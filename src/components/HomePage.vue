@@ -1,8 +1,8 @@
 <template>
   <div class="HomePage">
     <Navbar />
-    <img class="homepage-pic homepage-pic-left" src="../assets/left.png" />
-    <img class="homepage-pic homepage-pic-right" src="../assets/right.png" />
+    <img class="home-pic home-pic-left" src="../assets/left.png" />
+    <img class="home-pic home-pic-right" src="../assets/right.png" />
     <h1 id="scriptio-title">Scriptio</h1>
     <h2 id="scriptio-desc">Minimalist tool for perfectionist screenwriters</h2>
   </div>
@@ -20,7 +20,7 @@ import Navbar from "@/components/HomePageNavbar.vue"; // @ is an alias to /src
 export default class HomePage extends Vue {}
 </script>
 
-<style>
+<style scoped>
 @font-face {
   font-family: poetsen;
   src: URL("../assets/poetsen.ttf") format("truetype");
@@ -31,6 +31,7 @@ export default class HomePage extends Vue {}
   text-align: center;
   font-size: 7rem;
   margin-top: 15%;
+  margin-bottom: -0.6%;
 }
 
 #scriptio-desc {
@@ -38,17 +39,17 @@ export default class HomePage extends Vue {}
   font-size: 1rem;
 }
 
-.homepage-pic-right {
+.home-pic-right {
   margin-top: 5%;
   right: 4%;
 }
 
-.homepage-pic-left {
+.home-pic-left {
   margin-top: 5%;
   left: 7%;
 }
 
-.homepage-pic {
+.home-pic {
   position: absolute;
   width: 30%;
   opacity: 30%;

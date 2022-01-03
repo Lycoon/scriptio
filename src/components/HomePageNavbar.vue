@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-      <a class="navbar-item" href="https://localhost:8080">
+      <a class="navbar-item" href="http://localhost:8080">
         <img src="https://i.imgur.com/uIOrnUi.png" width="105" height="28" />
       </a>
 
@@ -19,16 +19,19 @@
     </div>
 
     <div id="navbarBasicExample" class="navbar-menu">
-      <div class="navbar-start">
-        <a class="navbar-item">Home</a>
-        <a class="navbar-item">Documentation</a>
-      </div>
-
       <div class="navbar-end">
         <div class="navbar-item">
           <div class="buttons">
-            <a class="button is-light is-rounded is-outlined">Sign up</a>
-            <a class="button is-light is-rounded is-outlined">Log in</a>
+            <a
+              href="login"
+              class="button is-light is-rounded is-small is-outlined"
+              >Log in</a
+            >
+            <a
+              href="register"
+              class="button is-light is-rounded is-small is-outlined"
+              >Create new account</a
+            >
           </div>
         </div>
       </div>

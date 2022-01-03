@@ -1,20 +1,20 @@
 <template>
-  <div class="LoginPage">
+  <div class="RegisterPage">
     <Navbar />
-    <LoginPage />
+    <RegisterPage />
   </div>
 </template>
 
 <script>
 import { Component, Vue } from "vue-property-decorator";
-import LoginPage from "@/components/LoginPage.vue";
+import RegisterPage from "@/components/RegisterPage.vue";
 import Navbar from "@/components/HomePageNavbar.vue";
 
 @Component({
   components: {
-    LoginPage,
+    RegisterPage,
     Navbar,
   },
 })
-export default class Login extends Vue {}
+export default class Register extends Vue {}
 </script>

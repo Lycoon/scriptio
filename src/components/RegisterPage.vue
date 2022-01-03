@@ -1,9 +1,9 @@
 <template>
-  <div class="LoginPage">
+  <div class="RegisterPage">
     <div class="columns is-vcentered">
       <div class="column is-3">
         <div class="field form">
-          <h1 id="page-title">Log in</h1>
+          <h1 id="page-title">Register</h1>
           <label class="label">Email</label>
           <div class="control has-icons-left">
             <input class="input" type="email" placeholder="Email" />
@@ -15,6 +15,14 @@
           <label class="label">Password</label>
           <div class="control">
             <input class="input" type="password" placeholder="Password" />
+          </div>
+
+          <div class="control">
+            <input
+              class="input"
+              type="password"
+              placeholder="Repeat password"
+            />
           </div>
 
           <div class="field is-grouped is-grouped-right">
