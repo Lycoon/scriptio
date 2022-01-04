@@ -1,14 +1,12 @@
 <template>
-  <div id="app">
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Poppins"
-    />
-    <router-view />
+  <div>
+    <NuxtPage />
   </div>
 </template>
 
 <style>
+@import "https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css";
+
 #app {
   font-family: Poppins, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -19,6 +17,4 @@
 ::-webkit-scrollbar {
   display: none;
 }
-
-@import "https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css";
 </style>

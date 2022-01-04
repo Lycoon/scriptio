@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-      <a class="navbar-item" href="http://localhost:8080">
+      <a class="navbar-item" href="http://localhost:3000">
         <img src="https://i.imgur.com/uIOrnUi.png" width="105" height="28" />
       </a>
 
