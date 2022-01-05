@@ -1,15 +1,14 @@
 <template>
   <div class="home">
     <HomePage />
+    <HomePageFooter />
   </div>
 </template>
 
 <script lang="ts">
-import HomePage from "@/components/HomePage.vue";
-
 export default {
-  components: {
-    HomePage,
+  head: {
+    title: "Scriptio",
   },
 };
 </script>

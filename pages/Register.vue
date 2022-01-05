@@ -1,18 +1,22 @@
 <template>
   <div class="RegisterPage">
     <Navbar />
-    <RegisterPage />
+    <div class="is-flex is-justify-content-center is-flex-direction-row">
+      <RegisterForm />
+    </div>
+    <HomePageFooter />
   </div>
 </template>
 
-<script>
-import RegisterPage from "@/components/RegisterPage.vue";
+<script lang="ts">
 import Navbar from "@/components/HomePageNavbar.vue";
 
 export default {
   components: {
-    RegisterPage,
     Navbar,
+  },
+  head: {
+    title: "Scriptio - Register",
   },
 };
 </script>

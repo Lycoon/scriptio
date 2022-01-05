@@ -1,18 +1,22 @@
 <template>
   <div class="LoginPage">
     <Navbar />
-    <LoginPage />
+    <div class="is-flex is-justify-content-center is-flex-direction-row">
+      <LoginForm />
+    </div>
+    <HomePageFooter />
   </div>
 </template>
 
-<script>
-import LoginPage from "@/components/LoginPage.vue";
+<script lang="ts">
 import Navbar from "@/components/HomePageNavbar.vue";
 
 export default {
   components: {
-    LoginPage,
     Navbar,
+  },
+  head: {
+    title: "Scriptio - Log in",
   },
 };
 </script>
