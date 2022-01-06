@@ -8,5 +8,9 @@
   "devDependencies": {
     "nuxt3": "latest",
     "resolve": "1.20.0"
+  },
+  "dependencies": {
+    "@tiptap/starter-kit": "^2.0.0-beta.168",
+    "@tiptap/vue-3": "^2.0.0-beta.87"
   }
 }
