@@ -1,7 +1,9 @@
 <template>
   <div class="editor">
     <Navbar />
-    <Editor />
+    <div class="is-flex is-justify-content-center is-flex-direction-row">
+      <Editor />
+    </div>
     <HomePageFooter />
   </div>
 </template>
