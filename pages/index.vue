@@ -1,5 +1,6 @@
 <template>
-  <div class="home">
+  <div id="home">
+    <HomePageNavbar />
     <HomePage />
     <HomePageFooter />
   </div>
@@ -12,3 +13,10 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+#home {
+  height: 100vh;
+  width: 100vw;
+}
+</style>

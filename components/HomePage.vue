@@ -1,7 +1,6 @@
 <template>
   <div>
     <div class="homepage">
-      <Navbar />
       <img class="home-pic home-pic-left" src="@/assets/left.png" />
       <img class="home-pic home-pic-right" src="@/assets/right.png" />
       <h1 id="scriptio-title">Scriptio</h1>

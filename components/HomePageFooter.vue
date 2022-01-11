@@ -2,9 +2,8 @@
   <footer id="footer">
     <div class="content has-text-centered">
       <p id="footer-text">
-        <a target="_blank" href="https://github.com/Lycoon/scriptio">About</a> -
-        <a target="_blank" href="mailto:hugo.bois@hotmail.fr">Contact</a> -
-        Donate
+        Designed by
+        <a target="_blank" href="https://github.com/Lycoon">Lycoon</a>
       </p>
     </div>
   </footer>
