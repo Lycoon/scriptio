@@ -1,11 +1,9 @@
 <template>
   <footer id="footer">
-    <div class="content has-text-centered">
-      <p id="footer-text">
-        Designed by
-        <a target="_blank" href="https://github.com/Lycoon">Lycoon</a>
-      </p>
-    </div>
+    <p id="footer-text">
+      Designed by
+      <a target="_blank" href="https://github.com/Lycoon">Lycoon</a>
+    </p>
   </footer>
 </template>
 

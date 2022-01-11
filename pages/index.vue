@@ -1,5 +1,5 @@
 <template>
-  <div id="home">
+  <div id="home-container">
     <HomePageNavbar />
     <HomePage />
     <HomePageFooter />
@@ -15,8 +15,10 @@ export default {
 </script>
 
 <style scoped>
-#home {
-  height: 100vh;
-  width: 100vw;
+#home-container {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 </style>

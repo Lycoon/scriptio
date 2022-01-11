@@ -1,13 +1,9 @@
 <template>
-  <div>
-    <div class="homepage">
-      <img class="home-pic home-pic-left" src="@/assets/left.png" />
-      <img class="home-pic home-pic-right" src="@/assets/right.png" />
-      <h1 id="scriptio-title">Scriptio</h1>
-      <h2 id="scriptio-desc">
-        Minimalist tool for perfectionist screenwriters
-      </h2>
-    </div>
+  <div class="homepage">
+    <img class="home-pic home-pic-left" src="@/assets/left.png" />
+    <img class="home-pic home-pic-right" src="@/assets/right.png" />
+    <h1 id="scriptio-title">Scriptio</h1>
+    <h2 id="scriptio-desc">Minimalist tool for perfectionist screenwriters</h2>
   </div>
 </template>
 
@@ -26,16 +22,20 @@ export default {
   font-family: poetsen;
   src: URL("/assets/poetsen.ttf") format("truetype");
 }
+@font-face {
+  font-family: roboto-thin;
+  src: URL("/assets/roboto-thin.ttf") format("truetype");
+}
 
 #scriptio-title {
   font-family: poetsen;
   text-align: center;
   font-size: 5.5vw;
-  margin-top: 30vh;
-  margin-bottom: -0.7rem;
+  margin-bottom: -0.2rem;
 }
 
 #scriptio-desc {
+  font-family: roboto-thin;
   text-align: center;
   font-size: 0.85vw;
 }
