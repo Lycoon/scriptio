@@ -1,5 +1,5 @@
 <template>
-  <div class="homepage">
+  <div id="homepage">
     <img class="home-pic home-pic-left" src="@/assets/left.png" />
     <img class="home-pic home-pic-right" src="@/assets/right.png" />
     <h1 id="scriptio-title">Scriptio</h1>
@@ -27,26 +27,35 @@ export default {
   src: URL("/assets/roboto-thin.ttf") format("truetype");
 }
 
+#homepage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 #scriptio-title {
   font-family: poetsen;
-  text-align: center;
-  font-size: 5.5vw;
-  margin-bottom: -0.2rem;
+  font-size: min(9vw, 9vh);
+  margin-bottom: 0.5rem;
 }
 
 #scriptio-desc {
   font-family: roboto-thin;
   text-align: center;
-  font-size: 0.85vw;
+  font-size: min(1.6vw, 1.6vh);
 }
 
 .home-pic-right {
+  z-index: -1;
   bottom: 15%;
   right: 0;
 }
 
 .home-pic-left {
-  top: -3%;
+  z-index: -1;
+  top: -2%;
   left: 2%;
 }
 

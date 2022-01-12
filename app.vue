@@ -11,11 +11,18 @@
   color: #2c3e50;
 }
 
+::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   margin: 0 !important;
 }
 
-::-webkit-scrollbar {
-  display: none;
+* {
+  font-family: sans-serif;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 </style>

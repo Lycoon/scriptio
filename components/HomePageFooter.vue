@@ -9,12 +9,12 @@
 
 <style scoped>
 #footer {
-  position: absolute;
-  bottom: 1%;
-  width: 100%;
+  text-align: center;
+  width: 100vw;
+  padding: 10px;
 }
 
 #footer-text {
-  font-size: 0.75vw;
+  font-size: min(2vw, 1.4vh);
 }
 </style>
