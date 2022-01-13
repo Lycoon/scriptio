@@ -1,6 +1,6 @@
 <template>
   <nav id="navbar">
-    <a class="logo" href="http://localhost:3000">
+    <a class="logo" href="http://localhost:8000">
       <img src="https://i.imgur.com/uIOrnUi.png" width="100" height="28" />
     </a>
     <button>Log in</button>
@@ -12,7 +12,7 @@
 #navbar {
   background-color: #555555;
   width: 100vw;
-  min-height: 6vh;
+  min-height: 4.5vh;
 
   display: flex;
   flex-direction: row;
