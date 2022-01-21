@@ -14,7 +14,9 @@
   padding: 10px;
 }
 
-#footer-text {
-  font-size: min(2vw, 1.4vh);
+#footer-text,
+a {
+  color: #9c9c9c;
+  font-size: min(1.8vw, 1.2vh);
 }
 </style>

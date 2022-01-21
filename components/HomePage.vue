@@ -2,8 +2,12 @@
   <div id="homepage">
     <img class="home-pic home-pic-left" src="@/assets/left.png" />
     <img class="home-pic home-pic-right" src="@/assets/right.png" />
-    <h1 id="scriptio-title">Scriptio</h1>
-    <h2 id="scriptio-desc">Minimalist tool for perfectionist screenwriters</h2>
+    <div id="homepage-text">
+      <h1 id="scriptio-title">Scriptio</h1>
+      <h2 id="scriptio-desc">
+        Minimalist tool for perfectionist screenwriters
+      </h2>
+    </div>
   </div>
 </template>
 
@@ -35,10 +39,14 @@ export default {
   align-items: center;
 }
 
+#homepage-text {
+  margin-bottom: 3.5%;
+}
+
 #scriptio-title {
   font-family: poetsen;
-  font-size: min(9vw, 9vh);
-  margin-bottom: 0.5rem;
+  font-size: min(11vw, 11vh);
+  margin-bottom: 0.7rem;
 }
 
 #scriptio-desc {
