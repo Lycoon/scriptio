@@ -1,14 +1,14 @@
 <template>
   <div id="navbar-btn">
-    <button onclick="window.location='login';" class="btn">
+    <a :href="redirect" class="btn">
       {{ content }}
-    </button>
+    </a>
   </div>
 </template>
 
 <script lang="ts">
 export default {
-  props: ["content"],
+  props: ["content", "redirect"],
 };
 </script>
 
