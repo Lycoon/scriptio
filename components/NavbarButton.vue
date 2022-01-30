@@ -13,6 +13,10 @@ export default {
 </script>
 
 <style scoped>
+a {
+  text-decoration: none;
+}
+
 .btn {
   font-size: 0.8rem;
   color: white;
@@ -22,10 +26,10 @@ export default {
   padding-block: 5px;
 
   /* Border */
-  border: solid;
-  border-color: #dbdbdb;
+  border-style: solid;
+  border-color: #a7a7a7;
   border-radius: 15px;
-  border-width: 0.2em;
+  border-width: 2px;
 }
 
 .btn:hover {
@@ -35,6 +39,6 @@ export default {
 
 .btn:active {
   transition: transform 0.25s;
-  transform: scale(0.95);
+  transform: scale(0.85);
 }
 </style>

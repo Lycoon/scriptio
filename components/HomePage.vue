@@ -1,34 +1,48 @@
 <template>
   <div id="homepage">
-    <img class="home-pic home-pic-left" src="@/assets/left.png" />
-    <img class="home-pic home-pic-right" src="@/assets/right.png" />
+    <img class="home-pic home-pic-left" src="@/assets/left-shadowed.png" />
+    <img class="home-pic home-pic-right" src="@/assets/right-shadowed.png" />
     <div id="homepage-text">
-      <h1 id="scriptio-title">Scriptio</h1>
-      <h2 id="scriptio-desc">
+      <h1 id="scriptio-title" class="title">Scriptio</h1>
+      <h2 id="scriptio-desc" class="title">
         Minimalist tool for perfectionist screenwriters
       </h2>
     </div>
   </div>
 </template>
 
-<script>
-import Navbar from "@/components/HomePageNavbar.vue";
-
-export default {
-  components: {
-    Navbar,
-  },
-};
+<script lang="ts">
+import "animate.css";
 </script>
 
-<style scoped>
+<style>
 @font-face {
   font-family: poetsen;
-  src: URL("/assets/poetsen.ttf") format("truetype");
+  src: URL("/assets/fonts/Poetsen.ttf") format("truetype");
 }
 @font-face {
   font-family: roboto-thin;
-  src: URL("/assets/roboto-thin.ttf") format("truetype");
+  src: URL("/assets/fonts/Roboto Thin.ttf") format("truetype");
+}
+@font-face {
+  font-family: segoe-bold;
+  src: URL("/assets/fonts/Segoe UI Bold.ttf") format("truetype");
+}
+@font-face {
+  font-family: segoe-light;
+  src: URL("/assets/fonts/Segoe UI Light.ttf") format("truetype");
+}
+
+.segoe-bold {
+  font-family: segoe-bold;
+}
+
+.segoe-light {
+  font-family: segoe-light;
+}
+
+.segoe {
+  font-family: "Segoe UI";
 }
 
 #homepage {
@@ -55,21 +69,31 @@ export default {
   font-size: min(1.6vw, 1.6vh);
 }
 
+.title {
+  animation: fadeIn;
+  animation-duration: 1s;
+}
+
 .home-pic-right {
   z-index: -1;
   bottom: 15%;
   right: 0;
+
+  animation: fadeInUpBig;
 }
 
 .home-pic-left {
   z-index: -1;
   top: -2%;
   left: 2%;
+
+  animation: fadeInDownBig;
 }
 
 .home-pic {
   position: absolute;
   width: 35%;
-  opacity: 20%;
+
+  animation-duration: 3.5s;
 }
 </style>

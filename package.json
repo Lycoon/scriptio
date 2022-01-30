@@ -12,6 +12,7 @@
   "dependencies": {
     "@tiptap/starter-kit": "^2.0.0-beta.168",
     "@tiptap/vue-3": "^2.0.0-beta.87",
+    "animate.css": "^4.1.1",
     "nuxi": "^0.10.1"
   }
 }

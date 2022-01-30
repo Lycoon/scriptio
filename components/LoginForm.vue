@@ -1,42 +1,54 @@
 <template>
   <!-- Log in form -->
-  <div class="is-flex is-flex-direction-column flex">
-    <h1 id="home-form-title">Log in</h1>
+  <div id="login-form">
+    <h1 class="segoe-bold">Log in</h1>
 
     <!-- Email -->
-    <label class="label">Email</label>
-    <div class="control has-icons-left">
-      <input class="input" type="email" placeholder="Email" />
-      <span class="icon is-small is-left">
-        <img src="https://img.icons8.com/material/24/000000/mail.png" />
-      </span>
+    <div id="email-form" class="form">
+      <input v-model="email" class="input" type="email" placeholder="Email" />
     </div>
 
     <!-- Password -->
-    <label class="label">Password</label>
-    <div class="control">
-      <input class="input" type="password" placeholder="Password" />
+    <div id="password-form" class="form">
+      <input
+        v-model="password"
+        class="input"
+        type="password"
+        placeholder="Password"
+      />
+      <a href="/recovery">Forgot password?</a>
     </div>
 
     <!-- Confirm button -->
-    <div class="field is-grouped is-grouped-right">
-      <button class="button is-medium is-dark is-rounded">Confirm</button>
+    <div id="form-btn-flex">
+      <a @click="login()" class="form-btn">Log in</a>
     </div>
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  props: ["content"],
+  methods: {
+    login: function () {
+      alert("Email: " + this.email + "\nPassword: " + this.password);
+    },
+  },
+};
+</script>
+
 <style>
-#home-form-title {
-  font-size: 2rem;
-  margin-top: 15%;
-  margin-bottom: 7%;
+#login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+
+  min-width: min(18vw, 30vh);
+  min-height: 25vh;
 }
 
-.control {
-  margin-bottom: 1rem;
-}
-
-.flex {
-  min-width: 15vw;
+a {
+  color: #9c9c9c;
+  font-size: min(1.8vw, 1.2vh);
 }
 </style>
