@@ -1,0 +1,49 @@
+#homepage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+  
+.homepage_text {
+  z-index: -1;
+  margin-bottom: 3.5%;
+}
+
+#scriptio_title {
+  font-family: poetsen;
+  font-size: min(11vw, 11vh);
+  margin-bottom: 0.7rem;
+}
+
+#scriptio_desc {
+  font-family: roboto-thin;
+  text-align: center;
+  font-size: min(1.6vw, 1.6vh);
+}
+
+.title {
+  animation: fadeIn;
+  animation-duration: 1s;
+}
+
+.home_pic_right {
+  bottom: 15%;
+  right: 0;
+}
+
+.home_pic_left {
+  top: -2%;
+  left: 2%;
+}
+
+.home_pic {
+  position: absolute;
+  z-index: -1;
+  width: 35%;
+
+  animation: fadeIn;
+  animation-duration: 5s;
+}

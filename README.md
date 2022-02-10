@@ -1,38 +1,34 @@
-<p align="center">
-    <img src="assets/pictures/homepage.png"  width="450" height="240">
-</p>
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-<p align="center">
-  Minimalist tool for perfectionist screenwriters
-</p>
+## Getting Started
 
-<p align="center">
-  <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lycoon/scriptio">
-</p>
+First, run the development server:
 
-# Why Scriptio?
-I like writing and creating stories in my spare time. For the last few years I have been using plenty of online screenplay editors such as *Celtx*, *WriterDuet* or *KitScenarist*, each of these being more or less enjoyable. However, none of them met my criteria. I wanted a free, dead simple, but pretty screenplay editor.
+```bash
+npm run dev
+# or
+yarn dev
+```
 
-My biggest inspiration is by far *Amazon Story Writer*, a very handy writing tool published by Amazon by 2015, which has unfortunately been shut down on June 30, 2019.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-# Features
-- Online
-- *planned* - Project management
-- *planned* - Export to PDF or Fountain format
-- *planned* - Collaborative editing
-- *planned* - Screenplay sharing
+You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
 
-# Dependencies
-### Running
-- Node `16.13.1`
-- npm `8.1.2`
+[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
 
-### Packages
-- Animate.css `4.1.1`
-- Tiptap `2.0.0`
-- NuxtJS `3.0`
+The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
-# How to launch
-1. `npm install`
-2. `npm run dev -- -o`
-3. `http://localhost:3000`
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.

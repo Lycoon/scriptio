@@ -1,0 +1,11 @@
+#footer {
+    text-align: center;
+    width: 100vw;
+    padding: 10px;
+}
+
+#footer-text,
+a {
+    color: #9c9c9c;
+    font-size: min(1.8vw, 1.2vh);
+}

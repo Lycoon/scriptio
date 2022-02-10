@@ -1,0 +1,78 @@
+/* Layouts */
+@import "HomePageFooter.module.css";
+@import "HomePageNavbar.module.css";
+@import "NavbarButton.module.css";
+
+/* Forms */
+@import "HomePageForm.module.css";
+@import "LoginForm.module.css";
+@import "RegisterForm.module.css";
+@import "RecoveryForm.module.css";
+
+/* Page containers */
+@import "HomePageContainer.module.css";
+@import "LoginContainer.module.css";
+@import "RegisterContainer.module.css";
+@import "RecoveryContainer.module.css";
+@import "EditorContainer.module.css";
+
+/* Editor */
+@import "EditorComponent.module.css";
+@import "EditorContent.module.css";
+@import "EditorSidebar.module.css";
+@import "EditorTab.module.css";
+@import "EditorPage.module.css";
+
+body {
+  margin: 0 !important;
+}
+
+* {
+  font-family: sans-serif;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.main-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+@font-face {
+  font-family: poetsen;
+  src: URL("/fonts/Poetsen.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: roboto-thin;
+  src: URL("/fonts/Roboto Thin.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: segoe-bold;
+  src: URL("/fonts/Segoe UI Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: segoe-light;
+  src: URL("/fonts/Segoe UI Light.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: courier-prime;
+  src: URL("/fonts/Courier Prime.ttf") format("truetype");
+}
+
+.segoe-bold {
+  font-family: segoe-bold;
+}
+
+.segoe-light {
+  font-family: segoe-light;
+}
+
+.segoe {
+  font-family: "Segoe UI";
+}
