@@ -10,6 +10,9 @@
     "resolve": "1.20.0"
   },
   "dependencies": {
+    "@nuxt/types": "^2.15.8",
+    "@nuxt/typescript-build": "^2.1.0",
+    "@nuxtjs/axios": "^5.13.6",
     "@tiptap/starter-kit": "^2.0.0-beta.168",
     "@tiptap/vue-3": "^2.0.0-beta.87",
     "animate.css": "^4.1.1",

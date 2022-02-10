@@ -1,42 +1,74 @@
 <template>
   <div id="sidebar" class="sidebar-shadow tabs">
-    <EditorTab />
-    <EditorTab />
-    <EditorTab />
-    <EditorTab />
-    <EditorTab />
-    <EditorTab />
+    <EditorTab @click="setSceneHeading" content="SCENE HEADING" />
+    <EditorTab @click="setAction" content="Action" />
+    <EditorTab @click="setCharacter" content="CHARACTER" />
+    <EditorTab @click="setDialogue" content="Dialogue" />
+    <EditorTab @click="setParenthetical" content="(Parenthetical)" />
+    <EditorTab @click="setTransition" content="TRANSITION:" />
+    <EditorTab @click="setActStart" content="ACT START" />
+    <EditorTab @click="setActEnd" content="ACT END" />
+    <EditorTab @click="setNote" content="[[Note]]" />
   </div>
 </template>
 
-<script>
-import EditorTab from "@/components/EditorTab.vue";
-
+<script lang="ts">
 export default {
-  components: {
-    EditorTab,
+  methods: {
+    setSceneHeading() {
+      console.log("setSceneHeading");
+      //console.log(this.$store.state.editor);
+    },
+
+    setAction() {
+      console.log("setAction");
+    },
+
+    setCharacter() {
+      console.log("setCharacter");
+    },
+
+    setDialogue() {
+      console.log("setDialogue");
+    },
+
+    setParenthetical() {
+      console.log("setParenthetical");
+    },
+
+    setTransition() {
+      console.log("setTransition");
+    },
+
+    setActStart() {
+      console.log("setActStart");
+    },
+
+    setActEnd() {
+      console.log("setActEnd");
+    },
+
+    setNote() {
+      console.log("setNote");
+    },
   },
 };
 </script>
 
 <style scoped>
 #sidebar {
-  width: 100%;
-  height: 100%;
-  background: #f6f6f6;
-  padding: 20px;
+  padding-top: 20px;
+  background: #f0f0f0;
+  min-width: max(10vw, 22vh);
 }
 
 .sidebar-shadow {
-  position: relative;
-  box-shadow: 5px -5px 9px -3px rgba(0, 0, 0, 0.14);
+  box-shadow: -6px 0px 4px -2px rgba(0, 0, 0, 0.15);
 }
 
 .tabs {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: center;
-  gap: 15px;
 }
 </style>

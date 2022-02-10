@@ -1,29 +1,38 @@
 <template>
-  <button class="button tab tab-text">Scene</button>
+  <button class="button tab tab-text">
+    {{ content }}
+  </button>
 </template>
+
+<script lang="ts">
+export default {
+  props: { content: String },
+};
+</script>
 
 <style scoped>
 .tab-text {
-  font-size: 110%;
+  font-size: 100%;
+  font-family: "Courier";
+  text-align: left;
+  font-weight: bold;
 }
 
 .tab {
   border: none;
-  box-shadow: 5px;
-  border-radius: 10px;
   width: 100%;
-  box-shadow: 0px 0px 2px 0px rgba(192, 198, 198, 0.75);
+  padding: 10px;
+  padding-left: 25px;
+  background-color: transparent;
 }
 
 .tab:hover {
-  transition: transform 0.1s;
-  transform: scale(1.03);
-  box-shadow: 0px 0px 12px -1px #c0c6c6;
+  transition: padding-left 0.1s;
+  padding-left: 45px;
+  background-color: rgb(230, 230, 230);
 }
 
-.tab:focus {
-  transition: transform 0.1s;
-  transform: scale(1.03);
-  box-shadow: 0px 0px 12px -1px #c0c6c6;
+.tab:active {
+  background-color: rgb(224, 224, 224);
 }
 </style>

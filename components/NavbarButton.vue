@@ -36,9 +36,4 @@ a {
   transition: background-color 0.2s;
   background-color: #686868;
 }
-
-.btn:active {
-  transition: transform 0.25s;
-  transform: scale(0.85);
-}
 </style>

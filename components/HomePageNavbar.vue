@@ -29,7 +29,8 @@ export default {
 #navbar {
   background-color: #474747;
   width: 100vw;
-  min-height: 4.5vh;
+  height: 4.5vh;
+  min-height: 55px;
 
   display: flex;
   flex-direction: row;
@@ -40,6 +41,7 @@ export default {
 
 #navbar-buttons {
   width: 210px;
+  margin-bottom: 4px;
   margin-right: 5px;
   display: flex;
   flex-direction: row;

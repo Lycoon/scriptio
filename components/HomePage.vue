@@ -32,6 +32,10 @@ import "animate.css";
   font-family: segoe-light;
   src: URL("/assets/fonts/Segoe UI Light.ttf") format("truetype");
 }
+@font-face {
+  font-family: courier-prime;
+  src: URL("/assets/fonts/Courier Prime.ttf") format("truetype");
+}
 
 .segoe-bold {
   font-family: segoe-bold;
@@ -51,9 +55,11 @@ import "animate.css";
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 #homepage-text {
+  z-index: -1;
   margin-bottom: 3.5%;
 }
 
@@ -75,25 +81,21 @@ import "animate.css";
 }
 
 .home-pic-right {
-  z-index: -1;
   bottom: 15%;
   right: 0;
-
-  animation: fadeInUpBig;
 }
 
 .home-pic-left {
-  z-index: -1;
   top: -2%;
   left: 2%;
-
-  animation: fadeInDownBig;
 }
 
 .home-pic {
   position: absolute;
+  z-index: -1;
   width: 35%;
 
-  animation-duration: 3.5s;
+  animation: fadeIn;
+  animation-duration: 5s;
 }
 </style>
