@@ -1,0 +1,15 @@
+#sidebar {
+  padding-top: 20px;
+  background: #f0f0f0;
+  min-width: max(10vw, 22vh);
+}
+
+.sidebar-shadow {
+  box-shadow: -6px 0px 4px -2px rgba(0, 0, 0, 0.15);
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}

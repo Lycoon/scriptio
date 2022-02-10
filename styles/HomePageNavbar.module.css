@@ -1,0 +1,27 @@
+#logo:hover {
+    transition: opacity 0.3s;
+    opacity: 80%;
+}
+
+#navbar {
+    background-color: #474747;
+    width: 100vw;
+    height: 4.5vh;
+    min-height: 55px;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 10px;
+}
+
+#navbar-buttons {
+    width: 210px;
+    margin-bottom: 4px;
+    margin-right: 5px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+}
