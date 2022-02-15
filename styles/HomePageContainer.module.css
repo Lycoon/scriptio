@@ -1,12 +1,12 @@
 #homepage {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
-  
+
 .homepage_text {
   z-index: -1;
   margin-bottom: 3.5%;
@@ -32,11 +32,15 @@
 .home_pic_right {
   bottom: 15%;
   right: 0;
+
+  animation: fadeInDown;
 }
 
 .home_pic_left {
   top: -2%;
   left: 2%;
+
+  animation: fadeInUp;
 }
 
 .home_pic {
@@ -44,6 +48,37 @@
   z-index: -1;
   width: 35%;
 
-  animation: fadeIn;
-  animation-duration: 5s;
+  animation-duration: 2.5s;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes fadeInDown {
+  0% {
+    transform: translateY(6%);
+    opacity: 0%;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 100%;
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    transform: translateY(-6%);
+    opacity: 0%;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 100%;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0%;
+  }
+  100% {
+    opacity: 100%;
+  }
 }
