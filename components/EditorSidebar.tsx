@@ -1,9 +1,15 @@
+import { useEditorState } from "../context/AppContext";
 import EditorTab from "./EditorTab";
 
 const EditorSidebar = () => {
+  const { editor, updateEditor } = useEditorState();
+
   const setSceneHeading = () => {
     console.log("setSceneHeading");
-    //console.log(this.$store.state.editor);
+
+    if (editor !== null) {
+      console.log(editor.getHTML());
+    }
   };
 
   const setAction = () => {
