@@ -7,8 +7,8 @@
 
 #editor {
   aspect-ratio: 0.707; /* A4 format */
-  width: 40%;
-  margin-top: 2%;
+  width: 45%;
+  margin-top: 3%;
 
   box-shadow: 0px 0px 8px 0px rgba(192, 198, 198, 0.75);
 }

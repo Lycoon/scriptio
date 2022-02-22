@@ -7,8 +7,10 @@
 
 #editor-container {
   display: flex;
-  flex-direction: row;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+
   width: 100%;
   overflow-y: scroll;
 }
