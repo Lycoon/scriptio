@@ -33,7 +33,6 @@ My biggest inspiration is by far _Amazon Story Writer_, a very handy writing too
 
 ### Packages
 
-- Animate.css `4.1.1`
 - Tiptap `2.0.0`
 - NextJS `12.0.10`
 - React `17.0.2`
