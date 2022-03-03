@@ -5,7 +5,7 @@ import { useEditorState } from "../context/AppContext";
 
 const EditorComponent = () => {
   const SceneHeading = Node.create({
-    name: "sceneHeading",
+    name: "sceneHeading"
   });
 
   const editorView = useEditor({

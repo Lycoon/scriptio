@@ -38,11 +38,10 @@ Last modified 8/21/08
   margin: 0;
 
   aspect-ratio: 0.707; /* A4 format */
-  width: 600px;
+  width: 640px;
 
   position: absolute;
   margin-inline: auto;
-  margin-top: 30px;
 
   border: solid;
   border-color: red;
@@ -52,7 +51,7 @@ Last modified 8/21/08
 
 .ProseMirror p {
   font: 16px/1.3em courier-prime, serif;
-  margin: 1.3em auto;
+  margin: 0.7em auto;
   text-align: left !important;
   letter-spacing: 0 !important;
 }
@@ -63,6 +62,10 @@ Last modified 8/21/08
   padding-top: 1.5ex !important;
 }
 
+.sceneheader {
+  text-transform: uppercase;
+}
+
 .action {
   padding-right: 5% !important;
   font-size: 12px !important;
@@ -71,6 +74,7 @@ Last modified 8/21/08
 
 .character {
   padding-left: 40% !important;
+  text-transform: uppercase;
 }
 
 .dialogue {
