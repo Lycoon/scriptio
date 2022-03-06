@@ -1,6 +1,4 @@
 import { Editor, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { cp } from "fs/promises";
 import { createContext, ReactNode, useContext, useState } from "react";
 
 export type editorContextType = {

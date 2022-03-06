@@ -3,45 +3,35 @@ import EditorTab from "./EditorTab";
 
 const EditorSidebar = () => {
   const { editor, updateEditor } = useEditorState();
+  const updateNode = (node: string) => {
+    console.log("Switched to node: " + node);
+    editor?.chain().focus().toggleNode(node, node, {}).run();
+  };
+  const getSelectedNode = () => {};
 
   const setSceneHeading = () => {
-    console.log("setSceneHeading");
-
-    if (editor !== null) {
-      console.log(editor.getHTML());
-    }
+    updateNode("SceneHeading");
   };
 
   const setAction = () => {
-    console.log("setAction");
+    updateNode("Action");
   };
 
   const setCharacter = () => {
-    console.log("setCharacter");
+    updateNode("Character");
   };
 
   const setDialogue = () => {
-    console.log("setDialogue");
+    updateNode("Dialogue");
   };
 
   const setParenthetical = () => {
-    console.log("setParenthetical");
+    updateNode("Parenthetical");
   };
 
   const setTransition = () => {
-    console.log("setTransition");
-  };
-
-  const setActStart = () => {
-    console.log("setActStart");
-  };
-
-  const setActEnd = () => {
-    console.log("setActEnd");
-  };
-
-  const setNote = () => {
-    console.log("setNote");
+    console.log(getSelectedNode());
+    console.log(editor?.isActive("Dialogue"));
   };
 
   return (
@@ -52,9 +42,6 @@ const EditorSidebar = () => {
       <EditorTab action={setDialogue} content="Dialogue" />
       <EditorTab action={setParenthetical} content="(Parenthetical)" />
       <EditorTab action={setTransition} content="TRANSITION:" />
-      <EditorTab action={setActStart} content="ACT START" />
-      <EditorTab action={setActEnd} content="ACT END" />
-      <EditorTab action={setNote} content="[[Note]]" />
     </div>
   );
 };
