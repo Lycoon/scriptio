@@ -1,7 +1,8 @@
 @import "../public/css/scriptio.css";
 
 #editor > div {
-  padding-top: 110px;
+  padding-top: 85px;
+  z-index: -1;
   width: 100%;
   height: 100%;
 }

@@ -30,8 +30,9 @@ const EditorSidebar = () => {
   };
 
   const setTransition = () => {
-    console.log(getSelectedNode());
-    console.log(editor?.isActive("Dialogue"));
+    //console.log(getSelectedNode());
+    //console.log(editor?.isActive("Dialogue"));
+    updateNode("Transition");
   };
 
   return (

@@ -21,10 +21,9 @@ IN THE SOFTWARE.
 */
 
 /*
-Scrippet.css
+Inspired by Scrippet CSS
 Scrippet is a CSS template designed for including short sections of screenplay-formatted material in blog posts.
 Originally developed by John August - johnaugust.com
-Last modified 8/21/08
 */
 
 .ProseMirror:focus {
@@ -34,62 +33,59 @@ Last modified 8/21/08
 .ProseMirror {
   color: #363636;
 
-  padding: 0;
-  margin: 0;
-
   aspect-ratio: 0.707; /* A4 format */
   width: 640px;
 
   position: absolute;
   margin-inline: auto;
-
-  border: solid;
-  border-color: red;
-
-  overflow-y: scroll;
 }
 
 .ProseMirror p,
 span {
-  font: 13pt courier-prime;
-  margin: 0.7em auto;
-  text-align: left !important;
+  font: 12pt courier-prime;
+  text-align: left;
   letter-spacing: -0.7px !important;
 }
 
 .sceneheader,
-.action,
-.character {
-  margin-top: 1.5ex !important;
+.action {
+  margin: 0.55em auto;
+}
+
+.action {
+  padding-right: 5% !important;
+  line-height: 17px !important;
+  text-align: justify;
 }
 
 .sceneheader {
-  background-color: #e9e9e9;
+  background-color: #dadada;
   width: 100%;
   padding-top: 2px;
   display: inline-block;
   text-transform: uppercase;
 }
 
-.sceneheader ::after {
-  content: "terfesfsef";
-  margin-left: -0.6in;
-  text-align: left;
+.sceneheader::before {
+  content: "1.";
+  position: absolute;
+  margin-left: -35px;
 }
 
-.action {
-  padding-right: 5% !important;
-  line-height: 17px !important;
+.dialogue + .sceneheader {
+  margin-top: 0 !important;
 }
 
 .character {
   padding-left: 40% !important;
+  margin-bottom: 0 !important;
   text-transform: uppercase;
 }
 
 .dialogue {
   padding-left: 20% !important;
   padding-right: 20% !important;
+  margin-bottom: 17px !important;
 }
 
 .parenthetical {
@@ -97,21 +93,19 @@ span {
   padding-right: 30% !important;
 }
 
-.parenthetical ::before {
+.parenthetical::before {
   content: "(";
 }
 
-.parenthetical ::after {
+.parenthetical::after {
   content: ")";
-}
-
-.dialogue + .parenthetical {
-  padding-bottom: 0 !important;
 }
 
 .transition {
   text-transform: uppercase;
-  padding-top: 3ex !important;
-  padding-left: 65% !important;
-  padding-bottom: 1.5ex !important;
+  text-align: right !important;
+}
+
+.transition::after {
+  content: ":";
 }
