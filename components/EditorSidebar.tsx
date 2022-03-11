@@ -11,7 +11,6 @@ const EditorSidebar = () => {
   const getSelectedNode = () => {};
   const escFunction = useCallback((event) => {
     if (event.key === "Tab") {
-      //Do whatever when esc is pressed
       event.preventDefault();
       console.log("dqzdqd");
     }
