@@ -1,3 +1,4 @@
+import { useCallback, useEffect } from "react";
 import { useEditorState } from "../context/AppContext";
 import EditorTab from "./EditorTab";
 
@@ -8,6 +9,21 @@ const EditorSidebar = () => {
     editor?.chain().focus().toggleNode(node, node, {}).run();
   };
   const getSelectedNode = () => {};
+  const escFunction = useCallback((event) => {
+    if (event.key === "Tab") {
+      //Do whatever when esc is pressed
+      event.preventDefault();
+      console.log("dqzdqd");
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("keydown", escFunction, false);
+
+    return () => {
+      document.removeEventListener("keydown", escFunction, false);
+    };
+  }, []);
 
   const setSceneHeading = () => {
     updateNode("SceneHeading");
