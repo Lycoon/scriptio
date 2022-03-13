@@ -1,6 +1,6 @@
 const EditorTab = (props: any) => {
   return (
-    <button onClick={props.action} className="button tab tab-text">
+    <button id={props.id_} onClick={props.action} className="button tab tab-text">
       {props.content}
     </button>
   );

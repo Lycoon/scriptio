@@ -2,62 +2,75 @@ import { useCallback, useEffect } from "react";
 import { useEditorState } from "../context/AppContext";
 import EditorTab from "./EditorTab";
 
+type TabDictionary = { [name: string]: HTMLElement | null };
 const EditorSidebar = () => {
   const { editor, updateEditor } = useEditorState();
-  const updateNode = (node: string) => {
-    console.log("Switched to node: " + node);
+  const getSelectedNode = () => {};
+
+  let selectedTab = 0;
+  let nodes: string[] = [];
+  const tabs: TabDictionary = {};
+  const setActiveTab = (node: string) => {
+    selectedTab = nodes.indexOf(node);
     editor?.chain().focus().toggleNode(node, node, {}).run();
   };
-  const getSelectedNode = () => {};
-  const escFunction = useCallback((event) => {
+
+  const tabKeyPressed = useCallback((event) => {
     if (event.key === "Tab") {
       event.preventDefault();
-      console.log("dqzdqd");
+      selectedTab = ++selectedTab % 6;
+      setActiveTab(nodes[selectedTab]);
     }
   }, []);
 
   useEffect(() => {
-    document.addEventListener("keydown", escFunction, false);
+    document.addEventListener("keydown", tabKeyPressed, false);
+
+    tabs["SceneHeading"] = document.getElementById("scene");
+    tabs["Action"] = document.getElementById("action");
+    tabs["Character"] = document.getElementById("character");
+    tabs["Dialogue"] = document.getElementById("dialogue");
+    tabs["Parenthetical"] = document.getElementById("parenthetical");
+    tabs["Transition"] = document.getElementById("transition");
+    nodes = Object.keys(tabs);
 
     return () => {
-      document.removeEventListener("keydown", escFunction, false);
+      document.removeEventListener("keydown", tabKeyPressed, false);
     };
   }, []);
 
   const setSceneHeading = () => {
-    updateNode("SceneHeading");
+    setActiveTab("SceneHeading");
   };
 
   const setAction = () => {
-    updateNode("Action");
+    setActiveTab("Action");
   };
 
   const setCharacter = () => {
-    updateNode("Character");
+    setActiveTab("Character");
   };
 
   const setDialogue = () => {
-    updateNode("Dialogue");
+    setActiveTab("Dialogue");
   };
 
   const setParenthetical = () => {
-    updateNode("Parenthetical");
+    setActiveTab("Parenthetical");
   };
 
   const setTransition = () => {
-    //console.log(getSelectedNode());
-    //console.log(editor?.isActive("Dialogue"));
-    updateNode("Transition");
+    setActiveTab("Transition");
   };
 
   return (
     <div id="sidebar" className="sidebar-shadow tabs">
-      <EditorTab action={setSceneHeading} content="SCENE HEADING" />
-      <EditorTab action={setAction} content="Action" />
-      <EditorTab action={setCharacter} content="CHARACTER" />
-      <EditorTab action={setDialogue} content="Dialogue" />
-      <EditorTab action={setParenthetical} content="(Parenthetical)" />
-      <EditorTab action={setTransition} content="TRANSITION:" />
+      <EditorTab id_="scene" action={setSceneHeading} content="SCENE HEADING" />
+      <EditorTab id_="action" action={setAction} content="Action" />
+      <EditorTab id_="character" action={setCharacter} content="CHARACTER" />
+      <EditorTab id_="dialogue" action={setDialogue} content="Dialogue" />
+      <EditorTab id_="parenthetical" action={setParenthetical} content="(Parenthetical)" />
+      <EditorTab id_="transition" action={setTransition} content="TRANSITION:" />
     </div>
   );
 };
