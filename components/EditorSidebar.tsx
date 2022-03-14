@@ -1,27 +1,45 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useEditorState } from "../context/AppContext";
 import EditorTab from "./EditorTab";
 
-type TabDictionary = { [name: string]: HTMLElement | null };
+type TabElementType = HTMLElement | null;
+type TabDictionary = { [name: string]: TabElementType };
+
 const EditorSidebar = () => {
   const { editor, updateEditor } = useEditorState();
   const getSelectedNode = () => {};
 
-  let selectedTab = 0;
-  let nodes: string[] = [];
-  const tabs: TabDictionary = {};
+  const [tabs, setTabs] = useState<TabDictionary>({});
+  const [selectedTab, updateSelectedTab] = useState<number>(0);
+  let [nodes, setNodes] = useState<string[]>([]);
+  let [buttons, setButtons] = useState<TabElementType[]>([]);
+
   const setActiveTab = (node: string) => {
-    selectedTab = nodes.indexOf(node);
+    updateSelectedTab(nodes.indexOf(node));
+    updateTabCSS(selectedTab);
+    console.log(nodes.indexOf(node));
+
     editor?.chain().focus().toggleNode(node, node, {}).run();
   };
 
-  const tabKeyPressed = useCallback((event) => {
+  const updateTabCSS = (tabIndex: number) => {
+    for (let i = 0; i < buttons.length; i++) {
+      if (i === tabIndex) {
+        buttons[i]!.classList.add("active-tab");
+      } else {
+        buttons[i]!.classList.remove("active-tab");
+      }
+    }
+  };
+
+  const tabKeyPressed = (event: any) => {
     if (event.key === "Tab") {
       event.preventDefault();
-      selectedTab = ++selectedTab % 6;
+
+      updateSelectedTab((selectedTab + 1) % 6);
       setActiveTab(nodes[selectedTab]);
     }
-  }, []);
+  };
 
   useEffect(() => {
     document.addEventListener("keydown", tabKeyPressed, false);
@@ -32,7 +50,14 @@ const EditorSidebar = () => {
     tabs["Dialogue"] = document.getElementById("dialogue");
     tabs["Parenthetical"] = document.getElementById("parenthetical");
     tabs["Transition"] = document.getElementById("transition");
+
     nodes = Object.keys(tabs);
+    buttons = Object.values(tabs);
+
+    setNodes(nodes);
+    setButtons(buttons);
+
+    setActiveTab("SceneHeading");
 
     return () => {
       document.removeEventListener("keydown", tabKeyPressed, false);
@@ -69,8 +94,16 @@ const EditorSidebar = () => {
       <EditorTab id_="action" action={setAction} content="Action" />
       <EditorTab id_="character" action={setCharacter} content="CHARACTER" />
       <EditorTab id_="dialogue" action={setDialogue} content="Dialogue" />
-      <EditorTab id_="parenthetical" action={setParenthetical} content="(Parenthetical)" />
-      <EditorTab id_="transition" action={setTransition} content="TRANSITION:" />
+      <EditorTab
+        id_="parenthetical"
+        action={setParenthetical}
+        content="(Parenthetical)"
+      />
+      <EditorTab
+        id_="transition"
+        action={setTransition}
+        content="TRANSITION:"
+      />
     </div>
   );
 };

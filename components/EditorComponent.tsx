@@ -1,5 +1,6 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { useEffect } from "react";
 import { useEditorState } from "../context/AppContext";
 
 import { Action } from "./extensions/Action";
@@ -25,7 +26,10 @@ const EditorComponent = () => {
   });
 
   const { editor, updateEditor } = useEditorState();
-  updateEditor(editorView!);
+
+  useEffect(() => {
+    updateEditor(editorView!);
+  });
 
   return (
     <div id="editor">
