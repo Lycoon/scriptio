@@ -6,10 +6,13 @@ export const Character = Node.create({
   draggable: false,
   group: "block",
   content: "inline*",
-  defaultOptions: {
-    HTMLAttributes: {
-      class: "character",
-    },
+
+  addOptions() {
+    return {
+      HTMLAttributes: {
+        class: "character",
+      },
+    };
   },
 
   renderHTML({ HTMLAttributes }) {

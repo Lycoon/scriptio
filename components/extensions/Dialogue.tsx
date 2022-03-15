@@ -6,10 +6,13 @@ export const Dialogue = Node.create({
   draggable: false,
   group: "block",
   content: "inline*",
-  defaultOptions: {
-    HTMLAttributes: {
-      class: "dialogue",
-    },
+
+  addOptions() {
+    return {
+      HTMLAttributes: {
+        class: "dialogue",
+      },
+    };
   },
 
   renderHTML({ HTMLAttributes }) {

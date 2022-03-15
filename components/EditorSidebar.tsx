@@ -35,8 +35,8 @@ const EditorSidebar = () => {
   };
 
   useEffect(() => {
-    setActiveTab("SceneHeading");
-  }, []);
+    setActiveTab("Action");
+  }, [editor]);
 
   useEffect(() => {
     document.addEventListener("keydown", tabKeyPressed, false);

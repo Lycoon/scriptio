@@ -1,16 +1,29 @@
 import { Node } from "@tiptap/core";
 import { mergeAttributes } from "@tiptap/react";
+import EditorSidebar from "../EditorSidebar";
 
 export const SceneHeading = Node.create({
   name: "SceneHeading",
   draggable: false,
   group: "block",
   content: "inline*",
-  defaultOptions: {
-    HTMLAttributes: {
-      class: "sceneheader",
-    },
+
+  addOptions() {
+    return {
+      HTMLAttributes: {
+        class: "sceneheader",
+      },
+    };
   },
+
+  /*
+  addKeyboardShortcuts() {
+    return {
+      Enter: () =>
+        this.editor.chain().focus().toggleNode("Action", "Action").run(),
+    };
+  },
+  */
 
   renderHTML({ HTMLAttributes }) {
     return [

@@ -6,10 +6,13 @@ export const Parenthetical = Node.create({
   draggable: false,
   group: "block",
   content: "inline*",
-  defaultOptions: {
-    HTMLAttributes: {
-      class: "parenthetical",
-    },
+
+  addOptions() {
+    return {
+      HTMLAttributes: {
+        class: "parenthetical",
+      },
+    };
   },
 
   renderHTML({ HTMLAttributes }) {

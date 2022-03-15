@@ -64,10 +64,11 @@ span {
   padding-top: 2px;
   display: inline-block;
   text-transform: uppercase;
+  counter-increment: scenenumber;
 }
 
 .sceneheader::before {
-  content: "1.";
+  content: counter(scenenumber) ".";
   position: absolute;
   margin-left: -35px;
 }

@@ -6,10 +6,14 @@ export const Action = Node.create({
   draggable: false,
   group: "block",
   content: "inline*",
-  defaultOptions: {
-    HTMLAttributes: {
-      class: "action",
-    },
+  priority: 1500,
+
+  addOptions() {
+    return {
+      HTMLAttributes: {
+        class: "action",
+      },
+    };
   },
 
   renderHTML({ HTMLAttributes }) {

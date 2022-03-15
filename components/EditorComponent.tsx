@@ -21,12 +21,14 @@ const EditorComponent = () => {
       Parenthetical,
       Transition,
     ],
-    content: "<p>Ceci est un test, un test, un test</p>",
+    content: "Ceci est un test, un test, un test",
     autofocus: "end",
     onTransaction: (editor) => {
       // console.log(editor.editor.state.selection.anchor);
-      const caret = editor.editor.state.selection.anchor;
-      console.log(editor.editor.state.doc.type);
+      const caret = editor.editor.state.selection.head;
+      const tmp: HTMLElement = editor.editor.view.domAtPos(caret).node
+        .parentNode! as any;
+      console.log(tmp.lastElementChild?.getAttribute("class"));
     },
   });
 

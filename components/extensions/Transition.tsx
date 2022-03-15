@@ -6,10 +6,13 @@ export const Transition = Node.create({
   draggable: false,
   group: "block",
   content: "inline*",
-  defaultOptions: {
-    HTMLAttributes: {
-      class: "transition",
-    },
+
+  addOptions() {
+    return {
+      HTMLAttributes: {
+        class: "transition",
+      },
+    };
   },
 
   renderHTML({ HTMLAttributes }) {
