@@ -23,6 +23,11 @@ const EditorComponent = () => {
     ],
     content: "<p>Ceci est un test, un test, un test</p>",
     autofocus: "end",
+    onTransaction: (editor) => {
+      // console.log(editor.editor.state.selection.anchor);
+      const caret = editor.editor.state.selection.anchor;
+      console.log(editor.editor.state.doc.type);
+    },
   });
 
   const { editor, updateEditor } = useEditorState();
