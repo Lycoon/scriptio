@@ -32,6 +32,18 @@ const EditorSidebar = () => {
       updateSelectedTab(idx);
       setActiveTab(tabs[idx]);
     }
+
+    /*
+    if (event.key === "Enter") {
+      console.log("Enter");
+
+      const currNode = editor?.state.selection.$anchor.parent.type.name;
+      if (currNode === "Character") {
+        setActiveTab("Dialogue");
+      } else if (currNode === "Dialogue") {
+        setActiveTab("Action");
+      }
+    }*/
   };
 
   useEffect(() => {

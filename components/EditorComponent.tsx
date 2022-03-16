@@ -23,12 +23,28 @@ const EditorComponent = () => {
     ],
     content: "Ceci est un test, un test, un test",
     autofocus: "end",
-    onTransaction: (editor) => {
-      // console.log(editor.editor.state.selection.anchor);
-      const caret = editor.editor.state.selection.head;
-      const tmp: HTMLElement = editor.editor.view.domAtPos(caret).node
-        .parentNode! as any;
-      console.log(tmp.lastElementChild?.getAttribute("class"));
+    editorProps: {
+      handleKeyDown(view, event) {
+        if (event.key === "Enter") {
+          const currNode = view.state.selection.$anchor.parent.type.name;
+          console.log("currNodeEnter: " + currNode);
+
+          if (currNode === "Character" || currNode === "Parenthetical") {
+            // setActiveTab("Dialogue")
+          }
+        }
+
+        return false;
+      },
+
+      handleClick(view, pos, event) {
+        const currNode = view.state.selection.$anchor.parent.type.name;
+        console.log("currNode: " + currNode);
+
+        // setActiveTab(currNode)
+
+        return false;
+      },
     },
   });
 

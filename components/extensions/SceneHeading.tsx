@@ -16,15 +16,6 @@ export const SceneHeading = Node.create({
     };
   },
 
-  /*
-  addKeyboardShortcuts() {
-    return {
-      Enter: () =>
-        this.editor.chain().focus().toggleNode("Action", "Action").run(),
-    };
-  },
-  */
-
   renderHTML({ HTMLAttributes }) {
     return [
       "span",
