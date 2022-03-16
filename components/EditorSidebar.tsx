@@ -1,62 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
-import { useEditorState } from "../context/AppContext";
 import EditorTab from "./EditorTab";
 
 type TabElementType = HTMLElement | null;
 type TabDictionary = { [name: string]: TabElementType };
 
-const EditorSidebar = () => {
-  const { editor, updateEditor } = useEditorState();
-  const getSelectedNode = () => {};
-
-  const [selectedTab, updateSelectedTab] = useState<number>(0);
-  const tabs = [
-    "SceneHeading",
-    "Action",
-    "Character",
-    "Dialogue",
-    "Parenthetical",
-    "Transition",
-  ];
-
-  const setActiveTab = (node: string) => {
-    updateSelectedTab(tabs.indexOf(node));
-    editor?.chain().focus().toggleNode(node, node, {}).run();
-  };
-
-  const tabKeyPressed = (event: any) => {
-    if (event.key === "Tab") {
-      event.preventDefault();
-
-      const idx = (selectedTab + 1) % 6;
-      updateSelectedTab(idx);
-      setActiveTab(tabs[idx]);
-    }
-
-    /*
-    if (event.key === "Enter") {
-      console.log("Enter");
-
-      const currNode = editor?.state.selection.$anchor.parent.type.name;
-      if (currNode === "Character") {
-        setActiveTab("Dialogue");
-      } else if (currNode === "Dialogue") {
-        setActiveTab("Action");
-      }
-    }*/
-  };
-
-  useEffect(() => {
-    setActiveTab("Action");
-  }, [editor]);
-
-  useEffect(() => {
-    document.addEventListener("keydown", tabKeyPressed, false);
-
-    return () => {
-      document.removeEventListener("keydown", tabKeyPressed, false);
-    };
-  }, [selectedTab]);
+const EditorSidebar = (props: any) => {
+  const tabs = props.tabs;
+  const selectedTab = props.selectedTab;
+  const setActiveTab = props.setActiveTab;
 
   return (
     <div id="sidebar" className="sidebar-shadow tabs">

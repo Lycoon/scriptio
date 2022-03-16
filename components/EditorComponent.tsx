@@ -10,7 +10,7 @@ import { Parenthetical } from "./extensions/Parenthetical";
 import { SceneHeading } from "./extensions/SceneHeading";
 import { Transition } from "./extensions/Transition";
 
-const EditorComponent = () => {
+const EditorComponent = ({ setActiveTab }: any) => {
   const editorView = useEditor({
     extensions: [
       StarterKit,
@@ -21,16 +21,21 @@ const EditorComponent = () => {
       Parenthetical,
       Transition,
     ],
+
     content: "Ceci est un test, un test, un test",
     autofocus: "end",
+  });
+
+  editorView?.setOptions({
     editorProps: {
       handleKeyDown(view, event) {
         if (event.key === "Enter") {
           const currNode = view.state.selection.$anchor.parent.type.name;
-          console.log("currNodeEnter: " + currNode);
 
+          let timeout = setTimeout(() => setActiveTab("Action"), 20);
           if (currNode === "Character" || currNode === "Parenthetical") {
-            // setActiveTab("Dialogue")
+            clearTimeout(timeout);
+            setTimeout(() => setActiveTab("Dialogue"), 20);
           }
         }
 
@@ -41,7 +46,7 @@ const EditorComponent = () => {
         const currNode = view.state.selection.$anchor.parent.type.name;
         console.log("currNode: " + currNode);
 
-        // setActiveTab(currNode)
+        setActiveTab(currNode);
 
         return false;
       },
