@@ -38,15 +38,14 @@ const EditorComponent = ({ setActiveTab }: any) => {
             setTimeout(() => setActiveTab("Dialogue"), 20);
           }
         }
+        console.log(editor?.getHTML());
 
         return false;
       },
 
       handleClick(view, pos, event) {
         const currNode = view.state.selection.$anchor.parent.type.name;
-
         setActiveTab(currNode);
-        console.log(editorView.getHTML());
 
         return false;
       },
