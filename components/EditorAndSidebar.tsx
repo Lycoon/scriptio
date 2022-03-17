@@ -1,5 +1,4 @@
-import { Editor } from "@tiptap/react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useEditorState } from "../context/AppContext";
 import EditorComponent from "./EditorComponent";
 import EditorSidebar from "./EditorSidebar";
@@ -8,7 +7,7 @@ const EditorAndSidebar = () => {
   const { editor, updateEditor } = useEditorState();
   const [selectedTab, updateSelectedTab] = useState<number>(0);
   const tabs = [
-    "SceneHeading",
+    "Scene",
     "Action",
     "Character",
     "Dialogue",
@@ -16,7 +15,6 @@ const EditorAndSidebar = () => {
     "Transition",
   ];
 
-  console.log("before setActiveTab: ", editor);
   const setActiveTab = (node: string) => {
     updateSelectedTab(tabs.indexOf(node));
     editor?.chain().focus().toggleNode(node, node, {}).run();

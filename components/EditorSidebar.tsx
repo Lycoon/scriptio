@@ -11,9 +11,9 @@ const EditorSidebar = (props: any) => {
   return (
     <div id="sidebar" className="sidebar-shadow tabs">
       <EditorTab
-        action={() => setActiveTab("SceneHeading")}
+        action={() => setActiveTab("Scene")}
         content="SCENE HEADING"
-        active={tabs[selectedTab] == "SceneHeading"}
+        active={tabs[selectedTab] == "Scene"}
       />
       <EditorTab
         action={() => setActiveTab("Action")}

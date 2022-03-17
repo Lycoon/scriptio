@@ -47,7 +47,7 @@ span {
   letter-spacing: -0.7px !important;
 }
 
-.sceneheader,
+.scene,
 .action {
   margin: 0.55em auto;
 }
@@ -58,22 +58,24 @@ span {
   text-align: justify;
 }
 
-.sceneheader {
+.scene {
   background-color: #dadada;
   width: 100%;
   padding-top: 2px;
+  padding-left: 4px;
   display: inline-block;
   text-transform: uppercase;
+  font-weight: bold;
   counter-increment: scenenumber;
 }
 
-.sceneheader::before {
+.scene::before {
   content: counter(scenenumber) ".";
   position: absolute;
-  margin-left: -35px;
+  margin-left: -40px;
 }
 
-.dialogue + .sceneheader {
+.dialogue + .scene {
   margin-top: 0 !important;
 }
 

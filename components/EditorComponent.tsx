@@ -7,14 +7,14 @@ import { Action } from "./extensions/Action";
 import { Character } from "./extensions/Character";
 import { Dialogue } from "./extensions/Dialogue";
 import { Parenthetical } from "./extensions/Parenthetical";
-import { SceneHeading } from "./extensions/SceneHeading";
+import { Scene } from "./extensions/Scene";
 import { Transition } from "./extensions/Transition";
 
 const EditorComponent = ({ setActiveTab }: any) => {
   const editorView = useEditor({
     extensions: [
       StarterKit,
-      SceneHeading,
+      Scene,
       Action,
       Character,
       Dialogue,
@@ -44,9 +44,9 @@ const EditorComponent = ({ setActiveTab }: any) => {
 
       handleClick(view, pos, event) {
         const currNode = view.state.selection.$anchor.parent.type.name;
-        console.log("currNode: " + currNode);
 
         setActiveTab(currNode);
+        console.log(editorView.getHTML());
 
         return false;
       },

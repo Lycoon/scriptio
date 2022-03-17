@@ -1,9 +1,8 @@
 import { Node } from "@tiptap/core";
 import { mergeAttributes } from "@tiptap/react";
-import EditorSidebar from "../EditorSidebar";
 
-export const SceneHeading = Node.create({
-  name: "SceneHeading",
+export const Scene = Node.create({
+  name: "Scene",
   draggable: false,
   group: "block",
   content: "inline*",
@@ -11,7 +10,7 @@ export const SceneHeading = Node.create({
   addOptions() {
     return {
       HTMLAttributes: {
-        class: "sceneheader",
+        class: "scene",
       },
     };
   },
