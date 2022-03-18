@@ -1,4 +1,4 @@
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
 import { useEditorState } from "../context/AppContext";
@@ -10,7 +10,31 @@ import { Parenthetical } from "./extensions/Parenthetical";
 import { Scene } from "./extensions/Scene";
 import { Transition } from "./extensions/Transition";
 
+import { jsPDF } from "jspdf";
+
 const EditorComponent = ({ setActiveTab }: any) => {
+  function exportToPDF(filename: string, json: JSONContent) {
+    const doc = new jsPDF({ unit: "px" });
+
+    doc.setFont("Courier");
+    doc.setFontSize(12);
+    doc.setTextColor("#363636");
+    doc.setCharSpace(5);
+
+    let fountain = "";
+    for (let i = 0; i < json.length; i++) {
+      const type: string = json[i]["type"];
+      const text: string = json[i]["content"][0]["text"];
+      const nextType: string =
+        i >= json.length - 1 ? undefined : json[i + 1]["type"];
+
+      doc.text(text, 0, i * 2);
+      fountain += "\n";
+    }
+
+    doc.save(filename + ".pdf");
+  }
+
   const editorView = useEditor({
     extensions: [
       StarterKit,
@@ -28,7 +52,7 @@ const EditorComponent = ({ setActiveTab }: any) => {
 
   editorView?.setOptions({
     editorProps: {
-      handleKeyDown(view, event) {
+      handleKeyDown(view: any, event: any) {
         if (event.key === "Enter") {
           const currNode = view.state.selection.$anchor.parent.type.name;
 
@@ -37,13 +61,14 @@ const EditorComponent = ({ setActiveTab }: any) => {
             clearTimeout(timeout);
             setTimeout(() => setActiveTab("Dialogue"), 20);
           }
+        } else if (event.key === "$") {
+          exportToPDF("screenplay", editor.getJSON());
         }
-        console.log(editor?.getHTML());
 
         return false;
       },
 
-      handleClick(view, pos, event) {
+      handleClick(view: any) {
         const currNode = view.state.selection.$anchor.parent.type.name;
         setActiveTab(currNode);
 
