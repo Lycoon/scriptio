@@ -63,7 +63,6 @@ function convertJSONtoFountain(json: any): string {
         break;
       default:
         fountain += text;
-        break;
     }
 
     fountain += "\n";

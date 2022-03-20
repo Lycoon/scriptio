@@ -32,12 +32,13 @@ Originally developed by John August - johnaugust.com
 
 .ProseMirror {
   color: #363636;
-
-  aspect-ratio: 0.707; /* A4 format */
-  width: 640px;
+  width: 586px;
+  height: 100%;
 
   position: absolute;
-  margin-inline: auto;
+  margin-left: 1.5in;
+  margin-right: 0.95in;
+  padding-block: 1in;
 }
 
 .ProseMirror p,
@@ -48,12 +49,18 @@ span {
 }
 
 .scene,
-.action {
-  margin: 0.55em auto;
+.action,
+.character,
+.transition {
+  margin-top: 0.75em !important;
+}
+
+.action + .action {
+  margin-top: 0 !important;
 }
 
 .action {
-  padding-right: 5% !important;
+  padding-block: 0.1in !important;
   line-height: 17px !important;
   text-align: justify;
 }
@@ -66,34 +73,29 @@ span {
   display: inline-block;
   text-transform: uppercase;
   font-weight: bold;
+  line-height: 20px !important;
   counter-increment: scenenumber;
 }
 
 .scene::before {
   content: counter(scenenumber) ".";
   position: absolute;
-  margin-left: -40px;
-}
-
-.dialogue + .scene {
-  margin-top: 0 !important;
+  margin-left: -75px;
 }
 
 .character {
-  padding-left: 40% !important;
+  padding-left: 2.2in !important;
   margin-bottom: 0 !important;
   text-transform: uppercase;
 }
 
 .dialogue {
-  padding-left: 20% !important;
-  padding-right: 20% !important;
-  margin-bottom: 17px !important;
+  padding-inline: 1.2in !important;
 }
 
 .parenthetical {
-  padding-left: 32% !important;
-  padding-right: 30% !important;
+  padding-left: 1.9in !important;
+  padding-right: 2.1in !important;
 }
 
 .parenthetical::before {
