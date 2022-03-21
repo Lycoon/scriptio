@@ -70,7 +70,7 @@ const initPDF = (
         margin: [4, 0, 0, 0],
       },
       character: {
-        margin: [170, 0],
+        margin: [170, 0, 0, 0],
       },
       dialogue: {
         margin: [100, 0],
