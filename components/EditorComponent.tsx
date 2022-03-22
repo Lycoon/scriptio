@@ -13,6 +13,7 @@ import { Dialogue } from "./extensions/Dialogue";
 import { Parenthetical } from "./extensions/Parenthetical";
 import { Scene } from "./extensions/Scene";
 import { Transition } from "./extensions/Transition";
+import { Screenplay } from "./extensions/Screenplay";
 
 const EditorComponent = ({ setActiveTab }: any) => {
   const editorView = useEditor({
@@ -20,16 +21,10 @@ const EditorComponent = ({ setActiveTab }: any) => {
       // default
       Document,
       Text,
-      Paragraph,
       History,
 
       // scriptio
-      Scene,
-      Action,
-      Character,
-      Dialogue,
-      Parenthetical,
-      Transition,
+      Screenplay,
     ],
 
     content: '<p class="character">Ceci est un test, un test, un test</p>',
@@ -39,24 +34,29 @@ const EditorComponent = ({ setActiveTab }: any) => {
   editorView?.setOptions({
     editorProps: {
       handleKeyDown(view: any, event: any) {
+        const currNode = view.state.selection.$anchor.parent.attrs.class;
         if (event.key === "Enter") {
-          const currNode = view.state.selection.$anchor.parent.type.name;
-
-          let timeout = setTimeout(() => setActiveTab("Action"), 20);
-          if (currNode === "Character" || currNode === "Parenthetical") {
+          let timeout = setTimeout(() => setActiveTab("action"), 20);
+          if (currNode === "character" || currNode === "parenthetical") {
             clearTimeout(timeout);
-            setTimeout(() => setActiveTab("Dialogue"), 20);
+            setTimeout(() => setActiveTab("dialogue"), 20);
           }
+        } else if (event.key === "Backspace") {
+          setActiveTab(currNode);
         }
 
         return false;
       },
 
-      handleClick(view: any) {
-        const currNode = view.state.selection.$anchor.parent.type.name;
-        //setActiveTab(currNode);
-
-        console.log(view.state["doc"]["content"]["content"]);
+      handleClickOn(
+        view: any,
+        pos: number,
+        node: any,
+        nodePos: number,
+        event: MouseEvent,
+        direct: boolean
+      ) {
+        setActiveTab(node.attrs.class);
 
         return false;
       },

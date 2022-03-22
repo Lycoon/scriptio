@@ -1,7 +1,7 @@
 import Paragraph from "@tiptap/extension-paragraph";
 
-export const Action = Paragraph.extend({
-  name: "Action",
+export const Screenplay = Paragraph.extend({
+  name: "Screenplay",
   draggable: false,
   group: "block",
   content: "inline*",
@@ -10,25 +10,12 @@ export const Action = Paragraph.extend({
     return {
       class: {
         default: "action",
-        renderHTML: (element) => {
-          console.log(element);
-        },
+        parseHTML: (element) => element.getAttribute("class"),
       },
     };
   },
 
-  /*
   renderHTML({ HTMLAttributes }) {
     return ["p", HTMLAttributes, 0];
-  },
-  */
-
-  parseHTML() {
-    return [
-      {
-        tag: "p",
-        class: "action",
-      },
-    ];
   },
 });

@@ -11,34 +11,34 @@ const EditorSidebar = (props: any) => {
   return (
     <div id="sidebar" className="sidebar-shadow tabs">
       <EditorTab
-        action={() => setActiveTab("Scene")}
+        action={() => setActiveTab("scene")}
         content="SCENE HEADING"
-        active={tabs[selectedTab] == "Scene"}
+        active={tabs[selectedTab] == "scene"}
       />
       <EditorTab
-        action={() => setActiveTab("Action")}
+        action={() => setActiveTab("action")}
         content="Action"
-        active={tabs[selectedTab] == "Action"}
+        active={tabs[selectedTab] == "action"}
       />
       <EditorTab
-        action={() => setActiveTab("Character")}
+        action={() => setActiveTab("character")}
         content="CHARACTER"
-        active={tabs[selectedTab] == "Character"}
+        active={tabs[selectedTab] == "character"}
       />
       <EditorTab
-        action={() => setActiveTab("Dialogue")}
+        action={() => setActiveTab("dialogue")}
         content="Dialogue"
-        active={tabs[selectedTab] == "Dialogue"}
+        active={tabs[selectedTab] == "dialogue"}
       />
       <EditorTab
-        action={() => setActiveTab("Parenthetical")}
+        action={() => setActiveTab("parenthetical")}
         content="(Parenthetical)"
-        active={tabs[selectedTab] == "Parenthetical"}
+        active={tabs[selectedTab] == "parenthetical"}
       />
       <EditorTab
-        action={() => setActiveTab("Transition")}
+        action={() => setActiveTab("transition")}
         content="TRANSITION:"
-        active={tabs[selectedTab] == "Transition"}
+        active={tabs[selectedTab] == "transition"}
       />
     </div>
   );

@@ -79,17 +79,17 @@ const EditorAndSidebar = () => {
   const { editor, updateEditor } = useEditorState();
   const [selectedTab, updateSelectedTab] = useState<number>(0);
   const tabs = [
-    "Scene",
-    "Action",
-    "Character",
-    "Dialogue",
-    "Parenthetical",
-    "Transition",
+    "scene",
+    "action",
+    "character",
+    "dialogue",
+    "parenthetical",
+    "transition",
   ];
 
   const setActiveTab = (node: string) => {
     updateSelectedTab(tabs.indexOf(node));
-    editor?.chain().focus().setNode(node).run();
+    editor?.chain().focus().setNode("Screenplay", { class: node }).run();
   };
 
   const tabKeyPressed = (event: any) => {
@@ -106,7 +106,7 @@ const EditorAndSidebar = () => {
   };
 
   useEffect(() => {
-    setActiveTab("Action");
+    setActiveTab("action");
   }, [editor]);
 
   useEffect(() => {
