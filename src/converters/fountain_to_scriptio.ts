@@ -8,16 +8,11 @@ export const convertFountainToJSON = async (text: string, editor: Editor) => {
     for (let i = 0; i < tokens.length; i++) {
       const type: string = tokens[i]["type"];
       const text: string = tokens[i]["text"];
-
-      switch (type) {
-        case "action":
-          break;
-      }
     }
 
     const html = output["html"]["script"];
-    editor?.commands.setContent(
-      '<p class="scene">INT. MAISON DE HUGO - JOUR</p>'
-    );
+
+    const demo = `<p class="action">This is an action</p><p class="character">This should be a character</p>`;
+    editor?.commands.setContent(demo);
   });
 };

@@ -1,5 +1,9 @@
-import { useEditor, EditorContent, JSONContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import Document from "@tiptap/extension-document";
+import Text from "@tiptap/extension-text";
+import Paragraph from "@tiptap/extension-paragraph";
+import History from "@tiptap/extension-history";
+
+import { useEditor, EditorContent } from "@tiptap/react";
 import { useEffect } from "react";
 import { useEditorState } from "../context/AppContext";
 
@@ -13,7 +17,13 @@ import { Transition } from "./extensions/Transition";
 const EditorComponent = ({ setActiveTab }: any) => {
   const editorView = useEditor({
     extensions: [
-      StarterKit,
+      // default
+      Document,
+      Text,
+      Paragraph,
+      History,
+
+      // scriptio
       Scene,
       Action,
       Character,
@@ -22,7 +32,7 @@ const EditorComponent = ({ setActiveTab }: any) => {
       Transition,
     ],
 
-    content: "Ceci est un test, un test, un test",
+    content: '<p class="character">Ceci est un test, un test, un test</p>',
     autofocus: "end",
   });
 
@@ -44,7 +54,9 @@ const EditorComponent = ({ setActiveTab }: any) => {
 
       handleClick(view: any) {
         const currNode = view.state.selection.$anchor.parent.type.name;
-        setActiveTab(currNode);
+        //setActiveTab(currNode);
+
+        console.log(view.state["doc"]["content"]["content"]);
 
         return false;
       },

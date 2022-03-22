@@ -1,40 +1,31 @@
 import { Node } from "@tiptap/core";
+import Paragraph from "@tiptap/extension-paragraph";
 import { mergeAttributes } from "@tiptap/react";
 
-export const Dialogue = Node.create({
+export const Dialogue = Paragraph.extend({
   name: "Dialogue",
   draggable: false,
   group: "block",
   content: "inline*",
 
-  addOptions() {
+  addAttributes() {
     return {
-      HTMLAttributes: {
-        class: "dialogue",
+      class: {
+        default: "dialogue",
       },
     };
   },
 
   renderHTML({ HTMLAttributes }) {
-    return [
-      "p",
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
-      0,
-    ];
+    return ["p", HTMLAttributes, 0];
   },
 
-  addCommands() {
-    return {
-      setHeading:
-        (attributes) =>
-        ({ commands }) => {
-          return commands.setNode(this.name, attributes);
-        },
-      toggleHeading:
-        (attributes) =>
-        ({ commands }) => {
-          return commands.toggleNode(this.name, this.name, attributes);
-        },
-    };
+  parseHTML() {
+    return [
+      {
+        tag: "p",
+        class: "dialogue",
+      },
+    ];
   },
 });

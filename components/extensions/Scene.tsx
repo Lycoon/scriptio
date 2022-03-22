@@ -7,34 +7,24 @@ export const Scene = Node.create({
   group: "block",
   content: "inline*",
 
-  addOptions() {
+  addAttributes() {
     return {
-      HTMLAttributes: {
-        class: "scene",
+      class: {
+        default: "scene",
       },
     };
   },
 
   renderHTML({ HTMLAttributes }) {
-    return [
-      "span",
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
-      0,
-    ];
+    return ["span", HTMLAttributes, 0];
   },
 
-  addCommands() {
-    return {
-      setHeading:
-        (attributes) =>
-        ({ commands }) => {
-          return commands.setNode(this.name, attributes);
-        },
-      toggleHeading:
-        (attributes) =>
-        ({ commands }) => {
-          return commands.toggleNode(this.name, this.name, attributes);
-        },
-    };
+  parseHTML() {
+    return [
+      {
+        tag: "span",
+        class: "scene",
+      },
+    ];
   },
 });

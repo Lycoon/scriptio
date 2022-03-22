@@ -8,8 +8,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tiptap/extension-document": "^2.0.0-beta.15",
+    "@tiptap/extension-history": "^2.0.0-beta.21",
+    "@tiptap/extension-paragraph": "^2.0.0-beta.23",
+    "@tiptap/extension-text": "^2.0.0-beta.15",
     "@tiptap/react": "^2.0.0-beta.108",
-    "@tiptap/starter-kit": "^2.0.0-beta.183",
     "next": "12.0.10",
     "pdfmake": "^0.2.4",
     "react": "17.0.2",

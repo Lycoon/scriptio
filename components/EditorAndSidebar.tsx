@@ -68,6 +68,13 @@ WILL
 (low but insistent)
 Make him stop.`;
 
+const demo2 = `This a paragraph with class action
+
+THIS SHOULD BE A PARAGRAPH WITH CLASS CHARACTER
+
+INT. THIS SHOULD BE A SCENE
+`;
+
 const EditorAndSidebar = () => {
   const { editor, updateEditor } = useEditorState();
   const [selectedTab, updateSelectedTab] = useState<number>(0);
@@ -82,7 +89,7 @@ const EditorAndSidebar = () => {
 
   const setActiveTab = (node: string) => {
     updateSelectedTab(tabs.indexOf(node));
-    editor?.chain().focus().toggleNode(node, node, {}).run();
+    editor?.chain().focus().setNode(node).run();
   };
 
   const tabKeyPressed = (event: any) => {
@@ -94,7 +101,7 @@ const EditorAndSidebar = () => {
       setActiveTab(tabs[idx]);
     } else if (event.key === "$") {
       console.log("editor: ", editor);
-      convertFountainToJSON(demo, editor!);
+      convertFountainToJSON(demo2, editor!);
     }
   };
 
