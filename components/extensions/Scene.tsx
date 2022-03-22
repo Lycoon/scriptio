@@ -1,4 +1,4 @@
-import { Node } from "@tiptap/core";
+import { Node } from "@tiptap/react";
 import { mergeAttributes } from "@tiptap/react";
 
 export const Scene = Node.create({
