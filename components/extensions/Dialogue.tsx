@@ -1,6 +1,4 @@
-import { Node } from "@tiptap/core";
 import Paragraph from "@tiptap/extension-paragraph";
-import { mergeAttributes } from "@tiptap/react";
 
 export const Dialogue = Paragraph.extend({
   name: "Dialogue",
