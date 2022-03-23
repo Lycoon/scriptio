@@ -3,13 +3,15 @@
  * @param json editor content JSON
  * @returns .fountain format screenplay
  */
-export const convertJSONtoFountain = async (json: any): Promise<string> => {
+export const convertJSONtoFountain = (json: any): string => {
   let fountain = "";
   let sceneCount = 1;
 
   const isNode = (type: string, check: string): boolean => {
     return type === check;
   };
+
+  console.log("json: ", json);
 
   for (let i = 0; i < json.length; i++) {
     const type: string = json[i]["type"];
@@ -18,27 +20,27 @@ export const convertJSONtoFountain = async (json: any): Promise<string> => {
       i >= json.length - 1 ? undefined : json[i + 1]["type"];
 
     switch (type) {
-      case "Scene":
+      case "scene":
         fountain += "." + text.toUpperCase() + " #" + sceneCount + ".#";
-        fountain += isNode(nextType, "Character") ? "" : "\n";
+        fountain += isNode(nextType, "character") ? "" : "\n";
         sceneCount++;
         break;
-      case "Action":
+      case "action":
         fountain += "!" + text;
-        fountain += isNode(nextType, "Character") ? "" : "\n";
+        fountain += isNode(nextType, "character") ? "" : "\n";
         break;
-      case "Character":
+      case "character":
         fountain += "\n@" + text;
         break;
-      case "Transition":
+      case "transition":
         fountain += "\n>" + text.toUpperCase() + ":\n";
         break;
-      case "Parenthetical":
+      case "parenthetical":
         fountain += "(" + text + ")";
         break;
-      case "Dialogue":
+      case "dialogue":
         fountain += text;
-        fountain += isNode(nextType, "Action") ? "\n" : "";
+        fountain += isNode(nextType, "action") ? "\n" : "";
         break;
       default:
         fountain += text;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useEditorState } from "../context/AppContext";
 import { convertFountainToJSON } from "../src/converters/fountain_to_scriptio";
+import { convertJSONtoFountain } from "../src/converters/scriptio_to_fountain";
 import EditorComponent from "./EditorComponent";
 import EditorSidebar from "./EditorSidebar";
 
@@ -100,7 +101,7 @@ const EditorAndSidebar = () => {
       updateSelectedTab(idx);
       setActiveTab(tabs[idx]);
     } else if (event.key === "$") {
-      console.log("editor: ", editor);
+      const json = editor?.getJSON();
       convertFountainToJSON(demo2, editor!);
     }
   };
@@ -115,7 +116,7 @@ const EditorAndSidebar = () => {
     return () => {
       document.removeEventListener("keydown", tabKeyPressed, false);
     };
-  }, [selectedTab]);
+  });
 
   return (
     <div id="editor-and-sidebar">

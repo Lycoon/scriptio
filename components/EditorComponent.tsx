@@ -4,15 +4,9 @@ import Paragraph from "@tiptap/extension-paragraph";
 import History from "@tiptap/extension-history";
 
 import { useEditor, EditorContent } from "@tiptap/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useEditorState } from "../context/AppContext";
 
-import { Action } from "./extensions/Action";
-import { Character } from "./extensions/Character";
-import { Dialogue } from "./extensions/Dialogue";
-import { Parenthetical } from "./extensions/Parenthetical";
-import { Scene } from "./extensions/Scene";
-import { Transition } from "./extensions/Transition";
 import { Screenplay } from "./extensions/Screenplay";
 
 const EditorComponent = ({ setActiveTab }: any) => {
@@ -27,7 +21,14 @@ const EditorComponent = ({ setActiveTab }: any) => {
       Screenplay,
     ],
 
-    content: '<p class="character">Ceci est un test, un test, un test</p>',
+    onTransaction({ editor, transaction }) {
+      if (transaction.steps.length !== 0) {
+        const currNode = editor.view.state.selection.$anchor.parent.attrs.class;
+        setActiveTab(currNode);
+      }
+    },
+
+    content: '<p class="action">Ceci est un test, un test, un test</p>',
     autofocus: "end",
   });
 
@@ -36,28 +37,21 @@ const EditorComponent = ({ setActiveTab }: any) => {
       handleKeyDown(view: any, event: any) {
         const currNode = view.state.selection.$anchor.parent.attrs.class;
         if (event.key === "Enter") {
-          let timeout = setTimeout(() => setActiveTab("action"), 20);
+          setTimeout(() => setActiveTab("action"), 20);
           if (currNode === "character" || currNode === "parenthetical") {
-            clearTimeout(timeout);
+            clearTimeout();
             setTimeout(() => setActiveTab("dialogue"), 20);
+          } else if (currNode === "dialogue") {
+            clearTimeout();
+            setTimeout(() => setActiveTab("character"), 20);
           }
-        } else if (event.key === "Backspace") {
-          setActiveTab(currNode);
         }
 
         return false;
       },
 
-      handleClickOn(
-        view: any,
-        pos: number,
-        node: any,
-        nodePos: number,
-        event: MouseEvent,
-        direct: boolean
-      ) {
+      handleClickOn(view: any, pos: number, node: any) {
         setActiveTab(node.attrs.class);
-
         return false;
       },
     },

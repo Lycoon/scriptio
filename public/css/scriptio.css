@@ -31,7 +31,7 @@ Originally developed by John August - johnaugust.com
 }
 
 .ProseMirror {
-  color: #363636;
+  color: #000000;
   width: 586px;
   height: 100%;
 
@@ -45,7 +45,7 @@ Originally developed by John August - johnaugust.com
 span {
   font: 12pt courier-prime;
   text-align: left;
-  letter-spacing: -0.7px !important;
+  letter-spacing: -0.6px !important;
 }
 
 .scene,
@@ -55,7 +55,8 @@ span {
   margin-top: 0.75em !important;
 }
 
-.action + .action {
+.action + .action,
+.scene:first-child {
   margin-top: 0 !important;
 }
 
@@ -100,10 +101,12 @@ span {
 
 .parenthetical::before {
   content: "(";
+  white-space: nowrap;
 }
 
 .parenthetical::after {
   content: ")";
+  white-space: nowrap;
 }
 
 .transition {
