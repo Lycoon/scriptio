@@ -90,25 +90,25 @@ export const exportToPDF = async (
   let pdfNodes = [];
 
   for (let i = 0; i < nodes.length; i++) {
-    const type: string = nodes[i]["type"]!;
+    const type: string = nodes[i]["attrs"]!["class"];
     const text: string = nodes[i]["content"]![0]["text"]!;
     const nextType: any =
-      i >= nodes.length - 1 ? undefined : nodes[i + 1]["type"];
+      i >= nodes.length - 1 ? undefined : nodes[i + 1]["attrs"]!["class"];
 
     switch (type) {
-      case "Scene":
+      case "scene":
         pdfNodes.push(getPDFSceneTemplate(text.toUpperCase()));
         break;
-      case "Character":
+      case "character":
         pdfNodes.push(getPDFNodeTemplate("character", text.toUpperCase()));
         break;
-      case "Dialogue":
+      case "dialogue":
         pdfNodes.push(getPDFNodeTemplate("dialogue", text));
         break;
-      case "Parenthetical":
+      case "parenthetical":
         pdfNodes.push(getPDFNodeTemplate("parenthetical", "(" + text + ")"));
         break;
-      case "Transition":
+      case "transition":
         pdfNodes.push(
           getPDFNodeTemplate("transition", text.toUpperCase() + ":")
         );

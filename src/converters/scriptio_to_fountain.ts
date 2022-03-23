@@ -14,10 +14,10 @@ export const convertJSONtoFountain = (json: any): string => {
   console.log("json: ", json);
 
   for (let i = 0; i < json.length; i++) {
-    const type: string = json[i]["type"];
+    const type: string = json[i]["attrs"]["class"];
     const text: string = json[i]["content"][0]["text"];
     const nextType: string =
-      i >= json.length - 1 ? undefined : json[i + 1]["type"];
+      i >= json.length - 1 ? undefined : json[i + 1]["attrs"]["class"];
 
     switch (type) {
       case "scene":

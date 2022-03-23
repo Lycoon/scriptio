@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useEditorState } from "../context/AppContext";
 
 import { Screenplay } from "./extensions/Screenplay";
+import { exportToPDF } from "../src/converters/scriptio_to_pdf";
 
 const EditorComponent = ({ setActiveTab }: any) => {
   const editorView = useEditor({
@@ -21,11 +22,10 @@ const EditorComponent = ({ setActiveTab }: any) => {
       Screenplay,
     ],
 
-    onTransaction({ editor, transaction }) {
-      if (transaction.steps.length !== 0) {
-        const currNode = editor.view.state.selection.$anchor.parent.attrs.class;
-        setActiveTab(currNode);
-      }
+    // update active on caret update
+    onSelectionUpdate({ editor, transaction }) {
+      const currNode = transaction.curSelection.$anchor.path[3].attrs.class;
+      setActiveTab(currNode);
     },
 
     content: '<p class="action">Ceci est un test, un test, un test</p>',
@@ -35,23 +35,21 @@ const EditorComponent = ({ setActiveTab }: any) => {
   editorView?.setOptions({
     editorProps: {
       handleKeyDown(view: any, event: any) {
-        const currNode = view.state.selection.$anchor.parent.attrs.class;
+        const node = view.state.selection.$anchor.parent;
+        const currNode = node.attrs.class;
         if (event.key === "Enter") {
           setTimeout(() => setActiveTab("action"), 20);
           if (currNode === "character" || currNode === "parenthetical") {
             clearTimeout();
             setTimeout(() => setActiveTab("dialogue"), 20);
-          } else if (currNode === "dialogue") {
+          } else if (currNode === "dialogue" && node.content.size !== 0) {
             clearTimeout();
             setTimeout(() => setActiveTab("character"), 20);
           }
+        } else if (event.key === "$") {
+          exportToPDF("eiyho", "Hugo", editor?.getJSON()!);
         }
 
-        return false;
-      },
-
-      handleClickOn(view: any, pos: number, node: any) {
-        setActiveTab(node.attrs.class);
         return false;
       },
     },
