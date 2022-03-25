@@ -1,13 +1,12 @@
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
-import Paragraph from "@tiptap/extension-paragraph";
 import History from "@tiptap/extension-history";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import { useEffect, useState } from "react";
 import { useEditorState } from "../context/AppContext";
 
-import { Screenplay } from "./extensions/Screenplay";
+import { Screenplay } from "../src/Screenplay";
 import { exportToPDF } from "../src/converters/scriptio_to_pdf";
 
 const EditorComponent = ({ setActiveTab }: any) => {

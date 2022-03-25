@@ -1,0 +1,12 @@
+.dropdown-items {
+  border-style: solid;
+  border-color: red;
+
+  padding-top: 220px;
+  position: absolute;
+  width: 150px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
