@@ -1,10 +1,7 @@
 .dropdown-items {
-  border-style: solid;
-  border-color: red;
-
   padding-top: 220px;
   position: absolute;
-  width: 150px;
+  width: 148px;
 
   display: flex;
   flex-direction: column;

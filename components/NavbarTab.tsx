@@ -3,12 +3,12 @@ import NavbarDropdown from "./NavbarDropdown";
 
 const NavbarTab = (props: any) => {
   const [active, updateActive] = useState<boolean>(false);
-  const clicked = () => {
+  const toggleDropdown = () => {
     updateActive(!active);
   };
 
   return (
-    <div onClick={clicked} className="navbar-tab">
+    <div onClick={toggleDropdown} className="navbar-tab">
       <p className="navbar-tab-content unselectable">{props.content}</p>
       <img
         className="dropdown-icon"

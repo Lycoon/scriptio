@@ -2,24 +2,18 @@ import { useEffect, useRef } from "react";
 import DropdownItem from "./DropdownItem";
 
 const NavbarDropdown = (props: any) => {
-  const ref = useRef(null);
-  const onClickOutside = () => {
-    console.log("close dropdown");
+  const handleClickOutside = (event: Event) => {
+      if (event.target!.className !== "dropdown-item") {
+          console.log("CLICKED OUTSIDE")
+      }
   };
 
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (ref.current && !ref.current.contains(event.target)) {
-        onClickOutside && onClickOutside();
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside, true);
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside, true);
-    };
-  }, [onClickOutside]);
+      document.addEventListener('click', handleClickOutside, true);
+      return () => {
+          document.removeEventListener('click', handleClickOutside, true);
+      };
+  });
 
   return (
     <div className="dropdown-items">

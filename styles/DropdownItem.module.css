@@ -1,12 +1,14 @@
 .dropdown-item {
+  font-size: 1rem;
+  font-family: segoe-light;
+  text-align: left;
+
   padding-inline: 15px;
   padding-block: 10px;
-  font-size: 1rem;
+  
   color: white;
-  font-family: segoe-light;
   background-color: #474747;
-  text-align: left;
-  border: none;
+  border:none
 }
 
 .dropdown-item:hover {

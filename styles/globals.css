@@ -54,6 +54,11 @@ body {
 }
 
 @font-face {
+  font-family: roboto;
+  src: URL("/fonts/Roboto.ttf") format("truetype");
+}
+
+@font-face {
   font-family: segoe-bold;
   src: URL("/fonts/Segoe UI Bold.ttf") format("truetype");
 }
