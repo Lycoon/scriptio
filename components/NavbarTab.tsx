@@ -15,7 +15,7 @@ const NavbarTab = (props: any) => {
         src="images/dropdown-arrow.svg"
         alt="Dropdown arrow"
       ></img>
-      {active && <NavbarDropdown />}
+      {active && <NavbarDropdown toggleDropdown={toggleDropdown} />}
     </div>
   );
 };

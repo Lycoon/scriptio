@@ -2,8 +2,7 @@ const HomePageFooter = () => {
     return (
         <footer id="footer">
             <p id="footer-text">
-                Designed by
-                <a target="_blank" href="https://github.com/Lycoon"> Lycoon</a>
+                <a target="_blank" href="https://github.com/Lycoon">About</a> | Contact
             </p>
         </footer>
     );

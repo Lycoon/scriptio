@@ -1,9 +1,12 @@
 .dropdown-items {
-  padding-top: 220px;
   position: absolute;
   width: 148px;
 
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+}
+
+.navbar-dropdown {
+  padding-top: 218px;
 }
