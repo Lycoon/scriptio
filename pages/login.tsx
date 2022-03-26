@@ -1,8 +1,8 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import HomePageFooter from "../components/HomePageFooter";
-import HomePageNavbar from "../components/HomePageNavbar";
-import LoginContainer from "../components/LoginContainer";
+import HomePageFooter from "../components/home/HomePageFooter";
+import HomePageNavbar from "../components/navbar/Navbar";
+import LoginContainer from "../components/home/login/LoginContainer";
 
 const LoginPage: NextPage = () => {
   return (

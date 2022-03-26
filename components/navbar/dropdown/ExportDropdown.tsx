@@ -1,7 +1,7 @@
 import FileSaver from "file-saver";
-import { useEditorState } from "../context/AppContext";
-import { convertJSONtoFountain } from "../src/converters/scriptio_to_fountain";
-import { exportToPDF } from "../src/converters/scriptio_to_pdf";
+import { useEditorState } from "../../../context/AppContext";
+import { convertJSONtoFountain } from "../../../src/converters/scriptio_to_fountain";
+import { exportToPDF } from "../../../src/converters/scriptio_to_pdf";
 import DropdownItem from "./DropdownItem";
 
 const ExportDropdown = (props: any) => {

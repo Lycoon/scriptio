@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import EditorContainer from "../components/EditorContainer";
-import HomePageNavbar from "../components/HomePageNavbar";
+import EditorContainer from "../components/editor/EditorContainer";
+import HomePageNavbar from "../components/navbar/Navbar";
 
 const EditorPage: NextPage = () => {
   return (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import NavbarDropdown from "./NavbarDropdown";
+import NavbarDropdown from "./dropdown/NavbarDropdown";
 
 const NavbarTab = (props: any) => {
   const [active, updateActive] = useState<boolean>(false);
