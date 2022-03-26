@@ -8,5 +8,6 @@
 }
 
 .navbar-dropdown {
+  z-index: 1;
   padding-top: 218px;
 }

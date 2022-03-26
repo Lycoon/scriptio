@@ -6,18 +6,17 @@
 export const convertJSONtoFountain = (json: any): string => {
   let fountain = "";
   let sceneCount = 1;
+  let nodes = json.content!;
 
   const isNode = (type: string, check: string): boolean => {
     return type === check;
   };
 
-  console.log("json: ", json);
-
-  for (let i = 0; i < json.length; i++) {
-    const type: string = json[i]["attrs"]["class"];
-    const text: string = json[i]["content"][0]["text"];
+  for (let i = 0; i < nodes.length; i++) {
+    const type: string = nodes[i]["attrs"]["class"];
+    const text: string = nodes[i]["content"][0]["text"];
     const nextType: string =
-      i >= json.length - 1 ? undefined : json[i + 1]["attrs"]["class"];
+      i >= nodes.length - 1 ? undefined : nodes[i + 1]["attrs"]["class"];
 
     switch (type) {
       case "scene":
