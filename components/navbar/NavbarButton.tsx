@@ -1,7 +1,7 @@
 const NavbarButton = (props: any) => {
   return (
     <div>
-      <a href={props.redirect} className="btn">
+      <a href={props.redirect} className="navbar-btn">
         {props.content}
       </a>
     </div>

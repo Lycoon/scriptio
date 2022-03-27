@@ -2,7 +2,7 @@ a {
     text-decoration: none;
 }
   
-.btn {
+.navbar-btn {
     font-size: 0.8rem;
     color: white;
     background-color: #47474700;
@@ -17,7 +17,7 @@ a {
     border-width: 2px;
 }
 
-.btn:hover {
+.navbar-btn:hover {
     transition: background-color 0.2s;
     background-color: #686868;
 }
