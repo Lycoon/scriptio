@@ -38,15 +38,11 @@ const EditorComponent = ({ setActiveTab }: any) => {
         const currNode = node.attrs.class;
         if (event.key === "Enter") {
           setTimeout(() => setActiveTab("action"), 20);
+          console.log(node.content.size)
           if (currNode === "character" || currNode === "parenthetical") {
             clearTimeout();
             setTimeout(() => setActiveTab("dialogue"), 20);
-          } else if (currNode === "dialogue" && node.content.size !== 0) {
-            clearTimeout();
-            setTimeout(() => setActiveTab("character"), 20);
           }
-        } else if (event.key === "$") {
-          exportToPDF("eiyho", "Hugo", editor?.getJSON()!);
         }
 
         return false;
