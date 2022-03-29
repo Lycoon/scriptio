@@ -101,12 +101,10 @@ span {
 
 .parenthetical::before {
   content: "(";
-  white-space: nowrap;
 }
 
 .parenthetical::after {
   content: ")";
-  white-space: nowrap;
 }
 
 .transition {

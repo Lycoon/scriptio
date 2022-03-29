@@ -2,9 +2,8 @@ import Paragraph from "@tiptap/extension-paragraph";
 
 export const Screenplay = Paragraph.extend({
   name: "Screenplay",
-  draggable: false,
   group: "block",
-  content: "inline*",
+  content: "text*",
 
   addAttributes() {
     return {
