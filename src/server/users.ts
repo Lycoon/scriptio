@@ -2,18 +2,59 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export function createProject(
-  userId: number,
-  title: string,
-  description: string | undefined
-) {
-  const project = prisma.project
+interface ProjectUpdate {
+  projectId: number;
+  title?: string;
+  description?: string;
+}
+
+interface ProjectCreation {
+  userId: number;
+  title: string;
+  description?: string;
+}
+
+export function updateProject(project: ProjectUpdate) {
+  const updated = prisma.project
+    .update({
+      data: {
+        title: project.title,
+        description: project.description,
+        updatedAt: new Date().toISOString(),
+      },
+      where: {
+        id: project.projectId,
+      },
+    })
+    .catch(() => {
+      return null;
+    });
+
+  return updated;
+}
+
+export function deleteProject(project: ProjectUpdate) {
+  const deleted = prisma.project
+    .delete({
+      where: {
+        id: project.projectId,
+      },
+    })
+    .catch(() => {
+      return null;
+    });
+
+  return deleted;
+}
+
+export function createProject(project: ProjectCreation) {
+  const created = prisma.project
     .create({
       data: {
-        title,
-        description,
+        title: project.title,
+        description: project.description,
         user: {
-          connect: { id: userId },
+          connect: { id: project.userId },
         },
       },
     })
@@ -21,7 +62,7 @@ export function createProject(
       return null;
     });
 
-  return project;
+  return created;
 }
 
 export function getProjects(userId: number) {
@@ -39,6 +80,20 @@ export function getProjects(userId: number) {
     });
 
   return projects;
+}
+
+export function getProjectFromId(projectId: number) {
+  const project = prisma.project
+    .findUnique({
+      where: {
+        id: projectId,
+      },
+    })
+    .catch(() => {
+      return null;
+    });
+
+  return project;
 }
 
 export function getUserFromId(userId: number) {
