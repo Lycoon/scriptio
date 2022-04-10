@@ -2,7 +2,7 @@ import {
   ProjectCreation,
   ProjectRepository,
   ProjectUpdate,
-} from "../repository/projects";
+} from "../repository/project-repository";
 
 const repository = new ProjectRepository();
 

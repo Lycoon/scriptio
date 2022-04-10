@@ -1,4 +1,7 @@
-import { fetchUserFromEmail, fetchUserFromId } from "../repository/users";
+import {
+  fetchUserFromEmail,
+  fetchUserFromId,
+} from "../repository/user-repository";
 
 export async function getUserFromId(userId: number) {
   const user = await fetchUserFromId(userId);
