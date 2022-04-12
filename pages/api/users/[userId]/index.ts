@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getUserFromId } from "../../../../src/server/users";
+import { getUserFromId } from "../../../../src/server/service/user-service";
 
 type User = {
   email: string;

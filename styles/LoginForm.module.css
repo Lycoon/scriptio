@@ -1,7 +1,7 @@
 #login-form {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 20px;
 
   min-width: min(18vw, 30vh);
   min-height: 25vh;

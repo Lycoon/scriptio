@@ -6,6 +6,7 @@ export interface ProjectUpdate {
   projectId: number;
   title?: string;
   description?: string;
+  screenplay?: string;
 }
 
 export interface ProjectCreation {
@@ -21,6 +22,7 @@ export class ProjectRepository {
         data: {
           title: project.title,
           description: project.description,
+          screenplay: project.screenplay,
           updatedAt: new Date().toISOString(),
         },
         where: {

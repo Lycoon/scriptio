@@ -1,21 +1,43 @@
 const LoginForm = () => {
+  async function onSubmit(e: any) {
+    e.preventDefault();
+
+    const body = {
+      email: e.target.email.value,
+      password: e.target.password.value,
+    };
+
+    console.log(body);
+  }
+
   return (
-    <div id="login-form">
+    <form id="login-form" onSubmit={onSubmit}>
       <h1 className="segoe-bold">Log in</h1>
 
-      <div id="email-form" className="form">
-        <input className="input" type="email" placeholder="Email" />
-      </div>
+      <label id="email-form" className="form-element">
+        <span className="form-label">Email</span>
+        <input className="form-input" name="email" type="email" required />
+      </label>
 
-      <div id="password-form" className="form">
-        <input className="input" type="password" placeholder="Password" />
-        <a href="/recovery">Forgot password?</a>
-      </div>
+      <label id="password-form" className="form-element">
+        <span className="form-label">Password</span>
+        <input
+          className="form-input"
+          name="password"
+          type="password"
+          required
+        />
+        <a id="forgot-password" href="/recovery">
+          Forgot password?
+        </a>
+      </label>
 
       <div id="form-btn-flex">
-        <a className="form-btn">Log in</a>
+        <button className="form-btn" type="submit">
+          Log in
+        </button>
       </div>
-    </div>
+    </form>
   );
 };
 

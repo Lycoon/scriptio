@@ -1,25 +1,48 @@
 const RegisterForm = () => {
+  async function onSubmit(e: any) {
+    e.preventDefault();
+
+    const body = {
+      email: e.target.email.value,
+      password1: e.target.password1.value,
+      password2: e.target.password2.value,
+    };
+
+    console.log(body);
+  }
+
   return (
-    <div id="register-form">
+    <form id="register-form" onSubmit={onSubmit}>
       <h1 className="segoe-bold">Register</h1>
 
-      <div id="email-form" className="form">
-        <input className="input" type="email" placeholder="Email" />
-      </div>
+      <label id="email-form" className="form-element">
+        <span className="form-label">Email</span>
+        <input className="form-input" name="email" type="email" required />
+      </label>
 
-      <div id="password-form" className="form">
-        <input className="input" type="password" placeholder="Password" />
+      <label id="password-form" className="form-element">
+        <span className="form-label">Password</span>
         <input
-          className="input"
+          className="form-input"
+          name="password1"
           type="password"
-          placeholder="Repeat password"
+          required
         />
-      </div>
+        <span className="form-label">Repeat password</span>
+        <input
+          className="form-input"
+          name="password2"
+          type="password"
+          required
+        />
+      </label>
 
       <div id="form-btn-flex">
-        <a className="form-btn">Register</a>
+        <button className="form-btn" type="submit">
+          Register
+        </button>
       </div>
-    </div>
+    </form>
   );
 };
 

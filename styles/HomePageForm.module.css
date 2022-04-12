@@ -2,17 +2,13 @@ a {
   text-decoration: none;
 }
 
-.input:focus::placeholder {
-  color: transparent;
-}
-
 #form-btn-flex {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
 }
 
-.input {
+.form-input {
   font-size: 1.15rem;
   font-family: "Segoe UI";
   border-radius: 7px;
@@ -26,10 +22,14 @@ a {
   font-size: 1rem;
 }
 
-.form {
+.form-label {
+  font-family: "Segoe UI";
+}
+
+.form-element {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
 }
 
 .form-btn {
@@ -37,8 +37,7 @@ a {
   font-family: segoe-bold;
   color: #ffffff;
   background-color: #474747;
-  width: 35%;
-  cursor: default;
+  width: 40%;
 
   /* Position */
   text-align: center;
@@ -46,6 +45,7 @@ a {
   padding-bottom: 12px;
 
   /* Border */
+  border: none;
   border-radius: 10px;
   border-width: 2px;
 }
