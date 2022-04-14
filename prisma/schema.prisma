@@ -13,8 +13,11 @@ datasource db {
 model User {
   id            Int         @id @default(autoincrement())
   createdAt     DateTime    @default(now())
+
   email         String      @unique
   password      String
+  salt          String
+
   projects      Project[]
 }
 
@@ -22,9 +25,11 @@ model Project {
   id            Int         @id @default(autoincrement())
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @default(now())
+
   title         String
   description   String?
   screenplay    Json?
+
   user          User        @relation(fields: [userId], references: [id])
   userId        Int
 }

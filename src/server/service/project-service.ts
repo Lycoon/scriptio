@@ -21,12 +21,12 @@ export async function createProject(project: ProjectCreation) {
   return res;
 }
 
-export async function fetchProjects(userId: number) {
+export async function getProjects(userId: number) {
   const res = await repository.fetchProjects(userId);
   return res;
 }
 
-export async function fetchProjectFromId(projectId: number) {
+export async function getProjectFromId(projectId: number) {
   const res = await repository.fetchProjectFromId(projectId);
   return res;
 }

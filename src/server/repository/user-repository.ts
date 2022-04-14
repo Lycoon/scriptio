@@ -3,12 +3,13 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class UserRepository {
-  createUser(email: string, password: string) {
+  createUser(email: string, hash: string, salt: string) {
     const created = prisma.user
       .create({
         data: {
           email,
-          password,
+          salt,
+          password: hash,
         },
       })
       .catch(() => {
@@ -59,6 +60,24 @@ export class UserRepository {
         select: {
           email: true,
           createdAt: true,
+        },
+      })
+      .catch(() => {
+        return null;
+      });
+
+    return user;
+  }
+
+  fetchUserSecrets(email: string) {
+    const user = prisma.user
+      .findUnique({
+        where: {
+          email,
+        },
+        select: {
+          password: true,
+          salt: true,
         },
       })
       .catch(() => {

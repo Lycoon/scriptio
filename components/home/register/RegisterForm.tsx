@@ -4,11 +4,25 @@ const RegisterForm = () => {
 
     const body = {
       email: e.target.email.value,
-      password1: e.target.password1.value,
-      password2: e.target.password2.value,
+      password: e.target.password1.value,
     };
 
-    console.log(body);
+    if (body.password !== e.target.password2.value) {
+      return;
+    }
+
+    const res = await fetch("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.status === 201) {
+      const userObj = await res.json();
+      console.log(userObj);
+    } else {
+      return;
+    }
   }
 
   return (
