@@ -1,4 +1,9 @@
+import Router from "next/router";
+import { useUser } from "../../../src/lib/hooks";
+
 const RegisterForm = () => {
+  useUser({ redirectTo: "/", redirectIfFound: true });
+
   async function onSubmit(e: any) {
     e.preventDefault();
 
@@ -11,15 +16,14 @@ const RegisterForm = () => {
       return;
     }
 
-    const res = await fetch("/api/users", {
+    const res = await fetch("/api/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
     if (res.status === 201) {
-      const userObj = await res.json();
-      console.log(userObj);
+      Router.push("/login");
     } else {
       return;
     }

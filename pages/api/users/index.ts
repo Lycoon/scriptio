@@ -1,33 +1,18 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import nextConnect from "next-connect";
-import auth from "../../../src/middleware/auth";
-import { createUser } from "../../../src/server/service/user-service";
+import { getLoginSession } from "../../../src/lib/auth";
+import { getUserFromEmail } from "../../../src/server/service/user-service";
 
-const handler = nextConnect();
+export default async function user(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const session = await getLoginSession(req);
+    console.log("session: ", session);
 
-handler.use(auth).post(async (req: NextApiRequest, res: NextApiResponse) => {
-  const email: string = req.body.email;
-  const password: string = req.body.password;
+    const fetched = await getUserFromEmail(session);
 
-  if (!email || !password) {
-    res.status(400).json({ error: "Missing body or body fields" });
-    return;
+    const user = (session && fetched) ?? null;
+
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).end("Authentication token is invalid, please log in");
   }
-
-  if (password.length < 8) {
-    res
-      .status(400)
-      .json({ error: "Password needs to be at least 8 characters long" });
-    return;
-  }
-
-  const created = await createUser(email, password);
-  if (created === null) {
-    res.status(500).json({ error: "User already registered with that email" });
-    return;
-  }
-
-  res.status(201).json({ status: "SUCCESS" });
-});
-
-export default handler;
+}
