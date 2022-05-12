@@ -1,5 +1,6 @@
 .export-dropdown {
   z-index: 1;
-  margin-left: 146px;
-  margin-top: 40px;
+  left: 100%;
+  padding-left: 10%;
+  width: 150px;
 }

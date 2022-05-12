@@ -15,8 +15,11 @@ model User {
   createdAt     DateTime    @default(now())
 
   email         String      @unique
-  password      String
+  hash          String
   salt          String
+
+  emailHash     String
+  active        Boolean     @default(false)
 
   projects      Project[]
 }

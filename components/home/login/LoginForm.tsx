@@ -1,9 +1,6 @@
 import Router from "next/router";
-import { useUser } from "../../../src/lib/hooks";
 
 const LoginForm = () => {
-  useUser({ redirectTo: "/", redirectIfFound: true });
-
   async function onSubmit(e: any) {
     e.preventDefault();
 

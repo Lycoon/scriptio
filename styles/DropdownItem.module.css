@@ -5,10 +5,10 @@
 
   padding-inline: 15px;
   padding-block: 10px;
-  
+
   color: white;
   background-color: #474747;
-  border:none
+  border: none;
 }
 
 .dropdown-item:hover {

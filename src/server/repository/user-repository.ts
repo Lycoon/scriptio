@@ -2,14 +2,58 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+export interface UserUpdate {
+  email?: string;
+  emailHash?: string;
+  salt?: string;
+  hash?: string;
+  active?: boolean;
+}
+
+export interface UserCreation {
+  email: string;
+  emailHash: string;
+  salt: string;
+  hash: string;
+}
+
+const userQuerySelect = {
+  id: true,
+  email: true,
+  active: true,
+  createdAt: true,
+};
+
 export class UserRepository {
-  createUser(email: string, hash: string, salt: string) {
+  updateUser(user: UserUpdate) {
+    const updated = prisma.user
+      .update({
+        data: {
+          email: user.email,
+          salt: user.salt,
+          hash: user.hash,
+          emailHash: user.emailHash,
+          active: user.active,
+        },
+        where: {
+          email: user.email,
+        },
+      })
+      .catch(() => {
+        return null;
+      });
+
+    return updated;
+  }
+
+  createUser(user: UserCreation) {
     const created = prisma.user
       .create({
         data: {
-          email,
-          salt,
-          password: hash,
+          email: user.email,
+          salt: user.salt,
+          hash: user.hash,
+          emailHash: user.emailHash,
         },
       })
       .catch(() => {
@@ -39,10 +83,7 @@ export class UserRepository {
         where: {
           id: userId,
         },
-        select: {
-          email: true,
-          createdAt: true,
-        },
+        select: userQuerySelect,
       })
       .catch(() => {
         return null;
@@ -57,10 +98,7 @@ export class UserRepository {
         where: {
           email,
         },
-        select: {
-          email: true,
-          createdAt: true,
-        },
+        select: userQuerySelect,
       })
       .catch(() => {
         return null;
@@ -76,7 +114,7 @@ export class UserRepository {
           email,
         },
         select: {
-          password: true,
+          hash: true,
           salt: true,
         },
       })

@@ -8,7 +8,7 @@ const HomePageNavbar = (props: any) => {
         <a id="logo" href="http://localhost:3000">
           <img src="https://i.imgur.com/uIOrnUi.png" width="100" height="28" />
         </a>
-        <NavbarTab content="Dream of Resurrection"></NavbarTab>
+        <NavbarTab content="West Side Story"></NavbarTab>
       </div>
       <div id="navbar-buttons">
         <NavbarButton content="Log in" redirect="login"></NavbarButton>

@@ -1,11 +1,11 @@
+import { withIronSessionApiRoute } from "iron-session/next";
+import { sessionOptions } from "../../src/lib/session";
 import { NextApiRequest, NextApiResponse } from "next";
-import { removeTokenCookie } from "../../src/lib/auth-cookies";
+import type { User } from "../../pages/api/users/index";
 
-export default async function logout(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  removeTokenCookie(res);
-  res.writeHead(302, { Location: "/" });
-  res.end();
+export default withIronSessionApiRoute(logoutRoute, sessionOptions);
+
+function logoutRoute(req: NextApiRequest, res: NextApiResponse<User>) {
+  req.session.destroy();
+  res.json({ isLoggedIn: false, email: "", id: -1, createdAt: new Date() });
 }

@@ -3,10 +3,11 @@ import Head from "next/head";
 import HomePageContainer from "../components/home/HomePageContainer";
 import HomePageFooter from "../components/home/HomePageFooter";
 import HomePageNavbar from "../components/navbar/Navbar";
-import { useUser } from "../src/lib/hooks";
+import useUser from "../src/lib/useUser";
 
 const HomePage: NextPage = () => {
-  const user = useUser();
+  const { user, mutateUser } = useUser();
+  console.log("after useUser: ", user);
 
   return (
     <div>
@@ -15,8 +16,7 @@ const HomePage: NextPage = () => {
       </Head>
       <div className="main-container">
         <HomePageNavbar />
-        {user && <h1>LOGGED IN {JSON.stringify(user, null, 2)}</h1>}
-        <HomePageContainer />
+        {user && <HomePageContainer />}
         <HomePageFooter />
       </div>
     </div>

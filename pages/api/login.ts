@@ -1,25 +1,38 @@
-import passport from "passport";
-import nextConnect from "next-connect";
-import { localStrategy } from "../../src/lib/password-local";
-import { setLoginSession } from "../../src/lib/auth";
-import next from "next";
+import type { User } from "../api/users/index";
 
-passport.use(localStrategy);
+import { withIronSessionApiRoute } from "iron-session/next";
+import { sessionOptions } from "../../src/lib/session";
+import { NextApiRequest, NextApiResponse } from "next";
+import {
+  checkPassword,
+  getUserFromEmail,
+} from "../../src/server/service/user-service";
 
-export default nextConnect()
-  .use(passport.initialize())
-  .post(async (req: any, res: any) => {
-    try {
-      console.log("body: ", req.body);
-      // session is the payload to save in the token, it may contain basic info about the user
-      passport.authenticate("local");
+export default withIronSessionApiRoute(loginRoute, sessionOptions);
 
-      // SHOULD TAKE USER
-      const session = { email: req.body.email };
+async function loginRoute(req: NextApiRequest, res: NextApiResponse) {
+  const { email, password } = await req.body;
 
-      await setLoginSession(res, session);
-      res.status(200).send({ done: true });
-    } catch (error) {
-      res.status(401).send({ error: "ERROR" });
-    }
-  });
+  if (!email || !password || !checkPassword(email, password)) {
+    res.status(401).json({ error: "Wrong credentials" });
+    return;
+  }
+
+  // Filling session with data
+  try {
+    const data = await getUserFromEmail(email);
+    const user = {
+      isLoggedIn: true,
+      email,
+      id: data?.id,
+      createdAt: data?.createdAt,
+    } as User;
+
+    req.session.user = user;
+    await req.session.save();
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: (error as Error).message });
+  }
+}

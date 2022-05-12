@@ -1,18 +1,32 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getLoginSession } from "../../../src/lib/auth";
-import { getUserFromEmail } from "../../../src/server/service/user-service";
+import { withIronSessionApiRoute } from "iron-session/next";
+import { sessionOptions } from "../../../src/lib/session";
 
-export default async function user(req: NextApiRequest, res: NextApiResponse) {
-  try {
-    const session = await getLoginSession(req);
-    console.log("session: ", session);
+export type User = {
+  isLoggedIn: boolean;
+  email: string;
+  id: number;
+  createdAt: Date;
+};
 
-    const fetched = await getUserFromEmail(session);
+export default withIronSessionApiRoute(userRoute, sessionOptions);
 
-    const user = (session && fetched) ?? null;
-
-    res.status(200).json({ user });
-  } catch (error) {
-    res.status(500).end("Authentication token is invalid, please log in");
+async function userRoute(req: NextApiRequest, res: NextApiResponse<User>) {
+  console.log("get api/users/");
+  if (req.session.user) {
+    // in a real world application you might read the user id from the session and then do a database request
+    // to get more information on the user if needed
+    console.log("req.session: ", req.session);
+    res.json({
+      ...req.session.user,
+      isLoggedIn: true,
+    });
+  } else {
+    res.json({
+      isLoggedIn: false,
+      email: "",
+      id: -1,
+      createdAt: new Date(),
+    });
   }
 }

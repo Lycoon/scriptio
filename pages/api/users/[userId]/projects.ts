@@ -1,11 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import nextConnect from "next-connect";
-import auth from "../../../../src/middleware/auth";
 import { getProjects } from "../../../../src/server/service/project-service";
 
-const handler = nextConnect();
-
-handler.use(auth).get(async (req: NextApiRequest, res: NextApiResponse) => {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const userId = +req.query["userId"];
 
   const projects = await getProjects(userId);
@@ -15,4 +14,4 @@ handler.use(auth).get(async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   res.status(200).json(projects!);
-});
+}
