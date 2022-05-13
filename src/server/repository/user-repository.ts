@@ -77,12 +77,10 @@ export class UserRepository {
     return deleted;
   }
 
-  fetchUserFromId(userId: number) {
+  fetchUser(idOrEmail: any) {
     const user = prisma.user
       .findUnique({
-        where: {
-          id: userId,
-        },
+        where: idOrEmail,
         select: userQuerySelect,
       })
       .catch(() => {
@@ -92,28 +90,12 @@ export class UserRepository {
     return user;
   }
 
-  fetchUserFromEmail(email: string) {
-    const user = prisma.user
+  fetchSecrets(idOrEmail: any) {
+    const secrets = prisma.user
       .findUnique({
-        where: {
-          email,
-        },
-        select: userQuerySelect,
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return user;
-  }
-
-  fetchUserSecrets(email: string) {
-    const user = prisma.user
-      .findUnique({
-        where: {
-          email,
-        },
+        where: idOrEmail,
         select: {
+          emailHash: true,
           hash: true,
           salt: true,
         },
@@ -122,6 +104,6 @@ export class UserRepository {
         return null;
       });
 
-    return user;
+    return secrets;
   }
 }

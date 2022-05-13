@@ -1,3 +1,5 @@
-const ProjectPageContainer = () => <div id="project-page-container"></div>;
+const ProjectPageContainer = (props: any) => {
+  return <div id="project-page-container">Welcome {props.user.email}!</div>;
+};
 
 export default ProjectPageContainer;

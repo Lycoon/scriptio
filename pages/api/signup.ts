@@ -1,4 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import {
+  EMAIL_ALREADY_REGISTERED,
+  MISSING_BODY,
+  PASSWORD_REQUIREMENTS,
+} from "../../src/lib/messages";
+import { onError, onSuccess } from "../../src/lib/utils";
 import { createUser } from "../../src/server/service/user-service";
 
 export default async function signup(
@@ -10,26 +16,19 @@ export default async function signup(
     const password: string = req.body.password;
 
     if (!email || !password) {
-      res.status(400).json({ error: "Missing body or body fields" });
-      return;
+      return onError(res, 400, MISSING_BODY);
     }
 
     if (password.length < 8) {
-      res
-        .status(400)
-        .json({ error: "Password needs to be at least 8 characters long" });
-      return;
+      return onError(res, 400, PASSWORD_REQUIREMENTS);
     }
 
     const created = await createUser(email, password);
     if (created === null) {
-      res
-        .status(500)
-        .send({ error: "A user is already registered with that email" });
-      return;
+      return onError(res, 500, EMAIL_ALREADY_REGISTERED);
     }
 
-    res.status(200).send({ done: true });
+    onSuccess(res, 201, "", created);
   } catch (error: any) {
     res.status(500).end(error.message);
   }

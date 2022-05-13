@@ -4,8 +4,8 @@ import crypto from "crypto";
 const repository = new UserRepository();
 
 export async function checkPassword(email: string, password: string) {
-  const secrets = await getUserSecrets(email);
-  if (secrets === null) {
+  const secrets = await getSecretsFromEmail(email);
+  if (!secrets) {
     return false;
   }
 
@@ -20,20 +20,20 @@ export async function checkPassword(email: string, password: string) {
 }
 
 export async function createUser(email: string, password: string) {
-  const emailHash = crypto.randomBytes(16).toString("hex");
+  const emailHash = crypto.randomBytes(64).toString("hex");
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto
     .pbkdf2Sync(password, salt, 1000, 64, "sha512")
     .toString("hex");
 
-  const user = await repository.createUser({
+  const created = await repository.createUser({
     email,
     emailHash,
     hash,
     salt,
   });
 
-  return user;
+  return created;
 }
 
 export async function updateUser(user: UserUpdate) {
@@ -47,16 +47,21 @@ export async function deleteUser(email: string) {
 }
 
 export async function getUserFromId(userId: number) {
-  const user = await repository.fetchUserFromId(userId);
+  const user = await repository.fetchUser({ id: userId });
   return user;
 }
 
 export async function getUserFromEmail(email: string) {
-  const user = await repository.fetchUserFromEmail(email);
+  const user = await repository.fetchUser({ email });
   return user;
 }
 
-export async function getUserSecrets(email: string) {
-  const secrets = await repository.fetchUserSecrets(email);
+export async function getSecretsFromEmail(email: string) {
+  const secrets = await repository.fetchSecrets({ email: email });
+  return secrets;
+}
+
+export async function getSecretsFromId(id: number) {
+  const secrets = await repository.fetchSecrets({ id: id });
   return secrets;
 }

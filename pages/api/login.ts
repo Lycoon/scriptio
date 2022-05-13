@@ -7,15 +7,17 @@ import {
   checkPassword,
   getUserFromEmail,
 } from "../../src/server/service/user-service";
+import { onError, onSuccess } from "../../src/lib/utils";
+import { WRONG_CREDENTIALS } from "../../src/lib/messages";
 
 export default withIronSessionApiRoute(loginRoute, sessionOptions);
 
 async function loginRoute(req: NextApiRequest, res: NextApiResponse) {
   const { email, password } = await req.body;
 
-  if (!email || !password || !checkPassword(email, password)) {
-    res.status(401).json({ error: "Wrong credentials" });
-    return;
+  const matchingPassword = await checkPassword(email, password);
+  if (!email || !password || !matchingPassword) {
+    return onError(res, 401, WRONG_CREDENTIALS);
   }
 
   // Filling session with data
@@ -23,15 +25,15 @@ async function loginRoute(req: NextApiRequest, res: NextApiResponse) {
     const data = await getUserFromEmail(email);
     const user = {
       isLoggedIn: true,
-      email,
       id: data?.id,
+      email: data?.email,
       createdAt: data?.createdAt,
     } as User;
 
     req.session.user = user;
     await req.session.save();
 
-    res.json(user);
+    return onSuccess(res, 200, "", user);
   } catch (error) {
     res.status(500).json({ message: (error as Error).message });
   }
