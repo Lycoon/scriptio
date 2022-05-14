@@ -17,6 +17,8 @@ export interface UserCreation {
   hash: string;
 }
 
+type idOrEmailType = { id: number } | { email: string };
+
 const userQuerySelect = {
   id: true,
   email: true,
@@ -77,7 +79,7 @@ export class UserRepository {
     return deleted;
   }
 
-  fetchUser(idOrEmail: any) {
+  fetchUser(idOrEmail: idOrEmailType) {
     const user = prisma.user
       .findUnique({
         where: idOrEmail,
@@ -90,7 +92,7 @@ export class UserRepository {
     return user;
   }
 
-  fetchSecrets(idOrEmail: any) {
+  fetchSecrets(idOrEmail: idOrEmailType) {
     const secrets = prisma.user
       .findUnique({
         where: idOrEmail,

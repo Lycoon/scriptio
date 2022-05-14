@@ -1,3 +1,4 @@
+import router from "next/router";
 import { useEffect, useState } from "react";
 import NavbarButton from "./NavbarButton";
 import NavbarTab from "./NavbarTab";
@@ -20,22 +21,19 @@ const HomePageNavbar = (props: any) => {
       </div>
       {!isLoggedIn ? (
         <div id="navbar-buttons">
-          <NavbarButton content="Log in" redirect="login"></NavbarButton>
-          <NavbarButton
-            content="Create account"
-            redirect="register"
-          ></NavbarButton>
+          <NavbarButton content="Log in" redirect="login" />
+          <NavbarButton content="Create account" redirect="register" />
         </div>
       ) : (
         <div id="navbar-buttons">
-          <NavbarButton content="Settings" redirect=""></NavbarButton>
+          <NavbarButton content="Settings" redirect="" />
           <NavbarButton
             content="Log out"
-            redirect=""
             action={() => {
               fetch("/api/logout");
+              router.push("/");
             }}
-          ></NavbarButton>
+          />
         </div>
       )}
     </nav>

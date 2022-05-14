@@ -12,6 +12,5 @@ function logoutRoute(req: NextApiRequest, res: NextApiResponse<User>) {
     isLoggedIn: false,
     email: "",
     id: -1,
-    createdAt: new Date(),
   });
 }

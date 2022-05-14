@@ -6,7 +6,6 @@ export type User = {
   isLoggedIn: boolean;
   email: string;
   id: number;
-  createdAt: Date;
 };
 
 export default withIronSessionApiRoute(userRoute, sessionOptions);
@@ -18,7 +17,6 @@ async function userRoute(
   if (req.session.user) {
     // in a real world application you might read the user id from the session and then do a database request
     // to get more information on the user if needed
-    console.log("req.session: ", req.session);
     res.json({
       ...req.session.user,
       isLoggedIn: true,
@@ -28,7 +26,6 @@ async function userRoute(
       isLoggedIn: false,
       email: "",
       id: -1,
-      createdAt: new Date(),
     });
   }
 }

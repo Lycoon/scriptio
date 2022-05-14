@@ -1,8 +1,18 @@
-const NavbarButton = (props: any) => {
+type NavbarButtonProps = {
+  redirect?: string;
+  action?: () => void;
+  content: string;
+};
+
+const NavbarButton: React.FC<NavbarButtonProps> = ({
+  redirect,
+  action,
+  content,
+}) => {
   return (
     <div>
-      <a href={props.redirect} onClick={props.action} className="navbar-btn">
-        {props.content}
+      <a href={redirect} onClick={action} className="navbar-btn">
+        {content}
       </a>
     </div>
   );
