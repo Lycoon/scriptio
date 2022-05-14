@@ -17,9 +17,9 @@ const LoginForm = () => {
 
     if (res.status === 200) {
       Router.push("/");
-    } else {
-      return;
     }
+
+    return;
   }
 
   return (

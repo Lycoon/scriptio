@@ -1,4 +1,4 @@
-import router from "next/router";
+import Router from "next/router";
 import { useEffect, useState } from "react";
 import NavbarButton from "./NavbarButton";
 import NavbarTab from "./NavbarTab";
@@ -11,6 +11,23 @@ const HomePageNavbar = (props: any) => {
     setLoggedIn(user?.isLoggedIn);
   }, [user, isLoggedIn]);
 
+  const onLogOut = async () => {
+    await fetch("/api/logout");
+    Router.push("");
+  };
+
+  const onLogIn = () => {
+    Router.push("login");
+  };
+
+  const onSignUp = () => {
+    Router.push("register");
+  };
+
+  const onSettings = () => {
+    Router.push("settings");
+  };
+
   return (
     <nav id="navbar">
       <div id="logo-and-tabs">
@@ -21,19 +38,13 @@ const HomePageNavbar = (props: any) => {
       </div>
       {!isLoggedIn ? (
         <div id="navbar-buttons">
-          <NavbarButton content="Log in" redirect="login" />
-          <NavbarButton content="Create account" redirect="register" />
+          <NavbarButton content="Log in" action={onLogIn} />
+          <NavbarButton content="Create account" action={onSignUp} />
         </div>
       ) : (
         <div id="navbar-buttons">
-          <NavbarButton content="Settings" redirect="" />
-          <NavbarButton
-            content="Log out"
-            action={() => {
-              fetch("/api/logout");
-              router.push("/");
-            }}
-          />
+          <NavbarButton content="Settings" action={onSettings} />
+          <NavbarButton content="Log out" action={onLogOut} />
         </div>
       )}
     </nav>
