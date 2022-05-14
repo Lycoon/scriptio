@@ -4,7 +4,7 @@
 }
 
 #logo {
-  padding-inline: 25px;
+  padding-inline: 16px;
 }
 
 #navbar {
@@ -20,13 +20,13 @@
 }
 
 #navbar-buttons {
-  width: 210px;
   margin-bottom: 4px;
-  margin-right: 5px;
+  margin-right: 10px;
   display: flex;
   flex-direction: row;
-  justify-content: space-evenly;
+  justify-content: flex-end;
   align-items: center;
+  gap: 6px;
 }
 
 #logo-and-tabs {

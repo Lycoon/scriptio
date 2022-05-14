@@ -1,23 +1,23 @@
 a {
-    text-decoration: none;
+  text-decoration: none;
 }
-  
+
 .navbar-btn {
-    font-size: 0.8rem;
-    color: white;
-    background-color: #47474700;
+  font-size: 0.8rem;
+  color: white;
+  background-color: #47474700;
 
-    padding-inline: 15px;
-    padding-block: 5px;
+  padding-inline: 15px;
+  padding-block: 5px;
 
-    /* Border */
-    border-style: solid;
-    border-color: #a7a7a7;
-    border-radius: 15px;
-    border-width: 2px;
+  /* Border */
+  border-style: solid;
+  border-color: #a7a7a7;
+  border-radius: 15px;
+  border-width: 2px;
 }
 
 .navbar-btn:hover {
-    transition: background-color 0.2s;
-    background-color: #686868;
+  transition: background-color 0.2s;
+  background-color: #686868;
 }
