@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useEditorState } from "../../context/AppContext";
+import { useEditorState } from "../../src/context/UserContext";
 import EditorComponent from "./EditorComponent";
 import EditorSidebar from "./EditorSidebar";
 

@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import { onError, onSuccess } from "../../../../src/lib/utils";
 import { getProjects } from "../../../../src/server/service/project-service";
 
 export default async function handler(
@@ -6,12 +7,16 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const userId = +req.query["userId"];
+  const user = req.session.user;
 
-  const projects = await getProjects(userId);
-  if (projects === null) {
-    res.status(404).json({ error: "User with id " + userId + " not found" });
-    return;
+  if (!user || !user.isLoggedIn) {
+    return onError(res, 403, "Forbidden");
   }
 
-  res.status(200).json(projects!);
+  const projects = await getProjects(userId);
+  if (!projects) {
+    return onError(res, 404, "User with id " + userId + " not found");
+  }
+
+  return onSuccess(res, 200, "", projects);
 }

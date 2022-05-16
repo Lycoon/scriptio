@@ -4,7 +4,7 @@ import History from "@tiptap/extension-history";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import { useEffect, useState } from "react";
-import { useEditorState } from "../../context/AppContext";
+import { useEditorState } from "../../src/context/UserContext";
 
 import { Screenplay } from "../../src/Screenplay";
 import { exportToPDF } from "../../src/converters/scriptio_to_pdf";
@@ -38,7 +38,7 @@ const EditorComponent = ({ setActiveTab }: any) => {
         const currNode = node.attrs.class;
         if (event.key === "Enter") {
           setTimeout(() => setActiveTab("action"), 20);
-          console.log(node.content.size)
+          console.log(node.content.size);
           if (currNode === "character" || currNode === "parenthetical") {
             clearTimeout();
             setTimeout(() => setActiveTab("dialogue"), 20);
