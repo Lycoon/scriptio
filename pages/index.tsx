@@ -6,10 +6,10 @@ import HomePageFooter from "../components/home/HomePageFooter";
 import HomePageNavbar from "../components/navbar/Navbar";
 import ProjectPageContainer from "../components/projects/ProjectPageContainer";
 import { UserContext } from "../src/context/UserContext";
-import { User } from "./api/users";
 
 const HomePage: NextPage = () => {
-  const { user, setUser } = useContext(UserContext);
+  const ctx = useContext(UserContext);
+  const user = ctx.user;
 
   return (
     <div>
@@ -17,12 +17,8 @@ const HomePage: NextPage = () => {
         <title>Scriptio</title>
       </Head>
       <div className="main-container">
-        <HomePageNavbar user={user} />
-        {!user?.isLoggedIn ? (
-          <HomePageContainer />
-        ) : (
-          <ProjectPageContainer user={user} />
-        )}
+        <HomePageNavbar />
+        {!user?.isLoggedIn ? <HomePageContainer /> : <ProjectPageContainer />}
         <HomePageFooter />
       </div>
     </div>

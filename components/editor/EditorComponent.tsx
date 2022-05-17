@@ -3,11 +3,10 @@ import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 
 import { useEditor, EditorContent } from "@tiptap/react";
-import { useEffect, useState } from "react";
-import { useEditorState } from "../../src/context/UserContext";
+import { useContext, useEffect, useState } from "react";
 
 import { Screenplay } from "../../src/Screenplay";
-import { exportToPDF } from "../../src/converters/scriptio_to_pdf";
+import { UserContext } from "../../src/context/UserContext";
 
 const EditorComponent = ({ setActiveTab }: any) => {
   const editorView = useEditor({
@@ -50,7 +49,7 @@ const EditorComponent = ({ setActiveTab }: any) => {
     },
   });
 
-  const { editor, updateEditor } = useEditorState();
+  const { editor, updateEditor } = useContext(UserContext);
 
   useEffect(() => {
     updateEditor(editorView!);

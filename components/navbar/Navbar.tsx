@@ -1,18 +1,16 @@
 import Router from "next/router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { UserContext } from "../../src/context/UserContext";
 import NavbarButton from "./NavbarButton";
 import NavbarTab from "./NavbarTab";
 
-const HomePageNavbar = (props: any) => {
-  const user = props.user;
-  const [isLoggedIn, setLoggedIn] = useState(false);
-
-  useEffect(() => {
-    setLoggedIn(user?.isLoggedIn);
-  }, [user, isLoggedIn]);
+const HomePageNavbar = () => {
+  const ctx = useContext(UserContext);
+  const user = ctx.user;
 
   const onLogOut = async () => {
     await fetch("/api/logout");
+    ctx.updateUser(undefined);
     Router.push("");
   };
 
@@ -34,9 +32,9 @@ const HomePageNavbar = (props: any) => {
         <a id="logo" href="http://localhost:3000">
           <img src="https://i.imgur.com/uIOrnUi.png" width="100" height="28" />
         </a>
-        {isLoggedIn && <NavbarTab content="Reverse"></NavbarTab>}
+        {user?.isLoggedIn && <NavbarTab content="Reverse"></NavbarTab>}
       </div>
-      {!isLoggedIn ? (
+      {!user?.isLoggedIn ? (
         <div id="navbar-buttons">
           <NavbarButton content="Log in" action={onLogIn} />
           <NavbarButton content="Create account" action={onSignUp} />

@@ -7,7 +7,7 @@ export default function useUser({
   redirectTo = "",
   redirectIfFound = true,
 } = {}) {
-  const { data: user, mutate: mutateUser } = useSWR<User>("api/users/");
+  const { data: user, mutate: setUser } = useSWR<User>("api/users/");
 
   useEffect(() => {
     if (!redirectTo || !user) return;
@@ -20,5 +20,5 @@ export default function useUser({
     }
   }, [user, redirectIfFound, redirectTo]);
 
-  return { user, mutateUser };
+  return { user, setUser };
 }

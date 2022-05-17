@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import { useEditorState } from "../../src/context/UserContext";
+import { useContext, useEffect, useState } from "react";
+import { UserContext } from "../../src/context/UserContext";
 import EditorComponent from "./EditorComponent";
 import EditorSidebar from "./EditorSidebar";
 
 const EditorAndSidebar = () => {
-  const { editor, updateEditor } = useEditorState();
+  const { editor, updateEditor } = useContext(UserContext);
   const [selectedTab, updateSelectedTab] = useState<number>(0);
   const tabs = [
     "scene",

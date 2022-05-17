@@ -1,6 +1,10 @@
 import Router from "next/router";
+import { useContext } from "react";
+import { UserContext } from "../../../src/context/UserContext";
 
 const LoginForm = () => {
+  const ctx = useContext(UserContext);
+
   async function onSubmit(e: any) {
     e.preventDefault();
 
@@ -16,6 +20,8 @@ const LoginForm = () => {
     });
 
     if (res.status === 200) {
+      const user = await res.json();
+      ctx.updateUser(user.data);
       Router.push("/");
     }
 

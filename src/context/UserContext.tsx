@@ -1,18 +1,19 @@
 import { Editor, useEditor } from "@tiptap/react";
 import { createContext, ReactNode, useState } from "react";
 import { User } from "../../pages/api/users";
+import useUser from "../lib/useUser";
 
 export type contextType = {
-  user: User | null;
-  updateUser: (user: User) => void;
-  editor: Editor | null;
+  user: User | undefined;
+  updateUser: (user: User | undefined) => void;
+  editor: Editor | undefined;
   updateEditor: (editor: Editor) => void;
 };
 
 const contextDefaults: contextType = {
-  user: null,
+  user: undefined,
   updateUser: () => {},
-  editor: null,
+  editor: undefined,
   updateEditor: () => {},
 };
 
@@ -23,8 +24,8 @@ type Props = {
 export const UserContext = createContext<contextType>(contextDefaults);
 
 export function ContextProvider({ children }: Props) {
-  const [user, setUser] = useState<User | null>(null);
-  const [editor, setEditor] = useState<Editor | null>(null);
+  const { user, setUser } = useUser();
+  const [editor, setEditor] = useState<Editor | undefined>(undefined);
 
   const updateUser = (user_: User) => {
     setUser(user_);
