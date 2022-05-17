@@ -1,8 +1,15 @@
 import Router from "next/router";
+import { useState } from "react";
+import FormError from "../FormError";
 
 const RegisterForm = () => {
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined
+  );
+
   async function onSubmit(e: any) {
     e.preventDefault();
+    setErrorMessage(undefined);
 
     const body = {
       email: e.target.email.value,
@@ -10,6 +17,7 @@ const RegisterForm = () => {
     };
 
     if (body.password !== e.target.password2.value) {
+      setErrorMessage("Passwords do not match");
       return;
     }
 
@@ -22,13 +30,14 @@ const RegisterForm = () => {
     if (res.status === 201) {
       Router.push("/login");
     } else {
-      return;
+      setErrorMessage((await res.json()).message);
     }
   }
 
   return (
     <form id="register-form" onSubmit={onSubmit}>
       <h1 className="segoe-bold">Register</h1>
+      {errorMessage && <FormError message={errorMessage} />}
 
       <label id="email-form" className="form-element">
         <span className="form-label">Email</span>
@@ -41,6 +50,7 @@ const RegisterForm = () => {
           className="form-input"
           name="password1"
           type="password"
+          onChange={() => setErrorMessage(undefined)}
           required
         />
         <span className="form-label">Repeat password</span>
@@ -48,6 +58,7 @@ const RegisterForm = () => {
           className="form-input"
           name="password2"
           type="password"
+          onChange={() => setErrorMessage(undefined)}
           required
         />
       </label>

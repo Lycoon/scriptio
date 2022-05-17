@@ -1,12 +1,17 @@
 import Router from "next/router";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
+import FormError from "../FormError";
 
 const LoginForm = () => {
   const ctx = useContext(UserContext);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined
+  );
 
   async function onSubmit(e: any) {
     e.preventDefault();
+    setErrorMessage(undefined);
 
     const body = {
       email: e.target.email.value,
@@ -21,16 +26,17 @@ const LoginForm = () => {
 
     if (res.status === 200) {
       const user = await res.json();
-      ctx.updateUser(user.data);
+      ctx.updateUser(user.data); // CHECK SECURITY
       Router.push("/");
+    } else {
+      setErrorMessage((await res.json()).message);
     }
-
-    return;
   }
 
   return (
     <form id="login-form" onSubmit={onSubmit}>
       <h1 className="segoe-bold">Log in</h1>
+      {errorMessage && <FormError message={errorMessage} />}
 
       <label id="email-form" className="form-element">
         <span className="form-label">Email</span>
@@ -43,6 +49,7 @@ const LoginForm = () => {
           className="form-input"
           name="password"
           type="password"
+          onChange={() => setErrorMessage(undefined)}
           required
         />
         <a id="forgot-password" href="/recovery">

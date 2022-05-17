@@ -37,12 +37,11 @@ a {
   font-family: segoe-bold;
   color: #ffffff;
   background-color: #474747;
-  width: 40%;
+  width: 50%;
 
   /* Position */
   text-align: center;
   padding: 10px;
-  padding-bottom: 12px;
 
   /* Border */
   border: none;

@@ -27,7 +27,7 @@ export function ContextProvider({ children }: Props) {
   const { user, setUser } = useUser();
   const [editor, setEditor] = useState<Editor | undefined>(undefined);
 
-  const updateUser = (user_: User) => {
+  const updateUser = (user_: User | undefined) => {
     setUser(user_);
   };
 

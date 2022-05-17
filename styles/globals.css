@@ -12,6 +12,7 @@
 @import "LoginForm.module.css";
 @import "RegisterForm.module.css";
 @import "RecoveryForm.module.css";
+@import "FormError.module.css";
 
 /* Page containers */
 @import "HomePageContainer.module.css";
