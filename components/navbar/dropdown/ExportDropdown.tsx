@@ -1,11 +1,12 @@
 import FileSaver from "file-saver";
-import { useEditorState } from "../../../src/context/UserContext";
+import { useContext } from "react";
+import { UserContext } from "../../../src/context/UserContext";
 import { convertJSONtoFountain } from "../../../src/converters/scriptio_to_fountain";
 import { exportToPDF } from "../../../src/converters/scriptio_to_pdf";
 import DropdownItem from "./DropdownItem";
 
-const ExportDropdown = (props: any) => {
-  const { editor, updateEditor } = useEditorState();
+const ExportDropdown = () => {
+  const { editor } = useContext(UserContext);
   const title = "title";
   const author = "author";
 
