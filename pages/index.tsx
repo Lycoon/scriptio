@@ -1,15 +1,17 @@
+import { Project } from "@prisma/client";
+import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
-import { useContext } from "react";
+import useSWR from "swr";
 import HomePageContainer from "../components/home/HomePageContainer";
 import HomePageFooter from "../components/home/HomePageFooter";
 import HomePageNavbar from "../components/navbar/Navbar";
 import ProjectPageContainer from "../components/projects/ProjectPageContainer";
-import { UserContext } from "../src/context/UserContext";
+import { sessionOptions } from "../src/lib/session";
+import { getProjects } from "../src/server/service/project-service";
 
-const HomePage: NextPage = () => {
-  const ctx = useContext(UserContext);
-  const user = ctx.user;
+const HomePage: NextPage = ({user, projects}: any) => {
+  console.log(projects);
 
   return (
     <div>
@@ -24,5 +26,22 @@ const HomePage: NextPage = () => {
     </div>
   );
 };
+
+export const getServerSideProps = withIronSessionSsr(
+  async function getServerSideProps({ req }) {
+    const user = req.session.user;
+    if (!user || !user.isLoggedIn)
+
+    const projects: Project[] | undefined = (await getProjects(user?.id!))?.projects;
+
+    return {
+      props: {
+        user: req.session.user,
+        projects
+      },
+    };
+  },
+  sessionOptions
+);
 
 export default HomePage;
