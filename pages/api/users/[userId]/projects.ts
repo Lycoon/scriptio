@@ -9,7 +9,7 @@ export default async function handler(
   const userId = +req.query["userId"];
   const user = req.session.user;
 
-  if (!user || !user.isLoggedIn) {
+  if (!user || !user.isLoggedIn || userId !== user.id) {
     return onError(res, 403, "Forbidden");
   }
 

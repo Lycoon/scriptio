@@ -1,11 +1,28 @@
-import { useContext } from "react";
-import { UserContext } from "../../src/context/UserContext";
+import { Project } from "@prisma/client";
+import NewProjectItem from "./NewProjectItem";
+import ProjectItem from "./ProjectItem";
 
-const ProjectPageContainer = () => {
-  const ctx = useContext(UserContext);
-  const user = ctx.user;
+type Props = {
+  projects: Project[];
+};
 
-  return <div id="project-page-container">Welcome {user?.email}!</div>;
+const ProjectPageContainer = ({ projects }: Props) => {
+  return (
+    <div id="project-page-container">
+      <div className="center-flex">
+        <h1 id="project-page-title">Projects</h1>
+        <div className="project-grid">
+          <NewProjectItem />
+          <NewProjectItem />
+          <NewProjectItem />
+          <NewProjectItem />
+          {projects.map(function (project: Project) {
+            return <ProjectItem project={project} />;
+          })}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default ProjectPageContainer;

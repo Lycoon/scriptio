@@ -6,27 +6,22 @@ import {
 
 const repository = new ProjectRepository();
 
-export async function updateProject(project: ProjectUpdate) {
-  const res = await repository.updateProject(project);
-  return res;
+export function updateProject(project: ProjectUpdate) {
+  return repository.updateProject(project);
 }
 
-export async function deleteProject(project: ProjectUpdate) {
-  const res = await repository.deleteProject(project);
-  return res;
+export function deleteProject(project: ProjectUpdate) {
+  return repository.deleteProject(project);
 }
 
-export async function createProject(project: ProjectCreation) {
-  const res = await repository.createProject(project);
-  return res;
+export function createProject(project: ProjectCreation) {
+  return repository.createProject(project);
 }
 
-export async function getProjects(userId: number) {
-  const res = await repository.fetchProjects(userId);
-  return res;
+export function getProjects(userId: number) {
+  return repository.fetchProjects(userId);
 }
 
-export async function getProjectFromId(projectId: number) {
-  const res = await repository.fetchProjectFromId(projectId);
-  return res;
+export function getProjectFromId(projectId: number) {
+  return repository.fetchProjectFromId(projectId);
 }

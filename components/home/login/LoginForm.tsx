@@ -25,8 +25,6 @@ const LoginForm = () => {
     });
 
     if (res.status === 200) {
-      const user = await res.json();
-      ctx.updateUser(user.data); // CHECK SECURITY
       Router.push("/");
     } else {
       setErrorMessage((await res.json()).message);

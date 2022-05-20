@@ -20,6 +20,7 @@
 @import "RegisterContainer.module.css";
 @import "RecoveryContainer.module.css";
 @import "EditorContainer.module.css";
+@import "ProjectPageContainer.module.css";
 
 /* Editor */
 @import "EditorComponent.module.css";

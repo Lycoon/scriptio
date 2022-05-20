@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Project } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -17,85 +17,55 @@ export interface ProjectCreation {
 
 export class ProjectRepository {
   updateProject(project: ProjectUpdate) {
-    const updated = prisma.project
-      .update({
-        data: {
-          title: project.title,
-          description: project.description,
-          screenplay: project.screenplay,
-          updatedAt: new Date().toISOString(),
-        },
-        where: {
-          id: project.projectId,
-        },
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return updated;
+    return prisma.project.update({
+      data: {
+        title: project.title,
+        description: project.description,
+        screenplay: project.screenplay,
+        updatedAt: new Date().toISOString(),
+      },
+      where: {
+        id: project.projectId,
+      },
+    });
   }
 
   deleteProject(project: ProjectUpdate) {
-    const deleted = prisma.project
-      .delete({
-        where: {
-          id: project.projectId,
-        },
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return deleted;
+    return prisma.project.delete({
+      where: {
+        id: project.projectId,
+      },
+    });
   }
 
   createProject(project: ProjectCreation) {
-    const created = prisma.project
-      .create({
-        data: {
-          title: project.title,
-          description: project.description,
-          user: {
-            connect: { id: project.userId },
-          },
+    return prisma.project.create({
+      data: {
+        title: project.title,
+        description: project.description,
+        user: {
+          connect: { id: project.userId },
         },
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return created;
+      },
+    });
   }
 
   fetchProjects(userId: number) {
-    const projects = prisma.user
-      .findUnique({
-        where: {
-          id: userId,
-        },
-        select: {
-          projects: true,
-        },
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return projects;
+    return prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        projects: true,
+      },
+    });
   }
 
   fetchProjectFromId(projectId: number) {
-    const project = prisma.project
-      .findUnique({
-        where: {
-          id: projectId,
-        },
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return project;
+    return prisma.project.findUnique({
+      where: {
+        id: projectId,
+      },
+    });
   }
 }
