@@ -28,84 +28,54 @@ const userQuerySelect = {
 
 export class UserRepository {
   updateUser(user: UserUpdate) {
-    const updated = prisma.user
-      .update({
-        data: {
-          email: user.email,
-          salt: user.salt,
-          hash: user.hash,
-          emailHash: user.emailHash,
-          active: user.active,
-        },
-        where: {
-          email: user.email,
-        },
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return updated;
+    return prisma.user.update({
+      data: {
+        email: user.email,
+        salt: user.salt,
+        hash: user.hash,
+        emailHash: user.emailHash,
+        active: user.active,
+      },
+      where: {
+        email: user.email,
+      },
+    });
   }
 
   createUser(user: UserCreation) {
-    const created = prisma.user
-      .create({
-        data: {
-          email: user.email,
-          salt: user.salt,
-          hash: user.hash,
-          emailHash: user.emailHash,
-        },
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return created;
+    return prisma.user.create({
+      data: {
+        email: user.email,
+        salt: user.salt,
+        hash: user.hash,
+        emailHash: user.emailHash,
+      },
+    });
   }
 
   deleteUser(email: string) {
-    const deleted = prisma.user
-      .delete({
-        where: {
-          email,
-        },
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return deleted;
+    return prisma.user.delete({
+      where: {
+        email,
+      },
+    });
   }
 
   fetchUser(idOrEmail: idOrEmailType) {
-    const user = prisma.user
-      .findUnique({
-        where: idOrEmail,
-        select: userQuerySelect,
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return user;
+    return prisma.user.findUnique({
+      where: idOrEmail,
+      select: userQuerySelect,
+    });
   }
 
   fetchSecrets(idOrEmail: idOrEmailType) {
-    const secrets = prisma.user
-      .findUnique({
-        where: idOrEmail,
-        select: {
-          emailHash: true,
-          hash: true,
-          salt: true,
-        },
-      })
-      .catch(() => {
-        return null;
-      });
-
-    return secrets;
+    return prisma.user.findUnique({
+      where: idOrEmail,
+      select: {
+        emailHash: true,
+        hash: true,
+        salt: true,
+      },
+    });
   }
 }

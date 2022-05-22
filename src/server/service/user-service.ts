@@ -37,31 +37,25 @@ export async function createUser(email: string, password: string) {
 }
 
 export async function updateUser(user: UserUpdate) {
-  const updated = await repository.updateUser(user);
-  return updated;
+  return repository.updateUser(user);
 }
 
 export async function deleteUser(email: string) {
-  const user = await repository.deleteUser(email);
-  return user;
+  return repository.deleteUser(email);
 }
 
 export async function getUserFromId(userId: number) {
-  const user = await repository.fetchUser({ id: userId });
-  return user;
+  return repository.fetchUser({ id: userId });
 }
 
 export async function getUserFromEmail(email: string) {
-  const user = await repository.fetchUser({ email });
-  return user;
+  return repository.fetchUser({ email });
 }
 
 export async function getSecretsFromEmail(email: string) {
-  const secrets = await repository.fetchSecrets({ email: email });
-  return secrets;
+  return repository.fetchSecrets({ email: email });
 }
 
 export async function getSecretsFromId(id: number) {
-  const secrets = await repository.fetchSecrets({ id: id });
-  return secrets;
+  return repository.fetchSecrets({ id: id });
 }
