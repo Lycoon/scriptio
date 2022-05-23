@@ -1,10 +1,8 @@
 import Router from "next/router";
-import { useContext, useState } from "react";
-import { UserContext } from "../../../src/context/UserContext";
+import { useState } from "react";
 import FormError from "../FormError";
 
 const LoginForm = () => {
-  const ctx = useContext(UserContext);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined
   );

@@ -13,4 +13,8 @@
   flex-direction: column;
   gap: 25px;
   margin-left: 60px;
+
+  width: 25%;
+  min-width: 270px;
+  max-width: 400px;
 }
