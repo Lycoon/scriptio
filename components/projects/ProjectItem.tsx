@@ -1,7 +1,12 @@
 import { Project } from "@prisma/client";
+import Router from "next/router";
 
 type Props = {
   project: Project;
+};
+
+const openProject = (projectId: number) => {
+  Router.push("/projects/" + projectId + "/editor");
 };
 
 const _MS_PER_DAY = 1000 * 60 * 60 * 24;
