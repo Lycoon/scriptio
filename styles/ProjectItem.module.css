@@ -1,0 +1,60 @@
+.project-item {
+  max-width: 320px;
+  aspect-ratio: 1.7;
+  text-align: left;
+  padding: 18px;
+
+  border: none;
+  border-radius: 16px;
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.401);
+}
+
+.project-item-title {
+  font-family: roboto-thin;
+  font-style: italic;
+  font-size: 1.2rem;
+  max-width: 120px;
+  text-align: left;
+}
+
+.project-item:hover {
+  background-color: rgb(252, 252, 252);
+  transition: transform 0.2s;
+  transform: scale(0.98);
+}
+
+.project-item:active {
+  transition: transform 0.05s;
+  transform: scale(0.95);
+}
+
+.project-item-flex {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.project-date {
+  display: flex;
+  flex-direction: row;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.project-date-text {
+  font-family: roboto-thin;
+  font-size: 0.9rem;
+  max-width: 120px;
+  text-align: left;
+}
+
+.calendar-icon {
+  width: 16px;
+}
+
+.movie-poster {
+  width: 35%;
+  aspect-ratio: 0.67;
+}

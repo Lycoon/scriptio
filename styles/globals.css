@@ -6,6 +6,7 @@
 @import "NavbarDropdown.module.css";
 @import "DropdownItem.module.css";
 @import "ExportDropdown.module.css";
+@import "ProjectItem.module.css";
 
 /* Forms */
 @import "HomePageForm.module.css";

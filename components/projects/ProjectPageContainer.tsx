@@ -12,10 +12,39 @@ const ProjectPageContainer = ({ projects }: Props) => {
       <div className="center-flex">
         <h1 id="project-page-title">Projects</h1>
         <div className="project-grid">
-          <NewProjectItem />
-          <NewProjectItem />
-          <NewProjectItem />
-          <NewProjectItem />
+          <ProjectItem
+            project={{
+              id: 0,
+              userId: 1,
+              title: "Dream of Resurrection",
+              description: "This is a simple description",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              screenplay: "",
+            }}
+          />
+          <ProjectItem
+            project={{
+              id: 0,
+              userId: 1,
+              title: "Dream of Resurrection",
+              description: "This is a simple description",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              screenplay: "",
+            }}
+          />
+          <ProjectItem
+            project={{
+              id: 0,
+              userId: 1,
+              title: "Dream of Resurrection",
+              description: "This is a simple description",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              screenplay: "",
+            }}
+          />
           {projects.map(function (project: Project) {
             return <ProjectItem project={project} />;
           })}
