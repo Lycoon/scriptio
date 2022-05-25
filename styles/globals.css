@@ -14,6 +14,7 @@
 @import "RegisterForm.module.css";
 @import "RecoveryForm.module.css";
 @import "FormError.module.css";
+@import "UploadButton.module.css";
 
 /* Page containers */
 @import "HomePageContainer.module.css";

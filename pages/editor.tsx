@@ -8,7 +8,7 @@ import { User } from "./api/users";
 
 const EditorPage: NextPage<{ user: User }> = ({ user }) => {
   return (
-    <div>
+    <>
       <Head>
         <title>Scriptio - Editor</title>
       </Head>
@@ -16,7 +16,7 @@ const EditorPage: NextPage<{ user: User }> = ({ user }) => {
         <HomePageNavbar className="navbar" user={user} />
         <EditorContainer />
       </div>
-    </div>
+    </>
   );
 };
 

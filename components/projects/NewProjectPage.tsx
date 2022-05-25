@@ -1,5 +1,6 @@
 import Router from "next/router";
 import { useState } from "react";
+import UploadButton from "./UploadButton";
 
 const onSubmit = (setIsCreating: any) => {
   // Successful project creation
@@ -44,7 +45,7 @@ const NewProjectPage = (props: any) => {
           <span className="form-label">Description</span>
           <input className="form-input" name="description" />
           <span className="form-label">Poster</span>
-          <input type="file" accept="image/png, image/jpeg" />
+          <UploadButton />
         </div>
         <div id="form-btn-flex">
           <button className="form-btn" type="submit">

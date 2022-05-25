@@ -6,7 +6,7 @@ import RegisterContainer from "../components/home/register/RegisterContainer";
 
 const RegisterPage: NextPage = () => {
   return (
-    <div>
+    <>
       <Head>
         <title>Scriptio - Register</title>
       </Head>
@@ -15,7 +15,7 @@ const RegisterPage: NextPage = () => {
         <RegisterContainer />
         <HomePageFooter />
       </div>
-    </div>
+    </>
   );
 };
 

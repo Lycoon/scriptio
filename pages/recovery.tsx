@@ -6,7 +6,7 @@ import RecoveryContainer from "../components/home/recovery/RecoveryContainer";
 
 const RecoveryPage: NextPage = () => {
   return (
-    <div>
+    <>
       <Head>
         <title>Scriptio - Password recovery</title>
       </Head>
@@ -15,7 +15,7 @@ const RecoveryPage: NextPage = () => {
         <RecoveryContainer />
         <HomePageFooter />
       </div>
-    </div>
+    </>
   );
 };
 

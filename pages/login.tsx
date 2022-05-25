@@ -6,7 +6,7 @@ import LoginContainer from "../components/home/login/LoginContainer";
 
 const LoginPage: NextPage = () => {
   return (
-    <div>
+    <>
       <Head>
         <title>Scriptio - Log in</title>
       </Head>
@@ -15,7 +15,7 @@ const LoginPage: NextPage = () => {
         <LoginContainer />
         <HomePageFooter />
       </div>
-    </div>
+    </>
   );
 };
 

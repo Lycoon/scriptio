@@ -12,7 +12,7 @@ import { User } from "./api/users";
 
 const HomePage: NextPage = ({ user, projects }: any) => {
   return (
-    <div>
+    <>
       <Head>
         <title>Scriptio</title>
       </Head>
@@ -25,7 +25,7 @@ const HomePage: NextPage = ({ user, projects }: any) => {
         )}
         <HomePageFooter />
       </div>
-    </div>
+    </>
   );
 };
 
