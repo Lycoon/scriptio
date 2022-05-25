@@ -11,6 +11,8 @@ import { getProjects } from "../src/server/service/project-service";
 import { User } from "./api/users";
 
 const HomePage: NextPage = ({ user, projects }: any) => {
+  console.log("homepage projects: ", projects);
+
   return (
     <>
       <Head>
@@ -44,6 +46,8 @@ export const getServerSideProps = withIronSessionSsr(
     if (!projects) {
       return unautheticated;
     }
+
+    console.log("serverside projects: ", projects.projects);
 
     return {
       props: {

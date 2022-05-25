@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const UploadButton = () => {
   const [dragover, setDragover] = useState<Boolean>(false);
 
+  useEffect(() => {
+    console.log(dragover);
+  }, [dragover]);
+
   return (
     <>
-      <label className="upload-button" htmlFor="movie-poster-input">
+      <label
+        onDragEnter={() => setDragover(true)}
+        onDragLeave={() => setDragover(false)}
+        className="upload-button"
+        htmlFor="movie-poster-input"
+      >
         <div
-          onDragEnter={() => setDragover(true)}
-          onDragLeave={() => setDragover(false)}
           className={
             "segoe-bold upload-button-div" + (dragover ? " dragover" : "")
           }

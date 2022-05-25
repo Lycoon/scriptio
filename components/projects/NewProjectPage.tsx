@@ -1,5 +1,6 @@
 import Router from "next/router";
 import { useState } from "react";
+import useUser from "../../src/lib/useUser";
 import UploadButton from "./UploadButton";
 
 const onSubmit = (setIsCreating: any) => {
@@ -9,6 +10,7 @@ const onSubmit = (setIsCreating: any) => {
 
 const NewProjectPage = (props: any) => {
   const setIsCreating = props.setIsCreating;
+  const { user, setUser } = useUser();
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined
   );
@@ -22,14 +24,17 @@ const NewProjectPage = (props: any) => {
       description: e.target.description.value,
     };
 
-    const res = await fetch("/api/users/" + "" + "/projects", {
+    console.log("body: ", body);
+
+    const res = await fetch(`/api/users/${user?.id}/projects`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
-    if (res.status === 200) {
-      Router.push("/");
+    if (res.status === 201) {
+      //Router.push("/");
+      setIsCreating(false);
     } else {
       setErrorMessage((await res.json()).message);
     }
@@ -37,9 +42,9 @@ const NewProjectPage = (props: any) => {
 
   return (
     <div id="new-project-page">
-      <form id="new-project-form" onSubmit={() => onSubmit(setIsCreating)}>
+      <form id="new-project-form" onSubmit={onSubmit}>
         <h1 className="segoe-bold">New project</h1>
-        <div id="email-form" className="form-element">
+        <div className="form-element">
           <span className="form-label">Title</span>
           <input className="form-input" name="title" required />
           <span className="form-label">Description</span>

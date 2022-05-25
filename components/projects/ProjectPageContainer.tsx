@@ -20,6 +20,7 @@ const sampleProject = {
 };
 
 const ProjectPageContainer = ({ projects }: Props) => {
+  console.log("projects: ", projects);
   const [isCreating, setIsCreating] = useState(false);
 
   if (isCreating) {

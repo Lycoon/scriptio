@@ -1,11 +1,12 @@
+import { withIronSessionApiRoute } from "iron-session/next";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { sessionOptions } from "../../../../src/lib/session";
 import { onError, onSuccess } from "../../../../src/lib/utils";
 import { getUserFromId } from "../../../../src/server/service/user-service";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default withIronSessionApiRoute(handler, sessionOptions);
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = +req.query["userId"];
   const user = req.session.user;
 
@@ -14,7 +15,6 @@ export default async function handler(
   }
 
   const fetchedUser = await getUserFromId(userId);
-
   if (!fetchedUser) {
     return onError(res, 404, "User with id " + userId + " not found");
   }

@@ -1,5 +1,5 @@
 .dragover {
-  background-color: rgb(192, 192, 192);
+  background-color: rgb(224, 224, 224);
 }
 
 input[type="file"] {
@@ -22,6 +22,8 @@ input[type="file"] {
   flex-direction: row;
   justify-content: center;
   align-items: center;
+
+  border-radius: 12px;
 }
 
 .upload-button {

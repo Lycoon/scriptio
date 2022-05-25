@@ -27,7 +27,7 @@ model User {
 model Project {
   id            Int         @id @default(autoincrement())
   createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   title         String
   description   String?

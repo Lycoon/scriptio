@@ -1,15 +1,16 @@
+import { withIronSessionApiRoute } from "iron-session/next";
 import { NextApiRequest, NextApiResponse } from "next";
 import { MISSING_BODY } from "../../../../src/lib/messages";
+import { sessionOptions } from "../../../../src/lib/session";
 import { onError, onSuccess } from "../../../../src/lib/utils";
 import {
   createProject,
   getProjects,
 } from "../../../../src/server/service/project-service";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default withIronSessionApiRoute(handler, sessionOptions);
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = +req.query["userId"];
   const user = req.session.user;
 
