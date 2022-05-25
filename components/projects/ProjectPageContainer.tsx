@@ -19,8 +19,14 @@ const sampleProject = {
   screenplay: "",
 };
 
-const ProjectPageContainer = ({ projects }: Props) => {
-  console.log("projects: ", projects);
+const ProjectPageContainer = ({ projects: propProjects }: Props) => {
+  // Getting back dates from workaround
+  const projects = propProjects.map((e) => ({
+    ...e,
+    updatedAt: new Date(e.updatedAt),
+    createdAt: new Date(e.createdAt),
+  }));
+
   const [isCreating, setIsCreating] = useState(false);
 
   if (isCreating) {

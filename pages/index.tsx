@@ -47,7 +47,14 @@ export const getServerSideProps = withIronSessionSsr(
       return unautheticated;
     }
 
-    console.log("serverside projects: ", projects.projects);
+    // Workaround because dates can't be serialized
+    projects.projects = projects.projects.map((e) => {
+      return {
+        ...e,
+        updatedAt: e.updatedAt.toISOString() as any as Date,
+        createdAt: e.createdAt.toISOString() as any as Date,
+      };
+    });
 
     return {
       props: {

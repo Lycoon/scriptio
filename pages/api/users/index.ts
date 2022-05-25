@@ -1,11 +1,22 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { withIronSessionApiRoute } from "iron-session/next";
 import { sessionOptions } from "../../../src/lib/session";
+import { Prisma } from "@prisma/client";
 
 export type User = {
   isLoggedIn: boolean;
   email: string;
   id: number;
+};
+
+export type Project = {
+  id: number;
+  createdAt: Date;
+  updatedAt: Date;
+  title: string;
+  description: string | null;
+  screenplay: Prisma.JsonValue | null;
+  userId: number;
 };
 
 export default withIronSessionApiRoute(userRoute, sessionOptions);
