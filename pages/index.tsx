@@ -10,20 +10,23 @@ import { sessionOptions } from "../src/lib/session";
 import { getProjects } from "../src/server/service/project-service";
 import { User } from "./api/users";
 
-const HomePage: NextPage = ({ user, projects }: any) => {
-  console.log("homepage projects: ", projects);
+type Props = {
+  user: User | null;
+  projects: Project[] | null;
+};
 
+const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
   return (
     <>
       <Head>
         <title>Scriptio</title>
       </Head>
       <div className="main-container">
-        <HomePageNavbar />
-        {!user?.isLoggedIn ? (
+        <HomePageNavbar project={null} />
+        {!user ? (
           <HomePageContainer />
         ) : (
-          <ProjectPageContainer projects={projects} />
+          <ProjectPageContainer projects={projects!} />
         )}
         <HomePageFooter />
       </div>
@@ -31,20 +34,18 @@ const HomePage: NextPage = ({ user, projects }: any) => {
   );
 };
 
-const unautheticated = {
-  props: { user: null as any as User, projects: null as any as Project[] },
-};
+const noauth = { props: { user: null, projects: [] } };
 
 export const getServerSideProps = withIronSessionSsr(
-  async function getServerSideProps({ req }) {
+  async function getServerSideProps({ req }): Promise<any> {
     const user = req.session.user;
     if (!user || !user.isLoggedIn) {
-      return unautheticated;
+      return noauth;
     }
 
     const projects = await getProjects(user.id);
     if (!projects) {
-      return unautheticated;
+      return noauth;
     }
 
     // Workaround because dates can't be serialized

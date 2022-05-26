@@ -1,7 +1,12 @@
 import { useState } from "react";
+import { Project } from "../../pages/api/users";
 import NavbarDropdown from "./dropdown/NavbarDropdown";
 
-const NavbarTab = (props: any) => {
+type Props = {
+  project: Project;
+};
+
+const NavbarTab = ({ project }: Props) => {
   const [active, updateActive] = useState<boolean>(false);
   const toggleDropdown = () => {
     updateActive(!active);
@@ -9,13 +14,15 @@ const NavbarTab = (props: any) => {
 
   return (
     <div onClick={toggleDropdown} className="navbar-tab">
-      <p className="navbar-tab-content unselectable">{props.content}</p>
+      <p className="navbar-tab-content unselectable">{project.title}</p>
       <img
         className="dropdown-icon"
-        src="images/arrow.svg"
+        src="/images/arrow.svg"
         alt="Dropdown arrow"
       />
-      {active && <NavbarDropdown toggleDropdown={toggleDropdown} />}
+      {active && (
+        <NavbarDropdown project={project} toggleDropdown={toggleDropdown} />
+      )}
     </div>
   );
 };

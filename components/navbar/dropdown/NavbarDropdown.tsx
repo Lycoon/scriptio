@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
+import { Project } from "../../../pages/api/users";
 import DropdownItem from "./DropdownItem";
 import ExportDropdown from "./ExportDropdown";
 
-const NavbarDropdown = (props: any) => {
+type Props = {
+  project: Project;
+  toggleDropdown: () => void;
+};
+
+const NavbarDropdown = ({ project, toggleDropdown }: Props) => {
   const [active, updateActive] = useState<boolean>(false);
   const handleClickOutside = (event: Event) => {
     if (event.target?.className !== "dropdown-item") {
-      props.toggleDropdown();
+      toggleDropdown();
     }
   };
 
@@ -58,7 +64,7 @@ const NavbarDropdown = (props: any) => {
         action={editProject}
         content="Edit project"
       ></DropdownItem>
-      {active && <ExportDropdown />}
+      {active && <ExportDropdown project={project} />}
     </div>
   );
 };

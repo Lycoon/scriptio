@@ -23,9 +23,8 @@ export default withIronSessionApiRoute(userRoute, sessionOptions);
 
 async function userRoute(
   req: NextApiRequest,
-  res: NextApiResponse<Partial<User>>
+  res: NextApiResponse<Partial<User> | null>
 ) {
-  console.log("GET api/users/");
   if (req.session.user) {
     console.log("req.session.user: ", req.session.user);
     // in a real world application you might read the user id from the session and then do a database request
@@ -37,8 +36,6 @@ async function userRoute(
   } else {
     res.json({
       isLoggedIn: false,
-      email: "",
-      id: -1,
     });
   }
 }

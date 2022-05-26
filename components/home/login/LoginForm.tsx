@@ -1,8 +1,10 @@
 import Router from "next/router";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { UserContext } from "../../../src/context/UserContext";
 import FormError from "../FormError";
 
 const LoginForm = () => {
+  const { user, updateUser } = useContext(UserContext);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined
   );
@@ -22,7 +24,11 @@ const LoginForm = () => {
       body: JSON.stringify(body),
     });
 
+    const s = (await res.json()).body;
+    console.log("user: ", s);
+
     if (res.status === 200) {
+      updateUser(s);
       Router.push("/");
     } else {
       setErrorMessage((await res.json()).message);

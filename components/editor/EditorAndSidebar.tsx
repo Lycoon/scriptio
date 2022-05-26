@@ -20,13 +20,20 @@ const EditorAndSidebar = () => {
     editor?.chain().focus().setNode("Screenplay", { class: node }).run();
   };
 
-  const tabKeyPressed = (event: any) => {
-    if (event.key === "Tab") {
-      event.preventDefault();
+  const tabKeyPressed = (e: KeyboardEvent) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
 
       const idx = (selectedTab + 1) % 6;
       updateSelectedTab(idx);
       setActiveTab(tabs[idx]);
+    }
+  };
+
+  const saveKeyPressed = (e: KeyboardEvent) => {
+    if (e.ctrlKey && e.key === "s") {
+      e.preventDefault();
+      console.log("saving screenplay");
     }
   };
 
@@ -35,10 +42,11 @@ const EditorAndSidebar = () => {
   }, [editor]);
 
   useEffect(() => {
-    document.addEventListener("keydown", tabKeyPressed, false);
-
+    addEventListener("keydown", tabKeyPressed, false);
+    addEventListener("keydown", saveKeyPressed, false);
     return () => {
-      document.removeEventListener("keydown", tabKeyPressed, false);
+      removeEventListener("keydown", tabKeyPressed, false);
+      removeEventListener("keydown", saveKeyPressed, false);
     };
   });
 

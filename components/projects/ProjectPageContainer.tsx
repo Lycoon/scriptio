@@ -6,10 +6,6 @@ import NewProjectItem from "./NewProjectItem";
 import NewProjectPage from "./NewProjectPage";
 import ProjectItem from "./ProjectItem";
 
-type Props = {
-  projects: Project[];
-};
-
 const sampleProject = {
   id: 0,
   userId: 1,
@@ -18,6 +14,10 @@ const sampleProject = {
   createdAt: new Date(),
   updatedAt: new Date(),
   screenplay: "",
+};
+
+type Props = {
+  projects: Project[];
 };
 
 const ProjectPageContainer = ({ projects: propProjects }: Props) => {
@@ -48,7 +48,7 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
           <div className="project-grid">
             <NewProjectItem setIsCreating={setIsCreating} />
             {projects.map(function (project: Project) {
-              return <ProjectItem project={project} />;
+              return <ProjectItem key={project.id} project={project} />;
             })}
           </div>
         </div>
