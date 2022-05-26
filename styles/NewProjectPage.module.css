@@ -18,3 +18,27 @@
   min-width: 270px;
   max-width: 400px;
 }
+
+#new-project-form-btn-flex {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 70px;
+}
+
+.new-project-submit-btn {
+  height: 50px;
+}
+
+.input-description {
+  min-height: 100px;
+  max-height: 300px;
+  resize: vertical;
+}
+
+.back-btn {
+  font-size: 1rem;
+  white-space: nowrap;
+  cursor: pointer;
+}

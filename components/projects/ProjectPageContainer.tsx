@@ -1,5 +1,6 @@
 import { Project } from "@prisma/client";
-import { useState } from "react";
+import { Router } from "next/router";
+import { useEffect, useState } from "react";
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectItem from "./NewProjectItem";
 import NewProjectPage from "./NewProjectPage";
@@ -21,11 +22,17 @@ const sampleProject = {
 
 const ProjectPageContainer = ({ projects: propProjects }: Props) => {
   // Getting back dates from workaround
-  const projects = propProjects.map((e) => ({
+  let projects = propProjects.map((e) => ({
     ...e,
     updatedAt: new Date(e.updatedAt),
     createdAt: new Date(e.createdAt),
   }));
+
+  // Sorting by last updated
+  projects = projects.sort((a, b) => {
+    if (b.updatedAt > a.updatedAt) return 1;
+    return 0;
+  });
 
   const [isCreating, setIsCreating] = useState(false);
 
@@ -39,9 +46,7 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
         <div className="center-flex">
           <h1 id="project-page-title">Projects</h1>
           <div className="project-grid">
-            <ProjectItem project={sampleProject} />
-            <ProjectItem project={sampleProject} />
-            <ProjectItem project={sampleProject} />
+            <NewProjectItem setIsCreating={setIsCreating} />
             {projects.map(function (project: Project) {
               return <ProjectItem project={project} />;
             })}

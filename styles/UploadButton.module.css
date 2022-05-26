@@ -35,3 +35,8 @@ input[type="file"] {
   height: 100px;
   border-radius: 12px;
 }
+
+.upload-button:hover {
+  background-color: rgb(246, 246, 246);
+  transition: background-color 0.25s;
+}

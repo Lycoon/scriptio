@@ -12,9 +12,9 @@ const NavbarTab = (props: any) => {
       <p className="navbar-tab-content unselectable">{props.content}</p>
       <img
         className="dropdown-icon"
-        src="images/dropdown-arrow.svg"
+        src="images/arrow.svg"
         alt="Dropdown arrow"
-      ></img>
+      />
       {active && <NavbarDropdown toggleDropdown={toggleDropdown} />}
     </div>
   );

@@ -15,7 +15,7 @@ const NewProjectPage = (props: any) => {
     undefined
   );
 
-  async function onSubmit(e: any) {
+  const onSubmit = async (e: any) => {
     e.preventDefault();
     setErrorMessage(undefined);
 
@@ -33,12 +33,12 @@ const NewProjectPage = (props: any) => {
     });
 
     if (res.status === 201) {
-      //Router.push("/");
+      Router.push("/");
       setIsCreating(false);
     } else {
       setErrorMessage((await res.json()).message);
     }
-  }
+  };
 
   return (
     <div id="new-project-page">
@@ -47,13 +47,23 @@ const NewProjectPage = (props: any) => {
         <div className="form-element">
           <span className="form-label">Title</span>
           <input className="form-input" name="title" required />
-          <span className="form-label">Description</span>
-          <input className="form-input" name="description" />
-          <span className="form-label">Poster</span>
+          <span className="form-label">
+            Description - <i>optional</i>
+          </span>
+          <textarea
+            className="form-input input-description"
+            name="description"
+          />
+          <span className="form-label">
+            Poster - <i>optional</i>
+          </span>
           <UploadButton />
         </div>
-        <div id="form-btn-flex">
-          <button className="form-btn" type="submit">
+        <div id="new-project-form-btn-flex">
+          <a className="back-btn" onClick={() => setIsCreating(false)}>
+            ← Back
+          </a>
+          <button className="form-btn new-project-submit-btn" type="submit">
             Create
           </button>
         </div>

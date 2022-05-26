@@ -37,7 +37,8 @@ a {
   font-family: segoe-bold;
   color: #ffffff;
   background-color: #474747;
-  width: 50%;
+  cursor: pointer;
+  width: 100%;
 
   /* Position */
   text-align: center;

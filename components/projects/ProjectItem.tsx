@@ -5,17 +5,24 @@ type Props = {
   project: Project;
 };
 
+const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+const getLastUpdate = (days: number) => {
+  if (days === 0) return "Today";
+  else if (days === 1) return "Yesterday";
+  else if (days <= 30) return `${days} days ago`;
+  else if (days <= 365) return `${days / 30} months ago`;
+  else return "More than 1 year ago";
+};
+
 const openProject = (projectId: number) => {
   Router.push("/projects/" + projectId + "/editor");
 };
-
-const _MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 const ProjectItem = ({ project }: Props) => {
   const days = Math.round((Date.now() - +project.updatedAt) / _MS_PER_DAY);
 
   return (
-    <button className="project-item">
+    <button className="project-item" onClick={() => openProject(project.id)}>
       <div className="project-item-flex">
         <div>
           <h2 className="project-item-title">{project.title}</h2>
@@ -25,7 +32,7 @@ const ProjectItem = ({ project }: Props) => {
               src="images/calendar.png"
               alt="Calendar icon"
             ></img>
-            <p className="project-date-text">{days} days ago</p>
+            <p className="project-date-text">{getLastUpdate(days)}</p>
           </div>
         </div>
         <img className="movie-poster" src="https://i.imgur.com/ySkNtJF.png" />
