@@ -29,7 +29,6 @@ const HomePageNavbar = ({ project }: Props) => {
     Router.push("");
   };
 
-  console.log("user: ", user);
   return (
     <nav id="navbar">
       <div id="logo-and-tabs">

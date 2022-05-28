@@ -1,4 +1,5 @@
 import { PrismaClient, Project } from "@prisma/client";
+import { JSONContent } from "@tiptap/react";
 
 const prisma = new PrismaClient();
 
@@ -6,7 +7,7 @@ export interface ProjectUpdate {
   projectId: number;
   title?: string;
   description?: string;
-  screenplay?: string;
+  screenplay?: JSONContent;
 }
 
 export interface ProjectCreation {
@@ -25,7 +26,7 @@ export class ProjectRepository {
         updatedAt: new Date().toISOString(),
       },
       where: {
-        id: project.projectId,
+        //id: project.projectId,
       },
     });
   }

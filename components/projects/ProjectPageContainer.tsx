@@ -29,11 +29,7 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
   }));
 
   // Sorting by last updated
-  projects = projects.sort((a, b) => {
-    if (b.updatedAt > a.updatedAt) return 1;
-    return 0;
-  });
-
+  projects.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
   const [isCreating, setIsCreating] = useState(false);
 
   if (isCreating) {

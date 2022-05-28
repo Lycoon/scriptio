@@ -19,8 +19,8 @@ My biggest inspiration is by far _Amazon Story Writer_, a very handy writing too
 # Features
 
 - Online
+- Export to PDF or Fountain format
 - _planned_ - Project management
-- _planned_ - Export to PDF or Fountain format
 - _planned_ - Collaborative editing
 - _planned_ - Screenplay sharing
 
@@ -36,6 +36,9 @@ My biggest inspiration is by far _Amazon Story Writer_, a very handy writing too
 - Tiptap `2.0.0`
 - NextJS `12.0.10`
 - React `17.0.2`
+- Prisma `3.11.1`
+- File Saver `2.0.5`
+- Iron Session `6.1.3`
 
 # How to launch
 

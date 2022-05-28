@@ -19,7 +19,7 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
   return (
     <>
       <Head>
-        <title>Scriptio</title>
+        <title>{!user ? "Scriptio" : "Scriptio - Projects"}</title>
       </Head>
       <div className="main-container">
         <HomePageNavbar project={null} />

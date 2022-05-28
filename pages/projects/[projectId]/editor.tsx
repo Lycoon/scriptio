@@ -1,7 +1,8 @@
 import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
-import Router from "next/router";
+import { useEffect, useState } from "react";
+import { setTimeout } from "timers/promises";
 import EditorContainer from "../../../components/editor/EditorContainer";
 import HomePageNavbar from "../../../components/navbar/Navbar";
 import { sessionOptions } from "../../../src/lib/session";
@@ -13,21 +14,22 @@ type Props = {
   project: Project | null;
 };
 
+const redirectToHome = { redirect: { destination: "/" } };
+
 const EditorPage: NextPage<Props> = ({ user, project }: Props) => {
   return (
     <>
       <Head>
-        <title>Scriptio - Editor</title>
+        <title>{project?.title}</title>
       </Head>
       <div className="main-container">
         <HomePageNavbar project={project} />
-        <EditorContainer />
+        <EditorContainer project={project!} />
       </div>
     </>
   );
 };
 
-const redirectToHome = { redirect: { destination: "/" } };
 export const getServerSideProps = withIronSessionSsr(async function ({
   req,
   query,

@@ -61,7 +61,7 @@ const NewProjectPage = (props: any) => {
         </div>
         <div id="new-project-form-btn-flex">
           <a className="back-btn" onClick={() => setIsCreating(false)}>
-            ← Back
+            Back
           </a>
           <button className="form-btn new-project-submit-btn" type="submit">
             Create

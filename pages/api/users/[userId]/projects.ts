@@ -5,7 +5,9 @@ import { sessionOptions } from "../../../../src/lib/session";
 import { onError, onSuccess } from "../../../../src/lib/utils";
 import {
   createProject,
+  getProjectFromId,
   getProjects,
+  updateProject,
 } from "../../../../src/server/service/project-service";
 
 export default withIronSessionApiRoute(handler, sessionOptions);
@@ -23,7 +25,34 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return getMethod(userId, res);
     case "POST":
       return postMethod(userId, req.body, res);
+    case "PATCH":
+      return patchMethod(userId, req.body, res);
   }
+}
+
+async function patchMethod(userId: number, body: any, res: NextApiResponse) {
+  const projectId = +body["projectId"];
+  const screenplay = JSON.parse(body["screenplay"]);
+  if (!projectId || !screenplay) {
+    return onError(res, 400, MISSING_BODY);
+  }
+
+  const project = await getProjectFromId(projectId);
+  if (project?.userId !== userId) {
+    // not user's project
+    return onError(res, 403, "Forbidden");
+  }
+
+  const updated = await updateProject({
+    projectId,
+    screenplay,
+  });
+
+  if (!updated) {
+    return onError(res, 500, MISSING_BODY);
+  }
+
+  return onSuccess(res, 200, "", updated);
 }
 
 async function getMethod(userId: number, res: NextApiResponse) {

@@ -36,3 +36,8 @@
   justify-content: flex-end;
   align-items: center;
 }
+
+.status-text {
+  color: white;
+  text-align: left;
+}
