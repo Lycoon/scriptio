@@ -50,7 +50,7 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
   });
 
   if (!updated) {
-    return onError(res, 500, MISSING_BODY);
+    return onError(res, 500, "Project update failed");
   }
 
   return onSuccess(res, 200, "", updated);
