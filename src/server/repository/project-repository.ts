@@ -26,7 +26,7 @@ export class ProjectRepository {
         updatedAt: new Date().toISOString(),
       },
       where: {
-        //id: project.projectId,
+        id: project.projectId,
       },
     });
   }

@@ -25,8 +25,6 @@ const LoginForm = () => {
     });
 
     const s = (await res.json()).body;
-    console.log("user: ", s);
-
     if (res.status === 200) {
       updateUser(s);
       Router.push("/");

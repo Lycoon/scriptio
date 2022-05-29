@@ -26,7 +26,7 @@ const HomePageNavbar = ({ project }: Props) => {
   const onLogOut = async () => {
     await fetch("/api/logout");
     updateUser(undefined);
-    Router.push("");
+    Router.push("/");
   };
 
   return (

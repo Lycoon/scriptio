@@ -32,7 +32,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 async function patchMethod(userId: number, body: any, res: NextApiResponse) {
   const projectId = +body["projectId"];
-  const screenplay = JSON.parse(body["screenplay"]);
+  const screenplay = body["screenplay"];
+
   if (!projectId || !screenplay) {
     return onError(res, 400, MISSING_BODY);
   }

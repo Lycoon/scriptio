@@ -1,4 +1,4 @@
-import { useEditor } from "@tiptap/react";
+import { JSONContent, useEditor } from "@tiptap/react";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../src/context/UserContext";
 import { Screenplay } from "../../src/Screenplay";
@@ -43,8 +43,6 @@ const EditorAndSidebar = ({ project }: Props) => {
       const currNode = transaction.curSelection.$anchor.path[3].attrs.class;
       setActiveTab(currNode);
     },
-
-    content: project.screenplay?.toString(),
     autofocus: "end",
   });
 
@@ -67,8 +65,9 @@ const EditorAndSidebar = ({ project }: Props) => {
   });
 
   useEffect(() => {
+    editorView?.commands.setContent(project.screenplay as JSONContent);
     updateEditor(editorView!);
-  }, []);
+  }, [editorView]);
 
   const setActiveTab = (node: string) => {
     updateSelectedTab(tabs.indexOf(node));
@@ -90,9 +89,17 @@ const EditorAndSidebar = ({ project }: Props) => {
   const saveKeyPressed = async (e: KeyboardEvent) => {
     if (e.ctrlKey && e.key === "s") {
       e.preventDefault();
-      await updateProject({
+
+      const body = {
         projectId: project.id,
         screenplay: editorView?.getJSON(),
+      };
+
+      console.log("body: ", body);
+      const res = await fetch(`/api/users/${project.userId}/projects`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
     }
   };
