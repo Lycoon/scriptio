@@ -16,7 +16,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const userId = +req.query["userId"];
   const user = req.session.user;
 
-  if (!user || !user.isLoggedIn || userId !== user.id) {
+  if (!user || !user.isLoggedIn || !userId || userId !== user.id) {
     return onError(res, 403, "Forbidden");
   }
 
@@ -46,8 +46,12 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     return onError(res, 403, "Forbidden");
   }
 
-  if (title && title.length < 2) {
-    return onError(res, 400, "Title must be at least 2-character long");
+  if (title && (title.length < 2 || title.length > 256)) {
+    return onError(res, 400, "Title must be between 2 and 256 characters");
+  }
+
+  if (description && description.length > 2048) {
+    return onError(res, 400, "Description must be at most 2048-character long");
   }
 
   const updated = await updateProject({
@@ -78,9 +82,20 @@ async function postMethod(userId: number, body: any, res: NextApiResponse) {
     return onError(res, 400, MISSING_BODY);
   }
 
+  const title: string = body.title;
+  const description: string = body.description;
+
+  if (title.length < 2 || title.length > 256) {
+    return onError(res, 400, "Title must be between 2 and 256 characters");
+  }
+
+  if (description && description.length > 2048) {
+    return onError(res, 400, "Description must be at most 2048-character long");
+  }
+
   const created = await createProject({
-    title: body.title,
-    description: body.description,
+    title,
+    description,
     userId,
   });
 
