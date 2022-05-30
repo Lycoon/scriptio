@@ -33,8 +33,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 async function patchMethod(userId: number, body: any, res: NextApiResponse) {
   const projectId = +body["projectId"];
   const screenplay = body["screenplay"];
+  const title: string = body["title"];
+  const description = body["description"];
 
-  if (!projectId || !screenplay) {
+  if (!projectId) {
     return onError(res, 400, MISSING_BODY);
   }
 
@@ -44,9 +46,15 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     return onError(res, 403, "Forbidden");
   }
 
+  if (title && title.length < 2) {
+    return onError(res, 400, "Title must be at least 2-character long");
+  }
+
   const updated = await updateProject({
     projectId,
     screenplay,
+    title,
+    description,
   });
 
   if (!updated) {

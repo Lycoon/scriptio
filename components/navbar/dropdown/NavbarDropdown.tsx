@@ -1,3 +1,4 @@
+import Router from "next/router";
 import { useEffect, useState } from "react";
 import { Project } from "../../../pages/api/users";
 import DropdownItem from "./DropdownItem";
@@ -25,7 +26,7 @@ const NavbarDropdown = ({ project, toggleDropdown }: Props) => {
   };
 
   const editProject = () => {
-    console.log("edit project");
+    Router.push(`/projects/${project.id}/edit`);
   };
 
   const hideExportDropdown = () => {

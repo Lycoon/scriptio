@@ -1,8 +1,9 @@
 import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
-import EditorContainer from "../../../components/editor/EditorContainer";
+import HomePageFooter from "../../../components/home/HomePageFooter";
 import HomePageNavbar from "../../../components/navbar/Navbar";
+import EditProjectContainer from "../../../components/projects/edit/EditProjectContainer";
 import { sessionOptions } from "../../../src/lib/session";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { Project, User } from "../../api/users";
@@ -14,15 +15,16 @@ type Props = {
 
 const redirectToHome = { redirect: { destination: "/" } };
 
-const EditorPage: NextPage<Props> = ({ user, project }: Props) => {
+const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
   return (
     <>
       <Head>
-        <title>{project?.title}</title>
+        <title>Scriptio - Edit project</title>
       </Head>
       <div className="main-container">
         <HomePageNavbar project={project} />
-        <EditorContainer project={project!} />
+        <EditProjectContainer user={user} project={project} />
+        <HomePageFooter />
       </div>
     </>
   );
@@ -53,4 +55,4 @@ export const getServerSideProps = withIronSessionSsr(async function ({
 },
 sessionOptions);
 
-export default EditorPage;
+export default EditProjectPage;

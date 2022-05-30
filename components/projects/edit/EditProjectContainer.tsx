@@ -1,20 +1,17 @@
+import { Project } from "@prisma/client";
 import Router from "next/router";
-import { useState } from "react";
-import useUser from "../../src/lib/useUser";
-import FormError from "../home/FormError";
-import UploadButton from "./UploadButton";
+import { useEffect, useState } from "react";
+import { User } from "../../../pages/api/users";
+import useUser from "../../../src/lib/useUser";
+import FormError from "../../home/FormError";
+import UploadButton from "../UploadButton";
 
 type Props = {
-  setIsCreating: (isCreating: boolean) => void;
+  project: Project;
+  user: User;
 };
 
-const onSubmit = (setIsCreating: (isCreating: boolean) => void) => {
-  // Successful project creation
-  setIsCreating(false);
-};
-
-const NewProjectPage = ({ setIsCreating }: Props) => {
-  const { user, setUser } = useUser();
+const EditProjectConainer = ({ project, user }: Props) => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined
   );
@@ -24,19 +21,19 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
     setErrorMessage(undefined);
 
     const body = {
+      projectId: project.id,
       title: e.target.title.value,
       description: e.target.description.value,
     };
 
-    const res = await fetch(`/api/users/${user?.id}/projects`, {
-      method: "POST",
+    const res = await fetch(`/api/users/${user.id}/projects`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
-    if (res.status === 201) {
-      Router.push("/");
-      setIsCreating(false);
+    if (res.status === 200) {
+      Router.push(`/projects/${project.id}/editor`);
     } else {
       setErrorMessage((await res.json()).message);
     }
@@ -45,30 +42,35 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
   return (
     <div id="new-project-page">
       <form id="new-project-form" onSubmit={onSubmit}>
-        <h1 className="segoe-bold">New project</h1>
+        <h1 className="segoe-bold">Edit project</h1>
         {errorMessage && <FormError message={errorMessage} />}
 
         <div className="form-element">
           <span className="form-label">Title</span>
-          <input className="form-input" name="title" required />
-          <span className="form-label">
-            Description - <i>optional</i>
-          </span>
+          <input
+            className="form-input"
+            name="title"
+            defaultValue={project.title}
+            required
+          />
+          <span className="form-label">Description</span>
           <textarea
             className="form-input input-description"
             name="description"
+            defaultValue={project.description ?? undefined}
           />
-          <span className="form-label">
-            Poster - <i>optional</i>
-          </span>
+          <span className="form-label">Poster</span>
           <UploadButton />
         </div>
         <div id="new-project-form-btn-flex">
-          <a className="back-btn" onClick={() => setIsCreating(false)}>
+          <a
+            className="back-btn"
+            onClick={() => Router.push(`/projects/${project.id}/editor`)}
+          >
             Back
           </a>
           <button className="form-btn new-project-submit-btn" type="submit">
-            Create
+            Confirm
           </button>
         </div>
       </form>
@@ -76,4 +78,4 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
   );
 };
 
-export default NewProjectPage;
+export default EditProjectConainer;
