@@ -9,7 +9,6 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
-import { updateProject } from "../../src/server/service/project-service";
 
 type Props = {
   project: Project;
@@ -95,7 +94,6 @@ const EditorAndSidebar = ({ project }: Props) => {
         screenplay: editorView?.getJSON(),
       };
 
-      console.log("body: ", body);
       const res = await fetch(`/api/users/${project.userId}/projects`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
