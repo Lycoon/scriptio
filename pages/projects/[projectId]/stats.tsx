@@ -2,7 +2,7 @@ import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
 import HomePageFooter from "../../../components/home/HomePageFooter";
-import HomePageNavbar from "../../../components/navbar/Navbar";
+import Navbar from "../../../components/navbar/Navbar";
 import EditProjectContainer from "../../../components/projects/edit/EditProjectContainer";
 import ProjectStatsContainer from "../../../components/projects/stats/ProjectStatsContainer";
 import { sessionOptions } from "../../../src/lib/session";
@@ -16,14 +16,14 @@ type Props = {
 
 const redirectToHome = { redirect: { destination: "/" } };
 
-const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
+const StatsProjectPage: NextPage<Props> = ({ user, project }: Props) => {
   return (
     <>
       <Head>
         <title>{project.title} - Statistics</title>
       </Head>
       <div className="main-container">
-        <HomePageNavbar project={project} />
+        <Navbar activeButtons={{ isStatistics: true }} project={project} />
         <ProjectStatsContainer project={project} />
         <HomePageFooter />
       </div>
@@ -56,4 +56,4 @@ export const getServerSideProps = withIronSessionSsr(async function ({
 },
 sessionOptions);
 
-export default EditProjectPage;
+export default StatsProjectPage;

@@ -1,6 +1,6 @@
 /* Layouts */
 @import "HomePageFooter.module.css";
-@import "HomePageNavbar.module.css";
+@import "Navbar.module.css";
 @import "NavbarButton.module.css";
 @import "NavbarTab.module.css";
 @import "NavbarDropdown.module.css";

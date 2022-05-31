@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import HomePageFooter from "../components/home/HomePageFooter";
-import HomePageNavbar from "../components/navbar/Navbar";
+import Navbar from "../components/navbar/Navbar";
 import RegisterContainer from "../components/home/register/RegisterContainer";
 
 const RegisterPage: NextPage = () => {
@@ -11,7 +11,7 @@ const RegisterPage: NextPage = () => {
         <title>Scriptio - Register</title>
       </Head>
       <div className="main-container">
-        <HomePageNavbar />
+        <Navbar />
         <RegisterContainer />
         <HomePageFooter />
       </div>

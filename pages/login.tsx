@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import HomePageFooter from "../components/home/HomePageFooter";
-import HomePageNavbar from "../components/navbar/Navbar";
+import Navbar from "../components/navbar/Navbar";
 import LoginContainer from "../components/home/login/LoginContainer";
 
 const LoginPage: NextPage = () => {
@@ -11,7 +11,7 @@ const LoginPage: NextPage = () => {
         <title>Scriptio - Log in</title>
       </Head>
       <div className="main-container">
-        <HomePageNavbar />
+        <Navbar />
         <LoginContainer />
         <HomePageFooter />
       </div>

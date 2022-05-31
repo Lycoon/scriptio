@@ -1,21 +1,19 @@
 import Router from "next/router";
 import { useEffect, useState } from "react";
 import { Project } from "../../../pages/api/users";
+import { ActiveButtons } from "../../../src/lib/utils";
 import DropdownItem from "./DropdownItem";
 import ExportDropdown from "./ExportDropdown";
 
 type Props = {
+  activeButtons?: ActiveButtons;
   project: Project;
   toggleDropdown: () => void;
 };
 
-const NavbarDropdown = ({ project, toggleDropdown }: Props) => {
+const NavbarDropdown = ({ activeButtons, project, toggleDropdown }: Props) => {
+  const { isScreenplay, isStatistics, isProjectEdition } = activeButtons ?? {};
   const [active, updateActive] = useState<boolean>(false);
-  const handleClickOutside = (event: Event) => {
-    if (event.target?.className !== "dropdown-item") {
-      toggleDropdown();
-    }
-  };
 
   const importFile = () => {
     console.log("import file");
@@ -41,6 +39,12 @@ const NavbarDropdown = ({ project, toggleDropdown }: Props) => {
     updateActive(true);
   };
 
+  const handleClickOutside = (event: any) => {
+    if (event.target?.className !== "dropdown-item") {
+      toggleDropdown();
+    }
+  };
+
   useEffect(() => {
     document.addEventListener("click", handleClickOutside, true);
     return () => {
@@ -50,30 +54,37 @@ const NavbarDropdown = ({ project, toggleDropdown }: Props) => {
 
   return (
     <div className="dropdown-items navbar-dropdown">
-      <DropdownItem
-        hovering={hideExportDropdown}
-        action={importFile}
-        content="Import..."
-      ></DropdownItem>
-      <DropdownItem
-        hovering={showExportDropdown}
-        content="Export..."
-      ></DropdownItem>
-      <DropdownItem
-        hovering={hideExportDropdown}
-        action={openScreenplay}
-        content="Screenplay"
-      ></DropdownItem>
-      <DropdownItem
-        hovering={hideExportDropdown}
-        action={editProject}
-        content="Edit project"
-      ></DropdownItem>
-      <DropdownItem
-        hovering={hideExportDropdown}
-        action={openStatistics}
-        content="Statistics"
-      ></DropdownItem>
+      {isScreenplay && (
+        <DropdownItem
+          hovering={hideExportDropdown}
+          action={importFile}
+          content="Import..."
+        />
+      )}
+      {isScreenplay && (
+        <DropdownItem hovering={showExportDropdown} content="Export..." />
+      )}
+      {!isScreenplay && (
+        <DropdownItem
+          hovering={hideExportDropdown}
+          action={openScreenplay}
+          content="Screenplay"
+        />
+      )}
+      {!isProjectEdition && (
+        <DropdownItem
+          hovering={hideExportDropdown}
+          action={editProject}
+          content="Edit project"
+        />
+      )}
+      {!isStatistics && (
+        <DropdownItem
+          hovering={hideExportDropdown}
+          action={openStatistics}
+          content="Statistics"
+        />
+      )}
       {active && <ExportDropdown project={project} />}
     </div>
   );

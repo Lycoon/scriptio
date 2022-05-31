@@ -1,5 +1,11 @@
 import { NextApiResponse } from "next";
 
+export type ActiveButtons = {
+  isScreenplay?: boolean;
+  isStatistics?: boolean;
+  isProjectEdition?: boolean;
+};
+
 export const onSuccess = (
   res: NextApiResponse,
   code: number,

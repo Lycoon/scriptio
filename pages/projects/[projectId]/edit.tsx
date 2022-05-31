@@ -2,7 +2,7 @@ import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
 import HomePageFooter from "../../../components/home/HomePageFooter";
-import HomePageNavbar from "../../../components/navbar/Navbar";
+import Navbar from "../../../components/navbar/Navbar";
 import EditProjectContainer from "../../../components/projects/edit/EditProjectContainer";
 import { sessionOptions } from "../../../src/lib/session";
 import { getProjectFromId } from "../../../src/server/service/project-service";
@@ -22,7 +22,7 @@ const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
         <title>{project.title} - Edit project</title>
       </Head>
       <div className="main-container">
-        <HomePageNavbar project={project} />
+        <Navbar activeButtons={{ isProjectEdition: true }} project={project} />
         <EditProjectContainer user={user} project={project} />
         <HomePageFooter />
       </div>

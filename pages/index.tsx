@@ -4,7 +4,7 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import HomePageContainer from "../components/home/HomePageContainer";
 import HomePageFooter from "../components/home/HomePageFooter";
-import HomePageNavbar from "../components/navbar/Navbar";
+import Navbar from "../components/navbar/Navbar";
 import ProjectPageContainer from "../components/projects/ProjectPageContainer";
 import { sessionOptions } from "../src/lib/session";
 import { getProjects } from "../src/server/service/project-service";
@@ -22,7 +22,7 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
         <title>{!user ? "Scriptio" : "Scriptio - Projects"}</title>
       </Head>
       <div className="main-container">
-        <HomePageNavbar project={null} />
+        <Navbar project={null} />
         {!user ? (
           <HomePageContainer />
         ) : (

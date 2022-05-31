@@ -1,11 +1,13 @@
 import Router from "next/router";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
+import { ActiveButtons } from "../../src/lib/utils";
 import NavbarButton from "./NavbarButton";
 import NavbarTab from "./NavbarTab";
 
 type Props = {
+  activeButtons?: ActiveButtons;
   project: Project | null;
 };
 
@@ -21,7 +23,7 @@ const onSettings = () => {
   Router.push("settings");
 };
 
-const HomePageNavbar = ({ project }: Props) => {
+const Navbar = ({ activeButtons, project }: Props) => {
   const { user, updateUser } = useContext(UserContext);
   const onLogOut = async () => {
     await fetch("/api/logout");
@@ -35,7 +37,12 @@ const HomePageNavbar = ({ project }: Props) => {
         <a id="logo" href="http://localhost:3000">
           <img src="https://i.imgur.com/uIOrnUi.png" width="100" height="28" />
         </a>
-        {project && <NavbarTab project={project}></NavbarTab>}
+        {project && (
+          <NavbarTab
+            activeButtons={activeButtons}
+            project={project}
+          ></NavbarTab>
+        )}
       </div>
       {!user?.isLoggedIn ? (
         <div id="navbar-buttons">
@@ -52,4 +59,4 @@ const HomePageNavbar = ({ project }: Props) => {
   );
 };
 
-export default HomePageNavbar;
+export default Navbar;
