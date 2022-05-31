@@ -27,6 +27,7 @@
 @import "EmptyProjectPage.module.css";
 @import "NewProjectPage.module.css";
 @import "EditProjectContainer.module.css";
+@import "ProjectStatsContainer.module.css";
 
 /* Editor */
 @import "EditorComponent.module.css";

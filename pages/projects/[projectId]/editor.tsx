@@ -18,7 +18,7 @@ const EditorPage: NextPage<Props> = ({ user, project }: Props) => {
   return (
     <>
       <Head>
-        <title>{project?.title}</title>
+        <title>{project.title}</title>
       </Head>
       <div className="main-container">
         <HomePageNavbar project={project} />

@@ -86,7 +86,7 @@ export const exportToPDF = async (
   author: string,
   json: JSONContent
 ) => {
-  let nodes = json.content!;
+  const nodes = json.content!;
   let pdfNodes = [];
 
   for (let i = 0; i < nodes.length; i++) {
@@ -95,8 +95,6 @@ export const exportToPDF = async (
     }
     const text: string = nodes[i]["content"]![0]["text"]!;
     const type: string = nodes[i]["attrs"]!["class"];
-    const nextType: any =
-      i >= nodes.length - 1 ? undefined : nodes[i + 1]["attrs"]!["class"];
 
     switch (type) {
       case "scene":

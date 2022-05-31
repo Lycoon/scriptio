@@ -22,7 +22,11 @@ const NavbarDropdown = ({ project, toggleDropdown }: Props) => {
   };
 
   const openStatistics = () => {
-    console.log("open statistics");
+    Router.push(`/projects/${project.id}/stats`);
+  };
+
+  const openScreenplay = () => {
+    Router.push(`/projects/${project.id}/editor`);
   };
 
   const editProject = () => {
@@ -57,13 +61,18 @@ const NavbarDropdown = ({ project, toggleDropdown }: Props) => {
       ></DropdownItem>
       <DropdownItem
         hovering={hideExportDropdown}
-        action={openStatistics}
-        content="Statistics"
+        action={openScreenplay}
+        content="Screenplay"
       ></DropdownItem>
       <DropdownItem
         hovering={hideExportDropdown}
         action={editProject}
         content="Edit project"
+      ></DropdownItem>
+      <DropdownItem
+        hovering={hideExportDropdown}
+        action={openStatistics}
+        content="Statistics"
       ></DropdownItem>
       {active && <ExportDropdown project={project} />}
     </div>

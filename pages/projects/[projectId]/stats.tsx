@@ -4,6 +4,7 @@ import Head from "next/head";
 import HomePageFooter from "../../../components/home/HomePageFooter";
 import HomePageNavbar from "../../../components/navbar/Navbar";
 import EditProjectContainer from "../../../components/projects/edit/EditProjectContainer";
+import ProjectStatsContainer from "../../../components/projects/stats/ProjectStatsContainer";
 import { sessionOptions } from "../../../src/lib/session";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { Project, User } from "../../api/users";
@@ -19,11 +20,11 @@ const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
   return (
     <>
       <Head>
-        <title>{project.title} - Edit project</title>
+        <title>{project.title} - Statistics</title>
       </Head>
       <div className="main-container">
         <HomePageNavbar project={project} />
-        <EditProjectContainer user={user} project={project} />
+        <ProjectStatsContainer project={project} />
         <HomePageFooter />
       </div>
     </>

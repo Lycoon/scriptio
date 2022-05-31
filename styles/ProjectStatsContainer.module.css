@@ -1,0 +1,18 @@
+#project-stats-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.center-column {
+  width: 50%;
+}
+
+.stats-title-text {
+  padding-top: 8px;
+  font-style: italic;
+}
+
+.stats-title {
+}
