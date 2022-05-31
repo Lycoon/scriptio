@@ -1,16 +1,14 @@
 export const getRandomColors = (
   occurrences: number,
-  hue: number,
-  saturation: number
+  saturation: number,
+  luminance: number
 ) => {
   const colors: string[] = [];
-  const rangeStart = 0.5;
-  const rangeEnd = 0.9;
-
-  const step = (rangeEnd - rangeStart) / occurrences;
+  const step = 1 / occurrences;
+  const startHue = Math.random();
 
   for (let i = 0; i < occurrences; i++) {
-    const RGB = HSLtoRGB(hue, saturation, rangeStart + i * step);
+    const RGB = HSLtoRGB((startHue + step * i) % 1, saturation, luminance);
     colors.push(`rgb(${RGB[0]}, ${RGB[1]}, ${RGB[2]})`);
   }
 
