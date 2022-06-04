@@ -16,6 +16,7 @@ class Document extends NextDocument<Props> {
           <meta name="title" content={TITLE} />
           <meta name="description" content={DESCRIPTION} />
           <meta name="author" content="Hugo 'Lycoon' Bois" />
+          <meta name="theme-color" content="#525252" />
           <meta
             name="keywords"
             content="movie, script, writing, story, storywriting, screenwriting, screenwriter"

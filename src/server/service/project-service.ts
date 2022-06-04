@@ -1,3 +1,4 @@
+import { getObject } from "../../lib/images";
 import {
   ProjectCreation,
   ProjectRepository,
@@ -23,5 +24,8 @@ export async function getProjects(userId: number) {
 }
 
 export async function getProjectFromId(projectId: number) {
+  const obj = await getObject("poster.png");
+  console.log(obj);
+
   return repository.fetchProjectFromId(projectId);
 }

@@ -6,6 +6,9 @@ const nextConfig = {
 
     return config;
   },
+  experimental: {
+    outputStandalone: true,
+  },
 };
 
 module.exports = nextConfig;

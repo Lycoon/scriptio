@@ -1,0 +1,9 @@
+name = "scriptio"
+account_id = "815d207de4a30c083dd7f50e7f14bdeb"
+main = "src/index.ts"
+compatibility_date = "2022-06-04"
+
+[[r2_buckets]]
+bucket_name = "scriptio"
+preview_bucket_name = "scriptio"
+binding = "R2_BUCKET"
