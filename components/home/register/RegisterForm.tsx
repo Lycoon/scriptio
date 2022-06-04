@@ -30,7 +30,7 @@ const RegisterForm = () => {
     if (res.status === 201) {
       Router.push("/login");
     } else {
-      setErrorMessage((await res.json()).message);
+      setErrorMessage(((await res.json()) as any).message);
     }
   }
 

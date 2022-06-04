@@ -38,7 +38,7 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
       Router.push("/");
       setIsCreating(false);
     } else {
-      setErrorMessage((await res.json()).message);
+      setErrorMessage(((await res.json()) as any).message);
     }
   };
 

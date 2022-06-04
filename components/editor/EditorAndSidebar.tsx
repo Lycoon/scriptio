@@ -39,7 +39,8 @@ const EditorAndSidebar = ({ project }: Props) => {
 
     // update active on caret update
     onSelectionUpdate({ transaction }) {
-      const currNode = transaction.curSelection.$anchor.path[3].attrs.class;
+      const currNode = (transaction as any).curSelection.$anchor.path[3].attrs
+        .class;
       setActiveTab(currNode);
     },
     autofocus: "end",

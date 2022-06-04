@@ -61,7 +61,13 @@ const CharacterFrequency = ({ project }: Props) => {
     },
   };
 
-  return <Doughnut plugins={[ChartDataLabels]} data={data} options={options} />;
+  return (
+    <Doughnut
+      plugins={[ChartDataLabels]}
+      data={data}
+      options={options as any}
+    />
+  );
 };
 
 export default CharacterFrequency;

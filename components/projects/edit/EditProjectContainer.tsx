@@ -35,7 +35,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
     if (res.status === 200) {
       Router.push(`/projects/${project.id}/editor`);
     } else {
-      setErrorMessage((await res.json()).message);
+      setErrorMessage(((await res.json()) as any).message);
     }
   };
 

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Router from "next/router";
 import { useContext } from "react";
 import { Project } from "../../pages/api/users";
@@ -8,7 +9,7 @@ import NavbarTab from "./NavbarTab";
 
 type Props = {
   activeButtons?: ActiveButtons;
-  project: Project | null;
+  project?: Project;
 };
 
 const onLogIn = () => {
@@ -35,7 +36,12 @@ const Navbar = ({ activeButtons, project }: Props) => {
     <nav id="navbar">
       <div id="logo-and-tabs">
         <a id="logo" href="http://localhost:3000">
-          <img src="https://i.imgur.com/uIOrnUi.png" width="100" height="28" />
+          <Image
+            src="https://i.imgur.com/uIOrnUi.png"
+            width="100"
+            height="28"
+            alt="Scriptio logo"
+          />
         </a>
         {project && (
           <NavbarTab

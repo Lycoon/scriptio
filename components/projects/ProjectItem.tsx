@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Router from "next/router";
 import { Project } from "../../pages/api/users";
 
@@ -27,15 +28,19 @@ const ProjectItem = ({ project }: Props) => {
         <div>
           <h2 className="project-item-title">{project.title}</h2>
           <div className="project-date">
-            <img
+            <Image
               className="calendar-icon"
               src="images/calendar.png"
               alt="Calendar icon"
-            ></img>
+            />
             <p className="project-date-text">{getLastUpdate(days)}</p>
           </div>
         </div>
-        <img className="movie-poster" src="https://i.imgur.com/ySkNtJF.png" />
+        <Image
+          className="movie-poster"
+          src="https://i.imgur.com/ySkNtJF.png"
+          alt="Movie poster"
+        />
       </div>
     </button>
   );

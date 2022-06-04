@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Router from "next/router";
 import { useContext, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
@@ -24,12 +25,12 @@ const LoginForm = () => {
       body: JSON.stringify(body),
     });
 
-    const s = (await res.json()).body;
+    const s = ((await res.json()) as any).body;
     if (res.status === 200) {
       updateUser(s);
       Router.push("/");
     } else {
-      setErrorMessage((await res.json()).message);
+      setErrorMessage(((await res.json()) as any).message);
     }
   }
 
@@ -52,9 +53,7 @@ const LoginForm = () => {
           onChange={() => setErrorMessage(undefined)}
           required
         />
-        <a id="forgot-password" href="/recovery">
-          Forgot password?
-        </a>
+        <Link href="/recovery">Forgot password?</Link>
       </label>
 
       <div id="form-btn-flex">
