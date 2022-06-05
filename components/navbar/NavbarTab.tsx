@@ -21,6 +21,8 @@ const NavbarTab = ({ activeButtons, project }: Props) => {
       <Image
         className="dropdown-icon"
         src="/images/arrow.svg"
+        width={20}
+        height={20}
         alt="Dropdown arrow"
       />
       {active && (

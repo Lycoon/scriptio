@@ -1,6 +1,5 @@
-import { Project } from "@prisma/client";
-import { Router } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Project } from "../../pages/api/users";
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectItem from "./NewProjectItem";
 import NewProjectPage from "./NewProjectPage";

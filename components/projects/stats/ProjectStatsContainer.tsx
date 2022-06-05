@@ -1,4 +1,4 @@
-import { Project } from "@prisma/client";
+import { Project } from "../../../pages/api/users";
 import CharacterFrequency from "./CharacterFrequency";
 
 type Props = {

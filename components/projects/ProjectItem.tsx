@@ -30,7 +30,9 @@ const ProjectItem = ({ project }: Props) => {
           <div className="project-date">
             <Image
               className="calendar-icon"
-              src="images/calendar.png"
+              width={15}
+              height={15}
+              src="/images/calendar.png"
               alt="Calendar icon"
             />
             <p className="project-date-text">{getLastUpdate(days)}</p>
@@ -38,7 +40,9 @@ const ProjectItem = ({ project }: Props) => {
         </div>
         <Image
           className="movie-poster"
-          src="https://i.imgur.com/ySkNtJF.png"
+          src="/images/default-poster.png"
+          width={90}
+          height={130}
           alt="Movie poster"
         />
       </div>

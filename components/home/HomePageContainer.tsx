@@ -2,12 +2,12 @@ import Image from "next/image";
 
 const HomePageContainer = () => (
   <div id="homepage">
-    <Image
+    <img
       className="home_pic home_pic_left"
       src="/images/left-shadowed.png"
       alt="Left screenplay preview"
     />
-    <Image
+    <img
       className="home_pic home_pic_right"
       src="/images/right-shadowed.png"
       alt="Right screenplay preview"

@@ -1,8 +1,6 @@
-import { Project } from "@prisma/client";
 import Router from "next/router";
-import { useEffect, useState } from "react";
-import { User } from "../../../pages/api/users";
-import useUser from "../../../src/lib/useUser";
+import { useState } from "react";
+import { Project, User } from "../../../pages/api/users";
 import FormError from "../../home/FormError";
 import UploadButton from "../UploadButton";
 

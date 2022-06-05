@@ -36,12 +36,7 @@ const Navbar = ({ activeButtons, project }: Props) => {
     <nav id="navbar">
       <div id="logo-and-tabs">
         <a id="logo" href="http://localhost:3000">
-          <Image
-            src="https://i.imgur.com/uIOrnUi.png"
-            width="100"
-            height="28"
-            alt="Scriptio logo"
-          />
+          <p id="logo-text">Scriptio</p>
         </a>
         {project && (
           <NavbarTab

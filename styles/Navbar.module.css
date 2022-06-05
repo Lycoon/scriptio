@@ -5,6 +5,13 @@
 
 #logo {
   padding-inline: 16px;
+  margin-bottom: 7px;
+}
+
+#logo-text {
+  color: white;
+  font-family: poetsen;
+  font-size: 26px;
 }
 
 #navbar {
