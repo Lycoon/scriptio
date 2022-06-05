@@ -1,6 +1,9 @@
+import { read } from "fs";
 import Router from "next/router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Project } from "../../../pages/api/users";
+import { UserContext } from "../../../src/context/UserContext";
+import { convertFountainToJSON } from "../../../src/converters/fountain_to_scriptio";
 import { ActiveButtons } from "../../../src/lib/utils";
 import DropdownItem from "./DropdownItem";
 import ExportDropdown from "./ExportDropdown";
@@ -12,11 +15,26 @@ type Props = {
 };
 
 const NavbarDropdown = ({ activeButtons, project, toggleDropdown }: Props) => {
+  const { editor, updateEditor } = useContext(UserContext);
   const { isScreenplay, isStatistics, isProjectEdition } = activeButtons ?? {};
   const [active, updateActive] = useState<boolean>(false);
 
   const importFile = () => {
-    console.log("import file");
+    var input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".fountain";
+
+    input.onchange = async (e: any) => {
+      const file: File = e.target!.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (e: any) => {
+        convertFountainToJSON(e.target.result, editor!);
+      };
+      reader.readAsText(file, "UTF-8");
+    };
+
+    input.click();
   };
 
   const openStatistics = () => {
