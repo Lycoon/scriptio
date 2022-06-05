@@ -1,22 +1,29 @@
-FROM node:16-alpine
+# Base on offical Node.js Alpine image
+FROM node:alpine
 
-ENV PORT 3000
+# Set working directory
+WORKDIR /usr/app
 
-# Create app directory
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
+# Copy package.json and package-lock.json before other files
+# Utilise Docker cache to save re-installing dependencies if unchanged
+COPY ./package*.json ./
 
-# Installing dependencies
-COPY package*.json /usr/src/app/
+# Install dependencies
 RUN npm install
 
-# Copying source files
-COPY . /usr/src/app
+# Copy all files
+COPY ./ ./
 
-# Building app
+# Build app
 RUN npx prisma generate
 RUN npm run build
+
+# Expose the listening port
 EXPOSE 3000
 
-# Running the app
-CMD "npm" "run" "dev"
+# Run container as non-root (unprivileged) user
+# The node user is provided in the Node.js Alpine base image
+USER node
+
+# Run npm start script when container starts
+CMD [ "npm", "start" ]

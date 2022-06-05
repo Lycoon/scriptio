@@ -35,7 +35,7 @@ const Navbar = ({ activeButtons, project }: Props) => {
   return (
     <nav id="navbar">
       <div id="logo-and-tabs">
-        <a id="logo" href="http://localhost:3000">
+        <a id="logo" href="/">
           <p id="logo-text">Scriptio</p>
         </a>
         {project && (

@@ -43,31 +43,40 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
   };
 
   return (
-    <div id="new-project-page">
-      <form id="new-project-form" onSubmit={onSubmit}>
-        <h1 className="segoe-bold">New project</h1>
+    <div className="project-form-container">
+      <form className="project-form" onSubmit={onSubmit}>
+        <h1 className="segoe-bold">Create project</h1>
         {errorMessage && <FormError message={errorMessage} />}
 
-        <div className="form-element">
-          <span className="form-label">Title</span>
-          <input className="form-input" name="title" required />
-          <span className="form-label">
-            Description - <i>optional</i>
-          </span>
-          <textarea
-            className="form-input input-description"
-            name="description"
-          />
-          <span className="form-label">
-            Poster - <i>optional</i>
-          </span>
-          <UploadButton />
+        <div>
+          <div className="form-element">
+            <span className="form-label">Title</span>
+            <input
+              id="project-title-input"
+              className="form-input"
+              name="title"
+              required
+            />
+            <span className="form-label">
+              Description - <i>optional</i>
+            </span>
+            <textarea
+              id="project-description-input"
+              className="form-input input-description"
+              name="description"
+            />
+            <span className="form-label">
+              Poster - <i>optional</i>
+            </span>
+            <UploadButton />
+          </div>
         </div>
-        <div id="new-project-form-btn-flex">
+
+        <div className="project-form-end">
           <a className="back-btn" onClick={() => setIsCreating(false)}>
             Back
           </a>
-          <button className="form-btn new-project-submit-btn" type="submit">
+          <button className="form-btn project-form-submit-btn" type="submit">
             Create
           </button>
         </div>

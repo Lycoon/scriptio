@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 const HomePageContainer = () => (
   <div id="homepage">
     <img

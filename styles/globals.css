@@ -69,6 +69,16 @@ body {
 }
 
 @font-face {
+  font-family: tommy;
+  src: URL("/fonts/Made Tommy.otf") format("opentype");
+}
+
+@font-face {
+  font-family: tommy-bold;
+  src: URL("/fonts/Made Tommy Bold.otf") format("opentype");
+}
+
+@font-face {
   font-family: segoe-bold;
   src: URL("/fonts/Segoe UI Bold.ttf") format("truetype");
 }
@@ -86,6 +96,14 @@ body {
 @font-face {
   font-family: courier-prime-bold;
   src: URL("/fonts/Courier Prime Bold.ttf") format("truetype");
+}
+
+.tommy {
+  font-family: tommy;
+}
+
+.tommy-bold {
+  font-family: tommy-bold;
 }
 
 .segoe-bold {

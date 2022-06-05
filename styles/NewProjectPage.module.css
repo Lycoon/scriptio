@@ -1,4 +1,12 @@
-#new-project-page {
+#project-title-input {
+  margin-bottom: 12px;
+}
+
+#project-description-input {
+  margin-bottom: 8px;
+}
+
+.project-form-container {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
@@ -8,18 +16,18 @@
   height: 100%;
 }
 
-#new-project-form {
+.project-form {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 50px;
   margin-left: 10%;
 
   width: 25%;
   min-width: 270px;
-  max-width: 400px;
+  max-width: 450px;
 }
 
-#new-project-form-btn-flex {
+.project-form-end {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -27,7 +35,7 @@
   gap: 70px;
 }
 
-.new-project-submit-btn {
+.project-form-submit-btn {
   height: 50px;
 }
 

@@ -1,7 +1,9 @@
-Dockerfile
+.git/
+.gitignore
+.next/                # Existing Next.js builds
 .dockerignore
-node_modules
-npm-debug.log
 README.md
-.next
-.git
+Dockerfile
+docker-compose.yml
+node_modules/         # Installed inside container
+nginx/                # We'll create this directory soon

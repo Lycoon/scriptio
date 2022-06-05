@@ -38,36 +38,45 @@ const EditProjectConainer = ({ project, user }: Props) => {
   };
 
   return (
-    <div id="new-project-page">
-      <form id="new-project-form" onSubmit={onSubmit}>
+    <div className="project-form-container">
+      <form className="project-form" onSubmit={onSubmit}>
         <h1 className="segoe-bold">Edit project</h1>
         {errorMessage && <FormError message={errorMessage} />}
 
-        <div className="form-element">
-          <span className="form-label">Title</span>
-          <input
-            className="form-input"
-            name="title"
-            defaultValue={project.title}
-            required
-          />
-          <span className="form-label">Description</span>
-          <textarea
-            className="form-input input-description"
-            name="description"
-            defaultValue={project.description ?? undefined}
-          />
-          <span className="form-label">Poster</span>
-          <UploadButton />
+        <div>
+          <div className="form-element">
+            <span className="form-label">Title</span>
+            <input
+              id="project-title-input"
+              className="form-input"
+              name="title"
+              defaultValue={project.title}
+              required
+            />
+          </div>
+          <div className="form-element">
+            <span className="form-label">Description</span>
+            <textarea
+              id="project-description-input"
+              className="form-input input-description"
+              name="description"
+              defaultValue={project.description ?? undefined}
+            />
+          </div>
+          <div className="form-element">
+            <span className="form-label">Poster</span>
+            <UploadButton />
+          </div>
         </div>
-        <div id="new-project-form-btn-flex">
+
+        <div className="project-form-end">
           <a
             className="back-btn"
             onClick={() => Router.push(`/projects/${project.id}/editor`)}
           >
             Back
           </a>
-          <button className="form-btn new-project-submit-btn" type="submit">
+          <button className="form-btn project-form-submit-btn" type="submit">
             Confirm
           </button>
         </div>

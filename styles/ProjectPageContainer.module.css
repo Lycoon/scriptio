@@ -7,7 +7,6 @@
 
 #project-page-title {
   margin-top: 70px;
-  text-align: left;
 }
 
 .center-flex {
@@ -22,6 +21,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 30px;
+  padding-bottom: 70px;
 }
 
 @media (max-width: 1000px) {

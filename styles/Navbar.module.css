@@ -16,9 +16,8 @@
 
 #navbar {
   background-color: #474747;
-  width: 100vw;
-  height: 4.5vh;
-  min-height: 55px;
+  width: 100%;
+  min-height: 60px;
 
   display: flex;
   flex-direction: row;

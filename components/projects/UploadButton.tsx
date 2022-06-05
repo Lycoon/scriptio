@@ -3,9 +3,8 @@ import { useEffect, useState } from "react";
 const UploadButton = () => {
   const [dragover, setDragover] = useState<Boolean>(false);
 
-  useEffect(() => {
-    console.log(dragover);
-  }, [dragover]);
+  useEffect(() => {}, [dragover]);
+  let dragoverStyle = dragover ? " dragover" : "";
 
   return (
     <>
@@ -15,11 +14,7 @@ const UploadButton = () => {
         className="upload-button"
         htmlFor="movie-poster-input"
       >
-        <div
-          className={
-            "segoe-bold upload-button-div" + (dragover ? " dragover" : "")
-          }
-        >
+        <div className={"upload-button-div" + dragoverStyle}>
           Click or drop here
         </div>
         <input

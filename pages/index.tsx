@@ -24,11 +24,13 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
       <div className="main-container">
         <Navbar />
         {!user ? (
-          <HomePageContainer />
+          <>
+            <HomePageContainer />
+            <HomePageFooter />
+          </>
         ) : (
           <ProjectPageContainer projects={projects!} />
         )}
-        <HomePageFooter />
       </div>
     </>
   );

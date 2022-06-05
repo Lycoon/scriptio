@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { useState } from "react";
 import { Project } from "../../pages/api/users";
 import { ActiveButtons } from "../../src/lib/utils";
@@ -18,11 +17,9 @@ const NavbarTab = ({ activeButtons, project }: Props) => {
   return (
     <div onClick={toggleDropdown} className="navbar-tab">
       <p className="navbar-tab-content unselectable">{project.title}</p>
-      <Image
+      <img
         className="dropdown-icon"
         src="/images/arrow.svg"
-        width={20}
-        height={20}
         alt="Dropdown arrow"
       />
       {active && (
