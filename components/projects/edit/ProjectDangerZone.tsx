@@ -12,6 +12,7 @@ const ProjectDangerZone = ({ project, user }: Props) => {
 
     const title = e.target.danger.value;
     if (title !== project.title) {
+      e.target.danger.value = "";
       return;
     }
 
