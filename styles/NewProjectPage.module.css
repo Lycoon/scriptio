@@ -27,12 +27,27 @@
   max-width: 450px;
 }
 
+.back-btn {
+  color: #474747;
+  background-color: white;
+
+  border-style: solid;
+  border-color: #757575;
+
+  width: 40%;
+}
+
+.back-btn:hover {
+  transition: background-color 0.2s;
+  background-color: #f4f4f4;
+}
+
 .project-form-end {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  gap: 70px;
+  gap: 40px;
 }
 
 .project-form-submit-btn {

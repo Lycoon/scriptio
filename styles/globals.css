@@ -8,6 +8,8 @@
 @import "ExportDropdown.module.css";
 @import "ProjectItem.module.css";
 @import "NewProjectItem.module.css";
+@import "Popup.module.css";
+@import "ProjectDangerZone.module.css";
 
 /* Forms */
 @import "HomePageForm.module.css";

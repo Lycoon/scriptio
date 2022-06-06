@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import Router from "next/router";
 import { useContext } from "react";
 import { Project } from "../../pages/api/users";
@@ -35,9 +36,11 @@ const Navbar = ({ activeButtons, project }: Props) => {
   return (
     <nav id="navbar">
       <div id="logo-and-tabs">
-        <a id="logo" href="/">
-          <p id="logo-text">Scriptio</p>
-        </a>
+        <Link href="/">
+          <a id="logo">
+            <p id="logo-text">Scriptio</p>
+          </a>
+        </Link>
         {project && (
           <NavbarTab
             activeButtons={activeButtons}

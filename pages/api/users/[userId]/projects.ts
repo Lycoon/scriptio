@@ -5,6 +5,7 @@ import { sessionOptions } from "../../../../src/lib/session";
 import { onError, onSuccess } from "../../../../src/lib/utils";
 import {
   createProject,
+  deleteProject,
   getProjectFromId,
   getProjects,
   updateProject,
@@ -27,45 +28,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return postMethod(userId, req.body, res);
     case "PATCH":
       return patchMethod(userId, req.body, res);
+    case "DELETE":
+      return deleteMethod(userId, req.body, res);
   }
-}
-
-async function patchMethod(userId: number, body: any, res: NextApiResponse) {
-  const projectId = +body["projectId"];
-  const screenplay = body["screenplay"];
-  const title: string = body["title"];
-  const description = body["description"];
-
-  if (!projectId) {
-    return onError(res, 400, MISSING_BODY);
-  }
-
-  const project = await getProjectFromId(projectId);
-  if (project?.userId !== userId) {
-    // not user's project
-    return onError(res, 403, "Forbidden");
-  }
-
-  if (title && (title.length < 2 || title.length > 256)) {
-    return onError(res, 400, "Title must be between 2 and 256 characters");
-  }
-
-  if (description && description.length > 2048) {
-    return onError(res, 400, "Description must be at most 2048-character long");
-  }
-
-  const updated = await updateProject({
-    projectId,
-    screenplay,
-    title,
-    description,
-  });
-
-  if (!updated) {
-    return onError(res, 500, "Project update failed");
-  }
-
-  return onSuccess(res, 200, "", updated);
 }
 
 async function getMethod(userId: number, res: NextApiResponse) {
@@ -104,4 +69,66 @@ async function postMethod(userId: number, body: any, res: NextApiResponse) {
   }
 
   return onSuccess(res, 201, "", created);
+}
+
+async function patchMethod(userId: number, body: any, res: NextApiResponse) {
+  const projectId = +body["projectId"];
+  const screenplay = body["screenplay"];
+  const title: string = body["title"];
+  const description = body["description"];
+
+  if (!projectId) {
+    return onError(res, 400, MISSING_BODY);
+  }
+
+  const project = await getProjectFromId(projectId);
+  if (!project || project.userId !== userId) {
+    // not user's project
+    return onError(res, 403, "Forbidden");
+  }
+
+  if (title && (title.length < 2 || title.length > 256)) {
+    return onError(res, 400, "Title must be between 2 and 256 characters");
+  }
+
+  if (description && description.length > 2048) {
+    return onError(res, 400, "Description must be at most 2048-character long");
+  }
+
+  const updated = await updateProject({
+    projectId,
+    screenplay,
+    title,
+    description,
+  });
+
+  if (!updated) {
+    return onError(res, 500, "Project update failed");
+  }
+
+  return onSuccess(res, 200, "", updated);
+}
+
+async function deleteMethod(userId: number, body: any, res: NextApiResponse) {
+  if (!body || !body.projectId) {
+    return onError(res, 400, MISSING_BODY);
+  }
+
+  const projectId: number = +body.projectId;
+  if (!projectId) {
+    return onError(res, 400, "Project ID must be a number");
+  }
+
+  const project = await getProjectFromId(projectId);
+  if (!project || project.userId !== userId) {
+    // not user's project
+    return onError(res, 403, "Forbidden");
+  }
+
+  const deleted = await deleteProject({ projectId });
+  if (!deleted) {
+    return onError(res, 500, "Project deletion failed");
+  }
+
+  return onSuccess(res, 200, "", deleted);
 }

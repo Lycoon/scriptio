@@ -1,0 +1,33 @@
+#danger-zone {
+  background-color: rgb(218, 101, 101);
+  border-radius: 12px;
+  padding: 15px;
+}
+
+#delete-project-btn {
+  background-color: white;
+  color: #474747;
+  width: 100%;
+}
+
+#delete-project-btn:hover {
+  transition: background-color 0.2s;
+  background-color: #ededed;
+}
+
+.danger-zone-text {
+  color: white;
+  padding-bottom: 16px;
+}
+
+.danger-zone-info {
+  color: white;
+  padding-bottom: 22px;
+}
+
+.danger-zone-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 20px;
+}

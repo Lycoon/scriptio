@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 const NewProjectItem = (props: any) => {
   const setIsCreating = props.setIsCreating;
 
@@ -10,11 +8,9 @@ const NewProjectItem = (props: any) => {
     >
       <div className="new-project-item-flex">
         <h2 className="new-project-item-title">Create project</h2>
-        <Image
+        <img
           className="new-project-icon"
           src="/images/plus.svg"
-          width={28}
-          height={28}
           alt="Plus sign"
         />
       </div>

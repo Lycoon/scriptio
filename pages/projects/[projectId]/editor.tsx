@@ -1,6 +1,7 @@
 import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
+import { useState } from "react";
 import EditorContainer from "../../../components/editor/EditorContainer";
 import Navbar from "../../../components/navbar/Navbar";
 import { sessionOptions } from "../../../src/lib/session";
@@ -15,6 +16,8 @@ type Props = {
 const redirectToHome = { redirect: { destination: "/" } };
 
 const EditorPage: NextPage<Props> = ({ user, project }: Props) => {
+  const [isBlurred, setBlurred] = useState<boolean>(false);
+
   return (
     <>
       <Head>

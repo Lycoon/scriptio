@@ -1,0 +1,22 @@
+#popup {
+  position: fixed;
+  width: 600px;
+  padding: 50px;
+
+  top: 40%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+
+  visibility: hidden;
+  opacity: 0;
+  transition: 0.5s;
+}
+
+#popup.active {
+  top: 50%;
+  visibility: visible;
+  opacity: 1;
+  transition: 0.5s;
+}

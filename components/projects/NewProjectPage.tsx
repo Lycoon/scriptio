@@ -73,9 +73,12 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
         </div>
 
         <div className="project-form-end">
-          <a className="back-btn" onClick={() => setIsCreating(false)}>
+          <button
+            className="form-btn back-btn"
+            onClick={() => setIsCreating(false)}
+          >
             Back
-          </a>
+          </button>
           <button className="form-btn project-form-submit-btn" type="submit">
             Create
           </button>

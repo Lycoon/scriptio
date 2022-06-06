@@ -19,7 +19,7 @@ const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
   return (
     <>
       <Head>
-        <title>{project.title} - Edit project</title>
+        <title>{project.title} - Edit</title>
       </Head>
       <div className="main-container">
         <Navbar activeButtons={{ isProjectEdition: true }} project={project} />

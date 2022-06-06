@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Project, User } from "../../../pages/api/users";
 import FormError from "../../home/FormError";
 import UploadButton from "../UploadButton";
+import ProjectDangerZone from "./ProjectDangerZone";
 
 type Props = {
   project: Project;
@@ -70,17 +71,18 @@ const EditProjectConainer = ({ project, user }: Props) => {
         </div>
 
         <div className="project-form-end">
-          <a
-            className="back-btn"
+          <button
+            className="form-btn back-btn"
             onClick={() => Router.push(`/projects/${project.id}/editor`)}
           >
             Back
-          </a>
+          </button>
           <button className="form-btn project-form-submit-btn" type="submit">
             Confirm
           </button>
         </div>
       </form>
+      <ProjectDangerZone project={project} user={user} />
     </div>
   );
 };
