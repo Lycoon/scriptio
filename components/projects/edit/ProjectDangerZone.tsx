@@ -25,6 +25,7 @@ const ProjectDangerZone = ({ project, user }: Props) => {
     if (res.status === 200) {
       Router.push("/");
     } else {
+      //need to add error message
       //setErrorMessage(((await res.json()) as any).message);
     }
   };
