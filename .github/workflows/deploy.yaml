@@ -10,7 +10,12 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
-        
+
+      - name: Create .env file
+        run: |
+          touch .env
+          echo "${{ secrets.ENV }}" > .env
+
       - name: Build image
         run: docker compose -f docker-compose.yml build
 
