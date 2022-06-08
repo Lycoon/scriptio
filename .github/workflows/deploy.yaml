@@ -38,4 +38,4 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /home/scriptio
-            touch test.txt
+            ./init.sh
