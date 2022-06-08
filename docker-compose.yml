@@ -1,6 +1,7 @@
 version: "3"
 services:
   nextjs:
+    env_file: .env
     build: ./
   nginx:
     build: ./nginx
