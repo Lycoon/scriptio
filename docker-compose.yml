@@ -1,9 +1,13 @@
 version: "3"
+
 services:
   nextjs:
-    env_file: .env
+    image: ghcr.io/lycoon/scriptio-app:latest
     build: ./
+    env_file: .env
+
   nginx:
+    image: ghcr.io/lycoon/scriptio-nginx:latest
     build: ./nginx
     ports:
       - 80:80
