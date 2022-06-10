@@ -40,4 +40,4 @@ jobs:
             cd /home/scriptio
             docker pull ghcr.io/lycoon/scriptio-nginx:latest
             docker pull ghcr.io/lycoon/scriptio-app:latest
-            docker-compose up --build -d
+            docker-compose up -d
