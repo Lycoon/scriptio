@@ -41,6 +41,10 @@ const noauth = { props: { user: null, projects: [] } };
 export const getServerSideProps = withIronSessionSsr(
   async function getServerSideProps({ req }): Promise<any> {
     const user = req.session.user;
+
+    console.log("req.session home: ", req.session);
+    console.log("home user: ", user);
+
     if (!user || !user.isLoggedIn) {
       return noauth;
     }

@@ -29,7 +29,7 @@ jobs:
       - name: Push image to GitHub Container Registry
         run: docker compose -f docker-compose.yml push
 
-      - name: Deploy Stack
+      - name: Deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -38,4 +38,6 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /home/scriptio
-            ./init.sh
+            docker pull ghcr.io/lycoon/scriptio-nginx:latest
+            docker pull ghcr.io/lycoon/scriptio-app:latest
+            docker-compose up --build -d

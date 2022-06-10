@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import Router from "next/router";
 import useSWR from "swr";
 import type { User } from "../../pages/api/users";
 
