@@ -4,6 +4,7 @@ services:
   nextjs:
     image: ghcr.io/lycoon/scriptio-app:latest
     build: ./
+    env_file: .env
 
   nginx:
     image: ghcr.io/lycoon/scriptio-nginx:latest
