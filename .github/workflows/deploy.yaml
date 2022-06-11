@@ -38,6 +38,5 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /home/scriptio
-            docker pull ghcr.io/lycoon/scriptio-nginx:latest
             docker pull ghcr.io/lycoon/scriptio-app:latest
             docker-compose up -d
