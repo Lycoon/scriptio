@@ -5,9 +5,4 @@ services:
     image: ghcr.io/lycoon/scriptio-app:latest
     build: ./
     env_file: .env
-
-  nginx:
-    image: ghcr.io/lycoon/scriptio-nginx:latest
-    build: ./nginx
-    ports:
-      - 80:80
+    ports: 5000:3000
