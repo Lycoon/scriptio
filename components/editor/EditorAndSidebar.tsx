@@ -1,7 +1,7 @@
 import { JSONContent, useEditor } from "@tiptap/react";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../src/context/UserContext";
-import { Screenplay } from "../../src/Screenplay";
+import { CustomBold, CustomItalic, Screenplay } from "../../src/Screenplay";
 import EditorComponent from "./EditorComponent";
 import EditorSidebar from "./EditorSidebar";
 
@@ -32,6 +32,8 @@ const EditorAndSidebar = ({ project }: Props) => {
       Document,
       Text,
       History,
+      CustomBold,
+      CustomItalic,
 
       // scriptio
       Screenplay,

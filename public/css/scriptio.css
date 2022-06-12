@@ -43,9 +43,18 @@ Originally developed by John August - johnaugust.com
 
 .ProseMirror p,
 span {
-  font: 12pt courier-prime;
+  font-family: "Courier Prime", monospace;
+  font-size: 12pt;
   text-align: left;
   letter-spacing: -0.6px !important;
+}
+
+span.bold {
+  font-weight: bold;
+}
+
+span.italic {
+  font-style: italic;
 }
 
 .scene,
