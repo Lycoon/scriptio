@@ -318,10 +318,10 @@
 
         case "scene_heading":
           html.push(
-            '<span class="scene"' +
+            '<p class="scene"' +
               (token.scene_number ? ' id="' + token.scene_number + '">' : ">") +
               token.text +
-              "</span>"
+              "</p>"
           );
           break;
         case "transition":
