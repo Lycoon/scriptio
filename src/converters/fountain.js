@@ -317,6 +317,7 @@
           break;
 
         case "scene_heading":
+          console.log("scene: ", token.text);
           html.push(
             '<span class="scene"' +
               (token.scene_number ? ' id="' + token.scene_number + '">' : ">") +

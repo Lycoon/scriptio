@@ -43,7 +43,6 @@ const EditorAndSidebar = ({ project }: Props) => {
         .class;
       setActiveTab(currNode);
     },
-    autofocus: "end",
   });
 
   editorView?.setOptions({
