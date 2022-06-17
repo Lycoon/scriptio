@@ -1,4 +1,5 @@
 import Router from "next/router";
+import { useEffect, useState } from "react";
 import { Project } from "../../pages/api/users";
 
 type Props = {
@@ -20,9 +21,10 @@ const openProject = (projectId: number) => {
 
 const ProjectItem = ({ project }: Props) => {
   const days = Math.round((Date.now() - +project.updatedAt) / _MS_PER_DAY);
+  const [displayDelete, updateDisplayDelete] = useState<boolean>(false);
 
   return (
-    <button className="project-item" onClick={() => openProject(project.id)}>
+    <button className="project-item" onMouseEnter={() => updateDisplayDelete(true)} onMouseLeave={() => updateDisplayDelete(false)} onClick={() => openProject(project.id)}>
       <div className="project-item-flex">
         <div>
           <h2 className="project-item-title">{project.title}</h2>
