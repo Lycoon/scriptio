@@ -38,6 +38,11 @@
   align-items: center;
 }
 
+.project-delete-button {
+  position: absolute;
+  text-align: left;
+}
+
 .project-date {
   display: flex;
   flex-direction: row;
