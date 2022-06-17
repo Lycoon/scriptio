@@ -11,5 +11,22 @@
 .tabs {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: space-between;
+}
+
+.saving-info {
+  font-family: courier-prime;
+  padding: 12px;
+}
+
+.saving-info-visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+.saving-info-hidden {
+  transition: visibility 0s 0.8s, opacity 0.8s linear;
+
+  visibility: hidden;
+  opacity: 0;
 }

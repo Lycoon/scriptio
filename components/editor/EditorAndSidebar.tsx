@@ -17,6 +17,7 @@ type Props = {
 const EditorAndSidebar = ({ project }: Props) => {
   const { editor, updateEditor } = useContext(UserContext);
   const [selectedTab, updateSelectedTab] = useState<number>(0);
+  const [isSaving, updateIsSaving] = useState<boolean>(false);
   const tabs = [
     "scene",
     "action",
@@ -101,6 +102,9 @@ const EditorAndSidebar = ({ project }: Props) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+
+      updateIsSaving(true);
+      setTimeout(() => {updateIsSaving(false)}, 1000);
     }
   };
 
@@ -122,6 +126,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         tabs={tabs}
         selectedTab={selectedTab}
         setActiveTab={setActiveTab}
+        isSaving={isSaving}
       />
     </div>
   );

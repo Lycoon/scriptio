@@ -41,8 +41,7 @@ export const CustomBold = Bold.extend({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
-    console.log("bold 2");
+  renderHTML({ HTMLAttributes }: any) {
     return ["span", HTMLAttributes, 0];
   },
 });
@@ -52,7 +51,7 @@ export const CustomItalic = Italic.extend({
     return {
       class: {
         default: "italic",
-        parseHTML: (element) => element.getAttribute("class"),
+        parseHTML: (element: Element) => element.getAttribute("class"),
       },
     };
   },
@@ -67,7 +66,7 @@ export const CustomItalic = Italic.extend({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }: any) {
     return ["span", HTMLAttributes, 0];
   },
 });

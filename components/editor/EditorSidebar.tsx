@@ -1,15 +1,16 @@
 import EditorTab from "./EditorTab";
 
-type TabElementType = HTMLElement | null;
-type TabDictionary = { [name: string]: TabElementType };
+type Props = {
+  tabs: any[],
+  selectedTab: number,
+  setActiveTab: (activeTab: string) => void,
+  isSaving: boolean
+}
 
-const EditorSidebar = (props: any) => {
-  const tabs = props.tabs;
-  const selectedTab = props.selectedTab;
-  const setActiveTab = props.setActiveTab;
-
+const EditorSidebar = ({tabs, selectedTab, setActiveTab, isSaving}: Props) => {
   return (
     <div id="sidebar" className="sidebar-shadow tabs">
+      <div className="tabs">
       <EditorTab
         action={() => setActiveTab("scene")}
         content="SCENE HEADING"
@@ -40,6 +41,8 @@ const EditorSidebar = (props: any) => {
         content="TRANSITION:"
         active={tabs[selectedTab] == "transition"}
       />
+      </div>
+      <p className={`saving-info saving-info-${isSaving ? "visible" : "hidden"}`}>Saving...</p>
     </div>
   );
 };
