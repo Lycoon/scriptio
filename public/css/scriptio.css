@@ -33,12 +33,12 @@ Originally developed by John August - johnaugust.com
 .ProseMirror {
   color: #000000;
   width: 586px;
-  height: 100%;
 
   position: absolute;
   margin-left: 1.5in;
   margin-right: 0.95in;
   padding-block: 1in;
+  min-height: 1100px;
 }
 
 .ProseMirror p,
@@ -64,8 +64,7 @@ span.italic {
   margin-top: 0.75em !important;
 }
 
-.action + .action,
-.scene:first-child {
+.action + .action {
   margin-top: 0 !important;
 }
 

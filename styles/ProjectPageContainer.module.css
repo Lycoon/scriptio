@@ -14,14 +14,14 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 25px;
+  gap: 30px;
 }
 
 .project-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
-  padding-bottom: 70px;
+  gap: 40px;
+  row-gap: 30px;
 }
 
 @media (max-width: 1000px) {

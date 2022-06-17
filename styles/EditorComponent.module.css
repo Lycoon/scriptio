@@ -4,6 +4,7 @@
   z-index: -1;
   width: 100%;
   height: max-content;
+  min-height: 100%;
 }
 
 #editor {
@@ -12,6 +13,7 @@
   height: max-content;
 
   margin-top: 2%;
+  margin-bottom: 4%;
   margin-inline: auto;
 
   background: #ffffff;
