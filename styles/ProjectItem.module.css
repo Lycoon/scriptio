@@ -39,8 +39,11 @@
 }
 
 .project-delete-button {
+  width: 20px;
+  height: 20px;
   position: absolute;
-  text-align: left;
+  border-radius: 8px;
+  border: none;
 }
 
 .project-date {

@@ -24,7 +24,6 @@ const ProjectItem = ({ project }: Props) => {
   const [displayDelete, updateDisplayDelete] = useState<boolean>(false);
 
   return (
-    {displayDelete && <button className="project-delete-button">X</button>}
     <button className="project-item" onMouseEnter={() => updateDisplayDelete(true)} onMouseLeave={() => updateDisplayDelete(false)} onClick={() => openProject(project.id)}>
       <div className="project-item-flex">
         <div>
