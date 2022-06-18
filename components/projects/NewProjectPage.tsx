@@ -5,87 +5,90 @@ import FormError from "../home/FormError";
 import UploadButton from "./UploadButton";
 
 type Props = {
-  setIsCreating: (isCreating: boolean) => void;
+    setIsCreating: (isCreating: boolean) => void;
 };
 
 const onSubmit = (setIsCreating: (isCreating: boolean) => void) => {
-  // Successful project creation
-  setIsCreating(false);
+    // Successful project creation
+    setIsCreating(false);
 };
 
 const NewProjectPage = ({ setIsCreating }: Props) => {
-  const { user, setUser } = useUser();
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(
-    undefined
-  );
+    const { user, setUser } = useUser();
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(
+        undefined
+    );
 
-  const onSubmit = async (e: any) => {
-    e.preventDefault();
-    setErrorMessage(undefined);
+    const onSubmit = async (e: any) => {
+        e.preventDefault();
+        setErrorMessage(undefined);
 
-    const body = {
-      title: e.target.title.value,
-      description: e.target.description.value,
+        const body = {
+            title: e.target.title.value,
+            description: e.target.description.value,
+        };
+
+        const res = await fetch(`/api/users/${user?.id}/projects`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+
+        if (res.status === 201) {
+            Router.push("/");
+            setIsCreating(false);
+        } else {
+            setErrorMessage(((await res.json()) as any).message);
+        }
     };
 
-    const res = await fetch(`/api/users/${user?.id}/projects`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    return (
+        <div className="project-form-container">
+            <form className="project-form" onSubmit={onSubmit}>
+                <h1 className="segoe-bold">Create project</h1>
+                {errorMessage && <FormError message={errorMessage} />}
 
-    if (res.status === 201) {
-      Router.push("/");
-      setIsCreating(false);
-    } else {
-      setErrorMessage(((await res.json()) as any).message);
-    }
-  };
+                <div>
+                    <div className="form-element">
+                        <span className="form-label">Title</span>
+                        <input
+                            id="project-title-input"
+                            className="form-input"
+                            name="title"
+                            required
+                        />
+                        <span className="form-label">
+                            Description - <i>optional</i>
+                        </span>
+                        <textarea
+                            id="project-description-input"
+                            className="form-input input-description"
+                            name="description"
+                        />
+                        <span className="form-label">
+                            Poster - <i>optional</i>
+                        </span>
+                        <UploadButton />
+                    </div>
+                </div>
 
-  return (
-    <div className="project-form-container">
-      <form className="project-form" onSubmit={onSubmit}>
-        <h1 className="segoe-bold">Create project</h1>
-        {errorMessage && <FormError message={errorMessage} />}
-
-        <div>
-          <div className="form-element">
-            <span className="form-label">Title</span>
-            <input
-              id="project-title-input"
-              className="form-input"
-              name="title"
-              required
-            />
-            <span className="form-label">
-              Description - <i>optional</i>
-            </span>
-            <textarea
-              id="project-description-input"
-              className="form-input input-description"
-              name="description"
-            />
-            <span className="form-label">
-              Poster - <i>optional</i>
-            </span>
-            <UploadButton />
-          </div>
+                <div className="project-form-end">
+                    <button
+                        className="form-btn back-btn"
+                        onClick={() => setIsCreating(false)}
+                    >
+                        Back
+                    </button>
+                    <button
+                        className="form-btn project-form-submit-btn"
+                        type="submit"
+                    >
+                        Create
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <div className="project-form-end">
-          <button
-            className="form-btn back-btn"
-            onClick={() => setIsCreating(false)}
-          >
-            Back
-          </button>
-          <button className="form-btn project-form-submit-btn" type="submit">
-            Create
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+    );
 };
 
 export default NewProjectPage;

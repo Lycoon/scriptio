@@ -9,49 +9,52 @@ import { getProjectFromId } from "../../../src/server/service/project-service";
 import { Project, User } from "../../api/users";
 
 type Props = {
-  user: User;
-  project: Project;
+    user: User;
+    project: Project;
 };
 
 const redirectToHome = { redirect: { destination: "/" } };
 
 const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
-  return (
-    <>
-      <Head>
-        <title>{project.title} - Edit</title>
-      </Head>
-      <div className="main-container">
-        <Navbar activeButtons={{ isProjectEdition: true }} project={project} />
-        <EditProjectContainer user={user} project={project} />
-        <HomePageFooter />
-      </div>
-    </>
-  );
+    return (
+        <>
+            <Head>
+                <title>{project.title} - Edit</title>
+            </Head>
+            <div className="main-container">
+                <Navbar
+                    activeButtons={{ isProjectEdition: true }}
+                    project={project}
+                />
+                <EditProjectContainer user={user} project={project} />
+                <HomePageFooter />
+            </div>
+        </>
+    );
 };
 
 export const getServerSideProps = withIronSessionSsr(async function ({
-  req,
-  query,
+    req,
+    query,
 }): Promise<any> {
-  const projectId = +query["projectId"]!;
-  if (!projectId) {
-    return redirectToHome;
-  }
+    const projectId = +query["projectId"]!;
+    if (!projectId) {
+        return redirectToHome;
+    }
 
-  const user = req.session.user;
-  const project = await getProjectFromId(projectId);
-  if (!project || project.userId !== user?.id) {
-    return redirectToHome;
-  }
+    const user = req.session.user;
+    const project = await getProjectFromId(projectId);
+    if (!project || project.userId !== user?.id) {
+        return redirectToHome;
+    }
 
-  // Workaround because dates can't be serialized
-  project.createdAt = project.createdAt.toISOString() as any as Date;
-  project.updatedAt = project.updatedAt.toISOString() as any as Date;
+    // Workaround because dates can't be serialized
+    project.createdAt = project.createdAt.toISOString() as any as Date;
+    project.updatedAt = project.updatedAt.toISOString() as any as Date;
 
-  return {
-    props: { user: req.session.user, project },
-  };
+    return {
+        props: { user: req.session.user, project },
+    };
 },
 sessionOptions);
 
