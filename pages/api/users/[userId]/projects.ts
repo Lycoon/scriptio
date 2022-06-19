@@ -1,134 +1,168 @@
+import { randomUUID } from "crypto";
 import { withIronSessionApiRoute } from "iron-session/next";
 import { NextApiRequest, NextApiResponse } from "next";
+import { deleteObject, uploadObject } from "../../../../src/lib/storage";
 import { MISSING_BODY } from "../../../../src/lib/messages";
 import { sessionOptions } from "../../../../src/lib/session";
 import { onError, onSuccess } from "../../../../src/lib/utils";
 import {
-  createProject,
-  deleteProject,
-  getProjectFromId,
-  getProjects,
-  updateProject,
+    createProject,
+    deleteProject,
+    getProjectFromId,
+    getProjects,
+    updateProject,
 } from "../../../../src/server/service/project-service";
+import { Project } from "..";
 
 export default withIronSessionApiRoute(handler, sessionOptions);
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const userId = +req.query["userId"];
-  const user = req.session.user;
+    const userId = +req.query["userId"];
+    const user = req.session.user;
 
-  if (!user || !user.isLoggedIn || !userId || userId !== user.id) {
-    return onError(res, 403, "Forbidden");
-  }
+    if (!user || !user.isLoggedIn || !userId || userId !== user.id) {
+        return onError(res, 403, "Forbidden");
+    }
 
-  switch (req.method) {
-    case "GET":
-      return getMethod(userId, res);
-    case "POST":
-      return postMethod(userId, req.body, res);
-    case "PATCH":
-      return patchMethod(userId, req.body, res);
-    case "DELETE":
-      return deleteMethod(userId, req.body, res);
-  }
+    switch (req.method) {
+        case "GET":
+            return getMethod(userId, res);
+        case "POST":
+            return postMethod(userId, req.body, res);
+        case "PATCH":
+            return patchMethod(userId, req.body, res);
+        case "DELETE":
+            return deleteMethod(userId, req.body, res);
+    }
 }
 
 async function getMethod(userId: number, res: NextApiResponse) {
-  const projects = await getProjects(userId);
-  if (!projects) {
-    return onError(res, 404, "User with id " + userId + " not found");
-  }
+    const projects = await getProjects(userId);
+    if (!projects) {
+        return onError(res, 404, "User with id " + userId + " not found");
+    }
 
-  return onSuccess(res, 200, "", projects);
+    return onSuccess(res, 200, "", projects);
 }
 
 async function postMethod(userId: number, body: any, res: NextApiResponse) {
-  if (!body || !body.title) {
-    return onError(res, 400, MISSING_BODY);
-  }
+    if (!body || !body.title) {
+        return onError(res, 400, MISSING_BODY);
+    }
 
-  const title: string = body.title;
-  const description: string = body.description;
+    const title: string = body.title;
+    const description: string = body.description;
 
-  if (title.length < 2 || title.length > 256) {
-    return onError(res, 400, "Title must be between 2 and 256 characters");
-  }
+    if (title.length < 2 || title.length > 256) {
+        return onError(res, 400, "Title must be between 2 and 256 characters");
+    }
 
-  if (description && description.length > 2048) {
-    return onError(res, 400, "Description must be at most 2048-character long");
-  }
+    if (description && description.length > 2048) {
+        return onError(
+            res,
+            400,
+            "Description must be at most 2048-character long"
+        );
+    }
 
-  const created = await createProject({
-    title,
-    description,
-    userId,
-  });
+    let uuid = undefined;
+    if (body.poster) {
+        uuid = randomUUID();
+        await uploadObject(uuid, body.poster);
+    }
 
-  if (!created) {
-    return onError(res, 500, "Project creation failed");
-  }
+    const created = await createProject({
+        title,
+        description,
+        userId,
+        poster: uuid,
+    });
 
-  return onSuccess(res, 201, "", created);
+    if (!created) {
+        return onError(res, 500, "Project creation failed");
+    }
+
+    return onSuccess(res, 201, "", created);
 }
 
 async function patchMethod(userId: number, body: any, res: NextApiResponse) {
-  const projectId = +body["projectId"];
-  const screenplay = body["screenplay"];
-  const title: string = body["title"];
-  const description = body["description"];
+    if (!body) {
+        return onError(res, 400, MISSING_BODY);
+    }
 
-  if (!projectId) {
-    return onError(res, 400, MISSING_BODY);
-  }
+    const projectId = +body["projectId"];
+    const screenplay = body["screenplay"];
+    const title: string = body["title"];
+    const description = body["description"];
 
-  const project = await getProjectFromId(projectId);
-  if (!project || project.userId !== userId) {
-    // not user's project
-    return onError(res, 403, "Forbidden");
-  }
+    if (!projectId) {
+        return onError(res, 400, MISSING_BODY);
+    }
 
-  if (title && (title.length < 2 || title.length > 256)) {
-    return onError(res, 400, "Title must be between 2 and 256 characters");
-  }
+    const project: Project = await getProjectFromId(projectId);
+    if (!project || project.userId !== userId) {
+        // not user's project
+        return onError(res, 403, "Forbidden");
+    }
 
-  if (description && description.length > 2048) {
-    return onError(res, 400, "Description must be at most 2048-character long");
-  }
+    if (title && (title.length < 2 || title.length > 256)) {
+        return onError(res, 400, "Title must be between 2 and 256 characters");
+    }
 
-  const updated = await updateProject({
-    projectId,
-    screenplay,
-    title,
-    description,
-  });
+    if (description && description.length > 2048) {
+        return onError(
+            res,
+            400,
+            "Description must be at most 2048-character long"
+        );
+    }
 
-  if (!updated) {
-    return onError(res, 500, "Project update failed");
-  }
+    let uuid;
+    if (body.poster) {
+        // Generates uuid if first time uploading, overwrite otherwise
+        uuid = project.poster ?? randomUUID();
+        await uploadObject(uuid, body.poster);
+    }
 
-  return onSuccess(res, 200, "", updated);
+    const updated = await updateProject({
+        projectId,
+        screenplay,
+        title,
+        description,
+        poster: uuid,
+    });
+
+    if (!updated) {
+        return onError(res, 500, "Project update failed");
+    }
+
+    return onSuccess(res, 200, "", updated);
 }
 
 async function deleteMethod(userId: number, body: any, res: NextApiResponse) {
-  if (!body || !body.projectId) {
-    return onError(res, 400, MISSING_BODY);
-  }
+    if (!body || !body.projectId) {
+        return onError(res, 400, MISSING_BODY);
+    }
 
-  const projectId: number = +body.projectId;
-  if (!projectId) {
-    return onError(res, 400, "Project ID must be a number");
-  }
+    const projectId: number = +body.projectId;
+    if (!projectId) {
+        return onError(res, 400, "Project ID must be a number");
+    }
 
-  const project = await getProjectFromId(projectId);
-  if (!project || project.userId !== userId) {
-    // not user's project
-    return onError(res, 403, "Forbidden");
-  }
+    const project: Project = await getProjectFromId(projectId);
+    if (!project || project.userId !== userId) {
+        // Not user's project
+        return onError(res, 403, "Forbidden");
+    }
 
-  const deleted = await deleteProject({ projectId });
-  if (!deleted) {
-    return onError(res, 500, "Project deletion failed");
-  }
+    const deleted = await deleteProject({ projectId });
+    if (!deleted) {
+        return onError(res, 500, "Project deletion failed");
+    }
 
-  return onSuccess(res, 200, "", deleted);
+    if (project.poster) {
+        deleteObject(project.poster);
+    }
+
+    return onSuccess(res, 200, "", deleted);
 }

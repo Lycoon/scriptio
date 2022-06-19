@@ -9,6 +9,7 @@ import fountain from "./fountain";
 export const convertFountainToJSON = async (text: string, editor: Editor) => {
   fountain.parse(text, true, function (output: any) {
     const html = output["html"]["script"];
+    console.log("html: ", html);
     editor?.commands.setContent(html);
   });
 };

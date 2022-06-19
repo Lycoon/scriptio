@@ -1,7 +1,7 @@
 import { JSONContent, useEditor } from "@tiptap/react";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../src/context/UserContext";
-import { Screenplay } from "../../src/Screenplay";
+import { CustomBold, CustomItalic, Screenplay } from "../../src/Screenplay";
 import EditorComponent from "./EditorComponent";
 import EditorSidebar from "./EditorSidebar";
 
@@ -11,119 +11,136 @@ import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
 
 type Props = {
-  project: Project;
+    project: Project;
 };
 
 const EditorAndSidebar = ({ project }: Props) => {
-  const { editor, updateEditor } = useContext(UserContext);
-  const [selectedTab, updateSelectedTab] = useState<number>(0);
-  const tabs = [
-    "scene",
-    "action",
-    "character",
-    "dialogue",
-    "parenthetical",
-    "transition",
-  ];
+    const { editor, updateEditor } = useContext(UserContext);
+    const [selectedTab, updateSelectedTab] = useState<number>(0);
+    const [isSaving, updateIsSaving] = useState<boolean>(false);
+    const tabs = [
+        "scene",
+        "action",
+        "character",
+        "dialogue",
+        "parenthetical",
+        "transition",
+    ];
 
-  const editorView = useEditor({
-    extensions: [
-      // default
-      Document,
-      Text,
-      History,
+    const editorView = useEditor({
+        extensions: [
+            // default
+            Document,
+            Text,
+            History,
+            CustomBold,
+            CustomItalic,
 
-      // scriptio
-      Screenplay,
-    ],
+            // scriptio
+            Screenplay,
+        ],
 
-    // update active on caret update
-    onSelectionUpdate({ transaction }) {
-      const currNode = (transaction as any).curSelection.$anchor.path[3].attrs
-        .class;
-      setActiveTab(currNode);
-    },
-    autofocus: "end",
-  });
+        // update active on caret update
+        onSelectionUpdate({ transaction }) {
+            const currNode = (transaction as any).curSelection.$anchor.path[3]
+                .attrs.class;
+            setActiveTab(currNode);
+        },
+    });
 
-  editorView?.setOptions({
-    editorProps: {
-      handleKeyDown(view: any, event: any) {
-        const node = view.state.selection.$anchor.parent;
-        const currNode = node.attrs.class;
-        if (event.key === "Enter") {
-          setTimeout(() => setActiveTab("action"), 20);
-          if (currNode === "character" || currNode === "parenthetical") {
-            clearTimeout();
-            setTimeout(() => setActiveTab("dialogue"), 20);
-          }
-        }
+    editorView?.setOptions({
+        editorProps: {
+            handleKeyDown(view: any, event: any) {
+                const node = view.state.selection.$anchor.parent;
+                const currNode = node.attrs.class;
+                if (event.key === "Enter") {
+                    setTimeout(() => setActiveTab("action"), 20);
+                    if (
+                        currNode === "character" ||
+                        currNode === "parenthetical"
+                    ) {
+                        clearTimeout();
+                        setTimeout(() => setActiveTab("dialogue"), 20);
+                    }
+                }
 
-        return false;
-      },
-    },
-  });
+                return false;
+            },
+        },
+    });
 
-  useEffect(() => {
-    editorView?.commands.setContent(project.screenplay as JSONContent);
-    updateEditor(editorView!);
-  }, [editorView]);
+    useEffect(() => {
+        editorView?.commands.setContent(project.screenplay as JSONContent);
+        updateEditor(editorView!);
+    }, [editorView]);
 
-  const setActiveTab = (node: string) => {
-    updateSelectedTab(tabs.indexOf(node));
+    const setActiveTab = (node: string) => {
+        updateSelectedTab(tabs.indexOf(node));
 
-    if (editorView)
-      editorView.chain().focus().setNode("Screenplay", { class: node }).run();
-  };
-
-  const tabKeyPressed = (e: KeyboardEvent) => {
-    if (e.key === "Tab") {
-      e.preventDefault();
-
-      const idx = (selectedTab + 1) % 6;
-      updateSelectedTab(idx);
-      setActiveTab(tabs[idx]);
-    }
-  };
-
-  const saveKeyPressed = async (e: KeyboardEvent) => {
-    if (e.ctrlKey && e.key === "s") {
-      e.preventDefault();
-
-      const body = {
-        projectId: project.id,
-        screenplay: editorView?.getJSON(),
-      };
-
-      const res = await fetch(`/api/users/${project.userId}/projects`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-    }
-  };
-
-  useEffect(() => {
-    addEventListener("keydown", tabKeyPressed, false);
-    addEventListener("keydown", saveKeyPressed, false);
-    return () => {
-      removeEventListener("keydown", tabKeyPressed, false);
-      removeEventListener("keydown", saveKeyPressed, false);
+        if (editorView)
+            editorView
+                .chain()
+                .focus()
+                .setNode("Screenplay", { class: node })
+                .run();
     };
-  });
 
-  return (
-    <div id="editor-and-sidebar">
-      <div id="editor-container">
-        <EditorComponent editor={editorView} />
-      </div>
-      <EditorSidebar
-        tabs={tabs}
-        selectedTab={selectedTab}
-        setActiveTab={setActiveTab}
-      />
-    </div>
-  );
+    const tabKeyPressed = (e: KeyboardEvent) => {
+        if (e.key === "Tab") {
+            e.preventDefault();
+
+            const idx = (selectedTab + 1) % 6;
+            updateSelectedTab(idx);
+            setActiveTab(tabs[idx]);
+        }
+    };
+
+    const saveKeyPressed = async (e: KeyboardEvent) => {
+        if (e.ctrlKey && e.key === "s") {
+            e.preventDefault();
+
+            const body = {
+                projectId: project.id,
+                screenplay: editorView?.getJSON(),
+            };
+
+            const res = await fetch(`/api/users/${project.userId}/projects`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+
+            if (res.ok) {
+                updateIsSaving(true);
+                setTimeout(() => {
+                    updateIsSaving(false);
+                }, 1000);
+            }
+        }
+    };
+
+    useEffect(() => {
+        addEventListener("keydown", tabKeyPressed, false);
+        addEventListener("keydown", saveKeyPressed, false);
+        return () => {
+            removeEventListener("keydown", tabKeyPressed, false);
+            removeEventListener("keydown", saveKeyPressed, false);
+        };
+    });
+
+    return (
+        <div id="editor-and-sidebar">
+            <div id="editor-container">
+                <EditorComponent editor={editorView} />
+            </div>
+            <EditorSidebar
+                tabs={tabs}
+                selectedTab={selectedTab}
+                setActiveTab={setActiveTab}
+                isSaving={isSaving}
+            />
+        </div>
+    );
 };
 
 export default EditorAndSidebar;

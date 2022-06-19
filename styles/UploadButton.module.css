@@ -1,46 +1,89 @@
 .dragover {
-  background-color: rgb(224, 224, 224);
+    background-color: rgb(224, 224, 224);
 }
 
 input[type="file"] {
-  position: absolute;
-  width: 100%;
+    position: absolute;
+    width: 100%;
 
-  left: 0;
-  opacity: 0;
-  top: 0;
-  bottom: 0;
+    left: 0;
+    opacity: 0;
+    top: 0;
+    bottom: 0;
 
-  cursor: pointer;
+    cursor: pointer;
 }
 
 .upload-button-div {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
 
-  /* Text style */
-  font-style: italic;
-  font-size: 17px;
-  color: rgb(73, 73, 73);
+    /* Text style */
+    font-style: italic;
+    font-size: 17px;
+    color: rgb(73, 73, 73);
 }
 
 .upload-button {
-  position: relative;
-  width: 100%;
-  height: 100px;
+    position: relative;
+    width: 100%;
+    height: 100px;
 
-  border-style: dotted;
-  border-color: rgb(212, 212, 212);
-  border-width: 3px;
-  border-radius: 12px;
+    border-style: dotted;
+    border-color: rgb(212, 212, 212);
+    border-width: 3px;
+    border-radius: 12px;
 }
 
 .upload-button:hover {
-  background-color: rgb(246, 246, 246);
-  transition: background-color 0.25s;
+    background-color: rgb(246, 246, 246);
+    transition: background-color 0.25s;
+}
+
+.upload-preview {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    margin-top: 15px;
+}
+
+.upload-preview-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.upload-preview-delete {
+    border: none;
+    border-radius: 6px;
+    background-color: rgb(218, 101, 101);
+    color: white;
+    font-weight: bold;
+
+    width: 30px;
+    height: 30px;
+}
+
+.upload-preview-delete:hover {
+    transition: background-color 0.2s;
+    background-color: rgb(235, 107, 107);
+}
+
+.upload-preview-delete:active {
+    transition: transform 0.2s;
+    transform: scale(0.97);
+}
+
+.upload-preview-image {
+    max-width: 80px;
+    object-fit: contain;
+    aspect-ratio: 0.67;
+    box-shadow: 0px 0px 6px rgba(100, 100, 100, 0.401);
 }

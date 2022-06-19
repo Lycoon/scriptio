@@ -7,33 +7,33 @@ import { exportToPDF } from "../../../src/converters/scriptio_to_pdf";
 import DropdownItem from "./DropdownItem";
 
 type Props = {
-  project: Project;
+    project: Project;
 };
 
 const ExportDropdown = ({ project }: Props) => {
-  const { editor } = useContext(UserContext);
+    const { editor } = useContext(UserContext);
 
-  const exportPDF = () => {
-    exportToPDF(project.title, "author", editor?.getJSON()!);
-  };
+    const exportPDF = () => {
+        exportToPDF(project.title, "author", editor?.getJSON()!);
+    };
 
-  const exportFountain = () => {
-    const fountain = convertJSONtoFountain(editor?.getJSON());
-    const file = new File([fountain], project.title + ".fountain", {
-      type: "text/plain;charset=utf-8",
-    });
-    FileSaver.saveAs(file);
-  };
+    const exportFountain = () => {
+        const fountain = convertJSONtoFountain(editor?.getJSON());
+        const file = new File([fountain], project.title + ".fountain", {
+            type: "text/plain;charset=utf-8",
+        });
+        FileSaver.saveAs(file);
+    };
 
-  return (
-    <div className="dropdown-items export-dropdown">
-      <DropdownItem action={exportPDF} content="to PDF"></DropdownItem>
-      <DropdownItem
-        action={exportFountain}
-        content="to Fountain"
-      ></DropdownItem>
-    </div>
-  );
+    return (
+        <div className="dropdown-items export-dropdown">
+            <DropdownItem action={exportPDF} content="to PDF"></DropdownItem>
+            <DropdownItem
+                action={exportFountain}
+                content="to Fountain"
+            ></DropdownItem>
+        </div>
+    );
 };
 
 export default ExportDropdown;

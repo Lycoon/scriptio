@@ -51,6 +51,7 @@ const initPDF = (
       font: "CourierPrime",
       fontSize: 12,
       alignment: "left",
+      characterSpacing: -0.4,
     },
     styles: {
       scene: {

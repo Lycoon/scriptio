@@ -318,13 +318,17 @@
 
         case "scene_heading":
           html.push(
-            '<span class="scene"' +
+            '<p class="scene"' +
               (token.scene_number ? ' id="' + token.scene_number + '">' : ">") +
               token.text +
-              "</span>"
+              "</p>"
           );
           break;
         case "transition":
+          if (token.text.charAt(token.text.length - 1) === ":") {
+            token.text = token.text.slice(0, -1);
+          }
+
           html.push('<p class="transition">' + token.text + "</p>");
           break;
 
@@ -340,6 +344,12 @@
           html.push('<p class="character">' + token.text + "</p>");
           break;
         case "parenthetical":
+          if (token.text.charAt(token.text.length - 1) === ")") {
+            token.text = token.text.slice(0, -1);
+          }
+          if (token.text.charAt(0) === "(") {
+            token.text = token.text.slice(1);
+          }
           html.push('<p class="parenthetical">' + token.text + "</p>");
           break;
         case "dialogue":

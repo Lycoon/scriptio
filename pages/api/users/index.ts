@@ -4,37 +4,38 @@ import { sessionOptions } from "../../../src/lib/session";
 import { Prisma } from "@prisma/client";
 
 export type User = {
-  isLoggedIn: boolean;
-  email: string;
-  id: number;
+    isLoggedIn: boolean;
+    email: string;
+    id: number;
 };
 
 export type Project = {
-  id: number;
-  createdAt: Date;
-  updatedAt: Date;
-  title: string;
-  description: string | null;
-  screenplay: Prisma.JsonValue | null;
-  userId: number;
+    id: number;
+    createdAt: Date;
+    updatedAt: Date;
+    title: string;
+    poster: string;
+    description: string | null;
+    screenplay: Prisma.JsonValue | null;
+    userId: number;
 };
 
 export default withIronSessionApiRoute(userRoute, sessionOptions);
 
 async function userRoute(
-  req: NextApiRequest,
-  res: NextApiResponse<Partial<User> | null>
+    req: NextApiRequest,
+    res: NextApiResponse<Partial<User> | null>
 ) {
-  if (req.session.user) {
-    // in a real world application you might read the user id from the session and then do a database request
-    // to get more information on the user if needed
-    res.json({
-      ...req.session.user,
-      isLoggedIn: true,
-    });
-  } else {
-    res.json({
-      isLoggedIn: false,
-    });
-  }
+    if (req.session.user) {
+        // in a real world application you might read the user id from the session and then do a database request
+        // to get more information on the user if needed
+        res.json({
+            ...req.session.user,
+            isLoggedIn: true,
+        });
+    } else {
+        res.json({
+            isLoggedIn: false,
+        });
+    }
 }
