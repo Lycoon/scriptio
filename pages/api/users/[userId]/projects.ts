@@ -99,7 +99,7 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
         return onError(res, 400, MISSING_BODY);
     }
 
-    const project: Project = await getProjectFromId(projectId);
+    const project = await getProjectFromId(projectId);
     if (!project || project.userId !== userId) {
         // not user's project
         return onError(res, 403, "Forbidden");
@@ -149,7 +149,7 @@ async function deleteMethod(userId: number, body: any, res: NextApiResponse) {
         return onError(res, 400, "Project ID must be a number");
     }
 
-    const project: Project = await getProjectFromId(projectId);
+    const project = await getProjectFromId(projectId);
     if (!project || project.userId !== userId) {
         // Not user's project
         return onError(res, 403, "Forbidden");
