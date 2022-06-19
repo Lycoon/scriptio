@@ -30,6 +30,7 @@
 @import "NewProjectPage.module.css";
 @import "EditProjectContainer.module.css";
 @import "ProjectStatsContainer.module.css";
+@import "Loading.module.css";
 
 /* Editor */
 @import "EditorComponent.module.css";
@@ -39,90 +40,90 @@
 @import "EditorPage.module.css";
 
 body {
-  margin: 0 !important;
+    margin: 0 !important;
 }
 
 * {
-  font-family: sans-serif;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+    font-family: sans-serif;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 .main-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 @font-face {
-  font-family: poetsen;
-  src: URL("/fonts/Poetsen.ttf") format("truetype");
+    font-family: poetsen;
+    src: URL("/fonts/Poetsen.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: roboto-thin;
-  src: URL("/fonts/Roboto Thin.ttf") format("truetype");
+    font-family: roboto-thin;
+    src: URL("/fonts/Roboto Thin.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: roboto;
-  src: URL("/fonts/Roboto.ttf") format("truetype");
+    font-family: roboto;
+    src: URL("/fonts/Roboto.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: tommy;
-  src: URL("/fonts/Made Tommy.otf") format("opentype");
+    font-family: tommy;
+    src: URL("/fonts/Made Tommy.otf") format("opentype");
 }
 
 @font-face {
-  font-family: tommy-bold;
-  src: URL("/fonts/Made Tommy Bold.otf") format("opentype");
+    font-family: tommy-bold;
+    src: URL("/fonts/Made Tommy Bold.otf") format("opentype");
 }
 
 @font-face {
-  font-family: segoe-bold;
-  src: URL("/fonts/Segoe UI Bold.ttf") format("truetype");
+    font-family: segoe-bold;
+    src: URL("/fonts/Segoe UI Bold.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: segoe-light;
-  src: URL("/fonts/Segoe UI Light.ttf") format("truetype");
+    font-family: segoe-light;
+    src: URL("/fonts/Segoe UI Light.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: courier-prime;
-  src: URL("/fonts/Courier Prime.ttf") format("truetype");
+    font-family: courier-prime;
+    src: URL("/fonts/Courier Prime.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: courier-prime-bold;
-  src: URL("/fonts/Courier Prime Bold.ttf") format("truetype");
+    font-family: courier-prime-bold;
+    src: URL("/fonts/Courier Prime Bold.ttf") format("truetype");
 }
 
 .tommy {
-  font-family: tommy;
+    font-family: tommy;
 }
 
 .tommy-bold {
-  font-family: tommy-bold;
+    font-family: tommy-bold;
 }
 
 .segoe-bold {
-  font-family: segoe-bold;
+    font-family: segoe-bold;
 }
 
 .segoe-light {
-  font-family: segoe-light;
+    font-family: segoe-light;
 }
 
 .segoe {
-  font-family: "Segoe UI";
+    font-family: "Segoe UI";
 }
 
 .unselectable {
-  -webkit-user-select: none; /* Chrome all / Safari all */
-  -moz-user-select: none; /* Firefox all */
-  -ms-user-select: none; /* IE 10+ */
-  user-select: none; /* Likely future */
+    -webkit-user-select: none; /* Chrome all / Safari all */
+    -moz-user-select: none; /* Firefox all */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none; /* Likely future */
 }

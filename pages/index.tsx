@@ -1,4 +1,3 @@
-import { Project } from "@prisma/client";
 import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
@@ -8,7 +7,7 @@ import Navbar from "../components/navbar/Navbar";
 import ProjectPageContainer from "../components/projects/ProjectPageContainer";
 import { sessionOptions } from "../src/lib/session";
 import { getProjects } from "../src/server/service/project-service";
-import { User } from "./api/users";
+import { Project, User } from "./api/users";
 
 type Props = {
     user: User | null;
