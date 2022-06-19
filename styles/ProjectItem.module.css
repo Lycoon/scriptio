@@ -1,70 +1,70 @@
 .project-item {
-  min-width: 270px;
-  max-width: 300px;
-  aspect-ratio: 1.7;
-  padding: 18px;
+    min-width: 270px;
+    max-width: 300px;
+    aspect-ratio: 1.7;
+    padding: 18px;
 
-  border: none;
-  border-radius: 16px;
-  background-color: rgb(255, 255, 255);
-  box-shadow: 0px 0px 6px rgba(100, 100, 100, 0.401);
+    border: none;
+    border-radius: 16px;
+    background-color: rgb(255, 255, 255);
+    box-shadow: 0px 0px 6px rgba(100, 100, 100, 0.401);
 
-  cursor: pointer;
-  transition: transform 0.1s;
+    cursor: pointer;
+    transition: transform 0.1s;
 }
 
 .project-item-title {
-  font-family: roboto-thin;
-  font-style: italic;
-  font-size: 1.4rem;
-  max-width: 120px;
-  text-align: left;
+    font-family: roboto-thin;
+    font-style: italic;
+    font-size: 1.4rem;
+    max-width: 120px;
+    text-align: left;
 }
 
 .project-item:hover {
-  transition: transform 0.3s;
-  transform: scale(1.03);
+    transition: transform 0.3s;
+    transform: scale(1.03);
 }
 
 .project-item:active {
-  transition: transform 0.05s;
-  transform: scale(0.98);
+    transition: transform 0.05s;
+    transform: scale(0.98);
 }
 
 .project-item-flex {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .project-delete-button {
-  width: 20px;
-  height: 20px;
-  position: absolute;
-  border-radius: 8px;
-  border: none;
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    border-radius: 8px;
+    border: none;
 }
 
 .project-date {
-  display: flex;
-  flex-direction: row;
-  gap: 7px;
-  margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    gap: 7px;
+    margin-top: 10px;
 }
 
 .project-date-text {
-  font-family: roboto-thin;
-  font-size: 0.9rem;
-  max-width: 120px;
-  text-align: left;
+    font-family: roboto-thin;
+    font-size: 0.9rem;
+    max-width: 120px;
+    text-align: left;
 }
 
 .calendar-icon {
-  width: 16px;
+    width: 16px;
 }
 
 .movie-poster {
-  width: 35%;
-  aspect-ratio: 0.67;
+    width: 35%;
+    aspect-ratio: 0.675;
 }

@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="public/images/homepage.png"  width="450" height="240">
+    <img src="public/images/banner.png"  width="450" height="240">
 </p>
 
 <p align="center">
@@ -18,27 +18,27 @@ My biggest inspiration is by far _Amazon Story Writer_, a very handy writing too
 
 # Features
 
-- Online
-- Export to PDF or Fountain format
-- _planned_ - Project management
-- _planned_ - Collaborative editing
-- _planned_ - Screenplay sharing
+-   Online
+-   Export to PDF or Fountain format
+-   _planned_ - Project management
+-   _planned_ - Collaborative editing
+-   _planned_ - Screenplay sharing
 
 # Dependencies
 
 ### Running
 
-- Node `16.13.1`
-- npm `8.1.2`
+-   Node `16.13.1`
+-   npm `8.1.2`
 
 ### Packages
 
-- Tiptap `2.0.0`
-- NextJS `12.0.10`
-- React `17.0.2`
-- Prisma `3.11.1`
-- File Saver `2.0.5`
-- Iron Session `6.1.3`
+-   Tiptap `2.0.0`
+-   NextJS `12.0.10`
+-   React `17.0.2`
+-   Prisma `3.11.1`
+-   File Saver `2.0.5`
+-   Iron Session `6.1.3`
 
 # How to launch
 

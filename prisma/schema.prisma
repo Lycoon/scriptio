@@ -31,6 +31,7 @@ model Project {
 
   title         String
   description   String?
+  poster        String?
   screenplay    Json?
 
   user          User        @relation(fields: [userId], references: [id])

@@ -1,29 +1,69 @@
 #project-stats-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
 }
 
 .center-column {
-  width: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: 60px;
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
 }
 
 .stats-title-text {
-  padding-top: 8px;
-  font-style: italic;
+    padding-top: 8px;
+    font-style: italic;
 }
 
 .charts-row {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 .charts-row > div {
-  position: relative;
-  width: 45%;
+    position: relative;
+    width: 45%;
+}
+
+.no-stats-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    width: 100%;
+    height: 100%;
+}
+
+.no-stats-div {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10%;
+}
+
+.no-stats-title {
+    font-family: roboto-thin;
+    font-style: italic;
+    font-size: 2.8rem;
+    margin-left: -6px;
+}
+
+.no-stats-subtitle {
+    font-family: roboto;
+    font-size: 1.4rem;
+    margin-top: 10px;
+}
+
+.no-stats-back-btn {
+    min-width: 60px;
+    max-width: 130px;
+    margin-top: 50px;
+}
+
+.no-stats-smiley {
+    font-size: 3.8rem;
+    font-style: italic;
+    padding-bottom: 70px;
 }

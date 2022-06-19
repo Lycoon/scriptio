@@ -1,6 +1,8 @@
 import Router from "next/router";
 import { useState } from "react";
 import { Project, User } from "../../../pages/api/users";
+import { getBase64 } from "../../../src/lib/utils";
+import { ProjectUpdate } from "../../../src/server/repository/project-repository";
 import FormError from "../../home/FormError";
 import UploadButton from "../UploadButton";
 import ProjectDangerZone from "./ProjectDangerZone";
@@ -11,6 +13,9 @@ type Props = {
 };
 
 const EditProjectConainer = ({ project, user }: Props) => {
+    const [selectedFile, setSelectedFile] = useState<File | undefined>(
+        undefined
+    );
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
         undefined
     );
@@ -19,11 +24,15 @@ const EditProjectConainer = ({ project, user }: Props) => {
         e.preventDefault();
         setErrorMessage(undefined);
 
-        const body = {
+        const body: ProjectUpdate = {
             projectId: project.id,
             title: e.target.title.value,
             description: e.target.description.value,
         };
+
+        if (selectedFile) {
+            body.poster = await getBase64(selectedFile, 686, 1016);
+        }
 
         const res = await fetch(`/api/users/${user.id}/projects`, {
             method: "PATCH",
@@ -66,7 +75,10 @@ const EditProjectConainer = ({ project, user }: Props) => {
                     </div>
                     <div className="form-element">
                         <span className="form-label">Poster</span>
-                        <UploadButton />
+                        <UploadButton
+                            setSelectedFile={setSelectedFile}
+                            selectedFile={selectedFile}
+                        />
                     </div>
                 </div>
 
