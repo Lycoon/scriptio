@@ -3,8 +3,27 @@ import type { AppProps } from "next/app";
 import { ContextProvider } from "../src/context/UserContext";
 import { SWRConfig } from "swr";
 import fetchJson from "../src/lib/fetchJson";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import Loading from "../components/home/Loading";
 
 function MyApp({ Component, pageProps }: AppProps) {
+    const [pageLoading, setPageLoading] = useState<boolean>(false);
+
+    const router = useRouter();
+    useEffect(() => {
+        const handleStart = () => {
+            setPageLoading(true);
+        };
+        const handleComplete = () => {
+            setPageLoading(false);
+        };
+
+        router.events.on("routeChangeStart", handleStart);
+        router.events.on("routeChangeComplete", handleComplete);
+        router.events.on("routeChangeError", handleComplete);
+    }, [router]);
+
     return (
         <SWRConfig
             value={{
@@ -16,7 +35,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             }}
         >
             <ContextProvider>
-                <Component {...pageProps} />
+                {pageLoading ? <Loading /> : <Component {...pageProps} />}
             </ContextProvider>
         </SWRConfig>
     );
