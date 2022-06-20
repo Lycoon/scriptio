@@ -1,4 +1,3 @@
-import { read } from "fs";
 import Router from "next/router";
 import { useContext, useEffect, useState } from "react";
 import { Project } from "../../../pages/api/users";
