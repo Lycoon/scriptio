@@ -40,6 +40,7 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
             <div id="project-page-container">
                 <div className="center-flex">
                     <h1 id="project-page-title">Projects</h1>
+                    <hr />
                     <div className="project-grid">
                         <NewProjectItem setIsCreating={setIsCreating} />
                         {projects.map(function (project: Project) {

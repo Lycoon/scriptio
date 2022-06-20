@@ -101,6 +101,11 @@ body {
     src: URL("/fonts/Courier Prime Bold.ttf") format("truetype");
 }
 
+@font-face {
+    font-family: josefin-medium;
+    src: URL("/fonts/Josefin Medium.ttf") format("truetype");
+}
+
 .tommy {
     font-family: tommy;
 }
