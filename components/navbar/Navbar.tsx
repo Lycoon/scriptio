@@ -1,4 +1,4 @@
-import Image from "next/image";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Router from "next/router";
 import { useContext } from "react";
@@ -6,7 +6,8 @@ import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
 import { ActiveButtons } from "../../src/lib/utils";
 import NavbarButton from "./NavbarButton";
-import NavbarTab from "./NavbarTab";
+
+const NavbarTab = dynamic(() => import("./NavbarTab"));
 
 type Props = {
     activeButtons?: ActiveButtons;
@@ -45,7 +46,7 @@ const Navbar = ({ activeButtons, project }: Props) => {
                     <NavbarTab
                         activeButtons={activeButtons}
                         project={project}
-                    ></NavbarTab>
+                    />
                 )}
             </div>
             {!user?.isLoggedIn ? (

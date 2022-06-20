@@ -1,8 +1,0 @@
-#register-form {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-
-  min-width: min(18vw, 30vh);
-  min-height: 25vh;
-}

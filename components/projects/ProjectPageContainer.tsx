@@ -1,19 +1,8 @@
 import { useState } from "react";
 import { Project } from "../../pages/api/users";
 import EmptyProjectPage from "./EmptyProjectPage";
-import NewProjectItem from "./NewProjectItem";
 import NewProjectPage from "./NewProjectPage";
 import ProjectItem from "./ProjectItem";
-
-const sampleProject = {
-    id: 0,
-    userId: 1,
-    title: "Titanic",
-    description: "This is a simple description",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    screenplay: "",
-};
 
 type Props = {
     projects: Project[];
@@ -39,9 +28,19 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
         return (
             <div id="project-page-container">
                 <div className="center-flex">
-                    <h1 id="project-page-title">Projects</h1>
+                    <div className="project-container-header">
+                        <div className="project-container-header-info">
+                            <h1>Projects</h1>
+                            <button
+                                className="form-btn create-project-button"
+                                onClick={() => setIsCreating(true)}
+                            >
+                                Create
+                            </button>
+                        </div>
+                        <hr />
+                    </div>
                     <div className="project-grid">
-                        <NewProjectItem setIsCreating={setIsCreating} />
                         {projects.map(function (project: Project) {
                             return (
                                 <ProjectItem

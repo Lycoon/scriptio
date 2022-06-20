@@ -7,11 +7,13 @@ const RecoveryForm = () => {
 
     return (
         <form id="recovery-form" onSubmit={onSubmit}>
-            <h1 className="segoe-bold">Recover password</h1>
-            <p className="info segoe">
-                If the provided email is linked to an existing account, an email
-                will be sent with a link to recover your password.
-            </p>
+            <div className="form-header">
+                <h1>Recover password</h1>
+                <p className="info segoe">
+                    If the provided email is linked to an existing account, an
+                    email will be sent with a link to recover your password.
+                </p>
+            </div>
 
             <div id="email-form" className="form-element">
                 <span className="form-label">Email</span>

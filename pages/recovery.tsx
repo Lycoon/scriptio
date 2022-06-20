@@ -8,7 +8,7 @@ const RecoveryPage: NextPage = () => {
     return (
         <>
             <Head>
-                <title>Scriptio - Password recovery</title>
+                <title>Scriptio - Recover password</title>
             </Head>
             <div className="main-container">
                 <Navbar />

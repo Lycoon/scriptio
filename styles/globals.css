@@ -39,15 +39,30 @@
 @import "EditorTab.module.css";
 @import "EditorPage.module.css";
 
-body {
-    margin: 0 !important;
-}
-
 * {
     font-family: sans-serif;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+body {
+    margin: 0 !important;
+}
+
+hr {
+    border: 0;
+    clear: both;
+    display: block;
+    width: 100%;
+    background-color: #e0e0e0;
+    height: 2px;
+    margin-top: 10px;
+}
+
+h1 {
+    font-family: josefin-medium;
+    color: #474747;
 }
 
 .main-container {
@@ -99,6 +114,11 @@ body {
 @font-face {
     font-family: courier-prime-bold;
     src: URL("/fonts/Courier Prime Bold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: josefin-medium;
+    src: URL("/fonts/Josefin Medium.ttf") format("truetype");
 }
 
 .tommy {

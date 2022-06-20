@@ -10,11 +10,6 @@ type Props = {
     setIsCreating: (isCreating: boolean) => void;
 };
 
-const onSubmit = (setIsCreating: (isCreating: boolean) => void) => {
-    // Successful project creation
-    setIsCreating(false);
-};
-
 const NewProjectPage = ({ setIsCreating }: Props) => {
     const { user, setUser } = useUser();
     const [selectedFile, setSelectedFile] = useState<File | undefined>(
@@ -54,8 +49,11 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
     return (
         <div className="project-form-container">
             <form className="project-form" onSubmit={onSubmit}>
-                <h1 className="segoe-bold">Create project</h1>
-                {errorMessage && <FormError message={errorMessage} />}
+                <div>
+                    <h1>New project</h1>
+                    {errorMessage && <FormError message={errorMessage} />}
+                    <hr />
+                </div>
 
                 <div>
                     <div className="form-element">

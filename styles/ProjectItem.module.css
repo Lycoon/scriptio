@@ -22,12 +22,12 @@
 }
 
 .project-item:hover {
-    transition: transform 0.3s;
-    transform: scale(1.03);
+    transition: transform 0.15s;
+    transform: scale(1.02);
 }
 
 .project-item:active {
-    transition: transform 0.05s;
+    transition: transform 0.03s;
     transform: scale(0.98);
 }
 

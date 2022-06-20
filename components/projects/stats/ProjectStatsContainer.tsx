@@ -15,9 +15,10 @@ const ProjectStatsContainer = ({ project }: Props) => {
         <div id="project-stats-container">
             {project.screenplay ? (
                 <div className="center-column">
-                    <div>
-                        <h1 id="project-page-title">Statistics</h1>
+                    <div className="project-stats-header">
+                        <h1>Statistics</h1>
                         <p className="stats-title-text">{project.title}</p>
+                        <hr />
                     </div>
                     <div>
                         <h3>Characters frequency</h3>

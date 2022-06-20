@@ -50,8 +50,11 @@ const EditProjectConainer = ({ project, user }: Props) => {
     return (
         <div className="project-form-container">
             <form className="project-form" onSubmit={onSubmit}>
-                <h1 className="segoe-bold">Edit project</h1>
-                {errorMessage && <FormError message={errorMessage} />}
+                <div>
+                    <h1>Edit project</h1>
+                    {errorMessage && <FormError message={errorMessage} />}
+                    <hr />
+                </div>
 
                 <div>
                     <div className="form-element">
