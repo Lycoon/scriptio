@@ -25,41 +25,46 @@ const LoginForm = () => {
             body: JSON.stringify(body),
         });
 
-        const s = ((await res.json()) as any).body;
+        const json = (await res.json()) as any;
+        const resBody = json.body;
         if (res.status === 200) {
-            updateUser(s);
+            updateUser(resBody);
             Router.push("/");
         } else {
-            setErrorMessage(((await res.json()) as any).message);
+            setErrorMessage(json.message);
         }
     }
 
     return (
-        <form id="login-form" onSubmit={onSubmit}>
-            <h1 className="segoe-bold">Log in</h1>
-            {errorMessage && <FormError message={errorMessage} />}
+        <form className="home-form" onSubmit={onSubmit}>
+            <div className="form-header">
+                <h1>Log in</h1>
+                {errorMessage && <FormError message={errorMessage} />}
+            </div>
 
-            <label id="email-form" className="form-element">
-                <span className="form-label">Email</span>
-                <input
-                    className="form-input"
-                    name="email"
-                    type="email"
-                    required
-                />
-            </label>
+            <div className="form-element">
+                <label id="email-form" className="form-element">
+                    <span className="form-label">Email</span>
+                    <input
+                        className="form-input"
+                        name="email"
+                        type="email"
+                        required
+                    />
+                </label>
 
-            <label id="password-form" className="form-element">
-                <span className="form-label">Password</span>
-                <input
-                    className="form-input"
-                    name="password"
-                    type="password"
-                    onChange={() => setErrorMessage(undefined)}
-                    required
-                />
-                <Link href="/recovery">Forgot password?</Link>
-            </label>
+                <label id="password-form" className="form-element">
+                    <span className="form-label">Password</span>
+                    <input
+                        className="form-input"
+                        name="password"
+                        type="password"
+                        onChange={() => setErrorMessage(undefined)}
+                        required
+                    />
+                    <Link href="/recovery">Forgot password?</Link>
+                </label>
+            </div>
 
             <div id="form-btn-flex">
                 <button className="form-btn" type="submit">

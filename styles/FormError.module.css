@@ -1,10 +1,9 @@
 .form-error {
-  margin-top: -18px;
-  max-width: fit-content;
+    max-width: fit-content;
 }
 
 .form-error-text {
-  font-size: 16px;
-  color: #ce4462;
-  text-align: justify;
+    font-size: 16px;
+    color: #ce4462;
+    text-align: justify;
 }

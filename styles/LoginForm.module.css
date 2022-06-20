@@ -1,13 +1,13 @@
-#login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.home-form {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
 
-  min-width: min(18vw, 30vh);
-  min-height: 25vh;
+    min-width: min(18vw, 30vh);
+    min-height: 25vh;
 }
 
-a {
-  color: #9c9c9c;
-  font-size: min(1.8vw, 1.2vh);
+#password-form > a {
+    color: #9c9c9c;
+    font-size: min(1.8vw, 1.2vh);
 }

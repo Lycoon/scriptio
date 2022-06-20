@@ -5,6 +5,10 @@
     height: 100%;
 }
 
+.project-stats-header {
+    margin-top: 6%;
+}
+
 .center-column {
     width: 50%;
     display: flex;

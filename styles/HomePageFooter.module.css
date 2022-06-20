@@ -1,11 +1,15 @@
 #footer {
-  text-align: center;
-  width: 100%;
-  padding: 10px;
+    text-align: center;
+    width: 100%;
+    padding: 10px;
+
+    position: absolute;
+    background-color: transparent;
+    bottom: 0;
 }
 
 #footer-text,
 a {
-  color: #9c9c9c;
-  font-size: min(1.8vw, 1.2vh);
+    color: #000000;
+    font-size: min(1.8vw, 1.2vh);
 }

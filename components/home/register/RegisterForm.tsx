@@ -35,9 +35,11 @@ const RegisterForm = () => {
     }
 
     return (
-        <form id="register-form" onSubmit={onSubmit}>
-            <h1 className="segoe-bold">Register</h1>
-            {errorMessage && <FormError message={errorMessage} />}
+        <form className="home-form" onSubmit={onSubmit}>
+            <div className="form-header">
+                <h1>Register</h1>
+                {errorMessage && <FormError message={errorMessage} />}
+            </div>
 
             <label id="email-form" className="form-element">
                 <span className="form-label">Email</span>

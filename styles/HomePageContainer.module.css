@@ -7,18 +7,19 @@
     overflow: hidden;
 }
 
-.homepage_text {
+.homepage-text {
     z-index: -1;
     margin-bottom: 3.5%;
 }
 
-#scriptio_title {
+#scriptio-title {
     font-family: poetsen;
     font-size: min(11vw, 11vh);
     margin-bottom: 0.7rem;
+    color: black;
 }
 
-#scriptio_desc {
+#scriptio-desc {
     font-family: roboto-thin;
     text-align: center;
     font-size: min(1.6vw, 1.6vh);
@@ -29,7 +30,7 @@
     animation-duration: 1s;
 }
 
-body {
+#homepage {
     background-image: linear-gradient(
         60deg,
         #e3caaa 0%,
@@ -37,6 +38,7 @@ body {
         #fdf6ec 67%,
         #b7cadb 100%
     );
+    z-index: -1;
     background-size: 100%;
 }
 

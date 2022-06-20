@@ -104,18 +104,13 @@ const EditorAndSidebar = ({ project }: Props) => {
                 screenplay: editorView?.getJSON(),
             };
 
+            updateIsSaving(true);
             const res = await fetch(`/api/users/${project.userId}/projects`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
             });
-
-            if (res.ok) {
-                updateIsSaving(true);
-                setTimeout(() => {
-                    updateIsSaving(false);
-                }, 1000);
-            }
+            updateIsSaving(false);
         }
     };
 

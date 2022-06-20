@@ -5,19 +5,25 @@
     height: 100%;
 }
 
-#project-page-title {
-    font-family: josefin-medium;
-    color: rgb(53, 53, 53);
+.project-container-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
     margin-top: 70px;
+    width: 100%;
 }
 
-hr {
-    border: 0;
-    clear: both;
-    display: block;
-    width: 100%;
-    background-color: #e0e0e0;
-    height: 2px;
+.project-container-header-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.create-project-button {
+    width: fit-content;
+    padding-inline: 40px;
 }
 
 .center-flex {
