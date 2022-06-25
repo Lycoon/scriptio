@@ -3,7 +3,7 @@ import { useState } from "react";
 import useUser from "../../src/lib/useUser";
 import { getBase64 } from "../../src/lib/utils";
 import { ProjectCreation } from "../../src/server/repository/project-repository";
-import FormError from "../home/FormError";
+import FormInfo, { FormInfoType } from "../home/FormInfo";
 import UploadButton from "./UploadButton";
 
 type Props = {
@@ -12,16 +12,22 @@ type Props = {
 
 const NewProjectPage = ({ setIsCreating }: Props) => {
     const { user, setUser } = useUser();
+    const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | undefined>(
         undefined
     );
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(
-        undefined
-    );
+
+    const exitCreating = () => {
+        setIsCreating(false);
+    };
+
+    const resetFromInfo = () => {
+        setFormInfo(null);
+    };
 
     const onSubmit = async (e: any) => {
         e.preventDefault();
-        setErrorMessage(undefined);
+        resetFromInfo();
 
         const body: Partial<ProjectCreation> = {
             title: e.target.title.value,
@@ -38,11 +44,12 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
             body: JSON.stringify(body),
         });
 
+        const json = await res.json();
         if (res.status === 201) {
-            Router.push("/");
             setIsCreating(false);
+            Router.push("/");
         } else {
-            setErrorMessage(((await res.json()) as any).message);
+            setFormInfo({ content: json.message, isError: true });
         }
     };
 
@@ -51,7 +58,7 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
             <form className="project-form" onSubmit={onSubmit}>
                 <div>
                     <h1>New project</h1>
-                    {errorMessage && <FormError message={errorMessage} />}
+                    {formInfo && <FormInfo info={formInfo} />}
                     <hr />
                 </div>
 
@@ -85,7 +92,7 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
                 <div className="project-form-end">
                     <button
                         className="form-btn back-btn"
-                        onClick={() => setIsCreating(false)}
+                        onClick={exitCreating}
                     >
                         Back
                     </button>

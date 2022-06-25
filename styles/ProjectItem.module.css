@@ -61,7 +61,9 @@
 }
 
 .calendar-icon {
-    width: 16px;
+    opacity: 80%;
+    width: 18px;
+    height: 18px;
 }
 
 .movie-poster {

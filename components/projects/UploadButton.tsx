@@ -10,6 +10,10 @@ const UploadButton = ({ setSelectedFile, selectedFile }: Props) => {
     const [preview, setPreview] = useState<string>();
     let dragoverStyle = dragover ? " dragover" : "";
 
+    const resetSelectedFile = () => {
+        setSelectedFile(null);
+    };
+
     useEffect(() => {
         if (!selectedFile) {
             setPreview(undefined);
@@ -23,8 +27,7 @@ const UploadButton = ({ setSelectedFile, selectedFile }: Props) => {
     }, [selectedFile]);
 
     const onSelectFile = (e: any) => {
-        if (!e.target.files || e.target.files.length === 0)
-            setSelectedFile(undefined);
+        if (!e.target.files || e.target.files.length === 0) resetSelectedFile();
         else setSelectedFile(e.target.files[0]);
     };
 
@@ -56,7 +59,7 @@ const UploadButton = ({ setSelectedFile, selectedFile }: Props) => {
                         </p>
                         <button
                             className="upload-preview-delete"
-                            onClick={() => setSelectedFile(undefined)}
+                            onClick={resetSelectedFile}
                         >
                             X
                         </button>
