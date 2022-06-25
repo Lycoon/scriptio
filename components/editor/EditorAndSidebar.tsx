@@ -9,6 +9,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
+import { editProject } from "../../src/lib/requests";
 
 type Props = {
     project: Project;
@@ -105,11 +106,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             };
 
             updateIsSaving(true);
-            const res = await fetch(`/api/users/${project.userId}/projects`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body),
-            });
+            await editProject(project.userId, body);
             updateIsSaving(false);
         }
     };

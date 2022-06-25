@@ -21,6 +21,13 @@
     align-items: center;
 }
 
+.project-container-header-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 8px;
+}
+
 .create-project-button {
     width: fit-content;
     padding-inline: 40px;

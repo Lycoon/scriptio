@@ -1,5 +1,6 @@
 import Router from "next/router";
 import { useState } from "react";
+import { createProject } from "../../src/lib/requests";
 import useUser from "../../src/lib/useUser";
 import { getBase64 } from "../../src/lib/utils";
 import { ProjectCreation } from "../../src/server/repository/project-repository";
@@ -38,13 +39,9 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
             body.poster = await getBase64(selectedFile, 686, 1016);
         }
 
-        const res = await fetch(`/api/users/${user?.id}/projects`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-        });
-
+        const res = await createProject(user?.id!, body);
         const json = await res.json();
+
         if (res.status === 201) {
             setIsCreating(false);
             Router.push("/");

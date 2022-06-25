@@ -1,5 +1,6 @@
 import Router from "next/router";
 import { Project, User } from "../../../pages/api/users";
+import { deleteProject } from "../../../src/lib/requests";
 
 type Props = {
     project: Project;
@@ -16,12 +17,7 @@ const ProjectDangerZone = ({ project, user }: Props) => {
             return;
         }
 
-        const res = await fetch(`/api/users/${user.id}/projects`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ projectId: project.id }),
-        });
-
+        const res = await deleteProject(user.id, project.id);
         if (res.status === 200) {
             Router.push("/");
         } else {
@@ -34,8 +30,12 @@ const ProjectDangerZone = ({ project, user }: Props) => {
         <form id="danger-zone" onSubmit={onDelete}>
             <p className="danger-zone-text segoe-bold">Danger zone</p>
             <p className="danger-zone-info segoe">
-                Type {project.title} below to confirm you want to delete the
-                project. This action is irreversible.
+                Type{" "}
+                <span className="danger-zone-project-title">
+                    {project.title}
+                </span>{" "}
+                below to confirm you want to delete the project. This action is
+                irreversible.
             </p>
             <div className="danger-zone-actions">
                 <input
