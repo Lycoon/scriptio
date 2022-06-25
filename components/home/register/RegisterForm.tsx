@@ -1,15 +1,16 @@
-import Router from "next/router";
 import { useState } from "react";
-import FormError from "../FormError";
+import FormInfo, { FormInfoType } from "../FormInfo";
 
 const RegisterForm = () => {
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(
-        undefined
-    );
+    const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
+
+    const resetFromInfo = () => {
+        setFormInfo(null);
+    };
 
     async function onSubmit(e: any) {
         e.preventDefault();
-        setErrorMessage(undefined);
+        resetFromInfo();
 
         const body = {
             email: e.target.email.value,
@@ -17,7 +18,7 @@ const RegisterForm = () => {
         };
 
         if (body.password !== e.target.password2.value) {
-            setErrorMessage("Passwords do not match");
+            setFormInfo({ content: "Passwords do not match", isError: true });
             return;
         }
 
@@ -27,10 +28,11 @@ const RegisterForm = () => {
             body: JSON.stringify(body),
         });
 
-        if (res.status === 201) {
-            Router.push("/login");
+        const json = await res.json();
+        if (res.status === 200 || res.status === 201) {
+            setFormInfo({ content: json.message });
         } else {
-            setErrorMessage(((await res.json()) as any).message);
+            setFormInfo({ content: json.message, isError: true });
         }
     }
 
@@ -38,7 +40,7 @@ const RegisterForm = () => {
         <form className="home-form" onSubmit={onSubmit}>
             <div className="form-header">
                 <h1>Register</h1>
-                {errorMessage && <FormError message={errorMessage} />}
+                {formInfo && <FormInfo info={formInfo} />}
             </div>
 
             <label id="email-form" className="form-element">
@@ -47,6 +49,7 @@ const RegisterForm = () => {
                     className="form-input"
                     name="email"
                     type="email"
+                    onChange={resetFromInfo}
                     required
                 />
             </label>
@@ -57,7 +60,7 @@ const RegisterForm = () => {
                     className="form-input"
                     name="password1"
                     type="password"
-                    onChange={() => setErrorMessage(undefined)}
+                    onChange={resetFromInfo}
                     required
                 />
                 <span className="form-label">Repeat password</span>
@@ -65,7 +68,7 @@ const RegisterForm = () => {
                     className="form-input"
                     name="password2"
                     type="password"
-                    onChange={() => setErrorMessage(undefined)}
+                    onChange={resetFromInfo}
                     required
                 />
             </label>

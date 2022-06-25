@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Project, User } from "../../../pages/api/users";
 import { getBase64 } from "../../../src/lib/utils";
 import { ProjectUpdate } from "../../../src/server/repository/project-repository";
-import FormError from "../../home/FormError";
+import FormInfo, { FormInfoType } from "../../home/FormInfo";
 import UploadButton from "../UploadButton";
 import ProjectDangerZone from "./ProjectDangerZone";
 
@@ -13,16 +13,20 @@ type Props = {
 };
 
 const EditProjectConainer = ({ project, user }: Props) => {
-    const [selectedFile, setSelectedFile] = useState<File | undefined>(
-        undefined
-    );
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(
-        undefined
-    );
+    const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    const backToScreenplay = () => {
+        Router.push(`/projects/${project.id}/editor`);
+    };
+
+    const resetFromInfo = () => {
+        setFormInfo(null);
+    };
 
     const onSubmit = async (e: any) => {
         e.preventDefault();
-        setErrorMessage(undefined);
+        resetFromInfo();
 
         const body: ProjectUpdate = {
             projectId: project.id,
@@ -40,10 +44,11 @@ const EditProjectConainer = ({ project, user }: Props) => {
             body: JSON.stringify(body),
         });
 
+        const json = await res.json();
         if (res.status === 200) {
             Router.push(`/projects/${project.id}/editor`);
         } else {
-            setErrorMessage(((await res.json()) as any).message);
+            setFormInfo({ content: json.message, isError: true });
         }
     };
 
@@ -52,7 +57,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
             <form className="project-form" onSubmit={onSubmit}>
                 <div>
                     <h1>Edit project</h1>
-                    {errorMessage && <FormError message={errorMessage} />}
+                    {formInfo && <FormInfo info={formInfo} />}
                     <hr />
                 </div>
 
@@ -88,9 +93,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
                 <div className="project-form-end">
                     <button
                         className="form-btn back-btn"
-                        onClick={() =>
-                            Router.push(`/projects/${project.id}/editor`)
-                        }
+                        onClick={backToScreenplay}
                     >
                         Back
                     </button>

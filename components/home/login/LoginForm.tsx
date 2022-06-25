@@ -2,17 +2,19 @@ import Link from "next/link";
 import Router from "next/router";
 import { useContext, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
-import FormError from "../FormError";
+import FormInfo, { FormInfoType } from "../FormInfo";
 
 const LoginForm = () => {
     const { user, updateUser } = useContext(UserContext);
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(
-        undefined
-    );
+    const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
+
+    const resetFromInfo = () => {
+        setFormInfo(null);
+    };
 
     async function onSubmit(e: any) {
         e.preventDefault();
-        setErrorMessage(undefined);
+        resetFromInfo();
 
         const body = {
             email: e.target.email.value,
@@ -27,11 +29,12 @@ const LoginForm = () => {
 
         const json = (await res.json()) as any;
         const resBody = json.body;
+
         if (res.status === 200) {
             updateUser(resBody);
             Router.push("/");
         } else {
-            setErrorMessage(json.message);
+            setFormInfo({ content: json.message, isError: true });
         }
     }
 
@@ -39,7 +42,7 @@ const LoginForm = () => {
         <form className="home-form" onSubmit={onSubmit}>
             <div className="form-header">
                 <h1>Log in</h1>
-                {errorMessage && <FormError message={errorMessage} />}
+                {formInfo && <FormInfo info={formInfo} />}
             </div>
 
             <div className="form-element">
@@ -49,6 +52,7 @@ const LoginForm = () => {
                         className="form-input"
                         name="email"
                         type="email"
+                        onChange={resetFromInfo}
                         required
                     />
                 </label>
@@ -59,7 +63,7 @@ const LoginForm = () => {
                         className="form-input"
                         name="password"
                         type="password"
-                        onChange={() => setErrorMessage(undefined)}
+                        onChange={resetFromInfo}
                         required
                     />
                     <Link href="/recovery">Forgot password?</Link>

@@ -25,6 +25,10 @@ const openProject = (projectId: number) => {
 const ProjectItem = ({ project }: Props) => {
     const days = Math.round((Date.now() - +project.updatedAt) / _MS_PER_DAY);
     const [displayDelete, updateDisplayDelete] = useState<boolean>(false);
+    const posterPath =
+        project.poster !== null
+            ? ASSETS + project.poster
+            : "/images/default-poster.png";
 
     return (
         <button
@@ -49,7 +53,7 @@ const ProjectItem = ({ project }: Props) => {
                 </div>
                 <img
                     className="movie-poster"
-                    src={ASSETS + project.poster}
+                    src={posterPath}
                     alt="Movie poster"
                 />
             </div>

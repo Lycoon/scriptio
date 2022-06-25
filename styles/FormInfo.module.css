@@ -1,0 +1,15 @@
+.form-info {
+    max-width: fit-content;
+}
+
+.form-info-text {
+    font-size: 16px;
+    color: #61b76b;
+    text-align: justify;
+}
+
+.form-info-error {
+    font-size: 16px;
+    color: #ce4462;
+    text-align: justify;
+}
