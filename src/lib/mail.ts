@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import { getSecretsFromId } from "../server/service/user-service";
 
 const transporter = nodemailer.createTransport({
     pool: true,
