@@ -26,7 +26,6 @@ const EditProjectConainer = ({ project, user }: Props) => {
 
     const onSubmit = async (e: any) => {
         e.preventDefault();
-        resetFromInfo();
 
         const body: ProjectUpdate = {
             projectId: project.id,
