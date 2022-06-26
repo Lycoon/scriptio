@@ -6,6 +6,12 @@ export type ActiveButtons = {
     isProjectEdition?: boolean;
 };
 
+export enum VerificationStatus {
+    SUCCESS,
+    FAILED,
+    USED,
+}
+
 export const onSuccess = (
     res: NextApiResponse,
     code: number,

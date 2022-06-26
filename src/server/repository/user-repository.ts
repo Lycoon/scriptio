@@ -2,7 +2,14 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+export type Secrets = {
+    emailHash: string;
+    hash: string;
+    salt: string;
+};
+
 export interface UserUpdate {
+    id: idOrEmailType;
     email?: string;
     emailHash?: string;
     salt?: string;
@@ -36,9 +43,7 @@ export class UserRepository {
                 emailHash: user.emailHash,
                 active: user.active,
             },
-            where: {
-                email: user.email,
-            },
+            where: user.id,
         });
     }
 
@@ -75,6 +80,7 @@ export class UserRepository {
                 emailHash: true,
                 hash: true,
                 salt: true,
+                active: true,
             },
         });
     }

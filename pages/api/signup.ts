@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { sendVerificationEmail } from "../../src/lib/mail";
+import { sendVerificationEmail } from "../../src/lib/mail/mail";
 import {
     EMAIL_ALREADY_REGISTERED,
     MISSING_BODY,
@@ -8,8 +8,9 @@ import {
 import { onError, onSuccess } from "../../src/lib/utils";
 import {
     createUser,
-    getSecretsFromId,
+    generateSecrets,
     getUserFromEmail,
+    updateUser,
 } from "../../src/server/service/user-service";
 
 export default async function signup(
@@ -33,8 +34,15 @@ export default async function signup(
             return onError(res, 500, EMAIL_ALREADY_REGISTERED);
         }
 
-        const secrets = await getSecretsFromId(existing.id);
-        sendVerificationEmail(existing.id, email, secrets!.emailHash);
+        const secrets = generateSecrets(password);
+        const updated = await updateUser({
+            id: { id: existing.id },
+            emailHash: secrets.emailHash,
+            hash: secrets.hash,
+            salt: secrets.salt,
+        });
+        sendVerificationEmail(existing.id, email, updated.emailHash);
+
         return onSuccess(
             res,
             200,

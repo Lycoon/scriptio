@@ -22,6 +22,10 @@ export const editProject = (userId: number, body: any) => {
     );
 };
 
+export const login = (email: string, password: string) => {
+    return request(`/api/login`, "POST", JSON.stringify({ email, password }));
+};
+
 const request = async (url: string, method: string, body?: string) => {
     return fetch(url, {
         headers: { "Content-Type": "application/json" },
