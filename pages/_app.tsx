@@ -6,6 +6,7 @@ import fetchJson from "../src/lib/fetchJson";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Loading from "../components/home/Loading";
+import { ThemeProvider } from "next-themes";
 
 function MyApp({ Component, pageProps }: AppProps) {
     const [pageLoading, setPageLoading] = useState<boolean>(false);
@@ -35,7 +36,9 @@ function MyApp({ Component, pageProps }: AppProps) {
             }}
         >
             <ContextProvider>
-                {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                <ThemeProvider attribute="class" defaultTheme="light">
+                    {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                </ThemeProvider>
             </ContextProvider>
         </SWRConfig>
     );

@@ -1,19 +1,16 @@
 .dropdown-item {
-  font-size: 1rem;
-  font-family: segoe-light;
-  text-align: left;
+    font-size: 1rem;
+    font-family: segoe-light;
+    text-align: left;
 
-  padding-inline: 15px;
-  padding-block: 10px;
+    padding-inline: 15px;
+    padding-block: 10px;
 
-  color: white;
-  background-color: #474747;
-  border: none;
+    color: white;
+    background-color: #474747;
+    border: none;
 }
 
 .dropdown-item:hover {
-  background-color: rgb(87, 87, 87);
-}
-
-.dropdown-item-content {
+    background-color: rgb(87, 87, 87);
 }

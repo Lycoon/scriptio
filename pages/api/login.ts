@@ -5,19 +5,25 @@ import { sessionOptions } from "../../src/lib/session";
 import { NextApiRequest, NextApiResponse } from "next";
 import {
     checkPassword,
+    getSecretsFromEmail,
     getUserFromEmail,
 } from "../../src/server/service/user-service";
 import { onError, onSuccess } from "../../src/lib/utils";
-import { WRONG_CREDENTIALS } from "../../src/lib/messages";
+import { NOT_VERIFIED, WRONG_CREDENTIALS } from "../../src/lib/messages";
 
 export default withIronSessionApiRoute(loginRoute, sessionOptions);
 
 async function loginRoute(req: NextApiRequest, res: NextApiResponse) {
     const { email, password } = await req.body;
 
-    const matchingPassword = await checkPassword(email, password);
+    const secrets = await getSecretsFromEmail(email);
+    const matchingPassword = await checkPassword(secrets, password);
     if (!email || !password || !matchingPassword) {
         return onError(res, 401, WRONG_CREDENTIALS);
+    }
+
+    if (!secrets?.active) {
+        return onError(res, 401, NOT_VERIFIED);
     }
 
     // Filling session with data

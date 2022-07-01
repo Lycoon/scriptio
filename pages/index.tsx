@@ -14,7 +14,16 @@ type Props = {
     projects: Project[] | null;
 };
 
+const HomepageContainer = () => (
+    <>
+        <HomePageContainer />
+        <HomePageFooter />
+    </>
+);
+
 const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
+    const ProjectPage = () => <ProjectPageContainer projects={projects!} />;
+
     return (
         <>
             <Head>
@@ -22,14 +31,7 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
             </Head>
             <div className="main-container">
                 <Navbar />
-                {!user ? (
-                    <>
-                        <HomePageContainer />
-                        <HomePageFooter />
-                    </>
-                ) : (
-                    <ProjectPageContainer projects={projects!} />
-                )}
+                {!user ? <HomepageContainer /> : <ProjectPage />}
             </div>
         </>
     );

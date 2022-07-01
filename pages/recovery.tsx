@@ -4,19 +4,17 @@ import HomePageFooter from "../components/home/HomePageFooter";
 import Navbar from "../components/navbar/Navbar";
 import RecoveryContainer from "../components/home/recovery/RecoveryContainer";
 
-const RecoveryPage: NextPage = () => {
-    return (
-        <>
-            <Head>
-                <title>Scriptio - Recover password</title>
-            </Head>
-            <div className="main-container">
-                <Navbar />
-                <RecoveryContainer />
-                <HomePageFooter />
-            </div>
-        </>
-    );
-};
+const RecoveryPage: NextPage = () => (
+    <>
+        <Head>
+            <title>Scriptio - Recover password</title>
+        </Head>
+        <div className="main-container">
+            <Navbar />
+            <RecoveryContainer />
+            <HomePageFooter />
+        </div>
+    </>
+);
 
 export default RecoveryPage;

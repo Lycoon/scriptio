@@ -9,20 +9,18 @@ type Props = {
     verificationStatus: VerificationStatus;
 };
 
-const LoginPage: NextPage<Props> = ({ verificationStatus }: Props) => {
-    return (
-        <>
-            <Head>
-                <title>Scriptio - Log in</title>
-            </Head>
-            <div className="main-container">
-                <Navbar />
-                <LoginContainer verificationStatus={verificationStatus} />
-                <HomePageFooter />
-            </div>
-        </>
-    );
-};
+const LoginPage: NextPage<Props> = ({ verificationStatus }: Props) => (
+    <>
+        <Head>
+            <title>Scriptio - Log in</title>
+        </Head>
+        <div className="main-container">
+            <Navbar />
+            <LoginContainer verificationStatus={verificationStatus} />
+            <HomePageFooter />
+        </div>
+    </>
+);
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
     const verified = ctx.query["verificationStatus"];

@@ -1,28 +1,28 @@
 .tab-text {
-  font-size: 100%;
-  font-family: "Courier";
-  text-align: left;
-  font-weight: bold;
+    font-size: 100%;
+    font-family: "Courier";
+    text-align: left;
+    font-weight: bold;
 }
 
 .tab {
-  border: none;
-  width: 100%;
-  padding: 10px;
-  padding-left: 25px;
-  background-color: transparent;
+    border: none;
+    width: 100%;
+    padding: 10px;
+    padding-left: 25px;
+    background-color: transparent;
 }
 
 .tab:focus {
-  outline: none;
+    outline: none;
 }
 
 .tab:hover {
-  transition: padding-left 0.1s;
-  padding-left: 45px;
+    transition: padding-left 0.1s;
+    padding-left: 45px;
 }
 
 .active-tab {
-  padding-left: 45px;
-  background-color: rgb(224, 224, 224);
+    padding-left: 45px;
+    background-color: var(--editor-active-tab);
 }

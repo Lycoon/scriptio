@@ -4,6 +4,7 @@ import {
     EMAIL_ALREADY_REGISTERED,
     MISSING_BODY,
     PASSWORD_REQUIREMENTS,
+    VERIFICATION_SENT,
 } from "../../src/lib/messages";
 import { onError, onSuccess } from "../../src/lib/utils";
 import {
@@ -43,12 +44,7 @@ export default async function signup(
         });
         sendVerificationEmail(existing.id, email, updated.emailHash);
 
-        return onSuccess(
-            res,
-            200,
-            "An email has been sent to that address to confirm your account.",
-            null
-        );
+        return onSuccess(res, 200, VERIFICATION_SENT, null);
     }
 
     const created = await createUser(email, password);
@@ -57,10 +53,5 @@ export default async function signup(
     }
 
     sendVerificationEmail(created.id, email, created.emailHash);
-    onSuccess(
-        res,
-        201,
-        "An email has been sent to that address to confirm your account.",
-        null
-    );
+    onSuccess(res, 201, VERIFICATION_SENT, null);
 }

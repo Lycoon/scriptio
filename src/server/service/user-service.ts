@@ -7,8 +7,7 @@ import crypto from "crypto";
 
 const repository = new UserRepository();
 
-export async function checkPassword(email: string, password: string) {
-    const secrets = await getSecretsFromEmail(email);
+export async function checkPassword(secrets: any, password: string) {
     if (!secrets) {
         return false;
     }

@@ -1,0 +1,48 @@
+#settings-container {
+    display: grid;
+    max-width: 750px;
+    min-width: 200px;
+    width: 50%;
+    margin-top: 70px;
+
+    row-gap: 50px;
+    column-gap: 5%;
+
+    grid-template-columns: 50%;
+    grid-template-areas:
+        "header  header"
+        "profile profile"
+        "col1    col2";
+}
+
+.settings-header {
+    grid-area: header;
+}
+
+.settings-profile {
+    grid-area: profile;
+}
+
+.settings-column-left {
+    grid-area: col1;
+}
+
+.settings-column-right {
+    grid-area: col2;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    min-width: min(18%, 30%);
+    min-height: 25%;
+}
+
+@media (max-width: 900px) {
+    #settings-container {
+        display: flex;
+        flex-direction: column;
+    }
+}
