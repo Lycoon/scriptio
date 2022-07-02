@@ -9,13 +9,13 @@
     font-family: "Segoe UI";
     border-radius: 7px;
     border-width: 2px;
-    border-color: rgb(212, 212, 212);
+    border-color: var(--separator);
     border-style: solid;
     padding: 8px;
 }
 
 .form-input:focus {
-    outline-color: rgb(162, 162, 162);
+    outline-color: var(--input-outline);
 }
 
 .form-header {
@@ -41,8 +41,8 @@
 .form-btn {
     font-size: 1rem;
     font-family: segoe-bold;
-    color: #ffffff;
-    background-color: #474747;
+    color: var(--secondary-text);
+    background-color: var(--secondary-bg);
     cursor: pointer;
     width: 100%;
 
@@ -58,7 +58,7 @@
 
 .form-btn:hover {
     transition: background-color 0.2s;
-    background-color: #686868;
+    background-color: var(--secondary-bg-hover);
 }
 
 .form-btn:active {

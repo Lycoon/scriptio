@@ -19,10 +19,9 @@
 
 .tab:hover {
     transition: padding-left 0.1s;
-    padding-left: 45px;
+    padding-left: 35px;
 }
 
 .active-tab {
-    padding-left: 45px;
     background-color: var(--editor-active-tab);
 }

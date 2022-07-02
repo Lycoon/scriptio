@@ -7,10 +7,10 @@
     padding-block: 10px;
 
     color: white;
-    background-color: #474747;
+    background-color: var(--secondary-bg);
     border: none;
 }
 
 .dropdown-item:hover {
-    background-color: rgb(87, 87, 87);
+    background-color: var(--secondary-bg-hover);
 }

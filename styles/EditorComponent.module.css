@@ -16,6 +16,6 @@
     margin-bottom: 4%;
     margin-inline: auto;
 
-    background: var(--editor-screenplay);
+    background: var(--editor-script-bg);
     box-shadow: 0px 0px 8px 0px rgba(168, 174, 174, 0.75);
 }

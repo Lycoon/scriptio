@@ -6,11 +6,28 @@ type Props = {
     project: Project;
 };
 
-const ProjectStatsContainer = ({ project }: Props) => {
-    const onBackButton = () => {
-        Router.push(`/projects/${project.id}/editor`);
-    };
+const onBackButton = (projectId: number) => {
+    Router.push(`/projects/${projectId}/editor`);
+};
 
+const NoStatsContainer = ({ projectId }: any) => (
+    <div className="no-stats-container">
+        <div className="no-stats-div">
+            <p className="no-stats-title">Your screenplay is empty</p>
+            <p className="no-stats-subtitle">
+                Write an outstanding story and come back to see your statistics
+            </p>
+            <button
+                className="form-btn no-stats-back-btn"
+                onClick={() => onBackButton(projectId)}
+            >
+                Back
+            </button>
+        </div>
+    </div>
+);
+
+const ProjectStatsContainer = ({ project }: Props) => {
     return (
         <div id="project-stats-container">
             {project.screenplay ? (
@@ -44,23 +61,7 @@ const ProjectStatsContainer = ({ project }: Props) => {
                     </div>
                 </div>
             ) : (
-                <div className="no-stats-container">
-                    <div className="no-stats-div">
-                        <p className="no-stats-title">
-                            Your screenplay is empty
-                        </p>
-                        <p className="no-stats-subtitle">
-                            Write an outstanding story and come back to see your
-                            statistics
-                        </p>
-                        <button
-                            className="form-btn no-stats-back-btn"
-                            onClick={onBackButton}
-                        >
-                            Back
-                        </button>
-                    </div>
-                </div>
+                <NoStatsContainer projectId={project.id} />
             )}
         </div>
     );

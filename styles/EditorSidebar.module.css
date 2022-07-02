@@ -1,7 +1,7 @@
 #sidebar {
     padding-top: 20px;
     background-color: var(--editor-sidebar);
-    min-width: max(10vw, 22vh);
+    min-width: 260px;
 }
 
 .sidebar-shadow {
@@ -16,7 +16,8 @@
 
 .saving-info {
     font-family: courier-prime;
-    padding: 12px;
+    padding-bottom: 10px;
+    padding-left: 16px;
 }
 
 .saving-info-visible {

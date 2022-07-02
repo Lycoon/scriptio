@@ -6,6 +6,7 @@ const EditorTab = (props: any) => {
                 props.active ? "active-tab" : ""
             }`}
         >
+            {props.active ? "➤ " : ""}
             {props.content}
         </button>
     );

@@ -1,4 +1,43 @@
+import { useTheme } from "next-themes";
+
+const ChangePasswordForm = () => (
+    <form className="settings-form">
+        <div className="form-element">
+            <label id="email-form" className="form-element">
+                <span className="form-label">Password</span>
+                <input
+                    className="form-input"
+                    name="password1"
+                    type="password"
+                    required
+                />
+            </label>
+
+            <label id="password-form" className="form-element">
+                <span className="form-label">Confirm password</span>
+                <input
+                    className="form-input"
+                    name="password2"
+                    type="password"
+                    required
+                />
+            </label>
+        </div>
+
+        <div id="form-btn-flex">
+            <button className="form-btn" type="submit">
+                Confirm
+            </button>
+        </div>
+    </form>
+);
+
 const SettingsPageContainer = () => {
+    const { theme, setTheme } = useTheme();
+    const toggleTheme = () => {
+        setTheme(theme === "light" ? "dark" : "light");
+    };
+
     return (
         <div className="center-flex">
             <div id="settings-container">
@@ -11,37 +50,7 @@ const SettingsPageContainer = () => {
                     <p>joined 28/06/2021</p>
                 </div>
                 <div className="settings-column-left">
-                    <form className="settings-form">
-                        <div className="form-element">
-                            <label id="email-form" className="form-element">
-                                <span className="form-label">Password</span>
-                                <input
-                                    className="form-input"
-                                    name="password1"
-                                    type="password"
-                                    required
-                                />
-                            </label>
-
-                            <label id="password-form" className="form-element">
-                                <span className="form-label">
-                                    Confirm password
-                                </span>
-                                <input
-                                    className="form-input"
-                                    name="password2"
-                                    type="password"
-                                    required
-                                />
-                            </label>
-                        </div>
-
-                        <div id="form-btn-flex">
-                            <button className="form-btn" type="submit">
-                                Confirm
-                            </button>
-                        </div>
-                    </form>
+                    <ChangePasswordForm />
                 </div>
                 <div className="settings-column-right">
                     <label id="email-form" className="form-element">
@@ -50,6 +59,8 @@ const SettingsPageContainer = () => {
                             className="form-input"
                             name="theme"
                             type="checkbox"
+                            onChange={toggleTheme}
+                            defaultChecked={theme === "dark"}
                             required
                         />
                     </label>

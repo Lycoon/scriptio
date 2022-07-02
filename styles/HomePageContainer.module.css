@@ -8,7 +8,6 @@
 }
 
 .homepage-text {
-    z-index: -1;
     margin-bottom: 3.5%;
 }
 
@@ -23,45 +22,23 @@
     font-family: roboto-thin;
     text-align: center;
     font-size: min(1.6vw, 1.6vh);
+    color: black;
 }
 
-.title {
+.fade-in {
     animation: fadeIn;
     animation-duration: 1s;
 }
 
 #homepage {
-    background-image: linear-gradient(
-        60deg,
-        #e3caaa 0%,
-        #fcd1d1 30%,
-        #fdf6ec 67%,
-        #b7cadb 100%
-    );
-    z-index: -1;
     background-size: 100%;
-}
-
-@keyframes fadeInDown {
-    0% {
-        transform: translateY(6%);
-        opacity: 0%;
-    }
-    100% {
-        transform: translateY(0);
-        opacity: 100%;
-    }
-}
-
-@keyframes fadeInUp {
-    0% {
-        transform: translateY(-6%);
-        opacity: 0%;
-    }
-    100% {
-        transform: translateY(0);
-        opacity: 100%;
-    }
+    background-image: linear-gradient(
+        40deg,
+        var(--home-bg-1) 0%,
+        var(--home-bg-2) 30%,
+        var(--home-bg-3) 67%,
+        var(--home-bg-4) 100%
+    );
 }
 
 @keyframes fadeIn {

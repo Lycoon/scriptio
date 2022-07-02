@@ -10,6 +10,6 @@
 
 #footer-text,
 a {
-    color: #000000;
+    color: var(--primary-text);
     font-size: min(1.8vw, 1.2vh);
 }

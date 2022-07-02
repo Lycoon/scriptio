@@ -1,11 +1,18 @@
 #editor-and-sidebar {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 100%;
 }
 
 #editor-container {
-  width: 100%;
-  overflow-y: scroll;
+    width: 100%;
+    overflow-y: scroll;
+
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+#editor-container::-webkit-scrollbar {
+    display: none;
 }
