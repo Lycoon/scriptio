@@ -1,67 +1,72 @@
 #project-title-input {
-  margin-bottom: 12px;
+    margin-bottom: 12px;
 }
 
 #project-description-input {
-  margin-bottom: 8px;
+    margin-bottom: 8px;
 }
 
 .project-form-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
 
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
 .project-form {
-  display: flex;
-  flex-direction: column;
-  gap: 50px;
-  margin-left: 10%;
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+    margin-left: 10%;
 
-  width: 25%;
-  min-width: 270px;
-  max-width: 450px;
+    width: 25%;
+    min-width: 270px;
+    max-width: 450px;
 }
 
 .back-btn {
-  color: #474747;
-  background-color: white;
+    color: #474747;
+    background-color: white;
 
-  border-style: solid;
-  border-color: #757575;
+    border-style: solid;
+    border-color: #757575;
 
-  width: 40%;
+    width: 40%;
 }
 
 .back-btn:hover {
-  transition: background-color 0.2s;
-  background-color: #f4f4f4;
+    transition: background-color 0.2s;
+    background-color: #cacaca;
+}
+
+.back-btn:active {
+    transition: transform 0.25s;
+    transform: scale(0.98);
 }
 
 .project-form-end {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  gap: 40px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
 }
 
 .project-form-submit-btn {
-  height: 50px;
+    height: 50px;
 }
 
 .input-description {
-  min-height: 100px;
-  max-height: 300px;
-  resize: vertical;
+    min-height: 100px;
+    max-height: 300px;
+    resize: vertical;
 }
 
 .back-btn {
-  font-size: 1rem;
-  white-space: nowrap;
-  cursor: pointer;
+    font-size: 1rem;
+    white-space: nowrap;
+    cursor: pointer;
 }

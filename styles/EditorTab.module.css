@@ -17,11 +17,15 @@
     outline: none;
 }
 
-.tab:hover {
+.tab:hover:not(.active-tab) {
     transition: padding-left 0.1s;
     padding-left: 35px;
 }
 
 .active-tab {
     background-color: var(--editor-active-tab);
+}
+
+.tab-arrow {
+    font-size: 12px;
 }

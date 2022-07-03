@@ -55,6 +55,7 @@ html.light {
     --primary-bg: #ffffff;
     --secondary-bg: #474747;
     --secondary-bg-hover: #616161;
+    --upload-bg-hover: #eeeeee;
 
     --primary-text: #474747;
     --secondary-text: #ffffff;
@@ -83,6 +84,7 @@ html.dark {
     --primary-bg: #1d1d1d;
     --secondary-bg: #2e2e2e;
     --secondary-bg-hover: #353535;
+    --upload-bg-hover: #2e2e2e;
 
     --primary-text: #ffffff;
     --secondary-text: #ffffff;
