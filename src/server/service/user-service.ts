@@ -54,18 +54,10 @@ export async function deleteUser(email: string) {
     return repository.deleteUser(email);
 }
 
-export async function getUserFromId(userId: number) {
-    return repository.fetchUser({ id: userId });
+export async function getUserFromId(userId: number, includeSecrets = false) {
+    return repository.fetchUser({ id: userId }, includeSecrets);
 }
 
-export async function getUserFromEmail(email: string) {
-    return repository.fetchUser({ email });
-}
-
-export async function getSecretsFromEmail(email: string) {
-    return repository.fetchSecrets({ email: email });
-}
-
-export async function getSecretsFromId(id: number) {
-    return repository.fetchSecrets({ id: id });
+export async function getUserFromEmail(email: string, includeSecrets = false) {
+    return repository.fetchUser({ email }, includeSecrets);
 }

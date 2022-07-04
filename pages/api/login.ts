@@ -5,7 +5,6 @@ import { sessionOptions } from "../../src/lib/session";
 import { NextApiRequest, NextApiResponse } from "next";
 import {
     checkPassword,
-    getSecretsFromEmail,
     getUserFromEmail,
 } from "../../src/server/service/user-service";
 import { onError, onSuccess } from "../../src/lib/utils";
@@ -16,29 +15,32 @@ export default withIronSessionApiRoute(loginRoute, sessionOptions);
 async function loginRoute(req: NextApiRequest, res: NextApiResponse) {
     const { email, password } = await req.body;
 
-    const secrets = await getSecretsFromEmail(email);
-    const matchingPassword = await checkPassword(secrets, password);
+    const user = await getUserFromEmail(email, true);
+    if (!user) {
+        return onError(res, 401, WRONG_CREDENTIALS);
+    }
+
+    const matchingPassword = await checkPassword(user.secrets, password);
     if (!email || !password || !matchingPassword) {
         return onError(res, 401, WRONG_CREDENTIALS);
     }
 
-    if (!secrets?.active) {
+    if (!user.verified) {
         return onError(res, 401, NOT_VERIFIED);
     }
 
     // Filling session with data
     try {
-        const data = await getUserFromEmail(email);
-        const user = {
+        const cookieUser = {
             isLoggedIn: true,
-            id: data?.id,
-            email: data?.email,
+            id: user.id,
+            email: user.email,
         } as User;
 
-        req.session.user = user;
+        req.session.user = cookieUser;
         await req.session.save();
 
-        return onSuccess(res, 200, "", user);
+        return onSuccess(res, 200, "", cookieUser);
     } catch (error) {
         return onError(res, 500, (error as Error).message);
     }

@@ -1,27 +1,29 @@
 #empty-project-page {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
 
-  border: none;
-  background-color: white;
-  cursor: pointer;
-  height: 100%;
-  width: 100%;
+    border: none;
+    cursor: pointer;
+    height: 100%;
+    width: 100%;
+
+    background: none;
 }
 
 #empty-project-page:hover .empty-project-title {
-  transition: transform 0.5s;
-  transform: scale(1.03);
+    transition: transform 0.5s;
+    transform: scale(1.03);
 }
 
 .empty-project-title {
-  font-family: roboto-thin;
-  font-style: italic;
-  font-size: 2.8rem;
-  padding-bottom: 70px;
+    font-family: roboto-thin;
+    font-style: italic;
+    font-size: 2.8rem;
+    padding-bottom: 70px;
+    color: var(--primary-text);
 
-  transition: transform 0.5s;
-  transform: scale(1);
+    transition: transform 0.5s;
+    transform: scale(1);
 }

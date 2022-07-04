@@ -26,13 +26,6 @@ export interface UserCreation {
 
 type idOrEmailType = { id: number } | { email: string };
 
-const userQuerySelect = {
-    id: true,
-    email: true,
-    verified: true,
-    createdAt: true,
-};
-
 export class UserRepository {
     updateUser(user: UserUpdate) {
         return prisma.user.update({
@@ -74,17 +67,18 @@ export class UserRepository {
         });
     }
 
-    fetchUser(idOrEmail: idOrEmailType) {
+    fetchUser(idOrEmail: idOrEmailType, includeSecrets = false) {
+        const userQuerySelect = {
+            id: true,
+            email: true,
+            verified: true,
+            createdAt: true,
+            secrets: includeSecrets,
+        };
+
         return prisma.user.findUnique({
             where: idOrEmail,
             select: userQuerySelect,
-        });
-    }
-
-    fetchSecrets(idOrEmail: idOrEmailType) {
-        return prisma.user.findUnique({
-            where: idOrEmail,
-            select: { secrets: true },
         });
     }
 }

@@ -23,7 +23,6 @@ const HomepageContainer = () => (
 
 const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
     const ProjectPage = () => <ProjectPageContainer projects={projects!} />;
-    console.log("home isLoggedIn? ", user?.isLoggedIn);
 
     return (
         <>
