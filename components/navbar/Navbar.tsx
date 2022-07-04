@@ -41,6 +41,8 @@ const Navbar = ({ activeButtons, project }: Props) => {
         Router.push("/");
     };
 
+    console.log("isLoggedIn? ", user?.isLoggedIn);
+
     return (
         <nav id="navbar">
             <div id="logo-and-tabs">

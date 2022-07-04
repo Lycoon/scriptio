@@ -14,7 +14,7 @@ export interface UserUpdate {
     emailHash?: string;
     salt?: string;
     hash?: string;
-    active?: boolean;
+    verified?: boolean;
 }
 
 export interface UserCreation {
@@ -29,21 +29,25 @@ type idOrEmailType = { id: number } | { email: string };
 const userQuerySelect = {
     id: true,
     email: true,
-    active: true,
+    verified: true,
     createdAt: true,
 };
 
 export class UserRepository {
     updateUser(user: UserUpdate) {
         return prisma.user.update({
+            where: user.id,
             data: {
                 email: user.email,
-                salt: user.salt,
-                hash: user.hash,
-                emailHash: user.emailHash,
-                active: user.active,
+                verified: user.verified,
+                secrets: {
+                    update: {
+                        salt: user.salt,
+                        hash: user.hash,
+                        emailHash: user.emailHash,
+                    },
+                },
             },
-            where: user.id,
         });
     }
 
@@ -51,9 +55,13 @@ export class UserRepository {
         return prisma.user.create({
             data: {
                 email: user.email,
-                salt: user.salt,
-                hash: user.hash,
-                emailHash: user.emailHash,
+                secrets: {
+                    create: {
+                        salt: user.salt,
+                        hash: user.hash,
+                        emailHash: user.emailHash,
+                    },
+                },
             },
         });
     }
@@ -76,12 +84,7 @@ export class UserRepository {
     fetchSecrets(idOrEmail: idOrEmailType) {
         return prisma.user.findUnique({
             where: idOrEmail,
-            select: {
-                emailHash: true,
-                hash: true,
-                salt: true,
-                active: true,
-            },
+            select: { secrets: true },
         });
     }
 }

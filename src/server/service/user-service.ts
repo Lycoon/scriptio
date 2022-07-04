@@ -4,6 +4,7 @@ import {
     UserUpdate,
 } from "../repository/user-repository";
 import crypto from "crypto";
+import { sendVerificationEmail } from "../../lib/mail/mail";
 
 const repository = new UserRepository();
 
@@ -40,6 +41,7 @@ export async function createUser(email: string, password: string) {
         hash: secrets.hash,
         salt: secrets.salt,
     });
+    sendVerificationEmail(created.id, email, secrets.emailHash);
 
     return created;
 }

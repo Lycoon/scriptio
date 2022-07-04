@@ -63,6 +63,8 @@ const EditorAndSidebar = ({ project }: Props) => {
                         clearTimeout();
                         setTimeout(() => setActiveTab("dialogue"), 20);
                     }
+
+                    return true;
                 }
 
                 return false;

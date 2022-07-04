@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { VerificationStatus } from "../../src/lib/utils";
 import {
     getSecretsFromId,
+    getUserFromId,
     updateUser,
 } from "../../src/server/service/user-service";
 
@@ -23,18 +24,19 @@ export default async function verify(
         const id = +req.query.id;
         const emailHash = req.query.code;
         const secrets = await getSecretsFromId(id);
+        const user = await getUserFromId(id);
 
-        if (!secrets || emailHash !== secrets.emailHash) {
+        if (!secrets || !user || emailHash !== secrets.emailHash) {
             redirect(res, VerificationStatus.FAILED);
             return;
         }
 
-        if (secrets.active) {
+        if (user.verified) {
             redirect(res, VerificationStatus.USED);
             return;
         }
 
-        const updated = await updateUser({ id: { id }, active: true });
+        const updated = await updateUser({ id: { id }, verified: true });
         if (!updated) {
             redirect(res, VerificationStatus.FAILED);
             return;

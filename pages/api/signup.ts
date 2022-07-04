@@ -1,12 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { sendVerificationEmail } from "../../src/lib/mail/mail";
+import { onError, onSuccess } from "../../src/lib/utils";
 import {
     EMAIL_ALREADY_REGISTERED,
     MISSING_BODY,
     PASSWORD_REQUIREMENTS,
     VERIFICATION_SENT,
 } from "../../src/lib/messages";
-import { onError, onSuccess } from "../../src/lib/utils";
 import {
     createUser,
     generateSecrets,
@@ -31,18 +31,18 @@ export default async function signup(
 
     const existing = await getUserFromEmail(email);
     if (existing) {
-        if (existing.active) {
+        if (existing.verified) {
             return onError(res, 500, EMAIL_ALREADY_REGISTERED);
         }
 
         const secrets = generateSecrets(password);
-        const updated = await updateUser({
+        await updateUser({
             id: { id: existing.id },
             emailHash: secrets.emailHash,
             hash: secrets.hash,
             salt: secrets.salt,
         });
-        sendVerificationEmail(existing.id, email, updated.emailHash);
+        sendVerificationEmail(existing.id, email, secrets.emailHash);
 
         return onSuccess(res, 200, VERIFICATION_SENT, null);
     }
@@ -52,6 +52,5 @@ export default async function signup(
         return onError(res, 500, "User could not be created");
     }
 
-    sendVerificationEmail(created.id, email, created.emailHash);
     onSuccess(res, 201, VERIFICATION_SENT, null);
 }

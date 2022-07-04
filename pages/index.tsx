@@ -23,6 +23,7 @@ const HomepageContainer = () => (
 
 const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
     const ProjectPage = () => <ProjectPageContainer projects={projects!} />;
+    console.log("home isLoggedIn? ", user?.isLoggedIn);
 
     return (
         <>
@@ -31,7 +32,11 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
             </Head>
             <div className="main-container">
                 <Navbar />
-                {!user ? <HomepageContainer /> : <ProjectPage />}
+                {user && user.isLoggedIn ? (
+                    <ProjectPage />
+                ) : (
+                    <HomepageContainer />
+                )}
             </div>
         </>
     );
