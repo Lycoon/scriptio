@@ -15,6 +15,21 @@ type Props = {
     project: Project;
 };
 
+const getNewNode = (type: string) => {
+    return {
+        type: "Screenplay",
+        attrs: {
+            class: type,
+        },
+        content: [
+            {
+                type: "text",
+                text: " ",
+            },
+        ],
+    };
+};
+
 const EditorAndSidebar = ({ project }: Props) => {
     const { editor, updateEditor } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
@@ -53,16 +68,25 @@ const EditorAndSidebar = ({ project }: Props) => {
         editorProps: {
             handleKeyDown(view: any, event: any) {
                 const node = view.state.selection.$anchor.parent;
+                const cursor = view.state.selection.anchor;
                 const currNode = node.attrs.class;
+
                 if (event.key === "Enter") {
-                    setTimeout(() => setActiveTab("action"), 20);
-                    if (
-                        currNode === "character" ||
-                        currNode === "parenthetical"
-                    ) {
-                        clearTimeout();
-                        setTimeout(() => setActiveTab("dialogue"), 20);
+                    let newNode;
+                    switch (currNode) {
+                        case "character":
+                        case "parenthetical":
+                            newNode = getNewNode("dialogue");
+                            break;
+                        default:
+                            newNode = getNewNode("action");
                     }
+
+                    editorView
+                        .chain()
+                        .insertContentAt(cursor, newNode)
+                        .focus(cursor)
+                        .run();
 
                     return true;
                 }
