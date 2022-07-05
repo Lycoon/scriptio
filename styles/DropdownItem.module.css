@@ -9,8 +9,19 @@
     color: white;
     background-color: var(--secondary-bg);
     border: none;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
 }
 
 .dropdown-item:hover {
     background-color: var(--secondary-bg-hover);
+}
+
+.dropdown-item-icon {
+    width: 18px;
+    height: 18px;
+    filter: invert(100%);
 }
