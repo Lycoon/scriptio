@@ -20,12 +20,14 @@
 .tab:hover:not(.active-tab) {
     transition: padding-left 0.1s;
     padding-left: 35px;
+    background-color: var(--editor-active-tab);
 }
 
 .active-tab {
     background-color: var(--editor-active-tab);
 }
 
-.tab-arrow {
+.active-tab::before {
     font-size: 12px;
+    content: "➤ ";
 }

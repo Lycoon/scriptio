@@ -17,7 +17,7 @@
 #navbar {
     background-color: var(--secondary-bg);
     width: 100%;
-    min-height: 60px;
+    height: 50px;
 
     display: flex;
     flex-direction: row;
@@ -26,19 +26,38 @@
 }
 
 #navbar-buttons {
-    margin-bottom: 4px;
-    margin-right: 10px;
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
+
+    margin-bottom: 3px;
+    margin-right: 12px;
 }
 
 #logo-and-tabs {
     display: flex;
-    height: 100%;
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
+
+    height: 100%;
+}
+
+.settings-btn {
+    width: 20px;
+    height: 20px;
+    margin-right: 7px;
+
+    cursor: pointer;
+}
+
+.settings-icon {
+    width: 100%;
+    filter: invert(70%);
+}
+
+.settings-icon:hover {
+    filter: invert(85%);
 }

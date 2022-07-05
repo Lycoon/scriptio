@@ -16,18 +16,7 @@ type Props = {
 };
 
 const getNewNode = (type: string) => {
-    return {
-        type: "Screenplay",
-        attrs: {
-            class: type,
-        },
-        content: [
-            {
-                type: "text",
-                text: " ",
-            },
-        ],
-    };
+    return type;
 };
 
 const EditorAndSidebar = ({ project }: Props) => {
@@ -84,7 +73,7 @@ const EditorAndSidebar = ({ project }: Props) => {
 
                     editorView
                         .chain()
-                        .insertContentAt(cursor, newNode)
+                        .insertContentAt(cursor, `<p class="${newNode}"></p>`)
                         .focus(cursor)
                         .run();
 

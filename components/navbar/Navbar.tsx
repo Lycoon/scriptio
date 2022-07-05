@@ -58,7 +58,9 @@ const Navbar = ({ activeButtons, project }: Props) => {
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    <NavbarButton content="Settings" action={onSettings} />
+                    <div className="settings-btn" onClick={onSettings}>
+                        <img className="settings-icon" src="/images/gear.png" />
+                    </div>
                     <NavbarButton content="Log out" action={onLogOut} />
                 </div>
             ) : (

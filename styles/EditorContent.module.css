@@ -8,11 +8,23 @@
 #editor-container {
     width: 100%;
     overflow-y: scroll;
-
-    -ms-overflow-style: none;
-    scrollbar-width: none;
 }
 
-#editor-container::-webkit-scrollbar {
-    display: none;
+::-webkit-scrollbar {
+    width: 16px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: var(--editor-scroll-bg);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: var(--editor-scroll-btn);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--editor-scroll-btn-hover);
 }

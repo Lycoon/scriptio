@@ -4,13 +4,13 @@ a {
 }
 
 .navbar-btn {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: white;
     background-color: transparent;
     cursor: pointer;
 
     padding-inline: 15px;
-    padding-block: 5px;
+    padding-block: 4px;
 
     /* Border */
     border-style: solid;
