@@ -4,7 +4,7 @@ const ChangePasswordForm = () => (
     <form className="settings-form">
         <div className="form-element">
             <label id="email-form" className="form-element">
-                <span className="form-label">Password</span>
+                <span className="form-label">New password</span>
                 <input
                     className="form-input"
                     name="password1"
@@ -14,7 +14,7 @@ const ChangePasswordForm = () => (
             </label>
 
             <label id="password-form" className="form-element">
-                <span className="form-label">Confirm password</span>
+                <span className="form-label">Confirm new password</span>
                 <input
                     className="form-input"
                     name="password2"
@@ -50,20 +50,34 @@ const SettingsPageContainer = () => {
                     <p>joined 28/06/2021</p>
                 </div>
                 <div className="settings-column-left">
+                    <div className="settings-element">
+                        <p>Change password</p>
+                        <hr />
+                    </div>
                     <ChangePasswordForm />
                 </div>
                 <div className="settings-column-right">
-                    <label id="email-form" className="form-element">
-                        <span className="form-label">Theme</span>
-                        <input
-                            className="form-input"
-                            name="theme"
-                            type="checkbox"
-                            onChange={toggleTheme}
-                            defaultChecked={theme === "dark"}
-                            required
-                        />
-                    </label>
+                    <div className="settings-element">
+                        <div className="settings-element-header">
+                            <p>Dark theme</p>
+                            <input
+                                type="checkbox"
+                                onChange={toggleTheme}
+                                defaultChecked={theme === "dark"}
+                            />
+                        </div>
+                        <hr />
+                    </div>
+                    <div className="settings-element">
+                        <div className="settings-element-header">
+                            <p>Language</p>
+                            <select id="language-form" name="language">
+                                <option value="en">English</option>
+                                <option value="fr">Français</option>
+                            </select>
+                        </div>
+                        <hr />
+                    </div>
                 </div>
             </div>
         </div>
