@@ -15,10 +15,6 @@ type Props = {
     project: Project;
 };
 
-const getNewNode = (type: string) => {
-    return type;
-};
-
 const EditorAndSidebar = ({ project }: Props) => {
     const { editor, updateEditor } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
@@ -65,10 +61,10 @@ const EditorAndSidebar = ({ project }: Props) => {
                     switch (currNode) {
                         case "character":
                         case "parenthetical":
-                            newNode = getNewNode("dialogue");
+                            newNode = "dialogue";
                             break;
                         default:
-                            newNode = getNewNode("action");
+                            newNode = "action";
                     }
 
                     editorView
