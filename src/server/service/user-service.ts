@@ -50,8 +50,8 @@ export async function updateUser(user: UserUpdate) {
     return repository.updateUser(user);
 }
 
-export async function deleteUser(email: string) {
-    return repository.deleteUser(email);
+export async function deleteUserFromId(userId: number) {
+    return repository.deleteUser({ id: userId });
 }
 
 export async function getUserFromId(userId: number, includeSecrets = false) {

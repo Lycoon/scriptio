@@ -22,6 +22,18 @@ export const editProject = (userId: number, body: any) => {
     );
 };
 
+export const changePassword = (userId: number, password: string) => {
+    return request(
+        `/api/users/${userId}`,
+        "PATCH",
+        JSON.stringify({ password })
+    );
+};
+
+export const signup = (email: string, password: string) => {
+    return request(`/api/signup`, "POST", JSON.stringify({ email, password }));
+};
+
 export const login = (email: string, password: string) => {
     return request(`/api/login`, "POST", JSON.stringify({ email, password }));
 };

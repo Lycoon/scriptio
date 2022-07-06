@@ -59,11 +59,9 @@ export class UserRepository {
         });
     }
 
-    deleteUser(email: string) {
+    deleteUser(idOrEmail: idOrEmailType) {
         return prisma.user.delete({
-            where: {
-                email,
-            },
+            where: idOrEmail,
         });
     }
 
