@@ -17,6 +17,10 @@ import { Project } from "..";
 export default withIronSessionApiRoute(handler, sessionOptions);
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
+    if (!req.query || !req.query.userId) {
+        return onError(res, 400, "Query not found");
+    }
+
     const userId = +req.query["userId"];
     const user = req.session.user;
 
