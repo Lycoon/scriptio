@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { VerificationStatus } from "../../src/lib/utils";
 import {
-    getSecretsFromId,
     getUserFromId,
     updateUser,
 } from "../../src/server/service/user-service";

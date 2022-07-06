@@ -1,6 +1,6 @@
 type Props = {
     content: string;
-    hovering: () => void;
+    hovering?: () => void;
     action?: () => void;
     icon?: string;
 };
