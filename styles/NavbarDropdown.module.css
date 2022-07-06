@@ -1,14 +1,14 @@
 .dropdown-items {
-  position: absolute;
-  top: 0;
+    position: absolute;
+    top: 0;
 
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .navbar-dropdown {
-  z-index: 1;
-  padding-top: 55px;
-  width: 100%;
+    z-index: 1;
+    padding-top: 48px;
+    width: 100%;
 }

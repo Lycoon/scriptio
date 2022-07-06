@@ -1,6 +1,7 @@
 import Router from "next/router";
 import { useState } from "react";
 import { Project, User } from "../../../pages/api/users";
+import { editProject } from "../../../src/lib/requests";
 import { getBase64 } from "../../../src/lib/utils";
 import { ProjectUpdate } from "../../../src/server/repository/project-repository";
 import FormInfo, { FormInfoType } from "../../home/FormInfo";
@@ -37,13 +38,9 @@ const EditProjectConainer = ({ project, user }: Props) => {
             body.poster = await getBase64(selectedFile, 686, 1016);
         }
 
-        const res = await fetch(`/api/users/${user.id}/projects`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-        });
-
+        const res = await editProject(user.id, body);
         const json = await res.json();
+
         if (res.status === 200) {
             Router.push(`/projects/${project.id}/editor`);
         } else {

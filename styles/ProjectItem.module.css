@@ -6,8 +6,8 @@
 
     border: none;
     border-radius: 16px;
-    background-color: rgb(255, 255, 255);
-    box-shadow: 0px 0px 6px rgba(100, 100, 100, 0.401);
+    background-color: var(--project-item-bg);
+    box-shadow: var(--project-item-shadow);
 
     cursor: pointer;
     transition: transform 0.1s;
@@ -64,6 +64,10 @@
     opacity: 80%;
     width: 18px;
     height: 18px;
+}
+
+html.dark .calendar-icon {
+    filter: invert(100%);
 }
 
 .movie-poster {

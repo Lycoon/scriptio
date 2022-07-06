@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { ERROR_PASSWORD_MATCH } from "../../../src/lib/messages";
+import { signup } from "../../../src/lib/requests";
 import FormInfo, { FormInfoType } from "../FormInfo";
 
 const RegisterForm = () => {
@@ -12,23 +14,18 @@ const RegisterForm = () => {
         e.preventDefault();
         resetFromInfo();
 
-        const body = {
-            email: e.target.email.value,
-            password: e.target.password1.value,
-        };
+        const email = e.target.email.value;
+        const pwd1 = e.target.password1.value;
+        const pwd2 = e.target.password2.value;
 
-        if (body.password !== e.target.password2.value) {
-            setFormInfo({ content: "Passwords do not match", isError: true });
+        if (pwd1 !== pwd2) {
+            setFormInfo({ content: ERROR_PASSWORD_MATCH, isError: true });
             return;
         }
 
-        const res = await fetch("/api/signup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-        });
-
+        const res = await signup(email, pwd1);
         const json = await res.json();
+
         if (res.status === 200 || res.status === 201) {
             setFormInfo({ content: json.message });
         } else {

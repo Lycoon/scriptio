@@ -1,10 +1,15 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { ERROR_VERIFYING } from "../../src/lib/messages";
-import { onError, onSuccess } from "../../src/lib/utils";
+import { VerificationStatus } from "../../src/lib/utils";
 import {
     getSecretsFromId,
+    getUserFromId,
     updateUser,
 } from "../../src/server/service/user-service";
+
+const redirect = (res: NextApiResponse, status: VerificationStatus) => {
+    const REDIRECTION = "/login?verificationStatus=";
+    res.redirect(REDIRECTION + status);
+};
 
 export default async function verify(
     req: NextApiRequest,
@@ -12,25 +17,29 @@ export default async function verify(
 ) {
     try {
         if (!req.query.id || !req.query.code) {
-            // scriptio.app/api/verify?id=userId?code=emailHash
-            return onError(res, 500, ERROR_VERIFYING);
+            // scriptio.app/api/verify?id=userId&code=emailHash
+            return redirect(res, VerificationStatus.FAILED);
         }
 
-        const id = +req.query.id;
+        const id = +req.query.id!;
         const emailHash = req.query.code;
-        const secrets = await getSecretsFromId(id);
+        const user = await getUserFromId(id, true);
 
-        if (emailHash !== secrets?.emailHash) {
-            return onError(res, 500, ERROR_VERIFYING);
+        if (!user || emailHash !== user.secrets.emailHash) {
+            return redirect(res, VerificationStatus.FAILED);
         }
 
-        const updated = await updateUser({ active: true });
+        if (user.verified) {
+            return redirect(res, VerificationStatus.USED);
+        }
+
+        const updated = await updateUser({ id: { id }, verified: true });
         if (!updated) {
-            return onError(res, 500, ERROR_VERIFYING);
+            return redirect(res, VerificationStatus.FAILED);
         }
 
-        return onSuccess(res, 200, "", null);
+        redirect(res, VerificationStatus.SUCCESS);
     } catch (error: any) {
-        res.status(500).end(error.message);
+        redirect(res, VerificationStatus.FAILED);
     }
 }

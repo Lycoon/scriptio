@@ -1,6 +1,6 @@
 const Loading = () => (
-    <div className="loading-div">
-        <img src="/images/loading.svg" width={70} />
+    <div className="main-container loading-div">
+        <img className="loading-svg" src="/images/loading.svg" width={70} />
     </div>
 );
 

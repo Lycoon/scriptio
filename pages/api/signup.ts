@@ -1,15 +1,17 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { sendVerificationEmail } from "../../src/lib/mail";
+import { sendVerificationEmail } from "../../src/lib/mail/mail";
+import { onError, onSuccess } from "../../src/lib/utils";
 import {
     EMAIL_ALREADY_REGISTERED,
     MISSING_BODY,
     PASSWORD_REQUIREMENTS,
+    VERIFICATION_SENT,
 } from "../../src/lib/messages";
-import { onError, onSuccess } from "../../src/lib/utils";
 import {
     createUser,
-    getSecretsFromId,
+    generateSecrets,
     getUserFromEmail,
+    updateUser,
 } from "../../src/server/service/user-service";
 
 export default async function signup(
@@ -29,18 +31,20 @@ export default async function signup(
 
     const existing = await getUserFromEmail(email);
     if (existing) {
-        if (existing.active) {
+        if (existing.verified) {
             return onError(res, 500, EMAIL_ALREADY_REGISTERED);
         }
 
-        const secrets = await getSecretsFromId(existing.id);
-        sendVerificationEmail(existing.id, email, secrets!.emailHash);
-        return onSuccess(
-            res,
-            200,
-            "An email has been sent to that address to confirm your account.",
-            null
-        );
+        const secrets = generateSecrets(password);
+        await updateUser({
+            id: { id: existing.id },
+            emailHash: secrets.emailHash,
+            hash: secrets.hash,
+            salt: secrets.salt,
+        });
+        sendVerificationEmail(existing.id, email, secrets.emailHash);
+
+        return onSuccess(res, 200, VERIFICATION_SENT, null);
     }
 
     const created = await createUser(email, password);
@@ -48,11 +52,5 @@ export default async function signup(
         return onError(res, 500, "User could not be created");
     }
 
-    sendVerificationEmail(created.id, email, created.emailHash);
-    onSuccess(
-        res,
-        201,
-        "An email has been sent to that address to confirm your account.",
-        null
-    );
+    onSuccess(res, 201, VERIFICATION_SENT, null);
 }

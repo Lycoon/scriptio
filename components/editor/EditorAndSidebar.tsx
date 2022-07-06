@@ -9,9 +9,14 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
+import { editProject } from "../../src/lib/requests";
 
 type Props = {
     project: Project;
+};
+
+const getNewNode = (type: string) => {
+    return type;
 };
 
 const EditorAndSidebar = ({ project }: Props) => {
@@ -52,16 +57,27 @@ const EditorAndSidebar = ({ project }: Props) => {
         editorProps: {
             handleKeyDown(view: any, event: any) {
                 const node = view.state.selection.$anchor.parent;
+                const cursor = view.state.selection.anchor;
                 const currNode = node.attrs.class;
+
                 if (event.key === "Enter") {
-                    setTimeout(() => setActiveTab("action"), 20);
-                    if (
-                        currNode === "character" ||
-                        currNode === "parenthetical"
-                    ) {
-                        clearTimeout();
-                        setTimeout(() => setActiveTab("dialogue"), 20);
+                    let newNode;
+                    switch (currNode) {
+                        case "character":
+                        case "parenthetical":
+                            newNode = getNewNode("dialogue");
+                            break;
+                        default:
+                            newNode = getNewNode("action");
                     }
+
+                    editorView
+                        .chain()
+                        .insertContentAt(cursor, `<p class="${newNode}"></p>`)
+                        .focus(cursor)
+                        .run();
+
+                    return true;
                 }
 
                 return false;
@@ -105,11 +121,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             };
 
             updateIsSaving(true);
-            const res = await fetch(`/api/users/${project.userId}/projects`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body),
-            });
+            await editProject(project.userId, body);
             updateIsSaving(false);
         }
     };

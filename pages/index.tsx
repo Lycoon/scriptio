@@ -14,7 +14,16 @@ type Props = {
     projects: Project[] | null;
 };
 
+const HomepageContainer = () => (
+    <>
+        <HomePageContainer />
+        <HomePageFooter />
+    </>
+);
+
 const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
+    const ProjectPage = () => <ProjectPageContainer projects={projects!} />;
+
     return (
         <>
             <Head>
@@ -22,13 +31,10 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
             </Head>
             <div className="main-container">
                 <Navbar />
-                {!user ? (
-                    <>
-                        <HomePageContainer />
-                        <HomePageFooter />
-                    </>
+                {user && user.isLoggedIn ? (
+                    <ProjectPage />
                 ) : (
-                    <ProjectPageContainer projects={projects!} />
+                    <HomepageContainer />
                 )}
             </div>
         </>
@@ -37,36 +43,36 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
 
 const noauth = { props: { user: null, projects: [] } };
 
-export const getServerSideProps = withIronSessionSsr(
-    async function getServerSideProps({ req }): Promise<any> {
-        const user = req.session.user;
+export const getServerSideProps = withIronSessionSsr(async function ({
+    req,
+}): Promise<any> {
+    const user = req.session.user;
 
-        if (!user || !user.isLoggedIn) {
-            return noauth;
-        }
+    if (!user || !user.isLoggedIn) {
+        return noauth;
+    }
 
-        const projects = await getProjects(user.id);
-        if (!projects) {
-            return noauth;
-        }
+    const projects = await getProjects(user.id);
+    if (!projects) {
+        return noauth;
+    }
 
-        // Workaround because dates can't be serialized
-        projects.projects = projects.projects.map((e) => {
-            return {
-                ...e,
-                updatedAt: e.updatedAt.toISOString() as any as Date,
-                createdAt: e.createdAt.toISOString() as any as Date,
-            };
-        });
-
+    // Workaround because dates can't be serialized
+    projects.projects = projects.projects.map((e) => {
         return {
-            props: {
-                user: req.session.user,
-                projects: projects.projects,
-            },
+            ...e,
+            updatedAt: e.updatedAt.toISOString() as any as Date,
+            createdAt: e.createdAt.toISOString() as any as Date,
         };
-    },
-    sessionOptions
-);
+    });
+
+    return {
+        props: {
+            user: req.session.user,
+            projects: projects.projects,
+        },
+    };
+},
+sessionOptions);
 
 export default HomePage;

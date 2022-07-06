@@ -27,99 +27,99 @@ Originally developed by John August - johnaugust.com
 */
 
 .ProseMirror:focus {
-  outline: none;
+    outline: none;
 }
 
 .ProseMirror {
-  color: #000000;
-  width: 586px;
+    color: var(--editor-text);
+    width: 586px;
 
-  position: absolute;
-  margin-left: 1.5in;
-  margin-right: 0.95in;
-  padding-block: 1in;
-  min-height: 1100px;
+    position: absolute;
+    margin-left: 1.5in;
+    margin-right: 0.95in;
+    padding-block: 1in;
+    min-height: 1100px;
 }
 
 .ProseMirror p,
 span {
-  font-family: "Courier Prime", monospace;
-  font-size: 12pt;
-  text-align: left;
-  letter-spacing: -0.6px !important;
+    font-family: "Courier Prime", monospace;
+    font-size: 12pt;
+    text-align: left;
+    letter-spacing: -0.6px !important;
 }
 
 span.bold {
-  font-weight: bold;
+    font-weight: bold;
 }
 
 span.italic {
-  font-style: italic;
+    font-style: italic;
 }
 
 .scene,
 .action,
 .character,
 .transition {
-  margin-top: 0.75em !important;
+    margin-top: 0.75em !important;
 }
 
 .action + .action {
-  margin-top: 0 !important;
+    margin-top: 0 !important;
 }
 
 .action {
-  padding-block: 0.1in !important;
-  line-height: 17px !important;
-  text-align: justify;
+    padding-block: 0.1in !important;
+    line-height: 17px !important;
+    text-align: justify;
 }
 
 .scene {
-  background-color: #dadada;
-  width: 100%;
-  padding-top: 2px;
-  padding-left: 4px;
-  display: inline-block;
-  text-transform: uppercase;
-  font-weight: bold;
-  line-height: 20px !important;
-  counter-increment: scenenumber;
+    background-color: var(--editor-scene);
+    width: 100%;
+    padding-top: 2px;
+    padding-left: 4px;
+    display: inline-block;
+    text-transform: uppercase;
+    font-weight: bold;
+    line-height: 20px !important;
+    counter-increment: scenenumber;
 }
 
 .scene::before {
-  content: counter(scenenumber) ".";
-  position: absolute;
-  margin-left: -75px;
+    content: counter(scenenumber) ".";
+    position: absolute;
+    margin-left: -75px;
 }
 
 .character {
-  padding-left: 2.2in !important;
-  margin-bottom: 0 !important;
-  text-transform: uppercase;
+    padding-left: 2.2in !important;
+    margin-bottom: 0 !important;
+    text-transform: uppercase;
 }
 
 .dialogue {
-  padding-inline: 1.2in !important;
+    padding-inline: 1.2in !important;
 }
 
 .parenthetical {
-  padding-left: 1.9in !important;
-  padding-right: 2.1in !important;
+    padding-left: 1.9in !important;
+    padding-right: 2.1in !important;
 }
 
 .parenthetical::before {
-  content: "(";
+    content: "(";
 }
 
 .parenthetical::after {
-  content: ")";
+    content: ")";
 }
 
 .transition {
-  text-transform: uppercase;
-  text-align: right !important;
+    text-transform: uppercase;
+    text-align: right !important;
 }
 
 .transition::after {
-  content: ":";
+    content: ":";
 }

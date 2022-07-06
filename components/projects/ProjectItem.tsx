@@ -2,9 +2,6 @@ import Router from "next/router";
 import { useEffect, useState } from "react";
 import { Project } from "../../pages/api/users";
 
-const ASSETS: string =
-    "https://storage.gra.cloud.ovh.net/v1/AUTH_2bc9dd4c501e44f88f5d9ae20f5c6e83/scriptio/";
-
 type Props = {
     project: Project;
 };
@@ -27,7 +24,7 @@ const ProjectItem = ({ project }: Props) => {
     const [displayDelete, updateDisplayDelete] = useState<boolean>(false);
     const posterPath =
         project.poster !== null
-            ? ASSETS + project.poster
+            ? "/api/s3/" + project.poster
             : "/images/default-poster.png";
 
     return (

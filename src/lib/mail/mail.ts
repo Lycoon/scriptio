@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer";
+import * as fs from "fs";
+var hogan = require("hogan.js");
 
 const transporter = nodemailer.createTransport({
     pool: true,
@@ -16,13 +18,12 @@ export const sendVerificationEmail = async (
     email: string,
     emailHash: string
 ) => {
-    const link = `https://scriptio.app/api/verify?id=${userId}?code=${emailHash}`;
+    const link = `https://scriptio.app/api/verify?id=${userId}&code=${emailHash}`;
+    const template = fs.readFileSync("./src/lib/mail/template.html").toString();
+    const compiled = hogan.compile(template);
+    const rendered = compiled.render({ email, verificationLink: link });
 
-    sendEmail(
-        email,
-        "Verify your account",
-        `Click here to verify your account: ${link}.`
-    );
+    sendEmail(email, "Verify your account", rendered);
 };
 
 export const sendEmail = async (
@@ -31,7 +32,7 @@ export const sendEmail = async (
     content: string
 ) => {
     transporter.sendMail({
-        from: "'Scriptio' <contact@scriptio.app>",
+        from: "Scriptio <contact@scriptio.app>",
         to,
         subject,
         html: content,

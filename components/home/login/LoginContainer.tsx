@@ -1,9 +1,14 @@
+import { VerificationStatus } from "../../../src/lib/utils";
 import LoginForm from "./LoginForm";
 
-const LoginContainer = () => {
+type Props = {
+    verificationStatus: VerificationStatus;
+};
+
+const LoginContainer = ({ verificationStatus }: Props) => {
     return (
         <div id="login-page">
-            <LoginForm />
+            <LoginForm verificationStatus={verificationStatus} />
         </div>
     );
 };

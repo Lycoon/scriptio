@@ -1,14 +1,14 @@
-type NavbarButtonProps = {
+import Link from "next/link";
+
+type Props = {
     action?: () => void;
     content: string;
 };
 
-const NavbarButton: React.FC<NavbarButtonProps> = ({ action, content }) => {
+const NavbarButton = ({ action, content }: Props) => {
     return (
-        <div>
-            <a onClick={action} className="navbar-btn">
-                {content}
-            </a>
+        <div className="navbar-btn" onClick={action}>
+            <p>{content}</p>
         </div>
     );
 };

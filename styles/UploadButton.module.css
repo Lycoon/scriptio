@@ -1,5 +1,5 @@
 .dragover {
-    background-color: rgb(224, 224, 224);
+    background-color: var(--primary-bg);
 }
 
 input[type="file"] {
@@ -26,7 +26,7 @@ input[type="file"] {
     /* Text style */
     font-style: italic;
     font-size: 17px;
-    color: rgb(73, 73, 73);
+    color: var(--primary-text);
 }
 
 .upload-button {
@@ -35,13 +35,13 @@ input[type="file"] {
     height: 100px;
 
     border-style: dotted;
-    border-color: rgb(212, 212, 212);
+    border-color: var(--separator);
     border-width: 3px;
     border-radius: 12px;
 }
 
 .upload-button:hover {
-    background-color: rgb(246, 246, 246);
+    background-color: var(--upload-bg-hover);
     transition: background-color 0.25s;
 }
 

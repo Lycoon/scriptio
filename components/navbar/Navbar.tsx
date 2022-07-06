@@ -15,16 +15,23 @@ type Props = {
 };
 
 const onLogIn = () => {
-    Router.push("login");
+    Router.push("/login");
 };
 
 const onSignUp = () => {
-    Router.push("register");
+    Router.push("/register");
 };
 
 const onSettings = () => {
-    Router.push("settings");
+    Router.push("/settings");
 };
+
+const NotLoggedNavbar = () => (
+    <div id="navbar-buttons">
+        <NavbarButton content="Log in" action={onLogIn} />
+        <NavbarButton content="Create account" action={onSignUp} />
+    </div>
+);
 
 const Navbar = ({ activeButtons, project }: Props) => {
     const { user, updateUser } = useContext(UserContext);
@@ -49,16 +56,15 @@ const Navbar = ({ activeButtons, project }: Props) => {
                     />
                 )}
             </div>
-            {!user?.isLoggedIn ? (
+            {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    <NavbarButton content="Log in" action={onLogIn} />
-                    <NavbarButton content="Create account" action={onSignUp} />
-                </div>
-            ) : (
-                <div id="navbar-buttons">
-                    <NavbarButton content="Settings" action={onSettings} />
+                    <div className="settings-btn" onClick={onSettings}>
+                        <img className="settings-icon" src="/images/gear.png" />
+                    </div>
                     <NavbarButton content="Log out" action={onLogOut} />
                 </div>
+            ) : (
+                <NotLoggedNavbar />
             )}
         </nav>
     );

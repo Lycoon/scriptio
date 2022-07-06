@@ -77,12 +77,14 @@ const NavbarDropdown = ({ activeButtons, project, toggleDropdown }: Props) => {
                     hovering={hideExportDropdown}
                     action={importFile}
                     content="Import..."
+                    icon="import.png"
                 />
             )}
             {isScreenplay && (
                 <DropdownItem
                     hovering={showExportDropdown}
                     content="Export..."
+                    icon="export.png"
                 />
             )}
             {!isScreenplay && (

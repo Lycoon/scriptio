@@ -2,12 +2,19 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+export type Secrets = {
+    emailHash: string;
+    hash: string;
+    salt: string;
+};
+
 export interface UserUpdate {
+    id: idOrEmailType;
     email?: string;
     emailHash?: string;
     salt?: string;
     hash?: string;
-    active?: boolean;
+    verified?: boolean;
 }
 
 export interface UserCreation {
@@ -19,25 +26,20 @@ export interface UserCreation {
 
 type idOrEmailType = { id: number } | { email: string };
 
-const userQuerySelect = {
-    id: true,
-    email: true,
-    active: true,
-    createdAt: true,
-};
-
 export class UserRepository {
     updateUser(user: UserUpdate) {
         return prisma.user.update({
+            where: user.id,
             data: {
                 email: user.email,
-                salt: user.salt,
-                hash: user.hash,
-                emailHash: user.emailHash,
-                active: user.active,
-            },
-            where: {
-                email: user.email,
+                verified: user.verified,
+                secrets: {
+                    update: {
+                        salt: user.salt,
+                        hash: user.hash,
+                        emailHash: user.emailHash,
+                    },
+                },
             },
         });
     }
@@ -46,36 +48,35 @@ export class UserRepository {
         return prisma.user.create({
             data: {
                 email: user.email,
-                salt: user.salt,
-                hash: user.hash,
-                emailHash: user.emailHash,
+                secrets: {
+                    create: {
+                        salt: user.salt,
+                        hash: user.hash,
+                        emailHash: user.emailHash,
+                    },
+                },
             },
         });
     }
 
-    deleteUser(email: string) {
+    deleteUser(idOrEmail: idOrEmailType) {
         return prisma.user.delete({
-            where: {
-                email,
-            },
+            where: idOrEmail,
         });
     }
 
-    fetchUser(idOrEmail: idOrEmailType) {
+    fetchUser(idOrEmail: idOrEmailType, includeSecrets = false) {
+        const userQuerySelect = {
+            id: true,
+            email: true,
+            verified: true,
+            createdAt: true,
+            secrets: includeSecrets,
+        };
+
         return prisma.user.findUnique({
             where: idOrEmail,
             select: userQuerySelect,
-        });
-    }
-
-    fetchSecrets(idOrEmail: idOrEmailType) {
-        return prisma.user.findUnique({
-            where: idOrEmail,
-            select: {
-                emailHash: true,
-                hash: true,
-                salt: true,
-            },
         });
     }
 }
