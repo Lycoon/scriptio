@@ -60,6 +60,7 @@ const LoginForm = ({ verificationStatus }: Props) => {
         <form className="home-form" onSubmit={onSubmit}>
             <div className="form-header">
                 <h1>Log in</h1>
+                <hr />
                 {formInfo && <FormInfo info={formInfo} />}
             </div>
 

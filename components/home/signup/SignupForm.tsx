@@ -3,7 +3,7 @@ import { ERROR_PASSWORD_MATCH } from "../../../src/lib/messages";
 import { signup } from "../../../src/lib/requests";
 import FormInfo, { FormInfoType } from "../FormInfo";
 
-const RegisterForm = () => {
+const SignupForm = () => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
 
     const resetFromInfo = () => {
@@ -36,7 +36,8 @@ const RegisterForm = () => {
     return (
         <form className="home-form" onSubmit={onSubmit}>
             <div className="form-header">
-                <h1>Register</h1>
+                <h1>Sign up</h1>
+                <hr />
                 {formInfo && <FormInfo info={formInfo} />}
             </div>
 
@@ -72,11 +73,11 @@ const RegisterForm = () => {
 
             <div id="form-btn-flex">
                 <button className="form-btn" type="submit">
-                    Register
+                    Sign up
                 </button>
             </div>
         </form>
     );
 };
 
-export default RegisterForm;
+export default SignupForm;

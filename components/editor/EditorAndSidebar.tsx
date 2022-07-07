@@ -52,11 +52,20 @@ const EditorAndSidebar = ({ project }: Props) => {
     editorView?.setOptions({
         editorProps: {
             handleKeyDown(view: any, event: any) {
-                const node = view.state.selection.$anchor.parent;
-                const cursor = view.state.selection.anchor;
-                const currNode = node.attrs.class;
+                const selection: TextSelection = view.state.selection;
 
                 if (event.key === "Enter") {
+                    const node = selection.$anchor.parent;
+                    const nodeSize = node.content.size;
+                    const nodePos = selection.$head.parentOffset;
+                    const currNode = node.attrs.class;
+                    const pos = selection.anchor;
+
+                    console.log(node);
+                    console.log(selection);
+
+                    if (nodePos < nodeSize) return false;
+
                     let newNode;
                     switch (currNode) {
                         case "character":
@@ -69,8 +78,8 @@ const EditorAndSidebar = ({ project }: Props) => {
 
                     editorView
                         .chain()
-                        .insertContentAt(cursor, `<p class="${newNode}"></p>`)
-                        .focus(cursor)
+                        .insertContentAt(pos, `<p class="${newNode}"></p>`)
+                        .focus(pos)
                         .run();
 
                     return true;
