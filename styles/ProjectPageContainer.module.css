@@ -31,6 +31,7 @@
 .create-project-button {
     width: fit-content;
     padding-inline: 40px;
+    border-radius: 20px;
 }
 
 .center-flex {

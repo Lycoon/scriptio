@@ -53,8 +53,8 @@ const EditProjectConainer = ({ project, user }: Props) => {
             <form className="project-form" onSubmit={onSubmit}>
                 <div>
                     <h1>Edit project</h1>
-                    {formInfo && <FormInfo info={formInfo} />}
                     <hr />
+                    {formInfo && <FormInfo info={formInfo} />}
                 </div>
 
                 <div>
@@ -62,9 +62,10 @@ const EditProjectConainer = ({ project, user }: Props) => {
                         <span className="form-label">Title</span>
                         <input
                             id="project-title-input"
-                            className="form-input"
                             name="title"
+                            className="form-input"
                             defaultValue={project.title}
+                            onChange={resetFromInfo}
                             required
                         />
                     </div>
@@ -75,6 +76,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
                             className="form-input input-description"
                             name="description"
                             defaultValue={project.description ?? undefined}
+                            onChange={resetFromInfo}
                         />
                     </div>
                     <div className="form-element">

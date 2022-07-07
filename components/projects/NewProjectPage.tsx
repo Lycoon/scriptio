@@ -55,8 +55,8 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
             <form className="project-form" onSubmit={onSubmit}>
                 <div>
                     <h1>New project</h1>
-                    {formInfo && <FormInfo info={formInfo} />}
                     <hr />
+                    {formInfo && <FormInfo info={formInfo} />}
                 </div>
 
                 <div>
@@ -64,8 +64,9 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
                         <span className="form-label">Title</span>
                         <input
                             id="project-title-input"
-                            className="form-input"
                             name="title"
+                            className="form-input"
+                            onChange={resetFromInfo}
                             required
                         />
                         <span className="form-label">
@@ -73,8 +74,9 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
                         </span>
                         <textarea
                             id="project-description-input"
-                            className="form-input input-description"
                             name="description"
+                            className="form-input input-description"
+                            onChange={resetFromInfo}
                         />
                         <span className="form-label">
                             Poster - <i>optional</i>

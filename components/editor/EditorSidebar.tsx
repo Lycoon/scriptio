@@ -4,11 +4,17 @@ type Props = {
     tabs: any[];
     selectedTab: number;
     setActiveTab: (activeTab: string) => void;
+    toggleBold: () => void;
+    toggleItalic: () => void;
+    toggleUnderline: () => void;
     isSaving: boolean;
 };
 
 const EditorSidebar = ({
     tabs,
+    toggleBold,
+    toggleItalic,
+    toggleUnderline,
     selectedTab,
     setActiveTab,
     isSaving,
@@ -16,6 +22,26 @@ const EditorSidebar = ({
     return (
         <div id="sidebar" className="sidebar-shadow tabs">
             <div className="tabs">
+                <div className="editor-style-buttons">
+                    <div className="editor-style-btn" onClick={toggleBold}>
+                        <img
+                            className="editor-style-icon"
+                            src="/images/bold.png"
+                        />
+                    </div>
+                    <div className="editor-style-btn" onClick={toggleItalic}>
+                        <img
+                            className="editor-style-icon"
+                            src="/images/italic.png"
+                        />
+                    </div>
+                    <div className="editor-style-btn" onClick={toggleUnderline}>
+                        <img
+                            className="editor-style-icon"
+                            src="/images/underline.png"
+                        />
+                    </div>
+                </div>
                 <EditorTab
                     action={() => setActiveTab("scene")}
                     content="SCENE HEADING"

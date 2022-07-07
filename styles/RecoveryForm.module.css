@@ -1,15 +1,15 @@
-.info {
-  overflow-wrap: anywhere;
-  text-align: justify;
-  color: #5c5c5c;
+.recovery-info {
+    overflow-wrap: anywhere;
+    text-align: justify;
+    color: #5c5c5c;
 }
 
 #recovery-form {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
 
-  max-width: 15%;
-  min-width: min(30vw, 30vh);
-  min-height: 25vh;
+    max-width: 15%;
+    min-width: min(30vw, 30vh);
+    min-height: 25vh;
 }

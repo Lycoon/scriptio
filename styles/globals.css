@@ -125,6 +125,11 @@ hr {
     margin-top: 10px;
 }
 
+input:focus {
+    outline-style: solid;
+    outline-color: var(--secondary-bg-hover) !important;
+}
+
 h1 {
     font-family: josefin-medium;
     color: var(--primary-text);

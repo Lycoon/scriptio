@@ -1,5 +1,5 @@
 #sidebar {
-    padding-top: 20px;
+    padding-top: 8px;
     background-color: var(--editor-sidebar);
     min-width: 260px;
 }
@@ -30,4 +30,37 @@
 
     visibility: hidden;
     opacity: 0;
+}
+
+.editor-style-buttons {
+    display: flex;
+    flex-direction: row;
+    padding-block: 15px;
+    padding-left: 25px;
+    gap: 12px;
+}
+
+.editor-style-btn {
+    width: 32px;
+    height: 32px;
+    padding: 9px;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 4px;
+    background-color: var(--primary-bg);
+
+    cursor: pointer;
+}
+
+.editor-style-icon {
+    width: 100%;
+    filter: invert(70%);
+}
+
+.editor-style-icon:hover {
+    filter: invert(85%);
 }

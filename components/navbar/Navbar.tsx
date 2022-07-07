@@ -19,7 +19,7 @@ const onLogIn = () => {
 };
 
 const onSignUp = () => {
-    Router.push("/register");
+    Router.push("/signup");
 };
 
 const onSettings = () => {
@@ -29,7 +29,7 @@ const onSettings = () => {
 const NotLoggedNavbar = () => (
     <div id="navbar-buttons">
         <NavbarButton content="Log in" action={onLogIn} />
-        <NavbarButton content="Create account" action={onSignUp} />
+        <NavbarButton content="Sign up" action={onSignUp} />
     </div>
 );
 
