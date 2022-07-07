@@ -1,7 +1,12 @@
 import { JSONContent, useEditor } from "@tiptap/react";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../src/context/UserContext";
-import { CustomBold, CustomItalic, Screenplay } from "../../src/Screenplay";
+import {
+    CustomBold,
+    CustomItalic,
+    CustomUnderline,
+    Screenplay,
+} from "../../src/Screenplay";
 import EditorComponent from "./EditorComponent";
 import EditorSidebar from "./EditorSidebar";
 
@@ -36,6 +41,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             History,
             CustomBold,
             CustomItalic,
+            CustomUnderline,
 
             // scriptio
             Screenplay,
@@ -52,7 +58,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     editorView?.setOptions({
         editorProps: {
             handleKeyDown(view: any, event: any) {
-                const selection: TextSelection = view.state.selection;
+                const selection = view.state.selection;
 
                 if (event.key === "Enter") {
                     const node = selection.$anchor.parent;
@@ -60,9 +66,6 @@ const EditorAndSidebar = ({ project }: Props) => {
                     const nodePos = selection.$head.parentOffset;
                     const currNode = node.attrs.class;
                     const pos = selection.anchor;
-
-                    console.log(node);
-                    console.log(selection);
 
                     if (nodePos < nodeSize) return false;
 
@@ -131,6 +134,18 @@ const EditorAndSidebar = ({ project }: Props) => {
         }
     };
 
+    const toggleBold = () => {
+        editorView?.commands.toggleBold();
+    };
+
+    const toggleItalic = () => {
+        editorView?.commands.toggleItalic();
+    };
+
+    const toggleUnderline = () => {
+        editorView?.commands.toggleUnderline();
+    };
+
     useEffect(() => {
         addEventListener("keydown", tabKeyPressed, false);
         addEventListener("keydown", saveKeyPressed, false);
@@ -147,6 +162,9 @@ const EditorAndSidebar = ({ project }: Props) => {
             </div>
             <EditorSidebar
                 tabs={tabs}
+                toggleBold={toggleBold}
+                toggleItalic={toggleItalic}
+                toggleUnderline={toggleUnderline}
                 selectedTab={selectedTab}
                 setActiveTab={setActiveTab}
                 isSaving={isSaving}
