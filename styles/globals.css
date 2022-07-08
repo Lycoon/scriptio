@@ -76,6 +76,9 @@ html.light {
     --editor-scroll-bg: #f0f0f0;
     --editor-scroll-btn: #d0d0d0;
     --editor-scroll-btn-hover: #dcdcdc;
+    --editor-style-bg: #ffffff;
+    --editor-style-bg-hover: #ffffff;
+    --editor-style-bg-active: #616161;
 
     --home-bg-1: #e3caaa;
     --home-bg-2: #fcd1d1;
@@ -108,6 +111,9 @@ html.dark {
     --editor-scroll-bg: #2e2e2e;
     --editor-scroll-btn: #464646;
     --editor-scroll-btn-hover: #4f4f4f;
+    --editor-style-bg: #1d1d1d;
+    --editor-style-bg-hover: #3c3c3c;
+    --editor-style-bg-active: #5d5d5d;
 
     --home-bg-1: #252850;
     --home-bg-2: #47cca0;

@@ -51,16 +51,25 @@
     align-items: center;
 
     border-radius: 4px;
-    background-color: var(--primary-bg);
+    background-color: var(--editor-style-bg);
 
     cursor: pointer;
 }
 
-.editor-style-icon {
-    width: 100%;
-    filter: invert(70%);
+.editor-style-btn:hover {
+    background-color: var(--editor-style-bg-hover);
 }
 
-.editor-style-icon:hover {
-    filter: invert(85%);
+.active-style {
+    outline-width: 2px;
+    outline-style: solid;
+    outline-color: var(--editor-style-bg-active);
+}
+
+.editor-style-icon {
+    width: 100%;
+}
+
+html.dark .editor-style-icon {
+    filter: invert(75%);
 }

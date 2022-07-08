@@ -24,6 +24,9 @@ const EditorAndSidebar = ({ project }: Props) => {
     const { editor, updateEditor } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
     const [isSaving, updateIsSaving] = useState<boolean>(false);
+    const [isBold, setIsBold] = useState<boolean>(false);
+    const [isItalic, setIsItalic] = useState<boolean>(false);
+    const [isUnderline, setIsUnderline] = useState<boolean>(false);
     const tabs = [
         "scene",
         "action",
@@ -49,9 +52,20 @@ const EditorAndSidebar = ({ project }: Props) => {
 
         // update active on caret update
         onSelectionUpdate({ transaction }) {
-            const currNode = (transaction as any).curSelection.$anchor.path[3]
-                .attrs.class;
+            const anchor = (transaction as any).curSelection.$anchor;
+            const currNode = anchor.path[3].attrs.class;
+            let marks: any[] = anchor.nodeAfter?.marks;
+
             setActiveTab(currNode);
+
+            if (!marks) {
+                return;
+            }
+
+            marks = marks.map((mark: any) => mark.type.name);
+            setIsBold(marks.includes("bold"));
+            setIsItalic(marks.includes("italic"));
+            setIsUnderline(marks.includes("underline"));
         },
     });
 
@@ -135,15 +149,18 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const toggleBold = () => {
-        editorView?.commands.toggleBold();
+        editorView?.chain().toggleBold().focus().run();
+        setIsBold(!isBold);
     };
 
     const toggleItalic = () => {
-        editorView?.commands.toggleItalic();
+        editorView?.chain().toggleItalic().focus().run();
+        setIsItalic(!isItalic);
     };
 
     const toggleUnderline = () => {
-        editorView?.commands.toggleUnderline();
+        editorView?.chain().toggleUnderline().focus().run();
+        setIsUnderline(!isUnderline);
     };
 
     useEffect(() => {
@@ -165,6 +182,9 @@ const EditorAndSidebar = ({ project }: Props) => {
                 toggleBold={toggleBold}
                 toggleItalic={toggleItalic}
                 toggleUnderline={toggleUnderline}
+                isBold={isBold}
+                isItalic={isItalic}
+                isUnderline={isUnderline}
                 selectedTab={selectedTab}
                 setActiveTab={setActiveTab}
                 isSaving={isSaving}

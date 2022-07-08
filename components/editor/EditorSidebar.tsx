@@ -7,7 +7,27 @@ type Props = {
     toggleBold: () => void;
     toggleItalic: () => void;
     toggleUnderline: () => void;
+    isBold: boolean;
+    isItalic: boolean;
+    isUnderline: boolean;
     isSaving: boolean;
+};
+
+type EditorStyleProps = {
+    isActive: boolean;
+    toggle: () => void;
+    icon: string;
+};
+
+const EditorStyle = ({ isActive, toggle, icon }: EditorStyleProps) => {
+    return (
+        <div
+            className={"editor-style-btn" + (isActive ? " active-style" : "")}
+            onClick={toggle}
+        >
+            <img className="editor-style-icon" src={"/images/" + icon} />
+        </div>
+    );
 };
 
 const EditorSidebar = ({
@@ -15,6 +35,9 @@ const EditorSidebar = ({
     toggleBold,
     toggleItalic,
     toggleUnderline,
+    isBold,
+    isItalic,
+    isUnderline,
     selectedTab,
     setActiveTab,
     isSaving,
@@ -23,24 +46,21 @@ const EditorSidebar = ({
         <div id="sidebar" className="sidebar-shadow tabs">
             <div className="tabs">
                 <div className="editor-style-buttons">
-                    <div className="editor-style-btn" onClick={toggleBold}>
-                        <img
-                            className="editor-style-icon"
-                            src="/images/bold.png"
-                        />
-                    </div>
-                    <div className="editor-style-btn" onClick={toggleItalic}>
-                        <img
-                            className="editor-style-icon"
-                            src="/images/italic.png"
-                        />
-                    </div>
-                    <div className="editor-style-btn" onClick={toggleUnderline}>
-                        <img
-                            className="editor-style-icon"
-                            src="/images/underline.png"
-                        />
-                    </div>
+                    <EditorStyle
+                        isActive={isBold}
+                        toggle={toggleBold}
+                        icon={"bold.png"}
+                    />
+                    <EditorStyle
+                        isActive={isItalic}
+                        toggle={toggleItalic}
+                        icon={"italic.png"}
+                    />
+                    <EditorStyle
+                        isActive={isUnderline}
+                        toggle={toggleUnderline}
+                        icon={"underline.png"}
+                    />
                 </div>
                 <EditorTab
                     action={() => setActiveTab("scene")}
