@@ -46,9 +46,10 @@ span {
     font-family: "Courier Prime", monospace;
     font-size: 12pt;
     text-align: left;
-    letter-spacing: -0.6px !important;
+    letter-spacing: -0.4px !important;
 }
 
+/* Editor styles */
 span.bold {
     font-weight: bold;
 }

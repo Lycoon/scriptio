@@ -25,7 +25,11 @@ const EditorStyle = ({ isActive, toggle, icon }: EditorStyleProps) => {
             className={"editor-style-btn" + (isActive ? " active-style" : "")}
             onClick={toggle}
         >
-            <img className="editor-style-icon" src={"/images/" + icon} />
+            <img
+                className="editor-style-icon"
+                src={"/images/" + icon}
+                alt="Editor style icon"
+            />
         </div>
     );
 };

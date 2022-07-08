@@ -23,6 +23,7 @@ type Props = {
 const EditorAndSidebar = ({ project }: Props) => {
     const { editor, updateEditor } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
+    const [notSaved, updateNotSaved] = useState<boolean>(false);
     const [isSaving, updateIsSaving] = useState<boolean>(false);
     const [isBold, setIsBold] = useState<boolean>(false);
     const [isItalic, setIsItalic] = useState<boolean>(false);
@@ -49,6 +50,10 @@ const EditorAndSidebar = ({ project }: Props) => {
             // scriptio
             Screenplay,
         ],
+
+        onUpdate() {
+            updateNotSaved(true);
+        },
 
         // update active on caret update
         onSelectionUpdate({ transaction }) {
@@ -83,14 +88,14 @@ const EditorAndSidebar = ({ project }: Props) => {
 
                     if (nodePos < nodeSize) return false;
 
-                    let newNode;
+                    let newNode = "action";
                     switch (currNode) {
                         case "character":
                         case "parenthetical":
                             newNode = "dialogue";
                             break;
-                        default:
-                            newNode = "action";
+                        case "dialogue":
+                            newNode = nodePos === 0 ? "action" : "character";
                     }
 
                     editorView
@@ -145,6 +150,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             updateIsSaving(true);
             await editProject(project.userId, body);
             updateIsSaving(false);
+            updateNotSaved(false);
         }
     };
 
@@ -163,12 +169,25 @@ const EditorAndSidebar = ({ project }: Props) => {
         setIsUnderline(!isUnderline);
     };
 
+    const onUnload = (e: BeforeUnloadEvent) => {
+        if (notSaved) {
+            let confirmationMessage = "Are you sure you want to leave?";
+
+            e.returnValue = confirmationMessage;
+            return confirmationMessage;
+        }
+
+        e.preventDefault();
+    };
+
     useEffect(() => {
         addEventListener("keydown", tabKeyPressed, false);
         addEventListener("keydown", saveKeyPressed, false);
+        addEventListener("beforeunload", onUnload);
         return () => {
             removeEventListener("keydown", tabKeyPressed, false);
             removeEventListener("keydown", saveKeyPressed, false);
+            removeEventListener("beforeunload", onUnload);
         };
     });
 

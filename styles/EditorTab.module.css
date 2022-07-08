@@ -6,6 +6,11 @@
 }
 
 .tab {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+
     border: none;
     width: 100%;
     padding: 10px;
@@ -18,16 +23,20 @@
 }
 
 .tab:hover:not(.active-tab) {
-    transition: padding-left 0.1s;
-    padding-left: 35px;
-    background-color: var(--editor-active-tab);
+    transition: padding-left 0.15s;
+    padding-left: 48px;
+    background-color: var(--editor-tab-active);
 }
 
 .active-tab {
-    background-color: var(--editor-active-tab);
+    background-color: var(--editor-tab-active);
 }
 
-.active-tab::before {
-    font-size: 12px;
-    content: "➤ ";
+.editor-tab-icon {
+    width: 12px;
+    height: 12px;
+}
+
+html.dark .editor-tab-icon {
+    filter: invert(100%);
 }
