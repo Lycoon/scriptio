@@ -27,7 +27,6 @@ export const CustomBold = Bold.extend({
         return {
             class: {
                 default: "bold",
-                parseHTML: (element) => element.getAttribute("class"),
             },
         };
     },
@@ -36,8 +35,10 @@ export const CustomBold = Bold.extend({
         return [
             {
                 tag: "span",
-                attrs: ["bold"],
                 preserveWhitespace: "full",
+                getAttrs: (e: any) => {
+                    return e.getAttribute("class") === "bold" && null;
+                },
             },
         ];
     },
@@ -52,7 +53,6 @@ export const CustomItalic = Italic.extend({
         return {
             class: {
                 default: "italic",
-                parseHTML: (element: Element) => element.getAttribute("class"),
             },
         };
     },
@@ -61,8 +61,10 @@ export const CustomItalic = Italic.extend({
         return [
             {
                 tag: "span",
-                attrs: ["italic"],
                 preserveWhitespace: "full",
+                getAttrs: (e: any) => {
+                    return e.getAttribute("class") === "italic" && null;
+                },
             },
         ];
     },
@@ -77,7 +79,6 @@ export const CustomUnderline = Underline.extend({
         return {
             class: {
                 default: "underline",
-                parseHTML: (element: Element) => element.getAttribute("class"),
             },
         };
     },
@@ -86,8 +87,10 @@ export const CustomUnderline = Underline.extend({
         return [
             {
                 tag: "span",
-                attrs: ["underline"],
                 preserveWhitespace: "full",
+                getAttrs: (e: any) => {
+                    return e.getAttribute("class") === "underline" && null;
+                },
             },
         ];
     },

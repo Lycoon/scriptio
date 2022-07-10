@@ -28,6 +28,15 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isBold, setIsBold] = useState<boolean>(false);
     const [isItalic, setIsItalic] = useState<boolean>(false);
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
+
+    const updateEditorStyles = (marks: any[]) => {
+        marks = marks.map((mark: any) => mark.attrs.class);
+
+        setIsBold(marks.includes("bold"));
+        setIsItalic(marks.includes("italic"));
+        setIsUnderline(marks.includes("underline"));
+    };
+
     const tabs = [
         "scene",
         "action",
@@ -59,18 +68,19 @@ const EditorAndSidebar = ({ project }: Props) => {
         onSelectionUpdate({ transaction }) {
             const anchor = (transaction as any).curSelection.$anchor;
             const currNode = anchor.path[3].attrs.class;
-            let marks: any[] = anchor.nodeAfter?.marks;
 
             setActiveTab(currNode);
 
-            if (!marks) {
+            if (!anchor.nodeBefore) {
+                if (!anchor.nodeAfter) {
+                    return;
+                }
+
+                updateEditorStyles(anchor.nodeAfter?.marks);
                 return;
             }
 
-            marks = marks.map((mark: any) => mark.type.name);
-            setIsBold(marks.includes("bold"));
-            setIsItalic(marks.includes("italic"));
-            setIsUnderline(marks.includes("underline"));
+            updateEditorStyles(anchor.nodeBefore?.marks);
         },
     });
 
@@ -86,16 +96,20 @@ const EditorAndSidebar = ({ project }: Props) => {
                     const currNode = node.attrs.class;
                     const pos = selection.anchor;
 
-                    if (nodePos < nodeSize) return false;
+                    if (nodePos < nodeSize) {
+                        return false;
+                    }
 
                     let newNode = "action";
-                    switch (currNode) {
-                        case "character":
-                        case "parenthetical":
-                            newNode = "dialogue";
-                            break;
-                        case "dialogue":
-                            newNode = nodePos === 0 ? "action" : "character";
+                    if (nodePos !== 0) {
+                        switch (currNode) {
+                            case "character":
+                            case "parenthetical":
+                                newNode = "dialogue";
+                                break;
+                            case "dialogue":
+                                newNode = "character";
+                        }
                     }
 
                     editorView

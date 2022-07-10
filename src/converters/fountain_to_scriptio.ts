@@ -7,9 +7,8 @@ import fountain from "./fountain";
  * @param editor main editor
  */
 export const convertFountainToJSON = async (text: string, editor: Editor) => {
-  fountain.parse(text, true, function (output: any) {
-    const html = output["html"]["script"];
-    console.log("html: ", html);
-    editor?.commands.setContent(html);
-  });
+    fountain.parse(text, true, function (output: any) {
+        const html = output["html"]["script"];
+        editor?.commands.setContent(html);
+    });
 };
