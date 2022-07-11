@@ -66,6 +66,10 @@ span.underline {
     margin-bottom: 17px;
 }
 
+.ProseMirror p:hover {
+    background-color: var(--editor-scene);
+}
+
 .action {
     line-height: 17px !important;
     text-align: justify;
