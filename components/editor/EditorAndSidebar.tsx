@@ -23,7 +23,20 @@ type Props = {
 const EditorAndSidebar = ({ project }: Props) => {
     const { editor, updateEditor } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
+    const [notSaved, updateNotSaved] = useState<boolean>(false);
     const [isSaving, updateIsSaving] = useState<boolean>(false);
+    const [isBold, setIsBold] = useState<boolean>(false);
+    const [isItalic, setIsItalic] = useState<boolean>(false);
+    const [isUnderline, setIsUnderline] = useState<boolean>(false);
+
+    const updateEditorStyles = (marks: any[]) => {
+        marks = marks.map((mark: any) => mark.attrs.class);
+
+        setIsBold(marks.includes("bold"));
+        setIsItalic(marks.includes("italic"));
+        setIsUnderline(marks.includes("underline"));
+    };
+
     const tabs = [
         "scene",
         "action",
@@ -47,11 +60,27 @@ const EditorAndSidebar = ({ project }: Props) => {
             Screenplay,
         ],
 
+        onUpdate() {
+            updateNotSaved(true);
+        },
+
         // update active on caret update
         onSelectionUpdate({ transaction }) {
-            const currNode = (transaction as any).curSelection.$anchor.path[3]
-                .attrs.class;
+            const anchor = (transaction as any).curSelection.$anchor;
+            const currNode = anchor.path[3].attrs.class;
+
             setActiveTab(currNode);
+
+            if (!anchor.nodeBefore) {
+                if (!anchor.nodeAfter) {
+                    return;
+                }
+
+                updateEditorStyles(anchor.nodeAfter?.marks);
+                return;
+            }
+
+            updateEditorStyles(anchor.nodeBefore?.marks);
         },
     });
 
@@ -67,16 +96,20 @@ const EditorAndSidebar = ({ project }: Props) => {
                     const currNode = node.attrs.class;
                     const pos = selection.anchor;
 
-                    if (nodePos < nodeSize) return false;
+                    if (nodePos < nodeSize) {
+                        return false;
+                    }
 
-                    let newNode;
-                    switch (currNode) {
-                        case "character":
-                        case "parenthetical":
-                            newNode = "dialogue";
-                            break;
-                        default:
-                            newNode = "action";
+                    let newNode = "action";
+                    if (nodePos !== 0) {
+                        switch (currNode) {
+                            case "character":
+                            case "parenthetical":
+                                newNode = "dialogue";
+                                break;
+                            case "dialogue":
+                                newNode = "character";
+                        }
                     }
 
                     editorView
@@ -131,27 +164,44 @@ const EditorAndSidebar = ({ project }: Props) => {
             updateIsSaving(true);
             await editProject(project.userId, body);
             updateIsSaving(false);
+            updateNotSaved(false);
         }
     };
 
     const toggleBold = () => {
-        editorView?.commands.toggleBold();
+        editorView?.chain().toggleBold().focus().run();
+        setIsBold(!isBold);
     };
 
     const toggleItalic = () => {
-        editorView?.commands.toggleItalic();
+        editorView?.chain().toggleItalic().focus().run();
+        setIsItalic(!isItalic);
     };
 
     const toggleUnderline = () => {
-        editorView?.commands.toggleUnderline();
+        editorView?.chain().toggleUnderline().focus().run();
+        setIsUnderline(!isUnderline);
+    };
+
+    const onUnload = (e: BeforeUnloadEvent) => {
+        if (notSaved) {
+            let confirmationMessage = "Are you sure you want to leave?";
+
+            e.returnValue = confirmationMessage;
+            return confirmationMessage;
+        }
+
+        e.preventDefault();
     };
 
     useEffect(() => {
         addEventListener("keydown", tabKeyPressed, false);
         addEventListener("keydown", saveKeyPressed, false);
+        addEventListener("beforeunload", onUnload);
         return () => {
             removeEventListener("keydown", tabKeyPressed, false);
             removeEventListener("keydown", saveKeyPressed, false);
+            removeEventListener("beforeunload", onUnload);
         };
     });
 
@@ -165,6 +215,9 @@ const EditorAndSidebar = ({ project }: Props) => {
                 toggleBold={toggleBold}
                 toggleItalic={toggleItalic}
                 toggleUnderline={toggleUnderline}
+                isBold={isBold}
+                isItalic={isItalic}
+                isUnderline={isUnderline}
                 selectedTab={selectedTab}
                 setActiveTab={setActiveTab}
                 isSaving={isSaving}

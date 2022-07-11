@@ -72,10 +72,13 @@ html.light {
     --editor-script-bg: #ffffff;
     --editor-bg: #f0f0f0;
     --editor-sidebar: #f0f0f0;
-    --editor-active-tab: #e0e0e0;
+    --editor-tab-active: #e0e0e0;
     --editor-scroll-bg: #f0f0f0;
     --editor-scroll-btn: #d0d0d0;
     --editor-scroll-btn-hover: #dcdcdc;
+    --editor-style-bg: #ffffff;
+    --editor-style-bg-hover: #f5f5f5;
+    --editor-style-bg-active: #616161;
 
     --home-bg-1: #e3caaa;
     --home-bg-2: #fcd1d1;
@@ -104,10 +107,13 @@ html.dark {
     --editor-script-bg: #272727;
     --editor-bg: #1d1d1d;
     --editor-sidebar: #272727;
-    --editor-active-tab: #3d3d3d;
+    --editor-tab-active: #3d3d3d;
     --editor-scroll-bg: #2e2e2e;
     --editor-scroll-btn: #464646;
     --editor-scroll-btn-hover: #4f4f4f;
+    --editor-style-bg: #1d1d1d;
+    --editor-style-bg-hover: #3c3c3c;
+    --editor-style-bg-active: #5d5d5d;
 
     --home-bg-1: #252850;
     --home-bg-2: #47cca0;

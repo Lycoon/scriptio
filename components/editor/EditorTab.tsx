@@ -6,6 +6,13 @@ const EditorTab = (props: any) => {
                 props.active ? "active-tab" : ""
             }`}
         >
+            {props.active && (
+                <img
+                    className="editor-tab-icon"
+                    src="/images/right-arrow.png"
+                    alt="Right arrow icon"
+                />
+            )}
             {props.content}
         </button>
     );

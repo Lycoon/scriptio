@@ -46,9 +46,10 @@ span {
     font-family: "Courier Prime", monospace;
     font-size: 12pt;
     text-align: left;
-    letter-spacing: -0.6px !important;
+    letter-spacing: -0.4px !important;
 }
 
+/* Editor styles */
 span.bold {
     font-weight: bold;
 }
@@ -61,19 +62,15 @@ span.underline {
     text-decoration: underline;
 }
 
-.scene,
-.action,
-.character,
-.transition {
-    margin-top: 0.75em !important;
+.ProseMirror p {
+    margin-bottom: 17px;
 }
 
-.action + .action {
-    margin-top: 0 !important;
+.ProseMirror p:hover {
+    background-color: var(--editor-scene);
 }
 
 .action {
-    padding-block: 0.1in !important;
     line-height: 17px !important;
     text-align: justify;
 }
@@ -96,19 +93,30 @@ span.underline {
     margin-left: -75px;
 }
 
+/* Dialogue */
+.dialogue {
+    padding-inline: 1.2in !important;
+}
+
+.dialogue + .parenthetical {
+    margin-top: -17px !important;
+}
+
 .character {
     padding-left: 2.2in !important;
     margin-bottom: 0 !important;
     text-transform: uppercase;
 }
 
-.dialogue {
-    padding-inline: 1.2in !important;
+.character + .character {
+    margin-top: 17px !important;
 }
 
+/* Parenthetical */
 .parenthetical {
     padding-left: 1.9in !important;
     padding-right: 2.1in !important;
+    margin-bottom: 0 !important;
 }
 
 .parenthetical::before {
@@ -119,6 +127,7 @@ span.underline {
     content: ")";
 }
 
+/* Transition */
 .transition {
     text-transform: uppercase;
     text-align: right !important;
