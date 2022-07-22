@@ -7,10 +7,10 @@ import Navbar from "../components/navbar/Navbar";
 import ProjectPageContainer from "../components/projects/ProjectPageContainer";
 import { sessionOptions } from "../src/lib/session";
 import { getProjects } from "../src/server/service/project-service";
-import { Project, User } from "./api/users";
+import { Project, CookieUser } from "./api/users";
 
 type Props = {
-    user: User | null;
+    user: CookieUser | null;
     projects: Project[] | null;
 };
 

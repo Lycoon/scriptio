@@ -1,23 +1,23 @@
 import { useEffect } from "react";
 import useSWR from "swr";
-import type { User } from "../../pages/api/users";
+import type { CookieUser } from "../../pages/api/users";
 
 export default function useUser({
-  redirectTo = "/",
-  redirectIfFound = true,
+    redirectTo = "/",
+    redirectIfFound = true,
 } = {}) {
-  const { data: user, mutate: setUser } = useSWR<User>("/api/users/");
+    const { data: user, mutate: setUser } = useSWR<CookieUser>("/api/users/");
 
-  useEffect(() => {
-    if (!redirectTo || !user) return;
+    useEffect(() => {
+        if (!redirectTo || !user) return;
 
-    // if (
-    //   (redirectTo && !redirectIfFound && !user?.isLoggedIn) ||
-    //   (redirectIfFound && user?.isLoggedIn)
-    // ) {
-    //   Router.push(redirectTo);
-    // }
-  }, [user, redirectIfFound, redirectTo]);
+        // if (
+        //   (redirectTo && !redirectIfFound && !user?.isLoggedIn) ||
+        //   (redirectIfFound && user?.isLoggedIn)
+        // ) {
+        //   Router.push(redirectTo);
+        // }
+    }, [user, redirectIfFound, redirectTo]);
 
-  return { user, setUser };
+    return { user, setUser };
 }

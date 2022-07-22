@@ -37,11 +37,13 @@ export async function createUser(email: string, password: string) {
     const secrets = generateSecrets(password);
     const created = await repository.createUser({
         email,
-        emailHash: secrets.emailHash,
-        hash: secrets.hash,
-        salt: secrets.salt,
+        secrets: {
+            emailHash: secrets.emailHash,
+            hash: secrets.hash,
+            salt: secrets.salt,
+        },
     });
-    sendVerificationEmail(created.id, email, secrets.emailHash);
+    sendVerificationEmail(created.id, email, secrets.emailHash!);
 
     return created;
 }

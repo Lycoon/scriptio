@@ -41,7 +41,7 @@
 .form-btn {
     font-size: 1rem;
     font-family: segoe-bold;
-    color: var(--secondary-text);
+    color: #ffffff;
     background-color: var(--secondary-bg);
     cursor: pointer;
     width: 100%;

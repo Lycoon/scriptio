@@ -3,25 +3,27 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export type Secrets = {
-    emailHash: string;
-    hash: string;
-    salt: string;
+    emailHash?: string;
+    hash?: string;
+    salt?: string;
+};
+
+export type Settings = {
+    highlightOnHover?: boolean;
+    sceneBackground?: boolean;
 };
 
 export interface UserUpdate {
     id: idOrEmailType;
     email?: string;
-    emailHash?: string;
-    salt?: string;
-    hash?: string;
     verified?: boolean;
+    secrets?: Secrets;
+    settings?: Settings;
 }
 
 export interface UserCreation {
     email: string;
-    emailHash: string;
-    salt: string;
-    hash: string;
+    secrets: Secrets;
 }
 
 type idOrEmailType = { id: number } | { email: string };
@@ -34,11 +36,10 @@ export class UserRepository {
                 email: user.email,
                 verified: user.verified,
                 secrets: {
-                    update: {
-                        salt: user.salt,
-                        hash: user.hash,
-                        emailHash: user.emailHash,
-                    },
+                    update: user.secrets,
+                },
+                settings: {
+                    update: user.settings,
                 },
             },
         });
@@ -50,10 +51,13 @@ export class UserRepository {
                 email: user.email,
                 secrets: {
                     create: {
-                        salt: user.salt,
-                        hash: user.hash,
-                        emailHash: user.emailHash,
+                        hash: user.secrets.hash!,
+                        salt: user.secrets.salt!,
+                        emailHash: user.secrets.emailHash!,
                     },
+                },
+                settings: {
+                    create: {},
                 },
             },
         });
@@ -71,6 +75,7 @@ export class UserRepository {
             email: true,
             verified: true,
             createdAt: true,
+            settings: true,
             secrets: includeSecrets,
         };
 

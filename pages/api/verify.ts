@@ -24,6 +24,9 @@ export default async function verify(
         const emailHash = req.query.code;
         const user = await getUserFromId(id, true);
 
+        console.log("emailHash: ", emailHash);
+        console.log("secretEmailHash: ", user?.secrets.emailHash);
+
         if (!user || emailHash !== user.secrets.emailHash) {
             return redirect(res, VerificationStatus.FAILED);
         }

@@ -1,6 +1,6 @@
 import Router from "next/router";
 import { useState } from "react";
-import { Project, User } from "../../../pages/api/users";
+import { Project, CookieUser } from "../../../pages/api/users";
 import { editProject } from "../../../src/lib/requests";
 import { getBase64 } from "../../../src/lib/utils";
 import { ProjectUpdate } from "../../../src/server/repository/project-repository";
@@ -10,7 +10,7 @@ import ProjectDangerZone from "./ProjectDangerZone";
 
 type Props = {
     project: Project;
-    user: User;
+    user: CookieUser;
 };
 
 const EditProjectConainer = ({ project, user }: Props) => {

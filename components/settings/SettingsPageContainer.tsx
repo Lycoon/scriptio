@@ -2,7 +2,11 @@ import { useTheme } from "next-themes";
 import { useState } from "react";
 import { User } from "../../pages/api/users";
 import { ERROR_PASSWORD_MATCH } from "../../src/lib/messages";
-import { changePassword } from "../../src/lib/requests";
+import {
+    changePassword,
+    editProject,
+    editUserSettings,
+} from "../../src/lib/requests";
 import FormInfo, { FormInfoType } from "../home/FormInfo";
 
 type Props = {
@@ -10,8 +14,17 @@ type Props = {
 };
 
 const SettingsPageContainer = ({ user }: Props) => {
+    user.createdAt = new Date(user.createdAt);
+
     const { theme, setTheme } = useTheme();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
+    const [sceneBackground, setSceneBackground] = useState<boolean>(
+        user.settings.sceneBackground
+    );
+    const [highlightOnHover, setHighlightOnHover] = useState<boolean>(
+        user.settings.highlightOnHover
+    );
+
     const toggleTheme = () => {
         setTheme(theme === "light" ? "dark" : "light");
     };
@@ -19,7 +32,17 @@ const SettingsPageContainer = ({ user }: Props) => {
         setFormInfo(null);
     };
 
-    async function onSubmit(e: any) {
+    function toggleHighlightOnHover() {
+        editUserSettings(user.id, { highlightOnHover: !highlightOnHover });
+        setHighlightOnHover(!highlightOnHover);
+    }
+
+    function toggleSceneBackground() {
+        editUserSettings(user.id, { sceneBackground: !sceneBackground });
+        setSceneBackground(!sceneBackground);
+    }
+
+    async function onChangePassword(e: any) {
         e.preventDefault();
         resetFromInfo();
 
@@ -49,8 +72,15 @@ const SettingsPageContainer = ({ user }: Props) => {
                     <hr />
                 </div>
                 <div className="settings-profile">
-                    <p>{user.email}</p>
-                    <p>joined 28/06/2021</p>
+                    <p className="settings-email">{user.email}</p>
+                    <p className="settings-joined-date">
+                        joined{" "}
+                        {user.createdAt.toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                        })}
+                    </p>
                 </div>
                 <div className="settings-column-left">
                     <div className="settings-element">
@@ -58,10 +88,12 @@ const SettingsPageContainer = ({ user }: Props) => {
                         <hr />
                         {formInfo && <FormInfo info={formInfo} />}
                     </div>
-                    <form className="settings-form" onSubmit={onSubmit}>
+                    <form className="settings-form" onSubmit={onChangePassword}>
                         <div className="form-element">
                             <label id="password-form" className="form-element">
-                                <span className="form-label">New password</span>
+                                <span className="form-label settings-label">
+                                    New password
+                                </span>
                                 <input
                                     className="form-input"
                                     name="password1"
@@ -69,7 +101,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                                     required
                                 />
 
-                                <span className="form-label">
+                                <span className="form-label settings-label">
                                     Confirm new password
                                 </span>
                                 <input
@@ -107,6 +139,27 @@ const SettingsPageContainer = ({ user }: Props) => {
                                 <option value="en">English</option>
                                 <option value="fr">Français</option>
                             </select>
+                        </div>
+                        <hr />
+                    </div>
+                    <div className="settings-element">
+                        <div className="settings-element-header">
+                            <p>Highlight screenplay element on hover</p>
+                            <input
+                                type="checkbox"
+                                onChange={toggleHighlightOnHover}
+                                defaultChecked={user.settings.highlightOnHover}
+                            />
+                        </div>
+                    </div>
+                    <div className="settings-element">
+                        <div className="settings-element-header">
+                            <p>Display scene heading background</p>
+                            <input
+                                type="checkbox"
+                                onChange={toggleSceneBackground}
+                                defaultChecked={user.settings.sceneBackground}
+                            />
                         </div>
                         <hr />
                     </div>

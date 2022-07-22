@@ -3,10 +3,12 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import {
     FAILED_PASSWORD_CHANGED,
     FAILED_USER_DELETION,
+    FAILED_USER_SETTINGS_UPDATE,
     MISSING_BODY,
     PASSWORD_CHANGED,
     PASSWORD_REQUIREMENTS,
     USER_DELETED,
+    USER_SETTINGS_UPDATED,
 } from "../../../../src/lib/messages";
 import { sessionOptions } from "../../../../src/lib/session";
 import { onError, onSuccess } from "../../../../src/lib/utils";
@@ -32,27 +34,33 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     switch (req.method) {
-        case "GET":
-            return getMethod(user.id, res);
-        case "DELETE":
-            return deleteMethod(user.id, res);
+        case "PATCH":
+            return patchMethod(user.id, req.body, res);
     }
 }
 
-async function getMethod(userId: number, res: NextApiResponse) {
-    const fetchedUser = await getUserFromId(userId);
-    if (!fetchedUser) {
-        return onError(res, 404, "User with id " + userId + " not found");
+async function patchMethod(userId: number, body: any, res: NextApiResponse) {
+    if (!body) {
+        return onError(res, 400, MISSING_BODY);
     }
 
-    return onSuccess(res, 200, "", fetchedUser);
-}
-
-async function deleteMethod(userId: number, res: NextApiResponse) {
-    const deleted = await deleteUserFromId(userId);
-    if (!deleted) {
-        return onError(res, 500, FAILED_USER_DELETION);
+    let settings: any = {};
+    if (typeof body.highlightOnHover === "boolean") {
+        settings.highlightOnHover = body.highlightOnHover;
     }
 
-    return onSuccess(res, 200, USER_DELETED, null);
+    if (typeof body.sceneBackground === "boolean") {
+        settings.sceneBackground = body.sceneBackground;
+    }
+
+    const updated = await updateUser({
+        id: { id: userId },
+        settings,
+    });
+
+    if (!updated) {
+        return onError(res, 500, FAILED_USER_SETTINGS_UPDATE);
+    }
+
+    return onSuccess(res, 200, USER_SETTINGS_UPDATED, null);
 }

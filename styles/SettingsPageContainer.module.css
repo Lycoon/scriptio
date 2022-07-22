@@ -5,7 +5,7 @@
     width: 50%;
     margin-top: 70px;
 
-    row-gap: 50px;
+    row-gap: 55px;
     column-gap: 10%;
 
     grid-template-columns: 45%;
@@ -21,6 +21,22 @@
 
 .settings-profile {
     grid-area: profile;
+    margin-top: -25px;
+}
+
+.settings-email {
+    font-size: 1.3rem;
+}
+
+.settings-joined-date {
+    color: var(--secondary-text);
+    font-style: italic;
+    margin-top: 5px;
+}
+
+.settings-label {
+    color: var(--secondary-text);
+    font-style: italic;
 }
 
 .settings-column-left {
@@ -28,7 +44,7 @@
 
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 20px;
 }
 
 .settings-column-right {
@@ -62,6 +78,7 @@
 }
 
 #language-form {
+    max-width: 50%;
     width: 130px;
     padding-inline: 4px;
     padding-block: 2px;

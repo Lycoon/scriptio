@@ -3,8 +3,9 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import Navbar from "../components/navbar/Navbar";
 import SettingsPageContainer from "../components/settings/SettingsPageContainer";
-import { User } from "./api/users";
 import { sessionOptions } from "../src/lib/session";
+import { getUserFromId } from "../src/server/service/user-service";
+import { User } from "./api/users";
 
 type Props = {
     user: User;
@@ -27,13 +28,20 @@ const noauth = { props: { user: null, projects: [] } };
 export const getServerSideProps = withIronSessionSsr(async function ({
     req,
 }): Promise<any> {
-    const user = req.session.user;
+    const cookieUser = req.session.user;
 
-    if (!user || !user.isLoggedIn) {
+    if (!cookieUser || !cookieUser.isLoggedIn) {
         return noauth;
     }
 
-    return { props: { user: user } };
+    const user = await getUserFromId(cookieUser.id);
+    if (!user) {
+        return noauth;
+    }
+
+    user.createdAt = user.createdAt.toISOString() as any as Date;
+
+    return { props: { user } };
 },
 sessionOptions);
 

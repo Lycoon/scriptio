@@ -38,11 +38,9 @@ export default async function signup(
         const secrets = generateSecrets(password);
         await updateUser({
             id: { id: existing.id },
-            emailHash: secrets.emailHash,
-            hash: secrets.hash,
-            salt: secrets.salt,
+            secrets,
         });
-        sendVerificationEmail(existing.id, email, secrets.emailHash);
+        sendVerificationEmail(existing.id, email, secrets.emailHash!);
 
         return onSuccess(res, 200, VERIFICATION_SENT, null);
     }
