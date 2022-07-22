@@ -6,10 +6,11 @@ import EditorContainer from "../../../components/editor/EditorContainer";
 import Navbar from "../../../components/navbar/Navbar";
 import { sessionOptions } from "../../../src/lib/session";
 import { getProjectFromId } from "../../../src/server/service/project-service";
-import { Project, CookieUser } from "../../api/users";
+import { getUserFromId } from "../../../src/server/service/user-service";
+import { Project, User } from "../../api/users";
 
 type Props = {
-    user: CookieUser;
+    user: User;
     project: Project;
 };
 
@@ -41,7 +42,7 @@ const EditorPage: NextPage<Props> = ({ user, project }: Props) => {
                     activeButtons={{ isScreenplay: true }}
                     project={project}
                 />
-                <EditorContainer project={project!} />
+                <EditorContainer user={user} project={project} />
             </div>
         </>
     );
@@ -56,18 +57,28 @@ export const getServerSideProps = withIronSessionSsr(async function ({
         return redirectToHome;
     }
 
-    const user = req.session.user;
+    const cookieUser = req.session.user;
+    if (!cookieUser || !cookieUser.isLoggedIn) {
+        return redirectToHome;
+    }
+
     const project = await getProjectFromId(projectId);
-    if (!project || project.userId !== user?.id) {
+    if (!project || project.userId !== cookieUser?.id) {
+        return redirectToHome;
+    }
+
+    const user = await getUserFromId(cookieUser.id);
+    if (!user) {
         return redirectToHome;
     }
 
     // Workaround because dates can't be serialized
+    user.createdAt = user.createdAt.toISOString() as any as Date;
     project.createdAt = project.createdAt.toISOString() as any as Date;
     project.updatedAt = project.updatedAt.toISOString() as any as Date;
 
     return {
-        props: { user: req.session.user, project },
+        props: { user, project },
     };
 },
 sessionOptions);
