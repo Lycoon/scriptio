@@ -18,3 +18,5 @@ export const USER_DELETED = "User deleted successfully";
 export const FAILED_USER_DELETION = "Failed user deletion";
 export const FAILED_USER_SETTINGS_UPDATE = "Failed updating user settings";
 export const USER_SETTINGS_UPDATED = "User settings updated successfully";
+export const ERROR_VERIFICATION_THROTTLE =
+    "A verification email has already been sent in the last 5 minutes";

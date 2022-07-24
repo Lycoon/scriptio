@@ -3,9 +3,10 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export type Secrets = {
-    emailHash?: string;
     hash?: string;
     salt?: string;
+    emailHash?: string;
+    lastEmailHash?: Date;
 };
 
 export type Settings = {

@@ -64,6 +64,10 @@ const EditorAndSidebar = ({ project }: Props) => {
             updateNotSaved(true);
         },
 
+        onCreate() {
+            console.log("Created");
+        },
+
         // update active on caret update
         onSelectionUpdate({ transaction }) {
             const anchor = (transaction as any).curSelection.$anchor;
@@ -85,6 +89,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     });
 
     editorView?.setOptions({
+        autofocus: "end",
         editorProps: {
             handleKeyDown(view: any, event: any) {
                 const selection = view.state.selection;
