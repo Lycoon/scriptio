@@ -42,7 +42,7 @@ const NavbarDropdown = ({ activeButtons, project, toggleDropdown }: Props) => {
     };
 
     const openScreenplay = () => {
-        Router.push(`/projects/${project.id}/editor`);
+        Router.push(`/projects/${project.id}/screenplay`);
     };
 
     const editProject = () => {

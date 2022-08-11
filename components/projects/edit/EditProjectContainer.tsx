@@ -18,7 +18,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const backToScreenplay = () => {
-        Router.push(`/projects/${project.id}/editor`);
+        Router.push(`/projects/${project.id}/screenplay`);
     };
 
     const resetFromInfo = () => {
@@ -42,7 +42,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
         const json = await res.json();
 
         if (res.status === 200) {
-            Router.push(`/projects/${project.id}/editor`);
+            Router.push(`/projects/${project.id}/screenplay`);
         } else {
             setFormInfo({ content: json.message, isError: true });
         }
