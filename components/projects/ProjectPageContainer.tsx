@@ -38,7 +38,7 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
 
     if (isCreating) {
         return <NewProjectPage setIsCreating={setIsCreating} />;
-    } else if (projects.length === 0) {
+    } else if (projs.length === 0) {
         return <EmptyProjectPage setIsCreating={setIsCreating} />;
     } else
         return (

@@ -37,6 +37,22 @@ const EditorAndSidebar = ({ project }: Props) => {
         setIsUnderline(marks.includes("underline"));
     };
 
+    const updateSelection = (anchor: any) => {
+        const currNode = anchor.path[3].attrs.class;
+        setActiveTab(currNode);
+
+        if (!anchor.nodeBefore) {
+            if (!anchor.nodeAfter) {
+                return;
+            }
+
+            updateEditorStyles(anchor.nodeAfter?.marks);
+            return;
+        }
+
+        updateEditorStyles(anchor.nodeBefore?.marks);
+    };
+
     const tabs = [
         "scene",
         "action",
@@ -64,27 +80,10 @@ const EditorAndSidebar = ({ project }: Props) => {
             updateNotSaved(true);
         },
 
-        onCreate() {
-            console.log("Created");
-        },
-
         // update active on caret update
         onSelectionUpdate({ transaction }) {
             const anchor = (transaction as any).curSelection.$anchor;
-            const currNode = anchor.path[3].attrs.class;
-
-            setActiveTab(currNode);
-
-            if (!anchor.nodeBefore) {
-                if (!anchor.nodeAfter) {
-                    return;
-                }
-
-                updateEditorStyles(anchor.nodeAfter?.marks);
-                return;
-            }
-
-            updateEditorStyles(anchor.nodeBefore?.marks);
+            updateSelection(anchor);
         },
     });
 
@@ -100,6 +99,12 @@ const EditorAndSidebar = ({ project }: Props) => {
                     const nodePos = selection.$head.parentOffset;
                     const currNode = node.attrs.class;
                     const pos = selection.anchor;
+
+                    // empty element
+                    if (nodeSize === 0) {
+                        setActiveTab("action");
+                        return true;
+                    }
 
                     if (nodePos < nodeSize) {
                         return false;
