@@ -43,6 +43,10 @@
     border-style: solid;
 }
 
+.delete-project-btn:hover {
+    background-color: var(--secondary-bg);
+}
+
 .delete-project-icon {
     height: 100%;
 }
