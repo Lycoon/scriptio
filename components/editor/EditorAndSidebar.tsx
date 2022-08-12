@@ -60,6 +60,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         "dialogue",
         "parenthetical",
         "transition",
+        "note",
     ];
 
     const editorView = useEditor({
@@ -156,7 +157,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         if (e.key === "Tab") {
             e.preventDefault();
 
-            const idx = (selectedTab + 1) % 6;
+            const idx = (selectedTab + 1) % 7;
             updateSelectedTab(idx);
             setActiveTab(tabs[idx]);
         }
