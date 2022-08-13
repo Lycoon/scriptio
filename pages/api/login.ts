@@ -1,4 +1,4 @@
-import type { User } from "../api/users/index";
+import type { CookieUser } from "../api/users/index";
 
 import { withIronSessionApiRoute } from "iron-session/next";
 import { sessionOptions } from "../../src/lib/session";
@@ -35,7 +35,7 @@ async function loginRoute(req: NextApiRequest, res: NextApiResponse) {
             isLoggedIn: true,
             id: user.id,
             email: user.email,
-        } as User;
+        } as CookieUser;
 
         req.session.user = cookieUser;
         await req.session.save();

@@ -58,7 +58,7 @@ html.light {
     --upload-bg-hover: #eeeeee;
 
     --primary-text: #474747;
-    --secondary-text: #ffffff;
+    --secondary-text: #9b9b9b;
 
     --separator: #e0e0e0;
     --input-outline: #a2a2a2;
@@ -89,11 +89,11 @@ html.light {
 html.dark {
     --primary-bg: #1d1d1d;
     --secondary-bg: #2e2e2e;
-    --secondary-bg-hover: #4d4d4d;
+    --secondary-bg-hover: #3a3a3a;
     --upload-bg-hover: #2e2e2e;
 
     --primary-text: #ffffff;
-    --secondary-text: #ffffff;
+    --secondary-text: #9b9b9b;
 
     --separator: #414141;
     --input-outline: #3d3d3d;

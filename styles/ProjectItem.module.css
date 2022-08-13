@@ -13,6 +13,59 @@
     transition: transform 0.1s;
 }
 
+/* Project deletion button */
+.project-item-delete {
+    transition: border-width 0.15s;
+
+    border-style: dashed;
+    border-color: rgb(190, 73, 73);
+    border-width: 4px;
+
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+
+    animation-duration: 1.3s;
+    animation-name: shake;
+    animation-delay: 0;
+    animation-iteration-count: infinite;
+    animation-direction: forward;
+}
+
+.project-item-delete-title {
+    font-family: roboto-thin;
+    font-style: italic;
+    font-size: 1.4rem;
+}
+
+.project-item-delete:hover {
+    background-color: var(--secondary-bg-hover);
+}
+
+@keyframes shake {
+    10%,
+    90% {
+        transform: rotate(0.5deg);
+    }
+
+    20%,
+    80% {
+        transform: rotate(-0.5deg);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: rotate(0.5deg);
+    }
+
+    40%,
+    60% {
+        transform: rotate(-0.5deg);
+    }
+}
+
+/* General */
 .project-item-title {
     font-family: roboto-thin;
     font-style: italic;
@@ -36,14 +89,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-}
-
-.project-delete-button {
-    width: 20px;
-    height: 20px;
-    position: absolute;
-    border-radius: 8px;
-    border: none;
+    position: relative;
 }
 
 .project-date {
@@ -71,6 +117,7 @@ html.dark .calendar-icon {
 }
 
 .movie-poster {
-    width: 35%;
+    width: 85px;
     aspect-ratio: 0.675;
+    border-radius: 6px;
 }

@@ -1,12 +1,22 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { withIronSessionApiRoute } from "iron-session/next";
 import { sessionOptions } from "../../../src/lib/session";
-import { Prisma } from "@prisma/client";
+import { Prisma, Settings } from "@prisma/client";
+import { Secrets } from "../../../src/server/repository/user-repository";
+
+export type CookieUser = {
+    id: number;
+    email: string;
+    isLoggedIn: boolean;
+};
 
 export type User = {
-    isLoggedIn: boolean;
-    email: string;
     id: number;
+    email: string;
+    verified: boolean;
+    createdAt: Date;
+    settings: Settings;
+    secrets?: Secrets;
 };
 
 export type Project = {
@@ -24,7 +34,7 @@ export default withIronSessionApiRoute(userRoute, sessionOptions);
 
 async function userRoute(
     req: NextApiRequest,
-    res: NextApiResponse<Partial<User> | null>
+    res: NextApiResponse<Partial<CookieUser> | null>
 ) {
     if (req.session.user) {
         // in a real world application you might read the user id from the session and then do a database request

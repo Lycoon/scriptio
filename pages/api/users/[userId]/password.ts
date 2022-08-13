@@ -32,27 +32,36 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     switch (req.method) {
-        case "GET":
-            return getMethod(user.id, res);
-        case "DELETE":
-            return deleteMethod(user.id, res);
+        case "PATCH":
+            return patchMethod(user.id, req.body, res);
     }
 }
 
-async function getMethod(userId: number, res: NextApiResponse) {
-    const fetchedUser = await getUserFromId(userId);
-    if (!fetchedUser) {
-        return onError(res, 404, "User with id " + userId + " not found");
+async function patchMethod(userId: number, body: any, res: NextApiResponse) {
+    if (!body || !body.password) {
+        return onError(res, 400, MISSING_BODY);
     }
 
-    return onSuccess(res, 200, "", fetchedUser);
-}
-
-async function deleteMethod(userId: number, res: NextApiResponse) {
-    const deleted = await deleteUserFromId(userId);
-    if (!deleted) {
-        return onError(res, 500, FAILED_USER_DELETION);
+    if (body.password.length < 8) {
+        return onError(res, 400, PASSWORD_REQUIREMENTS);
     }
 
-    return onSuccess(res, 200, USER_DELETED, null);
+    const secrets = generateSecrets(body.password);
+    if (!secrets) {
+        return onError(res, 500, FAILED_PASSWORD_CHANGED);
+    }
+
+    const updated = await updateUser({
+        id: { id: userId },
+        secrets: {
+            hash: secrets.hash,
+            salt: secrets.salt,
+        },
+    });
+
+    if (!updated) {
+        return onError(res, 500, FAILED_PASSWORD_CHANGED);
+    }
+
+    return onSuccess(res, 200, PASSWORD_CHANGED, null);
 }

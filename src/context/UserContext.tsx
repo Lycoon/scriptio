@@ -1,11 +1,11 @@
 import { Editor, useEditor } from "@tiptap/react";
 import { createContext, ReactNode, useEffect, useState } from "react";
-import { User } from "../../pages/api/users";
+import { CookieUser } from "../../pages/api/users";
 import useUser from "../lib/useUser";
 
 export type contextType = {
-    user: User | undefined;
-    updateUser: (user: User | undefined) => void;
+    user: CookieUser | undefined;
+    updateUser: (user: CookieUser | undefined) => void;
     editor: Editor | undefined;
     updateEditor: (editor: Editor) => void;
     darkMode: boolean;
@@ -32,7 +32,7 @@ export function ContextProvider({ children }: Props) {
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [darkMode, setDarkMode] = useState<boolean>(false);
 
-    const updateUser = (user_: User | undefined) => {
+    const updateUser = (user_: CookieUser | undefined) => {
         setUser(user_);
     };
 

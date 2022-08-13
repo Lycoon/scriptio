@@ -1,10 +1,10 @@
 import Router from "next/router";
-import { Project, User } from "../../../pages/api/users";
+import { Project, CookieUser } from "../../../pages/api/users";
 import { deleteProject } from "../../../src/lib/requests";
 
 type Props = {
     project: Project;
-    user: User;
+    user: CookieUser;
 };
 
 const ProjectDangerZone = ({ project, user }: Props) => {

@@ -1,3 +1,5 @@
+import { Settings } from "../server/repository/user-repository";
+
 export const deleteProject = (userId: number, projectId: number) => {
     return request(
         `/api/users/${userId}/projects`,
@@ -24,9 +26,17 @@ export const editProject = (userId: number, body: any) => {
 
 export const changePassword = (userId: number, password: string) => {
     return request(
-        `/api/users/${userId}`,
+        `/api/users/${userId}/password`,
         "PATCH",
         JSON.stringify({ password })
+    );
+};
+
+export const editUserSettings = (userId: number, body: Settings) => {
+    return request(
+        `/api/users/${userId}/settings`,
+        "PATCH",
+        JSON.stringify(body)
     );
 };
 

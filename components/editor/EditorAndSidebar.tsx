@@ -37,6 +37,22 @@ const EditorAndSidebar = ({ project }: Props) => {
         setIsUnderline(marks.includes("underline"));
     };
 
+    const updateSelection = (anchor: any) => {
+        const currNode = anchor.path[3].attrs.class;
+        setActiveTab(currNode);
+
+        if (!anchor.nodeBefore) {
+            if (!anchor.nodeAfter) {
+                return;
+            }
+
+            updateEditorStyles(anchor.nodeAfter?.marks);
+            return;
+        }
+
+        updateEditorStyles(anchor.nodeBefore?.marks);
+    };
+
     const tabs = [
         "scene",
         "action",
@@ -44,6 +60,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         "dialogue",
         "parenthetical",
         "transition",
+        "note",
     ];
 
     const editorView = useEditor({
@@ -67,24 +84,12 @@ const EditorAndSidebar = ({ project }: Props) => {
         // update active on caret update
         onSelectionUpdate({ transaction }) {
             const anchor = (transaction as any).curSelection.$anchor;
-            const currNode = anchor.path[3].attrs.class;
-
-            setActiveTab(currNode);
-
-            if (!anchor.nodeBefore) {
-                if (!anchor.nodeAfter) {
-                    return;
-                }
-
-                updateEditorStyles(anchor.nodeAfter?.marks);
-                return;
-            }
-
-            updateEditorStyles(anchor.nodeBefore?.marks);
+            updateSelection(anchor);
         },
     });
 
     editorView?.setOptions({
+        autofocus: "end",
         editorProps: {
             handleKeyDown(view: any, event: any) {
                 const selection = view.state.selection;
@@ -95,6 +100,12 @@ const EditorAndSidebar = ({ project }: Props) => {
                     const nodePos = selection.$head.parentOffset;
                     const currNode = node.attrs.class;
                     const pos = selection.anchor;
+
+                    // empty element
+                    if (nodeSize === 0) {
+                        setActiveTab("action");
+                        return true;
+                    }
 
                     if (nodePos < nodeSize) {
                         return false;
@@ -146,7 +157,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         if (e.key === "Tab") {
             e.preventDefault();
 
-            const idx = (selectedTab + 1) % 6;
+            const idx = (selectedTab + 1) % 7;
             updateSelectedTab(idx);
             setActiveTab(tabs[idx]);
         }

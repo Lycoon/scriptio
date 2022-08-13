@@ -25,7 +25,30 @@
     display: flex;
     flex-direction: row;
     justify-content: space-around;
-    gap: 8px;
+    align-items: center;
+    gap: 12px;
+}
+
+.delete-project-btn {
+    height: 35px;
+    width: 35px;
+    padding: 6px;
+
+    cursor: pointer;
+
+    text-align: center;
+    border-color: #d14d4d;
+    border-width: 3px;
+    border-radius: 18px;
+    border-style: solid;
+}
+
+.delete-project-btn:hover {
+    background-color: var(--secondary-bg);
+}
+
+.delete-project-icon {
+    height: 100%;
 }
 
 .create-project-button {

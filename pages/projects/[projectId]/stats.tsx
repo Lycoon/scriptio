@@ -7,10 +7,10 @@ import EditProjectContainer from "../../../components/projects/edit/EditProjectC
 import ProjectStatsContainer from "../../../components/projects/stats/ProjectStatsContainer";
 import { sessionOptions } from "../../../src/lib/session";
 import { getProjectFromId } from "../../../src/server/service/project-service";
-import { Project, User } from "../../api/users";
+import { Project, CookieUser } from "../../api/users";
 
 type Props = {
-    user: User;
+    user: CookieUser;
     project: Project;
 };
 

@@ -1,6 +1,6 @@
 import Router from "next/router";
 import { useState } from "react";
-import { Project, User } from "../../../pages/api/users";
+import { Project, CookieUser } from "../../../pages/api/users";
 import { editProject } from "../../../src/lib/requests";
 import { getBase64 } from "../../../src/lib/utils";
 import { ProjectUpdate } from "../../../src/server/repository/project-repository";
@@ -10,7 +10,7 @@ import ProjectDangerZone from "./ProjectDangerZone";
 
 type Props = {
     project: Project;
-    user: User;
+    user: CookieUser;
 };
 
 const EditProjectConainer = ({ project, user }: Props) => {
@@ -18,7 +18,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const backToScreenplay = () => {
-        Router.push(`/projects/${project.id}/editor`);
+        Router.push(`/projects/${project.id}/screenplay`);
     };
 
     const resetFromInfo = () => {
@@ -42,7 +42,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
         const json = await res.json();
 
         if (res.status === 200) {
-            Router.push(`/projects/${project.id}/editor`);
+            Router.push(`/projects/${project.id}/screenplay`);
         } else {
             setFormInfo({ content: json.message, isError: true });
         }

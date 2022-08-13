@@ -7,7 +7,7 @@ type Props = {
 };
 
 const onBackButton = (projectId: number) => {
-    Router.push(`/projects/${projectId}/editor`);
+    Router.push(`/projects/${projectId}/screenplay`);
 };
 
 const NoStatsContainer = ({ projectId }: any) => (

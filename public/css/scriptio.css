@@ -49,6 +49,10 @@ span {
     letter-spacing: -0.4px !important;
 }
 
+.ProseMirror p {
+    margin-bottom: 17px;
+}
+
 /* Editor styles */
 span.bold {
     font-weight: bold;
@@ -62,21 +66,23 @@ span.underline {
     text-decoration: underline;
 }
 
-.ProseMirror p {
-    margin-bottom: 17px;
-}
-
-.ProseMirror p:hover {
+/* User settings */
+.highlight-on-hover p:hover {
     background-color: var(--editor-scene);
 }
 
+.scene-background .scene {
+    background-color: var(--editor-scene);
+}
+
+/* Editor elements */
 .action {
     line-height: 17px !important;
     text-align: justify;
 }
 
 .scene {
-    background-color: var(--editor-scene);
+    background-color: none;
     width: 100%;
     padding-top: 2px;
     padding-left: 4px;

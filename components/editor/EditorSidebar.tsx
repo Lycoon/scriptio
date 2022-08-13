@@ -96,6 +96,11 @@ const EditorSidebar = ({
                     content="TRANSITION:"
                     active={tabs[selectedTab] == "transition"}
                 />
+                <EditorTab
+                    action={() => setActiveTab("note")}
+                    content="[[Note]]"
+                    active={tabs[selectedTab] == "note"}
+                />
             </div>
             <p
                 className={`saving-info saving-info-${
