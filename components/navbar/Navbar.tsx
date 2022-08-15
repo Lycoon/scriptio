@@ -41,6 +41,8 @@ const Navbar = ({ activeButtons, project }: Props) => {
         Router.push("/");
     };
 
+    console.log(activeButtons);
+
     return (
         <nav id="navbar">
             <div id="logo-and-tabs">
@@ -58,6 +60,14 @@ const Navbar = ({ activeButtons, project }: Props) => {
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
+                    {activeButtons?.isScreenplay && (
+                        <div className="settings-btn" onClick={onSettings}>
+                            <img
+                                className="settings-icon"
+                                src="/images/save.png"
+                            />
+                        </div>
+                    )}
                     <div className="settings-btn" onClick={onSettings}>
                         <img className="settings-icon" src="/images/gear.png" />
                     </div>
