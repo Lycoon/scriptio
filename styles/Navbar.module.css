@@ -53,6 +53,14 @@
     cursor: pointer;
 }
 
+.save-btn {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+
+    cursor: pointer;
+}
+
 .settings-icon {
     width: 100%;
     filter: invert(70%);

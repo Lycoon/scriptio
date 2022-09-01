@@ -34,14 +34,17 @@ const NotLoggedNavbar = () => (
 );
 
 const Navbar = ({ activeButtons, project }: Props) => {
-    const { user, updateUser } = useContext(UserContext);
+    const { user, editor, updateUser } = useContext(UserContext);
     const onLogOut = async () => {
         await fetch("/api/logout");
         updateUser(undefined);
         Router.push("/");
     };
 
-    console.log(activeButtons);
+    const onSave = () => {
+        console.log("Saving... ");
+        console.log(editor?.getJSON());
+    };
 
     return (
         <nav id="navbar">
@@ -61,7 +64,7 @@ const Navbar = ({ activeButtons, project }: Props) => {
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
                     {activeButtons?.isScreenplay && (
-                        <div className="settings-btn" onClick={onSettings}>
+                        <div className="save-btn" onClick={onSave}>
                             <img
                                 className="settings-icon"
                                 src="/images/save.png"
