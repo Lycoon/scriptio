@@ -11,6 +11,32 @@
     margin-top: 70px;
 }
 
+.general-stats-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 26px;
+}
+
+.general-stats-element {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.general-stats-element-data {
+    font-family: tommy-bold;
+    font-size: 40px;
+}
+
+.general-stats-element-info {
+    font-family: tommy;
+    font-size: 15px;
+}
+
 .center-column {
     width: 50%;
     display: flex;

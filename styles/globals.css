@@ -142,7 +142,12 @@ h1 {
 }
 
 h2 {
+    font-family: tommy;
     color: var(--primary-text);
+}
+
+h3 {
+    font-family: tommy;
 }
 
 .main-container {

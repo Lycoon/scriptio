@@ -37,6 +37,24 @@ const ProjectStatsContainer = ({ project }: Props) => {
                         <p className="stats-title-text">{project.title}</p>
                         <hr />
                     </div>
+                    <div className="general-stats-header">
+                        <div className="general-stats-element">
+                            <p className="general-stats-element-data">265</p>
+                            <p className="general-stats-element-info">words</p>
+                        </div>
+                        <div className="general-stats-element">
+                            <p className="general-stats-element-data">5</p>
+                            <p className="general-stats-element-info">characters</p>
+                        </div>
+                        <div className="general-stats-element">
+                            <p className="general-stats-element-data">7</p>
+                            <p className="general-stats-element-info">pages</p>
+                        </div>
+                        <div className="general-stats-element">
+                            <p className="general-stats-element-data">~26</p>
+                            <p className="general-stats-element-info">screen time (min.)</p>
+                        </div>
+                    </div>
                     <div>
                         <h3>Characters frequency</h3>
                         <div className="charts-row">

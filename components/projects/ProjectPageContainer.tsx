@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { Project } from "../../pages/api/users";
 import { deleteProject } from "../../src/lib/requests";
 import EmptyProjectPage from "./EmptyProjectPage";
@@ -23,6 +24,7 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
     const [projs, setProjs] = useState(projects);
     const [isCreating, setIsCreating] = useState(false);
     const [deleteMode, setDeleteMode] = useState(false);
+    const [parent] = useAutoAnimate();
 
     const deleteFromProjectPage = (userId: number, projectId: number) => {
         const updatedProjects: Project[] = [];

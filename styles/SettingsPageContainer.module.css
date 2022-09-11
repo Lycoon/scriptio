@@ -22,6 +22,10 @@
 .settings-profile {
     grid-area: profile;
     margin-top: -25px;
+
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 26px;
 }
 
 .settings-email {

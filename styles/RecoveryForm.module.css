@@ -1,7 +1,7 @@
 .recovery-info {
     overflow-wrap: anywhere;
     text-align: justify;
-    color: #5c5c5c;
+    color: var(--secondary-text);
 }
 
 #recovery-form {
