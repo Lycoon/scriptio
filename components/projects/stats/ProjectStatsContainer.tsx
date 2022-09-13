@@ -1,5 +1,7 @@
 import Router from "next/router";
+import { useEffect, useState } from "react";
 import { Project } from "../../../pages/api/users";
+import { getNumberOfActors, getNumberOfWords } from "../../../src/lib/statistics";
 import CharacterFrequency from "./CharacterFrequency";
 
 type Props = {
@@ -28,6 +30,17 @@ const NoStatsContainer = ({ projectId }: any) => (
 );
 
 const ProjectStatsContainer = ({ project }: Props) => {
+    const words = getNumberOfWords(project.screenplay);
+    const actors = getNumberOfActors(project.screenplay);
+    const pages = words / 190;
+    const screenTime = pages / 1.1;
+
+    const [color, setColor] = useState<string>("#ffffff");
+
+    useEffect(() => {
+         setColor(getComputedStyle(document.body).getPropertyValue("--primary-bg"));
+    }, [color]);
+
     return (
         <div id="project-stats-container">
             {project.screenplay ? (
@@ -39,19 +52,19 @@ const ProjectStatsContainer = ({ project }: Props) => {
                     </div>
                     <div className="general-stats-header">
                         <div className="general-stats-element">
-                            <p className="general-stats-element-data">265</p>
+                            <p className="general-stats-element-data">{words}</p>
                             <p className="general-stats-element-info">words</p>
                         </div>
                         <div className="general-stats-element">
-                            <p className="general-stats-element-data">5</p>
-                            <p className="general-stats-element-info">characters</p>
+                            <p className="general-stats-element-data">{actors}</p>
+                            <p className="general-stats-element-info">actors</p>
                         </div>
                         <div className="general-stats-element">
-                            <p className="general-stats-element-data">7</p>
+                            <p className="general-stats-element-data">~{pages.toFixed()}</p>
                             <p className="general-stats-element-info">pages</p>
                         </div>
                         <div className="general-stats-element">
-                            <p className="general-stats-element-data">~26</p>
+                            <p className="general-stats-element-data">~{screenTime.toFixed(1)}</p>
                             <p className="general-stats-element-info">screen time (min.)</p>
                         </div>
                     </div>
@@ -59,21 +72,21 @@ const ProjectStatsContainer = ({ project }: Props) => {
                         <h3>Characters frequency</h3>
                         <div className="charts-row">
                             <div>
-                                <CharacterFrequency project={project} />
+                                <CharacterFrequency color={color} project={project} />
                             </div>
                             <div>
-                                <CharacterFrequency project={project} />
+                                <CharacterFrequency color={color} project={project} />
                             </div>
                         </div>
                     </div>
                     <div>
-                        <h3>Characters frequency</h3>
+                        <h3>Screenplay structure</h3>
                         <div className="charts-row">
                             <div>
-                                <CharacterFrequency project={project} />
+                                <CharacterFrequency color={color} project={project} />
                             </div>
                             <div>
-                                <CharacterFrequency project={project} />
+                                <CharacterFrequency color={color} project={project} />
                             </div>
                         </div>
                     </div>

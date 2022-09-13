@@ -7,23 +7,24 @@ import {
     getCharacterFrequency,
     getRandomColors,
 } from "../../../src/lib/statistics";
+import { useEffect, useState } from "react";
 
 type Props = {
     project: Project;
+    color: string;
 };
 
-const CharacterFrequency = ({ project }: Props) => {
+const CharacterFrequency = ({ project, color }: Props) => {
     const frequency = getCharacterFrequency(project.screenplay);
-    const labels = Array.from(frequency.keys());
+    const labels = Object.keys(frequency);
+
     const data = {
         labels: labels,
         datasets: [
             {
                 backgroundColor: getRandomColors(labels.length, 0.9, 0.75),
-                data: Array.from(frequency.values()),
-                offset: 12,
-                hoverOffset: 30,
-                hoverBorderColor: "#ffffff",
+                borderColor: color,
+                data: Object.values(frequency)
             },
         ],
     };
@@ -31,12 +32,9 @@ const CharacterFrequency = ({ project }: Props) => {
     const options = {
         aspectRatio: 1.4,
         layout: {
-            padding: 20,
+            padding: 40,
         },
         plugins: {
-            tooltip: {
-                enabled: false,
-            },
             datalabels: {
                 backgroundColor: (ctx: any) => {
                     return "black";
@@ -44,9 +42,6 @@ const CharacterFrequency = ({ project }: Props) => {
                 formatter: (val: number, ctx: any) => {
                     return val + "%";
                 },
-                anchor: "center",
-                borderRadius: 4,
-                color: "white",
                 font: {
                     size: 12,
                     weight: "bold",
@@ -63,7 +58,6 @@ const CharacterFrequency = ({ project }: Props) => {
 
     return (
         <Doughnut
-            plugins={[ChartDataLabels]}
             data={data}
             options={options as any}
         />

@@ -41,12 +41,51 @@ export const HSLtoRGB = (h: number, s: number, l: number) => {
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 };
 
+export const getNumberOfActors = (json: any): number => {
+    let actors: string[] = [];
+    const nodes = json.content!;
+
+    for (let i = 0; i < nodes.length; i++) {
+        const currNode = nodes[i];
+
+        if (!currNode["content"] ) {
+            continue;
+        }
+
+        const type: string = currNode["attrs"]["class"];
+        const actor: string = currNode["content"][0]["text"];
+        if (type != "character" || actors.includes(actor)) {
+            continue;
+        }
+
+        actors.push(actor);
+    }
+
+    return actors.length;
+}
+
+export const getNumberOfWords = (json: any): number => {
+    let numberOfWords = 0;
+
+    const nodes = json.content!;
+    for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+
+        if (!node["content"])
+            continue;
+
+        numberOfWords += node["content"][0]["text"].split(" ").length;
+    }
+
+    return numberOfWords;
+};
+
 /**
  * Returns character occurence for each character
  * @param json editor content JSON
  */
-export const getCharacterFrequency = (json: any): Map<string, number> => {
-    const frequency = new Map<string, number>();
+export const getCharacterFrequency = (json: any): { [key: string]: number } => {
+    const frequency: { [key: string]: number } = {};
     const nodes = json.content!;
 
     for (let i = 0; i < nodes.length; i++) {
@@ -69,20 +108,29 @@ export const getCharacterFrequency = (json: any): Map<string, number> => {
 
         const currCharacter: string = currNode["content"][0]["text"];
         const dialog: string = nextNode["content"][0]["text"];
-        const prevCount: number = frequency.get(currCharacter) ?? 0;
+        const prevCount: number = frequency[currCharacter] ?? 0;
 
-        frequency.set(currCharacter, prevCount + dialog.length);
+        frequency[currCharacter] = prevCount + dialog.length;
     }
 
-    let values: number[] = Array.from(frequency.values());
-    const labels = Array.from(frequency.keys());
+    let values: number[] = Object.values(frequency);
+    const labels = Object.keys(frequency);
     const sum = values.reduce((acc, curr) => acc + curr, 0);
 
     values = values.map((e) => +((e / sum) * 100).toFixed(1));
 
     for (let i = 0; i < labels.length; i++) {
-        frequency.set(labels[i], values[i]);
+        frequency[labels[i]] = values[i];
     }
 
-    return frequency;
+    Object.keys(frequency).sort((a, b) => frequency[b] - frequency[a]);
+    var items = Object.keys(frequency).map((key: string) => {
+        return [key, frequency[key]];
+    });
+
+    items.sort((first: any, second: any) => {
+        return second[1] - first[1];
+    });
+
+    return { ...Object.fromEntries(items.slice(0, 6)) };
 };

@@ -28,7 +28,6 @@ const StatsProjectPage: NextPage<Props> = ({ user, project }: Props) => {
                     project={project}
                 />
                 <ProjectStatsContainer project={project} />
-                <HomePageFooter />
             </div>
         </>
     );

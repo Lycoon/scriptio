@@ -16,7 +16,7 @@
     flex-direction: row;
     justify-content: space-around;
 
-    background-color: var(--secondary-bg);
+    background-color: var(--header-background);
     border-radius: 12px;
     padding: 26px;
 }

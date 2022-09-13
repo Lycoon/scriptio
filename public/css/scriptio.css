@@ -68,7 +68,7 @@ span.underline {
 
 /* User settings */
 .highlight-on-hover p:hover {
-    background-color: var(--editor-scene);
+    background-color: var(--editor-element-hover);
 }
 
 .scene-background .scene {
