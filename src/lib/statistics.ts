@@ -80,6 +80,41 @@ export const getNumberOfWords = (json: any): number => {
     return numberOfWords;
 };
 
+export const getCharacterDistribution = (json: any, pages: number): any => {
+    const frequency: { [key: string]: number } = {};
+    const nodes = json.content!;
+    const ratio = pages / nodes.length;
+
+    let cursor: number = 0;
+
+    for (let i = 0; i < nodes.length; i++) {
+        if (i >= nodes.length - 1) {
+            break;
+        }
+
+        const currNode = nodes[i];
+        const nextNode = nodes[i + 1];
+
+        if (!currNode["content"] || !nextNode["content"]) {
+            continue;
+        }
+
+        cursor += currNode["content"][0]["text"].length;
+
+        const type: string = currNode["attrs"]["class"];
+        const nextType: string = nextNode["attrs"]["class"];
+        if (type != "character" || nextType != "dialogue") {
+            continue;
+        }
+
+        const currCharacter: string = currNode["content"][0]["text"];
+        const dialog: string = nextNode["content"][0]["text"];
+        const prevCount: number = frequency[currCharacter] ?? 0;
+
+        frequency[currCharacter] = prevCount + dialog.length;
+    }
+}
+
 /**
  * Returns character occurence for each character
  * @param json editor content JSON

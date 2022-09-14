@@ -32,22 +32,9 @@ const CharacterFrequency = ({ project, color }: Props) => {
     const options = {
         aspectRatio: 1.4,
         layout: {
-            padding: 40,
+            padding: 30,
         },
         plugins: {
-            datalabels: {
-                backgroundColor: (ctx: any) => {
-                    return "black";
-                },
-                formatter: (val: number, ctx: any) => {
-                    return val + "%";
-                },
-                font: {
-                    size: 12,
-                    weight: "bold",
-                },
-                padding: 6,
-            },
             legend: {
                 events: [],
                 display: true,

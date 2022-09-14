@@ -2,6 +2,7 @@ import Router from "next/router";
 import { useEffect, useState } from "react";
 import { Project } from "../../../pages/api/users";
 import { getNumberOfActors, getNumberOfWords } from "../../../src/lib/statistics";
+import CharacterDistribution from "./CharacterDistribution";
 import CharacterFrequency from "./CharacterFrequency";
 
 type Props = {
@@ -34,7 +35,7 @@ const ProjectStatsContainer = ({ project }: Props) => {
     const actors = getNumberOfActors(project.screenplay);
     const pages = words / 190;
     const screenTime = pages / 1.1;
-
+    
     const [color, setColor] = useState<string>("#ffffff");
 
     useEffect(() => {
@@ -72,7 +73,7 @@ const ProjectStatsContainer = ({ project }: Props) => {
                         <h3>Characters frequency</h3>
                         <div className="charts-row">
                             <div>
-                                <CharacterFrequency color={color} project={project} />
+                                <CharacterDistribution color={color} project={project} pages={Math.round(pages)} />
                             </div>
                             <div>
                                 <CharacterFrequency color={color} project={project} />
