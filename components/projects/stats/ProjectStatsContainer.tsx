@@ -1,7 +1,11 @@
 import Router from "next/router";
 import { useEffect, useState } from "react";
 import { Project } from "../../../pages/api/users";
-import { getNumberOfActors, getNumberOfWords } from "../../../src/lib/statistics";
+import {
+    getNumberOfActors,
+    getNumberOfWords,
+    getScreenplayData,
+} from "../../../src/lib/statistics";
 import CharacterDistribution from "./CharacterDistribution";
 import CharacterFrequency from "./CharacterFrequency";
 
@@ -31,15 +35,19 @@ const NoStatsContainer = ({ projectId }: any) => (
 );
 
 const ProjectStatsContainer = ({ project }: Props) => {
-    const words = getNumberOfWords(project.screenplay);
-    const actors = getNumberOfActors(project.screenplay);
-    const pages = words / 190;
+    const data = getScreenplayData(project.screenplay);
+    const pages = data.pageLimits.length + 1;
     const screenTime = pages / 1.1;
-    
+    const actors = 5;
+
+    console.log(data.distribution);
+
     const [color, setColor] = useState<string>("#ffffff");
 
     useEffect(() => {
-         setColor(getComputedStyle(document.body).getPropertyValue("--primary-bg"));
+        setColor(
+            getComputedStyle(document.body).getPropertyValue("--primary-bg")
+        );
     }, [color]);
 
     return (
@@ -53,30 +61,47 @@ const ProjectStatsContainer = ({ project }: Props) => {
                     </div>
                     <div className="general-stats-header">
                         <div className="general-stats-element">
-                            <p className="general-stats-element-data">{words}</p>
+                            <p className="general-stats-element-data">
+                                {data.words}
+                            </p>
                             <p className="general-stats-element-info">words</p>
                         </div>
                         <div className="general-stats-element">
-                            <p className="general-stats-element-data">{actors}</p>
+                            <p className="general-stats-element-data">
+                                {actors}
+                            </p>
                             <p className="general-stats-element-info">actors</p>
                         </div>
                         <div className="general-stats-element">
-                            <p className="general-stats-element-data">~{pages.toFixed()}</p>
+                            <p className="general-stats-element-data">
+                                {pages}
+                            </p>
                             <p className="general-stats-element-info">pages</p>
                         </div>
                         <div className="general-stats-element">
-                            <p className="general-stats-element-data">~{screenTime.toFixed(1)}</p>
-                            <p className="general-stats-element-info">screen time (min.)</p>
+                            <p className="general-stats-element-data">
+                                ~{screenTime.toFixed(1)}
+                            </p>
+                            <p className="general-stats-element-info">
+                                screen time (min.)
+                            </p>
                         </div>
                     </div>
                     <div>
                         <h3>Characters frequency</h3>
                         <div className="charts-row">
                             <div>
-                                <CharacterDistribution color={color} project={project} pages={Math.round(pages)} />
+                                <CharacterDistribution
+                                    color={color}
+                                    project={project}
+                                    pages={Math.round(pages)}
+                                />
                             </div>
                             <div>
-                                <CharacterFrequency color={color} project={project} />
+                                <CharacterFrequency
+                                    color={color}
+                                    project={project}
+                                />
                             </div>
                         </div>
                     </div>
@@ -84,10 +109,16 @@ const ProjectStatsContainer = ({ project }: Props) => {
                         <h3>Screenplay structure</h3>
                         <div className="charts-row">
                             <div>
-                                <CharacterFrequency color={color} project={project} />
+                                <CharacterFrequency
+                                    color={color}
+                                    project={project}
+                                />
                             </div>
                             <div>
-                                <CharacterFrequency color={color} project={project} />
+                                <CharacterFrequency
+                                    color={color}
+                                    project={project}
+                                />
                             </div>
                         </div>
                     </div>

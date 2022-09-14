@@ -1,3 +1,88 @@
+import { useEffect } from "react";
+
+interface IElementData {
+    lineSize: number;
+    lineY: number;
+    offsetY: number;
+}
+
+type ActorData = { [name: string]: number };
+type Distribution = { [key: number]: ActorData };
+
+const ScreenplayElements: { [type: string]: IElementData } = {
+    action: { lineSize: 67, lineY: 17, offsetY: 17 },
+    scene: { lineSize: 69, lineY: 20, offsetY: 17 },
+    dialogue: { lineSize: 41, lineY: 19, offsetY: 17 },
+    parenthetical: { lineSize: 23, lineY: 19, offsetY: 0 },
+    character: { lineSize: 44, lineY: 19, offsetY: 0 },
+    transition: { lineSize: 67, lineY: 19, offsetY: 17 },
+};
+
+type ScreenplayData = {
+    words: number;
+    pageLimits: number[];
+    distribution: Distribution;
+};
+
+export const getScreenplayData = (json: any): ScreenplayData => {
+    const nodes = json.content!;
+    const maxPageY: number = 1000;
+    const pageLimits: number[] = []; // contains at which character page stops
+    const distribution: Distribution = {};
+
+    let currSizeY: number = 0;
+    let characters: number = 0;
+    let words: number = 0;
+
+    for (let i = 0; i < nodes.length; i++) {
+        const currNode = nodes[i];
+        if (!currNode["content"]) {
+            continue;
+        }
+
+        const type: string = currNode["attrs"]["class"];
+        const content = currNode["content"][0]["text"];
+        const length = content.length;
+        characters += length;
+        words += content.split(" ").length;
+
+        const elt = ScreenplayElements[type];
+        if (!elt) continue;
+
+        const sizeY = (length / elt.lineSize + 1) * elt.lineY + elt.offsetY;
+        currSizeY += sizeY;
+
+        if (currSizeY >= maxPageY) {
+            pageLimits.push(characters); // marking page limit
+            currSizeY %= maxPageY;
+        }
+
+        if (type === "character") {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const nodeJ = nodes[j];
+                const typeJ = nodeJ["attrs"]["class"];
+                const contentJ = nodeJ["content"][0]["text"];
+
+                if (typeJ === "parenthetical") continue;
+                if (typeJ === "dialogue") {
+                    if (!distribution[pageLimits.length])
+                        distribution[pageLimits.length] = {};
+
+                    const actors = distribution[pageLimits.length];
+                    const prevCount = actors[content] ?? 0;
+                    actors[content] = prevCount + contentJ.length;
+
+                    continue;
+                }
+
+                break;
+            }
+        }
+    }
+
+    return { words, pageLimits, distribution };
+};
+
 export const getRandomColors = (
     occurrences: number,
     saturation: number,
@@ -39,133 +124,4 @@ export const HSLtoRGB = (h: number, s: number, l: number) => {
     }
 
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-};
-
-export const getNumberOfActors = (json: any): number => {
-    let actors: string[] = [];
-    const nodes = json.content!;
-
-    for (let i = 0; i < nodes.length; i++) {
-        const currNode = nodes[i];
-
-        if (!currNode["content"] ) {
-            continue;
-        }
-
-        const type: string = currNode["attrs"]["class"];
-        const actor: string = currNode["content"][0]["text"];
-        if (type != "character" || actors.includes(actor)) {
-            continue;
-        }
-
-        actors.push(actor);
-    }
-
-    return actors.length;
-}
-
-export const getNumberOfWords = (json: any): number => {
-    let numberOfWords = 0;
-
-    const nodes = json.content!;
-    for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
-
-        if (!node["content"])
-            continue;
-
-        numberOfWords += node["content"][0]["text"].split(" ").length;
-    }
-
-    return numberOfWords;
-};
-
-export const getCharacterDistribution = (json: any, pages: number): any => {
-    const frequency: { [key: string]: number } = {};
-    const nodes = json.content!;
-    const ratio = pages / nodes.length;
-
-    let cursor: number = 0;
-
-    for (let i = 0; i < nodes.length; i++) {
-        if (i >= nodes.length - 1) {
-            break;
-        }
-
-        const currNode = nodes[i];
-        const nextNode = nodes[i + 1];
-
-        if (!currNode["content"] || !nextNode["content"]) {
-            continue;
-        }
-
-        cursor += currNode["content"][0]["text"].length;
-
-        const type: string = currNode["attrs"]["class"];
-        const nextType: string = nextNode["attrs"]["class"];
-        if (type != "character" || nextType != "dialogue") {
-            continue;
-        }
-
-        const currCharacter: string = currNode["content"][0]["text"];
-        const dialog: string = nextNode["content"][0]["text"];
-        const prevCount: number = frequency[currCharacter] ?? 0;
-
-        frequency[currCharacter] = prevCount + dialog.length;
-    }
-}
-
-/**
- * Returns character occurence for each character
- * @param json editor content JSON
- */
-export const getCharacterFrequency = (json: any): { [key: string]: number } => {
-    const frequency: { [key: string]: number } = {};
-    const nodes = json.content!;
-
-    for (let i = 0; i < nodes.length; i++) {
-        if (i >= nodes.length - 1) {
-            break;
-        }
-
-        const currNode = nodes[i];
-        const nextNode = nodes[i + 1];
-
-        if (!currNode["content"] || !nextNode["content"]) {
-            continue;
-        }
-
-        const type: string = currNode["attrs"]["class"];
-        const nextType: string = nextNode["attrs"]["class"];
-        if (type != "character" || nextType != "dialogue") {
-            continue;
-        }
-
-        const currCharacter: string = currNode["content"][0]["text"];
-        const dialog: string = nextNode["content"][0]["text"];
-        const prevCount: number = frequency[currCharacter] ?? 0;
-
-        frequency[currCharacter] = prevCount + dialog.length;
-    }
-
-    let values: number[] = Object.values(frequency);
-    const labels = Object.keys(frequency);
-    const sum = values.reduce((acc, curr) => acc + curr, 0);
-
-    values = values.map((e) => +((e / sum) * 100).toFixed(1));
-
-    for (let i = 0; i < labels.length; i++) {
-        frequency[labels[i]] = values[i];
-    }
-
-    Object.keys(frequency).sort((a, b) => frequency[b] - frequency[a]);
-    var items = Object.keys(frequency).map((key: string) => {
-        return [key, frequency[key]];
-    });
-
-    items.sort((first: any, second: any) => {
-        return second[1] - first[1];
-    });
-
-    return { ...Object.fromEntries(items.slice(0, 6)) };
 };
