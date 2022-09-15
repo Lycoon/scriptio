@@ -4,54 +4,67 @@ import "chart.js/auto";
 import { Bubble, Doughnut, Line } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import {
-    getCharacterDistribution,
-    getCharacterFrequency,
+    Distribution,
+    Frequency,
     getRandomColors,
+    getScaledDistribution,
 } from "../../../src/lib/statistics";
 import { useEffect, useState } from "react";
 
 type Props = {
     project: Project;
     color: string;
-    pages: number;
+    distribution: Distribution;
+    frequency: Frequency;
 };
 
-const CharacterDistribution = ({ project, color, pages }: Props) => {
-    //let distribution = getCharacterDistribution(project.screenplay, pages);
-    const labels: number[] = new Array(pages).fill(0);;
-    
-    let distribution: { [actor: string]: { [pageNumber: number]: number } } = {}
-    distribution["Hugo"] = {5: 60, 6: 41, 12: 35, 17: 80};
-    distribution["Axel"] = {1: 15, 11: 110, 29: 55, 37: 21, 69: 21, 110: 21, 113: 21, 115: 21};
-    distribution["Emma"] = {87: 41, 91: 20, 110: 20};
+const CharacterDistribution = ({ project, color, distribution }: Props) => {
+    let scaled = getScaledDistribution(distribution);
+    const labels: any[] = [];
+    const datasets: any[] = [];
 
-    const datasets = [];
-    for (const label in distribution) {
-        const distr: { [pageNumber: number]: number } = distribution[label];
-        let data: any[] = [];
+    for (const actor in scaled) {
+        // optimization to get all labels?
+        const distr = scaled[actor];
+        for (const snapped in distr) {
+            if (!labels.includes(+snapped)) labels.push(+snapped);
+        }
+    }
+    labels.sort((a, b) => a - b);
 
-        for (const pageNumber in distr) {
-            data.push({x: pageNumber, y: distr[pageNumber], r: 5});
+    for (const actor in scaled) {
+        const distr: any = scaled[actor];
+        const quantities: any[] = [];
+
+        for (const label of labels) {
+            quantities.push(distr[label]);
         }
 
         datasets.push({
-            label,
-            data,
+            label: actor,
+            data: quantities,
             fill: false,
-            borderColor: 'rgb(' + Math.random() * 255 + ', ' + Math.random() * 255 +', ' + Math.random() * 255 +')',
-            tension: 0.1
-          })
+            borderColor:
+                "rgb(" +
+                Math.random() * 255 +
+                ", " +
+                Math.random() * 255 +
+                ", " +
+                Math.random() * 255 +
+                ")",
+            tension: 0.4,
+        });
     }
 
     const data = {
         labels,
-        datasets
+        datasets,
     };
 
     const options = {
         aspectRatio: 1.4,
         layout: {
-            padding: 50,
+            padding: 40,
         },
         plugins: {
             legend: {
@@ -62,12 +75,7 @@ const CharacterDistribution = ({ project, color, pages }: Props) => {
         },
     };
 
-    return (
-        <Bubble
-            data={data}
-            options={options as any}
-        />
-    );
+    return <Line data={data} options={options as any} />;
 };
 
 export default CharacterDistribution;

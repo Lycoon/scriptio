@@ -6,8 +6,17 @@ interface IElementData {
     offsetY: number;
 }
 
-type ActorData = { [name: string]: number };
-type Distribution = { [key: number]: ActorData };
+export type ActorData = { [name: string]: number };
+export type Distribution = { [page: number]: ActorData };
+export type Frequency = { [actor: string]: number };
+
+type ScreenplayData = {
+    words: number;
+    pageLimits: number[];
+    actors: number;
+    distribution: Distribution;
+    frequency: Frequency;
+};
 
 const ScreenplayElements: { [type: string]: IElementData } = {
     action: { lineSize: 67, lineY: 17, offsetY: 17 },
@@ -18,15 +27,56 @@ const ScreenplayElements: { [type: string]: IElementData } = {
     transition: { lineSize: 67, lineY: 19, offsetY: 17 },
 };
 
-type ScreenplayData = {
-    words: number;
-    pageLimits: number[];
-    distribution: Distribution;
+const cleanFrequency = (frequency: any) => {
+    let items = Object.keys(frequency).map((key) => {
+        return [key, frequency[key]];
+    });
+
+    items.sort((first, second) => {
+        return second[1] - first[1];
+    });
+
+    // Computing other characters
+    let others = items.splice(5);
+    let freqOthers = 0;
+    for (const e in others) {
+        freqOthers += others[e][1];
+    }
+    items.push(["Others", freqOthers]);
+
+    // Converting to percentage
+    const sum = items.reduce((acc: number, curr) => acc + curr[1], 0);
+    items.forEach((e) => {
+        e[1] = Math.round((e[1] / sum) * 100);
+    });
+
+    // Converting array to dictionary
+    let sorted: any = {};
+    items.forEach((e: any) => {
+        let key = e[0];
+        let value = e[1];
+        sorted[key] = value;
+    });
+
+    return sorted;
+};
+
+const getFrequency = (distribution: Distribution) => {
+    let frequency: Frequency = {};
+
+    for (const page in distribution) {
+        const actors = distribution[page];
+        for (const actor in actors) {
+            frequency[actor] = (frequency[actor] ?? 0) + actors[actor];
+        }
+    }
+
+    return frequency;
 };
 
 export const getScreenplayData = (json: any): ScreenplayData => {
     const nodes = json.content!;
-    const maxPageY: number = 1000;
+    const maxPageY: number = 990;
     const pageLimits: number[] = []; // contains at which character page stops
     const distribution: Distribution = {};
 
@@ -49,6 +99,7 @@ export const getScreenplayData = (json: any): ScreenplayData => {
         const elt = ScreenplayElements[type];
         if (!elt) continue;
 
+        // compute element size on a page
         const sizeY = (length / elt.lineSize + 1) * elt.lineY + elt.offsetY;
         currSizeY += sizeY;
 
@@ -57,9 +108,12 @@ export const getScreenplayData = (json: any): ScreenplayData => {
             currSizeY %= maxPageY;
         }
 
+        // Actor distribution
         if (type === "character") {
             for (let j = i + 1; j < nodes.length; j++) {
                 const nodeJ = nodes[j];
+                if (!nodeJ["content"]) continue;
+
                 const typeJ = nodeJ["attrs"]["class"];
                 const contentJ = nodeJ["content"][0]["text"];
 
@@ -80,7 +134,44 @@ export const getScreenplayData = (json: any): ScreenplayData => {
         }
     }
 
-    return { words, pageLimits, distribution };
+    // Frequency
+    let frequency = getFrequency(distribution);
+    const actors = Object.keys(frequency).length;
+    frequency = cleanFrequency(frequency);
+
+    return {
+        words,
+        pageLimits,
+        actors,
+        distribution,
+        frequency,
+    };
+};
+
+export const getScaledDistribution = (distribution: Distribution) => {
+    const pages = Object.keys(distribution).length;
+
+    const sample = 12;
+    const step = +(pages / sample);
+    let snapped = 0;
+
+    const scaled: { [actor: string]: { [page: number]: number } } = {};
+    for (const page in distribution) {
+        if (+page > snapped) snapped += snapped + step > pages ? pages : step;
+
+        for (const actor in distribution[page]) {
+            if (!scaled[actor]) {
+                scaled[actor] = {};
+            }
+
+            const snappedFixed = +snapped.toFixed();
+            const prev = scaled[actor][snappedFixed];
+            scaled[actor][snappedFixed] =
+                (prev ?? 0) + distribution[page][actor];
+        }
+    }
+
+    return scaled;
 };
 
 export const getRandomColors = (

@@ -1,11 +1,7 @@
 import Router from "next/router";
 import { useEffect, useState } from "react";
 import { Project } from "../../../pages/api/users";
-import {
-    getNumberOfActors,
-    getNumberOfWords,
-    getScreenplayData,
-} from "../../../src/lib/statistics";
+import { getScreenplayData } from "../../../src/lib/statistics";
 import CharacterDistribution from "./CharacterDistribution";
 import CharacterFrequency from "./CharacterFrequency";
 
@@ -38,9 +34,6 @@ const ProjectStatsContainer = ({ project }: Props) => {
     const data = getScreenplayData(project.screenplay);
     const pages = data.pageLimits.length + 1;
     const screenTime = pages / 1.1;
-    const actors = 5;
-
-    console.log(data.distribution);
 
     const [color, setColor] = useState<string>("#ffffff");
 
@@ -62,13 +55,13 @@ const ProjectStatsContainer = ({ project }: Props) => {
                     <div className="general-stats-header">
                         <div className="general-stats-element">
                             <p className="general-stats-element-data">
-                                {data.words}
+                                {data.words.toLocaleString()}
                             </p>
                             <p className="general-stats-element-info">words</p>
                         </div>
                         <div className="general-stats-element">
                             <p className="general-stats-element-data">
-                                {actors}
+                                {data.actors}
                             </p>
                             <p className="general-stats-element-info">actors</p>
                         </div>
@@ -80,7 +73,7 @@ const ProjectStatsContainer = ({ project }: Props) => {
                         </div>
                         <div className="general-stats-element">
                             <p className="general-stats-element-data">
-                                ~{screenTime.toFixed(1)}
+                                ~{screenTime.toFixed()}
                             </p>
                             <p className="general-stats-element-info">
                                 screen time (min.)
@@ -94,13 +87,15 @@ const ProjectStatsContainer = ({ project }: Props) => {
                                 <CharacterDistribution
                                     color={color}
                                     project={project}
-                                    pages={Math.round(pages)}
+                                    distribution={data.distribution}
+                                    frequency={data.frequency}
                                 />
                             </div>
                             <div>
                                 <CharacterFrequency
                                     color={color}
                                     project={project}
+                                    frequency={data.frequency}
                                 />
                             </div>
                         </div>
@@ -112,12 +107,14 @@ const ProjectStatsContainer = ({ project }: Props) => {
                                 <CharacterFrequency
                                     color={color}
                                     project={project}
+                                    frequency={data.frequency}
                                 />
                             </div>
                             <div>
                                 <CharacterFrequency
                                     color={color}
                                     project={project}
+                                    frequency={data.frequency}
                                 />
                             </div>
                         </div>

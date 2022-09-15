@@ -3,19 +3,16 @@ import { Project } from "../../../pages/api/users";
 import "chart.js/auto";
 import { Doughnut } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import {
-    getCharacterFrequency,
-    getRandomColors,
-} from "../../../src/lib/statistics";
+import { getRandomColors } from "../../../src/lib/statistics";
 import { useEffect, useState } from "react";
 
 type Props = {
     project: Project;
     color: string;
+    frequency: any;
 };
 
-const CharacterFrequency = ({ project, color }: Props) => {
-    const frequency = getCharacterFrequency(project.screenplay);
+const CharacterFrequency = ({ project, color, frequency }: Props) => {
     const labels = Object.keys(frequency);
 
     const data = {
@@ -24,7 +21,7 @@ const CharacterFrequency = ({ project, color }: Props) => {
             {
                 backgroundColor: getRandomColors(labels.length, 0.9, 0.75),
                 borderColor: color,
-                data: Object.values(frequency)
+                data: Object.values(frequency),
             },
         ],
     };
@@ -38,17 +35,12 @@ const CharacterFrequency = ({ project, color }: Props) => {
             legend: {
                 events: [],
                 display: true,
-                position: "left",
+                position: "right",
             },
         },
     };
 
-    return (
-        <Doughnut
-            data={data}
-            options={options as any}
-        />
-    );
+    return <Doughnut data={data} options={options as any} />;
 };
 
 export default CharacterFrequency;
