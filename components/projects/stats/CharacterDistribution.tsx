@@ -62,15 +62,18 @@ const CharacterDistribution = ({ project, color, distribution }: Props) => {
     };
 
     const options = {
-        aspectRatio: 1.4,
+        aspectRatio: 2,
         layout: {
-            padding: 40,
+            padding: 50,
         },
         plugins: {
             legend: {
                 events: [],
                 display: true,
-                position: "bottom",
+                position: "top",
+                labels: {
+                    padding: 20,
+                },
             },
         },
     };

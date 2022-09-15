@@ -49,6 +49,11 @@
     font-style: italic;
 }
 
+.charts-col {
+    display: flex;
+    flex-direction: column;
+}
+
 .charts-row {
     display: flex;
     flex-direction: row;
@@ -57,7 +62,7 @@
 
 .charts-row > div {
     position: relative;
-    width: 45%;
+    width: 50%;
 }
 
 .no-stats-container {

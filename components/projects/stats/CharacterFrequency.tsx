@@ -27,7 +27,8 @@ const CharacterFrequency = ({ project, color, frequency }: Props) => {
     };
 
     const options = {
-        aspectRatio: 1.4,
+        aspectRatio: 1.6,
+        hoverOffset: 12,
         layout: {
             padding: 30,
         },
@@ -35,7 +36,7 @@ const CharacterFrequency = ({ project, color, frequency }: Props) => {
             legend: {
                 events: [],
                 display: true,
-                position: "right",
+                position: "left",
             },
         },
     };

@@ -82,8 +82,8 @@ const ProjectStatsContainer = ({ project }: Props) => {
                     </div>
                     <div>
                         <h3>Characters frequency</h3>
-                        <div className="charts-row">
-                            <div>
+                        <div className="charts-col">
+                            <div className="character-distribution">
                                 <CharacterDistribution
                                     color={color}
                                     project={project}
@@ -91,12 +91,21 @@ const ProjectStatsContainer = ({ project }: Props) => {
                                     frequency={data.frequency}
                                 />
                             </div>
-                            <div>
-                                <CharacterFrequency
-                                    color={color}
-                                    project={project}
-                                    frequency={data.frequency}
-                                />
+                            <div className="charts-row">
+                                <div>
+                                    <CharacterFrequency
+                                        color={color}
+                                        project={project}
+                                        frequency={data.frequency}
+                                    />
+                                </div>
+                                <div>
+                                    <CharacterFrequency
+                                        color={color}
+                                        project={project}
+                                        frequency={data.frequency}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
