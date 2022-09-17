@@ -27,7 +27,6 @@ const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
                     project={project}
                 />
                 <EditProjectContainer user={user} project={project} />
-                <HomePageFooter />
             </div>
         </>
     );

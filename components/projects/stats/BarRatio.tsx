@@ -1,19 +1,23 @@
 import { Project } from "../../../pages/api/users";
 
 import "chart.js/auto";
-import { Doughnut } from "react-chartjs-2";
+import { Bar, Doughnut } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { Frequency, getRandomColors } from "../../../src/lib/statistics";
+import {
+    Frequency,
+    getRandomColors,
+    StatsRatio,
+} from "../../../src/lib/statistics";
 import { useEffect, useState } from "react";
 
 type Props = {
     project: Project;
     color: string;
-    frequency: Frequency;
+    ratio: StatsRatio;
 };
 
-const CharacterFrequency = ({ project, color, frequency }: Props) => {
-    const labels = Object.keys(frequency);
+const BarRatio = ({ project, color, ratio }: Props) => {
+    const labels = Object.keys(ratio);
 
     const data = {
         labels: labels,
@@ -21,27 +25,26 @@ const CharacterFrequency = ({ project, color, frequency }: Props) => {
             {
                 backgroundColor: getRandomColors(labels.length, 0.9, 0.75),
                 borderColor: color,
-                data: Object.values(frequency),
+                data: Object.values(ratio),
             },
         ],
     };
 
     const options = {
-        aspectRatio: 1.6,
-        hoverOffset: 12,
+        aspectRatio: 2.5,
+        indexAxis: "y",
+        barThickness: 40,
         layout: {
-            padding: 30,
+            padding: { right: 50, top: 60 },
         },
         plugins: {
             legend: {
-                events: [],
-                display: true,
-                position: "left",
+                display: false,
             },
         },
     };
 
-    return <Doughnut data={data} options={options as any} />;
+    return <Bar data={data} options={options as any} />;
 };
 
-export default CharacterFrequency;
+export default BarRatio;

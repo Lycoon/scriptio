@@ -44,14 +44,7 @@ const CharacterDistribution = ({ project, color, distribution }: Props) => {
             label: actor,
             data: quantities,
             fill: false,
-            borderColor:
-                "rgb(" +
-                Math.random() * 255 +
-                ", " +
-                Math.random() * 255 +
-                ", " +
-                Math.random() * 255 +
-                ")",
+            borderColor: getRandomColors(labels.length, 0.9, 0.75),
             tension: 0.4,
         });
     }

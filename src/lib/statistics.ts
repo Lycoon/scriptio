@@ -8,7 +8,10 @@ interface IElementData {
 
 export type ActorData = { [name: string]: number };
 export type Distribution = { [page: number]: ActorData };
+export type DialogueLengths = { [actor: string]: number[] };
 export type Frequency = { [actor: string]: number };
+export type Quantity = { [actor: string]: number };
+export type StatsRatio = { [actor: string]: number };
 
 type ScreenplayData = {
     words: number;
@@ -16,6 +19,9 @@ type ScreenplayData = {
     actors: number;
     distribution: Distribution;
     frequency: Frequency;
+    quantity: Quantity;
+    sceneRatio: StatsRatio;
+    actionRatio: StatsRatio;
 };
 
 const ScreenplayElements: { [type: string]: IElementData } = {
@@ -27,6 +33,9 @@ const ScreenplayElements: { [type: string]: IElementData } = {
     transition: { lineSize: 67, lineY: 19, offsetY: 17 },
 };
 
+const average = (list: number[]) =>
+    list.reduce((prev, curr) => prev + curr, 0) / list.length;
+
 const cleanFrequency = (frequency: any) => {
     let items = Object.keys(frequency).map((key) => {
         return [key, frequency[key]];
@@ -37,7 +46,7 @@ const cleanFrequency = (frequency: any) => {
     });
 
     // Computing other characters
-    let others = items.splice(5);
+    let others = items.splice(8);
     let freqOthers = 0;
     for (const e in others) {
         freqOthers += others[e][1];
@@ -49,6 +58,33 @@ const cleanFrequency = (frequency: any) => {
     items.forEach((e) => {
         e[1] = Math.round((e[1] / sum) * 100);
     });
+
+    // Converting array to dictionary
+    let sorted: any = {};
+    items.forEach((e: any) => {
+        let key = e[0];
+        let value = e[1];
+        sorted[key] = value;
+    });
+
+    return sorted;
+};
+
+const getQuantity = (dialLengths: DialogueLengths) => {
+    let quantity: Quantity = {};
+    for (const actor in dialLengths) {
+        quantity[actor] = average(dialLengths[actor]);
+    }
+
+    let items = Object.keys(quantity).map((key: string) => {
+        return [key, quantity[key]];
+    });
+
+    items.sort((first: any, second: any) => {
+        return second[1] - first[1];
+    });
+
+    items.splice(8);
 
     // Converting array to dictionary
     let sorted: any = {};
@@ -79,6 +115,9 @@ export const getScreenplayData = (json: any): ScreenplayData => {
     const maxPageY: number = 990;
     const pageLimits: number[] = []; // contains at which character page stops
     const distribution: Distribution = {};
+    const dialLengths: DialogueLengths = {};
+    const sceneRatio: StatsRatio = { INT: 0, EXT: 0 };
+    const actionRatio: StatsRatio = { Action: 0, Dialogue: 0 };
 
     let currSizeY: number = 0;
     let characters: number = 0;
@@ -91,7 +130,7 @@ export const getScreenplayData = (json: any): ScreenplayData => {
         }
 
         const type: string = currNode["attrs"]["class"];
-        const content = currNode["content"][0]["text"];
+        const content: string = currNode["content"][0]["text"];
         const length = content.length;
         characters += length;
         words += content.split(" ").length;
@@ -126,18 +165,29 @@ export const getScreenplayData = (json: any): ScreenplayData => {
                     const prevCount = actors[content] ?? 0;
                     actors[content] = prevCount + contentJ.length;
 
+                    if (!dialLengths[content]) dialLengths[content] = [];
+                    dialLengths[content].push(contentJ.length);
+                    actionRatio["Dialogue"] += contentJ.length;
+
                     continue;
                 }
-
                 break;
             }
+        } else if (type === "scene") {
+            if (content.startsWith("INT")) sceneRatio["INT"] += 1;
+            else if (content.startsWith("EXT")) sceneRatio["EXT"] += 1;
+        } else if (type === "action") {
+            actionRatio["Action"] += content.length;
         }
     }
 
     // Frequency
     let frequency = getFrequency(distribution);
-    const actors = Object.keys(frequency).length;
+    const actors = Object.keys(frequency).length; // need to be done before cleaning
     frequency = cleanFrequency(frequency);
+
+    // Quantity
+    const quantity: Quantity = getQuantity(dialLengths);
 
     return {
         words,
@@ -145,6 +195,9 @@ export const getScreenplayData = (json: any): ScreenplayData => {
         actors,
         distribution,
         frequency,
+        quantity,
+        sceneRatio,
+        actionRatio,
     };
 };
 
@@ -156,8 +209,12 @@ export const getScaledDistribution = (distribution: Distribution) => {
     let snapped = 0;
 
     const scaled: { [actor: string]: { [page: number]: number } } = {};
+
     for (const page in distribution) {
-        if (+page > snapped) snapped += snapped + step > pages ? pages : step;
+        if (+page > snapped) {
+            if (snapped + step > pages) snapped = pages;
+            else snapped += step;
+        }
 
         for (const actor in distribution[page]) {
             if (!scaled[actor]) {
