@@ -32,6 +32,7 @@
 @import "ProjectStatsContainer.module.css";
 @import "SettingsPageContainer.module.css";
 @import "Loading.module.css";
+@import "ExportProjectContainer.module.css";
 
 /* Editor */
 @import "EditorComponent.module.css";
@@ -67,6 +68,7 @@ html.light {
 
     --project-item-bg: #ffffff;
     --project-item-shadow: 0px 0px 6px rgba(100, 100, 100, 0.401);
+    --export-project-selected: #505050;
 
     --editor-scene: #dadada;
     --editor-text: #000000;
@@ -104,6 +106,7 @@ html.dark {
 
     --project-item-bg: #2e2e2e;
     --project-item-shadow: none;
+    --export-project-selected: #505050;
 
     --editor-scene: #3d3d3d;
     --editor-text: #ffffff;
