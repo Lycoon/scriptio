@@ -19,7 +19,7 @@ const HomePageContainer = () => {
                     Minimalist tool for perfectionist screenwriters
                 </h2>
             </div>
-            <div className="homepage-buttons">
+            <div className="homepage-buttons fade-in">
                 <button onClick={onSignUp} className="homepage-btn">
                     Sign up
                 </button>

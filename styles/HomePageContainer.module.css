@@ -15,12 +15,12 @@
 }
 
 .homepage-btn {
-    width: 200px;
+    width: 220px;
     height: 50px;
-    border-radius: 10px;
+    border-radius: 18px;
     border: none;
     background-color: var(--secondary-bg);
-    color: var(--primary-text);
+    color: #ffffff;
     font-size: 20px;
     font-weight: 600;
     cursor: pointer;
@@ -33,7 +33,8 @@
 #scriptio-title {
     font-family: poetsen;
     font-size: min(11vw, 11vh);
-    margin-bottom: 1.8rem;
+    margin-bottom: 1.5rem;
+    margin-top: -70px;
     color: var(--primary-text);
 }
 

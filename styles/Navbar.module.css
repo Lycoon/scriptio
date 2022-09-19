@@ -36,6 +36,13 @@
     margin-right: 12px;
 }
 
+#notlogged-navbar-btns {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    margin-right: 25px;
+}
+
 #logo-and-tabs {
     display: flex;
     flex-direction: row;

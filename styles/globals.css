@@ -1,5 +1,4 @@
 /* Layouts */
-@import "HomePageFooter.module.css";
 @import "Navbar.module.css";
 @import "NavbarButton.module.css";
 @import "NavbarTab.module.css";
@@ -52,6 +51,15 @@ body {
     margin: 0 !important;
 }
 
+a {
+    font-family: roboto;
+    color: var(--secondary-text);
+}
+
+a:hover {
+    color: #ffffff;
+}
+
 html.light {
     --primary-bg: #ffffff;
     --secondary-bg: #474747;
@@ -90,7 +98,6 @@ html.dark {
     --secondary-bg: #2e2e2e;
     --secondary-bg-hover: #3a3a3a;
     --upload-bg-hover: #2e2e2e;
-    --homepage-btn: #474747;
 
     --primary-text: #ffffff;
     --secondary-text: #9b9b9b;
