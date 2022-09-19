@@ -83,11 +83,6 @@ html.light {
     --editor-style-bg-hover: #f5f5f5;
     --editor-style-bg-active: #616161;
     --editor-element-hover: #eeeeee;
-
-    --home-bg-1: #e3caaa;
-    --home-bg-2: #fcd1d1;
-    --home-bg-3: #fdf6ec;
-    --home-bg-4: #b7cadb;
 }
 
 html.dark {
@@ -95,6 +90,7 @@ html.dark {
     --secondary-bg: #2e2e2e;
     --secondary-bg-hover: #3a3a3a;
     --upload-bg-hover: #2e2e2e;
+    --homepage-btn: #474747;
 
     --primary-text: #ffffff;
     --secondary-text: #9b9b9b;
@@ -121,11 +117,6 @@ html.dark {
     --editor-style-bg-hover: #3c3c3c;
     --editor-style-bg-active: #5d5d5d;
     --editor-element-hover: #3d3d3d;
-
-    --home-bg-1: #252850;
-    --home-bg-2: #47cca0;
-    --home-bg-3: #22c5ca;
-    --home-bg-4: #252850;
 }
 
 hr {

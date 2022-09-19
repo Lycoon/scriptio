@@ -14,24 +14,11 @@ type Props = {
     project?: Project;
 };
 
-const onLogIn = () => {
-    Router.push("/login");
-};
-
-const onSignUp = () => {
-    Router.push("/signup");
-};
-
 const onSettings = () => {
     Router.push("/settings");
 };
 
-const NotLoggedNavbar = () => (
-    <div id="navbar-buttons">
-        <NavbarButton content="Log in" action={onLogIn} />
-        <NavbarButton content="Sign up" action={onSignUp} />
-    </div>
-);
+const NotLoggedNavbar = () => <div id="navbar-buttons"></div>;
 
 const Navbar = ({ activeButtons, project }: Props) => {
     const { user, editor, updateUser } = useContext(UserContext);

@@ -1,28 +1,47 @@
 #homepage {
-    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    height: 100%;
+    gap: 90px;
 }
 
-.homepage-text {
-    margin-bottom: 3.5%;
+.homepage-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 20px;
+}
+
+.homepage-btn {
+    width: 200px;
+    height: 50px;
+    border-radius: 10px;
+    border: none;
+    background-color: var(--secondary-bg);
+    color: var(--primary-text);
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.homepage-btn:hover {
+    background-color: var(--secondary-bg-hover);
 }
 
 #scriptio-title {
     font-family: poetsen;
     font-size: min(11vw, 11vh);
-    margin-bottom: 0.7rem;
-    color: black;
+    margin-bottom: 1.8rem;
+    color: var(--primary-text);
 }
 
 #scriptio-desc {
     font-family: roboto-thin;
     text-align: center;
     font-size: min(1.6vw, 1.6vh);
-    color: black;
+    color: var(--primary-text);
 }
 
 .fade-in {
@@ -32,13 +51,7 @@
 
 #homepage {
     background-size: 100%;
-    background-image: linear-gradient(
-        40deg,
-        var(--home-bg-1) 0%,
-        var(--home-bg-2) 30%,
-        var(--home-bg-3) 67%,
-        var(--home-bg-4) 100%
-    );
+    background-color: var(--primary-bg);
 }
 
 @keyframes fadeIn {
@@ -47,5 +60,11 @@
     }
     100% {
         opacity: 100%;
+    }
+}
+
+@media (max-width: 700px) {
+    .homepage-buttons {
+        flex-direction: column;
     }
 }

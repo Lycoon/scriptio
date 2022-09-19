@@ -2,7 +2,6 @@ import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
 import HomePageContainer from "../components/home/HomePageContainer";
-import HomePageFooter from "../components/home/HomePageFooter";
 import Navbar from "../components/navbar/Navbar";
 import ProjectPageContainer from "../components/projects/ProjectPageContainer";
 import { sessionOptions } from "../src/lib/session";
@@ -13,13 +12,6 @@ type Props = {
     user: CookieUser | null;
     projects: Project[] | null;
 };
-
-const HomepageContainer = () => (
-    <>
-        <HomePageContainer />
-        <HomePageFooter />
-    </>
-);
 
 const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
     const ProjectPage = () => <ProjectPageContainer projects={projects!} />;
@@ -34,7 +26,7 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
                 {user && user.isLoggedIn ? (
                     <ProjectPage />
                 ) : (
-                    <HomepageContainer />
+                    <HomePageContainer />
                 )}
             </div>
         </>
