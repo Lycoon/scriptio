@@ -15,6 +15,14 @@ type Props = {
     user: CookieUser;
 };
 
+export type ExportData = {
+    title: string;
+    author: string;
+    watermark: boolean;
+    notes: boolean;
+    characters?: string[];
+};
+
 const removeFromStateList = (
     list: any[],
     setList: (list: any[]) => void,
@@ -44,6 +52,8 @@ const addToStateList = (
 const ExportProjectConainer = ({ project, user }: Props) => {
     const { editor } = useContext(UserContext);
     const [isPdfExport, setPdfExport] = useState<boolean>(true);
+    const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
+    const [includeNotes, setIncludeNotes] = useState<boolean>(false);
     const [allCharacters, setAllCharacters] = useState<boolean>(true);
     const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
     const [characters, setCharacters] = useState<string[]>(
@@ -60,21 +70,9 @@ const ExportProjectConainer = ({ project, user }: Props) => {
         addToStateList(characters, setCharacters, name);
     };
 
-    const exportPDF = (screenplay: any, title: string) => {
-        exportToPDF(
-            screenplay,
-            title,
-            user.email,
-            allCharacters ? undefined : selectedCharacters
-        );
-    };
-
-    const exportFountain = (screenplay: any, title: string) => {
-        const fountain = convertJSONtoFountain(
-            screenplay,
-            allCharacters ? undefined : selectedCharacters
-        );
-        const file = new File([fountain], title + ".fountain", {
+    const exportFountain = (screenplay: any, exportData: ExportData) => {
+        const fountain = convertJSONtoFountain(screenplay, exportData);
+        const file = new File([fountain], exportData.title + ".fountain", {
             type: "text/plain;charset=utf-8",
         });
         FileSaver.saveAs(file);
@@ -88,9 +86,21 @@ const ExportProjectConainer = ({ project, user }: Props) => {
         e.preventDefault();
 
         if (isPdfExport) {
-            exportPDF(project.screenplay, project.title);
+            exportToPDF(project.screenplay, {
+                title: project.title,
+                author: user.email,
+                watermark: includeWatermark,
+                notes: includeNotes,
+                characters: allCharacters ? undefined : selectedCharacters,
+            });
         } else {
-            exportFountain(project.screenplay, project.title);
+            exportFountain(project.screenplay, {
+                title: project.title,
+                author: user.email,
+                watermark: includeWatermark,
+                notes: includeNotes,
+                characters: allCharacters ? undefined : selectedCharacters,
+            });
         }
     };
 
@@ -124,14 +134,22 @@ const ExportProjectConainer = ({ project, user }: Props) => {
                         <div className="settings-element">
                             <div className="settings-element-header">
                                 <p>Watermark</p>
-                                <input type="checkbox" />
+                                <input
+                                    onChange={() =>
+                                        setIncludeWatermark(!includeWatermark)
+                                    }
+                                    type="checkbox"
+                                />
                             </div>
                         </div>
                     )}
                     <div className="settings-element">
                         <div className="settings-element-header">
                             <p>Include notes</p>
-                            <input type="checkbox" />
+                            <input
+                                onChange={() => setIncludeNotes(!includeNotes)}
+                                type="checkbox"
+                            />
                         </div>
                     </div>
                     <div className="settings-element">

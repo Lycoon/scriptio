@@ -142,3 +142,15 @@ span.underline {
 .transition::after {
     content: ":";
 }
+
+/* Note */
+.note {
+    background-color: rgba(255, 255, 104, 0.226);
+    padding-inline: 8px;
+    padding-block: 4px;
+
+    border-style: dashed;
+    border-width: 2px;
+    border-color: rgba(255, 255, 104, 0.226);
+    border-radius: 10px;
+}

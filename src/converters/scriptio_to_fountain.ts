@@ -1,3 +1,5 @@
+import { ExportData } from "../../components/projects/export/ExportProjectContainer";
+
 /**
  * Convert editor JSON screenplay to .fountain format
  * @param json editor content JSON
@@ -5,7 +7,7 @@
  */
 export const convertJSONtoFountain = (
     json: any,
-    characters?: string[]
+    exportData: ExportData
 ): string => {
     let fountain = "";
     let sceneCount = 1;

@@ -1,5 +1,6 @@
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import * as pdfMake from "pdfmake/build/pdfmake";
+import { ExportData } from "../../components/projects/export/ExportProjectContainer";
 
 const fonts = {
     CourierPrime: {
@@ -11,8 +12,11 @@ const fonts = {
 };
 
 const DEFAULT_OFFSET = 12;
+const addOffset = (pdfNodes: any[]) => {
+    pdfNodes.push(getPDFNodeTemplate("offset", ""));
+};
 
-const getPDFSceneTemplate = (text: string) => {
+const getPDFTableTemplate = (text: string, type: string) => {
     return {
         layout: "noBorders",
         table: {
@@ -21,7 +25,7 @@ const getPDFSceneTemplate = (text: string) => {
                 [
                     {
                         text,
-                        style: ["scene"],
+                        style: [type],
                     },
                 ],
             ],
@@ -36,22 +40,24 @@ const getPDFNodeTemplate = (style: string, text: string) => {
     };
 };
 
+const getWatermarkData = (text: string) => {
+    return {
+        text,
+        color: "grey",
+        opacity: 0.15,
+        bold: true,
+        italics: false,
+    };
+};
+
 const initPDF = (
-    title: string,
-    author: string,
+    exportData: ExportData,
     pdfNodes: any[]
 ): TDocumentDefinitions => {
     return {
         info: {
-            title,
-            author,
-        },
-        watermark: {
-            text: "Test Productions",
-            color: "grey",
-            opacity: 0.15,
-            bold: true,
-            italics: false,
+            title: exportData.title,
+            author: exportData.author,
         },
         content: pdfNodes,
         pageMargins: [105, 70, 70, 70],
@@ -64,9 +70,13 @@ const initPDF = (
         styles: {
             scene: {
                 bold: true,
-                fillColor: "#dadada",
+                fillColor: "#DADADA",
                 lineHeight: 0.85,
                 margin: [4, 0, 0, 0],
+            },
+            note: {
+                fillColor: "#FFFF68",
+                margin: [6, 0, 0, 0],
             },
             character: {
                 margin: [170, 0, 0, 0],
@@ -96,12 +106,8 @@ const initPDF = (
  * @param author screenplay author
  * @param json editor content JSON
  */
-export const exportToPDF = async (
-    json: any,
-    title: string,
-    author: string,
-    characters?: string[]
-) => {
+export const exportToPDF = async (json: any, exportData: ExportData) => {
+    const characters = exportData.characters;
     const nodes = json.content!;
     let pdfNodes = [];
 
@@ -133,8 +139,8 @@ export const exportToPDF = async (
 
         switch (type) {
             case "scene":
-                pdfNodes.push(getPDFSceneTemplate(text.toUpperCase()));
-                pdfNodes.push(getPDFNodeTemplate("offset", ""));
+                pdfNodes.push(getPDFTableTemplate(text.toUpperCase(), "scene"));
+                addOffset(pdfNodes);
                 break;
             case "character":
                 pdfNodes.push(
@@ -143,8 +149,9 @@ export const exportToPDF = async (
                 break;
             case "dialogue":
                 pdfNodes.push(getPDFNodeTemplate("dialogue", text));
-                if (nextType !== "parenthetical")
-                    pdfNodes.push(getPDFNodeTemplate("offset", ""));
+                if (nextType !== "parenthetical") {
+                    addOffset(pdfNodes);
+                }
                 break;
             case "parenthetical":
                 pdfNodes.push(
@@ -156,11 +163,27 @@ export const exportToPDF = async (
                     getPDFNodeTemplate("transition", text.toUpperCase() + ":")
                 );
                 break;
+            case "note":
+                if (exportData.notes) {
+                    pdfNodes.push(getPDFTableTemplate(text, "note"));
+                    addOffset(pdfNodes);
+                }
+                break;
             default:
                 pdfNodes.push(getPDFNodeTemplate("action", text));
         }
     }
 
-    const pdf = initPDF(title, author, pdfNodes);
+    let pdf = initPDF(exportData, pdfNodes);
+    if (exportData.watermark) {
+        pdf.watermark = {
+            text: exportData.author,
+            color: "grey",
+            opacity: 0.15,
+            bold: true,
+            italics: false,
+        };
+    }
+
     pdfMake.createPdf(pdf, undefined, fonts).open();
 };
