@@ -132,8 +132,10 @@ const ExportProjectConainer = ({ project, user }: Props) => {
                                     <select
                                         className="export-characters-dropdown"
                                         name="characters"
-                                        onChange={(e) => {
-                                            addCharacter(e.target.value);
+                                        onClick={(e: any) => {
+                                            if (e.button != 0)
+                                                // avoid adding value on unfolding dropdown
+                                                addCharacter(e.target.value);
                                         }}
                                     >
                                         {characters.map((name: string) => {
@@ -146,9 +148,9 @@ const ExportProjectConainer = ({ project, user }: Props) => {
                                     </select>
                                 )}
                                 <input
-                                    onChange={() =>
-                                        setAllCharacters(!allCharacters)
-                                    }
+                                    onChange={() => {
+                                        setAllCharacters(!allCharacters);
+                                    }}
                                     type="checkbox"
                                     defaultChecked
                                 />
