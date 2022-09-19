@@ -60,13 +60,21 @@ const ExportProjectConainer = ({ project, user }: Props) => {
         addToStateList(characters, setCharacters, name);
     };
 
-    const exportPDF = () => {
-        exportToPDF(project.title, user.email, project.screenplay);
+    const exportPDF = (screenplay: any, title: string) => {
+        exportToPDF(
+            screenplay,
+            title,
+            user.email,
+            allCharacters ? undefined : selectedCharacters
+        );
     };
 
-    const exportFountain = () => {
-        const fountain = convertJSONtoFountain(project.screenplay);
-        const file = new File([fountain], project.title + ".fountain", {
+    const exportFountain = (screenplay: any, title: string) => {
+        const fountain = convertJSONtoFountain(
+            screenplay,
+            allCharacters ? undefined : selectedCharacters
+        );
+        const file = new File([fountain], title + ".fountain", {
             type: "text/plain;charset=utf-8",
         });
         FileSaver.saveAs(file);
@@ -80,9 +88,9 @@ const ExportProjectConainer = ({ project, user }: Props) => {
         e.preventDefault();
 
         if (isPdfExport) {
-            exportPDF();
+            exportPDF(project.screenplay, project.title);
         } else {
-            exportFountain();
+            exportFountain(project.screenplay, project.title);
         }
     };
 
@@ -112,15 +120,17 @@ const ExportProjectConainer = ({ project, user }: Props) => {
                             </div>
                         </div>
                     </div>
+                    {isPdfExport && (
+                        <div className="settings-element">
+                            <div className="settings-element-header">
+                                <p>Watermark</p>
+                                <input type="checkbox" />
+                            </div>
+                        </div>
+                    )}
                     <div className="settings-element">
                         <div className="settings-element-header">
                             <p>Include notes</p>
-                            <input type="checkbox" />
-                        </div>
-                    </div>
-                    <div className="settings-element">
-                        <div className="settings-element-header">
-                            <p>Watermark</p>
                             <input type="checkbox" />
                         </div>
                     </div>

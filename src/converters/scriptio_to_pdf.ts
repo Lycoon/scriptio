@@ -10,6 +10,8 @@ const fonts = {
     },
 };
 
+const DEFAULT_OFFSET = 12;
+
 const getPDFSceneTemplate = (text: string) => {
     return {
         layout: "noBorders",
@@ -44,6 +46,13 @@ const initPDF = (
             title,
             author,
         },
+        watermark: {
+            text: "Test Productions",
+            color: "grey",
+            opacity: 0.15,
+            bold: true,
+            italics: false,
+        },
         content: pdfNodes,
         pageMargins: [105, 70, 70, 70],
         defaultStyle: {
@@ -63,13 +72,19 @@ const initPDF = (
                 margin: [170, 0, 0, 0],
             },
             dialogue: {
-                margin: [100, 0],
+                margin: [100, 0, 100, 0],
             },
             parenthetical: {
                 margin: [140, 0],
             },
+            action: {
+                margin: [0, 0, 0, DEFAULT_OFFSET],
+            },
             transition: {
                 alignment: "right",
+            },
+            offset: {
+                margin: [0, 0, 0, DEFAULT_OFFSET],
             },
         },
     };
@@ -81,7 +96,12 @@ const initPDF = (
  * @param author screenplay author
  * @param json editor content JSON
  */
-export const exportToPDF = async (title: string, author: string, json: any) => {
+export const exportToPDF = async (
+    json: any,
+    title: string,
+    author: string,
+    characters?: string[]
+) => {
     const nodes = json.content!;
     let pdfNodes = [];
 
@@ -89,12 +109,32 @@ export const exportToPDF = async (title: string, author: string, json: any) => {
         if (!nodes[i]["content"]) {
             continue;
         }
+
         const text: string = nodes[i]["content"]![0]["text"]!;
         const type: string = nodes[i]["attrs"]!["class"];
+
+        let nextType = "action";
+        if (i + 1 < nodes.length) nextType = nodes[i + 1]["attrs"]!["class"];
+
+        // Don't export unselected characters
+        if (type === "character" && characters && !characters.includes(text)) {
+            let j = i + 1;
+            for (; j < nodes.length; j++) {
+                const typeJ: string = nodes[j]["attrs"]!["class"];
+                if (typeJ === "dialogue" || typeJ === "parenthetical") {
+                    continue;
+                }
+
+                break;
+            }
+            i = j - 1;
+            continue;
+        }
 
         switch (type) {
             case "scene":
                 pdfNodes.push(getPDFSceneTemplate(text.toUpperCase()));
+                pdfNodes.push(getPDFNodeTemplate("offset", ""));
                 break;
             case "character":
                 pdfNodes.push(
@@ -103,6 +143,8 @@ export const exportToPDF = async (title: string, author: string, json: any) => {
                 break;
             case "dialogue":
                 pdfNodes.push(getPDFNodeTemplate("dialogue", text));
+                if (nextType !== "parenthetical")
+                    pdfNodes.push(getPDFNodeTemplate("offset", ""));
                 break;
             case "parenthetical":
                 pdfNodes.push(
