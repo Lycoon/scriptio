@@ -1,9 +1,8 @@
 import autoAnimate from "@formkit/auto-animate";
 import FileSaver from "file-saver";
 import Router from "next/router";
-import { useContext, useEffect, useRef, useState } from "react";
-import { Project, CookieUser } from "../../../pages/api/users";
-import { UserContext } from "../../../src/context/UserContext";
+import { useState } from "react";
+import { Project, User } from "../../../pages/api/users";
 import { convertJSONtoFountain } from "../../../src/converters/scriptio_to_fountain";
 import { exportToPDF } from "../../../src/converters/scriptio_to_pdf";
 import { getCharacterNames } from "../../../src/lib/statistics";
@@ -12,7 +11,7 @@ import FileFormatButtonExport from "./FileFormatButtonExport";
 
 type Props = {
     project: Project;
-    user: CookieUser;
+    user: User;
 };
 
 export type ExportData = {
@@ -20,6 +19,7 @@ export type ExportData = {
     author: string;
     watermark: boolean;
     notes: boolean;
+    notesColor?: string;
     characters?: string[];
 };
 
@@ -50,7 +50,6 @@ const addToStateList = (
 };
 
 const ExportProjectConainer = ({ project, user }: Props) => {
-    const { editor } = useContext(UserContext);
     const [isPdfExport, setPdfExport] = useState<boolean>(true);
     const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
     const [includeNotes, setIncludeNotes] = useState<boolean>(false);
@@ -91,6 +90,7 @@ const ExportProjectConainer = ({ project, user }: Props) => {
                 author: user.email,
                 watermark: includeWatermark,
                 notes: includeNotes,
+                notesColor: user.settings.exportedNotesColor,
                 characters: allCharacters ? undefined : selectedCharacters,
             });
         } else {

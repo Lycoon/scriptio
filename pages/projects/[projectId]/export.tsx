@@ -6,10 +6,11 @@ import EditProjectContainer from "../../../components/projects/edit/EditProjectC
 import ExportProjectConainer from "../../../components/projects/export/ExportProjectContainer";
 import { sessionOptions } from "../../../src/lib/session";
 import { getProjectFromId } from "../../../src/server/service/project-service";
-import { Project, CookieUser } from "../../api/users";
+import { getUserFromId } from "../../../src/server/service/user-service";
+import { Project, CookieUser, User } from "../../api/users";
 
 type Props = {
-    user: CookieUser;
+    user: User;
     project: Project;
 };
 
@@ -41,18 +42,28 @@ export const getServerSideProps = withIronSessionSsr(async function ({
         return redirectToHome;
     }
 
-    const user = req.session.user;
+    const cookieUser = req.session.user;
+    if (!cookieUser || !cookieUser.isLoggedIn) {
+        return redirectToHome;
+    }
+
     const project = await getProjectFromId(projectId);
-    if (!project || project.userId !== user?.id) {
+    if (!project || project.userId !== cookieUser?.id) {
+        return redirectToHome;
+    }
+
+    const user = await getUserFromId(cookieUser.id);
+    if (!user) {
         return redirectToHome;
     }
 
     // Workaround because dates can't be serialized
+    user.createdAt = user.createdAt.toISOString() as any as Date;
     project.createdAt = project.createdAt.toISOString() as any as Date;
     project.updatedAt = project.updatedAt.toISOString() as any as Date;
 
     return {
-        props: { user: req.session.user, project },
+        props: { user, project },
     };
 },
 sessionOptions);

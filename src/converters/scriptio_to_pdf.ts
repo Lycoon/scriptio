@@ -70,12 +70,12 @@ const initPDF = (
         styles: {
             scene: {
                 bold: true,
-                fillColor: "#DADADA",
+                fillColor: "#e4e4e4",
                 lineHeight: 0.85,
                 margin: [4, 0, 0, 0],
             },
             note: {
-                fillColor: "#FFFF68",
+                fillColor: exportData.notesColor ?? "#FFFF68",
                 margin: [6, 0, 0, 0],
             },
             character: {

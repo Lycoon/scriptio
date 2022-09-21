@@ -12,6 +12,7 @@ export const convertJSONtoFountain = (
     let fountain = "";
     let sceneCount = 1;
     let nodes = json.content!;
+    const characters = exportData.characters;
 
     for (let i = 0; i < nodes.length; i++) {
         if (!nodes[i]["content"]) {
@@ -22,6 +23,21 @@ export const convertJSONtoFountain = (
         const type: string = nodes[i]["attrs"]["class"];
         const nextType: string =
             i >= nodes.length - 1 ? undefined : nodes[i + 1]["attrs"]["class"];
+
+        // Don't export unselected characters
+        if (type === "character" && characters && !characters.includes(text)) {
+            let j = i + 1;
+            for (; j < nodes.length; j++) {
+                const typeJ: string = nodes[j]["attrs"]!["class"];
+                if (typeJ === "dialogue" || typeJ === "parenthetical") {
+                    continue;
+                }
+
+                break;
+            }
+            i = j - 1;
+            continue;
+        }
 
         switch (type) {
             case "scene":
@@ -48,7 +64,7 @@ export const convertJSONtoFountain = (
                 break;
             case "note":
                 if (exportData.notes) {
-                    fountain += "\n" + text;
+                    fountain += "\n[[" + text + "]]";
                 }
                 break;
             default:
