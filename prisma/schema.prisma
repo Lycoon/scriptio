@@ -41,6 +41,7 @@ model Settings {
 
   highlightOnHover    Boolean     @default(false)
   sceneBackground     Boolean     @default(true)
+  notesColor          String      @default("#FFFF68")
 }
 
 model Project {

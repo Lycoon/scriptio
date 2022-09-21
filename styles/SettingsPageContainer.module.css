@@ -15,6 +15,12 @@
         "col1    col2";
 }
 
+.notes-color {
+    position: absolute;
+    right: 0;
+    outline: none !important;
+}
+
 .settings-header {
     grid-area: header;
 }
@@ -79,6 +85,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    position: relative; /* for notes color input to not displace elements */
 }
 
 #language-form {
@@ -88,6 +95,9 @@
     padding-block: 2px;
     border-color: var(--secondary-bg);
     border-radius: 5px;
+
+    position: absolute;
+    right: 0;
 }
 
 @media (max-width: 900px) {

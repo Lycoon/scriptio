@@ -18,6 +18,9 @@ const SettingsPageContainer = ({ user }: Props) => {
 
     const { theme, setTheme } = useTheme();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
+    const [notesColor, setNotesColor] = useState<string>(
+        user.settings.notesColor
+    );
     const [sceneBackground, setSceneBackground] = useState<boolean>(
         user.settings.sceneBackground
     );
@@ -32,17 +35,22 @@ const SettingsPageContainer = ({ user }: Props) => {
         setFormInfo(null);
     };
 
-    function toggleHighlightOnHover() {
+    const toggleHighlightOnHover = () => {
         editUserSettings(user.id, { highlightOnHover: !highlightOnHover });
         setHighlightOnHover(!highlightOnHover);
-    }
+    };
 
-    function toggleSceneBackground() {
+    const toggleSceneBackground = () => {
         editUserSettings(user.id, { sceneBackground: !sceneBackground });
         setSceneBackground(!sceneBackground);
-    }
+    };
 
-    async function onChangePassword(e: any) {
+    const updateNotesColor = (newColor: string) => {
+        setNotesColor(newColor);
+        editUserSettings(user.id, { notesColor: newColor });
+    };
+
+    const onChangePassword = async (e: any) => {
         e.preventDefault();
         resetFromInfo();
 
@@ -62,7 +70,7 @@ const SettingsPageContainer = ({ user }: Props) => {
         } else {
             setFormInfo({ content: json.message, isError: true });
         }
-    }
+    };
 
     return (
         <div className="center-flex">
@@ -98,6 +106,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                                     className="form-input"
                                     name="password1"
                                     type="password"
+                                    autoComplete="on"
                                     required
                                 />
 
@@ -108,6 +117,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                                     className="form-input"
                                     name="password2"
                                     type="password"
+                                    autoComplete="on"
                                     required
                                 />
                             </label>
@@ -159,6 +169,19 @@ const SettingsPageContainer = ({ user }: Props) => {
                                 type="checkbox"
                                 onChange={toggleSceneBackground}
                                 defaultChecked={user.settings.sceneBackground}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="settings-element">
+                        <div className="settings-element-header">
+                            <p>Notes color</p>
+                            <input
+                                type="color"
+                                className="notes-color"
+                                name="notes-color"
+                                defaultValue={user.settings.notesColor}
+                                onBlur={(e) => updateNotesColor(e.target.value)}
                             />
                         </div>
                         <hr />

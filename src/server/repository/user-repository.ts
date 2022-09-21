@@ -12,6 +12,7 @@ export type Secrets = {
 export type Settings = {
     highlightOnHover?: boolean;
     sceneBackground?: boolean;
+    notesColor?: string;
 };
 
 export interface UserUpdate {
