@@ -46,6 +46,11 @@ export const convertJSONtoFountain = (
                 fountain += text;
                 fountain += nextType === "action" ? "\n" : "";
                 break;
+            case "note":
+                if (exportData.notes) {
+                    fountain += "\n" + text;
+                }
+                break;
             default:
                 fountain += text;
         }
