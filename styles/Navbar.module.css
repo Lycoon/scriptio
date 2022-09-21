@@ -68,6 +68,11 @@
     cursor: pointer;
 }
 
+.save-btn.disabled {
+    pointer-events: none;
+    opacity: 40%;
+}
+
 .settings-icon {
     width: 100%;
     filter: invert(70%);

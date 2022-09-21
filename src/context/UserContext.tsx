@@ -10,6 +10,8 @@ export type contextType = {
     updateEditor: (editor: Editor) => void;
     darkMode: boolean;
     updateDarkMode: (darkMode: boolean) => void;
+    saved: boolean;
+    updateSaved: (saved: boolean) => void;
 };
 
 const contextDefaults: contextType = {
@@ -19,6 +21,8 @@ const contextDefaults: contextType = {
     updateEditor: () => {},
     darkMode: false,
     updateDarkMode: () => {},
+    saved: true,
+    updateSaved: () => {},
 };
 
 type Props = {
@@ -31,6 +35,7 @@ export function ContextProvider({ children }: Props) {
     const { user, setUser } = useUser();
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [darkMode, setDarkMode] = useState<boolean>(false);
+    const [saved, setSaved] = useState<boolean>(true);
 
     const updateUser = (user_: CookieUser | undefined) => {
         setUser(user_);
@@ -44,6 +49,10 @@ export function ContextProvider({ children }: Props) {
         setDarkMode(darkMode_);
     };
 
+    const updateSaved = (saved_: boolean) => {
+        setSaved(saved_);
+    };
+
     const value = {
         user,
         updateUser,
@@ -51,6 +60,8 @@ export function ContextProvider({ children }: Props) {
         updateEditor,
         darkMode,
         updateDarkMode,
+        saved,
+        updateSaved,
     };
 
     return (

@@ -21,6 +21,9 @@ const SettingsPageContainer = ({ user }: Props) => {
     const [notesColor, setNotesColor] = useState<string>(
         user.settings.notesColor
     );
+    const [exportedNotesColor, setExportedNotesColor] = useState<string>(
+        user.settings.exportedNotesColor
+    );
     const [sceneBackground, setSceneBackground] = useState<boolean>(
         user.settings.sceneBackground
     );
@@ -48,6 +51,11 @@ const SettingsPageContainer = ({ user }: Props) => {
     const updateNotesColor = (newColor: string) => {
         setNotesColor(newColor);
         editUserSettings(user.id, { notesColor: newColor });
+    };
+
+    const updateExportedNotesColor = (newColor: string) => {
+        setExportedNotesColor(newColor);
+        editUserSettings(user.id, { exportedNotesColor: newColor });
     };
 
     const onChangePassword = async (e: any) => {
@@ -172,7 +180,6 @@ const SettingsPageContainer = ({ user }: Props) => {
                             />
                         </div>
                     </div>
-
                     <div className="settings-element">
                         <div className="settings-element-header">
                             <p>Notes color</p>
@@ -182,6 +189,20 @@ const SettingsPageContainer = ({ user }: Props) => {
                                 name="notes-color"
                                 defaultValue={user.settings.notesColor}
                                 onBlur={(e) => updateNotesColor(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className="settings-element">
+                        <div className="settings-element-header">
+                            <p>Exported notes color</p>
+                            <input
+                                type="color"
+                                className="notes-color"
+                                name="exported-notes-color"
+                                defaultValue={user.settings.exportedNotesColor}
+                                onBlur={(e) =>
+                                    updateExportedNotesColor(e.target.value)
+                                }
                             />
                         </div>
                         <hr />

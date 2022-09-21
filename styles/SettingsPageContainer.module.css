@@ -18,6 +18,7 @@
 .notes-color {
     position: absolute;
     right: 0;
+    border: none !important;
     outline: none !important;
 }
 

@@ -48,6 +48,13 @@ export const login = (email: string, password: string) => {
     return request(`/api/login`, "POST", JSON.stringify({ email, password }));
 };
 
+export const saveScreenplay = async (projectId: number, screenplay: any) => {
+    editProject(projectId, {
+        projectId,
+        screenplay,
+    });
+};
+
 const request = async (url: string, method: string, body?: string) => {
     return fetch(url, {
         headers: { "Content-Type": "application/json" },

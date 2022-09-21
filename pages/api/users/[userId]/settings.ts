@@ -44,6 +44,9 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     if (typeof body.notesColor === "string") {
         settings.notesColor = body.notesColor;
     }
+    if (typeof body.exportedNotesColor === "string") {
+        settings.exportedNotesColor = body.exportedNotesColor;
+    }
 
     const updated = await updateUser({
         id: { id: userId },

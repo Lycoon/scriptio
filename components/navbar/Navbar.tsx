@@ -4,6 +4,7 @@ import Router from "next/router";
 import { useContext } from "react";
 import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
+import { saveScreenplay } from "../../src/lib/requests";
 import { ActiveButtons } from "../../src/lib/utils";
 import NavbarButton from "./NavbarButton";
 
@@ -33,16 +34,19 @@ const NotLoggedNavbar = () => (
 );
 
 const Navbar = ({ activeButtons, project }: Props) => {
-    const { user, editor, updateUser } = useContext(UserContext);
+    const { user, updateUser, saved, updateSaved } = useContext(UserContext);
+
     const onLogOut = async () => {
         await fetch("/api/logout");
         updateUser(undefined);
         Router.push("/");
     };
 
+    console.log("saved: ", saved);
+
     const onSave = () => {
-        console.log("Saving... ");
-        console.log(editor?.getJSON());
+        saveScreenplay(project?.id!, project?.screenplay);
+        updateSaved(true);
     };
 
     return (
@@ -63,7 +67,10 @@ const Navbar = ({ activeButtons, project }: Props) => {
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
                     {activeButtons?.isScreenplay && (
-                        <div className="save-btn" onClick={onSave}>
+                        <div
+                            className={"save-btn" + (saved ? " disabled" : "")}
+                            onClick={onSave}
+                        >
                             <img
                                 className="settings-icon"
                                 src="/images/save.png"

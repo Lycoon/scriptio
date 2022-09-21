@@ -14,16 +14,15 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
-import { editProject } from "../../src/lib/requests";
+import { editProject, saveScreenplay } from "../../src/lib/requests";
 
 type Props = {
     project: Project;
 };
 
 const EditorAndSidebar = ({ project }: Props) => {
-    const { editor, updateEditor } = useContext(UserContext);
+    const { updateEditor, updateSaved, saved } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
-    const [notSaved, updateNotSaved] = useState<boolean>(false);
     const [isSaving, updateIsSaving] = useState<boolean>(false);
     const [isBold, setIsBold] = useState<boolean>(false);
     const [isItalic, setIsItalic] = useState<boolean>(false);
@@ -78,7 +77,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         ],
 
         onUpdate() {
-            updateNotSaved(true);
+            if (saved) updateSaved(false);
         },
 
         // update active on caret update
@@ -164,18 +163,10 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const saveKeyPressed = async (e: KeyboardEvent) => {
-        if (e.ctrlKey && e.key === "s") {
+        if (e.ctrlKey && e.key === "s" && !saved) {
             e.preventDefault();
-
-            const body = {
-                projectId: project.id,
-                screenplay: editorView?.getJSON(),
-            };
-
-            updateIsSaving(true);
-            await editProject(project.userId, body);
-            updateIsSaving(false);
-            updateNotSaved(false);
+            saveScreenplay(project.id, editorView?.getJSON());
+            updateSaved(true);
         }
     };
 
@@ -195,7 +186,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const onUnload = (e: BeforeUnloadEvent) => {
-        if (notSaved) {
+        if (!saved) {
             let confirmationMessage = "Are you sure you want to leave?";
 
             e.returnValue = confirmationMessage;
