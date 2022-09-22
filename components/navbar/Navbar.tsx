@@ -42,8 +42,6 @@ const Navbar = ({ activeButtons, project }: Props) => {
         Router.push("/");
     };
 
-    console.log("saved: ", saved);
-
     const onSave = () => {
         saveScreenplay(project?.id!, project?.screenplay);
         updateSaved(true);
