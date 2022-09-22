@@ -43,7 +43,7 @@ const Navbar = ({ activeButtons, project }: Props) => {
     };
 
     const onSave = () => {
-        saveScreenplay(project?.id!, project?.screenplay);
+        saveScreenplay(project?.userId, project?.id!, project?.screenplay);
         updateSaved(true);
     };
 

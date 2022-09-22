@@ -166,7 +166,11 @@ const EditorAndSidebar = ({ project }: Props) => {
         if (e.ctrlKey && e.key === "s") {
             e.preventDefault();
             if (!saved) {
-                saveScreenplay(project.id, editorView?.getJSON());
+                saveScreenplay(
+                    project.userId,
+                    project.id,
+                    editorView?.getJSON()
+                );
                 updateSaved(true);
             }
         }

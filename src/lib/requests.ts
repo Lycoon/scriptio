@@ -48,8 +48,12 @@ export const login = (email: string, password: string) => {
     return request(`/api/login`, "POST", JSON.stringify({ email, password }));
 };
 
-export const saveScreenplay = async (projectId: number, screenplay: any) => {
-    editProject(projectId, {
+export const saveScreenplay = async (
+    userId: number,
+    projectId: number,
+    screenplay: any
+) => {
+    editProject(userId, {
         projectId,
         screenplay,
     });
