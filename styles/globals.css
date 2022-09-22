@@ -62,12 +62,12 @@ a:hover {
 
 html.light {
     --primary-bg: #ffffff;
-    --secondary-bg: #474747;
+    --secondary-bg: #797979;
     --secondary-bg-hover: #616161;
     --upload-bg-hover: #eeeeee;
 
     --primary-text: #474747;
-    --secondary-text: #9b9b9b;
+    --secondary-text: #ffffff;
 
     --separator: #e0e0e0;
     --input-outline: #a2a2a2;

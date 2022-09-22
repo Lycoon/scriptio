@@ -40,13 +40,13 @@
 }
 
 .settings-joined-date {
-    color: var(--secondary-text);
+    color: var(--primary-text);
     font-style: italic;
     margin-top: 5px;
 }
 
 .settings-label {
-    color: var(--secondary-text);
+    color: var(--primary-text);
     font-style: italic;
 }
 
