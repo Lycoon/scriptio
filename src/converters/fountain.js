@@ -76,9 +76,14 @@
             line = src[i];
 
             // notes
-            /*if ((match = line.match(regex.note))) {
+            if ((match = line.match(regex.note))) {
                 tokens.push({ type: "note", text: match[1] });
-            }*/
+                if (line.length === match[0].length) {
+                    continue;
+                }
+
+                line = line.replace(match[0], "");
+            }
 
             // title page
             if (regex.title_page.test(line)) {
@@ -213,7 +218,7 @@
     };
 
     var inline = {
-        note: '<p class="note">$1</p>',
+        //note: '<span class="note">$1</span>',
         line_break: "<br />",
 
         bold_italic_underline: '<span class="bold italic underline">$2</span>',
@@ -369,10 +374,11 @@
                 case "dialogue":
                     html.push('<p class="dialogue">' + token.text + "</p>");
                     break;
-                /*
+
                 case "note":
                     html.push('<p class="note">' + token.text + "</p>");
                     break;
+                /*
                 case "dialogue_end":
                     html.push("</div> ");
                     break;

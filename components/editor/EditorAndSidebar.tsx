@@ -163,10 +163,12 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const saveKeyPressed = async (e: KeyboardEvent) => {
-        if (e.ctrlKey && e.key === "s" && !saved) {
+        if (e.ctrlKey && e.key === "s") {
             e.preventDefault();
-            saveScreenplay(project.id, editorView?.getJSON());
-            updateSaved(true);
+            if (!saved) {
+                saveScreenplay(project.id, editorView?.getJSON());
+                updateSaved(true);
+            }
         }
     };
 
