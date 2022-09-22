@@ -8,7 +8,19 @@
 }
 
 .navbar-dropdown {
-    z-index: 1;
-    padding-top: 47px;
+    z-index: -1;
     width: 100%;
+    padding-top: 48px;
+    animation: dropdown-anim 0.4s;
+}
+
+@keyframes dropdown-anim {
+    from {
+        padding-top: 0px;
+        opacity: 0;
+    }
+    to {
+        padding-top: 48px;
+        opacity: 1;
+    }
 }

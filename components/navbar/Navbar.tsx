@@ -21,13 +21,13 @@ const onSettings = () => {
 
 const NotLoggedNavbar = () => (
     <div id="notlogged-navbar-btns">
-        <Link className="notlogged-navbar-btn" href={"about"}>
+        <Link className="notlogged-navbar-btn" href={"/about"}>
             About
         </Link>
-        <Link className="notlogged-navbar-btn" href={"contact"}>
+        <Link className="notlogged-navbar-btn" href={"/contact"}>
             Contact
         </Link>
-        <Link className="notlogged-navbar-btn" href={"donate"}>
+        <Link className="notlogged-navbar-btn" href={"/donate"}>
             Donate
         </Link>
     </div>
@@ -43,7 +43,7 @@ const Navbar = ({ activeButtons, project }: Props) => {
     };
 
     const onSave = () => {
-        saveScreenplay(project?.userId, project?.id!, project?.screenplay);
+        saveScreenplay(project?.userId!, project?.id!, project?.screenplay);
         updateSaved(true);
     };
 

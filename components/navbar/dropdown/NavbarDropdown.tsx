@@ -5,7 +5,6 @@ import { UserContext } from "../../../src/context/UserContext";
 import { convertFountainToJSON } from "../../../src/converters/fountain_to_scriptio";
 import { ActiveButtons } from "../../../src/lib/utils";
 import DropdownItem from "./DropdownItem";
-import ExportDropdown from "./ExportDropdown";
 
 type Props = {
     activeButtons?: ActiveButtons;
