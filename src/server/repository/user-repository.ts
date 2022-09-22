@@ -13,6 +13,7 @@ export type Settings = {
     highlightOnHover?: boolean;
     sceneBackground?: boolean;
     notesColor?: string;
+    exportedNotesColor?: string;
 };
 
 export interface UserUpdate {

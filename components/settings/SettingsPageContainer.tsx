@@ -2,11 +2,7 @@ import { useTheme } from "next-themes";
 import { useState } from "react";
 import { User } from "../../pages/api/users";
 import { ERROR_PASSWORD_MATCH } from "../../src/lib/messages";
-import {
-    changePassword,
-    editProject,
-    editUserSettings,
-} from "../../src/lib/requests";
+import { changePassword, editUserSettings } from "../../src/lib/requests";
 import FormInfo, { FormInfoType } from "../home/FormInfo";
 
 type Props = {
@@ -32,6 +28,8 @@ const SettingsPageContainer = ({ user }: Props) => {
     );
 
     const toggleTheme = () => {
+        console.log("changed theme");
+
         setTheme(theme === "light" ? "dark" : "light");
     };
     const resetFromInfo = () => {
@@ -144,7 +142,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                             <p>Dark theme</p>
                             <input
                                 type="checkbox"
-                                onChange={toggleTheme}
+                                onClick={toggleTheme}
                                 defaultChecked={theme === "dark"}
                             />
                         </div>
