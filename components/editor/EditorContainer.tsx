@@ -15,7 +15,7 @@ const EditorContainer = ({ user, project }: Props) => {
     useEffect(() => {
         document.documentElement.style.setProperty(
             "--editor-notes-color",
-            user.settings.notesColor + "42" /* aplha channel */
+            user.settings.notesColor + "42" /* alpha channel */
         );
     });
 

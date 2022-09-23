@@ -92,6 +92,12 @@ const initPDF = (
             },
             transition: {
                 alignment: "right",
+                margin: [0, 0, 0, DEFAULT_OFFSET],
+            },
+            section: {
+                alignment: "center",
+                decoration: "underline",
+                margin: [0, 0, 0, DEFAULT_OFFSET],
             },
             offset: {
                 margin: [0, 0, 0, DEFAULT_OFFSET],
@@ -161,6 +167,11 @@ export const exportToPDF = async (json: any, exportData: ExportData) => {
             case "transition":
                 pdfNodes.push(
                     getPDFNodeTemplate("transition", text.toUpperCase() + ":")
+                );
+                break;
+            case "section":
+                pdfNodes.push(
+                    getPDFNodeTemplate("section", text.toUpperCase())
                 );
                 break;
             case "note":

@@ -123,7 +123,7 @@ const ProjectStatsContainer = ({ project }: Props) => {
                         <div className="charts-row">
                             <div>
                                 <p>
-                                    Proportion of interior and interior scenes
+                                    Proportion of interior and exterior scenes
                                 </p>
                                 <BarRatio
                                     color={color}

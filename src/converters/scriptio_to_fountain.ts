@@ -58,6 +58,9 @@ export const convertJSONtoFountain = (
             case "parenthetical":
                 fountain += "(" + text + ")";
                 break;
+            case "section":
+                fountain += "# " + text;
+                break;
             case "dialogue":
                 fountain += text;
                 fountain += nextType === "action" ? "\n" : "";

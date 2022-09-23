@@ -31,6 +31,7 @@ const ScreenplayElements: { [type: string]: IElementData } = {
     parenthetical: { lineSize: 23, lineY: 19, offsetY: 0 },
     character: { lineSize: 44, lineY: 19, offsetY: 0 },
     transition: { lineSize: 67, lineY: 19, offsetY: 17 },
+    section: { lineSize: 69, lineY: 20, offsetY: 17 },
 };
 
 const average = (list: number[]) =>

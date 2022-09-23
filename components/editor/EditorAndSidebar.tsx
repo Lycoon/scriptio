@@ -59,6 +59,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         "dialogue",
         "parenthetical",
         "transition",
+        "section",
         "note",
     ];
 
@@ -156,7 +157,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         if (e.key === "Tab") {
             e.preventDefault();
 
-            const idx = (selectedTab + 1) % 7;
+            const idx = (selectedTab + 1) % 8;
             updateSelectedTab(idx);
             setActiveTab(tabs[idx]);
         }

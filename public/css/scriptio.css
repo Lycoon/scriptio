@@ -143,6 +143,14 @@ span.underline {
     content: ":";
 }
 
+.section {
+    text-transform: uppercase;
+    text-align: center !important;
+    text-decoration: underline;
+    line-height: 20px !important;
+    counter-increment: actnumber;
+}
+
 /* Note */
 .note {
     background-color: var(--editor-notes-color); /* a: 0.226 */
