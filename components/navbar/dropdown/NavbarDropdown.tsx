@@ -13,7 +13,7 @@ type Props = {
 };
 
 const NavbarDropdown = ({ activeButtons, project, toggleDropdown }: Props) => {
-    const { editor, updateEditor } = useContext(UserContext);
+    const { editor, updateSaved } = useContext(UserContext);
     const { isScreenplay, isStatistics, isProjectEdition } =
         activeButtons ?? {};
 
@@ -28,6 +28,7 @@ const NavbarDropdown = ({ activeButtons, project, toggleDropdown }: Props) => {
 
             reader.onload = (e: any) => {
                 convertFountainToJSON(e.target.result, editor!);
+                updateSaved(false);
             };
             reader.readAsText(file, "UTF-8");
         };
