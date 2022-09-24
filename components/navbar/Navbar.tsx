@@ -27,7 +27,11 @@ const NotLoggedNavbar = () => (
         <Link className="notlogged-navbar-btn" href={"/contact"}>
             Contact
         </Link>
-        <Link className="notlogged-navbar-btn" href={"/donate"}>
+        <Link
+            className="notlogged-navbar-btn"
+            target={"_blank"}
+            href={"https://paypal.me/lycoon"}
+        >
             Donate
         </Link>
     </div>

@@ -32,6 +32,7 @@
 @import "SettingsPageContainer.module.css";
 @import "Loading.module.css";
 @import "ExportProjectContainer.module.css";
+@import "AboutPageContainer.module.css";
 
 /* Editor */
 @import "EditorComponent.module.css";
