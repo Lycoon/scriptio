@@ -12,6 +12,12 @@ export enum VerificationStatus {
     USED,
 }
 
+export enum PasswordRecoverStatus {
+    SUCCESS,
+    FAILED,
+    EXPIRED,
+}
+
 export const onSuccess = (
     res: NextApiResponse,
     code: number,
@@ -35,6 +41,14 @@ const onResponse = (status: string, message: string, data?: any) => {
         message,
         data,
     };
+};
+
+export const isValidDelay = (date: Date, minutes: number) => {
+    const now = new Date().getTime();
+    const last = date.getTime();
+    const lastMinutes = (now - last) / 1000 / 60;
+
+    return minutes < lastMinutes;
 };
 
 export const getBase64 = async (file: File, width: number, height: number) => {

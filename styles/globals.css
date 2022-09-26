@@ -17,6 +17,7 @@
 @import "RecoveryForm.module.css";
 @import "FormInfo.module.css";
 @import "UploadButton.module.css";
+@import "PasswordChangeForm.module.css";
 
 /* Page containers */
 @import "HomePageContainer.module.css";

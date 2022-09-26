@@ -31,8 +31,12 @@ model Secret {
 
   hash                String
   salt                String
+
   emailHash           String
   lastEmailHash       DateTime    @default(now())
+
+  recoverHash         String?
+  lastRecoverHash     DateTime    @default(now())
 }
 
 model Settings {

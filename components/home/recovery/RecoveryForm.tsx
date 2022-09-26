@@ -1,9 +1,12 @@
+import { sendRecover } from "../../../src/lib/requests";
+
 const RecoveryForm = () => {
-    async function onSubmit(e: any) {
+    const onSubmit = async (e: any) => {
         e.preventDefault();
 
         const email = e.target.email.value;
-    }
+        const res = await sendRecover(email);
+    };
 
     return (
         <form id="recovery-form" onSubmit={onSubmit}>

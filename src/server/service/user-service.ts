@@ -8,7 +8,19 @@ import { sendVerificationEmail } from "../../lib/mail/mail";
 
 const repository = new UserRepository();
 
-export async function checkPassword(secrets: any, password: string) {
+export const updateUserRecoveryHash = async (userId: number) => {
+    const recoverHash = crypto.randomBytes(64).toString("hex");
+    const secrets: Secrets = { recoverHash, lastRecoverHash: new Date() };
+
+    updateUser({
+        id: { id: userId },
+        secrets,
+    });
+
+    return recoverHash;
+};
+
+export const checkPassword = async (secrets: any, password: string) => {
     if (!secrets) {
         return false;
     }
@@ -21,45 +33,52 @@ export async function checkPassword(secrets: any, password: string) {
         return false;
     }
     return true;
-}
+};
 
-export function generateSecrets(password: string): Secrets {
+export const generateSecrets = (password: string): Secrets => {
+    const recoverHash = crypto.randomBytes(64).toString("hex");
     const emailHash = crypto.randomBytes(64).toString("hex");
     const salt = crypto.randomBytes(16).toString("hex");
     const hash = crypto
         .pbkdf2Sync(password, salt, 1000, 64, "sha512")
         .toString("hex");
 
-    return { hash, salt, emailHash };
-}
+    return {
+        hash,
+        salt,
+        emailHash,
+        recoverHash,
+        lastEmailHash: new Date(),
+        lastRecoverHash: new Date(),
+    };
+};
 
-export async function createUser(email: string, password: string) {
+export const createUser = async (email: string, password: string) => {
     const secrets = generateSecrets(password);
     const created = await repository.createUser({
         email,
-        secrets: {
-            emailHash: secrets.emailHash,
-            hash: secrets.hash,
-            salt: secrets.salt,
-        },
+        secrets,
     });
     sendVerificationEmail(created.id, email, secrets.emailHash!);
 
     return created;
-}
+};
 
-export async function updateUser(user: UserUpdate) {
+export const updateUser = async (user: UserUpdate) => {
     return repository.updateUser(user);
-}
+};
 
-export async function deleteUserFromId(userId: number) {
+export const deleteUserFromId = async (userId: number) => {
     return repository.deleteUser({ id: userId });
-}
+};
 
-export async function getUserFromId(userId: number, includeSecrets = false) {
+export const getUserFromId = async (userId: number, includeSecrets = false) => {
     return repository.fetchUser({ id: userId }, includeSecrets);
-}
+};
 
-export async function getUserFromEmail(email: string, includeSecrets = false) {
+export const getUserFromEmail = async (
+    email: string,
+    includeSecrets = false
+) => {
     return repository.fetchUser({ email }, includeSecrets);
-}
+};

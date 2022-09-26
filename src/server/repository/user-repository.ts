@@ -7,6 +7,8 @@ export type Secrets = {
     salt?: string;
     emailHash?: string;
     lastEmailHash?: Date;
+    recoverHash?: string;
+    lastRecoverHash?: Date;
 };
 
 export type Settings = {
