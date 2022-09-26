@@ -3,6 +3,7 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import Navbar from "../../../components/navbar/Navbar";
 import EditProjectContainer from "../../../components/projects/edit/EditProjectContainer";
+import NoStatsContainer from "../../../components/projects/stats/NoStatsContainer";
 import ProjectStatsContainer from "../../../components/projects/stats/ProjectStatsContainer";
 import { sessionOptions } from "../../../src/lib/session";
 import { getProjectFromId } from "../../../src/server/service/project-service";
@@ -26,7 +27,11 @@ const StatsProjectPage: NextPage<Props> = ({ user, project }: Props) => {
                     activeButtons={{ isStatistics: true }}
                     project={project}
                 />
-                <ProjectStatsContainer project={project} />
+                {project.screenplay ? (
+                    <ProjectStatsContainer project={project} />
+                ) : (
+                    <NoStatsContainer projectId={project.id} />
+                )}
             </div>
         </>
     );
