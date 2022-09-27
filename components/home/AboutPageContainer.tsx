@@ -49,7 +49,7 @@ const AboutPageContainer = () => {
                     </div>
                 </div>
                 <p className="about-paragraph">
-                    I'm currently studying a Masters of Computer Science
+                    I am currently studying a Masters of Computer Science
                     Engineering specialized in computer graphics. I enjoy a lot
                     working on several projects in my spare time, discovering
                     and experimenting new technologies. Someday, I had the idea
@@ -57,7 +57,7 @@ const AboutPageContainer = () => {
                     interest nor something that even got my interest.
                 </p>
                 <p className="about-paragraph">
-                    I'm passionate about cinema and moviemaking, especially
+                    I am passionate about cinema and moviemaking, especially
                     screenwriting. I used to write stuff using tools such as
                     <i> Celtx</i> which eventually appeared to have cumbersome
                     interface and limited usage for the free plan. By the end of
