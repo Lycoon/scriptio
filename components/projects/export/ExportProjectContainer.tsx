@@ -1,4 +1,3 @@
-import autoAnimate from "@formkit/auto-animate";
 import FileSaver from "file-saver";
 import Router from "next/router";
 import { useState } from "react";

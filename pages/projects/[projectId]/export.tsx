@@ -2,12 +2,11 @@ import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
 import Navbar from "../../../components/navbar/Navbar";
-import EditProjectContainer from "../../../components/projects/edit/EditProjectContainer";
 import ExportProjectConainer from "../../../components/projects/export/ExportProjectContainer";
 import { sessionOptions } from "../../../src/lib/session";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { getUserFromId } from "../../../src/server/service/user-service";
-import { Project, CookieUser, User } from "../../api/users";
+import { Project, User } from "../../api/users";
 
 type Props = {
     user: User;
