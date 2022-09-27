@@ -10,7 +10,7 @@
 .navbar-dropdown {
     z-index: -1;
     width: 100%;
-    padding-top: 48px;
+    padding-top: 47px;
     animation: dropdown-anim 0.4s;
 }
 
@@ -20,7 +20,7 @@
         opacity: 0;
     }
     to {
-        padding-top: 48px;
+        padding-top: 47px;
         opacity: 1;
     }
 }

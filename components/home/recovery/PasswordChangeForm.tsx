@@ -45,6 +45,10 @@ const PasswordChangeForm = ({ userId, recoverHash }: Props) => {
             <div className="form-header">
                 <h1>Change password</h1>
                 <hr className="hr-form" />
+                <p className="recovery-info segoe">
+                    This is a secure page to change your password. Don't share
+                    the link of this page with anyone else.
+                </p>
                 {formInfo && <FormInfo info={formInfo} />}
             </div>
             <label id="password-form" className="form-element">
