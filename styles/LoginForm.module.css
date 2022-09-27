@@ -3,7 +3,7 @@
     flex-direction: column;
     gap: 40px;
 
-    min-width: min(18vw, 30vh);
+    width: 320px;
     min-height: 25vh;
 }
 

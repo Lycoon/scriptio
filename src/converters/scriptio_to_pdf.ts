@@ -1,79 +1,109 @@
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import * as pdfMake from "pdfmake/build/pdfmake";
-import { JSONContent } from "@tiptap/react";
+import { ExportData } from "../../components/projects/export/ExportProjectContainer";
 
 const fonts = {
-  CourierPrime: {
-    normal: "http://localhost:3000/fonts/Courier%20Prime.ttf",
-    bold: "http://localhost:3000/fonts/Courier%20Prime%20Bold.ttf",
-    italics: "http://localhost:3000/fonts/Courier%20Prime.ttf",
-    bolditalics: "http://localhost:3000/fonts/Courier%20Prime.ttf",
-  },
+    CourierPrime: {
+        normal: "http://localhost:3000/fonts/Courier%20Prime.ttf",
+        bold: "http://localhost:3000/fonts/Courier%20Prime%20Bold.ttf",
+        italics: "http://localhost:3000/fonts/Courier%20Prime.ttf",
+        bolditalics: "http://localhost:3000/fonts/Courier%20Prime.ttf",
+    },
 };
 
-const getPDFSceneTemplate = (text: string) => {
-  return {
-    layout: "noBorders",
-    table: {
-      widths: ["*"],
-      body: [
-        [
-          {
-            text,
-            style: ["scene"],
-          },
-        ],
-      ],
-    },
-  };
+const DEFAULT_OFFSET = 12;
+const addOffset = (pdfNodes: any[]) => {
+    pdfNodes.push(getPDFNodeTemplate("offset", ""));
+};
+
+const getPDFTableTemplate = (text: string, type: string) => {
+    return {
+        layout: "noBorders",
+        table: {
+            widths: ["*"],
+            body: [
+                [
+                    {
+                        text,
+                        style: [type],
+                    },
+                ],
+            ],
+        },
+    };
 };
 
 const getPDFNodeTemplate = (style: string, text: string) => {
-  return {
-    text,
-    style: [style],
-  };
+    return {
+        text,
+        style: [style],
+    };
+};
+
+const getWatermarkData = (text: string) => {
+    return {
+        text,
+        color: "grey",
+        opacity: 0.15,
+        bold: true,
+        italics: false,
+    };
 };
 
 const initPDF = (
-  title: string,
-  author: string,
-  pdfNodes: any[]
+    exportData: ExportData,
+    pdfNodes: any[]
 ): TDocumentDefinitions => {
-  return {
-    info: {
-      title,
-      author,
-    },
-    content: pdfNodes,
-    pageMargins: [105, 70, 70, 70],
-    defaultStyle: {
-      font: "CourierPrime",
-      fontSize: 12,
-      alignment: "left",
-      characterSpacing: -0.4,
-    },
-    styles: {
-      scene: {
-        bold: true,
-        fillColor: "#dadada",
-        lineHeight: 0.85,
-        margin: [4, 0, 0, 0],
-      },
-      character: {
-        margin: [170, 0, 0, 0],
-      },
-      dialogue: {
-        margin: [100, 0],
-      },
-      parenthetical: {
-        margin: [140, 0],
-      },
-      transition: {
-        alignment: "right",
-      },
-    },
-  };
+    return {
+        info: {
+            title: exportData.title,
+            author: exportData.author,
+        },
+        content: pdfNodes,
+        pageMargins: [105, 70, 70, 70],
+        defaultStyle: {
+            font: "CourierPrime",
+            fontSize: 12,
+            alignment: "left",
+            characterSpacing: -0.4,
+        },
+        styles: {
+            scene: {
+                bold: true,
+                fillColor: "#e4e4e4",
+                lineHeight: 0.85,
+                margin: [4, 0, 0, 0],
+            },
+            note: {
+                fillColor: exportData.notesColor ?? "#FFFF68",
+                margin: [6, 0, 0, 0],
+            },
+            character: {
+                margin: [170, 0, 0, 0],
+            },
+            dialogue: {
+                margin: [100, 0, 100, 0],
+            },
+            parenthetical: {
+                margin: [140, 0],
+            },
+            action: {
+                margin: [0, 0, 0, DEFAULT_OFFSET],
+            },
+            transition: {
+                alignment: "right",
+                margin: [0, 0, 0, DEFAULT_OFFSET],
+            },
+            section: {
+                alignment: "center",
+                decoration: "underline",
+                margin: [0, 0, 0, DEFAULT_OFFSET],
+            },
+            offset: {
+                margin: [0, 0, 0, DEFAULT_OFFSET],
+            },
+        },
+    };
 };
 
 /**
@@ -82,44 +112,89 @@ const initPDF = (
  * @param author screenplay author
  * @param json editor content JSON
  */
-export const exportToPDF = async (
-  title: string,
-  author: string,
-  json: JSONContent
-) => {
-  const nodes = json.content!;
-  let pdfNodes = [];
+export const exportToPDF = async (json: any, exportData: ExportData) => {
+    const characters = exportData.characters;
+    const nodes = json.content!;
+    let pdfNodes = [];
 
-  for (let i = 0; i < nodes.length; i++) {
-    if (!nodes[i]["content"]) {
-      continue;
+    for (let i = 0; i < nodes.length; i++) {
+        if (!nodes[i]["content"]) {
+            continue;
+        }
+
+        const text: string = nodes[i]["content"]![0]["text"]!;
+        const type: string = nodes[i]["attrs"]!["class"];
+
+        let nextType = "action";
+        if (i + 1 < nodes.length) nextType = nodes[i + 1]["attrs"]!["class"];
+
+        // Don't export unselected characters
+        if (type === "character" && characters && !characters.includes(text)) {
+            let j = i + 1;
+            for (; j < nodes.length; j++) {
+                const typeJ: string = nodes[j]["attrs"]!["class"];
+                if (typeJ === "dialogue" || typeJ === "parenthetical") {
+                    continue;
+                }
+
+                break;
+            }
+            i = j - 1;
+            continue;
+        }
+
+        switch (type) {
+            case "scene":
+                pdfNodes.push(getPDFTableTemplate(text.toUpperCase(), "scene"));
+                addOffset(pdfNodes);
+                break;
+            case "character":
+                pdfNodes.push(
+                    getPDFNodeTemplate("character", text.toUpperCase())
+                );
+                break;
+            case "dialogue":
+                pdfNodes.push(getPDFNodeTemplate("dialogue", text));
+                if (nextType !== "parenthetical") {
+                    addOffset(pdfNodes);
+                }
+                break;
+            case "parenthetical":
+                pdfNodes.push(
+                    getPDFNodeTemplate("parenthetical", "(" + text + ")")
+                );
+                break;
+            case "transition":
+                pdfNodes.push(
+                    getPDFNodeTemplate("transition", text.toUpperCase() + ":")
+                );
+                break;
+            case "section":
+                pdfNodes.push(
+                    getPDFNodeTemplate("section", text.toUpperCase())
+                );
+                break;
+            case "note":
+                if (exportData.notes) {
+                    pdfNodes.push(getPDFTableTemplate(text, "note"));
+                    addOffset(pdfNodes);
+                }
+                break;
+            default:
+                pdfNodes.push(getPDFNodeTemplate("action", text));
+        }
     }
-    const text: string = nodes[i]["content"]![0]["text"]!;
-    const type: string = nodes[i]["attrs"]!["class"];
 
-    switch (type) {
-      case "scene":
-        pdfNodes.push(getPDFSceneTemplate(text.toUpperCase()));
-        break;
-      case "character":
-        pdfNodes.push(getPDFNodeTemplate("character", text.toUpperCase()));
-        break;
-      case "dialogue":
-        pdfNodes.push(getPDFNodeTemplate("dialogue", text));
-        break;
-      case "parenthetical":
-        pdfNodes.push(getPDFNodeTemplate("parenthetical", "(" + text + ")"));
-        break;
-      case "transition":
-        pdfNodes.push(
-          getPDFNodeTemplate("transition", text.toUpperCase() + ":")
-        );
-        break;
-      default:
-        pdfNodes.push(getPDFNodeTemplate("action", text));
+    let pdf = initPDF(exportData, pdfNodes);
+    if (exportData.watermark) {
+        pdf.watermark = {
+            text: exportData.author,
+            color: "grey",
+            opacity: 0.15,
+            bold: true,
+            italics: false,
+        };
     }
-  }
 
-  const pdf = initPDF(title, author, pdfNodes);
-  pdfMake.createPdf(pdf, undefined, fonts).open();
+    pdfMake.createPdf(pdf, undefined, fonts).open();
 };

@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "../../pages/api/users";
 import { deleteProject } from "../../src/lib/requests";
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./NewProjectPage";
 import ProjectItem from "./ProjectItem";
+import autoAnimate from "@formkit/auto-animate";
 
 type Props = {
     projects: Project[];
@@ -23,6 +25,11 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
     const [projs, setProjs] = useState(projects);
     const [isCreating, setIsCreating] = useState(false);
     const [deleteMode, setDeleteMode] = useState(false);
+    const parent = useRef(null);
+
+    useEffect(() => {
+        parent.current && autoAnimate(parent.current);
+    }, [parent]);
 
     const deleteFromProjectPage = (userId: number, projectId: number) => {
         const updatedProjects: Project[] = [];
@@ -67,8 +74,8 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
                         </div>
                         <hr />
                     </div>
-                    <div className="project-grid">
-                        {projs.map(function (project: Project) {
+                    <div ref={parent} className="project-grid">
+                        {projs.map((project: Project) => {
                             return (
                                 <ProjectItem
                                     key={project.id}

@@ -4,6 +4,7 @@ import Router from "next/router";
 import { useContext } from "react";
 import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
+import { saveScreenplay } from "../../src/lib/requests";
 import { ActiveButtons } from "../../src/lib/utils";
 import NavbarButton from "./NavbarButton";
 
@@ -14,31 +15,40 @@ type Props = {
     project?: Project;
 };
 
-const onLogIn = () => {
-    Router.push("/login");
-};
-
-const onSignUp = () => {
-    Router.push("/signup");
-};
-
 const onSettings = () => {
     Router.push("/settings");
 };
 
 const NotLoggedNavbar = () => (
-    <div id="navbar-buttons">
-        <NavbarButton content="Log in" action={onLogIn} />
-        <NavbarButton content="Sign up" action={onSignUp} />
+    <div id="notlogged-navbar-btns">
+        <Link className="notlogged-navbar-btn" href={"/about"}>
+            About
+        </Link>
+        <Link className="notlogged-navbar-btn" href={"/contact"}>
+            Contact
+        </Link>
+        <Link
+            className="notlogged-navbar-btn"
+            target={"_blank"}
+            href={"https://paypal.me/lycoon"}
+        >
+            Donate
+        </Link>
     </div>
 );
 
 const Navbar = ({ activeButtons, project }: Props) => {
-    const { user, updateUser } = useContext(UserContext);
+    const { user, updateUser, saved, updateSaved } = useContext(UserContext);
+
     const onLogOut = async () => {
         await fetch("/api/logout");
         updateUser(undefined);
         Router.push("/");
+    };
+
+    const onSave = () => {
+        saveScreenplay(project?.userId!, project?.id!, project?.screenplay);
+        updateSaved(true);
     };
 
     return (
@@ -58,6 +68,17 @@ const Navbar = ({ activeButtons, project }: Props) => {
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
+                    {activeButtons?.isScreenplay && (
+                        <div
+                            className={"save-btn" + (saved ? " disabled" : "")}
+                            onClick={onSave}
+                        >
+                            <img
+                                className="settings-icon"
+                                src="/images/save.png"
+                            />
+                        </div>
+                    )}
                     <div className="settings-btn" onClick={onSettings}>
                         <img className="settings-icon" src="/images/gear.png" />
                     </div>

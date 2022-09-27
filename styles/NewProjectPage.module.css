@@ -36,6 +36,9 @@
     border-color: #757575;
 
     width: 40%;
+    font-size: 1rem;
+    white-space: nowrap;
+    cursor: pointer;
 }
 
 .back-btn:hover {
@@ -64,10 +67,4 @@
     min-height: 100px;
     max-height: 300px;
     resize: vertical;
-}
-
-.back-btn {
-    font-size: 1rem;
-    white-space: nowrap;
-    cursor: pointer;
 }

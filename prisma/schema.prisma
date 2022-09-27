@@ -31,8 +31,12 @@ model Secret {
 
   hash                String
   salt                String
+
   emailHash           String
   lastEmailHash       DateTime    @default(now())
+
+  recoverHash         String?
+  lastRecoverHash     DateTime    @default(now())
 }
 
 model Settings {
@@ -41,6 +45,8 @@ model Settings {
 
   highlightOnHover    Boolean     @default(false)
   sceneBackground     Boolean     @default(true)
+  notesColor          String      @default("#FFFF68")
+  exportedNotesColor  String      @default("#FFFF68")
 }
 
 model Project {

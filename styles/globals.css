@@ -1,5 +1,4 @@
 /* Layouts */
-@import "HomePageFooter.module.css";
 @import "Navbar.module.css";
 @import "NavbarButton.module.css";
 @import "NavbarTab.module.css";
@@ -18,6 +17,7 @@
 @import "RecoveryForm.module.css";
 @import "FormInfo.module.css";
 @import "UploadButton.module.css";
+@import "PasswordChangeForm.module.css";
 
 /* Page containers */
 @import "HomePageContainer.module.css";
@@ -32,6 +32,8 @@
 @import "ProjectStatsContainer.module.css";
 @import "SettingsPageContainer.module.css";
 @import "Loading.module.css";
+@import "ExportProjectContainer.module.css";
+@import "AboutPageContainer.module.css";
 
 /* Editor */
 @import "EditorComponent.module.css";
@@ -51,21 +53,32 @@ body {
     margin: 0 !important;
 }
 
+a {
+    font-family: roboto;
+    color: var(--secondary-text);
+}
+
+a:hover {
+    color: #ffffff;
+}
+
 html.light {
     --primary-bg: #ffffff;
-    --secondary-bg: #474747;
+    --secondary-bg: #797979;
     --secondary-bg-hover: #616161;
     --upload-bg-hover: #eeeeee;
 
     --primary-text: #474747;
-    --secondary-text: #9b9b9b;
+    --secondary-text: #ffffff;
 
     --separator: #e0e0e0;
     --input-outline: #a2a2a2;
     --navbar-outline: #777777;
+    --header-background: #f0f0f0;
 
     --project-item-bg: #ffffff;
     --project-item-shadow: 0px 0px 6px rgba(100, 100, 100, 0.401);
+    --export-project-selected: #505050;
 
     --editor-scene: #dadada;
     --editor-text: #000000;
@@ -79,11 +92,7 @@ html.light {
     --editor-style-bg: #ffffff;
     --editor-style-bg-hover: #f5f5f5;
     --editor-style-bg-active: #616161;
-
-    --home-bg-1: #e3caaa;
-    --home-bg-2: #fcd1d1;
-    --home-bg-3: #fdf6ec;
-    --home-bg-4: #b7cadb;
+    --editor-element-hover: #eeeeee;
 }
 
 html.dark {
@@ -98,9 +107,11 @@ html.dark {
     --separator: #414141;
     --input-outline: #3d3d3d;
     --navbar-outline: #414141;
+    --header-background: #2e2e2e;
 
     --project-item-bg: #2e2e2e;
     --project-item-shadow: none;
+    --export-project-selected: #505050;
 
     --editor-scene: #3d3d3d;
     --editor-text: #ffffff;
@@ -114,11 +125,7 @@ html.dark {
     --editor-style-bg: #1d1d1d;
     --editor-style-bg-hover: #3c3c3c;
     --editor-style-bg-active: #5d5d5d;
-
-    --home-bg-1: #252850;
-    --home-bg-2: #47cca0;
-    --home-bg-3: #22c5ca;
-    --home-bg-4: #252850;
+    --editor-element-hover: #3d3d3d;
 }
 
 hr {
@@ -142,7 +149,12 @@ h1 {
 }
 
 h2 {
+    font-family: tommy;
     color: var(--primary-text);
+}
+
+h3 {
+    font-family: tommy;
 }
 
 .main-container {

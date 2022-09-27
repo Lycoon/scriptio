@@ -25,8 +25,8 @@
         section: /^(#+)(?: *)(.*)/,
         synopsis: /^(?:\=(?!\=+) *)(.*)/,
 
-        note: /^(?:\[{2}(?!\[+))(.+)(?:\]{2}(?!\[+))$/,
-        note_inline: /(?:\[{2}(?!\[+))([\s\S]+?)(?:\]{2}(?!\[+))/g,
+        note: /(?:\[{2,})([^\]]+)(?:\]{2,})/,
+        note_inline: /(?:\[{2,})([^\]]+)(?:\]{2,})/,
         boneyard: /(^\/\*|^\*\/)$/g,
 
         page_break: /^\={3,}$/,
@@ -74,6 +74,16 @@
 
         while (i--) {
             line = src[i];
+
+            // notes
+            if ((match = line.match(regex.note))) {
+                tokens.push({ type: "note", text: match[1] });
+                if (line.length === match[0].length) {
+                    continue;
+                }
+
+                line = line.replace(match[0], "");
+            }
 
             // title page
             if (regex.title_page.test(line)) {
@@ -180,12 +190,6 @@
                 continue;
             }
 
-            // notes
-            if ((match = line.match(regex.note))) {
-                tokens.push({ type: "note", text: match[1] });
-                continue;
-            }
-
             // boneyard
             if ((match = line.match(regex.boneyard))) {
                 tokens.push({
@@ -214,8 +218,7 @@
     };
 
     var inline = {
-        note: "<!-- $1 -->",
-
+        //note: '<span class="note">$1</span>',
         line_break: "<br />",
 
         bold_italic_underline: '<span class="bold italic underline">$2</span>',
@@ -309,9 +312,6 @@
                 case "source":
                     title_page.push('<p class="source">' + token.text + "</p>");
                     break;
-                case "notes":
-                    title_page.push('<p class="notes">' + token.text + "</p>");
-                    break;
                 case "draft_date":
                     title_page.push(
                         '<p class="draft-date">' + token.text + "</p>"
@@ -348,15 +348,15 @@
 
                     html.push('<p class="transition">' + token.text + "</p>");
                     break;
-
                 /* case "dual_dialogue_begin":
-          html.push('<div class="dual-dialogue">');
-          break;
-        case "dialogue_begin":
-          html.push(
-            '<div class="dialogue' + (token.dual ? " " + token.dual : "") + '">'
-          );
-          break;*/
+                    html.push('<div class="dual-dialogue">');
+                    break;
+                    case "dialogue_begin":
+                    html.push(
+                        '<div class="dialogue' + (token.dual ? " " + token.dual : "") + '">'
+                    );
+                    break;
+                */
                 case "character":
                     html.push('<p class="character">' + token.text + "</p>");
                     break;
@@ -374,13 +374,18 @@
                 case "dialogue":
                     html.push('<p class="dialogue">' + token.text + "</p>");
                     break;
-                /*case "dialogue_end":
-          html.push("</div> ");
-          break;
-        case "dual_dialogue_end":
-          html.push("</div> ");
-          break;*/
 
+                case "note":
+                    html.push('<p class="note">' + token.text + "</p>");
+                    break;
+                /*
+                case "dialogue_end":
+                    html.push("</div> ");
+                    break;
+                    case "dual_dialogue_end":
+                    html.push("</div> ");
+                    break;
+                */
                 case "section":
                     html.push(
                         '<p class="section" data-depth="' +
@@ -393,19 +398,18 @@
                 case "synopsis":
                     html.push('<p class="synopsis">' + token.text + "</p>");
                     break;
-
+                /*
                 case "note":
                     html.push("<!-- " + token.text + "-->");
                     break;
+                */
                 case "boneyard_begin":
                     html.push("<!-- ");
                     break;
                 case "boneyard_end":
                     html.push(" -->");
                     break;
-
                 case "action":
-                    console.log("action");
                     html.push('<p class="action">' + token.text + "</p>");
                     break;
                 case "centered":

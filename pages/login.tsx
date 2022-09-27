@@ -1,6 +1,5 @@
 import type { GetServerSideProps, NextApiRequest, NextPage } from "next";
 import Head from "next/head";
-import HomePageFooter from "../components/home/HomePageFooter";
 import Navbar from "../components/navbar/Navbar";
 import LoginContainer from "../components/home/login/LoginContainer";
 import { VerificationStatus } from "../src/lib/utils";
@@ -17,7 +16,6 @@ const LoginPage: NextPage<Props> = ({ verificationStatus }: Props) => (
         <div className="main-container">
             <Navbar />
             <LoginContainer verificationStatus={verificationStatus} />
-            <HomePageFooter />
         </div>
     </>
 );

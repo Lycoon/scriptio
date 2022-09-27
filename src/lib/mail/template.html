@@ -333,7 +333,6 @@
         </style>
     </head>
     <body>
-        <span class="preheader">Click here to verify your account</span>
         <table
             role="presentation"
             border="0"
@@ -359,16 +358,9 @@
                                         <tr>
                                             <td>
                                                 <h2 align="center">
-                                                    Thank you for joining
-                                                    Scriptio
+                                                    {{welcomeMessage}}
                                                 </h2>
-                                                <p>
-                                                    Hello {{email}}. Click the
-                                                    button below to verify your
-                                                    email address after which
-                                                    you will be able to log in
-                                                    using your credentials.
-                                                </p>
+                                                <p>{{content}}</p>
                                                 <table
                                                     role="presentation"
                                                     border="0"
@@ -389,10 +381,9 @@
                                                                         <tr>
                                                                             <td>
                                                                                 <a
-                                                                                    href="{{verificationLink}}"
+                                                                                    href="{{link}}"
                                                                                     target="_blank"
-                                                                                    >Verifiy
-                                                                                    account</a
+                                                                                    >{{buttonContent}}</a
                                                                                 >
                                                                             </td>
                                                                         </tr>
@@ -403,10 +394,10 @@
                                                     </tbody>
                                                 </table>
                                                 <p>
-                                                    If you did not request to
-                                                    verify a Scriptio account,
-                                                    you can safely ignore this
-                                                    email.
+                                                    If you did not request
+                                                    anything from Scriptio
+                                                    website, you can safely
+                                                    ignore this email.
                                                 </p>
                                             </td>
                                         </tr>

@@ -1,20 +1,14 @@
 import { withIronSessionApiRoute } from "iron-session/next";
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
-    FAILED_PASSWORD_CHANGED,
     FAILED_USER_DELETION,
-    MISSING_BODY,
-    PASSWORD_CHANGED,
-    PASSWORD_REQUIREMENTS,
     USER_DELETED,
 } from "../../../../src/lib/messages";
 import { sessionOptions } from "../../../../src/lib/session";
 import { onError, onSuccess } from "../../../../src/lib/utils";
 import {
     deleteUserFromId,
-    generateSecrets,
     getUserFromId,
-    updateUser,
 } from "../../../../src/server/service/user-service";
 
 export default withIronSessionApiRoute(handler, sessionOptions);

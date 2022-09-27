@@ -15,6 +15,13 @@
         "col1    col2";
 }
 
+.notes-color {
+    position: absolute;
+    right: 0;
+    border: none !important;
+    outline: none !important;
+}
+
 .settings-header {
     grid-area: header;
 }
@@ -22,6 +29,10 @@
 .settings-profile {
     grid-area: profile;
     margin-top: -25px;
+
+    background-color: var(--header-background);
+    border-radius: 12px;
+    padding: 26px;
 }
 
 .settings-email {
@@ -29,13 +40,13 @@
 }
 
 .settings-joined-date {
-    color: var(--secondary-text);
+    color: var(--primary-text);
     font-style: italic;
     margin-top: 5px;
 }
 
 .settings-label {
-    color: var(--secondary-text);
+    color: var(--primary-text);
     font-style: italic;
 }
 
@@ -75,6 +86,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    position: relative; /* for notes color input to not displace elements */
 }
 
 #language-form {
@@ -84,6 +96,9 @@
     padding-block: 2px;
     border-color: var(--secondary-bg);
     border-radius: 5px;
+
+    position: absolute;
+    right: 0;
 }
 
 @media (max-width: 900px) {

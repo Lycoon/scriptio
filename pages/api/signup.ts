@@ -1,8 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { sendVerificationEmail } from "../../src/lib/mail/mail";
-import { onError, onSuccess } from "../../src/lib/utils";
+import { isValidDelay, onError, onSuccess } from "../../src/lib/utils";
 import {
     EMAIL_ALREADY_REGISTERED,
+    ERROR_SIGN_UP,
     ERROR_VERIFICATION_THROTTLE,
     MISSING_BODY,
     PASSWORD_REQUIREMENTS,
@@ -36,21 +37,23 @@ export default async function signup(
             return onError(res, 500, EMAIL_ALREADY_REGISTERED);
         }
 
-        const now = new Date().getTime();
-        const lastEmailHash = existing.secrets.lastEmailHash.getTime();
-        const lastEmailMinutes = (now - lastEmailHash) / 1000 / 60;
-
-        if (lastEmailMinutes < 5) {
+        if (!isValidDelay(existing.secrets.lastEmailHash, 5)) {
             return onError(res, 500, ERROR_VERIFICATION_THROTTLE);
         }
 
         const secrets = generateSecrets(password);
-        secrets.lastEmailHash = new Date();
+        if (!secrets) {
+            return onError(res, 500, ERROR_SIGN_UP);
+        }
 
-        await updateUser({
+        const updated = await updateUser({
             id: { id: existing.id },
             secrets,
         });
+
+        if (!updated) {
+            return onError(res, 500, ERROR_SIGN_UP);
+        }
 
         sendVerificationEmail(existing.id, email, secrets.emailHash!);
         return onSuccess(res, 200, VERIFICATION_SENT, null);
@@ -58,7 +61,7 @@ export default async function signup(
 
     const created = await createUser(email, password);
     if (!created) {
-        return onError(res, 500, "User could not be created");
+        return onError(res, 500, ERROR_SIGN_UP);
     }
 
     onSuccess(res, 201, VERIFICATION_SENT, null);

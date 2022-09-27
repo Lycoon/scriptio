@@ -97,6 +97,11 @@ const EditorSidebar = ({
                     active={tabs[selectedTab] == "transition"}
                 />
                 <EditorTab
+                    action={() => setActiveTab("section")}
+                    content="Section"
+                    active={tabs[selectedTab] == "section"}
+                />
+                <EditorTab
                     action={() => setActiveTab("note")}
                     content="[[Note]]"
                     active={tabs[selectedTab] == "note"}

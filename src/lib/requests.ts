@@ -48,6 +48,33 @@ export const login = (email: string, password: string) => {
     return request(`/api/login`, "POST", JSON.stringify({ email, password }));
 };
 
+export const validateRecover = (
+    userId: number,
+    recoverHash: string,
+    password: string
+) => {
+    return request(
+        `/api/recover`,
+        "PATCH",
+        JSON.stringify({ userId, recoverHash, password })
+    );
+};
+
+export const sendRecover = (email: string) => {
+    return request(`/api/recover`, "POST", JSON.stringify({ email }));
+};
+
+export const saveScreenplay = async (
+    userId: number,
+    projectId: number,
+    screenplay: any
+) => {
+    editProject(userId, {
+        projectId,
+        screenplay,
+    });
+};
+
 const request = async (url: string, method: string, body?: string) => {
     return fetch(url, {
         headers: { "Content-Type": "application/json" },

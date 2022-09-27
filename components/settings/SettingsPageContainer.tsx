@@ -2,11 +2,7 @@ import { useTheme } from "next-themes";
 import { useState } from "react";
 import { User } from "../../pages/api/users";
 import { ERROR_PASSWORD_MATCH } from "../../src/lib/messages";
-import {
-    changePassword,
-    editProject,
-    editUserSettings,
-} from "../../src/lib/requests";
+import { changePassword, editUserSettings } from "../../src/lib/requests";
 import FormInfo, { FormInfoType } from "../home/FormInfo";
 
 type Props = {
@@ -18,6 +14,12 @@ const SettingsPageContainer = ({ user }: Props) => {
 
     const { theme, setTheme } = useTheme();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
+    const [notesColor, setNotesColor] = useState<string>(
+        user.settings.notesColor
+    );
+    const [exportedNotesColor, setExportedNotesColor] = useState<string>(
+        user.settings.exportedNotesColor
+    );
     const [sceneBackground, setSceneBackground] = useState<boolean>(
         user.settings.sceneBackground
     );
@@ -26,23 +28,35 @@ const SettingsPageContainer = ({ user }: Props) => {
     );
 
     const toggleTheme = () => {
+        console.log("changed theme");
+
         setTheme(theme === "light" ? "dark" : "light");
     };
     const resetFromInfo = () => {
         setFormInfo(null);
     };
 
-    function toggleHighlightOnHover() {
+    const toggleHighlightOnHover = () => {
         editUserSettings(user.id, { highlightOnHover: !highlightOnHover });
         setHighlightOnHover(!highlightOnHover);
-    }
+    };
 
-    function toggleSceneBackground() {
+    const toggleSceneBackground = () => {
         editUserSettings(user.id, { sceneBackground: !sceneBackground });
         setSceneBackground(!sceneBackground);
-    }
+    };
 
-    async function onChangePassword(e: any) {
+    const updateNotesColor = (newColor: string) => {
+        setNotesColor(newColor);
+        editUserSettings(user.id, { notesColor: newColor });
+    };
+
+    const updateExportedNotesColor = (newColor: string) => {
+        setExportedNotesColor(newColor);
+        editUserSettings(user.id, { exportedNotesColor: newColor });
+    };
+
+    const onChangePassword = async (e: any) => {
         e.preventDefault();
         resetFromInfo();
 
@@ -62,7 +76,7 @@ const SettingsPageContainer = ({ user }: Props) => {
         } else {
             setFormInfo({ content: json.message, isError: true });
         }
-    }
+    };
 
     return (
         <div className="center-flex">
@@ -98,6 +112,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                                     className="form-input"
                                     name="password1"
                                     type="password"
+                                    autoComplete="on"
                                     required
                                 />
 
@@ -108,6 +123,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                                     className="form-input"
                                     name="password2"
                                     type="password"
+                                    autoComplete="on"
                                     required
                                 />
                             </label>
@@ -126,7 +142,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                             <p>Dark theme</p>
                             <input
                                 type="checkbox"
-                                onChange={toggleTheme}
+                                onClick={toggleTheme}
                                 defaultChecked={theme === "dark"}
                             />
                         </div>
@@ -159,6 +175,32 @@ const SettingsPageContainer = ({ user }: Props) => {
                                 type="checkbox"
                                 onChange={toggleSceneBackground}
                                 defaultChecked={user.settings.sceneBackground}
+                            />
+                        </div>
+                    </div>
+                    <div className="settings-element">
+                        <div className="settings-element-header">
+                            <p>Notes color</p>
+                            <input
+                                type="color"
+                                className="notes-color"
+                                name="notes-color"
+                                defaultValue={user.settings.notesColor}
+                                onBlur={(e) => updateNotesColor(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className="settings-element">
+                        <div className="settings-element-header">
+                            <p>Exported notes color</p>
+                            <input
+                                type="color"
+                                className="notes-color"
+                                name="exported-notes-color"
+                                defaultValue={user.settings.exportedNotesColor}
+                                onBlur={(e) =>
+                                    updateExportedNotesColor(e.target.value)
+                                }
                             />
                         </div>
                         <hr />

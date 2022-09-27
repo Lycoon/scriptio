@@ -1,23 +1,13 @@
 import { withIronSessionApiRoute } from "iron-session/next";
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
-    FAILED_PASSWORD_CHANGED,
-    FAILED_USER_DELETION,
     FAILED_USER_SETTINGS_UPDATE,
     MISSING_BODY,
-    PASSWORD_CHANGED,
-    PASSWORD_REQUIREMENTS,
-    USER_DELETED,
     USER_SETTINGS_UPDATED,
 } from "../../../../src/lib/messages";
 import { sessionOptions } from "../../../../src/lib/session";
 import { onError, onSuccess } from "../../../../src/lib/utils";
-import {
-    deleteUserFromId,
-    generateSecrets,
-    getUserFromId,
-    updateUser,
-} from "../../../../src/server/service/user-service";
+import { updateUser } from "../../../../src/server/service/user-service";
 
 export default withIronSessionApiRoute(handler, sessionOptions);
 
@@ -48,9 +38,14 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     if (typeof body.highlightOnHover === "boolean") {
         settings.highlightOnHover = body.highlightOnHover;
     }
-
     if (typeof body.sceneBackground === "boolean") {
         settings.sceneBackground = body.sceneBackground;
+    }
+    if (typeof body.notesColor === "string") {
+        settings.notesColor = body.notesColor;
+    }
+    if (typeof body.exportedNotesColor === "string") {
+        settings.exportedNotesColor = body.exportedNotesColor;
     }
 
     const updated = await updateUser({

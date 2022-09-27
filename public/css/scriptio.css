@@ -68,7 +68,7 @@ span.underline {
 
 /* User settings */
 .highlight-on-hover p:hover {
-    background-color: var(--editor-scene);
+    background-color: var(--editor-element-hover);
 }
 
 .scene-background .scene {
@@ -141,4 +141,24 @@ span.underline {
 
 .transition::after {
     content: ":";
+}
+
+.section {
+    text-transform: uppercase;
+    text-align: center !important;
+    text-decoration: underline;
+    line-height: 20px !important;
+    counter-increment: actnumber;
+}
+
+/* Note */
+.note {
+    background-color: var(--editor-notes-color); /* a: 0.226 */
+    padding-inline: 8px;
+    padding-block: 4px;
+
+    border-style: dashed;
+    border-width: 2px;
+    border-color: var(--editor-notes-color); /* a: 0.226 */
+    border-radius: 10px;
 }

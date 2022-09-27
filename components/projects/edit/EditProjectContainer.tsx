@@ -103,7 +103,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
                     </button>
                 </div>
             </form>
-            <ProjectDangerZone project={project} user={user} />
+            {/*<ProjectDangerZone project={project} user={user} />*/}
         </div>
     );
 };

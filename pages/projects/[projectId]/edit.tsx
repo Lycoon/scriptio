@@ -1,7 +1,6 @@
 import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
-import HomePageFooter from "../../../components/home/HomePageFooter";
 import Navbar from "../../../components/navbar/Navbar";
 import EditProjectContainer from "../../../components/projects/edit/EditProjectContainer";
 import { sessionOptions } from "../../../src/lib/session";
@@ -27,7 +26,6 @@ const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
                     project={project}
                 />
                 <EditProjectContainer user={user} project={project} />
-                <HomePageFooter />
             </div>
         </>
     );
