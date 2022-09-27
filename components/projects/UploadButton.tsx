@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type Props = {
@@ -52,7 +53,12 @@ const UploadButton = ({ setSelectedFile, selectedFile }: Props) => {
                 </label>
             ) : (
                 <div className="upload-preview">
-                    <img className="upload-preview-image" src={preview} />
+                    <Image
+                        className="upload-preview-image"
+                        src={preview}
+                        width={140}
+                        height={140}
+                    />
                     <div className="upload-preview-info">
                         <p className="upload-preview-filename segoe">
                             {selectedFile && selectedFile.name}

@@ -6,6 +6,7 @@ import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./NewProjectPage";
 import ProjectItem from "./ProjectItem";
 import autoAnimate from "@formkit/auto-animate";
+import Image from "next/image";
 
 type Props = {
     projects: Project[];
@@ -59,9 +60,11 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
                                     onClick={() => setDeleteMode(!deleteMode)}
                                     className="delete-project-btn"
                                 >
-                                    <img
+                                    <Image
                                         className="delete-project-icon"
-                                        src="/images/trash.png"
+                                        src={"/images/trash.png"}
+                                        width={20}
+                                        height={20}
                                     />
                                 </div>
                                 <button
