@@ -4,10 +4,10 @@ import { ExportData } from "../../components/projects/export/ExportProjectContai
 
 const fonts = {
     CourierPrime: {
-        normal: "http://localhost:3000/fonts/Courier%20Prime.ttf",
-        bold: "http://localhost:3000/fonts/Courier%20Prime%20Bold.ttf",
-        italics: "http://localhost:3000/fonts/Courier%20Prime.ttf",
-        bolditalics: "http://localhost:3000/fonts/Courier%20Prime.ttf",
+        normal: "https://scriptio.app/fonts/Courier%20Prime.ttf",
+        bold: "https://scriptio.app/fonts/Courier%20Prime%20Bold.ttf",
+        italics: "https://scriptio.app/fonts/Courier%20Prime.ttf",
+        bolditalics: "https://scriptio.app/fonts/Courier%20Prime.ttf",
     },
 };
 
