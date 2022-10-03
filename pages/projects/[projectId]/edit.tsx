@@ -4,6 +4,7 @@ import Head from "next/head";
 import Navbar from "../../../components/navbar/Navbar";
 import EditProjectContainer from "../../../components/projects/edit/EditProjectContainer";
 import { sessionOptions } from "../../../src/lib/session";
+import { Page } from "../../../src/lib/utils";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { Project, CookieUser } from "../../api/users";
 
@@ -21,10 +22,7 @@ const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
                 <title>{project.title} - Edit</title>
             </Head>
             <div className="main-container">
-                <Navbar
-                    activeButtons={{ isProjectEdition: true }}
-                    project={project}
-                />
+                <Navbar page={Page.EDIT} project={project} />
                 <EditProjectContainer user={user} project={project} />
             </div>
         </>

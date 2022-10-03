@@ -28,6 +28,8 @@ const ProjectItem = ({ project, deleteMode, deleteProject }: Props) => {
             ? "/api/s3/" + project.poster
             : "/images/default-poster.png";
 
+    console.log(posterPath);
+
     return (
         <button
             className={

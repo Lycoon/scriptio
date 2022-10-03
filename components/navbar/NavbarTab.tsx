@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Project } from "../../pages/api/users";
-import { ActiveButtons } from "../../src/lib/utils";
+import { Page } from "../../src/lib/utils";
 import NavbarDropdown from "./dropdown/NavbarDropdown";
 
 type Props = {
-    activeButtons?: ActiveButtons;
+    page: Page;
     project: Project;
 };
 
-const NavbarTab = ({ activeButtons, project }: Props) => {
+const NavbarTab = ({ page, project }: Props) => {
     const [active, updateActive] = useState<boolean>(false);
     const toggleDropdown = () => {
         updateActive(!active);
@@ -24,7 +24,7 @@ const NavbarTab = ({ activeButtons, project }: Props) => {
             />
             {active && (
                 <NavbarDropdown
-                    activeButtons={activeButtons}
+                    page={page}
                     project={project}
                     toggleDropdown={toggleDropdown}
                 />

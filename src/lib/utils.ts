@@ -1,11 +1,5 @@
 import { NextApiResponse } from "next";
 
-export type ActiveButtons = {
-    isScreenplay?: boolean;
-    isStatistics?: boolean;
-    isProjectEdition?: boolean;
-};
-
 export enum VerificationStatus {
     SUCCESS,
     FAILED,
@@ -16,6 +10,13 @@ export enum PasswordRecoverStatus {
     SUCCESS,
     FAILED,
     EXPIRED,
+}
+
+export enum Page {
+    EXPORT,
+    SCREENPLAY,
+    STATISTICS,
+    EDIT,
 }
 
 export const onSuccess = (

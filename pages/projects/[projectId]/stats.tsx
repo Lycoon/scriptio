@@ -6,6 +6,7 @@ import EditProjectContainer from "../../../components/projects/edit/EditProjectC
 import NoStatsContainer from "../../../components/projects/stats/NoStatsContainer";
 import ProjectStatsContainer from "../../../components/projects/stats/ProjectStatsContainer";
 import { sessionOptions } from "../../../src/lib/session";
+import { Page } from "../../../src/lib/utils";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { Project, CookieUser } from "../../api/users";
 
@@ -23,10 +24,7 @@ const StatsProjectPage: NextPage<Props> = ({ user, project }: Props) => {
                 <title>{project.title} - Statistics</title>
             </Head>
             <div className="main-container">
-                <Navbar
-                    activeButtons={{ isStatistics: true }}
-                    project={project}
-                />
+                <Navbar page={Page.STATISTICS} project={project} />
                 {project.screenplay ? (
                     <ProjectStatsContainer project={project} />
                 ) : (

@@ -1,21 +1,19 @@
 import Router from "next/router";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { Project } from "../../../pages/api/users";
 import { UserContext } from "../../../src/context/UserContext";
 import { convertFountainToJSON } from "../../../src/converters/fountain_to_scriptio";
-import { ActiveButtons } from "../../../src/lib/utils";
+import { Page } from "../../../src/lib/utils";
 import DropdownItem from "./DropdownItem";
 
 type Props = {
-    activeButtons?: ActiveButtons;
+    page: Page;
     project: Project;
     toggleDropdown: () => void;
 };
 
-const NavbarDropdown = ({ activeButtons, project, toggleDropdown }: Props) => {
+const NavbarDropdown = ({ page, project, toggleDropdown }: Props) => {
     const { editor, updateSaved } = useContext(UserContext);
-    const { isScreenplay, isStatistics, isProjectEdition } =
-        activeButtons ?? {};
 
     const importFile = () => {
         var input = document.createElement("input");
@@ -67,27 +65,25 @@ const NavbarDropdown = ({ activeButtons, project, toggleDropdown }: Props) => {
 
     return (
         <div className="dropdown-items navbar-dropdown">
-            {isScreenplay && (
-                <DropdownItem
-                    action={importFile}
-                    content="Import..."
-                    icon="import.png"
-                />
-            )}
-            {isScreenplay && (
+            <DropdownItem
+                action={importFile}
+                content="Import..."
+                icon="import.png"
+            />
+            {page !== Page.EXPORT && (
                 <DropdownItem
                     action={exportFile}
                     content="Export..."
                     icon="export.png"
                 />
             )}
-            {!isScreenplay && (
+            {page !== Page.SCREENPLAY && (
                 <DropdownItem action={openScreenplay} content="Screenplay" />
             )}
-            {!isProjectEdition && (
+            {page !== Page.EDIT && (
                 <DropdownItem action={editProject} content="Edit project" />
             )}
-            {!isStatistics && (
+            {page !== Page.STATISTICS && (
                 <DropdownItem action={openStatistics} content="Statistics" />
             )}
         </div>

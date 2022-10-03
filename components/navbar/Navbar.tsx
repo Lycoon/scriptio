@@ -5,13 +5,13 @@ import { useContext } from "react";
 import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
 import { saveScreenplay } from "../../src/lib/requests";
-import { ActiveButtons } from "../../src/lib/utils";
+import { Page } from "../../src/lib/utils";
 import NavbarButton from "./NavbarButton";
 
 const NavbarTab = dynamic(() => import("./NavbarTab"));
 
 type Props = {
-    activeButtons?: ActiveButtons;
+    page?: Page;
     project?: Project;
 };
 
@@ -37,7 +37,7 @@ const NotLoggedNavbar = () => (
     </div>
 );
 
-const Navbar = ({ activeButtons, project }: Props) => {
+const Navbar = ({ page, project }: Props) => {
     const { user, updateUser, saved, updateSaved } = useContext(UserContext);
 
     const onLogOut = async () => {
@@ -59,16 +59,11 @@ const Navbar = ({ activeButtons, project }: Props) => {
                         <p id="logo-text">Scriptio</p>
                     </a>
                 </Link>
-                {project && (
-                    <NavbarTab
-                        activeButtons={activeButtons}
-                        project={project}
-                    />
-                )}
+                {project && <NavbarTab page={page} project={project} />}
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    {activeButtons?.isScreenplay && (
+                    {page === Page.SCREENPLAY && (
                         <div
                             className={"save-btn" + (saved ? " disabled" : "")}
                             onClick={onSave}
