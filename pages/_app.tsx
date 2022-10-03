@@ -37,7 +37,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         >
             <ContextProvider>
                 <ThemeProvider attribute="class" defaultTheme="light">
-                    {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                    <Component {...pageProps} />
                 </ThemeProvider>
             </ContextProvider>
         </SWRConfig>
