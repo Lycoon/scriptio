@@ -8,7 +8,7 @@
 
 <p align="center">
     <img alt="Discord" src="https://img.shields.io/discord/985259837602553876">
-  <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lycoon/scriptio">
+    <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lycoon/scriptio">
 </p>
 
 # Why Scriptio?
