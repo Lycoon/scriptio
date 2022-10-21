@@ -1,11 +1,11 @@
-#project-page-container {
+#projects-container {
     display: flex;
+    flex: 1;
     flex-direction: row;
     justify-content: center;
-    height: 100%;
 }
 
-.project-container-header {
+.projects-header {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -14,14 +14,14 @@
     width: 100%;
 }
 
-.project-container-header-info {
+.projects-header-info {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
 }
 
-.project-container-header-buttons {
+.projects-header-buttons {
     display: flex;
     flex-direction: row;
     justify-content: space-around;

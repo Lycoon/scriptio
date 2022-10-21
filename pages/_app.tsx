@@ -36,7 +36,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             }}
         >
             <ContextProvider>
-                <ThemeProvider attribute="class" defaultTheme="light">
+                <ThemeProvider attribute="class" defaultTheme="dark">
                     <Component {...pageProps} />
                 </ThemeProvider>
             </ContextProvider>

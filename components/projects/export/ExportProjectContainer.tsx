@@ -1,4 +1,5 @@
 import FileSaver from "file-saver";
+import Link from "next/link";
 import Router from "next/router";
 import { useState } from "react";
 import { Project, User } from "../../../pages/api/users";
@@ -74,10 +75,6 @@ const ExportProjectConainer = ({ project, user }: Props) => {
             type: "text/plain;charset=utf-8",
         });
         FileSaver.saveAs(file);
-    };
-
-    const backToScreenplay = () => {
-        Router.push(`/projects/${project.id}/screenplay`);
     };
 
     const onSubmit = async (e: any) => {
@@ -200,12 +197,9 @@ const ExportProjectConainer = ({ project, user }: Props) => {
                 </div>
 
                 <div className="project-form-end">
-                    <button
-                        className="form-btn back-btn"
-                        onClick={backToScreenplay}
-                    >
-                        Back
-                    </button>
+                    <Link href={`/projects/${project.id}/screenplay`}>
+                        <a className="form-btn back-btn">Back</a>
+                    </Link>
                     <button
                         className="form-btn project-form-submit-btn"
                         onClick={onSubmit}

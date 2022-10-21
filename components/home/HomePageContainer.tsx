@@ -10,7 +10,7 @@ const HomePageContainer = () => {
     };
 
     return (
-        <div id="homepage">
+        <div id="homepage-container">
             <div className="homepage-text">
                 <h1 id="scriptio-title" className="fade-in">
                     Scriptio

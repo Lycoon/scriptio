@@ -28,8 +28,6 @@ const SettingsPageContainer = ({ user }: Props) => {
     );
 
     const toggleTheme = () => {
-        console.log("changed theme");
-
         setTheme(theme === "light" ? "dark" : "light");
     };
     const resetFromInfo = () => {

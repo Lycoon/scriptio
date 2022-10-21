@@ -40,7 +40,6 @@
 @import "EditorContent.module.css";
 @import "EditorSidebar.module.css";
 @import "EditorTab.module.css";
-@import "EditorPage.module.css";
 
 * {
     font-family: sans-serif;

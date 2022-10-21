@@ -1,10 +1,14 @@
-#homepage {
+#homepage-container {
     display: flex;
+    flex: 1;
+
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100%;
     gap: 90px;
+
+    background-size: 100%;
+    background-color: var(--primary-bg);
 }
 
 .homepage-buttons {
@@ -48,11 +52,6 @@
 .fade-in {
     animation: fadeIn;
     animation-duration: 1s;
-}
-
-#homepage {
-    background-size: 100%;
-    background-color: var(--primary-bg);
 }
 
 @keyframes fadeIn {

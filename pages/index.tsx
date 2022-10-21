@@ -49,8 +49,6 @@ export const getServerSideProps = withIronSessionSsr(async function ({
         return noauth;
     }
 
-    console.log(projects);
-
     // Workaround because dates can't be serialized
     projects.projects = projects.projects.map((e) => {
         return {

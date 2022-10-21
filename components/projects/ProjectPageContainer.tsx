@@ -50,12 +50,12 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
         return <EmptyProjectPage setIsCreating={setIsCreating} />;
     } else
         return (
-            <div id="project-page-container">
+            <div id="projects-container">
                 <div className="center-flex">
-                    <div className="project-container-header">
-                        <div className="project-container-header-info">
+                    <div className="projects-header">
+                        <div className="projects-header-info">
                             <h1>Projects</h1>
-                            <div className="project-container-header-buttons">
+                            <div className="projects-header-buttons">
                                 <div
                                     onClick={() => setDeleteMode(!deleteMode)}
                                     className="delete-project-btn"
