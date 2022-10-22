@@ -14,6 +14,8 @@ export type contextType = {
     updateSaved: (saved: boolean) => void;
     project: Project | undefined;
     updateProject: (project: Project | undefined) => void;
+    isSaving: boolean;
+    updateIsSaving: (isSaving: boolean) => void;
 };
 
 const contextDefaults: contextType = {
@@ -27,6 +29,8 @@ const contextDefaults: contextType = {
     updateSaved: () => {},
     project: undefined,
     updateProject: () => {},
+    isSaving: false,
+    updateIsSaving: () => {},
 };
 
 type Props = {
@@ -41,6 +45,7 @@ export function ContextProvider({ children }: Props) {
     const [darkMode, setDarkMode] = useState<boolean>(false);
     const [saved, setSaved] = useState<boolean>(true);
     const [project, setProject] = useState<Project | undefined>(undefined);
+    const [isSaving, setIsSaving] = useState<boolean>(false);
 
     const updateUser = (user_: CookieUser | undefined) => {
         setUser(user_);
@@ -58,8 +63,12 @@ export function ContextProvider({ children }: Props) {
         setSaved(saved_);
     };
 
-    const updateProject = (project_: Project) => {
+    const updateProject = (project_: Project | undefined) => {
         setProject(project_);
+    };
+
+    const updateIsSaving = (isSaving_: boolean) => {
+        setIsSaving(isSaving_);
     };
 
     const value = {
@@ -73,6 +82,8 @@ export function ContextProvider({ children }: Props) {
         updateSaved,
         project,
         updateProject,
+        isSaving,
+        updateIsSaving,
     };
 
     return (

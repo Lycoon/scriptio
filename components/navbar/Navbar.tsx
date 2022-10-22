@@ -4,12 +4,7 @@ import Router, { useRouter } from "next/router";
 import { useContext } from "react";
 import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
-import { saveScreenplay } from "../../src/lib/requests";
 import NavbarButton from "./NavbarButton";
-
-const pages = {
-    "": "",
-};
 
 const NavbarTab = dynamic(() => import("./NavbarTab"));
 
@@ -47,19 +42,13 @@ const NotLoggedNavbar = () => (
 );
 
 const Navbar = () => {
-    const page = getCurrentPage();
-    const { user, updateUser, saved, updateSaved, project } =
-        useContext(UserContext);
+    // const page = getCurrentPage();
+    const { user, updateUser, isSaving, project } = useContext(UserContext);
 
     const onLogOut = async () => {
         await fetch("/api/logout");
         updateUser(undefined);
         Router.push("/");
-    };
-
-    const onSave = () => {
-        saveScreenplay(project?.userId!, project?.id!, project?.screenplay);
-        updateSaved(true);
     };
 
     return (
@@ -74,17 +63,16 @@ const Navbar = () => {
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    {/*page === Page.SCREENPLAY && (
-                        <div
-                            className={"save-btn" + (saved ? " disabled" : "")}
-                            onClick={onSave}
-                        >
-                            <img
-                                className="settings-icon"
-                                src="/images/save.png"
-                            />
-                        </div>
-                    )*/}
+                    <div
+                        className={
+                            "saving-spin" + (isSaving ? "" : " inactive-spin")
+                        }
+                    >
+                        <img
+                            className="settings-icon"
+                            src="/images/saving.svg"
+                        />
+                    </div>
                     <div className="settings-btn" onClick={onSettings}>
                         <img className="settings-icon" src="/images/gear.png" />
                     </div>

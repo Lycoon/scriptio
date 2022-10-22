@@ -140,7 +140,7 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
         return onError(res, 500, "Project update failed");
     }
 
-    return onSuccess(res, 200, "", updated);
+    return onSuccess(res, 200, "", {});
 }
 
 async function deleteMethod(userId: number, body: any, res: NextApiResponse) {

@@ -53,6 +53,24 @@
     height: 100%;
 }
 
+.saving-spin {
+    width: 25px;
+    height: 25px;
+    margin-right: 7px;
+}
+
+.inactive-spin {
+    animation: fadeOut;
+    animation-duration: 2s;
+    opacity: 0%;
+}
+
+@keyframes fadeOut {
+    50% {
+        opacity: 100%;
+    }
+}
+
 .settings-btn {
     width: 20px;
     height: 20px;
