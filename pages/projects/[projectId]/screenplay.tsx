@@ -5,7 +5,7 @@ import { useState } from "react";
 import EditorContainer from "../../../components/editor/EditorContainer";
 import Navbar from "../../../components/navbar/Navbar";
 import { sessionOptions } from "../../../src/lib/session";
-import { Page } from "../../../src/lib/utils";
+import { Page, setNavbarProject } from "../../../src/lib/utils";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { getUserFromId } from "../../../src/server/service/user-service";
 import { Project, User } from "../../api/users";
@@ -15,24 +15,20 @@ type Props = {
     project: Project;
 };
 
-const redirectToHome = { redirect: { destination: "/" } };
-
 const EditorPage: NextPage<Props> = ({ user, project }: Props) => {
-    const [isBlurred, setBlurred] = useState<boolean>(false);
+    setNavbarProject(project);
 
     return (
         <>
             <Head>
                 <title>{project.title}</title>
             </Head>
-            <div className="main-container">
-                <Navbar page={Page.SCREENPLAY} project={project} />
-                <EditorContainer user={user} project={project} />
-            </div>
+            <EditorContainer user={user} project={project} />
         </>
     );
 };
 
+const redirectToHome = { redirect: { destination: "/" } };
 export const getServerSideProps = withIronSessionSsr(async function ({
     req,
     query,

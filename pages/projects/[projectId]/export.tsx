@@ -4,7 +4,7 @@ import Head from "next/head";
 import Navbar from "../../../components/navbar/Navbar";
 import ExportProjectConainer from "../../../components/projects/export/ExportProjectContainer";
 import { sessionOptions } from "../../../src/lib/session";
-import { Page } from "../../../src/lib/utils";
+import { Page, setNavbarProject } from "../../../src/lib/utils";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { getUserFromId } from "../../../src/server/service/user-service";
 import { Project, User } from "../../api/users";
@@ -17,15 +17,14 @@ type Props = {
 const redirectToHome = { redirect: { destination: "/" } };
 
 const ExportProjectPage: NextPage<Props> = ({ user, project }: Props) => {
+    setNavbarProject(project);
+
     return (
         <>
             <Head>
                 <title>{project.title} - Export</title>
             </Head>
-            <div className="main-container">
-                <Navbar page={Page.EXPORT} project={project} />
-                <ExportProjectConainer user={user} project={project} />
-            </div>
+            <ExportProjectConainer user={user} project={project} />
         </>
     );
 };

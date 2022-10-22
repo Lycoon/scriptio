@@ -3,16 +3,14 @@ import { useContext, useEffect } from "react";
 import { Project } from "../../../pages/api/users";
 import { UserContext } from "../../../src/context/UserContext";
 import { convertFountainToJSON } from "../../../src/converters/fountain_to_scriptio";
-import { Page } from "../../../src/lib/utils";
 import DropdownItem from "./DropdownItem";
 
 type Props = {
-    page: Page;
     project: Project;
     toggleDropdown: () => void;
 };
 
-const NavbarDropdown = ({ page, project, toggleDropdown }: Props) => {
+const NavbarDropdown = ({ project, toggleDropdown }: Props) => {
     const { editor, updateSaved } = useContext(UserContext);
 
     const importFile = () => {
@@ -70,22 +68,14 @@ const NavbarDropdown = ({ page, project, toggleDropdown }: Props) => {
                 content="Import..."
                 icon="import.png"
             />
-            {page !== Page.EXPORT && (
-                <DropdownItem
-                    action={exportFile}
-                    content="Export..."
-                    icon="export.png"
-                />
-            )}
-            {page !== Page.SCREENPLAY && (
-                <DropdownItem action={openScreenplay} content="Screenplay" />
-            )}
-            {page !== Page.EDIT && (
-                <DropdownItem action={editProject} content="Edit project" />
-            )}
-            {page !== Page.STATISTICS && (
-                <DropdownItem action={openStatistics} content="Statistics" />
-            )}
+            <DropdownItem
+                action={exportFile}
+                content="Export..."
+                icon="export.png"
+            />
+            <DropdownItem action={openScreenplay} content="Screenplay" />
+            <DropdownItem action={editProject} content="Edit project" />
+            <DropdownItem action={openStatistics} content="Statistics" />
         </div>
     );
 };

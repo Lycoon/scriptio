@@ -2,7 +2,7 @@
     overflow-wrap: anywhere;
     text-align: justify;
     color: var(--secondary-text);
-    margin-top: 30px;
+    margin-top: 15px;
 }
 
 #recovery-form {
@@ -10,7 +10,6 @@
     flex-direction: column;
     gap: 25px;
 
-    max-width: 15%;
-    min-width: min(30vw, 30vh);
+    width: 320px;
     min-height: 25vh;
 }

@@ -46,7 +46,7 @@ const PasswordChangeForm = ({ userId, recoverHash }: Props) => {
                 <h1>Change password</h1>
                 <hr className="hr-form" />
                 <p className="recovery-info segoe">
-                    This is a secure page to change your password. Do not share
+                    This is a secure space to change your password. Do not share
                     the link of this page with anyone else.
                 </p>
                 {formInfo && <FormInfo info={formInfo} />}

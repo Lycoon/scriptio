@@ -2,7 +2,7 @@ import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import Navbar from "../components/navbar/Navbar";
 import RecoveryContainer from "../components/home/recovery/RecoveryContainer";
-import RecoveryForm from "../components/home/recovery/RecoveryForm";
+import { clearNavbarProject } from "../src/lib/utils";
 
 type Props = {
     userId: number;
@@ -10,15 +10,14 @@ type Props = {
 };
 
 const RecoveryPage: NextPage<Props> = ({ userId, recoverHash }: Props) => {
+    clearNavbarProject();
+
     return (
         <>
             <Head>
                 <title>Scriptio - Recover password</title>
             </Head>
-            <div className="main-container">
-                <Navbar />
-                <RecoveryContainer userId={userId} recoverHash={recoverHash} />
-            </div>
+            <RecoveryContainer userId={userId} recoverHash={recoverHash} />
         </>
     );
 };

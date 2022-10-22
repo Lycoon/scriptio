@@ -7,11 +7,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Loading from "../components/home/Loading";
 import { ThemeProvider } from "next-themes";
+import Navbar from "../components/navbar/Navbar";
 
 function MyApp({ Component, pageProps }: AppProps) {
     const [pageLoading, setPageLoading] = useState<boolean>(false);
-
     const router = useRouter();
+
     useEffect(() => {
         const handleStart = () => {
             setPageLoading(true);
@@ -37,7 +38,14 @@ function MyApp({ Component, pageProps }: AppProps) {
         >
             <ContextProvider>
                 <ThemeProvider attribute="class" defaultTheme="dark">
-                    <Component {...pageProps} />
+                    <div className="main-container">
+                        <Navbar />
+                        {pageLoading ? (
+                            <Loading />
+                        ) : (
+                            <Component {...pageProps} />
+                        )}
+                    </div>
                 </ThemeProvider>
             </ContextProvider>
         </SWRConfig>

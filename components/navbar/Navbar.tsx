@@ -1,22 +1,31 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import Router from "next/router";
+import Router, { useRouter } from "next/router";
 import { useContext } from "react";
 import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
 import { saveScreenplay } from "../../src/lib/requests";
-import { Page } from "../../src/lib/utils";
 import NavbarButton from "./NavbarButton";
+
+const pages = {
+    "": "",
+};
 
 const NavbarTab = dynamic(() => import("./NavbarTab"));
 
 type Props = {
-    page?: Page;
     project?: Project;
 };
 
 const onSettings = () => {
     Router.push("/settings");
+};
+
+const getCurrentPage = () => {
+    const { asPath } = useRouter();
+    const page = asPath.split("/")[1];
+
+    return page;
 };
 
 const NotLoggedNavbar = () => (
@@ -37,8 +46,10 @@ const NotLoggedNavbar = () => (
     </div>
 );
 
-const Navbar = ({ page, project }: Props) => {
-    const { user, updateUser, saved, updateSaved } = useContext(UserContext);
+const Navbar = () => {
+    const page = getCurrentPage();
+    const { user, updateUser, saved, updateSaved, project } =
+        useContext(UserContext);
 
     const onLogOut = async () => {
         await fetch("/api/logout");
@@ -59,11 +70,11 @@ const Navbar = ({ page, project }: Props) => {
                         <p id="logo-text">Scriptio</p>
                     </a>
                 </Link>
-                {project && <NavbarTab page={page} project={project} />}
+                {project && <NavbarTab project={project} />}
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    {page === Page.SCREENPLAY && (
+                    {/*page === Page.SCREENPLAY && (
                         <div
                             className={"save-btn" + (saved ? " disabled" : "")}
                             onClick={onSave}
@@ -73,7 +84,7 @@ const Navbar = ({ page, project }: Props) => {
                                 src="/images/save.png"
                             />
                         </div>
-                    )}
+                    )*/}
                     <div className="settings-btn" onClick={onSettings}>
                         <img className="settings-icon" src="/images/gear.png" />
                     </div>

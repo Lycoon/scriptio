@@ -4,11 +4,10 @@ import { Page } from "../../src/lib/utils";
 import NavbarDropdown from "./dropdown/NavbarDropdown";
 
 type Props = {
-    page: Page;
     project: Project;
 };
 
-const NavbarTab = ({ page, project }: Props) => {
+const NavbarTab = ({ project }: Props) => {
     const [active, updateActive] = useState<boolean>(false);
     const toggleDropdown = () => {
         updateActive(!active);
@@ -24,7 +23,6 @@ const NavbarTab = ({ page, project }: Props) => {
             />
             {active && (
                 <NavbarDropdown
-                    page={page}
                     project={project}
                     toggleDropdown={toggleDropdown}
                 />
