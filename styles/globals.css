@@ -42,14 +42,12 @@
 @import "EditorTab.module.css";
 
 * {
-    font-family: sans-serif;
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
-}
-
-body {
-    margin: 0 !important;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Candara, "Bitstream Vera Sans", "DejaVu Sans",
+        "Bitstream Vera Sans", "Trebuchet MS", Verdana, "Verdana Ref",
+        sans-serif;
 }
 
 a {
