@@ -1,22 +1,13 @@
-import Router from "next/router";
+const redirect = (url: string) => {
+    window.open(url, "_ blank");
+};
+
+const GITHUB = "https://github.com/lycoon";
+const TWITTER = "https://twitter.com/LycoonMC";
+const DISCORD = "https://discordapp.com/users/138282927502000128";
+const LINKEDIN = "https://www.linkedin.com/in/hbois";
 
 const AboutPageContainer = () => {
-    const redirectGithub = () => {
-        window.open("https://github.com/lycoon", "_ blank");
-    };
-    const redirectTwitter = () => {
-        window.open("https://twitter.com/LycoonMC", "_ blank");
-    };
-    const redirectDiscord = () => {
-        window.open(
-            "https://discordapp.com/users/138282927502000128",
-            "_ blank"
-        );
-    };
-    const redirectLinkedIn = () => {
-        window.open("https://www.linkedin.com/in/hugo-bois-dev/", "_ blank");
-    };
-
     return (
         <div id="about-container">
             <div className="about-center">
@@ -29,22 +20,22 @@ const AboutPageContainer = () => {
                         <img
                             className="social-icon"
                             src="/images/social/github.png"
-                            onClick={redirectGithub}
+                            onClick={() => redirect(GITHUB)}
                         />
                         <img
                             className="social-icon"
                             src="/images/social/twitter.png"
-                            onClick={redirectTwitter}
+                            onClick={() => redirect(TWITTER)}
                         />
                         <img
                             className="social-icon"
                             src="/images/social/discord.png"
-                            onClick={redirectDiscord}
+                            onClick={() => redirect(DISCORD)}
                         />
                         <img
                             className="social-icon"
                             src="/images/social/linkedin.png"
-                            onClick={redirectLinkedIn}
+                            onClick={() => redirect(LINKEDIN)}
                         />
                     </div>
                 </div>

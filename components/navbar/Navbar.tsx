@@ -16,11 +16,48 @@ const onSettings = () => {
     Router.push("/settings");
 };
 
+enum PAGE {
+    // /{page}
+    INDEX = "index",
+    SETTINGS = "settings",
+    ABOUT = "about",
+    LOGIN = "login",
+    SIGNUP = "signup",
+    RECOVER = "recover",
+
+    // /projects/{id}/{page}
+    SCREENPLAY = "screenplay",
+    STATISTICS = "statistics",
+    EDIT = "edit",
+    EXPORT = "export",
+}
+
 const getCurrentPage = () => {
     const { asPath } = useRouter();
-    const page = asPath.split("/")[1];
+    if (asPath === "/") return PAGE.INDEX;
 
-    return page;
+    const route = asPath.split("/");
+    switch (route[1]) {
+        case "login":
+            return PAGE.LOGIN;
+        case "signup":
+            return PAGE.SIGNUP;
+        case "about":
+            return PAGE.ABOUT;
+        case "recover":
+            return PAGE.RECOVER;
+    }
+
+    switch (route[4]) {
+        case "screenplay":
+            return PAGE.SCREENPLAY;
+        case "statistics":
+            return PAGE.STATISTICS;
+        case "edit":
+            return PAGE.EDIT;
+        case "export":
+            return PAGE.EXPORT;
+    }
 };
 
 const NotLoggedNavbar = () => (
@@ -42,8 +79,8 @@ const NotLoggedNavbar = () => (
 );
 
 const Navbar = () => {
-    // const page = getCurrentPage();
     const { user, updateUser, isSaving, project } = useContext(UserContext);
+    const page = getCurrentPage();
 
     const onLogOut = async () => {
         await fetch("/api/logout");
@@ -63,16 +100,19 @@ const Navbar = () => {
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    <div
-                        className={
-                            "saving-spin" + (isSaving ? "" : " inactive-spin")
-                        }
-                    >
-                        <img
-                            className="settings-icon"
-                            src="/images/saving.svg"
-                        />
-                    </div>
+                    {page === PAGE.SCREENPLAY && (
+                        <div
+                            className={
+                                "saving-spin" +
+                                (isSaving ? "" : " inactive-spin")
+                            }
+                        >
+                            <img
+                                className="settings-icon"
+                                src="/images/saving.svg"
+                            />
+                        </div>
+                    )}
                     <div className="settings-btn" onClick={onSettings}>
                         <img className="settings-icon" src="/images/gear.png" />
                     </div>
