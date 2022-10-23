@@ -1,8 +1,8 @@
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
-import Navbar from "../components/navbar/Navbar";
+import { useContext, useEffect } from "react";
 import RecoveryContainer from "../components/home/recovery/RecoveryContainer";
-import { clearNavbarProject } from "../src/lib/utils";
+import { UserContext } from "../src/context/UserContext";
 
 type Props = {
     userId: number;
@@ -10,7 +10,8 @@ type Props = {
 };
 
 const RecoveryPage: NextPage<Props> = ({ userId, recoverHash }: Props) => {
-    clearNavbarProject();
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(undefined), []);
 
     return (
         <>

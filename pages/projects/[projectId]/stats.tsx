@@ -1,10 +1,11 @@
 import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
+import { useContext, useEffect } from "react";
 import NoStatsContainer from "../../../components/projects/stats/NoStatsContainer";
 import ProjectStatsContainer from "../../../components/projects/stats/ProjectStatsContainer";
+import { UserContext } from "../../../src/context/UserContext";
 import { sessionOptions } from "../../../src/lib/session";
-import { setNavbarProject } from "../../../src/lib/utils";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { Project, CookieUser } from "../../api/users";
 
@@ -14,7 +15,8 @@ type Props = {
 };
 
 const StatsProjectPage: NextPage<Props> = ({ project }: Props) => {
-    setNavbarProject(project);
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(project), []);
 
     return (
         <>

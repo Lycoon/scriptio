@@ -25,7 +25,7 @@ const RecoveryForm = () => {
                 {sentEmail && (
                     <p className="recovery-info segoe">
                         The email can take few minutes to arrive. Please check
-                        your junk folder if you don't receive it.
+                        your junk folder if you do not receive it.
                     </p>
                 )}
             </div>

@@ -1,10 +1,11 @@
 import Head from "next/head";
+import { useContext, useEffect } from "react";
 import AboutPageContainer from "../components/home/AboutPageContainer";
-import Navbar from "../components/navbar/Navbar";
-import { clearNavbarProject } from "../src/lib/utils";
+import { UserContext } from "../src/context/UserContext";
 
 const AboutPage = () => {
-    clearNavbarProject();
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(undefined), []);
 
     return (
         <>

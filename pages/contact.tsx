@@ -1,9 +1,10 @@
 import Head from "next/head";
-import Navbar from "../components/navbar/Navbar";
-import { clearNavbarProject } from "../src/lib/utils";
+import { useContext, useEffect } from "react";
+import { UserContext } from "../src/context/UserContext";
 
 const ContactPage = () => {
-    clearNavbarProject();
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(undefined), []);
 
     return (
         <>
