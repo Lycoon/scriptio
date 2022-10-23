@@ -4,7 +4,7 @@ import { ExportData } from "../../components/projects/export/ExportProjectContai
 
 const LOCAL = "http://localhost:3000";
 const PRODUCTION = "https://scriptio.app";
-const BASE_URL = PRODUCTION;
+const BASE_URL = LOCAL;
 
 const fonts = {
     CourierPrime: {

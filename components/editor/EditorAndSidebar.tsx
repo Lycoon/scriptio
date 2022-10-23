@@ -14,12 +14,46 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
-import { editProject, saveScreenplay } from "../../src/lib/requests";
-import { useDebounce, useDebouncedCallback } from "use-debounce";
+import { saveScreenplay } from "../../src/lib/requests";
+import { useDebouncedCallback } from "use-debounce";
 
 type Props = {
     project: Project;
 };
+
+const getScenesData = (json: any) => {
+    const nodes = json.content!;
+    const scenes: any = [];
+    let cursor = 1;
+
+    for (let i = 0; i < nodes.length; i++) {
+        const currNode = nodes[i];
+        if (!currNode["content"]) {
+            cursor += 2; // empty screenplay element count for new line
+            continue;
+        }
+
+        let text = "";
+        const type: string = currNode["attrs"]["class"];
+        const content: any[] = currNode["content"];
+        for (let j = 0; j < content.length; j++) {
+            text += content[j]["text"];
+        }
+
+        if (type === "scene") {
+            scenes.push({
+                position: cursor,
+                name: text,
+            });
+        }
+
+        cursor += text.length + 2; // new line counts for 2 characters
+    }
+
+    return scenes;
+};
+
+const updateScenesData = (transaction: any) => {};
 
 const EditorAndSidebar = ({ project }: Props) => {
     const { updateEditor, updateIsSaving } = useContext(UserContext);
@@ -28,6 +62,11 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isBold, setIsBold] = useState<boolean>(false);
     const [isItalic, setIsItalic] = useState<boolean>(false);
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
+
+    useEffect(() => {
+        let scenesData = getScenesData(project.screenplay);
+        console.log(scenesData);
+    }, []);
 
     const save = () => {
         if (!isSaved) {
@@ -42,7 +81,7 @@ const EditorAndSidebar = ({ project }: Props) => {
 
     const deferredSave = useDebouncedCallback(() => {
         save();
-    }, 2500);
+    }, 2000);
 
     const updateEditorStyles = (marks: any[]) => {
         marks = marks.map((mark: any) => mark.attrs.class);
@@ -94,9 +133,10 @@ const EditorAndSidebar = ({ project }: Props) => {
         ],
 
         // update on each screenplay change
-        onUpdate() {
+        onUpdate({ editor, transaction }) {
             updateIsSaved(false); // to prevent data loss between typing and autosave
             deferredSave();
+            console.log(transaction);
         },
 
         // update active on caret update
