@@ -1,5 +1,5 @@
 #editor-page {
-    height: 100%;
+    flex: 1;
     overflow: hidden;
     background-color: var(--editor-bg);
 }

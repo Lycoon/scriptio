@@ -1,10 +1,7 @@
 import { NextApiResponse } from "next";
-
-export type ActiveButtons = {
-    isScreenplay?: boolean;
-    isStatistics?: boolean;
-    isProjectEdition?: boolean;
-};
+import { useCallback, useContext, useEffect } from "react";
+import { Project } from "../../pages/api/users";
+import { UserContext } from "../context/UserContext";
 
 export enum VerificationStatus {
     SUCCESS,
@@ -16,6 +13,13 @@ export enum PasswordRecoverStatus {
     SUCCESS,
     FAILED,
     EXPIRED,
+}
+
+export enum Page {
+    EXPORT,
+    SCREENPLAY,
+    STATISTICS,
+    EDIT,
 }
 
 export const onSuccess = (
@@ -41,6 +45,16 @@ const onResponse = (status: string, message: string, data?: any) => {
         message,
         data,
     };
+};
+
+export const setNavbarProject = (project: Project) => {
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(project), []);
+};
+
+export const clearNavbarProject = () => {
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(undefined), []);
 };
 
 export const isValidDelay = (date: Date, minutes: number) => {

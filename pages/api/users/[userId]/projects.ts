@@ -46,6 +46,7 @@ async function getMethod(userId: number, res: NextApiResponse) {
         return onError(res, 404, "User with id " + userId + " not found");
     }
 
+    res.setHeader("Cache-Control", "max-age=360");
     return onSuccess(res, 200, "", projects);
 }
 
@@ -140,7 +141,7 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
         return onError(res, 500, "Project update failed");
     }
 
-    return onSuccess(res, 200, "", updated);
+    return onSuccess(res, 200, "", {});
 }
 
 async function deleteMethod(userId: number, body: any, res: NextApiResponse) {

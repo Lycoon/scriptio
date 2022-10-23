@@ -1,22 +1,63 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import Router from "next/router";
+import Router, { useRouter } from "next/router";
 import { useContext } from "react";
 import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
-import { saveScreenplay } from "../../src/lib/requests";
-import { ActiveButtons } from "../../src/lib/utils";
 import NavbarButton from "./NavbarButton";
 
 const NavbarTab = dynamic(() => import("./NavbarTab"));
 
 type Props = {
-    activeButtons?: ActiveButtons;
     project?: Project;
 };
 
 const onSettings = () => {
     Router.push("/settings");
+};
+
+enum PAGE {
+    // /{page}
+    INDEX = "index",
+    SETTINGS = "settings",
+    ABOUT = "about",
+    LOGIN = "login",
+    SIGNUP = "signup",
+    RECOVER = "recover",
+
+    // /projects/{id}/{page}
+    SCREENPLAY = "screenplay",
+    STATISTICS = "statistics",
+    EDIT = "edit",
+    EXPORT = "export",
+}
+
+const getCurrentPage = () => {
+    const { asPath } = useRouter();
+    if (asPath === "/") return PAGE.INDEX;
+
+    const route = asPath.split("/");
+    switch (route[1]) {
+        case "login":
+            return PAGE.LOGIN;
+        case "signup":
+            return PAGE.SIGNUP;
+        case "about":
+            return PAGE.ABOUT;
+        case "recover":
+            return PAGE.RECOVER;
+    }
+
+    switch (route[3]) {
+        case "screenplay":
+            return PAGE.SCREENPLAY;
+        case "statistics":
+            return PAGE.STATISTICS;
+        case "edit":
+            return PAGE.EDIT;
+        case "export":
+            return PAGE.EXPORT;
+    }
 };
 
 const NotLoggedNavbar = () => (
@@ -37,18 +78,14 @@ const NotLoggedNavbar = () => (
     </div>
 );
 
-const Navbar = ({ activeButtons, project }: Props) => {
-    const { user, updateUser, saved, updateSaved } = useContext(UserContext);
+const Navbar = () => {
+    const { user, updateUser, isSaving, project } = useContext(UserContext);
+    const page = getCurrentPage();
 
     const onLogOut = async () => {
         await fetch("/api/logout");
         updateUser(undefined);
         Router.push("/");
-    };
-
-    const onSave = () => {
-        saveScreenplay(project?.userId!, project?.id!, project?.screenplay);
-        updateSaved(true);
     };
 
     return (
@@ -59,23 +96,20 @@ const Navbar = ({ activeButtons, project }: Props) => {
                         <p id="logo-text">Scriptio</p>
                     </a>
                 </Link>
-                {project && (
-                    <NavbarTab
-                        activeButtons={activeButtons}
-                        project={project}
-                    />
-                )}
+                {project && <NavbarTab project={project} />}
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    {activeButtons?.isScreenplay && (
+                    {page === PAGE.SCREENPLAY && (
                         <div
-                            className={"save-btn" + (saved ? " disabled" : "")}
-                            onClick={onSave}
+                            className={
+                                "saving-spin" +
+                                (isSaving ? "" : " inactive-spin")
+                            }
                         >
                             <img
                                 className="settings-icon"
-                                src="/images/save.png"
+                                src="/images/saving.svg"
                             />
                         </div>
                     )}

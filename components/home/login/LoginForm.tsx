@@ -11,7 +11,7 @@ type Props = {
 };
 
 const LoginForm = ({ verificationStatus }: Props) => {
-    const { user, updateUser } = useContext(UserContext);
+    const { updateUser } = useContext(UserContext);
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
 
     useEffect(() => {

@@ -2,12 +2,16 @@ import { TDocumentDefinitions } from "pdfmake/interfaces";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import { ExportData } from "../../components/projects/export/ExportProjectContainer";
 
+const LOCAL = "http://localhost:3000";
+const PRODUCTION = "https://scriptio.app";
+const BASE_URL = PRODUCTION;
+
 const fonts = {
     CourierPrime: {
-        normal: "https://scriptio.app/fonts/Courier%20Prime.ttf",
-        bold: "https://scriptio.app/fonts/Courier%20Prime%20Bold.ttf",
-        italics: "https://scriptio.app/fonts/Courier%20Prime.ttf",
-        bolditalics: "https://scriptio.app/fonts/Courier%20Prime.ttf",
+        normal: BASE_URL + "/fonts/Courier%20Prime.ttf",
+        bold: BASE_URL + "/fonts/Courier%20Prime%20Bold.ttf",
+        italics: BASE_URL + "/fonts/Courier%20Prime.ttf",
+        bolditalics: BASE_URL + "/fonts/Courier%20Prime.ttf",
     },
 };
 

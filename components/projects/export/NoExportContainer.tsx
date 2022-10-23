@@ -4,7 +4,7 @@ type Props = {
     projectId: number;
 };
 
-const NoStatsContainer = ({ projectId }: Props) => {
+const NoExportContainer = ({ projectId }: Props) => {
     return (
         <div id="project-stats-container">
             <div className="no-stats-container">
@@ -13,7 +13,7 @@ const NoStatsContainer = ({ projectId }: Props) => {
                         Your screenplay is not long enough
                     </p>
                     <p className="no-stats-subtitle">
-                        Write some more and come back to see your statistics
+                        Write some more and come back to export it
                     </p>
                     <Link href={`/projects/${projectId}/screenplay`}>
                         <a className="form-btn no-stats-back-btn">Back</a>
@@ -24,4 +24,4 @@ const NoStatsContainer = ({ projectId }: Props) => {
     );
 };
 
-export default NoStatsContainer;
+export default NoExportContainer;

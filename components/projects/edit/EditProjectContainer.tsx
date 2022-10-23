@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Router from "next/router";
 import { useState } from "react";
 import { Project, CookieUser } from "../../../pages/api/users";
@@ -6,7 +7,6 @@ import { getBase64 } from "../../../src/lib/utils";
 import { ProjectUpdate } from "../../../src/server/repository/project-repository";
 import FormInfo, { FormInfoType } from "../../home/FormInfo";
 import UploadButton from "../UploadButton";
-import ProjectDangerZone from "./ProjectDangerZone";
 
 type Props = {
     project: Project;
@@ -16,10 +16,6 @@ type Props = {
 const EditProjectConainer = ({ project, user }: Props) => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-    const backToScreenplay = () => {
-        Router.push(`/projects/${project.id}/screenplay`);
-    };
 
     const resetFromInfo = () => {
         setFormInfo(null);
@@ -89,12 +85,9 @@ const EditProjectConainer = ({ project, user }: Props) => {
                 </div>
 
                 <div className="project-form-end">
-                    <button
-                        className="form-btn back-btn"
-                        onClick={backToScreenplay}
-                    >
-                        Back
-                    </button>
+                    <Link href={`/projects/${project.id}/screenplay`}>
+                        <a className="form-btn back-btn">Back</a>
+                    </Link>
                     <button
                         className="form-btn project-form-submit-btn"
                         type="submit"

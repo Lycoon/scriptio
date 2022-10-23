@@ -15,18 +15,34 @@ import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
 import { editProject, saveScreenplay } from "../../src/lib/requests";
+import { useDebounce, useDebouncedCallback } from "use-debounce";
 
 type Props = {
     project: Project;
 };
 
 const EditorAndSidebar = ({ project }: Props) => {
-    const { updateEditor, updateSaved, saved } = useContext(UserContext);
+    const { updateEditor, updateIsSaving } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
-    const [isSaving, updateIsSaving] = useState<boolean>(false);
+    const [isSaved, updateIsSaved] = useState<boolean>(false);
     const [isBold, setIsBold] = useState<boolean>(false);
     const [isItalic, setIsItalic] = useState<boolean>(false);
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
+
+    const save = () => {
+        console.log("isSaved: ", isSaved);
+
+        if (!isSaved) {
+            updateIsSaving(true);
+            saveScreenplay(project.userId, project.id, editorView?.getJSON());
+            updateIsSaving(false);
+            updateIsSaved(true);
+        }
+    };
+
+    const deferredSave = useDebouncedCallback(() => {
+        save();
+    }, 2500);
 
     const updateEditorStyles = (marks: any[]) => {
         marks = marks.map((mark: any) => mark.attrs.class);
@@ -77,8 +93,10 @@ const EditorAndSidebar = ({ project }: Props) => {
             Screenplay,
         ],
 
+        // update on each screenplay change
         onUpdate() {
-            if (saved) updateSaved(false);
+            updateIsSaved(false); // to prevent data loss between typing and autosave
+            deferredSave();
         },
 
         // update active on caret update
@@ -166,14 +184,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     const saveKeyPressed = async (e: KeyboardEvent) => {
         if (e.ctrlKey && e.key === "s") {
             e.preventDefault();
-            if (!saved) {
-                saveScreenplay(
-                    project.userId,
-                    project.id,
-                    editorView?.getJSON()
-                );
-                updateSaved(true);
-            }
+            save();
         }
     };
 
@@ -193,7 +204,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const onUnload = (e: BeforeUnloadEvent) => {
-        if (!saved) {
+        if (!isSaved) {
             let confirmationMessage = "Are you sure you want to leave?";
 
             e.returnValue = confirmationMessage;
@@ -229,7 +240,6 @@ const EditorAndSidebar = ({ project }: Props) => {
                 isUnderline={isUnderline}
                 selectedTab={selectedTab}
                 setActiveTab={setActiveTab}
-                isSaving={isSaving}
             />
         </div>
     );

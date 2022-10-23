@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="public/images/banner.png"  width="500" height="235">
+    <img src="public/images/banner.png"  width="540" height="230">
 </p>
 
 <p align="center">
@@ -7,7 +7,8 @@
 </p>
 
 <p align="center">
-  <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lycoon/scriptio">
+    <img alt="Discord" src="https://img.shields.io/discord/985259837602553876">
+    <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lycoon/scriptio">
 </p>
 
 # Why Scriptio?
@@ -33,12 +34,12 @@ My biggest inspiration is by far _Amazon Story Writer_, a very handy writing too
 
 ### Packages
 
--   Tiptap `2.0.0`
--   NextJS `12.0.10`
--   React `17.0.2`
--   Prisma `3.11.1`
--   File Saver `2.0.5`
--   Iron Session `6.1.3`
+-   Tiptap
+-   NextJS
+-   Prisma
+-   file-saver
+-   iron-session
+-   make-pdf
 
 # How to launch
 

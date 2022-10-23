@@ -10,7 +10,6 @@ type Props = {
     isBold: boolean;
     isItalic: boolean;
     isUnderline: boolean;
-    isSaving: boolean;
 };
 
 type EditorStyleProps = {
@@ -44,7 +43,6 @@ const EditorSidebar = ({
     isUnderline,
     selectedTab,
     setActiveTab,
-    isSaving,
 }: Props) => {
     return (
         <div id="sidebar" className="sidebar-shadow tabs">
@@ -107,13 +105,6 @@ const EditorSidebar = ({
                     active={tabs[selectedTab] == "note"}
                 />
             </div>
-            <p
-                className={`saving-info saving-info-${
-                    isSaving ? "visible" : "hidden"
-                }`}
-            >
-                Saving...
-            </p>
         </div>
     );
 };

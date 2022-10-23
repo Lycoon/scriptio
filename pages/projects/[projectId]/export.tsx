@@ -3,7 +3,9 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import Navbar from "../../../components/navbar/Navbar";
 import ExportProjectConainer from "../../../components/projects/export/ExportProjectContainer";
+import NoExportContainer from "../../../components/projects/export/NoExportContainer";
 import { sessionOptions } from "../../../src/lib/session";
+import { Page, setNavbarProject } from "../../../src/lib/utils";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { getUserFromId } from "../../../src/server/service/user-service";
 import { Project, User } from "../../api/users";
@@ -16,18 +18,18 @@ type Props = {
 const redirectToHome = { redirect: { destination: "/" } };
 
 const ExportProjectPage: NextPage<Props> = ({ user, project }: Props) => {
+    setNavbarProject(project);
+
     return (
         <>
             <Head>
                 <title>{project.title} - Export</title>
             </Head>
-            <div className="main-container">
-                <Navbar
-                    activeButtons={{ isProjectEdition: true }}
-                    project={project}
-                />
+            {project.screenplay ? (
                 <ExportProjectConainer user={user} project={project} />
-            </div>
+            ) : (
+                <NoExportContainer projectId={project.id} />
+            )}
         </>
     );
 };

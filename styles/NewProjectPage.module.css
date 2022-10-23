@@ -8,13 +8,12 @@
 
 .project-form-container {
     display: flex;
+    flex: 1;
+
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
     gap: 50px;
-
-    width: 100%;
-    height: 100%;
 }
 
 .project-form {
@@ -44,6 +43,7 @@
 .back-btn:hover {
     transition: background-color 0.2s;
     background-color: #cacaca;
+    color: #474747;
 }
 
 .back-btn:active {
