@@ -30,11 +30,13 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
 
     const save = () => {
+        console.log("isSaved: ", isSaved);
+
         if (!isSaved) {
             updateIsSaving(true);
             saveScreenplay(project.userId, project.id, editorView?.getJSON());
             updateIsSaving(false);
-            updateIsSaved(true); // to prevent data loss between typing and autosave
+            updateIsSaved(true);
         }
     };
 
@@ -91,8 +93,9 @@ const EditorAndSidebar = ({ project }: Props) => {
             Screenplay,
         ],
 
+        // update on each screenplay change
         onUpdate() {
-            if (isSaved) updateIsSaved(false);
+            updateIsSaved(false); // to prevent data loss between typing and autosave
             deferredSave();
         },
 

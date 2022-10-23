@@ -48,7 +48,7 @@ const getCurrentPage = () => {
             return PAGE.RECOVER;
     }
 
-    switch (route[4]) {
+    switch (route[3]) {
         case "screenplay":
             return PAGE.SCREENPLAY;
         case "statistics":
