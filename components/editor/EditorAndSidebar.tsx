@@ -30,13 +30,13 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
 
     const save = () => {
-        console.log("isSaved: ", isSaved);
-
         if (!isSaved) {
             updateIsSaving(true);
             saveScreenplay(project.userId, project.id, editorView?.getJSON());
-            updateIsSaving(false);
             updateIsSaved(true);
+            setTimeout(() => {
+                updateIsSaving(false);
+            }, 1500);
         }
     };
 

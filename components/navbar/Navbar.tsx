@@ -100,13 +100,8 @@ const Navbar = () => {
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    {page === PAGE.SCREENPLAY && (
-                        <div
-                            className={
-                                "saving-spin" +
-                                (isSaving ? "" : " inactive-spin")
-                            }
-                        >
+                    {page === PAGE.SCREENPLAY && isSaving && (
+                        <div className="saving-spin">
                             <img
                                 className="settings-icon"
                                 src="/images/saving.svg"
