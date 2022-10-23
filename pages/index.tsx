@@ -1,10 +1,11 @@
 import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
+import { useContext, useEffect } from "react";
 import HomePageContainer from "../components/home/HomePageContainer";
 import ProjectPageContainer from "../components/projects/ProjectPageContainer";
+import { UserContext } from "../src/context/UserContext";
 import { sessionOptions } from "../src/lib/session";
-import { clearNavbarProject } from "../src/lib/utils";
 import { getProjects } from "../src/server/service/project-service";
 import { Project, CookieUser } from "./api/users";
 
@@ -15,7 +16,8 @@ type Props = {
 
 const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
     const ProjectPage = () => <ProjectPageContainer projects={projects!} />;
-    clearNavbarProject();
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(undefined), []);
 
     return (
         <>

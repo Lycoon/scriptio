@@ -32,11 +32,10 @@ enum PAGE {
     EXPORT = "export",
 }
 
-const getCurrentPage = () => {
-    const { asPath } = useRouter();
-    if (asPath === "/") return PAGE.INDEX;
+const getCurrentPage = (path: string) => {
+    if (path === "/") return PAGE.INDEX;
 
-    const route = asPath.split("/");
+    const route = path.split("/");
     switch (route[1]) {
         case "login":
             return PAGE.LOGIN;
@@ -80,7 +79,8 @@ const NotLoggedNavbar = () => (
 
 const Navbar = () => {
     const { user, updateUser, isSaving, project } = useContext(UserContext);
-    const page = getCurrentPage();
+    const { asPath } = useRouter();
+    const page = getCurrentPage(asPath);
 
     const onLogOut = async () => {
         await fetch("/api/logout");

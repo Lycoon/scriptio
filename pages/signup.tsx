@@ -1,11 +1,12 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import Navbar from "../components/navbar/Navbar";
+import { useContext, useEffect } from "react";
 import SignupContainer from "../components/home/signup/SignupContainer";
-import { clearNavbarProject } from "../src/lib/utils";
+import { UserContext } from "../src/context/UserContext";
 
 const SignupPage: NextPage = () => {
-    clearNavbarProject();
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(undefined), []);
 
     return (
         <>

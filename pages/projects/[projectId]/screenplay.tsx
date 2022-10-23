@@ -1,11 +1,10 @@
 import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
-import { useState } from "react";
+import { useContext, useEffect } from "react";
 import EditorContainer from "../../../components/editor/EditorContainer";
-import Navbar from "../../../components/navbar/Navbar";
+import { UserContext } from "../../../src/context/UserContext";
 import { sessionOptions } from "../../../src/lib/session";
-import { Page, setNavbarProject } from "../../../src/lib/utils";
 import { getProjectFromId } from "../../../src/server/service/project-service";
 import { getUserFromId } from "../../../src/server/service/user-service";
 import { Project, User } from "../../api/users";
@@ -16,7 +15,8 @@ type Props = {
 };
 
 const EditorPage: NextPage<Props> = ({ user, project }: Props) => {
-    setNavbarProject(project);
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(project), []);
 
     return (
         <>

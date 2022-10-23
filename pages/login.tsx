@@ -1,8 +1,7 @@
-import type { GetServerSideProps, NextApiRequest, NextPage } from "next";
+import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
-import Navbar from "../components/navbar/Navbar";
 import LoginContainer from "../components/home/login/LoginContainer";
-import { clearNavbarProject, VerificationStatus } from "../src/lib/utils";
+import { VerificationStatus } from "../src/lib/utils";
 import { useContext, useEffect } from "react";
 import { UserContext } from "../src/context/UserContext";
 
@@ -11,7 +10,8 @@ type Props = {
 };
 
 const LoginPage: NextPage<Props> = ({ verificationStatus }: Props) => {
-    clearNavbarProject();
+    const { updateProject } = useContext(UserContext);
+    useEffect(() => updateProject(undefined), []);
 
     return (
         <>
