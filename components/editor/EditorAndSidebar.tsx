@@ -91,7 +91,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         setIsUnderline(marks.includes("underline"));
     };
 
-    const updateSelection = (anchor: any) => {
+    const onCaretUpdate = (anchor: any) => {
         const currNode = anchor.path[3].attrs.class;
         setActiveTab(currNode);
 
@@ -142,7 +142,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         // update active on caret update
         onSelectionUpdate({ transaction }) {
             const anchor = (transaction as any).curSelection.$anchor;
-            updateSelection(anchor);
+            onCaretUpdate(anchor);
         },
     });
 
