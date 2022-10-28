@@ -8,63 +8,37 @@ import {
     Screenplay,
 } from "../../src/Screenplay";
 import EditorComponent from "./EditorComponent";
-import EditorSidebar from "./EditorSidebar";
-
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
 import { saveScreenplay } from "../../src/lib/requests";
 import { useDebouncedCallback } from "use-debounce";
+import {
+    computeFullScenesData,
+    getScenesData,
+} from "../../src/lib/screenplayUtils";
+import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
+import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 
 type Props = {
     project: Project;
 };
 
-const getScenesData = (json: any) => {
-    const nodes = json.content!;
-    const scenes: any = [];
-    let cursor = 1;
-
-    for (let i = 0; i < nodes.length; i++) {
-        const currNode = nodes[i];
-        if (!currNode["content"]) {
-            cursor += 2; // empty screenplay element count for new line
-            continue;
-        }
-
-        let text = "";
-        const type: string = currNode["attrs"]["class"];
-        const content: any[] = currNode["content"];
-        for (let j = 0; j < content.length; j++) {
-            text += content[j]["text"];
-        }
-
-        if (type === "scene") {
-            scenes.push({
-                position: cursor,
-                name: text,
-            });
-        }
-
-        cursor += text.length + 2; // new line counts for 2 characters
-    }
-
-    return scenes;
-};
-
-const updateScenesData = (transaction: any) => {};
-
 const EditorAndSidebar = ({ project }: Props) => {
     const { updateEditor, updateIsSaving } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
     const [isSaved, updateIsSaved] = useState<boolean>(false);
+    const [isNavigationActive, updateIsNavigationActive] =
+        useState<boolean>(false);
+
     const [isBold, setIsBold] = useState<boolean>(false);
     const [isItalic, setIsItalic] = useState<boolean>(false);
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
 
     useEffect(() => {
-        let scenesData = getScenesData(project.screenplay);
+        computeFullScenesData(project.screenplay);
+        let scenesData = getScenesData();
         console.log(scenesData);
     }, []);
 
@@ -82,6 +56,10 @@ const EditorAndSidebar = ({ project }: Props) => {
     const deferredSave = useDebouncedCallback(() => {
         save();
     }, 2000);
+
+    const deferredSceneUpdate = useDebouncedCallback(() => {
+        computeFullScenesData(project.screenplay);
+    }, 1000);
 
     const updateEditorStyles = (marks: any[]) => {
         marks = marks.map((mark: any) => mark.attrs.class);
@@ -135,8 +113,8 @@ const EditorAndSidebar = ({ project }: Props) => {
         // update on each screenplay change
         onUpdate({ editor, transaction }) {
             updateIsSaved(false); // to prevent data loss between typing and autosave
+            deferredSceneUpdate();
             deferredSave();
-            console.log(transaction);
         },
 
         // update active on caret update
@@ -228,6 +206,14 @@ const EditorAndSidebar = ({ project }: Props) => {
         }
     };
 
+    const navigationSidebarKeyPressed = async (e: KeyboardEvent) => {
+        if (e.altKey && e.key === "w") {
+            e.preventDefault();
+            updateIsNavigationActive(!isNavigationActive);
+            console.log(isNavigationActive);
+        }
+    };
+
     const toggleBold = () => {
         editorView?.chain().toggleBold().focus().run();
         setIsBold(!isBold);
@@ -257,20 +243,23 @@ const EditorAndSidebar = ({ project }: Props) => {
     useEffect(() => {
         addEventListener("keydown", tabKeyPressed, false);
         addEventListener("keydown", saveKeyPressed, false);
+        addEventListener("keydown", navigationSidebarKeyPressed, false);
         addEventListener("beforeunload", onUnload);
         return () => {
             removeEventListener("keydown", tabKeyPressed, false);
             removeEventListener("keydown", saveKeyPressed, false);
+            removeEventListener("keydown", navigationSidebarKeyPressed, false);
             removeEventListener("beforeunload", onUnload);
         };
     });
 
     return (
         <div id="editor-and-sidebar">
+            <EditorSidebarNavigation active={isNavigationActive} />
             <div id="editor-container">
                 <EditorComponent editor={editorView} />
             </div>
-            <EditorSidebar
+            <EditorSidebarFormat
                 tabs={tabs}
                 toggleBold={toggleBold}
                 toggleItalic={toggleItalic}

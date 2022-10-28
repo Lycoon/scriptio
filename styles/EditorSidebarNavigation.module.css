@@ -1,0 +1,71 @@
+.navigation-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    padding-inline: 20px;
+    padding-block: 12px;
+
+    /*resize: horizontal;
+    overflow: auto;*/
+
+    /* hiding it by default */
+    margin-left: calc(var(--sidebar-width) * -1);
+    transition: margin-left 0.15s ease-in;
+}
+
+.navigation-on {
+    margin-left: 0;
+    transition: margin-left 0.15s ease-in;
+}
+
+.sidebar-selection {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/* Scenes list */
+.scene-list {
+    display: flex;
+    flex-direction: column;
+
+    height: 260px;
+    margin-top: 12px;
+    border-radius: 10px;
+    overflow-y: auto;
+
+    background-color: var(--editor-style-bg-hover);
+}
+
+.scene-list-title {
+    font-size: 1rem;
+    font-family: segoe-light;
+}
+
+/* Scene item */
+.scene-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    padding-left: 8px;
+    padding-block: 10px;
+    cursor: pointer;
+
+    border-bottom: 2px solid;
+    border-color: var(--editor-sidebar);
+}
+
+.scene-item:hover {
+    background-color: var(--editor-style-bg-active);
+}
+
+.scene-item-title {
+    font-size: 14px;
+}
+
+.scene-item-title.selected {
+    background-color: var(--editor-style-bg-hover);
+}

@@ -46,7 +46,6 @@ async function getMethod(userId: number, res: NextApiResponse) {
         return onError(res, 404, "User with id " + userId + " not found");
     }
 
-    res.setHeader("Cache-Control", "max-age=360");
     return onSuccess(res, 200, "", projects);
 }
 

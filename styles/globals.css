@@ -40,6 +40,7 @@
 @import "EditorContent.module.css";
 @import "EditorSidebar.module.css";
 @import "EditorTab.module.css";
+@import "EditorSidebarNavigation.module.css";
 
 * {
     margin: 0;
@@ -59,6 +60,13 @@ a:hover {
     color: #ffffff;
 }
 
+/* Variables */
+/* Global */
+* {
+    --sidebar-width: 260px;
+}
+
+/* Themes */
 html.light {
     --primary-bg: #ffffff;
     --secondary-bg: #797979;

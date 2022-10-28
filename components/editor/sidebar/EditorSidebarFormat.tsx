@@ -1,4 +1,4 @@
-import EditorTab from "./EditorTab";
+import EditorTab from "../EditorTab";
 
 type Props = {
     tabs: any[];
@@ -33,7 +33,7 @@ const EditorStyle = ({ isActive, toggle, icon }: EditorStyleProps) => {
     );
 };
 
-const EditorSidebar = ({
+const EditorSidebarFormat = ({
     tabs,
     toggleBold,
     toggleItalic,
@@ -45,7 +45,7 @@ const EditorSidebar = ({
     setActiveTab,
 }: Props) => {
     return (
-        <div id="sidebar" className="sidebar-shadow tabs">
+        <div className="sidebar sidebar-shadow tabs">
             <div className="tabs">
                 <div className="editor-style-buttons">
                     <EditorStyle
@@ -109,4 +109,4 @@ const EditorSidebar = ({
     );
 };
 
-export default EditorSidebar;
+export default EditorSidebarFormat;
