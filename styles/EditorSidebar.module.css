@@ -1,7 +1,7 @@
 .sidebar {
     padding-top: 8px;
     background-color: var(--editor-sidebar);
-    min-width: var(--sidebar-width);
+    min-width: var(--format-sidebar-width);
 }
 
 .sidebar-shadow {

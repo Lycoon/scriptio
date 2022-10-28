@@ -1,12 +1,17 @@
-let scenesData: any;
+export type ScenesData = SceneItem[];
+export type SceneItem = {
+    title: string;
+    position: number;
+};
 
-export const getScenesData = () => {
+let scenesData: ScenesData = [];
+export const getScenesData = (): ScenesData => {
     return scenesData;
 };
 
 export const computeFullScenesData = async (json: any) => {
     const nodes = json.content!;
-    const scenes: any = [];
+    const scenes: ScenesData = [];
     let cursor = 1;
 
     for (let i = 0; i < nodes.length; i++) {
@@ -26,7 +31,7 @@ export const computeFullScenesData = async (json: any) => {
         if (type === "scene") {
             scenes.push({
                 position: cursor,
-                name: text,
+                title: text.toUpperCase(),
             });
         }
 

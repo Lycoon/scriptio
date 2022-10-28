@@ -1,3 +1,9 @@
+import { useEffect, useState } from "react";
+import {
+    getScenesData,
+    SceneItem,
+    ScenesData,
+} from "../../../src/lib/screenplayUtils";
 import SidebarSceneItem from "./SidebarSceneItem";
 
 type Props = {
@@ -6,10 +12,15 @@ type Props = {
 
 const EditorSidebarNavigation = ({ active }: Props) => {
     const isActive = active ? "navigation-on" : "";
-    console.log(isActive);
+    const [scenes, setScenes] = useState<ScenesData>(getScenesData());
+    const characters: any[] = [];
+
+    useEffect(() => {
+        setScenes(getScenesData());
+    }, [getScenesData()]);
 
     return (
-        <div className={`sidebar navigation-sidebar ${isActive}`}>
+        <div className={`navigation-sidebar ${isActive}`}>
             <div>
                 <div className="sidebar-selection">
                     <p className="scene-list-title selected">Characters</p>
@@ -17,19 +28,28 @@ const EditorSidebarNavigation = ({ active }: Props) => {
                     <p className="scene-list-title">Others</p>
                 </div>
                 <div className="scene-list">
-                    <SidebarSceneItem title="Hugo" />
-                    <SidebarSceneItem title="Axel" />
-                    <SidebarSceneItem title="Erwan" />
-                    <SidebarSceneItem title="Vahan" />
+                    {characters.map((character: any) => {
+                        return (
+                            <SidebarSceneItem
+                                title={character.name}
+                                position={0}
+                            />
+                        );
+                    })}
                 </div>
             </div>
             <div>
                 <p className="scene-list-title">Scenes</p>
                 <div className="scene-list">
-                    <SidebarSceneItem title="EXT. JARDIN - JOUR" />
-                    <SidebarSceneItem title="INT. MAISON - JOUR" />
-                    <SidebarSceneItem title="EXT. PARKING - JOUR" />
-                    <SidebarSceneItem title="EXT. MAGASIN - SOIRÉE" />
+                    {scenes.map((scene: SceneItem) => {
+                        return (
+                            <SidebarSceneItem
+                                key={scene.position}
+                                title={scene.title}
+                                position={scene.position}
+                            />
+                        );
+                    })}
                 </div>
             </div>
         </div>

@@ -32,14 +32,13 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isNavigationActive, updateIsNavigationActive] =
         useState<boolean>(false);
 
+    /* Format marks */
     const [isBold, setIsBold] = useState<boolean>(false);
     const [isItalic, setIsItalic] = useState<boolean>(false);
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
 
     useEffect(() => {
         computeFullScenesData(project.screenplay);
-        let scenesData = getScenesData();
-        console.log(scenesData);
     }, []);
 
     const save = () => {
@@ -57,8 +56,8 @@ const EditorAndSidebar = ({ project }: Props) => {
         save();
     }, 2000);
 
-    const deferredSceneUpdate = useDebouncedCallback(() => {
-        computeFullScenesData(project.screenplay);
+    const deferredSceneUpdate = useDebouncedCallback(async () => {
+        computeFullScenesData(editorView?.getJSON());
     }, 1000);
 
     const updateEditorStyles = (marks: any[]) => {
@@ -210,7 +209,6 @@ const EditorAndSidebar = ({ project }: Props) => {
         if (e.altKey && e.key === "w") {
             e.preventDefault();
             updateIsNavigationActive(!isNavigationActive);
-            console.log(isNavigationActive);
         }
     };
 

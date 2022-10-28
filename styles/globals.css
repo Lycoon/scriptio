@@ -63,7 +63,8 @@ a:hover {
 /* Variables */
 /* Global */
 * {
-    --sidebar-width: 260px;
+    --format-sidebar-width: 260px;
+    --nav-sidebar-width: 350px;
 }
 
 /* Themes */

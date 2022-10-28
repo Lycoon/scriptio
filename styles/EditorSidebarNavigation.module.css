@@ -3,14 +3,17 @@
     flex-direction: column;
     gap: 20px;
 
+    padding-top: 8px;
     padding-inline: 20px;
     padding-block: 12px;
+    width: var(--nav-sidebar-width);
+    background-color: var(--editor-sidebar);
 
     /*resize: horizontal;
     overflow: auto;*/
 
     /* hiding it by default */
-    margin-left: calc(var(--sidebar-width) * -1);
+    margin-left: calc(var(--nav-sidebar-width) * -1);
     transition: margin-left 0.15s ease-in;
 }
 
@@ -30,7 +33,7 @@
     display: flex;
     flex-direction: column;
 
-    height: 260px;
+    height: 350px;
     margin-top: 12px;
     border-radius: 10px;
     overflow-y: auto;
@@ -50,6 +53,7 @@
     justify-content: space-between;
     align-items: center;
 
+    /*max-width: fit-content;*/
     padding-left: 8px;
     padding-block: 10px;
     cursor: pointer;
@@ -64,6 +68,8 @@
 
 .scene-item-title {
     font-size: 14px;
+    overflow-x: hidden;
+    white-space: nowrap;
 }
 
 .scene-item-title.selected {
