@@ -38,16 +38,13 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isItalic, setIsItalic] = useState<boolean>(false);
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
 
-    useEffect(() => {
-        computeFullScenesData(project.screenplay);
-    }, []);
-
     const save = () => {
         if (!isSaved) {
             updateIsSaving(true);
             saveScreenplay(project.userId, project.id, editorView?.getJSON());
             updateIsSaved(true);
             setTimeout(() => {
+                // loading animation
                 updateIsSaving(false);
             }, 1500);
         }
@@ -174,11 +171,13 @@ const EditorAndSidebar = ({ project }: Props) => {
     });
 
     useEffect(() => {
-        if (editorView) {
-            editorView.commands.setContent(project.screenplay as JSONContent);
-            updateEditor(editorView!);
-        }
+        editorView?.commands.setContent(project.screenplay as JSONContent);
+        updateEditor(editorView!);
     }, [editorView]);
+
+    useEffect(() => {
+        computeFullScenesData(project.screenplay);
+    }, []);
 
     const setActiveTab = (node: string) => {
         updateSelectedTab(tabs.indexOf(node));
@@ -191,7 +190,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                 .run();
     };
 
-    const tabKeyPressed = (e: KeyboardEvent) => {
+    const pressedKeyEvent = (e: KeyboardEvent) => {
         if (e.key === "Tab") {
             e.preventDefault();
 
@@ -199,16 +198,12 @@ const EditorAndSidebar = ({ project }: Props) => {
             updateSelectedTab(idx);
             setActiveTab(tabs[idx]);
         }
-    };
 
-    const saveKeyPressed = async (e: KeyboardEvent) => {
         if (e.ctrlKey && e.key === "s") {
             e.preventDefault();
             save();
         }
-    };
 
-    const navigationSidebarKeyPressed = async (e: KeyboardEvent) => {
         if (e.altKey && e.key === "w") {
             e.preventDefault();
             updateIsNavigationActive(!isNavigationActive);
@@ -217,6 +212,23 @@ const EditorAndSidebar = ({ project }: Props) => {
 
     const getFocusOnPosition = (position: number) => {
         editorView?.commands.focus(position);
+    };
+
+    const selectTextInEditor = (start: number, end: number) => {
+        editorView
+            ?.chain()
+            .focus(start)
+            .setTextSelection({ from: start, to: end })
+            .run();
+    };
+
+    const cutTextSelection = (start: number, end: number) => {
+        //editorView?.state.doc.cut(start, end);
+        editorView?.commands.deleteRange({ from: start, to: end });
+    };
+
+    const copyTextSelection = (start: number, end: number) => {
+        editorView?.state.doc.copy();
     };
 
     const toggleBold = () => {
@@ -246,14 +258,10 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     useEffect(() => {
-        addEventListener("keydown", tabKeyPressed, false);
-        addEventListener("keydown", saveKeyPressed, false);
-        addEventListener("keydown", navigationSidebarKeyPressed, false);
+        addEventListener("keydown", pressedKeyEvent, false);
         addEventListener("beforeunload", onUnload);
         return () => {
-            removeEventListener("keydown", tabKeyPressed, false);
-            removeEventListener("keydown", saveKeyPressed, false);
-            removeEventListener("keydown", navigationSidebarKeyPressed, false);
+            removeEventListener("keydown", pressedKeyEvent, false);
             removeEventListener("beforeunload", onUnload);
         };
     });
@@ -264,6 +272,8 @@ const EditorAndSidebar = ({ project }: Props) => {
             <EditorSidebarNavigation
                 active={isNavigationActive}
                 getFocusOnPosition={getFocusOnPosition}
+                selectTextInEditor={selectTextInEditor}
+                cutTextSelection={cutTextSelection}
             />
             <div id="editor-container">
                 <EditorComponent editor={editorView} />

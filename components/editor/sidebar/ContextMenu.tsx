@@ -21,7 +21,10 @@ export const enum ContextMenuType {
 export type SceneContextProps = {
     title: string;
     position: number;
+    nextPosition: number;
     focusOn: (position: number) => void;
+    selectTextInEditor: (start: number, end: number) => void;
+    cutTextSelection: (start: number, end: number) => void;
 };
 
 const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
@@ -34,6 +37,8 @@ const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
 
 const SceneContextMenu = (props: any) => {
     const focusOn = props.props.focusOn;
+    const selectTextInEditor = props.props.selectTextInEditor;
+    const cutTextSelection = props.props.cutTextSelection;
     const position = props.props.position;
     const nextPosition = props.props.nextPosition;
 
@@ -44,10 +49,10 @@ const SceneContextMenu = (props: any) => {
         console.log("copy scene ", position);
     };
     const cutScene = () => {
-        console.log("cut scene ", position);
+        cutTextSelection(position, nextPosition);
     };
     const selectScene = () => {
-        console.log("select scene ", position);
+        selectTextInEditor(position, nextPosition);
     };
 
     return (
@@ -64,7 +69,6 @@ const ContextMenu = () => {
     const { contextMenu, updateContextMenu } = useContext(UserContext);
     const [visible, setVisible] = useState<boolean>(contextMenu !== undefined);
     const type = contextMenu?.type;
-    //console.log("context menu", contextMenu);
 
     const handleClick = () => {
         if (visible) setVisible(false);

@@ -9,9 +9,16 @@ import SidebarSceneItem from "./SidebarSceneItem";
 type Props = {
     active: boolean;
     getFocusOnPosition: (position: number) => void;
+    selectTextInEditor: (start: number, end: number) => void;
+    cutTextSelection: (start: number, end: number) => void;
 };
 
-const EditorSidebarNavigation = ({ active, getFocusOnPosition }: Props) => {
+const EditorSidebarNavigation = ({
+    active,
+    getFocusOnPosition,
+    selectTextInEditor,
+    cutTextSelection,
+}: Props) => {
     const isActive = active ? "navigation-on" : "";
     const [scenes, setScenes] = useState<ScenesData>(getScenesData());
     const characters: any[] = [];
@@ -34,7 +41,9 @@ const EditorSidebarNavigation = ({ active, getFocusOnPosition }: Props) => {
                             <SidebarSceneItem
                                 title={character.name}
                                 position={0}
+                                nextPosition={-1}
                                 focusOn={getFocusOnPosition}
+                                selectTextInEditor={selectTextInEditor}
                             />
                         );
                     })}
@@ -49,7 +58,10 @@ const EditorSidebarNavigation = ({ active, getFocusOnPosition }: Props) => {
                                 key={scene.position}
                                 title={scene.title}
                                 position={scene.position}
+                                nextPosition={scene.nextPosition}
                                 focusOn={getFocusOnPosition}
+                                selectTextInEditor={selectTextInEditor}
+                                cutTextSelection={cutTextSelection}
                             />
                         );
                     })}

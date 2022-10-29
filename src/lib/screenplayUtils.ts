@@ -2,6 +2,7 @@ export type ScenesData = SceneItem[];
 export type SceneItem = {
     title: string;
     position: number;
+    nextPosition: number;
 };
 
 let scenesData: ScenesData = [];
@@ -13,6 +14,7 @@ export const computeFullScenesData = async (json: any) => {
     const nodes = json.content!;
     const scenes: ScenesData = [];
     let cursor = 1;
+    let sceneNumber = 0;
 
     for (let i = 0; i < nodes.length; i++) {
         const currNode = nodes[i];
@@ -29,10 +31,18 @@ export const computeFullScenesData = async (json: any) => {
         }
 
         if (type === "scene") {
+            if (sceneNumber !== 0) {
+                // first scene has no previous scene to set nextPosition
+                scenes[scenes.length - 1].nextPosition = cursor;
+            }
+
             scenes.push({
                 position: cursor,
+                nextPosition: -1,
                 title: text.toUpperCase(),
             });
+
+            sceneNumber++;
         }
 
         cursor += text.length + 2; // new line counts for 2 characters

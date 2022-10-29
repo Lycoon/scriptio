@@ -2,7 +2,14 @@ import { useContext } from "react";
 import { ContextMenuType, SceneContextProps } from "./ContextMenu";
 import { UserContext } from "../../../src/context/UserContext";
 
-const SidebarSceneItem = ({ title, position, focusOn }: SceneContextProps) => {
+const SidebarSceneItem = ({
+    title,
+    position,
+    nextPosition,
+    focusOn,
+    selectTextInEditor,
+    cutTextSelection,
+}: SceneContextProps) => {
     const { updateContextMenu } = useContext(UserContext);
 
     const handleDropdown = (e: any) => {
@@ -10,12 +17,18 @@ const SidebarSceneItem = ({ title, position, focusOn }: SceneContextProps) => {
         updateContextMenu({
             type: ContextMenuType.Scene,
             position: { x: e.clientX, y: e.clientY },
-            typeSpecificProps: { position, focusOn },
+            typeSpecificProps: {
+                position,
+                nextPosition,
+                focusOn,
+                selectTextInEditor,
+                cutTextSelection,
+            },
         });
     };
 
     const handleDoubleClick = () => {
-        focusOn(position);
+        focusOn(position); // focus on double click in scene list
     };
 
     return (
