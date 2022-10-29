@@ -9,6 +9,7 @@
 @import "NewProjectItem.module.css";
 @import "Popup.module.css";
 @import "ProjectDangerZone.module.css";
+@import "ContextMenu.module.css";
 
 /* Forms */
 @import "HomePageForm.module.css";
@@ -64,7 +65,7 @@ a:hover {
 /* Global */
 * {
     --format-sidebar-width: 260px;
-    --nav-sidebar-width: 350px;
+    --nav-sidebar-width: 380px;
 }
 
 /* Themes */
@@ -241,6 +242,7 @@ h3 {
     font-family: "Segoe UI";
 }
 
+/* https://stackoverflow.com/questions/6900124/how-to-make-certain-text-not-selectable-with-css */
 .unselectable {
     -webkit-user-select: none; /* Chrome all / Safari all */
     -moz-user-select: none; /* Firefox all */

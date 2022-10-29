@@ -20,6 +20,7 @@ import {
 } from "../../src/lib/screenplayUtils";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
+import ContextMenu from "./sidebar/ContextMenu";
 
 type Props = {
     project: Project;
@@ -173,8 +174,10 @@ const EditorAndSidebar = ({ project }: Props) => {
     });
 
     useEffect(() => {
-        editorView?.commands.setContent(project.screenplay as JSONContent);
-        updateEditor(editorView!);
+        if (editorView) {
+            editorView.commands.setContent(project.screenplay as JSONContent);
+            updateEditor(editorView!);
+        }
     }, [editorView]);
 
     const setActiveTab = (node: string) => {
@@ -210,6 +213,10 @@ const EditorAndSidebar = ({ project }: Props) => {
             e.preventDefault();
             updateIsNavigationActive(!isNavigationActive);
         }
+    };
+
+    const getFocusOnPosition = (position: number) => {
+        editorView?.commands.focus(position);
     };
 
     const toggleBold = () => {
@@ -253,7 +260,11 @@ const EditorAndSidebar = ({ project }: Props) => {
 
     return (
         <div id="editor-and-sidebar">
-            <EditorSidebarNavigation active={isNavigationActive} />
+            <ContextMenu />
+            <EditorSidebarNavigation
+                active={isNavigationActive}
+                getFocusOnPosition={getFocusOnPosition}
+            />
             <div id="editor-container">
                 <EditorComponent editor={editorView} />
             </div>

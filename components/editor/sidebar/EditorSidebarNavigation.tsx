@@ -8,9 +8,10 @@ import SidebarSceneItem from "./SidebarSceneItem";
 
 type Props = {
     active: boolean;
+    getFocusOnPosition: (position: number) => void;
 };
 
-const EditorSidebarNavigation = ({ active }: Props) => {
+const EditorSidebarNavigation = ({ active, getFocusOnPosition }: Props) => {
     const isActive = active ? "navigation-on" : "";
     const [scenes, setScenes] = useState<ScenesData>(getScenesData());
     const characters: any[] = [];
@@ -33,6 +34,7 @@ const EditorSidebarNavigation = ({ active }: Props) => {
                             <SidebarSceneItem
                                 title={character.name}
                                 position={0}
+                                focusOn={getFocusOnPosition}
                             />
                         );
                     })}
@@ -47,6 +49,7 @@ const EditorSidebarNavigation = ({ active }: Props) => {
                                 key={scene.position}
                                 title={scene.title}
                                 position={scene.position}
+                                focusOn={getFocusOnPosition}
                             />
                         );
                     })}

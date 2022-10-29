@@ -1,5 +1,6 @@
-import { Editor, useEditor } from "@tiptap/react";
-import { createContext, ReactNode, useEffect, useState } from "react";
+import { Editor } from "@tiptap/react";
+import { createContext, ReactNode, useState } from "react";
+import { ContextMenuProps } from "../../components/editor/sidebar/ContextMenu";
 import { CookieUser, Project } from "../../pages/api/users";
 import useUser from "../lib/useUser";
 
@@ -16,6 +17,8 @@ export type contextType = {
     updateProject: (project: Project | undefined) => void;
     isSaving: boolean;
     updateIsSaving: (isSaving: boolean) => void;
+    contextMenu: ContextMenuProps | undefined;
+    updateContextMenu: (contextMenu: ContextMenuProps | undefined) => void;
 };
 
 const contextDefaults: contextType = {
@@ -31,6 +34,8 @@ const contextDefaults: contextType = {
     updateProject: () => {},
     isSaving: false,
     updateIsSaving: () => {},
+    contextMenu: undefined,
+    updateContextMenu: () => {},
 };
 
 type Props = {
@@ -46,6 +51,9 @@ export function ContextProvider({ children }: Props) {
     const [saved, setSaved] = useState<boolean>(true);
     const [project, setProject] = useState<Project | undefined>(undefined);
     const [isSaving, setIsSaving] = useState<boolean>(false);
+    const [contextMenu, setContextMenu] = useState<
+        ContextMenuProps | undefined
+    >(undefined);
 
     const updateUser = (user_: CookieUser | undefined) => {
         setUser(user_);
@@ -71,6 +79,10 @@ export function ContextProvider({ children }: Props) {
         setIsSaving(isSaving_);
     };
 
+    const updateContextMenu = (contextMenu_: ContextMenuProps | undefined) => {
+        setContextMenu(contextMenu_);
+    };
+
     const value = {
         user,
         updateUser,
@@ -84,6 +96,8 @@ export function ContextProvider({ children }: Props) {
         updateProject,
         isSaving,
         updateIsSaving,
+        contextMenu,
+        updateContextMenu,
     };
 
     return (
