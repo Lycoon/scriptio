@@ -127,11 +127,10 @@ const SceneListContextMenu = (props: any) => {
 
 const ContextMenu = () => {
     const { contextMenu, updateContextMenu } = useContext(UserContext);
-    const [visible, setVisible] = useState<boolean>(contextMenu !== undefined);
     const type = contextMenu?.type;
 
     const handleClick = () => {
-        if (visible) setVisible(false);
+        if (contextMenu) updateContextMenu(undefined);
     };
 
     useEffect(() => {
@@ -142,8 +141,8 @@ const ContextMenu = () => {
     });
 
     useEffect(() => {
-        setVisible(contextMenu !== undefined);
-    }, [contextMenu]);
+        updateContextMenu(undefined);
+    }, []);
 
     return (
         <div
@@ -153,18 +152,18 @@ const ContextMenu = () => {
                 left: contextMenu?.position.x,
             }}
         >
-            {visible && type === ContextMenuType.SceneItem && (
+            {contextMenu && type === ContextMenuType.SceneItem && (
                 <SceneItemContextMenu props={contextMenu?.typeSpecificProps} />
             )}
-            {visible && type === ContextMenuType.CharacterItem && (
+            {contextMenu && type === ContextMenuType.CharacterItem && (
                 <CharacterItemContextMenu
                     props={contextMenu?.typeSpecificProps}
                 />
             )}
-            {visible && type === ContextMenuType.SceneList && (
+            {contextMenu && type === ContextMenuType.SceneList && (
                 <SceneListContextMenu props={contextMenu?.typeSpecificProps} />
             )}
-            {visible && type === ContextMenuType.CharacterList && (
+            {contextMenu && type === ContextMenuType.CharacterList && (
                 <CharacterListContextMenu
                     props={contextMenu?.typeSpecificProps}
                 />

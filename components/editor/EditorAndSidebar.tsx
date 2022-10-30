@@ -202,11 +202,13 @@ const EditorAndSidebar = ({ project }: Props) => {
         }
 
         if (e.ctrlKey && e.key === "s") {
+            // Ctrl + S
             e.preventDefault();
             save();
         }
 
         if (e.altKey && e.key === "w") {
+            // Alt + W
             e.preventDefault();
             updateIsNavigationActive(!isNavigationActive);
         }
