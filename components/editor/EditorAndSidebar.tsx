@@ -176,7 +176,9 @@ const EditorAndSidebar = ({ project }: Props) => {
     }, [editorView]);
 
     useEffect(() => {
-        computeFullScenesData(project.screenplay);
+        if (project.screenplay) {
+            computeFullScenesData(project.screenplay);
+        }
     }, []);
 
     const setActiveTab = (node: string) => {
@@ -231,6 +233,20 @@ const EditorAndSidebar = ({ project }: Props) => {
         editorView?.state.doc.copy();
     };
 
+    const pasteText = (text: string) => {
+        editorView?.commands.insertContent(text);
+    };
+
+    const replaceOccurrences = (text: string, replace: string) => {
+        const len = replace.length;
+
+        editorView
+            ?.chain()
+            .focus()
+            .insertContentAt({ from: 0, to: 0 }, text)
+            .run();
+    };
+
     const toggleBold = () => {
         editorView?.chain().toggleBold().focus().run();
         setIsBold(!isBold);
@@ -274,6 +290,8 @@ const EditorAndSidebar = ({ project }: Props) => {
                 getFocusOnPosition={getFocusOnPosition}
                 selectTextInEditor={selectTextInEditor}
                 cutTextSelection={cutTextSelection}
+                pasteText={pasteText}
+                replaceOccurrences={replaceOccurrences}
             />
             <div id="editor-container">
                 <EditorComponent editor={editorView} />

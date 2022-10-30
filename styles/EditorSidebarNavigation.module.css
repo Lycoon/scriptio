@@ -3,7 +3,6 @@
     flex-direction: column;
     gap: 20px;
 
-    padding-top: 8px;
     padding-inline: 30px;
     padding-block: 12px;
     width: var(--nav-sidebar-width);
@@ -44,6 +43,11 @@
 .scene-list-title {
     font-size: 1rem;
     font-family: segoe-light;
+}
+
+.scene-list-fill {
+    min-height: 50px;
+    height: 100%;
 }
 
 /* Scene item */

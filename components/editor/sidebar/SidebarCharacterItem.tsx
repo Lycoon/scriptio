@@ -1,34 +1,29 @@
 import { useContext } from "react";
-import { ContextMenuType, SceneContextProps } from "./ContextMenu";
+import { CharacterContextProps, ContextMenuType } from "./ContextMenu";
 import { UserContext } from "../../../src/context/UserContext";
 
-const SidebarSceneItem = ({
-    title,
-    position,
-    nextPosition,
-    focusOn,
-    selectTextInEditor,
-    cutTextSelection,
-}: SceneContextProps) => {
+const SidebarCharacterItem = ({
+    name,
+    pasteText,
+    replaceOccurrences,
+}: CharacterContextProps) => {
     const { updateContextMenu } = useContext(UserContext);
 
     const handleDropdown = (e: any) => {
         e.preventDefault();
         updateContextMenu({
-            type: ContextMenuType.SceneItem,
+            type: ContextMenuType.CharacterItem,
             position: { x: e.clientX, y: e.clientY },
             typeSpecificProps: {
-                position,
-                nextPosition,
-                focusOn,
-                selectTextInEditor,
-                cutTextSelection,
+                name,
+                pasteText,
+                replaceOccurrences,
             },
         });
     };
 
     const handleDoubleClick = () => {
-        focusOn(position); // focus on double click in scene list
+        pasteText(name); // paste character name on double click
     };
 
     return (
@@ -37,9 +32,9 @@ const SidebarSceneItem = ({
             onDoubleClick={handleDoubleClick}
             className="scene-item"
         >
-            <p className="scene-item-title unselectable">{title}</p>
+            <p className="scene-item-title unselectable">{name}</p>
         </div>
     );
 };
 
-export default SidebarSceneItem;
+export default SidebarCharacterItem;

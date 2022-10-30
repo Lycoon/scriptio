@@ -13,9 +13,11 @@ export type ContextMenuProps = {
 };
 
 export const enum ContextMenuType {
-    Scene,
-    Character,
-    Location,
+    SceneList,
+    SceneItem,
+    CharacterList,
+    CharacterItem,
+    LocationItem,
 }
 
 export type SceneContextProps = {
@@ -27,6 +29,12 @@ export type SceneContextProps = {
     cutTextSelection: (start: number, end: number) => void;
 };
 
+export type CharacterContextProps = {
+    name: string;
+    pasteText: (text: string) => void;
+    replaceOccurrences: (text: string, replace: string) => void;
+};
+
 const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
     return (
         <div onClick={action} className="context-menu-item">
@@ -35,7 +43,7 @@ const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
     );
 };
 
-const SceneContextMenu = (props: any) => {
+const SceneItemContextMenu = (props: any) => {
     const focusOn = props.props.focusOn;
     const selectTextInEditor = props.props.selectTextInEditor;
     const cutTextSelection = props.props.cutTextSelection;
@@ -61,6 +69,58 @@ const SceneContextMenu = (props: any) => {
             <ContextMenuItem text={"Copy"} action={copyScene} />
             <ContextMenuItem text={"Cut"} action={cutScene} />
             <ContextMenuItem text={"Select in editor"} action={selectScene} />
+        </>
+    );
+};
+
+const CharacterItemContextMenu = (props: any) => {
+    const name = props.props.name;
+    const pasteText = props.props.pasteText;
+    const replaceOccurrences = props.props.replaceOccurrences;
+
+    const replaceCharacter = () => {
+        replaceOccurrences(name, "REPLACE");
+    };
+    const pasteCharacter = () => {
+        pasteText(name);
+    };
+    const removeCharacter = () => {
+        console.log("remove character ", name);
+    };
+
+    return (
+        <>
+            <ContextMenuItem text={"Rename"} action={replaceCharacter} />
+            <ContextMenuItem text={"Remove"} action={removeCharacter} />
+            <ContextMenuItem text={"Paste"} action={pasteCharacter} />
+        </>
+    );
+};
+
+const CharacterListContextMenu = (props: any) => {
+    const name = props.props.name;
+
+    const addCharacter = () => {
+        console.log("add character ", name);
+    };
+
+    return (
+        <>
+            <ContextMenuItem text={"Add character"} action={addCharacter} />
+        </>
+    );
+};
+
+const SceneListContextMenu = (props: any) => {
+    const title = props.props.title;
+
+    const addScene = () => {
+        console.log("add scene ", name);
+    };
+
+    return (
+        <>
+            <ContextMenuItem text={"Add scene"} action={addScene} />
         </>
     );
 };
@@ -93,8 +153,21 @@ const ContextMenu = () => {
                 left: contextMenu?.position.x,
             }}
         >
-            {visible && type === ContextMenuType.Scene && (
-                <SceneContextMenu props={contextMenu?.typeSpecificProps} />
+            {visible && type === ContextMenuType.SceneItem && (
+                <SceneItemContextMenu props={contextMenu?.typeSpecificProps} />
+            )}
+            {visible && type === ContextMenuType.CharacterItem && (
+                <CharacterItemContextMenu
+                    props={contextMenu?.typeSpecificProps}
+                />
+            )}
+            {visible && type === ContextMenuType.SceneList && (
+                <SceneListContextMenu props={contextMenu?.typeSpecificProps} />
+            )}
+            {visible && type === ContextMenuType.CharacterList && (
+                <CharacterListContextMenu
+                    props={contextMenu?.typeSpecificProps}
+                />
             )}
         </div>
     );

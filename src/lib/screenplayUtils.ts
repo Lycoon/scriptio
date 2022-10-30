@@ -5,6 +5,17 @@ export type SceneItem = {
     nextPosition: number;
 };
 
+export enum CharacterGender {
+    Female,
+    Male,
+    Other,
+}
+export type CharactersData = CharacterItem[];
+export type CharacterItem = {
+    name: string;
+    gender: CharacterGender;
+};
+
 let scenesData: ScenesData = [];
 export const getScenesData = (): ScenesData => {
     return scenesData;

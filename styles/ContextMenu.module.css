@@ -12,12 +12,16 @@
 
 .context-menu-item {
     padding-block: 6px;
-    padding-left: 6px;
+    padding-left: 8px;
     padding-right: 35px;
 
     font-size: 14px;
     border-bottom: 1px solid;
     border-color: var(--editor-sidebar);
+}
+
+.context-menu-item:last-child {
+    border-bottom: none;
 }
 
 .context-menu-item:hover {
