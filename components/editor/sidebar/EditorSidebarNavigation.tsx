@@ -48,7 +48,6 @@ const EditorSidebarNavigation = ({
 
     useEffect(() => {
         // update character navigation when characters change
-        console.log("characters: ", characters);
         setCharacters(getCharactersData());
     }, [getCharactersData()]);
 

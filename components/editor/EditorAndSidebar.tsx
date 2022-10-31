@@ -139,9 +139,6 @@ const EditorAndSidebar = ({ project }: Props) => {
                             case "character":
                             case "parenthetical":
                                 newNode = "dialogue";
-                                break;
-                            case "dialogue":
-                                newNode = "character";
                         }
                     }
 
