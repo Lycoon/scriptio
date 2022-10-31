@@ -1,7 +1,9 @@
+import Image from "next/image";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
 import {
     CharactersData,
+    getCharactersData,
     getScenesData,
     SceneItem,
     ScenesData,
@@ -19,6 +21,12 @@ type Props = {
     replaceOccurrences: (text: string, replace: string) => void;
 };
 
+const enum NavigationMenu {
+    Characters,
+    Locations,
+    Others,
+}
+
 const EditorSidebarNavigation = ({
     active,
     getFocusOnPosition,
@@ -29,12 +37,24 @@ const EditorSidebarNavigation = ({
 }: Props) => {
     const { updateContextMenu } = useContext(UserContext);
     const [scenes, setScenes] = useState<ScenesData>(getScenesData());
-    const [characters, setCharacters] = useState<CharactersData>([]);
+    const [characters, setCharacters] = useState<CharactersData>(getCharactersData());
+    const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
     const isActive = active ? "navigation-on" : "";
 
     useEffect(() => {
+        // update scene navigation when scenes change
         setScenes(getScenesData());
     }, [getScenesData()]);
+
+    useEffect(() => {
+        // update character navigation when characters change
+        console.log("characters: ", characters);
+        setCharacters(getCharactersData());
+    }, [getCharactersData()]);
+
+    const isCharactersMenu = menu === NavigationMenu.Characters;
+    const isLocationsMenu = menu === NavigationMenu.Locations;
+    const isOthersMenu = menu === NavigationMenu.Others;
 
     const handleDropdownSceneList = (e: any) => {
         e.preventDefault();
@@ -58,29 +78,39 @@ const EditorSidebarNavigation = ({
         <div className={`navigation-sidebar ${isActive}`}>
             <div>
                 <div className="sidebar-selection">
-                    <p className="scene-list-title selected">Characters</p>
-                    <p className="scene-list-title">Locations</p>
-                    <p className="scene-list-title">Others</p>
-                </div>
-                <div className="scene-list">
-                    {characters.map((character: any) => {
-                        return (
-                            <SidebarCharacterItem
-                                name={character.name}
-                                pasteText={pasteText}
-                                replaceOccurrences={replaceOccurrences}
-                            />
-                        );
-                    })}
                     <div
-                        className="scene-list-fill"
-                        onContextMenu={handleDropdownCharacterList}
-                    ></div>
+                        className={`nav-tab ${isCharactersMenu ? "active-nav-tab" : ""}`}
+                        onClick={() => setMenu(NavigationMenu.Characters)}
+                    >
+                        <img className="nav-tab-icon" src={"/images/character.png"} />
+                        <p className="nav-list-title">Characters</p>
+                    </div>
+                    <div
+                        className={`nav-tab ${isLocationsMenu ? "active-nav-tab" : ""}`}
+                        onClick={() => setMenu(NavigationMenu.Locations)}
+                    >
+                        <img className="nav-tab-icon" src={"/images/location.png"} />
+                        <p className="nav-list-title">Locations</p>
+                    </div>
+                </div>
+                <div className="nav-list">
+                    {menu === NavigationMenu.Characters &&
+                        Object.keys(characters).map((name: any) => {
+                            return (
+                                <SidebarCharacterItem
+                                    key={name}
+                                    name={name}
+                                    pasteText={pasteText}
+                                    replaceOccurrences={replaceOccurrences}
+                                />
+                            );
+                        })}
+                    <div className="scene-list-fill" onContextMenu={handleDropdownCharacterList} />
                 </div>
             </div>
             <div>
-                <p className="scene-list-title">Scenes</p>
-                <div className="scene-list">
+                <p className="nav-list-title">Scenes</p>
+                <div className="nav-list scene-list">
                     {scenes.map((scene: SceneItem) => {
                         return (
                             <SidebarSceneItem
@@ -94,10 +124,7 @@ const EditorSidebarNavigation = ({
                             />
                         );
                     })}
-                    <div
-                        className="scene-list-fill"
-                        onContextMenu={handleDropdownSceneList}
-                    ></div>
+                    <div className="scene-list-fill" onContextMenu={handleDropdownSceneList} />
                 </div>
             </div>
         </div>

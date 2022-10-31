@@ -1,12 +1,7 @@
 import { JSONContent, useEditor } from "@tiptap/react";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../src/context/UserContext";
-import {
-    CustomBold,
-    CustomItalic,
-    CustomUnderline,
-    Screenplay,
-} from "../../src/Screenplay";
+import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "../../src/Screenplay";
 import EditorComponent from "./EditorComponent";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
@@ -14,10 +9,7 @@ import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
 import { saveScreenplay } from "../../src/lib/requests";
 import { useDebouncedCallback } from "use-debounce";
-import {
-    computeFullScenesData,
-    getScenesData,
-} from "../../src/lib/screenplayUtils";
+import { computeFullScenesData, computeFullCharactersData } from "../../src/lib/screenplayUtils";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
@@ -30,8 +22,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     const { updateEditor, updateIsSaving } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
     const [isSaved, updateIsSaved] = useState<boolean>(false);
-    const [isNavigationActive, updateIsNavigationActive] =
-        useState<boolean>(false);
+    const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(false);
 
     /* Format marks */
     const [isBold, setIsBold] = useState<boolean>(false);
@@ -74,11 +65,9 @@ const EditorAndSidebar = ({ project }: Props) => {
             if (!anchor.nodeAfter) {
                 return;
             }
-
             updateEditorStyles(anchor.nodeAfter?.marks);
             return;
         }
-
         updateEditorStyles(anchor.nodeBefore?.marks);
     };
 
@@ -178,18 +167,14 @@ const EditorAndSidebar = ({ project }: Props) => {
     useEffect(() => {
         if (project.screenplay) {
             computeFullScenesData(project.screenplay);
+            computeFullCharactersData(project.screenplay);
         }
     }, []);
 
     const setActiveTab = (node: string) => {
         updateSelectedTab(tabs.indexOf(node));
 
-        if (editorView)
-            editorView
-                .chain()
-                .focus()
-                .setNode("Screenplay", { class: node })
-                .run();
+        if (editorView) editorView.chain().focus().setNode("Screenplay", { class: node }).run();
     };
 
     const pressedKeyEvent = (e: KeyboardEvent) => {
@@ -219,11 +204,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const selectTextInEditor = (start: number, end: number) => {
-        editorView
-            ?.chain()
-            .focus(start)
-            .setTextSelection({ from: start, to: end })
-            .run();
+        editorView?.chain().focus(start).setTextSelection({ from: start, to: end }).run();
     };
 
     const cutTextSelection = (start: number, end: number) => {
@@ -242,11 +223,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     const replaceOccurrences = (text: string, replace: string) => {
         const len = replace.length;
 
-        editorView
-            ?.chain()
-            .focus()
-            .insertContentAt({ from: 0, to: 0 }, text)
-            .run();
+        editorView?.chain().focus().insertContentAt({ from: 0, to: 0 }, text).run();
     };
 
     const toggleBold = () => {

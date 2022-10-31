@@ -1,24 +1,41 @@
+import { getCharacterNames } from "./statistics";
+
+/* Scenes */
+let scenesData: ScenesData = [];
 export type ScenesData = SceneItem[];
 export type SceneItem = {
     title: string;
     position: number;
     nextPosition: number;
 };
+export const getScenesData = (): ScenesData => {
+    return scenesData;
+};
 
+/* Characters */
+let charactersData: CharactersData = {};
 export enum CharacterGender {
     Female,
     Male,
     Other,
 }
-export type CharactersData = CharacterItem[];
+export type CharactersData = { [name: string]: CharacterItem };
 export type CharacterItem = {
-    name: string;
     gender: CharacterGender;
 };
+export const getCharactersData = (): CharactersData => {
+    return charactersData;
+};
 
-let scenesData: ScenesData = [];
-export const getScenesData = (): ScenesData => {
-    return scenesData;
+export const computeFullCharactersData = async (json: any) => {
+    const names = getCharacterNames(json);
+    for (const name of names) {
+        if (charactersData[name] !== undefined) {
+            // If character already exists in the data, don't overwrite it
+            continue;
+        }
+        charactersData[name] = { gender: CharacterGender.Other };
+    }
 };
 
 export const computeFullScenesData = async (json: any) => {
@@ -62,6 +79,7 @@ export const computeFullScenesData = async (json: any) => {
     scenesData = scenes;
 };
 
+/*
 export const updateScenesData = (transaction: any) => {
     const maps = transaction.mapping.maps;
     for (let i = 0; i < maps.length; i++) {
@@ -81,3 +99,4 @@ export const updateScenesData = (transaction: any) => {
         }
     }
 };
+*/
