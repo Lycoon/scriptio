@@ -45,7 +45,7 @@ const EditorSidebarFormat = ({
     setActiveTab,
 }: Props) => {
     return (
-        <div className="sidebar sidebar-shadow tabs">
+        <div className="sidebar tabs">
             <div className="tabs">
                 <div className="editor-style-buttons">
                     <EditorStyle

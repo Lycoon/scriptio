@@ -74,7 +74,7 @@ const EditorSidebarNavigation = ({
     };
 
     return (
-        <div className={`navigation-sidebar ${isActive}`}>
+        <div className={`navigation-sidebar sidebar-shadow ${isActive}`}>
             <div>
                 <div className="sidebar-selection">
                     <div

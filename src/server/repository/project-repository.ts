@@ -60,7 +60,16 @@ export class ProjectRepository {
                 id: userId,
             },
             select: {
-                projects: true,
+                projects: {
+                    select: {
+                        // fetch everything but the screenplay
+                        id: true,
+                        title: true,
+                        updatedAt: true,
+                        createdAt: true,
+                        poster: true,
+                    },
+                },
             },
         });
     }
