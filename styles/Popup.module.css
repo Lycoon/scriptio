@@ -3,7 +3,6 @@
     min-width: 500px;
     min-height: 250px;
     padding: 16px;
-    z-index: 1;
     left: 50%;
 
     transform: translate(-50%, -50%);
@@ -21,6 +20,14 @@
     visibility: visible;
     opacity: 1;
     transition: 0.2s;
+}
+
+.popup-container {
+    position: absolute;
+    z-index: 1;
+    backdrop-filter: blur(10px);
+    width: 100vw;
+    height: 100%;
 }
 
 /* Popup close button */
