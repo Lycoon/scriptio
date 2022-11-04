@@ -14,10 +14,11 @@ import SidebarSceneItem from "./SidebarSceneItem";
 
 type Props = {
     active: boolean;
+    pasteText: (text: string) => void;
     getFocusOnPosition: (position: number) => void;
     selectTextInEditor: (start: number, end: number) => void;
     cutTextSelection: (start: number, end: number) => void;
-    pasteText: (text: string) => void;
+    copyTextSelection: (start: number, end: number) => void;
     replaceOccurrences: (text: string, replace: string) => void;
 };
 
@@ -34,6 +35,7 @@ const EditorSidebarNavigation = ({
     cutTextSelection,
     pasteText,
     replaceOccurrences,
+    copyTextSelection,
 }: Props) => {
     const { updateContextMenu } = useContext(UserContext);
     const [scenes, setScenes] = useState<ScenesData>(getScenesData());
@@ -120,6 +122,7 @@ const EditorSidebarNavigation = ({
                                 focusOn={getFocusOnPosition}
                                 selectTextInEditor={selectTextInEditor}
                                 cutTextSelection={cutTextSelection}
+                                copyTextSelection={copyTextSelection}
                             />
                         );
                     })}

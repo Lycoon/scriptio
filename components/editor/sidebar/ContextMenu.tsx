@@ -27,6 +27,7 @@ export type SceneContextProps = {
     focusOn: (position: number) => void;
     selectTextInEditor: (start: number, end: number) => void;
     cutTextSelection: (start: number, end: number) => void;
+    copyTextSelection: (start: number, end: number) => void;
 };
 
 export type CharacterContextProps = {
@@ -47,6 +48,7 @@ const SceneItemContextMenu = (props: any) => {
     const focusOn = props.props.focusOn;
     const selectTextInEditor = props.props.selectTextInEditor;
     const cutTextSelection = props.props.cutTextSelection;
+    const copyTextSelection = props.props.copyTextSelection;
     const position = props.props.position;
     const nextPosition = props.props.nextPosition;
 
@@ -54,7 +56,7 @@ const SceneItemContextMenu = (props: any) => {
         focusOn(position);
     };
     const copyScene = () => {
-        console.log("copy scene ", position);
+        copyTextSelection(position, nextPosition);
     };
     const cutScene = () => {
         cutTextSelection(position, nextPosition);
@@ -156,17 +158,13 @@ const ContextMenu = () => {
                 <SceneItemContextMenu props={contextMenu?.typeSpecificProps} />
             )}
             {contextMenu && type === ContextMenuType.CharacterItem && (
-                <CharacterItemContextMenu
-                    props={contextMenu?.typeSpecificProps}
-                />
+                <CharacterItemContextMenu props={contextMenu?.typeSpecificProps} />
             )}
             {contextMenu && type === ContextMenuType.SceneList && (
                 <SceneListContextMenu props={contextMenu?.typeSpecificProps} />
             )}
             {contextMenu && type === ContextMenuType.CharacterList && (
-                <CharacterListContextMenu
-                    props={contextMenu?.typeSpecificProps}
-                />
+                <CharacterListContextMenu props={contextMenu?.typeSpecificProps} />
             )}
         </div>
     );

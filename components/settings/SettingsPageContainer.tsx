@@ -14,15 +14,11 @@ const SettingsPageContainer = ({ user }: Props) => {
 
     const { theme, setTheme } = useTheme();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
-    const [notesColor, setNotesColor] = useState<string>(
-        user.settings.notesColor
-    );
+    const [notesColor, setNotesColor] = useState<string>(user.settings.notesColor);
     const [exportedNotesColor, setExportedNotesColor] = useState<string>(
         user.settings.exportedNotesColor
     );
-    const [sceneBackground, setSceneBackground] = useState<boolean>(
-        user.settings.sceneBackground
-    );
+    const [sceneBackground, setSceneBackground] = useState<boolean>(user.settings.sceneBackground);
     const [highlightOnHover, setHighlightOnHover] = useState<boolean>(
         user.settings.highlightOnHover
     );
@@ -103,9 +99,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                     <form className="settings-form" onSubmit={onChangePassword}>
                         <div className="form-element">
                             <label id="password-form" className="form-element">
-                                <span className="form-label settings-label">
-                                    New password
-                                </span>
+                                <span className="form-label settings-label">New password</span>
                                 <input
                                     className="form-input"
                                     name="password1"
@@ -149,7 +143,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                     <div className="settings-element">
                         <div className="settings-element-header">
                             <p>Language</p>
-                            <select id="language-form" name="language">
+                            <select className="select-form" name="language">
                                 <option value="en">English</option>
                                 <option value="fr">Français</option>
                             </select>
@@ -196,9 +190,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                                 className="notes-color"
                                 name="exported-notes-color"
                                 defaultValue={user.settings.exportedNotesColor}
-                                onBlur={(e) =>
-                                    updateExportedNotesColor(e.target.value)
-                                }
+                                onBlur={(e) => updateExportedNotesColor(e.target.value)}
                             />
                         </div>
                         <hr />

@@ -210,7 +210,9 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const copyTextSelection = (start: number, end: number) => {
-        editorView?.state.doc.copy();
+        console.log("copy from " + start + " to " + end);
+
+        //editorView?.state.doc.copy();
     };
 
     const pasteText = (text: string) => {
@@ -268,6 +270,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                 cutTextSelection={cutTextSelection}
                 pasteText={pasteText}
                 replaceOccurrences={replaceOccurrences}
+                copyTextSelection={copyTextSelection}
             />
             <div id="editor-container">
                 <EditorComponent editor={editorView} />

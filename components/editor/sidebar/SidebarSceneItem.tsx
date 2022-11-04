@@ -9,6 +9,7 @@ const SidebarSceneItem = ({
     focusOn,
     selectTextInEditor,
     cutTextSelection,
+    copyTextSelection,
 }: SceneContextProps) => {
     const { updateContextMenu } = useContext(UserContext);
 
@@ -23,6 +24,7 @@ const SidebarSceneItem = ({
                 focusOn,
                 selectTextInEditor,
                 cutTextSelection,
+                copyTextSelection,
             },
         });
     };

@@ -27,15 +27,13 @@ export type Project = {
     poster: string;
     description: string | null;
     screenplay: Prisma.JsonValue | null;
+    characters: Prisma.JsonValue | null;
     userId: number;
 };
 
 export default withIronSessionApiRoute(userRoute, sessionOptions);
 
-async function userRoute(
-    req: NextApiRequest,
-    res: NextApiResponse<Partial<CookieUser> | null>
-) {
+async function userRoute(req: NextApiRequest, res: NextApiResponse<Partial<CookieUser> | null>) {
     if (req.session.user) {
         // in a real world application you might read the user id from the session and then do a database request
         // to get more information on the user if needed

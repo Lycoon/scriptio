@@ -1,22 +1,89 @@
-#popup {
-  position: fixed;
-  width: 600px;
-  padding: 50px;
+.popup {
+    position: absolute;
+    min-width: 500px;
+    min-height: 250px;
+    padding: 16px;
+    z-index: 1;
+    left: 50%;
 
-  top: 40%;
-  left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
 
-  transform: translate(-50%, -50%);
-  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
-
-  visibility: hidden;
-  opacity: 0;
-  transition: 0.5s;
+    visibility: hidden;
+    opacity: 0;
+    transition: 0.2s;
 }
 
-#popup.active {
-  top: 50%;
-  visibility: visible;
-  opacity: 1;
-  transition: 0.5s;
+.popup.active {
+    top: 50%;
+    visibility: visible;
+    opacity: 1;
+    transition: 0.2s;
+}
+
+/* Popup close button */
+.popup-close {
+    display: flex;
+
+    padding-inline: 8px;
+    padding-block: 5px;
+    border-radius: 50px;
+    border: none;
+}
+
+.popup-close:hover {
+    background-color: var(--secondary-bg-hover);
+}
+
+/* Popup header */
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.popup-title {
+    font-size: 24px;
+    font-weight: 500;
+    color: white;
+}
+
+/* Popup form */
+.popup-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.popup-textarea {
+    height: 100px;
+    font-size: 16px !important;
+    margin-block: 8px;
+
+    overflow-y: auto;
+    resize: none;
+}
+
+.popup-input {
+    height: 30px;
+    width: 50%;
+    font-size: 16px !important;
+}
+
+.popup-select {
+    position: relative !important;
+    height: 30px;
+}
+
+/* Popup confirm button */
+.popup-confirm {
+    background-color: var(--secondary-bg-hover) !important;
+}
+
+.popup-confirm:hover {
+    background-color: var(--editor-style-bg-hover) !important;
 }
