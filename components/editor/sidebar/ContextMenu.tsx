@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
+import { CharacterData, CharacterItem } from "../../../src/lib/screenplayUtils";
 
 type ContextMenuItemProps = {
     text: string;
@@ -31,9 +32,9 @@ export type SceneContextProps = {
 };
 
 export type CharacterContextProps = {
-    name: string;
+    character: CharacterData;
     pasteText: (text: string) => void;
-    replaceOccurrences: (text: string, replace: string) => void;
+    editCharacterPopup: (character: CharacterData) => void;
 };
 
 const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
@@ -76,39 +77,39 @@ const SceneItemContextMenu = (props: any) => {
 };
 
 const CharacterItemContextMenu = (props: any) => {
-    const name = props.props.name;
+    const character: CharacterData = props.props.character;
     const pasteText = props.props.pasteText;
-    const replaceOccurrences = props.props.replaceOccurrences;
+    const editCharacterPopup = props.props.editCharacterPopup;
 
-    const replaceCharacter = () => {
-        replaceOccurrences(name, "REPLACE");
+    const _editCharacterPopup = () => {
+        editCharacterPopup(character);
     };
-    const pasteCharacter = () => {
-        pasteText(name);
+    const _removeCharacter = () => {
+        console.log("remove character ", character.name);
     };
-    const removeCharacter = () => {
-        console.log("remove character ", name);
+    const _pasteText = () => {
+        pasteText(character.name);
     };
 
     return (
         <>
-            <ContextMenuItem text={"Rename"} action={replaceCharacter} />
-            <ContextMenuItem text={"Remove"} action={removeCharacter} />
-            <ContextMenuItem text={"Paste"} action={pasteCharacter} />
+            <ContextMenuItem text={"Edit"} action={_editCharacterPopup} />
+            <ContextMenuItem text={"Remove"} action={_removeCharacter} />
+            <ContextMenuItem text={"Paste"} action={_pasteText} />
         </>
     );
 };
 
 const CharacterListContextMenu = (props: any) => {
-    const name = props.props.name;
+    const addCharacterPopup = props.props.addCharacterPopup;
 
-    const addCharacter = () => {
-        console.log("add character ", name);
+    const _addCharacterPopup = () => {
+        addCharacterPopup();
     };
 
     return (
         <>
-            <ContextMenuItem text={"Add character"} action={addCharacter} />
+            <ContextMenuItem text={"Add character"} action={_addCharacterPopup} />
         </>
     );
 };

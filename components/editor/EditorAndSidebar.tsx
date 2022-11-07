@@ -9,10 +9,15 @@ import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
 import { saveScreenplay } from "../../src/lib/requests";
 import { useDebouncedCallback } from "use-debounce";
-import { computeFullScenesData, computeFullCharactersData } from "../../src/lib/screenplayUtils";
+import {
+    computeFullScenesData,
+    computeFullCharactersData,
+    CharacterData,
+} from "../../src/lib/screenplayUtils";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
+import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
 
 type Props = {
     project: Project;
@@ -22,6 +27,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     const { updateEditor, updateIsSaving } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
     const [isSaved, updateIsSaved] = useState<boolean>(false);
+    const [isPopupActive, updatePopupActive] = useState<boolean>(false);
     const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(false);
 
     /* Format marks */
@@ -196,6 +202,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         }
     };
 
+    /* Context menu actions */
     const getFocusOnPosition = (position: number) => {
         editorView?.commands.focus(position);
     };
@@ -225,16 +232,39 @@ const EditorAndSidebar = ({ project }: Props) => {
         editorView?.chain().focus().insertContentAt({ from: 0, to: 0 }, text).run();
     };
 
+    /* Popup actions */
+    const closePopup = () => {
+        updatePopupActive(false);
+    };
+
+    const [popup, setPopup] = useState<JSX.Element | null>(null);
+    const editCharacterPopup = (character: CharacterData) => {
+        setPopup(() => (
+            <PopupCharacterItem
+                closePopup={closePopup}
+                type={PopupType.EditCharacter}
+                character={character}
+            />
+        ));
+        updatePopupActive(true);
+    };
+
+    const addCharacterPopup = () => {
+        setPopup(() => (
+            <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />
+        ));
+        updatePopupActive(true);
+    };
+
+    /* Marks */
     const toggleBold = () => {
         editorView?.chain().toggleBold().focus().run();
         setIsBold(!isBold);
     };
-
     const toggleItalic = () => {
         editorView?.chain().toggleItalic().focus().run();
         setIsItalic(!isItalic);
     };
-
     const toggleUnderline = () => {
         editorView?.chain().toggleUnderline().focus().run();
         setIsUnderline(!isUnderline);
@@ -263,14 +293,16 @@ const EditorAndSidebar = ({ project }: Props) => {
     return (
         <div id="editor-and-sidebar">
             <ContextMenu />
+            {isPopupActive && popup}
             <EditorSidebarNavigation
                 active={isNavigationActive}
                 getFocusOnPosition={getFocusOnPosition}
                 selectTextInEditor={selectTextInEditor}
                 cutTextSelection={cutTextSelection}
                 pasteText={pasteText}
-                replaceOccurrences={replaceOccurrences}
                 copyTextSelection={copyTextSelection}
+                editCharacterPopup={editCharacterPopup}
+                addCharacterPopup={addCharacterPopup}
             />
             <div id="editor-container">
                 <EditorComponent editor={editorView} />

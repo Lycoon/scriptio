@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import Loading from "../components/home/Loading";
 import { ThemeProvider } from "next-themes";
 import Navbar from "../components/navbar/Navbar";
-import Popup from "../components/popup/Popup";
+import Popup from "../components/popup/PopupCharacterItem";
 
 function MyApp({ Component, pageProps }: AppProps) {
     const [pageLoading, setPageLoading] = useState<boolean>(false);
@@ -41,14 +41,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                 <ThemeProvider attribute="class" defaultTheme="dark">
                     <div className="main-container">
                         <Navbar />
-                        {pageLoading ? (
-                            <Loading />
-                        ) : (
-                            <>
-                                <Popup />
-                                <Component {...pageProps} />
-                            </>
-                        )}
+                        {pageLoading ? <Loading /> : <Component {...pageProps} />}
                     </div>
                 </ThemeProvider>
             </ContextProvider>

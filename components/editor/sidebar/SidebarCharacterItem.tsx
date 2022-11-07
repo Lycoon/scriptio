@@ -3,9 +3,9 @@ import { CharacterContextProps, ContextMenuType } from "./ContextMenu";
 import { UserContext } from "../../../src/context/UserContext";
 
 const SidebarCharacterItem = ({
-    name,
+    character,
     pasteText,
-    replaceOccurrences,
+    editCharacterPopup,
 }: CharacterContextProps) => {
     const { updateContextMenu } = useContext(UserContext);
 
@@ -15,15 +15,15 @@ const SidebarCharacterItem = ({
             type: ContextMenuType.CharacterItem,
             position: { x: e.clientX, y: e.clientY },
             typeSpecificProps: {
-                name,
+                character,
                 pasteText,
-                replaceOccurrences,
+                editCharacterPopup,
             },
         });
     };
 
     const handleDoubleClick = () => {
-        pasteText(name); // paste character name on double click
+        pasteText(character.name); // paste character name on double click
     };
 
     return (
@@ -32,7 +32,7 @@ const SidebarCharacterItem = ({
             onDoubleClick={handleDoubleClick}
             className="scene-item"
         >
-            <p className="scene-item-title unselectable">{name}</p>
+            <p className="scene-item-title unselectable">{character.name}</p>
         </div>
     );
 };

@@ -2,7 +2,8 @@ import Image from "next/image";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
 import {
-    CharactersData,
+    CharacterData,
+    CharacterMap,
     getCharactersData,
     getScenesData,
     SceneItem,
@@ -14,12 +15,17 @@ import SidebarSceneItem from "./SidebarSceneItem";
 
 type Props = {
     active: boolean;
+
+    /* Editor actions */
     pasteText: (text: string) => void;
     getFocusOnPosition: (position: number) => void;
     selectTextInEditor: (start: number, end: number) => void;
     cutTextSelection: (start: number, end: number) => void;
     copyTextSelection: (start: number, end: number) => void;
-    replaceOccurrences: (text: string, replace: string) => void;
+
+    /* Characters */
+    editCharacterPopup: (character: CharacterData) => void;
+    addCharacterPopup: () => void;
 };
 
 const enum NavigationMenu {
@@ -30,16 +36,21 @@ const enum NavigationMenu {
 
 const EditorSidebarNavigation = ({
     active,
+
+    /* Editor actions */
     getFocusOnPosition,
     selectTextInEditor,
     cutTextSelection,
     pasteText,
-    replaceOccurrences,
     copyTextSelection,
+
+    /* Characters */
+    editCharacterPopup,
+    addCharacterPopup,
 }: Props) => {
     const { updateContextMenu } = useContext(UserContext);
     const [scenes, setScenes] = useState<ScenesData>(getScenesData());
-    const [characters, setCharacters] = useState<CharactersData>(getCharactersData());
+    const [characters, setCharacters] = useState<CharacterMap>(getCharactersData());
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
     const isActive = active ? "navigation-on" : "";
 
@@ -71,7 +82,7 @@ const EditorSidebarNavigation = ({
         updateContextMenu({
             type: ContextMenuType.CharacterList,
             position: { x: e.clientX, y: e.clientY },
-            typeSpecificProps: {},
+            typeSpecificProps: { addCharacterPopup },
         });
     };
 
@@ -96,13 +107,18 @@ const EditorSidebarNavigation = ({
                 </div>
                 <div className="nav-list">
                     {menu === NavigationMenu.Characters &&
-                        Object.keys(characters).map((name: any) => {
+                        Object.entries(characters).map((character: any) => {
                             return (
                                 <SidebarCharacterItem
-                                    key={name}
-                                    name={name}
+                                    key={character[0]}
+                                    character={{
+                                        // As we loop over entries of the character map, we get an array of [key, value]
+                                        name: character[0],
+                                        gender: character[1].gender,
+                                        synopsis: character[1].synopsis,
+                                    }}
                                     pasteText={pasteText}
-                                    replaceOccurrences={replaceOccurrences}
+                                    editCharacterPopup={editCharacterPopup}
                                 />
                             );
                         })}

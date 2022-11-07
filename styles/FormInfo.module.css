@@ -5,15 +5,28 @@
     font-size: 1rem;
 }
 
+:root {
+    --validation-color: #61b76b;
+    --error-color: #ce4462;
+    --warning-color: #efa52f;
+}
+
 .form-info-text {
-    background-color: #61b76b;
+    background-color: var(--validation-color);
     text-align: justify;
     padding: 15px;
     border-radius: 6px;
 }
 
 .form-info-error {
-    background-color: #ce4462;
+    background-color: var(--error-color);
+    text-align: justify;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.form-info-warn {
+    background-color: var(--warning-color);
     text-align: justify;
     padding: 15px;
     border-radius: 6px;

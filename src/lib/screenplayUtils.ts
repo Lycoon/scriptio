@@ -13,18 +13,34 @@ export const getScenesData = (): ScenesData => {
 };
 
 /* Characters */
-let charactersData: CharactersData = {};
+let charactersData: CharacterMap = {};
 export enum CharacterGender {
     Female,
     Male,
     Other,
 }
-export type CharactersData = { [name: string]: CharacterItem };
+export type CharacterMap = { [name: string]: CharacterItem }; // map by character name
+export type CharacterData = { name: string } & CharacterItem;
 export type CharacterItem = {
     gender: CharacterGender;
+    synopsis: string;
 };
-export const getCharactersData = (): CharactersData => {
+export const getCharactersData = (): CharacterMap => {
     return charactersData;
+};
+
+export const doesCharacterExist = (name: string): boolean => {
+    const nameLowered = name.toLowerCase();
+    let found = false;
+
+    Object.keys(charactersData).forEach((key) => {
+        if (key.toLowerCase() === nameLowered) {
+            found = true;
+            return;
+        }
+    });
+
+    return found;
 };
 
 export const computeFullCharactersData = async (json: any) => {
@@ -34,7 +50,10 @@ export const computeFullCharactersData = async (json: any) => {
             // If character already exists in the data, don't overwrite it
             continue;
         }
-        charactersData[name] = { gender: CharacterGender.Other };
+        charactersData[name] = {
+            gender: CharacterGender.Other,
+            synopsis: "",
+        };
     }
 };
 
