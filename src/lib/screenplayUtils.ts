@@ -30,11 +30,11 @@ export const getCharactersData = (): CharacterMap => {
 };
 
 export const doesCharacterExist = (name: string): boolean => {
-    const nameLowered = name.toLowerCase();
+    const nameUppered = name.toUpperCase();
     let found = false;
 
     Object.keys(charactersData).forEach((key) => {
-        if (key.toLowerCase() === nameLowered) {
+        if (key.toUpperCase() === nameUppered) {
             found = true;
             return;
         }
@@ -45,6 +45,8 @@ export const doesCharacterExist = (name: string): boolean => {
 
 export const computeFullCharactersData = async (json: any) => {
     const names = getCharacterNames(json);
+    charactersData = {};
+
     for (const name of names) {
         if (charactersData[name] !== undefined) {
             // If character already exists in the data, don't overwrite it

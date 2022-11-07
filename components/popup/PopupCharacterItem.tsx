@@ -26,15 +26,13 @@ const PopupCharacterItem = ({ closePopup, type, character }: Props) => {
         e.preventDefault();
 
         const _newName = e.target.name.value;
-        setNewName(_newName);
-
         const newGender = e.target.gender.value;
         const newSynopsis = e.target.synopsis.value;
+        setNewName(_newName.toUpperCase()); // to display it in popup UI
 
         if (_newName !== character?.name) {
             const doesExist = doesCharacterExist(_newName);
             if (doesExist) {
-                console.log(_newName);
                 return setTakenNameError(true);
             }
 
@@ -53,7 +51,7 @@ const PopupCharacterItem = ({ closePopup, type, character }: Props) => {
     };
 
     if (type === PopupType.EditCharacter) {
-        def.title = "Edit Character";
+        def.title = "Edit Character - " + character?.name;
         def.onSubmit = onEdit;
         def.name = character?.name;
         def.synopsis = character?.synopsis;
@@ -132,7 +130,11 @@ const PopupCharacterItem = ({ closePopup, type, character }: Props) => {
                             defaultValue={def.synopsis}
                         />
                     </div>
-                    <button className="form-btn popup-confirm" type="submit">
+                    <button
+                        disabled={newNameWarning || takenNameError}
+                        className="form-btn popup-confirm"
+                        type="submit"
+                    >
                         Confirm
                     </button>
                 </form>

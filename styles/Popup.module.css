@@ -90,3 +90,8 @@
 .popup-confirm:hover {
     background-color: var(--editor-style-bg-hover) !important;
 }
+
+.popup-confirm:disabled {
+    filter: brightness(60%);
+    cursor: not-allowed;
+}
