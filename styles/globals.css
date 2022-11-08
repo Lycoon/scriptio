@@ -10,6 +10,7 @@
 @import "Popup.module.css";
 @import "ProjectDangerZone.module.css";
 @import "ContextMenu.module.css";
+@import "PageCounter.module.css";
 
 /* Forms */
 @import "HomePageForm.module.css";

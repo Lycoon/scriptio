@@ -1,4 +1,4 @@
-import { JSONContent, useEditor } from "@tiptap/react";
+import { Extension, JSONContent, useEditor } from "@tiptap/react";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../src/context/UserContext";
 import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "../../src/Screenplay";
@@ -21,6 +21,7 @@ import EditorSidebarFormat, { ScreenplayElement } from "./sidebar/EditorSidebarF
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
+import Suggestion from "@tiptap/suggestion";
 
 type Props = {
     project: Project;

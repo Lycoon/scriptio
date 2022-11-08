@@ -70,6 +70,13 @@ const SceneItemContextMenu = (props: any) => {
     return (
         <>
             <ContextMenuItem text={"Go to scene"} action={goToScene} />
+            <ContextMenuItem text={"Cut"} action={cutScene} />
+            <ContextMenuItem text={"Select in editor"} action={selectScene} />
+        </>
+    );
+    return (
+        <>
+            <ContextMenuItem text={"Go to scene"} action={goToScene} />
             <ContextMenuItem text={"Copy"} action={copyScene} />
             <ContextMenuItem text={"Cut"} action={cutScene} />
             <ContextMenuItem text={"Select in editor"} action={selectScene} />
@@ -123,11 +130,8 @@ const SceneListContextMenu = (props: any) => {
         console.log("add scene ", name);
     };
 
-    return (
-        <>
-            <ContextMenuItem text={"Add scene"} action={addScene} />
-        </>
-    );
+    return <></>;
+    return <>{<ContextMenuItem text={"Add scene"} action={addScene} />}</>;
 };
 
 const ContextMenu = () => {
