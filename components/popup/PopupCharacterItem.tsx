@@ -1,3 +1,4 @@
+import assert from "assert";
 import { useState } from "react";
 import { CharacterData, CharacterGender, doesCharacterExist } from "../../src/lib/screenplayUtils";
 
@@ -5,6 +6,7 @@ type Props = {
     type: PopupType;
     character?: CharacterData;
     closePopup: () => void;
+    getCharacterOccurrences?: (word: string) => number;
 };
 
 export enum PopupType {
@@ -12,9 +14,10 @@ export enum PopupType {
     EditCharacter,
 }
 
-const PopupCharacterItem = ({ closePopup, type, character }: Props) => {
+const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrences }: Props) => {
     const [newNameWarning, setNewNameWarning] = useState<boolean>(false);
     const [takenNameError, setTakenNameError] = useState<boolean>(false);
+    const [nameOccurrences, setNameOccurrences] = useState<number>(0);
     const [newName, setNewName] = useState<string>("");
 
     const onCreate = (e: any) => {
@@ -25,17 +28,22 @@ const PopupCharacterItem = ({ closePopup, type, character }: Props) => {
     const onEdit = (e: any) => {
         e.preventDefault();
 
+        assert(character, "A character must be defined on edit mode");
+        assert(getCharacterOccurrences);
+
         const _newName = e.target.name.value;
         const newGender = e.target.gender.value;
         const newSynopsis = e.target.synopsis.value;
         setNewName(_newName.toUpperCase()); // to display it in popup UI
 
-        if (_newName !== character?.name) {
+        if (_newName.toUpperCase() !== character.name) {
             const doesExist = doesCharacterExist(_newName);
+
             if (doesExist) {
                 return setTakenNameError(true);
             }
 
+            setNameOccurrences(getCharacterOccurrences(character.name));
             setNewNameWarning(true);
         }
     };
@@ -71,8 +79,8 @@ const PopupCharacterItem = ({ closePopup, type, character }: Props) => {
                     {newNameWarning && (
                         <div className="form-info-warn popup-info">
                             <p>
-                                Are you sure you want to update 49 occurrences of word{" "}
-                                {character?.name} to {newName}? Take extra care of common words
+                                Are you sure you want to update {nameOccurrences} occurrences of
+                                word {character?.name} to {newName}? Take extra care of common words
                                 whose update might be unwated.
                             </p>
                             <div className="popup-info-btns">

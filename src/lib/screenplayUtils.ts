@@ -1,3 +1,4 @@
+import { count } from "console";
 import { getCharacterNames } from "./statistics";
 
 /* Scenes */
@@ -41,6 +42,23 @@ export const doesCharacterExist = (name: string): boolean => {
     });
 
     return found;
+};
+
+export const countOccurrences = (json: any, word: string): number => {
+    const regex = new RegExp(`${word}`, "gi");
+    const nodes = json.content!;
+    let count = 0;
+
+    for (let i = 0; i < nodes.length; i++) {
+        const currNode = nodes[i];
+        const content: any[] = currNode["content"];
+        const text: string = content[0]["text"];
+
+        const res = Array.from(text.matchAll(regex));
+        count += res.length;
+    }
+
+    return count;
 };
 
 export const computeFullCharactersData = async (json: any) => {

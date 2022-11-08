@@ -13,6 +13,7 @@ import {
     computeFullScenesData,
     computeFullCharactersData,
     CharacterData,
+    countOccurrences,
 } from "../../src/lib/screenplayUtils";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
@@ -233,17 +234,23 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     /* Popup actions */
+    const [popup, setPopup] = useState<JSX.Element | null>(null);
     const closePopup = () => {
         updatePopupActive(false);
     };
 
-    const [popup, setPopup] = useState<JSX.Element | null>(null);
+    const getCharacterOccurrences = (word: string) => {
+        const count = countOccurrences(editorView?.getJSON(), word);
+        return count;
+    };
+
     const editCharacterPopup = (character: CharacterData) => {
         setPopup(() => (
             <PopupCharacterItem
                 closePopup={closePopup}
                 type={PopupType.EditCharacter}
                 character={character}
+                getCharacterOccurrences={getCharacterOccurrences}
             />
         ));
         updatePopupActive(true);
