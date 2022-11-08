@@ -9,6 +9,8 @@
 @import "NewProjectItem.module.css";
 @import "Popup.module.css";
 @import "ProjectDangerZone.module.css";
+@import "ContextMenu.module.css";
+@import "PageCounter.module.css";
 
 /* Forms */
 @import "HomePageForm.module.css";
@@ -40,14 +42,14 @@
 @import "EditorContent.module.css";
 @import "EditorSidebar.module.css";
 @import "EditorTab.module.css";
+@import "EditorSidebarNavigation.module.css";
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Segoe UI", Candara, "Bitstream Vera Sans", "DejaVu Sans",
-        "Bitstream Vera Sans", "Trebuchet MS", Verdana, "Verdana Ref",
-        sans-serif;
+    font-family: "Segoe UI", Candara, "Bitstream Vera Sans", "DejaVu Sans", "Bitstream Vera Sans",
+        "Trebuchet MS", Verdana, "Verdana Ref", sans-serif;
 }
 
 a {
@@ -59,6 +61,14 @@ a:hover {
     color: #ffffff;
 }
 
+/* Variables */
+/* Global */
+* {
+    --format-sidebar-width: 260px;
+    --nav-sidebar-width: 380px;
+}
+
+/* Themes */
 html.light {
     --primary-bg: #ffffff;
     --secondary-bg: #797979;
@@ -157,7 +167,10 @@ h3 {
 .main-container {
     display: flex;
     flex-direction: column;
+
+    position: relative;
     height: 100vh;
+
     background-color: var(--primary-bg);
     transition: background-color 0.15s;
 }
@@ -232,6 +245,7 @@ h3 {
     font-family: "Segoe UI";
 }
 
+/* https://stackoverflow.com/questions/6900124/how-to-make-certain-text-not-selectable-with-css */
 .unselectable {
     -webkit-user-select: none; /* Chrome all / Safari all */
     -moz-user-select: none; /* Firefox all */

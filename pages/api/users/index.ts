@@ -3,6 +3,7 @@ import { withIronSessionApiRoute } from "iron-session/next";
 import { sessionOptions } from "../../../src/lib/session";
 import { Prisma, Settings } from "@prisma/client";
 import { Secrets } from "../../../src/server/repository/user-repository";
+import { CharacterData, CharacterMap } from "../../../src/lib/screenplayUtils";
 
 export type CookieUser = {
     id: number;
@@ -27,15 +28,13 @@ export type Project = {
     poster: string;
     description: string | null;
     screenplay: Prisma.JsonValue | null;
+    characters: CharacterMap;
     userId: number;
 };
 
 export default withIronSessionApiRoute(userRoute, sessionOptions);
 
-async function userRoute(
-    req: NextApiRequest,
-    res: NextApiResponse<Partial<CookieUser> | null>
-) {
+async function userRoute(req: NextApiRequest, res: NextApiResponse<Partial<CookieUser> | null>) {
     if (req.session.user) {
         // in a real world application you might read the user id from the session and then do a database request
         // to get more information on the user if needed

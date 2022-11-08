@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "../../pages/api/users";
 import { deleteProject } from "../../src/lib/requests";
 import EmptyProjectPage from "./EmptyProjectPage";

@@ -1,4 +1,6 @@
 import { EditorContent, Editor } from "@tiptap/react";
+import { useEffect } from "react";
+import PageCounter from "./PageCounter";
 
 type Props = {
     editor: Editor | undefined;

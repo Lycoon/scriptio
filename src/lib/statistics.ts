@@ -34,8 +34,7 @@ const ScreenplayElements: { [type: string]: IElementData } = {
     section: { lineSize: 69, lineY: 20, offsetY: 17 },
 };
 
-const average = (list: number[]) =>
-    list.reduce((prev, curr) => prev + curr, 0) / list.length;
+const average = (list: number[]) => list.reduce((prev, curr) => prev + curr, 0) / list.length;
 
 const cleanFrequency = (frequency: any) => {
     let items = Object.keys(frequency).map((key) => {
@@ -125,7 +124,7 @@ export const getCharacterNames = (json: any) => {
         const content: string = currNode["content"][0]["text"];
 
         if (type === "character" && !characters.includes(content)) {
-            characters.push(content);
+            characters.push(content.toUpperCase());
         }
     }
 
@@ -180,8 +179,7 @@ export const getScreenplayData = (json: any): ScreenplayData => {
 
                 if (typeJ === "parenthetical") continue;
                 if (typeJ === "dialogue") {
-                    if (!distribution[pageLimits.length])
-                        distribution[pageLimits.length] = {};
+                    if (!distribution[pageLimits.length]) distribution[pageLimits.length] = {};
 
                     const actors = distribution[pageLimits.length];
                     const prevCount = actors[content] ?? 0;
@@ -245,19 +243,14 @@ export const getScaledDistribution = (distribution: Distribution) => {
 
             const snappedFixed = +snapped.toFixed();
             const prev = scaled[actor][snappedFixed];
-            scaled[actor][snappedFixed] =
-                (prev ?? 0) + distribution[page][actor];
+            scaled[actor][snappedFixed] = (prev ?? 0) + distribution[page][actor];
         }
     }
 
     return scaled;
 };
 
-export const getRandomColors = (
-    occurrences: number,
-    saturation: number,
-    luminance: number
-) => {
+export const getRandomColors = (occurrences: number, saturation: number, luminance: number) => {
     const colors: string[] = [];
     const step = 1 / occurrences;
     const startHue = Math.random();

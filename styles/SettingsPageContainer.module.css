@@ -89,9 +89,8 @@
     position: relative; /* for notes color input to not displace elements */
 }
 
-#language-form {
-    max-width: 50%;
-    width: 130px;
+.select-form {
+    width: 50%;
     padding-inline: 4px;
     padding-block: 2px;
     border-color: var(--secondary-bg);

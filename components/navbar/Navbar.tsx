@@ -67,11 +67,7 @@ const NotLoggedNavbar = () => (
         <Link className="notlogged-navbar-btn" href={"/contact"}>
             Contact
         </Link>
-        <Link
-            className="notlogged-navbar-btn"
-            target={"_blank"}
-            href={"https://paypal.me/lycoon"}
-        >
+        <Link className="notlogged-navbar-btn" target={"_blank"} href={"https://paypal.me/lycoon"}>
             Donate
         </Link>
     </div>
@@ -102,10 +98,7 @@ const Navbar = () => {
                 <div id="navbar-buttons">
                     {page === PAGE.SCREENPLAY && isSaving && (
                         <div className="saving-spin">
-                            <img
-                                className="settings-icon"
-                                src="/images/saving.svg"
-                            />
+                            <img className="settings-icon" src="/images/saving.svg" />
                         </div>
                     )}
                     <div className="settings-btn" onClick={onSettings}>

@@ -30,9 +30,7 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
 };
 
 const noauth = { props: { user: null, projects: [] } };
-export const getServerSideProps = withIronSessionSsr(async function ({
-    req,
-}): Promise<any> {
+export const getServerSideProps = withIronSessionSsr(async function ({ req }): Promise<any> {
     const user = req.session.user;
 
     if (!user || !user.isLoggedIn) {
@@ -59,7 +57,6 @@ export const getServerSideProps = withIronSessionSsr(async function ({
             projects: projects.projects,
         },
     };
-},
-sessionOptions);
+}, sessionOptions);
 
 export default HomePage;

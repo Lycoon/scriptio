@@ -1,4 +1,4 @@
-import EditorTab from "./EditorTab";
+import EditorTab from "../EditorTab";
 
 type Props = {
     tabs: any[];
@@ -18,22 +18,26 @@ type EditorStyleProps = {
     icon: string;
 };
 
+export enum ScreenplayElement {
+    SceneHeading,
+    Action,
+    Character,
+    Dialogue,
+    Parenthetical,
+    Transition,
+    Section,
+    Note,
+}
+
 const EditorStyle = ({ isActive, toggle, icon }: EditorStyleProps) => {
     return (
-        <div
-            className={"editor-style-btn" + (isActive ? " active-style" : "")}
-            onClick={toggle}
-        >
-            <img
-                className="editor-style-icon"
-                src={"/images/" + icon}
-                alt="Editor style icon"
-            />
+        <div className={"editor-style-btn" + (isActive ? " active-style" : "")} onClick={toggle}>
+            <img className="editor-style-icon" src={"/images/" + icon} alt="Editor style icon" />
         </div>
     );
 };
 
-const EditorSidebar = ({
+const EditorSidebarFormat = ({
     tabs,
     toggleBold,
     toggleItalic,
@@ -45,19 +49,11 @@ const EditorSidebar = ({
     setActiveTab,
 }: Props) => {
     return (
-        <div id="sidebar" className="sidebar-shadow tabs">
+        <div className="sidebar tabs">
             <div className="tabs">
                 <div className="editor-style-buttons">
-                    <EditorStyle
-                        isActive={isBold}
-                        toggle={toggleBold}
-                        icon={"bold.png"}
-                    />
-                    <EditorStyle
-                        isActive={isItalic}
-                        toggle={toggleItalic}
-                        icon={"italic.png"}
-                    />
+                    <EditorStyle isActive={isBold} toggle={toggleBold} icon={"bold.png"} />
+                    <EditorStyle isActive={isItalic} toggle={toggleItalic} icon={"italic.png"} />
                     <EditorStyle
                         isActive={isUnderline}
                         toggle={toggleUnderline}
@@ -109,4 +105,4 @@ const EditorSidebar = ({
     );
 };
 
-export default EditorSidebar;
+export default EditorSidebarFormat;
