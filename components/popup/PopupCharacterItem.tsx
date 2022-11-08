@@ -1,12 +1,19 @@
 import assert from "assert";
 import { useState } from "react";
-import { CharacterData, CharacterGender, doesCharacterExist } from "../../src/lib/screenplayUtils";
+import {
+    CharacterData,
+    CharacterGender,
+    deleteCharacter,
+    doesCharacterExist,
+    upsertCharacterData,
+} from "../../src/lib/screenplayUtils";
 
 type Props = {
     type: PopupType;
     character?: CharacterData;
     closePopup: () => void;
     getCharacterOccurrences?: (word: string) => number;
+    replaceOccurrences?: (oldWord: string, newWord: string) => void;
 };
 
 export enum PopupType {
@@ -14,15 +21,38 @@ export enum PopupType {
     EditCharacter,
 }
 
-const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrences }: Props) => {
+const PopupCharacterItem = ({
+    closePopup,
+    type,
+    character,
+    getCharacterOccurrences,
+    replaceOccurrences,
+}: Props) => {
     const [newNameWarning, setNewNameWarning] = useState<boolean>(false);
     const [takenNameError, setTakenNameError] = useState<boolean>(false);
     const [nameOccurrences, setNameOccurrences] = useState<number>(0);
     const [newName, setNewName] = useState<string>("");
+    const [newGender, setNewGender] = useState<CharacterGender>(CharacterGender.Female);
+    const [newSynopsis, setNewSynopsis] = useState<string>("");
 
     const onCreate = (e: any) => {
-        const _newName = e.target.name.value;
         e.preventDefault();
+
+        const _name = e.target.name.value;
+        const _gender = e.target.gender.value;
+        const _synopsis = e.target.synopsis.value;
+
+        const doesExist = doesCharacterExist(_name);
+        if (doesExist) {
+            return setTakenNameError(true);
+        }
+
+        upsertCharacterData(_name.toUpperCase(), {
+            gender: _gender,
+            synopsis: _synopsis,
+        });
+
+        closePopup();
     };
 
     const onEdit = (e: any) => {
@@ -31,10 +61,14 @@ const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrenc
         assert(character, "A character must be defined on edit mode");
         assert(getCharacterOccurrences);
 
+        // need to store in local variables because stateful is async
         const _newName = e.target.name.value;
-        const newGender = e.target.gender.value;
-        const newSynopsis = e.target.synopsis.value;
+        const _newGender = e.target.gender.value;
+        const _newSynopsis = e.target.synopsis.value;
+
         setNewName(_newName.toUpperCase()); // to display it in popup UI
+        setNewGender(_newGender);
+        setNewSynopsis(_newSynopsis);
 
         if (_newName.toUpperCase() !== character.name) {
             const doesExist = doesCharacterExist(_newName);
@@ -45,10 +79,32 @@ const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrenc
 
             setNameOccurrences(getCharacterOccurrences(character.name));
             setNewNameWarning(true);
+            return;
         }
+
+        // if name is the same, just update the character
+        upsertCharacterData(character.name, {
+            gender: _newGender,
+            synopsis: _newSynopsis,
+        });
+
+        closePopup();
     };
 
-    const onNewNameConfirm = () => {};
+    const onNewNameConfirm = () => {
+        assert(character, "A character must be defined on edit mode");
+        assert(replaceOccurrences);
+
+        // delete old character and insert with new name
+        replaceOccurrences(character.name, newName);
+        deleteCharacter(character.name);
+        upsertCharacterData(newName, {
+            gender: newGender,
+            synopsis: newSynopsis,
+        });
+
+        closePopup();
+    };
 
     let def: any = {
         title: "Create Character",
@@ -86,6 +142,7 @@ const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrenc
                             <div className="popup-info-btns">
                                 <button
                                     className="form-btn popup-info-btn"
+                                    type="button"
                                     onClick={onNewNameConfirm}
                                 >
                                     Yes
@@ -122,10 +179,14 @@ const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrenc
                     <div className="settings-element">
                         <div className="settings-element-header">
                             <p>Gender</p>
-                            <select className="select-form popup-select" name="gender">
-                                <option value="f">Female</option>
-                                <option value="m">Male</option>
-                                <option value="o">Other</option>
+                            <select
+                                className="select-form popup-select"
+                                name="gender"
+                                defaultValue={def.gender}
+                            >
+                                <option value="0">Female</option>
+                                <option value="1">Male</option>
+                                <option value="2">Other</option>
                             </select>
                         </div>
                         <hr />

@@ -44,6 +44,15 @@ export const doesCharacterExist = (name: string): boolean => {
     return found;
 };
 
+export const upsertCharacterData = (name: string, data: CharacterItem) => {
+    charactersData[name] = data;
+    console.log(charactersData);
+};
+
+export const deleteCharacter = (name: string) => {
+    delete charactersData[name];
+};
+
 export const countOccurrences = (json: any, word: string): number => {
     const regex = new RegExp(`${word}`, "gi");
     const nodes = json.content!;

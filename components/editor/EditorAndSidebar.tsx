@@ -213,13 +213,12 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const cutTextSelection = (start: number, end: number) => {
-        //editorView?.state.doc.cut(start, end);
+        // TODO: get last document position because -1 makes it crash
         editorView?.commands.deleteRange({ from: start, to: end });
     };
 
     const copyTextSelection = (start: number, end: number) => {
         console.log("copy from " + start + " to " + end);
-
         //editorView?.state.doc.copy();
     };
 
@@ -227,10 +226,8 @@ const EditorAndSidebar = ({ project }: Props) => {
         editorView?.commands.insertContent(text);
     };
 
-    const replaceOccurrences = (text: string, replace: string) => {
-        const len = replace.length;
-
-        editorView?.chain().focus().insertContentAt({ from: 0, to: 0 }, text).run();
+    const replaceOccurrences = (oldWord: string, newWord: string) => {
+        editorView?.chain().focus().insertContentAt({ from: 0, to: 4 }, newWord).run();
     };
 
     /* Popup actions */
@@ -240,8 +237,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const getCharacterOccurrences = (word: string) => {
-        const count = countOccurrences(editorView?.getJSON(), word);
-        return count;
+        return countOccurrences(editorView?.getJSON(), word);
     };
 
     const editCharacterPopup = (character: CharacterData) => {
@@ -251,6 +247,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                 type={PopupType.EditCharacter}
                 character={character}
                 getCharacterOccurrences={getCharacterOccurrences}
+                replaceOccurrences={replaceOccurrences}
             />
         ));
         updatePopupActive(true);

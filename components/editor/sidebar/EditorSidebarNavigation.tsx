@@ -1,5 +1,6 @@
+import autoAnimate from "@formkit/auto-animate";
 import Image from "next/image";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
 import {
     CharacterData,
@@ -54,6 +55,11 @@ const EditorSidebarNavigation = ({
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
     const isActive = active ? "navigation-on" : "";
 
+    const parent = useRef(null);
+    useEffect(() => {
+        parent.current && autoAnimate(parent.current);
+    }, [parent]);
+
     useEffect(() => {
         // update scene navigation when scenes change
         setScenes(getScenesData());
@@ -105,7 +111,7 @@ const EditorSidebarNavigation = ({
                         <p className="nav-list-title">Locations</p>
                     </div>
                 </div>
-                <div className="nav-list">
+                <div ref={parent} className="nav-list">
                     {menu === NavigationMenu.Characters &&
                         Object.entries(characters).map((character: any) => {
                             return (
