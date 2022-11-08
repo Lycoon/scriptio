@@ -151,7 +151,7 @@ const PopupCharacterItem = ({
                                     className="form-btn popup-info-btn"
                                     onClick={() => setNewNameWarning(false)}
                                 >
-                                    No, don't change
+                                    No, do not change
                                 </button>
                             </div>
                         </div>

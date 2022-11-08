@@ -4,7 +4,7 @@ import { ExportData } from "../../components/projects/export/ExportProjectContai
 
 const LOCAL = "http://localhost:3000";
 const PRODUCTION = "https://scriptio.app";
-const BASE_URL = LOCAL;
+const BASE_URL = PRODUCTION;
 
 const fonts = {
     CourierPrime: {
@@ -54,10 +54,7 @@ const getWatermarkData = (text: string) => {
     };
 };
 
-const initPDF = (
-    exportData: ExportData,
-    pdfNodes: any[]
-): TDocumentDefinitions => {
+const initPDF = (exportData: ExportData, pdfNodes: any[]): TDocumentDefinitions => {
     return {
         info: {
             title: exportData.title,
@@ -153,9 +150,7 @@ export const exportToPDF = async (json: any, exportData: ExportData) => {
                 addOffset(pdfNodes);
                 break;
             case "character":
-                pdfNodes.push(
-                    getPDFNodeTemplate("character", text.toUpperCase())
-                );
+                pdfNodes.push(getPDFNodeTemplate("character", text.toUpperCase()));
                 break;
             case "dialogue":
                 pdfNodes.push(getPDFNodeTemplate("dialogue", text));
@@ -164,19 +159,13 @@ export const exportToPDF = async (json: any, exportData: ExportData) => {
                 }
                 break;
             case "parenthetical":
-                pdfNodes.push(
-                    getPDFNodeTemplate("parenthetical", "(" + text + ")")
-                );
+                pdfNodes.push(getPDFNodeTemplate("parenthetical", "(" + text + ")"));
                 break;
             case "transition":
-                pdfNodes.push(
-                    getPDFNodeTemplate("transition", text.toUpperCase() + ":")
-                );
+                pdfNodes.push(getPDFNodeTemplate("transition", text.toUpperCase() + ":"));
                 break;
             case "section":
-                pdfNodes.push(
-                    getPDFNodeTemplate("section", text.toUpperCase())
-                );
+                pdfNodes.push(getPDFNodeTemplate("section", text.toUpperCase()));
                 break;
             case "note":
                 if (exportData.notes) {
