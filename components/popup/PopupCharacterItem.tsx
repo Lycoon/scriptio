@@ -63,7 +63,7 @@ const PopupCharacterItem = ({
 
         // need to store in local variables because stateful is async
         const _newName = e.target.name.value;
-        const _newGender = e.target.gender.value;
+        const _newGender = +e.target.gender.value;
         const _newSynopsis = e.target.synopsis.value;
 
         setNewName(_newName.toUpperCase()); // to display it in popup UI
@@ -173,6 +173,7 @@ const PopupCharacterItem = ({
                                 required
                                 defaultValue={def.name}
                                 onChange={() => setTakenNameError(false)}
+                                disabled={newNameWarning}
                             />
                         </div>
                     </div>
@@ -183,6 +184,7 @@ const PopupCharacterItem = ({
                                 className="select-form popup-select"
                                 name="gender"
                                 defaultValue={def.gender}
+                                disabled={newNameWarning || takenNameError}
                             >
                                 <option value="0">Female</option>
                                 <option value="1">Male</option>
@@ -197,6 +199,7 @@ const PopupCharacterItem = ({
                             className="form-input popup-textarea"
                             name="synopsis"
                             defaultValue={def.synopsis}
+                            disabled={newNameWarning || takenNameError}
                         />
                     </div>
                     <button

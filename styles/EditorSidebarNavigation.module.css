@@ -64,6 +64,7 @@
     margin-top: 12px;
     border-radius: 10px;
     overflow-y: auto;
+    overflow-x: hidden;
 
     background-color: var(--editor-style-bg-hover);
 }

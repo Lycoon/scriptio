@@ -73,9 +73,6 @@ const EditorSidebarNavigation = ({
     useEffect(() => {
         // update character navigation when characters change
         setCharacters(getCharactersData());
-        console.log("changed characters");
-
-        deferredCharactersUpdate();
     }, [getCharactersData()]);
 
     const isCharactersMenu = menu === NavigationMenu.Characters;

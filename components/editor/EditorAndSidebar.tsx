@@ -58,9 +58,8 @@ const EditorAndSidebar = ({ project }: Props) => {
         computeFullScenesData(editorView?.getJSON());
     }, 1000);
 
-    const deferredCharactersUpdate = useDebouncedCallback(async () => {
-        console.log("update characters");
-        await saveProjectCharacters(project.userId, project.id, getCharactersData());
+    const deferredCharactersUpdate = useDebouncedCallback(() => {
+        saveProjectCharacters(project.userId, project.id, getCharactersData());
     }, 500);
 
     const updateEditorStyles = (marks: any[]) => {
@@ -171,8 +170,10 @@ const EditorAndSidebar = ({ project }: Props) => {
     });
 
     useEffect(() => {
-        editorView?.commands.setContent(project.screenplay as JSONContent);
-        updateEditor(editorView!);
+        if (editorView?.commands) {
+            editorView?.commands.setContent(project.screenplay as JSONContent);
+            updateEditor(editorView!);
+        }
     }, [editorView]);
 
     // init on editor load
@@ -185,8 +186,9 @@ const EditorAndSidebar = ({ project }: Props) => {
 
     const setActiveTab = (node: string) => {
         updateSelectedTab(tabs.indexOf(node));
-
-        if (editorView) editorView.chain().focus().setNode("Screenplay", { class: node }).run();
+        if (editorView) {
+            editorView.chain().focus().setNode("Screenplay", { class: node }).run();
+        }
     };
 
     const pressedKeyEvent = (e: KeyboardEvent) => {
@@ -202,6 +204,8 @@ const EditorAndSidebar = ({ project }: Props) => {
                     idx = ScreenplayElement.Dialogue;
                     break;
                 case ScreenplayElement.Character:
+                    idx = ScreenplayElement.Action;
+                    break;
                 case ScreenplayElement.Dialogue:
                     idx = ScreenplayElement.Parenthetical;
             }
@@ -233,8 +237,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const cutTextSelection = (start: number, end: number) => {
-        // TODO: get last document position because -1 makes it crash
-        editorView?.commands.deleteRange({ from: start, to: end });
+        editorView?.commands.deleteRange({ from: start, to: end - 1 });
     };
 
     const copyTextSelection = (start: number, end: number) => {
@@ -310,11 +313,13 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     useEffect(() => {
-        addEventListener("keydown", pressedKeyEvent, false);
+        addEventListener("keydown", pressedKeyEvent);
         addEventListener("beforeunload", onUnload);
+        addEventListener("charactersDataUpdated", deferredCharactersUpdate);
         return () => {
-            removeEventListener("keydown", pressedKeyEvent, false);
+            removeEventListener("keydown", pressedKeyEvent);
             removeEventListener("beforeunload", onUnload);
+            removeEventListener("charactersDataUpdated", deferredCharactersUpdate);
         };
     });
 

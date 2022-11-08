@@ -12,7 +12,6 @@ import {
     getProjects,
     updateProject,
 } from "../../../../src/server/service/project-service";
-import { Project } from "..";
 
 export default withIronSessionApiRoute(handler, sessionOptions);
 

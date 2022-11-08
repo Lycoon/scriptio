@@ -1,6 +1,6 @@
 import { PrismaClient, Project } from "@prisma/client";
 import { JSONContent } from "@tiptap/react";
-import { CharacterData } from "../../lib/screenplayUtils";
+import { CharacterData, CharacterMap } from "../../lib/screenplayUtils";
 
 const prisma = new PrismaClient();
 
@@ -10,7 +10,7 @@ export interface ProjectUpdate {
     description?: string;
     screenplay?: JSONContent;
     poster?: string;
-    characters?: CharacterData[];
+    characters?: CharacterMap;
 }
 
 export interface ProjectCreation {
@@ -28,6 +28,7 @@ export class ProjectRepository {
                 description: project.description,
                 screenplay: project.screenplay,
                 poster: project.poster,
+                characters: project.characters,
             },
             where: {
                 id: project.projectId,

@@ -44,12 +44,21 @@ export const doesCharacterExist = (name: string): boolean => {
     return found;
 };
 
+const triggerUpdate = () => {
+    const event = new Event("charactersDataUpdated");
+    window.dispatchEvent(event);
+};
+
 export const upsertCharacterData = (name: string, data: CharacterItem) => {
     charactersData[name] = data;
+
+    triggerUpdate();
 };
 
 export const deleteCharacter = (name: string) => {
     delete charactersData[name];
+
+    triggerUpdate();
 };
 
 export const countOccurrences = (json: any, word: string): number => {
@@ -83,6 +92,8 @@ export const computeFullCharactersData = async (json: any, fetchedCharacters: Ch
             synopsis: "",
         };
     }
+
+    triggerUpdate();
 };
 
 export const computeFullScenesData = async (json: any) => {
@@ -123,7 +134,12 @@ export const computeFullScenesData = async (json: any) => {
         cursor += text.length + 2; // new line counts for 2 characters
     }
 
-    scenes[scenes.length - 1].nextPosition = cursor; // last scene has no next scene to set nextPosition
+    if (scenes.length <= 0) {
+        scenesData = [];
+    } else {
+        scenes[scenes.length - 1].nextPosition = cursor; // last scene has no next scene to set nextPosition
+    }
+
     scenesData = scenes;
 };
 
