@@ -6,6 +6,7 @@ const SidebarCharacterItem = ({
     character,
     pasteText,
     editCharacterPopup,
+    removeCharacter,
 }: CharacterContextProps) => {
     const { updateContextMenu } = useContext(UserContext);
 
@@ -18,6 +19,7 @@ const SidebarCharacterItem = ({
                 character,
                 pasteText,
                 editCharacterPopup,
+                removeCharacter,
             },
         });
     };

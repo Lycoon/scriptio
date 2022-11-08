@@ -27,6 +27,7 @@ type Props = {
     /* Characters */
     editCharacterPopup: (character: CharacterData) => void;
     addCharacterPopup: () => void;
+    removeCharacter: (name: string) => void;
 };
 
 const enum NavigationMenu {
@@ -48,6 +49,7 @@ const EditorSidebarNavigation = ({
     /* Characters */
     editCharacterPopup,
     addCharacterPopup,
+    removeCharacter,
 }: Props) => {
     const { updateContextMenu } = useContext(UserContext);
     const [scenes, setScenes] = useState<ScenesData>(getScenesData());
@@ -125,6 +127,7 @@ const EditorSidebarNavigation = ({
                                     }}
                                     pasteText={pasteText}
                                     editCharacterPopup={editCharacterPopup}
+                                    removeCharacter={removeCharacter}
                                 />
                             );
                         })}
@@ -133,7 +136,7 @@ const EditorSidebarNavigation = ({
             </div>
             <div>
                 <p className="nav-list-title">Scenes</p>
-                <div className="nav-list scene-list">
+                <div ref={parent} className="nav-list scene-list">
                     {scenes.map((scene: SceneItem) => {
                         return (
                             <SidebarSceneItem

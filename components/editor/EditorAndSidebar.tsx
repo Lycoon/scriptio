@@ -14,6 +14,7 @@ import {
     computeFullCharactersData,
     CharacterData,
     countOccurrences,
+    deleteCharacter,
 } from "../../src/lib/screenplayUtils";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
@@ -230,6 +231,10 @@ const EditorAndSidebar = ({ project }: Props) => {
         editorView?.chain().focus().insertContentAt({ from: 0, to: 4 }, newWord).run();
     };
 
+    const removeCharacter = (name: string) => {
+        deleteCharacter(name);
+    };
+
     /* Popup actions */
     const [popup, setPopup] = useState<JSX.Element | null>(null);
     const closePopup = () => {
@@ -307,6 +312,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                 copyTextSelection={copyTextSelection}
                 editCharacterPopup={editCharacterPopup}
                 addCharacterPopup={addCharacterPopup}
+                removeCharacter={removeCharacter}
             />
             <div id="editor-container">
                 <EditorComponent editor={editorView} />

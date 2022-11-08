@@ -35,6 +35,7 @@ export type CharacterContextProps = {
     character: CharacterData;
     pasteText: (text: string) => void;
     editCharacterPopup: (character: CharacterData) => void;
+    removeCharacter: (name: string) => void;
 };
 
 const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
@@ -80,12 +81,13 @@ const CharacterItemContextMenu = (props: any) => {
     const character: CharacterData = props.props.character;
     const pasteText = props.props.pasteText;
     const editCharacterPopup = props.props.editCharacterPopup;
+    const removeCharacter = props.props.removeCharacter;
 
     const _editCharacterPopup = () => {
         editCharacterPopup(character);
     };
     const _removeCharacter = () => {
-        console.log("remove character ", character.name);
+        removeCharacter(character.name);
     };
     const _pasteText = () => {
         pasteText(character.name);
