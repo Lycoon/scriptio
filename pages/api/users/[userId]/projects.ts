@@ -62,11 +62,7 @@ async function postMethod(userId: number, body: any, res: NextApiResponse) {
     }
 
     if (description && description.length > 2048) {
-        return onError(
-            res,
-            400,
-            "Description must be at most 2048-character long"
-        );
+        return onError(res, 400, "Description must be at most 2048-character long");
     }
 
     let uuid = undefined;
@@ -98,6 +94,7 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     const screenplay = body["screenplay"];
     const title: string = body["title"];
     const description = body["description"];
+    const characters = body["characters"];
 
     if (!projectId) {
         return onError(res, 400, MISSING_BODY);
@@ -114,11 +111,7 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     }
 
     if (description && description.length > 2048) {
-        return onError(
-            res,
-            400,
-            "Description must be at most 2048-character long"
-        );
+        return onError(res, 400, "Description must be at most 2048-character long");
     }
 
     let uuid;
@@ -133,6 +126,7 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
         screenplay,
         title,
         description,
+        characters,
         poster: uuid,
     });
 

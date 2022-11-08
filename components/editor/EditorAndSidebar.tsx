@@ -7,7 +7,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { Project } from "../../pages/api/users";
-import { saveScreenplay } from "../../src/lib/requests";
+import { saveProjectCharacters, saveScreenplay } from "../../src/lib/requests";
 import { useDebouncedCallback } from "use-debounce";
 import {
     computeFullScenesData,
@@ -15,8 +15,9 @@ import {
     CharacterData,
     countOccurrences,
     deleteCharacter,
+    getCharactersData,
 } from "../../src/lib/screenplayUtils";
-import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
+import EditorSidebarFormat, { ScreenplayElement } from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
@@ -56,6 +57,11 @@ const EditorAndSidebar = ({ project }: Props) => {
     const deferredSceneUpdate = useDebouncedCallback(async () => {
         computeFullScenesData(editorView?.getJSON());
     }, 1000);
+
+    const deferredCharactersUpdate = useDebouncedCallback(async () => {
+        console.log("update characters");
+        await saveProjectCharacters(project.userId, project.id, getCharactersData());
+    }, 500);
 
     const updateEditorStyles = (marks: any[]) => {
         marks = marks.map((mark: any) => mark.attrs.class);
@@ -104,9 +110,9 @@ const EditorAndSidebar = ({ project }: Props) => {
             Screenplay,
         ],
 
-        // update on each screenplay change
+        // update on each screenplay update
         onUpdate({ editor, transaction }) {
-            updateIsSaved(false); // to prevent data loss between typing and autosave
+            updateIsSaved(false); // unsaved changes, to prevent data loss between typing and autosave
             deferredSceneUpdate();
             deferredSave();
         },
@@ -169,10 +175,11 @@ const EditorAndSidebar = ({ project }: Props) => {
         updateEditor(editorView!);
     }, [editorView]);
 
+    // init on editor load
     useEffect(() => {
         if (project.screenplay) {
             computeFullScenesData(project.screenplay);
-            computeFullCharactersData(project.screenplay);
+            computeFullCharactersData(project.screenplay, project.characters);
         }
     }, []);
 
@@ -186,7 +193,19 @@ const EditorAndSidebar = ({ project }: Props) => {
         if (e.key === "Tab") {
             e.preventDefault();
 
-            const idx = (selectedTab + 1) % 8;
+            let idx = 0;
+            switch (selectedTab) {
+                case ScreenplayElement.Action:
+                    idx = ScreenplayElement.Character;
+                    break;
+                case ScreenplayElement.Parenthetical:
+                    idx = ScreenplayElement.Dialogue;
+                    break;
+                case ScreenplayElement.Character:
+                case ScreenplayElement.Dialogue:
+                    idx = ScreenplayElement.Parenthetical;
+            }
+
             updateSelectedTab(idx);
             setActiveTab(tabs[idx]);
         }
@@ -310,6 +329,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                 cutTextSelection={cutTextSelection}
                 pasteText={pasteText}
                 copyTextSelection={copyTextSelection}
+                deferredCharactersUpdate={deferredCharactersUpdate}
                 editCharacterPopup={editCharacterPopup}
                 addCharacterPopup={addCharacterPopup}
                 removeCharacter={removeCharacter}

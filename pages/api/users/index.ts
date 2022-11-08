@@ -3,6 +3,7 @@ import { withIronSessionApiRoute } from "iron-session/next";
 import { sessionOptions } from "../../../src/lib/session";
 import { Prisma, Settings } from "@prisma/client";
 import { Secrets } from "../../../src/server/repository/user-repository";
+import { CharacterData, CharacterMap } from "../../../src/lib/screenplayUtils";
 
 export type CookieUser = {
     id: number;
@@ -27,7 +28,7 @@ export type Project = {
     poster: string;
     description: string | null;
     screenplay: Prisma.JsonValue | null;
-    characters: Prisma.JsonValue | null;
+    characters: CharacterMap;
     userId: number;
 };
 

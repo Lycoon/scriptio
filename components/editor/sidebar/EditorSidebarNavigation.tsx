@@ -25,6 +25,7 @@ type Props = {
     copyTextSelection: (start: number, end: number) => void;
 
     /* Characters */
+    deferredCharactersUpdate: () => void;
     editCharacterPopup: (character: CharacterData) => void;
     addCharacterPopup: () => void;
     removeCharacter: (name: string) => void;
@@ -49,6 +50,7 @@ const EditorSidebarNavigation = ({
     /* Characters */
     editCharacterPopup,
     addCharacterPopup,
+    deferredCharactersUpdate,
     removeCharacter,
 }: Props) => {
     const { updateContextMenu } = useContext(UserContext);
@@ -57,6 +59,7 @@ const EditorSidebarNavigation = ({
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
     const isActive = active ? "navigation-on" : "";
 
+    // List animation
     const parent = useRef(null);
     useEffect(() => {
         parent.current && autoAnimate(parent.current);
@@ -70,6 +73,9 @@ const EditorSidebarNavigation = ({
     useEffect(() => {
         // update character navigation when characters change
         setCharacters(getCharactersData());
+        console.log("changed characters");
+
+        deferredCharactersUpdate();
     }, [getCharactersData()]);
 
     const isCharactersMenu = menu === NavigationMenu.Characters;
@@ -136,7 +142,7 @@ const EditorSidebarNavigation = ({
             </div>
             <div>
                 <p className="nav-list-title">Scenes</p>
-                <div ref={parent} className="nav-list scene-list">
+                <div className="nav-list scene-list">
                     {scenes.map((scene: SceneItem) => {
                         return (
                             <SidebarSceneItem

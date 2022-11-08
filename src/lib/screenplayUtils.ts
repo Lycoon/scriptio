@@ -46,7 +46,6 @@ export const doesCharacterExist = (name: string): boolean => {
 
 export const upsertCharacterData = (name: string, data: CharacterItem) => {
     charactersData[name] = data;
-    console.log(charactersData);
 };
 
 export const deleteCharacter = (name: string) => {
@@ -70,11 +69,11 @@ export const countOccurrences = (json: any, word: string): number => {
     return count;
 };
 
-export const computeFullCharactersData = async (json: any) => {
-    const names = getCharacterNames(json);
-    charactersData = {};
+export const computeFullCharactersData = async (json: any, fetchedCharacters: CharacterMap) => {
+    charactersData = fetchedCharacters ?? {};
+    const namesFromEditor = getCharacterNames(json);
 
-    for (const name of names) {
+    for (const name of namesFromEditor) {
         if (charactersData[name] !== undefined) {
             // If character already exists in the data, don't overwrite it
             continue;
@@ -124,6 +123,7 @@ export const computeFullScenesData = async (json: any) => {
         cursor += text.length + 2; // new line counts for 2 characters
     }
 
+    scenes[scenes.length - 1].nextPosition = cursor; // last scene has no next scene to set nextPosition
     scenesData = scenes;
 };
 

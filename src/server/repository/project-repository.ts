@@ -1,5 +1,6 @@
 import { PrismaClient, Project } from "@prisma/client";
 import { JSONContent } from "@tiptap/react";
+import { CharacterData } from "../../lib/screenplayUtils";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +10,7 @@ export interface ProjectUpdate {
     description?: string;
     screenplay?: JSONContent;
     poster?: string;
+    characters?: CharacterData[];
 }
 
 export interface ProjectCreation {
