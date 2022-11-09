@@ -32,7 +32,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [selectedTab, updateSelectedTab] = useState<number>(0);
     const [isSaved, updateIsSaved] = useState<boolean>(false);
     const [isPopupActive, updatePopupActive] = useState<boolean>(false);
-    const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(false);
+    const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(true);
 
     /* Format marks */
     const [isBold, setIsBold] = useState<boolean>(false);
