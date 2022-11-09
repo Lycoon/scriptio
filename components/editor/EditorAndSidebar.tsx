@@ -221,8 +221,8 @@ const EditorAndSidebar = ({ project }: Props) => {
             save();
         }
 
-        if (e.altKey && e.key === "w") {
-            // Alt + W
+        if (e.ctrlKey && e.key === "x") {
+            // Ctrl + X
             e.preventDefault();
             updateIsNavigationActive(!isNavigationActive);
         }
