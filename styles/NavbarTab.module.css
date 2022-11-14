@@ -1,8 +1,5 @@
 .navbar-tab {
-    padding-inline: 25px;
-    border-inline-style: solid;
-    border-inline-color: var(--navbar-outline);
-    border-inline-width: 2px;
+    padding-inline: 20px;
     height: 100%;
 
     display: flex;
@@ -13,6 +10,7 @@
 }
 
 .navbar-tab:hover {
+    cursor: pointer;
     background-color: var(--secondary-bg-hover);
 }
 
@@ -20,8 +18,7 @@
     font-size: 1rem;
     color: white;
     font-family: segoe-light;
-    padding-right: 10px;
-    padding-bottom: 5px;
+    padding-bottom: 3px;
 }
 
 .dropdown-icon {

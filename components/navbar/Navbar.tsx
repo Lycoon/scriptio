@@ -85,14 +85,21 @@ const Navbar = () => {
     };
 
     return (
-        <nav id="navbar">
+        <nav id="navbar" className="sidebar-shadow">
             <div id="logo-and-tabs">
                 <Link href="/">
                     <a id="logo">
                         <p id="logo-text">Scriptio</p>
                     </a>
                 </Link>
-                {project && <NavbarTab project={project} />}
+                {project && (
+                    <>
+                        <NavbarTab title="File" project={project} />
+                        <NavbarTab title="Edit" project={project} />
+                        <NavbarTab title="Story" project={project} />
+                        <NavbarTab title="Production" project={project} />
+                    </>
+                )}
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
