@@ -19,6 +19,7 @@ export const enum ContextMenuType {
     CharacterList,
     CharacterItem,
     LocationItem,
+    Suggestion,
 }
 
 export type SceneContextProps = {
@@ -38,7 +39,7 @@ export type CharacterContextProps = {
     removeCharacter: (name: string) => void;
 };
 
-const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
+export const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
     return (
         <div onClick={action} className="context-menu-item">
             <p className="unselectable">{text}</p>
@@ -46,7 +47,7 @@ const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
     );
 };
 
-const SceneItemContextMenu = (props: any) => {
+const SceneItemMenu = (props: any) => {
     const focusOn = props.props.focusOn;
     const selectTextInEditor = props.props.selectTextInEditor;
     const cutTextSelection = props.props.cutTextSelection;
@@ -84,7 +85,7 @@ const SceneItemContextMenu = (props: any) => {
     );
 };
 
-const CharacterItemContextMenu = (props: any) => {
+const CharacterItemMenu = (props: any) => {
     const character: CharacterData = props.props.character;
     const pasteText = props.props.pasteText;
     const editCharacterPopup = props.props.editCharacterPopup;
@@ -109,7 +110,7 @@ const CharacterItemContextMenu = (props: any) => {
     );
 };
 
-const CharacterListContextMenu = (props: any) => {
+const CharacterListMenu = (props: any) => {
     const addCharacterPopup = props.props.addCharacterPopup;
 
     const _addCharacterPopup = () => {
@@ -123,7 +124,7 @@ const CharacterListContextMenu = (props: any) => {
     );
 };
 
-const SceneListContextMenu = (props: any) => {
+const SceneListMenu = (props: any) => {
     const title = props.props.title;
 
     const addScene = () => {
@@ -132,6 +133,19 @@ const SceneListContextMenu = (props: any) => {
 
     return <></>;
     return <>{<ContextMenuItem text={"Add scene"} action={addScene} />}</>;
+};
+
+const getContextMenu = (type: ContextMenuType | undefined, props: any) => {
+    switch (type) {
+        case ContextMenuType.SceneList:
+            return <SceneListMenu props={props} />;
+        case ContextMenuType.SceneItem:
+            return <SceneItemMenu props={props} />;
+        case ContextMenuType.CharacterList:
+            return <CharacterListMenu props={props} />;
+        case ContextMenuType.CharacterItem:
+            return <CharacterItemMenu props={props} />;
+    }
 };
 
 const ContextMenu = () => {
@@ -161,18 +175,7 @@ const ContextMenu = () => {
                 left: contextMenu?.position.x,
             }}
         >
-            {contextMenu && type === ContextMenuType.SceneItem && (
-                <SceneItemContextMenu props={contextMenu?.typeSpecificProps} />
-            )}
-            {contextMenu && type === ContextMenuType.CharacterItem && (
-                <CharacterItemContextMenu props={contextMenu?.typeSpecificProps} />
-            )}
-            {contextMenu && type === ContextMenuType.SceneList && (
-                <SceneListContextMenu props={contextMenu?.typeSpecificProps} />
-            )}
-            {contextMenu && type === ContextMenuType.CharacterList && (
-                <CharacterListContextMenu props={contextMenu?.typeSpecificProps} />
-            )}
+            {contextMenu && getContextMenu(type, contextMenu.typeSpecificProps)}
         </div>
     );
 };

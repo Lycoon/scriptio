@@ -21,7 +21,7 @@ import EditorSidebarFormat, { ScreenplayElement } from "./sidebar/EditorSidebarF
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
-import Suggestion from "@tiptap/suggestion";
+import Suggestion, { SuggestionProps } from "@tiptap/suggestion";
 
 type Props = {
     project: Project;
@@ -85,6 +85,43 @@ const EditorAndSidebar = ({ project }: Props) => {
         updateEditorStyles(anchor.nodeBefore?.marks);
     };
 
+    const ScreenplaySuggestion = Extension.create({
+        name: "ScreenplaySuggestion",
+
+        addProseMirrorPlugins() {
+            return [
+                Suggestion<any>({
+                    editor: this.editor,
+                    char: "",
+                    startOfLine: true,
+                    allowSpaces: true,
+                    allow: ({ editor, state, range }) => {
+                        const node = state.selection.$anchor.parent.attrs.class;
+                        return node === "character";
+                    },
+                    command: ({ editor, range, props }: any) => props.command({ editor, range }),
+                    items: ({ query }) => {
+                        const suggestions = Object.keys(getCharactersData())
+                            .filter((name: string) =>
+                                name.toLowerCase().startsWith(query.toLowerCase())
+                            )
+                            .slice(0, 5);
+
+                        return suggestions;
+                    },
+                    render: () => {
+                        return {
+                            onStart: (props: SuggestionProps): void => {
+                                console.log("start suggestion");
+                                return;
+                            },
+                        };
+                    },
+                }),
+            ];
+        },
+    });
+
     const tabs = [
         "scene",
         "action",
@@ -105,6 +142,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             CustomBold,
             CustomItalic,
             CustomUnderline,
+            ScreenplaySuggestion,
 
             // scriptio
             Screenplay,
