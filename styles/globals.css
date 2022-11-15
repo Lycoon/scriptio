@@ -11,6 +11,7 @@
 @import "ProjectDangerZone.module.css";
 @import "ContextMenu.module.css";
 @import "PageCounter.module.css";
+@import "SuggestionMenu.module.css";
 
 /* Forms */
 @import "HomePageForm.module.css";

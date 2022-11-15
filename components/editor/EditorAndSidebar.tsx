@@ -1,4 +1,4 @@
-import { Extension, JSONContent, useEditor } from "@tiptap/react";
+import { Extension, JSONContent, ReactRenderer, useEditor } from "@tiptap/react";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../src/context/UserContext";
 import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "../../src/Screenplay";
@@ -22,6 +22,7 @@ import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
 import Suggestion, { SuggestionProps } from "@tiptap/suggestion";
+import SuggestionMenu, { Position } from "./SuggestionMenu";
 
 type Props = {
     project: Project;
@@ -33,6 +34,10 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isSaved, updateIsSaved] = useState<boolean>(false);
     const [isPopupActive, updatePopupActive] = useState<boolean>(false);
     const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(true);
+
+    /* Suggestion menu */
+    const [suggestions, updateSuggestions] = useState<string[]>([]);
+    const [suggestionPosition, updateSuggestionPosition] = useState<Position>({ x: 0, y: 0 });
 
     /* Format marks */
     const [isBold, setIsBold] = useState<boolean>(false);
@@ -101,18 +106,29 @@ const EditorAndSidebar = ({ project }: Props) => {
                     },
                     command: ({ editor, range, props }: any) => props.command({ editor, range }),
                     items: ({ query }) => {
-                        const suggestions = Object.keys(getCharactersData())
+                        const suggestions = Object.keys(getCharactersData());
+                        return suggestions
                             .filter((name: string) =>
                                 name.toLowerCase().startsWith(query.toLowerCase())
                             )
                             .slice(0, 5);
-
-                        return suggestions;
                     },
                     render: () => {
                         return {
-                            onStart: (props: SuggestionProps): void => {
-                                console.log("start suggestion");
+                            onStart: ({ clientRect, items }: SuggestionProps) => {
+                                if (!clientRect) return;
+
+                                const pos = clientRect()!;
+                                updateSuggestionPosition({ x: pos.x, y: pos.y });
+                                updateSuggestions(items);
+                                return;
+                            },
+                            onUpdate: ({ items }: SuggestionProps) => {
+                                updateSuggestions(items);
+                                return;
+                            },
+                            onExit: () => {
+                                updateSuggestions([]);
                                 return;
                             },
                         };
@@ -169,6 +185,10 @@ const EditorAndSidebar = ({ project }: Props) => {
                 const selection = view.state.selection;
 
                 if (event.key === "Enter") {
+                    if (suggestions?.length !== 0) {
+                        return true;
+                    }
+
                     const node = selection.$anchor.parent;
                     const nodeSize = node.content.size;
                     const nodePos = selection.$head.parentOffset;
@@ -364,6 +384,13 @@ const EditorAndSidebar = ({ project }: Props) => {
 
     return (
         <div id="editor-and-sidebar">
+            {suggestions.length !== 0 && (
+                <SuggestionMenu
+                    suggestions={suggestions}
+                    position={suggestionPosition}
+                    pasteText={pasteText}
+                />
+            )}
             <ContextMenu />
             {isPopupActive && popup}
             <EditorSidebarNavigation
