@@ -19,7 +19,7 @@ type EditorStyleProps = {
 };
 
 export enum ScreenplayElement {
-    SceneHeading,
+    Scene,
     Action,
     Character,
     Dialogue,

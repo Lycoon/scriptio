@@ -1,4 +1,4 @@
-import { Extension, JSONContent, ReactRenderer, useEditor } from "@tiptap/react";
+import { Editor, Extension, JSONContent, ReactRenderer, useEditor } from "@tiptap/react";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../src/context/UserContext";
 import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "../../src/Screenplay";
@@ -76,9 +76,27 @@ const EditorAndSidebar = ({ project }: Props) => {
         setIsUnderline(marks.includes("underline"));
     };
 
-    const onCaretUpdate = (anchor: any) => {
-        const currNode = anchor.path[3].attrs.class;
-        setActiveTab(currNode);
+    const onCaretUpdate = (editor: Editor, anchor: any) => {
+        const node = anchor.parent;
+        const element = node.attrs.class;
+        setActiveTab(element);
+
+        if (element === "character") {
+            const nodeSize = node.content.size;
+            const nodePos = anchor.parentOffset;
+            const text: string = node.textContent;
+            const textLength: number = text.length;
+
+            if (nodeSize <= 0) {
+                updateSuggestions(Object.keys(getCharactersData()).slice(0, 5));
+            } else {
+                const text = node.textContent;
+                const suggestions = Object.keys(getCharactersData())
+                    .filter((character) => character.startsWith(text))
+                    .slice(0, 5);
+                updateSuggestions(suggestions);
+            }
+        }
 
         if (!anchor.nodeBefore) {
             if (!anchor.nodeAfter) {
@@ -172,9 +190,9 @@ const EditorAndSidebar = ({ project }: Props) => {
         },
 
         // update active on caret update
-        onSelectionUpdate({ transaction }) {
+        onSelectionUpdate({ editor, transaction }) {
             const anchor = (transaction as any).curSelection.$anchor;
-            onCaretUpdate(anchor);
+            onCaretUpdate(editor as Editor, anchor);
         },
     });
 
@@ -185,10 +203,6 @@ const EditorAndSidebar = ({ project }: Props) => {
                 const selection = view.state.selection;
 
                 if (event.key === "Enter") {
-                    if (suggestions?.length !== 0) {
-                        return true;
-                    }
-
                     const node = selection.$anchor.parent;
                     const nodeSize = node.content.size;
                     const nodePos = selection.$head.parentOffset;
