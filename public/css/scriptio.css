@@ -47,6 +47,7 @@ span {
     font-size: 12pt;
     text-align: left;
     letter-spacing: -0.4px !important;
+    line-height: 17px !important;
 }
 
 .ProseMirror p {
@@ -110,12 +111,12 @@ span.underline {
 
 .character {
     padding-left: 2.2in !important;
-    margin-bottom: 0 !important;
     text-transform: uppercase;
 }
 
-.character + .character {
-    margin-top: 17px !important;
+.character + .parenthetical,
+.character + .dialogue {
+    margin-top: -17px !important;
 }
 
 /* Parenthetical */
