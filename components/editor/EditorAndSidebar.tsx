@@ -84,8 +84,8 @@ const EditorAndSidebar = ({ project }: Props) => {
         const element = node.attrs.class;
         setActiveTab(element);
 
-        const displaySuggestions = (suggestions: string[], data: SuggestionData) => {
-            updateSuggestions(suggestions);
+        const displaySuggestions = (list: string[], data: SuggestionData) => {
+            updateSuggestions(list);
             updateSuggestionData(data);
         };
 
@@ -96,7 +96,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             const cursor: number = anchor.pos;
             const pagePos = editor.view.coordsAtPos(cursor);
 
-            let suggestions = Object.keys(getCharactersData());
+            let list = Object.keys(getCharactersData());
 
             if (nodeSize > 0) {
                 if (cursorInNode !== nodeSize) {
@@ -106,7 +106,7 @@ const EditorAndSidebar = ({ project }: Props) => {
 
                 const text = node.textContent;
                 const trimmed: string = text.slice(0, cursorInNode).toLowerCase();
-                suggestions = suggestions
+                list = list
                     .filter((name) => {
                         const name_ = name.toLowerCase();
                         return name_ !== trimmed && name_.startsWith(trimmed) && name_ !== text;
@@ -114,14 +114,18 @@ const EditorAndSidebar = ({ project }: Props) => {
                     .slice(0, 5);
             }
 
-            displaySuggestions(suggestions, {
+            displaySuggestions(list, {
                 position: { x: pagePos.left, y: pagePos.top },
                 cursor,
                 cursorInNode,
             });
         } else if (element === "scene") {
             // TODO: Autocompletion for scenes
-        } else updateSuggestions([]);
+        }
+
+        if (element !== "character") {
+            updateSuggestions([]);
+        }
 
         // Updating format marks
         if (!anchor.nodeBefore) {
