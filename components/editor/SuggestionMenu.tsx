@@ -2,22 +2,28 @@ import { useEffect, useState } from "react";
 
 type Props = {
     suggestions: string[];
-    pasteText: (text: string) => void;
-    position: Position;
+    pasteTextAt: (text: string, position: number) => void;
+    suggestionData: SuggestionData;
 };
 
-export type Position = {
+type Position = {
     x: number;
     y: number;
 };
 
-const SuggestionMenu = ({ suggestions, pasteText, position }: Props) => {
+export type SuggestionData = {
+    position: Position;
+    cursor: number;
+    cursorInNode: number;
+};
+
+const SuggestionMenu = ({ pasteTextAt, suggestionData, suggestions }: Props) => {
     const [selectedIdx, setSelectedIdx] = useState(0);
 
     const selectSuggestion = (idx: number) => {
-        const suggestion = suggestions[idx];
+        const suggestion = suggestions[idx].slice(suggestionData.cursorInNode);
         if (suggestion) {
-            pasteText(suggestion);
+            pasteTextAt(suggestion, suggestionData.cursor);
         }
     };
 
@@ -42,7 +48,6 @@ const SuggestionMenu = ({ suggestions, pasteText, position }: Props) => {
             downHandler();
             return true;
         } else if (e.key === "Enter") {
-            console.log("selected suggestion");
             enterHandler();
             return true;
         }
@@ -58,19 +63,19 @@ const SuggestionMenu = ({ suggestions, pasteText, position }: Props) => {
 
     return (
         <div
-            className="context-menu"
+            className="suggestion-menu"
             style={{
-                top: position.y + 20,
-                left: position.x,
+                top: suggestionData.position.y + 20,
+                left: suggestionData.position.x,
             }}
         >
             {suggestions.map((suggestion: string, index: number) => (
                 <div
-                    key={index}
-                    onClick={() => selectSuggestion(index)}
                     className={`context-menu-item ${index === selectedIdx ? "selected" : ""}`}
+                    onClick={() => selectSuggestion(index)}
+                    key={index}
                 >
-                    <p className="unselectable">{suggestion}</p>
+                    <p className="suggestion-item unselectable">{suggestion}</p>
                 </div>
             ))}
         </div>

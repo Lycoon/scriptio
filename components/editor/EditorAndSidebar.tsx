@@ -1,4 +1,4 @@
-import { Editor, Extension, JSONContent, ReactRenderer, useEditor } from "@tiptap/react";
+import { Editor, JSONContent, useEditor } from "@tiptap/react";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../src/context/UserContext";
 import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "../../src/Screenplay";
@@ -21,15 +21,14 @@ import EditorSidebarFormat, { ScreenplayElement } from "./sidebar/EditorSidebarF
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
-import Suggestion, { SuggestionProps } from "@tiptap/suggestion";
-import SuggestionMenu, { Position } from "./SuggestionMenu";
+import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 
 type Props = {
     project: Project;
 };
 
 const EditorAndSidebar = ({ project }: Props) => {
-    const { updateEditor, updateIsSaving } = useContext(UserContext);
+    const { updateEditor, updateIsSaving, updateContextMenu } = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
     const [isSaved, updateIsSaved] = useState<boolean>(false);
     const [isPopupActive, updatePopupActive] = useState<boolean>(false);
@@ -37,7 +36,11 @@ const EditorAndSidebar = ({ project }: Props) => {
 
     /* Suggestion menu */
     const [suggestions, updateSuggestions] = useState<string[]>([]);
-    const [suggestionPosition, updateSuggestionPosition] = useState<Position>({ x: 0, y: 0 });
+    const [suggestionData, updateSuggestionData] = useState<SuggestionData>({
+        position: { x: 0, y: 0 },
+        cursor: 0,
+        cursorInNode: 0,
+    });
 
     /* Format marks */
     const [isBold, setIsBold] = useState<boolean>(false);
@@ -81,23 +84,46 @@ const EditorAndSidebar = ({ project }: Props) => {
         const element = node.attrs.class;
         setActiveTab(element);
 
+        const displaySuggestions = (suggestions: string[], data: SuggestionData) => {
+            updateSuggestions(suggestions);
+            updateSuggestionData(data);
+        };
+
+        // Autocompletion
         if (element === "character") {
-            const nodeSize = node.content.size;
-            const nodePos = anchor.parentOffset;
-            const text: string = node.textContent;
-            const textLength: number = text.length;
+            const nodeSize: number = node.content.size;
+            const cursorInNode: number = anchor.parentOffset;
+            const cursor: number = anchor.pos;
+            const pagePos = editor.view.coordsAtPos(cursor);
 
-            if (nodeSize <= 0) {
-                updateSuggestions(Object.keys(getCharactersData()).slice(0, 5));
-            } else {
+            let suggestions = Object.keys(getCharactersData());
+
+            if (nodeSize > 0) {
+                if (cursorInNode !== nodeSize) {
+                    updateSuggestions([]);
+                    return;
+                }
+
                 const text = node.textContent;
-                const suggestions = Object.keys(getCharactersData())
-                    .filter((character) => character.startsWith(text))
+                const trimmed: string = text.slice(0, cursorInNode).toLowerCase();
+                suggestions = suggestions
+                    .filter((name) => {
+                        const name_ = name.toLowerCase();
+                        return name_ !== trimmed && name_.startsWith(trimmed) && name_ !== text;
+                    })
                     .slice(0, 5);
-                updateSuggestions(suggestions);
             }
-        }
 
+            displaySuggestions(suggestions, {
+                position: { x: pagePos.left, y: pagePos.top },
+                cursor,
+                cursorInNode,
+            });
+        } else if (element === "scene") {
+            // TODO: Autocompletion for scenes
+        } else updateSuggestions([]);
+
+        // Updating format marks
         if (!anchor.nodeBefore) {
             if (!anchor.nodeAfter) {
                 return;
@@ -107,54 +133,6 @@ const EditorAndSidebar = ({ project }: Props) => {
         }
         updateEditorStyles(anchor.nodeBefore?.marks);
     };
-
-    const ScreenplaySuggestion = Extension.create({
-        name: "ScreenplaySuggestion",
-
-        addProseMirrorPlugins() {
-            return [
-                Suggestion<any>({
-                    editor: this.editor,
-                    char: "",
-                    startOfLine: true,
-                    allowSpaces: true,
-                    allow: ({ editor, state, range }) => {
-                        const node = state.selection.$anchor.parent.attrs.class;
-                        return node === "character";
-                    },
-                    command: ({ editor, range, props }: any) => props.command({ editor, range }),
-                    items: ({ query }) => {
-                        const suggestions = Object.keys(getCharactersData());
-                        return suggestions
-                            .filter((name: string) =>
-                                name.toLowerCase().startsWith(query.toLowerCase())
-                            )
-                            .slice(0, 5);
-                    },
-                    render: () => {
-                        return {
-                            onStart: ({ clientRect, items }: SuggestionProps) => {
-                                if (!clientRect) return;
-
-                                const pos = clientRect()!;
-                                updateSuggestionPosition({ x: pos.x, y: pos.y });
-                                updateSuggestions(items);
-                                return;
-                            },
-                            onUpdate: ({ items }: SuggestionProps) => {
-                                updateSuggestions(items);
-                                return;
-                            },
-                            onExit: () => {
-                                updateSuggestions([]);
-                                return;
-                            },
-                        };
-                    },
-                }),
-            ];
-        },
-    });
 
     const tabs = [
         "scene",
@@ -176,7 +154,6 @@ const EditorAndSidebar = ({ project }: Props) => {
             CustomBold,
             CustomItalic,
             CustomUnderline,
-            ScreenplaySuggestion,
 
             // scriptio
             Screenplay,
@@ -203,6 +180,12 @@ const EditorAndSidebar = ({ project }: Props) => {
                 const selection = view.state.selection;
 
                 if (event.key === "Enter") {
+                    if (suggestions.length > 0) {
+                        // prevent new line if suggestions are displayed
+                        event.preventDefault();
+                        return true;
+                    }
+
                     const node = selection.$anchor.parent;
                     const nodeSize = node.content.size;
                     const nodePos = selection.$head.parentOffset;
@@ -298,6 +281,11 @@ const EditorAndSidebar = ({ project }: Props) => {
             e.preventDefault();
             updateIsNavigationActive(!isNavigationActive);
         }
+
+        if (e.key === "Escape") {
+            updateContextMenu(undefined);
+            updateSuggestions([]);
+        }
     };
 
     /* Context menu actions */
@@ -318,8 +306,21 @@ const EditorAndSidebar = ({ project }: Props) => {
         //editorView?.state.doc.copy();
     };
 
+    const replaceRange = (start: number, end: number, text: string) => {
+        editorView
+            ?.chain()
+            .focus(start)
+            .setTextSelection({ from: start, to: end })
+            .insertContent(text)
+            .run();
+    };
+
     const pasteText = (text: string) => {
         editorView?.commands.insertContent(text);
+    };
+
+    const pasteTextAt = (text: string, position: number) => {
+        editorView?.commands.insertContentAt(position, text);
     };
 
     const replaceOccurrences = (oldWord: string, newWord: string) => {
@@ -398,14 +399,14 @@ const EditorAndSidebar = ({ project }: Props) => {
 
     return (
         <div id="editor-and-sidebar">
+            <ContextMenu />
             {suggestions.length !== 0 && (
                 <SuggestionMenu
                     suggestions={suggestions}
-                    position={suggestionPosition}
-                    pasteText={pasteText}
+                    suggestionData={suggestionData}
+                    pasteTextAt={pasteTextAt}
                 />
             )}
-            <ContextMenu />
             {isPopupActive && popup}
             <EditorSidebarNavigation
                 active={isNavigationActive}

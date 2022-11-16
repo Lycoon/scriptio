@@ -69,8 +69,9 @@ export const countOccurrences = (json: any, word: string): number => {
     for (let i = 0; i < nodes.length; i++) {
         const currNode = nodes[i];
         const content: any[] = currNode["content"];
-        const text: string = content[0]["text"];
+        if (!content) continue;
 
+        const text: string = content[0]["text"];
         const res = Array.from(text.matchAll(regex));
         count += res.length;
     }
