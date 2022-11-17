@@ -55,7 +55,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
 
                 <div>
                     <div className="form-element">
-                        <span className="form-label">Title</span>
+                        <span>Title</span>
                         <input
                             id="project-title-input"
                             name="title"
@@ -66,7 +66,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
                         />
                     </div>
                     <div className="form-element">
-                        <span className="form-label">Description</span>
+                        <span>Description</span>
                         <textarea
                             id="project-description-input"
                             className="form-input input-description"
@@ -76,7 +76,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
                         />
                     </div>
                     <div className="form-element">
-                        <span className="form-label">Poster</span>
+                        <span>Poster</span>
                         <UploadButton
                             setSelectedFile={setSelectedFile}
                             selectedFile={selectedFile}
@@ -88,10 +88,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
                     <Link href={`/projects/${project.id}/screenplay`}>
                         <a className="form-btn back-btn">Back</a>
                     </Link>
-                    <button
-                        className="form-btn project-form-submit-btn"
-                        type="submit"
-                    >
+                    <button className="form-btn project-form-submit-btn" type="submit">
                         Confirm
                     </button>
                 </div>

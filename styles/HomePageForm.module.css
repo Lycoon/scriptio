@@ -6,7 +6,6 @@
 
 .form-input {
     font-size: 1.15rem;
-    font-family: "Segoe UI";
     border-radius: 7px;
     border-width: 2px;
     border-color: var(--separator);
@@ -26,10 +25,6 @@
 
 .input::placeholder {
     font-size: 1rem;
-}
-
-.form-label {
-    font-family: "Segoe UI";
 }
 
 .form-element {

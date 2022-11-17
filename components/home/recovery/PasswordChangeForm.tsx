@@ -46,26 +46,16 @@ const PasswordChangeForm = ({ userId, recoverHash }: Props) => {
                 <h1>Change password</h1>
                 <hr className="hr-form" />
                 <p className="recovery-info segoe">
-                    This is a secure space to change your password. Do not share
-                    the link of this page with anyone else.
+                    This is a secure space to change your password. Do not share the link of this
+                    page with anyone else.
                 </p>
                 {formInfo && <FormInfo info={formInfo} />}
             </div>
             <label id="password-form" className="form-element">
-                <span className="form-label">New password</span>
-                <input
-                    className="form-input"
-                    name="password1"
-                    type="password"
-                    required
-                />
-                <span className="form-label">Repeat password</span>
-                <input
-                    className="form-input"
-                    name="password2"
-                    type="password"
-                    required
-                />
+                <span>New password</span>
+                <input className="form-input" name="password1" type="password" required />
+                <span>Repeat password</span>
+                <input className="form-input" name="password2" type="password" required />
             </label>
             <div id="form-btn-flex">
                 <button className="form-btn" type="submit">

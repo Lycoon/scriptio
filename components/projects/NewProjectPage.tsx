@@ -14,9 +14,7 @@ type Props = {
 const NewProjectPage = ({ setIsCreating }: Props) => {
     const { user, setUser } = useUser();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
-    const [selectedFile, setSelectedFile] = useState<File | undefined>(
-        undefined
-    );
+    const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
 
     const exitCreating = () => {
         setIsCreating(false);
@@ -61,7 +59,7 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
 
                 <div>
                     <div className="form-element">
-                        <span className="form-label">Title</span>
+                        <span>Title</span>
                         <input
                             id="project-title-input"
                             name="title"
@@ -69,7 +67,7 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
                             onChange={resetFromInfo}
                             required
                         />
-                        <span className="form-label">
+                        <span>
                             Description - <i>optional</i>
                         </span>
                         <textarea
@@ -78,7 +76,7 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
                             className="form-input input-description"
                             onChange={resetFromInfo}
                         />
-                        <span className="form-label">
+                        <span>
                             Poster - <i>optional</i>
                         </span>
                         <UploadButton
@@ -89,16 +87,10 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
                 </div>
 
                 <div className="project-form-end">
-                    <button
-                        className="form-btn back-btn"
-                        onClick={exitCreating}
-                    >
+                    <button className="form-btn back-btn" onClick={exitCreating}>
                         Back
                     </button>
-                    <button
-                        className="form-btn project-form-submit-btn"
-                        type="submit"
-                    >
+                    <button className="form-btn project-form-submit-btn" type="submit">
                         Create
                     </button>
                 </div>

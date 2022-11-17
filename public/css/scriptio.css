@@ -41,8 +41,7 @@ Originally developed by John August - johnaugust.com
     min-height: 1100px;
 }
 
-.ProseMirror p,
-span {
+.ProseMirror p {
     font-family: "Courier Prime", monospace;
     font-size: 12pt;
     text-align: left;

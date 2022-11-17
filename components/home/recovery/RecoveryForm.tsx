@@ -19,26 +19,21 @@ const RecoveryForm = () => {
                 <h1>Recover</h1>
                 <hr className="hr-form" />
                 <p className="recovery-info segoe">
-                    If the provided email is linked to an existing account, an
-                    email will be sent with a link to recover your password.
+                    If the provided email is linked to an existing account, an email will be sent
+                    with a link to recover your password.
                 </p>
                 {sentEmail && (
                     <p className="recovery-info segoe">
-                        The email can take few minutes to arrive. Please check
-                        your junk folder if you do not receive it.
+                        The email can take few minutes to arrive. Please check your junk folder if
+                        you do not receive it.
                     </p>
                 )}
             </div>
 
             {!sentEmail && (
                 <div id="email-form" className="form-element">
-                    <span className="form-label">Email</span>
-                    <input
-                        className="form-input"
-                        name="email"
-                        type="email"
-                        required
-                    />
+                    <span>Email</span>
+                    <input className="form-input" name="email" type="email" required />
                 </div>
             )}
 

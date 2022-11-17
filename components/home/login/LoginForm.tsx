@@ -66,7 +66,7 @@ const LoginForm = ({ verificationStatus }: Props) => {
 
             <div className="form-element">
                 <label id="email-form" className="form-element">
-                    <span className="form-label">Email</span>
+                    <span>Email</span>
                     <input
                         className="form-input"
                         name="email"
@@ -77,7 +77,7 @@ const LoginForm = ({ verificationStatus }: Props) => {
                 </label>
 
                 <label id="password-form" className="form-element">
-                    <span className="form-label">Password</span>
+                    <span>Password</span>
                     <input
                         className="form-input"
                         name="password"

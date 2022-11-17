@@ -99,7 +99,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                     <form className="settings-form" onSubmit={onChangePassword}>
                         <div className="form-element">
                             <label id="password-form" className="form-element">
-                                <span className="form-label settings-label">New password</span>
+                                <span className="settings-label">New password</span>
                                 <input
                                     className="form-input"
                                     name="password1"
@@ -108,9 +108,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                                     required
                                 />
 
-                                <span className="form-label settings-label">
-                                    Confirm new password
-                                </span>
+                                <span className="settings-label">Confirm new password</span>
                                 <input
                                     className="form-input"
                                     name="password2"

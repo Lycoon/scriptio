@@ -90,6 +90,12 @@ const EditorAndSidebar = ({ project }: Props) => {
             updateSuggestionData(data);
         };
 
+        // Leaving autocomplete
+        if (previousElement === "character" && element !== "character") {
+            updateSuggestions([]);
+        }
+        previousElement = element;
+
         // Autocompletion
         if (element === "character") {
             const nodeSize: number = node.content.size;
@@ -124,11 +130,6 @@ const EditorAndSidebar = ({ project }: Props) => {
             // TODO: Autocompletion for scenes
         }
 
-        // Leaving autocomplete
-        if (previousElement === "character" && element !== "character") {
-            updateSuggestions([]);
-        }
-
         // Updating format marks
         if (!anchor.nodeBefore) {
             if (!anchor.nodeAfter) {
@@ -138,7 +139,6 @@ const EditorAndSidebar = ({ project }: Props) => {
             return;
         }
         updateEditorStyles(anchor.nodeBefore?.marks);
-        previousElement = element;
     };
 
     const tabs = [
@@ -273,7 +273,6 @@ const EditorAndSidebar = ({ project }: Props) => {
                     idx = ScreenplayElement.Parenthetical;
             }
 
-            updateSelectedTab(idx);
             setActiveTab(tabs[idx]);
         }
 

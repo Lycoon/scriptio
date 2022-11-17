@@ -42,7 +42,7 @@ const SignupForm = () => {
             </div>
 
             <label id="email-form" className="form-element">
-                <span className="form-label">Email</span>
+                <span>Email</span>
                 <input
                     className="form-input"
                     name="email"
@@ -53,7 +53,7 @@ const SignupForm = () => {
             </label>
 
             <label id="password-form" className="form-element">
-                <span className="form-label">Password</span>
+                <span>Password</span>
                 <input
                     className="form-input"
                     name="password1"
@@ -61,7 +61,7 @@ const SignupForm = () => {
                     onChange={resetFromInfo}
                     required
                 />
-                <span className="form-label">Repeat password</span>
+                <span>Repeat password</span>
                 <input
                     className="form-input"
                     name="password2"
