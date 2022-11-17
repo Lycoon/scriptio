@@ -35,6 +35,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(true);
 
     /* Suggestion menu */
+    let previousElement: string;
     const [suggestions, updateSuggestions] = useState<string[]>([]);
     const [suggestionData, updateSuggestionData] = useState<SuggestionData>({
         position: { x: 0, y: 0 },
@@ -123,7 +124,8 @@ const EditorAndSidebar = ({ project }: Props) => {
             // TODO: Autocompletion for scenes
         }
 
-        if (element !== "character") {
+        // Leaving autocomplete
+        if (previousElement === "character" && element !== "character") {
             updateSuggestions([]);
         }
 
@@ -136,6 +138,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             return;
         }
         updateEditorStyles(anchor.nodeBefore?.marks);
+        previousElement = element;
     };
 
     const tabs = [
