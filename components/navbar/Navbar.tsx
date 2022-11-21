@@ -1,9 +1,11 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Router, { useRouter } from "next/router";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
+import { convertFountainToJSON } from "../../src/converters/fountain_to_scriptio";
+import DropdownItem from "./dropdown/DropdownItem";
 import NavbarButton from "./NavbarButton";
 
 const NavbarTab = dynamic(() => import("./NavbarTab"));
@@ -73,8 +75,18 @@ const NotLoggedNavbar = () => (
     </div>
 );
 
+export type NavbarTabData = {
+    name: string;
+    action: () => void;
+    icon?: string;
+};
+
+type NavbarTabs = {
+    [tabName: string]: NavbarTabData[];
+};
+
 const Navbar = () => {
-    const { user, updateUser, isSaving, project } = useContext(UserContext);
+    const { user, updateUser, isSaving, updateSaved, editor, project } = useContext(UserContext);
     const { asPath } = useRouter();
     const page = getCurrentPage(asPath);
 
@@ -83,6 +95,58 @@ const Navbar = () => {
         updateUser(undefined);
         Router.push("/");
     };
+
+    const importFile = () => {
+        var input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".fountain";
+
+        input.onchange = async (e: any) => {
+            const file: File = e.target!.files[0];
+            const reader = new FileReader();
+
+            reader.onload = (e: any) => {
+                convertFountainToJSON(e.target.result, editor!);
+                updateSaved(false);
+            };
+            reader.readAsText(file, "UTF-8");
+        };
+
+        input.click();
+    };
+
+    let tabs: NavbarTabs = {};
+    if (project) {
+        tabs = {
+            File: [
+                { name: "Import...", action: importFile, icon: "import.png" },
+                {
+                    name: "Export",
+                    action: () => Router.push(`/projects/${project.id}/export`),
+                    icon: "export.png",
+                },
+            ],
+            Edit: [
+                {
+                    name: "Project info",
+                    action: () => Router.push(`/projects/${project.id}/edit`),
+                },
+                {
+                    name: "Screenplay",
+                    action: () => Router.push(`/projects/${project.id}/screenplay`),
+                },
+                { name: "Title page", action: () => Router.push(`/projects/${project.id}/title`) },
+                { name: "Story", action: () => Router.push(`/projects/${project.id}/story`) },
+            ],
+            Production: [
+                {
+                    name: "Statistics",
+                    action: () => Router.push(`/projects/${project.id}/stats`),
+                },
+                { name: "Reports", action: () => Router.push(`/projects/${project.id}/reports`) },
+            ],
+        };
+    }
 
     return (
         <nav id="navbar" className="sidebar-shadow">
@@ -94,10 +158,9 @@ const Navbar = () => {
                 </Link>
                 {project && (
                     <>
-                        <NavbarTab title="File" project={project} />
-                        <NavbarTab title="Edit" project={project} />
-                        <NavbarTab title="Story" project={project} />
-                        <NavbarTab title="Production" project={project} />
+                        {Object.keys(tabs).map((tabName) => (
+                            <NavbarTab key={tabName} title={tabName} dropdown={tabs[tabName]} />
+                        ))}
                     </>
                 )}
             </div>

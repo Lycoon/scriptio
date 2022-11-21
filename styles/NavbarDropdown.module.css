@@ -1,15 +1,16 @@
-.dropdown-items {
+.navbar-dropdown {
     position: absolute;
+    width: 150px;
+    min-width: max-content;
+    z-index: -1;
+
     top: 0;
+    left: 0;
+    padding-top: 45px;
 
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-}
 
-.navbar-dropdown {
-    width: 100%;
-    padding-top: 47px;
     animation: dropdown-anim 0.4s;
 }
 
@@ -19,7 +20,7 @@
         opacity: 0;
     }
     to {
-        padding-top: 47px;
+        padding-top: 45px;
         opacity: 1;
     }
 }
