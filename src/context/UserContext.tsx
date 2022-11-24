@@ -19,6 +19,8 @@ export type contextType = {
     updateIsSaving: (isSaving: boolean) => void;
     contextMenu: ContextMenuProps | undefined;
     updateContextMenu: (contextMenu: ContextMenuProps | undefined) => void;
+    popup: any;
+    updatePopup: (popup: any) => void;
 };
 
 const contextDefaults: contextType = {
@@ -36,6 +38,8 @@ const contextDefaults: contextType = {
     updateIsSaving: () => {},
     contextMenu: undefined,
     updateContextMenu: () => {},
+    popup: undefined,
+    updatePopup: () => {},
 };
 
 type Props = {
@@ -51,9 +55,8 @@ export function ContextProvider({ children }: Props) {
     const [saved, setSaved] = useState<boolean>(true);
     const [project, setProject] = useState<Project | undefined>(undefined);
     const [isSaving, setIsSaving] = useState<boolean>(false);
-    const [contextMenu, setContextMenu] = useState<
-        ContextMenuProps | undefined
-    >(undefined);
+    const [contextMenu, setContextMenu] = useState<ContextMenuProps | undefined>(undefined);
+    const [popup, setPopup] = useState<any>(undefined);
 
     const updateUser = (user_: CookieUser | undefined) => {
         setUser(user_);
@@ -83,6 +86,10 @@ export function ContextProvider({ children }: Props) {
         setContextMenu(contextMenu_);
     };
 
+    const updatePopup = (popup_: any) => {
+        setPopup(popup_);
+    };
+
     const value = {
         user,
         updateUser,
@@ -98,13 +105,13 @@ export function ContextProvider({ children }: Props) {
         updateIsSaving,
         contextMenu,
         updateContextMenu,
+        popup,
+        updatePopup,
     };
 
     return (
         <>
-            <UserContext.Provider value={value}>
-                {children}
-            </UserContext.Provider>
+            <UserContext.Provider value={value}>{children}</UserContext.Provider>
         </>
     );
 }

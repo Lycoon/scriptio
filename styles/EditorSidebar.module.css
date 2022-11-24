@@ -43,9 +43,7 @@
 }
 
 .active-style {
-    outline-width: 2px;
-    outline-style: solid;
-    outline-color: var(--editor-style-bg-active);
+    background-color: var(--editor-style-bg-hover);
 }
 
 .editor-style-icon {

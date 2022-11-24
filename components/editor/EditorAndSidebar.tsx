@@ -28,10 +28,10 @@ type Props = {
 };
 
 const EditorAndSidebar = ({ project }: Props) => {
-    const { updateEditor, updateIsSaving, updateContextMenu } = useContext(UserContext);
+    const { updateEditor, updateIsSaving, updateContextMenu, updatePopup, popup } =
+        useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
     const [isSaved, updateIsSaved] = useState<boolean>(false);
-    const [isPopupActive, updatePopupActive] = useState<boolean>(false);
     const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(true);
 
     /* Suggestion menu */
@@ -338,9 +338,8 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     /* Popup actions */
-    const [popup, setPopup] = useState<JSX.Element | null>(null);
     const closePopup = () => {
-        updatePopupActive(false);
+        updatePopup(undefined);
     };
 
     const getCharacterOccurrences = (word: string) => {
@@ -348,7 +347,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const editCharacterPopup = (character: CharacterData) => {
-        setPopup(() => (
+        updatePopup(() => (
             <PopupCharacterItem
                 closePopup={closePopup}
                 type={PopupType.EditCharacter}
@@ -357,14 +356,12 @@ const EditorAndSidebar = ({ project }: Props) => {
                 replaceOccurrences={replaceOccurrences}
             />
         ));
-        updatePopupActive(true);
     };
 
     const addCharacterPopup = () => {
-        setPopup(() => (
+        updatePopup(() => (
             <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />
         ));
-        updatePopupActive(true);
     };
 
     /* Marks */
@@ -413,7 +410,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                     pasteTextAt={pasteTextAt}
                 />
             )}
-            {isPopupActive && popup}
+            {popup}
             <EditorSidebarNavigation
                 active={isNavigationActive}
                 getFocusOnPosition={getFocusOnPosition}

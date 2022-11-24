@@ -5,6 +5,7 @@ import { useContext, useEffect } from "react";
 import { Project } from "../../pages/api/users";
 import { UserContext } from "../../src/context/UserContext";
 import { convertFountainToJSON } from "../../src/converters/fountain_to_scriptio";
+import PopupImportFile from "../popup/PopupImportFile";
 import DropdownItem from "./dropdown/DropdownItem";
 import NavbarButton from "./NavbarButton";
 
@@ -86,7 +87,8 @@ type NavbarTabs = {
 };
 
 const Navbar = () => {
-    const { user, updateUser, isSaving, updateSaved, editor, project } = useContext(UserContext);
+    const { user, updateUser, isSaving, updateSaved, editor, project, updatePopup } =
+        useContext(UserContext);
     const { asPath } = useRouter();
     const page = getCurrentPage(asPath);
 
@@ -106,8 +108,17 @@ const Navbar = () => {
             const reader = new FileReader();
 
             reader.onload = (e: any) => {
-                convertFountainToJSON(e.target.result, editor!);
-                updateSaved(false);
+                const confirmImport = () => {
+                    convertFountainToJSON(e.target.result, editor!);
+                    updateSaved(false);
+                };
+
+                updatePopup(() => (
+                    <PopupImportFile
+                        closePopup={() => updatePopup(undefined)}
+                        confirmImport={confirmImport}
+                    />
+                ));
             };
             reader.readAsText(file, "UTF-8");
         };
@@ -115,35 +126,44 @@ const Navbar = () => {
         input.click();
     };
 
+    const onExport = () => {
+        Router.push(`/projects/${project!.id}/export`);
+    };
+    const onProjectInfo = () => {
+        Router.push(`/projects/${project!.id}/edit`);
+    };
+    const onScreenplay = () => {
+        Router.push(`/projects/${project!.id}/screenplay`);
+    };
+    const onTitlePage = () => {
+        Router.push(`/projects/${project!.id}/title`);
+    };
+    const onStory = () => {
+        Router.push(`/projects/${project!.id}/story`);
+    };
+    const onStatistics = () => {
+        Router.push(`/projects/${project!.id}/stats`);
+    };
+    const onReports = () => {
+        Router.push(`/projects/${project!.id}/reports`);
+    };
+
     let tabs: NavbarTabs = {};
     if (project) {
         tabs = {
             File: [
                 { name: "Import...", action: importFile, icon: "import.png" },
-                {
-                    name: "Export",
-                    action: () => Router.push(`/projects/${project.id}/export`),
-                    icon: "export.png",
-                },
+                { name: "Export", action: onExport, icon: "export.png" },
             ],
             Edit: [
-                {
-                    name: "Project info",
-                    action: () => Router.push(`/projects/${project.id}/edit`),
-                },
-                {
-                    name: "Screenplay",
-                    action: () => Router.push(`/projects/${project.id}/screenplay`),
-                },
-                { name: "Title page", action: () => Router.push(`/projects/${project.id}/title`) },
-                { name: "Story", action: () => Router.push(`/projects/${project.id}/story`) },
+                { name: "Project info", action: onProjectInfo },
+                { name: "Screenplay", action: onScreenplay },
+                { name: "Title page", action: onTitlePage },
+                { name: "Story", action: onStory },
             ],
             Production: [
-                {
-                    name: "Statistics",
-                    action: () => Router.push(`/projects/${project.id}/stats`),
-                },
-                { name: "Reports", action: () => Router.push(`/projects/${project.id}/reports`) },
+                { name: "Statistics", action: onStatistics },
+                { name: "Reports", action: onReports },
             ],
         };
     }
