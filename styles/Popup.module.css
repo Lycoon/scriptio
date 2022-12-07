@@ -87,7 +87,22 @@
     background-color: var(--secondary-bg-hover) !important;
 }
 
+.popup-import-confirm {
+    border-width: 2px !important;
+    border-style: dashed !important;
+    border-color: var(--error-color) !important;
+}
+
+.popup-cancel {
+    margin-top: 10px;
+    background-color: var(--secondary-bg-hover) !important;
+}
+
 .popup-confirm:hover {
+    background-color: var(--editor-style-bg-hover) !important;
+}
+
+.popup-cancel:hover {
     background-color: var(--editor-style-bg-hover) !important;
 }
 

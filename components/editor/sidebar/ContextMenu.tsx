@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
-import { CharacterData, CharacterItem } from "../../../src/lib/screenplayUtils";
+import { CharacterData, CharacterItem, SceneItem } from "../../../src/lib/screenplayUtils";
 
 type ContextMenuItemProps = {
     text: string;
@@ -23,9 +23,7 @@ export const enum ContextMenuType {
 }
 
 export type SceneContextProps = {
-    title: string;
-    position: number;
-    nextPosition: number;
+    scene: SceneItem;
     focusOn: (position: number) => void;
     selectTextInEditor: (start: number, end: number) => void;
     cutTextSelection: (start: number, end: number) => void;

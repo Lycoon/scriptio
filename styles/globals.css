@@ -8,6 +8,7 @@
 @import "ProjectItem.module.css";
 @import "NewProjectItem.module.css";
 @import "Popup.module.css";
+@import "PopupImport.module.css";
 @import "ProjectDangerZone.module.css";
 @import "ContextMenu.module.css";
 @import "PageCounter.module.css";

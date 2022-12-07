@@ -3,9 +3,7 @@ import { ContextMenuType, SceneContextProps } from "./ContextMenu";
 import { UserContext } from "../../../src/context/UserContext";
 
 const SidebarSceneItem = ({
-    title,
-    position,
-    nextPosition,
+    scene,
     focusOn,
     selectTextInEditor,
     cutTextSelection,
@@ -19,8 +17,8 @@ const SidebarSceneItem = ({
             type: ContextMenuType.SceneItem,
             position: { x: e.clientX, y: e.clientY },
             typeSpecificProps: {
-                position,
-                nextPosition,
+                position: scene.position,
+                nextPosition: scene.nextPosition,
                 focusOn,
                 selectTextInEditor,
                 cutTextSelection,
@@ -30,7 +28,7 @@ const SidebarSceneItem = ({
     };
 
     const handleDoubleClick = () => {
-        focusOn(position); // focus on double click in scene list
+        focusOn(scene.position); // focus on double click in scene list
     };
 
     return (
@@ -39,7 +37,8 @@ const SidebarSceneItem = ({
             onDoubleClick={handleDoubleClick}
             className="scene-item"
         >
-            <p className="scene-item-title unselectable">{title}</p>
+            <p className="scene-item-title unselectable">{scene.title}</p>
+            <p className="scene-item-preview unselectable">{scene.preview}</p>
         </div>
     );
 };

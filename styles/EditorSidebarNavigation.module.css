@@ -86,9 +86,8 @@
 /* Scene item */
 .scene-item {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
 
     /*max-width: fit-content;*/
     padding-inline: 8px;
@@ -107,6 +106,14 @@
     overflow-x: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+.scene-item-preview {
+    font-size: 12px;
+    overflow-x: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: grey;
 }
 
 .scene-item-title.selected {

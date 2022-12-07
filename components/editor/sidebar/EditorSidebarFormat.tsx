@@ -18,17 +18,6 @@ type EditorStyleProps = {
     icon: string;
 };
 
-export enum ScreenplayElement {
-    Scene,
-    Action,
-    Character,
-    Dialogue,
-    Parenthetical,
-    Transition,
-    Section,
-    Note,
-}
-
 const EditorStyle = ({ isActive, toggle, icon }: EditorStyleProps) => {
     return (
         <div className={"editor-style-btn" + (isActive ? " active-style" : "")} onClick={toggle}>

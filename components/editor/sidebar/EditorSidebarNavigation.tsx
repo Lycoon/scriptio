@@ -136,9 +136,7 @@ const EditorSidebarNavigation = ({
                         return (
                             <SidebarSceneItem
                                 key={scene.position}
-                                title={scene.title}
-                                position={scene.position}
-                                nextPosition={scene.nextPosition}
+                                scene={scene}
                                 focusOn={getFocusOnPosition}
                                 selectTextInEditor={selectTextInEditor}
                                 cutTextSelection={cutTextSelection}

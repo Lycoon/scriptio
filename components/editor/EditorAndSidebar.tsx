@@ -16,8 +16,9 @@ import {
     countOccurrences,
     deleteCharacter,
     getCharactersData,
+    ScreenplayElement,
 } from "../../src/lib/screenplayUtils";
-import EditorSidebarFormat, { ScreenplayElement } from "./sidebar/EditorSidebarFormat";
+import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
@@ -31,7 +32,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     const { updateEditor, updateIsSaving, updateContextMenu, updatePopup, popup } =
         useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
-    const [isSaved, updateIsSaved] = useState<boolean>(false);
+    const [isSaved, updateIsSaved] = useState<boolean>(true);
     const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(true);
 
     /* Suggestion menu */

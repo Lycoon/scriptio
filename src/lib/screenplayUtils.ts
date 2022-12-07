@@ -1,11 +1,30 @@
-import { count } from "console";
 import { getCharacterNames } from "./statistics";
+
+/* Nodes */
+export type NodeData = {
+    type: ScreenplayElement;
+    content: any[]; // contains marks (bold, italic, etc.)
+    flattenText: string; // contains only text
+};
+
+export enum ScreenplayElement {
+    Scene = "scene",
+    Action = "action",
+    Character = "character",
+    Dialogue = "dialogue",
+    Parenthetical = "parenthetical",
+    Transition = "transition",
+    Section = "section",
+    Note = "note",
+    None = "none",
+}
 
 /* Scenes */
 let scenesData: ScenesData = [];
 export type ScenesData = SceneItem[];
 export type SceneItem = {
     title: string;
+    preview: string;
     position: number;
     nextPosition: number;
 };
@@ -97,6 +116,41 @@ export const computeFullCharactersData = async (json: any, fetchedCharacters: Ch
     triggerUpdate();
 };
 
+const getNodeData = (node: any): NodeData => {
+    const type: string = node["attrs"]["class"];
+    const content: any[] = node["content"];
+    const flattenText = getNodeFlattenContent(content);
+
+    return {
+        type: type as unknown as ScreenplayElement,
+        content,
+        flattenText,
+    };
+};
+
+const getNodeFlattenContent = (node: any[]) => {
+    let text = "";
+    for (let i = 0; i < node.length; i++) {
+        text += node[i]["text"];
+    }
+
+    return text;
+};
+
+const getScenePreview = (nodes: any[], cursor: number) => {
+    let preview = "";
+
+    for (let i = cursor; i < nodes.length && preview.length <= 30; i++) {
+        const node = getNodeData(nodes[i]);
+        if (node.type === ScreenplayElement.None) continue;
+        if (node.type === ScreenplayElement.Scene) break; // stop when next scene is found (preview is 30 characters max
+
+        preview += node.flattenText + " ";
+    }
+
+    return preview;
+};
+
 export const computeFullScenesData = async (json: any) => {
     const nodes = json.content!;
     const scenes: ScenesData = [];
@@ -104,20 +158,14 @@ export const computeFullScenesData = async (json: any) => {
     let sceneNumber = 0;
 
     for (let i = 0; i < nodes.length; i++) {
-        const currNode = nodes[i];
-        if (!currNode["content"]) {
+        const node = getNodeData(nodes[i]);
+
+        if (node.type === ScreenplayElement.None) {
             cursor += 2; // empty screenplay element count for new line
             continue;
         }
 
-        let text = "";
-        const type: string = currNode["attrs"]["class"];
-        const content: any[] = currNode["content"];
-        for (let j = 0; j < content.length; j++) {
-            text += content[j]["text"];
-        }
-
-        if (type === "scene") {
+        if (node.type === ScreenplayElement.Scene) {
             if (sceneNumber !== 0) {
                 // first scene has no previous scene to set nextPosition
                 scenes[scenes.length - 1].nextPosition = cursor;
@@ -126,18 +174,17 @@ export const computeFullScenesData = async (json: any) => {
             scenes.push({
                 position: cursor,
                 nextPosition: -1,
-                title: text.toUpperCase(),
+                title: node.flattenText.toUpperCase(),
+                preview: getScenePreview(nodes, i + 1),
             });
 
             sceneNumber++;
         }
 
-        cursor += text.length + 2; // new line counts for 2 characters
+        cursor += node.flattenText.length + 2; // new line counts for 2 characters
     }
 
-    if (scenes.length <= 0) {
-        scenesData = [];
-    } else {
+    if (scenes.length > 0) {
         scenes[scenes.length - 1].nextPosition = cursor; // last scene has no next scene to set nextPosition
     }
 
