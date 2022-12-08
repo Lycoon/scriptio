@@ -8,15 +8,15 @@ export type NodeData = {
 };
 
 export enum ScreenplayElement {
-    Scene = "scene",
-    Action = "action",
-    Character = "character",
-    Dialogue = "dialogue",
-    Parenthetical = "parenthetical",
-    Transition = "transition",
-    Section = "section",
-    Note = "note",
-    None = "none",
+    Scene,
+    Action,
+    Character,
+    Dialogue,
+    Parenthetical,
+    Transition,
+    Section,
+    Note,
+    None,
 }
 
 /* Scenes */
@@ -116,22 +116,47 @@ export const computeFullCharactersData = async (json: any, fetchedCharacters: Ch
     triggerUpdate();
 };
 
+const getScreenplayElementType = (nodeType: string): ScreenplayElement => {
+    switch (nodeType) {
+        case "scene":
+            return ScreenplayElement.Scene;
+        case "action":
+            return ScreenplayElement.Action;
+        case "character":
+            return ScreenplayElement.Character;
+        case "dialogue":
+            return ScreenplayElement.Dialogue;
+        case "parenthetical":
+            return ScreenplayElement.Parenthetical;
+        case "transition":
+            return ScreenplayElement.Transition;
+        case "section":
+            return ScreenplayElement.Section;
+        case "note":
+            return ScreenplayElement.Note;
+        default:
+            return ScreenplayElement.None;
+    }
+};
+
 const getNodeData = (node: any): NodeData => {
     const type: string = node["attrs"]["class"];
     const content: any[] = node["content"];
     const flattenText = getNodeFlattenContent(content);
 
     return {
-        type: type as unknown as ScreenplayElement,
+        type: getScreenplayElementType(type),
         content,
         flattenText,
     };
 };
 
-const getNodeFlattenContent = (node: any[]) => {
+const getNodeFlattenContent = (content: any[]) => {
+    if (!content) return "";
+
     let text = "";
-    for (let i = 0; i < node.length; i++) {
-        text += node[i]["text"];
+    for (let i = 0; i < content.length; i++) {
+        text += content[i]["text"];
     }
 
     return text;
