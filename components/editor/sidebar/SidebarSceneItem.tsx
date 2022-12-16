@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { ContextMenuType, SceneContextProps } from "./ContextMenu";
 import { UserContext } from "../../../src/context/UserContext";
+import SceneLengthItem from "../SceneLengthItem";
 
 const SidebarSceneItem = ({
     scene,
@@ -37,7 +38,10 @@ const SidebarSceneItem = ({
             onDoubleClick={handleDoubleClick}
             className="scene-item"
         >
-            <p className="scene-item-title unselectable">{scene.title}</p>
+            <div className="scene-item-header">
+                <p className="scene-item-title unselectable">{scene.title}</p>
+                <SceneLengthItem scene={scene} />
+            </div>
             <p className="scene-item-preview unselectable">{scene.preview}</p>
         </div>
     );

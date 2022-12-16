@@ -107,6 +107,18 @@
     text-overflow: ellipsis;
 }
 
+.scene-item-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.scene-item-header .scene-item-preview {
+    text-overflow: none;
+}
+
 .scene-item-preview {
     font-size: 12px;
     overflow-x: hidden;

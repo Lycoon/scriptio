@@ -55,7 +55,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             saveScreenplay(project.userId, project.id, editorView?.getJSON());
             updateIsSaved(true);
             setTimeout(() => {
-                // loading animation
+                // save loading animation
                 updateIsSaving(false);
             }, 1500);
         }
