@@ -68,7 +68,7 @@ span.underline {
 }
 
 /* User settings */
-.highlight-on-hover p:hover {
+.highlight-on-hover .ProseMirror > p:hover {
     background-color: var(--editor-element-hover);
 }
 
