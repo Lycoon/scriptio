@@ -1,6 +1,6 @@
 @import "../public/css/scriptio.css";
 
-#editor > div {
+#editor > .ProseMirror {
     z-index: -1;
     width: 100%;
     height: max-content;

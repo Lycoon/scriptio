@@ -1,5 +1,6 @@
 import { EditorContent, Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
+import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 
 type Props = {
     editor: Editor | null;
@@ -9,22 +10,25 @@ const EditorComponent = ({ editor }: Props) => {
     const [pages, setPages] = useState<number>(0);
 
     useEffect(() => {
-        setTimeout(() => {
-            const div = document.getElementById("editor");
-            const height = +((div?.clientHeight || 0) / 860).toFixed(0);
-            setPages(height);
-        }, 1000); // waiting for the editor to render otherwise the height is wrong
+        const target = document.getElementById("editor")!;
+        const callback = (entries: ResizeObserverEntry[]) => {
+            const height = entries[0].contentRect.height;
+            const nbPages = +((height || 0) / 860).toFixed(0);
+            setPages(nbPages);
+        };
+        const observer = new ResizeObserver(callback);
+        observer.observe(target);
     }, []);
 
     return (
         <div id="editor">
-            <span className="page-counter">
+            <div className="page-counter">
                 {Array.from({ length: pages }, (_, page) => (
                     <p key={page} className="page-nb unselectable">
                         p.{page + 1}
                     </p>
                 ))}
-            </span>
+            </div>
             <EditorContent editor={editor} />
         </div>
     );

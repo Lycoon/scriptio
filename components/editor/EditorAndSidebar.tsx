@@ -122,6 +122,8 @@ const EditorAndSidebar = ({ project }: Props) => {
                     .slice(0, 5);
             }
 
+            console.log(editor.view.coordsAtPos(cursor));
+
             displaySuggestions(list, {
                 position: { x: pagePos.left, y: pagePos.top },
                 cursor,
@@ -401,10 +403,14 @@ const EditorAndSidebar = ({ project }: Props) => {
         };
     });
 
+    const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
+        if (suggestions.length > 0) updateSuggestions([]);
+    };
+
     return (
         <div id="editor-and-sidebar">
             <ContextMenu />
-            {suggestions.length !== 0 && (
+            {suggestions.length > 0 && (
                 <SuggestionMenu
                     suggestions={suggestions}
                     suggestionData={suggestionData}
@@ -424,7 +430,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                 addCharacterPopup={addCharacterPopup}
                 removeCharacter={removeCharacter}
             />
-            <div id="editor-container">
+            <div id="editor-container" onScroll={onScroll}>
                 <EditorComponent editor={editorView} />
             </div>
             <EditorSidebarFormat
