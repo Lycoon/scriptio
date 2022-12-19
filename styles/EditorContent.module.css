@@ -36,6 +36,7 @@
 ::-webkit-scrollbar-thumb {
     height: 60px;
     background: var(--editor-scroll-btn);
+    border-radius: 10px;
 }
 
 /* Handle on hover */

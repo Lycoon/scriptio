@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Project } from "../../pages/api/users";
+import { CookieUser, Project } from "../../pages/api/users";
 import { deleteProject } from "../../src/lib/requests";
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./NewProjectPage";
@@ -8,10 +8,11 @@ import autoAnimate from "@formkit/auto-animate";
 import Image from "next/image";
 
 type Props = {
+    user: CookieUser;
     projects: Project[];
 };
 
-const ProjectPageContainer = ({ projects: propProjects }: Props) => {
+const ProjectPageContainer = ({ user, projects: propProjects }: Props) => {
     // Getting back dates from workaround
     let projects = propProjects.map((e) => ({
         ...e,
@@ -83,7 +84,9 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
                                     key={project.id}
                                     project={project}
                                     deleteMode={deleteMode}
-                                    deleteProject={deleteFromProjectPage}
+                                    deleteProject={() => {
+                                        deleteFromProjectPage(user.id, project.id);
+                                    }}
                                 />
                             );
                         })}

@@ -15,16 +15,21 @@ type Props = {
 };
 
 const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
-    const ProjectPage = () => <ProjectPageContainer projects={projects!} />;
     const { updateProject } = useContext(UserContext);
-    useEffect(() => updateProject(undefined), []);
+    useEffect(() => {
+        updateProject(undefined);
+    }, []);
 
     return (
         <>
             <Head>
                 <title>{!user ? "Scriptio" : "Scriptio - Projects"}</title>
             </Head>
-            {user && user.isLoggedIn ? <ProjectPage /> : <HomePageContainer />}
+            {user && user.isLoggedIn ? (
+                <ProjectPageContainer projects={projects!} user={user} />
+            ) : (
+                <HomePageContainer />
+            )}
         </>
     );
 };

@@ -42,7 +42,7 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
 
         if (res.status === 201) {
             setIsCreating(false);
-            Router.push("/");
+            Router.push(`/projects/${json.data.id}/screenplay`);
         } else {
             setFormInfo({ content: json.message, isError: true });
         }
