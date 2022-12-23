@@ -23,7 +23,6 @@ type Props = {
     copyTextSelection: (start: number, end: number) => void;
 
     /* Characters */
-    deferredCharactersUpdate: () => void;
     editCharacterPopup: (character: CharacterData) => void;
     addCharacterPopup: () => void;
     removeCharacter: (name: string) => void;
@@ -48,7 +47,6 @@ const EditorSidebarNavigation = ({
     /* Characters */
     editCharacterPopup,
     addCharacterPopup,
-    deferredCharactersUpdate,
     removeCharacter,
 }: Props) => {
     const { updateContextMenu } = useContext(UserContext);

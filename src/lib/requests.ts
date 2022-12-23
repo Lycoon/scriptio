@@ -37,8 +37,12 @@ export const sendRecover = (email: string) => {
     return request(`/api/recover`, "POST", JSON.stringify({ email }));
 };
 
-export const saveScreenplay = async (userId: number, projectId: number, screenplay: any) => {
-    editProject(userId, {
+export const saveScreenplay = async (
+    userId: number,
+    projectId: number,
+    screenplay: any
+): Promise<Response> => {
+    return editProject(userId, {
         projectId,
         screenplay,
     });

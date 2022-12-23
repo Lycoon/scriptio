@@ -29,10 +29,8 @@ type Props = {
 };
 
 const EditorAndSidebar = ({ project }: Props) => {
-    const { updateEditor, updateIsSaving, updateContextMenu, updatePopup, popup } =
-        useContext(UserContext);
+    const ctx = useContext(UserContext);
     const [selectedTab, updateSelectedTab] = useState<number>(0);
-    const [isSaved, updateIsSaved] = useState<boolean>(true);
     const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(true);
 
     /* Suggestion menu */
@@ -49,19 +47,16 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isItalic, setIsItalic] = useState<boolean>(false);
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
 
-    const save = () => {
-        if (!isSaved) {
-            updateIsSaving(true);
-            saveScreenplay(project.userId, project.id, editorView?.getJSON());
-            updateIsSaved(true);
-            setTimeout(() => {
-                // save loading animation
-                updateIsSaving(false);
-            }, 1500);
+    const save = async () => {
+        if (!ctx.saved) {
+            ctx.updateIsSaving(true);
+            const res = await saveScreenplay(project.userId, project.id, editorView?.getJSON());
+            ctx.updateIsSaving(false);
+            ctx.updateSaved(true);
         }
     };
 
-    const deferredSave = useDebouncedCallback(() => {
+    const deferredScreenplaySave = useDebouncedCallback(() => {
         save();
     }, 2000);
 
@@ -69,9 +64,9 @@ const EditorAndSidebar = ({ project }: Props) => {
         computeFullScenesData(editorView?.getJSON());
     }, 1000);
 
-    const deferredCharactersUpdate = useDebouncedCallback(() => {
+    const charactersUpdate = () => {
         saveProjectCharacters(project.userId, project.id, getCharactersData());
-    }, 500);
+    };
 
     const updateEditorStyles = (marks: any[]) => {
         marks = marks.map((mark: any) => mark.attrs.class);
@@ -171,9 +166,9 @@ const EditorAndSidebar = ({ project }: Props) => {
 
         // update on each screenplay update
         onUpdate({ editor, transaction }) {
-            updateIsSaved(false); // unsaved changes, to prevent data loss between typing and autosave
+            ctx.updateSaved(false); // unsaved changes, to prevent data loss between typing and autosave
             deferredSceneUpdate();
-            deferredSave();
+            deferredScreenplaySave();
         },
 
         // update active on caret update
@@ -238,7 +233,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     useEffect(() => {
         if (editorView?.commands) {
             editorView?.commands.setContent(project.screenplay as JSONContent);
-            updateEditor(editorView!);
+            ctx.updateEditor(editorView!);
         }
     }, [editorView]);
 
@@ -292,7 +287,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         }
 
         if (e.key === "Escape") {
-            updateContextMenu(undefined);
+            ctx.updateContextMenu(undefined);
             updateSuggestions([]);
         }
     };
@@ -342,7 +337,7 @@ const EditorAndSidebar = ({ project }: Props) => {
 
     /* Popup actions */
     const closePopup = () => {
-        updatePopup(undefined);
+        ctx.updatePopup(undefined);
     };
 
     const getCharacterOccurrences = (word: string) => {
@@ -350,7 +345,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const editCharacterPopup = (character: CharacterData) => {
-        updatePopup(() => (
+        ctx.updatePopup(() => (
             <PopupCharacterItem
                 closePopup={closePopup}
                 type={PopupType.EditCharacter}
@@ -362,7 +357,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const addCharacterPopup = () => {
-        updatePopup(() => (
+        ctx.updatePopup(() => (
             <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />
         ));
     };
@@ -382,7 +377,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const onUnload = (e: BeforeUnloadEvent) => {
-        if (!isSaved) {
+        if (!ctx.saved) {
             let confirmationMessage = "Are you sure you want to leave?";
 
             e.returnValue = confirmationMessage;
@@ -395,11 +390,11 @@ const EditorAndSidebar = ({ project }: Props) => {
     useEffect(() => {
         addEventListener("keydown", pressedKeyEvent);
         addEventListener("beforeunload", onUnload);
-        addEventListener("charactersDataUpdated", deferredCharactersUpdate);
+        addEventListener("charactersDataUpdated", charactersUpdate);
         return () => {
             removeEventListener("keydown", pressedKeyEvent);
             removeEventListener("beforeunload", onUnload);
-            removeEventListener("charactersDataUpdated", deferredCharactersUpdate);
+            removeEventListener("charactersDataUpdated", charactersUpdate);
         };
     });
 
@@ -417,7 +412,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                     pasteTextAt={pasteTextAt}
                 />
             )}
-            {popup}
+            {ctx.popup}
             <EditorSidebarNavigation
                 active={isNavigationActive}
                 getFocusOnPosition={getFocusOnPosition}
@@ -425,7 +420,6 @@ const EditorAndSidebar = ({ project }: Props) => {
                 cutTextSelection={cutTextSelection}
                 pasteText={pasteText}
                 copyTextSelection={copyTextSelection}
-                deferredCharactersUpdate={deferredCharactersUpdate}
                 editCharacterPopup={editCharacterPopup}
                 addCharacterPopup={addCharacterPopup}
                 removeCharacter={removeCharacter}
