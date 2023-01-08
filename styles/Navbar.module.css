@@ -73,8 +73,8 @@
 }
 
 .settings-btn {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     margin-right: 7px;
 
     cursor: pointer;
@@ -100,4 +100,11 @@
 
 .settings-icon:hover {
     filter: invert(85%);
+}
+
+.last-saved {
+    color: grey;
+    font-size: 12px;
+    margin-right: 12px;
+    text-transform: uppercase;
 }

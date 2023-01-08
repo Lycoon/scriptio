@@ -70,6 +70,7 @@ span.underline {
 /* User settings */
 .highlight-on-hover .ProseMirror > p:hover {
     background-color: var(--editor-element-hover);
+    border-radius: 8px;
 }
 
 .scene-background .scene {

@@ -186,15 +186,20 @@ const Navbar = () => {
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    {page === PAGE.SCREENPLAY && isSaving && (
-                        <div className="saving-spin">
-                            <img className="settings-icon" src="/images/saving.svg" />
-                        </div>
-                    )}
+                    {page === PAGE.SCREENPLAY &&
+                        (isSaving ? (
+                            <div className="saving-spin">
+                                <img className="settings-icon" src="/images/saving.svg" />
+                            </div>
+                        ) : (
+                            <p className="last-saved">Last saved 21h13</p>
+                        ))}
                     <div className="settings-btn" onClick={onSettings}>
                         <img className="settings-icon" src="/images/gear.png" />
                     </div>
-                    <NavbarButton content="Log out" action={onLogOut} />
+                    <div className="settings-btn" onClick={onLogOut}>
+                        <img className="settings-icon" src="/images/logout.png" />
+                    </div>
                 </div>
             ) : (
                 <NotLoggedNavbar />
