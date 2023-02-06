@@ -191,7 +191,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                 if (event.code === "Space") {
                     // if starting action with INT. or EXT. switch to scene
                     if (currNode === "action" && node.textContent.match(/^\b(int|ext)\./gi)) {
-                        if (node.textContent.match()) setActiveTab("scene");
+                        setActiveTab("scene");
                     }
                 } else if (event.key === "Enter") {
                     if (suggestions.length > 0) {
