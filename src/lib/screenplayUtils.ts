@@ -169,7 +169,7 @@ const getScenePreview = (nodes: any[], cursor: number) => {
     for (let i = cursor; i < nodes.length && preview.length <= 30; i++) {
         const node = getNodeData(nodes[i]);
         if (node.type === ScreenplayElement.None) continue;
-        if (node.type === ScreenplayElement.Scene) break; // stop when next scene is found (preview is 30 characters max
+        if (node.type === ScreenplayElement.Scene) break; // stop when next scene is found (preview is 30 characters max)
 
         preview += node.flattenText + " ";
     }

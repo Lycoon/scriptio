@@ -12,7 +12,7 @@ const getLastUpdate = (days: number) => {
     if (days === 0) return "Today";
     else if (days === 1) return "Yesterday";
     else if (days <= 30) return `${days} days ago`;
-    else if (days <= 365) return `${days / 30} months ago`;
+    else if (days <= 365) return `${Math.round(days / 30)} month(s) ago`;
     else return "More than 1 year ago";
 };
 
@@ -24,19 +24,13 @@ const ProjectItem = ({ project, deleteMode, deleteProject }: Props) => {
     const days = Math.round((Date.now() - +project.updatedAt) / _MS_PER_DAY);
     const lastUpdated = getLastUpdate(days);
     const posterPath =
-        project.poster !== null
-            ? "/api/s3/" + project.poster
-            : "/images/default-poster.png";
+        project.poster !== null ? "/api/s3/" + project.poster : "/images/default-poster.png";
 
     return (
         <button
-            className={
-                "project-item" + (deleteMode ? " project-item-delete" : "")
-            }
+            className={"project-item" + (deleteMode ? " project-item-delete" : "")}
             onClick={() => {
-                deleteMode
-                    ? deleteProject(project.userId, project.id)
-                    : openProject(project.id);
+                deleteMode ? deleteProject(project.userId, project.id) : openProject(project.id);
             }}
         >
             {deleteMode ? (
@@ -57,11 +51,7 @@ const ProjectItem = ({ project, deleteMode, deleteProject }: Props) => {
                             <p className="project-date-text">{lastUpdated}</p>
                         </div>
                     </div>
-                    <img
-                        className="movie-poster"
-                        src={posterPath}
-                        alt="Movie poster"
-                    />
+                    <img className="movie-poster" src={posterPath} alt="Movie poster" />
                 </div>
             )}
         </button>
