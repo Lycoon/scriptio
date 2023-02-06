@@ -117,7 +117,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                     .slice(0, 5);
             }
 
-            console.log(editor.view.coordsAtPos(cursor));
+            // console.log(editor.view.coordsAtPos(cursor));
 
             displaySuggestions(list, {
                 position: { x: pagePos.left, y: pagePos.top },
@@ -183,18 +183,23 @@ const EditorAndSidebar = ({ project }: Props) => {
         editorProps: {
             handleKeyDown(view: any, event: any) {
                 const selection = view.state.selection;
+                const node = selection.$anchor.parent;
+                const nodeSize = node.content.size;
+                const nodePos = selection.$head.parentOffset;
+                const currNode = node.attrs.class;
 
-                if (event.key === "Enter") {
+                if (event.code === "Space") {
+                    // if starting action with INT. or EXT. switch to scene
+                    if (currNode === "action" && node.textContent.match(/^\b(int|ext)\./gi)) {
+                        if (node.textContent.match()) setActiveTab("scene");
+                    }
+                } else if (event.key === "Enter") {
                     if (suggestions.length > 0) {
                         // prevent new line if suggestions are displayed
                         event.preventDefault();
                         return true;
                     }
 
-                    const node = selection.$anchor.parent;
-                    const nodeSize = node.content.size;
-                    const nodePos = selection.$head.parentOffset;
-                    const currNode = node.attrs.class;
                     const pos = selection.anchor;
 
                     // empty element
