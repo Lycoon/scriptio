@@ -10,7 +10,6 @@
 @import "Popup.module.css";
 @import "PopupImport.module.css";
 @import "ProjectDangerZone.module.css";
-@import "ContextMenu.module.css";
 @import "PageCounter.module.css";
 @import "SuggestionMenu.module.css";
 
@@ -42,7 +41,6 @@
 /* Editor */
 @import "EditorComponent.module.css";
 @import "EditorContent.module.css";
-@import "EditorSidebar.module.css";
 @import "EditorTab.module.css";
 @import "EditorSidebarNavigation.module.css";
 

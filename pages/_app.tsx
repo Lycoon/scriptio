@@ -1,10 +1,10 @@
 import "../styles/globals.css";
 
 import type { AppProps } from "next/app";
-import { ContextProvider } from "../src/context/UserContext";
+import { ContextProvider, UserContext } from "../src/context/UserContext";
 import { SWRConfig } from "swr";
 import fetchJson from "../src/lib/fetchJson";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Loading from "../components/home/Loading";
 import { ThemeProvider } from "next-themes";
@@ -40,7 +40,6 @@ function MyApp({ Component, pageProps }: AppProps) {
             <ContextProvider>
                 <ThemeProvider attribute="class" defaultTheme="dark">
                     <div className="main-container">
-                        <Navbar />
                         {pageLoading ? <Loading /> : <Component {...pageProps} />}
                     </div>
                 </ThemeProvider>

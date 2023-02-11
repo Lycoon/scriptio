@@ -2,6 +2,7 @@ import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect } from "react";
+import Navbar from "../../../components/navbar/Navbar";
 import NoStatsContainer from "../../../components/projects/stats/NoStatsContainer";
 import ProjectStatsContainer from "../../../components/projects/stats/ProjectStatsContainer";
 import { UserContext } from "../../../src/context/UserContext";
@@ -24,7 +25,10 @@ const StatsProjectPage: NextPage<Props> = ({ project }: Props) => {
                 <title>{project.title} - Statistics</title>
             </Head>
             {project.screenplay ? (
-                <ProjectStatsContainer project={project} />
+                <>
+                    <Navbar />
+                    <ProjectStatsContainer project={project} />
+                </>
             ) : (
                 <NoStatsContainer projectId={project.id} />
             )}
@@ -33,10 +37,7 @@ const StatsProjectPage: NextPage<Props> = ({ project }: Props) => {
 };
 
 const redirectToHome = { redirect: { destination: "/" } };
-export const getServerSideProps = withIronSessionSsr(async function ({
-    req,
-    query,
-}): Promise<any> {
+export const getServerSideProps = withIronSessionSsr(async function ({ req, query }): Promise<any> {
     const projectId = +query["projectId"]!;
     if (!projectId) {
         return redirectToHome;
@@ -55,7 +56,6 @@ export const getServerSideProps = withIronSessionSsr(async function ({
     return {
         props: { user: req.session.user, project },
     };
-},
-sessionOptions);
+}, sessionOptions);
 
 export default StatsProjectPage;

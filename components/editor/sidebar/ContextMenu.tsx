@@ -1,6 +1,7 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { UserContext } from "../../../src/context/UserContext";
-import { CharacterData, CharacterItem, SceneItem } from "../../../src/lib/screenplayUtils";
+import { CharacterData, SceneItem } from "../../../src/lib/screenplayUtils";
+import styles from "./ContextMenu.module.css";
 
 type ContextMenuItemProps = {
     text: string;
@@ -39,7 +40,7 @@ export type CharacterContextProps = {
 
 export const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
     return (
-        <div onClick={action} className="context-menu-item">
+        <div onClick={action} className={styles.menu_item}>
             <p className="unselectable">{text}</p>
         </div>
     );
@@ -167,7 +168,7 @@ const ContextMenu = () => {
 
     return (
         <div
-            className={"context-menu"}
+            className={styles.menu}
             style={{
                 top: contextMenu?.position.y,
                 left: contextMenu?.position.x,

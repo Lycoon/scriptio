@@ -192,7 +192,7 @@ const Navbar = () => {
                                 <img className="settings-icon" src="/images/saving.svg" />
                             </div>
                         ) : (
-                            <p className="last-saved">Last saved 21h13</p>
+                            <p className="last-saved">In sync</p>
                         ))}
                     <div className="settings-btn" onClick={onSettings}>
                         <img className="settings-icon" src="/images/gear.png" />

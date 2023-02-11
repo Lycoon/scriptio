@@ -3,6 +3,7 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect } from "react";
 import EditorContainer from "../../../components/editor/EditorContainer";
+import Navbar from "../../../components/navbar/Navbar";
 import { UserContext } from "../../../src/context/UserContext";
 import { sessionOptions } from "../../../src/lib/session";
 import { getProjectFromId } from "../../../src/server/service/project-service";
@@ -23,16 +24,14 @@ const EditorPage: NextPage<Props> = ({ user, project }: Props) => {
             <Head>
                 <title>{project.title}</title>
             </Head>
+            <Navbar />
             <EditorContainer user={user} project={project} />
         </>
     );
 };
 
 const redirectToHome = { redirect: { destination: "/" } };
-export const getServerSideProps = withIronSessionSsr(async function ({
-    req,
-    query,
-}): Promise<any> {
+export const getServerSideProps = withIronSessionSsr(async function ({ req, query }): Promise<any> {
     const projectId = +query["projectId"]!;
     if (!projectId) {
         return redirectToHome;
@@ -61,7 +60,6 @@ export const getServerSideProps = withIronSessionSsr(async function ({
     return {
         props: { user, project },
     };
-},
-sessionOptions);
+}, sessionOptions);
 
 export default EditorPage;

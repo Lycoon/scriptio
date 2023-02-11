@@ -2,6 +2,7 @@ import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect } from "react";
+import Navbar from "../components/navbar/Navbar";
 import SettingsPageContainer from "../components/settings/SettingsPageContainer";
 import { UserContext } from "../src/context/UserContext";
 import { sessionOptions } from "../src/lib/session";
@@ -21,6 +22,7 @@ const SettingsPage: NextPage<Props> = ({ user }: Props) => {
             <Head>
                 <title>Scriptio - Settings</title>
             </Head>
+            <Navbar />
             <SettingsPageContainer user={user} />
         </>
     );
@@ -28,9 +30,7 @@ const SettingsPage: NextPage<Props> = ({ user }: Props) => {
 
 const noauth = { props: { user: null, projects: [] } };
 
-export const getServerSideProps = withIronSessionSsr(async function ({
-    req,
-}): Promise<any> {
+export const getServerSideProps = withIronSessionSsr(async function ({ req }): Promise<any> {
     const cookieUser = req.session.user;
 
     if (!cookieUser || !cookieUser.isLoggedIn) {
@@ -45,7 +45,6 @@ export const getServerSideProps = withIronSessionSsr(async function ({
     user.createdAt = user.createdAt.toISOString() as any as Date;
 
     return { props: { user } };
-},
-sessionOptions);
+}, sessionOptions);
 
 export default SettingsPage;

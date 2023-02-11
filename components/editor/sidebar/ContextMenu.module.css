@@ -1,4 +1,4 @@
-.context-menu {
+.menu {
     display: flex;
     flex-direction: column;
 
@@ -10,7 +10,7 @@
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
 }
 
-.context-menu-item {
+.menu_item {
     padding-block: 6px;
     padding-left: 8px;
     padding-right: 35px;
@@ -20,19 +20,10 @@
     border-color: var(--editor-sidebar);
 }
 
-.context-menu-item:last-child {
+.menu_item:last-child {
     border-bottom: none;
 }
 
-.context-menu-item:hover {
+.menu_item:hover {
     background-color: var(--editor-style-bg-active);
-}
-
-.context-fade-in {
-    animation: fadeIn;
-    animation-duration: 0.3s;
-}
-
-.context-hidden {
-    opacity: 0;
 }

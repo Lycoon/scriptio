@@ -3,6 +3,7 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect } from "react";
 import HomePageContainer from "../components/home/HomePageContainer";
+import Navbar from "../components/navbar/Navbar";
 import ProjectPageContainer from "../components/projects/ProjectPageContainer";
 import { UserContext } from "../src/context/UserContext";
 import { sessionOptions } from "../src/lib/session";
@@ -26,7 +27,10 @@ const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
                 <title>{!user ? "Scriptio" : "Scriptio - Projects"}</title>
             </Head>
             {user && user.isLoggedIn ? (
-                <ProjectPageContainer projects={projects!} user={user} />
+                <>
+                    <Navbar />
+                    <ProjectPageContainer projects={projects!} user={user} />
+                </>
             ) : (
                 <HomePageContainer />
             )}
