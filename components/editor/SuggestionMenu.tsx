@@ -71,7 +71,7 @@ const SuggestionMenu = ({ pasteTextAt, suggestionData, suggestions }: Props) => 
         >
             {suggestions.map((suggestion: string, index: number) => (
                 <div
-                    className={`context-menu-item ${index === selectedIdx ? "selected" : ""}`}
+                    className={`context_menu_item ${index === selectedIdx ? "selected" : ""}`}
                     onClick={() => selectSuggestion(index)}
                     key={index}
                 >

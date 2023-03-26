@@ -19,7 +19,3 @@
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-
-.context-menu-item.selected {
-    background-color: var(--editor-style-bg-active);
-}

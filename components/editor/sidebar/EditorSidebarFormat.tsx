@@ -1,5 +1,4 @@
 import EditorTab from "../EditorTab";
-import styles from "./EditorSidebar.module.css";
 
 type Props = {
     tabs: any[];
@@ -22,10 +21,14 @@ type EditorStyleProps = {
 const EditorStyle = ({ isActive, toggle, icon }: EditorStyleProps) => {
     return (
         <div
-            className={styles.style_btn + (isActive ? " " + styles.active_style : "")}
+            className={"style_format_btn" + (isActive ? " " + "active_style" : "")}
             onClick={toggle}
         >
-            <img className={styles.style_img} src={"/images/" + icon} alt="Editor style icon" />
+            <img
+                className="style_format_btn_icon"
+                src={"/images/" + icon}
+                alt="Editor style icon"
+            />
         </div>
     );
 };
@@ -42,9 +45,9 @@ const EditorSidebarFormat = ({
     setActiveTab,
 }: Props) => {
     return (
-        <div className={styles.sidebar + " " + styles.tabs}>
-            <div className={styles.tabs}>
-                <div className={styles.style_btns}>
+        <div className="sidebar tabs">
+            <div className="tabs">
+                <div className="style_format_btns">
                     <EditorStyle isActive={isBold} toggle={toggleBold} icon={"bold.png"} />
                     <EditorStyle isActive={isItalic} toggle={toggleItalic} icon={"italic.png"} />
                     <EditorStyle

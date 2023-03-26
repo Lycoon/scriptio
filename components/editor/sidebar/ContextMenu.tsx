@@ -40,7 +40,7 @@ export type CharacterContextProps = {
 
 export const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
     return (
-        <div onClick={action} className={styles.menu_item}>
+        <div onClick={action} className="context_menu_item">
             <p className="unselectable">{text}</p>
         </div>
     );
@@ -168,7 +168,7 @@ const ContextMenu = () => {
 
     return (
         <div
-            className={styles.menu}
+            className="context_menu"
             style={{
                 top: contextMenu?.position.y,
                 left: contextMenu?.position.x,

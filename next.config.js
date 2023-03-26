@@ -9,6 +9,9 @@ const nextConfig = {
 
         return config;
     },
+    images: {
+        unoptimized: true,
+    },
 };
 
 module.exports = nextConfig;

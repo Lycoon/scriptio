@@ -37,8 +37,10 @@
 @import "Loading.module.css";
 @import "ExportProjectContainer.module.css";
 @import "AboutPageContainer.module.css";
+@import "ContextMenu.module.css";
 
 /* Editor */
+@import "EditorSidebar.module.css";
 @import "EditorComponent.module.css";
 @import "EditorContent.module.css";
 @import "EditorTab.module.css";
