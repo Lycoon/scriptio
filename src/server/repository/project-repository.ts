@@ -5,7 +5,7 @@ import { CharacterData, CharacterMap } from "../../lib/screenplayUtils";
 const prisma = new PrismaClient();
 
 export interface ProjectUpdate {
-    projectId: number;
+    projectId: string;
     title?: string;
     description?: string;
     screenplay?: JSONContent;
@@ -77,7 +77,7 @@ export class ProjectRepository {
         });
     }
 
-    fetchProjectFromId(projectId: number) {
+    fetchProjectFromId(projectId: string) {
         return prisma.project.findUnique({
             where: {
                 id: projectId,

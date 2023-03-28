@@ -22,6 +22,6 @@ export async function getProjects(userId: number) {
     return repository.fetchProjects(userId);
 }
 
-export async function getProjectFromId(projectId: number) {
+export async function getProjectFromId(projectId: string) {
     return repository.fetchProjectFromId(projectId);
 }

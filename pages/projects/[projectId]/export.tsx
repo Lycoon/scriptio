@@ -40,7 +40,7 @@ const ExportProjectPage: NextPage<Props> = ({ user, project }: Props) => {
 };
 
 export const getServerSideProps = withIronSessionSsr(async function ({ req, query }): Promise<any> {
-    const projectId = +query["projectId"]!;
+    const projectId = query["projectId"] as string;
     if (!projectId) {
         return redirectToHome;
     }

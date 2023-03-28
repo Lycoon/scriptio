@@ -31,7 +31,7 @@ const EditProjectPage: NextPage<Props> = ({ user, project }: Props) => {
 
 const redirectToHome = { redirect: { destination: "/" } };
 export const getServerSideProps = withIronSessionSsr(async function ({ req, query }): Promise<any> {
-    const projectId = +query["projectId"]!;
+    const projectId = query["projectId"] as string;
     if (!projectId) {
         return redirectToHome;
     }

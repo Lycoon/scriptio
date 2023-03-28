@@ -89,7 +89,7 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
         return onError(res, 400, MISSING_BODY);
     }
 
-    const projectId = +body["projectId"];
+    const projectId = body["projectId"];
     const screenplay = body["screenplay"];
     const title: string = body["title"];
     const description = body["description"];
@@ -141,9 +141,9 @@ async function deleteMethod(userId: number, body: any, res: NextApiResponse) {
         return onError(res, 400, MISSING_BODY);
     }
 
-    const projectId: number = +body.projectId;
+    const projectId: string = body.projectId;
     if (!projectId) {
-        return onError(res, 400, "Project ID must be a number");
+        return onError(res, 400, "Project ID must be a UUID");
     }
 
     const project = await getProjectFromId(projectId);
