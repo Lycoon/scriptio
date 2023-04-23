@@ -5,13 +5,10 @@ import {
     MISSING_BODY,
     PASSWORD_CHANGED,
     PASSWORD_REQUIREMENTS,
-} from "../../../../src/lib/messages";
-import { sessionOptions } from "../../../../src/lib/session";
-import { onError, onSuccess } from "../../../../src/lib/utils";
-import {
-    generateSecrets,
-    updateUser,
-} from "../../../../src/server/service/user-service";
+} from "../../../src/lib/messages";
+import { sessionOptions } from "../../../src/lib/session";
+import { generateSecrets, updateUser } from "../../../src/server/service/user-service";
+import { onError, onSuccess } from "../../../src/lib/utils/requests";
 
 export default withIronSessionApiRoute(handler, sessionOptions);
 

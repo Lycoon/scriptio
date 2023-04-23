@@ -1,4 +1,4 @@
-import { VerificationStatus } from "../../../src/lib/utils";
+import { VerificationStatus } from "../../../src/lib/utils/misc";
 import LoginForm from "./LoginForm";
 
 type Props = {

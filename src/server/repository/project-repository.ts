@@ -1,6 +1,6 @@
 import { PrismaClient, Project } from "@prisma/client";
 import { JSONContent } from "@tiptap/react";
-import { CharacterData, CharacterMap } from "../../lib/screenplayUtils";
+import { CharacterMap } from "../../lib/utils/characters";
 
 const prisma = new PrismaClient();
 

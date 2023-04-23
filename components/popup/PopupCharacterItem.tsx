@@ -1,12 +1,11 @@
 import assert from "assert";
 import { useState } from "react";
 import {
-    CharacterData,
     CharacterGender,
-    deleteCharacter,
     doesCharacterExist,
     upsertCharacterData,
-} from "../../src/lib/screenplayUtils";
+    deleteCharacter,
+} from "../../src/lib/utils/characters";
 
 type Props = {
     type: PopupType;

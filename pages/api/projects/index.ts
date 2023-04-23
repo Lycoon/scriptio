@@ -1,41 +1,35 @@
 import { randomUUID } from "crypto";
 import { withIronSessionApiRoute } from "iron-session/next";
 import { NextApiRequest, NextApiResponse } from "next";
-import { deleteObject, uploadObject } from "../../../../src/lib/storage";
-import { MISSING_BODY } from "../../../../src/lib/messages";
-import { sessionOptions } from "../../../../src/lib/session";
-import { onError, onSuccess } from "../../../../src/lib/utils";
+import { MISSING_BODY } from "../../../src/lib/messages";
+import { sessionOptions } from "../../../src/lib/session";
+import { deleteObject, uploadObject } from "../../../src/lib/storage";
 import {
     createProject,
     deleteProject,
     getProjectFromId,
     getProjects,
     updateProject,
-} from "../../../../src/server/service/project-service";
+} from "../../../src/server/service/project-service";
+import { onError, onSuccess } from "../../../src/lib/utils/requests";
 
 export default withIronSessionApiRoute(handler, sessionOptions);
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (!req.query || !req.query.userId) {
-        return onError(res, 400, "Query not found");
-    }
-
-    const userId = +req.query["userId"];
     const user = req.session.user;
-
-    if (!user || !user.isLoggedIn || !userId || userId !== user.id) {
+    if (!user || !user.isLoggedIn || !user.id) {
         return onError(res, 403, "Forbidden");
     }
 
     switch (req.method) {
         case "GET":
-            return getMethod(userId, res);
+            return getMethod(user.id, res);
         case "POST":
-            return postMethod(userId, req.body, res);
+            return postMethod(user.id, req.body, res);
         case "PATCH":
-            return patchMethod(userId, req.body, res);
+            return patchMethod(user.id, req.body, res);
         case "DELETE":
-            return deleteMethod(userId, req.body, res);
+            return deleteMethod(user.id, req.body, res);
     }
 }
 
@@ -45,7 +39,7 @@ async function getMethod(userId: number, res: NextApiResponse) {
         return onError(res, 404, "User with id " + userId + " not found");
     }
 
-    return onSuccess(res, 200, "", projects);
+    return onSuccess(res, 200, "", projects.projects);
 }
 
 async function postMethod(userId: number, body: any, res: NextApiResponse) {

@@ -2,9 +2,9 @@ import Link from "next/link";
 import Router from "next/router";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
-import { login } from "../../../src/lib/requests";
-import { VerificationStatus } from "../../../src/lib/utils";
 import FormInfo, { FormInfoType } from "../FormInfo";
+import { VerificationStatus } from "../../../src/lib/utils/enums";
+import { login } from "../../../src/lib/utils/requests";
 
 type Props = {
     verificationStatus: VerificationStatus;
@@ -48,7 +48,7 @@ const LoginForm = ({ verificationStatus }: Props) => {
         const json = (await res.json()) as any;
         const resBody = json.body;
 
-        if (res.status === 200) {
+        if (res.ok) {
             updateUser(resBody);
             Router.push("/");
         } else {

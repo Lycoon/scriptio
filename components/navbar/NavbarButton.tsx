@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 type Props = {
     action?: () => void;
     content: string;

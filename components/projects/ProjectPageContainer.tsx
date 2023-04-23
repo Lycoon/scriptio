@@ -1,29 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { CookieUser, Project } from "../../pages/api/users";
-import { deleteProject } from "../../src/lib/requests";
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./NewProjectPage";
 import ProjectItem from "./ProjectItem";
 import autoAnimate from "@formkit/auto-animate";
 import Image from "next/image";
+import { useProjects } from "../../src/lib/utils/hooks";
+import Loading from "../home/Loading";
+import { Project } from "../../src/lib/utils/types";
+import { deleteProject } from "../../src/lib/utils/requests";
 
-type Props = {
-    user: CookieUser;
-    projects: Project[];
-};
-
-const ProjectPageContainer = ({ user, projects: propProjects }: Props) => {
-    // Getting back dates from workaround
-    let projects = propProjects.map((e) => ({
-        ...e,
-        updatedAt: new Date(e.updatedAt),
-        createdAt: new Date(e.createdAt),
-    }));
-
-    // Sorting by last updated
-    projects.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-
-    const [projs, setProjs] = useState(projects);
+const ProjectPageContainer = () => {
+    const { data: projects, isLoading, mutate } = useProjects();
     const [isCreating, setIsCreating] = useState(false);
     const [deleteMode, setDeleteMode] = useState(false);
     const parent = useRef(null);
@@ -32,23 +19,17 @@ const ProjectPageContainer = ({ user, projects: propProjects }: Props) => {
         parent.current && autoAnimate(parent.current);
     }, [parent]);
 
-    const deleteFromProjectPage = (userId: number, projectId: number) => {
-        const updatedProjects: Project[] = [];
-        projs.forEach((p: Project) => {
-            if (p.id !== projectId) {
-                updatedProjects.push(p);
-            }
-        });
+    if (isLoading || !projects) return <Loading />;
 
-        setProjs(updatedProjects);
-        deleteProject(userId, projectId);
-    };
+    projects.sort((a: Project, b: Project) => {
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
 
     if (isCreating) {
         return <NewProjectPage setIsCreating={setIsCreating} />;
-    } else if (projs.length === 0) {
+    } else if (projects.length === 0) {
         return <EmptyProjectPage setIsCreating={setIsCreating} />;
-    } else
+    } else {
         return (
             <div id="projects-container">
                 <div className="center-flex">
@@ -60,11 +41,10 @@ const ProjectPageContainer = ({ user, projects: propProjects }: Props) => {
                                     onClick={() => setDeleteMode(!deleteMode)}
                                     className="delete-project-btn"
                                 >
-                                    <Image
+                                    <img
                                         className="delete-project-icon"
                                         src={"/images/trash.png"}
-                                        width={20}
-                                        height={20}
+                                        alt={"Trash icon"}
                                     />
                                 </div>
                                 <button
@@ -78,14 +58,15 @@ const ProjectPageContainer = ({ user, projects: propProjects }: Props) => {
                         <hr />
                     </div>
                     <div ref={parent} className="project-grid">
-                        {projs.map((project: Project) => {
+                        {projects.map((project: Project) => {
                             return (
                                 <ProjectItem
                                     key={project.id}
                                     project={project}
                                     deleteMode={deleteMode}
                                     deleteProject={() => {
-                                        deleteFromProjectPage(user.id, project.id);
+                                        deleteProject(project.id);
+                                        mutate!();
                                     }}
                                 />
                             );
@@ -94,6 +75,7 @@ const ProjectPageContainer = ({ user, projects: propProjects }: Props) => {
                 </div>
             </div>
         );
+    }
 };
 
 export default ProjectPageContainer;

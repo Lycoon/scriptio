@@ -1,12 +1,10 @@
-import Router from "next/router";
 import { useEffect, useState } from "react";
-import { Project } from "../../../pages/api/users";
 import { getScreenplayData } from "../../../src/lib/statistics";
 import CharacterDistribution from "./CharacterDistribution";
 import CharacterFrequency from "./CharacterFrequency";
 import CharacterQuantity from "./CharacterQuantity";
-import CharacterThreshold from "./CharacterQuantity";
 import BarRatio from "./BarRatio";
+import { Project } from "../../../src/lib/utils/types";
 
 type Props = {
     project: Project;
@@ -20,9 +18,7 @@ const ProjectStatsContainer = ({ project }: Props) => {
     const [color, setColor] = useState<string>("#ffffff");
 
     useEffect(() => {
-        setColor(
-            getComputedStyle(document.body).getPropertyValue("--primary-bg")
-        );
+        setColor(getComputedStyle(document.body).getPropertyValue("--primary-bg"));
     }, [color]);
 
     return (
@@ -34,15 +30,11 @@ const ProjectStatsContainer = ({ project }: Props) => {
                 </div>
                 <div className="general-stats-header">
                     <div className="general-stats-element">
-                        <p className="general-stats-element-data">
-                            {data.words.toLocaleString()}
-                        </p>
+                        <p className="general-stats-element-data">{data.words.toLocaleString()}</p>
                         <p className="general-stats-element-info">words</p>
                     </div>
                     <div className="general-stats-element">
-                        <p className="general-stats-element-data">
-                            {data.actors}
-                        </p>
+                        <p className="general-stats-element-data">{data.actors}</p>
                         <p className="general-stats-element-info">actors</p>
                     </div>
                     <div className="general-stats-element">
@@ -50,12 +42,8 @@ const ProjectStatsContainer = ({ project }: Props) => {
                         <p className="general-stats-element-info">pages</p>
                     </div>
                     <div className="general-stats-element">
-                        <p className="general-stats-element-data">
-                            ~{screenTime.toFixed()}
-                        </p>
-                        <p className="general-stats-element-info">
-                            screen time (min.)
-                        </p>
+                        <p className="general-stats-element-data">~{screenTime.toFixed()}</p>
+                        <p className="general-stats-element-info">screen time (min.)</p>
                     </div>
                 </div>
                 <div>
@@ -95,19 +83,11 @@ const ProjectStatsContainer = ({ project }: Props) => {
                     <div className="charts-row">
                         <div>
                             <p>Proportion of interior and exterior scenes</p>
-                            <BarRatio
-                                color={color}
-                                project={project}
-                                ratio={data.sceneRatio}
-                            />
+                            <BarRatio color={color} project={project} ratio={data.sceneRatio} />
                         </div>
                         <div>
                             <p>Proportion of action and dialogue</p>
-                            <BarRatio
-                                color={color}
-                                project={project}
-                                ratio={data.actionRatio}
-                            />
+                            <BarRatio color={color} project={project} ratio={data.actionRatio} />
                         </div>
                     </div>
                 </div>

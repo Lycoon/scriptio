@@ -2,16 +2,17 @@ import FileSaver from "file-saver";
 import Link from "next/link";
 import Router from "next/router";
 import { useState } from "react";
-import { Project, User } from "../../../pages/api/users";
 import { convertJSONtoFountain } from "../../../src/converters/scriptio_to_fountain";
 import { exportToPDF } from "../../../src/converters/scriptio_to_pdf";
-import { getCharacterNames } from "../../../src/lib/statistics";
+import { useSettings, useUser } from "../../../src/lib/utils/hooks";
 import CharacterExport from "./CharacterExport";
 import FileFormatButtonExport from "./FileFormatButtonExport";
+import Loading from "../../home/Loading";
+import { Project } from "../../../src/lib/utils/types";
+import { getCharacterNames } from "../../../src/lib/utils/characters";
 
 type Props = {
     project: Project;
-    user: User;
 };
 
 export type ExportData = {
@@ -23,11 +24,7 @@ export type ExportData = {
     characters?: string[];
 };
 
-const removeFromStateList = (
-    list: any[],
-    setList: (list: any[]) => void,
-    item: string
-) => {
+const removeFromStateList = (list: any[], setList: (list: any[]) => void, item: string) => {
     const updated: any[] = [];
     list.forEach((e: any) => {
         if (e != item) {
@@ -38,26 +35,28 @@ const removeFromStateList = (
     setList(updated);
 };
 
-const addToStateList = (
-    list: any[],
-    setList: (list: any[]) => void,
-    item: any
-) => {
+const addToStateList = (list: any[], setList: (list: any[]) => void, item: any) => {
     const updated = [...list];
     updated.push(item);
 
     setList(updated);
 };
 
-const ExportProjectConainer = ({ project, user }: Props) => {
+const ExportProjectConainer = ({ project }: Props) => {
+    const { data: user, isLoading: isUserLoading } = useUser();
+    if (!isUserLoading && (!user || !user.isLoggedIn)) {
+        Router.push("/");
+    }
+
+    const { data: settings, isLoading } = useSettings();
     const [isPdfExport, setPdfExport] = useState<boolean>(true);
     const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
     const [includeNotes, setIncludeNotes] = useState<boolean>(false);
     const [allCharacters, setAllCharacters] = useState<boolean>(true);
     const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
-    const [characters, setCharacters] = useState<string[]>(
-        getCharacterNames(project.screenplay)
-    );
+    const [characters, setCharacters] = useState<string[]>(getCharacterNames(project.screenplay));
+
+    if (!settings || isLoading) return <Loading />;
 
     const addCharacter = (name: string) => {
         addToStateList(selectedCharacters, setSelectedCharacters, name);
@@ -83,16 +82,16 @@ const ExportProjectConainer = ({ project, user }: Props) => {
         if (isPdfExport) {
             exportToPDF(project.screenplay, {
                 title: project.title,
-                author: user.email,
+                author: user!.email,
                 watermark: includeWatermark,
                 notes: includeNotes,
-                notesColor: user.settings.exportedNotesColor,
+                notesColor: settings.exportedNotesColor,
                 characters: allCharacters ? undefined : selectedCharacters,
             });
         } else {
             exportFountain(project.screenplay, {
                 title: project.title,
-                author: user.email,
+                author: user!.email,
                 watermark: includeWatermark,
                 notes: includeNotes,
                 characters: allCharacters ? undefined : selectedCharacters,
@@ -131,9 +130,7 @@ const ExportProjectConainer = ({ project, user }: Props) => {
                             <div className="settings-element-header">
                                 <p>Watermark</p>
                                 <input
-                                    onChange={() =>
-                                        setIncludeWatermark(!includeWatermark)
-                                    }
+                                    onChange={() => setIncludeWatermark(!includeWatermark)}
                                     type="checkbox"
                                 />
                             </div>
@@ -197,7 +194,7 @@ const ExportProjectConainer = ({ project, user }: Props) => {
                 </div>
 
                 <div className="project-form-end">
-                    <Link href={`/projects/${project.id}/screenplay`}>
+                    <Link legacyBehavior href={`/projects/${project.id}/screenplay`}>
                         <a className="form-btn back-btn">Back</a>
                     </Link>
                     <button

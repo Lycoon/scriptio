@@ -4,12 +4,11 @@ import {
     ERROR_RECOVERY_LINK_EXPIRED,
     FAILED_PASSWORD_CHANGED,
     MISSING_BODY,
-    PASSWORD_CHANGED,
     PASSWORD_REQUIREMENTS,
     RECOVERY_REQUEST_FULFILLED,
     RECOVERY_SUCCESS,
 } from "../../src/lib/messages";
-import { isValidDelay, onError, onSuccess } from "../../src/lib/utils";
+import { isValidDelay } from "../../src/lib/utils/misc";
 import {
     generateSecrets,
     getUserFromEmail,
@@ -17,11 +16,9 @@ import {
     updateUser,
     updateUserRecoveryHash,
 } from "../../src/server/service/user-service";
+import { onError, onSuccess } from "../../src/lib/utils/requests";
 
-export default async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
         case "POST": // when submitting email recovery form
             return postMethod(req.body, res);

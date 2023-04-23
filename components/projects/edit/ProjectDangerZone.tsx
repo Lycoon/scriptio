@@ -1,6 +1,7 @@
+import { Project } from "@prisma/client";
 import Router from "next/router";
-import { Project, CookieUser } from "../../../pages/api/users";
-import { deleteProject } from "../../../src/lib/requests";
+import { deleteProject } from "../../../src/lib/utils/requests";
+import { CookieUser } from "../../../src/lib/utils/types";
 
 type Props = {
     project: Project;
@@ -17,7 +18,7 @@ const ProjectDangerZone = ({ project, user }: Props) => {
             return;
         }
 
-        const res = await deleteProject(user.id, project.id);
+        const res = await deleteProject(project.id);
         if (res.status === 200) {
             Router.push("/");
         } else {
@@ -30,12 +31,8 @@ const ProjectDangerZone = ({ project, user }: Props) => {
         <form id="danger-zone" onSubmit={onDelete}>
             <p className="danger-zone-text segoe-bold">Danger zone</p>
             <p className="danger-zone-info segoe">
-                Type{" "}
-                <span className="danger-zone-project-title">
-                    {project.title}
-                </span>{" "}
-                below to confirm you want to delete the project. This action is
-                irreversible.
+                Type <span className="danger-zone-project-title">{project.title}</span> below to
+                confirm you want to delete the project. This action is irreversible.
             </p>
             <div className="danger-zone-actions">
                 <input
@@ -44,11 +41,7 @@ const ProjectDangerZone = ({ project, user }: Props) => {
                     placeholder="Project title"
                     required
                 />
-                <button
-                    id="delete-project-btn"
-                    className="form-btn"
-                    type="submit"
-                >
+                <button id="delete-project-btn" className="form-btn" type="submit">
                     Delete
                 </button>
             </div>

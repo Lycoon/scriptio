@@ -1,6 +1,5 @@
 import { EditorContent, Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
-import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 
 type Props = {
     editor: Editor | null;

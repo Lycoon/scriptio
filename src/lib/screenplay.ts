@@ -1,5 +1,4 @@
-import { Editor } from "@tiptap/react";
-import { getCharacterNames } from "./statistics";
+import { ScreenplayElement } from "./utils/enums";
 
 /* Nodes */
 export type NodeData = {
@@ -8,77 +7,14 @@ export type NodeData = {
     flattenText: string; // contains only text
 };
 
-export enum ScreenplayElement {
-    Scene,
-    Action,
-    Character,
-    Dialogue,
-    Parenthetical,
-    Transition,
-    Section,
-    Note,
-    None,
-}
-
 /* Scenes */
-let scenesData: ScenesData = [];
+export let scenesData: ScenesData = [];
 export type ScenesData = SceneItem[];
 export type SceneItem = {
     title: string;
     preview: string;
     position: number;
     nextPosition: number;
-};
-export const getScenesData = (): ScenesData => {
-    return scenesData;
-};
-
-/* Characters */
-let charactersData: CharacterMap = {};
-export enum CharacterGender {
-    Female,
-    Male,
-    Other,
-}
-export type CharacterMap = { [name: string]: CharacterItem }; // map by character name
-export type CharacterData = { name: string } & CharacterItem;
-export type CharacterItem = {
-    gender: CharacterGender;
-    synopsis: string;
-};
-export const getCharactersData = (): CharacterMap => {
-    return charactersData;
-};
-
-export const doesCharacterExist = (name: string): boolean => {
-    const nameUppered = name.toUpperCase();
-    let found = false;
-
-    Object.keys(charactersData).forEach((key) => {
-        if (key.toUpperCase() === nameUppered) {
-            found = true;
-            return;
-        }
-    });
-
-    return found;
-};
-
-const triggerUpdate = () => {
-    const event = new Event("charactersDataUpdated");
-    window.dispatchEvent(event);
-};
-
-export const upsertCharacterData = (name: string, data: CharacterItem) => {
-    charactersData[name] = data;
-
-    triggerUpdate();
-};
-
-export const deleteCharacter = (name: string) => {
-    delete charactersData[name];
-
-    triggerUpdate();
 };
 
 export const countOccurrences = (json: any, word: string): number => {
@@ -97,24 +33,6 @@ export const countOccurrences = (json: any, word: string): number => {
     }
 
     return count;
-};
-
-export const computeFullCharactersData = async (json: any, fetchedCharacters: CharacterMap) => {
-    charactersData = fetchedCharacters ?? {};
-    const namesFromEditor = getCharacterNames(json);
-
-    for (const name of namesFromEditor) {
-        if (charactersData[name] !== undefined) {
-            // If character already exists in the data, don't overwrite it
-            continue;
-        }
-        charactersData[name] = {
-            gender: CharacterGender.Other,
-            synopsis: "",
-        };
-    }
-
-    triggerUpdate();
 };
 
 const getScreenplayElementType = (nodeType: string): ScreenplayElement => {
@@ -178,7 +96,9 @@ const getScenePreview = (nodes: any[], cursor: number) => {
 };
 
 export const computeFullScenesData = async (json: any) => {
-    const nodes = json.content!;
+    if (!json) return;
+
+    const nodes = json.content;
     const scenes: ScenesData = [];
     let cursor = 1;
     let sceneNumber = 0;
@@ -216,25 +136,3 @@ export const computeFullScenesData = async (json: any) => {
 
     scenesData = scenes;
 };
-
-/*
-export const updateScenesData = (transaction: any) => {
-    const maps = transaction.mapping.maps;
-    for (let i = 0; i < maps.length; i++) {
-        const ranges = maps[i].ranges;
-        for (let j = 0; j < ranges.length; j += 3) {
-            const cursor = ranges[j];
-            const oldSize = ranges[j + 1];
-            const newSize = ranges[j + 2];
-            const diff = newSize - oldSize;
-
-            for (let k = 0; k < scenesData.length; k++) {
-                if (scenesData[k].position < cursor) {
-                    continue; // scene is before the change, no need to update
-                }
-                scenesData[k].position += diff;
-            }
-        }
-    }
-};
-*/

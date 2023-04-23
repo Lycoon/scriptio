@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "../../../src/lib/messages";
-import { signup } from "../../../src/lib/requests";
 import FormInfo, { FormInfoType } from "../FormInfo";
+import { signup } from "../../../src/lib/utils/requests";
 
 const SignupForm = () => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);

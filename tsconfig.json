@@ -15,11 +15,9 @@
         "jsx": "preserve",
         "incremental": true
     },
-    "include": [
-        "next-env.d.ts",
-        "**/*.ts",
-        "**/*.tsx",
-        "pages/api/users/[userId]"
-    ],
-    "exclude": ["node_modules"]
+    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "pages/api/users/[userId]"],
+    "exclude": ["node_modules"],
+    "paths": {
+        "@*": ["./*"]
+    }
 }

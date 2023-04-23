@@ -1,13 +1,12 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Router, { useRouter } from "next/router";
-import { useContext, useEffect } from "react";
-import { Project } from "../../pages/api/users";
+import { useContext } from "react";
 import { UserContext } from "../../src/context/UserContext";
 import { convertFountainToJSON } from "../../src/converters/fountain_to_scriptio";
 import PopupImportFile from "../popup/PopupImportFile";
-import DropdownItem from "./dropdown/DropdownItem";
-import NavbarButton from "./NavbarButton";
+import { Project } from "@prisma/client";
+import { SaveStatus } from "../../src/lib/utils/enums";
 
 const NavbarTab = dynamic(() => import("./NavbarTab"));
 
@@ -76,6 +75,25 @@ const NotLoggedNavbar = () => (
     </div>
 );
 
+const SaveStatusNavbar = () => {
+    const { saveStatus } = useContext(UserContext);
+
+    switch (saveStatus) {
+        case SaveStatus.SAVING:
+            return (
+                <div className="saving-spin">
+                    <img className="settings-icon" src="/images/saving.svg" />
+                </div>
+            );
+        case SaveStatus.SAVED:
+            return <p className="last-saved">In sync</p>;
+        case SaveStatus.NOT_SAVED:
+            return <p className="last-saved">Not saved</p>;
+        case SaveStatus.ERROR:
+            return <p className="last-saved">Error</p>;
+    }
+};
+
 export type NavbarTabData = {
     name: string;
     action: () => void;
@@ -87,8 +105,9 @@ type NavbarTabs = {
 };
 
 const Navbar = () => {
-    const { user, updateUser, isSaving, updateSaved, editor, project, updatePopup } =
+    const { user, project, updateUser, updateSaveStatus, editor, updatePopup } =
         useContext(UserContext);
+
     const { asPath } = useRouter();
     const page = getCurrentPage(asPath);
 
@@ -110,7 +129,7 @@ const Navbar = () => {
             reader.onload = (e: any) => {
                 const confirmImport = () => {
                     convertFountainToJSON(e.target.result, editor!);
-                    updateSaved(false);
+                    updateSaveStatus(SaveStatus.NOT_SAVED);
                 };
 
                 updatePopup(() => (
@@ -171,7 +190,7 @@ const Navbar = () => {
     return (
         <nav id="navbar" className="sidebar-shadow">
             <div id="logo-and-tabs">
-                <Link href="/">
+                <Link legacyBehavior href="/">
                     <a id="logo">
                         <p id="logo-text">Scriptio</p>
                     </a>
@@ -186,14 +205,8 @@ const Navbar = () => {
             </div>
             {user && user.isLoggedIn ? (
                 <div id="navbar-buttons">
-                    {page === PAGE.SCREENPLAY &&
-                        (isSaving ? (
-                            <div className="saving-spin">
-                                <img className="settings-icon" src="/images/saving.svg" />
-                            </div>
-                        ) : (
-                            <p className="last-saved">In sync</p>
-                        ))}
+                    {page === PAGE.SCREENPLAY && <SaveStatusNavbar />}
+
                     <div className="settings-btn" onClick={onSettings}>
                         <img className="settings-icon" src="/images/gear.png" />
                     </div>

@@ -1,71 +1,82 @@
 import { useTheme } from "next-themes";
-import { useState } from "react";
-import { User } from "../../pages/api/users";
+import { useEffect, useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "../../src/lib/messages";
-import { changePassword, editUserSettings } from "../../src/lib/requests";
+import { useSettings, useUser } from "../../src/lib/utils/hooks";
 import FormInfo, { FormInfoType } from "../home/FormInfo";
+import Loading from "../home/Loading";
+import { editUserSettings, changePassword } from "../../src/lib/utils/requests";
 
-type Props = {
-    user: User;
-};
+const SettingsPageContainer = () => {
+    const { data: cookieUser } = useUser();
+    const { data: settings, isLoading } = useSettings();
 
-const SettingsPageContainer = ({ user }: Props) => {
-    user.createdAt = new Date(user.createdAt);
+    useEffect(() => {
+        if (!settings || !cookieUser) return;
+
+        setCreatedAt(new Date(cookieUser.createdAt));
+        setSceneBackground(settings.sceneBackground!);
+        setHighlightOnHover(settings.highlightOnHover!);
+        setNotesColor(settings.notesColor!);
+        setExportedNotesColor(settings.exportedNotesColor!);
+    }, [settings]);
 
     const { theme, setTheme } = useTheme();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
-    const [notesColor, setNotesColor] = useState<string>(user.settings.notesColor);
-    const [exportedNotesColor, setExportedNotesColor] = useState<string>(
-        user.settings.exportedNotesColor
-    );
-    const [sceneBackground, setSceneBackground] = useState<boolean>(user.settings.sceneBackground);
-    const [highlightOnHover, setHighlightOnHover] = useState<boolean>(
-        user.settings.highlightOnHover
-    );
+    const [createdAt, setCreatedAt] = useState<Date>(new Date());
+
+    const [sceneBackground, setSceneBackground] = useState<boolean>(false);
+    const [highlightOnHover, setHighlightOnHover] = useState<boolean>(false);
+    const [notesColor, setNotesColor] = useState<string>("");
+    const [exportedNotesColor, setExportedNotesColor] = useState<string>("");
+
+    if (isLoading || !cookieUser?.isLoggedIn || !settings) {
+        return <Loading />;
+    }
 
     const toggleTheme = () => {
         setTheme(theme === "light" ? "dark" : "light");
     };
+
     const resetFromInfo = () => {
         setFormInfo(null);
     };
 
     const toggleHighlightOnHover = () => {
-        editUserSettings(user.id, { highlightOnHover: !highlightOnHover });
+        editUserSettings({ highlightOnHover: !highlightOnHover });
         setHighlightOnHover(!highlightOnHover);
     };
 
     const toggleSceneBackground = () => {
-        editUserSettings(user.id, { sceneBackground: !sceneBackground });
+        editUserSettings({ sceneBackground: !sceneBackground });
         setSceneBackground(!sceneBackground);
     };
 
     const updateNotesColor = (newColor: string) => {
         setNotesColor(newColor);
-        editUserSettings(user.id, { notesColor: newColor });
+        editUserSettings({ notesColor: newColor });
     };
 
     const updateExportedNotesColor = (newColor: string) => {
         setExportedNotesColor(newColor);
-        editUserSettings(user.id, { exportedNotesColor: newColor });
+        editUserSettings({ exportedNotesColor: newColor });
     };
 
     const onChangePassword = async (e: any) => {
         e.preventDefault();
         resetFromInfo();
 
-        const pwd1 = e.target.password1.value;
-        const pwd2 = e.target.password2.value;
+        const newPassword = e.target.password1.value;
+        const newPasswordRepeat = e.target.password2.value;
 
-        if (pwd1 != pwd2) {
+        if (newPassword != newPasswordRepeat) {
             setFormInfo({ content: ERROR_PASSWORD_MATCH, isError: true });
             return;
         }
 
-        const res = await changePassword(user.id, pwd1);
+        const res = await changePassword(newPassword);
         const json = await res.json();
 
-        if (res.status === 200) {
+        if (res.ok) {
             setFormInfo({ content: json.message });
         } else {
             setFormInfo({ content: json.message, isError: true });
@@ -80,10 +91,10 @@ const SettingsPageContainer = ({ user }: Props) => {
                     <hr />
                 </div>
                 <div className="settings-profile">
-                    <p className="settings-email">{user.email}</p>
+                    <p className="settings-email">{cookieUser.email}</p>
                     <p className="settings-joined-date">
                         joined{" "}
-                        {user.createdAt.toLocaleDateString("en-GB", {
+                        {createdAt.toLocaleDateString("en-GB", {
                             day: "numeric",
                             month: "long",
                             year: "numeric",
@@ -154,7 +165,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                             <input
                                 type="checkbox"
                                 onChange={toggleHighlightOnHover}
-                                defaultChecked={user.settings.highlightOnHover}
+                                defaultChecked={settings?.highlightOnHover}
                             />
                         </div>
                     </div>
@@ -164,7 +175,7 @@ const SettingsPageContainer = ({ user }: Props) => {
                             <input
                                 type="checkbox"
                                 onChange={toggleSceneBackground}
-                                defaultChecked={user.settings.sceneBackground}
+                                defaultChecked={settings?.sceneBackground}
                             />
                         </div>
                     </div>
@@ -175,7 +186,8 @@ const SettingsPageContainer = ({ user }: Props) => {
                                 type="color"
                                 className="notes-color"
                                 name="notes-color"
-                                defaultValue={user.settings.notesColor}
+                                value={notesColor}
+                                onChange={(e) => setNotesColor(e.target.value)}
                                 onBlur={(e) => updateNotesColor(e.target.value)}
                             />
                         </div>
@@ -187,7 +199,8 @@ const SettingsPageContainer = ({ user }: Props) => {
                                 type="color"
                                 className="notes-color"
                                 name="exported-notes-color"
-                                defaultValue={user.settings.exportedNotesColor}
+                                value={exportedNotesColor}
+                                onChange={(e) => setExportedNotesColor(e.target.value)}
                                 onBlur={(e) => updateExportedNotesColor(e.target.value)}
                             />
                         </div>

@@ -122,9 +122,9 @@ html.dark {
     --project-item-shadow: none;
     --export-project-selected: #505050;
 
-    --editor-scene: #3d3d3d;
-    --editor-text: #ffffff;
-    --editor-script-bg: #272727;
+    --editor-scene: #dadada;
+    --editor-text: #000000;
+    --editor-script-bg: #ffffff;
     --editor-bg: #1d1d1d;
     --editor-sidebar: #272727;
     --editor-tab-active: #3d3d3d;
@@ -134,7 +134,7 @@ html.dark {
     --editor-style-bg: #1d1d1d;
     --editor-style-bg-hover: #3c3c3c;
     --editor-style-bg-active: #5d5d5d;
-    --editor-element-hover: #3d3d3d;
+    --editor-element-hover: #eeeeee;
 }
 
 hr {

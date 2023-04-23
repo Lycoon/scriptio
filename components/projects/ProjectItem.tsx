@@ -1,10 +1,10 @@
 import Router from "next/router";
-import { Project } from "../../pages/api/users";
+import { Project } from "../../src/lib/utils/types";
 
 type Props = {
     project: Project;
     deleteMode: boolean;
-    deleteProject: (userId: number, projectId: number) => void;
+    deleteProject: (userId: number, projectId: string) => void;
 };
 
 const _MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -16,12 +16,14 @@ const getLastUpdate = (days: number) => {
     else return "More than 1 year ago";
 };
 
-const openProject = (projectId: number) => {
+const openProject = (projectId: string) => {
     Router.push("/projects/" + projectId + "/screenplay");
 };
 
 const ProjectItem = ({ project, deleteMode, deleteProject }: Props) => {
-    const days = Math.round((Date.now() - +project.updatedAt) / _MS_PER_DAY);
+    const projectDateMS = new Date(project.updatedAt).getTime();
+    const days = Math.round((Date.now() - projectDateMS) / _MS_PER_DAY);
+
     const lastUpdated = getLastUpdate(days);
     const posterPath =
         project.poster !== null ? "/api/s3/" + project.poster : "/images/default-poster.png";

@@ -4,29 +4,34 @@ import {
     FAILED_USER_SETTINGS_UPDATE,
     MISSING_BODY,
     USER_SETTINGS_UPDATED,
-} from "../../../../src/lib/messages";
-import { sessionOptions } from "../../../../src/lib/session";
-import { onError, onSuccess } from "../../../../src/lib/utils";
-import { updateUser } from "../../../../src/server/service/user-service";
+} from "../../../src/lib/messages";
+import { sessionOptions } from "../../../src/lib/session";
+import { getUserFromId, updateUser } from "../../../src/server/service/user-service";
+import { onError, onSuccess } from "../../../src/lib/utils/requests";
 
 export default withIronSessionApiRoute(handler, sessionOptions);
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (!req.query || !req.query.userId) {
-        return onError(res, 400, "Query not found");
-    }
-
-    const userId = +req.query.userId;
     const user = req.session.user;
-
-    if (!user || !user.isLoggedIn || !userId || userId !== user.id) {
+    if (!user || !user.isLoggedIn || !user.id) {
         return onError(res, 403, "Forbidden");
     }
 
     switch (req.method) {
         case "PATCH":
             return patchMethod(user.id, req.body, res);
+        case "GET":
+            return getMethod(user.id, res);
     }
+}
+
+async function getMethod(userId: number, res: NextApiResponse<any>) {
+    const user = await getUserFromId(userId);
+    if (!user) {
+        return onError(res, 404, "User with id " + userId + " not found");
+    }
+
+    return onSuccess(res, 200, "", user.settings);
 }
 
 async function patchMethod(userId: number, body: any, res: NextApiResponse) {

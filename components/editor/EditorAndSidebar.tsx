@@ -1,28 +1,33 @@
-import { Editor, JSONContent, useEditor } from "@tiptap/react";
-import { useContext, useEffect, useState } from "react";
-import { UserContext } from "../../src/context/UserContext";
-import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "../../src/Screenplay";
-import EditorComponent from "./EditorComponent";
+/* Tiptap */
+import { Content, Editor, JSONContent, useEditor } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
-import { Project } from "../../pages/api/users";
-import { saveProjectCharacters, saveScreenplay } from "../../src/lib/requests";
-import { useDebouncedCallback } from "use-debounce";
-import {
-    computeFullScenesData,
-    computeFullCharactersData,
-    CharacterData,
-    countOccurrences,
-    deleteCharacter,
-    getCharactersData,
-    ScreenplayElement,
-} from "../../src/lib/screenplayUtils";
+
+/* Components */
+import EditorComponent from "./EditorComponent";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
 import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
+import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "../../src/Screenplay";
+
+/* Utils */
+import { useProjectFromUrl } from "../../src/lib/utils/hooks";
+import Loading from "../home/Loading";
+import { useContext, useEffect, useState } from "react";
+import { UserContext } from "../../src/context/UserContext";
+import { useDebouncedCallback } from "use-debounce";
+import { SaveStatus, ScreenplayElement } from "../../src/lib/utils/enums";
+import { computeFullScenesData, countOccurrences } from "../../src/lib/screenplay";
+import {
+    charactersData,
+    computeFullCharactersData,
+    deleteCharacter,
+} from "../../src/lib/utils/characters";
+import { saveScreenplay } from "../../src/lib/utils/requests";
+import { Project } from "../../src/lib/utils/types";
 
 type Props = {
     project: Project;
@@ -48,11 +53,16 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
 
     const save = async () => {
-        if (!ctx.saved) {
-            ctx.updateIsSaving(true);
-            const res = await saveScreenplay(project.userId, project.id, editorView?.getJSON());
-            ctx.updateIsSaving(false);
-            ctx.updateSaved(true);
+        if (ctx.saveStatus !== SaveStatus.SAVED) {
+            ctx.updateSaveStatus(SaveStatus.SAVING);
+            const res = await saveScreenplay(project.id, editorView?.getJSON(), charactersData);
+
+            if (!res.ok) {
+                ctx.updateSaveStatus(SaveStatus.ERROR);
+                return;
+            }
+
+            ctx.updateSaveStatus(SaveStatus.SAVED);
         }
     };
 
@@ -64,9 +74,30 @@ const EditorAndSidebar = ({ project }: Props) => {
         computeFullScenesData(editorView?.getJSON());
     }, 1000);
 
-    const charactersUpdate = () => {
-        saveProjectCharacters(project.userId, project.id, getCharactersData());
+    const deferredCharactersUpdate = useDebouncedCallback(async () => {
+        computeFullCharactersData(editorView?.getJSON(), project.characters);
+    }, 1000);
+
+    const triggerEditorUpdate = () => {
+        // Set as unsaved, to prevent data loss between typing and autosave
+        ctx.updateSaveStatus(SaveStatus.NOT_SAVED);
+
+        deferredSceneUpdate();
+        deferredCharactersUpdate();
+
+        deferredScreenplaySave();
     };
+
+    const tabs = [
+        "scene",
+        "action",
+        "character",
+        "dialogue",
+        "parenthetical",
+        "transition",
+        "section",
+        "note",
+    ];
 
     const updateEditorStyles = (marks: any[]) => {
         marks = marks.map((mark: any) => mark.attrs.class);
@@ -99,7 +130,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             const cursor: number = anchor.pos;
             const pagePos = editor.view.coordsAtPos(cursor);
 
-            let list = Object.keys(getCharactersData());
+            let list = Object.keys(charactersData);
 
             if (nodeSize > 0) {
                 if (cursorInNode !== nodeSize) {
@@ -139,17 +170,6 @@ const EditorAndSidebar = ({ project }: Props) => {
         updateEditorStyles(anchor.nodeBefore?.marks);
     };
 
-    const tabs = [
-        "scene",
-        "action",
-        "character",
-        "dialogue",
-        "parenthetical",
-        "transition",
-        "section",
-        "note",
-    ];
-
     const editorView = useEditor({
         extensions: [
             // default
@@ -163,12 +183,11 @@ const EditorAndSidebar = ({ project }: Props) => {
             // scriptio
             Screenplay,
         ],
+        content: project.screenplay as Content,
 
         // update on each screenplay update
         onUpdate({ editor, transaction }) {
-            ctx.updateSaved(false); // unsaved changes, to prevent data loss between typing and autosave
-            deferredSceneUpdate();
-            deferredScreenplaySave();
+            triggerEditorUpdate();
         },
 
         // update active on caret update
@@ -234,21 +253,6 @@ const EditorAndSidebar = ({ project }: Props) => {
             },
         },
     });
-
-    useEffect(() => {
-        if (editorView?.commands) {
-            editorView?.commands.setContent(project.screenplay as JSONContent);
-            ctx.updateEditor(editorView!);
-        }
-    }, [editorView]);
-
-    // init on editor load
-    useEffect(() => {
-        if (project.screenplay) {
-            computeFullScenesData(project.screenplay);
-            computeFullCharactersData(project.screenplay, project.characters);
-        }
-    }, []);
 
     const setActiveTab = (node: string) => {
         updateSelectedTab(tabs.indexOf(node));
@@ -382,7 +386,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const onUnload = (e: BeforeUnloadEvent) => {
-        if (!ctx.saved) {
+        if (ctx.saveStatus === SaveStatus.NOT_SAVED) {
             let confirmationMessage = "Are you sure you want to leave?";
 
             e.returnValue = confirmationMessage;
@@ -395,13 +399,23 @@ const EditorAndSidebar = ({ project }: Props) => {
     useEffect(() => {
         addEventListener("keydown", pressedKeyEvent);
         addEventListener("beforeunload", onUnload);
-        addEventListener("charactersDataUpdated", charactersUpdate);
+        addEventListener("onCharacterUpdate", deferredScreenplaySave);
         return () => {
             removeEventListener("keydown", pressedKeyEvent);
             removeEventListener("beforeunload", onUnload);
-            removeEventListener("charactersDataUpdated", charactersUpdate);
+            removeEventListener("onCharacterUpdate", deferredScreenplaySave);
         };
     });
+
+    useEffect(() => {
+        if (editorView) {
+            editorView.commands.setContent(project.screenplay as JSONContent);
+            ctx.updateEditor(editorView);
+
+            computeFullScenesData(project.screenplay);
+            computeFullCharactersData(project.screenplay, project.characters);
+        }
+    }, [project, editorView]);
 
     const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         if (suggestions.length > 0) updateSuggestions([]);

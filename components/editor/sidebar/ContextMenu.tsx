@@ -1,7 +1,6 @@
 import { useContext, useEffect } from "react";
 import { UserContext } from "../../../src/context/UserContext";
-import { CharacterData, SceneItem } from "../../../src/lib/screenplayUtils";
-import styles from "./ContextMenu.module.css";
+import { SceneItem } from "../../../src/lib/screenplay";
 
 type ContextMenuItemProps = {
     text: string;

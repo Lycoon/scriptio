@@ -1,18 +1,16 @@
 import Router from "next/router";
 import { useState } from "react";
-import { createProject } from "../../src/lib/requests";
-import useUser from "../../src/lib/useUser";
-import { getBase64 } from "../../src/lib/utils";
+import { getBase64 } from "../../src/lib/utils/misc";
 import { ProjectCreation } from "../../src/server/repository/project-repository";
 import FormInfo, { FormInfoType } from "../home/FormInfo";
 import UploadButton from "./UploadButton";
+import { createProject } from "../../src/lib/utils/requests";
 
 type Props = {
     setIsCreating: (isCreating: boolean) => void;
 };
 
 const NewProjectPage = ({ setIsCreating }: Props) => {
-    const { user, setUser } = useUser();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
 
@@ -37,10 +35,10 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
             body.poster = await getBase64(selectedFile, 686, 1016);
         }
 
-        const res = await createProject(user?.id!, body);
+        const res = await createProject(body);
         const json = await res.json();
 
-        if (res.status === 201) {
+        if (res.ok) {
             setIsCreating(false);
             Router.push(`/projects/${json.data.id}/screenplay`);
         } else {

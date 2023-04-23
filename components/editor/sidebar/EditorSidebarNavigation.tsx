@@ -1,16 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../../src/context/UserContext";
-import {
-    CharacterData,
-    CharacterMap,
-    getCharactersData,
-    getScenesData,
-    SceneItem,
-    ScenesData,
-} from "../../../src/lib/screenplayUtils";
 import { ContextMenuType } from "./ContextMenu";
 import SidebarCharacterItem from "./SidebarCharacterItem";
 import SidebarSceneItem from "./SidebarSceneItem";
+import { ScenesData, scenesData, SceneItem } from "../../../src/lib/screenplay";
+import { CharacterMap, charactersData } from "../../../src/lib/utils/characters";
 
 type Props = {
     active: boolean;
@@ -50,20 +44,20 @@ const EditorSidebarNavigation = ({
     removeCharacter,
 }: Props) => {
     const { updateContextMenu } = useContext(UserContext);
-    const [scenes, setScenes] = useState<ScenesData>(getScenesData());
-    const [characters, setCharacters] = useState<CharacterMap>(getCharactersData());
+    const [scenes, setScenes] = useState<ScenesData>(scenesData);
+    const [characters, setCharacters] = useState<CharacterMap>(charactersData);
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
     const isActive = active ? "navigation-on" : "";
 
     useEffect(() => {
         // update scene navigation when scenes change
-        setScenes(getScenesData());
-    }, [getScenesData()]);
+        setScenes(scenesData);
+    }, [scenesData]);
 
     useEffect(() => {
         // update character navigation when characters change
-        setCharacters(getCharactersData());
-    }, [getCharactersData()]);
+        setCharacters(charactersData);
+    }, [charactersData]);
 
     const isCharactersMenu = menu === NavigationMenu.Characters;
     const isLocationsMenu = menu === NavigationMenu.Locations;

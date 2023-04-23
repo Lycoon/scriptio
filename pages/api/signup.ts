@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { sendVerificationEmail } from "../../src/lib/mail/mail";
-import { isValidDelay, onError, onSuccess } from "../../src/lib/utils";
+import { isValidDelay } from "../../src/lib/utils/misc";
 import {
     EMAIL_ALREADY_REGISTERED,
     ERROR_SIGN_UP,
@@ -15,11 +15,9 @@ import {
     getUserFromEmail,
     updateUser,
 } from "../../src/server/service/user-service";
+import { onError, onSuccess } from "../../src/lib/utils/requests";
 
-export default async function signup(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
+export default async function signup(req: NextApiRequest, res: NextApiResponse) {
     const email: string = req.body.email;
     const password: string = req.body.password;
 

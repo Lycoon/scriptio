@@ -1,4 +1,4 @@
-import { SceneItem } from "../../src/lib/screenplayUtils";
+import { SceneItem } from "../../src/lib/screenplay";
 
 type Props = {
     scene: SceneItem;

@@ -1,8 +1,5 @@
-import { Children, ReactNode, useEffect, useState } from "react";
-import { Project } from "../../pages/api/users";
-import { Page } from "../../src/lib/utils";
+import { useEffect, useState } from "react";
 import DropdownItem from "./dropdown/DropdownItem";
-import NavbarDropdown from "./dropdown/NavbarDropdown";
 import { NavbarTabData } from "./Navbar";
 
 type Props = {

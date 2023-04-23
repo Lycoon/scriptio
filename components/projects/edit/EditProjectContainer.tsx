@@ -1,19 +1,18 @@
 import Link from "next/link";
 import Router from "next/router";
 import { useState } from "react";
-import { Project, CookieUser } from "../../../pages/api/users";
-import { editProject } from "../../../src/lib/requests";
-import { getBase64 } from "../../../src/lib/utils";
+import { getBase64 } from "../../../src/lib/utils/misc";
 import { ProjectUpdate } from "../../../src/server/repository/project-repository";
 import FormInfo, { FormInfoType } from "../../home/FormInfo";
 import UploadButton from "../UploadButton";
+import { Project } from "@prisma/client";
+import { editProject } from "../../../src/lib/utils/requests";
 
 type Props = {
     project: Project;
-    user: CookieUser;
 };
 
-const EditProjectConainer = ({ project, user }: Props) => {
+const EditProjectConainer = ({ project }: Props) => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -34,7 +33,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
             body.poster = await getBase64(selectedFile, 686, 1016);
         }
 
-        const res = await editProject(user.id, body);
+        const res = await editProject(body);
         const json = await res.json();
 
         if (res.status === 200) {
@@ -85,7 +84,7 @@ const EditProjectConainer = ({ project, user }: Props) => {
                 </div>
 
                 <div className="project-form-end">
-                    <Link href={`/projects/${project.id}/screenplay`}>
+                    <Link legacyBehavior href={`/projects/${project.id}/screenplay`}>
                         <a className="form-btn back-btn">Back</a>
                     </Link>
                     <button className="form-btn project-form-submit-btn" type="submit">

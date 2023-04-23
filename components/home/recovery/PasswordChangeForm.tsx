@@ -1,8 +1,8 @@
 import Router from "next/router";
 import { useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "../../../src/lib/messages";
-import { validateRecover } from "../../../src/lib/requests";
 import FormInfo, { FormInfoType } from "../FormInfo";
+import { validateRecover } from "../../../src/lib/utils/requests";
 
 type Props = {
     userId: number;
@@ -30,7 +30,7 @@ const PasswordChangeForm = ({ userId, recoverHash }: Props) => {
         const res = await validateRecover(userId, recoverHash, pwd1);
         const json = await res.json();
 
-        if (res.status === 200 || res.status === 201) {
+        if (res.ok) {
             setFormInfo({ content: json.message });
             setTimeout(() => {
                 Router.push("/login");

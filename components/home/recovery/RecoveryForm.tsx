@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useState } from "react";
-import { sendRecover } from "../../../src/lib/requests";
+import { sendRecover } from "../../../src/lib/utils/requests";
 
 const RecoveryForm = () => {
     const [sentEmail, setSetSentEmail] = useState(false);
@@ -43,7 +43,7 @@ const RecoveryForm = () => {
                         Send
                     </button>
                 ) : (
-                    <Link href={"/login"}>
+                    <Link legacyBehavior href={"/login"}>
                         <a className="form-btn">Back</a>
                     </Link>
                 )}
