@@ -3,7 +3,7 @@ import { withIronSessionApiRoute } from "iron-session/next";
 import { NextApiRequest, NextApiResponse } from "next";
 import { MISSING_BODY } from "../../../src/lib/messages";
 import { sessionOptions } from "../../../src/lib/session";
-import { deleteObject, uploadObject } from "../../../src/lib/storage";
+import { deleteObject, uploadObject } from "../../../src/lib/s3";
 import {
     createProject,
     deleteProject,

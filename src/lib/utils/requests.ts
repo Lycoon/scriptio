@@ -1,6 +1,8 @@
 import { NextApiResponse } from "next";
 import { Settings } from "../../server/repository/user-repository";
 import { CharacterMap } from "./characters";
+import { useTauriStore } from "../store";
+import { useDesktop } from "./hooks";
 
 export interface StateResult<T> {
     data?: T;
@@ -31,6 +33,9 @@ export const deleteProject = (projectId: string) => {
 };
 
 export const createProject = (body: any) => {
+    const isDesktop = useDesktop();
+    const { state, setState, loading } = useTauriStore("user", null, "scriptio.cfg");
+
     return request(`/api/projects`, "POST", JSON.stringify(body));
 };
 

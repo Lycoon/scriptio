@@ -38,6 +38,7 @@
         "react-dom": "^18.2.0",
         "render2": "^0.1.4",
         "swr": "^2.1.1",
+        "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store",
         "use-debounce": "^8.0.4"
     },
     "devDependencies": {

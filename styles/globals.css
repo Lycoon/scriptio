@@ -38,6 +38,8 @@
 @import "ExportProjectContainer.module.css";
 @import "AboutPageContainer.module.css";
 @import "ContextMenu.module.css";
+@import "DesktopHomePageContainer.module.css";
+@import "DesktopNavbar.module.css";
 
 /* Editor */
 @import "EditorSidebar.module.css";

@@ -18,13 +18,13 @@ const NewProjectPage = ({ setIsCreating }: Props) => {
         setIsCreating(false);
     };
 
-    const resetFromInfo = () => {
+    const resetFormInfo = () => {
         setFormInfo(null);
     };
 
     const onSubmit = async (e: any) => {
         e.preventDefault();
-        resetFromInfo();
+        resetFormInfo();
 
         const body: Partial<ProjectCreation> = {
             title: e.target.title.value,

@@ -31,7 +31,7 @@ const ProjectPageContainer = () => {
         return <EmptyProjectPage setIsCreating={setIsCreating} />;
     } else {
         return (
-            <div id="projects-container">
+            <div className="projects-container">
                 <div className="center-flex">
                     <div className="projects-header">
                         <div className="projects-header-info">

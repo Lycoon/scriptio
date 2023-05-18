@@ -1,3 +1,4 @@
+import { JSONContent } from "@tiptap/react";
 import { ScreenplayElement } from "./utils/enums";
 
 /* Nodes */
@@ -17,18 +18,18 @@ export type SceneItem = {
     nextPosition: number;
 };
 
-export const countOccurrences = (json: any, word: string): number => {
+export const countOccurrences = (json: JSONContent, word: string): number => {
     const regex = new RegExp(`${word}`, "gi");
     const nodes = json.content!;
     let count = 0;
 
     for (let i = 0; i < nodes.length; i++) {
         const currNode = nodes[i];
-        const content: any[] = currNode["content"];
+        const content = currNode["content"];
         if (!content) continue;
 
-        const text: string = content[0]["text"];
-        const res = Array.from(text.matchAll(regex));
+        const text = content[0]["text"];
+        const res = Array.from(text!.matchAll(regex));
         count += res.length;
     }
 

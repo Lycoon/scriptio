@@ -57,11 +57,13 @@
         },
         "windows": [
             {
-                "fullscreen": false,
-                "height": 1080,
-                "resizable": true,
                 "title": "Scriptio",
-                "width": 1920
+                "resizable": true,
+                "decorations": true,
+                "width": 1920,
+                "height": 1080,
+                "minWidth": 800,
+                "minHeight": 600
             }
         ]
     }

@@ -349,8 +349,9 @@ const EditorAndSidebar = ({ project }: Props) => {
         ctx.updatePopup(undefined);
     };
 
-    const getCharacterOccurrences = (word: string) => {
-        return countOccurrences(editorView?.getJSON(), word);
+    const getCharacterOccurrences = (word: string): number => {
+        if (!editorView) return 0;
+        return countOccurrences(editorView.getJSON(), word);
     };
 
     const editCharacterPopup = (character: CharacterData) => {

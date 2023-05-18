@@ -21,6 +21,17 @@ const returnData = (data: any, error: any, mutate: any, isLoading: any) => {
     };
 };
 
+const useProjectIdFromUrl = () => {
+    const router = useRouter();
+    const [projectId, setProjectId] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        if (router.query.projectId) setProjectId(router.query.projectId as string);
+    }, [router.query.projectId]);
+
+    return projectId;
+};
+
 const useUser = (redirect: boolean = false): StateResult<CookieUser> => {
     const { data, error, mutate, isLoading } = useSWR<CookieUser>("/api/users/cookie");
 
@@ -29,6 +40,16 @@ const useUser = (redirect: boolean = false): StateResult<CookieUser> => {
     }
 
     return returnData(data, error, mutate, isLoading);
+};
+
+const useDesktop = (): boolean => {
+    const [isDesktop, setIsDesktop] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (window.__TAURI__) setIsDesktop(true);
+    }, []);
+
+    return isDesktop;
 };
 
 const useSettings = (): StateResult<Settings> => {
@@ -43,17 +64,11 @@ const useProjects = (): StateResult<Project[]> => {
 
 const useProjectFromUrl = (): StateResult<Project> => {
     const { updateProject } = useContext(UserContext);
-    const [projectId, setProjectId] = useState<string | undefined>(undefined);
-    const router = useRouter();
+    const projectId = useProjectIdFromUrl();
 
     let { data, error, mutate, isLoading } = useSWR<Project>(
         projectId ? `/api/projects/${projectId}` : null
     );
-
-    // When router has loaded, set the project id
-    useEffect(() => {
-        if (router.query.projectId) setProjectId(router.query.projectId as string);
-    }, [router.query.projectId]);
 
     // When the data has loaded, update the project
     useEffect(() => {
@@ -63,4 +78,4 @@ const useProjectFromUrl = (): StateResult<Project> => {
     return returnData(data, error, mutate, isLoading);
 };
 
-export { useUser, useSettings, useProjects, useProjectFromUrl };
+export { useUser, useSettings, useProjects, useProjectFromUrl, useDesktop };
