@@ -8,17 +8,37 @@ const getTauriStore = (filename: string) => {
     return stores[filename];
 };
 
-export const useTauriStore = (key: string, value: any, storeName: string = "scriptio.cfg") => {
+export const getDesktopValue = (key: string, storeName: string = "scriptio.cfg") => {
     const store = getTauriStore(storeName);
-    const [state, setState] = useState(value);
     const [loading, setLoading] = useState(true);
+    const [getValue, setGetValue] = useState<any>();
 
-    if (loading) {
-        store.get(key).then((value) => {
-            setState(value);
-            setLoading(false);
-        });
-    }
+    store.get(key).then((value) => {
+        setLoading(false);
+        setGetValue(value);
+    });
 
-    return { state, setState, loading };
+    return { loading, getValue };
+};
+
+export const hasDesktopValue = (key: string, storeName: string = "scriptio.cfg") => {
+    const store = getTauriStore(storeName);
+    const [loading, setLoading] = useState(true);
+    const [hasValue, setHasValue] = useState(false);
+
+    store.has(key).then((value) => {
+        setLoading(false);
+        setHasValue(value);
+    });
+
+    return { loading, hasValue };
+};
+
+export const setDesktopValue = async <T>(
+    key: string,
+    value: T,
+    storeName: string = "scriptio.cfg"
+) => {
+    const store = getTauriStore(storeName);
+    return store.set(key, value);
 };
