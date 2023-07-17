@@ -4,7 +4,7 @@ import { ExportData, ExportDataPDF } from "@components/projects/export/ExportPro
 
 const LOCAL = "http://localhost:3000";
 const PRODUCTION = "https://scriptio.app";
-const BASE_URL = LOCAL;
+const BASE_URL = PRODUCTION;
 
 const fonts = {
     CourierPrime: {
