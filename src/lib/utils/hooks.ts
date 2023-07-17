@@ -2,15 +2,9 @@ import useSWR from "swr";
 import { Settings } from "../../server/repository/user-repository";
 import { useContext, useEffect, useState } from "react";
 import Router, { useRouter } from "next/router";
-import { StateResult } from "./requests";
 import { CookieUser, Project } from "./types";
 import { UserContext } from "../../context/UserContext";
-
-declare global {
-    interface Window {
-        __TAURI__: unknown;
-    }
-}
+import { useDesktopValues } from "../store";
 
 const returnData = (data: any, error: any, mutate: any, isLoading: any) => {
     return {
@@ -20,6 +14,13 @@ const returnData = (data: any, error: any, mutate: any, isLoading: any) => {
         isLoading,
     };
 };
+
+interface StateResult<T> {
+    data?: T;
+    isLoading: boolean;
+    error?: any;
+    mutate?: (data?: T, shouldRevalidate?: boolean) => Promise<T | undefined>;
+}
 
 const useProjectIdFromUrl = () => {
     const router = useRouter();
@@ -35,7 +36,7 @@ const useProjectIdFromUrl = () => {
 const useUser = (redirect: boolean = false): StateResult<CookieUser> => {
     const { data, error, mutate, isLoading } = useSWR<CookieUser>("/api/users/cookie");
 
-    if (redirect && !isLoading && !data?.isLoggedIn) {
+    if (redirect && !isLoading && data && !data.isLoggedIn) {
         Router.push("/login");
     }
 
@@ -58,17 +59,32 @@ const useSettings = (): StateResult<Settings> => {
 };
 
 const useProjects = (): StateResult<Project[]> => {
-    const { data, error, mutate, isLoading } = useSWR("/api/projects");
-    return returnData(data, error, mutate, isLoading);
+    const { data: user } = useUser();
+
+    // Fetch local projects if we're on desktop
+    const { data: localProjects, isLoading: isLocalLoading, error: isLocalError } = useDesktopValues("projects.cfg");
+
+    // Fetch cloud projects if we're logged in
+    const {
+        data: cloudProjects,
+        isLoading: isCloudLoading,
+        error: isCloudError,
+        mutate,
+    } = useSWR(user && user.isLoggedIn ? "/api/projects" : null);
+
+    return returnData(
+        [...(cloudProjects ?? []), ...(localProjects ?? [])],
+        isCloudError || isLocalError,
+        mutate,
+        isCloudLoading || isLocalLoading
+    );
 };
 
 const useProjectFromUrl = (): StateResult<Project> => {
     const { updateProject } = useContext(UserContext);
     const projectId = useProjectIdFromUrl();
 
-    let { data, error, mutate, isLoading } = useSWR<Project>(
-        projectId ? `/api/projects/${projectId}` : null
-    );
+    let { data, error, mutate, isLoading } = useSWR<Project>(projectId ? `/api/projects/${projectId}` : null);
 
     // When the data has loaded, update the project
     useEffect(() => {

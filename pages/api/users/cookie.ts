@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { withIronSessionApiRoute } from "iron-session/next";
-import { sessionOptions } from "../../../src/lib/session";
-import { onSuccess } from "../../../src/lib/utils/requests";
-import { CookieUser } from "../../../src/lib/utils/types";
+import { sessionOptions } from "@src/lib/session";
+import { onResponseAPI } from "@src/lib/utils/requests";
+import { CookieUser } from "@src/lib/utils/types";
 
 export default withIronSessionApiRoute(userRoute, sessionOptions);
 
@@ -15,5 +15,5 @@ async function userRoute(req: NextApiRequest, res: NextApiResponse<Partial<Cooki
         };
     }
 
-    return onSuccess(res, 200, "", user);
+    return onResponseAPI(res, 200, "", user);
 }

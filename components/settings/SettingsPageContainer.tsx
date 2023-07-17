@@ -1,10 +1,15 @@
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { ERROR_PASSWORD_MATCH } from "../../src/lib/messages";
-import { useSettings, useUser } from "../../src/lib/utils/hooks";
-import FormInfo, { FormInfoType } from "../home/FormInfo";
-import Loading from "../home/Loading";
-import { editUserSettings, changePassword } from "../../src/lib/utils/requests";
+import { ERROR_PASSWORD_MATCH } from "@src/lib/messages";
+import { useSettings, useUser } from "@src/lib/utils/hooks";
+import FormInfo, { FormInfoType } from "../utils/FormInfo";
+import Loading from "../utils/Loading";
+import { editUserSettings, changePassword } from "@src/lib/utils/requests";
+
+import page from "./SettingsPageContainer.module.css";
+import layout from "../utils/Layout.module.css";
+import form from "../utils/Form.module.css";
+import { join } from "@src/lib/utils/misc";
 
 const SettingsPageContainer = () => {
     const { data: cookieUser } = useUser();
@@ -65,8 +70,8 @@ const SettingsPageContainer = () => {
         e.preventDefault();
         resetFromInfo();
 
-        const newPassword = e.target.password1.value;
-        const newPasswordRepeat = e.target.password2.value;
+        const newPassword = e.target.pwd1.value;
+        const newPasswordRepeat = e.target.pwd2.value;
 
         if (newPassword != newPasswordRepeat) {
             setFormInfo({ content: ERROR_PASSWORD_MATCH, isError: true });
@@ -76,23 +81,19 @@ const SettingsPageContainer = () => {
         const res = await changePassword(newPassword);
         const json = await res.json();
 
-        if (res.ok) {
-            setFormInfo({ content: json.message });
-        } else {
-            setFormInfo({ content: json.message, isError: true });
-        }
+        setFormInfo({ content: json.message, isError: !res.ok });
     };
 
     return (
-        <div className="center-flex">
-            <div id="settings-container">
-                <div className="settings-header">
+        <div className={layout.center_col}>
+            <div className={join(layout.center_content, page.grid)}>
+                <div className={page.header}>
                     <h1>Settings</h1>
                     <hr />
                 </div>
-                <div className="settings-profile">
-                    <p className="settings-email">{cookieUser.email}</p>
-                    <p className="settings-joined-date">
+                <div className={page.profile}>
+                    <p className={page.email}>{cookieUser.email}</p>
+                    <p className={page.joined_date}>
                         joined{" "}
                         {createdAt.toLocaleDateString("en-GB", {
                             day: "numeric",
@@ -101,66 +102,50 @@ const SettingsPageContainer = () => {
                         })}
                     </p>
                 </div>
-                <div className="settings-column-left">
-                    <div className="settings-element">
+                <div className={page.col_left}>
+                    <div className={page.element}>
                         <p>Change password</p>
                         <hr />
                         {formInfo && <FormInfo info={formInfo} />}
                     </div>
-                    <form className="settings-form" onSubmit={onChangePassword}>
-                        <div className="form-element">
-                            <label id="password-form" className="form-element">
-                                <span className="settings-label">New password</span>
-                                <input
-                                    className="form-input"
-                                    name="password1"
-                                    type="password"
-                                    autoComplete="on"
-                                    required
-                                />
+                    <form className={page.form} onSubmit={onChangePassword}>
+                        <div className={form.element}>
+                            <label className={form.element}>
+                                <span className={page.label}>New password</span>
+                                <input className={form.input} name="pwd1" type="password" autoComplete="on" required />
 
-                                <span className="settings-label">Confirm new password</span>
-                                <input
-                                    className="form-input"
-                                    name="password2"
-                                    type="password"
-                                    autoComplete="on"
-                                    required
-                                />
+                                <span className={page.label}>Confirm new password</span>
+                                <input className={form.input} name="pwd2" type="password" autoComplete="on" required />
                             </label>
                         </div>
 
-                        <div id="form-btn-flex">
-                            <button className="form-btn" type="submit">
-                                Confirm
+                        <div className={form.btn_flex}>
+                            <button className={form.btn} type="submit">
+                                Change
                             </button>
                         </div>
                     </form>
                 </div>
-                <div className="settings-column-right">
-                    <div className="settings-element">
-                        <div className="settings-element-header">
+                <div className={page.col_right}>
+                    <div className={page.element}>
+                        <div className={page.element_header}>
                             <p>Dark theme</p>
-                            <input
-                                type="checkbox"
-                                onClick={toggleTheme}
-                                defaultChecked={theme === "dark"}
-                            />
+                            <input type="checkbox" onClick={toggleTheme} defaultChecked={theme === "dark"} />
                         </div>
                         <hr />
                     </div>
-                    <div className="settings-element">
-                        <div className="settings-element-header">
+                    <div className={page.element}>
+                        <div className={page.element_header}>
                             <p>Language</p>
-                            <select className="select-form" name="language">
+                            <select name="language">
                                 <option value="en">English</option>
                                 <option value="fr">Français</option>
                             </select>
                         </div>
                         <hr />
                     </div>
-                    <div className="settings-element">
-                        <div className="settings-element-header">
+                    <div className={page.element}>
+                        <div className={page.element_header}>
                             <p>Highlight screenplay element on hover</p>
                             <input
                                 type="checkbox"
@@ -169,8 +154,8 @@ const SettingsPageContainer = () => {
                             />
                         </div>
                     </div>
-                    <div className="settings-element">
-                        <div className="settings-element-header">
+                    <div className={page.element}>
+                        <div className={page.element_header}>
                             <p>Display scene heading background</p>
                             <input
                                 type="checkbox"
@@ -178,13 +163,14 @@ const SettingsPageContainer = () => {
                                 defaultChecked={settings?.sceneBackground}
                             />
                         </div>
+                        <hr />
                     </div>
-                    <div className="settings-element">
-                        <div className="settings-element-header">
+                    <div className={page.element}>
+                        <div className={page.element_header}>
                             <p>Notes color</p>
                             <input
                                 type="color"
-                                className="notes-color"
+                                className={page.notes_color}
                                 name="notes-color"
                                 value={notesColor}
                                 onChange={(e) => setNotesColor(e.target.value)}
@@ -192,12 +178,12 @@ const SettingsPageContainer = () => {
                             />
                         </div>
                     </div>
-                    <div className="settings-element">
-                        <div className="settings-element-header">
+                    <div className={page.element}>
+                        <div className={page.element_header}>
                             <p>Exported notes color</p>
                             <input
                                 type="color"
-                                className="notes-color"
+                                className={page.notes_color}
                                 name="exported-notes-color"
                                 value={exportedNotesColor}
                                 onChange={(e) => setExportedNotesColor(e.target.value)}

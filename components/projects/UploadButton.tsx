@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
+import upload from "./UploadButton.module.css";
+
 type Props = {
     selectedFile: any;
     setSelectedFile: (file: any) => void;
@@ -38,35 +40,29 @@ const UploadButton = ({ setSelectedFile, selectedFile }: Props) => {
                 <label
                     onDragEnter={() => setDragover(true)}
                     onDragLeave={() => setDragover(false)}
-                    className="upload-button"
+                    className={upload.container}
                     htmlFor="movie-poster-input"
                 >
-                    <div className={"upload-button-div" + dragoverStyle}>
-                        Click or drop here
-                    </div>
+                    <div className={upload.dropfile_zone + dragoverStyle}>Click or drop here</div>
                     <input
+                        id={upload.poster_input}
                         type="file"
-                        id="movie-poster-input"
                         accept="image/png, image/jpeg"
                         onChange={onSelectFile}
                     />
                 </label>
             ) : (
-                <div className="upload-preview">
+                <div className={upload.preview}>
                     <Image
-                        className="upload-preview-image"
+                        className={upload.preview_img}
                         src={preview}
                         width={140}
                         height={140}
+                        alt={"Upload preview target"}
                     />
-                    <div className="upload-preview-info">
-                        <p className="upload-preview-filename segoe">
-                            {selectedFile && selectedFile.name}
-                        </p>
-                        <button
-                            className="upload-preview-delete"
-                            onClick={resetSelectedFile}
-                        >
+                    <div className={upload.preview_info}>
+                        <p className="segoe">{selectedFile && selectedFile.name}</p>
+                        <button className={upload.preview_delete} onClick={resetSelectedFile}>
                             X
                         </button>
                     </div>

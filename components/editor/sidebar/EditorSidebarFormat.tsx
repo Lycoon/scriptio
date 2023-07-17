@@ -1,5 +1,12 @@
 import EditorTab from "../EditorTab";
 
+import BoldSVG from "../../../public/images/bold.svg";
+import ItalicSVG from "../../../public/images/italic.svg";
+import UnderlineSVG from "../../../public/images/underline.svg";
+
+import sidebar from "./EditorSidebar.module.css";
+import { join } from "@src/lib/utils/misc";
+
 type Props = {
     tabs: any[];
     selectedTab: number;
@@ -10,27 +17,6 @@ type Props = {
     isBold: boolean;
     isItalic: boolean;
     isUnderline: boolean;
-};
-
-type EditorStyleProps = {
-    isActive: boolean;
-    toggle: () => void;
-    icon: string;
-};
-
-const EditorStyle = ({ isActive, toggle, icon }: EditorStyleProps) => {
-    return (
-        <div
-            className={"style_format_btn" + (isActive ? " " + "active_style" : "")}
-            onClick={toggle}
-        >
-            <img
-                className="style_format_btn_icon"
-                src={"/images/" + icon}
-                alt="Editor style icon"
-            />
-        </div>
-    );
 };
 
 const EditorSidebarFormat = ({
@@ -44,17 +30,26 @@ const EditorSidebarFormat = ({
     selectedTab,
     setActiveTab,
 }: Props) => {
+    const boldActive = isBold ? sidebar.active_style : "";
+    const italicActive = isItalic ? sidebar.active_style : "";
+    const underlineActive = isUnderline ? sidebar.active_style : "";
+
     return (
-        <div className="sidebar tabs">
-            <div className="tabs">
-                <div className="style_format_btns">
-                    <EditorStyle isActive={isBold} toggle={toggleBold} icon={"bold.png"} />
-                    <EditorStyle isActive={isItalic} toggle={toggleItalic} icon={"italic.png"} />
-                    <EditorStyle
-                        isActive={isUnderline}
-                        toggle={toggleUnderline}
-                        icon={"underline.png"}
-                    />
+        <div className={join(sidebar.container, sidebar.tabs)}>
+            <div className={sidebar.tabs}>
+                <div className={sidebar.style_btns}>
+                    <div className={join(sidebar.style_btn, boldActive)} onClick={toggleBold}>
+                        <BoldSVG className={sidebar.style_btn_img} />
+                    </div>
+                    <div className={join(sidebar.style_btn, italicActive)} onClick={toggleItalic}>
+                        <ItalicSVG className={sidebar.style_btn_img} />
+                    </div>
+                    <div
+                        className={join(sidebar.style_btn, underlineActive)}
+                        onClick={toggleUnderline}
+                    >
+                        <UnderlineSVG className={sidebar.style_btn_img} />
+                    </div>
                 </div>
                 <EditorTab
                     action={() => setActiveTab("scene")}

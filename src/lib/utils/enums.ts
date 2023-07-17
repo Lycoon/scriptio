@@ -17,6 +17,12 @@ export enum SaveStatus {
     ERROR,
 }
 
+export enum SaveMode {
+    LOCAL = 1,
+    CLOUD = 2,
+    BOTH = LOCAL | CLOUD,
+}
+
 export enum Page {
     EXPORT,
     SCREENPLAY,

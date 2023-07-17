@@ -1,6 +1,8 @@
 import { useContext } from "react";
 import { CharacterContextProps, ContextMenuType } from "./ContextMenu";
-import { UserContext } from "../../../src/context/UserContext";
+import { UserContext } from "@src/context/UserContext";
+
+import nav_item from "./SidebarItem.module.css";
 
 const SidebarCharacterItem = ({
     character,
@@ -32,9 +34,9 @@ const SidebarCharacterItem = ({
         <div
             onContextMenu={handleDropdown}
             onDoubleClick={handleDoubleClick}
-            className="scene-item"
+            className={nav_item.container}
         >
-            <p className="scene-item-title unselectable">{character.name}</p>
+            <p className={nav_item.title + " unselectable"}>{character.name}</p>
         </div>
     );
 };

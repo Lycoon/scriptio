@@ -1,0 +1,103 @@
+.grid {
+    display: grid;
+    row-gap: 55px;
+    column-gap: 10%;
+
+    grid-template-columns: 45%;
+    grid-template-areas:
+        "header  header"
+        "profile profile"
+        "col1    col2";
+}
+
+.notes_color {
+    position: absolute;
+    right: 0;
+    border: none !important;
+    outline: none !important;
+}
+
+.header {
+    grid-area: header;
+}
+
+.profile {
+    grid-area: profile;
+    margin-top: -25px;
+
+    background-color: var(--secondary);
+    border-radius: 12px;
+    padding: 26px;
+}
+
+.email {
+    font-size: 1.3rem;
+    color: var(--primary-text);
+}
+
+.joined_date {
+    font-style: italic;
+    margin-top: 5px;
+    color: var(--secondary-text);
+}
+
+.label {
+    color: var(--secondary-text);
+    font-style: italic;
+}
+
+.col_left {
+    grid-area: col1;
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.col_right {
+    grid-area: col2;
+
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    min-width: min(18%, 30%);
+    min-height: 25%;
+}
+
+.element {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.element_header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    position: relative; /* for notes color input to not displace elements */
+}
+
+.icon {
+    height: 24px;
+    width: 24px;
+    color: var(--primary-text);
+}
+
+.icon:hover {
+    color: var(--secondary-text);
+}
+
+@media (max-width: 900px) {
+    #settings-container {
+        display: flex;
+        flex-direction: column;
+    }
+}

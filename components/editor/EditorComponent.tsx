@@ -1,6 +1,9 @@
 import { EditorContent, Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
 
+import editor_ from "./EditorComponent.module.css";
+import { join } from "@src/lib/utils/misc";
+
 type Props = {
     editor: Editor | null;
 };
@@ -20,10 +23,10 @@ const EditorComponent = ({ editor }: Props) => {
     }, []);
 
     return (
-        <div id="editor">
-            <div className="page-counter">
+        <div id="editor" className={editor_.container}>
+            <div className={editor_.page_counter}>
                 {Array.from({ length: pages }, (_, page) => (
-                    <p key={page} className="page-nb unselectable">
+                    <p key={page} className={join(editor_.page_count, "unselectable")}>
                         p.{page + 1}
                     </p>
                 ))}

@@ -1,10 +1,10 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect } from "react";
-import Navbar from "../components/navbar/Navbar";
-import SettingsPageContainer from "../components/settings/SettingsPageContainer";
-import { UserContext } from "../src/context/UserContext";
-import { useUser } from "../src/lib/utils/hooks";
+import Navbar from "@components/navbar/Navbar";
+import SettingsPageContainer from "@components/settings/SettingsPageContainer";
+import { UserContext } from "@src/context/UserContext";
+import { useUser } from "@src/lib/utils/hooks";
 
 const SettingsPage: NextPage = () => {
     const { data: user } = useUser(true);

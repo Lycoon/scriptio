@@ -1,6 +1,9 @@
 import { useContext, useEffect } from "react";
-import { UserContext } from "../../../src/context/UserContext";
-import { SceneItem } from "../../../src/lib/screenplay";
+import { UserContext } from "@src/context/UserContext";
+import { SceneItem } from "@src/lib/screenplay";
+
+import context from "./ContextMenu.module.css";
+import { CharacterData } from "@src/lib/utils/characters";
 
 type ContextMenuItemProps = {
     text: string;
@@ -39,7 +42,7 @@ export type CharacterContextProps = {
 
 export const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
     return (
-        <div onClick={action} className="context_menu_item">
+        <div onClick={action} className={context.menu_item}>
             <p className="unselectable">{text}</p>
         </div>
     );
@@ -167,7 +170,7 @@ const ContextMenu = () => {
 
     return (
         <div
-            className="context_menu"
+            className={context.menu}
             style={{
                 top: contextMenu?.position.y,
                 left: contextMenu?.position.x,

@@ -1,0 +1,48 @@
+.container {
+    width: 100%;
+    padding: 18px;
+
+    border: none;
+    border-radius: 16px;
+    background-color: var(--project-item-bg);
+    box-shadow: var(--project-item-shadow);
+
+    cursor: pointer;
+}
+
+.container:hover {
+    outline-style: solid;
+    outline-color: var(--secondary-bg-hover);
+    outline-width: 3px;
+}
+
+.container:active {
+    transform: scale(0.97);
+    transition: transform 0.07s;
+}
+
+.flex {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative;
+    gap: 26px;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.date {
+    display: flex;
+    flex-direction: row;
+    gap: 7px;
+    margin-top: 6px;
+}
+
+.path {
+    color: var(--secondary-text);
+}

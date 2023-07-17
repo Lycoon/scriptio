@@ -1,4 +1,7 @@
-import Link from "next/link";
+import stats from "../stats/ProjectStatsContainer.module.css";
+import noStats from "../stats/NoStatsContainer.module.css";
+import BackButton from "@components/utils/BackButton";
+import { redirectScreenplay } from "@src/lib/utils/redirects";
 
 type Props = {
     projectId: string;
@@ -6,14 +9,14 @@ type Props = {
 
 const NoExportContainer = ({ projectId }: Props) => {
     return (
-        <div id="project-stats-container">
-            <div className="no-stats-container">
-                <div className="no-stats-div">
-                    <p className="no-stats-title">Your screenplay is not long enough</p>
-                    <p className="no-stats-subtitle">Write some more and come back to export it</p>
-                    <Link legacyBehavior href={`/projects/${projectId}/screenplay`}>
-                        <a className="form-btn no-stats-back-btn">Back</a>
-                    </Link>
+        <div className={stats.container}>
+            <div className={noStats.container}>
+                <div className={noStats.content}>
+                    <p className={noStats.title}>Your screenplay is not long enough</p>
+                    <p className={noStats.subtitle}>Write some more and come back to export it</p>
+                    <div className={noStats.back_btn}>
+                        <BackButton onClick={() => redirectScreenplay(projectId)} />
+                    </div>
                 </div>
             </div>
         </div>

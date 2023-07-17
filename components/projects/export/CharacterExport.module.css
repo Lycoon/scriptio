@@ -1,0 +1,18 @@
+.container {
+    display: inline-block;
+    margin-right: 6px;
+    margin-bottom: 6px;
+}
+
+.content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+
+    padding-block: 8px;
+    padding-inline: 14px;
+    background-color: var(--secondary);
+    border-radius: 14px;
+    width: max-content;
+}

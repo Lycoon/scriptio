@@ -1,7 +1,7 @@
 import "chart.js/auto";
 import { Doughnut } from "react-chartjs-2";
-import { getRandomColors, Quantity } from "../../../src/lib/statistics";
-import { Project } from "../../../src/lib/utils/types";
+import { getRandomColors, Quantity } from "@src/lib/statistics";
+import { Project } from "@src/lib/utils/types";
 
 type Props = {
     project: Project;

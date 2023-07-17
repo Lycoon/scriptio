@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Store } from "tauri-plugin-store-api";
+import { DesktopResponse } from "./utils/types";
+import { useDesktop } from "./utils/hooks";
 
+const DEFAULT_STORE = "scriptio.cfg";
 const stores: { [store: string]: Store } = {};
 
 const getTauriStore = (filename: string) => {
@@ -8,37 +11,74 @@ const getTauriStore = (filename: string) => {
     return stores[filename];
 };
 
-export const getDesktopValue = (key: string, storeName: string = "scriptio.cfg") => {
-    const store = getTauriStore(storeName);
-    const [loading, setLoading] = useState(true);
-    const [getValue, setGetValue] = useState<any>();
+const useDesktopData = <T>(action: Promise<any> | undefined): DesktopResponse<T> => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<any>(undefined);
+    const [data, setData] = useState<any>(undefined);
 
-    store.get(key).then((value) => {
-        setLoading(false);
-        setGetValue(value);
-    });
+    if (!action) return { isLoading: false, data: undefined, error: undefined };
 
-    return { loading, getValue };
-};
+    action
+        .then((_data) => {
+            setIsLoading(false);
+            setData(_data);
+        })
+        .catch((err) => {
+            setIsLoading(false);
+            setError(err);
+        });
 
-export const hasDesktopValue = (key: string, storeName: string = "scriptio.cfg") => {
-    const store = getTauriStore(storeName);
-    const [loading, setLoading] = useState(true);
-    const [hasValue, setHasValue] = useState(false);
-
-    store.has(key).then((value) => {
-        setLoading(false);
-        setHasValue(value);
-    });
-
-    return { loading, hasValue };
+    return { isLoading, data, error };
 };
 
 export const setDesktopValue = async <T>(
     key: string,
     value: T,
-    storeName: string = "scriptio.cfg"
-) => {
-    const store = getTauriStore(storeName);
-    return store.set(key, value);
+    storeName: string
+): Promise<any> => {
+    const store = getTauriStore(storeName ?? DEFAULT_STORE);
+
+    try {
+        await store.set(key, value);
+    } catch (error) {
+        return { error };
+    }
+
+    return {};
+};
+
+export const deleteDesktopValue = async (key: string, storeName: string): Promise<any> => {
+    const store = getTauriStore(storeName ?? DEFAULT_STORE);
+
+    try {
+        await store.delete(key);
+    } catch (error) {
+        return { error };
+    }
+
+    return {};
+};
+
+export const useDesktopValue = <T>(key: string, storeName: string): DesktopResponse<T> => {
+    const isDesktop = useDesktop();
+    const store = isDesktop ? getTauriStore(storeName ?? DEFAULT_STORE) : undefined;
+
+    const { isLoading, data, error } = useDesktopData<T>(store?.get(key));
+    return { isLoading, data, error };
+};
+
+export const useDesktopHas = (key: string, storeName: string): DesktopResponse<boolean> => {
+    const isDesktop = useDesktop();
+    const store = isDesktop ? getTauriStore(storeName ?? DEFAULT_STORE) : undefined;
+
+    const { isLoading, data, error } = useDesktopData<boolean>(store?.has(key));
+    return { isLoading, data, error };
+};
+
+export const useDesktopValues = (storeName: string): DesktopResponse<string[]> => {
+    const isDesktop = useDesktop();
+    const store = isDesktop ? getTauriStore(storeName ?? DEFAULT_STORE) : undefined;
+
+    const { isLoading, data, error } = useDesktopData<string[]>(store?.keys());
+    return { isLoading, data, error };
 };

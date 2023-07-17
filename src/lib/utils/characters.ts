@@ -1,4 +1,5 @@
-export let charactersData: CharacterMap = {};
+import { ScreenplayCtxType } from "@src/context/ScreenplayContext";
+
 export enum CharacterGender {
     Female,
     Male,
@@ -16,21 +17,21 @@ const triggerCharactersUpdate = () => {
     window.dispatchEvent(charactersUpdateEvent);
 };
 
-export const upsertCharacterData = (name: string, data: CharacterItem) => {
-    charactersData[name] = data;
+export const upsertCharacterData = (data: CharacterData, screenplayCtx: ScreenplayCtxType) => {
+    screenplayCtx.charactersData[data.name] = data;
     triggerCharactersUpdate();
 };
 
-export const deleteCharacter = (name: string) => {
-    delete charactersData[name];
+export const deleteCharacter = (name: string, screenplayCtx: ScreenplayCtxType) => {
+    delete screenplayCtx.charactersData[name];
     triggerCharactersUpdate();
 };
 
-export const doesCharacterExist = (name: string): boolean => {
+export const doesCharacterExist = (name: string, screenplayCtx: ScreenplayCtxType): boolean => {
     const nameUppered = name.toUpperCase();
     let found = false;
 
-    Object.keys(charactersData).forEach((key) => {
+    Object.keys(screenplayCtx.charactersData).forEach((key) => {
         if (key.toUpperCase() === nameUppered) {
             found = true;
             return;
@@ -40,10 +41,10 @@ export const doesCharacterExist = (name: string): boolean => {
     return found;
 };
 
-export const getCharacterNames = (json: any) => {
-    if (!json) return [];
+export const getCharacterNames = (scriptioScreenplay: any) => {
+    if (!scriptioScreenplay) return [];
 
-    const nodes = json.content;
+    const nodes = scriptioScreenplay.content;
     const characters: string[] = [];
 
     for (let i = 0; i < nodes.length; i++) {
@@ -63,9 +64,13 @@ export const getCharacterNames = (json: any) => {
     return characters;
 };
 
-export const computeFullCharactersData = async (json: any, fetchedCharacters: CharacterMap) => {
-    charactersData = fetchedCharacters ?? {};
-    const namesFromEditor = getCharacterNames(json);
+export const computeFullCharactersData = async (
+    scriptioScreenplay: any,
+    persistentCharacters: CharacterMap,
+    screenplayCtx: ScreenplayCtxType
+) => {
+    let charactersData = persistentCharacters ?? {};
+    const namesFromEditor = getCharacterNames(scriptioScreenplay);
 
     for (const name of namesFromEditor) {
         if (charactersData[name] !== undefined) {
@@ -77,5 +82,7 @@ export const computeFullCharactersData = async (json: any, fetchedCharacters: Ch
             synopsis: "",
         };
     }
+
+    screenplayCtx.updateCharactersData(charactersData);
     triggerCharactersUpdate();
 };

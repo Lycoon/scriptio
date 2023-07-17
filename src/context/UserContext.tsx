@@ -1,6 +1,6 @@
 import { Editor } from "@tiptap/react";
 import { createContext, ReactNode, useState } from "react";
-import { ContextMenuProps } from "../../components/editor/sidebar/ContextMenu";
+import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
 import { useUser } from "../lib/utils/hooks";
 import { Project } from "@prisma/client";
 import { SaveStatus } from "../lib/utils/enums";
@@ -23,8 +23,6 @@ export type contextType = {
     updatePopup: (popup: any) => void;
     isDesktop: boolean;
     updateIsDesktop: (isDesktop: boolean) => void;
-    testBool: boolean;
-    updateTestBool: (testBool: boolean) => void;
 };
 
 const contextDefaults: contextType = {
@@ -44,8 +42,6 @@ const contextDefaults: contextType = {
     updatePopup: () => {},
     isDesktop: false,
     updateIsDesktop: () => {},
-    testBool: false,
-    updateTestBool: () => {},
 };
 
 type Props = {
@@ -54,7 +50,7 @@ type Props = {
 
 export const UserContext = createContext<contextType>(contextDefaults);
 
-export function ContextProvider({ children }: Props) {
+export function UserContextProvider({ children }: Props) {
     const { data: user, mutate: setUser } = useUser();
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [darkMode, setDarkMode] = useState<boolean>(false);
@@ -63,7 +59,6 @@ export function ContextProvider({ children }: Props) {
     const [contextMenu, setContextMenu] = useState<ContextMenuProps | undefined>(undefined);
     const [popup, setPopup] = useState<any>(undefined);
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
-    const [testBool, setTestBool] = useState<boolean>(false);
 
     const updateUser = (user_: CookieUser | undefined) => {
         setUser!(user_);
@@ -97,10 +92,6 @@ export function ContextProvider({ children }: Props) {
         setIsDesktop(isDesktop_);
     };
 
-    const updateTestBool = (testBool_: boolean) => {
-        setTestBool(testBool_);
-    };
-
     const value = {
         user,
         updateUser,
@@ -118,8 +109,6 @@ export function ContextProvider({ children }: Props) {
         updatePopup,
         isDesktop,
         updateIsDesktop,
-        testBool,
-        updateTestBool,
     };
 
     return (

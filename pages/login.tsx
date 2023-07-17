@@ -1,9 +1,9 @@
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
-import LoginContainer from "../components/home/login/LoginContainer";
+import LoginContainer from "@components/home/login/LoginContainer";
 import { useContext, useEffect } from "react";
-import { UserContext } from "../src/context/UserContext";
-import { VerificationStatus } from "../src/lib/utils/enums";
+import { UserContext } from "@src/context/UserContext";
+import { VerificationStatus } from "@src/lib/utils/enums";
 
 type Props = {
     verificationStatus: VerificationStatus;

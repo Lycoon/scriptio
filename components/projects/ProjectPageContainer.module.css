@@ -1,0 +1,87 @@
+.container {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    margin-top: 70px;
+    width: 100%;
+}
+
+.header_info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header_btns {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    gap: 12px;
+}
+
+.delete_btn {
+    height: 35px;
+    width: 35px;
+    padding: 6px;
+
+    cursor: pointer;
+
+    text-align: center;
+    border-color: var(--secondary);
+    border-width: 3px;
+    border-radius: 18px;
+    border-style: solid;
+}
+
+.delete_btn:hover {
+    border-color: var(--secondary-hover);
+}
+
+.delete_img {
+    height: 100%;
+    width: 100%;
+    color: var(--secondary);
+}
+
+.create_btn {
+    width: fit-content;
+    padding-inline: 40px;
+    border-radius: 20px;
+}
+
+.center {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 50px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    row-gap: 30px;
+}
+
+@media (max-width: 1300px) {
+    .project-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 800px) {
+    .project-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}

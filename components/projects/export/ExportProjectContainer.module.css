@@ -1,0 +1,42 @@
+.formats {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+}
+
+.format {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+
+    padding-block: 4px;
+    padding-inline: 14px;
+    background-color: var(--secondary);
+    color: #ffffff;
+    border-radius: 6px;
+
+    cursor: pointer;
+}
+
+.active_format {
+    background-color: var(--export-project-selected);
+}
+
+.characters_check {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 10px;
+    position: relative;
+}
+
+.characters_dropdown {
+    position: absolute;
+    width: 150px;
+    margin-right: 30px;
+    margin-top: -6px;
+}
+
+.characters_list {
+    margin-top: 16px;
+}

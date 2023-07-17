@@ -1,0 +1,20 @@
+.container {
+    font-size: 0.75rem;
+    color: white;
+    background-color: transparent;
+    cursor: pointer;
+
+    padding-inline: 15px;
+    padding-block: 4px;
+
+    /* Border */
+    border-style: solid;
+    border-color: #a7a7a7;
+    border-radius: 15px;
+    border-width: 2px;
+}
+
+.container:hover {
+    transition: background-color 0.2s;
+    background-color: var(--secondary-bg-hover);
+}

@@ -1,7 +1,7 @@
 import "chart.js/auto";
 import { Bar } from "react-chartjs-2";
-import { getRandomColors, StatsRatio } from "../../../src/lib/statistics";
-import { Project } from "../../../src/lib/utils/types";
+import { getRandomColors, StatsRatio } from "@src/lib/statistics";
+import { Project } from "@src/lib/utils/types";
 
 type Props = {
     project: Project;
@@ -28,7 +28,7 @@ const BarRatio = ({ color, ratio }: Props) => {
         indexAxis: "y",
         barThickness: 40,
         layout: {
-            padding: { right: 50, top: 60 },
+            padding: { right: 50 },
         },
         plugins: {
             legend: {

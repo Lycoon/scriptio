@@ -1,8 +1,8 @@
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect } from "react";
-import RecoveryContainer from "../components/home/recovery/RecoveryContainer";
-import { UserContext } from "../src/context/UserContext";
+import RecoveryContainer from "@components/home/recovery/RecoveryContainer";
+import { UserContext } from "@src/context/UserContext";
 
 type Props = {
     userId: number;

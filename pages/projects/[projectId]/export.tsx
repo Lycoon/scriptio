@@ -1,10 +1,10 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import Navbar from "../../../components/navbar/Navbar";
-import ExportProjectConainer from "../../../components/projects/export/ExportProjectContainer";
-import NoExportContainer from "../../../components/projects/export/NoExportContainer";
-import { useProjectFromUrl, useUser } from "../../../src/lib/utils/hooks";
-import Loading from "../../../components/home/Loading";
+import Navbar from "@components/navbar/Navbar";
+import ExportProjectConainer from "@components/projects/export/ExportProjectContainer";
+import NoExportContainer from "@components/projects/export/NoExportContainer";
+import { useProjectFromUrl, useUser } from "@src/lib/utils/hooks";
+import Loading from "@components/utils/Loading";
 
 const ExportProjectPage: NextPage = () => {
     const { data: user } = useUser(true);

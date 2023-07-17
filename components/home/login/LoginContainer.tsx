@@ -1,5 +1,7 @@
-import { VerificationStatus } from "../../../src/lib/utils/misc";
+import { VerificationStatus } from "@src/lib/utils/enums";
 import LoginForm from "./LoginForm";
+
+import layout from "../../utils/Layout.module.css";
 
 type Props = {
     verificationStatus: VerificationStatus;
@@ -7,7 +9,7 @@ type Props = {
 
 const LoginContainer = ({ verificationStatus }: Props) => {
     return (
-        <div id="login-page">
+        <div className={layout.center_middle}>
             <LoginForm verificationStatus={verificationStatus} />
         </div>
     );

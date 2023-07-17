@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import EmptyProjectPage from "./EmptyProjectPage";
-import NewProjectPage from "./NewProjectPage";
+import NewProjectPage from "./CreateProjectPage";
 import ProjectItem from "./ProjectItem";
 import autoAnimate from "@formkit/auto-animate";
-import Image from "next/image";
-import { useProjects } from "../../src/lib/utils/hooks";
-import Loading from "../home/Loading";
-import { Project } from "../../src/lib/utils/types";
-import { deleteProject } from "../../src/lib/utils/requests";
+import { useProjects } from "@src/lib/utils/hooks";
+import Loading from "../utils/Loading";
+import { Project } from "@src/lib/utils/types";
+import { deleteProject } from "@src/lib/utils/requests";
+import { join } from "@src/lib/utils/misc";
+
+import TrashSVG from "../../public/images/trash.svg";
+
+import page from "./ProjectPageContainer.module.css";
+import form from "../utils/Form.module.css";
 
 const ProjectPageContainer = () => {
     const { data: projects, isLoading, mutate } = useProjects();
@@ -31,33 +36,23 @@ const ProjectPageContainer = () => {
         return <EmptyProjectPage setIsCreating={setIsCreating} />;
     } else {
         return (
-            <div className="projects-container">
-                <div className="center-flex">
-                    <div className="projects-header">
-                        <div className="projects-header-info">
+            <div className={page.container}>
+                <div className={page.center}>
+                    <div className={page.header}>
+                        <div className={page.header_info}>
                             <h1>Projects</h1>
-                            <div className="projects-header-buttons">
-                                <div
-                                    onClick={() => setDeleteMode(!deleteMode)}
-                                    className="delete-project-btn"
-                                >
-                                    <img
-                                        className="delete-project-icon"
-                                        src={"/images/trash.png"}
-                                        alt={"Trash icon"}
-                                    />
+                            <div className={page.header_btns}>
+                                <div onClick={() => setDeleteMode(!deleteMode)} className={page.delete_btn}>
+                                    <TrashSVG className={page.delete_img} alt="Trash icon" />
                                 </div>
-                                <button
-                                    className="form-btn create-project-button"
-                                    onClick={() => setIsCreating(true)}
-                                >
+                                <button className={join(page.create_btn, form.btn)} onClick={() => setIsCreating(true)}>
                                     Create
                                 </button>
                             </div>
                         </div>
                         <hr />
                     </div>
-                    <div ref={parent} className="project-grid">
+                    <div ref={parent} className={page.grid}>
                         {projects.map((project: Project) => {
                             return (
                                 <ProjectItem

@@ -1,5 +1,7 @@
 import React from "react";
 
+import item from "./CharacterExport.module.css";
+
 type Props = {
     name: string;
     deleteCharacter: (name: string) => void;
@@ -7,8 +9,8 @@ type Props = {
 
 const CharacterExport = ({ name, deleteCharacter }: Props) => {
     return (
-        <div className="character-export-item-wrapper">
-            <div className="character-export-item">
+        <div className={item.container}>
+            <div className={item.content}>
                 <p>{name}</p>
                 <button
                     onClick={() => deleteCharacter(name)}

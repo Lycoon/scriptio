@@ -1,5 +1,6 @@
 import { JSONContent } from "@tiptap/react";
 import { ScreenplayElement } from "./utils/enums";
+import { ScreenplayCtxType } from "@src/context/ScreenplayContext";
 
 /* Nodes */
 export type NodeData = {
@@ -34,6 +35,17 @@ export const countOccurrences = (json: JSONContent, word: string): number => {
     }
 
     return count;
+};
+
+export const getNodeFlattenContent = (content: any[]) => {
+    if (!content) return "";
+
+    let text = "";
+    for (let i = 0; i < content.length; i++) {
+        text += content[i]["text"];
+    }
+
+    return text;
 };
 
 const getScreenplayElementType = (nodeType: string): ScreenplayElement => {
@@ -71,17 +83,6 @@ const getNodeData = (node: any): NodeData => {
     };
 };
 
-const getNodeFlattenContent = (content: any[]) => {
-    if (!content) return "";
-
-    let text = "";
-    for (let i = 0; i < content.length; i++) {
-        text += content[i]["text"];
-    }
-
-    return text;
-};
-
 const getScenePreview = (nodes: any[], cursor: number) => {
     let preview = "";
 
@@ -96,10 +97,13 @@ const getScenePreview = (nodes: any[], cursor: number) => {
     return preview;
 };
 
-export const computeFullScenesData = async (json: any) => {
-    if (!json) return;
+export const computeFullScenesData = async (scriptioScreenplay: any, screenplayCtx: ScreenplayCtxType) => {
+    if (!scriptioScreenplay) {
+        screenplayCtx.updateScenesData([]);
+        return;
+    }
 
-    const nodes = json.content;
+    const nodes = scriptioScreenplay.content;
     const scenes: ScenesData = [];
     let cursor = 1;
     let sceneNumber = 0;
@@ -135,5 +139,5 @@ export const computeFullScenesData = async (json: any) => {
         scenes[scenes.length - 1].nextPosition = cursor; // last scene has no next scene to set nextPosition
     }
 
-    scenesData = scenes;
+    screenplayCtx.updateScenesData(scenes);
 };

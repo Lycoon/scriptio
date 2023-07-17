@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 
+import styles from "./SuggestionMenu.module.css";
+import context from "./sidebar/ContextMenu.module.css";
+
 type Props = {
     suggestions: string[];
     pasteTextAt: (text: string, position: number) => void;
@@ -63,7 +66,7 @@ const SuggestionMenu = ({ pasteTextAt, suggestionData, suggestions }: Props) => 
 
     return (
         <div
-            className="suggestion-menu"
+            className={styles.menu}
             style={{
                 top: suggestionData.position.y + 20,
                 left: suggestionData.position.x,
@@ -71,11 +74,11 @@ const SuggestionMenu = ({ pasteTextAt, suggestionData, suggestions }: Props) => 
         >
             {suggestions.map((suggestion: string, index: number) => (
                 <div
-                    className={`context_menu_item ${index === selectedIdx ? "selected" : ""}`}
+                    className={context.menu_item + " " + (index === selectedIdx ? "selected" : "")}
                     onClick={() => selectSuggestion(index)}
                     key={index}
                 >
-                    <p className="suggestion-item unselectable">{suggestion}</p>
+                    <p className={styles.item + " unselectable"}>{suggestion}</p>
                 </div>
             ))}
         </div>

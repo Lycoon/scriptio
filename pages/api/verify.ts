@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getUserFromId, updateUser } from "../../src/server/service/user-service";
-import { VerificationStatus } from "../../src/lib/utils/enums";
+import { getUserFromId, updateUser } from "@src/server/service/user-service";
+import { VerificationStatus } from "@src/lib/utils/enums";
 
 const redirect = (res: NextApiResponse, status: VerificationStatus) => {
     const REDIRECTION = "/login?verificationStatus=";

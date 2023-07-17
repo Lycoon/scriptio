@@ -1,0 +1,21 @@
+.menu {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+
+    z-index: 1;
+    border-radius: 6px;
+    background-color: var(--secondary);
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
+
+    max-width: 160px;
+    max-height: 180px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.item {
+    overflow-x: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

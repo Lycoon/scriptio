@@ -1,0 +1,39 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+
+    border: none;
+    width: 100%;
+    padding: 10px;
+    padding-left: 25px;
+    background-color: transparent;
+}
+
+.container:focus {
+    outline: none;
+}
+
+.container:hover:not(.active) {
+    transition: padding-left 0.15s;
+    padding-left: 48px;
+    background-color: var(--editor-tab-active);
+}
+
+.text {
+    font-size: 100%;
+    font-family: "Courier";
+    text-align: left;
+    font-weight: bold;
+}
+
+.active {
+    background-color: var(--editor-tab-active);
+}
+
+.selector {
+    width: 10px;
+    height: 10px;
+    color: var(--primary-text);
+}

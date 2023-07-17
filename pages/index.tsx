@@ -1,13 +1,13 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect, useState } from "react";
-import HomePageContainer from "../components/home/HomePageContainer";
-import Navbar from "../components/navbar/Navbar";
-import ProjectPageContainer from "../components/projects/ProjectPageContainer";
-import { UserContext } from "../src/context/UserContext";
-import { useDesktop, useUser } from "../src/lib/utils/hooks";
-import { CookieUser } from "../src/lib/utils/types";
-import DesktopHomePageContainer from "../components/home/DesktopHomePageContainer";
+import HomePageContainer from "@components/home/HomePageContainer";
+import Navbar from "@components/navbar/Navbar";
+import ProjectPageContainer from "@components/projects/ProjectPageContainer";
+import { UserContext } from "@src/context/UserContext";
+import { useDesktop, useUser } from "@src/lib/utils/hooks";
+import { CookieUser } from "@src/lib/utils/types";
+import DesktopHomePageContainer from "@components/home/DesktopHomePageContainer";
 
 type Props = {
     user: CookieUser | undefined;
@@ -15,7 +15,19 @@ type Props = {
 
 const HomePageWindow = ({ user }: Props) => {
     const isDesktop = useDesktop();
-    if (isDesktop) return <DesktopHomePageContainer />;
+    const { updateProject } = useContext(UserContext);
+
+    useEffect(() => {
+        updateProject(undefined);
+    }, []);
+
+    if (isDesktop)
+        return (
+            <>
+                <Navbar />
+                <DesktopHomePageContainer />
+            </>
+        );
 
     if (user?.isLoggedIn) {
         return (

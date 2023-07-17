@@ -1,7 +1,7 @@
 import { Project } from "@prisma/client";
 import Router from "next/router";
-import { deleteProject } from "../../../src/lib/utils/requests";
-import { CookieUser } from "../../../src/lib/utils/types";
+import { deleteProject } from "@src/lib/utils/requests";
+import { CookieUser } from "@src/lib/utils/types";
 
 type Props = {
     project: Project;

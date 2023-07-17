@@ -1,7 +1,10 @@
 import { useContext } from "react";
 import { ContextMenuType, SceneContextProps } from "./ContextMenu";
-import { UserContext } from "../../../src/context/UserContext";
-import SceneLengthItem from "../SceneLengthItem";
+import { UserContext } from "@src/context/UserContext";
+import SceneLengthItem from "../sidebar/SceneLengthItem";
+import { join } from "@src/lib/utils/misc";
+
+import nav_item from "./SidebarItem.module.css";
 
 const SidebarSceneItem = ({
     scene,
@@ -33,16 +36,12 @@ const SidebarSceneItem = ({
     };
 
     return (
-        <div
-            onContextMenu={handleDropdown}
-            onDoubleClick={handleDoubleClick}
-            className="scene-item"
-        >
-            <div className="scene-item-header">
-                <p className="scene-item-title unselectable">{scene.title}</p>
+        <div onContextMenu={handleDropdown} onDoubleClick={handleDoubleClick} className={nav_item.container}>
+            <div className={nav_item.header}>
+                <p className={join(nav_item.title, "unselectable")}>{scene.title}</p>
                 <SceneLengthItem scene={scene} />
             </div>
-            <p className="scene-item-preview unselectable">{scene.preview}</p>
+            <p className={join(nav_item.preview, "unselectable")}>{scene.preview}</p>
         </div>
     );
 };

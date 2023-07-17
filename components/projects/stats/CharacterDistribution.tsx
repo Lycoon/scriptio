@@ -5,8 +5,8 @@ import {
     Frequency,
     getRandomColors,
     getScaledDistribution,
-} from "../../../src/lib/statistics";
-import { Project } from "../../../src/lib/utils/types";
+} from "@src/lib/statistics";
+import { Project } from "@src/lib/utils/types";
 
 type Props = {
     project: Project;

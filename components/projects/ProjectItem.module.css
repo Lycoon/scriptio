@@ -1,0 +1,131 @@
+/* ==================== */
+/*        Layout        */
+/* ==================== */
+
+.container {
+    width: 270px;
+    aspect-ratio: 1.7;
+    padding: 18px;
+
+    border: none;
+    border-radius: 16px;
+    background-color: var(--secondary);
+    box-shadow: var(--project-item-shadow);
+
+    cursor: pointer;
+}
+
+.container:hover {
+    outline-style: solid;
+    outline-color: var(--secondary-hover);
+    outline-width: 3px;
+}
+
+.container:active {
+    transform: scale(0.97);
+    transition: transform 0.07s;
+}
+
+/* ==================== */
+/*        General       */
+/* ==================== */
+
+.title {
+    font-family: roboto-thin;
+    font-style: italic;
+    font-size: 1.2rem;
+    max-width: 125px;
+    text-align: left;
+}
+
+.title_flex {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.date {
+    display: flex;
+    flex-direction: row;
+    gap: 7px;
+    margin-top: 10px;
+}
+
+.date_text {
+    font-family: roboto;
+    font-size: 0.9rem;
+    max-width: 120px;
+    text-align: left;
+    color: var(--secondary-text);
+}
+
+.calendar {
+    width: 18px;
+    height: 18px;
+    color: var(--secondary-text);
+}
+
+.poster {
+    width: 85px;
+    aspect-ratio: 0.675;
+    border-radius: 6px;
+}
+
+/* ==================== */
+/*     Deletion mode    */
+/* ==================== */
+
+.delete {
+    border-style: dashed;
+    border-color: rgb(190, 73, 73);
+    border-width: 4px;
+
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+
+    animation-duration: 1.3s;
+    animation-name: shake;
+    animation-delay: 0;
+    animation-iteration-count: infinite;
+    animation-direction: forward;
+}
+
+.delete:hover {
+    border-color: var(--seconday);
+    background-color: var(--secondary-hover);
+}
+
+.text_delete {
+    font-family: roboto-thin;
+    font-size: 1.4rem;
+}
+
+/* ==================== */
+/*       Animation      */
+/* ==================== */
+
+@keyframes shake {
+    10%,
+    90% {
+        transform: rotate(0.5deg);
+    }
+
+    20%,
+    80% {
+        transform: rotate(-0.5deg);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: rotate(0.5deg);
+    }
+
+    40%,
+    60% {
+        transform: rotate(-0.5deg);
+    }
+}

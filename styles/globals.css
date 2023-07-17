@@ -1,87 +1,35 @@
-/* Layouts */
-@import "Navbar.module.css";
-@import "NavbarButton.module.css";
-@import "NavbarTab.module.css";
-@import "NavbarDropdown.module.css";
-@import "DropdownItem.module.css";
-@import "ExportDropdown.module.css";
-@import "ProjectItem.module.css";
-@import "NewProjectItem.module.css";
-@import "Popup.module.css";
-@import "PopupImport.module.css";
-@import "ProjectDangerZone.module.css";
-@import "PageCounter.module.css";
-@import "SuggestionMenu.module.css";
-
-/* Forms */
-@import "HomePageForm.module.css";
-@import "LoginForm.module.css";
-@import "RegisterForm.module.css";
-@import "RecoveryForm.module.css";
-@import "FormInfo.module.css";
-@import "UploadButton.module.css";
-@import "PasswordChangeForm.module.css";
-
-/* Page containers */
-@import "HomePageContainer.module.css";
-@import "LoginContainer.module.css";
-@import "RegisterContainer.module.css";
-@import "RecoveryContainer.module.css";
-@import "EditorContainer.module.css";
-@import "ProjectPageContainer.module.css";
-@import "EmptyProjectPage.module.css";
-@import "NewProjectPage.module.css";
-@import "EditProjectContainer.module.css";
-@import "ProjectStatsContainer.module.css";
-@import "SettingsPageContainer.module.css";
-@import "Loading.module.css";
-@import "ExportProjectContainer.module.css";
-@import "AboutPageContainer.module.css";
-@import "ContextMenu.module.css";
-@import "DesktopHomePageContainer.module.css";
-@import "DesktopNavbar.module.css";
-
-/* Editor */
-@import "EditorSidebar.module.css";
-@import "EditorComponent.module.css";
-@import "EditorContent.module.css";
-@import "EditorTab.module.css";
-@import "EditorSidebarNavigation.module.css";
+@import "../public/css/scriptio.css";
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-        Arial, sans-serif;
-}
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-a {
-    font-family: roboto;
-    color: var(--secondary-text);
-}
-
-a:hover {
-    color: #ffffff;
-}
-
-/* Variables */
-/* Global */
-* {
+    /* Default values */
     --format-sidebar-width: 260px;
     --nav-sidebar-width: 380px;
 }
 
-/* Themes */
+/* ==================== */
+/*        Themes        */
+/* ==================== */
+html {
+    --validation-color: #61b76b;
+    --error-color: #ce4462;
+    --warning-color: #efa52f;
+}
+
 html.light {
-    --primary-bg: #ffffff;
-    --secondary-bg: #797979;
-    --secondary-bg-hover: #616161;
+    --primary: #ffffff;
+    --secondary: #4f4f4f;
+    --tertiary: #e0e0e0;
+
+    --on-primary: #474747;
+    --on-secondary: #d6d6d6;
+    --on-tertiary: #000000;
+
     --upload-bg-hover: #eeeeee;
-
-    --primary-text: #474747;
-    --secondary-text: #ffffff;
-
     --separator: #e0e0e0;
     --input-outline: #a2a2a2;
     --navbar-outline: #777777;
@@ -107,10 +55,13 @@ html.light {
 }
 
 html.dark {
-    --primary-bg: #1d1d1d;
-    --secondary-bg: #2e2e2e;
-    --secondary-bg-hover: #3a3a3a;
-    --upload-bg-hover: #2e2e2e;
+    --primary: #1d1d1d;
+    --secondary: #2e2e2e;
+    --tertiary: #3a3a3a;
+
+    --primary-hover: #2e2e2e;
+    --secondary-hover: #3a3a3a;
+    --tertiary-hover: #464646;
 
     --primary-text: #ffffff;
     --secondary-text: #9b9b9b;
@@ -139,6 +90,10 @@ html.dark {
     --editor-element-hover: #eeeeee;
 }
 
+/* ==================== */
+/*        Layouts       */
+/* ==================== */
+
 hr {
     border: 0;
     clear: both;
@@ -149,35 +104,70 @@ hr {
     margin-top: 10px;
 }
 
-input:focus {
-    outline-style: solid;
-    outline-color: var(--secondary-bg-hover) !important;
-}
-
 h1 {
     font-family: josefin-medium;
-    color: var(--primary-text);
 }
 
-h2 {
-    font-family: tommy;
-    color: var(--primary-text);
-}
-
+h2,
 h3 {
     font-family: tommy;
 }
 
-.main-container {
-    display: flex;
-    flex-direction: column;
-
-    position: relative;
-    height: 100vh;
-
-    background-color: var(--primary-bg);
-    transition: background-color 0.15s;
+a {
+    font-family: roboto;
+    color: var(--secondary-text);
 }
+
+a:hover {
+    color: #ffffff;
+}
+
+p {
+    color: var(--primary-text);
+}
+
+select {
+    width: 40%;
+    height: 25px;
+    padding-inline: 4px;
+    padding-block: 2px;
+    border: none;
+    border-radius: 5px;
+}
+
+select:focus {
+    outline: none;
+}
+
+/* ==================== */
+/*       Scrollbar      */
+/* ==================== */
+
+::-webkit-scrollbar {
+    width: 16px;
+    box-shadow: 0px 0px 20px 1px rgba(0, 0, 0, 0.15);
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: var(--editor-scroll-bg);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    height: 60px;
+    background: var(--editor-scroll-btn);
+    border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--editor-scroll-btn-hover);
+}
+
+/* ==================== */
+/*        Fonts         */
+/* ==================== */
 
 @font-face {
     font-family: poetsen;

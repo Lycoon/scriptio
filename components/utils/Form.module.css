@@ -1,0 +1,115 @@
+/* ==================== */
+/*        Layout        */
+/* ==================== */
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.elements {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+
+    width: 25%;
+    min-width: 270px;
+    max-width: 450px;
+    margin-left: 10%;
+}
+
+.element {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.project {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10%;
+
+    width: 25%;
+    min-width: 270px;
+    max-width: 450px;
+}
+
+.home {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+
+    width: 320px;
+    min-height: 25vh;
+}
+
+/* ==================== */
+/*        Buttons       */
+/* ==================== */
+
+.btn_flex {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.btn {
+    font-size: 1rem;
+    font-family: segoe-bold;
+    color: #ffffff;
+    background-color: var(--secondary);
+    cursor: pointer;
+    width: 100%;
+
+    /* Position */
+    text-align: center;
+    padding: 10px;
+
+    /* Border */
+    border: none;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.btn:hover {
+    transition: background-color 0.2s;
+    background-color: var(--secondary-hover);
+}
+
+.btn:active {
+    transition: transform 0.25s;
+    transform: scale(0.98);
+}
+
+.btn:disabled {
+    color: var(--secondary-text);
+    background-color: var(--secondary);
+}
+
+/* ==================== */
+/*        Inputs        */
+/* ==================== */
+
+.input {
+    font-size: 1.15rem;
+    border: none;
+    border-radius: 7px;
+    padding: 8px;
+}
+
+.input::placeholder {
+    font-size: 1rem;
+}
+
+.input_desc {
+    min-height: 100px;
+    max-height: 300px;
+    resize: vertical;
+}

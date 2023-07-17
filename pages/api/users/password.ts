@@ -5,23 +5,23 @@ import {
     MISSING_BODY,
     PASSWORD_CHANGED,
     PASSWORD_REQUIREMENTS,
-} from "../../../src/lib/messages";
-import { sessionOptions } from "../../../src/lib/session";
-import { generateSecrets, updateUser } from "../../../src/server/service/user-service";
-import { onError, onSuccess } from "../../../src/lib/utils/requests";
+} from "@src/lib/messages";
+import { sessionOptions } from "@src/lib/session";
+import { generateSecrets, updateUser } from "@src/server/service/user-service";
+import { onResponseAPI } from "@src/lib/utils/requests";
 
 export default withIronSessionApiRoute(handler, sessionOptions);
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!req.query || !req.query.userId) {
-        return onError(res, 400, "Query not found");
+        return onResponseAPI(res, 400, "Query not found");
     }
 
     const userId = +req.query.userId;
     const user = req.session.user;
 
     if (!user || !user.isLoggedIn || !userId || userId !== user.id) {
-        return onError(res, 403, "Forbidden");
+        return onResponseAPI(res, 403, "Forbidden");
     }
 
     switch (req.method) {
@@ -32,16 +32,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     if (!body || !body.password) {
-        return onError(res, 400, MISSING_BODY);
+        return onResponseAPI(res, 400, MISSING_BODY);
     }
 
     if (body.password.length < 8) {
-        return onError(res, 400, PASSWORD_REQUIREMENTS);
+        return onResponseAPI(res, 400, PASSWORD_REQUIREMENTS);
     }
 
     const secrets = generateSecrets(body.password);
     if (!secrets) {
-        return onError(res, 500, FAILED_PASSWORD_CHANGED);
+        return onResponseAPI(res, 500, FAILED_PASSWORD_CHANGED);
     }
 
     const updated = await updateUser({
@@ -53,8 +53,8 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     });
 
     if (!updated) {
-        return onError(res, 500, FAILED_PASSWORD_CHANGED);
+        return onResponseAPI(res, 500, FAILED_PASSWORD_CHANGED);
     }
 
-    return onSuccess(res, 200, PASSWORD_CHANGED, null);
+    return onResponseAPI(res, 200, PASSWORD_CHANGED, null);
 }
