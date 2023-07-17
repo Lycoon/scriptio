@@ -1,31 +1,50 @@
-import { useState } from "react";
-import { Project } from "../../pages/api/users";
-import { Page } from "../../src/lib/utils";
-import NavbarDropdown from "./dropdown/NavbarDropdown";
+import { useEffect, useRef, useState } from "react";
+import DropdownItem from "./dropdown/DropdownItem";
+import { NavbarTabData } from "./Navbar";
+
+import tab from "./NavbarTab.module.css";
 
 type Props = {
-    project: Project;
+    title: string;
+    dropdown: NavbarTabData[];
 };
 
-const NavbarTab = ({ project }: Props) => {
+const NavbarTab = ({ title, dropdown }: Props) => {
+    const ref = useRef<HTMLButtonElement>(null);
     const [active, updateActive] = useState<boolean>(false);
+
     const toggleDropdown = () => {
         updateActive(!active);
     };
 
+    const handleClickOutside = (event: any) => {
+        if (event.target?.className !== ref.current?.className) {
+            updateActive(false);
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener("click", handleClickOutside, true);
+        return () => {
+            document.removeEventListener("click", handleClickOutside, true);
+        };
+    });
+
     return (
-        <div onClick={toggleDropdown} className="navbar-tab">
-            <p className="navbar-tab-content unselectable">{project.title}</p>
-            <img
-                className="dropdown-icon"
-                src="/images/arrow.svg"
-                alt="Dropdown arrow"
-            />
+        <div onClick={toggleDropdown} className={tab.container}>
+            <p className={tab.content + " unselectable"}>{title}</p>
             {active && (
-                <NavbarDropdown
-                    project={project}
-                    toggleDropdown={toggleDropdown}
-                />
+                <div className={tab.dropdown}>
+                    {dropdown.map((item) => (
+                        <DropdownItem
+                            key={item.name}
+                            content={item.name}
+                            icon={item.icon}
+                            action={item.action}
+                            ref={ref}
+                        />
+                    ))}
+                </div>
             )}
         </div>
     );

@@ -1,67 +1,94 @@
-import { Extension, JSONContent, useEditor } from "@tiptap/react";
-import { useContext, useEffect, useState } from "react";
-import { UserContext } from "../../src/context/UserContext";
-import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "../../src/Screenplay";
-import EditorComponent from "./EditorComponent";
+/* Tiptap */
+import { Content, Editor, JSONContent, useEditor } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
-import { Project } from "../../pages/api/users";
-import { saveProjectCharacters, saveScreenplay } from "../../src/lib/requests";
-import { useDebouncedCallback } from "use-debounce";
-import {
-    computeFullScenesData,
-    computeFullCharactersData,
-    CharacterData,
-    countOccurrences,
-    deleteCharacter,
-    getCharactersData,
-} from "../../src/lib/screenplayUtils";
-import EditorSidebarFormat, { ScreenplayElement } from "./sidebar/EditorSidebarFormat";
+
+/* Components */
+import EditorComponent from "./EditorComponent";
+import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
-import Suggestion from "@tiptap/suggestion";
+import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
+import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "@src/Screenplay";
+
+/* Utils */
+import { useContext, useEffect, useState } from "react";
+import { UserContext } from "@src/context/UserContext";
+import { useDebouncedCallback } from "use-debounce";
+import { SaveStatus, ScreenplayElement } from "@src/lib/utils/enums";
+import { computeFullScenesData, countOccurrences } from "@src/lib/screenplay";
+import { saveScreenplay } from "@src/lib/utils/requests";
+import { Project } from "@src/lib/utils/types";
+import { CharacterData, computeFullCharactersData, deleteCharacter } from "@src/lib/utils/characters";
+
+/* Styles */
+import editor_ from "./EditorAndSidebar.module.css";
+import { ScreenplayContext } from "@src/context/ScreenplayContext";
 
 type Props = {
     project: Project;
 };
 
 const EditorAndSidebar = ({ project }: Props) => {
-    const { updateEditor, updateIsSaving } = useContext(UserContext);
+    const userCtx = useContext(UserContext);
+    const screenplayCtx = useContext(ScreenplayContext);
+
     const [selectedTab, updateSelectedTab] = useState<number>(0);
-    const [isSaved, updateIsSaved] = useState<boolean>(false);
-    const [isPopupActive, updatePopupActive] = useState<boolean>(false);
     const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(true);
+
+    /* Suggestion menu */
+    const [previousElement, updatePreviousElement] = useState<string>("action");
+    const [suggestions, updateSuggestions] = useState<string[]>([]);
+    const [suggestionData, updateSuggestionData] = useState<SuggestionData>({
+        position: { x: 0, y: 0 },
+        cursor: 0,
+        cursorInNode: 0,
+    });
 
     /* Format marks */
     const [isBold, setIsBold] = useState<boolean>(false);
     const [isItalic, setIsItalic] = useState<boolean>(false);
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
 
-    const save = () => {
-        if (!isSaved) {
-            updateIsSaving(true);
-            saveScreenplay(project.userId, project.id, editorView?.getJSON());
-            updateIsSaved(true);
-            setTimeout(() => {
-                // loading animation
-                updateIsSaving(false);
-            }, 1500);
+    const save = async () => {
+        if (userCtx.saveStatus !== SaveStatus.SAVED) {
+            userCtx.updateSaveStatus(SaveStatus.SAVING);
+            const res = await saveScreenplay(project.id, editorView?.getJSON(), screenplayCtx.charactersData);
+
+            if (!res.ok) {
+                userCtx.updateSaveStatus(SaveStatus.ERROR);
+                return;
+            }
+
+            userCtx.updateSaveStatus(SaveStatus.SAVED);
         }
     };
 
-    const deferredSave = useDebouncedCallback(() => {
+    const deferredScreenplaySave = useDebouncedCallback(() => {
         save();
     }, 2000);
 
     const deferredSceneUpdate = useDebouncedCallback(async () => {
-        computeFullScenesData(editorView?.getJSON());
-    }, 1000);
-
-    const deferredCharactersUpdate = useDebouncedCallback(() => {
-        saveProjectCharacters(project.userId, project.id, getCharactersData());
+        computeFullScenesData(editorView?.getJSON(), screenplayCtx);
     }, 500);
+
+    const deferredCharactersUpdate = useDebouncedCallback(async () => {
+        computeFullCharactersData(editorView?.getJSON(), project.characters, screenplayCtx);
+    }, 2000);
+
+    const triggerEditorUpdate = () => {
+        // Set as unsaved, to prevent data loss between typing and autosave
+        userCtx.updateSaveStatus(SaveStatus.NOT_SAVED);
+
+        deferredSceneUpdate();
+        deferredCharactersUpdate();
+
+        deferredScreenplaySave();
+    };
+
+    const tabs = ["scene", "action", "character", "dialogue", "parenthetical", "transition", "section", "note"];
 
     const updateEditorStyles = (marks: any[]) => {
         marks = marks.map((mark: any) => mark.attrs.class);
@@ -71,10 +98,63 @@ const EditorAndSidebar = ({ project }: Props) => {
         setIsUnderline(marks.includes("underline"));
     };
 
-    const onCaretUpdate = (anchor: any) => {
-        const currNode = anchor.path[3].attrs.class;
-        setActiveTab(currNode);
+    const onCaretUpdate = (editor: Editor, selection: any) => {
+        const anchor = selection.$anchor;
+        const nodeAnchor = anchor.parent;
+        const elementAnchor = nodeAnchor.attrs.class;
 
+        const head = selection.$head;
+        const nodeHead = head.parent;
+        const elementHead = nodeHead.attrs.class;
+
+        setActiveTab(elementHead, false);
+
+        const displaySuggestions = (list: string[], data: SuggestionData) => {
+            updateSuggestions(list);
+            updateSuggestionData(data);
+        };
+
+        // Leaving autocomplete
+        if (previousElement === "character" && elementAnchor !== "character") {
+            updateSuggestions([]);
+        }
+        updatePreviousElement(elementAnchor);
+
+        // Autocompletion
+        if (elementAnchor === "character") {
+            const nodeSize: number = nodeAnchor.content.size;
+            const cursorInNode: number = anchor.parentOffset;
+            const cursor: number = anchor.pos;
+            const pagePos = editor.view.coordsAtPos(cursor);
+
+            let list = Object.keys(screenplayCtx.charactersData);
+
+            if (nodeSize > 0) {
+                if (cursorInNode !== nodeSize) {
+                    updateSuggestions([]);
+                    return;
+                }
+
+                const text = nodeAnchor.textContent;
+                const trimmed: string = text.slice(0, cursorInNode).toLowerCase();
+                list = list
+                    .filter((name) => {
+                        const name_ = name.toLowerCase();
+                        return name_ !== trimmed && name_.startsWith(trimmed) && name_ !== text;
+                    })
+                    .slice(0, 5);
+            }
+
+            displaySuggestions(list, {
+                position: { x: pagePos.left, y: pagePos.top },
+                cursor,
+                cursorInNode,
+            });
+        } else if (elementAnchor === "scene") {
+            // TODO: Autocompletion for scenes
+        }
+
+        // Updating format marks
         if (!anchor.nodeBefore) {
             if (!anchor.nodeAfter) {
                 return;
@@ -84,17 +164,6 @@ const EditorAndSidebar = ({ project }: Props) => {
         }
         updateEditorStyles(anchor.nodeBefore?.marks);
     };
-
-    const tabs = [
-        "scene",
-        "action",
-        "character",
-        "dialogue",
-        "parenthetical",
-        "transition",
-        "section",
-        "note",
-    ];
 
     const editorView = useEditor({
         extensions: [
@@ -109,18 +178,17 @@ const EditorAndSidebar = ({ project }: Props) => {
             // scriptio
             Screenplay,
         ],
+        content: project.screenplay as Content,
 
         // update on each screenplay update
         onUpdate({ editor, transaction }) {
-            updateIsSaved(false); // unsaved changes, to prevent data loss between typing and autosave
-            deferredSceneUpdate();
-            deferredSave();
+            triggerEditorUpdate();
         },
 
         // update active on caret update
-        onSelectionUpdate({ transaction }) {
-            const anchor = (transaction as any).curSelection.$anchor;
-            onCaretUpdate(anchor);
+        onSelectionUpdate({ editor, transaction }) {
+            const selection = (transaction as any).curSelection;
+            onCaretUpdate(editor as Editor, selection);
         },
     });
 
@@ -129,12 +197,23 @@ const EditorAndSidebar = ({ project }: Props) => {
         editorProps: {
             handleKeyDown(view: any, event: any) {
                 const selection = view.state.selection;
+                const node = selection.$anchor.parent;
+                const nodeSize = node.content.size;
+                const nodePos = selection.$head.parentOffset;
+                const currNode = node.attrs.class;
 
-                if (event.key === "Enter") {
-                    const node = selection.$anchor.parent;
-                    const nodeSize = node.content.size;
-                    const nodePos = selection.$head.parentOffset;
-                    const currNode = node.attrs.class;
+                if (event.code === "Space") {
+                    // if starting action with INT. or EXT. switch to scene
+                    if (currNode === "action" && node.textContent.match(/^\b(int|ext)\./gi)) {
+                        setActiveTab("scene");
+                    }
+                } else if (event.key === "Enter") {
+                    if (suggestions.length > 0) {
+                        // prevent new line if suggestions are displayed
+                        event.preventDefault();
+                        return true;
+                    }
+
                     const pos = selection.anchor;
 
                     // empty element
@@ -156,11 +235,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                         }
                     }
 
-                    editorView
-                        .chain()
-                        .insertContentAt(pos, `<p class="${newNode}"></p>`)
-                        .focus(pos)
-                        .run();
+                    editorView.chain().insertContentAt(pos, `<p class="${newNode}"></p>`).focus(pos).run();
 
                     return true;
                 }
@@ -170,24 +245,10 @@ const EditorAndSidebar = ({ project }: Props) => {
         },
     });
 
-    useEffect(() => {
-        if (editorView?.commands) {
-            editorView?.commands.setContent(project.screenplay as JSONContent);
-            updateEditor(editorView!);
-        }
-    }, [editorView]);
-
-    // init on editor load
-    useEffect(() => {
-        if (project.screenplay) {
-            computeFullScenesData(project.screenplay);
-            computeFullCharactersData(project.screenplay, project.characters);
-        }
-    }, []);
-
-    const setActiveTab = (node: string) => {
+    const setActiveTab = (node: string, applyStyle = true) => {
         updateSelectedTab(tabs.indexOf(node));
-        if (editorView) {
+
+        if (applyStyle && editorView) {
             editorView.chain().focus().setNode("Screenplay", { class: node }).run();
         }
     };
@@ -211,20 +272,25 @@ const EditorAndSidebar = ({ project }: Props) => {
                     idx = ScreenplayElement.Parenthetical;
             }
 
-            updateSelectedTab(idx);
             setActiveTab(tabs[idx]);
         }
 
+        // Ctrl + S
         if (e.ctrlKey && e.key === "s") {
-            // Ctrl + S
             e.preventDefault();
             save();
         }
 
+        // Ctrl + X
         if (e.ctrlKey && e.key === "x") {
-            // Ctrl + X
             e.preventDefault();
             updateIsNavigationActive(!isNavigationActive);
+        }
+
+        // Escape
+        if (e.key === "Escape") {
+            userCtx.updateContextMenu(undefined);
+            updateSuggestions([]);
         }
     };
 
@@ -246,8 +312,16 @@ const EditorAndSidebar = ({ project }: Props) => {
         //editorView?.state.doc.copy();
     };
 
+    const replaceRange = (start: number, end: number, text: string) => {
+        editorView?.chain().focus(start).setTextSelection({ from: start, to: end }).insertContent(text).run();
+    };
+
     const pasteText = (text: string) => {
         editorView?.commands.insertContent(text);
+    };
+
+    const pasteTextAt = (text: string, position: number) => {
+        editorView?.commands.insertContentAt(position, text);
     };
 
     const replaceOccurrences = (oldWord: string, newWord: string) => {
@@ -255,21 +329,21 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const removeCharacter = (name: string) => {
-        deleteCharacter(name);
+        deleteCharacter(name, screenplayCtx);
     };
 
     /* Popup actions */
-    const [popup, setPopup] = useState<JSX.Element | null>(null);
     const closePopup = () => {
-        updatePopupActive(false);
+        userCtx.updatePopup(undefined);
     };
 
-    const getCharacterOccurrences = (word: string) => {
-        return countOccurrences(editorView?.getJSON(), word);
+    const getCharacterOccurrences = (word: string): number => {
+        if (!editorView) return 0;
+        return countOccurrences(editorView.getJSON(), word);
     };
 
     const editCharacterPopup = (character: CharacterData) => {
-        setPopup(() => (
+        userCtx.updatePopup(() => (
             <PopupCharacterItem
                 closePopup={closePopup}
                 type={PopupType.EditCharacter}
@@ -278,14 +352,10 @@ const EditorAndSidebar = ({ project }: Props) => {
                 replaceOccurrences={replaceOccurrences}
             />
         ));
-        updatePopupActive(true);
     };
 
     const addCharacterPopup = () => {
-        setPopup(() => (
-            <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />
-        ));
-        updatePopupActive(true);
+        userCtx.updatePopup(() => <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />);
     };
 
     /* Marks */
@@ -303,7 +373,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const onUnload = (e: BeforeUnloadEvent) => {
-        if (!isSaved) {
+        if (userCtx.saveStatus === SaveStatus.NOT_SAVED) {
             let confirmationMessage = "Are you sure you want to leave?";
 
             e.returnValue = confirmationMessage;
@@ -316,18 +386,35 @@ const EditorAndSidebar = ({ project }: Props) => {
     useEffect(() => {
         addEventListener("keydown", pressedKeyEvent);
         addEventListener("beforeunload", onUnload);
-        addEventListener("charactersDataUpdated", deferredCharactersUpdate);
+        addEventListener("onCharacterUpdate", deferredScreenplaySave);
         return () => {
             removeEventListener("keydown", pressedKeyEvent);
             removeEventListener("beforeunload", onUnload);
-            removeEventListener("charactersDataUpdated", deferredCharactersUpdate);
+            removeEventListener("onCharacterUpdate", deferredScreenplaySave);
         };
     });
 
+    useEffect(() => {
+        if (editorView) {
+            editorView.commands.setContent(project.screenplay as JSONContent);
+            userCtx.updateEditor(editorView);
+
+            computeFullScenesData(project.screenplay, screenplayCtx);
+            computeFullCharactersData(project.screenplay, project.characters, screenplayCtx);
+        }
+    }, [project, editorView]);
+
+    const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
+        if (suggestions.length > 0) updateSuggestions([]);
+    };
+
     return (
-        <div id="editor-and-sidebar">
+        <div className={editor_.editor_and_sidebar}>
             <ContextMenu />
-            {isPopupActive && popup}
+            {suggestions.length > 0 && (
+                <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} pasteTextAt={pasteTextAt} />
+            )}
+            {userCtx.popup}
             <EditorSidebarNavigation
                 active={isNavigationActive}
                 getFocusOnPosition={getFocusOnPosition}
@@ -335,12 +422,11 @@ const EditorAndSidebar = ({ project }: Props) => {
                 cutTextSelection={cutTextSelection}
                 pasteText={pasteText}
                 copyTextSelection={copyTextSelection}
-                deferredCharactersUpdate={deferredCharactersUpdate}
                 editCharacterPopup={editCharacterPopup}
                 addCharacterPopup={addCharacterPopup}
                 removeCharacter={removeCharacter}
             />
-            <div id="editor-container">
+            <div className={editor_.container} onScroll={onScroll}>
                 <EditorComponent editor={editorView} />
             </div>
             <EditorSidebarFormat

@@ -1,8 +1,10 @@
 import { Editor } from "@tiptap/react";
 import { createContext, ReactNode, useState } from "react";
-import { ContextMenuProps } from "../../components/editor/sidebar/ContextMenu";
-import { CookieUser, Project } from "../../pages/api/users";
-import useUser from "../lib/useUser";
+import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
+import { useUser } from "../lib/utils/hooks";
+import { Project } from "@prisma/client";
+import { SaveStatus } from "../lib/utils/enums";
+import { CookieUser } from "../lib/utils/types";
 
 export type contextType = {
     user: CookieUser | undefined;
@@ -11,14 +13,16 @@ export type contextType = {
     updateEditor: (editor: Editor) => void;
     darkMode: boolean;
     updateDarkMode: (darkMode: boolean) => void;
-    saved: boolean;
-    updateSaved: (saved: boolean) => void;
+    saveStatus: SaveStatus;
+    updateSaveStatus: (saveStatus: SaveStatus) => void;
     project: Project | undefined;
     updateProject: (project: Project | undefined) => void;
-    isSaving: boolean;
-    updateIsSaving: (isSaving: boolean) => void;
     contextMenu: ContextMenuProps | undefined;
     updateContextMenu: (contextMenu: ContextMenuProps | undefined) => void;
+    popup: any;
+    updatePopup: (popup: any) => void;
+    isDesktop: boolean;
+    updateIsDesktop: (isDesktop: boolean) => void;
 };
 
 const contextDefaults: contextType = {
@@ -28,14 +32,16 @@ const contextDefaults: contextType = {
     updateEditor: () => {},
     darkMode: false,
     updateDarkMode: () => {},
-    saved: true,
-    updateSaved: () => {},
+    saveStatus: SaveStatus.SAVED,
+    updateSaveStatus: () => {},
     project: undefined,
     updateProject: () => {},
-    isSaving: false,
-    updateIsSaving: () => {},
     contextMenu: undefined,
     updateContextMenu: () => {},
+    popup: undefined,
+    updatePopup: () => {},
+    isDesktop: false,
+    updateIsDesktop: () => {},
 };
 
 type Props = {
@@ -44,19 +50,18 @@ type Props = {
 
 export const UserContext = createContext<contextType>(contextDefaults);
 
-export function ContextProvider({ children }: Props) {
-    const { user, setUser } = useUser();
+export function UserContextProvider({ children }: Props) {
+    const { data: user, mutate: setUser } = useUser();
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [darkMode, setDarkMode] = useState<boolean>(false);
-    const [saved, setSaved] = useState<boolean>(true);
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.SAVED);
     const [project, setProject] = useState<Project | undefined>(undefined);
-    const [isSaving, setIsSaving] = useState<boolean>(false);
-    const [contextMenu, setContextMenu] = useState<
-        ContextMenuProps | undefined
-    >(undefined);
+    const [contextMenu, setContextMenu] = useState<ContextMenuProps | undefined>(undefined);
+    const [popup, setPopup] = useState<any>(undefined);
+    const [isDesktop, setIsDesktop] = useState<boolean>(false);
 
     const updateUser = (user_: CookieUser | undefined) => {
-        setUser(user_);
+        setUser!(user_);
     };
 
     const updateEditor = (editor_: Editor) => {
@@ -67,20 +72,24 @@ export function ContextProvider({ children }: Props) {
         setDarkMode(darkMode_);
     };
 
-    const updateSaved = (saved_: boolean) => {
-        setSaved(saved_);
+    const updateSaveStatus = (saveStatus_: SaveStatus) => {
+        setSaveStatus(saveStatus_);
     };
 
     const updateProject = (project_: Project | undefined) => {
         setProject(project_);
     };
 
-    const updateIsSaving = (isSaving_: boolean) => {
-        setIsSaving(isSaving_);
-    };
-
     const updateContextMenu = (contextMenu_: ContextMenuProps | undefined) => {
         setContextMenu(contextMenu_);
+    };
+
+    const updatePopup = (popup_: any) => {
+        setPopup(popup_);
+    };
+
+    const updateIsDesktop = (isDesktop_: boolean) => {
+        setIsDesktop(isDesktop_);
     };
 
     const value = {
@@ -90,21 +99,21 @@ export function ContextProvider({ children }: Props) {
         updateEditor,
         darkMode,
         updateDarkMode,
-        saved,
-        updateSaved,
+        saveStatus,
+        updateSaveStatus,
         project,
         updateProject,
-        isSaving,
-        updateIsSaving,
         contextMenu,
         updateContextMenu,
+        popup,
+        updatePopup,
+        isDesktop,
+        updateIsDesktop,
     };
 
     return (
         <>
-            <UserContext.Provider value={value}>
-                {children}
-            </UserContext.Provider>
+            <UserContext.Provider value={value}>{children}</UserContext.Provider>
         </>
     );
 }

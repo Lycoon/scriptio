@@ -1,0 +1,26 @@
+.item {
+    font-size: 0.9rem;
+    text-align: left;
+
+    padding-inline: 15px;
+    padding-block: 10px;
+
+    color: white;
+    background-color: var(--secondary);
+    border: none;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.item:hover {
+    background-color: var(--secondary-hover);
+}
+
+.item_img {
+    width: 18px;
+    height: 18px;
+    filter: invert(100%);
+}

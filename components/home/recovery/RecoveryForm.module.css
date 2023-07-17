@@ -1,0 +1,8 @@
+.info {
+    font-family: "Segoe UI";
+    color: var(--secondary-text);
+
+    overflow-wrap: anywhere;
+    text-align: justify;
+    margin-top: 15px;
+}

@@ -1,0 +1,83 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    padding-top: 25px;
+    padding-inline: 30px;
+    width: var(--nav-sidebar-width);
+    background-color: var(--editor-sidebar);
+
+    /*resize: horizontal;
+    overflow: auto;*/
+
+    /* hiding it by default */
+    margin-left: calc(var(--nav-sidebar-width) * -1);
+    transition: margin-left 0.1s ease-in;
+}
+
+.active {
+    margin-left: 0;
+    transition: margin-left 0.1s ease-in;
+}
+
+.selection {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+/* Navigation menu tabs */
+.tab {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+
+    padding: 4px 10px;
+    border-radius: 8px;
+    background-color: var(--editor-style-bg-hover);
+    cursor: pointer;
+}
+
+.tab:hover {
+    background-color: var(--editor-style-bg-active);
+}
+
+.tab.active_tab {
+    background-color: var(--editor-style-bg-active);
+}
+
+.tab_img {
+    width: 16px;
+    height: 16px;
+    color: var(--primary-text);
+}
+
+/* Scenes list */
+.list {
+    display: flex;
+    flex-direction: column;
+
+    height: 225px;
+    margin-top: 12px;
+    border-radius: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    background-color: var(--editor-style-bg-hover);
+}
+
+.scene_list {
+    height: 430px;
+}
+
+.list_title {
+    font-size: 1rem;
+}
+
+.list_fill {
+    min-height: 30px;
+    height: 100%;
+}

@@ -1,18 +1,18 @@
-import autoAnimate from "@formkit/auto-animate";
-import Image from "next/image";
-import { useContext, useEffect, useRef, useState } from "react";
-import { UserContext } from "../../../src/context/UserContext";
-import {
-    CharacterData,
-    CharacterMap,
-    getCharactersData,
-    getScenesData,
-    SceneItem,
-    ScenesData,
-} from "../../../src/lib/screenplayUtils";
+import { join } from "@src/lib/utils/misc";
+import { useContext, useState } from "react";
+import { ScreenplayContext } from "@src/context/ScreenplayContext";
+import { UserContext } from "@src/context/UserContext";
 import { ContextMenuType } from "./ContextMenu";
+import { SceneItem } from "@src/lib/screenplay";
+import { CharacterData } from "@src/lib/utils/characters";
 import SidebarCharacterItem from "./SidebarCharacterItem";
 import SidebarSceneItem from "./SidebarSceneItem";
+
+import CharacterSVG from "../../../public/images/character.svg";
+import LocationSVG from "../../../public/images/location.svg";
+
+import sidebar from "./EditorSidebar.module.css";
+import sidebar_nav from "./EditorSidebarNavigation.module.css";
 
 type Props = {
     active: boolean;
@@ -25,7 +25,6 @@ type Props = {
     copyTextSelection: (start: number, end: number) => void;
 
     /* Characters */
-    deferredCharactersUpdate: () => void;
     editCharacterPopup: (character: CharacterData) => void;
     addCharacterPopup: () => void;
     removeCharacter: (name: string) => void;
@@ -50,30 +49,12 @@ const EditorSidebarNavigation = ({
     /* Characters */
     editCharacterPopup,
     addCharacterPopup,
-    deferredCharactersUpdate,
     removeCharacter,
 }: Props) => {
+    const { scenesData, charactersData } = useContext(ScreenplayContext);
     const { updateContextMenu } = useContext(UserContext);
-    const [scenes, setScenes] = useState<ScenesData>(getScenesData());
-    const [characters, setCharacters] = useState<CharacterMap>(getCharactersData());
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
-    const isActive = active ? "navigation-on" : "";
-
-    // List animation
-    const parent = useRef(null);
-    useEffect(() => {
-        parent.current && autoAnimate(parent.current);
-    }, [parent]);
-
-    useEffect(() => {
-        // update scene navigation when scenes change
-        setScenes(getScenesData());
-    }, [getScenesData()]);
-
-    useEffect(() => {
-        // update character navigation when characters change
-        setCharacters(getCharactersData());
-    }, [getCharactersData()]);
+    const isActive = active ? sidebar_nav.active : "";
 
     const isCharactersMenu = menu === NavigationMenu.Characters;
     const isLocationsMenu = menu === NavigationMenu.Locations;
@@ -97,28 +78,31 @@ const EditorSidebarNavigation = ({
         });
     };
 
+    const activeCharactersMenu = isCharactersMenu ? sidebar_nav.active_tab : "";
+    const activeLocationsMenu = isLocationsMenu ? sidebar_nav.active_tab : "";
+
     return (
-        <div className={`navigation-sidebar sidebar-shadow ${isActive}`}>
+        <div className={join(sidebar_nav.container, sidebar.shadow, isActive)}>
             <div>
-                <div className="sidebar-selection">
+                <div className={sidebar_nav.selection}>
                     <div
-                        className={`nav-tab ${isCharactersMenu ? "active-nav-tab" : ""}`}
+                        className={join(sidebar_nav.tab, activeCharactersMenu)}
                         onClick={() => setMenu(NavigationMenu.Characters)}
                     >
-                        <img className="nav-tab-icon" src={"/images/character.png"} />
-                        <p className="nav-list-title">Characters</p>
+                        <CharacterSVG className={sidebar_nav.tab_img} />
+                        <p className={sidebar_nav.list_title}>Characters</p>
                     </div>
                     <div
-                        className={`nav-tab ${isLocationsMenu ? "active-nav-tab" : ""}`}
+                        className={join(sidebar_nav.tab, activeLocationsMenu)}
                         onClick={() => setMenu(NavigationMenu.Locations)}
                     >
-                        <img className="nav-tab-icon" src={"/images/location.png"} />
-                        <p className="nav-list-title">Locations</p>
+                        <LocationSVG className={sidebar_nav.tab_img} />
+                        <p className={sidebar_nav.list_title}>Locations</p>
                     </div>
                 </div>
-                <div ref={parent} className="nav-list">
+                <div className={sidebar_nav.list}>
                     {menu === NavigationMenu.Characters &&
-                        Object.entries(characters).map((character: any) => {
+                        Object.entries(charactersData).map((character: any) => {
                             return (
                                 <SidebarCharacterItem
                                     key={character[0]}
@@ -134,19 +118,17 @@ const EditorSidebarNavigation = ({
                                 />
                             );
                         })}
-                    <div className="scene-list-fill" onContextMenu={handleDropdownCharacterList} />
+                    <div className={sidebar_nav.list_fill} onContextMenu={handleDropdownCharacterList} />
                 </div>
             </div>
             <div>
-                <p className="nav-list-title">Scenes</p>
-                <div className="nav-list scene-list">
-                    {scenes.map((scene: SceneItem) => {
+                <p className={sidebar_nav.list_title}>Scenes</p>
+                <div className={sidebar_nav.list + " " + sidebar_nav.scene_list}>
+                    {scenesData.map((scene: SceneItem) => {
                         return (
                             <SidebarSceneItem
                                 key={scene.position}
-                                title={scene.title}
-                                position={scene.position}
-                                nextPosition={scene.nextPosition}
+                                scene={scene}
                                 focusOn={getFocusOnPosition}
                                 selectTextInEditor={selectTextInEditor}
                                 cutTextSelection={cutTextSelection}
@@ -154,7 +136,7 @@ const EditorSidebarNavigation = ({
                             />
                         );
                     })}
-                    <div className="scene-list-fill" onContextMenu={handleDropdownSceneList} />
+                    <div className={sidebar_nav.list_fill} onContextMenu={handleDropdownSceneList} />
                 </div>
             </div>
         </div>

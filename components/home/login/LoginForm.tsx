@@ -1,10 +1,12 @@
 import Link from "next/link";
 import Router from "next/router";
 import { useContext, useEffect, useState } from "react";
-import { UserContext } from "../../../src/context/UserContext";
-import { login } from "../../../src/lib/requests";
-import { VerificationStatus } from "../../../src/lib/utils";
-import FormInfo, { FormInfoType } from "../FormInfo";
+import { UserContext } from "@src/context/UserContext";
+import FormInfo, { FormInfoType } from "../../utils/FormInfo";
+import { VerificationStatus } from "@src/lib/utils/enums";
+import { login } from "@src/lib/utils/requests";
+
+import form from "../../utils/Form.module.css";
 
 type Props = {
     verificationStatus: VerificationStatus;
@@ -48,7 +50,7 @@ const LoginForm = ({ verificationStatus }: Props) => {
         const json = (await res.json()) as any;
         const resBody = json.body;
 
-        if (res.status === 200) {
+        if (res.ok) {
             updateUser(resBody);
             Router.push("/");
         } else {
@@ -57,40 +59,28 @@ const LoginForm = ({ verificationStatus }: Props) => {
     }
 
     return (
-        <form className="home-form" onSubmit={onSubmit}>
-            <div className="form-header">
+        <form className={form.home} onSubmit={onSubmit}>
+            <div className={form.header}>
                 <h1>Log in</h1>
                 <hr />
                 {formInfo && <FormInfo info={formInfo} />}
             </div>
 
-            <div className="form-element">
-                <label id="email-form" className="form-element">
-                    <span className="form-label">Email</span>
-                    <input
-                        className="form-input"
-                        name="email"
-                        type="email"
-                        onChange={resetFromInfo}
-                        required
-                    />
+            <div className={form.element}>
+                <label className={form.element}>
+                    <span>Email</span>
+                    <input className={form.input} name="email" type="email" onChange={resetFromInfo} required />
                 </label>
 
-                <label id="password-form" className="form-element">
-                    <span className="form-label">Password</span>
-                    <input
-                        className="form-input"
-                        name="password"
-                        type="password"
-                        onChange={resetFromInfo}
-                        required
-                    />
+                <label className={form.element}>
+                    <span>Password</span>
+                    <input className={form.input} name="password" type="password" onChange={resetFromInfo} required />
                     <Link href="/recovery">Forgot password?</Link>
                 </label>
             </div>
 
-            <div id="form-btn-flex">
-                <button className="form-btn" type="submit">
+            <div className={form.btn_flex}>
+                <button className={form.btn} type="submit">
                     Log in
                 </button>
             </div>

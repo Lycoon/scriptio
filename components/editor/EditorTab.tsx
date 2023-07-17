@@ -1,18 +1,14 @@
+import { join } from "@src/lib/utils/misc";
+import tab from "./EditorTab.module.css";
+
+import SelectorSVG from "../../public/images/selector.svg";
+
 const EditorTab = (props: any) => {
+    const activeTab = props.active ? tab.active : "";
+
     return (
-        <button
-            onClick={props.action}
-            className={`button tab tab-text ${
-                props.active ? "active-tab" : ""
-            }`}
-        >
-            {props.active && (
-                <img
-                    className="editor-tab-icon"
-                    src="/images/right-arrow.png"
-                    alt="Right arrow icon"
-                />
-            )}
+        <button onClick={props.action} className={join(tab.container, tab.text, activeTab, "button")}>
+            {props.active && <SelectorSVG className={tab.selector} alt="Selector icon" />}
             {props.content}
         </button>
     );

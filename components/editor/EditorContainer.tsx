@@ -1,26 +1,37 @@
-import { useEffect } from "react";
-import { Project, User } from "../../pages/api/users";
 import EditorAndSidebar from "./EditorAndSidebar";
+import { useSettings } from "@src/lib/utils/hooks";
+import { useEffect, useState } from "react";
+import { Project } from "@src/lib/utils/types";
+
+import page from "./EditorContainer.module.css";
 
 type Props = {
-    user: User;
     project: Project;
 };
 
-const EditorContainer = ({ user, project }: Props) => {
-    /* Configuring editor user settings */
-    let settings = "";
-    settings += user.settings.highlightOnHover ? "highlight-on-hover " : "";
-    settings += user.settings.sceneBackground ? "scene-background " : "";
+const EditorContainer = ({ project }: Props) => {
+    const { data: settings } = useSettings();
+    const [settingsCSS, setSettingsCSS] = useState("");
+
     useEffect(() => {
+        if (!settings) return;
+
+        /* Configuring editor user settings */
+        let settingsClass = "";
+        settingsClass += settings.highlightOnHover ? "highlight-on-hover " : "";
+        settingsClass += settings.sceneBackground ? "scene-background " : "";
+        setSettingsCSS(settingsClass);
+
         document.documentElement.style.setProperty(
             "--editor-notes-color",
-            user.settings.notesColor + "42" /* alpha channel */
+            settings.notesColor + "42" // 42 is for the alpha channel
         );
-    });
+
+        console.log("Settings changed: ", settings.notesColor);
+    }, [settings]);
 
     return (
-        <div id="editor-page" className={settings}>
+        <div id={page.container} className={settingsCSS}>
             <EditorAndSidebar project={project} />
         </div>
     );

@@ -1,0 +1,106 @@
+.logo:hover {
+    transition: opacity 0.3s;
+    opacity: 80%;
+}
+
+.logo {
+    text-decoration: solid;
+    padding-inline: 16px;
+    margin-bottom: 4px;
+}
+
+.logo_text {
+    font-family: poetsen;
+    font-size: 18px;
+}
+
+.container {
+    z-index: 1;
+    position: relative;
+    background-color: var(--secondary);
+    width: 100%;
+    height: 45px;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn {
+    width: 18px;
+    height: 18px;
+    margin-right: 7px;
+
+    color: var(--secondary-text);
+    cursor: pointer;
+}
+
+.btn:hover {
+    color: var(--secondary-text-hover);
+}
+
+.btns {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 7px;
+
+    margin-bottom: 3px;
+    margin-right: 12px;
+}
+
+.notlogged_btns {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    margin-right: 25px;
+}
+
+.logo_and_tabs {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+
+    height: 100%;
+}
+
+.saving_spin {
+    width: 25px;
+    height: 25px;
+    margin-right: 7px;
+}
+
+.inactive-spin {
+    animation: fadeOut;
+    animation-duration: 2s;
+    opacity: 0%;
+}
+
+@keyframes fadeOut {
+    50% {
+        opacity: 100%;
+    }
+}
+
+.last_saved {
+    color: grey;
+    font-size: 12px;
+    margin-right: 12px;
+    text-transform: uppercase;
+}
+
+.save-btn {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+
+    cursor: pointer;
+}
+
+.save-btn.disabled {
+    pointer-events: none;
+    opacity: 40%;
+}

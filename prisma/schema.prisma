@@ -50,7 +50,7 @@ model Settings {
 }
 
 model Project {
-  id                  Int         @id @default(autoincrement())
+  id                  String      @id @default(uuid())
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 

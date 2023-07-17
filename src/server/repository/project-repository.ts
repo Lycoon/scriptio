@@ -1,27 +1,10 @@
-import { PrismaClient, Project } from "@prisma/client";
-import { JSONContent } from "@tiptap/react";
-import { CharacterData, CharacterMap } from "../../lib/screenplayUtils";
+import { PrismaClient } from "@prisma/client";
+import { ProjectCreationDTO, ProjectUpdateDTO } from "../../lib/utils/types";
 
 const prisma = new PrismaClient();
 
-export interface ProjectUpdate {
-    projectId: number;
-    title?: string;
-    description?: string;
-    screenplay?: JSONContent;
-    poster?: string;
-    characters?: CharacterMap;
-}
-
-export interface ProjectCreation {
-    userId: number;
-    title: string;
-    description?: string;
-    poster?: string;
-}
-
 export class ProjectRepository {
-    updateProject(project: ProjectUpdate) {
+    updateProject(project: ProjectUpdateDTO) {
         return prisma.project.update({
             data: {
                 title: project.title,
@@ -36,7 +19,7 @@ export class ProjectRepository {
         });
     }
 
-    deleteProject(project: ProjectUpdate) {
+    deleteProject(project: ProjectUpdateDTO) {
         return prisma.project.delete({
             where: {
                 id: project.projectId,
@@ -44,7 +27,7 @@ export class ProjectRepository {
         });
     }
 
-    createProject(project: ProjectCreation) {
+    createProject(project: ProjectCreationDTO) {
         return prisma.project.create({
             data: {
                 title: project.title,
@@ -77,7 +60,7 @@ export class ProjectRepository {
         });
     }
 
-    fetchProjectFromId(projectId: number) {
+    fetchProjectFromId(projectId: string) {
         return prisma.project.findUnique({
             where: {
                 id: projectId,

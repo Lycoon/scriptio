@@ -1,10 +1,7 @@
-import { Project } from "../../../pages/api/users";
-
 import "chart.js/auto";
 import { Doughnut } from "react-chartjs-2";
-import ChartDataLabels from "chartjs-plugin-datalabels";
-import { getRandomColors, Quantity } from "../../../src/lib/statistics";
-import { useEffect, useState } from "react";
+import { getRandomColors, Quantity } from "@src/lib/statistics";
+import { Project } from "@src/lib/utils/types";
 
 type Props = {
     project: Project;
@@ -12,7 +9,7 @@ type Props = {
     quantity: Quantity;
 };
 
-const CharacterQuantity = ({ project, color, quantity }: Props) => {
+const CharacterQuantity = ({ color, quantity }: Props) => {
     const labels = Object.keys(quantity);
 
     const data = {

@@ -1,8 +1,10 @@
 import SignupForm from "./SignupForm";
 
+import layout from "../../utils/Layout.module.css";
+
 const SignupContainer = () => {
     return (
-        <div id="register-page">
+        <div className={layout.center_middle}>
             <SignupForm />
         </div>
     );

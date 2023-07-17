@@ -27,30 +27,31 @@ Originally developed by John August - johnaugust.com
 */
 
 .ProseMirror:focus {
+    /* Prevent outline from appearing when focused on screenplay */
     outline: none;
 }
 
 .ProseMirror {
-    color: var(--editor-text);
-    width: 586px;
-
     position: absolute;
+    width: 586px;
+    min-height: 1100px;
+
+    /* Screenplay margins */
     margin-left: 1.5in;
     margin-right: 0.95in;
     padding-block: 1in;
-    min-height: 1100px;
 }
 
 .ProseMirror p,
-span {
+.ProseMirror span {
+    /* Default screenplay text attributes */
     font-family: "Courier Prime", monospace;
     font-size: 12pt;
     text-align: left;
     letter-spacing: -0.4px !important;
-}
-
-.ProseMirror p {
+    line-height: 17px !important;
     margin-bottom: 17px;
+    color: var(--editor-text);
 }
 
 /* Editor styles */
@@ -67,8 +68,9 @@ span.underline {
 }
 
 /* User settings */
-.highlight-on-hover p:hover {
+.highlight-on-hover .ProseMirror > p:hover {
     background-color: var(--editor-element-hover);
+    border-radius: 8px;
 }
 
 .scene-background .scene {
@@ -110,12 +112,12 @@ span.underline {
 
 .character {
     padding-left: 2.2in !important;
-    margin-bottom: 0 !important;
     text-transform: uppercase;
 }
 
-.character + .character {
-    margin-top: 17px !important;
+.character + .parenthetical,
+.character + .dialogue {
+    margin-top: -17px !important;
 }
 
 /* Parenthetical */

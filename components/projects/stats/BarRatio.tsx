@@ -1,14 +1,7 @@
-import { Project } from "../../../pages/api/users";
-
 import "chart.js/auto";
-import { Bar, Doughnut } from "react-chartjs-2";
-import ChartDataLabels from "chartjs-plugin-datalabels";
-import {
-    Frequency,
-    getRandomColors,
-    StatsRatio,
-} from "../../../src/lib/statistics";
-import { useEffect, useState } from "react";
+import { Bar } from "react-chartjs-2";
+import { getRandomColors, StatsRatio } from "@src/lib/statistics";
+import { Project } from "@src/lib/utils/types";
 
 type Props = {
     project: Project;
@@ -16,7 +9,7 @@ type Props = {
     ratio: StatsRatio;
 };
 
-const BarRatio = ({ project, color, ratio }: Props) => {
+const BarRatio = ({ color, ratio }: Props) => {
     const labels = Object.keys(ratio);
 
     const data = {
@@ -35,7 +28,7 @@ const BarRatio = ({ project, color, ratio }: Props) => {
         indexAxis: "y",
         barThickness: 40,
         layout: {
-            padding: { right: 50, top: 60 },
+            padding: { right: 50 },
         },
         plugins: {
             legend: {

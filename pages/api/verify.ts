@@ -1,19 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { VerificationStatus } from "../../src/lib/utils";
-import {
-    getUserFromId,
-    updateUser,
-} from "../../src/server/service/user-service";
+import { getUserFromId, updateUser } from "@src/server/service/user-service";
+import { VerificationStatus } from "@src/lib/utils/enums";
 
 const redirect = (res: NextApiResponse, status: VerificationStatus) => {
     const REDIRECTION = "/login?verificationStatus=";
     res.redirect(REDIRECTION + status);
 };
 
-export default async function verify(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
+export default async function verify(req: NextApiRequest, res: NextApiResponse) {
     try {
         if (!req.query.id || !req.query.code) {
             // scriptio.app/api/verify?id=userId&code=emailHash

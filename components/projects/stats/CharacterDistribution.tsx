@@ -1,15 +1,12 @@
-import { Project } from "../../../pages/api/users";
-
 import "chart.js/auto";
-import { Bubble, Doughnut, Line } from "react-chartjs-2";
-import ChartDataLabels from "chartjs-plugin-datalabels";
+import { Line } from "react-chartjs-2";
 import {
     Distribution,
     Frequency,
     getRandomColors,
     getScaledDistribution,
-} from "../../../src/lib/statistics";
-import { useEffect, useState } from "react";
+} from "@src/lib/statistics";
+import { Project } from "@src/lib/utils/types";
 
 type Props = {
     project: Project;
@@ -18,7 +15,7 @@ type Props = {
     frequency: Frequency;
 };
 
-const CharacterDistribution = ({ project, color, distribution }: Props) => {
+const CharacterDistribution = ({ distribution }: Props) => {
     let scaled = getScaledDistribution(distribution);
     const labels: any[] = [];
     const datasets: any[] = [];

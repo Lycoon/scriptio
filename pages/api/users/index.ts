@@ -1,50 +1,40 @@
-import { NextApiRequest, NextApiResponse } from "next";
 import { withIronSessionApiRoute } from "iron-session/next";
-import { sessionOptions } from "../../../src/lib/session";
-import { Prisma, Settings } from "@prisma/client";
-import { Secrets } from "../../../src/server/repository/user-repository";
-import { CharacterData, CharacterMap } from "../../../src/lib/screenplayUtils";
+import type { NextApiRequest, NextApiResponse } from "next";
+import { FAILED_USER_DELETION, USER_DELETED } from "@src/lib/messages";
+import { sessionOptions } from "@src/lib/session";
+import { deleteUserFromId, getUserFromId } from "@src/server/service/user-service";
+import { onResponseAPI } from "@src/lib/utils/requests";
 
-export type CookieUser = {
-    id: number;
-    email: string;
-    isLoggedIn: boolean;
-};
+export default withIronSessionApiRoute(handler, sessionOptions);
 
-export type User = {
-    id: number;
-    email: string;
-    verified: boolean;
-    createdAt: Date;
-    settings: Settings;
-    secrets?: Secrets;
-};
-
-export type Project = {
-    id: number;
-    createdAt: Date;
-    updatedAt: Date;
-    title: string;
-    poster: string;
-    description: string | null;
-    screenplay: Prisma.JsonValue | null;
-    characters: CharacterMap;
-    userId: number;
-};
-
-export default withIronSessionApiRoute(userRoute, sessionOptions);
-
-async function userRoute(req: NextApiRequest, res: NextApiResponse<Partial<CookieUser> | null>) {
-    if (req.session.user) {
-        // in a real world application you might read the user id from the session and then do a database request
-        // to get more information on the user if needed
-        res.json({
-            ...req.session.user,
-            isLoggedIn: true,
-        });
-    } else {
-        res.json({
-            isLoggedIn: false,
-        });
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+    const user = req.session.user;
+    if (!user || !user.isLoggedIn || !user.id) {
+        return onResponseAPI(res, 403, "Forbidden");
     }
+
+    switch (req.method) {
+        case "GET":
+            return getMethod(user.id, res);
+        case "DELETE":
+            return deleteMethod(user.id, res);
+    }
+}
+
+async function getMethod(userId: number, res: NextApiResponse) {
+    const fetchedUser = await getUserFromId(userId);
+    if (!fetchedUser) {
+        return onResponseAPI(res, 500, "An error occurred while fetching user from database");
+    }
+
+    return onResponseAPI(res, 200, "", fetchedUser);
+}
+
+async function deleteMethod(userId: number, res: NextApiResponse) {
+    const deleted = await deleteUserFromId(userId);
+    if (!deleted) {
+        return onResponseAPI(res, 500, FAILED_USER_DELETION);
+    }
+
+    return onResponseAPI(res, 200, USER_DELETED, null);
 }

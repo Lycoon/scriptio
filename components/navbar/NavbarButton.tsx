@@ -1,4 +1,4 @@
-import Link from "next/link";
+import btn from "./NavbarButton.module.css";
 
 type Props = {
     action?: () => void;
@@ -7,7 +7,7 @@ type Props = {
 
 const NavbarButton = ({ action, content }: Props) => {
     return (
-        <div className="navbar-btn" onClick={action}>
+        <div className={btn.container} onClick={action}>
             <p>{content}</p>
         </div>
     );

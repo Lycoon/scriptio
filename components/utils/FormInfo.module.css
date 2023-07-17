@@ -1,0 +1,27 @@
+.info {
+    padding-top: 6px;
+    color: white;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.text {
+    background-color: var(--validation-color);
+    text-align: justify;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.error {
+    background-color: var(--error-color);
+    text-align: justify;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.warn {
+    background-color: var(--warning-color);
+    text-align: justify;
+    padding: 15px;
+    border-radius: 6px;
+}

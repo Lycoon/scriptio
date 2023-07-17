@@ -1,3 +1,6 @@
+import { ForwardedRef, MutableRefObject, RefObject, forwardRef } from "react";
+import dropdown from "./DropdownItem.module.css";
+
 type Props = {
     content: string;
     hovering?: () => void;
@@ -5,19 +8,15 @@ type Props = {
     icon?: string;
 };
 
-const DropdownItem = ({ hovering, content, action, icon }: Props) => {
-    return (
-        <button
-            onMouseEnter={hovering}
-            onClick={action}
-            className="dropdown-item"
-        >
-            {icon && (
-                <img className="dropdown-item-icon" src={`/images/${icon}`} />
-            )}
-            {content}
-        </button>
-    );
-};
+const DropdownItem = forwardRef(
+    ({ hovering, content, action, icon }: Props, ref: ForwardedRef<HTMLButtonElement>) => {
+        return (
+            <button onMouseEnter={hovering} onClick={action} className={dropdown.item} ref={ref}>
+                {icon && <img className={dropdown.item_img} src={`/images/${icon}`} />}
+                {content}
+            </button>
+        );
+    }
+);
 
 export default DropdownItem;

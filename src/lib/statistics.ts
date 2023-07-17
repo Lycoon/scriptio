@@ -110,27 +110,6 @@ const getFrequency = (distribution: Distribution) => {
     return frequency;
 };
 
-export const getCharacterNames = (json: any) => {
-    const nodes = json.content!;
-    const characters: string[] = [];
-
-    for (let i = 0; i < nodes.length; i++) {
-        const currNode = nodes[i];
-        if (!currNode["content"]) {
-            continue;
-        }
-
-        const type: string = currNode["attrs"]["class"];
-        const content: string = currNode["content"][0]["text"];
-
-        if (type === "character" && !characters.includes(content)) {
-            characters.push(content.toUpperCase());
-        }
-    }
-
-    return characters;
-};
-
 export const getScreenplayData = (json: any): ScreenplayData => {
     const nodes = json.content!;
     const maxPageY: number = 990;

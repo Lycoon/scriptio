@@ -1,62 +1,56 @@
-import { withIronSessionSsr } from "iron-session/next";
 import type { NextPage } from "next";
 import Head from "next/head";
-import { useContext, useEffect } from "react";
-import HomePageContainer from "../components/home/HomePageContainer";
-import ProjectPageContainer from "../components/projects/ProjectPageContainer";
-import { UserContext } from "../src/context/UserContext";
-import { sessionOptions } from "../src/lib/session";
-import { getProjects } from "../src/server/service/project-service";
-import { Project, CookieUser } from "./api/users";
+import { useContext, useEffect, useState } from "react";
+import HomePageContainer from "@components/home/HomePageContainer";
+import Navbar from "@components/navbar/Navbar";
+import ProjectPageContainer from "@components/projects/ProjectPageContainer";
+import { UserContext } from "@src/context/UserContext";
+import { useDesktop, useUser } from "@src/lib/utils/hooks";
+import { CookieUser } from "@src/lib/utils/types";
+import DesktopHomePageContainer from "@components/home/DesktopHomePageContainer";
 
 type Props = {
-    user: CookieUser | null;
-    projects: Project[] | null;
+    user: CookieUser | undefined;
 };
 
-const HomePage: NextPage<Props> = ({ user, projects }: Props) => {
-    const ProjectPage = () => <ProjectPageContainer projects={projects!} />;
+const HomePageWindow = ({ user }: Props) => {
+    const isDesktop = useDesktop();
     const { updateProject } = useContext(UserContext);
-    useEffect(() => updateProject(undefined), []);
 
+    useEffect(() => {
+        updateProject(undefined);
+    }, []);
+
+    if (isDesktop)
+        return (
+            <>
+                <Navbar />
+                <DesktopHomePageContainer />
+            </>
+        );
+
+    if (user?.isLoggedIn) {
+        return (
+            <>
+                <Navbar />
+                <ProjectPageContainer />
+            </>
+        );
+    } else {
+        return <HomePageContainer />;
+    }
+};
+
+const HomePage: NextPage = () => {
+    const { data: user } = useUser();
     return (
         <>
             <Head>
                 <title>{!user ? "Scriptio" : "Scriptio - Projects"}</title>
             </Head>
-            {user && user.isLoggedIn ? <ProjectPage /> : <HomePageContainer />}
+            <HomePageWindow user={user} />
         </>
     );
 };
-
-const noauth = { props: { user: null, projects: [] } };
-export const getServerSideProps = withIronSessionSsr(async function ({ req }): Promise<any> {
-    const user = req.session.user;
-
-    if (!user || !user.isLoggedIn) {
-        return noauth;
-    }
-
-    const projects = await getProjects(user.id);
-    if (!projects) {
-        return noauth;
-    }
-
-    // Workaround because dates can't be serialized
-    projects.projects = projects.projects.map((e) => {
-        return {
-            ...e,
-            updatedAt: e.updatedAt.toISOString() as any as Date,
-            createdAt: e.createdAt.toISOString() as any as Date,
-        };
-    });
-
-    return {
-        props: {
-            user: req.session.user,
-            projects: projects.projects,
-        },
-    };
-}, sessionOptions);
 
 export default HomePage;

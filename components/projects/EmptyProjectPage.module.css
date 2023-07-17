@@ -1,0 +1,28 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+
+    border: none;
+    cursor: pointer;
+
+    background: none;
+}
+
+.container:hover .title {
+    transition: transform 0.5s;
+    transform: scale(1.03);
+}
+
+.title {
+    font-family: roboto-thin;
+    font-style: italic;
+    font-size: 2.8rem;
+    padding-bottom: 70px;
+    color: var(--primary-text);
+
+    transition: transform 0.5s;
+    transform: scale(1);
+}

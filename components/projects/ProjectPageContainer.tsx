@@ -1,28 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { Project } from "../../pages/api/users";
-import { deleteProject } from "../../src/lib/requests";
 import EmptyProjectPage from "./EmptyProjectPage";
-import NewProjectPage from "./NewProjectPage";
+import NewProjectPage from "./CreateProjectPage";
 import ProjectItem from "./ProjectItem";
 import autoAnimate from "@formkit/auto-animate";
-import Image from "next/image";
+import { useProjects } from "@src/lib/utils/hooks";
+import Loading from "../utils/Loading";
+import { Project } from "@src/lib/utils/types";
+import { deleteProject } from "@src/lib/utils/requests";
+import { join } from "@src/lib/utils/misc";
 
-type Props = {
-    projects: Project[];
-};
+import TrashSVG from "../../public/images/trash.svg";
 
-const ProjectPageContainer = ({ projects: propProjects }: Props) => {
-    // Getting back dates from workaround
-    let projects = propProjects.map((e) => ({
-        ...e,
-        updatedAt: new Date(e.updatedAt),
-        createdAt: new Date(e.createdAt),
-    }));
+import page from "./ProjectPageContainer.module.css";
+import form from "../utils/Form.module.css";
 
-    // Sorting by last updated
-    projects.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-
-    const [projs, setProjs] = useState(projects);
+const ProjectPageContainer = () => {
+    const { data: projects, isLoading, mutate } = useProjects();
     const [isCreating, setIsCreating] = useState(false);
     const [deleteMode, setDeleteMode] = useState(false);
     const parent = useRef(null);
@@ -31,59 +24,45 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
         parent.current && autoAnimate(parent.current);
     }, [parent]);
 
-    const deleteFromProjectPage = (userId: number, projectId: number) => {
-        const updatedProjects: Project[] = [];
-        projs.forEach((p: Project) => {
-            if (p.id !== projectId) {
-                updatedProjects.push(p);
-            }
-        });
+    if (isLoading || !projects) return <Loading />;
 
-        setProjs(updatedProjects);
-        deleteProject(userId, projectId);
-    };
+    projects.sort((a: Project, b: Project) => {
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
 
     if (isCreating) {
         return <NewProjectPage setIsCreating={setIsCreating} />;
-    } else if (projs.length === 0) {
+    } else if (projects.length === 0) {
         return <EmptyProjectPage setIsCreating={setIsCreating} />;
-    } else
+    } else {
         return (
-            <div id="projects-container">
-                <div className="center-flex">
-                    <div className="projects-header">
-                        <div className="projects-header-info">
+            <div className={page.container}>
+                <div className={page.center}>
+                    <div className={page.header}>
+                        <div className={page.header_info}>
                             <h1>Projects</h1>
-                            <div className="projects-header-buttons">
-                                <div
-                                    onClick={() => setDeleteMode(!deleteMode)}
-                                    className="delete-project-btn"
-                                >
-                                    <Image
-                                        className="delete-project-icon"
-                                        src={"/images/trash.png"}
-                                        width={20}
-                                        height={20}
-                                    />
+                            <div className={page.header_btns}>
+                                <div onClick={() => setDeleteMode(!deleteMode)} className={page.delete_btn}>
+                                    <TrashSVG className={page.delete_img} alt="Trash icon" />
                                 </div>
-                                <button
-                                    className="form-btn create-project-button"
-                                    onClick={() => setIsCreating(true)}
-                                >
+                                <button className={join(page.create_btn, form.btn)} onClick={() => setIsCreating(true)}>
                                     Create
                                 </button>
                             </div>
                         </div>
                         <hr />
                     </div>
-                    <div ref={parent} className="project-grid">
-                        {projs.map((project: Project) => {
+                    <div ref={parent} className={page.grid}>
+                        {projects.map((project: Project) => {
                             return (
                                 <ProjectItem
                                     key={project.id}
                                     project={project}
                                     deleteMode={deleteMode}
-                                    deleteProject={deleteFromProjectPage}
+                                    deleteProject={() => {
+                                        deleteProject(project.id);
+                                        mutate!();
+                                    }}
                                 />
                             );
                         })}
@@ -91,6 +70,7 @@ const ProjectPageContainer = ({ projects: propProjects }: Props) => {
                 </div>
             </div>
         );
+    }
 };
 
 export default ProjectPageContainer;

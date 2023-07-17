@@ -1,3 +1,13 @@
 {
-  "extends": "next/core-web-vitals"
+    "extends": [
+        "next/core-web-vitals",
+        "eslint:recommended",
+        "plugin:react/recommended",
+        "plugin:react-hooks/recommended",
+        "react/jsx-runtime"
+    ],
+    "plugins": ["react", "@typescript-eslint"],
+    "rules": {
+        "brace-style": ["allman"]
+    }
 }

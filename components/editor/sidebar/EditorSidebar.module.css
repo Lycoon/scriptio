@@ -1,0 +1,51 @@
+.container {
+    padding-top: 8px;
+    background-color: var(--editor-sidebar);
+    min-width: var(--format-sidebar-width);
+}
+
+.shadow {
+    box-shadow: 0px 0px 20px 1px rgba(0, 0, 0, 0.15);
+}
+
+.tabs {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.style_btns {
+    display: flex;
+    flex-direction: row;
+    padding-block: 15px;
+    padding-left: 25px;
+    gap: 12px;
+}
+
+.style_btn {
+    width: 32px;
+    height: 32px;
+    padding: 9px;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 4px;
+    background-color: var(--editor-style-bg);
+
+    cursor: pointer;
+}
+
+.style_btn:hover {
+    background-color: var(--editor-style-bg-hover);
+}
+
+.active_style {
+    background-color: var(--editor-style-bg-hover);
+}
+
+.style_btn_img {
+    color: var(--primary-text);
+}
