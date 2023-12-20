@@ -1,4 +1,5 @@
 import { ScreenplayCtxType } from "@src/context/ScreenplayContext";
+import { getNodeFlattenContent } from "../screenplay";
 
 export enum CharacterGender {
     Female,
@@ -54,7 +55,7 @@ export const getCharacterNames = (scriptioScreenplay: any) => {
         }
 
         const type: string = currNode["attrs"]["class"];
-        const content: string = currNode["content"][0]["text"];
+        const content: string = getNodeFlattenContent(currNode);
 
         if (type === "character" && !characters.includes(content)) {
             characters.push(content.toUpperCase());
