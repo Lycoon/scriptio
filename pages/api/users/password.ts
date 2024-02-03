@@ -1,27 +1,23 @@
-import { withIronSessionApiRoute } from "iron-session/next";
 import type { NextApiRequest, NextApiResponse } from "next";
-import {
-    FAILED_PASSWORD_CHANGED,
-    MISSING_BODY,
-    PASSWORD_CHANGED,
-    PASSWORD_REQUIREMENTS,
-} from "@src/lib/messages";
-import { sessionOptions } from "@src/lib/session";
+import { FAILED_PASSWORD_CHANGED, MISSING_BODY, PASSWORD_CHANGED, PASSWORD_REQUIREMENTS } from "@src/lib/messages";
 import { generateSecrets, updateUser } from "@src/server/service/user-service";
-import { onResponseAPI } from "@src/lib/utils/requests";
+import { ResponseAPI } from "@src/lib/utils/requests";
+import { getCookieUser } from "@src/lib/session";
 
-export default withIronSessionApiRoute(handler, sessionOptions);
-
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function passwordRoute(req: NextApiRequest, res: NextApiResponse) {
     if (!req.query || !req.query.userId) {
-        return onResponseAPI(res, 400, "Query not found");
+        return ResponseAPI(res, 400, "Query not found");
     }
 
     const userId = +req.query.userId;
-    const user = req.session.user;
+    const user = await getCookieUser(req, res);
 
-    if (!user || !user.isLoggedIn || !userId || userId !== user.id) {
-        return onResponseAPI(res, 403, "Forbidden");
+    if (!userId) {
+        return ResponseAPI(res, 400, "User id not found");
+    }
+
+    if (!user || userId !== user.id) {
+        return ResponseAPI(res, 403, "Forbidden");
     }
 
     switch (req.method) {
@@ -32,16 +28,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     if (!body || !body.password) {
-        return onResponseAPI(res, 400, MISSING_BODY);
+        return ResponseAPI(res, 400, MISSING_BODY);
     }
 
     if (body.password.length < 8) {
-        return onResponseAPI(res, 400, PASSWORD_REQUIREMENTS);
+        return ResponseAPI(res, 400, PASSWORD_REQUIREMENTS);
     }
 
     const secrets = generateSecrets(body.password);
     if (!secrets) {
-        return onResponseAPI(res, 500, FAILED_PASSWORD_CHANGED);
+        return ResponseAPI(res, 500, FAILED_PASSWORD_CHANGED);
     }
 
     const updated = await updateUser({
@@ -53,8 +49,8 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     });
 
     if (!updated) {
-        return onResponseAPI(res, 500, FAILED_PASSWORD_CHANGED);
+        return ResponseAPI(res, 500, FAILED_PASSWORD_CHANGED);
     }
 
-    return onResponseAPI(res, 200, PASSWORD_CHANGED, null);
+    return ResponseAPI(res, 200, PASSWORD_CHANGED, null);
 }

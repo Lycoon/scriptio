@@ -1,19 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { withIronSessionApiRoute } from "iron-session/next";
-import { sessionOptions } from "@src/lib/session";
-import { onResponseAPI } from "@src/lib/utils/requests";
+import { ResponseAPI } from "@src/lib/utils/requests";
 import { CookieUser } from "@src/lib/utils/types";
+import { getCookieUser } from "@src/lib/session";
 
-export default withIronSessionApiRoute(userRoute, sessionOptions);
-
-async function userRoute(req: NextApiRequest, res: NextApiResponse<Partial<CookieUser> | null>) {
-    let user = { isLoggedIn: false };
-    if (req.session.user) {
-        user.isLoggedIn = true;
-        user = {
-            ...req.session.user,
-        };
-    }
-
-    return onResponseAPI(res, 200, "", user);
+export default async function cookieRoute(req: NextApiRequest, res: NextApiResponse<CookieUser | null>) {
+    const user = await getCookieUser(req, res);
+    return ResponseAPI(res, 200, "", user);
 }

@@ -1,11 +1,9 @@
 import FileSaver from "file-saver";
-import Router from "next/router";
 import { useState } from "react";
 import { convertToFountain } from "@src/converters/export/fountain";
 import { exportToPDF } from "@src/converters/export/pdf";
 import { useSettings, useUser } from "@src/lib/utils/hooks";
 import CharacterExport from "./CharacterExport";
-import FileFormatButtonExport from "./FileFormatButtonExport";
 import Loading from "../../utils/Loading";
 import { Project } from "@src/lib/utils/types";
 import FormHeader from "../FormHeader";
@@ -17,7 +15,7 @@ import form from "../../utils/Form.module.css";
 import settings_ from "../../settings/SettingsPageContainer.module.css";
 import export_ from "./ExportProjectContainer.module.css";
 
-import { redirectHome, redirectScreenplay } from "@src/lib/utils/redirects";
+import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { convertToFDX } from "@src/converters/export/fdx";
 
 // ------------------------------ //
@@ -70,12 +68,9 @@ const addToStateList = (list: any[], setList: (list: any[]) => void, item: any) 
 //           COMPONENTS           //
 // ------------------------------ //
 const ExportProjectConainer = ({ project }: Props) => {
-    const { data: user, isLoading: isUserLoading } = useUser();
-    if (!isUserLoading && (!user || !user.isLoggedIn)) {
-        redirectHome();
-    }
-
+    const { data: user } = useUser(true);
     const { data: settings, isLoading } = useSettings();
+
     const [exportFormat, setExportFormat] = useState<ExportFormat>(ExportFormat.PDF);
     const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
     const [includeNotes, setIncludeNotes] = useState<boolean>(false);
@@ -83,7 +78,7 @@ const ExportProjectConainer = ({ project }: Props) => {
     const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
     const [characters, setCharacters] = useState<string[]>(getCharacterNames(project.screenplay));
 
-    if (!settings_ || isLoading) return <Loading />;
+    if (isLoading) return <Loading />;
 
     const addCharacter = (name: string) => {
         addToStateList(selectedCharacters, setSelectedCharacters, name);

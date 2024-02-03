@@ -5,6 +5,7 @@ import Router, { useRouter } from "next/router";
 import { CookieUser, Project } from "./types";
 import { UserContext } from "../../context/UserContext";
 import { useDesktopValues } from "../store";
+import fetchJson from "../fetchJson";
 
 const returnData = (data: any, error: any, mutate: any, isLoading: any) => {
     return {
@@ -34,13 +35,13 @@ const useProjectIdFromUrl = () => {
 };
 
 const useUser = (redirect: boolean = false): StateResult<CookieUser> => {
-    const { data, error, mutate, isLoading } = useSWR<CookieUser>("/api/users/cookie");
+    const { data: user, isLoading } = useSWR<CookieUser>("/api/users/cookie");
 
-    if (redirect && !isLoading && data && !data.isLoggedIn) {
+    if (redirect && !isLoading && !user) {
         Router.push("/login");
     }
 
-    return returnData(data, error, mutate, isLoading);
+    return { data: user, isLoading };
 };
 
 const useDesktop = (): boolean => {
@@ -70,7 +71,7 @@ const useProjects = (): StateResult<Project[]> => {
         isLoading: isCloudLoading,
         error: isCloudError,
         mutate,
-    } = useSWR(user && user.isLoggedIn ? "/api/projects" : null);
+    } = useSWR(user ? "/api/projects" : null);
 
     return returnData(
         [...(cloudProjects ?? []), ...(localProjects ?? [])],

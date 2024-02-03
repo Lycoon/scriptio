@@ -1,7 +1,6 @@
 import { NextApiResponse } from "next";
 import { Settings } from "../../server/repository/user-repository";
 import { CharacterMap } from "./characters";
-import { useDesktop } from "./hooks";
 import { CookieUser, DataResult, ProjectCreated, ProjectCreation, ProjectCreationDTO, ProjectUpdateDTO } from "./types";
 import { SaveMode } from "./enums";
 import { randomUUID } from "crypto";
@@ -19,7 +18,7 @@ const request = async (url: string, method: string, body?: Object) => {
 };
 
 // API response
-export const onResponseAPI = (res: NextApiResponse, code: number, message: string, data?: any) => {
+export const ResponseAPI = (res: NextApiResponse, code: number, message: string, data?: any) => {
     res.status(code).json({ message, data });
 };
 
@@ -44,7 +43,7 @@ export const createProject = async (
     };
 
     let resCloud, cloudProjectId;
-    if (user && user.isLoggedIn && project.saveMode & SaveMode.CLOUD) {
+    if (user && project.saveMode & SaveMode.CLOUD) {
         resCloud = await request(`/api/projects`, "POST", body);
 
         if (resCloud.ok) {

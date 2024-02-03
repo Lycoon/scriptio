@@ -12,13 +12,13 @@ import form from "../utils/Form.module.css";
 import { join } from "@src/lib/utils/misc";
 
 const SettingsPageContainer = () => {
-    const { data: cookieUser } = useUser();
+    const { data: user } = useUser();
     const { data: settings, isLoading } = useSettings();
 
     useEffect(() => {
-        if (!settings || !cookieUser) return;
+        if (!settings || !user) return;
 
-        setCreatedAt(new Date(cookieUser.createdAt));
+        setCreatedAt(new Date(user.createdAt));
         setSceneBackground(settings.sceneBackground!);
         setHighlightOnHover(settings.highlightOnHover!);
         setNotesColor(settings.notesColor!);
@@ -34,7 +34,7 @@ const SettingsPageContainer = () => {
     const [notesColor, setNotesColor] = useState<string>("");
     const [exportedNotesColor, setExportedNotesColor] = useState<string>("");
 
-    if (isLoading || !cookieUser?.isLoggedIn || !settings) {
+    if (isLoading || !user || !settings) {
         return <Loading />;
     }
 
@@ -92,7 +92,7 @@ const SettingsPageContainer = () => {
                     <hr />
                 </div>
                 <div className={page.profile}>
-                    <p className={page.email}>{cookieUser.email}</p>
+                    <p className={page.email}>{user.email}</p>
                     <p className={page.joined_date}>
                         joined{" "}
                         {createdAt.toLocaleDateString("en-GB", {

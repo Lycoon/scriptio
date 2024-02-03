@@ -1,14 +1,10 @@
 import { Editor } from "@tiptap/react";
 import { createContext, ReactNode, useState } from "react";
 import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
-import { useUser } from "../lib/utils/hooks";
 import { Project } from "@prisma/client";
 import { SaveStatus } from "../lib/utils/enums";
-import { CookieUser } from "../lib/utils/types";
 
 export type contextType = {
-    user: CookieUser | undefined;
-    updateUser: (user: CookieUser | undefined) => void;
     editor: Editor | undefined;
     updateEditor: (editor: Editor) => void;
     darkMode: boolean;
@@ -26,8 +22,6 @@ export type contextType = {
 };
 
 const contextDefaults: contextType = {
-    user: undefined,
-    updateUser: () => {},
     editor: undefined,
     updateEditor: () => {},
     darkMode: false,
@@ -51,7 +45,6 @@ type Props = {
 export const UserContext = createContext<contextType>(contextDefaults);
 
 export function UserContextProvider({ children }: Props) {
-    const { data: user, mutate: setUser } = useUser();
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [darkMode, setDarkMode] = useState<boolean>(false);
     const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.SAVED);
@@ -59,10 +52,6 @@ export function UserContextProvider({ children }: Props) {
     const [contextMenu, setContextMenu] = useState<ContextMenuProps | undefined>(undefined);
     const [popup, setPopup] = useState<any>(undefined);
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
-
-    const updateUser = (user_: CookieUser | undefined) => {
-        setUser!(user_);
-    };
 
     const updateEditor = (editor_: Editor) => {
         setEditor(editor_);
@@ -93,8 +82,6 @@ export function UserContextProvider({ children }: Props) {
     };
 
     const value = {
-        user,
-        updateUser,
         editor,
         updateEditor,
         darkMode,

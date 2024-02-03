@@ -1,8 +1,6 @@
 import { randomUUID } from "crypto";
-import { withIronSessionApiRoute } from "iron-session/next";
 import { NextApiRequest, NextApiResponse } from "next";
 import { MISSING_BODY } from "@src/lib/messages";
-import { sessionOptions } from "@src/lib/session";
 import { deleteObject, uploadObject } from "@src/lib/s3";
 import {
     createProject,
@@ -11,15 +9,14 @@ import {
     getProjects,
     updateProject,
 } from "@src/server/service/project-service";
-import { onResponseAPI } from "@src/lib/utils/requests";
+import { ResponseAPI } from "@src/lib/utils/requests";
+import { getCookieUser } from "@src/lib/session";
 
-export default withIronSessionApiRoute(handler, sessionOptions);
+export default async function projectsRoute(req: NextApiRequest, res: NextApiResponse) {
+    const user = await getCookieUser(req, res);
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
-    const user = req.session.user;
-
-    if (!user || !user.isLoggedIn || !user.id) {
-        return onResponseAPI(res, 403, "Forbidden");
+    if (!user || !user.id) {
+        return ResponseAPI(res, 403, "Forbidden");
     }
 
     switch (req.method) {
@@ -37,26 +34,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 async function getMethod(userId: number, res: NextApiResponse) {
     const projects = await getProjects(userId);
     if (!projects) {
-        return onResponseAPI(res, 404, "User with id " + userId + " not found");
+        return ResponseAPI(res, 404, "User with id " + userId + " not found");
     }
 
-    return onResponseAPI(res, 200, "", projects.projects);
+    return ResponseAPI(res, 200, "", projects.projects);
 }
 
 async function postMethod(userId: number, body: any, res: NextApiResponse) {
     if (!body || !body.title) {
-        return onResponseAPI(res, 400, MISSING_BODY);
+        return ResponseAPI(res, 400, MISSING_BODY);
     }
 
     const title: string = body.title;
     const description: string = body.description;
 
     if (title.length < 2 || title.length > 256) {
-        return onResponseAPI(res, 400, "Title must be between 2 and 256 characters");
+        return ResponseAPI(res, 400, "Title must be between 2 and 256 characters");
     }
 
     if (description && description.length > 2048) {
-        return onResponseAPI(res, 400, "Description must be at most 2048-character long");
+        return ResponseAPI(res, 400, "Description must be at most 2048-character long");
     }
 
     let uuid = undefined;
@@ -73,15 +70,15 @@ async function postMethod(userId: number, body: any, res: NextApiResponse) {
     });
 
     if (!created) {
-        return onResponseAPI(res, 500, "Project creation failed");
+        return ResponseAPI(res, 500, "Project creation failed");
     }
 
-    return onResponseAPI(res, 201, "Project created successfully", created);
+    return ResponseAPI(res, 201, "Project created successfully", created);
 }
 
 async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     if (!body) {
-        return onResponseAPI(res, 400, MISSING_BODY);
+        return ResponseAPI(res, 400, MISSING_BODY);
     }
 
     const projectId = body["projectId"];
@@ -91,21 +88,21 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     const characters = body["characters"];
 
     if (!projectId) {
-        return onResponseAPI(res, 400, MISSING_BODY);
+        return ResponseAPI(res, 400, MISSING_BODY);
     }
 
     const project = await getProjectFromId(projectId);
     if (!project || project.userId !== userId) {
         // not user's project
-        return onResponseAPI(res, 403, "Forbidden");
+        return ResponseAPI(res, 403, "Forbidden");
     }
 
     if (title && (title.length < 2 || title.length > 256)) {
-        return onResponseAPI(res, 400, "Title must be between 2 and 256 characters");
+        return ResponseAPI(res, 400, "Title must be between 2 and 256 characters");
     }
 
     if (description && description.length > 2048) {
-        return onResponseAPI(res, 400, "Description must be at most 2048-character long");
+        return ResponseAPI(res, 400, "Description must be at most 2048-character long");
     }
 
     let uuid;
@@ -125,32 +122,32 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     });
 
     if (!updated) {
-        return onResponseAPI(res, 500, "Project update failed");
+        return ResponseAPI(res, 500, "Project update failed");
     }
 
-    return onResponseAPI(res, 200, "Project updated successfully", {});
+    return ResponseAPI(res, 200, "Project updated successfully", {});
 }
 
 async function deleteMethod(userId: number, query: any, res: NextApiResponse) {
     const { projectId } = query;
     if (!projectId) {
-        return onResponseAPI(res, 400, MISSING_BODY);
+        return ResponseAPI(res, 400, MISSING_BODY);
     }
 
     const project = await getProjectFromId(projectId);
     if (!project || project.userId !== userId) {
         // Not user's project
-        return onResponseAPI(res, 403, "Forbidden");
+        return ResponseAPI(res, 403, "Forbidden");
     }
 
     const deleted = await deleteProject({ projectId });
     if (!deleted) {
-        return onResponseAPI(res, 500, "Project deletion failed");
+        return ResponseAPI(res, 500, "Project deletion failed");
     }
 
     if (project.poster) {
         deleteObject(project.poster);
     }
 
-    return onResponseAPI(res, 200, "Project deleted successfully", deleted);
+    return ResponseAPI(res, 200, "Project deleted successfully", deleted);
 }

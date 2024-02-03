@@ -28,6 +28,7 @@ import SavingSVG from "../../public/images/saving.svg";
 import settings from "../settings/SettingsPageContainer.module.css";
 import navbar from "./Navbar.module.css";
 import sidebar from "../editor/sidebar/EditorSidebar.module.css";
+import { useSWRConfig } from "swr";
 
 const NavbarTab = dynamic(() => import("./NavbarTab"));
 
@@ -136,11 +137,18 @@ const Navbar = () => {
     const { asPath } = useRouter();
     const page = getCurrentPage(asPath);
 
+    const { mutate } = useSWRConfig();
     const isDesktop = useDesktop();
-    const { data: user } = useUser();
+    const { data: user, isLoading } = useUser();
+
+    if (isLoading) return null;
 
     const onLogOut = async () => {
+        // 1. This destroys the session on the server
         await fetch("/api/logout");
+        // 2. This revalidates the SWR cache with an empty user
+        mutate("/api/users/cookie", undefined);
+
         Router.push("/");
     };
 
@@ -190,7 +198,7 @@ const Navbar = () => {
     }
 
     let NavbarButtons;
-    if (user && user.isLoggedIn) {
+    if (user) {
         // Logged in on web OR desktop app
         NavbarButtons = () => (
             <div className={navbar.btns}>

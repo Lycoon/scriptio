@@ -8,7 +8,6 @@ import { SaveMode } from "./enums";
 export type CookieUser = {
     id: number;
     email: string;
-    isLoggedIn: boolean;
     createdAt: Date;
 };
 

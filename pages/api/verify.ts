@@ -7,7 +7,7 @@ const redirect = (res: NextApiResponse, status: VerificationStatus) => {
     res.redirect(REDIRECTION + status);
 };
 
-export default async function verify(req: NextApiRequest, res: NextApiResponse) {
+export default async function verifyRoute(req: NextApiRequest, res: NextApiResponse) {
     try {
         if (!req.query.id || !req.query.code) {
             // scriptio.app/api/verify?id=userId&code=emailHash

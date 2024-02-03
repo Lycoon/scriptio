@@ -1,20 +1,14 @@
-import { withIronSessionApiRoute } from "iron-session/next";
 import type { NextApiRequest, NextApiResponse } from "next";
-import {
-    FAILED_USER_SETTINGS_UPDATE,
-    MISSING_BODY,
-    USER_SETTINGS_UPDATED,
-} from "@src/lib/messages";
-import { sessionOptions } from "@src/lib/session";
+import { FAILED_USER_SETTINGS_UPDATE, MISSING_BODY, USER_SETTINGS_UPDATED } from "@src/lib/messages";
 import { getUserFromId, updateUser } from "@src/server/service/user-service";
-import { onResponseAPI } from "@src/lib/utils/requests";
+import { ResponseAPI } from "@src/lib/utils/requests";
+import { getCookieUser } from "@src/lib/session";
 
-export default withIronSessionApiRoute(handler, sessionOptions);
+export default async function settingsRoute(req: NextApiRequest, res: NextApiResponse) {
+    const user = await getCookieUser(req, res);
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
-    const user = req.session.user;
-    if (!user || !user.isLoggedIn || !user.id) {
-        return onResponseAPI(res, 403, "Forbidden");
+    if (!user || !user.id) {
+        return ResponseAPI(res, 403, "Forbidden");
     }
 
     switch (req.method) {
@@ -28,15 +22,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 async function getMethod(userId: number, res: NextApiResponse<any>) {
     const user = await getUserFromId(userId);
     if (!user) {
-        return onResponseAPI(res, 404, "User with id " + userId + " not found");
+        return ResponseAPI(res, 404, "User with id " + userId + " not found");
     }
 
-    return onResponseAPI(res, 200, "", user.settings);
+    return ResponseAPI(res, 200, "", user.settings);
 }
 
 async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     if (!body) {
-        return onResponseAPI(res, 400, MISSING_BODY);
+        return ResponseAPI(res, 400, MISSING_BODY);
     }
 
     let settings: any = {};
@@ -59,8 +53,8 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
     });
 
     if (!updated) {
-        return onResponseAPI(res, 500, FAILED_USER_SETTINGS_UPDATE);
+        return ResponseAPI(res, 500, FAILED_USER_SETTINGS_UPDATE);
     }
 
-    return onResponseAPI(res, 200, USER_SETTINGS_UPDATED, null);
+    return ResponseAPI(res, 200, USER_SETTINGS_UPDATED, null);
 }
