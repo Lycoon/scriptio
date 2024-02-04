@@ -21,9 +21,9 @@ import {
     redirectTitlePage,
 } from "@src/lib/utils/redirects";
 
-import SettingsSVG from "../../public/images/gear.svg";
-import LogoutSVG from "../../public/images/logout.svg";
-import SavingSVG from "../../public/images/saving.svg";
+import SettingsSVG from "@public/images/gear.svg";
+import LogoutSVG from "@public/images/logout.svg";
+import SavingSVG from "@public/images/saving.svg";
 
 import settings from "../settings/SettingsPageContainer.module.css";
 import navbar from "./Navbar.module.css";

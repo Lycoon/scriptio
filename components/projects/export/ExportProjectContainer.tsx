@@ -8,7 +8,7 @@ import Loading from "../../utils/Loading";
 import { Project } from "@src/lib/utils/types";
 import FormHeader from "../FormHeader";
 import FormEnd from "../FormEnd";
-import { getCharacterNames } from "@src/lib/utils/characters";
+import { getCharacterNames } from "@src/lib/editor/characters";
 
 import layout from "../../utils/Layout.module.css";
 import form from "../../utils/Form.module.css";

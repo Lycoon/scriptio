@@ -1,7 +1,7 @@
 import popup from "./Popup.module.css";
 import form from "../utils/Form.module.css";
 
-import CloseSVG from "../../public/images/close.svg";
+import CloseSVG from "@public/images/close.svg";
 import { join } from "@src/lib/utils/misc";
 
 type Props = {

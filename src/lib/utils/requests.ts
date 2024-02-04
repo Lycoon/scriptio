@@ -1,6 +1,6 @@
 import { NextApiResponse } from "next";
 import { Settings } from "../../server/repository/user-repository";
-import { CharacterMap } from "./characters";
+import { CharacterMap } from "../editor/characters";
 import { CookieUser, DataResult, ProjectCreated, ProjectCreation, ProjectCreationDTO, ProjectUpdateDTO } from "./types";
 import { SaveMode } from "./enums";
 import { randomUUID } from "crypto";

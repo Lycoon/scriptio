@@ -18,10 +18,10 @@ import { useContext, useEffect, useState } from "react";
 import { UserContext } from "@src/context/UserContext";
 import { useDebouncedCallback } from "use-debounce";
 import { SaveStatus, ScreenplayElement } from "@src/lib/utils/enums";
-import { computeFullScenesData, countOccurrences } from "@src/lib/screenplay";
+import { computeFullScenesData, countOccurrences } from "@src/lib/editor/screenplay";
 import { saveScreenplay } from "@src/lib/utils/requests";
 import { Project } from "@src/lib/utils/types";
-import { CharacterData, computeFullCharactersData, deleteCharacter } from "@src/lib/utils/characters";
+import { CharacterData, computeFullCharactersData, deleteCharacter } from "@src/lib/editor/characters";
 
 /* Styles */
 import editor_ from "./EditorAndSidebar.module.css";
@@ -295,35 +295,6 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     /* Context menu actions */
-    const getFocusOnPosition = (position: number) => {
-        editorView?.commands.focus(position);
-    };
-
-    const selectTextInEditor = (start: number, end: number) => {
-        editorView?.chain().focus(start).setTextSelection({ from: start, to: end }).run();
-    };
-
-    const cutTextSelection = (start: number, end: number) => {
-        editorView?.commands.deleteRange({ from: start, to: end - 1 });
-    };
-
-    const copyTextSelection = (start: number, end: number) => {
-        console.log("copy from " + start + " to " + end);
-        //editorView?.state.doc.copy();
-    };
-
-    const replaceRange = (start: number, end: number, text: string) => {
-        editorView?.chain().focus(start).setTextSelection({ from: start, to: end }).insertContent(text).run();
-    };
-
-    const pasteText = (text: string) => {
-        editorView?.commands.insertContent(text);
-    };
-
-    const pasteTextAt = (text: string, position: number) => {
-        editorView?.commands.insertContentAt(position, text);
-    };
-
     const replaceOccurrences = (oldWord: string, newWord: string) => {
         editorView?.chain().focus().insertContentAt({ from: 0, to: 4 }, newWord).run();
     };
@@ -379,8 +350,6 @@ const EditorAndSidebar = ({ project }: Props) => {
             e.returnValue = confirmationMessage;
             return confirmationMessage;
         }
-
-        e.preventDefault();
     };
 
     useEffect(() => {
@@ -411,17 +380,10 @@ const EditorAndSidebar = ({ project }: Props) => {
     return (
         <div className={editor_.editor_and_sidebar}>
             <ContextMenu />
-            {suggestions.length > 0 && (
-                <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} pasteTextAt={pasteTextAt} />
-            )}
+            {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
             {userCtx.popup}
             <EditorSidebarNavigation
                 active={isNavigationActive}
-                getFocusOnPosition={getFocusOnPosition}
-                selectTextInEditor={selectTextInEditor}
-                cutTextSelection={cutTextSelection}
-                pasteText={pasteText}
-                copyTextSelection={copyTextSelection}
                 editCharacterPopup={editCharacterPopup}
                 addCharacterPopup={addCharacterPopup}
                 removeCharacter={removeCharacter}

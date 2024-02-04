@@ -6,9 +6,9 @@ import {
     upsertCharacterData,
     deleteCharacter,
     CharacterData,
-} from "@src/lib/utils/characters";
+} from "@src/lib/editor/characters";
 
-import CloseSVG from "../../public/images/close.svg";
+import CloseSVG from "@public/images/close.svg";
 
 import form from "../utils/Form.module.css";
 import form_info from "../utils/FormInfo.module.css";
@@ -16,6 +16,8 @@ import settings from "../settings/SettingsPageContainer.module.css";
 import popup from "./Popup.module.css";
 import { join } from "@src/lib/utils/misc";
 import { ScreenplayContext } from "@src/context/ScreenplayContext";
+import { UserContext } from "@src/context/UserContext";
+import { SaveStatus } from "@src/lib/utils/enums";
 
 type Props = {
     type: PopupType;
@@ -30,8 +32,15 @@ export enum PopupType {
     EditCharacter,
 }
 
-const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrences, replaceOccurrences }: Props) => {
+export const PopupCharacterItem = ({
+    closePopup,
+    type,
+    character,
+    getCharacterOccurrences,
+    replaceOccurrences,
+}: Props) => {
     const screenplayCtx = useContext(ScreenplayContext);
+    const userCtx = useContext(UserContext);
 
     const [newNameWarning, setNewNameWarning] = useState<boolean>(false);
     const [takenNameError, setTakenNameError] = useState<boolean>(false);
@@ -52,6 +61,7 @@ const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrenc
             return setTakenNameError(true);
         }
 
+        userCtx.updateSaveStatus(SaveStatus.NOT_SAVED);
         upsertCharacterData(
             {
                 name: _name.toUpperCase(),
@@ -92,6 +102,7 @@ const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrenc
         }
 
         // if name is the same, just update the character
+        userCtx.updateSaveStatus(SaveStatus.NOT_SAVED);
         upsertCharacterData(
             {
                 name: character.name,
@@ -111,6 +122,8 @@ const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrenc
         // delete old character and insert with new name
         replaceOccurrences(character.name, newName);
         deleteCharacter(character.name, screenplayCtx);
+
+        userCtx.updateSaveStatus(SaveStatus.NOT_SAVED);
         upsertCharacterData(
             {
                 name: newName,

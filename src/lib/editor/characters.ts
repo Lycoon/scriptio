@@ -1,5 +1,5 @@
-import { ScreenplayCtxType } from "@src/context/ScreenplayContext";
-import { getNodeFlattenContent } from "../screenplay";
+import { ScreenplayContextType } from "@src/context/ScreenplayContext";
+import { getNodeFlattenContent } from "./screenplay";
 
 export enum CharacterGender {
     Female,
@@ -18,17 +18,17 @@ const triggerCharactersUpdate = () => {
     window.dispatchEvent(charactersUpdateEvent);
 };
 
-export const upsertCharacterData = (data: CharacterData, screenplayCtx: ScreenplayCtxType) => {
+export const upsertCharacterData = (data: CharacterData, screenplayCtx: ScreenplayContextType) => {
     screenplayCtx.charactersData[data.name] = data;
     triggerCharactersUpdate();
 };
 
-export const deleteCharacter = (name: string, screenplayCtx: ScreenplayCtxType) => {
+export const deleteCharacter = (name: string, screenplayCtx: ScreenplayContextType) => {
     delete screenplayCtx.charactersData[name];
     triggerCharactersUpdate();
 };
 
-export const doesCharacterExist = (name: string, screenplayCtx: ScreenplayCtxType): boolean => {
+export const doesCharacterExist = (name: string, screenplayCtx: ScreenplayContextType): boolean => {
     const nameUppered = name.toUpperCase();
     let found = false;
 
@@ -55,7 +55,7 @@ export const getCharacterNames = (scriptioScreenplay: any) => {
         }
 
         const type: string = currNode["attrs"]["class"];
-        const content: string = getNodeFlattenContent(currNode);
+        const content: string = getNodeFlattenContent(currNode["content"]);
 
         if (type === "character" && !characters.includes(content)) {
             characters.push(content.toUpperCase());
@@ -68,10 +68,10 @@ export const getCharacterNames = (scriptioScreenplay: any) => {
 export const computeFullCharactersData = async (
     scriptioScreenplay: any,
     persistentCharacters: CharacterMap,
-    screenplayCtx: ScreenplayCtxType
+    screenplayCtx: ScreenplayContextType
 ) => {
-    let charactersData = persistentCharacters ?? {};
-    const namesFromEditor = getCharacterNames(scriptioScreenplay);
+    let charactersData: CharacterMap = persistentCharacters ?? {};
+    const namesFromEditor: string[] = getCharacterNames(scriptioScreenplay);
 
     for (const name of namesFromEditor) {
         if (charactersData[name] !== undefined) {

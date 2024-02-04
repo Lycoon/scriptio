@@ -1,8 +1,8 @@
 import EditorTab from "../EditorTab";
 
-import BoldSVG from "../../../public/images/bold.svg";
-import ItalicSVG from "../../../public/images/italic.svg";
-import UnderlineSVG from "../../../public/images/underline.svg";
+import BoldSVG from "@public/images/bold.svg";
+import ItalicSVG from "@public/images/italic.svg";
+import UnderlineSVG from "@public/images/underline.svg";
 
 import sidebar from "./EditorSidebar.module.css";
 import { join } from "@src/lib/utils/misc";
@@ -44,10 +44,7 @@ const EditorSidebarFormat = ({
                     <div className={join(sidebar.style_btn, italicActive)} onClick={toggleItalic}>
                         <ItalicSVG className={sidebar.style_btn_img} />
                     </div>
-                    <div
-                        className={join(sidebar.style_btn, underlineActive)}
-                        onClick={toggleUnderline}
-                    >
+                    <div className={join(sidebar.style_btn, underlineActive)} onClick={toggleUnderline}>
                         <UnderlineSVG className={sidebar.style_btn_img} />
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { Secrets, Settings } from "../../server/repository/user-repository";
-import { CharacterMap } from "./characters";
+import { CharacterMap } from "../editor/characters";
 import { JSONContent } from "@tiptap/react";
 import { SaveMode } from "./enums";
 

@@ -12,6 +12,7 @@ import { useDesktop } from "@src/lib/utils/hooks";
 
 import layout from "../components/utils/Layout.module.css";
 import { ScreenplayContextProvider } from "@src/context/ScreenplayContext";
+import { PopupContextProvider } from "@src/context/PopupContext";
 
 const DesktopNavbar = () => {
     return (
@@ -59,9 +60,13 @@ function MyApp({ Component, pageProps }: AppProps) {
         >
             <UserContextProvider>
                 <ScreenplayContextProvider>
-                    <ThemeProvider attribute="class" defaultTheme="dark">
-                        <div className={layout.main}>{pageLoading ? <Loading /> : <Component {...pageProps} />}</div>
-                    </ThemeProvider>
+                    <PopupContextProvider>
+                        <ThemeProvider attribute="class" defaultTheme="dark">
+                            <div className={layout.main}>
+                                {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                            </div>
+                        </ThemeProvider>
+                    </PopupContextProvider>
                 </ScreenplayContextProvider>
             </UserContextProvider>
         </SWRConfig>

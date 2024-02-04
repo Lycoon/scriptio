@@ -1,6 +1,6 @@
 import "chart.js/auto";
 import { Bar } from "react-chartjs-2";
-import { getRandomColors, StatsRatio } from "@src/lib/statistics";
+import { getRandomColors, StatsRatio } from "@src/lib/editor/statistics";
 import { Project } from "@src/lib/utils/types";
 
 type Props = {

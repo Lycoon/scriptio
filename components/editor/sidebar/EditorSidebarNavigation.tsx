@@ -3,26 +3,19 @@ import { useContext, useState } from "react";
 import { ScreenplayContext } from "@src/context/ScreenplayContext";
 import { UserContext } from "@src/context/UserContext";
 import { ContextMenuType } from "./ContextMenu";
-import { SceneItem } from "@src/lib/screenplay";
-import { CharacterData } from "@src/lib/utils/characters";
+import { SceneItem } from "@src/lib/editor/screenplay";
+import { CharacterData } from "@src/lib/editor/characters";
 import SidebarCharacterItem from "./SidebarCharacterItem";
 import SidebarSceneItem from "./SidebarSceneItem";
 
-import CharacterSVG from "../../../public/images/character.svg";
-import LocationSVG from "../../../public/images/location.svg";
+import CharacterSVG from "@public/images/character.svg";
+import LocationSVG from "@public/images/location.svg";
 
 import sidebar from "./EditorSidebar.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
 
 type Props = {
     active: boolean;
-
-    /* Editor actions */
-    pasteText: (text: string) => void;
-    getFocusOnPosition: (position: number) => void;
-    selectTextInEditor: (start: number, end: number) => void;
-    cutTextSelection: (start: number, end: number) => void;
-    copyTextSelection: (start: number, end: number) => void;
 
     /* Characters */
     editCharacterPopup: (character: CharacterData) => void;
@@ -38,13 +31,6 @@ const enum NavigationMenu {
 
 const EditorSidebarNavigation = ({
     active,
-
-    /* Editor actions */
-    getFocusOnPosition,
-    selectTextInEditor,
-    cutTextSelection,
-    pasteText,
-    copyTextSelection,
 
     /* Characters */
     editCharacterPopup,
@@ -112,7 +98,6 @@ const EditorSidebarNavigation = ({
                                         gender: character[1].gender,
                                         synopsis: character[1].synopsis,
                                     }}
-                                    pasteText={pasteText}
                                     editCharacterPopup={editCharacterPopup}
                                     removeCharacter={removeCharacter}
                                 />
@@ -125,16 +110,7 @@ const EditorSidebarNavigation = ({
                 <p className={sidebar_nav.list_title}>Scenes</p>
                 <div className={sidebar_nav.list + " " + sidebar_nav.scene_list}>
                     {scenesData.map((scene: SceneItem) => {
-                        return (
-                            <SidebarSceneItem
-                                key={scene.position}
-                                scene={scene}
-                                focusOn={getFocusOnPosition}
-                                selectTextInEditor={selectTextInEditor}
-                                cutTextSelection={cutTextSelection}
-                                copyTextSelection={copyTextSelection}
-                            />
-                        );
+                        return <SidebarSceneItem key={scene.position} scene={scene} />;
                     })}
                     <div className={sidebar_nav.list_fill} onContextMenu={handleDropdownSceneList} />
                 </div>

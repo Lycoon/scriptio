@@ -1,6 +1,6 @@
 import { JSONContent } from "@tiptap/react";
-import { ScreenplayElement } from "./utils/enums";
-import { ScreenplayCtxType } from "@src/context/ScreenplayContext";
+import { ScreenplayElement } from "../utils/enums";
+import { ScreenplayContextType } from "@src/context/ScreenplayContext";
 
 /* Nodes */
 export type NodeData = {
@@ -10,7 +10,6 @@ export type NodeData = {
 };
 
 /* Scenes */
-export let scenesData: ScenesData = [];
 export type ScenesData = SceneItem[];
 export type SceneItem = {
     title: string;
@@ -97,7 +96,7 @@ const getScenePreview = (nodes: any[], cursor: number) => {
     return preview;
 };
 
-export const computeFullScenesData = async (scriptioScreenplay: any, screenplayCtx: ScreenplayCtxType) => {
+export const computeFullScenesData = async (scriptioScreenplay: any, screenplayCtx: ScreenplayContextType) => {
     if (!scriptioScreenplay) {
         screenplayCtx.updateScenesData([]);
         return;

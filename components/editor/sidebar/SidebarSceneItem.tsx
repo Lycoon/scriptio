@@ -5,15 +5,10 @@ import SceneLengthItem from "../sidebar/SceneLengthItem";
 import { join } from "@src/lib/utils/misc";
 
 import nav_item from "./SidebarItem.module.css";
+import { focusOnPosition } from "@src/lib/editor/editor";
 
-const SidebarSceneItem = ({
-    scene,
-    focusOn,
-    selectTextInEditor,
-    cutTextSelection,
-    copyTextSelection,
-}: SceneContextProps) => {
-    const { updateContextMenu } = useContext(UserContext);
+const SidebarSceneItem = ({ scene }: SceneContextProps) => {
+    const { editor, updateContextMenu } = useContext(UserContext);
 
     const handleDropdown = (e: any) => {
         e.preventDefault();
@@ -23,16 +18,13 @@ const SidebarSceneItem = ({
             typeSpecificProps: {
                 position: scene.position,
                 nextPosition: scene.nextPosition,
-                focusOn,
-                selectTextInEditor,
-                cutTextSelection,
-                copyTextSelection,
             },
         });
     };
 
     const handleDoubleClick = () => {
-        focusOn(scene.position); // focus on double click in scene list
+        // focus on double click in scene list
+        focusOnPosition(editor!, scene.position);
     };
 
     return (

@@ -1,10 +1,10 @@
 import { Editor } from "@tiptap/react";
-import { createContext, ReactNode, useState } from "react";
+import { Component, createContext, ReactNode, useState } from "react";
 import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
 import { Project } from "@prisma/client";
 import { SaveStatus } from "../lib/utils/enums";
 
-export type contextType = {
+export type UserContextType = {
     editor: Editor | undefined;
     updateEditor: (editor: Editor) => void;
     darkMode: boolean;
@@ -21,7 +21,7 @@ export type contextType = {
     updateIsDesktop: (isDesktop: boolean) => void;
 };
 
-const contextDefaults: contextType = {
+const contextDefaults: UserContextType = {
     editor: undefined,
     updateEditor: () => {},
     darkMode: false,
@@ -42,7 +42,7 @@ type Props = {
     children: ReactNode;
 };
 
-export const UserContext = createContext<contextType>(contextDefaults);
+export const UserContext = createContext<UserContextType>(contextDefaults);
 
 export function UserContextProvider({ children }: Props) {
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
@@ -73,7 +73,7 @@ export function UserContextProvider({ children }: Props) {
         setContextMenu(contextMenu_);
     };
 
-    const updatePopup = (popup_: any) => {
+    const updatePopup = (popup_: JSX.Element) => {
         setPopup(popup_);
     };
 

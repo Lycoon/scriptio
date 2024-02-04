@@ -18,7 +18,6 @@ const HomePageWindow = () => {
     }, []);
 
     if (isLoading) return null;
-    console.log("user", user);
 
     if (isDesktop) {
         return (
