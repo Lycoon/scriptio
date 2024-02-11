@@ -21,7 +21,11 @@ import { SaveStatus, ScreenplayElement } from "@src/lib/utils/enums";
 import { computeFullScenesData, countOccurrences } from "@src/lib/editor/screenplay";
 import { saveScreenplay } from "@src/lib/utils/requests";
 import { Project } from "@src/lib/utils/types";
-import { CharacterData, computeFullCharactersData, deleteCharacter } from "@src/lib/editor/characters";
+import {
+    CharacterData,
+    computeFullCharactersData,
+    deleteCharacter,
+} from "@src/lib/editor/characters";
 
 /* Styles */
 import editor_ from "./EditorAndSidebar.module.css";
@@ -55,7 +59,11 @@ const EditorAndSidebar = ({ project }: Props) => {
     const save = async () => {
         if (userCtx.saveStatus !== SaveStatus.SAVED) {
             userCtx.updateSaveStatus(SaveStatus.SAVING);
-            const res = await saveScreenplay(project.id, editorView?.getJSON(), screenplayCtx.charactersData);
+            const res = await saveScreenplay(
+                project.id,
+                editorView?.getJSON(),
+                screenplayCtx.charactersData
+            );
 
             if (!res.ok) {
                 userCtx.updateSaveStatus(SaveStatus.ERROR);
@@ -84,11 +92,19 @@ const EditorAndSidebar = ({ project }: Props) => {
 
         deferredSceneUpdate();
         deferredCharactersUpdate();
-
         deferredScreenplaySave();
     };
 
-    const tabs = ["scene", "action", "character", "dialogue", "parenthetical", "transition", "section", "note"];
+    const tabs = [
+        "scene",
+        "action",
+        "character",
+        "dialogue",
+        "parenthetical",
+        "transition",
+        "section",
+        "note",
+    ];
 
     const updateEditorStyles = (marks: any[]) => {
         marks = marks.map((mark: any) => mark.attrs.class);
@@ -235,7 +251,11 @@ const EditorAndSidebar = ({ project }: Props) => {
                         }
                     }
 
-                    editorView.chain().insertContentAt(pos, `<p class="${newNode}"></p>`).focus(pos).run();
+                    editorView
+                        .chain()
+                        .insertContentAt(pos, `<p class="${newNode}"></p>`)
+                        .focus(pos)
+                        .run();
 
                     return true;
                 }
@@ -326,7 +346,9 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const addCharacterPopup = () => {
-        userCtx.updatePopup(() => <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />);
+        userCtx.updatePopup(() => (
+            <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />
+        ));
     };
 
     /* Marks */
@@ -355,11 +377,9 @@ const EditorAndSidebar = ({ project }: Props) => {
     useEffect(() => {
         addEventListener("keydown", pressedKeyEvent);
         addEventListener("beforeunload", onUnload);
-        addEventListener("onCharacterUpdate", deferredScreenplaySave);
         return () => {
             removeEventListener("keydown", pressedKeyEvent);
             removeEventListener("beforeunload", onUnload);
-            removeEventListener("onCharacterUpdate", deferredScreenplaySave);
         };
     });
 
@@ -380,7 +400,9 @@ const EditorAndSidebar = ({ project }: Props) => {
     return (
         <div className={editor_.editor_and_sidebar}>
             <ContextMenu />
-            {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
+            {suggestions.length > 0 && (
+                <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />
+            )}
             {userCtx.popup}
             <EditorSidebarNavigation
                 active={isNavigationActive}
