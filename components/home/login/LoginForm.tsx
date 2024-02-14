@@ -19,18 +19,18 @@ const LoginForm = ({ verificationStatus }: Props) => {
 
     useEffect(() => {
         switch (verificationStatus) {
-            case VerificationStatus.FAILED:
+            case VerificationStatus.Failed:
                 setFormInfo({
                     content: "An error occurred while verifying your account",
                     isError: true,
                 });
                 break;
-            case VerificationStatus.SUCCESS:
+            case VerificationStatus.Success:
                 setFormInfo({
                     content: "Your account has been successfully verified",
                 });
                 break;
-            case VerificationStatus.USED:
+            case VerificationStatus.Used:
                 setFormInfo({
                     content: "This email has already been registered",
                     isError: true,

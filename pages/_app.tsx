@@ -11,7 +11,7 @@ import { ThemeProvider } from "next-themes";
 import { useDesktop } from "@src/lib/utils/hooks";
 
 import layout from "../components/utils/Layout.module.css";
-import { ScreenplayContextProvider } from "@src/context/ScreenplayContext";
+import { ProjectContextProvider } from "@src/context/ProjectContext";
 import { PopupContextProvider } from "@src/context/PopupContext";
 
 const DesktopNavbar = () => {
@@ -59,7 +59,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             }}
         >
             <UserContextProvider>
-                <ScreenplayContextProvider>
+                <ProjectContextProvider>
                     <PopupContextProvider>
                         <ThemeProvider attribute="class" defaultTheme="dark">
                             <div className={layout.main}>
@@ -67,7 +67,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                             </div>
                         </ThemeProvider>
                     </PopupContextProvider>
-                </ScreenplayContextProvider>
+                </ProjectContextProvider>
             </UserContextProvider>
         </SWRConfig>
     );

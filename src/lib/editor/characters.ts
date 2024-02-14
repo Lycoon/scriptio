@@ -1,4 +1,4 @@
-import { ScreenplayContextType } from "@src/context/ScreenplayContext";
+import { ProjectContextType } from "@src/context/ProjectContext";
 import { getNodeFlattenContent } from "./screenplay";
 
 export enum CharacterGender {
@@ -18,21 +18,21 @@ const triggerCharactersUpdate = () => {
     window.dispatchEvent(charactersUpdateEvent);
 };
 
-export const upsertCharacterData = (data: CharacterData, screenplayCtx: ScreenplayContextType) => {
-    screenplayCtx.charactersData[data.name] = data;
+export const upsertCharacterData = (data: CharacterData, projectCtx: ProjectContextType) => {
+    projectCtx.charactersData[data.name] = data;
     triggerCharactersUpdate();
 };
 
-export const deleteCharacter = (name: string, screenplayCtx: ScreenplayContextType) => {
-    delete screenplayCtx.charactersData[name];
+export const deleteCharacter = (name: string, projectCtx: ProjectContextType) => {
+    delete projectCtx.charactersData[name];
     triggerCharactersUpdate();
 };
 
-export const doesCharacterExist = (name: string, screenplayCtx: ScreenplayContextType): boolean => {
+export const doesCharacterExist = (name: string, projectCtx: ProjectContextType): boolean => {
     const nameUppered = name.toUpperCase();
     let found = false;
 
-    Object.keys(screenplayCtx.charactersData).forEach((key) => {
+    Object.keys(projectCtx.charactersData).forEach((key) => {
         if (key.toUpperCase() === nameUppered) {
             found = true;
             return;
@@ -68,7 +68,7 @@ export const getCharacterNames = (scriptioScreenplay: any) => {
 export const computeFullCharactersData = async (
     scriptioScreenplay: any,
     persistentCharacters: CharacterMap,
-    screenplayCtx: ScreenplayContextType
+    screenplayCtx: ProjectContextType
 ) => {
     let charactersData: CharacterMap = persistentCharacters ?? {};
     const namesFromEditor: string[] = getCharacterNames(scriptioScreenplay);

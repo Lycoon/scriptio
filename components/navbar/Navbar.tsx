@@ -29,6 +29,7 @@ import settings from "../settings/SettingsPageContainer.module.css";
 import navbar from "./Navbar.module.css";
 import sidebar from "../editor/sidebar/EditorSidebar.module.css";
 import { useSWRConfig } from "swr";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 const NavbarTab = dynamic(() => import("./NavbarTab"));
 
@@ -113,26 +114,27 @@ const NotLoggedNavbar = () => (
 );
 
 const SaveStatusNavbar = () => {
-    const { saveStatus } = useContext(UserContext);
+    const { saveStatus } = useContext(ProjectContext);
 
     switch (saveStatus) {
-        case SaveStatus.SAVING:
+        case SaveStatus.Saving:
             return (
                 <div className={navbar.saving_spin}>
                     <SavingSVG className={settings.icon} />
                 </div>
             );
-        case SaveStatus.SAVED:
+        case SaveStatus.Saved:
             return <p className={navbar.last_saved}>In sync</p>;
-        case SaveStatus.NOT_SAVED:
+        case SaveStatus.NotSaved:
             return <p className={navbar.last_saved}>Not saved</p>;
-        case SaveStatus.ERROR:
+        case SaveStatus.Error:
             return <p className={navbar.last_saved}>Error</p>;
     }
 };
 
 const Navbar = () => {
-    const { project, updateSaveStatus, editor, updatePopup } = useContext(UserContext);
+    const { project, editor, updatePopup } = useContext(UserContext);
+    const { updateSaveStatus } = useContext(ProjectContext);
 
     const { asPath } = useRouter();
     const page = getCurrentPage(asPath);
@@ -164,7 +166,7 @@ const Navbar = () => {
             reader.onload = (e: any) => {
                 const confirmImport = () => {
                     convertFountainToJSON(e.target.result, editor!);
-                    updateSaveStatus(SaveStatus.NOT_SAVED);
+                    updateSaveStatus(SaveStatus.NotSaved);
                 };
 
                 updatePopup(() => (

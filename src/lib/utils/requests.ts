@@ -43,7 +43,7 @@ export const createProject = async (
     };
 
     let resCloud, cloudProjectId;
-    if (user && project.saveMode & SaveMode.CLOUD) {
+    if (user && project.saveMode & SaveMode.Cloud) {
         resCloud = await request(`/api/projects`, "POST", body);
 
         if (resCloud.ok) {
@@ -55,7 +55,7 @@ export const createProject = async (
     }
 
     let resLocal, fileProjectId;
-    if (isDesktop && project.saveMode & SaveMode.LOCAL) {
+    if (isDesktop && project.saveMode & SaveMode.Local) {
         fileProjectId = randomUUID();
 
         // Add project setting to local storage
@@ -72,7 +72,7 @@ export const createProject = async (
             return onDataError("Project could not be created on disk");
         }
 
-        if (project.saveMode & ~SaveMode.CLOUD) {
+        if (project.saveMode & ~SaveMode.Cloud) {
             // If project has only been created locally, return fileProjectId
             return onDataSuccess("Project created successfully", { id: fileProjectId });
         }

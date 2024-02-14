@@ -1,33 +1,51 @@
+// ------------------------------ //
+//             WEBSITE            //
+// ------------------------------ //
+
 export enum VerificationStatus {
-    SUCCESS,
-    FAILED,
-    USED,
+    Success,
+    Failed,
+    Used,
 }
 
 export enum PasswordRecoverStatus {
-    SUCCESS,
-    FAILED,
-    EXPIRED,
-}
-
-export enum SaveStatus {
-    SAVING,
-    SAVED,
-    NOT_SAVED,
-    ERROR,
-}
-
-export enum SaveMode {
-    LOCAL = 1,
-    CLOUD = 2,
-    BOTH = LOCAL | CLOUD,
+    Success,
+    Failed,
+    Expired,
 }
 
 export enum Page {
-    EXPORT,
-    SCREENPLAY,
-    STATISTICS,
-    EDIT,
+    Export,
+    Screenplay,
+    Statistics,
+    Edit,
+}
+
+// ------------------------------ //
+//            PROJECT             //
+// ------------------------------ //
+
+export enum SaveStatus {
+    Saving,
+    Saved,
+    NotSaved,
+    Error,
+}
+
+export enum SaveMode {
+    Local = 1,
+    Cloud = 2,
+    Both = Local | Cloud,
+}
+
+// ------------------------------ //
+//            EDITOR              //
+// ------------------------------ //
+
+export enum Style {
+    Bold = 1,
+    Italic = 2,
+    Underline = 3,
 }
 
 export enum ScreenplayElement {

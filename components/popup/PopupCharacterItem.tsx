@@ -15,7 +15,7 @@ import form_info from "../utils/FormInfo.module.css";
 import settings from "../settings/SettingsPageContainer.module.css";
 import popup from "./Popup.module.css";
 import { join } from "@src/lib/utils/misc";
-import { ScreenplayContext } from "@src/context/ScreenplayContext";
+import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { SaveStatus } from "@src/lib/utils/enums";
 
@@ -39,12 +39,12 @@ export const PopupCharacterItem = ({
     getCharacterOccurrences,
     replaceOccurrences,
 }: Props) => {
-    const screenplayCtx = useContext(ScreenplayContext);
-    const userCtx = useContext(UserContext);
+    const projectCtx = useContext(ProjectContext);
 
     const [newNameWarning, setNewNameWarning] = useState<boolean>(false);
     const [takenNameError, setTakenNameError] = useState<boolean>(false);
     const [nameOccurrences, setNameOccurrences] = useState<number>(0);
+
     const [newName, setNewName] = useState<string>("");
     const [newGender, setNewGender] = useState<CharacterGender>(CharacterGender.Female);
     const [newSynopsis, setNewSynopsis] = useState<string>("");
@@ -56,19 +56,19 @@ export const PopupCharacterItem = ({
         const _gender = e.target.gender.value;
         const _synopsis = e.target.synopsis.value;
 
-        const doesExist = doesCharacterExist(_name, screenplayCtx);
+        const doesExist = doesCharacterExist(_name, projectCtx);
         if (doesExist) {
             return setTakenNameError(true);
         }
 
-        userCtx.updateSaveStatus(SaveStatus.NOT_SAVED);
+        projectCtx.updateSaveStatus(SaveStatus.NotSaved);
         upsertCharacterData(
             {
                 name: _name.toUpperCase(),
                 gender: _gender,
                 synopsis: _synopsis,
             },
-            screenplayCtx
+            projectCtx
         );
 
         closePopup();
@@ -90,7 +90,7 @@ export const PopupCharacterItem = ({
         setNewSynopsis(_newSynopsis);
 
         if (_newName.toUpperCase() !== character.name) {
-            const doesExist = doesCharacterExist(_newName, screenplayCtx);
+            const doesExist = doesCharacterExist(_newName, projectCtx);
 
             if (doesExist) {
                 return setTakenNameError(true);
@@ -102,14 +102,14 @@ export const PopupCharacterItem = ({
         }
 
         // if name is the same, just update the character
-        userCtx.updateSaveStatus(SaveStatus.NOT_SAVED);
+        projectCtx.updateSaveStatus(SaveStatus.NotSaved);
         upsertCharacterData(
             {
                 name: character.name,
                 gender: _newGender,
                 synopsis: _newSynopsis,
             },
-            screenplayCtx
+            projectCtx
         );
 
         closePopup();
@@ -121,16 +121,16 @@ export const PopupCharacterItem = ({
 
         // delete old character and insert with new name
         replaceOccurrences(character.name, newName);
-        deleteCharacter(character.name, screenplayCtx);
+        deleteCharacter(character.name, projectCtx);
 
-        userCtx.updateSaveStatus(SaveStatus.NOT_SAVED);
+        projectCtx.updateSaveStatus(SaveStatus.NotSaved);
         upsertCharacterData(
             {
                 name: newName,
                 gender: newGender,
                 synopsis: newSynopsis,
             },
-            screenplayCtx
+            projectCtx
         );
 
         closePopup();

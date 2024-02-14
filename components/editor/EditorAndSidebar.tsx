@@ -21,15 +21,12 @@ import { SaveStatus, ScreenplayElement } from "@src/lib/utils/enums";
 import { computeFullScenesData, countOccurrences } from "@src/lib/editor/screenplay";
 import { saveScreenplay } from "@src/lib/utils/requests";
 import { Project } from "@src/lib/utils/types";
-import {
-    CharacterData,
-    computeFullCharactersData,
-    deleteCharacter,
-} from "@src/lib/editor/characters";
+import { CharacterData, computeFullCharactersData, deleteCharacter } from "@src/lib/editor/characters";
 
 /* Styles */
 import editor_ from "./EditorAndSidebar.module.css";
-import { ScreenplayContext } from "@src/context/ScreenplayContext";
+import { ProjectContext } from "@src/context/ProjectContext";
+import { deferredCharactersUpdate, deferredSceneUpdate, deferredScreenplaySave, save } from "@src/lib/editor/editor";
 
 type Props = {
     project: Project;
@@ -37,7 +34,7 @@ type Props = {
 
 const EditorAndSidebar = ({ project }: Props) => {
     const userCtx = useContext(UserContext);
-    const screenplayCtx = useContext(ScreenplayContext);
+    const projectCtx = useContext(ProjectContext);
 
     const [selectedTab, updateSelectedTab] = useState<number>(0);
     const [isNavigationActive, updateIsNavigationActive] = useState<boolean>(true);
@@ -56,55 +53,15 @@ const EditorAndSidebar = ({ project }: Props) => {
     const [isItalic, setIsItalic] = useState<boolean>(false);
     const [isUnderline, setIsUnderline] = useState<boolean>(false);
 
-    const save = async () => {
-        if (userCtx.saveStatus !== SaveStatus.SAVED) {
-            userCtx.updateSaveStatus(SaveStatus.SAVING);
-            const res = await saveScreenplay(
-                project.id,
-                editorView?.getJSON(),
-                screenplayCtx.charactersData
-            );
-
-            if (!res.ok) {
-                userCtx.updateSaveStatus(SaveStatus.ERROR);
-                return;
-            }
-
-            userCtx.updateSaveStatus(SaveStatus.SAVED);
-        }
-    };
-
-    const deferredScreenplaySave = useDebouncedCallback(() => {
-        save();
-    }, 2000);
-
-    const deferredSceneUpdate = useDebouncedCallback(async () => {
-        computeFullScenesData(editorView?.getJSON(), screenplayCtx);
-    }, 500);
-
-    const deferredCharactersUpdate = useDebouncedCallback(async () => {
-        computeFullCharactersData(editorView?.getJSON(), project.characters, screenplayCtx);
-    }, 2000);
-
     const triggerEditorUpdate = () => {
         // Set as unsaved, to prevent data loss between typing and autosave
-        userCtx.updateSaveStatus(SaveStatus.NOT_SAVED);
-
-        deferredSceneUpdate();
-        deferredCharactersUpdate();
-        deferredScreenplaySave();
+        projectCtx.updateSaveStatus(SaveStatus.NotSaved);
+        deferredSceneUpdate(projectCtx, editorView?.getJSON());
+        deferredCharactersUpdate(projectCtx, editorView?.getJSON());
+        deferredScreenplaySave(projectCtx, project.id, editorView?.getJSON());
     };
 
-    const tabs = [
-        "scene",
-        "action",
-        "character",
-        "dialogue",
-        "parenthetical",
-        "transition",
-        "section",
-        "note",
-    ];
+    const tabs = ["scene", "action", "character", "dialogue", "parenthetical", "transition", "section", "note"];
 
     const updateEditorStyles = (marks: any[]) => {
         marks = marks.map((mark: any) => mark.attrs.class);
@@ -143,7 +100,7 @@ const EditorAndSidebar = ({ project }: Props) => {
             const cursor: number = anchor.pos;
             const pagePos = editor.view.coordsAtPos(cursor);
 
-            let list = Object.keys(screenplayCtx.charactersData);
+            let list = Object.keys(projectCtx.charactersData);
 
             if (nodeSize > 0) {
                 if (cursorInNode !== nodeSize) {
@@ -251,11 +208,7 @@ const EditorAndSidebar = ({ project }: Props) => {
                         }
                     }
 
-                    editorView
-                        .chain()
-                        .insertContentAt(pos, `<p class="${newNode}"></p>`)
-                        .focus(pos)
-                        .run();
+                    editorView.chain().insertContentAt(pos, `<p class="${newNode}"></p>`).focus(pos).run();
 
                     return true;
                 }
@@ -298,7 +251,7 @@ const EditorAndSidebar = ({ project }: Props) => {
         // Ctrl + S
         if (e.ctrlKey && e.key === "s") {
             e.preventDefault();
-            save();
+            save(projectCtx, project.id, editorView?.getJSON());
         }
 
         // Ctrl + X
@@ -320,7 +273,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const removeCharacter = (name: string) => {
-        deleteCharacter(name, screenplayCtx);
+        deleteCharacter(name, projectCtx);
     };
 
     /* Popup actions */
@@ -346,9 +299,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const addCharacterPopup = () => {
-        userCtx.updatePopup(() => (
-            <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />
-        ));
+        userCtx.updatePopup(() => <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />);
     };
 
     /* Marks */
@@ -366,7 +317,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     };
 
     const onUnload = (e: BeforeUnloadEvent) => {
-        if (userCtx.saveStatus === SaveStatus.NOT_SAVED) {
+        if (projectCtx.saveStatus === SaveStatus.NotSaved) {
             let confirmationMessage = "Are you sure you want to leave?";
 
             e.returnValue = confirmationMessage;
@@ -388,8 +339,8 @@ const EditorAndSidebar = ({ project }: Props) => {
             editorView.commands.setContent(project.screenplay as JSONContent);
             userCtx.updateEditor(editorView);
 
-            computeFullScenesData(project.screenplay, screenplayCtx);
-            computeFullCharactersData(project.screenplay, project.characters, screenplayCtx);
+            computeFullScenesData(project.screenplay, projectCtx);
+            computeFullCharactersData(project.screenplay, project.characters, projectCtx);
         }
     }, [project, editorView]);
 
@@ -400,9 +351,7 @@ const EditorAndSidebar = ({ project }: Props) => {
     return (
         <div className={editor_.editor_and_sidebar}>
             <ContextMenu />
-            {suggestions.length > 0 && (
-                <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />
-            )}
+            {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
             {userCtx.popup}
             <EditorSidebarNavigation
                 active={isNavigationActive}

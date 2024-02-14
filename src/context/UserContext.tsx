@@ -1,16 +1,13 @@
 import { Editor } from "@tiptap/react";
-import { Component, createContext, ReactNode, useState } from "react";
+import { createContext, ReactNode, useState } from "react";
 import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
 import { Project } from "@prisma/client";
-import { SaveStatus } from "../lib/utils/enums";
 
 export type UserContextType = {
     editor: Editor | undefined;
     updateEditor: (editor: Editor) => void;
     darkMode: boolean;
     updateDarkMode: (darkMode: boolean) => void;
-    saveStatus: SaveStatus;
-    updateSaveStatus: (saveStatus: SaveStatus) => void;
     project: Project | undefined;
     updateProject: (project: Project | undefined) => void;
     contextMenu: ContextMenuProps | undefined;
@@ -26,8 +23,6 @@ const contextDefaults: UserContextType = {
     updateEditor: () => {},
     darkMode: false,
     updateDarkMode: () => {},
-    saveStatus: SaveStatus.SAVED,
-    updateSaveStatus: () => {},
     project: undefined,
     updateProject: () => {},
     contextMenu: undefined,
@@ -47,7 +42,6 @@ export const UserContext = createContext<UserContextType>(contextDefaults);
 export function UserContextProvider({ children }: Props) {
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [darkMode, setDarkMode] = useState<boolean>(false);
-    const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.SAVED);
     const [project, setProject] = useState<Project | undefined>(undefined);
     const [contextMenu, setContextMenu] = useState<ContextMenuProps | undefined>(undefined);
     const [popup, setPopup] = useState<any>(undefined);
@@ -59,10 +53,6 @@ export function UserContextProvider({ children }: Props) {
 
     const updateDarkMode = (darkMode_: boolean) => {
         setDarkMode(darkMode_);
-    };
-
-    const updateSaveStatus = (saveStatus_: SaveStatus) => {
-        setSaveStatus(saveStatus_);
     };
 
     const updateProject = (project_: Project | undefined) => {
@@ -86,8 +76,6 @@ export function UserContextProvider({ children }: Props) {
         updateEditor,
         darkMode,
         updateDarkMode,
-        saveStatus,
-        updateSaveStatus,
         project,
         updateProject,
         contextMenu,

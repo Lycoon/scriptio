@@ -1,6 +1,6 @@
 import { join } from "@src/lib/utils/misc";
 import { useContext, useState } from "react";
-import { ScreenplayContext } from "@src/context/ScreenplayContext";
+import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { ContextMenuType } from "./ContextMenu";
 import { SceneItem } from "@src/lib/editor/screenplay";
@@ -37,7 +37,7 @@ const EditorSidebarNavigation = ({
     addCharacterPopup,
     removeCharacter,
 }: Props) => {
-    const { scenesData, charactersData } = useContext(ScreenplayContext);
+    const { scenesData, charactersData } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
     const isActive = active ? sidebar_nav.active : "";

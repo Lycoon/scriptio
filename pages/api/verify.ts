@@ -11,7 +11,7 @@ export default async function verifyRoute(req: NextApiRequest, res: NextApiRespo
     try {
         if (!req.query.id || !req.query.code) {
             // scriptio.app/api/verify?id=userId&code=emailHash
-            return redirect(res, VerificationStatus.FAILED);
+            return redirect(res, VerificationStatus.Failed);
         }
 
         const id = +req.query.id!;
@@ -19,20 +19,20 @@ export default async function verifyRoute(req: NextApiRequest, res: NextApiRespo
         const user = await getUserFromId(id, true);
 
         if (!user || emailHash !== user.secrets.emailHash) {
-            return redirect(res, VerificationStatus.FAILED);
+            return redirect(res, VerificationStatus.Failed);
         }
 
         if (user.verified) {
-            return redirect(res, VerificationStatus.USED);
+            return redirect(res, VerificationStatus.Used);
         }
 
         const updated = await updateUser({ id: { id }, verified: true });
         if (!updated) {
-            return redirect(res, VerificationStatus.FAILED);
+            return redirect(res, VerificationStatus.Failed);
         }
 
-        redirect(res, VerificationStatus.SUCCESS);
+        redirect(res, VerificationStatus.Success);
     } catch (error: any) {
-        redirect(res, VerificationStatus.FAILED);
+        redirect(res, VerificationStatus.Failed);
     }
 }
