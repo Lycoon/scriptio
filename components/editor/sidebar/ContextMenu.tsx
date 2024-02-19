@@ -4,13 +4,7 @@ import { SceneItem } from "@src/lib/editor/screenplay";
 
 import context from "./ContextMenu.module.css";
 import { CharacterData } from "@src/lib/editor/characters";
-import {
-    copyTextSelection,
-    cutTextSelection,
-    focusOnPosition,
-    pasteText,
-    selectTextInEditor,
-} from "@src/lib/editor/editor";
+import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/editor/editor";
 
 /* ==================== */
 /*     Context menu     */
@@ -62,10 +56,10 @@ const SceneItemMenu = (props: any) => {
         focusOnPosition(editor!, position);
     };
     const copyScene = () => {
-        copyTextSelection(editor!, position, nextPosition);
+        copyText(editor!, position, nextPosition);
     };
     const cutScene = () => {
-        cutTextSelection(editor!, position, nextPosition);
+        cutText(editor!, position, nextPosition);
     };
     const selectScene = () => {
         selectTextInEditor(editor!, position, nextPosition);

@@ -6,87 +6,103 @@ import UnderlineSVG from "@public/images/underline.svg";
 
 import sidebar from "./EditorSidebar.module.css";
 import { join } from "@src/lib/utils/misc";
+import { ScreenplayElement, Style } from "@src/lib/utils/enums";
+import { Dispatch, SetStateAction, useContext } from "react";
+import { applyMarkToggle } from "@src/lib/editor/editor";
+import { UserContext } from "@src/context/UserContext";
 
-type Props = {
-    tabs: any[];
-    selectedTab: number;
-    setActiveTab: (activeTab: string) => void;
-    toggleBold: () => void;
-    toggleItalic: () => void;
-    toggleUnderline: () => void;
-    isBold: boolean;
-    isItalic: boolean;
-    isUnderline: boolean;
+type FormatButtonsProps = {
+    selectedStyles: Style;
+    setActiveStyles: Dispatch<SetStateAction<Style>>;
 };
 
-const EditorSidebarFormat = ({
-    tabs,
-    toggleBold,
-    toggleItalic,
-    toggleUnderline,
-    isBold,
-    isItalic,
-    isUnderline,
-    selectedTab,
-    setActiveTab,
-}: Props) => {
-    const boldActive = isBold ? sidebar.active_style : "";
-    const italicActive = isItalic ? sidebar.active_style : "";
-    const underlineActive = isUnderline ? sidebar.active_style : "";
+const FormatButtons = ({ selectedStyles, setActiveStyles }: FormatButtonsProps) => {
+    const { editor } = useContext(UserContext);
 
+    const toggleStyle = (style: Style) => {
+        setActiveStyles((prev) => prev ^ style);
+        applyMarkToggle(editor!, style);
+    };
+
+    const getActiveStyleCSS = (style: Style) => (selectedStyles & style ? sidebar.active_style : "");
+    const boldActive = getActiveStyleCSS(Style.Bold);
+    const italicActive = getActiveStyleCSS(Style.Italic);
+    const underlineActive = getActiveStyleCSS(Style.Underline);
+
+    return (
+        <div className={sidebar.style_btns}>
+            <div className={join(sidebar.style_btn, boldActive)} onClick={() => toggleStyle(Style.Bold)}>
+                <BoldSVG className={sidebar.style_btn_img} />
+            </div>
+            <div className={join(sidebar.style_btn, italicActive)} onClick={() => toggleStyle(Style.Italic)}>
+                <ItalicSVG className={sidebar.style_btn_img} />
+            </div>
+            <div className={join(sidebar.style_btn, underlineActive)} onClick={() => toggleStyle(Style.Underline)}>
+                <UnderlineSVG className={sidebar.style_btn_img} />
+            </div>
+        </div>
+    );
+};
+
+type Props = {
+    selectedStyles: Style;
+    setActiveStyles: Dispatch<SetStateAction<Style>>;
+    selectedElement: ScreenplayElement;
+    setActiveElement: (activeElement: ScreenplayElement) => void;
+};
+
+const EditorSidebarFormat = ({ selectedStyles, setActiveStyles, selectedElement, setActiveElement }: Props) => {
     return (
         <div className={join(sidebar.container, sidebar.tabs)}>
             <div className={sidebar.tabs}>
-                <div className={sidebar.style_btns}>
-                    <div className={join(sidebar.style_btn, boldActive)} onClick={toggleBold}>
-                        <BoldSVG className={sidebar.style_btn_img} />
-                    </div>
-                    <div className={join(sidebar.style_btn, italicActive)} onClick={toggleItalic}>
-                        <ItalicSVG className={sidebar.style_btn_img} />
-                    </div>
-                    <div className={join(sidebar.style_btn, underlineActive)} onClick={toggleUnderline}>
-                        <UnderlineSVG className={sidebar.style_btn_img} />
-                    </div>
-                </div>
+                <FormatButtons selectedStyles={selectedStyles} setActiveStyles={setActiveStyles} />
                 <EditorTab
-                    action={() => setActiveTab("scene")}
                     content="SCENE HEADING"
-                    active={tabs[selectedTab] == "scene"}
+                    element={ScreenplayElement.Scene}
+                    currentElement={selectedElement}
+                    setActiveElement={setActiveElement}
                 />
                 <EditorTab
-                    action={() => setActiveTab("action")}
                     content="Action"
-                    active={tabs[selectedTab] == "action"}
+                    element={ScreenplayElement.Action}
+                    currentElement={selectedElement}
+                    setActiveElement={setActiveElement}
                 />
                 <EditorTab
-                    action={() => setActiveTab("character")}
                     content="CHARACTER"
-                    active={tabs[selectedTab] == "character"}
+                    element={ScreenplayElement.Character}
+                    currentElement={selectedElement}
+                    setActiveElement={setActiveElement}
                 />
                 <EditorTab
-                    action={() => setActiveTab("dialogue")}
                     content="Dialogue"
-                    active={tabs[selectedTab] == "dialogue"}
+                    element={ScreenplayElement.Dialogue}
+                    currentElement={selectedElement}
+                    setActiveElement={setActiveElement}
                 />
                 <EditorTab
-                    action={() => setActiveTab("parenthetical")}
                     content="(Parenthetical)"
-                    active={tabs[selectedTab] == "parenthetical"}
+                    element={ScreenplayElement.Parenthetical}
+                    currentElement={selectedElement}
+                    setActiveElement={setActiveElement}
                 />
                 <EditorTab
-                    action={() => setActiveTab("transition")}
                     content="TRANSITION:"
-                    active={tabs[selectedTab] == "transition"}
+                    element={ScreenplayElement.Transition}
+                    currentElement={selectedElement}
+                    setActiveElement={setActiveElement}
                 />
                 <EditorTab
-                    action={() => setActiveTab("section")}
                     content="Section"
-                    active={tabs[selectedTab] == "section"}
+                    element={ScreenplayElement.Section}
+                    currentElement={selectedElement}
+                    setActiveElement={setActiveElement}
                 />
                 <EditorTab
-                    action={() => setActiveTab("note")}
                     content="[[Note]]"
-                    active={tabs[selectedTab] == "note"}
+                    element={ScreenplayElement.Note}
+                    currentElement={selectedElement}
+                    setActiveElement={setActiveElement}
                 />
             </div>
         </div>

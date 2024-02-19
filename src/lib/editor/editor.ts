@@ -1,41 +1,77 @@
-import { Editor } from "@tiptap/react";
-import { SaveStatus } from "../utils/enums";
+import { Content, Editor, useEditor } from "@tiptap/react";
+import { SaveStatus, ScreenplayElement, Style } from "../utils/enums";
 import { saveScreenplay } from "../utils/requests";
 import { ProjectContextType } from "@src/context/ProjectContext";
-import { useDebouncedCallback } from "use-debounce";
-import { computeFullScenesData } from "./screenplay";
-import { computeFullCharactersData } from "./characters";
 
-export const focusOnPosition = (editorView: Editor, position: number) => {
-    editorView.commands.focus(position);
+import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "@src/Screenplay";
+import Document from "@tiptap/extension-document";
+import Text from "@tiptap/extension-text";
+import History from "@tiptap/extension-history";
+import { Project } from "../utils/types";
+
+// ------------------------------ //
+//          TEXT EDITION          //
+// ------------------------------ //
+
+export const applyMarkToggle = (editor: Editor, style: Style) => {
+    if (style & Style.Bold) editor.commands.toggleBold();
+    if (style & Style.Italic) editor.commands.toggleItalic();
+    if (style & Style.Underline) editor.commands.toggleUnderline();
 };
 
-export const selectTextInEditor = (editorView: Editor, start: number, end: number) => {
-    editorView.chain().focus(start).setTextSelection({ from: start, to: end }).run();
+export const applyElement = (editor: Editor, element: ScreenplayElement) => {
+    editor.chain().focus().setNode("Screenplay", { class: element }).run();
 };
 
-export const cutTextSelection = (editorView: Editor, start: number, end: number) => {
-    editorView.commands.deleteRange({ from: start, to: end - 1 });
+export const focusOnPosition = (editor: Editor, position: number) => {
+    editor.commands.focus(position);
 };
 
-export const copyTextSelection = (editorView: Editor, start: number, end: number) => {
+export const selectTextInEditor = (editor: Editor, start: number, end: number) => {
+    editor.chain().focus(start).setTextSelection({ from: start, to: end }).run();
+};
+
+export const cutText = (editor: Editor, start: number, end: number) => {
+    editor.commands.deleteRange({ from: start, to: end - 1 });
+};
+
+export const copyText = (editor: Editor, start: number, end: number) => {
     console.log("copy from " + start + " to " + end);
-    //editorView?.state.doc.copy();
+    //editor?.state.doc.copy();
 };
 
-export const replaceRange = (editorView: Editor, start: number, end: number, text: string) => {
-    editorView.chain().focus(start).setTextSelection({ from: start, to: end }).insertContent(text).run();
+export const replaceRange = (editor: Editor, start: number, end: number, text: string) => {
+    editor.chain().focus(start).setTextSelection({ from: start, to: end }).insertContent(text).run();
 };
 
-export const pasteText = (editorView: Editor, text: string) => {
-    editorView.commands.insertContent(text);
+export const pasteText = (editor: Editor, text: string) => {
+    editor.commands.insertContent(text);
 };
 
-export const pasteTextAt = (editorView: Editor, text: string, position: number) => {
-    editorView.commands.insertContentAt(position, text);
+export const pasteTextAt = (editor: Editor, text: string, position: number) => {
+    editor.commands.insertContentAt(position, text);
 };
 
-export const save = async (ctx: ProjectContextType, projectId: string, screenplay: any) => {
+export const insertElement = (editor: Editor, element: ScreenplayElement, position: number) => {
+    editor.chain().insertContentAt(position, `<p class="${element}"></p>`).focus(position).run();
+};
+
+export const getStylesFromMarks = (marks: any[]): Style => {
+    let style = Style.None;
+    marks.forEach((mark: any) => {
+        const styleClass = mark.attrs.class;
+        if (styleClass === "bold") style |= Style.Bold;
+        if (styleClass === "italic") style |= Style.Italic;
+        if (styleClass === "underline") style |= Style.Underline;
+    });
+    return style;
+};
+
+// ------------------------------ //
+//          EDITOR STATE          //
+// ------------------------------ //
+
+export const save = async (projectId: string, screenplay: any, ctx: ProjectContextType) => {
     if (ctx.saveStatus !== SaveStatus.Saved) {
         ctx.updateSaveStatus(SaveStatus.Saving);
         const res = await saveScreenplay(projectId, screenplay, ctx.charactersData);
@@ -49,17 +85,32 @@ export const save = async (ctx: ProjectContextType, projectId: string, screenpla
     }
 };
 
-export const deferredScreenplaySave = useDebouncedCallback(
-    (ctx: ProjectContextType, projectId: string, screenplay: any) => {
-        save(ctx, projectId, screenplay);
-    },
-    2000
-);
+export const useScriptioEditor = (project: Project, triggerEditorUpdate: () => void, onCaretUpdate: () => void) => {
+    const editorView = useEditor({
+        extensions: [
+            // default
+            Document,
+            Text,
+            History,
+            CustomBold,
+            CustomItalic,
+            CustomUnderline,
 
-export const deferredSceneUpdate = useDebouncedCallback(async (ctx: ProjectContextType, screenplay: any) => {
-    computeFullScenesData(screenplay, ctx);
-}, 500);
+            // scriptio
+            Screenplay,
+        ],
+        content: project.screenplay as Content,
 
-export const deferredCharactersUpdate = useDebouncedCallback(async (ctx: ProjectContextType, screenplay: any) => {
-    computeFullCharactersData(screenplay, project.characters, ctx);
-}, 500);
+        // update on each screenplay update
+        onUpdate({ editor, transaction }) {
+            triggerEditorUpdate();
+        },
+
+        // update active on caret update
+        onSelectionUpdate({ editor, transaction }) {
+            const selection = (transaction as any).curSelection;
+            onCaretUpdate(editor as Editor, selection);
+        },
+    });
+    return editorView;
+};

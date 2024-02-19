@@ -43,19 +43,21 @@ export enum SaveMode {
 // ------------------------------ //
 
 export enum Style {
+    None = 0,
     Bold = 1,
     Italic = 2,
-    Underline = 3,
+    Underline = 4,
 }
 
+// String values must match the class names in the /public/scriptio.css file
 export enum ScreenplayElement {
-    Scene,
-    Action,
-    Character,
-    Dialogue,
-    Parenthetical,
-    Transition,
-    Section,
-    Note,
-    None,
+    Scene = "scene",
+    Action = "action",
+    Character = "character",
+    Dialogue = "dialogue",
+    Parenthetical = "parenthetical",
+    Transition = "transition",
+    Section = "section",
+    Note = "note",
+    None = "none",
 }

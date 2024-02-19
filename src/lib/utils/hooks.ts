@@ -5,7 +5,6 @@ import Router, { useRouter } from "next/router";
 import { CookieUser, Project } from "./types";
 import { UserContext } from "../../context/UserContext";
 import { useDesktopValues } from "../store";
-import fetchJson from "../fetchJson";
 
 const returnData = (data: any, error: any, mutate: any, isLoading: any) => {
     return {
