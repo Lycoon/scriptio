@@ -1,10 +1,10 @@
 import Head from "next/head";
 import { useContext, useEffect } from "react";
 import AboutPageContainer from "@components/home/AboutPageContainer";
-import { UserContext } from "@src/context/UserContext";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 const AboutPage = () => {
-    const { updateProject } = useContext(UserContext);
+    const { updateProject } = useContext(ProjectContext);
     useEffect(() => updateProject(undefined), []);
 
     return (

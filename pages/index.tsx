@@ -4,14 +4,14 @@ import { useContext, useEffect } from "react";
 import HomePageContainer from "@components/home/HomePageContainer";
 import Navbar from "@components/navbar/Navbar";
 import ProjectPageContainer from "@components/projects/ProjectPageContainer";
-import { UserContext } from "@src/context/UserContext";
 import { useDesktop, useUser } from "@src/lib/utils/hooks";
 import DesktopHomePageContainer from "@components/home/DesktopHomePageContainer";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 const HomePageWindow = () => {
     const isDesktop = useDesktop();
     const { data: user, isLoading } = useUser();
-    const { updateProject } = useContext(UserContext);
+    const { updateProject } = useContext(ProjectContext);
 
     useEffect(() => {
         updateProject(undefined);

@@ -26,8 +26,6 @@ const EditorContainer = ({ project }: Props) => {
             "--editor-notes-color",
             settings.notesColor + "42" // 42 is for the alpha channel
         );
-
-        console.log("Settings changed: ", settings.notesColor);
     }, [settings]);
 
     return (

@@ -3,8 +3,8 @@ import { Settings } from "../../server/repository/user-repository";
 import { useContext, useEffect, useState } from "react";
 import Router, { useRouter } from "next/router";
 import { CookieUser, Project } from "./types";
-import { UserContext } from "../../context/UserContext";
 import { useDesktopValues } from "../store";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 const returnData = (data: any, error: any, mutate: any, isLoading: any) => {
     return {
@@ -81,7 +81,7 @@ const useProjects = (): StateResult<Project[]> => {
 };
 
 const useProjectFromUrl = (): StateResult<Project> => {
-    const { updateProject } = useContext(UserContext);
+    const { updateProject } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
 
     let { data, error, mutate, isLoading } = useSWR<Project>(projectId ? `/api/projects/${projectId}` : null);

@@ -2,10 +2,10 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect } from "react";
 import SignupContainer from "@components/home/signup/SignupContainer";
-import { UserContext } from "@src/context/UserContext";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 const SignupPage: NextPage = () => {
-    const { updateProject } = useContext(UserContext);
+    const { updateProject } = useContext(ProjectContext);
     useEffect(() => updateProject(undefined), []);
 
     return (

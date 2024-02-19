@@ -3,12 +3,12 @@ import Head from "next/head";
 import { useContext, useEffect } from "react";
 import Navbar from "@components/navbar/Navbar";
 import SettingsPageContainer from "@components/settings/SettingsPageContainer";
-import { UserContext } from "@src/context/UserContext";
 import { useUser } from "@src/lib/utils/hooks";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 const SettingsPage: NextPage = () => {
     const { data: user } = useUser(true);
-    const { updateProject } = useContext(UserContext);
+    const { updateProject } = useContext(ProjectContext);
 
     useEffect(() => updateProject(undefined), []);
 

@@ -96,9 +96,9 @@ const getScenePreview = (nodes: any[], cursor: number) => {
     return preview;
 };
 
-export const computeFullScenesData = async (scriptioScreenplay: any, screenplayCtx: ProjectContextType) => {
+export const computeFullScenesData = async (scriptioScreenplay: any, projectCtx: ProjectContextType) => {
     if (!scriptioScreenplay) {
-        screenplayCtx.updateScenesData([]);
+        projectCtx.updateScenesData([]);
         return;
     }
 
@@ -138,5 +138,5 @@ export const computeFullScenesData = async (scriptioScreenplay: any, screenplayC
         scenes[scenes.length - 1].nextPosition = cursor; // last scene has no next scene to set nextPosition
     }
 
-    screenplayCtx.updateScenesData(scenes);
+    projectCtx.updateScenesData(scenes);
 };

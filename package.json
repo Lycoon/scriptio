@@ -23,6 +23,7 @@
         "@tiptap/react": "^2.2.0",
         "chart.js": "^4.4.1",
         "chartjs-plugin-datalabels": "^2.2.0",
+        "debounce": "^2.0.0",
         "fast-xml-parser": "^4.3.4",
         "file-saver": "^2.0.5",
         "hogan.js": "^3.0.2",
@@ -37,8 +38,7 @@
         "react-dom": "^18.2.0",
         "render2": "^0.1.4",
         "swr": "^2.2.4",
-        "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store",
-        "use-debounce": "^8.0.4"
+        "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store"
     },
     "devDependencies": {
         "@svgr/webpack": "^8.0.1",

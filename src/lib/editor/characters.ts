@@ -13,19 +13,12 @@ export type CharacterItem = {
     synopsis: string;
 };
 
-const triggerCharactersUpdate = () => {
-    const charactersUpdateEvent = new Event("onCharacterUpdate");
-    window.dispatchEvent(charactersUpdateEvent);
-};
-
 export const upsertCharacterData = (data: CharacterData, projectCtx: ProjectContextType) => {
     projectCtx.charactersData[data.name] = data;
-    triggerCharactersUpdate();
 };
 
 export const deleteCharacter = (name: string, projectCtx: ProjectContextType) => {
     delete projectCtx.charactersData[name];
-    triggerCharactersUpdate();
 };
 
 export const doesCharacterExist = (name: string, projectCtx: ProjectContextType): boolean => {
@@ -65,11 +58,8 @@ export const getCharacterNames = (scriptioScreenplay: any) => {
     return characters;
 };
 
-export const computeFullCharactersData = async (
-    scriptioScreenplay: any,
-    persistentCharacters: CharacterMap,
-    screenplayCtx: ProjectContextType
-) => {
+export const computeFullCharactersData = async (scriptioScreenplay: any, projectCtx: ProjectContextType) => {
+    const persistentCharacters = projectCtx.charactersData;
     let charactersData: CharacterMap = persistentCharacters ?? {};
     const namesFromEditor: string[] = getCharacterNames(scriptioScreenplay);
 
@@ -84,6 +74,5 @@ export const computeFullCharactersData = async (
         };
     }
 
-    screenplayCtx.updateCharactersData(charactersData);
-    triggerCharactersUpdate();
+    projectCtx.updateCharactersData(charactersData);
 };

@@ -1,15 +1,12 @@
 import { Editor } from "@tiptap/react";
 import { createContext, ReactNode, useState } from "react";
 import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
-import { Project } from "@prisma/client";
 
 export type UserContextType = {
     editor: Editor | undefined;
     updateEditor: (editor: Editor) => void;
     darkMode: boolean;
     updateDarkMode: (darkMode: boolean) => void;
-    project: Project | undefined;
-    updateProject: (project: Project | undefined) => void;
     contextMenu: ContextMenuProps | undefined;
     updateContextMenu: (contextMenu: ContextMenuProps | undefined) => void;
     popup: any;
@@ -23,8 +20,6 @@ const contextDefaults: UserContextType = {
     updateEditor: () => {},
     darkMode: false,
     updateDarkMode: () => {},
-    project: undefined,
-    updateProject: () => {},
     contextMenu: undefined,
     updateContextMenu: () => {},
     popup: undefined,
@@ -42,7 +37,6 @@ export const UserContext = createContext<UserContextType>(contextDefaults);
 export function UserContextProvider({ children }: Props) {
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [darkMode, setDarkMode] = useState<boolean>(false);
-    const [project, setProject] = useState<Project | undefined>(undefined);
     const [contextMenu, setContextMenu] = useState<ContextMenuProps | undefined>(undefined);
     const [popup, setPopup] = useState<any>(undefined);
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
@@ -53,10 +47,6 @@ export function UserContextProvider({ children }: Props) {
 
     const updateDarkMode = (darkMode_: boolean) => {
         setDarkMode(darkMode_);
-    };
-
-    const updateProject = (project_: Project | undefined) => {
-        setProject(project_);
     };
 
     const updateContextMenu = (contextMenu_: ContextMenuProps | undefined) => {
@@ -76,8 +66,6 @@ export function UserContextProvider({ children }: Props) {
         updateEditor,
         darkMode,
         updateDarkMode,
-        project,
-        updateProject,
         contextMenu,
         updateContextMenu,
         popup,

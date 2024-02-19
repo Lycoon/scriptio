@@ -133,8 +133,8 @@ const SaveStatusNavbar = () => {
 };
 
 const Navbar = () => {
-    const { project, editor, updatePopup } = useContext(UserContext);
-    const { updateSaveStatus } = useContext(ProjectContext);
+    const { editor, updatePopup } = useContext(UserContext);
+    const { project, updateSaveStatus } = useContext(ProjectContext);
 
     const { asPath } = useRouter();
     const page = getCurrentPage(asPath);

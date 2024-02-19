@@ -16,15 +16,15 @@ import settings from "../settings/SettingsPageContainer.module.css";
 import popup from "./Popup.module.css";
 import { join } from "@src/lib/utils/misc";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { UserContext } from "@src/context/UserContext";
 import { SaveStatus } from "@src/lib/utils/enums";
+import { replaceOccurrences } from "@src/lib/editor/editor";
+import { UserContext } from "@src/context/UserContext";
 
 type Props = {
     type: PopupType;
     character?: CharacterData;
     closePopup: () => void;
     getCharacterOccurrences?: (word: string) => number;
-    replaceOccurrences?: (oldWord: string, newWord: string) => void;
 };
 
 export enum PopupType {
@@ -32,14 +32,9 @@ export enum PopupType {
     EditCharacter,
 }
 
-export const PopupCharacterItem = ({
-    closePopup,
-    type,
-    character,
-    getCharacterOccurrences,
-    replaceOccurrences,
-}: Props) => {
+export const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrences }: Props) => {
     const projectCtx = useContext(ProjectContext);
+    const userCtx = useContext(UserContext);
 
     const [newNameWarning, setNewNameWarning] = useState<boolean>(false);
     const [takenNameError, setTakenNameError] = useState<boolean>(false);
@@ -117,10 +112,9 @@ export const PopupCharacterItem = ({
 
     const onNewNameConfirm = () => {
         assert(character, "A character must be defined on edit mode");
-        assert(replaceOccurrences);
 
         // delete old character and insert with new name
-        replaceOccurrences(character.name, newName);
+        replaceOccurrences(userCtx.editor!, character.name, newName);
         deleteCharacter(character.name, projectCtx);
 
         projectCtx.updateSaveStatus(SaveStatus.NotSaved);
