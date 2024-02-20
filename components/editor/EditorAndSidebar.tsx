@@ -20,7 +20,7 @@ import { CharacterData, computeFullCharactersData, deleteCharacter } from "@src/
 /* Styles */
 import editor_ from "./EditorAndSidebar.module.css";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { applyElement, save, getStylesFromMarks, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
+import { applyElement, save, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
 
 type EditorAndSidebarProps = {
     project: Project;
@@ -189,7 +189,7 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
             removeEventListener("keydown", pressedKeyEvent);
             removeEventListener("beforeunload", onUnload);
         };
-    }, []);
+    }, [pressedKeyEvent, onUnload]);
 
     // Update editor content on first load
     useEffect(() => {
