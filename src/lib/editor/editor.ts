@@ -80,8 +80,6 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 // ------------------------------ //
 
 export const save = async (screenplay: any, projectCtx: ProjectContextType) => {
-    console.log("Saving screenplay");
-
     if (projectCtx.saveStatus !== SaveStatus.Saved) {
         projectCtx.updateSaveStatus(SaveStatus.Saving);
         const res = await saveScreenplay(projectCtx.project!.id, screenplay, projectCtx.charactersData);

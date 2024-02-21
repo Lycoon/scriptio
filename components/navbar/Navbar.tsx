@@ -30,6 +30,7 @@ import navbar from "./Navbar.module.css";
 import sidebar from "../editor/sidebar/EditorSidebar.module.css";
 import { useSWRConfig } from "swr";
 import { ProjectContext } from "@src/context/ProjectContext";
+import { closePopup, importFilePopup } from "@src/lib/editor/popup";
 
 const NavbarTab = dynamic(() => import("./NavbarTab"));
 
@@ -133,7 +134,9 @@ const SaveStatusNavbar = () => {
 };
 
 const Navbar = () => {
-    const { editor, updatePopup } = useContext(UserContext);
+    const userCtx = useContext(UserContext);
+    const { editor, updatePopup } = userCtx;
+
     const { project, updateSaveStatus } = useContext(ProjectContext);
 
     const { asPath } = useRouter();
@@ -169,9 +172,7 @@ const Navbar = () => {
                     updateSaveStatus(SaveStatus.NotSaved);
                 };
 
-                updatePopup(() => (
-                    <PopupImportFile closePopup={() => updatePopup(undefined)} confirmImport={confirmImport} />
-                ));
+                importFilePopup(userCtx, confirmImport);
             };
             reader.readAsText(file, "UTF-8");
         };

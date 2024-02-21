@@ -1,6 +1,7 @@
 import { Editor } from "@tiptap/react";
 import { createContext, ReactNode, useState } from "react";
 import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
+import { PopupCharacterItemProps } from "@components/popup/PopupCharacterItem";
 
 export type UserContextType = {
     editor: Editor | undefined;
@@ -9,8 +10,8 @@ export type UserContextType = {
     updateDarkMode: (darkMode: boolean) => void;
     contextMenu: ContextMenuProps | undefined;
     updateContextMenu: (contextMenu: ContextMenuProps | undefined) => void;
-    popup: any;
-    updatePopup: (popup: any) => void;
+    popup: PopupCharacterItemProps | undefined;
+    updatePopup: (popup: PopupCharacterItemProps | undefined) => void;
     isDesktop: boolean;
     updateIsDesktop: (isDesktop: boolean) => void;
 };
@@ -38,7 +39,7 @@ export function UserContextProvider({ children }: Props) {
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [darkMode, setDarkMode] = useState<boolean>(false);
     const [contextMenu, setContextMenu] = useState<ContextMenuProps | undefined>(undefined);
-    const [popup, setPopup] = useState<any>(undefined);
+    const [popup, setPopup] = useState<PopupCharacterItemProps | undefined>(undefined);
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
 
     const updateEditor = (editor_: Editor) => {
@@ -53,7 +54,7 @@ export function UserContextProvider({ children }: Props) {
         setContextMenu(contextMenu_);
     };
 
-    const updatePopup = (popup_: JSX.Element) => {
+    const updatePopup = (popup_: PopupCharacterItemProps | undefined) => {
         setPopup(popup_);
     };
 

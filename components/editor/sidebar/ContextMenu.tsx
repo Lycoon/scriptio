@@ -5,6 +5,7 @@ import { SceneItem } from "@src/lib/editor/screenplay";
 import context from "./ContextMenu.module.css";
 import { CharacterData } from "@src/lib/editor/characters";
 import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/editor/editor";
+import { editCharacterPopup } from "@src/lib/editor/popup";
 
 /* ==================== */
 /*     Context menu     */
@@ -99,25 +100,23 @@ const SceneListMenu = (props: any) => {
 
 export type CharacterContextProps = {
     character: CharacterData;
-    editCharacterPopup: (character: CharacterData) => void;
     removeCharacter: (name: string) => void;
 };
 
 const CharacterItemMenu = (props: any) => {
-    const { editor } = useContext(UserContext);
+    const userCtx = useContext(UserContext);
 
     const character: CharacterData = props.props.character;
-    const editCharacterPopup = props.props.editCharacterPopup;
     const removeCharacter = props.props.removeCharacter;
 
     const _editCharacterPopup = () => {
-        editCharacterPopup(character);
+        editCharacterPopup(character, userCtx);
     };
     const _removeCharacter = () => {
         removeCharacter(character.name);
     };
     const pasteTextAction = () => {
-        pasteText(editor!, character.name);
+        pasteText(userCtx.editor!, character.name);
     };
 
     return (

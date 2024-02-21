@@ -5,7 +5,7 @@ import { pasteText } from "@src/lib/editor/editor";
 
 import nav_item from "./SidebarItem.module.css";
 
-const SidebarCharacterItem = ({ character, editCharacterPopup, removeCharacter }: CharacterContextProps) => {
+const SidebarCharacterItem = ({ character, removeCharacter }: CharacterContextProps) => {
     const { updateContextMenu, editor } = useContext(UserContext);
 
     const handleDropdown = (e: any) => {
@@ -16,7 +16,6 @@ const SidebarCharacterItem = ({ character, editCharacterPopup, removeCharacter }
             typeSpecificProps: {
                 character,
                 pasteText,
-                editCharacterPopup,
                 removeCharacter,
             },
         });

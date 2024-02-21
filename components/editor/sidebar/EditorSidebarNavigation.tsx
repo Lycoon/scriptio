@@ -13,13 +13,10 @@ import LocationSVG from "@public/images/location.svg";
 
 import sidebar from "./EditorSidebar.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
+import { addCharacterPopup, editCharacterPopup } from "@src/lib/editor/popup";
 
-type Props = {
+type SidebarNavigationProps = {
     active: boolean;
-
-    /* Characters */
-    editCharacterPopup: (character: CharacterData) => void;
-    addCharacterPopup: () => void;
     removeCharacter: (name: string) => void;
 };
 
@@ -29,14 +26,7 @@ const enum NavigationMenu {
     Others,
 }
 
-const EditorSidebarNavigation = ({
-    active,
-
-    /* Characters */
-    editCharacterPopup,
-    addCharacterPopup,
-    removeCharacter,
-}: Props) => {
+const EditorSidebarNavigation = ({ active, removeCharacter }: SidebarNavigationProps) => {
     const { scenesData, charactersData } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
@@ -98,7 +88,6 @@ const EditorSidebarNavigation = ({
                                         gender: character[1].gender,
                                         synopsis: character[1].synopsis,
                                     }}
-                                    editCharacterPopup={editCharacterPopup}
                                     removeCharacter={removeCharacter}
                                 />
                             );

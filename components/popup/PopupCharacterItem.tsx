@@ -19,20 +19,15 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { SaveStatus } from "@src/lib/utils/enums";
 import { replaceOccurrences } from "@src/lib/editor/editor";
 import { UserContext } from "@src/context/UserContext";
+import { PopupType, closePopup } from "@src/lib/editor/popup";
+import { countOccurrences } from "@src/lib/editor/screenplay";
 
-type Props = {
+export type PopupCharacterItemProps = {
     type: PopupType;
     character?: CharacterData;
-    closePopup: () => void;
-    getCharacterOccurrences?: (word: string) => number;
 };
 
-export enum PopupType {
-    NewCharacter,
-    EditCharacter,
-}
-
-export const PopupCharacterItem = ({ closePopup, type, character, getCharacterOccurrences }: Props) => {
+export const PopupCharacterItem = ({ type, character }: PopupCharacterItemProps) => {
     const projectCtx = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
 
@@ -66,14 +61,13 @@ export const PopupCharacterItem = ({ closePopup, type, character, getCharacterOc
             projectCtx
         );
 
-        closePopup();
+        closePopup(userCtx);
     };
 
     const onEdit = (e: any) => {
         e.preventDefault();
 
         assert(character, "A character must be defined on edit mode");
-        assert(getCharacterOccurrences);
 
         // need to store in local variables because stateful is async
         const _newName = e.target.name.value;
@@ -91,7 +85,7 @@ export const PopupCharacterItem = ({ closePopup, type, character, getCharacterOc
                 return setTakenNameError(true);
             }
 
-            setNameOccurrences(getCharacterOccurrences(character.name));
+            setNameOccurrences(countOccurrences(userCtx.editor?.getJSON()!, character.name));
             setNewNameWarning(true);
             return;
         }
@@ -107,7 +101,7 @@ export const PopupCharacterItem = ({ closePopup, type, character, getCharacterOc
             projectCtx
         );
 
-        closePopup();
+        closePopup(userCtx);
     };
 
     const onNewNameConfirm = () => {
@@ -127,7 +121,7 @@ export const PopupCharacterItem = ({ closePopup, type, character, getCharacterOc
             projectCtx
         );
 
-        closePopup();
+        closePopup(userCtx);
     };
 
     let def: any = {
@@ -151,7 +145,7 @@ export const PopupCharacterItem = ({ closePopup, type, character, getCharacterOc
             <div className={popup.container}>
                 <div className={popup.header}>
                     <h2 className={popup.title}>{def.title}</h2>
-                    <CloseSVG className={popup.close_btn} onClick={closePopup} alt="Close icon" />
+                    <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
                 </div>
                 <form className={popup.form} onSubmit={def.onSubmit}>
                     {newNameWarning && (

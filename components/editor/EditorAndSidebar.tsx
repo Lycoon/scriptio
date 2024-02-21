@@ -6,7 +6,7 @@ import EditorComponent from "./EditorComponent";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
-import PopupCharacterItem, { PopupType } from "../popup/PopupCharacterItem";
+import PopupCharacterItem from "../popup/PopupCharacterItem";
 import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 
 /* Utils */
@@ -147,31 +147,6 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         deleteCharacter(name, projectCtx);
     };
 
-    /* Popup actions */
-    const closePopup = () => {
-        userCtx.updatePopup(undefined);
-    };
-
-    const getCharacterOccurrences = (word: string): number => {
-        if (!editorView) return 0;
-        return countOccurrences(editorView.getJSON(), word);
-    };
-
-    const editCharacterPopup = (character: CharacterData) => {
-        userCtx.updatePopup(() => (
-            <PopupCharacterItem
-                closePopup={closePopup}
-                type={PopupType.EditCharacter}
-                character={character}
-                getCharacterOccurrences={getCharacterOccurrences}
-            />
-        ));
-    };
-
-    const addCharacterPopup = () => {
-        userCtx.updatePopup(() => <PopupCharacterItem closePopup={closePopup} type={PopupType.NewCharacter} />);
-    };
-
     const onUnload = (e: BeforeUnloadEvent) => {
         if (projectCtx.saveStatus === SaveStatus.NotSaved) {
             let confirmationMessage = "Are you sure you want to leave?";
@@ -210,13 +185,8 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         <div className={editor_.editor_and_sidebar}>
             <ContextMenu />
             {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
-            {userCtx.popup}
-            <EditorSidebarNavigation
-                active={isNavigationActive}
-                editCharacterPopup={editCharacterPopup}
-                addCharacterPopup={addCharacterPopup}
-                removeCharacter={removeCharacter}
-            />
+            {userCtx.popup && <PopupCharacterItem type={userCtx.popup.type} character={userCtx.popup.character} />}
+            <EditorSidebarNavigation active={isNavigationActive} removeCharacter={removeCharacter} />
             <div className={editor_.container} onScroll={onScroll}>
                 <EditorComponent editor={editorView} />
             </div>
