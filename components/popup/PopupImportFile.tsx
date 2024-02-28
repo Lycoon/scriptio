@@ -3,16 +3,16 @@ import form from "../utils/Form.module.css";
 
 import CloseSVG from "@public/images/close.svg";
 import { join } from "@src/lib/utils/misc";
+import { PopupData, PopupImportFileData, closePopup } from "@src/lib/editor/popup";
+import { useContext } from "react";
+import { UserContext } from "@src/context/UserContext";
 
-type Props = {
-    confirmImport: () => void;
-    closePopup: () => void;
-};
+const PopupImportFile = ({ data: { confirmImport } }: PopupData<PopupImportFileData>) => {
+    const userCtx = useContext(UserContext);
 
-const PopupImportFile = ({ confirmImport, closePopup }: Props) => {
     const onConfirmImport = () => {
         confirmImport();
-        closePopup();
+        closePopup(userCtx);
     };
 
     return (
@@ -20,7 +20,7 @@ const PopupImportFile = ({ confirmImport, closePopup }: Props) => {
             <div className={popup.container}>
                 <div className={popup.header}>
                     <h2 className={popup.title}>Import screenplay</h2>
-                    <CloseSVG className={popup.close_btn} onClick={closePopup} alt="Close icon" />
+                    <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
                 </div>
                 <div className={popup.info}>
                     <p>
@@ -31,7 +31,7 @@ const PopupImportFile = ({ confirmImport, closePopup }: Props) => {
                 <button className={join(form.btn, popup.confirm, popup.import_confirm)} onClick={onConfirmImport}>
                     Yes, import
                 </button>
-                <button className={join(form.btn, popup.cancel)} onClick={closePopup}>
+                <button className={join(form.btn, popup.cancel)} onClick={() => closePopup(userCtx)}>
                     No
                 </button>
             </div>

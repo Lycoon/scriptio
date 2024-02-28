@@ -28,7 +28,6 @@ export enum Page {
 export enum SaveStatus {
     Saving,
     Saved,
-    NotSaved,
     Error,
 }
 

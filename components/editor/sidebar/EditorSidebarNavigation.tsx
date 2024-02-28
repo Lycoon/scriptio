@@ -4,7 +4,6 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { ContextMenuType } from "./ContextMenu";
 import { SceneItem } from "@src/lib/editor/screenplay";
-import { CharacterData } from "@src/lib/editor/characters";
 import SidebarCharacterItem from "./SidebarCharacterItem";
 import SidebarSceneItem from "./SidebarSceneItem";
 
@@ -13,11 +12,9 @@ import LocationSVG from "@public/images/location.svg";
 
 import sidebar from "./EditorSidebar.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
-import { addCharacterPopup, editCharacterPopup } from "@src/lib/editor/popup";
 
 type SidebarNavigationProps = {
     active: boolean;
-    removeCharacter: (name: string) => void;
 };
 
 const enum NavigationMenu {
@@ -26,7 +23,7 @@ const enum NavigationMenu {
     Others,
 }
 
-const EditorSidebarNavigation = ({ active, removeCharacter }: SidebarNavigationProps) => {
+const EditorSidebarNavigation = ({ active }: SidebarNavigationProps) => {
     const { scenesData, charactersData } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
@@ -50,7 +47,7 @@ const EditorSidebarNavigation = ({ active, removeCharacter }: SidebarNavigationP
         updateContextMenu({
             type: ContextMenuType.CharacterList,
             position: { x: e.clientX, y: e.clientY },
-            typeSpecificProps: { addCharacterPopup },
+            typeSpecificProps: {},
         });
     };
 
@@ -88,7 +85,6 @@ const EditorSidebarNavigation = ({ active, removeCharacter }: SidebarNavigationP
                                         gender: character[1].gender,
                                         synopsis: character[1].synopsis,
                                     }}
-                                    removeCharacter={removeCharacter}
                                 />
                             );
                         })}

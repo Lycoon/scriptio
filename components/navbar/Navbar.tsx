@@ -4,7 +4,6 @@ import Router, { useRouter } from "next/router";
 import { useContext } from "react";
 import { UserContext } from "@src/context/UserContext";
 import { convertFountainToJSON } from "@src/converters/import/fountain";
-import PopupImportFile from "../popup/PopupImportFile";
 import { Project } from "@prisma/client";
 import { SaveStatus } from "@src/lib/utils/enums";
 import { useDesktop, useUser } from "@src/lib/utils/hooks";
@@ -126,8 +125,6 @@ const SaveStatusNavbar = () => {
             );
         case SaveStatus.Saved:
             return <p className={navbar.last_saved}>In sync</p>;
-        case SaveStatus.NotSaved:
-            return <p className={navbar.last_saved}>Not saved</p>;
         case SaveStatus.Error:
             return <p className={navbar.last_saved}>Error</p>;
     }
@@ -135,8 +132,7 @@ const SaveStatusNavbar = () => {
 
 const Navbar = () => {
     const userCtx = useContext(UserContext);
-    const { editor, updatePopup } = userCtx;
-
+    const { editor } = userCtx;
     const { project, updateSaveStatus } = useContext(ProjectContext);
 
     const { asPath } = useRouter();
@@ -169,7 +165,7 @@ const Navbar = () => {
             reader.onload = (e: any) => {
                 const confirmImport = () => {
                     convertFountainToJSON(e.target.result, editor!);
-                    updateSaveStatus(SaveStatus.NotSaved);
+                    updateSaveStatus(SaveStatus.Saving);
                 };
 
                 importFilePopup(userCtx, confirmImport);

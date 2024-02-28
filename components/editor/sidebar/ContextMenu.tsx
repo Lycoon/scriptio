@@ -3,9 +3,10 @@ import { UserContext } from "@src/context/UserContext";
 import { SceneItem } from "@src/lib/editor/screenplay";
 
 import context from "./ContextMenu.module.css";
-import { CharacterData } from "@src/lib/editor/characters";
+import { CharacterData, deleteCharacter } from "@src/lib/editor/characters";
 import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/editor/editor";
-import { editCharacterPopup } from "@src/lib/editor/popup";
+import { addCharacterPopup, editCharacterPopup } from "@src/lib/editor/popup";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 /* ==================== */
 /*     Context menu     */
@@ -53,32 +54,14 @@ const SceneItemMenu = (props: any) => {
     const position = props.props.position;
     const nextPosition = props.props.nextPosition;
 
-    const goToScene = () => {
-        focusOnPosition(editor!, position);
-    };
-    const copyScene = () => {
-        copyText(editor!, position, nextPosition);
-    };
-    const cutScene = () => {
-        cutText(editor!, position, nextPosition);
-    };
-    const selectScene = () => {
-        selectTextInEditor(editor!, position, nextPosition);
-    };
-
     return (
         <>
-            <ContextMenuItem text={"Go to scene"} action={goToScene} />
-            <ContextMenuItem text={"Cut"} action={cutScene} />
-            <ContextMenuItem text={"Select in editor"} action={selectScene} />
-        </>
-    );
-    return (
-        <>
-            <ContextMenuItem text={"Go to scene"} action={goToScene} />
-            <ContextMenuItem text={"Copy"} action={copyScene} />
-            <ContextMenuItem text={"Cut"} action={cutScene} />
-            <ContextMenuItem text={"Select in editor"} action={selectScene} />
+            <ContextMenuItem text={"Go to scene"} action={() => focusOnPosition(editor!, position)} />
+            <ContextMenuItem text={"Cut"} action={() => cutText(editor!, position, nextPosition)} />
+            <ContextMenuItem
+                text={"Select in editor"}
+                action={() => selectTextInEditor(editor!, position, nextPosition)}
+            />
         </>
     );
 };
@@ -100,46 +83,25 @@ const SceneListMenu = (props: any) => {
 
 export type CharacterContextProps = {
     character: CharacterData;
-    removeCharacter: (name: string) => void;
 };
 
 const CharacterItemMenu = (props: any) => {
     const userCtx = useContext(UserContext);
-
+    const projectCtx = useContext(ProjectContext);
     const character: CharacterData = props.props.character;
-    const removeCharacter = props.props.removeCharacter;
-
-    const _editCharacterPopup = () => {
-        editCharacterPopup(character, userCtx);
-    };
-    const _removeCharacter = () => {
-        removeCharacter(character.name);
-    };
-    const pasteTextAction = () => {
-        pasteText(userCtx.editor!, character.name);
-    };
 
     return (
         <>
-            <ContextMenuItem text={"Edit"} action={_editCharacterPopup} />
-            <ContextMenuItem text={"Remove"} action={_removeCharacter} />
-            <ContextMenuItem text={"Paste"} action={pasteTextAction} />
+            <ContextMenuItem text={"Edit"} action={() => editCharacterPopup(character, userCtx)} />
+            <ContextMenuItem text={"Remove"} action={() => deleteCharacter(character.name, projectCtx)} />
+            <ContextMenuItem text={"Paste"} action={() => pasteText(userCtx.editor!, character.name)} />
         </>
     );
 };
 
 const CharacterListMenu = (props: any) => {
-    const addCharacterPopup = props.props.addCharacterPopup;
-
-    const _addCharacterPopup = () => {
-        addCharacterPopup();
-    };
-
-    return (
-        <>
-            <ContextMenuItem text={"Add character"} action={_addCharacterPopup} />
-        </>
-    );
+    const userCtx = useContext(UserContext);
+    return <ContextMenuItem text={"Add character"} action={() => addCharacterPopup(userCtx)} />;
 };
 
 const renderContextMenu = (contextMenu: ContextMenuProps) => {

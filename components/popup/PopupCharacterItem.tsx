@@ -1,12 +1,6 @@
 import assert from "assert";
 import { useContext, useState } from "react";
-import {
-    CharacterGender,
-    doesCharacterExist,
-    upsertCharacterData,
-    deleteCharacter,
-    CharacterData,
-} from "@src/lib/editor/characters";
+import { CharacterGender, doesCharacterExist, upsertCharacterData, deleteCharacter } from "@src/lib/editor/characters";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -19,15 +13,48 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { SaveStatus } from "@src/lib/utils/enums";
 import { replaceOccurrences } from "@src/lib/editor/editor";
 import { UserContext } from "@src/context/UserContext";
-import { PopupType, closePopup } from "@src/lib/editor/popup";
+import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/editor/popup";
 import { countOccurrences } from "@src/lib/editor/screenplay";
 
-export type PopupCharacterItemProps = {
-    type: PopupType;
-    character?: CharacterData;
+type NewNameWarningProps = {
+    setNewNameWarning: (value: boolean) => void;
+    onNewNameConfirm: () => void;
+    nameOccurrences: number;
+    oldName: string;
+    newName: string;
 };
 
-export const PopupCharacterItem = ({ type, character }: PopupCharacterItemProps) => {
+const NewNameWarning = (props: NewNameWarningProps) => {
+    return (
+        <div className={join(popup.info, form_info.warn)}>
+            <p>
+                Are you sure you want to update {props.nameOccurrences} occurrences of word {props.oldName} to{" "}
+                {props.newName}? Take extra care of common words whose update might be unwated.
+            </p>
+            <div className={popup.info_btns}>
+                <button className={join(form.btn, popup.info_btn)} type="button" onClick={props.onNewNameConfirm}>
+                    Yes
+                </button>
+                <button className={join(form.btn, popup.info_btn)} onClick={() => props.setNewNameWarning(false)}>
+                    No, do not change
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const TakenNameError = (newName: string) => {
+    return (
+        <div className={join(popup.info, form_info.error)}>
+            <p>
+                A character with the name {newName} already exists. Please choose a different name or edit the existing
+                character instead.
+            </p>
+        </div>
+    );
+};
+
+export const PopupCharacterItem = ({ type, data: { character } }: PopupData<PopupCharacterData>) => {
     const projectCtx = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
 
@@ -51,12 +78,13 @@ export const PopupCharacterItem = ({ type, character }: PopupCharacterItemProps)
             return setTakenNameError(true);
         }
 
-        projectCtx.updateSaveStatus(SaveStatus.NotSaved);
+        projectCtx.updateSaveStatus(SaveStatus.Saving);
         upsertCharacterData(
             {
                 name: _name.toUpperCase(),
                 gender: _gender,
                 synopsis: _synopsis,
+                persistent: true,
             },
             projectCtx
         );
@@ -91,12 +119,13 @@ export const PopupCharacterItem = ({ type, character }: PopupCharacterItemProps)
         }
 
         // if name is the same, just update the character
-        projectCtx.updateSaveStatus(SaveStatus.NotSaved);
+        projectCtx.updateSaveStatus(SaveStatus.Saving);
         upsertCharacterData(
             {
                 name: character.name,
                 gender: _newGender,
                 synopsis: _newSynopsis,
+                persistent: true,
             },
             projectCtx
         );
@@ -111,12 +140,13 @@ export const PopupCharacterItem = ({ type, character }: PopupCharacterItemProps)
         replaceOccurrences(userCtx.editor!, character.name, newName);
         deleteCharacter(character.name, projectCtx);
 
-        projectCtx.updateSaveStatus(SaveStatus.NotSaved);
+        projectCtx.updateSaveStatus(SaveStatus.Saving);
         upsertCharacterData(
             {
                 name: newName,
                 gender: newGender,
                 synopsis: newSynopsis,
+                persistent: true,
             },
             projectCtx
         );
@@ -148,37 +178,15 @@ export const PopupCharacterItem = ({ type, character }: PopupCharacterItemProps)
                     <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
                 </div>
                 <form className={popup.form} onSubmit={def.onSubmit}>
-                    {newNameWarning && (
-                        <div className={join(popup.info, form_info.warn)}>
-                            <p>
-                                Are you sure you want to update {nameOccurrences} occurrences of word {character?.name}{" "}
-                                to {newName}? Take extra care of common words whose update might be unwated.
-                            </p>
-                            <div className={popup.info_btns}>
-                                <button
-                                    className={join(form.btn, popup.info_btn)}
-                                    type="button"
-                                    onClick={onNewNameConfirm}
-                                >
-                                    Yes
-                                </button>
-                                <button
-                                    className={join(form.btn, popup.info_btn)}
-                                    onClick={() => setNewNameWarning(false)}
-                                >
-                                    No, do not change
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                    {takenNameError && (
-                        <div className={join(popup.info, form_info.error)}>
-                            <p>
-                                A character with the name {newName} already exists. Please choose a different name or
-                                edit the existing character instead.
-                            </p>
-                        </div>
-                    )}
+                    {takenNameError && TakenNameError(newName)}
+                    {newNameWarning &&
+                        NewNameWarning({
+                            setNewNameWarning,
+                            onNewNameConfirm,
+                            nameOccurrences,
+                            oldName: character?.name!,
+                            newName,
+                        })}
                     <div className={settings.element}>
                         <div className={settings.element_header}>
                             <p>Name</p>

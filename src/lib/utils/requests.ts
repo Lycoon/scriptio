@@ -1,6 +1,6 @@
 import { NextApiResponse } from "next";
 import { Settings } from "../../server/repository/user-repository";
-import { CharacterMap } from "../editor/characters";
+import { CharacterItem, CharacterMap, getPersistentCharacters } from "../editor/characters";
 import { CookieUser, DataResult, ProjectCreated, ProjectCreation, ProjectCreationDTO, ProjectUpdateDTO } from "./types";
 import { SaveMode } from "./enums";
 import { randomUUID } from "crypto";
@@ -117,8 +117,13 @@ export const sendRecover = (email: string) => {
 };
 
 // Screenplay
-export const saveScreenplay = async (projectId: string, screenplay: any, characters: any): Promise<Response> => {
-    return editProject({ projectId, screenplay, characters });
+export const saveScreenplay = async (
+    projectId: string,
+    screenplay: any,
+    characters: CharacterMap
+): Promise<Response> => {
+    const persistentCharacters = getPersistentCharacters(characters); // Get rid of non-persistent characters
+    return editProject({ projectId, screenplay, characters: persistentCharacters });
 };
 
 export const saveProjectCharacters = async (projectId: string, characters: CharacterMap) => {

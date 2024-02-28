@@ -5,7 +5,7 @@ import { pasteText } from "@src/lib/editor/editor";
 
 import nav_item from "./SidebarItem.module.css";
 
-const SidebarCharacterItem = ({ character, removeCharacter }: CharacterContextProps) => {
+const SidebarCharacterItem = ({ character }: CharacterContextProps) => {
     const { updateContextMenu, editor } = useContext(UserContext);
 
     const handleDropdown = (e: any) => {
@@ -15,14 +15,13 @@ const SidebarCharacterItem = ({ character, removeCharacter }: CharacterContextPr
             position: { x: e.clientX, y: e.clientY },
             typeSpecificProps: {
                 character,
-                pasteText,
-                removeCharacter,
             },
         });
     };
 
     const handleDoubleClick = () => {
-        pasteText(editor!, character.name); // paste character name on double click
+        // paste character name on double click
+        pasteText(editor!, character.name);
     };
 
     return (

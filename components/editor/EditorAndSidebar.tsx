@@ -21,6 +21,7 @@ import { CharacterData, computeFullCharactersData, deleteCharacter } from "@src/
 import editor_ from "./EditorAndSidebar.module.css";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { applyElement, save, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
+import { Popup } from "@components/popup/Popup";
 
 type EditorAndSidebarProps = {
     project: Project;
@@ -143,12 +144,8 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
     };
 
     /* Context menu actions */
-    const removeCharacter = (name: string) => {
-        deleteCharacter(name, projectCtx);
-    };
-
     const onUnload = (e: BeforeUnloadEvent) => {
-        if (projectCtx.saveStatus === SaveStatus.NotSaved) {
+        if (projectCtx.saveStatus === SaveStatus.Saving) {
             let confirmationMessage = "Are you sure you want to leave?";
 
             e.returnValue = confirmationMessage;
@@ -185,8 +182,8 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         <div className={editor_.editor_and_sidebar}>
             <ContextMenu />
             {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
-            {userCtx.popup && <PopupCharacterItem type={userCtx.popup.type} character={userCtx.popup.character} />}
-            <EditorSidebarNavigation active={isNavigationActive} removeCharacter={removeCharacter} />
+            <Popup />
+            <EditorSidebarNavigation active={isNavigationActive} />
             <div className={editor_.container} onScroll={onScroll}>
                 <EditorComponent editor={editorView} />
             </div>

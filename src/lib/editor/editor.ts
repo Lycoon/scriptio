@@ -109,7 +109,7 @@ const deferredCharactersUpdate = debounce((screenplay: any, projectCtx: ProjectC
 
 const triggerEditorSave = (projectCtx: ProjectContextType, screenplay: any) => {
     // Set as unsaved, to prevent data loss between typing and autosave
-    projectCtx.updateSaveStatus(SaveStatus.NotSaved);
+    projectCtx.updateSaveStatus(SaveStatus.Saving);
     deferredSceneUpdate(screenplay, projectCtx);
     deferredCharactersUpdate(screenplay, projectCtx);
     deferredScreenplaySave(screenplay, projectCtx);
