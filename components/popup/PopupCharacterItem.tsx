@@ -1,6 +1,11 @@
 import assert from "assert";
 import { useContext, useState } from "react";
-import { CharacterGender, doesCharacterExist, upsertCharacterData, deleteCharacter } from "@src/lib/editor/characters";
+import {
+    CharacterGender,
+    doesCharacterExist,
+    upsertCharacterData,
+    deleteCharacter,
+} from "@src/lib/editor/characters";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -28,14 +33,22 @@ const NewNameWarning = (props: NewNameWarningProps) => {
     return (
         <div className={join(popup.info, form_info.warn)}>
             <p>
-                Are you sure you want to update {props.nameOccurrences} occurrences of word {props.oldName} to{" "}
-                {props.newName}? Take extra care of common words whose update might be unwated.
+                Are you sure you want to update {props.nameOccurrences} occurrences of word{" "}
+                {props.oldName} to {props.newName}? Take extra care of common words whose update
+                might be unwated.
             </p>
             <div className={popup.info_btns}>
-                <button className={join(form.btn, popup.info_btn)} type="button" onClick={props.onNewNameConfirm}>
+                <button
+                    className={join(form.btn, popup.info_btn)}
+                    type="button"
+                    onClick={props.onNewNameConfirm}
+                >
                     Yes
                 </button>
-                <button className={join(form.btn, popup.info_btn)} onClick={() => props.setNewNameWarning(false)}>
+                <button
+                    className={join(form.btn, popup.info_btn)}
+                    onClick={() => props.setNewNameWarning(false)}
+                >
                     No, do not change
                 </button>
             </div>
@@ -47,14 +60,17 @@ const TakenNameError = (newName: string) => {
     return (
         <div className={join(popup.info, form_info.error)}>
             <p>
-                A character with the name {newName} already exists. Please choose a different name or edit the existing
-                character instead.
+                A character with the name {newName} already exists. Please choose a different name
+                or edit the existing character instead.
             </p>
         </div>
     );
 };
 
-export const PopupCharacterItem = ({ type, data: { character } }: PopupData<PopupCharacterData>) => {
+export const PopupCharacterItem = ({
+    type,
+    data: { character },
+}: PopupData<PopupCharacterData>) => {
     const projectCtx = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
 
@@ -175,7 +191,11 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
             <div className={popup.container}>
                 <div className={popup.header}>
                     <h2 className={popup.title}>{def.title}</h2>
-                    <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
+                    <CloseSVG
+                        className={popup.close_btn}
+                        onClick={() => closePopup(userCtx)}
+                        alt="Close icon"
+                    />
                 </div>
                 <form className={popup.form} onSubmit={def.onSubmit}>
                     {takenNameError && TakenNameError(newName)}

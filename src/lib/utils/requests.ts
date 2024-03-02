@@ -1,36 +1,57 @@
 import { NextApiResponse } from "next";
 import { Settings } from "../../server/repository/user-repository";
-import { CharacterItem, CharacterMap, getPersistentCharacters } from "../editor/characters";
-import { CookieUser, DataResult, ProjectCreated, ProjectCreation, ProjectCreationDTO, ProjectUpdateDTO } from "./types";
-import { SaveMode } from "./enums";
+import { CharacterMap, getPersistentCharacters } from "../editor/characters";
+import {
+    CookieUser,
+    DataResult,
+    ProjectCreated,
+    ProjectCreation,
+    ProjectCreationDTO,
+    ProjectUpdateDTO,
+} from "./types";
+import { SaveMode, SaveStatus } from "./enums";
 import { randomUUID } from "crypto";
 import { writeFileSync } from "fs";
 import { setDesktopValue } from "../store";
+import { ProjectContextType } from "@src/context/ProjectContext";
+import { JSONContent } from "@tiptap/react";
+
+enum APIMethod {
+    Get = "GET",
+    Post = "POST",
+    Patch = "PATCH",
+    Delete = "DELETE",
+}
 
 const request = async (url: string, method: string, body?: Object) => {
-    const bodyStr = JSON.stringify(body);
-
+    const json = JSON.stringify(body);
     return fetch(url, {
         headers: { "Content-Type": "application/json" },
         method,
-        body: bodyStr,
+        body: json,
     });
 };
 
-// API response
+// ------------------------------ //
+//          API RESPONSE          //
+// ------------------------------ //
+
 export const ResponseAPI = (res: NextApiResponse, code: number, message: string, data?: any) => {
     res.status(code).json({ message, data });
 };
 
-export const onDataError = (message: string) => {
+export const ErrorResponse = (message: string) => {
     return { message, isError: true };
 };
 
-export const onDataSuccess = (message: string, data: any) => {
+export const SuccessResponse = (message: string, data: any) => {
     return { message, data, isError: false };
 };
 
-// Projects
+// ------------------------------ //
+//            PROJECT             //
+// ------------------------------ //
+
 export const createProject = async (
     project: ProjectCreation,
     isDesktop: boolean,
@@ -44,13 +65,13 @@ export const createProject = async (
 
     let resCloud, cloudProjectId;
     if (user && project.saveMode & SaveMode.Cloud) {
-        resCloud = await request(`/api/projects`, "POST", body);
+        resCloud = await request(`/api/projects`, APIMethod.Post, body);
 
         if (resCloud.ok) {
             const json = await resCloud.json();
             cloudProjectId = json.data.id;
         } else {
-            return onDataError("Project could not be created on cloud");
+            return ErrorResponse("Project could not be created on cloud");
         }
     }
 
@@ -59,76 +80,97 @@ export const createProject = async (
         fileProjectId = randomUUID();
 
         // Add project setting to local storage
-        resLocal = await setDesktopValue(fileProjectId, { cloudProjectId, path: project.filePath }, "projects.cfg");
+        resLocal = await setDesktopValue(
+            fileProjectId,
+            { cloudProjectId, path: project.filePath },
+            "projects.cfg"
+        );
 
         if (resLocal.error) {
-            return onDataError("Project could not be added to local storage");
+            return ErrorResponse("Project could not be added to local storage");
         }
 
         try {
             // Create project file on disk
             writeFileSync(project.filePath!, JSON.stringify(body));
         } catch (err) {
-            return onDataError("Project could not be created on disk");
+            return ErrorResponse("Project could not be created on disk");
         }
 
         if (project.saveMode & ~SaveMode.Cloud) {
             // If project has only been created locally, return fileProjectId
-            return onDataSuccess("Project created successfully", { id: fileProjectId });
+            return SuccessResponse("Project created successfully", { id: fileProjectId });
         }
     }
 
     // If file has been synced to cloud, return cloudProjectId
-    return onDataSuccess("Project created successfully", { id: cloudProjectId });
+    return SuccessResponse("Project created successfully", { id: cloudProjectId });
 };
 
 export const deleteProject = (projectId: string) => {
-    return request(`/api/projects?projectId=${projectId}`, "DELETE", undefined);
+    return request(`/api/projects?projectId=${projectId}`, APIMethod.Delete, undefined);
 };
 
 export const editProject = (body: ProjectUpdateDTO) => {
-    return request(`/api/projects`, "PATCH", body);
+    return request(`/api/projects`, APIMethod.Patch, body);
 };
 
-// User
-export const changePassword = (password: string) => {
-    return request(`/api/users/password`, "PATCH", { password });
-};
-
-export const editUserSettings = (body: Settings) => {
-    return request(`/api/users/settings`, "PATCH", body);
-};
-
-// Authentication
-export const signup = (email: string, password: string) => {
-    return request(`/api/signup`, "POST", { email, password });
-};
-
-export const login = (email: string, password: string) => {
-    return request(`/api/login`, "POST", { email, password });
-};
-
-export const validateRecover = (userId: number, recoverHash: string, password: string) => {
-    return request(`/api/recover`, "PATCH", { userId, recoverHash, password });
-};
-
-export const sendRecover = (email: string) => {
-    return request(`/api/recover`, "POST", { email });
-};
-
-// Screenplay
-export const saveScreenplay = async (
-    projectId: string,
-    screenplay: any,
+export const saveCharacters = async (
+    projectCtx: ProjectContextType,
     characters: CharacterMap
 ): Promise<Response> => {
     const persistentCharacters = getPersistentCharacters(characters); // Get rid of non-persistent characters
-    return editProject({ projectId, screenplay, characters: persistentCharacters });
+
+    const projectId = projectCtx.project!.id;
+    const res = await editProject({ projectId, characters: persistentCharacters });
+
+    if (res.ok) projectCtx.updateSaveStatus(SaveStatus.Saved);
+    else projectCtx.updateSaveStatus(SaveStatus.Error);
+
+    return res;
 };
 
-export const saveProjectCharacters = async (projectId: string, characters: CharacterMap) => {
-    editProject({
-        projectId,
-        characters,
-    });
+export const saveScreenplay = async (
+    projectCtx: ProjectContextType,
+    screenplay: JSONContent
+): Promise<Response> => {
+    const projectId = projectCtx.project!.id;
+    const res = await editProject({ projectId, screenplay });
+
+    if (res.ok) projectCtx.updateSaveStatus(SaveStatus.Saved);
+    else projectCtx.updateSaveStatus(SaveStatus.Error);
+
+    return res;
+};
+
+// ------------------------------ //
+//               USER             //
+// ------------------------------ //
+
+export const changePassword = (password: string) => {
+    return request(`/api/users/password`, APIMethod.Patch, { password });
+};
+
+export const editUserSettings = (body: Settings) => {
+    return request(`/api/users/settings`, APIMethod.Patch, body);
+};
+
+// ------------------------------ //
+//         AUTHENTICATION         //
+// ------------------------------ //
+
+export const signup = (email: string, password: string) => {
+    return request(`/api/signup`, APIMethod.Post, { email, password });
+};
+
+export const login = (email: string, password: string) => {
+    return request(`/api/login`, APIMethod.Post, { email, password });
+};
+
+export const validateRecover = (userId: number, recoverHash: string, password: string) => {
+    return request(`/api/recover`, APIMethod.Patch, { userId, recoverHash, password });
+};
+
+export const sendRecover = (email: string) => {
+    return request(`/api/recover`, APIMethod.Post, { email });
 };

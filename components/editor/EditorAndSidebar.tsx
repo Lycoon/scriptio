@@ -1,26 +1,28 @@
-/* Tiptap */
-import { Editor, JSONContent } from "@tiptap/react";
-
 /* Components */
 import EditorComponent from "./EditorComponent";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
-import PopupCharacterItem from "../popup/PopupCharacterItem";
 import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 
 /* Utils */
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "@src/context/UserContext";
 import { SaveStatus, ScreenplayElement, Style } from "@src/lib/utils/enums";
-import { computeFullScenesData, countOccurrences } from "@src/lib/editor/screenplay";
+import { computeFullScenesData } from "@src/lib/editor/screenplay";
 import { Project } from "@src/lib/utils/types";
-import { CharacterData, computeFullCharactersData, deleteCharacter } from "@src/lib/editor/characters";
+import { computeFullCharactersData } from "@src/lib/editor/characters";
 
 /* Styles */
 import editor_ from "./EditorAndSidebar.module.css";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { applyElement, save, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
+import {
+    applyElement,
+    deferredCharactersUpdate,
+    deferredSceneUpdate,
+    insertElement,
+    useScriptioEditor,
+} from "@src/lib/editor/editor";
 import { Popup } from "@components/popup/Popup";
 
 type EditorAndSidebarProps = {
@@ -32,7 +34,9 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
     const projectCtx = useContext(ProjectContext);
 
     const [selectedStyles, setSelectedStyles] = useState<Style>(Style.None);
-    const [selectedElement, setSelectedElement] = useState<ScreenplayElement>(ScreenplayElement.Action);
+    const [selectedElement, setSelectedElement] = useState<ScreenplayElement>(
+        ScreenplayElement.Action
+    );
     const [isNavigationActive, setIsNavigationActive] = useState<boolean>(true);
 
     /* Suggestion menu */
@@ -48,7 +52,13 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         if (applyStyle && editorView) applyElement(editorView, element);
     };
 
-    const editorView = useScriptioEditor(setActiveElement, setSelectedStyles, updateSuggestions, updateSuggestionData);
+    const editorView = useScriptioEditor(
+        project.screenplay,
+        setActiveElement,
+        setSelectedStyles,
+        updateSuggestions,
+        updateSuggestionData
+    );
 
     editorView?.setOptions({
         autofocus: "end",
@@ -62,7 +72,10 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
 
                 if (event.code === "Space") {
                     // if starting action with INT. or EXT. switch to scene
-                    if (currNode === ScreenplayElement.Action && node.textContent.match(/^\b(int|ext)\./gi)) {
+                    if (
+                        currNode === ScreenplayElement.Action &&
+                        node.textContent.match(/^\b(int|ext)\./gi)
+                    ) {
                         setActiveElement(ScreenplayElement.Scene);
                     }
                 }
@@ -127,7 +140,6 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         // Ctrl + S
         if (e.ctrlKey && e.key === "s") {
             e.preventDefault();
-            save(editorView?.getJSON(), projectCtx);
         }
 
         // Ctrl + X
@@ -163,16 +175,10 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         };
     }, [pressedKeyEvent, onUnload]);
 
-    // Update editor content on first load
     useEffect(() => {
-        if (editorView) {
-            editorView.commands.setContent(project.screenplay as JSONContent);
-            userCtx.updateEditor(editorView);
-
-            computeFullScenesData(project.screenplay, projectCtx);
-            computeFullCharactersData(project.screenplay, projectCtx);
-        }
-    }, [project, editorView]);
+        computeFullScenesData(project.screenplay, projectCtx);
+        computeFullCharactersData(project.screenplay, projectCtx);
+    }, [editorView]);
 
     const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         if (suggestions.length > 0) updateSuggestions([]);
@@ -181,7 +187,9 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
     return (
         <div className={editor_.editor_and_sidebar}>
             <ContextMenu />
-            {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
+            {suggestions.length > 0 && (
+                <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />
+            )}
             <Popup />
             <EditorSidebarNavigation active={isNavigationActive} />
             <div className={editor_.container} onScroll={onScroll}>

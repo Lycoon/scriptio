@@ -1,4 +1,4 @@
-import { Editor, useEditor } from "@tiptap/react";
+import { Editor, JSONContent, useEditor } from "@tiptap/react";
 import { SaveStatus, ScreenplayElement, Style } from "../utils/enums";
 import { saveScreenplay } from "../utils/requests";
 import { ProjectContext, ProjectContextType } from "@src/context/ProjectContext";
@@ -8,7 +8,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { computeFullScenesData } from "./screenplay";
-import { computeFullCharactersData } from "./characters";
+import { CharacterMap, computeFullCharactersData } from "./characters";
 import { useContext } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
@@ -45,7 +45,12 @@ export const copyText = (editor: Editor, start: number, end: number) => {
 };
 
 export const replaceRange = (editor: Editor, start: number, end: number, text: string) => {
-    editor.chain().focus(start).setTextSelection({ from: start, to: end }).insertContent(text).run();
+    editor
+        .chain()
+        .focus(start)
+        .setTextSelection({ from: start, to: end })
+        .insertContent(text)
+        .run();
 };
 
 export const pasteText = (editor: Editor, text: string) => {
@@ -79,43 +84,32 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 //          EDITOR STATE          //
 // ------------------------------ //
 
-export const save = async (screenplay: any, projectCtx: ProjectContextType) => {
-    if (projectCtx.saveStatus !== SaveStatus.Saved) {
-        projectCtx.updateSaveStatus(SaveStatus.Saving);
-        const res = await saveScreenplay(projectCtx.project!.id, screenplay, projectCtx.charactersData);
-
-        if (!res.ok) {
-            projectCtx.updateSaveStatus(SaveStatus.Error);
-            return;
-        }
-        projectCtx.updateSaveStatus(SaveStatus.Saved);
-    }
-};
-
 const SCREENPLAY_SAVE_DELAY = 2000;
-const deferredScreenplaySave = debounce((screenplay: any, projectCtx: ProjectContextType) => {
-    save(screenplay, projectCtx);
-}, SCREENPLAY_SAVE_DELAY);
-
 const SCENE_UPDATE_DELAY = 500;
-const deferredSceneUpdate = debounce((screenplay: any, projectCtx: ProjectContextType) => {
-    computeFullScenesData(screenplay, projectCtx);
-}, SCENE_UPDATE_DELAY);
-
 const CHARACTERS_UPDATE_DELAY = 500;
-const deferredCharactersUpdate = debounce((screenplay: any, projectCtx: ProjectContextType) => {
-    computeFullCharactersData(screenplay, projectCtx);
-}, CHARACTERS_UPDATE_DELAY);
 
-const triggerEditorSave = (projectCtx: ProjectContextType, screenplay: any) => {
-    // Set as unsaved, to prevent data loss between typing and autosave
-    projectCtx.updateSaveStatus(SaveStatus.Saving);
-    deferredSceneUpdate(screenplay, projectCtx);
-    deferredCharactersUpdate(screenplay, projectCtx);
-    deferredScreenplaySave(screenplay, projectCtx);
-};
+const deferredScreenplaySave = debounce(
+    (screenplay: JSONContent, projectCtx: ProjectContextType) => {
+        saveScreenplay(projectCtx, screenplay);
+    },
+    SCREENPLAY_SAVE_DELAY
+);
 
-const onAutoComplete = (
+export const deferredSceneUpdate = debounce(
+    (screenplay: JSONContent, projectCtx: ProjectContextType) => {
+        computeFullScenesData(screenplay, projectCtx);
+    },
+    SCENE_UPDATE_DELAY
+);
+
+export const deferredCharactersUpdate = debounce(
+    (screenplay: JSONContent, projectCtx: ProjectContextType) => {
+        computeFullCharactersData(screenplay, projectCtx);
+    },
+    CHARACTERS_UPDATE_DELAY
+);
+
+const processAutoComplete = (
     anchor: any,
     projectCtx: ProjectContextType,
     editor: Editor,
@@ -166,6 +160,7 @@ const onAutoComplete = (
 };
 
 export const useScriptioEditor = (
+    screenplay: JSONContent,
     setActiveElement: (element: ScreenplayElement, applyStyle: boolean) => void,
     setSelectedStyles: (style: Style) => void,
     updateSuggestions: (suggestions: string[]) => void,
@@ -189,7 +184,15 @@ export const useScriptioEditor = (
         // update on each screenplay update
         onUpdate({ editor }) {
             const screenplay = editor.getJSON();
-            triggerEditorSave(projectCtx, screenplay);
+            projectCtx.updateSaveStatus(SaveStatus.Saving);
+            deferredScreenplaySave(screenplay, projectCtx);
+            deferredSceneUpdate(screenplay, projectCtx);
+            deferredCharactersUpdate(screenplay, projectCtx);
+        },
+
+        onCreate({ editor }) {
+            projectCtx.updateEditor(editor as Editor);
+            editor.commands.setContent(screenplay);
         },
 
         // update active on caret update
@@ -200,7 +203,13 @@ export const useScriptioEditor = (
             setActiveElement(elementAnchor, false);
             if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
 
-            onAutoComplete(anchor, projectCtx, editor as Editor, updateSuggestions, updateSuggestionsData);
+            /*processAutoComplete(
+                anchor,
+                projectCtx,
+                editor as Editor,
+                updateSuggestions,
+                updateSuggestionsData
+            );*/
         },
     });
     return editorView;

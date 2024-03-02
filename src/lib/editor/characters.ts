@@ -1,6 +1,9 @@
 import { ProjectContextType } from "@src/context/ProjectContext";
 import { getNodeFlattenContent } from "./screenplay";
 import { ScreenplayElement } from "../utils/enums";
+import { useState } from "react";
+import { saveCharacters } from "../utils/requests";
+import { JSONContent } from "@tiptap/react";
 
 export enum CharacterGender {
     Female,
@@ -16,11 +19,20 @@ export type CharacterItem = {
 };
 
 export const upsertCharacterData = (data: CharacterData, projectCtx: ProjectContextType) => {
-    projectCtx.charactersData[data.name] = data;
+    projectCtx.updateCharactersData((prevData: CharacterMap) => {
+        const newData = { ...prevData, [data.name]: data };
+        if (newData !== prevData) saveCharacters(projectCtx, newData);
+        return newData;
+    });
 };
 
 export const deleteCharacter = (name: string, projectCtx: ProjectContextType) => {
-    delete projectCtx.charactersData[name];
+    projectCtx.updateCharactersData((prevData: CharacterMap) => {
+        const newData = { ...prevData };
+        delete newData[name];
+        if (newData !== prevData) saveCharacters(projectCtx, newData);
+        return newData;
+    });
 };
 
 export const doesCharacterExist = (name: string, projectCtx: ProjectContextType): boolean => {
@@ -37,22 +49,20 @@ export const doesCharacterExist = (name: string, projectCtx: ProjectContextType)
     return found;
 };
 
-export const getCharacterNames = (scriptioScreenplay: any) => {
-    if (!scriptioScreenplay) return [];
+export const getCharacterNames = (screenplay: JSONContent) => {
+    if (!screenplay.content) return [];
 
-    const nodes = scriptioScreenplay.content;
+    const nodes = screenplay.content;
     const characters: string[] = [];
 
     for (let i = 0; i < nodes.length; i++) {
         const currNode = nodes[i];
-        if (!currNode["content"]) {
-            continue;
-        }
+        const type: string = currNode.attrs!["class"];
 
-        const type: string = currNode["attrs"]["class"];
+        if (type !== ScreenplayElement.Character || !currNode.content) continue;
+
         const content: string = getNodeFlattenContent(currNode["content"]);
-
-        if (type === ScreenplayElement.Character && !characters.includes(content)) {
+        if (!characters.includes(content)) {
             characters.push(content.toUpperCase());
         }
     }
@@ -60,10 +70,14 @@ export const getCharacterNames = (scriptioScreenplay: any) => {
     return characters;
 };
 
-export const computeFullCharactersData = async (scriptioScreenplay: any, projectCtx: ProjectContextType) => {
-    const persistentCharacters = projectCtx.charactersData;
-    let charactersData: CharacterMap = persistentCharacters ?? {};
-    const namesFromEditor: string[] = getCharacterNames(scriptioScreenplay);
+export const computeFullCharactersData = async (
+    screenplay: JSONContent,
+    projectCtx: ProjectContextType
+) => {
+    let charactersData: CharacterMap = { ...projectCtx.project?.characters };
+    console.log(charactersData);
+
+    const namesFromEditor: string[] = getCharacterNames(screenplay);
 
     for (const name of namesFromEditor) {
         // If character already exists in the data, don't overwrite it
@@ -89,7 +103,7 @@ export const computeFullCharactersData = async (scriptioScreenplay: any, project
 export const getPersistentCharacters = (characters: CharacterMap): CharacterMap => {
     let persistentCharacters: CharacterMap = {};
 
-    Object.keys(characters).forEach((key) => {
+    Object.keys(characters).forEach((key: string) => {
         const character = characters[key];
         if (character.persistent) persistentCharacters[key] = character;
     });

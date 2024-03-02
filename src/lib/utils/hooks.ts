@@ -62,7 +62,11 @@ const useProjects = (): StateResult<Project[]> => {
     const { data: user } = useUser();
 
     // Fetch local projects if we're on desktop
-    const { data: localProjects, isLoading: isLocalLoading, error: isLocalError } = useDesktopValues("projects.cfg");
+    const {
+        data: localProjects,
+        isLoading: isLocalLoading,
+        error: isLocalError,
+    } = useDesktopValues("projects.cfg");
 
     // Fetch cloud projects if we're logged in
     const {
@@ -81,14 +85,19 @@ const useProjects = (): StateResult<Project[]> => {
 };
 
 const useProjectFromUrl = (): StateResult<Project> => {
-    const { updateProject } = useContext(ProjectContext);
+    const { updateProject, updateCharactersData } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
 
-    let { data, error, mutate, isLoading } = useSWR<Project>(projectId ? `/api/projects/${projectId}` : null);
+    let { data, error, mutate, isLoading } = useSWR<Project>(
+        projectId ? `/api/projects/${projectId}` : null
+    );
 
     // When the data has loaded, update the project
     useEffect(() => {
-        if (data && !error) updateProject(data);
+        if (data && !error) {
+            updateProject(data);
+            updateCharactersData(data.characters);
+        }
     }, [data]);
 
     return returnData(data, error, mutate, isLoading);

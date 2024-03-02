@@ -1,6 +1,7 @@
 import { JSONContent } from "@tiptap/react";
 import { ScreenplayElement } from "../utils/enums";
 import { ProjectContextType } from "@src/context/ProjectContext";
+import { isEmptyObject } from "../utils/misc";
 
 /* Nodes */
 export type NodeData = {
@@ -18,9 +19,9 @@ export type SceneItem = {
     nextPosition: number;
 };
 
-export const countOccurrences = (json: JSONContent, word: string): number => {
+export const countOccurrences = (screenplay: JSONContent, word: string): number => {
     const regex = new RegExp(`${word}`, "gi");
-    const nodes = json.content!;
+    const nodes = screenplay.content!;
     let count = 0;
 
     for (let i = 0; i < nodes.length; i++) {
@@ -47,42 +48,19 @@ export const getNodeFlattenContent = (content: any[]) => {
     return text;
 };
 
-const getScreenplayElementType = (nodeType: string): ScreenplayElement => {
-    switch (nodeType) {
-        case "scene":
-            return ScreenplayElement.Scene;
-        case "action":
-            return ScreenplayElement.Action;
-        case "character":
-            return ScreenplayElement.Character;
-        case "dialogue":
-            return ScreenplayElement.Dialogue;
-        case "parenthetical":
-            return ScreenplayElement.Parenthetical;
-        case "transition":
-            return ScreenplayElement.Transition;
-        case "section":
-            return ScreenplayElement.Section;
-        case "note":
-            return ScreenplayElement.Note;
-        default:
-            return ScreenplayElement.None;
-    }
-};
-
-const getNodeData = (node: any): NodeData => {
-    const type: string = node["attrs"]["class"];
-    const content: any[] = node["content"];
+const getNodeData = (node: JSONContent): NodeData => {
+    const type: ScreenplayElement = node.attrs?.class;
+    const content: JSONContent[] = node.content!;
     const flattenText = getNodeFlattenContent(content);
 
     return {
-        type: getScreenplayElementType(type),
+        type,
         content,
         flattenText,
     };
 };
 
-const getScenePreview = (nodes: any[], cursor: number) => {
+const getScenePreview = (nodes: JSONContent[], cursor: number) => {
     let preview = "";
 
     for (let i = cursor; i < nodes.length && preview.length <= 30; i++) {
@@ -96,13 +74,16 @@ const getScenePreview = (nodes: any[], cursor: number) => {
     return preview;
 };
 
-export const computeFullScenesData = async (scriptioScreenplay: any, projectCtx: ProjectContextType) => {
-    if (!scriptioScreenplay) {
+export const computeFullScenesData = async (
+    screenplay: JSONContent,
+    projectCtx: ProjectContextType
+) => {
+    if (!screenplay.content) {
         projectCtx.updateScenesData([]);
         return;
     }
 
-    const nodes = scriptioScreenplay.content;
+    const nodes = screenplay.content;
     const scenes: ScenesData = [];
     let cursor = 1;
     let sceneNumber = 0;

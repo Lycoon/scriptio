@@ -46,3 +46,7 @@ export const join = (...args: string[]): string => {
 export const capitalizeFirstLetter = (str: string) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
+
+export const isEmptyObject = (obj: Object) => {
+    return Object.keys(obj).length === 0;
+};

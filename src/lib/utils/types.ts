@@ -25,7 +25,7 @@ export type Project = {
     title: string;
     poster: string;
     description: string | null;
-    screenplay: Prisma.JsonValue | null;
+    screenplay: JSONContent;
     characters: CharacterMap;
 };
 
