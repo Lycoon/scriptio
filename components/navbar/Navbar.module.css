@@ -27,9 +27,35 @@
     align-items: center;
 }
 
+.title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.title_box {
+    border: none;
+    background: none;
+    font-size: 1rem;
+    border-radius: 6px;
+    padding-left: 6px;
+    padding-bottom: 3px;
+    color: var(--primary-text);
+}
+
+.title_box:focus {
+    background-color: var(--secondary-hover);
+    outline: none;
+}
+
+.title_box:hover {
+    background-color: var(--secondary-hover);
+}
+
 .btn {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     margin-right: 7px;
 
     color: var(--secondary-text);
@@ -67,40 +93,22 @@
     height: 100%;
 }
 
-.saving_spin {
-    width: 25px;
-    height: 25px;
-    margin-right: 7px;
+.status {
+    color: var(--secondary-text);
+    width: 20px;
+    height: 20px;
 }
 
-.inactive-spin {
-    animation: fadeOut;
-    animation-duration: 2s;
-    opacity: 0%;
+.failed {
+    color: var(--error);
+}
+
+.success {
+    color: var(--success);
 }
 
 @keyframes fadeOut {
     50% {
         opacity: 100%;
     }
-}
-
-.last_saved {
-    color: grey;
-    font-size: 12px;
-    margin-right: 12px;
-    text-transform: uppercase;
-}
-
-.save-btn {
-    width: 18px;
-    height: 18px;
-    margin-right: 12px;
-
-    cursor: pointer;
-}
-
-.save-btn.disabled {
-    pointer-events: none;
-    opacity: 40%;
 }

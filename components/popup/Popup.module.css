@@ -51,7 +51,7 @@
 
 .info_btn {
     background-color: white !important;
-    color: var(--warning-color) !important;
+    color: var(--warning) !important;
 }
 
 .close_btn {
@@ -107,7 +107,7 @@
 .import_confirm {
     border-width: 2px !important;
     border-style: dashed !important;
-    border-color: var(--error-color) !important;
+    border-color: var(--error) !important;
 }
 
 .confirm {

@@ -6,9 +6,11 @@ import { join } from "@src/lib/utils/misc";
 
 import nav_item from "./SidebarItem.module.css";
 import { focusOnPosition } from "@src/lib/editor/editor";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 const SidebarSceneItem = ({ scene }: SceneContextProps) => {
-    const { editor, updateContextMenu } = useContext(UserContext);
+    const { updateContextMenu } = useContext(UserContext);
+    const { editor } = useContext(ProjectContext);
 
     const handleDropdown = (e: any) => {
         e.preventDefault();

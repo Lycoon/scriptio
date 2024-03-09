@@ -1,7 +1,6 @@
 import { JSONContent } from "@tiptap/react";
 import { ScreenplayElement } from "../utils/enums";
 import { ProjectContextType } from "@src/context/ProjectContext";
-import { isEmptyObject } from "../utils/misc";
 
 /* Nodes */
 export type NodeData = {
@@ -74,10 +73,7 @@ const getScenePreview = (nodes: JSONContent[], cursor: number) => {
     return preview;
 };
 
-export const computeFullScenesData = async (
-    screenplay: JSONContent,
-    projectCtx: ProjectContextType
-) => {
+export const computeFullScenesData = async (screenplay: JSONContent, projectCtx: ProjectContextType) => {
     if (!screenplay.content) {
         projectCtx.updateScenesData([]);
         return;

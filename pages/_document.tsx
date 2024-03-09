@@ -14,6 +14,7 @@ class Document extends NextDocument<Props> {
         return (
             <Html lang="en">
                 <Head>
+                    <title>Scriptio</title>
                     <meta name="title" content={TITLE} />
                     <meta name="description" content={DESCRIPTION} />
                     <meta name="author" content="Hugo 'Lycoon' Bois" />
@@ -32,10 +33,7 @@ class Document extends NextDocument<Props> {
                     <meta property="twitter:card" content={TITLE_IMG} />
                     <meta property="twitter:url" content={URL} />
                     <meta property="twitter:title" content={TITLE} />
-                    <meta
-                        property="twitter:description"
-                        content={DESCRIPTION}
-                    />
+                    <meta property="twitter:description" content={DESCRIPTION} />
                     <meta property="twitter:image" content={TITLE_IMG} />
                 </Head>
                 <body>

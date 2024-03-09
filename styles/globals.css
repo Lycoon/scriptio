@@ -15,9 +15,9 @@
 /*        Themes        */
 /* ==================== */
 html {
-    --validation-color: #61b76b;
-    --error-color: #ce4462;
-    --warning-color: #efa52f;
+    --success: #61b76b;
+    --error: #ce4462;
+    --warning: #efa52f;
 }
 
 html.light {

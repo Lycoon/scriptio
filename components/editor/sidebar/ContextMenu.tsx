@@ -49,7 +49,7 @@ export type SceneContextProps = {
 };
 
 const SceneItemMenu = (props: any) => {
-    const { editor } = useContext(UserContext);
+    const { editor } = useContext(ProjectContext);
 
     const position = props.props.position;
     const nextPosition = props.props.nextPosition;
@@ -94,7 +94,7 @@ const CharacterItemMenu = (props: any) => {
         <>
             <ContextMenuItem text={"Edit"} action={() => editCharacterPopup(character, userCtx)} />
             <ContextMenuItem text={"Remove"} action={() => deleteCharacter(character.name, projectCtx)} />
-            <ContextMenuItem text={"Paste"} action={() => pasteText(userCtx.editor!, character.name)} />
+            <ContextMenuItem text={"Paste"} action={() => pasteText(projectCtx.editor!, character.name)} />
         </>
     );
 };

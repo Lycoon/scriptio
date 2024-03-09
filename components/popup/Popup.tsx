@@ -6,14 +6,21 @@ import PopupImportFile from "./PopupImportFile";
 
 export const Popup = () => {
     const { popup } = useContext(UserContext);
+
     if (!popup) return null;
 
+    let popupToRender;
     switch (popup.type) {
         case PopupType.NewCharacter:
-            return PopupCharacterItem(popup as PopupData<PopupCharacterData>);
+            popupToRender = PopupCharacterItem(popup as PopupData<PopupCharacterData>);
+            break;
         case PopupType.EditCharacter:
-            return PopupCharacterItem(popup as PopupData<PopupCharacterData>);
+            popupToRender = PopupCharacterItem(popup as PopupData<PopupCharacterData>);
+            break;
         case PopupType.ImportFile:
-            return PopupImportFile(popup as PopupData<PopupImportFileData>);
+            popupToRender = PopupImportFile(popup as PopupData<PopupImportFileData>);
+            break;
     }
+
+    return <> {popupToRender} </>;
 };

@@ -12,6 +12,7 @@ import LocationSVG from "@public/images/location.svg";
 
 import sidebar from "./EditorSidebar.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
+import { CharacterItem } from "@src/lib/editor/characters";
 
 type SidebarNavigationProps = {
     active: boolean;
@@ -75,25 +76,15 @@ const EditorSidebarNavigation = ({ active }: SidebarNavigationProps) => {
                 </div>
                 <div className={sidebar_nav.list}>
                     {menu === NavigationMenu.Characters &&
-                        Object.entries(charactersData).map((character: any) => {
-                            return (
-                                <SidebarCharacterItem
-                                    key={character[0]}
-                                    character={{
-                                        // As we loop over entries of the character map, we get an array of [key, value]
-                                        name: character[0],
-                                        gender: character[1].gender,
-                                        synopsis: character[1].synopsis,
-                                    }}
-                                />
-                            );
+                        Object.entries(charactersData).map((item: [string, CharacterItem]) => {
+                            return <SidebarCharacterItem key={item[0]} character={{ name: item[0], ...item[1] }} />;
                         })}
                     <div className={sidebar_nav.list_fill} onContextMenu={handleDropdownCharacterList} />
                 </div>
             </div>
             <div>
                 <p className={sidebar_nav.list_title}>Scenes</p>
-                <div className={sidebar_nav.list + " " + sidebar_nav.scene_list}>
+                <div className={join(sidebar_nav.list, sidebar_nav.scene_list)}>
                     {scenesData.map((scene: SceneItem) => {
                         return <SidebarSceneItem key={scene.position} scene={scene} />;
                     })}

@@ -15,10 +15,19 @@ export enum PasswordRecoverStatus {
 }
 
 export enum Page {
-    Export,
-    Screenplay,
-    Statistics,
-    Edit,
+    // /{page}
+    Index = "index",
+    Settings = "settings",
+    About = "about",
+    Login = "login",
+    Signup = "signup",
+    Recover = "recover",
+
+    // /projects/{id}/{page}
+    Screenplay = "screenplay",
+    Statistics = "statistics",
+    Edit = "edit",
+    Export = "export",
 }
 
 // ------------------------------ //

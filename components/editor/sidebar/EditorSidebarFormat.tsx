@@ -9,7 +9,7 @@ import { join } from "@src/lib/utils/misc";
 import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 import { Dispatch, SetStateAction, useContext } from "react";
 import { applyMarkToggle } from "@src/lib/editor/editor";
-import { UserContext } from "@src/context/UserContext";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 type FormatButtonsProps = {
     selectedStyles: Style;
@@ -17,7 +17,7 @@ type FormatButtonsProps = {
 };
 
 const FormatButtons = ({ selectedStyles, setActiveStyles }: FormatButtonsProps) => {
-    const { editor } = useContext(UserContext);
+    const { editor } = useContext(ProjectContext);
 
     const toggleStyle = (style: Style) => {
         setActiveStyles((prev) => prev ^ style);

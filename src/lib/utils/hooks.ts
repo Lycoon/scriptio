@@ -5,6 +5,7 @@ import Router, { useRouter } from "next/router";
 import { CookieUser, Project } from "./types";
 import { useDesktopValues } from "../store";
 import { ProjectContext } from "@src/context/ProjectContext";
+import { Page } from "./enums";
 
 const returnData = (data: any, error: any, mutate: any, isLoading: any) => {
     return {
@@ -62,11 +63,7 @@ const useProjects = (): StateResult<Project[]> => {
     const { data: user } = useUser();
 
     // Fetch local projects if we're on desktop
-    const {
-        data: localProjects,
-        isLoading: isLocalLoading,
-        error: isLocalError,
-    } = useDesktopValues("projects.cfg");
+    const { data: localProjects, isLoading: isLocalLoading, error: isLocalError } = useDesktopValues("projects.cfg");
 
     // Fetch cloud projects if we're logged in
     const {
@@ -88,9 +85,7 @@ const useProjectFromUrl = (): StateResult<Project> => {
     const { updateProject, updateCharactersData } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
 
-    let { data, error, mutate, isLoading } = useSWR<Project>(
-        projectId ? `/api/projects/${projectId}` : null
-    );
+    let { data, error, mutate, isLoading } = useSWR<Project>(projectId ? `/api/projects/${projectId}` : null);
 
     // When the data has loaded, update the project
     useEffect(() => {
@@ -103,4 +98,21 @@ const useProjectFromUrl = (): StateResult<Project> => {
     return returnData(data, error, mutate, isLoading);
 };
 
-export { useUser, useSettings, useProjects, useProjectFromUrl, useDesktop };
+const usePage = (): Page => {
+    const router = useRouter();
+    const [page, setPage] = useState<Page>(Page.Index);
+
+    useEffect(() => {
+        if (router.pathname) {
+            const paths = router.pathname.split("/");
+
+            if (paths.length === 1) setPage(Page.Index);
+            else if (paths[1] === "projects") setPage(paths[3] as Page);
+            else setPage(paths[1] as Page);
+        }
+    }, [router]);
+
+    return page;
+};
+
+export { useUser, useSettings, useProjects, useProjectFromUrl, usePage, useDesktop };

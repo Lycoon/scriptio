@@ -34,9 +34,7 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
     const projectCtx = useContext(ProjectContext);
 
     const [selectedStyles, setSelectedStyles] = useState<Style>(Style.None);
-    const [selectedElement, setSelectedElement] = useState<ScreenplayElement>(
-        ScreenplayElement.Action
-    );
+    const [selectedElement, setSelectedElement] = useState<ScreenplayElement>(ScreenplayElement.Action);
     const [isNavigationActive, setIsNavigationActive] = useState<boolean>(true);
 
     /* Suggestion menu */
@@ -72,10 +70,7 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
 
                 if (event.code === "Space") {
                     // if starting action with INT. or EXT. switch to scene
-                    if (
-                        currNode === ScreenplayElement.Action &&
-                        node.textContent.match(/^\b(int|ext)\./gi)
-                    ) {
+                    if (currNode === ScreenplayElement.Action && node.textContent.match(/^\b(int|ext)\./gi)) {
                         setActiveElement(ScreenplayElement.Scene);
                     }
                 }
@@ -187,9 +182,7 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
     return (
         <div className={editor_.editor_and_sidebar}>
             <ContextMenu />
-            {suggestions.length > 0 && (
-                <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />
-            )}
+            {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
             <Popup />
             <EditorSidebarNavigation active={isNavigationActive} />
             <div className={editor_.container} onScroll={onScroll}>

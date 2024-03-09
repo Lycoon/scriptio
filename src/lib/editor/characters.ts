@@ -1,7 +1,6 @@
 import { ProjectContextType } from "@src/context/ProjectContext";
 import { getNodeFlattenContent } from "./screenplay";
 import { ScreenplayElement } from "../utils/enums";
-import { useState } from "react";
 import { saveCharacters } from "../utils/requests";
 import { JSONContent } from "@tiptap/react";
 
@@ -70,10 +69,7 @@ export const getCharacterNames = (screenplay: JSONContent) => {
     return characters;
 };
 
-export const computeFullCharactersData = async (
-    screenplay: JSONContent,
-    projectCtx: ProjectContextType
-) => {
+export const computeFullCharactersData = async (screenplay: JSONContent, projectCtx: ProjectContextType) => {
     let charactersData: CharacterMap = { ...projectCtx.project?.characters };
     console.log(charactersData);
 

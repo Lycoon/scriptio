@@ -1,14 +1,7 @@
 import { NextApiResponse } from "next";
 import { Settings } from "../../server/repository/user-repository";
 import { CharacterMap, getPersistentCharacters } from "../editor/characters";
-import {
-    CookieUser,
-    DataResult,
-    ProjectCreated,
-    ProjectCreation,
-    ProjectCreationDTO,
-    ProjectUpdateDTO,
-} from "./types";
+import { CookieUser, DataResult, ProjectCreated, ProjectCreation, ProjectCreationDTO, ProjectUpdateDTO } from "./types";
 import { SaveMode, SaveStatus } from "./enums";
 import { randomUUID } from "crypto";
 import { writeFileSync } from "fs";
@@ -80,11 +73,7 @@ export const createProject = async (
         fileProjectId = randomUUID();
 
         // Add project setting to local storage
-        resLocal = await setDesktopValue(
-            fileProjectId,
-            { cloudProjectId, path: project.filePath },
-            "projects.cfg"
-        );
+        resLocal = await setDesktopValue(fileProjectId, { cloudProjectId, path: project.filePath }, "projects.cfg");
 
         if (resLocal.error) {
             return ErrorResponse("Project could not be added to local storage");
@@ -115,10 +104,7 @@ export const editProject = (body: ProjectUpdateDTO) => {
     return request(`/api/projects`, APIMethod.Patch, body);
 };
 
-export const saveCharacters = async (
-    projectCtx: ProjectContextType,
-    characters: CharacterMap
-): Promise<Response> => {
+export const saveCharacters = async (projectCtx: ProjectContextType, characters: CharacterMap): Promise<Response> => {
     const persistentCharacters = getPersistentCharacters(characters); // Get rid of non-persistent characters
 
     const projectId = projectCtx.project!.id;
@@ -130,10 +116,7 @@ export const saveCharacters = async (
     return res;
 };
 
-export const saveScreenplay = async (
-    projectCtx: ProjectContextType,
-    screenplay: JSONContent
-): Promise<Response> => {
+export const saveScreenplay = async (projectCtx: ProjectContextType, screenplay: JSONContent): Promise<Response> => {
     const projectId = projectCtx.project!.id;
     const res = await editProject({ projectId, screenplay });
 

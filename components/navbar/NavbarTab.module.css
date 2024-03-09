@@ -16,7 +16,7 @@
 
 .content {
     font-size: 1rem;
-    color: white;
+    color: var(--primary-text);
     padding-bottom: 3px;
 }
 
