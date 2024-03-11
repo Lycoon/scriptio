@@ -18,7 +18,7 @@ type SidebarNavigationProps = {
     active: boolean;
 };
 
-const enum NavigationMenu {
+enum NavigationMenu {
     Characters,
     Locations,
     Others,

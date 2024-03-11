@@ -82,7 +82,7 @@ const useProjects = (): StateResult<Project[]> => {
 };
 
 const useProjectFromUrl = (): StateResult<Project> => {
-    const { updateProject, updateCharactersData } = useContext(ProjectContext);
+    const { updateProject } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
 
     let { data, error, mutate, isLoading } = useSWR<Project>(projectId ? `/api/projects/${projectId}` : null);
@@ -91,7 +91,6 @@ const useProjectFromUrl = (): StateResult<Project> => {
     useEffect(() => {
         if (data && !error) {
             updateProject(data);
-            updateCharactersData(data.characters);
         }
     }, [data]);
 

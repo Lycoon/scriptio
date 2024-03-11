@@ -16,13 +16,7 @@ import { computeFullCharactersData } from "@src/lib/editor/characters";
 /* Styles */
 import editor_ from "./EditorAndSidebar.module.css";
 import { ProjectContext } from "@src/context/ProjectContext";
-import {
-    applyElement,
-    deferredCharactersUpdate,
-    deferredSceneUpdate,
-    insertElement,
-    useScriptioEditor,
-} from "@src/lib/editor/editor";
+import { applyElement, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
 import { Popup } from "@components/popup/Popup";
 
 type EditorAndSidebarProps = {

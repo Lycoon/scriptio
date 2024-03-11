@@ -1,6 +1,5 @@
 import { ExportData } from "@components/projects/export/ExportProjectContainer";
 import { getNodeFlattenContent } from "@src/lib/editor/screenplay";
-import { capitalizeFirstLetter } from "@src/lib/utils/misc";
 import { XMLBuilder } from "fast-xml-parser";
 
 const options = { attributeNamePrefix: "@_", textNodeName: "#text", ignoreAttributes: false, format: true };

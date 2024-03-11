@@ -1,14 +1,10 @@
-import { Editor } from "@tiptap/react";
 import fountain from "./fountain_parser";
 
 /**
- * Convert .fountain format screenplay to editor JSON
- * @param text .fountain format screenplay
- * @param editor main editor
+ * Convert .fountain format screenplay to HTML
+ * @param fountainScreenplay .fountain format screenplay
  */
-export const convertFountainToJSON = async (text: string, editor: Editor) => {
-    fountain.parse(text, true, function (output: any) {
-        const html = output["html"]["script"];
-        editor.commands.setContent(html);
-    });
+export const convertFountainToHTML = (fountainScreenplay: string) => {
+    const output = fountain.parse(fountainScreenplay, true);
+    return output["html"]["script"];
 };

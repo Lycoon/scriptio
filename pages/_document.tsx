@@ -14,7 +14,6 @@ class Document extends NextDocument<Props> {
         return (
             <Html lang="en">
                 <Head>
-                    <title>Scriptio</title>
                     <meta name="title" content={TITLE} />
                     <meta name="description" content={DESCRIPTION} />
                     <meta name="author" content="Hugo 'Lycoon' Bois" />

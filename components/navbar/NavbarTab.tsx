@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import DropdownItem from "./dropdown/DropdownItem";
-import { NavbarTabData } from "./Navbar";
 
 import tab from "./NavbarTab.module.css";
 import { join } from "@src/lib/utils/misc";
+import { NavbarTabData } from "./NavbarMenu";
 
 type Props = {
     title: string;

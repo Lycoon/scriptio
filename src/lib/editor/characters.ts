@@ -71,8 +71,6 @@ export const getCharacterNames = (screenplay: JSONContent) => {
 
 export const computeFullCharactersData = async (screenplay: JSONContent, projectCtx: ProjectContextType) => {
     let charactersData: CharacterMap = { ...projectCtx.project?.characters };
-    console.log(charactersData);
-
     const namesFromEditor: string[] = getCharacterNames(screenplay);
 
     for (const name of namesFromEditor) {

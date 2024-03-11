@@ -13,8 +13,13 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { SaveStatus } from "@src/lib/utils/enums";
 import { UserContext } from "@src/context/UserContext";
 import { importFilePopup } from "@src/lib/editor/popup";
-import { convertFountainToJSON } from "@src/converters/import/fountain";
+import { convertFountainToHTML } from "@src/converters/import/fountain";
 import dynamic from "next/dynamic";
+import { computeFullCharactersData } from "@src/lib/editor/characters";
+import { computeFullScenesData } from "@src/lib/editor/screenplay";
+import { saveScreenplay } from "@src/lib/utils/requests";
+import { generateJSON } from "@tiptap/react";
+import { SCRIPTIO_EXTENSIONS, replaceScreenplay } from "@src/lib/editor/editor";
 
 // ------------------------------ //
 //              DATA              //
@@ -38,9 +43,12 @@ type NavbarMenuProps = {
 
 const NavbarMenu = ({ project }: NavbarMenuProps) => {
     const userCtx = useContext(UserContext);
-    const { editor, updateSaveStatus } = useContext(ProjectContext);
+    const projectCtx = useContext(ProjectContext);
+    const { editor, updateSaveStatus } = projectCtx;
 
     const importFile = () => {
+        if (!editor) return;
+
         var input = document.createElement("input");
         input.type = "file";
         input.accept = ".fountain";
@@ -51,8 +59,14 @@ const NavbarMenu = ({ project }: NavbarMenuProps) => {
 
             reader.onload = (e: any) => {
                 const confirmImport = () => {
-                    convertFountainToJSON(e.target.result, editor!);
+                    const html = convertFountainToHTML(e.target.result);
+                    const json = generateJSON(html, SCRIPTIO_EXTENSIONS);
+
                     updateSaveStatus(SaveStatus.Saving);
+                    replaceScreenplay(editor, json);
+                    computeFullCharactersData(json, projectCtx);
+                    computeFullScenesData(json, projectCtx);
+                    saveScreenplay(projectCtx, json);
                 };
 
                 importFilePopup(userCtx, confirmImport);

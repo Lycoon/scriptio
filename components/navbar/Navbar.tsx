@@ -1,4 +1,3 @@
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import Router from "next/router";
 import { useContext, useEffect, useState } from "react";
@@ -20,6 +19,7 @@ import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
 import NavbarMenu from "./NavbarMenu";
+import { computeFullCharactersData } from "@src/lib/editor/characters";
 
 const NotLoggedNavbar = () => (
     <div className={navbar.notlogged_btns}>
@@ -49,7 +49,8 @@ const SaveStatusNavbar = () => {
 };
 
 const Navbar = () => {
-    const { project } = useContext(ProjectContext);
+    const projectCtx = useContext(ProjectContext);
+    const { project } = projectCtx;
 
     const page = usePage();
     const isDesktop = useDesktop();
@@ -70,12 +71,11 @@ const Navbar = () => {
         Router.push("/");
     };
 
-    const deferredTitleUpdate = (projectId: string, projectTitle: string) => {
-        debounce(async () => {
-            editProject({ projectId, title: projectTitle });
-            mutate(`/api/projects/${projectId}`, { ...project, title: projectTitle });
-        }, 1000);
-    };
+    const deferredTitleUpdate = debounce(async (projectId: string, projectTitle: string) => {
+        await editProject({ projectId, title: projectTitle });
+        mutate(`/api/projects/${projectId}`, { ...project, title: projectTitle });
+        await computeFullCharactersData(project?.screenplay!, projectCtx);
+    }, 1000);
 
     let NavbarButtons;
     if (user) {

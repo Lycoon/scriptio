@@ -8,7 +8,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { computeFullScenesData } from "./screenplay";
-import { CharacterMap, computeFullCharactersData } from "./characters";
+import { computeFullCharactersData } from "./characters";
 import { useContext } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
@@ -45,12 +45,7 @@ export const copyText = (editor: Editor, start: number, end: number) => {
 };
 
 export const replaceRange = (editor: Editor, start: number, end: number, text: string) => {
-    editor
-        .chain()
-        .focus(start)
-        .setTextSelection({ from: start, to: end })
-        .insertContent(text)
-        .run();
+    editor.chain().focus(start).setTextSelection({ from: start, to: end }).insertContent(text).run();
 };
 
 export const pasteText = (editor: Editor, text: string) => {
@@ -67,6 +62,10 @@ export const insertElement = (editor: Editor, element: ScreenplayElement, positi
 
 export const replaceOccurrences = (editor: Editor, oldWord: string, newWord: string) => {
     editor.chain().focus().insertContentAt({ from: 0, to: 4 }, newWord).run();
+};
+
+export const replaceScreenplay = (editor: Editor, screenplay: JSONContent) => {
+    editor.commands.setContent(screenplay);
 };
 
 export const getStylesFromMarks = (marks: any[]): Style => {
@@ -88,26 +87,17 @@ const SCREENPLAY_SAVE_DELAY = 2000;
 const SCENE_UPDATE_DELAY = 500;
 const CHARACTERS_UPDATE_DELAY = 500;
 
-const deferredScreenplaySave = debounce(
-    (screenplay: JSONContent, projectCtx: ProjectContextType) => {
-        saveScreenplay(projectCtx, screenplay);
-    },
-    SCREENPLAY_SAVE_DELAY
-);
+const deferredScreenplaySave = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
+    saveScreenplay(projectCtx, screenplay);
+}, SCREENPLAY_SAVE_DELAY);
 
-export const deferredSceneUpdate = debounce(
-    (screenplay: JSONContent, projectCtx: ProjectContextType) => {
-        computeFullScenesData(screenplay, projectCtx);
-    },
-    SCENE_UPDATE_DELAY
-);
+export const deferredSceneUpdate = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
+    computeFullScenesData(screenplay, projectCtx);
+}, SCENE_UPDATE_DELAY);
 
-export const deferredCharactersUpdate = debounce(
-    (screenplay: JSONContent, projectCtx: ProjectContextType) => {
-        computeFullCharactersData(screenplay, projectCtx);
-    },
-    CHARACTERS_UPDATE_DELAY
-);
+export const deferredCharactersUpdate = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
+    computeFullCharactersData(screenplay, projectCtx);
+}, CHARACTERS_UPDATE_DELAY);
 
 const processAutoComplete = (
     anchor: any,
@@ -159,6 +149,19 @@ const processAutoComplete = (
     }
 };
 
+export const SCRIPTIO_EXTENSIONS = [
+    // default
+    Document,
+    Text,
+    History,
+    CustomBold,
+    CustomItalic,
+    CustomUnderline,
+
+    // scriptio
+    Screenplay,
+];
+
 export const useScriptioEditor = (
     screenplay: JSONContent,
     setActiveElement: (element: ScreenplayElement, applyStyle: boolean) => void,
@@ -168,18 +171,7 @@ export const useScriptioEditor = (
 ) => {
     const projectCtx = useContext(ProjectContext);
     const editorView = useEditor({
-        extensions: [
-            // default
-            Document,
-            Text,
-            History,
-            CustomBold,
-            CustomItalic,
-            CustomUnderline,
-
-            // scriptio
-            Screenplay,
-        ],
+        extensions: SCRIPTIO_EXTENSIONS,
 
         // update on each screenplay update
         onUpdate({ editor }) {
@@ -192,7 +184,7 @@ export const useScriptioEditor = (
 
         onCreate({ editor }) {
             projectCtx.updateEditor(editor as Editor);
-            editor.commands.setContent(screenplay);
+            replaceScreenplay(editor as Editor, screenplay);
         },
 
         // update active on caret update
