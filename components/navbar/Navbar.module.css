@@ -39,7 +39,7 @@
     background: none;
     font-size: 1rem;
     border-radius: 6px;
-    padding-left: 6px;
+    padding-inline: 6px;
     padding-bottom: 3px;
     color: var(--primary-text);
 }

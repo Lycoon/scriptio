@@ -81,19 +81,19 @@ const NavbarMenu = ({ project }: NavbarMenuProps) => {
     if (project) {
         tabs = {
             File: [
-                { name: "Import...", action: importFile, icon: "import.png" },
+                { name: "Import", action: importFile, icon: "import.png" },
                 { name: "Export", action: () => redirectExport(project.id), icon: "export.png" },
             ],
             Edit: [
                 { name: "Project info", action: () => redirectProjectInfo(project.id) },
                 { name: "Screenplay", action: () => redirectScreenplay(project.id) },
                 { name: "Title page", action: () => redirectTitlePage(project.id) },
-                { name: "Story", action: () => redirectStory(project.id) },
+                /*{ name: "Story", action: () => redirectStory(project.id) },*/
             ],
-            Production: [
+            /*Production: [
                 { name: "Statistics", action: () => redirectStatistics(project.id) },
                 { name: "Reports", action: () => redirectReports(project.id) },
-            ],
+            ],*/
         };
     }
 

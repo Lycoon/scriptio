@@ -74,7 +74,6 @@ const Navbar = () => {
     const deferredTitleUpdate = debounce(async (projectId: string, projectTitle: string) => {
         await editProject({ projectId, title: projectTitle });
         mutate(`/api/projects/${projectId}`, { ...project, title: projectTitle });
-        await computeFullCharactersData(project?.screenplay!, projectCtx);
     }, 1000);
 
     let NavbarButtons;
