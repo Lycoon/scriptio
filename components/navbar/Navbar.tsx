@@ -10,6 +10,8 @@ import SettingsSVG from "@public/images/gear.svg";
 import LogoutSVG from "@public/images/logout.svg";
 import SavingSVG from "@public/images/saving.svg";
 import CheckmarkSVG from "@public/images/checkmark.svg";
+import OfflineSVG from "@public/images/offline.svg";
+import EyeSVG from "@public/images/eye.svg";
 
 import navbar from "./Navbar.module.css";
 import sidebar from "../editor/sidebar/EditorSidebar.module.css";
@@ -19,7 +21,7 @@ import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
 import NavbarMenu from "./NavbarMenu";
-import { computeFullCharactersData } from "@src/lib/editor/characters";
+import { UserContext } from "@src/context/UserContext";
 
 const NotLoggedNavbar = () => (
     <div className={navbar.notlogged_btns}>
@@ -44,13 +46,15 @@ const SaveStatusNavbar = () => {
         case SaveStatus.Saved:
             return <CheckmarkSVG className={join(navbar.status, navbar.success)} />;
         case SaveStatus.Error:
-            return <p className={navbar.last_saved}>Error</p>;
+            return <OfflineSVG className={join(navbar.status, navbar.failed)} />;
     }
 };
 
 const Navbar = () => {
+    const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
     const { project } = projectCtx;
+    const { updateZenMode } = userCtx;
 
     const page = usePage();
     const isDesktop = useDesktop();
@@ -76,11 +80,14 @@ const Navbar = () => {
         mutate(`/api/projects/${projectId}`, { ...project, title: projectTitle });
     }, 1000);
 
+    const toggleZenMode = () => updateZenMode(!userCtx.isZenMode);
+
     let NavbarButtons;
     if (user) {
         // Logged in on web OR desktop app
         NavbarButtons = () => (
             <div className={navbar.btns}>
+                <EyeSVG className={join(navbar.btn, navbar.zen_btn)} onClick={toggleZenMode} alt="Eye icon" />
                 <SettingsSVG className={navbar.btn} onClick={redirectSettings} alt="Settings icon" />
                 <LogoutSVG className={navbar.btn} onClick={onLogOut} alt="Logout icon" />
             </div>
@@ -98,7 +105,7 @@ const Navbar = () => {
     }
 
     return (
-        <nav className={navbar.container + " " + sidebar.shadow}>
+        <nav className={join(navbar.container, sidebar.shadow)}>
             <div className={navbar.logo_and_tabs}>
                 <Link legacyBehavior href="/">
                     <a className={navbar.logo}>

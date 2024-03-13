@@ -131,12 +131,6 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
             e.preventDefault();
         }
 
-        // Ctrl + X
-        if (e.ctrlKey && e.key === "x") {
-            e.preventDefault();
-            setIsNavigationActive(!isNavigationActive);
-        }
-
         // Escape
         if (e.key === "Escape") {
             userCtx.updateContextMenu(undefined);
@@ -178,7 +172,7 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
             <ContextMenu />
             {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
             <Popup />
-            <EditorSidebarNavigation active={isNavigationActive} />
+            <EditorSidebarNavigation />
             <div className={editor_.container} onScroll={onScroll}>
                 <EditorComponent editor={editorView} />
             </div>

@@ -2,6 +2,14 @@
     padding-top: 8px;
     background-color: var(--editor-sidebar);
     min-width: var(--format-sidebar-width);
+
+    margin-right: calc(var(--format-sidebar-width) * -1);
+    transition: margin-right 0.5s ease;
+}
+
+.active {
+    margin-right: 0;
+    transition: margin-right 0.5s ease;
 }
 
 .shadow {

@@ -25,6 +25,8 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+
+    box-shadow: 0px 0px 15px 5px rgba(0, 0, 0, 0.3);
 }
 
 .title {
@@ -60,6 +62,11 @@
 
     color: var(--secondary-text);
     cursor: pointer;
+}
+
+.zen_btn {
+    width: 20px;
+    height: 20px;
 }
 
 .btn:hover {

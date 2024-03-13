@@ -3,8 +3,10 @@ import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
 import { PopupData, PopupUnionData } from "@src/lib/editor/popup";
 
 export type UserContextType = {
-    darkMode: boolean;
-    updateDarkMode: (darkMode: boolean) => void;
+    isDarkMode: boolean;
+    updateDarkMode: (isDarkMode: boolean) => void;
+    isZenMode: boolean;
+    updateZenMode: (isZenMode: boolean) => void;
     contextMenu: ContextMenuProps | undefined;
     updateContextMenu: (contextMenu: ContextMenuProps | undefined) => void;
     popup: PopupData<PopupUnionData> | undefined;
@@ -14,8 +16,10 @@ export type UserContextType = {
 };
 
 const contextDefaults: UserContextType = {
-    darkMode: false,
+    isDarkMode: false,
     updateDarkMode: () => {},
+    isZenMode: false,
+    updateZenMode: () => {},
     contextMenu: undefined,
     updateContextMenu: () => {},
     popup: undefined,
@@ -24,20 +28,25 @@ const contextDefaults: UserContextType = {
     updateIsDesktop: () => {},
 };
 
-type Props = {
+type UserContextProps = {
     children: ReactNode;
 };
 
 export const UserContext = createContext<UserContextType>(contextDefaults);
 
-export function UserContextProvider({ children }: Props) {
-    const [darkMode, setDarkMode] = useState<boolean>(false);
+export function UserContextProvider({ children }: UserContextProps) {
+    const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+    const [isZenMode, setIsZenMode] = useState<boolean>(false);
     const [contextMenu, setContextMenu] = useState<ContextMenuProps | undefined>(undefined);
     const [popup, setPopup] = useState<PopupData<PopupUnionData> | undefined>(undefined);
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
 
-    const updateDarkMode = (darkMode_: boolean) => {
-        setDarkMode(darkMode_);
+    const updateDarkMode = (isDarkMode_: boolean) => {
+        setIsDarkMode(isDarkMode_);
+    };
+
+    const updateZenMode = (isZenMode_: boolean) => {
+        setIsZenMode(isZenMode_);
     };
 
     const updateContextMenu = (contextMenu_: ContextMenuProps | undefined) => {
@@ -53,8 +62,10 @@ export function UserContextProvider({ children }: Props) {
     };
 
     const value = {
-        darkMode,
+        isDarkMode,
         updateDarkMode,
+        isZenMode,
+        updateZenMode,
         contextMenu,
         updateContextMenu,
         popup,

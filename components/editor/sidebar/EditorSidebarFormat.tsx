@@ -10,6 +10,7 @@ import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 import { Dispatch, SetStateAction, useContext } from "react";
 import { applyMarkToggle } from "@src/lib/editor/editor";
 import { ProjectContext } from "@src/context/ProjectContext";
+import { UserContext } from "@src/context/UserContext";
 
 type FormatButtonsProps = {
     selectedStyles: Style;
@@ -52,8 +53,11 @@ type Props = {
 };
 
 const EditorSidebarFormat = ({ selectedStyles, setActiveStyles, selectedElement, setActiveElement }: Props) => {
+    const { isZenMode } = useContext(UserContext);
+    const isActive = isZenMode ? "" : sidebar.active;
+
     return (
-        <div className={join(sidebar.container, sidebar.tabs)}>
+        <div className={join(sidebar.container, sidebar.tabs, isActive)}>
             <div className={sidebar.tabs}>
                 <FormatButtons selectedStyles={selectedStyles} setActiveStyles={setActiveStyles} />
                 <EditorTab

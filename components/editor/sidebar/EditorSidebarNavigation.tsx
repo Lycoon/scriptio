@@ -14,21 +14,18 @@ import sidebar from "./EditorSidebar.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
 import { CharacterItem } from "@src/lib/editor/characters";
 
-type SidebarNavigationProps = {
-    active: boolean;
-};
-
 enum NavigationMenu {
     Characters,
     Locations,
     Others,
 }
 
-const EditorSidebarNavigation = ({ active }: SidebarNavigationProps) => {
+const EditorSidebarNavigation = () => {
     const { scenesData, charactersData } = useContext(ProjectContext);
-    const { updateContextMenu } = useContext(UserContext);
+    const { isZenMode, updateContextMenu } = useContext(UserContext);
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
-    const isActive = active ? sidebar_nav.active : "";
+
+    const isActive = isZenMode ? "" : sidebar_nav.active;
 
     const isCharactersMenu = menu === NavigationMenu.Characters;
     const isLocationsMenu = menu === NavigationMenu.Locations;
