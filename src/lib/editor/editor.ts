@@ -1,9 +1,8 @@
-import { Editor, JSONContent, NodePos, useEditor } from "@tiptap/react";
+import { Editor, JSONContent, getSchema, useEditor } from "@tiptap/react";
 import { EditorElement, SaveStatus, ScreenplayElement, Style, TitlePageElement } from "../utils/enums";
 import { saveScreenplay, saveTitlePage } from "../utils/requests";
 import { ProjectContext, ProjectContextType } from "@src/context/ProjectContext";
 
-import { Node } from "prosemirror-model";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { computeFullScenesData } from "./screenplay";
@@ -77,6 +76,8 @@ export const replaceScreenplay = (editor: Editor, content: JSONContent) => {
 };
 
 export const getStylesFromMarks = (marks: any[]): Style => {
+    console.log(marks);
+
     let style = Style.None;
     marks.forEach((mark: any) => {
         const styleClass = mark.type.name;
@@ -182,31 +183,6 @@ const BASE_EXTENSIONS = [Screenplay, Text, History, CustomBold, CustomItalic, Cu
 export const SCREENPLAY_EXTENSIONS = [...BASE_EXTENSIONS, ScriptElement, Page];
 export const TITLE_PAGE_EXTENSIONS = [...BASE_EXTENSIONS, ScriptElement];
 
-const printNodes = (nodes: Node[]) => {
-    let str = "";
-    nodes.forEach((node) => {
-        switch (node.type.name) {
-            case "element":
-                str += node.attrs.class + " ";
-                break;
-            case "page":
-                str += "PAGE ";
-                break;
-            default:
-                str += node.type.name + " ";
-        }
-    });
-    console.log(str);
-};
-
-export const isOverflown = (element: HTMLElement) => {
-    const parent = element.parentElement!;
-    const elementHeightPos = element.offsetTop + element.offsetHeight;
-
-    if (elementHeightPos > parent.clientHeight - 96) return true;
-    return false;
-};
-
 export const useScreenplayEditor = (
     screenplay: JSONContent,
     setActiveElement: (element: ScreenplayElement, applyStyle: boolean) => void,
@@ -218,28 +194,8 @@ export const useScreenplayEditor = (
     const editorView = useEditor({
         extensions: SCREENPLAY_EXTENSIONS,
 
-        onTransaction({ editor, transaction: tr }) {
-            if (tr.steps.length === 0) return;
-
-            const { selection } = tr;
-            const { $from, $to } = selection;
-
-            const fromNodePos = new NodePos($from, editor);
-            const fromNodePage = fromNodePos.closest("page")!;
-            const lastNode = fromNodePage.lastChild!;
-            const overflow = isOverflown(lastNode.element);
-
-            const toNodePos = new NodePos($to, editor);
-            const toNodePage = toNodePos.closest("page");
-            const isSamePage = fromNodePage === toNodePage;
-
-            const pages = editor.$nodes("page")!;
-
-            console.log(overflow);
-        },
-
         // update on each screenplay update
-        onUpdate({ editor, transaction }) {
+        onUpdate({ editor }) {
             const screenplay = editor.getJSON();
             projectCtx.updateSaveStatus(SaveStatus.Saving);
             deferredScreenplaySave(screenplay, projectCtx);

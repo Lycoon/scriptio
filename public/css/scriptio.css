@@ -5,7 +5,7 @@
     --page-bottom-padding: 1in;
 
     --us-letter-format-width: 8.5in;
-    --us-letter-format-height: /*11in*/ 5in;
+    --us-letter-format-height: 11in;
     --a4-format-width: 8.27in;
     --a4-format-height: 11.69in;
 
@@ -15,6 +15,10 @@
 .ProseMirror:focus {
     /* Prevent outline from appearing when focused on screenplay */
     outline: none;
+}
+
+.ProseMirror {
+    min-height: 1100px;
 }
 
 .ProseMirror p,
@@ -40,7 +44,7 @@
     padding-bottom: var(--page-bottom-padding);
 
     position: relative;
-    background-color: var(--editor-script-bg);
+    background: var(--editor-script-bg);
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
     margin-bottom: 15px;
 }
@@ -99,13 +103,17 @@ span.underline {
     padding-right: 1.55in;
 }
 
+.dialogue + .parenthetical {
+    margin-top: -17px;
+}
+
 .character {
     padding-left: 2in;
     text-transform: uppercase;
 }
 
 .character + .parenthetical,
-.parenthetical + .dialogue {
+.character + .dialogue {
     margin-top: -17px;
 }
 

@@ -72,6 +72,8 @@ export const computeFullCharactersData = async (screenplay: JSONContent, project
     let charactersData: CharacterMap = { ...projectCtx.project?.characters };
     const namesFromEditor: string[] = getCharacterNames(screenplay);
 
+    console.log(screenplay);
+
     for (const name of namesFromEditor) {
         // If character already exists in the data, don't overwrite it
         if (charactersData[name] !== undefined) continue;

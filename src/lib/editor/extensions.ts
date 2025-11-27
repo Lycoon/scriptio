@@ -2,7 +2,7 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
 import Underline from "@tiptap/extension-underline";
-import { Node } from "@tiptap/react";
+import { Node, NodeViewRenderer } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 
 export const Screenplay = Document.extend({
@@ -22,8 +22,19 @@ export const Page = Node.create({
     name: "page",
     content: "element+",
     group: "block",
-    defining: true,
 
+    addNodeView(): NodeViewRenderer {
+        return ({ editor, node, getPos }) => {
+            const wrapper = document.createElement("div");
+            wrapper.classList.add("page");
+
+            const content = document.createElement("div");
+            content.classList.add("content");
+            wrapper.append(content);
+
+            return { wrapper };
+        };
+    },
     parseHTML() {
         return [{ tag: "div.page" }];
     },

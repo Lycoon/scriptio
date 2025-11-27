@@ -126,7 +126,7 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
         }
 
         if (e.key === "F2") {
-            insertPage(screenplayEditor!, screenplayEditor?.state.selection.anchor!);
+            insertPage(screenplayEditor!, 0);
         }
 
         // Ctrl + S
