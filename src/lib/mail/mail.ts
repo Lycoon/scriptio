@@ -2,6 +2,10 @@ import nodemailer from "nodemailer";
 import * as fs from "fs";
 var hogan = require("hogan.js");
 
+const BASE_URL = process.env.NODE_ENV === "production" 
+  ? "https://scriptio.app" 
+  : "http://localhost:3000";
+
 const transporter = nodemailer.createTransport({
     pool: true,
     host: "email-smtp.eu-west-3.amazonaws.com",

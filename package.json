@@ -2,7 +2,7 @@
     "name": "scriptio",
     "private": true,
     "scripts": {
-        "dev": "next dev",
+        "dev": "docker compose up -d && npx prisma db push && next dev",
         "build": "next build",
         "export": "next export",
         "start": "next start",
