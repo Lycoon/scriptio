@@ -11,18 +11,18 @@ import { Dispatch, SetStateAction, useContext } from "react";
 import { applyMarkToggle } from "@src/lib/editor/editor";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
-import { Editor } from "@tiptap/react";
 
 type FormatButtonsProps = {
     selectedStyles: Style;
     setActiveStyles: Dispatch<SetStateAction<Style>>;
-    editor: Editor;
 };
 
-export const FormatButtons = ({ selectedStyles, setActiveStyles, editor }: FormatButtonsProps) => {
+const FormatButtons = ({ selectedStyles, setActiveStyles }: FormatButtonsProps) => {
+    const { editor } = useContext(ProjectContext);
+
     const toggleStyle = (style: Style) => {
         setActiveStyles((prev) => prev ^ style);
-        applyMarkToggle(editor, style);
+        applyMarkToggle(editor!, style);
     };
 
     const getActiveStyleCSS = (style: Style) => (selectedStyles & style ? sidebar.active_style : "");
@@ -45,31 +45,21 @@ export const FormatButtons = ({ selectedStyles, setActiveStyles, editor }: Forma
     );
 };
 
-type EditorSidebarFormatProps = {
+type Props = {
     selectedStyles: Style;
     setActiveStyles: Dispatch<SetStateAction<Style>>;
     selectedElement: ScreenplayElement;
     setActiveElement: (activeElement: ScreenplayElement) => void;
 };
 
-const EditorSidebarFormat = ({
-    selectedStyles,
-    setActiveStyles,
-    selectedElement,
-    setActiveElement,
-}: EditorSidebarFormatProps) => {
-    const { screenplayEditor } = useContext(ProjectContext);
+const EditorSidebarFormat = ({ selectedStyles, setActiveStyles, selectedElement, setActiveElement }: Props) => {
     const { isZenMode } = useContext(UserContext);
     const isActive = isZenMode ? "" : sidebar.active;
 
     return (
         <div className={join(sidebar.container, sidebar.tabs, isActive)}>
             <div className={sidebar.tabs}>
-                <FormatButtons
-                    selectedStyles={selectedStyles}
-                    setActiveStyles={setActiveStyles}
-                    editor={screenplayEditor!}
-                />
+                <FormatButtons selectedStyles={selectedStyles} setActiveStyles={setActiveStyles} />
                 <EditorTab
                     content="SCENE HEADING"
                     element={ScreenplayElement.Scene}

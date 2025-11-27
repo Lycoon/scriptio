@@ -1,11 +1,11 @@
-.container {
+.editor_and_sidebar {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     height: 100%;
 }
 
-.screenplay {
+.container {
     flex: 1;
     overflow-y: scroll;
 }

@@ -49,18 +49,18 @@ export type SceneContextProps = {
 };
 
 const SceneItemMenu = (props: any) => {
-    const { screenplayEditor } = useContext(ProjectContext);
+    const { editor } = useContext(ProjectContext);
 
     const position = props.props.position;
     const nextPosition = props.props.nextPosition;
 
     return (
         <>
-            <ContextMenuItem text={"Go to scene"} action={() => focusOnPosition(screenplayEditor!, position)} />
-            <ContextMenuItem text={"Cut"} action={() => cutText(screenplayEditor!, position, nextPosition)} />
+            <ContextMenuItem text={"Go to scene"} action={() => focusOnPosition(editor!, position)} />
+            <ContextMenuItem text={"Cut"} action={() => cutText(editor!, position, nextPosition)} />
             <ContextMenuItem
                 text={"Select in editor"}
-                action={() => selectTextInEditor(screenplayEditor!, position, nextPosition)}
+                action={() => selectTextInEditor(editor!, position, nextPosition)}
             />
         </>
     );
@@ -94,7 +94,7 @@ const CharacterItemMenu = (props: any) => {
         <>
             <ContextMenuItem text={"Edit"} action={() => editCharacterPopup(character, userCtx)} />
             <ContextMenuItem text={"Remove"} action={() => deleteCharacter(character.name, projectCtx)} />
-            <ContextMenuItem text={"Paste"} action={() => pasteText(projectCtx.screenplayEditor!, character.name)} />
+            <ContextMenuItem text={"Paste"} action={() => pasteText(projectCtx.editor!, character.name)} />
         </>
     );
 };

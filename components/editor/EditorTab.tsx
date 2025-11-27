@@ -2,21 +2,16 @@ import { join } from "@src/lib/utils/misc";
 import tab from "./EditorTab.module.css";
 
 import SelectorSVG from "@public/images/selector.svg";
-import { EditorElement, ScreenplayElement, TitlePageElement } from "@src/lib/utils/enums";
+import { ScreenplayElement } from "@src/lib/utils/enums";
 
-type EditorTabProps<T extends EditorElement> = {
-    setActiveElement: (element: T) => void;
-    currentElement: T;
-    element: T;
+type Props = {
+    setActiveElement: (element: ScreenplayElement) => void;
+    currentElement: ScreenplayElement;
+    element: ScreenplayElement;
     content: string;
 };
 
-const EditorTab = <T extends EditorElement>({
-    setActiveElement,
-    currentElement,
-    element,
-    content,
-}: EditorTabProps<T>) => {
+const EditorTab = ({ setActiveElement, currentElement, element, content }: Props) => {
     const isActive = currentElement == element;
     const activeStyle = isActive ? tab.active : "";
     const tabStyle = join(tab.container, tab.text, activeStyle, "button");

@@ -87,9 +87,7 @@ const Navbar = () => {
         // Logged in on web OR desktop app
         NavbarButtons = () => (
             <div className={navbar.btns}>
-                {page === Page.Screenplay && (
-                    <EyeSVG className={join(navbar.btn, navbar.zen_btn)} onClick={toggleZenMode} alt="Eye icon" />
-                )}
+                <EyeSVG className={join(navbar.btn, navbar.zen_btn)} onClick={toggleZenMode} alt="Eye icon" />
                 <SettingsSVG className={navbar.btn} onClick={redirectSettings} alt="Settings icon" />
                 <LogoutSVG className={navbar.btn} onClick={onLogOut} alt="Logout icon" />
             </div>

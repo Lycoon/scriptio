@@ -1,5 +1,5 @@
 /* Components */
-import Screenplay from "./Screenplay";
+import EditorComponent from "./EditorComponent";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
@@ -14,21 +14,22 @@ import { Project } from "@src/lib/utils/types";
 import { computeFullCharactersData } from "@src/lib/editor/characters";
 
 /* Styles */
-import styles from "./ScreenplayAndSidebars.module.css";
+import editor_ from "./EditorAndSidebar.module.css";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { applyElement, insertElement, useScreenplayEditor } from "@src/lib/editor/editor";
+import { applyElement, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
 import { Popup } from "@components/popup/Popup";
 
-type ScreenplayAndSidebarsProps = {
+type EditorAndSidebarProps = {
     project: Project;
 };
 
-const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
+const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
 
     const [selectedStyles, setSelectedStyles] = useState<Style>(Style.None);
     const [selectedElement, setSelectedElement] = useState<ScreenplayElement>(ScreenplayElement.Action);
+    const [isNavigationActive, setIsNavigationActive] = useState<boolean>(true);
 
     /* Suggestion menu */
     const [suggestions, updateSuggestions] = useState<string[]>([]);
@@ -40,10 +41,10 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
 
     const setActiveElement = (element: ScreenplayElement, applyStyle = true) => {
         setSelectedElement(element);
-        if (applyStyle && screenplayEditor) applyElement(screenplayEditor, element);
+        if (applyStyle && editorView) applyElement(editorView, element);
     };
 
-    const screenplayEditor = useScreenplayEditor(
+    const editorView = useScriptioEditor(
         project.screenplay,
         setActiveElement,
         setSelectedStyles,
@@ -51,7 +52,7 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
         updateSuggestionData
     );
 
-    screenplayEditor?.setOptions({
+    editorView?.setOptions({
         autofocus: "end",
         editorProps: {
             handleKeyDown(view: any, event: any) {
@@ -96,7 +97,7 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
                         }
                     }
 
-                    insertElement(screenplayEditor, newNode, selection.anchor);
+                    insertElement(editorView, newNode, selection.anchor);
                     return true; // prevent default new line
                 }
 
@@ -160,20 +161,20 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
     useEffect(() => {
         computeFullScenesData(project.screenplay, projectCtx);
         computeFullCharactersData(project.screenplay, projectCtx);
-    }, [screenplayEditor]);
+    }, [editorView]);
 
     const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         if (suggestions.length > 0) updateSuggestions([]);
     };
 
     return (
-        <div className={styles.container}>
+        <div className={editor_.editor_and_sidebar}>
             <ContextMenu />
             {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
             <Popup />
             <EditorSidebarNavigation />
-            <div className={styles.screenplay} onScroll={onScroll}>
-                <Screenplay editor={screenplayEditor} />
+            <div className={editor_.container} onScroll={onScroll}>
+                <EditorComponent editor={editorView} />
             </div>
             <EditorSidebarFormat
                 selectedStyles={selectedStyles}
@@ -185,4 +186,4 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
     );
 };
 
-export default ScreenplayAndSidebars;
+export default EditorAndSidebar;

@@ -10,7 +10,7 @@ import { ProjectContext } from "@src/context/ProjectContext";
 
 const SidebarSceneItem = ({ scene }: SceneContextProps) => {
     const { updateContextMenu } = useContext(UserContext);
-    const { screenplayEditor } = useContext(ProjectContext);
+    const { editor } = useContext(ProjectContext);
 
     const handleDropdown = (e: any) => {
         e.preventDefault();
@@ -26,7 +26,7 @@ const SidebarSceneItem = ({ scene }: SceneContextProps) => {
 
     const handleDoubleClick = () => {
         // focus on double click in scene list
-        focusOnPosition(screenplayEditor!, scene.position);
+        focusOnPosition(editor!, scene.position);
     };
 
     return (

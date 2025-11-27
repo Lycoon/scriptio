@@ -113,7 +113,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                 return setTakenNameError(true);
             }
 
-            setNameOccurrences(countOccurrences(projectCtx.screenplayEditor?.getJSON()!, character.name));
+            setNameOccurrences(countOccurrences(projectCtx.editor?.getJSON()!, character.name));
             setNewNameWarning(true);
             return;
         }
@@ -137,7 +137,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
         assert(character, "A character must be defined on edit mode");
 
         // delete old character and insert with new name
-        replaceOccurrences(projectCtx.screenplayEditor!, character.name, newName);
+        replaceOccurrences(projectCtx.editor!, character.name, newName);
         deleteCharacter(character.name, projectCtx);
 
         projectCtx.updateSaveStatus(SaveStatus.Saving);
