@@ -11,7 +11,6 @@ import {
 } from "@src/server/service/project-service";
 import { ResponseAPI } from "@src/lib/utils/requests";
 import { getCookieUser } from "@src/lib/session";
-import { defaultScreenplay } from "@src/lib/editor/editor";
 
 const MAX_TITLE_LENGTH = 256;
 const MAX_DESC_LENGTH = 4096;
@@ -71,7 +70,6 @@ async function postMethod(userId: number, body: any, res: NextApiResponse) {
         description,
         userId,
         poster: uuid,
-        screenplay: defaultScreenplay,
     });
 
     if (!created) {

@@ -1,6 +1,6 @@
 import { ProjectContextType } from "@src/context/ProjectContext";
-import { getNodeData } from "./screenplay";
-import { ScreenplayElement as SE } from "../utils/enums";
+import { getNodeFlattenContent } from "./screenplay";
+import { ScreenplayElement } from "../utils/enums";
 import { saveCharacters } from "../utils/requests";
 import { JSONContent } from "@tiptap/react";
 
@@ -55,13 +55,14 @@ export const getCharacterNames = (screenplay: JSONContent) => {
     const characters: string[] = [];
 
     for (let i = 0; i < nodes.length; i++) {
-        const currNode = getNodeData(nodes[i]);
-        const type: string = currNode.type;
+        const currNode = nodes[i];
+        const type: string = currNode.attrs!["class"];
 
-        if (type !== SE.Character || !currNode.content) continue;
+        if (type !== ScreenplayElement.Character || !currNode.content) continue;
 
-        if (!characters.includes(currNode.text)) {
-            characters.push(currNode.text.toUpperCase());
+        const content: string = getNodeFlattenContent(currNode["content"]);
+        if (!characters.includes(content)) {
+            characters.push(content.toUpperCase());
         }
     }
 
@@ -71,8 +72,6 @@ export const getCharacterNames = (screenplay: JSONContent) => {
 export const computeFullCharactersData = async (screenplay: JSONContent, projectCtx: ProjectContextType) => {
     let charactersData: CharacterMap = { ...projectCtx.project?.characters };
     const namesFromEditor: string[] = getCharacterNames(screenplay);
-
-    console.log(screenplay);
 
     for (const name of namesFromEditor) {
         // If character already exists in the data, don't overwrite it

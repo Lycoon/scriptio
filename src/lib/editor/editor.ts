@@ -1,8 +1,10 @@
-import { Editor, JSONContent, getSchema, useEditor } from "@tiptap/react";
+import { Editor, JSONContent, useEditor } from "@tiptap/react";
 import { EditorElement, SaveStatus, ScreenplayElement, Style, TitlePageElement } from "../utils/enums";
 import { saveScreenplay, saveTitlePage } from "../utils/requests";
 import { ProjectContext, ProjectContextType } from "@src/context/ProjectContext";
 
+import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "@src/Screenplay";
+import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { computeFullScenesData } from "./screenplay";
@@ -10,7 +12,6 @@ import { computeFullCharactersData } from "./characters";
 import { useContext } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
-import { CustomBold, CustomItalic, CustomUnderline, Page, Screenplay, ScriptElement } from "./extensions";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -20,6 +21,10 @@ export const applyMarkToggle = (editor: Editor, style: Style) => {
     if (style & Style.Bold) editor.commands.toggleBold();
     if (style & Style.Italic) editor.commands.toggleItalic();
     if (style & Style.Underline) editor.commands.toggleUnderline();
+};
+
+export const applyElement = (editor: Editor, element: EditorElement) => {
+    editor.chain().focus().setNode("Screenplay", { class: element }).run();
 };
 
 export const focusOnPosition = (editor: Editor, position: number) => {
@@ -51,20 +56,8 @@ export const pasteTextAt = (editor: Editor, text: string, position: number) => {
     editor.commands.insertContentAt(position, text);
 };
 
-export const applyElement = (editor: Editor, element: EditorElement) => {
-    editor.chain().focus().setNode(ScriptElement.name, { class: element }).run();
-};
-
 export const insertElement = (editor: Editor, element: ScreenplayElement, position: number) => {
-    editor
-        .chain()
-        .insertContentAt(position, { type: ScriptElement.name, attrs: { class: element } })
-        .focus(position)
-        .run();
-};
-
-export const insertPage = (editor: Editor, position: number) => {
-    editor.chain().insertContentAt(position, defaultPage).focus(position).run();
+    editor.chain().insertContentAt(position, `<p class="${element}"></p>`).focus(position).run();
 };
 
 export const replaceOccurrences = (editor: Editor, oldWord: string, newWord: string) => {
@@ -76,11 +69,9 @@ export const replaceScreenplay = (editor: Editor, content: JSONContent) => {
 };
 
 export const getStylesFromMarks = (marks: any[]): Style => {
-    console.log(marks);
-
     let style = Style.None;
     marks.forEach((mark: any) => {
-        const styleClass = mark.type.name;
+        const styleClass = mark.attrs.class;
         if (styleClass === "bold") style |= Style.Bold;
         if (styleClass === "italic") style |= Style.Italic;
         if (styleClass === "underline") style |= Style.Underline;
@@ -162,26 +153,9 @@ const processAutoComplete = (
     }
 };
 
-export const defautElement = {
-    type: ScriptElement.name,
-    attrs: {
-        class: "action",
-    },
-};
-
-export const defaultPage = {
-    type: Page.name,
-    content: [defautElement],
-};
-
-export const defaultScreenplay = {
-    type: Screenplay.name,
-    content: [defaultPage, defaultPage],
-};
-
-const BASE_EXTENSIONS = [Screenplay, Text, History, CustomBold, CustomItalic, CustomUnderline];
-export const SCREENPLAY_EXTENSIONS = [...BASE_EXTENSIONS, ScriptElement, Page];
-export const TITLE_PAGE_EXTENSIONS = [...BASE_EXTENSIONS, ScriptElement];
+const BASE_EXTENSIONS = [Document, Text, History, CustomBold, CustomItalic, CustomUnderline];
+export const TITLE_PAGE_EXTENSIONS = [...BASE_EXTENSIONS, Screenplay];
+export const SCREENPLAY_EXTENSIONS = [...BASE_EXTENSIONS, Screenplay];
 
 export const useScreenplayEditor = (
     screenplay: JSONContent,

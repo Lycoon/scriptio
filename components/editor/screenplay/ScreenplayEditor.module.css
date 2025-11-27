@@ -1,6 +1,7 @@
 .container {
-    width: 8.5in;
-    height: 11in;
+    aspect-ratio: 0.707; /* A4 format */
+    width: 800px;
+    height: max-content;
 
     position: relative;
     margin-top: 2%;

@@ -15,7 +15,7 @@ import { computeFullCharactersData } from "@src/lib/editor/characters";
 /* Styles */
 import styles from "./ScreenplayAndSidebars.module.css";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { applyElement, insertElement, insertPage, insertPageBreak, useScreenplayEditor } from "@src/lib/editor/editor";
+import { applyElement, insertElement, useScreenplayEditor } from "@src/lib/editor/editor";
 import { Popup } from "@components/popup/Popup";
 import ScreenplayEditor from "./ScreenplayEditor";
 
@@ -78,7 +78,7 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
                     // empty element
                     if (nodeSize === 0) {
                         setActiveElement(ScreenplayElement.Action);
-                        return false; // prevent default new line
+                        return true; // prevent default new line
                     }
 
                     // breaking line in the middle of an element
@@ -123,10 +123,6 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
                 case ScreenplayElement.Dialogue:
                     setActiveElement(ScreenplayElement.Parenthetical);
             }
-        }
-
-        if (e.key === "F2") {
-            insertPage(screenplayEditor!, 0);
         }
 
         // Ctrl + S

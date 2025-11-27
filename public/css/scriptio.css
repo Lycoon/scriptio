@@ -1,13 +1,8 @@
 :root {
-    --page-left-padding: 1.5in;
-    --page-right-padding: 1in;
-    --page-top-padding: 1in;
-    --page-bottom-padding: 1in;
-
-    --us-letter-format-width: 8.5in;
-    --us-letter-format-height: 11in;
-    --a4-format-width: 8.27in;
-    --a4-format-height: 11.69in;
+    --editor-left-margin: 1.5in;
+    --editor-right-margin: 1in;
+    --editor-top-padding: 1in;
+    --editor-bottom-padding: 1in;
 
     --scene-count-visibility: visible;
 }
@@ -19,6 +14,12 @@
 
 .ProseMirror {
     min-height: 1100px;
+
+    /* Screenplay margins */
+    margin-left: var(--editor-left-margin);
+    margin-right: var(--editor-right-margin);
+    padding-top: var(--editor-top-padding);
+    padding-bottom: var(--editor-bottom-padding);
 }
 
 .ProseMirror p,
@@ -30,23 +31,6 @@
     text-align: left;
     line-height: 17px;
     margin-bottom: 17px;
-}
-
-.page {
-    /* Page size in US Letter format */
-    width: var(--us-letter-format-width);
-    height: var(--us-letter-format-height);
-
-    /* Screenplay margins */
-    padding-left: var(--page-left-padding);
-    padding-right: var(--page-right-padding);
-    padding-top: var(--page-top-padding);
-    padding-bottom: var(--page-bottom-padding);
-
-    position: relative;
-    background: var(--editor-script-bg);
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-    margin-bottom: 15px;
 }
 
 /* Editor styles */

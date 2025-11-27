@@ -32,7 +32,7 @@ export class ProjectRepository {
                 title: project.title,
                 description: project.description,
                 poster: project.poster,
-                screenplay: project.screenplay,
+                screenplay: {},
                 user: {
                     connect: { id: project.userId },
                 },
