@@ -1,14 +1,10 @@
 import { TDocumentDefinitions } from "pdfmake/interfaces";
-import { ExportDataPDF } from "@components/projects/export/ExportProjectContainer";
-import { env } from "process";
-import { JSONContent } from "@tiptap/react";
-import { getNodeData } from "@src/lib/editor/screenplay";
-import { ScreenplayElement as SE } from "@src/lib/utils/enums";
 import * as pdfMake from "pdfmake/build/pdfmake";
+import { ExportData, ExportDataPDF } from "@components/projects/export/ExportProjectContainer";
 
 const LOCAL = "http://localhost:3000";
 const PRODUCTION = "https://scriptio.app";
-const BASE_URL = env.NODE_ENV === "production" ? PRODUCTION : LOCAL;
+const BASE_URL = PRODUCTION;
 
 const fonts = {
     CourierPrime: {
@@ -19,8 +15,7 @@ const fonts = {
     },
 };
 
-const DEFAULT_OFFSET = 13;
-
+const DEFAULT_OFFSET = 12;
 const addOffset = (pdfNodes: any[]) => {
     pdfNodes.push(getPDFNodeTemplate("offset", ""));
 };
@@ -59,14 +54,14 @@ const getWatermarkData = (text: string) => {
     };
 };
 
-const generatePDF = (exportData: ExportDataPDF, pdfNodes: any[]): TDocumentDefinitions => {
+const initPDF = (exportData: ExportData, pdfNodes: any[]): TDocumentDefinitions => {
     return {
         info: {
             title: exportData.title,
             author: exportData.author,
         },
         content: pdfNodes,
-        pageMargins: exportData.margins,
+        pageMargins: [105, 70, 70, 70],
         defaultStyle: {
             font: "CourierPrime",
             fontSize: 12,
@@ -114,29 +109,34 @@ const generatePDF = (exportData: ExportDataPDF, pdfNodes: any[]): TDocumentDefin
 
 /**
  * Export editor JSON screenplay to .pdf format
- * @param exportData PDF export settings
+ * @param title screenplay title
+ * @param author screenplay author
  * @param json editor content JSON
  */
-export const exportToPDF = async (json: JSONContent, exportData: ExportDataPDF) => {
+export const exportToPDF = async (json: any, exportData: ExportDataPDF) => {
     const characters = exportData.characters;
     const nodes = json.content!;
     let pdfNodes = [];
 
     for (let i = 0; i < nodes.length; i++) {
-        const node = getNodeData(nodes[i]);
-        if (node.type === SE.None) continue;
+        if (!nodes[i]["content"]) {
+            continue;
+        }
 
-        let nextType = SE.Action;
+        const text: string = nodes[i]["content"]![0]["text"]!;
+        const type: string = nodes[i]["attrs"]!["class"];
+
+        let nextType = "action";
         if (i + 1 < nodes.length) nextType = nodes[i + 1]["attrs"]!["class"];
 
         // Don't export unselected characters
-        if (node.type === SE.Character && characters && !characters.includes(node.text)) {
+        if (type === "character" && characters && !characters.includes(text)) {
             let j = i + 1;
             for (; j < nodes.length; j++) {
-                const currNode = getNodeData(nodes[j]);
-                const isCharacterOrParenthetical = currNode.type === SE.Character || currNode.type === SE.Parenthetical;
-
-                if (isCharacterOrParenthetical) continue;
+                const typeJ: string = nodes[j]["attrs"]!["class"];
+                if (typeJ === "dialogue" || typeJ === "parenthetical") {
+                    continue;
+                }
 
                 break;
             }
@@ -144,43 +144,49 @@ export const exportToPDF = async (json: JSONContent, exportData: ExportDataPDF) 
             continue;
         }
 
-        switch (node.type) {
-            case SE.Scene:
-                pdfNodes.push(getPDFTableTemplate(node.text.toUpperCase(), "scene"));
+        switch (type) {
+            case "scene":
+                pdfNodes.push(getPDFTableTemplate(text.toUpperCase(), "scene"));
                 addOffset(pdfNodes);
                 break;
-            case SE.Character:
-                pdfNodes.push(getPDFNodeTemplate("character", node.text.toUpperCase()));
+            case "character":
+                pdfNodes.push(getPDFNodeTemplate("character", text.toUpperCase()));
                 break;
-            case SE.Dialogue:
-                pdfNodes.push(getPDFNodeTemplate("dialogue", node.text));
-                if (nextType !== SE.Parenthetical) {
+            case "dialogue":
+                pdfNodes.push(getPDFNodeTemplate("dialogue", text));
+                if (nextType !== "parenthetical") {
                     addOffset(pdfNodes);
                 }
                 break;
-            case SE.Parenthetical:
-                pdfNodes.push(getPDFNodeTemplate("parenthetical", "(" + node.text + ")"));
+            case "parenthetical":
+                pdfNodes.push(getPDFNodeTemplate("parenthetical", "(" + text + ")"));
                 break;
-            case SE.Transition:
-                pdfNodes.push(getPDFNodeTemplate("transition", node.text.toUpperCase() + ":"));
+            case "transition":
+                pdfNodes.push(getPDFNodeTemplate("transition", text.toUpperCase() + ":"));
                 break;
-            case SE.Section:
-                pdfNodes.push(getPDFNodeTemplate("section", node.text.toUpperCase()));
+            case "section":
+                pdfNodes.push(getPDFNodeTemplate("section", text.toUpperCase()));
                 break;
-            case SE.Note:
+            case "note":
                 if (exportData.notes) {
-                    pdfNodes.push(getPDFTableTemplate(node.text, "note"));
+                    pdfNodes.push(getPDFTableTemplate(text, "note"));
                     addOffset(pdfNodes);
                 }
                 break;
             default:
-                pdfNodes.push(getPDFNodeTemplate("action", node.text));
+                pdfNodes.push(getPDFNodeTemplate("action", text));
         }
     }
 
-    let pdf = generatePDF(exportData, pdfNodes);
+    let pdf = initPDF(exportData, pdfNodes);
     if (exportData.watermark) {
-        pdf.watermark = getWatermarkData(exportData.author);
+        pdf.watermark = {
+            text: exportData.author,
+            color: "grey",
+            opacity: 0.15,
+            bold: true,
+            italics: false,
+        };
     }
 
     pdfMake.createPdf(pdf, undefined, fonts).open();

@@ -45,7 +45,7 @@ const HomePage: NextPage = () => {
     return (
         <>
             <Head>
-                <title>{!user ? "Scriptio" : "Scriptio • Projects"}</title>
+                <title>{!user ? "Scriptio" : "Scriptio - Projects"}</title>
             </Head>
             <HomePageWindow />
         </>

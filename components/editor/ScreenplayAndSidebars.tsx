@@ -1,8 +1,9 @@
 /* Components */
-import EditorSidebarFormat from "../sidebar/EditorSidebarFormat";
-import EditorSidebarNavigation from "../sidebar/EditorSidebarNavigation";
-import ContextMenu from "../sidebar/ContextMenu";
-import SuggestionMenu, { SuggestionData } from "../SuggestionMenu";
+import Screenplay from "./Screenplay";
+import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
+import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
+import ContextMenu from "./sidebar/ContextMenu";
+import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 
 /* Utils */
 import { useContext, useEffect, useState } from "react";
@@ -17,7 +18,6 @@ import styles from "./ScreenplayAndSidebars.module.css";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { applyElement, insertElement, useScreenplayEditor } from "@src/lib/editor/editor";
 import { Popup } from "@components/popup/Popup";
-import ScreenplayEditor from "./ScreenplayEditor";
 
 type ScreenplayAndSidebarsProps = {
     project: Project;
@@ -140,7 +140,10 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
     /* Context menu actions */
     const onUnload = (e: BeforeUnloadEvent) => {
         if (projectCtx.saveStatus === SaveStatus.Saving) {
-            return "Are you sure you want to leave?";
+            let confirmationMessage = "Are you sure you want to leave?";
+
+            e.returnValue = confirmationMessage;
+            return confirmationMessage;
         }
     };
 
@@ -170,7 +173,7 @@ const ScreenplayAndSidebars = ({ project }: ScreenplayAndSidebarsProps) => {
             <Popup />
             <EditorSidebarNavigation />
             <div className={styles.screenplay} onScroll={onScroll}>
-                <ScreenplayEditor editor={screenplayEditor} />
+                <Screenplay editor={screenplayEditor} />
             </div>
             <EditorSidebarFormat
                 selectedStyles={selectedStyles}

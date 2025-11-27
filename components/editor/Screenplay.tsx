@@ -1,14 +1,14 @@
 import { EditorContent, Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
 
-import styles from "./ScreenplayEditor.module.css";
+import styles from "./Screenplay.module.css";
 import { join } from "@src/lib/utils/misc";
 
-type ScreenplayEditorProps = {
+type ScreenplayProps = {
     editor: Editor | null;
 };
 
-const ScreenplayEditor = ({ editor }: ScreenplayEditorProps) => {
+const Screenplay = ({ editor }: ScreenplayProps) => {
     const [pages, setPages] = useState<number>(0);
 
     useEffect(() => {
@@ -36,4 +36,4 @@ const ScreenplayEditor = ({ editor }: ScreenplayEditorProps) => {
     );
 };
 
-export default ScreenplayEditor;
+export default Screenplay;

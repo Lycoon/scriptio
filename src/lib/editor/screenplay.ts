@@ -6,7 +6,7 @@ import { ProjectContextType } from "@src/context/ProjectContext";
 export type NodeData = {
     type: ScreenplayElement;
     content: any[]; // contains marks (bold, italic, etc.)
-    text: string; // contains only text
+    flattenText: string; // contains only text
 };
 
 /* Scenes */
@@ -47,15 +47,15 @@ export const getNodeFlattenContent = (content: any[]) => {
     return text;
 };
 
-export const getNodeData = (node: JSONContent): NodeData => {
+const getNodeData = (node: JSONContent): NodeData => {
     const type: ScreenplayElement = node.attrs?.class;
     const content: JSONContent[] = node.content!;
-    const text = getNodeFlattenContent(content);
+    const flattenText = getNodeFlattenContent(content);
 
     return {
         type,
         content,
-        text,
+        flattenText,
     };
 };
 
@@ -67,7 +67,7 @@ const getScenePreview = (nodes: JSONContent[], cursor: number) => {
         if (node.type === ScreenplayElement.None) continue;
         if (node.type === ScreenplayElement.Scene) break; // stop when next scene is found (preview is 30 characters max)
 
-        preview += node.text + " ";
+        preview += node.flattenText + " ";
     }
 
     return preview;
@@ -101,14 +101,14 @@ export const computeFullScenesData = async (screenplay: JSONContent, projectCtx:
             scenes.push({
                 position: cursor,
                 nextPosition: -1,
-                title: node.text.toUpperCase(),
+                title: node.flattenText.toUpperCase(),
                 preview: getScenePreview(nodes, i + 1),
             });
 
             sceneNumber++;
         }
 
-        cursor += node.text.length + 2; // new line counts for 2 characters
+        cursor += node.flattenText.length + 2; // new line counts for 2 characters
     }
 
     if (scenes.length > 0) {

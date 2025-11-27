@@ -14,11 +14,6 @@ export enum PasswordRecoverStatus {
     Expired,
 }
 
-export enum Theme {
-    Light = "light",
-    Dark = "dark",
-}
-
 export enum Page {
     // /{page}
     Index = "index",
@@ -30,7 +25,6 @@ export enum Page {
 
     // /projects/{id}/{page}
     Screenplay = "screenplay",
-    TitlePage = "title",
     Statistics = "statistics",
     Edit = "edit",
     Export = "export",
@@ -61,14 +55,6 @@ export enum Style {
     Bold = 1,
     Italic = 2,
     Underline = 4,
-}
-
-export type EditorElement = TitlePageElement | ScreenplayElement;
-export enum TitlePageElement {
-    Title = "title",
-    Author = "author",
-    Contact = "contact",
-    Other = "other",
 }
 
 // String values must match the class names in the /public/scriptio.css file

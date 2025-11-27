@@ -14,7 +14,7 @@ const EditProjectPage: NextPage = () => {
     return (
         <>
             <Head>
-                <title>{project.title} • Edit</title>
+                <title>{project.title} - Edit</title>
             </Head>
             <Navbar />
             <EditProjectContainer project={project} />

@@ -8,7 +8,6 @@ export class ProjectRepository {
                 title: project.title,
                 description: project.description,
                 screenplay: project.screenplay,
-                titlePage: project.titlePage,
                 poster: project.poster,
                 characters: project.characters,
             },

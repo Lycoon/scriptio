@@ -1,4 +1,12 @@
-import { redirectExport, redirectProjectInfo, redirectScreenplay, redirectTitlePage } from "@src/lib/utils/redirects";
+import {
+    redirectExport,
+    redirectProjectInfo,
+    redirectScreenplay,
+    redirectTitlePage,
+    redirectStory,
+    redirectStatistics,
+    redirectReports,
+} from "@src/lib/utils/redirects";
 import { Project } from "@src/lib/utils/types";
 import { useContext } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -11,7 +19,7 @@ import { computeFullCharactersData } from "@src/lib/editor/characters";
 import { computeFullScenesData } from "@src/lib/editor/screenplay";
 import { saveScreenplay } from "@src/lib/utils/requests";
 import { generateJSON } from "@tiptap/react";
-import { SCREENPLAY_EXTENSIONS, replaceScreenplay } from "@src/lib/editor/editor";
+import { SCRIPTIO_EXTENSIONS, replaceScreenplay } from "@src/lib/editor/editor";
 
 // ------------------------------ //
 //              DATA              //
@@ -52,7 +60,7 @@ const NavbarMenu = ({ project }: NavbarMenuProps) => {
             reader.onload = (e: any) => {
                 const confirmImport = () => {
                     const html = convertFountainToHTML(e.target.result);
-                    const json = generateJSON(html, SCREENPLAY_EXTENSIONS);
+                    const json = generateJSON(html, SCRIPTIO_EXTENSIONS);
 
                     updateSaveStatus(SaveStatus.Saving);
                     replaceScreenplay(screenplayEditor, json);

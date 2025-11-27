@@ -1,27 +1,19 @@
-/* Components */
-import Head from "next/head";
-import { ThemeProvider } from "next-themes";
-import Loading from "@components/utils/Loading";
+import "@styles/globals.css";
 
-/* Utils */
-import fetchJson from "@src/lib/fetchJson";
 import type { AppProps } from "next/app";
+import { UserContextProvider } from "@src/context/UserContext";
 import { SWRConfig } from "swr";
+import fetchJson from "@src/lib/fetchJson";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Loading from "@components/utils/Loading";
+import { ThemeProvider } from "next-themes";
 import { useDesktop } from "@src/lib/utils/hooks";
-import { UserContextProvider } from "@src/context/UserContext";
+
+import layout from "../components/utils/Layout.module.css";
 import { ProjectContextProvider } from "@src/context/ProjectContext";
 import { PopupContextProvider } from "@src/context/PopupContext";
-
-/* Styles */
-import { Theme } from "@src/lib/utils/enums";
-import layout from "../components/utils/Layout.module.css";
-
-import "@public/css/default.css";
-import "@public/css/scriptio.css";
-import "@public/css/themes.css";
-import "@public/css/fonts.css";
+import Head from "next/head";
 
 const DesktopNavbar = () => {
     return (
@@ -39,21 +31,7 @@ const DesktopNavbar = () => {
     );
 };
 
-const ScriptioProviders = ({ children }: any) => {
-    return (
-        <UserContextProvider>
-            <ProjectContextProvider>
-                <PopupContextProvider>
-                    <ThemeProvider themes={Object.values(Theme)} defaultTheme={Theme.Dark}>
-                        {children}
-                    </ThemeProvider>
-                </PopupContextProvider>
-            </ProjectContextProvider>
-        </UserContextProvider>
-    );
-};
-
-function ScriptioApp({ Component, pageProps }: AppProps) {
+function MyApp({ Component, pageProps }: AppProps) {
     const [pageLoading, setPageLoading] = useState<boolean>(false);
     const router = useRouter();
     const isDesktop = useDesktop();
@@ -85,12 +63,20 @@ function ScriptioApp({ Component, pageProps }: AppProps) {
                     },
                 }}
             >
-                <ScriptioProviders>
-                    <div className={layout.main}>{pageLoading ? <Loading /> : <Component {...pageProps} />}</div>
-                </ScriptioProviders>
+                <UserContextProvider>
+                    <ProjectContextProvider>
+                        <PopupContextProvider>
+                            <ThemeProvider attribute="class" defaultTheme="dark">
+                                <div className={layout.main}>
+                                    {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                                </div>
+                            </ThemeProvider>
+                        </PopupContextProvider>
+                    </ProjectContextProvider>
+                </UserContextProvider>
             </SWRConfig>
         </>
     );
 }
 
-export default ScriptioApp;
+export default MyApp;

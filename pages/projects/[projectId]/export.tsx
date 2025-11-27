@@ -15,7 +15,7 @@ const ExportProjectPage: NextPage = () => {
     return (
         <>
             <Head>
-                <title>{project.title} • Export</title>
+                <title>{project.title} - Export</title>
             </Head>
             <Navbar />
             {project.screenplay ? (

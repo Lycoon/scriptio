@@ -8,8 +8,6 @@ import { writeFileSync } from "fs";
 import { setDesktopValue } from "../store";
 import { ProjectContextType } from "@src/context/ProjectContext";
 import { JSONContent } from "@tiptap/react";
-import { mutate } from "swr";
-import Router from "next/router";
 
 enum APIMethod {
     Get = "GET",
@@ -118,23 +116,12 @@ export const saveCharacters = async (projectCtx: ProjectContextType, characters:
     return res;
 };
 
-export const updateUISaveStatus = (res: Response, projectCtx: ProjectContextType) => {
-    if (res.ok) projectCtx.updateSaveStatus(SaveStatus.Saved);
-    else projectCtx.updateSaveStatus(SaveStatus.Error);
-};
-
 export const saveScreenplay = async (projectCtx: ProjectContextType, screenplay: JSONContent): Promise<Response> => {
     const projectId = projectCtx.project!.id;
     const res = await editProject({ projectId, screenplay });
-    updateUISaveStatus(res, projectCtx);
 
-    return res;
-};
-
-export const saveTitlePage = async (projectCtx: ProjectContextType, titlePage: JSONContent): Promise<Response> => {
-    const projectId = projectCtx.project!.id;
-    const res = await editProject({ projectId, titlePage });
-    updateUISaveStatus(res, projectCtx);
+    if (res.ok) projectCtx.updateSaveStatus(SaveStatus.Saved);
+    else projectCtx.updateSaveStatus(SaveStatus.Error);
 
     return res;
 };
@@ -169,13 +156,4 @@ export const validateRecover = (userId: number, recoverHash: string, password: s
 
 export const sendRecover = (email: string) => {
     return request(`/api/recover`, APIMethod.Post, { email });
-};
-
-export const logOut = async () => {
-    // 1. This destroys the session on the server
-    await fetch("/api/logout");
-    // 2. This revalidates the SWR cache with an empty user
-    mutate("/api/users/cookie", undefined);
-    // 3. This redirects the user to the login page
-    Router.push("/");
 };

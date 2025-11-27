@@ -1,5 +1,5 @@
 import { Project } from "@src/lib/utils/types";
-import { getElapsedDaysFrom, getLastUpdate, join } from "@src/lib/utils/misc";
+import { _MS_PER_DAY, getElapsedDaysFrom, getLastUpdate, join } from "@src/lib/utils/misc";
 
 import CalendarSVG from "@public/images/calendar.svg";
 

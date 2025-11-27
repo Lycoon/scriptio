@@ -4,19 +4,19 @@ import { useContext, useEffect } from "react";
 import RecoveryContainer from "@components/home/recovery/RecoveryContainer";
 import { ProjectContext } from "@src/context/ProjectContext";
 
-type RecoveryProps = {
+type Props = {
     userId: number;
     recoverHash: string;
 };
 
-const RecoveryPage: NextPage<RecoveryProps> = ({ userId, recoverHash }: RecoveryProps) => {
+const RecoveryPage: NextPage<Props> = ({ userId, recoverHash }: Props) => {
     const { updateProject } = useContext(ProjectContext);
     useEffect(() => updateProject(undefined), []);
 
     return (
         <>
             <Head>
-                <title>Scriptio • Recover password</title>
+                <title>Scriptio - Recover password</title>
             </Head>
             <RecoveryContainer userId={userId} recoverHash={recoverHash} />
         </>

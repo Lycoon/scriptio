@@ -1,6 +1,6 @@
 import Head from "next/head";
 import type { NextPage } from "next";
-import ScreenplayWrapper from "@components/editor/screenplay/ScreenplayWrapper";
+import EditorContainer from "@components/editor/EditorContainer";
 import Navbar from "@components/navbar/Navbar";
 import Loading from "@components/utils/Loading";
 import { useProjectFromUrl } from "@src/lib/utils/hooks";
@@ -16,7 +16,7 @@ const EditorPage: NextPage = () => {
                 <title>{project.title} • Scriptio</title>
             </Head>
             <Navbar />
-            <ScreenplayWrapper project={project} />
+            <EditorContainer project={project} />
         </>
     );
 };

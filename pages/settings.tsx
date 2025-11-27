@@ -15,7 +15,7 @@ const SettingsPage: NextPage = () => {
     return (
         <>
             <Head>
-                <title>Scriptio • Settings</title>
+                <title>Scriptio - Settings</title>
             </Head>
             <Navbar />
             <SettingsPageContainer />

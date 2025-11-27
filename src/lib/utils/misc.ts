@@ -26,7 +26,7 @@ export const getBase64 = async (file: File, width: number, height: number) => {
     return ctx.canvas.toDataURL("image/jpeg") || "data:,";
 };
 
-export const MS_PER_DAY = 1000 * 60 * 60 * 24;
+export const _MS_PER_DAY = 1000 * 60 * 60 * 24;
 export const getLastUpdate = (days: number) => {
     if (days === 0) return "Today";
     else if (days === 1) return "Yesterday";
@@ -36,11 +36,7 @@ export const getLastUpdate = (days: number) => {
 };
 
 export const getElapsedDaysFrom = (date: Date) => {
-    return Math.round((Date.now() - new Date(date).getTime()) / MS_PER_DAY);
-};
-
-export const convertInchesToPt = (inches: number) => {
-    return inches * 72; // https://www.w3.org/Style/Examples/007/units.en.html
+    return Math.round((Date.now() - new Date(date).getTime()) / _MS_PER_DAY);
 };
 
 export const join = (...args: string[]): string => {

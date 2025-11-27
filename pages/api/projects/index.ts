@@ -12,9 +12,6 @@ import {
 import { ResponseAPI } from "@src/lib/utils/requests";
 import { getCookieUser } from "@src/lib/session";
 
-const MAX_TITLE_LENGTH = 256;
-const MAX_DESC_LENGTH = 4096;
-
 export default async function projectsRoute(req: NextApiRequest, res: NextApiResponse) {
     const user = await getCookieUser(req, res);
 
@@ -51,12 +48,12 @@ async function postMethod(userId: number, body: any, res: NextApiResponse) {
     const title: string = body.title;
     const description: string = body.description;
 
-    if (title.length < 1 || title.length > MAX_TITLE_LENGTH) {
-        return ResponseAPI(res, 400, `Title must be between 1 and ${MAX_TITLE_LENGTH} characters`);
+    if (title.length < 2 || title.length > 256) {
+        return ResponseAPI(res, 400, "Title must be between 2 and 256 characters");
     }
 
-    if (description && description.length > MAX_DESC_LENGTH) {
-        return ResponseAPI(res, 400, `Description must be at most ${MAX_DESC_LENGTH}-character long`);
+    if (description && description.length > 2048) {
+        return ResponseAPI(res, 400, "Description must be at most 2048-character long");
     }
 
     let uuid = undefined;
@@ -100,12 +97,12 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
         return ResponseAPI(res, 403, "Forbidden");
     }
 
-    if (title && (title.length < 1 || title.length > MAX_TITLE_LENGTH)) {
-        return ResponseAPI(res, 400, `Title must be between 2 and ${MAX_TITLE_LENGTH} characters`);
+    if (title && (title.length < 2 || title.length > 256)) {
+        return ResponseAPI(res, 400, "Title must be between 2 and 256 characters");
     }
 
-    if (description && description.length > MAX_DESC_LENGTH) {
-        return ResponseAPI(res, 400, `Description must be at most ${MAX_DESC_LENGTH}-character long`);
+    if (description && description.length > 2048) {
+        return ResponseAPI(res, 400, "Description must be at most 2048-character long");
     }
 
     let uuid;

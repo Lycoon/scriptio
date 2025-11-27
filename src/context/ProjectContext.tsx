@@ -8,10 +8,8 @@ import { Editor } from "@tiptap/react";
 export type ProjectContextType = {
     project: Project | undefined;
     updateProject: (project: Project | undefined) => void;
-    screenplayEditor: Editor | undefined;
-    updateScreenplayEditor: (editor: Editor) => void;
-    titleEditor: Editor | undefined;
-    updateTitleEditor: (editor: Editor) => void;
+    editor: Editor | undefined;
+    updateEditor: (editor: Editor) => void;
     scenesData: ScenesData;
     updateScenesData: (scenesData: ScenesData) => void;
     charactersData: CharacterMap;
@@ -23,10 +21,8 @@ export type ProjectContextType = {
 const contextDefaults: ProjectContextType = {
     project: undefined,
     updateProject: () => {},
-    screenplayEditor: undefined,
-    updateScreenplayEditor: () => {},
-    titleEditor: undefined,
-    updateTitleEditor: () => {},
+    editor: undefined,
+    updateEditor: () => {},
     scenesData: [],
     updateScenesData: () => {},
     charactersData: {},
@@ -37,8 +33,7 @@ const contextDefaults: ProjectContextType = {
 
 export function ProjectContextProvider({ children }: { children: ReactNode }) {
     const [project, setProject] = useState<Project | undefined>(undefined);
-    const [screenplayEditor, setScreenplayEditor] = useState<Editor | undefined>(undefined);
-    const [titleEditor, setTitleEditor] = useState<Editor | undefined>(undefined);
+    const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [scenesData, setScenesData] = useState<ScenesData>([]);
     const [charactersData, setCharactersData] = useState<CharacterMap>({});
     const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.Saved);
@@ -47,12 +42,8 @@ export function ProjectContextProvider({ children }: { children: ReactNode }) {
         setProject(project_);
     };
 
-    const updateScreenplayEditor = (screenplayEditor_: Editor) => {
-        setScreenplayEditor(screenplayEditor_);
-    };
-
-    const updateTitleEditor = (titleEditor_: Editor) => {
-        setTitleEditor(titleEditor_);
+    const updateEditor = (editor_: Editor) => {
+        setEditor(editor_);
     };
 
     const updateScenesData = (scenesData: ScenesData) => {
@@ -70,10 +61,8 @@ export function ProjectContextProvider({ children }: { children: ReactNode }) {
     const value = {
         project,
         updateProject,
-        screenplayEditor,
-        updateScreenplayEditor,
-        titleEditor,
-        updateTitleEditor,
+        editor,
+        updateEditor,
         scenesData,
         updateScenesData,
         charactersData,

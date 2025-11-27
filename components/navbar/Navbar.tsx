@@ -1,23 +1,11 @@
-/* Utils */
 import Link from "next/link";
 import Router from "next/router";
-import debounce from "debounce";
 import { useContext, useEffect, useState } from "react";
 import { Page, SaveStatus } from "@src/lib/utils/enums";
 import { useDesktop, usePage, useUser } from "@src/lib/utils/hooks";
-import { redirectLogin, redirectSettings } from "@src/lib/utils/redirects";
-import { mutate, useSWRConfig } from "swr";
-import { ProjectContext } from "@src/context/ProjectContext";
-import { editProject, logOut } from "@src/lib/utils/requests";
-import { join } from "@src/lib/utils/misc";
-import { UserContext } from "@src/context/UserContext";
-import { Project } from "@src/lib/utils/types";
-
-/* Components */
-import NavbarMenu from "./NavbarMenu";
 import NavbarButton from "./NavbarButton";
+import { redirectLogin, redirectSettings } from "@src/lib/utils/redirects";
 
-/* SVGs */
 import SettingsSVG from "@public/images/gear.svg";
 import LogoutSVG from "@public/images/logout.svg";
 import SavingSVG from "@public/images/saving.svg";
@@ -25,9 +13,15 @@ import CheckmarkSVG from "@public/images/checkmark.svg";
 import OfflineSVG from "@public/images/offline.svg";
 import EyeSVG from "@public/images/eye.svg";
 
-/* Styles */
 import navbar from "./Navbar.module.css";
 import sidebar from "../editor/sidebar/EditorSidebar.module.css";
+import { useSWRConfig } from "swr";
+import { ProjectContext } from "@src/context/ProjectContext";
+import debounce from "debounce";
+import { editProject } from "@src/lib/utils/requests";
+import { join } from "@src/lib/utils/misc";
+import NavbarMenu from "./NavbarMenu";
+import { UserContext } from "@src/context/UserContext";
 
 const NotLoggedNavbar = () => (
     <div className={navbar.notlogged_btns}>
@@ -56,25 +50,6 @@ const SaveStatusNavbar = () => {
     }
 };
 
-const TitleBar = (project: Project, projectTitle: string) => {
-    const deferredTitleUpdate = debounce(async (projectId: string, projectTitle: string) => {
-        await editProject({ projectId, title: projectTitle });
-        mutate(`/api/projects/${projectId}`, { ...project, title: projectTitle });
-    }, 1000);
-
-    return (
-        <div className={navbar.title}>
-            <SaveStatusNavbar />
-            <input
-                type="text"
-                className={navbar.title_box}
-                onChange={(e) => deferredTitleUpdate(project!.id, e.target.value)}
-                defaultValue={projectTitle}
-            />
-        </div>
-    );
-};
-
 const Navbar = () => {
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
@@ -87,12 +62,24 @@ const Navbar = () => {
     const { data: user } = useUser();
 
     const [projectTitle, setProjectTitle] = useState<string>("");
-
     useEffect(() => {
         if (project) setProjectTitle(project.title);
     }, [project]);
 
-    const displayTitleBar = page === Page.Screenplay || page === Page.TitlePage;
+    const onLogOut = async () => {
+        // 1. This destroys the session on the server
+        await fetch("/api/logout");
+        // 2. This revalidates the SWR cache with an empty user
+        mutate("/api/users/cookie", undefined);
+        // 3. This redirects the user to the login page
+        Router.push("/");
+    };
+
+    const deferredTitleUpdate = debounce(async (projectId: string, projectTitle: string) => {
+        await editProject({ projectId, title: projectTitle });
+        mutate(`/api/projects/${projectId}`, { ...project, title: projectTitle });
+    }, 1000);
+
     const toggleZenMode = () => updateZenMode(!userCtx.isZenMode);
 
     let NavbarButtons;
@@ -104,7 +91,7 @@ const Navbar = () => {
                     <EyeSVG className={join(navbar.btn, navbar.zen_btn)} onClick={toggleZenMode} alt="Eye icon" />
                 )}
                 <SettingsSVG className={navbar.btn} onClick={redirectSettings} alt="Settings icon" />
-                <LogoutSVG className={navbar.btn} onClick={logOut} alt="Logout icon" />
+                <LogoutSVG className={navbar.btn} onClick={onLogOut} alt="Logout icon" />
             </div>
         );
     } else if (isDesktop) {
@@ -129,7 +116,19 @@ const Navbar = () => {
                 </Link>
                 <NavbarMenu project={project!} />
             </div>
-            {displayTitleBar && TitleBar(project!, projectTitle)}
+            <div className={navbar.title}>
+                {page === Page.Screenplay && (
+                    <>
+                        <SaveStatusNavbar />
+                        <input
+                            type="text"
+                            className={navbar.title_box}
+                            onChange={(e) => deferredTitleUpdate(project!.id, e.target.value)}
+                            defaultValue={projectTitle}
+                        />
+                    </>
+                )}
+            </div>
             <NavbarButtons />
         </nav>
     );

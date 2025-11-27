@@ -17,20 +17,18 @@ import export_ from "./ExportProjectContainer.module.css";
 
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { convertToFDX } from "@src/converters/export/fdx";
-import { convertInchesToPt } from "@src/lib/utils/misc";
 
 // ------------------------------ //
 //              DATA              //
 // ------------------------------ //
-
-type ExportProjectConainerProps = {
+type Props = {
     project: Project;
 };
 
 export enum ExportFormat {
     PDF = "pdf",
+    FOUNTAIN = "fountain",
     FDX = "fdx",
-    Fountain = "fountain",
 }
 
 export type ExportData = {
@@ -43,13 +41,11 @@ export type ExportData = {
 
 export type ExportDataPDF = ExportData & {
     watermark: boolean;
-    margins: [number, number, number, number];
 };
 
 // ------------------------------ //
 //            FUNCTIONS           //
 // ------------------------------ //
-
 const removeFromStateList = (list: any[], setList: (list: any[]) => void, item: string) => {
     const updated: any[] = [];
     list.forEach((e: any) => {
@@ -71,8 +67,7 @@ const addToStateList = (list: any[], setList: (list: any[]) => void, item: any) 
 // ------------------------------ //
 //           COMPONENTS           //
 // ------------------------------ //
-
-const ExportProjectConainer = ({ project }: ExportProjectConainerProps) => {
+const ExportProjectConainer = ({ project }: Props) => {
     const { data: user } = useUser(true);
     const { data: settings, isLoading } = useSettings();
 
@@ -122,21 +117,15 @@ const ExportProjectConainer = ({ project }: ExportProjectConainerProps) => {
             characters: allCharacters ? undefined : selectedCharacters,
         };
 
-        const pdfData: ExportDataPDF = {
-            ...exportData,
-            watermark: includeWatermark,
-            margins: [108, 72, 72, 72],
-        };
-
         switch (exportFormat) {
             case ExportFormat.PDF:
-                exportToPDF(project.screenplay, pdfData);
+                exportToPDF(project.screenplay, { ...exportData, watermark: includeWatermark });
+                break;
+            case ExportFormat.FOUNTAIN:
+                exportToFountain(project.screenplay, exportData);
                 break;
             case ExportFormat.FDX:
                 exportToFDX(project.screenplay, exportData);
-                break;
-            case ExportFormat.Fountain:
-                exportToFountain(project.screenplay, exportData);
                 break;
         }
     };

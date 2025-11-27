@@ -5,18 +5,18 @@ import { useContext, useEffect } from "react";
 import { VerificationStatus } from "@src/lib/utils/enums";
 import { ProjectContext } from "@src/context/ProjectContext";
 
-type LoginProps = {
+type Props = {
     verificationStatus: VerificationStatus;
 };
 
-const LoginPage: NextPage<LoginProps> = ({ verificationStatus }: LoginProps) => {
+const LoginPage: NextPage<Props> = ({ verificationStatus }: Props) => {
     const { updateProject } = useContext(ProjectContext);
     useEffect(() => updateProject(undefined), []);
 
     return (
         <>
             <Head>
-                <title>Scriptio • Log in</title>
+                <title>Scriptio - Log in</title>
             </Head>
             <LoginContainer verificationStatus={verificationStatus} />
         </>

@@ -2,7 +2,7 @@ import { join } from "@src/lib/utils/misc";
 import tab from "./EditorTab.module.css";
 
 import SelectorSVG from "@public/images/selector.svg";
-import { EditorElement } from "@src/lib/utils/enums";
+import { EditorElement, ScreenplayElement, TitlePageElement } from "@src/lib/utils/enums";
 
 type EditorTabProps<T extends EditorElement> = {
     setActiveElement: (element: T) => void;

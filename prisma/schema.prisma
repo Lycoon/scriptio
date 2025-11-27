@@ -59,7 +59,6 @@ model Project {
   poster              String?
   screenplay          Json?
   characters          Json?
-  titlePage           Json?
 
   user                User        @relation(fields: [userId], references: [id])
   userId              Int
