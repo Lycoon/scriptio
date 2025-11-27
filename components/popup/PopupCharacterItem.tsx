@@ -11,7 +11,7 @@ import popup from "./Popup.module.css";
 import { join } from "@src/lib/utils/misc";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { SaveStatus } from "@src/lib/utils/enums";
-import { replaceOccurrences } from "@src/lib/editor/utils";
+import { replaceOccurrences } from "@src/lib/editor/editor";
 import { UserContext } from "@src/context/UserContext";
 import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/editor/popup";
 import { countOccurrences } from "@src/lib/editor/screenplay";

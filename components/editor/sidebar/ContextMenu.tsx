@@ -4,7 +4,7 @@ import { SceneItem } from "@src/lib/editor/screenplay";
 
 import context from "./ContextMenu.module.css";
 import { CharacterData, deleteCharacter } from "@src/lib/editor/characters";
-import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/editor/utils";
+import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/editor/editor";
 import { addCharacterPopup, editCharacterPopup } from "@src/lib/editor/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
 

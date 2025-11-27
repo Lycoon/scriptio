@@ -5,7 +5,7 @@ import SceneLengthItem from "../sidebar/SceneLengthItem";
 import { join } from "@src/lib/utils/misc";
 
 import nav_item from "./SidebarItem.module.css";
-import { focusOnPosition } from "@src/lib/editor/utils";
+import { focusOnPosition } from "@src/lib/editor/editor";
 import { ProjectContext } from "@src/context/ProjectContext";
 
 const SidebarSceneItem = ({ scene }: SceneContextProps) => {

@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { CharacterContextProps, ContextMenuType } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
-import { pasteText } from "@src/lib/editor/utils";
+import { pasteText } from "@src/lib/editor/editor";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { join } from "@src/lib/utils/misc";

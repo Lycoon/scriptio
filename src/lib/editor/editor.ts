@@ -1,16 +1,17 @@
-import { Editor, JSONContent } from "@tiptap/react";
-import { EditorElement, ScreenplayElement, Style } from "../utils/enums";
+import { Editor, JSONContent, NodePos, useEditor } from "@tiptap/react";
+import { EditorElement, SaveStatus, ScreenplayElement, Style, TitlePageElement } from "../utils/enums";
 import { saveScreenplay, saveTitlePage } from "../utils/requests";
-import { ProjectContextType } from "@src/context/ProjectContext";
+import { ProjectContext, ProjectContextType } from "@src/context/ProjectContext";
 
 import { Node } from "prosemirror-model";
+import Text from "@tiptap/extension-text";
+import History from "@tiptap/extension-history";
 import { computeFullScenesData } from "./screenplay";
 import { computeFullCharactersData } from "./characters";
+import { useContext } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
-import { ScriptElement } from "./extensions/element";
-import { Page } from "./extensions/page";
-import { Screenplay } from "./extensions/screenplay";
+import { CustomBold, CustomItalic, CustomUnderline, Page, Screenplay, ScriptElement } from "./extensions";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -87,27 +88,6 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 };
 
 // ------------------------------ //
-//         DEFAULT EDITOR         //
-// ------------------------------ //
-
-export const defautElement = {
-    type: ScriptElement.name,
-    attrs: {
-        class: "action",
-    },
-};
-
-export const defaultPage = {
-    type: Page.name,
-    content: [defautElement],
-};
-
-export const defaultScreenplay = {
-    type: Screenplay.name,
-    content: [defaultPage, defaultPage],
-};
-
-// ------------------------------ //
 //          EDITOR STATE          //
 // ------------------------------ //
 
@@ -115,11 +95,11 @@ const EDITOR_SAVE_DELAY = 2000;
 const SCENE_UPDATE_DELAY = 500;
 const CHARACTERS_UPDATE_DELAY = 500;
 
-export const deferredScreenplaySave = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
+const deferredScreenplaySave = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
     saveScreenplay(projectCtx, screenplay);
 }, EDITOR_SAVE_DELAY);
 
-export const deferredTitlePageSave = debounce((titlePage: JSONContent, projectCtx: ProjectContextType) => {
+const deferredTitlePageSave = debounce((titlePage: JSONContent, projectCtx: ProjectContextType) => {
     saveTitlePage(projectCtx, titlePage);
 }, EDITOR_SAVE_DELAY);
 
@@ -181,6 +161,27 @@ const processAutoComplete = (
     }
 };
 
+export const defautElement = {
+    type: ScriptElement.name,
+    attrs: {
+        class: "action",
+    },
+};
+
+export const defaultPage = {
+    type: Page.name,
+    content: [defautElement],
+};
+
+export const defaultScreenplay = {
+    type: Screenplay.name,
+    content: [defaultPage, defaultPage],
+};
+
+const BASE_EXTENSIONS = [Screenplay, Text, History, CustomBold, CustomItalic, CustomUnderline];
+export const SCREENPLAY_EXTENSIONS = [...BASE_EXTENSIONS, ScriptElement, Page];
+export const TITLE_PAGE_EXTENSIONS = [...BASE_EXTENSIONS, ScriptElement];
+
 const printNodes = (nodes: Node[]) => {
     let str = "";
     nodes.forEach((node) => {
@@ -196,4 +197,110 @@ const printNodes = (nodes: Node[]) => {
         }
     });
     console.log(str);
+};
+
+export const isOverflown = (element: HTMLElement) => {
+    const parent = element.parentElement!;
+    const elementHeightPos = element.offsetTop + element.offsetHeight;
+
+    if (elementHeightPos > parent.clientHeight - 96) return true;
+    return false;
+};
+
+export const useScreenplayEditor = (
+    screenplay: JSONContent,
+    setActiveElement: (element: ScreenplayElement, applyStyle: boolean) => void,
+    setSelectedStyles: (style: Style) => void,
+    updateSuggestions: (suggestions: string[]) => void,
+    updateSuggestionsData: (data: SuggestionData) => void
+) => {
+    const projectCtx = useContext(ProjectContext);
+    const editorView = useEditor({
+        extensions: SCREENPLAY_EXTENSIONS,
+
+        onTransaction({ editor, transaction: tr }) {
+            if (tr.steps.length === 0) return;
+
+            const { selection } = tr;
+            const { $from, $to } = selection;
+
+            const fromNodePos = new NodePos($from, editor);
+            const fromNodePage = fromNodePos.closest("page")!;
+            const lastNode = fromNodePage.lastChild!;
+            const overflow = isOverflown(lastNode.element);
+
+            const toNodePos = new NodePos($to, editor);
+            const toNodePage = toNodePos.closest("page");
+            const isSamePage = fromNodePage === toNodePage;
+
+            const pages = editor.$nodes("page")!;
+
+            console.log(overflow);
+        },
+
+        // update on each screenplay update
+        onUpdate({ editor, transaction }) {
+            const screenplay = editor.getJSON();
+            projectCtx.updateSaveStatus(SaveStatus.Saving);
+            deferredScreenplaySave(screenplay, projectCtx);
+            deferredSceneUpdate(screenplay, projectCtx);
+            deferredCharactersUpdate(screenplay, projectCtx);
+        },
+
+        onCreate({ editor }) {
+            projectCtx.updateScreenplayEditor(editor as Editor);
+            replaceScreenplay(editor as Editor, screenplay);
+        },
+
+        // update active on caret update
+        onSelectionUpdate({ editor, transaction }) {
+            const anchor = (transaction as any).curSelection.$anchor;
+            const elementAnchor = anchor.parent.attrs.class;
+
+            setActiveElement(elementAnchor, false);
+            if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
+
+            /*processAutoComplete(
+                anchor,
+                projectCtx,
+                editor as Editor,
+                updateSuggestions,
+                updateSuggestionsData
+            );*/
+        },
+    });
+    return editorView;
+};
+
+export const useTitlePageEditor = (
+    titlePage: JSONContent,
+    setActiveElement: (element: TitlePageElement, applyStyle: boolean) => void,
+    setSelectedStyles: (style: Style) => void
+) => {
+    const projectCtx = useContext(ProjectContext);
+    const editorView = useEditor({
+        extensions: TITLE_PAGE_EXTENSIONS,
+
+        // update on each title page update
+        onUpdate({ editor }) {
+            const screenplay = editor.getJSON();
+            projectCtx.updateSaveStatus(SaveStatus.Saving);
+            deferredTitlePageSave(screenplay, projectCtx);
+        },
+
+        onCreate({ editor }) {
+            projectCtx.updateTitleEditor(editor as Editor);
+            replaceScreenplay(editor as Editor, titlePage);
+        },
+
+        // update active on caret update
+        onSelectionUpdate({ editor, transaction }) {
+            const anchor = (transaction as any).curSelection.$anchor;
+            const elementAnchor = anchor.parent.attrs.class;
+
+            setActiveElement(elementAnchor, false);
+            if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
+        },
+    });
+    return editorView;
 };

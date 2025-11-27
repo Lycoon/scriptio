@@ -13,7 +13,7 @@ import { Project } from "@src/lib/utils/types";
 /* Styles */
 import styles from "./TitlePageAndSidebar.module.css";
 import editor_ from "../screenplay/Screenplay.module.css";
-import { applyElement, insertElement, useTitlePageEditor } from "@src/lib/editor/utils";
+import { applyElement, insertElement, useTitlePageEditor } from "@src/lib/editor/editor";
 import TitlePageEditor from "./TitlePageEditor";
 
 type TitlePageAndSidebarProps = {

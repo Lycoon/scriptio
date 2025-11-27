@@ -16,8 +16,7 @@
         "incremental": true,
         "plugins": [{ "name": "next" }],
         "paths": {
-            "@*": ["./*"],
-            "@tiptap/core": ["./node_modules/@tiptap/core/src/index"]
+            "@*": ["./*"]
         }
     },
     "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "src/global.d.ts", "pages/api/users/[userId]"],

@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 
 import styles from "./SuggestionMenu.module.css";
 import context from "./sidebar/ContextMenu.module.css";
-import { pasteTextAt } from "@src/lib/editor/utils";
+import { pasteTextAt } from "@src/lib/editor/editor";
 import { UserContext } from "@src/context/UserContext";
 
 type Props = {

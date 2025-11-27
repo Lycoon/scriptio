@@ -11,7 +11,7 @@ import { computeFullCharactersData } from "@src/lib/editor/characters";
 import { computeFullScenesData } from "@src/lib/editor/screenplay";
 import { saveScreenplay } from "@src/lib/utils/requests";
 import { generateJSON } from "@tiptap/react";
-import { SCREENPLAY_EXTENSIONS, replaceScreenplay } from "@src/lib/editor/utils";
+import { SCREENPLAY_EXTENSIONS, replaceScreenplay } from "@src/lib/editor/editor";
 
 // ------------------------------ //
 //              DATA              //
