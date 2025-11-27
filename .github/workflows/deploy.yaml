@@ -9,25 +9,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v2
-
-      - name: Create .env file
-        run: |
-          touch .env
-          echo "${{ secrets.ENV }}" > .env
+        uses: actions/checkout@v3
 
       - name: Build image
-        run: docker compose -f docker-compose.yml build
+        run: docker compose build app
 
       - name: Login to GitHub Package Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push image to GitHub Container Registry
-        run: docker compose -f docker-compose.yml push
+        run: docker push ghcr.io/lycoon/scriptio-app:latest
 
       - name: Deploy
         uses: appleboy/ssh-action@master
@@ -37,6 +32,6 @@ jobs:
           key: ${{ secrets.SSH_SECRET }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd /home/scriptio
-            docker pull ghcr.io/lycoon/scriptio-app:latest
-            docker-compose up -d
+            cd /opt/projects/scriptio
+            docker compose pull app
+            docker compose --profile prod up -d
