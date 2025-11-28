@@ -15,6 +15,13 @@
     background-color: var(--editor-style-bg-active);
 }
 
+.data {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .title {
     font-size: 12px;
     overflow-x: hidden;
@@ -44,4 +51,11 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     color: grey;
+}
+
+.icon {
+    height: 13px;
+    width: 13px;
+    margin-right: 6px;
+    color: var(--secondary-text);
 }

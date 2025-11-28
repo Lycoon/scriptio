@@ -1,7 +1,7 @@
 import form from "./Form.module.css";
 import btn from "./Button.module.css";
 
-import BackSVG from "../../public/images/back.svg";
+import BackSVG from "@public/images/back.svg";
 import { join } from "@src/lib/utils/misc";
 
 type Props = {

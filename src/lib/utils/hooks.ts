@@ -3,8 +3,9 @@ import { Settings } from "../../server/repository/user-repository";
 import { useContext, useEffect, useState } from "react";
 import Router, { useRouter } from "next/router";
 import { CookieUser, Project } from "./types";
-import { UserContext } from "../../context/UserContext";
 import { useDesktopValues } from "../store";
+import { ProjectContext } from "@src/context/ProjectContext";
+import { Page } from "./enums";
 
 const returnData = (data: any, error: any, mutate: any, isLoading: any) => {
     return {
@@ -34,13 +35,13 @@ const useProjectIdFromUrl = () => {
 };
 
 const useUser = (redirect: boolean = false): StateResult<CookieUser> => {
-    const { data, error, mutate, isLoading } = useSWR<CookieUser>("/api/users/cookie");
+    const { data: user, isLoading } = useSWR<CookieUser>("/api/users/cookie");
 
-    if (redirect && !isLoading && data && !data.isLoggedIn) {
+    if (redirect && !isLoading && !user) {
         Router.push("/login");
     }
 
-    return returnData(data, error, mutate, isLoading);
+    return { data: user, isLoading };
 };
 
 const useDesktop = (): boolean => {
@@ -70,7 +71,7 @@ const useProjects = (): StateResult<Project[]> => {
         isLoading: isCloudLoading,
         error: isCloudError,
         mutate,
-    } = useSWR(user && user.isLoggedIn ? "/api/projects" : null);
+    } = useSWR(user ? "/api/projects" : null);
 
     return returnData(
         [...(cloudProjects ?? []), ...(localProjects ?? [])],
@@ -81,17 +82,36 @@ const useProjects = (): StateResult<Project[]> => {
 };
 
 const useProjectFromUrl = (): StateResult<Project> => {
-    const { updateProject } = useContext(UserContext);
+    const { updateProject } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
 
     let { data, error, mutate, isLoading } = useSWR<Project>(projectId ? `/api/projects/${projectId}` : null);
 
     // When the data has loaded, update the project
     useEffect(() => {
-        if (data && !error) updateProject(data);
+        if (data && !error) {
+            updateProject(data);
+        }
     }, [data]);
 
     return returnData(data, error, mutate, isLoading);
 };
 
-export { useUser, useSettings, useProjects, useProjectFromUrl, useDesktop };
+const usePage = (): Page => {
+    const router = useRouter();
+    const [page, setPage] = useState<Page>(Page.Index);
+
+    useEffect(() => {
+        if (router.pathname) {
+            const paths = router.pathname.split("/");
+
+            if (paths.length === 1) setPage(Page.Index);
+            else if (paths[1] === "projects") setPage(paths[3] as Page);
+            else setPage(paths[1] as Page);
+        }
+    }, [router]);
+
+    return page;
+};
+
+export { useUser, useSettings, useProjects, useProjectFromUrl, usePage, useDesktop };

@@ -7,29 +7,30 @@ import { VerificationStatus } from "@src/lib/utils/enums";
 import { login } from "@src/lib/utils/requests";
 
 import form from "../../utils/Form.module.css";
+import { useSWRConfig } from "swr";
 
 type Props = {
     verificationStatus: VerificationStatus;
 };
 
 const LoginForm = ({ verificationStatus }: Props) => {
-    const { updateUser } = useContext(UserContext);
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
+    const { mutate } = useSWRConfig();
 
     useEffect(() => {
         switch (verificationStatus) {
-            case VerificationStatus.FAILED:
+            case VerificationStatus.Failed:
                 setFormInfo({
                     content: "An error occurred while verifying your account",
                     isError: true,
                 });
                 break;
-            case VerificationStatus.SUCCESS:
+            case VerificationStatus.Success:
                 setFormInfo({
                     content: "Your account has been successfully verified",
                 });
                 break;
-            case VerificationStatus.USED:
+            case VerificationStatus.Used:
                 setFormInfo({
                     content: "This email has already been registered",
                     isError: true,
@@ -48,10 +49,9 @@ const LoginForm = ({ verificationStatus }: Props) => {
 
         const res = await login(e.target.email.value, e.target.password.value);
         const json = (await res.json()) as any;
-        const resBody = json.body;
 
         if (res.ok) {
-            updateUser(resBody);
+            mutate("/api/users/cookie");
             Router.push("/");
         } else {
             setFormInfo({ content: json.message, isError: true });

@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { Secrets, Settings } from "../../server/repository/user-repository";
-import { CharacterMap } from "./characters";
+import { CharacterMap } from "../editor/characters";
 import { JSONContent } from "@tiptap/react";
 import { SaveMode } from "./enums";
 
@@ -8,7 +8,6 @@ import { SaveMode } from "./enums";
 export type CookieUser = {
     id: number;
     email: string;
-    isLoggedIn: boolean;
     createdAt: Date;
 };
 
@@ -26,7 +25,7 @@ export type Project = {
     title: string;
     poster: string;
     description: string | null;
-    screenplay: Prisma.JsonValue | null;
+    screenplay: JSONContent;
     characters: CharacterMap;
 };
 

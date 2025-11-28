@@ -1,4 +1,4 @@
-import { SceneItem } from "@src/lib/screenplay";
+import { SceneItem } from "@src/lib/editor/screenplay";
 import { join } from "@src/lib/utils/misc";
 
 import nav_item from "./SidebarItem.module.css";

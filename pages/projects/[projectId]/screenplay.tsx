@@ -3,19 +3,20 @@ import type { NextPage } from "next";
 import EditorContainer from "@components/editor/EditorContainer";
 import Navbar from "@components/navbar/Navbar";
 import Loading from "@components/utils/Loading";
-import { useProjectFromUrl, useUser } from "@src/lib/utils/hooks";
+import { useProjectFromUrl } from "@src/lib/utils/hooks";
 
 const EditorPage: NextPage = () => {
-    const { data: user } = useUser(true);
-    const { data: project, isLoading } = useProjectFromUrl();
+    const { data: project } = useProjectFromUrl();
+
+    if (!project) return <Loading />;
 
     return (
         <>
             <Head>
-                <title>{project?.title}</title>
+                <title>{project.title} • Scriptio</title>
             </Head>
             <Navbar />
-            {project ? <EditorContainer project={project} /> : <Loading />}
+            <EditorContainer project={project} />
         </>
     );
 };

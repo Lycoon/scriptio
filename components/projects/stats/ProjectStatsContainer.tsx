@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getScreenplayData } from "@src/lib/statistics";
+import { getScreenplayData } from "@src/lib/editor/statistics";
 import CharacterDistribution from "./CharacterDistribution";
 import CharacterFrequency from "./CharacterFrequency";
 import CharacterQuantity from "./CharacterQuantity";

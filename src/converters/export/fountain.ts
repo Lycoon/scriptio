@@ -1,5 +1,5 @@
 import { ExportData } from "@components/projects/export/ExportProjectContainer";
-import { getNodeFlattenContent } from "@src/lib/screenplay";
+import { getNodeFlattenContent } from "@src/lib/editor/screenplay";
 
 /**
  * Convert editor JSON screenplay to .fountain format

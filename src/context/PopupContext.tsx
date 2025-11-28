@@ -1,22 +1,22 @@
 import { createContext, ReactNode, useState } from "react";
-import { ScenesData } from "@src/lib/screenplay";
-import { CharacterMap } from "@src/lib/utils/characters";
+import { ScenesData } from "@src/lib/editor/screenplay";
+import { CharacterMap } from "@src/lib/editor/characters";
 
-export type ScreenplayCtxType = {
+export type PopupContextType = {
     scenesData: ScenesData;
     updateScenesData: (scenesData: ScenesData) => void;
     charactersData: CharacterMap;
     updateCharactersData: (charactersData: CharacterMap) => void;
 };
 
-const contextDefaults: ScreenplayCtxType = {
+const contextDefaults: PopupContextType = {
     scenesData: [],
     updateScenesData: () => {},
     charactersData: {},
     updateCharactersData: () => {},
 };
 
-export function ScreenplayContextProvider({ children }: { children: ReactNode }) {
+export function PopupContextProvider({ children }: { children: ReactNode }) {
     const [scenesData, setScenesData] = useState<ScenesData>([]);
     const [charactersData, setCharactersData] = useState<CharacterMap>({});
 
@@ -37,9 +37,9 @@ export function ScreenplayContextProvider({ children }: { children: ReactNode })
 
     return (
         <>
-            <ScreenplayContext.Provider value={value}>{children}</ScreenplayContext.Provider>
+            <PopupContext.Provider value={value}>{children}</PopupContext.Provider>
         </>
     );
 }
 
-export const ScreenplayContext = createContext<ScreenplayCtxType>(contextDefaults);
+export const PopupContext = createContext<PopupContextType>(contextDefaults);

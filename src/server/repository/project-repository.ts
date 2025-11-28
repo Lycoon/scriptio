@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { ProjectCreationDTO, ProjectUpdateDTO } from "../../lib/utils/types";
-
-const prisma = new PrismaClient();
+import prisma from "../db";
 
 export class ProjectRepository {
     updateProject(project: ProjectUpdateDTO) {
@@ -33,6 +31,7 @@ export class ProjectRepository {
                 title: project.title,
                 description: project.description,
                 poster: project.poster,
+                screenplay: {},
                 user: {
                     connect: { id: project.userId },
                 },

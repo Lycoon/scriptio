@@ -1,35 +1,34 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import HomePageContainer from "@components/home/HomePageContainer";
 import Navbar from "@components/navbar/Navbar";
 import ProjectPageContainer from "@components/projects/ProjectPageContainer";
-import { UserContext } from "@src/context/UserContext";
 import { useDesktop, useUser } from "@src/lib/utils/hooks";
-import { CookieUser } from "@src/lib/utils/types";
 import DesktopHomePageContainer from "@components/home/DesktopHomePageContainer";
+import { ProjectContext } from "@src/context/ProjectContext";
 
-type Props = {
-    user: CookieUser | undefined;
-};
-
-const HomePageWindow = ({ user }: Props) => {
+const HomePageWindow = () => {
     const isDesktop = useDesktop();
-    const { updateProject } = useContext(UserContext);
+    const { data: user, isLoading } = useUser();
+    const { updateProject } = useContext(ProjectContext);
 
     useEffect(() => {
         updateProject(undefined);
     }, []);
 
-    if (isDesktop)
+    if (isLoading) return null;
+
+    if (isDesktop) {
         return (
             <>
                 <Navbar />
                 <DesktopHomePageContainer />
             </>
         );
+    }
 
-    if (user?.isLoggedIn) {
+    if (user) {
         return (
             <>
                 <Navbar />
@@ -48,7 +47,7 @@ const HomePage: NextPage = () => {
             <Head>
                 <title>{!user ? "Scriptio" : "Scriptio - Projects"}</title>
             </Head>
-            <HomePageWindow user={user} />
+            <HomePageWindow />
         </>
     );
 };

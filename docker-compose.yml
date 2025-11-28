@@ -1,9 +1,44 @@
 version: "3"
 
 services:
-  nextjs:
+  app:
     image: ghcr.io/lycoon/scriptio-app:latest
-    build: ./
+    profiles: ["prod"]
     env_file: .env
     ports:
       - 5000:3000
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@prod-db:5432/${DB_NAME}?schema=public
+    depends_on:
+      - prod-db
+
+  # Production Database
+  prod-db:
+    image: postgres:17-alpine
+    profiles: ["prod"]
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  
+  # Testing Database
+  test-db:
+    image: postgres:17-alpine
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - test_db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
+  test_db_data:

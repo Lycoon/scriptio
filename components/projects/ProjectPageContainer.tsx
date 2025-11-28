@@ -9,7 +9,7 @@ import { Project } from "@src/lib/utils/types";
 import { deleteProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
 
-import TrashSVG from "../../public/images/trash.svg";
+import TrashSVG from "@public/images/trash.svg";
 
 import page from "./ProjectPageContainer.module.css";
 import form from "../utils/Form.module.css";

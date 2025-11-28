@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import styles from "./SuggestionMenu.module.css";
 import context from "./sidebar/ContextMenu.module.css";
+import { pasteTextAt } from "@src/lib/editor/editor";
+import { UserContext } from "@src/context/UserContext";
 
 type Props = {
     suggestions: string[];
-    pasteTextAt: (text: string, position: number) => void;
     suggestionData: SuggestionData;
 };
 
@@ -20,13 +21,14 @@ export type SuggestionData = {
     cursorInNode: number;
 };
 
-const SuggestionMenu = ({ pasteTextAt, suggestionData, suggestions }: Props) => {
+const SuggestionMenu = ({ suggestionData, suggestions }: Props) => {
     const [selectedIdx, setSelectedIdx] = useState(0);
+    const { editor } = useContext(UserContext);
 
     const selectSuggestion = (idx: number) => {
         const suggestion = suggestions[idx].slice(suggestionData.cursorInNode);
         if (suggestion) {
-            pasteTextAt(suggestion, suggestionData.cursor);
+            pasteTextAt(editor!, suggestion, suggestionData.cursor);
         }
     };
 

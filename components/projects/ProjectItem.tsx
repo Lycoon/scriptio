@@ -1,8 +1,7 @@
-import Router from "next/router";
 import { Project } from "@src/lib/utils/types";
 import { _MS_PER_DAY, getElapsedDaysFrom, getLastUpdate, join } from "@src/lib/utils/misc";
 
-import CalendarSVG from "../../public/images/calendar.svg";
+import CalendarSVG from "@public/images/calendar.svg";
 
 import item from "./ProjectItem.module.css";
 import { redirectScreenplay } from "@src/lib/utils/redirects";

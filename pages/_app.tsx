@@ -11,7 +11,9 @@ import { ThemeProvider } from "next-themes";
 import { useDesktop } from "@src/lib/utils/hooks";
 
 import layout from "../components/utils/Layout.module.css";
-import { ScreenplayContextProvider } from "@src/context/ScreenplayContext";
+import { ProjectContextProvider } from "@src/context/ProjectContext";
+import { PopupContextProvider } from "@src/context/PopupContext";
+import Head from "next/head";
 
 const DesktopNavbar = () => {
     return (
@@ -48,23 +50,32 @@ function MyApp({ Component, pageProps }: AppProps) {
     }, [router]);
 
     return (
-        <SWRConfig
-            value={{
-                fetcher: fetchJson,
-                onSuccess: () => {},
-                onError: (err) => {
-                    console.error(err);
-                },
-            }}
-        >
-            <UserContextProvider>
-                <ScreenplayContextProvider>
-                    <ThemeProvider attribute="class" defaultTheme="dark">
-                        <div className={layout.main}>{pageLoading ? <Loading /> : <Component {...pageProps} />}</div>
-                    </ThemeProvider>
-                </ScreenplayContextProvider>
-            </UserContextProvider>
-        </SWRConfig>
+        <>
+            <Head>
+                <title>Scriptio</title>
+            </Head>
+            <SWRConfig
+                value={{
+                    fetcher: fetchJson,
+                    onSuccess: () => {},
+                    onError: (err) => {
+                        console.error(err);
+                    },
+                }}
+            >
+                <UserContextProvider>
+                    <ProjectContextProvider>
+                        <PopupContextProvider>
+                            <ThemeProvider attribute="class" defaultTheme="dark">
+                                <div className={layout.main}>
+                                    {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                                </div>
+                            </ThemeProvider>
+                        </PopupContextProvider>
+                    </ProjectContextProvider>
+                </UserContextProvider>
+            </SWRConfig>
+        </>
     );
 }
 

@@ -1,60 +1,31 @@
 import { join } from "@src/lib/utils/misc";
 import { useContext, useState } from "react";
-import { ScreenplayContext } from "@src/context/ScreenplayContext";
+import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { ContextMenuType } from "./ContextMenu";
-import { SceneItem } from "@src/lib/screenplay";
-import { CharacterData } from "@src/lib/utils/characters";
+import { SceneItem } from "@src/lib/editor/screenplay";
 import SidebarCharacterItem from "./SidebarCharacterItem";
 import SidebarSceneItem from "./SidebarSceneItem";
 
-import CharacterSVG from "../../../public/images/character.svg";
-import LocationSVG from "../../../public/images/location.svg";
+import CharacterSVG from "@public/images/character.svg";
+import LocationSVG from "@public/images/location.svg";
 
 import sidebar from "./EditorSidebar.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
+import { CharacterItem } from "@src/lib/editor/characters";
 
-type Props = {
-    active: boolean;
-
-    /* Editor actions */
-    pasteText: (text: string) => void;
-    getFocusOnPosition: (position: number) => void;
-    selectTextInEditor: (start: number, end: number) => void;
-    cutTextSelection: (start: number, end: number) => void;
-    copyTextSelection: (start: number, end: number) => void;
-
-    /* Characters */
-    editCharacterPopup: (character: CharacterData) => void;
-    addCharacterPopup: () => void;
-    removeCharacter: (name: string) => void;
-};
-
-const enum NavigationMenu {
+enum NavigationMenu {
     Characters,
     Locations,
     Others,
 }
 
-const EditorSidebarNavigation = ({
-    active,
-
-    /* Editor actions */
-    getFocusOnPosition,
-    selectTextInEditor,
-    cutTextSelection,
-    pasteText,
-    copyTextSelection,
-
-    /* Characters */
-    editCharacterPopup,
-    addCharacterPopup,
-    removeCharacter,
-}: Props) => {
-    const { scenesData, charactersData } = useContext(ScreenplayContext);
-    const { updateContextMenu } = useContext(UserContext);
+const EditorSidebarNavigation = () => {
+    const { scenesData, charactersData } = useContext(ProjectContext);
+    const { isZenMode, updateContextMenu } = useContext(UserContext);
     const [menu, setMenu] = useState<NavigationMenu>(NavigationMenu.Characters);
-    const isActive = active ? sidebar_nav.active : "";
+
+    const isActive = isZenMode ? "" : sidebar_nav.active;
 
     const isCharactersMenu = menu === NavigationMenu.Characters;
     const isLocationsMenu = menu === NavigationMenu.Locations;
@@ -74,7 +45,7 @@ const EditorSidebarNavigation = ({
         updateContextMenu({
             type: ContextMenuType.CharacterList,
             position: { x: e.clientX, y: e.clientY },
-            typeSpecificProps: { addCharacterPopup },
+            typeSpecificProps: {},
         });
     };
 
@@ -102,39 +73,17 @@ const EditorSidebarNavigation = ({
                 </div>
                 <div className={sidebar_nav.list}>
                     {menu === NavigationMenu.Characters &&
-                        Object.entries(charactersData).map((character: any) => {
-                            return (
-                                <SidebarCharacterItem
-                                    key={character[0]}
-                                    character={{
-                                        // As we loop over entries of the character map, we get an array of [key, value]
-                                        name: character[0],
-                                        gender: character[1].gender,
-                                        synopsis: character[1].synopsis,
-                                    }}
-                                    pasteText={pasteText}
-                                    editCharacterPopup={editCharacterPopup}
-                                    removeCharacter={removeCharacter}
-                                />
-                            );
+                        Object.entries(charactersData).map((item: [string, CharacterItem]) => {
+                            return <SidebarCharacterItem key={item[0]} character={{ name: item[0], ...item[1] }} />;
                         })}
                     <div className={sidebar_nav.list_fill} onContextMenu={handleDropdownCharacterList} />
                 </div>
             </div>
             <div>
                 <p className={sidebar_nav.list_title}>Scenes</p>
-                <div className={sidebar_nav.list + " " + sidebar_nav.scene_list}>
+                <div className={join(sidebar_nav.list, sidebar_nav.scene_list)}>
                     {scenesData.map((scene: SceneItem) => {
-                        return (
-                            <SidebarSceneItem
-                                key={scene.position}
-                                scene={scene}
-                                focusOn={getFocusOnPosition}
-                                selectTextInEditor={selectTextInEditor}
-                                cutTextSelection={cutTextSelection}
-                                copyTextSelection={copyTextSelection}
-                            />
-                        );
+                        return <SidebarSceneItem key={scene.position} scene={scene} />;
                     })}
                     <div className={sidebar_nav.list_fill} onContextMenu={handleDropdownSceneList} />
                 </div>

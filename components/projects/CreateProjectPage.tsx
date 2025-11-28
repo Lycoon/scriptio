@@ -39,7 +39,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         const body: ProjectCreation = {
             title: e.target.title.value,
             description: e.target.description.value,
-            saveMode: SaveMode.CLOUD, //TODO: Add save mode to form
+            saveMode: SaveMode.Cloud, //TODO: Add save mode to form
         };
 
         if (selectedFile) {

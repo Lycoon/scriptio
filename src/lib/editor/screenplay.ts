@@ -1,6 +1,6 @@
 import { JSONContent } from "@tiptap/react";
-import { ScreenplayElement } from "./utils/enums";
-import { ScreenplayCtxType } from "@src/context/ScreenplayContext";
+import { ScreenplayElement } from "../utils/enums";
+import { ProjectContextType } from "@src/context/ProjectContext";
 
 /* Nodes */
 export type NodeData = {
@@ -10,7 +10,6 @@ export type NodeData = {
 };
 
 /* Scenes */
-export let scenesData: ScenesData = [];
 export type ScenesData = SceneItem[];
 export type SceneItem = {
     title: string;
@@ -19,9 +18,9 @@ export type SceneItem = {
     nextPosition: number;
 };
 
-export const countOccurrences = (json: JSONContent, word: string): number => {
+export const countOccurrences = (screenplay: JSONContent, word: string): number => {
     const regex = new RegExp(`${word}`, "gi");
-    const nodes = json.content!;
+    const nodes = screenplay.content!;
     let count = 0;
 
     for (let i = 0; i < nodes.length; i++) {
@@ -48,42 +47,19 @@ export const getNodeFlattenContent = (content: any[]) => {
     return text;
 };
 
-const getScreenplayElementType = (nodeType: string): ScreenplayElement => {
-    switch (nodeType) {
-        case "scene":
-            return ScreenplayElement.Scene;
-        case "action":
-            return ScreenplayElement.Action;
-        case "character":
-            return ScreenplayElement.Character;
-        case "dialogue":
-            return ScreenplayElement.Dialogue;
-        case "parenthetical":
-            return ScreenplayElement.Parenthetical;
-        case "transition":
-            return ScreenplayElement.Transition;
-        case "section":
-            return ScreenplayElement.Section;
-        case "note":
-            return ScreenplayElement.Note;
-        default:
-            return ScreenplayElement.None;
-    }
-};
-
-const getNodeData = (node: any): NodeData => {
-    const type: string = node["attrs"]["class"];
-    const content: any[] = node["content"];
+const getNodeData = (node: JSONContent): NodeData => {
+    const type: ScreenplayElement = node.attrs?.class;
+    const content: JSONContent[] = node.content!;
     const flattenText = getNodeFlattenContent(content);
 
     return {
-        type: getScreenplayElementType(type),
+        type,
         content,
         flattenText,
     };
 };
 
-const getScenePreview = (nodes: any[], cursor: number) => {
+const getScenePreview = (nodes: JSONContent[], cursor: number) => {
     let preview = "";
 
     for (let i = cursor; i < nodes.length && preview.length <= 30; i++) {
@@ -97,13 +73,13 @@ const getScenePreview = (nodes: any[], cursor: number) => {
     return preview;
 };
 
-export const computeFullScenesData = async (scriptioScreenplay: any, screenplayCtx: ScreenplayCtxType) => {
-    if (!scriptioScreenplay) {
-        screenplayCtx.updateScenesData([]);
+export const computeFullScenesData = async (screenplay: JSONContent, projectCtx: ProjectContextType) => {
+    if (!screenplay.content) {
+        projectCtx.updateScenesData([]);
         return;
     }
 
-    const nodes = scriptioScreenplay.content;
+    const nodes = screenplay.content;
     const scenes: ScenesData = [];
     let cursor = 1;
     let sceneNumber = 0;
@@ -139,5 +115,5 @@ export const computeFullScenesData = async (scriptioScreenplay: any, screenplayC
         scenes[scenes.length - 1].nextPosition = cursor; // last scene has no next scene to set nextPosition
     }
 
-    screenplayCtx.updateScenesData(scenes);
+    projectCtx.updateScenesData(scenes);
 };

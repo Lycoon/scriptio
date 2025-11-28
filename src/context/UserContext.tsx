@@ -1,41 +1,25 @@
-import { Editor } from "@tiptap/react";
 import { createContext, ReactNode, useState } from "react";
 import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
-import { useUser } from "../lib/utils/hooks";
-import { Project } from "@prisma/client";
-import { SaveStatus } from "../lib/utils/enums";
-import { CookieUser } from "../lib/utils/types";
+import { PopupData, PopupUnionData } from "@src/lib/editor/popup";
 
-export type contextType = {
-    user: CookieUser | undefined;
-    updateUser: (user: CookieUser | undefined) => void;
-    editor: Editor | undefined;
-    updateEditor: (editor: Editor) => void;
-    darkMode: boolean;
-    updateDarkMode: (darkMode: boolean) => void;
-    saveStatus: SaveStatus;
-    updateSaveStatus: (saveStatus: SaveStatus) => void;
-    project: Project | undefined;
-    updateProject: (project: Project | undefined) => void;
+export type UserContextType = {
+    isDarkMode: boolean;
+    updateDarkMode: (isDarkMode: boolean) => void;
+    isZenMode: boolean;
+    updateZenMode: (isZenMode: boolean) => void;
     contextMenu: ContextMenuProps | undefined;
     updateContextMenu: (contextMenu: ContextMenuProps | undefined) => void;
-    popup: any;
-    updatePopup: (popup: any) => void;
+    popup: PopupData<PopupUnionData> | undefined;
+    updatePopup: (popup: PopupData<PopupUnionData> | undefined) => void;
     isDesktop: boolean;
     updateIsDesktop: (isDesktop: boolean) => void;
 };
 
-const contextDefaults: contextType = {
-    user: undefined,
-    updateUser: () => {},
-    editor: undefined,
-    updateEditor: () => {},
-    darkMode: false,
+const contextDefaults: UserContextType = {
+    isDarkMode: false,
     updateDarkMode: () => {},
-    saveStatus: SaveStatus.SAVED,
-    updateSaveStatus: () => {},
-    project: undefined,
-    updateProject: () => {},
+    isZenMode: false,
+    updateZenMode: () => {},
     contextMenu: undefined,
     updateContextMenu: () => {},
     popup: undefined,
@@ -44,47 +28,32 @@ const contextDefaults: contextType = {
     updateIsDesktop: () => {},
 };
 
-type Props = {
+type UserContextProps = {
     children: ReactNode;
 };
 
-export const UserContext = createContext<contextType>(contextDefaults);
+export const UserContext = createContext<UserContextType>(contextDefaults);
 
-export function UserContextProvider({ children }: Props) {
-    const { data: user, mutate: setUser } = useUser();
-    const [editor, setEditor] = useState<Editor | undefined>(undefined);
-    const [darkMode, setDarkMode] = useState<boolean>(false);
-    const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.SAVED);
-    const [project, setProject] = useState<Project | undefined>(undefined);
+export function UserContextProvider({ children }: UserContextProps) {
+    const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+    const [isZenMode, setIsZenMode] = useState<boolean>(false);
     const [contextMenu, setContextMenu] = useState<ContextMenuProps | undefined>(undefined);
-    const [popup, setPopup] = useState<any>(undefined);
+    const [popup, setPopup] = useState<PopupData<PopupUnionData> | undefined>(undefined);
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
 
-    const updateUser = (user_: CookieUser | undefined) => {
-        setUser!(user_);
+    const updateDarkMode = (isDarkMode_: boolean) => {
+        setIsDarkMode(isDarkMode_);
     };
 
-    const updateEditor = (editor_: Editor) => {
-        setEditor(editor_);
-    };
-
-    const updateDarkMode = (darkMode_: boolean) => {
-        setDarkMode(darkMode_);
-    };
-
-    const updateSaveStatus = (saveStatus_: SaveStatus) => {
-        setSaveStatus(saveStatus_);
-    };
-
-    const updateProject = (project_: Project | undefined) => {
-        setProject(project_);
+    const updateZenMode = (isZenMode_: boolean) => {
+        setIsZenMode(isZenMode_);
     };
 
     const updateContextMenu = (contextMenu_: ContextMenuProps | undefined) => {
         setContextMenu(contextMenu_);
     };
 
-    const updatePopup = (popup_: any) => {
+    const updatePopup = (popup_: PopupData<PopupUnionData> | undefined) => {
         setPopup(popup_);
     };
 
@@ -93,16 +62,10 @@ export function UserContextProvider({ children }: Props) {
     };
 
     const value = {
-        user,
-        updateUser,
-        editor,
-        updateEditor,
-        darkMode,
+        isDarkMode,
         updateDarkMode,
-        saveStatus,
-        updateSaveStatus,
-        project,
-        updateProject,
+        isZenMode,
+        updateZenMode,
         contextMenu,
         updateContextMenu,
         popup,

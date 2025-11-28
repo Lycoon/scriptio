@@ -2,7 +2,7 @@ import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect } from "react";
 import RecoveryContainer from "@components/home/recovery/RecoveryContainer";
-import { UserContext } from "@src/context/UserContext";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 type Props = {
     userId: number;
@@ -10,7 +10,7 @@ type Props = {
 };
 
 const RecoveryPage: NextPage<Props> = ({ userId, recoverHash }: Props) => {
-    const { updateProject } = useContext(UserContext);
+    const { updateProject } = useContext(ProjectContext);
     useEffect(() => updateProject(undefined), []);
 
     return (

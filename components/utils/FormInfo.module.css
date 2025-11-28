@@ -6,21 +6,21 @@
 }
 
 .text {
-    background-color: var(--validation-color);
+    background-color: var(--success);
     text-align: justify;
     padding: 15px;
     border-radius: 6px;
 }
 
 .error {
-    background-color: var(--error-color);
+    background-color: var(--error);
     text-align: justify;
     padding: 15px;
     border-radius: 6px;
 }
 
 .warn {
-    background-color: var(--warning-color);
+    background-color: var(--warning);
     text-align: justify;
     padding: 15px;
     border-radius: 6px;

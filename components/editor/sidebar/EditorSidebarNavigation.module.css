@@ -13,12 +13,12 @@
 
     /* hiding it by default */
     margin-left: calc(var(--nav-sidebar-width) * -1);
-    transition: margin-left 0.1s ease-in;
+    transition: margin-left 0.5s ease;
 }
 
 .active {
     margin-left: 0;
-    transition: margin-left 0.1s ease-in;
+    transition: margin-left 0.5s ease;
 }
 
 .selection {

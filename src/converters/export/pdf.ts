@@ -2,9 +2,9 @@ import { TDocumentDefinitions } from "pdfmake/interfaces";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import { ExportData, ExportDataPDF } from "@components/projects/export/ExportProjectContainer";
 
-const LOCAL = "http://localhost:3000";
-const PRODUCTION = "https://scriptio.app";
-const BASE_URL = PRODUCTION;
+const BASE_URL = typeof window !== "undefined" 
+  ? window.location.origin 
+  : "https://scriptio.app";
 
 const fonts = {
     CourierPrime: {
