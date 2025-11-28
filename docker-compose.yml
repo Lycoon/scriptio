@@ -3,10 +3,10 @@ version: "3.8"
 services:
   app:
     image: ghcr.io/lycoon/scriptio-app:latest
+    container_name: scriptio
     profiles: ["prod"]
     env_file: .env
     build: .
-    container_name: scriptio
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@prod-db:5432/${DB_NAME}?schema=public
     depends_on:
@@ -24,6 +24,7 @@ services:
   
   migrations:
     container_name: migrations
+    profiles: ["prod"]
     build:
       context: .
       dockerfile: ./Dockerfile.migrations
