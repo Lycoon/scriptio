@@ -21,9 +21,6 @@ jobs:
       - name: Build image
         run: docker compose build app
 
-      - name: Tag Image for GHCR
-        run: docker tag scriptio-app:latest ghcr.io/lycoon/scriptio-app:latest
-
       - name: Push image to GHCR
         run: docker push ghcr.io/lycoon/scriptio-app:latest
 
