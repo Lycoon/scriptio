@@ -1,5 +1,6 @@
 FROM node:20-alpine
 
+RUN apk add --no-cache openssl1.1-compat
 RUN apk add --no-cache libc6-compat
 RUN apk add --no-cache git
 
@@ -10,6 +11,7 @@ COPY ./ ./
 
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
+RUN chown -R node:node .
 RUN npm run build
 
 EXPOSE 3000
