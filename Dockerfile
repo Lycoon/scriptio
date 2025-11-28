@@ -10,11 +10,13 @@ COPY ./ ./
 
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
-RUN npx prisma generate
 RUN npm run build
 
 EXPOSE 3000
 USER node
 ENV NEXT_TELEMETRY_DISABLED 1
 
+RUN chmod +x ./launch.sh
+
+ENTRYPOINT ["./launch.sh"]
 CMD [ "npm", "start" ]
