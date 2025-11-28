@@ -27,7 +27,7 @@ services:
     profiles: ["prod"]
     build:
       context: .
-      dockerfile: ./Dockerfile.migrations
+      dockerfile: Dockerfile.migrations
     networks:
       - internal
     depends_on:
