@@ -5,6 +5,7 @@ services:
     image: ghcr.io/lycoon/scriptio-app:latest
     profiles: ["prod"]
     env_file: .env
+    build: .
     ports:
       - 5000:3000
     environment:
