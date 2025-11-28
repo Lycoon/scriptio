@@ -21,6 +21,20 @@ services:
       - traefik.http.routers.scriptio-app.entrypoints=secure
       - traefik.http.routers.scriptio-app.tls=true
       - traefik.http.routers.scriptio-app.tls.certresolver=letsencrypt
+  
+  migrations:
+    container_name: migrations
+    build:
+      context: .
+      dockerfile: ./Dockerfile.migrations
+    networks:
+      - internal
+    depends_on:
+      - prod-db
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@prod-db:5432/${DB_NAME}?schema=public
 
   # Production Database
   prod-db:
