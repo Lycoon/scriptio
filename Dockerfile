@@ -1,5 +1,7 @@
 FROM node:20-alpine
+
 RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache git
 
 WORKDIR /usr/app
 COPY ./package*.json ./
