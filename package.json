@@ -3,7 +3,7 @@
     "private": true,
     "scripts": {
         "dev": "docker compose up -d && npx prisma db push && next dev",
-        "build": "next build",
+        "build": "npx prisma generate && next build",
         "export": "next export",
         "start": "next start",
         "tauri": "tauri",

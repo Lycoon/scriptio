@@ -1,8 +1,4 @@
 <p align="center">
-    <img src="public/images/banner.png"  width="540" height="230">
-</p>
-
-<p align="center">
   Minimalist tool for perfectionist screenwriters
 </p>
 
@@ -25,6 +21,31 @@ My biggest inspiration is by far _Amazon Story Writer_, a very handy writing too
 -   Screenplay statistics
 -   Scene navigation
 -   Character management
+
+# Launch
+
+## Production
+The workflow for deployment is entirely automated once a feature reaches the `release` branch.
+The DATABASE_URL environment variable is automatically built depending on .env database variables.
+
+1. Trigger `.github\workflows\deploy.yml`
+    - `docker compose build app`
+      - Installing dependencies `npm install`
+      - Generating Prisma files `npx prisma generate`
+      - Building app `npm run build`
+    - Image is pushed to registry `docker push ghcr.io/lycoon/scriptio-app:latest`
+2. Copy `docker-compose.yml` to the server
+3. Go in app path on the server
+    - Pull latest app image `docker compose pull app`
+    - Run the image `docker compose --profile prod up -d`
+      - Run `launch.sh` script 
+      - Deploy up-to-date database migrations `npx prisma migrate deploy`
+      - Launch the app `npm start`
+
+## Test
+1. `npm install`
+2. `npm run dev`
+3. `http://localhost:3000`
 
 # Dependencies
 
@@ -58,11 +79,3 @@ Sending emails programmatically is a pain. I had to use a lot of different tools
 | hogan.js   | Templating language for email generation           | [![](https://img.shields.io/npm/v/hogan.js)](https://www.npmjs.com/package/hogan.js)     |
 | inline-css | Used along with hogan.js for inlining CSS in email | [![](https://img.shields.io/npm/v/inline-css)](https://www.npmjs.com/package/inline-css) |
 | nodemailer | Sending emails from NodeJS                         | [![](https://img.shields.io/npm/v/nodemailer)](https://www.npmjs.com/package/nodemailer) |
-
-# How to launch
-
-Development is currently done under NodeJS v16.13.1 and NPM v8.1.2, using NextJS. Running the app locally only requires the following steps.
-
-1. `npm install`
-2. `npm run dev`
-3. `http://localhost:3000`
