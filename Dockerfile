@@ -16,7 +16,5 @@ EXPOSE 3000
 USER node
 ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN chmod +x ./launch.sh
-
 ENTRYPOINT ["./launch.sh"]
 CMD [ "npm", "start" ]
