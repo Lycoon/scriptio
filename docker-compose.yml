@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 
 services:
   app:
@@ -6,31 +6,41 @@ services:
     profiles: ["prod"]
     env_file: .env
     build: .
-    ports:
-      - 5000:3000
+    container_name: scriptio
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@prod-db:5432/${DB_NAME}?schema=public
     depends_on:
       - prod-db
+    networks:
+      - webproxy
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=webproxy
+      - traefik.http.routers.scriptio-app.rule=Host(`scriptio.app`)
+      - traefik.http.routers.scriptio-app.entrypoints=secure
+      - traefik.http.routers.scriptio-app.tls=true
+      - traefik.http.routers.scriptio-app.tls.certresolver=letsencrypt
 
   # Production Database
   prod-db:
     image: postgres:17-alpine
     profiles: ["prod"]
-    restart: always
+    env_file: .env
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
-  
+      - ./database:/var/lib/postgresql/data
+    networks:
+      - internal
+
   # Testing Database
   test-db:
     image: postgres:17-alpine
-    restart: always
+    restart: unless-stopped
     ports:
       - "5433:5432"
     environment:
@@ -38,8 +48,10 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - test_db_data:/var/lib/postgresql/data
+      - ./test_database:/var/lib/postgresql/data
 
-volumes:
-  db_data:
-  test_db_data:
+networks:
+  webproxy:
+    external: true
+  internal:
+    external: false
