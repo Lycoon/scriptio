@@ -1,0 +1,17 @@
+name: CI Check
+
+on:
+    push:
+        branches-ignore: [release]
+    pull_request:
+        branches: [release, dev]
+
+jobs:
+    check_build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout the repo
+              uses: actions/checkout@v3
+
+            - name: Build image
+              run: docker compose build app

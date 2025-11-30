@@ -14,16 +14,18 @@ import { Project } from "@src/lib/utils/types";
 import { computeFullCharactersData } from "@src/lib/editor/characters";
 
 /* Styles */
-import editor_ from "./EditorAndSidebar.module.css";
+import styles from "./EditorAndSidebar.module.css";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { applyElement, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
 import { Popup } from "@components/popup/Popup";
+import { join } from "@src/lib/utils/misc";
 
 type EditorAndSidebarProps = {
     project: Project;
+    css: string;
 };
 
-const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
+const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
 
@@ -168,12 +170,12 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
     };
 
     return (
-        <div className={editor_.editor_and_sidebar}>
+        <div className={join(styles.editor_and_sidebar, css)}>
             <ContextMenu />
             {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
             <Popup />
             <EditorSidebarNavigation />
-            <div className={editor_.container} onScroll={onScroll}>
+            <div className={styles.container} onScroll={onScroll}>
                 <EditorComponent editor={editorView} />
             </div>
             <EditorSidebarFormat

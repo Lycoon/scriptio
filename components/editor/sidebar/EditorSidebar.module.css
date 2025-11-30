@@ -1,4 +1,7 @@
 .container {
+    overflow: hidden;
+    height: 100vh;
+
     padding-top: 8px;
     background-color: var(--editor-sidebar);
     min-width: var(--format-sidebar-width);
