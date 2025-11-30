@@ -1,17 +1,14 @@
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import { ExportData, ExportDataPDF } from "@components/projects/export/ExportProjectContainer";
-
-const BASE_URL = typeof window !== "undefined" 
-  ? window.location.origin 
-  : "https://scriptio.app";
+import { BASE_URL } from "@src/lib/utils/constants";
 
 const fonts = {
     CourierPrime: {
-        normal: BASE_URL + "/fonts/Courier%20Prime.ttf",
-        bold: BASE_URL + "/fonts/Courier%20Prime%20Bold.ttf",
-        italics: BASE_URL + "/fonts/Courier%20Prime.ttf",
-        bolditalics: BASE_URL + "/fonts/Courier%20Prime.ttf",
+        normal: `${BASE_URL}/fonts/Courier%20Prime.ttf`,
+        bold: `${BASE_URL}/fonts/Courier%20Prime%20Bold.ttf`,
+        italics: `${BASE_URL}/fonts/Courier%20Prime.ttf`,
+        bolditalics: `${BASE_URL}/fonts/Courier%20Prime.ttf`,
     },
 };
 

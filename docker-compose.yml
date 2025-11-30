@@ -1,55 +1,60 @@
 services:
-  app:
-    image: ghcr.io/lycoon/scriptio-app:latest
-    container_name: scriptio
-    profiles: ["prod"]
-    env_file: .env
-    build: .
-    environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@prod-db:5432/${DB_NAME}?schema=public
-    depends_on:
-      - prod-db
-    networks:
-      - webproxy
-      - internal
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=webproxy
-      - traefik.http.routers.scriptio-app.rule=Host(`scriptio.app`)
-      - traefik.http.routers.scriptio-app.entrypoints=secure
-      - traefik.http.routers.scriptio-app.tls=true
-      - traefik.http.routers.scriptio-app.tls.certresolver=letsencrypt
-      
-  # Production Database
-  prod-db:
-    image: postgres:17-alpine
-    profiles: ["prod"]
-    env_file: .env
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    volumes:
-      - ./database:/var/lib/postgresql/data
-    networks:
-      - internal
+    app:
+        image: ghcr.io/lycoon/scriptio-app:latest
+        container_name: scriptio
+        profiles: ["prod"]
+        env_file: .env
+        build: .
+        environment:
+            - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@prod-db:5432/${DB_NAME}?schema=public
+        depends_on:
+            - prod-db
+        networks:
+            - webproxy
+            - internal
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=webproxy
+            - traefik.http.routers.scriptio-app.rule=Host(`scriptio.app`)
+            - traefik.http.routers.scriptio-app.entrypoints=secure
+            - traefik.http.routers.scriptio-app.tls=true
+            - traefik.http.routers.scriptio-app.tls.certresolver=letsencrypt
 
-  # Testing Database
-  test-db:
-    image: postgres:17-alpine
-    restart: unless-stopped
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    volumes:
-      - ./test_database:/var/lib/postgresql/data
+    # Production Database
+    prod-db:
+        image: postgres:17-alpine
+        profiles: ["prod"]
+        env_file: .env
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        volumes:
+            - ./database:/var/lib/postgresql/data
+        networks:
+            - internal
+
+    # Testing Database
+    test-db:
+        image: postgres:17-alpine
+        restart: unless-stopped
+        ports:
+            - "5433:5432"
+        environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        volumes:
+            - ./test_database:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
 networks:
-  webproxy:
-    external: true
-  internal:
-    external: false
+    webproxy:
+        external: true
+    internal:
+        external: false
