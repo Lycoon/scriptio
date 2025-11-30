@@ -1,6 +1,7 @@
 .center_col {
     display: flex;
     flex: 1;
+    height: 100%;
 
     flex-direction: column;
     justify-content: flex-start;
@@ -10,6 +11,7 @@
 .center_row {
     display: flex;
     flex: 1;
+    height: 100%;
 
     flex-direction: row;
     justify-content: flex-start;
@@ -19,6 +21,7 @@
 .center_middle {
     display: flex;
     flex: 1;
+    height: 100%;
 
     flex-direction: row;
     justify-content: center;
@@ -33,11 +36,8 @@
 }
 
 .main {
-    display: flex;
-    flex-direction: column;
-
-    position: relative;
-    height: 100vh;
+    flex: 1;
+    overflow-y: scroll;
 
     background-color: var(--primary);
     transition: background-color 0.15s;

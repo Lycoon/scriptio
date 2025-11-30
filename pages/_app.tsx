@@ -68,9 +68,11 @@ function MyApp({ Component, pageProps }: AppProps) {
                     <ProjectContextProvider>
                         <PopupContextProvider>
                             <ThemeProvider attribute="class" defaultTheme="dark">
-                                <Navbar />
-                                <div className={layout.main}>
-                                    {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                                <div className="app-layout">
+                                    <Navbar />
+                                    <div className={layout.main}>
+                                        {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                                    </div>
                                 </div>
                             </ThemeProvider>
                         </PopupContextProvider>

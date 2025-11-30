@@ -1,20 +1,38 @@
 import Head from "next/head";
 import type { NextPage } from "next";
-import EditorContainer from "@components/editor/EditorContainer";
 import Loading from "@components/utils/Loading";
-import { useProjectFromUrl } from "@src/lib/utils/hooks";
+import { useProjectFromUrl, useSettings } from "@src/lib/utils/hooks";
+import { useEffect, useState } from "react";
+import EditorAndSidebar from "@components/editor/EditorAndSidebar";
 
 const EditorPage: NextPage = () => {
     const { data: project } = useProjectFromUrl();
+    const { data: settings } = useSettings();
+    const [settingsCSS, setSettingsCSS] = useState("");
+
+    useEffect(() => {
+        if (!settings) return;
+
+        /* Configuring editor user settings */
+        let settingsClass = "";
+        settingsClass += settings.highlightOnHover ? "highlight-on-hover " : "";
+        settingsClass += settings.sceneBackground ? "scene-background " : "";
+        setSettingsCSS(settingsClass);
+
+        document.documentElement.style.setProperty(
+            "--editor-notes-color",
+            settings.notesColor + "42" // 42 is for the alpha channel
+        );
+    }, [settings]);
 
     if (!project) return <Loading />;
 
     return (
         <>
             <Head>
-                <title>{project.title} • Scriptio</title>
+                <title>{project?.title + " • Scriptio"}</title>
             </Head>
-            <EditorContainer project={project} />
+            <EditorAndSidebar project={project} css={settingsCSS} />
         </>
     );
 };

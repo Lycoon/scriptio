@@ -13,7 +13,7 @@ const EditProjectPage: NextPage = () => {
     return (
         <>
             <Head>
-                <title>{project.title} - Edit</title>
+                <title>{project?.title + " • Edit"}</title>
             </Head>
             <EditProjectContainer project={project} />
         </>
