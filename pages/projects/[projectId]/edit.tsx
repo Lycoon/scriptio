@@ -1,6 +1,5 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import Navbar from "@components/navbar/Navbar";
 import EditProjectContainer from "@components/projects/edit/EditProjectContainer";
 import Loading from "@components/utils/Loading";
 import { useProjectFromUrl, useUser } from "@src/lib/utils/hooks";
@@ -16,7 +15,6 @@ const EditProjectPage: NextPage = () => {
             <Head>
                 <title>{project.title} - Edit</title>
             </Head>
-            <Navbar />
             <EditProjectContainer project={project} />
         </>
     );

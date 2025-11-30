@@ -1,6 +1,5 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import Navbar from "@components/navbar/Navbar";
 import ExportProjectConainer from "@components/projects/export/ExportProjectContainer";
 import NoExportContainer from "@components/projects/export/NoExportContainer";
 import { useProjectFromUrl, useUser } from "@src/lib/utils/hooks";
@@ -17,7 +16,6 @@ const ExportProjectPage: NextPage = () => {
             <Head>
                 <title>{project.title} - Export</title>
             </Head>
-            <Navbar />
             {project.screenplay ? (
                 <ExportProjectConainer project={project} />
             ) : (

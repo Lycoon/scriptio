@@ -1,10 +1,7 @@
 import nodemailer from "nodemailer";
 import * as fs from "fs";
+import { BASE_URL } from "../utils/constants";
 var hogan = require("hogan.js");
-
-const BASE_URL = process.env.NODE_ENV === "production" 
-  ? "https://scriptio.app" 
-  : "http://localhost:3000";
 
 const transporter = nodemailer.createTransport({
     pool: true,
@@ -17,30 +14,15 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export const sendRecoveryEmail = async (
-    userId: number,
-    email: string,
-    recoverHash: string
-) => {
-    const link = `https://scriptio.app/recovery?id=${userId}&code=${recoverHash}`;
+export const sendRecoveryEmail = async (userId: number, email: string, recoverHash: string) => {
+    const link = `${BASE_URL}/recovery?id=${userId}&code=${recoverHash}`;
     const content = `A request has been issued to update ${email} account password. Click the button below to change your password.`;
 
-    sendFormattedEmail(
-        email,
-        "Change password",
-        "Password change request",
-        content,
-        "Change password",
-        link
-    );
+    sendFormattedEmail(email, "Change password", "Password change request", content, "Change password", link);
 };
 
-export const sendVerificationEmail = async (
-    userId: number,
-    email: string,
-    emailHash: string
-) => {
-    const link = `https://scriptio.app/api/verify?id=${userId}&code=${emailHash}`;
+export const sendVerificationEmail = async (userId: number, email: string, emailHash: string) => {
+    const link = `${BASE_URL}/api/verify?id=${userId}&code=${emailHash}`;
     const content = `Welcome ${email}! Click the button below to verify your email address after which you will be able to log in using your credentials.`;
 
     sendFormattedEmail(

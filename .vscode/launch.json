@@ -9,7 +9,7 @@
         },
         {
             "name": "Next.js: debug client-side",
-            "type": "chrome",
+            "type": "firefox",
             "request": "launch",
             "url": "http://localhost:3000"
         },
@@ -21,7 +21,7 @@
             "serverReadyAction": {
                 "pattern": "- Local:.+(https?://.+)",
                 "uriFormat": "%s",
-                "action": "debugWithChrome"
+                "action": "debugWithFirefox"
             }
         }
     ]

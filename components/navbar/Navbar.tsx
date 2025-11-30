@@ -87,9 +87,17 @@ const Navbar = () => {
         // Logged in on web OR desktop app
         NavbarButtons = () => (
             <div className={navbar.btns}>
-                <EyeSVG className={join(navbar.btn, navbar.zen_btn)} onClick={toggleZenMode} alt="Eye icon" />
-                <SettingsSVG className={navbar.btn} onClick={redirectSettings} alt="Settings icon" />
-                <LogoutSVG className={navbar.btn} onClick={onLogOut} alt="Logout icon" />
+                {page === Page.Screenplay && (
+                    <div className={navbar.tooltip_container} data-hint="Zen mode">
+                        <EyeSVG className={join(navbar.btn, navbar.zen_btn)} onClick={toggleZenMode} alt="Eye icon" />
+                    </div>
+                )}
+                <div className={navbar.tooltip_container} data-hint="Settings">
+                    <SettingsSVG className={navbar.btn} onClick={redirectSettings} alt="Settings icon" />
+                </div>
+                <div className={navbar.tooltip_container} data-hint="Logout">
+                    <LogoutSVG className={navbar.btn} onClick={onLogOut} alt="Logout icon" />
+                </div>
             </div>
         );
     } else if (isDesktop) {
@@ -115,13 +123,13 @@ const Navbar = () => {
                 <NavbarMenu project={project!} />
             </div>
             <div className={navbar.title}>
-                {page === Page.Screenplay && (
+                {page === Page.Screenplay && project && (
                     <>
                         <SaveStatusNavbar />
                         <input
                             type="text"
                             className={navbar.title_box}
-                            onChange={(e) => deferredTitleUpdate(project!.id, e.target.value)}
+                            onChange={(e) => deferredTitleUpdate(project.id, e.target.value)}
                             defaultValue={projectTitle}
                         />
                     </>

@@ -114,6 +114,36 @@
     color: var(--success);
 }
 
+.tooltip_container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.tooltip_container:hover::after {
+    content: attr(data-hint);
+    position: absolute;
+    top: 100%;
+    right: 0;
+    transform: none;
+    margin-top: 5px;
+
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
 @keyframes fadeOut {
     50% {
         opacity: 100%;

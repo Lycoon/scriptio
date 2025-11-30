@@ -14,6 +14,7 @@ import layout from "../components/utils/Layout.module.css";
 import { ProjectContextProvider } from "@src/context/ProjectContext";
 import { PopupContextProvider } from "@src/context/PopupContext";
 import Head from "next/head";
+import Navbar from "@components/navbar/Navbar";
 
 const DesktopNavbar = () => {
     return (
@@ -67,6 +68,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                     <ProjectContextProvider>
                         <PopupContextProvider>
                             <ThemeProvider attribute="class" defaultTheme="dark">
+                                <Navbar />
                                 <div className={layout.main}>
                                     {pageLoading ? <Loading /> : <Component {...pageProps} />}
                                 </div>
