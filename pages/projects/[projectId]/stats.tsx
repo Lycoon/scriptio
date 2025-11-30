@@ -22,7 +22,6 @@ const StatsProjectPage: NextPage = () => {
             <Head>
                 <title>{project?.title} - Statistics</title>
             </Head>
-            <Navbar />
             {StatsWindow(project)}
         </>
     );

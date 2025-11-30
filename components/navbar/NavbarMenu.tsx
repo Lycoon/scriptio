@@ -87,13 +87,13 @@ const NavbarMenu = ({ project }: NavbarMenuProps) => {
             Edit: [
                 { name: "Project info", action: () => redirectProjectInfo(project.id) },
                 { name: "Screenplay", action: () => redirectScreenplay(project.id) },
-                { name: "Title page", action: () => redirectTitlePage(project.id) },
+                /*{ name: "Title page", action: () => redirectTitlePage(project.id) },*/
                 /*{ name: "Story", action: () => redirectStory(project.id) },*/
             ],
-            /*Production: [
+            Production: [
                 { name: "Statistics", action: () => redirectStatistics(project.id) },
-                { name: "Reports", action: () => redirectReports(project.id) },
-            ],*/
+                /*{ name: "Reports", action: () => redirectReports(project.id) },*/
+            ],
         };
     }
 

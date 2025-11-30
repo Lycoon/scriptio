@@ -18,26 +18,9 @@ const HomePageWindow = () => {
     }, []);
 
     if (isLoading) return null;
-
-    if (isDesktop) {
-        return (
-            <>
-                <Navbar />
-                <DesktopHomePageContainer />
-            </>
-        );
-    }
-
-    if (user) {
-        return (
-            <>
-                <Navbar />
-                <ProjectPageContainer />
-            </>
-        );
-    } else {
-        return <HomePageContainer />;
-    }
+    if (isDesktop) return <DesktopHomePageContainer />;
+    if (user) return <ProjectPageContainer />;
+    else return <HomePageContainer />;
 };
 
 const HomePage: NextPage = () => {
