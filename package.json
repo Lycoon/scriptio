@@ -12,6 +12,7 @@
     "dependencies": {
         "@aws-sdk/client-s3": "^3.113.0",
         "@formkit/auto-animate": "^0.7.0",
+        "@hocuspocus/provider": "^3.4.0",
         "@prisma/client": "^6.19.0",
         "@svgr/core": "^8.1.0",
         "@tiptap/extension-bold": "^3.13.0",
@@ -40,7 +41,9 @@
         "react-dom": "^19.2.1",
         "render2": "^0.1.4",
         "swr": "^2.2.4",
-        "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store"
+        "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store",
+        "y-indexeddb": "^9.0.12",
+        "yjs": "^13.6.27"
     },
     "devDependencies": {
         "@svgr/webpack": "^8.1.0",

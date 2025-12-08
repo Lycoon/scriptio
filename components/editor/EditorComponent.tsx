@@ -8,7 +8,7 @@ type Props = {
     editor: Editor | null;
 };
 
-const EditorComponent = ({ editor }: Props) => {
+const ScreenplayEditor = ({ editor }: Props) => {
     const [pages, setPages] = useState<number>(0);
 
     useEffect(() => {
@@ -36,4 +36,4 @@ const EditorComponent = ({ editor }: Props) => {
     );
 };
 
-export default EditorComponent;
+export default ScreenplayEditor;

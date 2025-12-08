@@ -1,5 +1,5 @@
 /* Components */
-import EditorComponent from "./EditorComponent";
+import ScreenplayEditor from "./EditorComponent";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
@@ -47,7 +47,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
     };
 
     const editorView = useScriptioEditor(
-        project.screenplay,
+        project,
         setActiveElement,
         setSelectedStyles,
         updateSuggestions,
@@ -176,7 +176,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
             <Popup />
             <EditorSidebarNavigation />
             <div className={styles.container} onScroll={onScroll}>
-                <EditorComponent editor={editorView} />
+                <ScreenplayEditor editor={editorView} />
             </div>
             <EditorSidebarFormat
                 selectedStyles={selectedStyles}

@@ -9,9 +9,13 @@ import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { computeFullScenesData } from "./screenplay";
 import { computeFullCharactersData } from "./characters";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
+import * as Y from "yjs";
+import { IndexeddbPersistence } from "@node_modules/y-indexeddb/dist/src/y-indexeddb";
+import { HocuspocusProvider } from "@node_modules/@hocuspocus/provider/dist/packages/provider/src";
+import { Project } from "../utils/types";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -149,62 +153,92 @@ const processAutoComplete = (
     }
 };
 
-export const SCRIPTIO_EXTENSIONS = [
-    // default
-    Document,
-    Text,
-    History,
-    CustomBold,
-    CustomItalic,
-    CustomUnderline,
+export const useCollaboration = (projectId: string) => {
+    const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
+    const [provider, setProvider] = useState<HocuspocusProvider | null>(null);
+    const [status, setStatus] = useState<string>("connecting");
 
-    // scriptio
-    Screenplay,
-];
+    useEffect(() => {
+        if (!projectId) return;
+
+        const doc = new Y.Doc();
+        const localProvider = new IndexeddbPersistence(projectId, doc);
+        const cloudProvider = new HocuspocusProvider({
+            url: "wss://votre-worker.workers.dev",
+            name: projectId,
+            document: doc,
+            onStatus: (event) => {
+                console.log(event.status); // logs "connected" or "disconnected"
+                setStatus(event.status);
+            },
+        });
+
+        setYdoc(doc);
+        setProvider(cloudProvider);
+
+        return () => {
+            cloudProvider.destroy();
+            localProvider.destroy();
+            doc.destroy();
+        };
+    }, [projectId]);
+
+    return { ydoc, provider, status };
+};
 
 export const useScriptioEditor = (
-    screenplay: JSONContent,
+    project: Project,
     setActiveElement: (element: ScreenplayElement, applyStyle: boolean) => void,
     setSelectedStyles: (style: Style) => void,
     updateSuggestions: (suggestions: string[]) => void,
     updateSuggestionsData: (data: SuggestionData) => void
 ) => {
     const projectCtx = useContext(ProjectContext);
-    const editor = useEditor({
-        immediatelyRender: false,
-        extensions: SCRIPTIO_EXTENSIONS,
+    const { ydoc, provider, status } = useCollaboration(project.id);
+    const editorView = useEditor(
+        {
+            extensions: [
+                Document,
+                Text,
+                CustomBold,
+                CustomItalic,
+                CustomUnderline,
+                Screenplay,
+                ...(ydoc && provider ? [] : []),
+            ],
 
-        // update on each screenplay update
-        onUpdate({ editor }) {
-            const screenplay = editor.getJSON();
-            projectCtx.updateSaveStatus(SaveStatus.Saving);
-            deferredScreenplaySave(screenplay, projectCtx);
-            deferredSceneUpdate(screenplay, projectCtx);
-            deferredCharactersUpdate(screenplay, projectCtx);
-        },
+            // update on each screenplay update
+            onUpdate({ editor }) {
+                const screenplay = editor.getJSON();
+                projectCtx.updateSaveStatus(SaveStatus.Saving);
+                deferredScreenplaySave(screenplay, projectCtx);
+                deferredSceneUpdate(screenplay, projectCtx);
+                deferredCharactersUpdate(screenplay, projectCtx);
+            },
 
-        onCreate({ editor }) {
-            projectCtx.updateEditor(editor as Editor);
-            replaceScreenplay(editor as Editor, screenplay);
-        },
+            onCreate({ editor }) {
+                projectCtx.updateEditor(editor as Editor);
+                replaceScreenplay(editor as Editor, screenplay);
+            },
 
-        // update active on caret update
-        onSelectionUpdate({ editor, transaction }) {
-            const anchor = (transaction as any).curSelection.$anchor;
-            const elementAnchor = anchor.parent.attrs.class;
+            // update active on caret update
+            onSelectionUpdate({ editor, transaction }) {
+                const anchor = (transaction as any).curSelection.$anchor;
+                const elementAnchor = anchor.parent.attrs.class;
 
-            setActiveElement(elementAnchor, false);
-            if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
+                setActiveElement(elementAnchor, false);
+                if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
 
-            /*processAutoComplete(
+                /*processAutoComplete(
                 anchor,
                 projectCtx,
                 editor as Editor,
                 updateSuggestions,
                 updateSuggestionsData
             );*/
+            },
         },
-    });
-
-    return editor;
+        [ydoc]
+    );
+    return editorView;
 };
