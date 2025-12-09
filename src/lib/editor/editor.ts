@@ -8,7 +8,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import { computeFullScenesData } from "./screenplay";
 import { computeFullCharactersData } from "./characters";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import * as Y from "yjs";
@@ -17,6 +17,7 @@ import { IndexeddbPersistence } from "y-indexeddb";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import { WebsocketProvider } from "y-websocket";
+import { Awareness, removeAwarenessStates } from "@node_modules/y-protocols/awareness";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -162,7 +163,50 @@ const processAutoComplete = (
     }
 };
 
-export const useLocal = (projectId: string) => {
+const EMPTY_MAP = new Map(); // Stable reference for empty state
+
+export const useUsers = (awareness: Awareness | null) => {
+    // 1. ALWAYS call useRef (Do not return early before this!)
+    const stateRef = useRef<ReturnType<Awareness["getStates"]>>(EMPTY_MAP);
+
+    // 2. Define subscribe (Handle null awareness inside)
+    const subscribe = useCallback(
+        (callback: () => void) => {
+            if (!awareness) return () => {};
+
+            const onChange = () => {
+                stateRef.current = new Map(awareness.getStates());
+                callback();
+            };
+
+            awareness.on("change", onChange);
+
+            // Optional: Update ref immediately on subscribe to ensure data is fresh
+            stateRef.current = new Map(awareness.getStates());
+
+            return () => awareness.off("change", onChange);
+        },
+        [awareness] // Re-run subscription when awareness instance changes
+    );
+
+    // 3. Define getSnapshot (Handle null awareness inside)
+    const getSnapshot = useCallback(() => {
+        if (!awareness) return EMPTY_MAP;
+
+        // Lazy init: If we have awareness but empty ref, populate it now
+        if (stateRef.current === EMPTY_MAP) {
+            stateRef.current = new Map(awareness.getStates());
+        }
+        return stateRef.current;
+    }, [awareness]);
+
+    // 4. ALWAYS call useSyncExternalStore
+    const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+    return state;
+};
+
+const useLocal = (projectId: string) => {
     const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
 
     useEffect(() => {
@@ -182,9 +226,10 @@ export const useLocal = (projectId: string) => {
     return { ydoc };
 };
 
-export const useCollaboration = (projectId: string, doc: Y.Doc | null) => {
+const useCollaboration = (projectId: string, doc: Y.Doc | null) => {
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
     const [status, setStatus] = useState<string>("connecting");
+    const users = useUsers(provider ? provider.awareness : null);
 
     useEffect(() => {
         if (!doc || !projectId) {
@@ -202,7 +247,6 @@ export const useCollaboration = (projectId: string, doc: Y.Doc | null) => {
             }
 
             const { data } = await token.json();
-
             const cloudProvider = new WebsocketProvider(
                 `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
                 projectId,
@@ -214,22 +258,28 @@ export const useCollaboration = (projectId: string, doc: Y.Doc | null) => {
                     },
                 }
             );
-
             setProvider(cloudProvider);
+
+            const disconnect = () => {
+                removeAwarenessStates(cloudProvider.awareness, [doc.clientID], "window unload");
+                cloudProvider.destroy();
+            };
+
+            window.addEventListener("beforeunload", disconnect);
 
             cloudProvider.on("status", (event: any) => {
                 setStatus(event.status);
             });
 
             return () => {
-                cloudProvider.destroy();
+                disconnect();
             };
         };
 
         connect();
     }, [doc, projectId]);
 
-    return { provider, status };
+    return { provider, status, users };
 };
 
 export const useScriptioEditor = (
@@ -241,7 +291,7 @@ export const useScriptioEditor = (
 ) => {
     const projectCtx = useContext(ProjectContext);
     const { ydoc } = useLocal(project.id);
-    const { provider, status } = useCollaboration(project.id, ydoc);
+    const { provider, status, users } = useCollaboration(project.id, ydoc);
 
     useEffect(() => {
         console.log("Cloud Provider: ", provider);
@@ -272,7 +322,7 @@ export const useScriptioEditor = (
                               provider: provider,
                               user: {
                                   name: "User_" + Math.floor(Math.random() * 1000),
-                                  color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+                                  color: "#0000FF",
                               },
                               render: (user: any) => {
                                   const caret = document.createElement("span");
@@ -302,7 +352,6 @@ export const useScriptioEditor = (
 
             // Update on each screenplay update
             onUpdate({ editor }) {
-                console.log("onUpdate");
                 const screenplay = editor.getJSON();
                 projectCtx.updateSaveStatus(SaveStatus.Saving);
                 deferredScreenplaySave(screenplay, projectCtx);
@@ -311,10 +360,8 @@ export const useScriptioEditor = (
             },
 
             onCreate({ editor }) {
-                console.log("onCreate");
                 projectCtx.updateEditor(editor as Editor);
                 if (ydoc && ydoc.getText("doc").length === 0 && project.screenplay) {
-                    console.log("Loading screenplay into YDoc: ", project.screenplay);
                     replaceScreenplay(editor as Editor, project.screenplay);
                 }
             },

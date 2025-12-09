@@ -26,6 +26,7 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
                 break;
 
             case 1:
+                //awarenessProtocol.applyAwarenessUpdate(room.awareness, messageContent.subarray(1), sender);
                 room.broadcast(fullMessage, sender);
                 break;
 
@@ -34,10 +35,9 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
                 break;
         }
     } catch (e) {
-        console.error(
-            `YJS Protocol Error: Failed to process message type ${messageType} with message ${messageContent}`,
-            e
-        );
+        const decoder = new TextDecoder("utf-8");
+        const text = decoder.decode(fullMessage);
+        console.error(`YJS Protocol Error: Failed to process message type ${messageType} with message ${text}`);
         if (messageType !== 1) {
             room.broadcast(fullMessage, sender);
         }
@@ -46,15 +46,24 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
 
 export class ScreenplayRoom extends DurableObject {
     doc: Y.Doc;
-    sessions: Set<WebSocket>;
+    sessions: Map<WebSocket, Set<number>>;
     saveTimeout: any = null;
     awareness: awarenessProtocol.Awareness;
 
     constructor(ctx: DurableObjectState, env: Env) {
         super(ctx, env);
-        this.sessions = new Set();
+        this.sessions = new Map();
         this.doc = new Y.Doc();
         this.awareness = new awarenessProtocol.Awareness(this.doc);
+
+        this.awareness.on("update", ({ added, updated, removed }: any, origin: any) => {
+            if (origin instanceof WebSocket) {
+                const clientIds = this.sessions.get(origin) || new Set();
+                added.forEach((id: number) => clientIds.add(id));
+                this.sessions.set(origin, clientIds);
+            }
+            //broadcastAwareness(this, added, updated, removed, origin);
+        });
 
         this.ctx.blockConcurrencyWhile(async () => {
             const storedDoc = await this.ctx.storage.get<Uint8Array>("doc");
@@ -70,7 +79,7 @@ export class ScreenplayRoom extends DurableObject {
             const [client, server] = Object.values(pair);
 
             this.ctx.acceptWebSocket(server);
-            this.sessions.add(server);
+            this.sessions.set(server, new Set());
 
             const encoder = encoding.createEncoder();
             syncProtocol.writeSyncStep1(encoder, this.doc);
@@ -108,11 +117,15 @@ export class ScreenplayRoom extends DurableObject {
     }
 
     async webSocketClose(ws: WebSocket) {
-        this.sessions.delete(ws);
+        const clientIds = this.sessions.get(ws);
+        if (clientIds) {
+            awarenessProtocol.removeAwarenessStates(this.awareness, Array.from(clientIds), null);
+            this.sessions.delete(ws);
+        }
     }
 
     broadcast(message: Uint8Array, sender: WebSocket | undefined) {
-        for (const client of this.sessions) {
+        for (const client of this.sessions.keys()) {
             if (client !== sender && client.readyState === 1) {
                 client.send(message);
             }
