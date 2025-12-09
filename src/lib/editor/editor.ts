@@ -352,6 +352,7 @@ export const useScriptioEditor = (
 
             // Update on each screenplay update
             onUpdate({ editor }) {
+                console.log("onUpdate");
                 const screenplay = editor.getJSON();
                 projectCtx.updateSaveStatus(SaveStatus.Saving);
                 deferredScreenplaySave(screenplay, projectCtx);
@@ -360,6 +361,7 @@ export const useScriptioEditor = (
             },
 
             onCreate({ editor }) {
+                console.log("onCreate");
                 projectCtx.updateEditor(editor as Editor);
                 if (ydoc && ydoc.getText("doc").length === 0 && project.screenplay) {
                     replaceScreenplay(editor as Editor, project.screenplay);
