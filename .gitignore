@@ -5,6 +5,10 @@
 /.pnp
 .pnp.js
 
+# collaboration
+/src/lib/collaboration/node_modules
+.wrangler
+
 # testing
 /coverage
 /test_database
