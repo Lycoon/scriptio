@@ -115,10 +115,8 @@ const Navbar = () => {
     return (
         <nav className={join(navbar.container, sidebar.shadow)}>
             <div className={navbar.logo_and_tabs}>
-                <Link legacyBehavior href="/">
-                    <a className={navbar.logo}>
-                        <p className={navbar.logo_text}>Scriptio</p>
-                    </a>
+                <Link href="/" className={navbar.logo}>
+                    <p className={navbar.logo_text}>Scriptio</p>
                 </Link>
                 <NavbarMenu project={project!} />
             </div>

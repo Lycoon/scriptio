@@ -170,7 +170,8 @@ export const useScriptioEditor = (
     updateSuggestionsData: (data: SuggestionData) => void
 ) => {
     const projectCtx = useContext(ProjectContext);
-    const editorView = useEditor({
+    const editor = useEditor({
+        immediatelyRender: false,
         extensions: SCRIPTIO_EXTENSIONS,
 
         // update on each screenplay update
@@ -204,5 +205,6 @@ export const useScriptioEditor = (
             );*/
         },
     });
-    return editorView;
+
+    return editor;
 };

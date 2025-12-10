@@ -47,8 +47,8 @@ const RecoveryForm = () => {
                         Send
                     </button>
                 ) : (
-                    <Link legacyBehavior href={"/login"}>
-                        <a className={form.btn}>Back</a>
+                    <Link href={"/login"} className={form.btn}>
+                        Back
                     </Link>
                 )}
             </div>
