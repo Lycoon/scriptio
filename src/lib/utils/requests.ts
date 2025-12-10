@@ -4,7 +4,6 @@ import { CharacterMap, getPersistentCharacters } from "../editor/characters";
 import { CookieUser, DataResult, ProjectCreated, ProjectCreation, ProjectCreationDTO, ProjectUpdateDTO } from "./types";
 import { SaveMode, SaveStatus } from "./enums";
 import { randomUUID } from "crypto";
-import { writeFileSync } from "fs";
 import { setDesktopValue } from "../store";
 import { ProjectContextType } from "@src/context/ProjectContext";
 import { JSONContent } from "@tiptap/react";
@@ -81,7 +80,7 @@ export const createProject = async (
 
         try {
             // Create project file on disk
-            writeFileSync(project.filePath!, JSON.stringify(body));
+            //writeFileSync(project.filePath!, JSON.stringify(body));
         } catch (err) {
             return ErrorResponse("Project could not be created on disk");
         }
