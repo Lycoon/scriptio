@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "@src/lib/messages";
-import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 import { signup } from "@src/lib/utils/requests";
+import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 
 import form from "../../utils/Form.module.css";
+import { useRouter } from "@node_modules/next/router";
 
 const SignupForm = () => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
+    const { query } = useRouter();
 
     const resetFromInfo = () => {
         setFormInfo(null);
@@ -25,7 +27,7 @@ const SignupForm = () => {
             return;
         }
 
-        const res = await signup(email, pwd1);
+        const res = await signup(email, pwd1, query.token as string);
         const json = await res.json();
 
         setFormInfo({ content: json.message, isError: !res.ok });
@@ -41,7 +43,15 @@ const SignupForm = () => {
 
             <label className={form.element}>
                 <span>Email</span>
-                <input className={form.input} name="email" type="email" onChange={resetFromInfo} required />
+                <input
+                    key={query.email as string}
+                    className={form.input}
+                    name="email"
+                    type="email"
+                    onChange={resetFromInfo}
+                    defaultValue={query.email}
+                    required
+                />
             </label>
 
             <label className={form.element}>

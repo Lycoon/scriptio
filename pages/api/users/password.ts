@@ -3,8 +3,9 @@ import { FAILED_PASSWORD_CHANGED, MISSING_BODY, PASSWORD_CHANGED, PASSWORD_REQUI
 import { generateSecrets, updateUser } from "@src/server/service/user-service";
 import { ResponseAPI } from "@src/lib/utils/requests";
 import { getCookieUser } from "@src/lib/session";
+import { apiHandler } from "@src/lib/utils/api-handler";
 
-export default async function passwordRoute(req: NextApiRequest, res: NextApiResponse) {
+async function passwordRoute(req: NextApiRequest, res: NextApiResponse) {
     if (!req.query || !req.query.userId) {
         return ResponseAPI(res, 400, "Query not found");
     }
@@ -54,3 +55,5 @@ async function patchMethod(userId: number, body: any, res: NextApiResponse) {
 
     return ResponseAPI(res, 200, PASSWORD_CHANGED, null);
 }
+
+export default apiHandler(passwordRoute);

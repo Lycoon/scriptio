@@ -14,6 +14,8 @@ export type Settings = {
     sceneBackground?: boolean;
     notesColor?: string;
     exportedNotesColor?: string;
+    onlineUsername?: string;
+    onlineColor?: string;
 };
 
 export interface UserUpdate {

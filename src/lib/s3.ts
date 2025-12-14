@@ -1,8 +1,4 @@
-import {
-    DeleteObjectCommand,
-    PutObjectCommand,
-    S3Client,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { env } from "process";
 
 const client = new S3Client({
@@ -14,35 +10,34 @@ const client = new S3Client({
     },
 });
 
-export const uploadObject = async (name: string, data: string) => {
+export const upload = async (name: string, data: string): Promise<boolean> => {
     const params = {
         Bucket: env.S3_BUCKET,
         Key: name,
-        Body: Buffer.from(
-            data.substring("data:image/jpeg;base64,".length),
-            "base64"
-        ),
+        Body: Buffer.from(data.substring("data:image/jpeg;base64,".length), "base64"),
         ContentType: "image/jpeg",
     };
 
     try {
-        const data = await client.send(new PutObjectCommand(params));
-        return data;
-    } catch (e: any) {
-        console.log(e);
+        await client.send(new PutObjectCommand(params));
+        return true;
+    } catch (e) {
+        console.error("An error occurred while uploading object to S3: ", e);
+        return false;
     }
 };
 
-export const deleteObject = async (name: string) => {
+export const destroy = async (name: string): Promise<boolean> => {
     const params = {
         Bucket: env.S3_BUCKET,
         Key: name,
     };
 
     try {
-        const data = await client.send(new DeleteObjectCommand(params));
-        return data;
-    } catch (e: any) {
-        console.log(e);
+        await client.send(new DeleteObjectCommand(params));
+        return true;
+    } catch (e) {
+        console.error("An error occurred while destroying object from S3: ", e);
+        return false;
     }
 };

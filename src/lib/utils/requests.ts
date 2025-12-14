@@ -1,12 +1,9 @@
 import { NextApiResponse } from "next";
 import { Settings } from "../../server/repository/user-repository";
 import { CharacterMap, getPersistentCharacters } from "../editor/characters";
-import { CookieUser, DataResult, ProjectCreated, ProjectCreation, ProjectCreationDTO, ProjectUpdateDTO } from "./types";
-import { SaveMode, SaveStatus } from "./enums";
-import { randomUUID } from "crypto";
-import { setDesktopValue } from "../store";
+import { CookieUser, DataResult, ProjectCreated, ProjectCreation, ProjectUpdateDTO } from "./types";
+import { SaveStatus } from "./enums";
 import { ProjectContextType } from "@src/context/ProjectContext";
-import { JSONContent } from "@tiptap/react";
 
 enum APIMethod {
     Get = "GET",
@@ -15,7 +12,7 @@ enum APIMethod {
     Delete = "DELETE",
 }
 
-const request = async (url: string, method: string, body?: Object) => {
+const request = async (url: string, method: APIMethod, body?: Object) => {
     const json = JSON.stringify(body);
     return fetch(url, {
         headers: { "Content-Type": "application/json" },
@@ -24,13 +21,7 @@ const request = async (url: string, method: string, body?: Object) => {
     });
 };
 
-// ------------------------------ //
-//          API RESPONSE          //
-// ------------------------------ //
-
-export const ResponseAPI = (res: NextApiResponse, code: number, message: string, data?: any) => {
-    res.status(code).json({ message, data });
-};
+// API Responses
 
 export const ErrorResponse = (message: string) => {
     return { message, isError: true };
@@ -40,59 +31,33 @@ export const SuccessResponse = (message: string, data: any) => {
     return { message, data, isError: false };
 };
 
-// ------------------------------ //
-//            PROJECT             //
-// ------------------------------ //
+// Project
 
 export const createProject = async (
     project: ProjectCreation,
     isDesktop: boolean,
-    user: CookieUser | undefined
+    user: CookieUser
 ): Promise<DataResult<ProjectCreated>> => {
-    let body: ProjectCreationDTO = {
+    let body: ProjectCreation = {
+        userId: user.id,
         title: project.title,
         description: project.description,
         poster: project.poster,
     };
 
-    let resCloud, cloudProjectId;
-    if (user && project.saveMode & SaveMode.Cloud) {
-        resCloud = await request(`/api/projects`, APIMethod.Post, body);
+    let projectId;
+    if (user) {
+        const res = await request(`/api/projects`, APIMethod.Post, body);
 
-        if (resCloud.ok) {
-            const json = await resCloud.json();
-            cloudProjectId = json.data.id;
+        if (res.ok) {
+            const json = await res.json();
+            projectId = json.data.id;
         } else {
             return ErrorResponse("Project could not be created on cloud");
         }
     }
 
-    let resLocal, fileProjectId;
-    if (isDesktop && project.saveMode & SaveMode.Local) {
-        fileProjectId = randomUUID();
-
-        // Add project setting to local storage
-        resLocal = await setDesktopValue(fileProjectId, { cloudProjectId, path: project.filePath }, "projects.cfg");
-
-        if (resLocal.error) {
-            return ErrorResponse("Project could not be added to local storage");
-        }
-
-        try {
-            // Create project file on disk
-            //writeFileSync(project.filePath!, JSON.stringify(body));
-        } catch (err) {
-            return ErrorResponse("Project could not be created on disk");
-        }
-
-        if (project.saveMode & ~SaveMode.Cloud) {
-            // If project has only been created locally, return fileProjectId
-            return SuccessResponse("Project created successfully", { id: fileProjectId });
-        }
-    }
-
-    // If file has been synced to cloud, return cloudProjectId
-    return SuccessResponse("Project created successfully", { id: cloudProjectId });
+    return SuccessResponse("Project created successfully", { id: projectId });
 };
 
 export const deleteProject = (projectId: string) => {
@@ -115,19 +80,7 @@ export const saveCharacters = async (projectCtx: ProjectContextType, characters:
     return res;
 };
 
-export const saveScreenplay = async (projectCtx: ProjectContextType, screenplay: JSONContent): Promise<Response> => {
-    const projectId = projectCtx.project!.id;
-    const res = await editProject({ projectId, screenplay });
-
-    if (res.ok) projectCtx.updateSaveStatus(SaveStatus.Saved);
-    else projectCtx.updateSaveStatus(SaveStatus.Error);
-
-    return res;
-};
-
-// ------------------------------ //
-//               USER             //
-// ------------------------------ //
+// User
 
 export const changePassword = (password: string) => {
     return request(`/api/users/password`, APIMethod.Patch, { password });
@@ -137,12 +90,10 @@ export const editUserSettings = (body: Settings) => {
     return request(`/api/users/settings`, APIMethod.Patch, body);
 };
 
-// ------------------------------ //
-//         AUTHENTICATION         //
-// ------------------------------ //
+// Authentication
 
-export const signup = (email: string, password: string) => {
-    return request(`/api/signup`, APIMethod.Post, { email, password });
+export const signup = (email: string, password: string, inviteToken?: string) => {
+    return request(`/api/signup`, APIMethod.Post, { email, password, inviteToken });
 };
 
 export const login = (email: string, password: string) => {

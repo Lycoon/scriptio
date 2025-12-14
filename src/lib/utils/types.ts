@@ -1,6 +1,5 @@
 import { Secrets, Settings } from "../../server/repository/user-repository";
 import { CharacterMap } from "../editor/characters";
-import { JSONContent } from "@tiptap/react";
 import { SaveMode } from "./enums";
 
 // User
@@ -24,13 +23,7 @@ export type Project = {
     title: string;
     poster: string;
     description: string | null;
-    screenplay: JSONContent;
     characters: CharacterMap;
-};
-
-export type ProjectCreation = ProjectCreationDTO & {
-    saveMode: SaveMode;
-    filePath?: string;
 };
 
 // Used to return freshly created project id whether it's on the cloud or locally
@@ -53,9 +46,9 @@ export type DataResult<T> = {
 };
 
 // Data Transfer Objects
-export type ProjectCreationDTO = {
+export type ProjectCreation = {
+    userId: number;
     title: string;
-    userId?: number;
     description?: string;
     poster?: string;
 };
@@ -64,7 +57,6 @@ export type ProjectUpdateDTO = {
     projectId: string;
     title?: string;
     description?: string;
-    screenplay?: JSONContent;
-    poster?: string;
+    poster?: boolean;
     characters?: CharacterMap;
 };

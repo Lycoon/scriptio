@@ -36,10 +36,12 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         e.preventDefault();
         resetFormInfo();
 
+        if (!user) return;
+
         const body: ProjectCreation = {
+            userId: user.id,
             title: e.target.title.value,
             description: e.target.description.value,
-            saveMode: SaveMode.Cloud, //TODO: Add save mode to form
         };
 
         if (selectedFile) {

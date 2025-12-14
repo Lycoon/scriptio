@@ -10,13 +10,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ProjectRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
 model User {
   id                  Int         @id @default(autoincrement())
   createdAt           DateTime    @default(now())
-
   email               String      @unique
   verified            Boolean     @default(false)
-  projects            Project[]
+
+  projects            ProjectMember[]
 
   secrets             Secret      @relation(fields: [secretsId], references: [id])
   secretsId           Int         @unique
@@ -34,7 +41,6 @@ model Secret {
 
   emailHash           String
   lastEmailHash       DateTime    @default(now())
-
   recoverHash         String?
   lastRecoverHash     DateTime    @default(now())
 }
@@ -47,6 +53,8 @@ model Settings {
   sceneBackground     Boolean     @default(true)
   notesColor          String      @default("#FFFF68")
   exportedNotesColor  String      @default("#FFFF68")
+  onlineUsername      String?
+  onlineColor         String?
 }
 
 model Project {
@@ -56,10 +64,33 @@ model Project {
 
   title               String
   description         String?
-  poster              String?
-  screenplay          Json?
+  poster              Boolean     @default(false)
   characters          Json?
+
+  members             ProjectMember[]
+  invitations         ProjectInvitation[]
+}
+
+model ProjectMember {
+  id                  Int         @id @default(autoincrement())
+  role                ProjectRole @default(VIEWER)
 
   user                User        @relation(fields: [userId], references: [id])
   userId              Int
+  project             Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId           String
+
+  @@unique([userId, projectId])
+}
+
+model ProjectInvitation {
+  id                   Int        @id @default(autoincrement())
+  token                String     @unique
+  email                String
+  createdAt            DateTime   @default(now())
+
+  project              Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId            String
+  
+  @@unique([email, projectId])
 }

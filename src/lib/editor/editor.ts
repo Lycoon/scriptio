@@ -18,6 +18,8 @@ import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import { WebsocketProvider } from "y-websocket";
 import { Awareness, removeAwarenessStates } from "@node_modules/y-protocols/awareness";
+import { useSettings } from "../utils/hooks";
+import { getRandomColor } from "../utils/misc";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -97,13 +99,20 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 //          EDITOR STATE          //
 // ------------------------------ //
 
+export const SCRIPTIO_EXTENSIONS = [
+    Document.configure({
+        content: "Screenplay+",
+    }),
+    Text,
+    Screenplay,
+    CustomBold,
+    CustomItalic,
+    CustomUnderline,
+];
+
 const SCREENPLAY_SAVE_DELAY = 2000;
 const SCENE_UPDATE_DELAY = 500;
 const CHARACTERS_UPDATE_DELAY = 500;
-
-const deferredScreenplaySave = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
-    saveScreenplay(projectCtx, screenplay);
-}, SCREENPLAY_SAVE_DELAY);
 
 export const deferredSceneUpdate = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
     computeFullScenesData(screenplay, projectCtx);
@@ -163,49 +172,6 @@ const processAutoComplete = (
     }
 };
 
-const EMPTY_MAP = new Map(); // Stable reference for empty state
-
-export const useUsers = (awareness: Awareness | null) => {
-    // 1. ALWAYS call useRef (Do not return early before this!)
-    const stateRef = useRef<ReturnType<Awareness["getStates"]>>(EMPTY_MAP);
-
-    // 2. Define subscribe (Handle null awareness inside)
-    const subscribe = useCallback(
-        (callback: () => void) => {
-            if (!awareness) return () => {};
-
-            const onChange = () => {
-                stateRef.current = new Map(awareness.getStates());
-                callback();
-            };
-
-            awareness.on("change", onChange);
-
-            // Optional: Update ref immediately on subscribe to ensure data is fresh
-            stateRef.current = new Map(awareness.getStates());
-
-            return () => awareness.off("change", onChange);
-        },
-        [awareness] // Re-run subscription when awareness instance changes
-    );
-
-    // 3. Define getSnapshot (Handle null awareness inside)
-    const getSnapshot = useCallback(() => {
-        if (!awareness) return EMPTY_MAP;
-
-        // Lazy init: If we have awareness but empty ref, populate it now
-        if (stateRef.current === EMPTY_MAP) {
-            stateRef.current = new Map(awareness.getStates());
-        }
-        return stateRef.current;
-    }, [awareness]);
-
-    // 4. ALWAYS call useSyncExternalStore
-    const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-
-    return state;
-};
-
 const useLocal = (projectId: string) => {
     const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
 
@@ -226,10 +192,10 @@ const useLocal = (projectId: string) => {
     return { ydoc };
 };
 
-const useCollaboration = (projectId: string, doc: Y.Doc | null) => {
+const useCloud = (projectId: string, doc: Y.Doc | null) => {
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
     const [status, setStatus] = useState<string>("connecting");
-    const users = useUsers(provider ? provider.awareness : null);
+    const [users, setUsers] = useState<any[]>([]);
 
     useEffect(() => {
         if (!doc || !projectId) {
@@ -265,10 +231,18 @@ const useCollaboration = (projectId: string, doc: Y.Doc | null) => {
                 cloudProvider.destroy();
             };
 
+            // If a user disconnects, we remove its awareness state
             window.addEventListener("beforeunload", disconnect);
-
             cloudProvider.on("status", (event: any) => {
                 setStatus(event.status);
+            });
+
+            // Listen to connected users
+            cloudProvider.awareness.on("update", () => {
+                const users = Array.from(cloudProvider.awareness.getStates().values())
+                    .filter((state: any) => state.user)
+                    .map((state: any) => state.user);
+                setUsers(users);
             });
 
             return () => {
@@ -290,29 +264,15 @@ export const useScriptioEditor = (
     updateSuggestionsData: (data: SuggestionData) => void
 ) => {
     const projectCtx = useContext(ProjectContext);
+    const { onlineUsername, onlineColor } = useSettings();
     const { ydoc } = useLocal(project.id);
-    const { provider, status, users } = useCollaboration(project.id, ydoc);
+    const { provider, status, users } = useCloud(project.id, ydoc);
 
-    useEffect(() => {
-        console.log("Cloud Provider: ", provider);
-    }, [provider]);
-
-    useEffect(() => {
-        console.log("Collaboration status: ", status);
-    }, [status]);
-
-    const editorView = useEditor(
+    const scriptioEditor = useEditor(
         {
             immediatelyRender: false,
             extensions: [
-                Document.configure({
-                    content: "Screenplay+",
-                }),
-                Text,
-                Screenplay,
-                CustomBold,
-                CustomItalic,
-                CustomUnderline,
+                ...SCRIPTIO_EXTENSIONS,
                 ...(ydoc && provider
                     ? [
                           Collaboration.configure({
@@ -321,8 +281,8 @@ export const useScriptioEditor = (
                           CollaborationCaret.configure({
                               provider: provider,
                               user: {
-                                  name: "User_" + Math.floor(Math.random() * 1000),
-                                  color: "#0000FF",
+                                  name: onlineUsername || "User_" + Math.floor(Math.random() * 1000),
+                                  color: onlineColor || getRandomColor(),
                               },
                               render: (user: any) => {
                                   const caret = document.createElement("span");
@@ -355,7 +315,6 @@ export const useScriptioEditor = (
                 console.log("onUpdate");
                 const screenplay = editor.getJSON();
                 projectCtx.updateSaveStatus(SaveStatus.Saving);
-                deferredScreenplaySave(screenplay, projectCtx);
                 deferredSceneUpdate(screenplay, projectCtx);
                 deferredCharactersUpdate(screenplay, projectCtx);
             },
@@ -363,9 +322,6 @@ export const useScriptioEditor = (
             onCreate({ editor }) {
                 console.log("onCreate");
                 projectCtx.updateEditor(editor as Editor);
-                if (ydoc && ydoc.getText("doc").length === 0 && project.screenplay) {
-                    replaceScreenplay(editor as Editor, project.screenplay);
-                }
             },
 
             // Update active on caret update
@@ -388,5 +344,5 @@ export const useScriptioEditor = (
         [ydoc, provider]
     );
 
-    return editorView;
+    return scriptioEditor;
 };

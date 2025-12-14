@@ -1,9 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { ResponseAPI } from "@src/lib/utils/requests";
 import { CookieUser } from "@src/lib/utils/types";
 import { getCookieUser } from "@src/lib/session";
+import { apiHandler } from "@src/lib/utils/api-handler";
+import { Success } from "@src/lib/utils/api-utils";
 
-export default async function cookieRoute(req: NextApiRequest, res: NextApiResponse<CookieUser | null>) {
+async function cookieRoute(req: NextApiRequest, res: NextApiResponse<CookieUser | null>) {
     const user = await getCookieUser(req, res);
-    return ResponseAPI(res, 200, "", user);
+    return Success(res, user);
 }
+
+export default apiHandler(cookieRoute);

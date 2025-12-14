@@ -54,9 +54,9 @@ const useDesktop = (): boolean => {
     return isDesktop;
 };
 
-const useSettings = (): StateResult<Settings> => {
+const useSettings = (): Settings => {
     const { data, error, mutate, isLoading } = useSWR<Settings>("/api/users/settings");
-    return returnData(data, error, mutate, isLoading);
+    return data || {};
 };
 
 const useProjects = (): StateResult<Project[]> => {

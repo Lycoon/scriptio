@@ -1,60 +1,82 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { FAILED_USER_SETTINGS_UPDATE, MISSING_BODY, USER_SETTINGS_UPDATED } from "@src/lib/messages";
-import { getUserFromId, updateUser } from "@src/server/service/user-service";
-import { ResponseAPI } from "@src/lib/utils/requests";
+import { FAILED_USER_SETTINGS_UPDATE, USER_SETTINGS_UPDATED } from "@src/lib/messages";
 import { getCookieUser } from "@src/lib/session";
+import { apiHandler } from "@src/lib/utils/api-handler";
+import {
+    InternalServerError,
+    NotFoundError,
+    Success,
+    SuccessNoContent,
+    UnauthorizedError,
+    validate,
+} from "@src/lib/utils/api-utils";
 
-export default async function settingsRoute(req: NextApiRequest, res: NextApiResponse) {
+import * as UserService from "@src/server/service/user-service";
+import z from "zod";
+
+const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
+
+type UpdateSettingsBody = z.infer<typeof UpdateSettingsBodySchema>;
+const UpdateSettingsBodySchema = z.object({
+    highlightOnHover: z.boolean().optional(),
+    sceneBackground: z.boolean().optional(),
+    notesColor: z.string().regex(HEX_COLOR_REGEX, { message: "Invalid hex color code" }).optional(),
+    exportedNotesColor: z.string().regex(HEX_COLOR_REGEX, { message: "Invalid hex color code" }).optional(),
+    onlineUsername: z.string().optional(),
+    onlineColor: z.string().regex(HEX_COLOR_REGEX, { message: "Invalid hex color code" }).optional(),
+});
+
+async function settingsRoute(req: NextApiRequest, res: NextApiResponse) {
     const user = await getCookieUser(req, res);
 
     if (!user || !user.id) {
-        return ResponseAPI(res, 403, "Forbidden");
+        throw new UnauthorizedError();
     }
 
     switch (req.method) {
-        case "PATCH":
-            return patchMethod(user.id, req.body, res);
         case "GET":
-            return getMethod(user.id, res);
+            return getSettings(user.id, res);
+        case "PATCH":
+            const body = validate(UpdateSettingsBodySchema, req.body);
+            return updateSettings(user.id, body, res);
     }
 }
 
-async function getMethod(userId: number, res: NextApiResponse<any>) {
-    const user = await getUserFromId(userId);
+/**
+ * GET `/users/settings`
+ *
+ * Gets settings from authenticated user
+ */
+async function getSettings(userId: number, res: NextApiResponse<any>) {
+    const user = await UserService.getUserFromId(userId);
     if (!user) {
-        return ResponseAPI(res, 404, "User with id " + userId + " not found");
+        throw new NotFoundError();
     }
-
-    return ResponseAPI(res, 200, "", user.settings);
+    return Success(res, user.settings);
 }
 
-async function patchMethod(userId: number, body: any, res: NextApiResponse) {
-    if (!body) {
-        return ResponseAPI(res, 400, MISSING_BODY);
-    }
-
+/**
+ * PATCH `/users/settings`
+ *
+ * Updates settings from authenticated user
+ */
+async function updateSettings(userId: number, body: UpdateSettingsBody, res: NextApiResponse) {
     let settings: any = {};
-    if (typeof body.highlightOnHover === "boolean") {
-        settings.highlightOnHover = body.highlightOnHover;
-    }
-    if (typeof body.sceneBackground === "boolean") {
-        settings.sceneBackground = body.sceneBackground;
-    }
-    if (typeof body.notesColor === "string") {
-        settings.notesColor = body.notesColor;
-    }
-    if (typeof body.exportedNotesColor === "string") {
-        settings.exportedNotesColor = body.exportedNotesColor;
-    }
+    settings.highlightOnHover = body.highlightOnHover;
+    settings.sceneBackground = body.sceneBackground;
+    settings.notesColor = body.notesColor;
+    settings.exportedNotesColor = body.exportedNotesColor;
 
-    const updated = await updateUser({
+    const updated = await UserService.updateUser({
         id: { id: userId },
         settings,
     });
 
     if (!updated) {
-        return ResponseAPI(res, 500, FAILED_USER_SETTINGS_UPDATE);
+        throw new InternalServerError(FAILED_USER_SETTINGS_UPDATE);
     }
 
-    return ResponseAPI(res, 200, USER_SETTINGS_UPDATED, null);
+    return SuccessNoContent(res, USER_SETTINGS_UPDATED);
 }
+
+export default apiHandler(settingsRoute);

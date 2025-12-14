@@ -1,28 +1,140 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getProjectFromId } from "@src/server/service/project-service";
-import { ResponseAPI } from "@src/lib/utils/requests";
 import { getCookieUser } from "@src/lib/session";
+import { ProjectRole } from "@prisma/client";
 
-export default async function projectIdRoute(req: NextApiRequest, res: NextApiResponse) {
+import * as S3 from "@src/lib/s3";
+import * as ProjectService from "@src/server/service/project-service";
+import * as Roles from "@src/lib/utils/roles";
+import { apiHandler } from "@src/lib/utils/api-handler";
+import {
+    ForbiddenError,
+    InternalServerError,
+    ProjectNotFoundError,
+    Success,
+    UnauthorizedError,
+    BodyFieldError,
+    validate,
+} from "@src/lib/utils/api-utils";
+
+import z from "zod";
+
+type Query = z.infer<typeof QuerySchema>;
+const QuerySchema = z.object({
+    projectId: z.string(),
+});
+
+type UpdateProjectBody = z.infer<typeof UpdateProjectBodySchema>;
+const UpdateProjectBodySchema = z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    poster: z.string().optional(),
+    characters: z.object().optional(),
+});
+
+async function projectIdRoute(req: NextApiRequest, res: NextApiResponse) {
+    const query = validate(QuerySchema, req.query);
     const user = await getCookieUser(req, res);
-    const projectId = req.query["projectId"];
-
-    if (!user || !user.id || !projectId) {
-        return ResponseAPI(res, 403, "Forbidden");
+    if (!user || !user.id) {
+        throw new UnauthorizedError();
     }
 
     switch (req.method) {
         case "GET":
-            return getMethod(projectId, res);
+            return getProject(query, res);
+        case "PATCH":
+            const body = validate(UpdateProjectBodySchema, req.body);
+            return updateProject(user.id, query, body, res);
+        case "DELETE":
+            return deleteProject(user.id, query, res);
     }
 }
 
-async function getMethod(projectId: any, res: NextApiResponse) {
-    const project = await getProjectFromId(projectId);
+/**
+ * GET `/projets/[projectId]`
+ *
+ * Gets project information
+ */
+async function getProject(query: Query, res: NextApiResponse) {
+    const { projectId } = query;
+    const project = await ProjectService.get(projectId);
 
     if (!project) {
-        return ResponseAPI(res, 404, "Project with id " + projectId + " not found");
+        throw new ProjectNotFoundError();
     }
 
-    return ResponseAPI(res, 200, "", project);
+    return Success(res, project);
 }
+
+/**
+ * PATCH `/projects/[projectId]`
+ *
+ * Updates project information
+ */
+async function updateProject(userId: number, query: Query, body: UpdateProjectBody, res: NextApiResponse) {
+    const { projectId } = query;
+    const member = await ProjectService.getMember(projectId, userId);
+    if (!member) {
+        throw new ProjectNotFoundError();
+    }
+
+    const { title, description, poster, characters } = body;
+    if (title && (title.length < 1 || title.length > 256)) {
+        throw new BodyFieldError("Title must be between 1 and 256 characters");
+    }
+    if (description && description.length > 2048) {
+        throw new BodyFieldError("Description must be at most 2048-character long");
+    }
+
+    if (!Roles.hasRoleOrGreater(member.role, ProjectRole.EDITOR)) {
+        throw new ForbiddenError();
+    }
+
+    let hasPoster = member.project.poster;
+    if (poster) {
+        hasPoster = await S3.upload(projectId, poster);
+    }
+
+    const updated = await ProjectService.update({
+        projectId,
+        title,
+        description,
+        characters,
+        poster: hasPoster,
+    });
+
+    if (!updated) {
+        throw new InternalServerError();
+    }
+
+    return Success(res);
+}
+
+/**
+ * DELETE `/projects/[projectId]`
+ *
+ * Deletes project
+ */
+async function deleteProject(userId: number, query: Query, res: NextApiResponse) {
+    const { projectId } = query;
+    const member = await ProjectService.getMember(projectId, userId);
+    if (!member) {
+        throw new ProjectNotFoundError();
+    }
+
+    if (!Roles.hasRoleOrGreater(member.role, ProjectRole.OWNER)) {
+        throw new ForbiddenError();
+    }
+
+    const deleted = await ProjectService.destroy(projectId);
+    if (!deleted) {
+        throw new InternalServerError();
+    }
+
+    if (member.project.poster) {
+        S3.destroy(projectId);
+    }
+
+    return Success(res);
+}
+
+export default apiHandler(projectIdRoute);

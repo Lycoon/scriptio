@@ -26,6 +26,7 @@ declare namespace NodeJS {
         S3_ACCESS: string;
 
         // SMTP
+        SMTP_HOST: string;
         SMTP_USER: string;
         SMTP_SECRET: string;
     }

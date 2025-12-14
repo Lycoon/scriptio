@@ -43,10 +43,10 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
 
     const setActiveElement = (element: ScreenplayElement, applyStyle = true) => {
         setSelectedElement(element);
-        if (applyStyle && editorView) applyElement(editorView, element);
+        if (applyStyle && editor) applyElement(editor, element);
     };
 
-    const editorView = useScriptioEditor(
+    const editor = useScriptioEditor(
         project,
         setActiveElement,
         setSelectedStyles,
@@ -54,7 +54,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
         updateSuggestionData
     );
 
-    editorView?.setOptions({
+    editor?.setOptions({
         autofocus: "end",
         editorProps: {
             handleKeyDown(view: any, event: any) {
@@ -99,7 +99,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
                         }
                     }
 
-                    insertElement(editorView, newNode, selection.anchor);
+                    insertElement(editor, newNode, selection.anchor);
                     return true; // prevent default new line
                 }
 
@@ -160,11 +160,6 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
         };
     }, [pressedKeyEvent, onUnload]);
 
-    useEffect(() => {
-        computeFullScenesData(project.screenplay, projectCtx);
-        computeFullCharactersData(project.screenplay, projectCtx);
-    }, [editorView]);
-
     const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         if (suggestions.length > 0) updateSuggestions([]);
     };
@@ -176,7 +171,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
             <Popup />
             <EditorSidebarNavigation />
             <div className={styles.container} onScroll={onScroll}>
-                <ScreenplayEditor editor={editorView} />
+                <ScreenplayEditor editor={editor} />
             </div>
             <EditorSidebarFormat
                 selectedStyles={selectedStyles}

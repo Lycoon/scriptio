@@ -25,7 +25,7 @@ const RecoveryPage: NextPage<Props> = ({ userId, recoverHash }: Props) => {
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
     const userId = ctx.query["id"];
-    const recoverHash = ctx.query["code"];
+    const recoverHash = ctx.query["token"];
 
     if (recoverHash && userId) {
         return { props: { userId, recoverHash } };
