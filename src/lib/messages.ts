@@ -8,8 +8,7 @@ export const ERROR_SIGN_UP = "An error occurred while signing up";
 
 // Recovery
 export const ERROR_RECOVERY_LINK_EXPIRED = "Password recovery links are only valid for 1 hour. This one has expired";
-export const RECOVERY_REQUEST_FULFILLED =
-    "Password recovery request fulfilled successfully. It does not imply that an email was sent";
+export const RECOVERY_REQUEST_FULFILLED = "An email for password recovery has been sent if an account is linked to it";
 export const RECOVERY_SUCCESS = "Password changed successfully. You will be redirected to the login page";
 
 // Email

@@ -14,6 +14,7 @@ import {
     UnauthorizedError,
     BodyFieldError,
     validate,
+    SuccessNoContent,
 } from "@src/lib/utils/api-utils";
 
 import z from "zod";
@@ -23,16 +24,17 @@ const QuerySchema = z.object({
     projectId: z.string(),
 });
 
-type UpdateProjectBody = z.infer<typeof UpdateProjectBodySchema>;
+export type UpdateProjectBody = z.infer<typeof UpdateProjectBodySchema>;
 const UpdateProjectBodySchema = z.object({
     title: z.string().optional(),
     description: z.string().optional(),
     poster: z.string().optional(),
-    characters: z.object().optional(),
+    characters: z.any().optional(),
 });
 
 async function projectIdRoute(req: NextApiRequest, res: NextApiResponse) {
     const query = validate(QuerySchema, req.query);
+
     const user = await getCookieUser(req, res);
     if (!user || !user.id) {
         throw new UnauthorizedError();
@@ -40,7 +42,7 @@ async function projectIdRoute(req: NextApiRequest, res: NextApiResponse) {
 
     switch (req.method) {
         case "GET":
-            return getProject(query, res);
+            return getProject(user.id, query, res);
         case "PATCH":
             const body = validate(UpdateProjectBodySchema, req.body);
             return updateProject(user.id, query, body, res);
@@ -50,29 +52,31 @@ async function projectIdRoute(req: NextApiRequest, res: NextApiResponse) {
 }
 
 /**
- * GET `/projets/[projectId]`
+ * GET `/projects/[projectId]`
  *
- * Gets project information
+ * Gets project information from authenticated user
  */
-async function getProject(query: Query, res: NextApiResponse) {
+async function getProject(userId: number, query: Query, res: NextApiResponse) {
     const { projectId } = query;
-    const project = await ProjectService.get(projectId);
 
-    if (!project) {
+    const membership = await ProjectService.getMembership(projectId, userId);
+
+    if (!membership) {
         throw new ProjectNotFoundError();
     }
 
-    return Success(res, project);
+    return Success(res, membership);
 }
 
 /**
  * PATCH `/projects/[projectId]`
  *
- * Updates project information
+ * Updates project information from authenticated user
  */
 async function updateProject(userId: number, query: Query, body: UpdateProjectBody, res: NextApiResponse) {
     const { projectId } = query;
-    const member = await ProjectService.getMember(projectId, userId);
+
+    const member = await ProjectService.getMembership(projectId, userId);
     if (!member) {
         throw new ProjectNotFoundError();
     }
@@ -89,9 +93,9 @@ async function updateProject(userId: number, query: Query, body: UpdateProjectBo
         throw new ForbiddenError();
     }
 
-    let hasPoster = member.project.poster;
+    let hasPoster = false;
     if (poster) {
-        hasPoster = await S3.upload(projectId, poster);
+        hasPoster = await S3.upload(`poster-${projectId}`, poster);
     }
 
     const updated = await ProjectService.update({
@@ -99,24 +103,25 @@ async function updateProject(userId: number, query: Query, body: UpdateProjectBo
         title,
         description,
         characters,
-        poster: hasPoster,
+        hasPoster,
     });
 
     if (!updated) {
         throw new InternalServerError();
     }
 
-    return Success(res);
+    return SuccessNoContent(res);
 }
 
 /**
  * DELETE `/projects/[projectId]`
  *
- * Deletes project
+ * Deletes project from unautheticated user
  */
 async function deleteProject(userId: number, query: Query, res: NextApiResponse) {
     const { projectId } = query;
-    const member = await ProjectService.getMember(projectId, userId);
+
+    const member = await ProjectService.getMembership(projectId, userId);
     if (!member) {
         throw new ProjectNotFoundError();
     }
@@ -134,7 +139,7 @@ async function deleteProject(userId: number, query: Query, res: NextApiResponse)
         S3.destroy(projectId);
     }
 
-    return Success(res);
+    return SuccessNoContent(res);
 }
 
 export default apiHandler(projectIdRoute);

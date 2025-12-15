@@ -59,11 +59,11 @@ const Navbar = () => {
     const page = usePage();
     const isDesktop = useDesktop();
     const { mutate } = useSWRConfig();
-    const { data: user } = useUser();
+    const { user } = useUser();
 
     const [projectTitle, setProjectTitle] = useState<string>("");
     useEffect(() => {
-        if (project) setProjectTitle(project.title);
+        if (project) setProjectTitle(project.project.title);
     }, [project]);
 
     const onLogOut = async () => {
@@ -76,7 +76,7 @@ const Navbar = () => {
     };
 
     const deferredTitleUpdate = debounce(async (projectId: string, projectTitle: string) => {
-        await editProject({ projectId, title: projectTitle });
+        await editProject(projectId, { title: projectTitle });
         mutate(`/api/projects/${projectId}`, { ...project, title: projectTitle });
     }, 1000);
 
@@ -116,7 +116,7 @@ const Navbar = () => {
         <nav className={join(navbar.container, sidebar.shadow)}>
             <div className={navbar.logo_and_tabs}>
                 <Link href="/" className={navbar.logo}>
-                    <p className={navbar.logo_text}>Scriptio</p>
+                    <img src="/images/scriptio.png" alt="Scriptio" />
                 </Link>
                 <NavbarMenu project={project!} />
             </div>
@@ -127,7 +127,7 @@ const Navbar = () => {
                         <input
                             type="text"
                             className={navbar.title_box}
-                            onChange={(e) => deferredTitleUpdate(project.id, e.target.value)}
+                            onChange={(e) => deferredTitleUpdate(project.project.id, e.target.value)}
                             defaultValue={projectTitle}
                         />
                     </>

@@ -5,9 +5,9 @@ import { saveCharacters } from "../utils/requests";
 import { JSONContent } from "@tiptap/react";
 
 export enum CharacterGender {
-    Female,
-    Male,
-    Other,
+    FEMALE,
+    MALE,
+    OTHER,
 }
 export type CharacterMap = { [name: string]: CharacterItem }; // map by character name
 export type CharacterData = { name: string } & CharacterItem;

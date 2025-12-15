@@ -1,4 +1,4 @@
-import { Secrets } from "@src/server/repository/user-repository";
+import { UpdateSecrets } from "@src/server/repository/user-repository";
 import crypto from "crypto";
 
 export const generateHexToken = (length: number = 64) => {
@@ -21,7 +21,7 @@ export const checkPassword = async (secrets: any, password: string) => {
     }
 };
 
-export const generateSecrets = (password: string): Secrets => {
+export const generateSecrets = (password: string): UpdateSecrets => {
     const recoverHash = generateHexToken();
     const emailHash = generateHexToken();
     const salt = generateHexToken(16);

@@ -9,9 +9,15 @@ export const apiHandler = (handler: Handler) => {
             await handler(req, res);
         } catch (err: any) {
             if (err instanceof AppError) {
-                return res.status(err.statusCode).json({ error: err.message });
+                return res.status(err.statusCode).json({
+                    status: "error",
+                    message: err.message,
+                });
             }
-            return res.status(500).json({ error: "Internal Server Error" });
+            return res.status(500).json({
+                status: "error",
+                message: "Something went wrong on our end.",
+            });
         }
     };
 };

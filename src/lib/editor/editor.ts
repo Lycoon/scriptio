@@ -1,6 +1,5 @@
 import { Editor, JSONContent, useEditor } from "@tiptap/react";
 import { SaveStatus, ScreenplayElement, Style } from "../utils/enums";
-import { saveScreenplay } from "../utils/requests";
 import { ProjectContext, ProjectContextType } from "@src/context/ProjectContext";
 
 import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "@src/Screenplay";
@@ -8,18 +7,19 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import { computeFullScenesData } from "./screenplay";
 import { computeFullCharactersData } from "./characters";
-import { useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useContext, useEffect, useState } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import * as Y from "yjs";
-import { Project } from "../utils/types";
 import { IndexeddbPersistence } from "y-indexeddb";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import { WebsocketProvider } from "y-websocket";
-import { Awareness, removeAwarenessStates } from "@node_modules/y-protocols/awareness";
+import { removeAwarenessStates } from "@node_modules/y-protocols/awareness";
 import { useSettings } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { getCollabToken } from "../utils/requests";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -81,7 +81,9 @@ export const replaceOccurrences = (editor: Editor, oldWord: string, newWord: str
 };
 
 export const replaceScreenplay = (editor: Editor, screenplay: JSONContent) => {
-    editor.commands.setContent(screenplay);
+    editor.commands.setContent(screenplay, {
+        emitUpdate: true,
+    });
 };
 
 export const getStylesFromMarks = (marks: any[]): Style => {
@@ -206,20 +208,19 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
         }
 
         const connect = async () => {
-            const token = await fetch(`/api/projects/${projectId}/collab-token`);
-            if (!token.ok) {
+            const token = await getCollabToken(projectId);
+            if (!token) {
                 setStatus("unauthorized");
                 return;
             }
 
-            const { data } = await token.json();
             const cloudProvider = new WebsocketProvider(
                 `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
                 projectId,
                 doc,
                 {
                     params: {
-                        token: data.token,
+                        token,
                         clientId: doc.clientID.toString(),
                     },
                 }
@@ -257,16 +258,18 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
 };
 
 export const useScriptioEditor = (
-    project: Project,
+    project: ProjectMembershipPayload["project"],
     setActiveElement: (element: ScreenplayElement, applyStyle: boolean) => void,
     setSelectedStyles: (style: Style) => void,
     updateSuggestions: (suggestions: string[]) => void,
     updateSuggestionsData: (data: SuggestionData) => void
 ) => {
     const projectCtx = useContext(ProjectContext);
-    const { onlineUsername, onlineColor } = useSettings();
+    const { settings } = useSettings();
     const { ydoc } = useLocal(project.id);
     const { provider, status, users } = useCloud(project.id, ydoc);
+
+    const { onlineColor, onlineUsername } = settings;
 
     const scriptioEditor = useEditor(
         {
@@ -312,7 +315,6 @@ export const useScriptioEditor = (
 
             // Update on each screenplay update
             onUpdate({ editor }) {
-                console.log("onUpdate");
                 const screenplay = editor.getJSON();
                 projectCtx.updateSaveStatus(SaveStatus.Saving);
                 deferredSceneUpdate(screenplay, projectCtx);
@@ -320,7 +322,6 @@ export const useScriptioEditor = (
             },
 
             onCreate({ editor }) {
-                console.log("onCreate");
                 projectCtx.updateEditor(editor as Editor);
             },
 

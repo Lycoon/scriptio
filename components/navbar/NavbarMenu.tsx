@@ -1,12 +1,4 @@
-import {
-    redirectExport,
-    redirectProjectInfo,
-    redirectScreenplay,
-    redirectTitlePage,
-    redirectStory,
-    redirectStatistics,
-    redirectReports,
-} from "@src/lib/utils/redirects";
+import { redirectExport, redirectProjectInfo, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
 import { Project } from "@src/lib/utils/types";
 import { useContext } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -17,7 +9,6 @@ import { convertFountainToHTML } from "@src/converters/import/fountain";
 import dynamic from "next/dynamic";
 import { computeFullCharactersData } from "@src/lib/editor/characters";
 import { computeFullScenesData } from "@src/lib/editor/screenplay";
-import { saveScreenplay } from "@src/lib/utils/requests";
 import { generateJSON } from "@tiptap/react";
 import { SCRIPTIO_EXTENSIONS, replaceScreenplay } from "@src/lib/editor/editor";
 
@@ -66,7 +57,6 @@ const NavbarMenu = ({ project }: NavbarMenuProps) => {
                     replaceScreenplay(editor, json);
                     computeFullCharactersData(json, projectCtx);
                     computeFullScenesData(json, projectCtx);
-                    saveScreenplay(projectCtx, json);
                 };
 
                 importFilePopup(userCtx, confirmImport);

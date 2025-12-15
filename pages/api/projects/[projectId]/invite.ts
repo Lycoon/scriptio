@@ -53,7 +53,7 @@ async function inviteMember(userId: number, query: Query, body: Body, res: NextA
     const { email: emailToInvite } = body;
     const { projectId } = query;
 
-    const member = await ProjectService.getMember(projectId, userId, true);
+    const member = await ProjectService.getMembership(projectId, userId);
     if (!member) {
         throw new NotFoundError();
     }
@@ -77,7 +77,7 @@ async function deleteInvite(userId: number, query: Query, body: Body, res: NextA
     const { email: emailToDelete } = body;
     const { projectId } = query;
 
-    const member = await ProjectService.getMember(projectId, userId, true);
+    const member = await ProjectService.getMembership(projectId, userId);
     if (!member) {
         throw new NotFoundError();
     }

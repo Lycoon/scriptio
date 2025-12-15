@@ -21,7 +21,7 @@ async function projectCollabTokenRoute(req: NextApiRequest, res: NextApiResponse
         throw new UnauthorizedError();
     }
 
-    const member = await ProjectService.getMember(projectId, user.id);
+    const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {
         throw new UnauthorizedError();
     }

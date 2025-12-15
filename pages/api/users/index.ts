@@ -28,7 +28,7 @@ async function userRoute(req: NextApiRequest, res: NextApiResponse) {
 }
 
 /**
- * GET `/users/[user]`
+ * GET `/users`
  *
  * Gets authenticated user information
  */
@@ -41,7 +41,7 @@ async function getUser(userId: number, res: NextApiResponse) {
 }
 
 /**
- * DELETE `/users/[user]`
+ * DELETE `/users`
  *
  * Deletes authenticated user
  */

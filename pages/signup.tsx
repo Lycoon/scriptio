@@ -11,7 +11,7 @@ const SignupPage: NextPage = () => {
     return (
         <>
             <Head>
-                <title>Scriptio - Sign up</title>
+                <title>Scriptio • Sign up</title>
             </Head>
             <SignupContainer />
         </>

@@ -23,18 +23,17 @@ model User {
   email               String      @unique
   verified            Boolean     @default(false)
 
+  settings            Settings?
+  secrets             Secret?
+
   projects            ProjectMember[]
-
-  secrets             Secret      @relation(fields: [secretsId], references: [id])
-  secretsId           Int         @unique
-
-  settings            Settings    @relation(fields: [settingsId], references: [id])
-  settingsId          Int         @unique
 }
 
 model Secret {
   id                  Int         @id @default(autoincrement())
-  user                User?
+
+  userId              Int         @unique
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   hash                String
   salt                String
@@ -47,7 +46,9 @@ model Secret {
 
 model Settings {
   id                  Int         @id @default(autoincrement())
-  user                User?
+
+  userId              Int         @unique 
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   highlightOnHover    Boolean     @default(false)
   sceneBackground     Boolean     @default(true)
@@ -64,7 +65,7 @@ model Project {
 
   title               String
   description         String?
-  poster              Boolean     @default(false)
+  hasPoster           Boolean     @default(false)
   characters          Json?
 
   members             ProjectMember[]

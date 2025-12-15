@@ -16,8 +16,8 @@ import {
 
 import z from "zod";
 
-type Body = z.infer<typeof BodySchema>;
-const BodySchema = z.object({
+export type CreateProjectBody = z.infer<typeof CreateProjectBodySchema>;
+const CreateProjectBodySchema = z.object({
     title: z.string(),
     description: z.string().optional(),
     poster: z.string().optional(),
@@ -34,7 +34,7 @@ async function projectsRoute(req: NextApiRequest, res: NextApiResponse) {
         case "GET":
             return getProjects(user.id, res);
         case "POST":
-            const body = validate(BodySchema, req.body);
+            const body = validate(CreateProjectBodySchema, req.body);
             return createProject(user.id, body, res);
     }
 }
@@ -45,12 +45,12 @@ async function projectsRoute(req: NextApiRequest, res: NextApiResponse) {
  * Gets all projects from authenticated user
  */
 async function getProjects(userId: number, res: NextApiResponse) {
-    const query = await ProjectService.getAll(userId);
-    if (!query) {
+    const projects = await ProjectService.getMemberships(userId);
+    if (!projects) {
         throw new UserNotFoundError();
     }
 
-    return Success(res, query.projects);
+    return Success(res, projects);
 }
 
 /**
@@ -58,7 +58,7 @@ async function getProjects(userId: number, res: NextApiResponse) {
  *
  * Creates a new project
  */
-async function createProject(userId: number, body: Body, res: NextApiResponse) {
+async function createProject(userId: number, body: CreateProjectBody, res: NextApiResponse) {
     const { title, description, poster } = body;
 
     if (title.length < 1 || title.length > 256) {
@@ -72,14 +72,14 @@ async function createProject(userId: number, body: Body, res: NextApiResponse) {
         title,
         description,
         userId,
-        poster,
+        hasPoster: poster !== undefined,
     });
 
     if (!newProject) {
         throw new InternalServerError();
     }
     if (poster) {
-        await S3.upload(newProject.id, poster);
+        await S3.upload(`poster-${newProject.id}`, poster);
     }
 
     return SuccessCreated(res, newProject);

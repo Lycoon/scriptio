@@ -2,12 +2,12 @@ import { createContext, ReactNode, SetStateAction, useState } from "react";
 import { ScenesData } from "@src/lib/editor/screenplay";
 import { CharacterMap } from "@src/lib/editor/characters";
 import { SaveStatus } from "@src/lib/utils/enums";
-import { Project } from "@src/lib/utils/types";
 import { Editor } from "@tiptap/react";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 export type ProjectContextType = {
-    project: Project | undefined;
-    updateProject: (project: Project | undefined) => void;
+    project: ProjectMembershipPayload | undefined;
+    updateProject: (project: ProjectMembershipPayload | undefined) => void;
     editor: Editor | undefined;
     updateEditor: (editor: Editor) => void;
     scenesData: ScenesData;
@@ -32,13 +32,13 @@ const contextDefaults: ProjectContextType = {
 };
 
 export function ProjectContextProvider({ children }: { children: ReactNode }) {
-    const [project, setProject] = useState<Project | undefined>(undefined);
+    const [project, setProject] = useState<ProjectMembershipPayload | undefined>(undefined);
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [scenesData, setScenesData] = useState<ScenesData>([]);
     const [charactersData, setCharactersData] = useState<CharacterMap>({});
     const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.Saved);
 
-    const updateProject = (project_: Project | undefined) => {
+    const updateProject = (project_: ProjectMembershipPayload | undefined) => {
         setProject(project_);
     };
 

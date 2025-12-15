@@ -1,6 +1,12 @@
 import { NextApiResponse } from "@node_modules/next";
 import z from "zod";
 
+export interface ApiResponse<T = any> {
+    status: "success" | "error";
+    message?: string;
+    data?: T;
+}
+
 export class AppError extends Error {
     constructor(public statusCode: number, public message: string) {
         super(message);
@@ -57,15 +63,15 @@ export class InternalServerError extends AppError {
 }
 
 export const SuccessNoContent = (res: NextApiResponse, message?: string) => {
-    return res.status(204).json({ message });
+    res.status(204).end();
 };
 
-export const Success = (res: NextApiResponse, data?: any, message?: string) => {
-    return res.status(200).json({ message, data });
+export const Success = <T>(res: NextApiResponse<ApiResponse<T>>, data: T, message?: string) => {
+    res.status(200).json({ status: "success", data, ...(message && { message }) });
 };
 
-export const SuccessCreated = (res: NextApiResponse, data?: any, message?: string) => {
-    return res.status(201).json({ message, data });
+export const SuccessCreated = <T>(res: NextApiResponse<ApiResponse<T>>, data: T, message?: string) => {
+    res.status(201).json({ status: "success", data, ...(message && { message }) });
 };
 
 export function validate<T>(schema: z.ZodSchema<T>, data: unknown): T {

@@ -4,12 +4,12 @@ import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 import UploadButton from "../UploadButton";
 import { Project } from "@prisma/client";
 import { editProject } from "@src/lib/utils/requests";
-import { ProjectUpdateDTO } from "@src/lib/utils/types";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import FormEnd from "../FormEnd";
 
 import layout from "../../utils/Layout.module.css";
 import form from "../../utils/Form.module.css";
+import { UpdateProjectBody } from "@pages/api/projects/[projectId]";
 
 type Props = {
     project: Project;
@@ -26,8 +26,7 @@ const EditProjectConainer = ({ project }: Props) => {
     const onSubmit = async (e: any) => {
         e.preventDefault();
 
-        const body: ProjectUpdateDTO = {
-            projectId: project.id,
+        const body: UpdateProjectBody = {
             title: e.target.title.value,
             description: e.target.description.value,
         };
@@ -36,12 +35,11 @@ const EditProjectConainer = ({ project }: Props) => {
             body.poster = await getBase64(selectedFile, 686, 1016);
         }
 
-        const res = await editProject(body);
-        const json = await res.json();
-
+        const res = await editProject(project.id, body);
         if (res.ok) {
             redirectScreenplay(project.id);
         } else {
+            const json = await res.json();
             setFormInfo({ content: json.message, isError: true });
         }
     };

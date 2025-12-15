@@ -1,6 +1,7 @@
+import { Secret } from "@node_modules/.prisma/client";
 import prisma from "../db";
 
-export type Secrets = {
+export type UpdateSecrets = {
     hash?: string;
     salt?: string;
     emailHash?: string;
@@ -9,7 +10,7 @@ export type Secrets = {
     lastRecoverHash?: Date;
 };
 
-export type Settings = {
+export type UpdateSettings = {
     highlightOnHover?: boolean;
     sceneBackground?: boolean;
     notesColor?: string;
@@ -22,13 +23,13 @@ export interface UserUpdate {
     id: idOrEmailType;
     email?: string;
     verified?: boolean;
-    secrets?: Secrets;
-    settings?: Settings;
+    secrets?: UpdateSecrets;
+    settings?: UpdateSettings;
 }
 
 export interface UserCreation {
     email: string;
-    secrets: Secrets;
+    secrets: Secret;
 }
 
 type idOrEmailType = { id: number } | { email: string };

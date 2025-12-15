@@ -21,9 +21,9 @@ declare namespace NodeJS {
 
         // S3
         S3_BUCKET: string;
-        S3_URL: string;
-        S3_SECRET: string;
-        S3_ACCESS: string;
+        S3_ACCOUNT_ID: string;
+        S3_KEY: string;
+        S3_SECRET_KEY: string;
 
         // SMTP
         SMTP_HOST: string;

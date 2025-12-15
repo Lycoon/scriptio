@@ -16,7 +16,7 @@ const RecoveryPage: NextPage<Props> = ({ userId, recoverHash }: Props) => {
     return (
         <>
             <Head>
-                <title>Scriptio - Recover password</title>
+                <title>Scriptio • Recover password</title>
             </Head>
             <RecoveryContainer userId={userId} recoverHash={recoverHash} />
         </>

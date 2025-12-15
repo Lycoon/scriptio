@@ -13,6 +13,7 @@
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.113.0",
+        "@aws-sdk/s3-request-presigner": "^3.952.0",
         "@formkit/auto-animate": "^0.7.0",
         "@prisma/client": "^6.19.0",
         "@svgr/core": "^8.1.0",

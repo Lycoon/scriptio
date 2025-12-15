@@ -6,15 +6,17 @@ import { useUser } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
 
 const SettingsPage: NextPage = () => {
-    const { data: user } = useUser(true);
+    const { user } = useUser(true);
     const { updateProject } = useContext(ProjectContext);
 
     useEffect(() => updateProject(undefined), []);
 
+    if (!user) return null;
+
     return (
         <>
             <Head>
-                <title>Scriptio - Settings</title>
+                <title>Scriptio • Settings</title>
             </Head>
             <SettingsPageContainer />
         </>

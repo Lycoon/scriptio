@@ -1,9 +1,9 @@
-import { NextApiResponse } from "next";
-import { Settings } from "../../server/repository/user-repository";
+import { UpdateSettings } from "../../server/repository/user-repository";
 import { CharacterMap, getPersistentCharacters } from "../editor/characters";
-import { CookieUser, DataResult, ProjectCreated, ProjectCreation, ProjectUpdateDTO } from "./types";
 import { SaveStatus } from "./enums";
 import { ProjectContextType } from "@src/context/ProjectContext";
+import { UpdateProjectBody } from "@pages/api/projects/[projectId]";
+import { CreateProjectBody } from "@pages/api/projects";
 
 enum APIMethod {
     Get = "GET",
@@ -33,46 +33,32 @@ export const SuccessResponse = (message: string, data: any) => {
 
 // Project
 
-export const createProject = async (
-    project: ProjectCreation,
-    isDesktop: boolean,
-    user: CookieUser
-): Promise<DataResult<ProjectCreated>> => {
-    let body: ProjectCreation = {
-        userId: user.id,
-        title: project.title,
-        description: project.description,
-        poster: project.poster,
-    };
-
-    let projectId;
-    if (user) {
-        const res = await request(`/api/projects`, APIMethod.Post, body);
-
-        if (res.ok) {
-            const json = await res.json();
-            projectId = json.data.id;
-        } else {
-            return ErrorResponse("Project could not be created on cloud");
-        }
+export const getCollabToken = async (projectId: string): Promise<string | null> => {
+    const res = await request(`/api/projects/${projectId}/collab-token`, APIMethod.Get);
+    if (res.ok) {
+        const { data: token } = await res.json();
+        return token;
     }
+    return null;
+};
 
-    return SuccessResponse("Project created successfully", { id: projectId });
+export const createProject = async (userId: number, body: CreateProjectBody) => {
+    return request(`/api/projects`, APIMethod.Post, body);
 };
 
 export const deleteProject = (projectId: string) => {
-    return request(`/api/projects?projectId=${projectId}`, APIMethod.Delete, undefined);
+    return request(`/api/projects/${projectId}`, APIMethod.Delete);
 };
 
-export const editProject = (body: ProjectUpdateDTO) => {
-    return request(`/api/projects`, APIMethod.Patch, body);
+export const editProject = (projectId: string, body: UpdateProjectBody) => {
+    return request(`/api/projects/${projectId}`, APIMethod.Patch, body);
 };
 
 export const saveCharacters = async (projectCtx: ProjectContextType, characters: CharacterMap): Promise<Response> => {
     const persistentCharacters = getPersistentCharacters(characters); // Get rid of non-persistent characters
 
     const projectId = projectCtx.project!.id;
-    const res = await editProject({ projectId, characters: persistentCharacters });
+    const res = await editProject(projectId, { characters: persistentCharacters });
 
     if (res.ok) projectCtx.updateSaveStatus(SaveStatus.Saved);
     else projectCtx.updateSaveStatus(SaveStatus.Error);
@@ -86,7 +72,7 @@ export const changePassword = (password: string) => {
     return request(`/api/users/password`, APIMethod.Patch, { password });
 };
 
-export const editUserSettings = (body: Settings) => {
+export const editUserSettings = (body: UpdateSettings) => {
     return request(`/api/users/settings`, APIMethod.Patch, body);
 };
 

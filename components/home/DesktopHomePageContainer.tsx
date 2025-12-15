@@ -1,13 +1,13 @@
 import { useState } from "react";
 import NewProjectPage from "../projects/CreateProjectPage";
 import ProjectItemDesktop from "../projects/ProjectItemDesktop";
-import { useProjects } from "@src/lib/utils/hooks";
-import { Project } from "@src/lib/utils/types";
 import Loading from "../utils/Loading";
 
 import page_dk from "./DesktopHomePageContainer.module.css";
 import page from "../projects/ProjectPageContainer.module.css";
 import layout from "../utils/Layout.module.css";
+import { useProjectMemberships } from "@src/lib/utils/hooks";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 const onFileOpen = () => {
     console.log("File open");
@@ -16,7 +16,7 @@ const onFileOpen = () => {
 const DesktopHomePageContainer = () => {
     const [deleteMode, setDeleteMode] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
-    const { data: projects, isLoading } = useProjects();
+    const { projects, isLoading } = useProjectMemberships();
 
     if (isLoading) return <Loading />;
     if (isCreating) return <NewProjectPage setIsCreating={setIsCreating} />;
@@ -42,11 +42,11 @@ const DesktopHomePageContainer = () => {
                 </div>
                 <div className={page_dk.list}>
                     {projects &&
-                        projects.map((project: Project) => {
+                        projects.map((membership: ProjectMembershipPayload) => {
                             return (
                                 <ProjectItemDesktop
-                                    key={project.id}
-                                    project={project}
+                                    key={membership.project.id}
+                                    project={membership.project}
                                     deleteMode={deleteMode}
                                     deleteProject={() => {}}
                                 />

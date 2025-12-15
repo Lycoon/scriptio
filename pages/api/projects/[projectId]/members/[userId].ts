@@ -38,7 +38,7 @@ async function projectRoleRoute(req: NextApiRequest, res: NextApiResponse) {
 
     switch (req.method) {
         case "GET":
-            return getProjectMemberRole(user.id, query, res);
+            return getProjectMember(user.id, query, res);
         case "PATCH":
             const body = validate(UpdateRoleSchema, req.body);
             return updateProjectMemberRole(user.id, query, body, res);
@@ -50,18 +50,15 @@ async function projectRoleRoute(req: NextApiRequest, res: NextApiResponse) {
 /**
  * GET `/projects/[projectId]/members/[userid]`
  *
- * Returns the role of a project member
+ * Returns a project member given its userId and associated projectId
  */
-async function getProjectMemberRole(userId: number, query: Query, res: NextApiResponse) {
-    // We query the user role for this project, throw 404 in case it doesn't belong to it
+async function getProjectMember(userId: number, query: Query, res: NextApiResponse) {
+    // We query the user role for this poject, throw 404 in case it doesn't belong to it
     const { projectId } = query;
-    const member = await ProjectService.getMember(projectId, userId);
+
+    const member = await ProjectService.getMembership(projectId, userId);
     if (!member) {
         throw new ProjectNotFoundError();
-    }
-
-    if (member.id !== userId || member.projectId !== projectId) {
-        throw new ForbiddenError();
     }
 
     return Success(res, member);
@@ -79,11 +76,11 @@ async function updateProjectMemberRole(userId: number, query: Query, body: Updat
     if (!Roles.isValid(role)) throw new BodyFieldError("Unknown role");
     const newRole = role as ProjectRole;
 
-    const member = await ProjectService.getMember(projectId, userId);
+    const member = await ProjectService.getMembership(projectId, userId);
     if (!member) {
         throw new ProjectNotFoundError();
     }
-    const memberToUpdate = await ProjectService.getMember(projectId, userToUpdateId);
+    const memberToUpdate = await ProjectService.getMembership(projectId, userToUpdateId);
     if (!memberToUpdate) {
         throw new ProjectNotFoundError();
     }
@@ -112,7 +109,7 @@ async function updateProjectMemberRole(userId: number, query: Query, body: Updat
 async function deleteProjectMember(userId: number, query: Query, res: NextApiResponse) {
     const { userId: userToDelete, projectId } = query;
 
-    const member = await ProjectService.getMember(projectId, userId);
+    const member = await ProjectService.getMembership(projectId, userId);
     if (!member) {
         throw new NotFoundError();
     }
@@ -121,7 +118,7 @@ async function deleteProjectMember(userId: number, query: Query, res: NextApiRes
         throw new ForbiddenError("User must be admin to delete a project member");
     }
 
-    const memberToDelete = await ProjectService.getMember(projectId, userToDelete);
+    const memberToDelete = await ProjectService.getMembership(projectId, userToDelete);
     if (!memberToDelete) {
         throw new NotFoundError();
     }

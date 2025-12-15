@@ -12,13 +12,14 @@ import FormEnd from "./FormEnd";
 
 import form from "../utils/Form.module.css";
 import layout from "../utils/Layout.module.css";
+import { CreateProjectBody } from "@pages/api/projects";
 
 type Props = {
     setIsCreating: (isCreating: boolean) => void;
 };
 
 const CreateProjectPage = ({ setIsCreating }: Props) => {
-    const { data: user } = useUser();
+    const { user } = useUser();
     const isDesktop = useDesktop();
 
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
@@ -38,8 +39,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
 
         if (!user) return;
 
-        const body: ProjectCreation = {
-            userId: user.id,
+        const body: CreateProjectBody = {
             title: e.target.title.value,
             description: e.target.description.value,
         };
@@ -48,13 +48,14 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
             body.poster = await getBase64(selectedFile, 686, 1016);
         }
 
-        const res = await createProject(body, isDesktop, user);
-        if (res.isError) {
-            setFormInfo({ content: res.message!, isError: true });
+        const res = await createProject(user.id, body);
+        const json = await res.json();
+        if (!res.ok) {
+            setFormInfo({ content: json.message, isError: true });
             return;
         }
 
-        const projectId = res.data!.id;
+        const projectId = json.data.id;
         setIsCreating(false);
         redirectScreenplay(projectId);
     };

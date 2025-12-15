@@ -9,9 +9,6 @@ import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "@src/context/UserContext";
 import { SaveStatus, ScreenplayElement, Style } from "@src/lib/utils/enums";
-import { computeFullScenesData } from "@src/lib/editor/screenplay";
-import { Project } from "@src/lib/utils/types";
-import { computeFullCharactersData } from "@src/lib/editor/characters";
 
 /* Styles */
 import styles from "./EditorAndSidebar.module.css";
@@ -19,9 +16,10 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { applyElement, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
 import { Popup } from "@components/popup/Popup";
 import { join } from "@src/lib/utils/misc";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 type EditorAndSidebarProps = {
-    project: Project;
+    project: ProjectMembershipPayload["project"];
     css: string;
 };
 

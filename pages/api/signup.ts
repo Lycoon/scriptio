@@ -26,6 +26,11 @@ const QuerySchema = z.object({
     inviteToken: z.string().optional(),
 });
 
+/**
+ * POST `/signup`
+ *
+ * Verifies a user that just registered and clicked the link in validation mail
+ */
 async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
     const { email, password } = validate(BodySchema, req.body);
     const { inviteToken } = validate(QuerySchema, req.query);

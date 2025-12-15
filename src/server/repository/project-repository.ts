@@ -1,14 +1,97 @@
-import { ProjectCreation, ProjectUpdateDTO } from "../../lib/utils/types";
-import { ProjectRole } from "@prisma/client";
+import { ProjectCreation, ProjectUpdate } from "../../lib/utils/types";
+import { Prisma, ProjectRole } from "@prisma/client";
 import prisma from "../db";
 
+import * as S3 from "@src/lib/s3";
+
+const projectMembershipSelect = {
+    project: {
+        select: {
+            id: true,
+            title: true,
+            hasPoster: true,
+            description: true,
+            createdAt: true,
+            updatedAt: true,
+            characters: true,
+        },
+    },
+    role: true,
+};
+
+const projectSelect = projectMembershipSelect.project.select;
+type RawProject = Prisma.ProjectGetPayload<{
+    select: typeof projectSelect;
+}>;
+
+export type Project = Omit<RawProject, "poster"> & {
+    poster: string | null;
+};
+export interface ProjectMembershipPayload {
+    role: ProjectRole;
+    project: Project;
+}
+
 export class ProjectRepository {
+    private async hydrateMembership(membership: any): Promise<ProjectMembershipPayload> {
+        let posterUrl: string | null = null;
+
+        if (membership.project.poster) {
+            const key = `poster-${membership.project.id}`;
+            posterUrl = await S3.getSignedDownloadUrl(key);
+        }
+
+        return {
+            ...membership,
+            project: {
+                ...membership.project,
+                poster: posterUrl,
+            },
+        };
+    }
+
+    async fetchProjectMemberships(userId: number) {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                projects: {
+                    select: projectMembershipSelect,
+                    orderBy: {
+                        project: {
+                            updatedAt: "desc",
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!user) return [];
+
+        return Promise.all(user.projects.map((m) => this.hydrateMembership(m)));
+    }
+
+    async fetchProjectMembership(projectId: string, userId: number) {
+        const membership = await prisma.projectMember.findUnique({
+            where: {
+                userId_projectId: {
+                    userId,
+                    projectId,
+                },
+            },
+            select: projectMembershipSelect,
+        });
+
+        if (!membership) return null;
+
+        return this.hydrateMembership(membership);
+    }
+
     createProject(project: ProjectCreation) {
         return prisma.project.create({
             data: {
                 title: project.title,
                 description: project.description,
-                poster: project.poster === undefined,
+                hasPoster: project.hasPoster,
                 members: {
                     create: {
                         userId: project.userId,
@@ -19,13 +102,13 @@ export class ProjectRepository {
         });
     }
 
-    updateProject(project: ProjectUpdateDTO) {
+    updateProject(project: ProjectUpdate) {
         return prisma.project.update({
             where: { id: project.projectId },
             data: {
                 title: project.title,
                 description: project.description,
-                poster: project.poster,
+                hasPoster: project.hasPoster,
                 characters: project.characters,
             },
         });
@@ -37,80 +120,44 @@ export class ProjectRepository {
         });
     }
 
-    fetchProjects(userId: number) {
-        return prisma.user.findUnique({
-            where: { id: userId },
-            select: {
-                projects: { select: { project: true } },
-            },
-        });
-    }
-
-    fetchProjectFromId(projectId: string, includeMembers: boolean) {
-        return prisma.project.findUnique({
-            where: { id: projectId },
-            include: {
-                members: includeMembers,
-            },
-        });
-    }
-
     setProjectMember(projectId: string, userId: number, role: ProjectRole) {
         return prisma.projectMember.upsert({
             where: {
                 userId_projectId: {
-                    projectId: projectId,
-                    userId: userId,
+                    projectId,
+                    userId,
                 },
             },
             update: {
-                role: role,
+                role,
             },
             create: {
-                projectId: projectId,
-                userId: userId,
-                role: role,
-            },
-        });
-    }
-
-    fetchProjectMember(projectId: string, userId: number, includeProject: boolean) {
-        return prisma.projectMember.findUnique({
-            where: {
-                userId_projectId: {
-                    userId: userId,
-                    projectId: projectId,
-                },
-            },
-            include: {
-                project: includeProject,
-            },
-        });
-    }
-
-    createInvite(projectId: string, email: string, token: string) {
-        const date = new Date();
-        date.setDate(date.getDate() + 7);
-
-        return prisma.projectInvitation.create({
-            data: {
-                projectId: projectId,
-                email: email,
-                token: token,
-                createdAt: date,
+                projectId,
+                userId,
+                role,
             },
         });
     }
 
     fetchInvite(token: string) {
         return prisma.projectInvitation.findUnique({
-            where: { token: token },
+            where: { token },
+        });
+    }
+
+    createInvite(projectId: string, email: string, token: string) {
+        return prisma.projectInvitation.create({
+            data: {
+                projectId,
+                email,
+                token,
+            },
         });
     }
 
     deleteInviteFromToken(token: string) {
         return prisma.projectInvitation.delete({
-            where: { token: token },
+            where: { token },
         });
     }
 
@@ -118,8 +165,8 @@ export class ProjectRepository {
         return prisma.projectInvitation.delete({
             where: {
                 email_projectId: {
-                    email: email,
-                    projectId: projectId,
+                    email,
+                    projectId,
                 },
             },
         });
@@ -129,8 +176,8 @@ export class ProjectRepository {
         return prisma.projectMember.delete({
             where: {
                 userId_projectId: {
-                    projectId: projectId,
-                    userId: userId,
+                    projectId,
+                    userId,
                 },
             },
         });
