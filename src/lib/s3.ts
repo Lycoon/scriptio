@@ -2,9 +2,11 @@ import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } fro
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "process";
 
+export const S3_ENDPOINT = `https://${env.S3_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+
 const client = new S3Client({
     region: "auto",
-    endpoint: `https://${env.S3_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    endpoint: S3_ENDPOINT,
     credentials: {
         accessKeyId: env.S3_KEY,
         secretAccessKey: env.S3_SECRET_KEY,

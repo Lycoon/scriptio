@@ -14,7 +14,6 @@ const onFileOpen = () => {
 };
 
 const DesktopHomePageContainer = () => {
-    const [deleteMode, setDeleteMode] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const { projects, isLoading } = useProjectMemberships();
 
@@ -33,9 +32,6 @@ const DesktopHomePageContainer = () => {
                             <button className={page.create_btn + " form-btn"} onClick={onFileOpen}>
                                 Open...
                             </button>
-                            <div onClick={() => setDeleteMode(!deleteMode)} className={page.delete_btn}>
-                                <img className={page.delete_img} src={"/images/trash.png"} alt={"Trash icon"} />
-                            </div>
                         </div>
                     </div>
                     <hr />
@@ -43,14 +39,7 @@ const DesktopHomePageContainer = () => {
                 <div className={page_dk.list}>
                     {projects &&
                         projects.map((membership: ProjectMembershipPayload) => {
-                            return (
-                                <ProjectItemDesktop
-                                    key={membership.project.id}
-                                    project={membership.project}
-                                    deleteMode={deleteMode}
-                                    deleteProject={() => {}}
-                                />
-                            );
+                            return <ProjectItemDesktop key={membership.project.id} project={membership.project} />;
                         })}
                 </div>
             </div>

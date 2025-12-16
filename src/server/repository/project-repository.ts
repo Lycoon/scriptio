@@ -33,10 +33,10 @@ export interface ProjectMembershipPayload {
 }
 
 export class ProjectRepository {
-    private async hydrateMembership(membership: any): Promise<ProjectMembershipPayload> {
+    private async hydrateMembership(membership: ProjectMembershipPayload): Promise<ProjectMembershipPayload> {
         let posterUrl: string | null = null;
 
-        if (membership.project.poster) {
+        if (membership.project.hasPoster) {
             const key = `poster-${membership.project.id}`;
             posterUrl = await S3.getSignedDownloadUrl(key);
         }

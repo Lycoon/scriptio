@@ -15,7 +15,7 @@ const ProjectItem = ({ project }: Props) => {
     const lastUpdated = getLastUpdate(elapsedDays);
 
     let posterPath;
-    if (project.poster) posterPath = "/api/s3/" + project.id;
+    if (project.poster) posterPath = project.poster;
     else posterPath = "/images/default-poster.png";
 
     return (

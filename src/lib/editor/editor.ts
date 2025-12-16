@@ -180,7 +180,6 @@ const useLocal = (projectId: string) => {
     useEffect(() => {
         if (!projectId) return;
 
-        console.log("Loading local YDoc for project:", projectId);
         const doc = new Y.Doc();
         const localProvider = new IndexeddbPersistence(projectId, doc);
         setYdoc(doc);
