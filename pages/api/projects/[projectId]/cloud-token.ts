@@ -12,7 +12,7 @@ const QuerySchema = z.object({
     projectId: z.string(),
 });
 
-async function projectCollabTokenRoute(req: NextApiRequest, res: NextApiResponse) {
+async function projectCloudTokenRoute(req: NextApiRequest, res: NextApiResponse) {
     const query = validate(QuerySchema, req.query);
     const { projectId } = query;
 
@@ -38,4 +38,4 @@ async function projectCollabTokenRoute(req: NextApiRequest, res: NextApiResponse
     return Success(res, token);
 }
 
-export default apiHandler(projectCollabTokenRoute);
+export default apiHandler(projectCloudTokenRoute);

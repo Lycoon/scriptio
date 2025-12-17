@@ -8,6 +8,7 @@ import { login } from "@src/lib/utils/requests";
 
 import form from "../../utils/Form.module.css";
 import { useSWRConfig } from "swr";
+import { ApiResponse } from "@src/lib/utils/api-utils";
 
 type Props = {
     verificationStatus: VerificationStatus;
@@ -48,13 +49,12 @@ const LoginForm = ({ verificationStatus }: Props) => {
         resetFromInfo();
 
         const res = await login(e.target.email.value, e.target.password.value);
-        const json = (await res.json()) as any;
-
         if (res.ok) {
             mutate("/api/users/cookie");
             Router.push("/");
         } else {
-            setFormInfo({ content: json.message, isError: true });
+            const json = (await res.json()) as ApiResponse;
+            setFormInfo({ content: json.message!, isError: true });
         }
     }
 

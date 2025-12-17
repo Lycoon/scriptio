@@ -10,6 +10,7 @@ import page from "./SettingsPageContainer.module.css";
 import layout from "../utils/Layout.module.css";
 import form from "../utils/Form.module.css";
 import { join } from "@src/lib/utils/misc";
+import { ApiResponse } from "@src/lib/utils/api-utils";
 
 const SettingsPageContainer = () => {
     const { user } = useUser();
@@ -82,8 +83,8 @@ const SettingsPageContainer = () => {
         }
 
         const res = await changePassword(newPassword);
-        const json = await res.json();
-        setFormInfo({ content: json.message, isError: !res.ok });
+        const json = (await res.json()) as ApiResponse;
+        setFormInfo({ content: json.message!, isError: !res.ok });
 
         if (res.ok) e.target.reset();
     };

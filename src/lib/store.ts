@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Store } from "tauri-plugin-store-api";
-import { DesktopResponse } from "./utils/types";
 import { useDesktop } from "./utils/hooks";
 
 const DEFAULT_STORE = "scriptio.cfg";
@@ -11,6 +10,7 @@ const getTauriStore = (filename: string) => {
     return stores[filename];
 };
 
+/*
 const useDesktopData = <T>(action: Promise<any> | undefined): DesktopResponse<T> => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<any>(undefined);
@@ -31,11 +31,7 @@ const useDesktopData = <T>(action: Promise<any> | undefined): DesktopResponse<T>
     return { isLoading, data, error };
 };
 
-export const setDesktopValue = async <T>(
-    key: string,
-    value: T,
-    storeName: string
-): Promise<any> => {
+export const setDesktopValue = async <T>(key: string, value: T, storeName: string): Promise<any> => {
     const store = getTauriStore(storeName ?? DEFAULT_STORE);
 
     try {
@@ -82,3 +78,4 @@ export const useDesktopValues = (storeName: string): DesktopResponse<string[]> =
     const { isLoading, data, error } = useDesktopData<string[]>(store?.keys());
     return { isLoading, data, error };
 };
+*/

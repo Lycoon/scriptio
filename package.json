@@ -27,6 +27,7 @@
         "@tiptap/extension-text": "^3.13.0",
         "@tiptap/extension-underline": "^3.13.0",
         "@tiptap/react": "^3.13.0",
+        "argon2": "^0.44.0",
         "chart.js": "^4.4.1",
         "chartjs-plugin-datalabels": "^2.2.0",
         "debounce": "^2.0.0",
@@ -53,7 +54,7 @@
         "zod": "^4.1.13"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20251205.0",
+        "@cloudflare/workers-types": "^4.20251216.0",
         "@svgr/webpack": "^8.1.0",
         "@tauri-apps/cli": "^1.5.9",
         "@types/file-saver": "^2.0.5",

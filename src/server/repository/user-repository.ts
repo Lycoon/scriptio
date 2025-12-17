@@ -1,12 +1,10 @@
-import { Secret } from "@node_modules/.prisma/client";
 import prisma from "../db";
 
 export type UpdateSecrets = {
-    hash?: string;
-    salt?: string;
-    emailHash?: string;
+    password?: string;
+    emailHash?: string | null;
+    recoverHash?: string | null;
     lastEmailHash?: Date;
-    recoverHash?: string;
     lastRecoverHash?: Date;
 };
 
@@ -29,7 +27,12 @@ export interface UserUpdate {
 
 export interface UserCreation {
     email: string;
-    secrets: Secret;
+    secrets: SecretCreation;
+}
+
+export interface SecretCreation {
+    password: string;
+    emailHash: string;
 }
 
 type idOrEmailType = { id: number } | { email: string };
@@ -57,9 +60,8 @@ export class UserRepository {
                 email: user.email,
                 secrets: {
                     create: {
-                        hash: user.secrets.hash!,
-                        salt: user.secrets.salt!,
-                        emailHash: user.secrets.emailHash!,
+                        password: user.secrets.password,
+                        emailHash: user.secrets.emailHash,
                     },
                 },
                 settings: {

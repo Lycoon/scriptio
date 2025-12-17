@@ -23,17 +23,17 @@ async function loginRoute(req: NextApiRequest, res: NextApiResponse) {
     const { email, password } = validate(BodySchema, req.body);
 
     const user = await UserService.getUserFromEmail(email, true);
-    if (!user) {
-        throw new UnauthorizedError(WRONG_CREDENTIALS);
-    }
-
-    const matchingPassword = await SecretService.checkPassword(user.secrets, password);
-    if (!matchingPassword) {
+    if (!user || !user.secrets) {
         throw new UnauthorizedError(WRONG_CREDENTIALS);
     }
 
     if (!user.verified) {
         throw new UnauthorizedError(NOT_VERIFIED);
+    }
+
+    const matchingPassword = await SecretService.checkPassword(user.secrets.password, password);
+    if (!matchingPassword) {
+        throw new UnauthorizedError(WRONG_CREDENTIALS);
     }
 
     // Filling session with data

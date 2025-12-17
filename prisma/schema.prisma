@@ -35,12 +35,10 @@ model Secret {
   userId              Int         @unique
   user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  hash                String
-  salt                String
-
-  emailHash           String
-  lastEmailHash       DateTime    @default(now())
+  password            String
+  emailHash           String?
   recoverHash         String?
+  lastEmailHash       DateTime    @default(now())
   lastRecoverHash     DateTime    @default(now())
 }
 

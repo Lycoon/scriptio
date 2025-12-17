@@ -60,7 +60,7 @@ async function recoverPassword(body: RecoveryBody, res: NextApiResponse) {
 /**
  * PATCH `/recover`
  *
- * Hit when a user changes its password (when unautheticated)
+ * Hit when a user changes its password (when unauthenticated)
  */
 async function updatePassword(body: UpdatePasswordBody, res: NextApiResponse) {
     const { password, userId, recoverHash } = body;
@@ -70,26 +70,27 @@ async function updatePassword(body: UpdatePasswordBody, res: NextApiResponse) {
     }
 
     const user = await UserService.getUserFromId(userId, true);
+    if (!user || !user.secrets) {
+        throw new BodyFieldError(ERROR_RECOVERY_LINK_EXPIRED);
+    }
+
     if (
-        !user ||
-        recoverHash !== user.secrets.recoverHash ||
-        Misc.hasExpired(user.secrets.lastRecoverHash, 60, "minutes")
+        !SecretService.isHashValid(recoverHash, user.secrets.recoverHash) ||
+        Misc.hasExpired(user.secrets.lastRecoverHash, 15, "minutes")
     ) {
         throw new BodyFieldError(ERROR_RECOVERY_LINK_EXPIRED);
     }
 
-    const secrets = SecretService.generateSecrets(password);
-    if (!secrets) {
+    const newPassword = await SecretService.hashPassword(password);
+    if (!newPassword) {
         throw new InternalServerError(FAILED_PASSWORD_CHANGED);
     }
 
     const updated = await UserService.updateUser({
         id: { id: user.id },
         secrets: {
-            hash: secrets.hash,
-            salt: secrets.salt,
-            recoverHash: secrets.recoverHash,
-            lastRecoverHash: secrets.lastRecoverHash,
+            password: newPassword,
+            recoverHash: null,
         },
     });
 

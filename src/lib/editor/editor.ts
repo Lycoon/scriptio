@@ -2,7 +2,6 @@ import { Editor, JSONContent, useEditor } from "@tiptap/react";
 import { SaveStatus, ScreenplayElement, Style } from "../utils/enums";
 import { ProjectContext, ProjectContextType } from "@src/context/ProjectContext";
 
-import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "@src/Screenplay";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import { computeFullScenesData } from "./screenplay";
@@ -19,7 +18,10 @@ import { removeAwarenessStates } from "@node_modules/y-protocols/awareness";
 import { useSettings } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
-import { getCollabToken } from "../utils/requests";
+import { getCloudToken } from "../utils/requests";
+import { Screenplay } from "../utils/types";
+
+import * as Node from "@src/Screenplay";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -106,21 +108,21 @@ export const SCRIPTIO_EXTENSIONS = [
         content: "Screenplay+",
     }),
     Text,
-    Screenplay,
-    CustomBold,
-    CustomItalic,
-    CustomUnderline,
+    Node.Screenplay,
+    Node.CustomBold,
+    Node.CustomItalic,
+    Node.CustomUnderline,
 ];
 
 const SCREENPLAY_SAVE_DELAY = 2000;
 const SCENE_UPDATE_DELAY = 500;
 const CHARACTERS_UPDATE_DELAY = 500;
 
-export const deferredSceneUpdate = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
+export const deferredSceneUpdate = debounce((screenplay: Screenplay, projectCtx: ProjectContextType) => {
     computeFullScenesData(screenplay, projectCtx);
 }, SCENE_UPDATE_DELAY);
 
-export const deferredCharactersUpdate = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
+export const deferredCharactersUpdate = debounce((screenplay: Screenplay, projectCtx: ProjectContextType) => {
     computeFullCharactersData(screenplay, projectCtx);
 }, CHARACTERS_UPDATE_DELAY);
 
@@ -207,7 +209,7 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
         }
 
         const connect = async () => {
-            const token = await getCollabToken(projectId);
+            const token = await getCloudToken(projectId);
             if (!token) {
                 setStatus("unauthorized");
                 return;
@@ -316,6 +318,7 @@ export const useScriptioEditor = (
             onUpdate({ editor }) {
                 const screenplay = editor.getJSON();
                 projectCtx.updateSaveStatus(SaveStatus.Saving);
+                projectCtx.updateScreenplay(screenplay);
                 deferredSceneUpdate(screenplay, projectCtx);
                 deferredCharactersUpdate(screenplay, projectCtx);
             },

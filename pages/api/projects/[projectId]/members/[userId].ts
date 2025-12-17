@@ -86,7 +86,7 @@ async function updateProjectMemberRole(userId: number, query: Query, body: Updat
     }
 
     if (memberToUpdate.role === newRole) {
-        return SuccessNoContent(res, "User already has this role");
+        return SuccessNoContent(res);
     }
 
     if (
@@ -97,8 +97,8 @@ async function updateProjectMemberRole(userId: number, query: Query, body: Updat
         throw new ForbiddenError("User does not have sufficient permissions");
     }
 
-    await ProjectService.upsertMember(projectId, userToUpdateId, newRole);
-    return Success(res, "User role updated successfully");
+    const updated = await ProjectService.upsertMember(projectId, userToUpdateId, newRole);
+    return Success(res, updated);
 }
 
 /**
@@ -132,7 +132,7 @@ async function deleteProjectMember(userId: number, query: Query, res: NextApiRes
     }
 
     await ProjectService.deleteProjectMember(projectId, userToDelete);
-    return SuccessNoContent(res, "User deleted successfully");
+    return SuccessNoContent(res);
 }
 
 export default apiHandler(projectRoleRoute);

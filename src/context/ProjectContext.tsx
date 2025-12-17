@@ -1,11 +1,20 @@
-import { createContext, ReactNode, SetStateAction, useState } from "react";
+import { createContext, ReactNode, SetStateAction, useMemo, useState } from "react";
 import { ScenesData } from "@src/lib/editor/screenplay";
 import { CharacterMap } from "@src/lib/editor/characters";
 import { SaveStatus } from "@src/lib/utils/enums";
 import { Editor } from "@tiptap/react";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { Screenplay } from "@src/lib/utils/types";
+
+const DEFAULT_SCREENPLAY: Screenplay = {
+    type: "doc",
+    attrs: {},
+    content: [{ type: "paragraph", attrs: {} }],
+};
 
 export type ProjectContextType = {
+    screenplay: Screenplay;
+    updateScreenplay: (screenplay: Screenplay) => void;
     project: ProjectMembershipPayload | undefined;
     updateProject: (project: ProjectMembershipPayload | undefined) => void;
     editor: Editor | undefined;
@@ -19,6 +28,8 @@ export type ProjectContextType = {
 };
 
 const contextDefaults: ProjectContextType = {
+    screenplay: DEFAULT_SCREENPLAY,
+    updateScreenplay: () => {},
     project: undefined,
     updateProject: () => {},
     editor: undefined,
@@ -32,11 +43,16 @@ const contextDefaults: ProjectContextType = {
 };
 
 export function ProjectContextProvider({ children }: { children: ReactNode }) {
+    const [screenplay, setScreenplay] = useState<Screenplay>(DEFAULT_SCREENPLAY);
     const [project, setProject] = useState<ProjectMembershipPayload | undefined>(undefined);
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [scenesData, setScenesData] = useState<ScenesData>([]);
     const [charactersData, setCharactersData] = useState<CharacterMap>({});
     const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.Saved);
+
+    const updateScreenplay = (screenplay_: Screenplay) => {
+        setScreenplay(screenplay_);
+    };
 
     const updateProject = (project_: ProjectMembershipPayload | undefined) => {
         setProject(project_);
@@ -58,18 +74,23 @@ export function ProjectContextProvider({ children }: { children: ReactNode }) {
         setSaveStatus(saveStatus_);
     };
 
-    const value = {
-        project,
-        updateProject,
-        editor,
-        updateEditor,
-        scenesData,
-        updateScenesData,
-        charactersData,
-        updateCharactersData,
-        saveStatus,
-        updateSaveStatus,
-    };
+    const value = useMemo(
+        () => ({
+            screenplay,
+            updateScreenplay,
+            project,
+            updateProject,
+            editor,
+            updateEditor,
+            scenesData,
+            updateScenesData,
+            charactersData,
+            updateCharactersData,
+            saveStatus,
+            updateSaveStatus,
+        }),
+        [screenplay, project, editor, scenesData, charactersData, saveStatus]
+    );
 
     return (
         <>

@@ -1,7 +1,12 @@
+import { DocumentType, NodeType, TextType } from "@tiptap/core";
 import { UpdateSecrets, UpdateSettings } from "../../server/repository/user-repository";
 import { CharacterMap } from "../editor/characters";
 
-// User
+export type Screenplay = DocumentType<
+    Record<string, any> | undefined,
+    NodeType<string, undefined | Record<string, any>, any, (NodeType | TextType)[]>[]
+>;
+
 export type CookieUser = {
     id: number;
     email: string;

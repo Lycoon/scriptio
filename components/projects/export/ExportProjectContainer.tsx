@@ -1,11 +1,10 @@
 import FileSaver from "file-saver";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { convertToFountain } from "@src/converters/export/fountain";
 import { exportToPDF } from "@src/converters/export/pdf";
 import { useSettings, useUser } from "@src/lib/utils/hooks";
 import CharacterExport from "./CharacterExport";
 import Loading from "../../utils/Loading";
-import { Project } from "@src/lib/utils/types";
 import FormHeader from "../FormHeader";
 import FormEnd from "../FormEnd";
 import { getCharacterNames } from "@src/lib/editor/characters";
@@ -17,13 +16,11 @@ import export_ from "./ExportProjectContainer.module.css";
 
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { convertToFDX } from "@src/converters/export/fdx";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 // ------------------------------ //
 //              DATA              //
 // ------------------------------ //
-type Props = {
-    project: Project;
-};
 
 export enum ExportFormat {
     PDF = "pdf",
@@ -44,50 +41,31 @@ export type ExportDataPDF = ExportData & {
 };
 
 // ------------------------------ //
-//            FUNCTIONS           //
-// ------------------------------ //
-const removeFromStateList = (list: any[], setList: (list: any[]) => void, item: string) => {
-    const updated: any[] = [];
-    list.forEach((e: any) => {
-        if (e != item) {
-            updated.push(e);
-        }
-    });
-
-    setList(updated);
-};
-
-const addToStateList = (list: any[], setList: (list: any[]) => void, item: any) => {
-    const updated = [...list];
-    updated.push(item);
-
-    setList(updated);
-};
-
-// ------------------------------ //
 //           COMPONENTS           //
 // ------------------------------ //
-const ExportProjectConainer = ({ project }: Props) => {
-    const { data: user } = useUser(true);
-    const { data: settings, isLoading } = useSettings();
+const ExportProjectConainer = () => {
+    const { user } = useUser(true);
+    const { project: membership, screenplay } = useContext(ProjectContext);
+    const { settings, isLoading } = useSettings();
 
     const [exportFormat, setExportFormat] = useState<ExportFormat>(ExportFormat.PDF);
     const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
     const [includeNotes, setIncludeNotes] = useState<boolean>(false);
+
     const [allCharacters, setAllCharacters] = useState<boolean>(true);
     const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
-    const [characters, setCharacters] = useState<string[]>(getCharacterNames(project.screenplay));
+    const [availableCharacters, setAvailableCharacters] = useState<string[]>(getCharacterNames(screenplay));
 
-    if (isLoading) return <Loading />;
+    if (isLoading || !user || !membership) return <Loading />;
 
     const addCharacter = (name: string) => {
-        addToStateList(selectedCharacters, setSelectedCharacters, name);
-        removeFromStateList(characters, setCharacters, name);
+        setSelectedCharacters((prevSelected) => [...prevSelected, name]);
+        setAvailableCharacters((prevAvailable) => prevAvailable.filter((charName) => charName !== name));
     };
 
     const deleteCharacter = (name: string) => {
-        removeFromStateList(selectedCharacters, setSelectedCharacters, name);
-        addToStateList(characters, setCharacters, name);
+        setSelectedCharacters((prevSelected) => prevSelected.filter((charName) => charName !== name));
+        setAvailableCharacters((prevAvailable) => [...prevAvailable, name]);
     };
 
     const exportToFountain = (screenplay: any, exportData: ExportData) => {
@@ -110,8 +88,8 @@ const ExportProjectConainer = ({ project }: Props) => {
         e.preventDefault();
 
         const exportData: ExportData = {
-            title: project.title,
-            author: user!.email,
+            title: membership.project.title,
+            author: user.email,
             notes: includeNotes,
             notesColor: settings?.exportedNotesColor,
             characters: allCharacters ? undefined : selectedCharacters,
@@ -119,13 +97,13 @@ const ExportProjectConainer = ({ project }: Props) => {
 
         switch (exportFormat) {
             case ExportFormat.PDF:
-                exportToPDF(project.screenplay, { ...exportData, watermark: includeWatermark });
+                exportToPDF(screenplay, { ...exportData, watermark: includeWatermark });
                 break;
             case ExportFormat.FOUNTAIN:
-                exportToFountain(project.screenplay, exportData);
+                exportToFountain(screenplay, exportData);
                 break;
             case ExportFormat.FDX:
-                exportToFDX(project.screenplay, exportData);
+                exportToFDX(screenplay, exportData);
                 break;
         }
     };
@@ -173,12 +151,10 @@ const ExportProjectConainer = ({ project }: Props) => {
                                         className={export_.characters_dropdown}
                                         name="characters"
                                         onClick={(e: any) => {
-                                            if (e.button != 0)
-                                                // avoid adding value on unfolding dropdown
-                                                addCharacter(e.target.value);
+                                            if (e.button != 0) addCharacter(e.target.value);
                                         }}
                                     >
-                                        {characters.map((name: string) => {
+                                        {availableCharacters.map((name: string) => {
                                             return (
                                                 <option key={name} value={name}>
                                                     {name}
@@ -206,7 +182,7 @@ const ExportProjectConainer = ({ project }: Props) => {
                     </div>
                 </div>
 
-                <FormEnd submitText={"Export"} onBack={() => redirectScreenplay(project.id)} />
+                <FormEnd submitText={"Export"} onBack={() => redirectScreenplay(membership.project.id)} />
             </form>
         </div>
     );

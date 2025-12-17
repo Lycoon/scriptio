@@ -1,9 +1,8 @@
 import { UpdateSettings } from "../../server/repository/user-repository";
 import { CharacterMap, getPersistentCharacters } from "../editor/characters";
-import { SaveStatus } from "./enums";
-import { ProjectContextType } from "@src/context/ProjectContext";
 import { UpdateProjectBody } from "@pages/api/projects/[projectId]";
 import { CreateProjectBody } from "@pages/api/projects";
+import { ApiResponse } from "./api-utils";
 
 enum APIMethod {
     Get = "GET",
@@ -33,10 +32,10 @@ export const SuccessResponse = (message: string, data: any) => {
 
 // Project
 
-export const getCollabToken = async (projectId: string): Promise<string | null> => {
-    const res = await request(`/api/projects/${projectId}/collab-token`, APIMethod.Get);
+export const getCloudToken = async (projectId: string): Promise<string | null> => {
+    const res = await request(`/api/projects/${projectId}/cloud-token`, APIMethod.Get);
     if (res.ok) {
-        const { data: token } = await res.json();
+        const { data: token } = (await res.json()) as ApiResponse;
         return token;
     }
     return null;
@@ -54,14 +53,12 @@ export const editProject = (projectId: string, body: UpdateProjectBody) => {
     return request(`/api/projects/${projectId}`, APIMethod.Patch, body);
 };
 
-export const saveCharacters = async (projectCtx: ProjectContextType, characters: CharacterMap): Promise<Response> => {
+export const saveCharacters = async (projectId: string, characters: CharacterMap): Promise<Response> => {
     const persistentCharacters = getPersistentCharacters(characters); // Get rid of non-persistent characters
-
-    const projectId = projectCtx.project!.id;
     const res = await editProject(projectId, { characters: persistentCharacters });
 
-    if (res.ok) projectCtx.updateSaveStatus(SaveStatus.Saved);
-    else projectCtx.updateSaveStatus(SaveStatus.Error);
+    //if (res.ok) projectCtx.updateSaveStatus(SaveStatus.Saved);
+    //else projectCtx.updateSaveStatus(SaveStatus.Error);
 
     return res;
 };

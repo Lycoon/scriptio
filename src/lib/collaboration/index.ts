@@ -1,3 +1,4 @@
+/// <reference types="@cloudflare/workers-types" />
 import { DurableObject } from "cloudflare:workers";
 import * as Y from "yjs";
 import { verify } from "jsonwebtoken";
@@ -83,7 +84,11 @@ export class ScreenplayRoom extends DurableObject {
 
             const encoder = encoding.createEncoder();
             syncProtocol.writeSyncStep1(encoder, this.doc);
-            const syncStep1 = new Uint8Array([0, ...encoding.toUint8Array(encoder)]);
+
+            const payload = encoding.toUint8Array(encoder);
+            const syncStep1 = new Uint8Array(payload.length + 1);
+            syncStep1.set([0], 0);
+            syncStep1.set(payload, 1);
             server.send(syncStep1);
 
             return new Response(null, { status: 101, webSocket: client });

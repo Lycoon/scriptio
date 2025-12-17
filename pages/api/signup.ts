@@ -45,6 +45,10 @@ async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
             throw new InternalServerError(EMAIL_ALREADY_REGISTERED);
         }
 
+        if (!existing.secrets) {
+            throw new InternalServerError(ERROR_SIGN_UP);
+        }
+
         if (!Misc.hasExpired(existing.secrets.lastEmailHash, 5, "minutes")) {
             throw new BodyFieldError(ERROR_VERIFICATION_THROTTLE);
         }
@@ -55,7 +59,7 @@ async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
         return Success(res, null, VERIFICATION_SENT);
     }
 
-    const secrets = SecretService.generateSecrets(password);
+    const secrets = await SecretService.createSecrets(password);
     const created = await UserService.createUser(email, secrets);
     if (!created) {
         throw new InternalServerError(ERROR_SIGN_UP);
@@ -84,7 +88,7 @@ async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
         return Success(res, null, VERIFICATION_SENT);
     }
 
-    Mail.sendVerificationEmail(created.id, email, secrets.emailHash!);
+    Mail.sendVerificationEmail(created.id, email, secrets.emailHash);
     return Success(res, null, VERIFICATION_SENT);
 }
 

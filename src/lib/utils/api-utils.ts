@@ -62,7 +62,7 @@ export class InternalServerError extends AppError {
     }
 }
 
-export const SuccessNoContent = (res: NextApiResponse, message?: string) => {
+export const SuccessNoContent = (res: NextApiResponse) => {
     res.status(204).end();
 };
 

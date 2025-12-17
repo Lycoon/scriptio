@@ -13,6 +13,7 @@ import FormEnd from "./FormEnd";
 import form from "../utils/Form.module.css";
 import layout from "../utils/Layout.module.css";
 import { CreateProjectBody } from "@pages/api/projects";
+import { ApiResponse } from "@src/lib/utils/api-utils";
 
 type Props = {
     setIsCreating: (isCreating: boolean) => void;
@@ -49,9 +50,9 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         }
 
         const res = await createProject(user.id, body);
-        const json = await res.json();
+        const json = (await res.json()) as ApiResponse;
         if (!res.ok) {
-            setFormInfo({ content: json.message, isError: true });
+            setFormInfo({ content: json.message!, isError: true });
             return;
         }
 

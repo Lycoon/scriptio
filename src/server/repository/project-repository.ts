@@ -24,6 +24,11 @@ type RawProject = Prisma.ProjectGetPayload<{
     select: typeof projectSelect;
 }>;
 
+type RawMembership = {
+    role: ProjectRole;
+    project: RawProject;
+};
+
 export type Project = Omit<RawProject, "poster"> & {
     poster: string | null;
 };
@@ -33,7 +38,7 @@ export interface ProjectMembershipPayload {
 }
 
 export class ProjectRepository {
-    private async hydrateMembership(membership: ProjectMembershipPayload): Promise<ProjectMembershipPayload> {
+    private async hydrateMembership(membership: RawMembership): Promise<ProjectMembershipPayload> {
         let posterUrl: string | null = null;
 
         if (membership.project.hasPoster) {

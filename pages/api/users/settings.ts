@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { FAILED_USER_SETTINGS_UPDATE, USER_SETTINGS_UPDATED } from "@src/lib/messages";
+import { FAILED_USER_SETTINGS_UPDATE } from "@src/lib/messages";
 import { getCookieUser } from "@src/lib/session";
 import { apiHandler } from "@src/lib/utils/api-handler";
 import {
@@ -76,7 +76,7 @@ async function updateSettings(userId: number, body: UpdateSettingsBody, res: Nex
         throw new InternalServerError(FAILED_USER_SETTINGS_UPDATE);
     }
 
-    return SuccessNoContent(res, USER_SETTINGS_UPDATED);
+    return SuccessNoContent(res);
 }
 
 export default apiHandler(settingsRoute);

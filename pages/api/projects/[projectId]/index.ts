@@ -110,7 +110,7 @@ async function updateProject(userId: number, query: Query, body: UpdateProjectBo
         throw new InternalServerError();
     }
 
-    return SuccessNoContent(res);
+    return Success(res, updated);
 }
 
 /**

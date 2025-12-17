@@ -7,8 +7,9 @@ export const ERROR_PASSWORD_MATCH = "Passwords do not match";
 export const ERROR_SIGN_UP = "An error occurred while signing up";
 
 // Recovery
-export const ERROR_RECOVERY_LINK_EXPIRED = "Password recovery links are only valid for 1 hour. This one has expired";
-export const RECOVERY_REQUEST_FULFILLED = "An email for password recovery has been sent if an account is linked to it";
+export const ERROR_RECOVERY_LINK_EXPIRED = "This recovery link has expired. Please request a new one.";
+export const RECOVERY_REQUEST_FULFILLED =
+    "An email for password recovery has been sent if an account is linked to it. The link is valid for the next 15 minutes.";
 export const RECOVERY_SUCCESS = "Password changed successfully. You will be redirected to the login page";
 
 // Email
@@ -22,7 +23,6 @@ export const ERROR_VERIFICATION_THROTTLE = "A verification email has already bee
 export const USER_DELETED = "User deleted successfully";
 export const FAILED_USER_DELETION = "Failed user deletion";
 export const FAILED_USER_SETTINGS_UPDATE = "Failed updating user settings";
-export const USER_SETTINGS_UPDATED = "User settings updated successfully";
 
 // Generic
 export const MISSING_BODY = "Missing body";

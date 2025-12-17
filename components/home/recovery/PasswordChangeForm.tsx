@@ -3,10 +3,10 @@ import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 import { useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "@src/lib/messages";
 import { validateRecover } from "@src/lib/utils/requests";
-import { join } from "@src/lib/utils/misc";
 
 import form from "../../utils/Form.module.css";
 import recovery from "../recovery/RecoveryForm.module.css";
+import { ApiResponse } from "@src/lib/utils/api-utils";
 
 type Props = {
     userId: number;
@@ -32,15 +32,15 @@ const PasswordChangeForm = ({ userId, recoverHash }: Props) => {
         }
 
         const res = await validateRecover(userId, recoverHash, pwd1);
-        const json = await res.json();
+        const json = (await res.json()) as ApiResponse;
 
         if (res.ok) {
-            setFormInfo({ content: json.message });
+            setFormInfo({ content: json.message! });
             setTimeout(() => {
                 Router.push("/login");
             }, 3000);
         } else {
-            setFormInfo({ content: json.message, isError: true });
+            setFormInfo({ content: json.message!, isError: true });
         }
     };
 

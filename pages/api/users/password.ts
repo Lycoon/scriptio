@@ -2,14 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { FAILED_PASSWORD_CHANGED, PASSWORD_CHANGED, PASSWORD_REQUIREMENTS } from "@src/lib/messages";
 import { getCookieUser } from "@src/lib/session";
 import { apiHandler } from "@src/lib/utils/api-handler";
-import {
-    BodyFieldError,
-    ForbiddenError,
-    InternalServerError,
-    Success,
-    SuccessNoContent,
-    validate,
-} from "@src/lib/utils/api-utils";
+import { BodyFieldError, ForbiddenError, InternalServerError, Success, validate } from "@src/lib/utils/api-utils";
 
 import * as UserService from "@src/server/service/user-service";
 import * as SecretService from "@src/lib/utils/secrets";
@@ -43,16 +36,15 @@ async function updatePassword(userId: number, body: UpdatePasswordBody, res: Nex
         throw new BodyFieldError(PASSWORD_REQUIREMENTS);
     }
 
-    const secrets = SecretService.generateSecrets(body.password);
-    if (!secrets) {
+    const password = await SecretService.hashPassword(body.password);
+    if (!password) {
         throw new InternalServerError(FAILED_PASSWORD_CHANGED);
     }
 
     const updated = await UserService.updateUser({
         id: { id: userId },
         secrets: {
-            hash: secrets.hash,
-            salt: secrets.salt,
+            password,
         },
     });
 

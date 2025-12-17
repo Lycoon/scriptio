@@ -1,38 +1,53 @@
-import { UpdateSecrets } from "@src/server/repository/user-repository";
+import { SecretCreation } from "@src/server/repository/user-repository";
 import crypto from "crypto";
+import argon2 from "argon2";
 
-export const generateHexToken = (length: number = 64) => {
+export const generateToken = (length: number = 32) => {
     return crypto.randomBytes(length).toString("hex");
 };
 
-export const hashPassword = (password: string, salt: string) => {
-    return crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
+export const hashPassword = async (password: string): Promise<string> => {
+    return await argon2.hash(password, {
+        type: argon2.argon2id,
+        memoryCost: 2 ** 16,
+        timeCost: 3,
+        parallelism: 1,
+    });
 };
 
-export const checkPassword = async (secrets: any, password: string) => {
-    if (!secrets || !password) {
+export const checkPassword = async (passwordA: string, passwordB: string): Promise<boolean> => {
+    if (!passwordA || !passwordB) {
         return false;
     }
     try {
-        const hash = hashPassword(password, secrets.salt);
-        return hash === secrets.hash;
+        return await argon2.verify(passwordA, passwordB);
     } catch (error) {
         return false;
     }
 };
 
-export const generateSecrets = (password: string): UpdateSecrets => {
-    const recoverHash = generateHexToken();
-    const emailHash = generateHexToken();
-    const salt = generateHexToken(16);
-    const hash = hashPassword(password, salt);
+export const isHashValid = (hashA: string | null | undefined, hashB: string | null | undefined): boolean => {
+    if (!hashA || !hashB || typeof hashA !== "string" || typeof hashB !== "string") {
+        return false;
+    }
+
+    const bufHashA = Buffer.from(hashA);
+    const bufHashB = Buffer.from(hashB);
+
+    if (bufHashA.length !== bufHashB.length) {
+        return false;
+    }
+
+    const isValid = crypto.timingSafeEqual(new Uint8Array(bufHashA), new Uint8Array(bufHashB));
+    return isValid;
+};
+
+export const createSecrets = async (password: string): Promise<SecretCreation> => {
+    const emailHash = generateToken();
+    const hashedPassword = await hashPassword(password);
 
     return {
-        hash,
-        salt,
+        password: hashedPassword,
         emailHash,
-        recoverHash,
-        lastEmailHash: new Date(),
-        lastRecoverHash: new Date(),
     };
 };

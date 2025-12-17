@@ -63,7 +63,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     const [nameOccurrences, setNameOccurrences] = useState<number>(0);
 
     const [newName, setNewName] = useState<string>("");
-    const [newGender, setNewGender] = useState<CharacterGender>(CharacterGender.Female);
+    const [newGender, setNewGender] = useState<CharacterGender>(CharacterGender.FEMALE);
     const [newSynopsis, setNewSynopsis] = useState<string>("");
 
     const onCreate = (e: any) => {

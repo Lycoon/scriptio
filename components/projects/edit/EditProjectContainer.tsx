@@ -10,6 +10,7 @@ import FormEnd from "../FormEnd";
 import layout from "../../utils/Layout.module.css";
 import form from "../../utils/Form.module.css";
 import { UpdateProjectBody } from "@pages/api/projects/[projectId]";
+import { ApiResponse } from "@src/lib/utils/api-utils";
 
 type Props = {
     project: Project;
@@ -39,8 +40,8 @@ const EditProjectConainer = ({ project }: Props) => {
         if (res.ok) {
             redirectScreenplay(project.id);
         } else {
-            const json = await res.json();
-            setFormInfo({ content: json.message, isError: true });
+            const json = (await res.json()) as ApiResponse;
+            setFormInfo({ content: json.message!, isError: true });
         }
     };
 

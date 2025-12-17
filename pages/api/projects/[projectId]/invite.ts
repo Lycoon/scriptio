@@ -18,8 +18,8 @@ import * as Roles from "@src/lib/utils/roles";
 import z from "zod";
 import { ProjectRole } from "@node_modules/.prisma/client";
 
-type Body = z.infer<typeof BodySchema>;
-const BodySchema = z.object({
+type ProjectMemberEmailBody = z.infer<typeof ProjectMemberEmailBodySchema>;
+const ProjectMemberEmailBodySchema = z.object({
     email: z.email(),
 });
 
@@ -35,7 +35,7 @@ async function inviteMemberRoute(req: NextApiRequest, res: NextApiResponse) {
         throw new UnauthorizedError();
     }
 
-    const body = validate(BodySchema, req.body);
+    const body = validate(ProjectMemberEmailBodySchema, req.body);
     switch (req.method) {
         case "POST":
             return inviteMember(user.id, query, body, res);
@@ -49,7 +49,7 @@ async function inviteMemberRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Invites a given user to a project, creating a pending `ProjectInvitation`
  */
-async function inviteMember(userId: number, query: Query, body: Body, res: NextApiResponse) {
+async function inviteMember(userId: number, query: Query, body: ProjectMemberEmailBody, res: NextApiResponse) {
     const { email: emailToInvite } = body;
     const { projectId } = query;
 
@@ -61,7 +61,7 @@ async function inviteMember(userId: number, query: Query, body: Body, res: NextA
         throw new ForbiddenError("Only admin members can issue invites");
     }
 
-    const token = Secrets.generateHexToken();
+    const token = Secrets.generateToken();
     const invite = await ProjectService.createInvite(projectId, emailToInvite, token);
     Mail.sendProjectInviteEmail(emailToInvite, member.project.title, token);
 
@@ -73,7 +73,7 @@ async function inviteMember(userId: number, query: Query, body: Body, res: NextA
  *
  * Deletes the invite associated to a given email address, removing its pending `ProjectInvitation`
  */
-async function deleteInvite(userId: number, query: Query, body: Body, res: NextApiResponse) {
+async function deleteInvite(userId: number, query: Query, body: ProjectMemberEmailBody, res: NextApiResponse) {
     const { email: emailToDelete } = body;
     const { projectId } = query;
 

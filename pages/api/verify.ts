@@ -35,7 +35,12 @@ async function verifyRoute(req: NextApiRequest, res: NextApiResponse) {
             return redirect(res, VerificationStatus.Used);
         }
 
-        const updated = await UserService.updateUser({ id: { id }, verified: true });
+        const updated = await UserService.updateUser({
+            id: { id },
+            secrets: { emailHash: null },
+            verified: true,
+        });
+
         if (!updated) {
             return redirect(res, VerificationStatus.Failed);
         }

@@ -5,6 +5,7 @@ import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 
 import form from "../../utils/Form.module.css";
 import { useRouter } from "@node_modules/next/router";
+import { ApiResponse } from "@src/lib/utils/api-utils";
 
 const SignupForm = () => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
@@ -28,9 +29,9 @@ const SignupForm = () => {
         }
 
         const res = await signup(email, pwd1, query.token as string);
-        const json = await res.json();
+        const json = (await res.json()) as ApiResponse;
 
-        setFormInfo({ content: json.message, isError: !res.ok });
+        setFormInfo({ content: json.message!, isError: !res.ok });
     }
 
     return (
