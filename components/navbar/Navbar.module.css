@@ -4,14 +4,16 @@
 }
 
 .logo {
-    text-decoration: solid;
-    padding-inline: 16px;
-    margin-bottom: 4px;
+    position: relative;
+    margin-left: 16px;
+    display: block;
+    width: 70px;
 }
 
-.logo_text {
-    font-family: poetsen;
-    font-size: 18px;
+.logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .container {

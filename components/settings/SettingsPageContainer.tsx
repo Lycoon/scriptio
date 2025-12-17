@@ -10,33 +10,33 @@ import page from "./SettingsPageContainer.module.css";
 import layout from "../utils/Layout.module.css";
 import form from "../utils/Form.module.css";
 import { join } from "@src/lib/utils/misc";
+import { ApiResponse } from "@src/lib/utils/api-utils";
 
 const SettingsPageContainer = () => {
-    const { data: user } = useUser();
-    const { data: settings, isLoading } = useSettings();
+    const { user } = useUser();
+    const { settings, isLoading, mutate } = useSettings();
+    const { theme, setTheme } = useTheme();
+
+    const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
+    const [notesColor, setNotesColor] = useState<string>("#000000");
+    const [exportedNotesColor, setExportedNotesColor] = useState<string>("#000000");
 
     useEffect(() => {
         if (!settings || !user) return;
 
-        setCreatedAt(new Date(user.createdAt));
-        setSceneBackground(settings.sceneBackground!);
-        setHighlightOnHover(settings.highlightOnHover!);
-        setNotesColor(settings.notesColor!);
-        setExportedNotesColor(settings.exportedNotesColor!);
-    }, [settings]);
-
-    const { theme, setTheme } = useTheme();
-    const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
-    const [createdAt, setCreatedAt] = useState<Date>(new Date());
-
-    const [sceneBackground, setSceneBackground] = useState<boolean>(false);
-    const [highlightOnHover, setHighlightOnHover] = useState<boolean>(false);
-    const [notesColor, setNotesColor] = useState<string>("");
-    const [exportedNotesColor, setExportedNotesColor] = useState<string>("");
+        if (settings?.notesColor) setNotesColor(settings.notesColor);
+        if (settings?.exportedNotesColor) setExportedNotesColor(settings.exportedNotesColor!);
+    }, [settings.exportedNotesColor, settings.notesColor, user]);
 
     if (isLoading || !user || !settings) {
         return <Loading />;
     }
+
+    const joinedDate = new Date(user.createdAt).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    });
 
     const toggleTheme = () => {
         setTheme(theme === "light" ? "dark" : "light");
@@ -46,24 +46,28 @@ const SettingsPageContainer = () => {
         setFormInfo(null);
     };
 
-    const toggleHighlightOnHover = () => {
-        editUserSettings({ highlightOnHover: !highlightOnHover });
-        setHighlightOnHover(!highlightOnHover);
+    const toggleHighlightOnHover = async () => {
+        const newHighlight = !settings.highlightOnHover;
+        await editUserSettings({ highlightOnHover: newHighlight });
+        mutate();
     };
 
-    const toggleSceneBackground = () => {
-        editUserSettings({ sceneBackground: !sceneBackground });
-        setSceneBackground(!sceneBackground);
+    const toggleSceneBackground = async () => {
+        const newBackground = !settings.sceneBackground;
+        await editUserSettings({ sceneBackground: newBackground });
+        mutate();
     };
 
-    const updateNotesColor = (newColor: string) => {
+    const updateNotesColor = async (newColor: string) => {
         setNotesColor(newColor);
-        editUserSettings({ notesColor: newColor });
+        await editUserSettings({ notesColor: newColor });
+        mutate();
     };
 
-    const updateExportedNotesColor = (newColor: string) => {
+    const updateExportedNotesColor = async (newColor: string) => {
         setExportedNotesColor(newColor);
-        editUserSettings({ exportedNotesColor: newColor });
+        await editUserSettings({ exportedNotesColor: newColor });
+        mutate();
     };
 
     const onChangePassword = async (e: any) => {
@@ -79,9 +83,10 @@ const SettingsPageContainer = () => {
         }
 
         const res = await changePassword(newPassword);
-        const json = await res.json();
+        const json = (await res.json()) as ApiResponse;
+        setFormInfo({ content: json.message!, isError: !res.ok });
 
-        setFormInfo({ content: json.message, isError: !res.ok });
+        if (res.ok) e.target.reset();
     };
 
     return (
@@ -93,14 +98,7 @@ const SettingsPageContainer = () => {
                 </div>
                 <div className={page.profile}>
                     <p className={page.email}>{user.email}</p>
-                    <p className={page.joined_date}>
-                        joined{" "}
-                        {createdAt.toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                        })}
-                    </p>
+                    <p className={page.joined_date}>joined {joinedDate}</p>
                 </div>
                 <div className={page.col_left}>
                     <div className={page.element}>
@@ -150,7 +148,7 @@ const SettingsPageContainer = () => {
                             <input
                                 type="checkbox"
                                 onChange={toggleHighlightOnHover}
-                                defaultChecked={settings?.highlightOnHover}
+                                checked={settings.highlightOnHover}
                             />
                         </div>
                     </div>
@@ -160,7 +158,7 @@ const SettingsPageContainer = () => {
                             <input
                                 type="checkbox"
                                 onChange={toggleSceneBackground}
-                                defaultChecked={settings?.sceneBackground}
+                                checked={settings.sceneBackground}
                             />
                         </div>
                         <hr />

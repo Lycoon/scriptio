@@ -1,0 +1,12 @@
+name = "screenplay-collaboration"
+main = "index.ts"
+compatibility_date = "2025-12-08"
+compatibility_flags = ["nodejs_compat"]
+
+[[durable_objects.bindings]]
+name = "SCREENPLAY_ROOM"
+class_name = "ScreenplayRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ScreenplayRoom"]

@@ -1,153 +1,88 @@
-import { randomUUID } from "crypto";
 import { NextApiRequest, NextApiResponse } from "next";
-import { MISSING_BODY } from "@src/lib/messages";
-import { deleteObject, uploadObject } from "@src/lib/s3";
-import {
-    createProject,
-    deleteProject,
-    getProjectFromId,
-    getProjects,
-    updateProject,
-} from "@src/server/service/project-service";
-import { ResponseAPI } from "@src/lib/utils/requests";
 import { getCookieUser } from "@src/lib/session";
 
-export default async function projectsRoute(req: NextApiRequest, res: NextApiResponse) {
+import * as S3 from "@src/lib/s3";
+import * as ProjectService from "@src/server/service/project-service";
+import { apiHandler } from "@src/lib/utils/api-handler";
+import {
+    InternalServerError,
+    Success,
+    SuccessCreated,
+    UnauthorizedError,
+    BodyFieldError,
+    UserNotFoundError,
+    validate,
+} from "@src/lib/utils/api-utils";
+
+import z from "zod";
+
+export type CreateProjectBody = z.infer<typeof CreateProjectBodySchema>;
+const CreateProjectBodySchema = z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    poster: z.string().optional(),
+});
+
+async function projectsRoute(req: NextApiRequest, res: NextApiResponse) {
     const user = await getCookieUser(req, res);
 
     if (!user || !user.id) {
-        return ResponseAPI(res, 403, "Forbidden");
+        throw new UnauthorizedError();
     }
 
     switch (req.method) {
         case "GET":
-            return getMethod(user.id, res);
+            return getProjects(user.id, res);
         case "POST":
-            return postMethod(user.id, req.body, res);
-        case "PATCH":
-            return patchMethod(user.id, req.body, res);
-        case "DELETE":
-            return deleteMethod(user.id, req.query, res);
+            const body = validate(CreateProjectBodySchema, req.body);
+            return createProject(user.id, body, res);
     }
 }
 
-async function getMethod(userId: number, res: NextApiResponse) {
-    const projects = await getProjects(userId);
+/**
+ * GET `/projects`
+ *
+ * Gets all projects from authenticated user
+ */
+async function getProjects(userId: number, res: NextApiResponse) {
+    const projects = await ProjectService.getMemberships(userId);
     if (!projects) {
-        return ResponseAPI(res, 404, "User with id " + userId + " not found");
+        throw new UserNotFoundError();
     }
 
-    return ResponseAPI(res, 200, "", projects.projects);
+    return Success(res, projects);
 }
 
-async function postMethod(userId: number, body: any, res: NextApiResponse) {
-    if (!body || !body.title) {
-        return ResponseAPI(res, 400, MISSING_BODY);
+/**
+ * POST `/projects`
+ *
+ * Creates a new project
+ */
+async function createProject(userId: number, body: CreateProjectBody, res: NextApiResponse) {
+    const { title, description, poster } = body;
+
+    if (title.length < 1 || title.length > 256) {
+        throw new BodyFieldError("Title must be between 1 and 256 characters");
     }
-
-    const title: string = body.title;
-    const description: string = body.description;
-
-    if (title.length < 2 || title.length > 256) {
-        return ResponseAPI(res, 400, "Title must be between 2 and 256 characters");
-    }
-
     if (description && description.length > 2048) {
-        return ResponseAPI(res, 400, "Description must be at most 2048-character long");
+        throw new BodyFieldError("Description must be at most 2048-character long");
     }
 
-    let uuid = undefined;
-    if (body.poster) {
-        uuid = randomUUID();
-        await uploadObject(uuid, body.poster);
-    }
-
-    const created = await createProject({
+    const newProject = await ProjectService.create({
         title,
         description,
         userId,
-        poster: uuid,
+        hasPoster: poster !== undefined,
     });
 
-    if (!created) {
-        return ResponseAPI(res, 500, "Project creation failed");
+    if (!newProject) {
+        throw new InternalServerError();
+    }
+    if (poster) {
+        await S3.upload(`poster-${newProject.id}`, poster);
     }
 
-    return ResponseAPI(res, 201, "Project created successfully", created);
+    return SuccessCreated(res, newProject);
 }
 
-async function patchMethod(userId: number, body: any, res: NextApiResponse) {
-    if (!body) {
-        return ResponseAPI(res, 400, MISSING_BODY);
-    }
-
-    const projectId = body["projectId"];
-    const screenplay = body["screenplay"];
-    const title: string = body["title"];
-    const description = body["description"];
-    const characters = body["characters"];
-
-    if (!projectId) {
-        return ResponseAPI(res, 400, MISSING_BODY);
-    }
-
-    const project = await getProjectFromId(projectId);
-    if (!project || project.userId !== userId) {
-        // not user's project
-        return ResponseAPI(res, 403, "Forbidden");
-    }
-
-    if (title && (title.length < 2 || title.length > 256)) {
-        return ResponseAPI(res, 400, "Title must be between 2 and 256 characters");
-    }
-
-    if (description && description.length > 2048) {
-        return ResponseAPI(res, 400, "Description must be at most 2048-character long");
-    }
-
-    let uuid;
-    if (body.poster) {
-        // Generates uuid if first time uploading, overwrite otherwise
-        uuid = project.poster ?? randomUUID();
-        await uploadObject(uuid, body.poster);
-    }
-
-    const updated = await updateProject({
-        projectId,
-        screenplay,
-        title,
-        description,
-        characters,
-        poster: uuid,
-    });
-
-    if (!updated) {
-        return ResponseAPI(res, 500, "Project update failed");
-    }
-
-    return ResponseAPI(res, 200, "Project updated successfully", {});
-}
-
-async function deleteMethod(userId: number, query: any, res: NextApiResponse) {
-    const { projectId } = query;
-    if (!projectId) {
-        return ResponseAPI(res, 400, MISSING_BODY);
-    }
-
-    const project = await getProjectFromId(projectId);
-    if (!project || project.userId !== userId) {
-        // Not user's project
-        return ResponseAPI(res, 403, "Forbidden");
-    }
-
-    const deleted = await deleteProject({ projectId });
-    if (!deleted) {
-        return ResponseAPI(res, 500, "Project deletion failed");
-    }
-
-    if (project.poster) {
-        deleteObject(project.poster);
-    }
-
-    return ResponseAPI(res, 200, "Project deleted successfully", deleted);
-}
+export default apiHandler(projectsRoute);

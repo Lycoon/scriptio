@@ -9,7 +9,7 @@ const ContactPage = () => {
     return (
         <>
             <Head>
-                <title>Scriptio - Contact</title>
+                <title>Scriptio • Contact</title>
             </Head>
         </>
     );

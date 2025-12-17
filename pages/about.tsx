@@ -10,7 +10,7 @@ const AboutPage = () => {
     return (
         <>
             <Head>
-                <title>Scriptio - About</title>
+                <title>Scriptio • About</title>
             </Head>
             <AboutPageContainer />
         </>

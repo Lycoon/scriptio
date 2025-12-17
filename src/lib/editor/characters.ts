@@ -3,11 +3,12 @@ import { getNodeFlattenContent } from "./screenplay";
 import { ScreenplayElement } from "../utils/enums";
 import { saveCharacters } from "../utils/requests";
 import { JSONContent } from "@tiptap/react";
+import { Screenplay } from "../utils/types";
 
 export enum CharacterGender {
-    Female,
-    Male,
-    Other,
+    FEMALE,
+    MALE,
+    OTHER,
 }
 export type CharacterMap = { [name: string]: CharacterItem }; // map by character name
 export type CharacterData = { name: string } & CharacterItem;
@@ -20,7 +21,7 @@ export type CharacterItem = {
 export const upsertCharacterData = (data: CharacterData, projectCtx: ProjectContextType) => {
     projectCtx.updateCharactersData((prevData: CharacterMap) => {
         const newData = { ...prevData, [data.name]: data };
-        if (newData !== prevData) saveCharacters(projectCtx, newData);
+        if (newData !== prevData) saveCharacters(projectCtx.project!.project.id, newData);
         return newData;
     });
 };
@@ -29,7 +30,7 @@ export const deleteCharacter = (name: string, projectCtx: ProjectContextType) =>
     projectCtx.updateCharactersData((prevData: CharacterMap) => {
         const newData = { ...prevData };
         delete newData[name];
-        if (newData !== prevData) saveCharacters(projectCtx, newData);
+        if (newData !== prevData) saveCharacters(projectCtx.project!.project.id, newData);
         return newData;
     });
 };
@@ -48,7 +49,7 @@ export const doesCharacterExist = (name: string, projectCtx: ProjectContextType)
     return found;
 };
 
-export const getCharacterNames = (screenplay: JSONContent) => {
+export const getCharacterNames = (screenplay: Screenplay) => {
     if (!screenplay.content) return [];
 
     const nodes = screenplay.content;
@@ -69,8 +70,9 @@ export const getCharacterNames = (screenplay: JSONContent) => {
     return characters;
 };
 
-export const computeFullCharactersData = async (screenplay: JSONContent, projectCtx: ProjectContextType) => {
-    let charactersData: CharacterMap = { ...projectCtx.project?.characters };
+export const computeFullCharactersData = async (screenplay: Screenplay, projectCtx: ProjectContextType) => {
+    const existingCharacters = projectCtx.project!.project.characters as CharacterMap;
+    let charactersData: CharacterMap = { ...existingCharacters };
     const namesFromEditor: string[] = getCharacterNames(screenplay);
 
     for (const name of namesFromEditor) {
@@ -78,7 +80,7 @@ export const computeFullCharactersData = async (screenplay: JSONContent, project
         if (charactersData[name] !== undefined) continue;
 
         charactersData[name] = {
-            gender: CharacterGender.Other,
+            gender: CharacterGender.OTHER,
             synopsis: "",
             persistent: false,
         };

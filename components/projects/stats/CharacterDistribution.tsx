@@ -1,10 +1,8 @@
 import "chart.js/auto";
 import { Line } from "react-chartjs-2";
 import { Distribution, Frequency, getRandomColors, getScaledDistribution } from "@src/lib/editor/statistics";
-import { Project } from "@src/lib/utils/types";
 
 type Props = {
-    project: Project;
     color: string;
     distribution: Distribution;
     frequency: Frequency;

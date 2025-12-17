@@ -1,5 +1,5 @@
 /* Components */
-import EditorComponent from "./EditorComponent";
+import ScreenplayEditor from "./EditorComponent";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
@@ -9,9 +9,6 @@ import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "@src/context/UserContext";
 import { SaveStatus, ScreenplayElement, Style } from "@src/lib/utils/enums";
-import { computeFullScenesData } from "@src/lib/editor/screenplay";
-import { Project } from "@src/lib/utils/types";
-import { computeFullCharactersData } from "@src/lib/editor/characters";
 
 /* Styles */
 import styles from "./EditorAndSidebar.module.css";
@@ -19,9 +16,10 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { applyElement, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
 import { Popup } from "@components/popup/Popup";
 import { join } from "@src/lib/utils/misc";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 type EditorAndSidebarProps = {
-    project: Project;
+    project: ProjectMembershipPayload["project"];
     css: string;
 };
 
@@ -43,18 +41,18 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
 
     const setActiveElement = (element: ScreenplayElement, applyStyle = true) => {
         setSelectedElement(element);
-        if (applyStyle && editorView) applyElement(editorView, element);
+        if (applyStyle && editor) applyElement(editor, element);
     };
 
-    const editorView = useScriptioEditor(
-        project.screenplay,
+    const editor = useScriptioEditor(
+        project,
         setActiveElement,
         setSelectedStyles,
         updateSuggestions,
         updateSuggestionData
     );
 
-    editorView?.setOptions({
+    editor?.setOptions({
         autofocus: "end",
         editorProps: {
             handleKeyDown(view: any, event: any) {
@@ -99,7 +97,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
                         }
                     }
 
-                    insertElement(editorView, newNode, selection.anchor);
+                    insertElement(editor, newNode, selection.anchor);
                     return true; // prevent default new line
                 }
 
@@ -160,11 +158,6 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
         };
     }, [pressedKeyEvent, onUnload]);
 
-    useEffect(() => {
-        computeFullScenesData(project.screenplay, projectCtx);
-        computeFullCharactersData(project.screenplay, projectCtx);
-    }, [editorView]);
-
     const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         if (suggestions.length > 0) updateSuggestions([]);
     };
@@ -176,7 +169,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
             <Popup />
             <EditorSidebarNavigation />
             <div className={styles.container} onScroll={onScroll}>
-                <EditorComponent editor={editorView} />
+                <ScreenplayEditor editor={editor} />
             </div>
             <EditorSidebarFormat
                 selectedStyles={selectedStyles}

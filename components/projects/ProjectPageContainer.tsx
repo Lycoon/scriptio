@@ -1,23 +1,20 @@
 import { useEffect, useRef, useState } from "react";
+import { useProjectMemberships } from "@src/lib/utils/hooks";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { join } from "@src/lib/utils/misc";
+
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./CreateProjectPage";
 import ProjectItem from "./ProjectItem";
 import autoAnimate from "@formkit/auto-animate";
-import { useProjects } from "@src/lib/utils/hooks";
 import Loading from "../utils/Loading";
-import { Project } from "@src/lib/utils/types";
-import { deleteProject } from "@src/lib/utils/requests";
-import { join } from "@src/lib/utils/misc";
-
-import TrashSVG from "@public/images/trash.svg";
 
 import page from "./ProjectPageContainer.module.css";
 import form from "../utils/Form.module.css";
 
 const ProjectPageContainer = () => {
-    const { data: projects, isLoading, mutate } = useProjects();
+    const { projects, isLoading } = useProjectMemberships();
     const [isCreating, setIsCreating] = useState(false);
-    const [deleteMode, setDeleteMode] = useState(false);
     const parent = useRef(null);
 
     useEffect(() => {
@@ -25,10 +22,6 @@ const ProjectPageContainer = () => {
     }, [parent]);
 
     if (isLoading || !projects) return <Loading />;
-
-    projects.sort((a: Project, b: Project) => {
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
 
     if (isCreating) {
         return <NewProjectPage setIsCreating={setIsCreating} />;
@@ -42,9 +35,6 @@ const ProjectPageContainer = () => {
                         <div className={page.header_info}>
                             <h1>Projects</h1>
                             <div className={page.header_btns}>
-                                <div onClick={() => setDeleteMode(!deleteMode)} className={page.delete_btn}>
-                                    <TrashSVG className={page.delete_img} alt="Trash icon" />
-                                </div>
                                 <button className={join(page.create_btn, form.btn)} onClick={() => setIsCreating(true)}>
                                     Create
                                 </button>
@@ -53,18 +43,8 @@ const ProjectPageContainer = () => {
                         <hr />
                     </div>
                     <div ref={parent} className={page.grid}>
-                        {projects.map((project: Project) => {
-                            return (
-                                <ProjectItem
-                                    key={project.id}
-                                    project={project}
-                                    deleteMode={deleteMode}
-                                    deleteProject={() => {
-                                        deleteProject(project.id);
-                                        mutate!();
-                                    }}
-                                />
-                            );
+                        {projects.map((membership: ProjectMembershipPayload) => {
+                            return <ProjectItem key={membership.project.id} project={membership.project} />;
                         })}
                     </div>
                 </div>

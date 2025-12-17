@@ -53,18 +53,18 @@ const SaveStatusNavbar = () => {
 const Navbar = () => {
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
-    const { project } = projectCtx;
+    const { project: membership } = projectCtx;
     const { updateZenMode } = userCtx;
 
     const page = usePage();
     const isDesktop = useDesktop();
     const { mutate } = useSWRConfig();
-    const { data: user } = useUser();
+    const { user } = useUser();
 
     const [projectTitle, setProjectTitle] = useState<string>("");
     useEffect(() => {
-        if (project) setProjectTitle(project.title);
-    }, [project]);
+        if (membership) setProjectTitle(membership.project.title);
+    }, [membership]);
 
     const onLogOut = async () => {
         // 1. This destroys the session on the server
@@ -76,8 +76,8 @@ const Navbar = () => {
     };
 
     const deferredTitleUpdate = debounce(async (projectId: string, projectTitle: string) => {
-        await editProject({ projectId, title: projectTitle });
-        mutate(`/api/projects/${projectId}`, { ...project, title: projectTitle });
+        await editProject(projectId, { title: projectTitle });
+        mutate(`/api/projects/${projectId}`, { ...membership, title: projectTitle });
     }, 1000);
 
     const toggleZenMode = () => updateZenMode(!userCtx.isZenMode);
@@ -116,18 +116,18 @@ const Navbar = () => {
         <nav className={join(navbar.container, sidebar.shadow)}>
             <div className={navbar.logo_and_tabs}>
                 <Link href="/" className={navbar.logo}>
-                    <p className={navbar.logo_text}>Scriptio</p>
+                    <img src="/images/scriptio.png" alt="Scriptio" />
                 </Link>
-                <NavbarMenu project={project!} />
+                <NavbarMenu project={membership?.project!} />
             </div>
             <div className={navbar.title}>
-                {page === Page.Screenplay && project && (
+                {page === Page.Screenplay && membership && (
                     <>
                         <SaveStatusNavbar />
                         <input
                             type="text"
                             className={navbar.title_box}
-                            onChange={(e) => deferredTitleUpdate(project.id, e.target.value)}
+                            onChange={(e) => deferredTitleUpdate(membership.project.id, e.target.value)}
                             defaultValue={projectTitle}
                         />
                     </>

@@ -10,7 +10,7 @@ import { ProjectContext } from "@src/context/ProjectContext";
 
 const HomePageWindow = () => {
     const isDesktop = useDesktop();
-    const { data: user, isLoading } = useUser();
+    const { user, isLoading } = useUser();
     const { updateProject } = useContext(ProjectContext);
 
     useEffect(() => {
@@ -24,11 +24,11 @@ const HomePageWindow = () => {
 };
 
 const HomePage: NextPage = () => {
-    const { data: user } = useUser();
+    const { user } = useUser();
     return (
         <>
             <Head>
-                <title>{!user ? "Scriptio" : "Scriptio - Projects"}</title>
+                <title>{!user ? "Scriptio" : "Scriptio • Projects"}</title>
             </Head>
             <HomePageWindow />
         </>

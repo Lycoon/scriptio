@@ -1,22 +1,21 @@
 import { useState } from "react";
 import NewProjectPage from "../projects/CreateProjectPage";
 import ProjectItemDesktop from "../projects/ProjectItemDesktop";
-import { useProjects } from "@src/lib/utils/hooks";
-import { Project } from "@src/lib/utils/types";
 import Loading from "../utils/Loading";
 
 import page_dk from "./DesktopHomePageContainer.module.css";
 import page from "../projects/ProjectPageContainer.module.css";
 import layout from "../utils/Layout.module.css";
+import { useProjectMemberships } from "@src/lib/utils/hooks";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 const onFileOpen = () => {
     console.log("File open");
 };
 
 const DesktopHomePageContainer = () => {
-    const [deleteMode, setDeleteMode] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
-    const { data: projects, isLoading } = useProjects();
+    const { projects, isLoading } = useProjectMemberships();
 
     if (isLoading) return <Loading />;
     if (isCreating) return <NewProjectPage setIsCreating={setIsCreating} />;
@@ -33,24 +32,14 @@ const DesktopHomePageContainer = () => {
                             <button className={page.create_btn + " form-btn"} onClick={onFileOpen}>
                                 Open...
                             </button>
-                            <div onClick={() => setDeleteMode(!deleteMode)} className={page.delete_btn}>
-                                <img className={page.delete_img} src={"/images/trash.png"} alt={"Trash icon"} />
-                            </div>
                         </div>
                     </div>
                     <hr />
                 </div>
                 <div className={page_dk.list}>
                     {projects &&
-                        projects.map((project: Project) => {
-                            return (
-                                <ProjectItemDesktop
-                                    key={project.id}
-                                    project={project}
-                                    deleteMode={deleteMode}
-                                    deleteProject={() => {}}
-                                />
-                            );
+                        projects.map((membership: ProjectMembershipPayload) => {
+                            return <ProjectItemDesktop key={membership.project.id} project={membership.project} />;
                         })}
                 </div>
             </div>

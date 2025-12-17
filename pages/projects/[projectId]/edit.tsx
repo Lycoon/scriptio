@@ -2,20 +2,20 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import EditProjectContainer from "@components/projects/edit/EditProjectContainer";
 import Loading from "@components/utils/Loading";
-import { useProjectFromUrl, useUser } from "@src/lib/utils/hooks";
+import { useProjectMembership, useUser } from "@src/lib/utils/hooks";
 
 const EditProjectPage: NextPage = () => {
-    const { data: user } = useUser(true);
-    const { data: project, isLoading } = useProjectFromUrl();
+    const { user } = useUser(true);
+    const { membership, isLoading } = useProjectMembership();
 
-    if (!project || isLoading) return <Loading />;
+    if (!membership || isLoading) return <Loading />;
 
     return (
         <>
             <Head>
-                <title>{project?.title + " • Edit"}</title>
+                <title>{membership.project.title + " • Edit"}</title>
             </Head>
-            <EditProjectContainer project={project} />
+            <EditProjectContainer project={membership.project} />
         </>
     );
 };

@@ -1,17 +1,27 @@
 import { Editor, JSONContent, useEditor } from "@tiptap/react";
 import { SaveStatus, ScreenplayElement, Style } from "../utils/enums";
-import { saveScreenplay } from "../utils/requests";
 import { ProjectContext, ProjectContextType } from "@src/context/ProjectContext";
 
-import { CustomBold, CustomItalic, CustomUnderline, Screenplay } from "@src/Screenplay";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
-import History from "@tiptap/extension-history";
 import { computeFullScenesData } from "./screenplay";
 import { computeFullCharactersData } from "./characters";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
+import * as Y from "yjs";
+import { IndexeddbPersistence } from "y-indexeddb";
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCaret from "@tiptap/extension-collaboration-caret";
+import { WebsocketProvider } from "y-websocket";
+import { removeAwarenessStates } from "@node_modules/y-protocols/awareness";
+import { useSettings } from "../utils/hooks";
+import { getRandomColor } from "../utils/misc";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { getCloudToken } from "../utils/requests";
+import { Screenplay } from "../utils/types";
+
+import * as Node from "@src/Screenplay";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -57,7 +67,15 @@ export const pasteTextAt = (editor: Editor, text: string, position: number) => {
 };
 
 export const insertElement = (editor: Editor, element: ScreenplayElement, position: number) => {
-    editor.chain().insertContentAt(position, `<p class="${element}"></p>`).focus(position).run();
+    const newNode = {
+        type: "Screenplay",
+        attrs: {
+            class: element,
+        },
+        content: [],
+    };
+
+    editor.chain().insertContentAt(position, newNode).focus(position).run();
 };
 
 export const replaceOccurrences = (editor: Editor, oldWord: string, newWord: string) => {
@@ -65,7 +83,9 @@ export const replaceOccurrences = (editor: Editor, oldWord: string, newWord: str
 };
 
 export const replaceScreenplay = (editor: Editor, screenplay: JSONContent) => {
-    editor.commands.setContent(screenplay);
+    editor.commands.setContent(screenplay, {
+        emitUpdate: true,
+    });
 };
 
 export const getStylesFromMarks = (marks: any[]): Style => {
@@ -83,19 +103,26 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 //          EDITOR STATE          //
 // ------------------------------ //
 
+export const SCRIPTIO_EXTENSIONS = [
+    Document.configure({
+        content: "Screenplay+",
+    }),
+    Text,
+    Node.Screenplay,
+    Node.CustomBold,
+    Node.CustomItalic,
+    Node.CustomUnderline,
+];
+
 const SCREENPLAY_SAVE_DELAY = 2000;
 const SCENE_UPDATE_DELAY = 500;
 const CHARACTERS_UPDATE_DELAY = 500;
 
-const deferredScreenplaySave = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
-    saveScreenplay(projectCtx, screenplay);
-}, SCREENPLAY_SAVE_DELAY);
-
-export const deferredSceneUpdate = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
+export const deferredSceneUpdate = debounce((screenplay: Screenplay, projectCtx: ProjectContextType) => {
     computeFullScenesData(screenplay, projectCtx);
 }, SCENE_UPDATE_DELAY);
 
-export const deferredCharactersUpdate = debounce((screenplay: JSONContent, projectCtx: ProjectContextType) => {
+export const deferredCharactersUpdate = debounce((screenplay: Screenplay, projectCtx: ProjectContextType) => {
     computeFullCharactersData(screenplay, projectCtx);
 }, CHARACTERS_UPDATE_DELAY);
 
@@ -149,62 +176,176 @@ const processAutoComplete = (
     }
 };
 
-export const SCRIPTIO_EXTENSIONS = [
-    // default
-    Document,
-    Text,
-    History,
-    CustomBold,
-    CustomItalic,
-    CustomUnderline,
+const useLocal = (projectId: string) => {
+    const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
 
-    // scriptio
-    Screenplay,
-];
+    useEffect(() => {
+        if (!projectId) return;
+
+        const doc = new Y.Doc();
+        const localProvider = new IndexeddbPersistence(projectId, doc);
+        setYdoc(doc);
+
+        return () => {
+            localProvider.destroy();
+            doc.destroy();
+        };
+    }, [projectId]);
+
+    return { ydoc };
+};
+
+const useCloud = (projectId: string, doc: Y.Doc | null) => {
+    const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+    const [status, setStatus] = useState<string>("connecting");
+    const [users, setUsers] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!doc || !projectId) {
+            if (provider) provider.destroy();
+            setProvider(null);
+            setStatus("disabled");
+            return;
+        }
+
+        const connect = async () => {
+            const token = await getCloudToken(projectId);
+            if (!token) {
+                setStatus("unauthorized");
+                return;
+            }
+
+            const cloudProvider = new WebsocketProvider(
+                `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
+                projectId,
+                doc,
+                {
+                    params: {
+                        token,
+                        clientId: doc.clientID.toString(),
+                    },
+                }
+            );
+            setProvider(cloudProvider);
+
+            const disconnect = () => {
+                removeAwarenessStates(cloudProvider.awareness, [doc.clientID], "window unload");
+                cloudProvider.destroy();
+            };
+
+            // If a user disconnects, we remove its awareness state
+            window.addEventListener("beforeunload", disconnect);
+            cloudProvider.on("status", (event: any) => {
+                setStatus(event.status);
+            });
+
+            // Listen to connected users
+            cloudProvider.awareness.on("update", () => {
+                const users = Array.from(cloudProvider.awareness.getStates().values())
+                    .filter((state: any) => state.user)
+                    .map((state: any) => state.user);
+                setUsers(users);
+            });
+
+            return () => {
+                disconnect();
+            };
+        };
+
+        connect();
+    }, [doc, projectId]);
+
+    return { provider, status, users };
+};
 
 export const useScriptioEditor = (
-    screenplay: JSONContent,
+    project: ProjectMembershipPayload["project"],
     setActiveElement: (element: ScreenplayElement, applyStyle: boolean) => void,
     setSelectedStyles: (style: Style) => void,
     updateSuggestions: (suggestions: string[]) => void,
     updateSuggestionsData: (data: SuggestionData) => void
 ) => {
     const projectCtx = useContext(ProjectContext);
-    const editor = useEditor({
-        immediatelyRender: false,
-        extensions: SCRIPTIO_EXTENSIONS,
+    const { settings } = useSettings();
+    const { ydoc } = useLocal(project.id);
+    const { provider, status, users } = useCloud(project.id, ydoc);
 
-        // update on each screenplay update
-        onUpdate({ editor }) {
-            const screenplay = editor.getJSON();
-            projectCtx.updateSaveStatus(SaveStatus.Saving);
-            deferredScreenplaySave(screenplay, projectCtx);
-            deferredSceneUpdate(screenplay, projectCtx);
-            deferredCharactersUpdate(screenplay, projectCtx);
-        },
+    const { onlineColor, onlineUsername } = settings;
 
-        onCreate({ editor }) {
-            projectCtx.updateEditor(editor as Editor);
-            replaceScreenplay(editor as Editor, screenplay);
-        },
+    const scriptioEditor = useEditor(
+        {
+            immediatelyRender: false,
+            extensions: [
+                ...SCRIPTIO_EXTENSIONS,
+                ...(ydoc && provider
+                    ? [
+                          Collaboration.configure({
+                              document: ydoc,
+                          }),
+                          CollaborationCaret.configure({
+                              provider: provider,
+                              user: {
+                                  name: onlineUsername || "User_" + Math.floor(Math.random() * 1000),
+                                  color: onlineColor || getRandomColor(),
+                              },
+                              render: (user: any) => {
+                                  const caret = document.createElement("span");
+                                  caret.classList.add("collab-caret");
+                                  caret.style.borderLeft = `2px solid ${user.color}`;
+                                  caret.style.marginLeft = "-1px";
+                                  caret.style.height = "1em";
+                                  caret.style.position = "absolute";
+                                  caret.style.zIndex = "10";
+                                  const label = document.createElement("div");
+                                  label.classList.add("collab-caret-label");
+                                  label.style.backgroundColor = user.color;
+                                  label.style.color = "white";
+                                  label.style.padding = "2px 4px";
+                                  label.style.position = "absolute";
+                                  label.style.top = "-1.5em";
+                                  label.style.fontSize = "0.75em";
+                                  label.style.whiteSpace = "nowrap";
+                                  label.innerText = user.name;
+                                  caret.appendChild(label);
+                                  return caret;
+                              },
+                          }),
+                      ]
+                    : []),
+            ],
 
-        // update active on caret update
-        onSelectionUpdate({ editor, transaction }) {
-            const anchor = (transaction as any).curSelection.$anchor;
-            const elementAnchor = anchor.parent.attrs.class;
+            // Update on each screenplay update
+            onUpdate({ editor }) {
+                const screenplay = editor.getJSON();
+                projectCtx.updateSaveStatus(SaveStatus.Saving);
+                projectCtx.updateScreenplay(screenplay);
+                deferredSceneUpdate(screenplay, projectCtx);
+                deferredCharactersUpdate(screenplay, projectCtx);
+            },
 
-            setActiveElement(elementAnchor, false);
-            if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
+            onCreate({ editor }) {
+                projectCtx.updateEditor(editor as Editor);
+            },
 
-            /*processAutoComplete(
+            // Update active on caret update
+            onSelectionUpdate({ editor, transaction }) {
+                const anchor = (transaction as any).curSelection.$anchor;
+                const elementAnchor = anchor.parent.attrs.class;
+
+                setActiveElement(elementAnchor, false);
+                if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
+
+                /*processAutoComplete(
                 anchor,
                 projectCtx,
                 editor as Editor,
                 updateSuggestions,
                 updateSuggestionsData
             );*/
+            },
         },
-    });
+        [ydoc, provider]
+    );
 
-    return editor;
+    return scriptioEditor;
 };

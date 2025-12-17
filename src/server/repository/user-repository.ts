@@ -1,32 +1,38 @@
 import prisma from "../db";
 
-export type Secrets = {
-    hash?: string;
-    salt?: string;
-    emailHash?: string;
+export type UpdateSecrets = {
+    password?: string;
+    emailHash?: string | null;
+    recoverHash?: string | null;
     lastEmailHash?: Date;
-    recoverHash?: string;
     lastRecoverHash?: Date;
 };
 
-export type Settings = {
+export type UpdateSettings = {
     highlightOnHover?: boolean;
     sceneBackground?: boolean;
     notesColor?: string;
     exportedNotesColor?: string;
+    onlineUsername?: string;
+    onlineColor?: string;
 };
 
 export interface UserUpdate {
     id: idOrEmailType;
     email?: string;
     verified?: boolean;
-    secrets?: Secrets;
-    settings?: Settings;
+    secrets?: UpdateSecrets;
+    settings?: UpdateSettings;
 }
 
 export interface UserCreation {
     email: string;
-    secrets: Secrets;
+    secrets: SecretCreation;
+}
+
+export interface SecretCreation {
+    password: string;
+    emailHash: string;
 }
 
 type idOrEmailType = { id: number } | { email: string };
@@ -54,9 +60,8 @@ export class UserRepository {
                 email: user.email,
                 secrets: {
                     create: {
-                        hash: user.secrets.hash!,
-                        salt: user.secrets.salt!,
-                        emailHash: user.secrets.emailHash!,
+                        password: user.secrets.password,
+                        emailHash: user.secrets.emailHash,
                     },
                 },
                 settings: {

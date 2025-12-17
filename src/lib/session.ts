@@ -4,7 +4,7 @@ import { CookieUser } from "@src/lib/utils/types";
 import { NextApiRequest, NextApiResponse } from "next";
 
 const sessionOptions: SessionOptions = {
-    password: process.env.COOKIE_SECRET as string,
+    password: process.env.COOKIE_SECRET,
     cookieName: "auth-cookie",
     cookieOptions: {
         secure: process.env.NODE_ENV === "production",

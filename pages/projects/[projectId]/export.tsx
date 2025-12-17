@@ -2,25 +2,24 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import ExportProjectConainer from "@components/projects/export/ExportProjectContainer";
 import NoExportContainer from "@components/projects/export/NoExportContainer";
-import { useProjectFromUrl, useUser } from "@src/lib/utils/hooks";
 import Loading from "@components/utils/Loading";
+import { useProjectMembership, useUser } from "@src/lib/utils/hooks";
+import { useContext } from "react";
+import { ProjectContext } from "@src/context/ProjectContext";
 
 const ExportProjectPage: NextPage = () => {
-    const { data: user } = useUser(true);
-    const { data: project, isLoading, error } = useProjectFromUrl();
+    const { user } = useUser(true);
+    const { screenplay } = useContext(ProjectContext);
+    const { membership, isLoading } = useProjectMembership();
 
-    if (!project || isLoading) return <Loading />;
+    if (!user || !membership || isLoading) return <Loading />;
 
     return (
         <>
             <Head>
-                <title>{project?.title + " • Export"}</title>
+                <title>{membership.project.title + " • Export"}</title>
             </Head>
-            {project.screenplay ? (
-                <ExportProjectConainer project={project} />
-            ) : (
-                <NoExportContainer projectId={project.id} />
-            )}
+            {screenplay ? <ExportProjectConainer /> : <NoExportContainer projectId={membership.project.id} />}
         </>
     );
 };

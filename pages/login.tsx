@@ -16,7 +16,7 @@ const LoginPage: NextPage<Props> = ({ verificationStatus }: Props) => {
     return (
         <>
             <Head>
-                <title>Scriptio - Log in</title>
+                <title>Scriptio • Log in</title>
             </Head>
             <LoginContainer verificationStatus={verificationStatus} />
         </>

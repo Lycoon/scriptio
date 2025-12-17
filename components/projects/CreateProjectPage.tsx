@@ -12,13 +12,15 @@ import FormEnd from "./FormEnd";
 
 import form from "../utils/Form.module.css";
 import layout from "../utils/Layout.module.css";
+import { CreateProjectBody } from "@pages/api/projects";
+import { ApiResponse } from "@src/lib/utils/api-utils";
 
 type Props = {
     setIsCreating: (isCreating: boolean) => void;
 };
 
 const CreateProjectPage = ({ setIsCreating }: Props) => {
-    const { data: user } = useUser();
+    const { user } = useUser();
     const isDesktop = useDesktop();
 
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
@@ -36,23 +38,25 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         e.preventDefault();
         resetFormInfo();
 
-        const body: ProjectCreation = {
+        if (!user) return;
+
+        const body: CreateProjectBody = {
             title: e.target.title.value,
             description: e.target.description.value,
-            saveMode: SaveMode.Cloud, //TODO: Add save mode to form
         };
 
         if (selectedFile) {
             body.poster = await getBase64(selectedFile, 686, 1016);
         }
 
-        const res = await createProject(body, isDesktop, user);
-        if (res.isError) {
-            setFormInfo({ content: res.message!, isError: true });
+        const res = await createProject(user.id, body);
+        const json = (await res.json()) as ApiResponse;
+        if (!res.ok) {
+            setFormInfo({ content: json.message!, isError: true });
             return;
         }
 
-        const projectId = res.data!.id;
+        const projectId = json.data.id;
         setIsCreating(false);
         redirectScreenplay(projectId);
     };

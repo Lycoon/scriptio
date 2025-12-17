@@ -1,13 +1,4 @@
-import {
-    redirectExport,
-    redirectProjectInfo,
-    redirectScreenplay,
-    redirectTitlePage,
-    redirectStory,
-    redirectStatistics,
-    redirectReports,
-} from "@src/lib/utils/redirects";
-import { Project } from "@src/lib/utils/types";
+import { redirectExport, redirectProjectInfo, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
 import { useContext } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { SaveStatus } from "@src/lib/utils/enums";
@@ -17,9 +8,10 @@ import { convertFountainToHTML } from "@src/converters/import/fountain";
 import dynamic from "next/dynamic";
 import { computeFullCharactersData } from "@src/lib/editor/characters";
 import { computeFullScenesData } from "@src/lib/editor/screenplay";
-import { saveScreenplay } from "@src/lib/utils/requests";
 import { generateJSON } from "@tiptap/react";
 import { SCRIPTIO_EXTENSIONS, replaceScreenplay } from "@src/lib/editor/editor";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { Screenplay } from "@src/lib/utils/types";
 
 // ------------------------------ //
 //              DATA              //
@@ -38,7 +30,7 @@ type NavbarTabs = {
 };
 
 type NavbarMenuProps = {
-    project: Project;
+    project: ProjectMembershipPayload["project"];
 };
 
 const NavbarMenu = ({ project }: NavbarMenuProps) => {
@@ -60,13 +52,12 @@ const NavbarMenu = ({ project }: NavbarMenuProps) => {
             reader.onload = (e: any) => {
                 const confirmImport = () => {
                     const html = convertFountainToHTML(e.target.result);
-                    const json = generateJSON(html, SCRIPTIO_EXTENSIONS);
+                    const json = generateJSON(html, SCRIPTIO_EXTENSIONS) as Screenplay;
 
                     updateSaveStatus(SaveStatus.Saving);
                     replaceScreenplay(editor, json);
                     computeFullCharactersData(json, projectCtx);
                     computeFullScenesData(json, projectCtx);
-                    saveScreenplay(projectCtx, json);
                 };
 
                 importFilePopup(userCtx, confirmImport);

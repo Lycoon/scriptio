@@ -1,61 +1,95 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { sendVerificationEmail } from "@src/lib/mail/mail";
-import { isValidDelay } from "@src/lib/utils/misc";
 import {
     EMAIL_ALREADY_REGISTERED,
     ERROR_SIGN_UP,
     ERROR_VERIFICATION_THROTTLE,
-    MISSING_BODY,
     PASSWORD_REQUIREMENTS,
     VERIFICATION_SENT,
 } from "@src/lib/messages";
-import { createUser, generateSecrets, getUserFromEmail, updateUser } from "@src/server/service/user-service";
-import { ResponseAPI } from "@src/lib/utils/requests";
+import { apiHandler } from "@src/lib/utils/api-handler";
+import { BodyFieldError, InternalServerError, Success, validate } from "@src/lib/utils/api-utils";
 
-export default async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
-    const email: string = req.body.email;
-    const password: string = req.body.password;
+import * as SecretService from "@src/lib/utils/secrets";
+import * as ProjectService from "@src/server/service/project-service";
+import * as UserService from "@src/server/service/user-service";
+import * as Misc from "@src/lib/utils/misc";
+import * as Mail from "@src/lib/mail/mail";
 
-    if (!email || !password) {
-        return ResponseAPI(res, 400, MISSING_BODY);
-    }
+import z from "zod";
+
+const BodySchema = z.object({
+    email: z.string(),
+    password: z.string(),
+});
+
+const QuerySchema = z.object({
+    inviteToken: z.string().optional(),
+});
+
+/**
+ * POST `/signup`
+ *
+ * Verifies a user that just registered and clicked the link in validation mail
+ */
+async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
+    const { email, password } = validate(BodySchema, req.body);
+    const { inviteToken } = validate(QuerySchema, req.query);
 
     if (password.length < 8) {
-        return ResponseAPI(res, 400, PASSWORD_REQUIREMENTS);
+        throw new BodyFieldError(PASSWORD_REQUIREMENTS);
     }
 
-    const existing = await getUserFromEmail(email, true);
+    const existing = await UserService.getUserFromEmail(email, true);
     if (existing) {
         if (existing.verified) {
-            return ResponseAPI(res, 500, EMAIL_ALREADY_REGISTERED);
+            throw new InternalServerError(EMAIL_ALREADY_REGISTERED);
         }
 
-        if (!isValidDelay(existing.secrets.lastEmailHash, 5)) {
-            return ResponseAPI(res, 500, ERROR_VERIFICATION_THROTTLE);
+        if (!existing.secrets) {
+            throw new InternalServerError(ERROR_SIGN_UP);
         }
 
-        const secrets = generateSecrets(password);
-        if (!secrets) {
-            return ResponseAPI(res, 500, ERROR_SIGN_UP);
+        if (!Misc.hasExpired(existing.secrets.lastEmailHash, 5, "minutes")) {
+            throw new BodyFieldError(ERROR_VERIFICATION_THROTTLE);
         }
 
-        const updated = await updateUser({
-            id: { id: existing.id },
-            secrets,
-        });
+        const emailHash = await UserService.updateEmailHash(existing.id);
+        Mail.sendVerificationEmail(existing.id, email, emailHash);
 
-        if (!updated) {
-            return ResponseAPI(res, 500, ERROR_SIGN_UP);
-        }
-
-        sendVerificationEmail(existing.id, email, secrets.emailHash!);
-        return ResponseAPI(res, 200, VERIFICATION_SENT, null);
+        return Success(res, null, VERIFICATION_SENT);
     }
 
-    const created = await createUser(email, password);
+    const secrets = await SecretService.createSecrets(password);
+    const created = await UserService.createUser(email, secrets);
     if (!created) {
-        return ResponseAPI(res, 500, ERROR_SIGN_UP);
+        throw new InternalServerError(ERROR_SIGN_UP);
     }
 
-    ResponseAPI(res, 201, VERIFICATION_SENT, null);
+    // We don't want to send verification email if a user logs in from a project invite token
+    // We need to try/catch to ignore any failure occuring invitation logic
+    let inviteProcessed = false;
+
+    if (inviteToken) {
+        try {
+            const invite = await ProjectService.getInvite(inviteToken);
+            if (!invite || invite.email !== email || Misc.hasExpired(invite.createdAt, 7, "days")) {
+                // Failing to resolve invite token is passthrough, don't make the signup fail
+                return Success(res, null, VERIFICATION_SENT);
+            }
+
+            await ProjectService.upsertMember(invite.projectId, created.id);
+            await ProjectService.deleteInviteFromToken(inviteToken);
+
+            inviteProcessed = true;
+        } catch (err) {}
+    }
+
+    if (inviteProcessed) {
+        return Success(res, null, VERIFICATION_SENT);
+    }
+
+    Mail.sendVerificationEmail(created.id, email, secrets.emailHash);
+    return Success(res, null, VERIFICATION_SENT);
 }
+
+export default apiHandler(signupRoute);

@@ -1,12 +1,15 @@
-import Paragraph from "@tiptap/extension-paragraph";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
 import Underline from "@tiptap/extension-underline";
+import { Node } from "@tiptap/core";
 
-export const Screenplay = Paragraph.extend({
+export const Screenplay = Node.create({
     name: "Screenplay",
     group: "block",
     content: "text*",
+
+    defining: true,
+    draggable: false,
 
     addAttributes() {
         return {

@@ -10,43 +10,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ProjectRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
 model User {
   id                  Int         @id @default(autoincrement())
   createdAt           DateTime    @default(now())
-
   email               String      @unique
   verified            Boolean     @default(false)
-  projects            Project[]
 
-  secrets             Secret      @relation(fields: [secretsId], references: [id])
-  secretsId           Int         @unique
+  settings            Settings?
+  secrets             Secret?
 
-  settings            Settings    @relation(fields: [settingsId], references: [id])
-  settingsId          Int         @unique
+  projects            ProjectMember[]
 }
 
 model Secret {
   id                  Int         @id @default(autoincrement())
-  user                User?
 
-  hash                String
-  salt                String
+  userId              Int         @unique
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  emailHash           String
-  lastEmailHash       DateTime    @default(now())
-
+  password            String
+  emailHash           String?
   recoverHash         String?
+  lastEmailHash       DateTime    @default(now())
   lastRecoverHash     DateTime    @default(now())
 }
 
 model Settings {
   id                  Int         @id @default(autoincrement())
-  user                User?
+
+  userId              Int         @unique 
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   highlightOnHover    Boolean     @default(false)
   sceneBackground     Boolean     @default(true)
   notesColor          String      @default("#FFFF68")
   exportedNotesColor  String      @default("#FFFF68")
+  onlineUsername      String?
+  onlineColor         String?
 }
 
 model Project {
@@ -56,10 +63,33 @@ model Project {
 
   title               String
   description         String?
-  poster              String?
-  screenplay          Json?
+  hasPoster           Boolean     @default(false)
   characters          Json?
+
+  members             ProjectMember[]
+  invitations         ProjectInvitation[]
+}
+
+model ProjectMember {
+  id                  Int         @id @default(autoincrement())
+  role                ProjectRole @default(VIEWER)
 
   user                User        @relation(fields: [userId], references: [id])
   userId              Int
+  project             Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId           String
+
+  @@unique([userId, projectId])
+}
+
+model ProjectInvitation {
+  id                   Int        @id @default(autoincrement())
+  token                String     @unique
+  email                String
+  createdAt            DateTime   @default(now())
+
+  project              Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId            String
+  
+  @@unique([email, projectId])
 }

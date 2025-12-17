@@ -3,86 +3,102 @@ import { sendRecoveryEmail } from "@src/lib/mail/mail";
 import {
     ERROR_RECOVERY_LINK_EXPIRED,
     FAILED_PASSWORD_CHANGED,
-    MISSING_BODY,
     PASSWORD_REQUIREMENTS,
     RECOVERY_REQUEST_FULFILLED,
     RECOVERY_SUCCESS,
 } from "@src/lib/messages";
-import { isValidDelay } from "@src/lib/utils/misc";
-import {
-    generateSecrets,
-    getUserFromEmail,
-    getUserFromId,
-    updateUser,
-    updateUserRecoveryHash,
-} from "@src/server/service/user-service";
-import { ResponseAPI } from "@src/lib/utils/requests";
+import { apiHandler } from "@src/lib/utils/api-handler";
+import { BodyFieldError, InternalServerError, Success, validate } from "@src/lib/utils/api-utils";
 
-export default async function recoverRoute(req: NextApiRequest, res: NextApiResponse) {
+import * as Misc from "@src/lib/utils/misc";
+import * as SecretService from "@src/lib/utils/secrets";
+import * as UserService from "@src/server/service/user-service";
+import z from "zod";
+
+type RecoveryBody = z.infer<typeof RecoveryBodySchema>;
+const RecoveryBodySchema = z.object({
+    email: z.string(),
+});
+
+type UpdatePasswordBody = z.infer<typeof UpdatePasswordBodySchema>;
+const UpdatePasswordBodySchema = z.object({
+    userId: z.coerce.number().int().positive(),
+    password: z.string(),
+    recoverHash: z.string(),
+});
+
+async function recoverRoute(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
-        case "POST": // when submitting email recovery form
-            return postMethod(req.body, res);
-        case "PATCH": // when submitting new password form
-            return patchMethod(req.body, res);
+        case "POST":
+            const recoveryBody = validate(RecoveryBodySchema, req.body);
+            return recoverPassword(recoveryBody, res);
+        case "PATCH":
+            const updatePwdBody = validate(UpdatePasswordBodySchema, req.body);
+            return updatePassword(updatePwdBody, res);
     }
 }
 
-async function postMethod(body: any, res: NextApiResponse) {
-    if (!body || !body.email) {
-        return ResponseAPI(res, 400, MISSING_BODY);
-    }
-
-    const user = await getUserFromEmail(body.email);
+/**
+ * POST `/recover`
+ *
+ * Hit once a user asks to recover its password (when unautheticated)
+ */
+async function recoverPassword(body: RecoveryBody, res: NextApiResponse) {
+    const { email } = body;
+    const user = await UserService.getUserFromEmail(email);
     if (!user) {
-        // don't tell the user if the email is registered or not
-        return ResponseAPI(res, 200, RECOVERY_REQUEST_FULFILLED, null);
+        // Don't tell the user if the email is registered or not
+        return Success(res, null, RECOVERY_REQUEST_FULFILLED);
     }
 
-    const recoverHash = await updateUserRecoveryHash(user.id);
-
+    const recoverHash = await UserService.updateRecoveryHash(user.id);
     sendRecoveryEmail(user.id, user.email, recoverHash);
-    return ResponseAPI(res, 200, RECOVERY_REQUEST_FULFILLED, null);
+
+    return Success(res, null, RECOVERY_REQUEST_FULFILLED);
 }
 
-async function patchMethod(body: any, res: NextApiResponse) {
-    try {
-        if (!body || !body.password || !body.userId || !body.recoverHash) {
-            return ResponseAPI(res, 400, MISSING_BODY);
-        }
+/**
+ * PATCH `/recover`
+ *
+ * Hit when a user changes its password (when unauthenticated)
+ */
+async function updatePassword(body: UpdatePasswordBody, res: NextApiResponse) {
+    const { password, userId, recoverHash } = body;
 
-        if (body.password.length < 8) {
-            return ResponseAPI(res, 400, PASSWORD_REQUIREMENTS);
-        }
-
-        const userId = +body.userId!;
-        const recoverHash = body.recoverHash;
-        const user = await getUserFromId(userId, true);
-
-        if (!user || recoverHash !== user.secrets.recoverHash || isValidDelay(user.secrets.lastRecoverHash, 60)) {
-            return ResponseAPI(res, 500, ERROR_RECOVERY_LINK_EXPIRED);
-        }
-
-        const secrets = generateSecrets(body.password);
-        if (!secrets) {
-            return ResponseAPI(res, 500, FAILED_PASSWORD_CHANGED);
-        }
-
-        const updated = await updateUser({
-            id: { id: user.id },
-            secrets: {
-                hash: secrets.hash,
-                salt: secrets.salt,
-                recoverHash: secrets.recoverHash,
-                lastRecoverHash: secrets.lastRecoverHash,
-            },
-        });
-
-        if (!updated) {
-            return ResponseAPI(res, 500, FAILED_PASSWORD_CHANGED);
-        }
-
-        return ResponseAPI(res, 200, RECOVERY_SUCCESS, null);
-    } catch (error: any) {
-        return ResponseAPI(res, 500, FAILED_PASSWORD_CHANGED);
+    if (password.length < 8) {
+        throw new BodyFieldError(PASSWORD_REQUIREMENTS);
     }
+
+    const user = await UserService.getUserFromId(userId, true);
+    if (!user || !user.secrets) {
+        throw new BodyFieldError(ERROR_RECOVERY_LINK_EXPIRED);
+    }
+
+    if (
+        !SecretService.isHashValid(recoverHash, user.secrets.recoverHash) ||
+        Misc.hasExpired(user.secrets.lastRecoverHash, 15, "minutes")
+    ) {
+        throw new BodyFieldError(ERROR_RECOVERY_LINK_EXPIRED);
+    }
+
+    const newPassword = await SecretService.hashPassword(password);
+    if (!newPassword) {
+        throw new InternalServerError(FAILED_PASSWORD_CHANGED);
+    }
+
+    const updated = await UserService.updateUser({
+        id: { id: user.id },
+        secrets: {
+            password: newPassword,
+            recoverHash: null,
+        },
+    });
+
+    if (!updated) {
+        throw new InternalServerError(FAILED_PASSWORD_CHANGED);
+    }
+
+    return Success(res, null, RECOVERY_SUCCESS);
 }
+
+export default apiHandler(recoverRoute);

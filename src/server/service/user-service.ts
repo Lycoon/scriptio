@@ -1,53 +1,42 @@
-import { Secrets, UserRepository, UserUpdate } from "../repository/user-repository";
-import crypto from "crypto";
-import { sendVerificationEmail } from "../../lib/mail/mail";
+import { SecretCreation, UpdateSecrets, UserRepository, UserUpdate } from "../repository/user-repository";
+
+import * as SecretService from "../../lib/utils/secrets";
 
 const repository = new UserRepository();
 
-export const updateUserRecoveryHash = async (userId: number) => {
-    const recoverHash = crypto.randomBytes(64).toString("hex");
-    const secrets: Secrets = { recoverHash, lastRecoverHash: new Date() };
+export const updateRecoveryHash = async (userId: number) => {
+    const recoverHash = SecretService.generateToken();
 
     updateUser({
         id: { id: userId },
-        secrets,
+        secrets: {
+            recoverHash,
+            lastRecoverHash: new Date(),
+        },
     });
 
     return recoverHash;
 };
 
-export const checkPassword = async (secrets: any, password: string) => {
-    if (!secrets || !password) {
-        return false;
-    }
+export const updateEmailHash = async (userId: number) => {
+    const emailHash = SecretService.generateToken();
 
-    const hash = crypto.pbkdf2Sync(password, secrets.salt, 1000, 64, "sha512").toString("hex");
-    return hash === secrets.hash;
+    updateUser({
+        id: { id: userId },
+        secrets: {
+            emailHash,
+            lastEmailHash: new Date(),
+        },
+    });
+
+    return emailHash;
 };
 
-export const generateSecrets = (password: string): Secrets => {
-    const recoverHash = crypto.randomBytes(64).toString("hex");
-    const emailHash = crypto.randomBytes(64).toString("hex");
-    const salt = crypto.randomBytes(16).toString("hex");
-    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
-
-    return {
-        hash,
-        salt,
-        emailHash,
-        recoverHash,
-        lastEmailHash: new Date(),
-        lastRecoverHash: new Date(),
-    };
-};
-
-export const createUser = async (email: string, password: string) => {
-    const secrets = generateSecrets(password);
+export const createUser = async (email: string, secrets: SecretCreation) => {
     const created = await repository.createUser({
         email,
         secrets,
     });
-    sendVerificationEmail(created.id, email, secrets.emailHash!);
 
     return created;
 };
