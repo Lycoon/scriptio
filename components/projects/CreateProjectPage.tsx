@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getBase64, join } from "@src/lib/utils/misc";
+import { cropImageBase64, join } from "@src/lib/utils/misc";
 import { ProjectCreation } from "@src/lib/utils/types";
 import { FormInfoType } from "../utils/FormInfo";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
@@ -46,7 +46,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         };
 
         if (selectedFile) {
-            body.poster = await getBase64(selectedFile, 686, 1016);
+            body.poster = await cropImageBase64(selectedFile, 686, 1016);
         }
 
         const res = await createProject(user.id, body);

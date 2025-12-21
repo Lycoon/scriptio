@@ -22,7 +22,7 @@ const redirect = (res: NextApiResponse, status: VerificationStatus) => {
  * Verifies a user that just registered and clicked the link in validation mail
  * scriptio.app/api/verify?id=userId&token=emailHash
  */
-async function verifyRoute(req: NextApiRequest, res: NextApiResponse) {
+async function verifyUser(req: NextApiRequest, res: NextApiResponse) {
     try {
         const { id, token } = validate(QuerySchema, req.query);
 
@@ -51,4 +51,4 @@ async function verifyRoute(req: NextApiRequest, res: NextApiResponse) {
     }
 }
 
-export default apiHandler(verifyRoute);
+export default apiHandler(verifyUser);

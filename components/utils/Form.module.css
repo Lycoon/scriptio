@@ -50,6 +50,14 @@
     min-height: 25vh;
 }
 
+.label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
+}
+
 /* ==================== */
 /*        Buttons       */
 /* ==================== */
@@ -62,7 +70,6 @@
 
 .btn {
     font-size: 1rem;
-    font-family: segoe-bold;
     color: #ffffff;
     background-color: var(--secondary);
     cursor: pointer;

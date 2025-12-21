@@ -1,14 +1,15 @@
 import Link from "next/link";
 import Router from "next/router";
-import { useContext, useEffect, useState } from "react";
-import { UserContext } from "@src/context/UserContext";
+import { useEffect, useState } from "react";
 import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 import { VerificationStatus } from "@src/lib/utils/enums";
 import { login } from "@src/lib/utils/requests";
 
-import form from "../../utils/Form.module.css";
 import { useSWRConfig } from "swr";
 import { ApiResponse } from "@src/lib/utils/api-utils";
+import { LoginBody } from "@pages/api/login";
+
+import form from "../../utils/Form.module.css";
 
 type Props = {
     verificationStatus: VerificationStatus;
@@ -48,7 +49,12 @@ const LoginForm = ({ verificationStatus }: Props) => {
         e.preventDefault();
         resetFromInfo();
 
-        const res = await login(e.target.email.value, e.target.password.value);
+        const body: LoginBody = {
+            email: e.target.email.value,
+            password: e.target.password.value,
+        };
+
+        const res = await login(body);
         if (res.ok) {
             mutate("/api/users/cookie");
             Router.push("/");
@@ -68,12 +74,12 @@ const LoginForm = ({ verificationStatus }: Props) => {
 
             <div className={form.element}>
                 <label className={form.element}>
-                    <span>Email</span>
+                    <span className={form.label}>Email</span>
                     <input className={form.input} name="email" type="email" onChange={resetFromInfo} required />
                 </label>
 
                 <label className={form.element}>
-                    <span>Password</span>
+                    <span className={form.label}>Password</span>
                     <input className={form.input} name="password" type="password" onChange={resetFromInfo} required />
                     <Link href="/recovery">Forgot password?</Link>
                 </label>

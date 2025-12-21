@@ -14,14 +14,12 @@
 }
 
 .title {
-    font-family: roboto-thin;
     font-style: italic;
     font-size: 2.8rem;
     margin-left: -6px;
 }
 
 .subtitle {
-    font-family: roboto;
     font-size: 1.4rem;
     margin-top: 10px;
 }

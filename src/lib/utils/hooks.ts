@@ -5,7 +5,7 @@ import Router, { useRouter } from "next/router";
 import { CookieUser } from "./types";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { Page } from "./enums";
-import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 const useDesktop = (): boolean => {
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
@@ -67,52 +67,42 @@ const useSettings = (): UseSettingsResult => {
     };
 };
 
-interface UseProjectsResult {
-    projects: ProjectMembershipPayload[];
-    isLoading: boolean;
-    mutate: any;
-}
-
-const useProjectMemberships = (): UseProjectsResult => {
+const useProjectMemberships = () => {
     const { data, isLoading, mutate } = useSWR<ProjectMembershipPayload[]>("/api/projects");
-    const projects = data ?? [];
-
     return {
-        projects,
+        projects: data || [],
         isLoading,
         mutate,
     };
 };
 
-interface UseProjectResult {
-    membership?: ProjectMembershipPayload;
-    isLoading: boolean;
-    mutate: any;
-}
-
-const useProjectMembership = (): UseProjectResult => {
+const useProjectMembership = () => {
     const { updateProject } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
 
-    let {
-        data: membership,
-        error,
-        mutate,
-        isLoading,
-    } = useSWR<ProjectMembershipPayload>(projectId ? `/api/projects/${projectId}` : null);
+    const { data, isLoading, mutate } = useSWR<ProjectMembershipPayload>(
+        projectId ? `/api/projects/${projectId}` : null
+    );
 
     useEffect(() => {
         // When the data has loaded, update the project
-        if (membership && !error) {
-            updateProject(membership);
+        if (data && !isLoading) {
+            console.log("updating project");
+            updateProject(data);
         }
-    }, [membership]);
+    }, [data]);
 
-    return {
-        membership,
-        isLoading,
-        mutate,
-    };
+    return { membership: data, isLoading, mutate };
+};
+
+const useProjectInvites = (projectId: string | undefined) => {
+    const { data, isLoading, mutate } = useSWR<ProjectInvite[]>(projectId ? `/api/projects/${projectId}/invite` : null);
+    return { invites: data || [], isLoading, mutate };
+};
+
+const useProjectCollaborators = (projectId: string | undefined) => {
+    const { data, isLoading, mutate } = useSWR<any[]>(projectId ? `/api/projects/${projectId}/members` : null);
+    return { collaborators: data || [], isLoading, mutate };
 };
 
 const usePage = (): Page => {
@@ -132,4 +122,13 @@ const usePage = (): Page => {
     return page;
 };
 
-export { useUser, useSettings, useProjectMemberships, useProjectMembership, usePage, useDesktop };
+export {
+    useUser,
+    useSettings,
+    useProjectMemberships,
+    useProjectMembership,
+    useProjectInvites,
+    useProjectCollaborators,
+    usePage,
+    useDesktop,
+};

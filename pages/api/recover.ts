@@ -15,13 +15,13 @@ import * as SecretService from "@src/lib/utils/secrets";
 import * as UserService from "@src/server/service/user-service";
 import z from "zod";
 
-type RecoveryBody = z.infer<typeof RecoveryBodySchema>;
-const RecoveryBodySchema = z.object({
-    email: z.string(),
+export type RequestRecoveryBody = z.infer<typeof RequestRecoveryBodySchema>;
+const RequestRecoveryBodySchema = z.object({
+    email: z.email(),
 });
 
-type UpdatePasswordBody = z.infer<typeof UpdatePasswordBodySchema>;
-const UpdatePasswordBodySchema = z.object({
+export type RecoverPasswordBody = z.infer<typeof RecoverPasswordBodySchema>;
+const RecoverPasswordBodySchema = z.object({
     userId: z.coerce.number().int().positive(),
     password: z.string(),
     recoverHash: z.string(),
@@ -30,11 +30,11 @@ const UpdatePasswordBodySchema = z.object({
 async function recoverRoute(req: NextApiRequest, res: NextApiResponse) {
     switch (req.method) {
         case "POST":
-            const recoveryBody = validate(RecoveryBodySchema, req.body);
-            return recoverPassword(recoveryBody, res);
+            const recoveryBody = validate(RequestRecoveryBodySchema, req.body);
+            return requestRecovery(recoveryBody, res);
         case "PATCH":
-            const updatePwdBody = validate(UpdatePasswordBodySchema, req.body);
-            return updatePassword(updatePwdBody, res);
+            const updatePwdBody = validate(RecoverPasswordBodySchema, req.body);
+            return recoverPassword(updatePwdBody, res);
     }
 }
 
@@ -43,7 +43,7 @@ async function recoverRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Hit once a user asks to recover its password (when unautheticated)
  */
-async function recoverPassword(body: RecoveryBody, res: NextApiResponse) {
+async function requestRecovery(body: RequestRecoveryBody, res: NextApiResponse) {
     const { email } = body;
     const user = await UserService.getUserFromEmail(email);
     if (!user) {
@@ -62,7 +62,7 @@ async function recoverPassword(body: RecoveryBody, res: NextApiResponse) {
  *
  * Hit when a user changes its password (when unauthenticated)
  */
-async function updatePassword(body: UpdatePasswordBody, res: NextApiResponse) {
+async function recoverPassword(body: RecoverPasswordBody, res: NextApiResponse) {
     const { password, userId, recoverHash } = body;
 
     if (password.length < 8) {

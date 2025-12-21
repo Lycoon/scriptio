@@ -54,6 +54,7 @@
 }
 
 .create_btn {
+    font-weight: bold;
     width: fit-content;
     padding-inline: 40px;
     border-radius: 20px;

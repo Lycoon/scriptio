@@ -23,9 +23,9 @@
 
 .text {
     font-size: 100%;
-    font-family: "Courier";
-    text-align: left;
+    font-family: var(--font-courier), monospace;
     font-weight: bold;
+    text-align: left;
 }
 
 .active {

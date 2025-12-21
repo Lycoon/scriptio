@@ -1,5 +1,6 @@
 import "@styles/globals.css";
 
+import { josefin, inter, courier } from "../styles/fonts";
 import type { AppProps } from "next/app";
 import { UserContextProvider } from "@src/context/UserContext";
 import { SWRConfig } from "swr";
@@ -15,6 +16,8 @@ import { ProjectContextProvider } from "@src/context/ProjectContext";
 import { PopupContextProvider } from "@src/context/PopupContext";
 import Head from "next/head";
 import Navbar from "@components/navbar/Navbar";
+import { DashboardContextProvider } from "@src/context/DashboardContext";
+import DashboardModal from "@components/dashboard/DashboardModal";
 
 const DesktopNavbar = () => {
     return (
@@ -67,14 +70,19 @@ function MyApp({ Component, pageProps }: AppProps) {
                 <UserContextProvider>
                     <ProjectContextProvider>
                         <PopupContextProvider>
-                            <ThemeProvider attribute="class" defaultTheme="dark">
-                                <div className="app-layout">
-                                    <Navbar />
-                                    <div className={layout.main}>
-                                        {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                            <DashboardContextProvider>
+                                <ThemeProvider attribute="class" defaultTheme="dark">
+                                    <div className="app-layout">
+                                        <Navbar />
+                                        <main
+                                            className={`${layout.main} ${courier.variable} ${inter.variable} ${josefin.variable}`}
+                                        >
+                                            {pageLoading ? <Loading /> : <Component {...pageProps} />}
+                                        </main>
+                                        <DashboardModal />
                                     </div>
-                                </div>
-                            </ThemeProvider>
+                                </ThemeProvider>
+                            </DashboardContextProvider>
                         </PopupContextProvider>
                     </ProjectContextProvider>
                 </UserContextProvider>

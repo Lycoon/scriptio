@@ -2,11 +2,12 @@ import Router from "next/router";
 import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 import { useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "@src/lib/messages";
-import { validateRecover } from "@src/lib/utils/requests";
+import { recoverPassword } from "@src/lib/utils/requests";
 
 import form from "../../utils/Form.module.css";
 import recovery from "../recovery/RecoveryForm.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
+import { RecoverPasswordBody } from "@pages/api/recover";
 
 type Props = {
     userId: number;
@@ -31,7 +32,13 @@ const PasswordChangeForm = ({ userId, recoverHash }: Props) => {
             return;
         }
 
-        const res = await validateRecover(userId, recoverHash, pwd1);
+        const body: RecoverPasswordBody = {
+            userId,
+            recoverHash,
+            password: pwd1,
+        };
+
+        const res = await recoverPassword(body);
         const json = (await res.json()) as ApiResponse;
 
         if (res.ok) {

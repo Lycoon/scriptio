@@ -19,6 +19,26 @@ const projectMembershipSelect = {
     role: true,
 };
 
+const collaboratorSelect = Prisma.validator<Prisma.ProjectMemberSelect>()({
+    user: {
+        select: {
+            id: true,
+            email: true,
+        },
+    },
+    role: true,
+});
+
+export type Collaborator = Prisma.ProjectMemberGetPayload<{
+    select: typeof collaboratorSelect;
+}>;
+
+export type ProjectInvite = Prisma.ProjectInvitationGetPayload<{
+    select: {
+        email: true;
+    };
+}>;
+
 const projectSelect = projectMembershipSelect.project.select;
 type RawProject = Prisma.ProjectGetPayload<{
     select: typeof projectSelect;
@@ -91,6 +111,13 @@ export class ProjectRepository {
         return this.hydrateMembership(membership);
     }
 
+    fetchCollaborators(projectId: string): Promise<Collaborator[]> {
+        return prisma.projectMember.findMany({
+            where: { projectId },
+            select: collaboratorSelect,
+        });
+    }
+
     createProject(project: ProjectCreation) {
         return prisma.project.create({
             data: {
@@ -140,6 +167,15 @@ export class ProjectRepository {
                 projectId,
                 userId,
                 role,
+            },
+        });
+    }
+
+    fetchInvites(projectId: string) {
+        return prisma.projectInvitation.findMany({
+            where: { projectId },
+            select: {
+                email: true,
             },
         });
     }

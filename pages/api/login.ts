@@ -9,8 +9,9 @@ import { Success, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
 
 import z from "zod";
 
-const BodySchema = z.object({
-    email: z.string(),
+export type LoginBody = z.infer<typeof LoginBodySchema>;
+const LoginBodySchema = z.object({
+    email: z.email(),
     password: z.string(),
 });
 
@@ -20,7 +21,7 @@ const BodySchema = z.object({
  * Authenticates a user into the application, issuing a cookie
  */
 async function loginRoute(req: NextApiRequest, res: NextApiResponse) {
-    const { email, password } = validate(BodySchema, req.body);
+    const { email, password } = validate(LoginBodySchema, req.body);
 
     const user = await UserService.getUserFromEmail(email, true);
     if (!user || !user.secrets) {

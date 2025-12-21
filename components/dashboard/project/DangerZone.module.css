@@ -1,0 +1,53 @@
+.dangerTitle {
+    color: #df3c3c;
+    margin-bottom: 16px;
+    font-size: 1.1rem;
+}
+
+.dangerContainer {
+    border: 2px dashed var(--error);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dangerItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: var(--secondary);
+}
+
+.dangerItem:not(:last-child) {
+    border-bottom: 1px solid var(--separator);
+}
+
+.dangerDescription {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 4px 0 0 0;
+}
+
+.dangerBtn {
+    background-color: var(--error);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s;
+    min-width: 110px;
+    margin-left: 30px;
+}
+
+.dangerBtn:hover {
+    opacity: 0.85;
+}
+
+.secondaryBtn {
+    background-color: white;
+    border: 1px solid #d1d5db;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}

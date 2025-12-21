@@ -2,10 +2,11 @@ import { useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "@src/lib/messages";
 import { signup } from "@src/lib/utils/requests";
 import FormInfo, { FormInfoType } from "../../utils/FormInfo";
-
-import form from "../../utils/Form.module.css";
 import { useRouter } from "@node_modules/next/router";
 import { ApiResponse } from "@src/lib/utils/api-utils";
+import { SignupBody } from "@pages/api/signup";
+
+import form from "../../utils/Form.module.css";
 
 const SignupForm = () => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
@@ -17,7 +18,6 @@ const SignupForm = () => {
 
     async function onSubmit(e: any) {
         e.preventDefault();
-        resetFromInfo();
 
         const email = e.target.email.value;
         const pwd1 = e.target.pwd1.value;
@@ -28,7 +28,13 @@ const SignupForm = () => {
             return;
         }
 
-        const res = await signup(email, pwd1, query.token as string);
+        const body: SignupBody = {
+            email,
+            password: pwd1,
+            inviteToken: query.inviteToken as string,
+        };
+
+        const res = await signup(body);
         const json = (await res.json()) as ApiResponse;
 
         setFormInfo({ content: json.message!, isError: !res.ok });
@@ -43,7 +49,7 @@ const SignupForm = () => {
             </div>
 
             <label className={form.element}>
-                <span>Email</span>
+                <span className={form.label}>Email</span>
                 <input
                     key={query.email as string}
                     className={form.input}
@@ -56,9 +62,9 @@ const SignupForm = () => {
             </label>
 
             <label className={form.element}>
-                <span>Password</span>
+                <span className={form.label}>Password</span>
                 <input className={form.input} name="pwd1" type="password" onChange={resetFromInfo} required />
-                <span>Repeat password</span>
+                <span className={form.label}>Repeat password</span>
                 <input className={form.input} name="pwd2" type="password" onChange={resetFromInfo} required />
             </label>
 

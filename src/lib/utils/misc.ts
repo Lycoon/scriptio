@@ -34,7 +34,7 @@ export function hasExpired(date: Date | string | number, duration: number, unit:
     return now - dateMs > timeLimitMs;
 }
 
-export const getBase64 = async (file: File, width: number, height: number) => {
+export const cropImageBase64 = async (file: File, width: number, height: number) => {
     const img = await createImageBitmap(file);
     const canvas = document.createElement("canvas");
     canvas.width = width;

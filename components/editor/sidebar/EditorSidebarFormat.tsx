@@ -4,13 +4,14 @@ import BoldSVG from "@public/images/bold.svg";
 import ItalicSVG from "@public/images/italic.svg";
 import UnderlineSVG from "@public/images/underline.svg";
 
-import sidebar from "./EditorSidebar.module.css";
 import { join } from "@src/lib/utils/misc";
 import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 import { Dispatch, SetStateAction, useContext } from "react";
 import { applyMarkToggle } from "@src/lib/editor/editor";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
+
+import sidebar from "./EditorSidebar.module.css";
 
 type FormatButtonsProps = {
     selectedStyles: Style;
@@ -58,56 +59,58 @@ const EditorSidebarFormat = ({ selectedStyles, setActiveStyles, selectedElement,
 
     return (
         <div className={join(sidebar.container, sidebar.tabs, isActive)}>
-            <div className={sidebar.tabs}>
-                <FormatButtons selectedStyles={selectedStyles} setActiveStyles={setActiveStyles} />
-                <EditorTab
-                    content="SCENE HEADING"
-                    element={ScreenplayElement.Scene}
-                    currentElement={selectedElement}
-                    setActiveElement={setActiveElement}
-                />
-                <EditorTab
-                    content="Action"
-                    element={ScreenplayElement.Action}
-                    currentElement={selectedElement}
-                    setActiveElement={setActiveElement}
-                />
-                <EditorTab
-                    content="CHARACTER"
-                    element={ScreenplayElement.Character}
-                    currentElement={selectedElement}
-                    setActiveElement={setActiveElement}
-                />
-                <EditorTab
-                    content="Dialogue"
-                    element={ScreenplayElement.Dialogue}
-                    currentElement={selectedElement}
-                    setActiveElement={setActiveElement}
-                />
-                <EditorTab
-                    content="(Parenthetical)"
-                    element={ScreenplayElement.Parenthetical}
-                    currentElement={selectedElement}
-                    setActiveElement={setActiveElement}
-                />
-                <EditorTab
-                    content="TRANSITION:"
-                    element={ScreenplayElement.Transition}
-                    currentElement={selectedElement}
-                    setActiveElement={setActiveElement}
-                />
-                <EditorTab
-                    content="Section"
-                    element={ScreenplayElement.Section}
-                    currentElement={selectedElement}
-                    setActiveElement={setActiveElement}
-                />
-                <EditorTab
-                    content="[[Note]]"
-                    element={ScreenplayElement.Note}
-                    currentElement={selectedElement}
-                    setActiveElement={setActiveElement}
-                />
+            <div className={sidebar.element}>
+                <div className={sidebar.tabs}>
+                    <FormatButtons selectedStyles={selectedStyles} setActiveStyles={setActiveStyles} />
+                    <EditorTab
+                        content="SCENE HEADING"
+                        element={ScreenplayElement.Scene}
+                        currentElement={selectedElement}
+                        setActiveElement={setActiveElement}
+                    />
+                    <EditorTab
+                        content="Action"
+                        element={ScreenplayElement.Action}
+                        currentElement={selectedElement}
+                        setActiveElement={setActiveElement}
+                    />
+                    <EditorTab
+                        content="CHARACTER"
+                        element={ScreenplayElement.Character}
+                        currentElement={selectedElement}
+                        setActiveElement={setActiveElement}
+                    />
+                    <EditorTab
+                        content="Dialogue"
+                        element={ScreenplayElement.Dialogue}
+                        currentElement={selectedElement}
+                        setActiveElement={setActiveElement}
+                    />
+                    <EditorTab
+                        content="(Parenthetical)"
+                        element={ScreenplayElement.Parenthetical}
+                        currentElement={selectedElement}
+                        setActiveElement={setActiveElement}
+                    />
+                    <EditorTab
+                        content="TRANSITION:"
+                        element={ScreenplayElement.Transition}
+                        currentElement={selectedElement}
+                        setActiveElement={setActiveElement}
+                    />
+                    <EditorTab
+                        content="Section"
+                        element={ScreenplayElement.Section}
+                        currentElement={selectedElement}
+                        setActiveElement={setActiveElement}
+                    />
+                    <EditorTab
+                        content="[[Note]]"
+                        element={ScreenplayElement.Note}
+                        currentElement={selectedElement}
+                        setActiveElement={setActiveElement}
+                    />
+                </div>
             </div>
         </div>
     );

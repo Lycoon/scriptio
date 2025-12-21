@@ -4,24 +4,26 @@ import { useContext, useEffect, useState } from "react";
 import { Page, SaveStatus } from "@src/lib/utils/enums";
 import { useDesktop, usePage, useUser } from "@src/lib/utils/hooks";
 import NavbarButton from "./NavbarButton";
-import { redirectLogin, redirectSettings } from "@src/lib/utils/redirects";
+import { redirectHome, redirectLogin } from "@src/lib/utils/redirects";
 
 import SettingsSVG from "@public/images/gear.svg";
 import LogoutSVG from "@public/images/logout.svg";
-import SavingSVG from "@public/images/saving.svg";
 import CheckmarkSVG from "@public/images/checkmark.svg";
-import OfflineSVG from "@public/images/offline.svg";
 import EyeSVG from "@public/images/eye.svg";
+import BackSVG from "@public/images/back2.svg";
+import ExportSVG from "@public/images/export.svg";
+import OnlineSVG from "@public/images/online.svg";
+import OfflineSVG from "@public/images/offline.svg";
 
-import navbar from "./Navbar.module.css";
-import sidebar from "../editor/sidebar/EditorSidebar.module.css";
 import { useSWRConfig } from "swr";
 import { ProjectContext } from "@src/context/ProjectContext";
 import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
-import NavbarMenu from "./NavbarMenu";
 import { UserContext } from "@src/context/UserContext";
+import { DashboardContext } from "@src/context/DashboardContext";
+
+import navbar from "./Navbar.module.css";
 
 const NotLoggedNavbar = () => (
     <div className={navbar.notlogged_btns}>
@@ -37,24 +39,10 @@ const NotLoggedNavbar = () => (
     </div>
 );
 
-const SaveStatusNavbar = () => {
-    const { saveStatus } = useContext(ProjectContext);
-
-    switch (saveStatus) {
-        case SaveStatus.Saving:
-            return <SavingSVG className={navbar.status} />;
-        case SaveStatus.Saved:
-            return <CheckmarkSVG className={join(navbar.status, navbar.success)} />;
-        case SaveStatus.Error:
-            return <OfflineSVG className={join(navbar.status, navbar.failed)} />;
-    }
-};
-
 const Navbar = () => {
-    const userCtx = useContext(UserContext);
-    const projectCtx = useContext(ProjectContext);
-    const { project: membership } = projectCtx;
-    const { updateZenMode } = userCtx;
+    const { isZenMode, updateZenMode } = useContext(UserContext);
+    const { openDashboard } = useContext(DashboardContext);
+    const { project: membership } = useContext(ProjectContext);
 
     const page = usePage();
     const isDesktop = useDesktop();
@@ -80,60 +68,57 @@ const Navbar = () => {
         mutate(`/api/projects/${projectId}`, { ...membership, title: projectTitle });
     }, 1000);
 
-    const toggleZenMode = () => updateZenMode(!userCtx.isZenMode);
+    const toggleZenMode = () => updateZenMode(!isZenMode);
 
     let NavbarButtons;
     if (user) {
         // Logged in on web OR desktop app
-        NavbarButtons = () => (
-            <div className={navbar.btns}>
-                {page === Page.Screenplay && (
-                    <div className={navbar.tooltip_container} data-hint="Zen mode">
-                        <EyeSVG className={join(navbar.btn, navbar.zen_btn)} onClick={toggleZenMode} alt="Eye icon" />
-                    </div>
-                )}
-                <div className={navbar.tooltip_container} data-hint="Settings">
-                    <SettingsSVG className={navbar.btn} onClick={redirectSettings} alt="Settings icon" />
-                </div>
-                <div className={navbar.tooltip_container} data-hint="Logout">
-                    <LogoutSVG className={navbar.btn} onClick={onLogOut} alt="Logout icon" />
-                </div>
-            </div>
-        );
+        NavbarButtons = () => <div></div>;
     } else if (isDesktop) {
         // Not logged in + on desktop app
-        NavbarButtons = () => (
-            <div className={navbar.btns}>
-                <NavbarButton content="Log in" action={redirectLogin} />
-            </div>
-        );
+        NavbarButtons = () => <div></div>;
     } else {
         // Not loggedin + on web
         NavbarButtons = () => <NotLoggedNavbar />;
     }
 
     return (
-        <nav className={join(navbar.container, sidebar.shadow)}>
-            <div className={navbar.logo_and_tabs}>
-                <Link href="/" className={navbar.logo}>
-                    <img src="/images/scriptio.png" alt="Scriptio" />
-                </Link>
-                <NavbarMenu project={membership?.project!} />
-            </div>
-            <div className={navbar.title}>
-                {page === Page.Screenplay && membership && (
-                    <>
-                        <SaveStatusNavbar />
-                        <input
-                            type="text"
-                            className={navbar.title_box}
-                            onChange={(e) => deferredTitleUpdate(membership.project.id, e.target.value)}
-                            defaultValue={projectTitle}
-                        />
-                    </>
-                )}
-            </div>
-            <NavbarButtons />
+        <nav className={join(navbar.container)}>
+            {page === Page.Screenplay && (
+                <div className={navbar.left_btns}>
+                    <div className={navbar.back_btn} onClick={() => redirectHome()}>
+                        <BackSVG />
+                        <p>Back to projects</p>
+                    </div>
+                    <div className={navbar.export_project_btn} onClick={() => openDashboard("Export")}>
+                        <ExportSVG />
+                        <p>Export...</p>
+                    </div>
+                </div>
+            )}
+            {page === Page.Screenplay && membership && (
+                <div className={navbar.title_div}>
+                    {<OnlineSVG className={navbar.status_icon} />}
+                    <input
+                        type="text"
+                        className={navbar.title_box}
+                        onChange={(e) => deferredTitleUpdate(membership.project.id, e.target.value)}
+                        defaultValue={projectTitle}
+                    />
+                </div>
+            )}
+            {page === Page.Screenplay && (
+                <div className={navbar.right_btns}>
+                    <div className={navbar.export_project_btn} onClick={toggleZenMode}>
+                        <EyeSVG />
+                        <p>Zen mode</p>
+                    </div>
+                    <div className={navbar.export_project_btn} onClick={() => openDashboard("Settings")}>
+                        <SettingsSVG />
+                        <p>Settings</p>
+                    </div>
+                </div>
+            )}
         </nav>
     );
 };

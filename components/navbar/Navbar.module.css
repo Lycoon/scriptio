@@ -1,41 +1,103 @@
-.logo:hover {
-    transition: opacity 0.3s;
-    opacity: 80%;
-}
-
-.logo {
-    position: relative;
-    margin-left: 16px;
-    display: block;
-    width: 70px;
-}
-
-.logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
 .container {
     z-index: 1;
     position: relative;
-    background-color: var(--secondary);
+    padding-block: 30px;
     width: 100%;
-    height: 45px;
+    height: var(--navbar-height);
+    background-color: var(--editor-bg);
 
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-
-    box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.2);
 }
 
-.title {
+.title_div {
     display: flex;
     flex-direction: row;
+    gap: 12px;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
+    padding-inline: 24px;
+    border-radius: 64px;
+    background-color: var(--secondary);
+    height: 100%;
+}
+
+.right_btns {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 6px;
+
+    height: 100%;
+    width: var(--format-sidebar-width);
+    margin-right: 30px;
+}
+
+.left_btns {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 12px;
+
+    height: 100%;
+    width: calc(var(--navigation-sidebar-width) + 30px);
+}
+
+.export_project_btn {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    gap: 12px;
+
+    border-radius: 64px;
+    border: 2px solid var(--tertiary);
+    user-select: none;
+    cursor: pointer;
+}
+
+.export_project_btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.export_project_btn svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--primary-text);
+    object-fit: contain;
+}
+
+.back_btn {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    gap: 12px;
+
+    border-radius: 0 64px 64px 0;
+    border: 2px solid var(--tertiary);
+    border-left: none;
+    user-select: none;
+    cursor: pointer;
+}
+
+.back_btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.back_btn svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--primary-text);
+    object-fit: contain;
+}
+
+svg.status_icon {
+    fill: var(--success);
 }
 
 .title_box {
@@ -55,35 +117,6 @@
 
 .title_box:hover {
     background-color: var(--secondary-hover);
-}
-
-.btn {
-    width: 16px;
-    height: 16px;
-    margin-right: 7px;
-
-    color: var(--secondary-text);
-    cursor: pointer;
-}
-
-.zen_btn {
-    width: 20px;
-    height: 20px;
-}
-
-.btn:hover {
-    color: var(--secondary-text-hover);
-}
-
-.btns {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 7px;
-
-    margin-bottom: 3px;
-    margin-right: 12px;
 }
 
 .notlogged_btns {

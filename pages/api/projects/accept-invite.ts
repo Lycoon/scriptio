@@ -41,9 +41,9 @@ async function acceptProjectInvite(query: Query, res: NextApiResponse) {
     const user = await UserService.getUserFromEmail(invite.email);
     if (user) {
         // If user exists, we can add him as a project member
-        const projectUser = await ProjectService.upsertMember(invite.projectId, user.id);
+        await ProjectService.upsertMember(invite.projectId, user.id);
         await ProjectService.deleteInviteFromToken(token);
-        return Success(res, projectUser);
+        res.redirect(`/projects/${invite.projectId}/screenplay`);
     } else {
         // If email is not registered on Scriptio we redirect to signup with the same token
         res.redirect(`/signup?email=${invite.email}&inviteToken=${token}`);

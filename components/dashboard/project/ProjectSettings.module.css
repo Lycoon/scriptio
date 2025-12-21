@@ -1,0 +1,108 @@
+.settingsForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input,
+.textarea {
+    font-size: 1rem;
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--primary-text);
+    font-family: var(--font-inter);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input:focus,
+.textarea:focus {
+    border-color: var(--secondary-text);
+}
+
+.textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.posterUploadArea {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: var(--secondary);
+    padding: 20px;
+    border-radius: 12px;
+    height: 200px;
+}
+
+.posterPreview {
+    width: 100px;
+    height: 148px; /* 2:3 Aspect Ratio */
+    background: var(--primary);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--separator);
+    flex-shrink: 0;
+}
+
+.posterPreview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.posterPlaceholder {
+    font-size: 0.7rem;
+    color: var(--secondary-text);
+}
+
+.uploadControls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.helpText {
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    line-height: 1.4;
+}
+
+.formActions {
+    border-top: 1px solid var(--separator);
+    padding-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.saveBtn {
+    background: var(--success);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+}
+
+.saveBtn:hover {
+    opacity: 0.85;
+}
+
+.saveBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

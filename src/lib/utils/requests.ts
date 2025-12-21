@@ -3,15 +3,15 @@ import { CharacterMap, getPersistentCharacters } from "../editor/characters";
 import { UpdateProjectBody } from "@pages/api/projects/[projectId]";
 import { CreateProjectBody } from "@pages/api/projects";
 import { ApiResponse } from "./api-utils";
+import { UpdateRoleBody } from "@pages/api/projects/[projectId]/members/[userId]";
+import { SignupBody } from "@pages/api/signup";
+import { LoginBody } from "@pages/api/login";
+import { RecoverPasswordBody, RequestRecoveryBody } from "@pages/api/recover";
+import { UpdatePasswordBody } from "@pages/api/users/password";
 
-enum APIMethod {
-    Get = "GET",
-    Post = "POST",
-    Patch = "PATCH",
-    Delete = "DELETE",
-}
+type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-const request = async (url: string, method: APIMethod, body?: Object) => {
+const request = async (url: string, method: RESTMethod, body?: Object) => {
     const json = JSON.stringify(body);
     return fetch(url, {
         headers: { "Content-Type": "application/json" },
@@ -20,38 +20,7 @@ const request = async (url: string, method: APIMethod, body?: Object) => {
     });
 };
 
-// API Responses
-
-export const ErrorResponse = (message: string) => {
-    return { message, isError: true };
-};
-
-export const SuccessResponse = (message: string, data: any) => {
-    return { message, data, isError: false };
-};
-
-// Project
-
-export const getCloudToken = async (projectId: string): Promise<string | null> => {
-    const res = await request(`/api/projects/${projectId}/cloud-token`, APIMethod.Get);
-    if (res.ok) {
-        const { data: token } = (await res.json()) as ApiResponse;
-        return token;
-    }
-    return null;
-};
-
-export const createProject = async (userId: number, body: CreateProjectBody) => {
-    return request(`/api/projects`, APIMethod.Post, body);
-};
-
-export const deleteProject = (projectId: string) => {
-    return request(`/api/projects/${projectId}`, APIMethod.Delete);
-};
-
-export const editProject = (projectId: string, body: UpdateProjectBody) => {
-    return request(`/api/projects/${projectId}`, APIMethod.Patch, body);
-};
+/* Projects */
 
 export const saveCharacters = async (projectId: string, characters: CharacterMap): Promise<Response> => {
     const persistentCharacters = getPersistentCharacters(characters); // Get rid of non-persistent characters
@@ -63,30 +32,69 @@ export const saveCharacters = async (projectId: string, characters: CharacterMap
     return res;
 };
 
-// User
+export const getCloudToken = async (projectId: string): Promise<string | null> => {
+    const res = await request(`/api/projects/${projectId}/cloud-token`, "GET");
+    if (res.ok) {
+        const { data: token } = (await res.json()) as ApiResponse;
+        return token;
+    }
+    return null;
+};
 
-export const changePassword = (password: string) => {
-    return request(`/api/users/password`, APIMethod.Patch, { password });
+export const createProject = async (userId: number, body: CreateProjectBody) => {
+    return request(`/api/projects`, "POST", body);
+};
+
+export const deleteProject = (projectId: string) => {
+    return request(`/api/projects/${projectId}`, "DELETE");
+};
+
+export const editProject = (projectId: string, body: UpdateProjectBody) => {
+    return request(`/api/projects/${projectId}`, "PATCH", body);
+};
+
+/* Collaborators */
+
+export const kickCollaborator = (projectId: string, userId: number) => {
+    return request(`/api/projects/${projectId}/members/${userId}`, "DELETE");
+};
+
+export const inviteCollaborator = async (projectId: string, email: string) => {
+    return request(`/api/projects/${projectId}/invite`, "POST", { email });
+};
+
+export const deleteInvite = async (projectId: string, email: string) => {
+    return request(`/api/projects/${projectId}/invite`, "DELETE", { email });
+};
+
+export const updateMemberRole = async (projectId: string, userId: number, body: UpdateRoleBody) => {
+    return request(`/api/projects/${projectId}/members/${userId}`, "PATCH", body);
+};
+
+/* Users */
+
+export const changePassword = (body: UpdatePasswordBody) => {
+    return request(`/api/users/password`, "PATCH", body);
 };
 
 export const editUserSettings = (body: UpdateSettings) => {
-    return request(`/api/users/settings`, APIMethod.Patch, body);
+    return request(`/api/users/settings`, "PATCH", body);
 };
 
-// Authentication
+/* Auth */
 
-export const signup = (email: string, password: string, inviteToken?: string) => {
-    return request(`/api/signup`, APIMethod.Post, { email, password, inviteToken });
+export const signup = (body: SignupBody) => {
+    return request(`/api/signup`, "POST", body);
 };
 
-export const login = (email: string, password: string) => {
-    return request(`/api/login`, APIMethod.Post, { email, password });
+export const login = (body: LoginBody) => {
+    return request(`/api/login`, "POST", body);
 };
 
-export const validateRecover = (userId: number, recoverHash: string, password: string) => {
-    return request(`/api/recover`, APIMethod.Patch, { userId, recoverHash, password });
+export const recoverPassword = (body: RecoverPasswordBody) => {
+    return request(`/api/recover`, "PATCH", body);
 };
 
-export const sendRecover = (email: string) => {
-    return request(`/api/recover`, APIMethod.Post, { email });
+export const requestRecovery = (body: RequestRecoveryBody) => {
+    return request(`/api/recover`, "POST", body);
 };

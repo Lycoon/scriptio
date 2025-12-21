@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendProjectInviteEmail = async (email: string, projectTitle: string, token: string) => {
-    const link = `${BASE_URL}/projects/accept-invite?token=${token}`;
+    const link = `${BASE_URL}/api/projects/accept-invite?token=${token}`;
     const content = `You have been invited to join project ${projectTitle} as a collaborator. Click the button below to accept the invite.`;
 
     sendFormattedEmail(email, "Project invitation", "Project invitation", content, "Accept invitation", link);

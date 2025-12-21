@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getBase64, join } from "@src/lib/utils/misc";
+import { cropImageBase64, join } from "@src/lib/utils/misc";
 import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 import UploadButton from "../UploadButton";
 import { Project } from "@prisma/client";
@@ -33,7 +33,7 @@ const EditProjectConainer = ({ project }: Props) => {
         };
 
         if (selectedFile) {
-            body.poster = await getBase64(selectedFile, 686, 1016);
+            body.poster = await cropImageBase64(selectedFile, 686, 1016);
         }
 
         const res = await editProject(project.id, body);

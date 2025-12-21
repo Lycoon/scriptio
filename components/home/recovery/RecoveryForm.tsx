@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { useState } from "react";
-import { sendRecover } from "@src/lib/utils/requests";
+import { requestRecovery } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
+import { RequestRecoveryBody } from "@pages/api/recover";
 
 import form from "../../utils/Form.module.css";
 import recovery from "./RecoveryForm.module.css";
@@ -13,7 +14,8 @@ const RecoveryForm = () => {
         e.preventDefault();
 
         const email: string = e.target.email.value;
-        sendRecover(email);
+        const body: RequestRecoveryBody = { email };
+        requestRecovery(body);
         setSetSentEmail(true);
     };
 
@@ -36,7 +38,7 @@ const RecoveryForm = () => {
 
             {!sentEmail && (
                 <div className={form.element}>
-                    <span>Email</span>
+                    <span className={form.label}>Email</span>
                     <input className={form.input} name="email" type="email" required />
                 </div>
             )}

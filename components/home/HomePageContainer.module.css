@@ -37,7 +37,6 @@
 }
 
 .title {
-    font-family: poetsen;
     font-size: min(11vw, 11vh);
     margin-bottom: 1.5rem;
     margin-top: -70px;
@@ -45,7 +44,6 @@
 }
 
 .desc {
-    font-family: roboto-thin;
     text-align: center;
     font-size: min(1.6vw, 1.6vh);
     color: var(--primary-text);

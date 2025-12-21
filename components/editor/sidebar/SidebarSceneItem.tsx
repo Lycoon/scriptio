@@ -1,12 +1,12 @@
 import { useContext } from "react";
 import { ContextMenuType, SceneContextProps } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
-import SceneLengthItem from "../sidebar/SceneLengthItem";
 import { join } from "@src/lib/utils/misc";
+import { ProjectContext } from "@src/context/ProjectContext";
+import { focusOnPosition } from "@src/lib/editor/editor";
+import SceneLengthItem from "../sidebar/SceneLengthItem";
 
 import nav_item from "./SidebarItem.module.css";
-import { focusOnPosition } from "@src/lib/editor/editor";
-import { ProjectContext } from "@src/context/ProjectContext";
 
 const SidebarSceneItem = ({ scene }: SceneContextProps) => {
     const { updateContextMenu } = useContext(UserContext);

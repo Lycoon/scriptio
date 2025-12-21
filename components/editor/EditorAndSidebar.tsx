@@ -4,6 +4,11 @@ import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
+import { ProjectContext } from "@src/context/ProjectContext";
+import { applyElement, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
+import { Popup } from "@components/popup/Popup";
+import { join } from "@src/lib/utils/misc";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 /* Utils */
 import { useContext, useEffect, useState } from "react";
@@ -12,11 +17,6 @@ import { SaveStatus, ScreenplayElement, Style } from "@src/lib/utils/enums";
 
 /* Styles */
 import styles from "./EditorAndSidebar.module.css";
-import { ProjectContext } from "@src/context/ProjectContext";
-import { applyElement, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
-import { Popup } from "@components/popup/Popup";
-import { join } from "@src/lib/utils/misc";
-import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 type EditorAndSidebarProps = {
     project: ProjectMembershipPayload["project"];
@@ -27,6 +27,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
 
+    const [isScrolled, setIsScrolled] = useState(false);
     const [selectedStyles, setSelectedStyles] = useState<Style>(Style.None);
     const [selectedElement, setSelectedElement] = useState<ScreenplayElement>(ScreenplayElement.Action);
     const [isNavigationActive, setIsNavigationActive] = useState<boolean>(true);
@@ -160,6 +161,8 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
 
     const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         if (suggestions.length > 0) updateSuggestions([]);
+        const scrollTop = e.currentTarget.scrollTop;
+        setIsScrolled(scrollTop > 0);
     };
 
     return (
@@ -169,6 +172,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
             <Popup />
             <EditorSidebarNavigation />
             <div className={styles.container} onScroll={onScroll}>
+                <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
                 <ScreenplayEditor editor={editor} />
             </div>
             <EditorSidebarFormat

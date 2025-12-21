@@ -3,7 +3,9 @@ import { getCookieUser } from "@src/lib/session";
 import { apiHandler } from "@src/lib/utils/api-handler";
 import {
     ForbiddenError,
+    InternalServerError,
     NotFoundError,
+    Success,
     SuccessCreated,
     SuccessNoContent,
     UnauthorizedError,
@@ -35,13 +37,28 @@ async function inviteMemberRoute(req: NextApiRequest, res: NextApiResponse) {
         throw new UnauthorizedError();
     }
 
-    const body = validate(ProjectMemberEmailBodySchema, req.body);
     switch (req.method) {
+        case "GET":
+            return getInvites(user.id, query, res);
         case "POST":
-            return inviteMember(user.id, query, body, res);
+            const inviteBody = validate(ProjectMemberEmailBodySchema, req.body);
+            return inviteMember(user.id, query, inviteBody, res);
         case "DELETE":
-            return deleteInvite(user.id, query, body, res);
+            const deleteBody = validate(ProjectMemberEmailBodySchema, req.body);
+            return deleteInvite(user.id, query, deleteBody, res);
     }
+}
+
+/**
+ * GET `/projects/[projectId]/invite`
+ *
+ * Returns the list of pending invites for this project
+ */
+async function getInvites(userId: number, query: Query, res: NextApiResponse) {
+    const { projectId } = query;
+
+    const invites = await ProjectService.getInvites(projectId);
+    return Success(res, invites);
 }
 
 /**
@@ -59,6 +76,22 @@ async function inviteMember(userId: number, query: Query, body: ProjectMemberEma
     }
     if (!Roles.hasRoleOrGreater(member.role, ProjectRole.ADMIN)) {
         throw new ForbiddenError("Only admin members can issue invites");
+    }
+
+    const invites = await ProjectService.getInvites(projectId);
+    const isAlreadyInvited = invites.some((i) => i.email === emailToInvite);
+    if (isAlreadyInvited) {
+        throw new ForbiddenError("User is already invited");
+    }
+
+    const members = await ProjectService.getCollaborators(projectId);
+    const isAlreadyMember = members.some((m) => m.user.email === emailToInvite);
+    if (isAlreadyMember) {
+        throw new ForbiddenError("User is already part of the project");
+    }
+
+    if (invites.length + members.length >= 6) {
+        throw new InternalServerError("Project has reached maximum capacity of collaborators");
     }
 
     const token = Secrets.generateToken();

@@ -4,15 +4,16 @@
     justify-content: space-between;
 
     /*max-width: fit-content;*/
-    padding-inline: 8px;
+    padding-inline: 20px;
     padding-block: 10px;
-
-    border-bottom: 2px solid;
-    border-color: var(--editor-sidebar);
 }
 
 .container:hover {
-    background-color: var(--editor-style-bg-active);
+    background-color: var(--editor-style-bg-hover);
+}
+
+.container:not(:last-child) {
+    border-bottom: 1px solid var(--separator);
 }
 
 .data {

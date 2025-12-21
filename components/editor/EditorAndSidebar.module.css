@@ -3,11 +3,34 @@
     flex-direction: row;
     justify-content: space-between;
 
-    overflow: hidden;
     height: 100%;
+    width: 100%;
 }
 
 .container {
     flex: 1;
-    overflow-y: scroll;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.editor_shadow {
+    position: sticky;
+    top: 0;
+    left: 0;
+
+    margin-inline: auto;
+    width: 800px;
+    height: 40px;
+
+    margin-bottom: -40px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 10;
+
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.show_shadow {
+    opacity: 1;
 }

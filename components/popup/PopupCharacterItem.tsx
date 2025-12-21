@@ -163,7 +163,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     };
 
     if (type === PopupType.EditCharacter) {
-        def.title = "Edit Character - " + character?.name;
+        def.title = "Edit Character";
         def.onSubmit = onEdit;
         def.name = character?.name;
         def.synopsis = character?.synopsis;

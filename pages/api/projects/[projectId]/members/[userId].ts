@@ -24,7 +24,7 @@ const QuerySchema = z.object({
     userId: z.coerce.number().int().positive(),
 });
 
-type UpdateRoleBody = z.infer<typeof UpdateRoleSchema>;
+export type UpdateRoleBody = z.infer<typeof UpdateRoleSchema>;
 const UpdateRoleSchema = z.object({
     role: z.string(),
 });
@@ -32,6 +32,7 @@ const UpdateRoleSchema = z.object({
 async function projectRoleRoute(req: NextApiRequest, res: NextApiResponse) {
     const query = validate(QuerySchema, req.query);
     const user = await getCookieUser(req, res);
+
     if (!user || !user.id) {
         throw new UnauthorizedError();
     }
@@ -104,7 +105,7 @@ async function updateProjectMemberRole(userId: number, query: Query, body: Updat
 /**
  * DELETE `/projects/[projectId]/members/[userid]`
  *
- * Removes a member from a project
+ * Removes a member from a project. A user can leave the project itself
  */
 async function deleteProjectMember(userId: number, query: Query, res: NextApiResponse) {
     const { userId: userToDelete, projectId } = query;
@@ -114,8 +115,15 @@ async function deleteProjectMember(userId: number, query: Query, res: NextApiRes
         throw new NotFoundError();
     }
 
+    const isSelf = userId === userToDelete;
+    if (isSelf && member.role !== ProjectRole.OWNER) {
+        // An owner cannot leave its project as a collaborator, he either needs to transfer ownership or delete project
+        await ProjectService.deleteProjectMember(projectId, userToDelete);
+        return SuccessNoContent(res);
+    }
+
     if (!Roles.hasRoleOrGreater(member.role, ProjectRole.ADMIN)) {
-        throw new ForbiddenError("User must be admin to delete a project member");
+        throw new ForbiddenError("User must be admin to kick another project member");
     }
 
     const memberToDelete = await ProjectService.getMembership(projectId, userToDelete);

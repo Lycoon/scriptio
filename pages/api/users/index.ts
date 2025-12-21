@@ -1,16 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { FAILED_USER_DELETION, USER_DELETED } from "@src/lib/messages";
+import { FAILED_USER_DELETION } from "@src/lib/messages";
 import { getCookieUser } from "@src/lib/session";
 import { deleteUserFromId, getUserFromId } from "@src/server/service/user-service";
 import { apiHandler } from "@src/lib/utils/api-handler";
 
-import z from "zod";
 import { InternalServerError, Success, SuccessNoContent, UnauthorizedError } from "@src/lib/utils/api-utils";
-
-type Query = z.infer<typeof QuerySchema>;
-const QuerySchema = z.object({
-    userId: z.string(),
-});
 
 async function userRoute(req: NextApiRequest, res: NextApiResponse) {
     const user = await getCookieUser(req, res);

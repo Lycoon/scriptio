@@ -17,12 +17,10 @@ import * as Mail from "@src/lib/mail/mail";
 
 import z from "zod";
 
-const BodySchema = z.object({
-    email: z.string(),
+export type SignupBody = z.infer<typeof SignupBodySchema>;
+const SignupBodySchema = z.object({
+    email: z.email(),
     password: z.string(),
-});
-
-const QuerySchema = z.object({
     inviteToken: z.string().optional(),
 });
 
@@ -32,8 +30,7 @@ const QuerySchema = z.object({
  * Verifies a user that just registered and clicked the link in validation mail
  */
 async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
-    const { email, password } = validate(BodySchema, req.body);
-    const { inviteToken } = validate(QuerySchema, req.query);
+    const { email, password, inviteToken } = validate(SignupBodySchema, req.body);
 
     if (password.length < 8) {
         throw new BodyFieldError(PASSWORD_REQUIREMENTS);
@@ -89,7 +86,7 @@ async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
     }
 
     Mail.sendVerificationEmail(created.id, email, secrets.emailHash);
-    return Success(res, null, VERIFICATION_SENT);
+    Success(res, null, VERIFICATION_SENT);
 }
 
 export default apiHandler(signupRoute);

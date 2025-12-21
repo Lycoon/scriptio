@@ -30,11 +30,15 @@
 /* ==================== */
 
 .title {
-    font-family: roboto-thin;
-    font-style: italic;
-    font-size: 1.2rem;
+    font-family: var(--font-josefin), sans-serif;
+    font-weight: 400;
+    font-size: 1.3rem;
     max-width: 125px;
     text-align: left;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .title_flex {
@@ -53,7 +57,6 @@
 }
 
 .date_text {
-    font-family: roboto;
     font-size: 0.9rem;
     max-width: 120px;
     text-align: left;
@@ -63,7 +66,7 @@
 .calendar {
     width: 18px;
     height: 18px;
-    color: var(--secondary-text);
+    fill: var(--secondary-text);
 }
 
 .poster {
@@ -98,7 +101,6 @@
 }
 
 .text_delete {
-    font-family: roboto-thin;
     font-size: 1.4rem;
 }
 

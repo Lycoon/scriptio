@@ -8,7 +8,7 @@ import * as UserService from "@src/server/service/user-service";
 import * as SecretService from "@src/lib/utils/secrets";
 import z from "zod";
 
-type UpdatePasswordBody = z.infer<typeof UpdatePasswordBodySchema>;
+export type UpdatePasswordBody = z.infer<typeof UpdatePasswordBodySchema>;
 const UpdatePasswordBodySchema = z.object({
     password: z.string(),
 });

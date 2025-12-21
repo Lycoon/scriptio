@@ -24,6 +24,10 @@ export async function getMemberships(userId: number) {
     return repository.fetchProjectMemberships(userId);
 }
 
+export async function getCollaborators(projectId: string) {
+    return repository.fetchCollaborators(projectId);
+}
+
 export async function upsertMember(projectId: string, userId: number, role: ProjectRole = ProjectRole.VIEWER) {
     return repository.setProjectMember(projectId, userId, role);
 }
@@ -31,6 +35,11 @@ export async function upsertMember(projectId: string, userId: number, role: Proj
 export async function createInvite(projectId: string, email: string, token: string) {
     return repository.createInvite(projectId, email, token);
 }
+
+export async function getInvites(projectId: string) {
+    return repository.fetchInvites(projectId);
+}
+
 export async function getInvite(token: string) {
     return repository.fetchInvite(token);
 }

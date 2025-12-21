@@ -1,0 +1,187 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.slotGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.slot {
+    background: var(--primary);
+    border: 1px solid var(--separator);
+    border-radius: 10px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    transition: border-color 0.2s;
+}
+
+.slot.empty {
+    background: var(--primary);
+    border-style: dashed;
+}
+
+.memberItem {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+}
+
+.memberInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.memberEmail {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--primary-text);
+}
+
+.statusBadge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--separator);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.2);
+}
+
+.memberActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    width: 180px;
+    flex-shrink: 0;
+}
+
+.roleSelect {
+    appearance: none;
+    background: var(--tertiary);
+    color: var(--secondary-text);
+    border: 1px solid var(--separator);
+    padding: 4px 28px 4px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s;
+    width: 100%;
+    height: 32px;
+
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23666' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 10px;
+}
+
+.roleSelect:hover {
+    border-color: var(--secondary-text);
+    color: var(--primary-text);
+}
+
+.addBtn,
+.kickBtn,
+.cancelBtn {
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 6px 14px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border: none;
+    outline: none;
+    min-width: 80px;
+}
+
+.addBtn {
+    background: var(--primary-text);
+    color: var(--primary);
+}
+
+.addBtn:hover {
+    opacity: 0.7;
+}
+
+.kickBtn {
+    background: rgba(255, 77, 77, 0.1);
+    color: #ff4d4d;
+}
+
+.kickBtn:hover {
+    opacity: 0.85;
+}
+
+.cancelBtn {
+    color: var(--primary-text);
+    background-color: var(--secondary);
+}
+
+.cancelBtn:hover {
+    opacity: 0.7;
+}
+
+.inviteAction {
+    display: flex;
+    width: 100%;
+    padding: 0 16px;
+    gap: 12px;
+    align-items: center;
+}
+
+.miniInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: white;
+    font-size: 0.9rem;
+    outline: none;
+    height: 56px;
+}
+
+.permissionsHint {
+    border-radius: 8px;
+    padding: 12px 0px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hintItem {
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+}
+
+.hintRole {
+    font-weight: 700;
+    color: var(--primary-text);
+    margin-right: 6px;
+    min-width: 45px;
+    display: inline-block;
+}
