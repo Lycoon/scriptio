@@ -1,7 +1,7 @@
 import { createContext, ReactNode, SetStateAction, useMemo, useState } from "react";
 import { ScenesData } from "@src/lib/editor/screenplay";
 import { CharacterMap } from "@src/lib/editor/characters";
-import { SaveStatus } from "@src/lib/utils/enums";
+import { ConnectionStatus } from "@src/lib/utils/enums";
 import { Editor } from "@tiptap/react";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { Screenplay } from "@src/lib/utils/types";
@@ -23,8 +23,8 @@ export type ProjectContextType = {
     updateScenesData: (scenesData: ScenesData) => void;
     charactersData: CharacterMap;
     updateCharactersData: (charactersData: SetStateAction<CharacterMap>) => void;
-    saveStatus: SaveStatus;
-    updateSaveStatus: (saveStatus: SaveStatus) => void;
+    connectionStatus: ConnectionStatus;
+    updateSaveStatus: (saveStatus: ConnectionStatus) => void;
 };
 
 const contextDefaults: ProjectContextType = {
@@ -38,7 +38,7 @@ const contextDefaults: ProjectContextType = {
     updateScenesData: () => {},
     charactersData: {},
     updateCharactersData: () => {},
-    saveStatus: SaveStatus.Saved,
+    connectionStatus: ConnectionStatus.Online,
     updateSaveStatus: () => {},
 };
 
@@ -48,7 +48,7 @@ export function ProjectContextProvider({ children }: { children: ReactNode }) {
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [scenesData, setScenesData] = useState<ScenesData>([]);
     const [charactersData, setCharactersData] = useState<CharacterMap>({});
-    const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.Saved);
+    const [saveStatus, setSaveStatus] = useState<ConnectionStatus>(ConnectionStatus.Online);
 
     const updateScreenplay = (screenplay_: Screenplay) => {
         setScreenplay(screenplay_);
@@ -70,7 +70,7 @@ export function ProjectContextProvider({ children }: { children: ReactNode }) {
         setCharactersData(charactersData);
     };
 
-    const updateSaveStatus = (saveStatus_: SaveStatus) => {
+    const updateSaveStatus = (saveStatus_: ConnectionStatus) => {
         setSaveStatus(saveStatus_);
     };
 

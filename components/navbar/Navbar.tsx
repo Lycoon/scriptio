@@ -1,10 +1,9 @@
 import Link from "next/link";
 import Router from "next/router";
 import { useContext, useEffect, useState } from "react";
-import { Page, SaveStatus } from "@src/lib/utils/enums";
+import { Page, ConnectionStatus } from "@src/lib/utils/enums";
 import { useDesktop, usePage, useUser } from "@src/lib/utils/hooks";
-import NavbarButton from "./NavbarButton";
-import { redirectHome, redirectLogin } from "@src/lib/utils/redirects";
+import { redirectHome } from "@src/lib/utils/redirects";
 
 import SettingsSVG from "@public/images/gear.svg";
 import LogoutSVG from "@public/images/logout.svg";

@@ -32,7 +32,7 @@ async function projectCloudTokenRoute(req: NextApiRequest, res: NextApiResponse)
         role: member.role,
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "5m" });
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "12h" });
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
 
     return Success(res, token);

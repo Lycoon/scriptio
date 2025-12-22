@@ -1,7 +1,7 @@
 import { redirectExport, redirectProjectInfo, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
 import { useContext } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { SaveStatus } from "@src/lib/utils/enums";
+import { ConnectionStatus } from "@src/lib/utils/enums";
 import { UserContext } from "@src/context/UserContext";
 import { importFilePopup } from "@src/lib/editor/popup";
 import { convertFountainToHTML } from "@src/converters/import/fountain";
@@ -54,7 +54,6 @@ const NavbarMenu = ({ project }: NavbarMenuProps) => {
                     const html = convertFountainToHTML(e.target.result);
                     const json = generateJSON(html, SCRIPTIO_EXTENSIONS) as Screenplay;
 
-                    updateSaveStatus(SaveStatus.Saving);
                     replaceScreenplay(editor, json);
                     computeFullCharactersData(json, projectCtx);
                     computeFullScenesData(json, projectCtx);

@@ -20,15 +20,17 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
 
     try {
         switch (messageType) {
-            case 0:
+            case 0: // Sync (document updates)
                 syncProtocol.readSyncMessage(decoder, new encoding.Encoder(), room.doc, room);
                 room.broadcast(fullMessage, sender);
                 room.scheduleSave();
                 break;
-
-            case 1:
+            case 1: // Awareness (cursor)
                 //awarenessProtocol.applyAwarenessUpdate(room.awareness, messageContent.subarray(1), sender);
                 room.broadcast(fullMessage, sender);
+                break;
+            case 9: // Ping
+                sender.send(fullMessage);
                 break;
 
             default:
@@ -63,7 +65,6 @@ export class ScreenplayRoom extends DurableObject {
                 added.forEach((id: number) => clientIds.add(id));
                 this.sessions.set(origin, clientIds);
             }
-            //broadcastAwareness(this, added, updated, removed, origin);
         });
 
         this.ctx.blockConcurrencyWhile(async () => {
@@ -102,7 +103,7 @@ export class ScreenplayRoom extends DurableObject {
         const fullMessage = new Uint8Array(message);
         if (fullMessage.length === 0) return;
 
-        //console.log("\nReceived webSocketMessage");
+        console.log("Received " + fullMessage.length + " bytes message update");
         handleProtocolMessage(this, fullMessage, ws);
     }
 
@@ -154,7 +155,6 @@ export default {
         const token = url.searchParams.get("token");
         const clientId = url.searchParams.get("clientId");
         const projectId = url.pathname.slice(1).replace(/\/$/, "") || "default";
-        console.log("Initializing websocket session");
 
         if (!projectId || !clientId || !token) {
             return new Response("Missing projectId, clientId, or token", { status: 400 });

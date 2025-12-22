@@ -10,7 +10,7 @@ import settings from "../settings/SettingsPageContainer.module.css";
 import popup from "./Popup.module.css";
 import { join } from "@src/lib/utils/misc";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { SaveStatus } from "@src/lib/utils/enums";
+import { ConnectionStatus } from "@src/lib/utils/enums";
 import { replaceOccurrences } from "@src/lib/editor/editor";
 import { UserContext } from "@src/context/UserContext";
 import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/editor/popup";
@@ -78,7 +78,6 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
             return setTakenNameError(true);
         }
 
-        projectCtx.updateSaveStatus(SaveStatus.Saving);
         upsertCharacterData(
             {
                 name: _name.toUpperCase(),
@@ -119,7 +118,6 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
         }
 
         // if name is the same, just update the character
-        projectCtx.updateSaveStatus(SaveStatus.Saving);
         upsertCharacterData(
             {
                 name: character.name,
@@ -140,7 +138,6 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
         replaceOccurrences(projectCtx.editor!, character.name, newName);
         deleteCharacter(character.name, projectCtx);
 
-        projectCtx.updateSaveStatus(SaveStatus.Saving);
         upsertCharacterData(
             {
                 name: newName,

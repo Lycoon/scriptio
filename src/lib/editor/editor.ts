@@ -1,5 +1,5 @@
 import { Editor, JSONContent, useEditor } from "@tiptap/react";
-import { SaveStatus, ScreenplayElement, Style } from "../utils/enums";
+import { ScreenplayElement, Style } from "../utils/enums";
 import { ProjectContext, ProjectContextType } from "@src/context/ProjectContext";
 
 import Document from "@tiptap/extension-document";
@@ -22,6 +22,7 @@ import { getCloudToken } from "../utils/requests";
 import { Screenplay } from "../utils/types";
 
 import * as Node from "@src/Screenplay";
+import { ThrottledWebsocketProvider } from "../collaboration/utils";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -215,7 +216,7 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
                 return;
             }
 
-            const cloudProvider = new WebsocketProvider(
+            const cloudProvider = new ThrottledWebsocketProvider(
                 `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
                 projectId,
                 doc,
@@ -245,6 +246,12 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
                     .filter((state: any) => state.user)
                     .map((state: any) => state.user);
                 setUsers(users);
+            });
+
+            cloudProvider.on("connection-error", async () => {
+                console.error("Connection lost, trying to reconnect...");
+                cloudProvider.destroy();
+                setTimeout(() => connect(), 1000);
             });
 
             return () => {
@@ -317,7 +324,6 @@ export const useScriptioEditor = (
             // Update on each screenplay update
             onUpdate({ editor }) {
                 const screenplay = editor.getJSON();
-                projectCtx.updateSaveStatus(SaveStatus.Saving);
                 projectCtx.updateScreenplay(screenplay);
                 deferredSceneUpdate(screenplay, projectCtx);
                 deferredCharactersUpdate(screenplay, projectCtx);

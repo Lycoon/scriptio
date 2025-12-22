@@ -13,7 +13,7 @@ import { ProjectMembershipPayload } from "@src/server/repository/project-reposit
 /* Utils */
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "@src/context/UserContext";
-import { SaveStatus, ScreenplayElement, Style } from "@src/lib/utils/enums";
+import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 
 /* Styles */
 import styles from "./EditorAndSidebar.module.css";
@@ -139,25 +139,13 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
         }
     };
 
-    /* Context menu actions */
-    const onUnload = (e: BeforeUnloadEvent) => {
-        if (projectCtx.saveStatus === SaveStatus.Saving) {
-            let confirmationMessage = "Are you sure you want to leave?";
-
-            e.returnValue = confirmationMessage;
-            return confirmationMessage;
-        }
-    };
-
     // Initialize event listeners on mount
     useEffect(() => {
         addEventListener("keydown", pressedKeyEvent);
-        addEventListener("beforeunload", onUnload);
         return () => {
             removeEventListener("keydown", pressedKeyEvent);
-            removeEventListener("beforeunload", onUnload);
         };
-    }, [pressedKeyEvent, onUnload]);
+    }, [pressedKeyEvent]);
 
     const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         if (suggestions.length > 0) updateSuggestions([]);

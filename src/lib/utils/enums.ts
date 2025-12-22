@@ -34,10 +34,9 @@ export enum Page {
 //            PROJECT             //
 // ------------------------------ //
 
-export enum SaveStatus {
-    Saving,
-    Saved,
-    Error,
+export enum ConnectionStatus {
+    Online,
+    Offline,
 }
 
 export enum SaveMode {
