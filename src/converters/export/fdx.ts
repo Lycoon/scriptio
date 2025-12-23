@@ -31,7 +31,6 @@ export const convertToFDX = (json: any, exportData: ExportData): string => {
     let paragraphNodes: any = [];
     let nodes = json.content!;
     const characters = exportData.characters;
-    debugger;
 
     for (let i = 0; i < nodes.length; i++) {
         if (!nodes[i]["content"]) {

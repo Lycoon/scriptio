@@ -14,6 +14,7 @@ import ProjectSettings from "./project/ProjectSettings";
 import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
+import ExportProject from "./project/ExportProject";
 
 const MENU_STRUCTURE: MenuSection[] = [
     {
@@ -84,6 +85,7 @@ const DashboardModal = () => {
 
                     <div className={styles.scrollArea}>
                         {activeTab === "General" && <ProjectSettings />}
+                        {activeTab === "Export" && <ExportProject />}
                         {activeTab === "Collaborators" && <CollaboratorsSettings />}
                         {activeTab === "Profile" && <ProfileSettings />}
                         {/* Others... */}

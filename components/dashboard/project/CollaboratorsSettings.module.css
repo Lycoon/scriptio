@@ -20,7 +20,7 @@
     background: var(--primary);
     border: 1px solid var(--separator);
     border-radius: 10px;
-    min-height: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     transition: border-color 0.2s;
@@ -49,17 +49,6 @@
     font-size: 0.95rem;
     font-weight: 500;
     color: var(--primary-text);
-}
-
-.statusBadge {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid var(--separator);
-    color: #fbbf24;
-    border-color: rgba(251, 191, 36, 0.2);
 }
 
 .memberActions {
@@ -184,4 +173,20 @@
     margin-right: 6px;
     min-width: 45px;
     display: inline-block;
+}
+
+.pendingBadge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--separator);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.2);
+}
+
+.pendingSlot {
+    background-color: rgba(251, 191, 36, 0.02);
+    border-color: rgba(251, 191, 36, 0.2);
 }

@@ -5,10 +5,10 @@ import { BASE_URL } from "@src/lib/utils/constants";
 
 const fonts = {
     CourierPrime: {
-        normal: `${BASE_URL}/fonts/Courier%20Prime.ttf`,
-        bold: `${BASE_URL}/fonts/Courier%20Prime%20Bold.ttf`,
-        italics: `${BASE_URL}/fonts/Courier%20Prime.ttf`,
-        bolditalics: `${BASE_URL}/fonts/Courier%20Prime.ttf`,
+        normal: `${BASE_URL}/fonts/CourierPrimeRegular.ttf`,
+        bold: `${BASE_URL}/fonts/CourierPrimeBold.ttf`,
+        italics: `${BASE_URL}/fonts/CourierPrimeItalic.ttf`,
+        bolditalics: `${BASE_URL}/fonts/CourierPrimeBoldItalic.ttf`,
     },
 };
 
@@ -54,7 +54,6 @@ const getWatermarkData = (text: string) => {
 const initPDF = (exportData: ExportData, pdfNodes: any[]): TDocumentDefinitions => {
     return {
         info: {
-            title: exportData.title,
             author: exportData.author,
         },
         content: pdfNodes,
@@ -110,7 +109,7 @@ const initPDF = (exportData: ExportData, pdfNodes: any[]): TDocumentDefinitions 
  * @param author screenplay author
  * @param json editor content JSON
  */
-export const exportToPDF = async (json: any, exportData: ExportDataPDF) => {
+export const exportToPDF = async (json: any, exportData: ExportDataPDF): Promise<pdfMake.TCreatedPdf> => {
     const characters = exportData.characters;
     const nodes = json.content!;
     let pdfNodes = [];
@@ -186,5 +185,5 @@ export const exportToPDF = async (json: any, exportData: ExportDataPDF) => {
         };
     }
 
-    pdfMake.createPdf(pdf, undefined, fonts).open();
+    return pdfMake.createPdf(pdf, undefined, fonts);
 };

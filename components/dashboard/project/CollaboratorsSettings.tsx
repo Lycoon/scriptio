@@ -179,7 +179,7 @@ const InviteSlot = ({ data, mutateInvites }: { data: ProjectInvite; mutateInvite
             <div className={styles.memberItem}>
                 <div className={styles.memberInfo}>
                     <span className={styles.memberEmail}>{data.email}</span>
-                    <span className={styles.statusBadge}>Pending</span>
+                    <span className={styles.pendingBadge}>Pending</span>
                 </div>
 
                 <div className={styles.memberActions}>
