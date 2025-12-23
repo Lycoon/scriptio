@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getCookieUser } from "@src/lib/session";
 import { apiHandler } from "@src/lib/utils/api-handler";
+import { ProjectRole } from "@prisma/client";
 import {
     ForbiddenError,
     InternalServerError,
@@ -18,7 +19,6 @@ import * as Secrets from "@src/lib/utils/secrets";
 import * as Roles from "@src/lib/utils/roles";
 
 import z from "zod";
-import { ProjectRole } from "@node_modules/.prisma/client";
 
 type ProjectMemberEmailBody = z.infer<typeof ProjectMemberEmailBodySchema>;
 const ProjectMemberEmailBodySchema = z.object({
@@ -54,7 +54,7 @@ async function inviteMemberRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Returns the list of pending invites for this project
  */
-async function getInvites(userId: number, query: Query, res: NextApiResponse) {
+async function getInvites(userId: string, query: Query, res: NextApiResponse) {
     const { projectId } = query;
 
     const invites = await ProjectService.getInvites(projectId);
@@ -66,7 +66,7 @@ async function getInvites(userId: number, query: Query, res: NextApiResponse) {
  *
  * Invites a given user to a project, creating a pending `ProjectInvitation`
  */
-async function inviteMember(userId: number, query: Query, body: ProjectMemberEmailBody, res: NextApiResponse) {
+async function inviteMember(userId: string, query: Query, body: ProjectMemberEmailBody, res: NextApiResponse) {
     const { email: emailToInvite } = body;
     const { projectId } = query;
 
@@ -106,7 +106,7 @@ async function inviteMember(userId: number, query: Query, body: ProjectMemberEma
  *
  * Deletes the invite associated to a given email address, removing its pending `ProjectInvitation`
  */
-async function deleteInvite(userId: number, query: Query, body: ProjectMemberEmailBody, res: NextApiResponse) {
+async function deleteInvite(userId: string, query: Query, body: ProjectMemberEmailBody, res: NextApiResponse) {
     const { email: emailToDelete } = body;
     const { projectId } = query;
 

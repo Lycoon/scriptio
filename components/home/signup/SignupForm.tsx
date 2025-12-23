@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "@src/lib/messages";
 import { signup } from "@src/lib/utils/requests";
 import FormInfo, { FormInfoType } from "../../utils/FormInfo";
-import { useRouter } from "@node_modules/next/router";
+import Router, { useRouter } from "@node_modules/next/router";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { SignupBody } from "@pages/api/signup";
 
@@ -36,6 +36,11 @@ const SignupForm = () => {
 
         const res = await signup(body);
         const json = (await res.json()) as ApiResponse;
+
+        if (res.ok && json.data && json.data.redirectUrl) {
+            Router.push(json.data.redirectUrl);
+            return;
+        }
 
         setFormInfo({ content: json.message!, isError: !res.ok });
     }

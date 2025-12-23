@@ -56,7 +56,7 @@ async function projectIdRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Gets project information from authenticated user
  */
-async function getProject(userId: number, query: Query, res: NextApiResponse) {
+async function getProject(userId: string, query: Query, res: NextApiResponse) {
     const { projectId } = query;
 
     const membership = await ProjectService.getMembership(projectId, userId);
@@ -73,7 +73,7 @@ async function getProject(userId: number, query: Query, res: NextApiResponse) {
  *
  * Updates project information from authenticated user
  */
-async function updateProject(userId: number, query: Query, body: UpdateProjectBody, res: NextApiResponse) {
+async function updateProject(userId: string, query: Query, body: UpdateProjectBody, res: NextApiResponse) {
     const { projectId } = query;
 
     const member = await ProjectService.getMembership(projectId, userId);
@@ -118,7 +118,7 @@ async function updateProject(userId: number, query: Query, body: UpdateProjectBo
  *
  * Deletes project from unautheticated user
  */
-async function deleteProject(userId: number, query: Query, res: NextApiResponse) {
+async function deleteProject(userId: string, query: Query, res: NextApiResponse) {
     const { projectId } = query;
 
     const member = await ProjectService.getMembership(projectId, userId);

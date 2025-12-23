@@ -16,11 +16,11 @@ export async function destroy(projectId: string) {
     return repository.deleteProject(projectId);
 }
 
-export async function getMembership(projectId: string, userId: number) {
+export async function getMembership(projectId: string, userId: string) {
     return repository.fetchProjectMembership(projectId, userId);
 }
 
-export async function getMemberships(userId: number) {
+export async function getMemberships(userId: string) {
     return repository.fetchProjectMemberships(userId);
 }
 
@@ -28,7 +28,7 @@ export async function getCollaborators(projectId: string) {
     return repository.fetchCollaborators(projectId);
 }
 
-export async function upsertMember(projectId: string, userId: number, role: ProjectRole = ProjectRole.VIEWER) {
+export async function upsertMember(projectId: string, userId: string, role: ProjectRole = ProjectRole.VIEWER) {
     return repository.setProjectMember(projectId, userId, role);
 }
 
@@ -52,6 +52,6 @@ export async function deleteInviteFromEmail(email: string, projectId: string) {
     return repository.deleteInviteFromEmail(email, projectId);
 }
 
-export async function deleteProjectMember(projectId: string, userId: number) {
+export async function deleteProjectMember(projectId: string, userId: string) {
     return repository.deleteProjectMember(projectId, userId);
 }

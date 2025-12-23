@@ -5,7 +5,7 @@ import RecoveryForm from "./RecoveryForm";
 import layout from "../../utils/Layout.module.css";
 
 type Props = {
-    userId: number;
+    userId: string;
     recoverHash: string;
 };
 

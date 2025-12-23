@@ -47,7 +47,7 @@ async function settingsRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Gets settings from authenticated user
  */
-async function getSettings(userId: number, res: NextApiResponse<any>) {
+async function getSettings(userId: string, res: NextApiResponse<any>) {
     const user = await UserService.getUserFromId(userId);
     if (!user) {
         throw new NotFoundError();
@@ -60,7 +60,7 @@ async function getSettings(userId: number, res: NextApiResponse<any>) {
  *
  * Updates settings from authenticated user
  */
-async function updateSettings(userId: number, body: UpdateSettingsBody, res: NextApiResponse) {
+async function updateSettings(userId: string, body: UpdateSettingsBody, res: NextApiResponse) {
     let settings: any = {};
     settings.highlightOnHover = body.highlightOnHover;
     settings.sceneBackground = body.sceneBackground;

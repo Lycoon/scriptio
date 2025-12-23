@@ -5,7 +5,7 @@ import RecoveryContainer from "@components/home/recovery/RecoveryContainer";
 import { ProjectContext } from "@src/context/ProjectContext";
 
 type Props = {
-    userId: number;
+    userId: string;
     recoverHash: string;
 };
 

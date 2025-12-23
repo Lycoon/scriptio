@@ -8,7 +8,7 @@ export type Screenplay = DocumentType<
 >;
 
 export type CookieUser = {
-    id: number;
+    id: string;
     email: string;
     createdAt: Date;
 };
@@ -19,7 +19,7 @@ export type User = CookieUser & {
 };
 
 export type ProjectCreation = {
-    userId: number;
+    userId: string;
     title: string;
     description?: string;
     hasPoster?: boolean;

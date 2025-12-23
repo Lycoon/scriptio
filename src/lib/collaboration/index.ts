@@ -26,13 +26,11 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
                 room.scheduleSave();
                 break;
             case 1: // Awareness (cursor)
-                //awarenessProtocol.applyAwarenessUpdate(room.awareness, messageContent.subarray(1), sender);
                 room.broadcast(fullMessage, sender);
                 break;
             case 9: // Ping
                 sender.send(fullMessage);
                 break;
-
             default:
                 console.warn(`Unknown message type received: ${messageType}`);
                 break;
@@ -49,15 +47,19 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
 
 export class ScreenplayRoom extends DurableObject {
     doc: Y.Doc;
-    sessions: Map<WebSocket, Set<number>>;
     saveTimeout: any = null;
     awareness: awarenessProtocol.Awareness;
+    sessions: Map<WebSocket, Set<number>>;
+    userConnections: Map<string, WebSocket>;
+    blacklist: Set<string>;
 
     constructor(ctx: DurableObjectState, env: Env) {
         super(ctx, env);
-        this.sessions = new Map();
         this.doc = new Y.Doc();
         this.awareness = new awarenessProtocol.Awareness(this.doc);
+        this.sessions = new Map();
+        this.userConnections = new Map();
+        this.blacklist = new Set();
 
         this.awareness.on("update", ({ added, updated, removed }: any, origin: any) => {
             if (origin instanceof WebSocket) {
@@ -68,15 +70,62 @@ export class ScreenplayRoom extends DurableObject {
         });
 
         this.ctx.blockConcurrencyWhile(async () => {
+            // Restoring project document
             const storedDoc = await this.ctx.storage.get<Uint8Array>("doc");
-            if (storedDoc) {
-                Y.applyUpdate(this.doc, storedDoc);
-            }
+            if (storedDoc) Y.applyUpdate(this.doc, storedDoc);
+
+            // Restoring blacklist
+            const storedBlacklist = await this.ctx.storage.get<string[]>("blacklist");
+            if (storedBlacklist) this.blacklist = new Set(storedBlacklist);
         });
     }
 
     async fetch(request: Request): Promise<Response> {
+        const url = new URL(request.url);
+
+        // When a user is kicked from a project, its JWT cloud token is most likely still valid
+        // We want to block him at the websocket level by blacklisting its user id (until it is reinvited again)
+        if (request.method === "POST" && url.pathname === "/blacklist") {
+            const { userId } = (await request.json()) as any;
+            if (userId) {
+                this.blacklist.add(userId);
+
+                const socket = this.userConnections.get(userId);
+                if (socket) {
+                    socket.close(4003, "You have been removed from this project.");
+                    this.userConnections.delete(userId);
+                }
+
+                console.log(`Blacklisted user ${userId} from project`);
+                await this.ctx.storage.put("blacklist", Array.from(this.blacklist));
+                return new Response(`User ${userId} blacklisted.`, { status: 200 });
+            }
+            return new Response("Missing userId", { status: 400 });
+        }
+
+        // If a blacklisted user gets reinvited after being kicked, we need to remove it from blacklist
+        if (request.method === "POST" && url.pathname === "/allow") {
+            const { userId } = (await request.json()) as any;
+            if (userId) {
+                const wasBlacklisted = this.blacklist.delete(userId);
+                if (wasBlacklisted) {
+                    await this.ctx.storage.put("blacklist", Array.from(this.blacklist));
+                }
+                console.log(`Allowed user ${userId} to project`);
+                return new Response(`User ${userId} allowed.`, { status: 200 });
+            }
+            return new Response("Missing userId", { status: 400 });
+        }
+
+        // First handshake with the worker. The connection is kept alive thanks to ping requests
         if (request.headers.get("Upgrade") === "websocket") {
+            const userId = request.headers.get("X-User-Id");
+            if (!userId) return new Response("Missing User Identity", { status: 400 });
+
+            if (this.blacklist.has(userId)) {
+                return new Response("Unauthorized: You have been kicked.", { status: 403 });
+            }
+
             const pair = new WebSocketPair();
             const [client, server] = Object.values(pair);
 
@@ -139,34 +188,49 @@ export class ScreenplayRoom extends DurableObject {
     }
 }
 
-async function isValidToken(token: string, projectId: string, env: Env): Promise<boolean> {
+async function getVerifiedPayload(token: string | null, secret: string) {
+    if (!token) return null;
     try {
-        const decoded = verify(token, env.JWT_SECRET) as any;
-        if (decoded.projectId !== projectId) return false;
-        return true;
-    } catch (err) {
-        return false;
+        return verify(token, secret) as any;
+    } catch (e) {
+        return null;
     }
 }
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
-        const token = url.searchParams.get("token");
-        const clientId = url.searchParams.get("clientId");
         const projectId = url.pathname.slice(1).replace(/\/$/, "") || "default";
 
-        if (!projectId || !clientId || !token) {
-            return new Response("Missing projectId, clientId, or token", { status: 400 });
+        if (request.method === "POST" && url.pathname.endsWith("/blacklist")) {
+            const authHeader = request.headers.get("Authorization");
+            const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+
+            const decoded = await getVerifiedPayload(token, env.JWT_SECRET);
+            if (!decoded || decoded.type !== "admin-action" || (decoded.projectId && decoded.projectId !== projectId)) {
+                return new Response("Unauthorized", { status: 401 });
+            }
+
+            const stub = env.SCREENPLAY_ROOM.get(env.SCREENPLAY_ROOM.idFromName(projectId));
+            return stub.fetch(request);
         }
 
-        if (!(await isValidToken(token, projectId, env))) {
-            return new Response("Unauthorized", { status: 401 });
+        if (request.headers.get("Upgrade") === "websocket") {
+            const token = url.searchParams.get("token");
+            const decoded = await getVerifiedPayload(token, env.JWT_SECRET);
+
+            if (!decoded || decoded.projectId !== projectId) {
+                return new Response("Unauthorized", { status: 401 });
+            }
+
+            const userId = decoded.userId || decoded.sub;
+            const newRequest = new Request(request);
+            newRequest.headers.set("X-User-Id", userId);
+
+            const stub = env.SCREENPLAY_ROOM.get(env.SCREENPLAY_ROOM.idFromName(projectId));
+            return stub.fetch(newRequest);
         }
 
-        console.log("Session opened for " + projectId);
-        const stubId = env.SCREENPLAY_ROOM.idFromName(projectId);
-        const stub = env.SCREENPLAY_ROOM.get(stubId);
-        return stub.fetch(request);
+        return new Response("Not Found", { status: 404 });
     },
 };

@@ -26,7 +26,7 @@ async function userRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Gets authenticated user information
  */
-async function getUser(userId: number, res: NextApiResponse) {
+async function getUser(userId: string, res: NextApiResponse) {
     const fetchedUser = await getUserFromId(userId);
     if (!fetchedUser) {
         throw new InternalServerError("An error occurred while fetching user from database");
@@ -39,7 +39,7 @@ async function getUser(userId: number, res: NextApiResponse) {
  *
  * Deletes authenticated user
  */
-async function deleteUser(userId: number, res: NextApiResponse) {
+async function deleteUser(userId: string, res: NextApiResponse) {
     const deleted = await deleteUserFromId(userId);
     if (!deleted) {
         throw new InternalServerError(FAILED_USER_DELETION);

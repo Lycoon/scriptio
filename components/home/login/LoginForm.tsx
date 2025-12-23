@@ -47,7 +47,6 @@ const LoginForm = ({ verificationStatus }: Props) => {
 
     async function onSubmit(e: any) {
         e.preventDefault();
-        resetFromInfo();
 
         const body: LoginBody = {
             email: e.target.email.value,

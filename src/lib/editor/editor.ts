@@ -306,12 +306,14 @@ export const useScriptioEditor = (
                                   const label = document.createElement("div");
                                   label.classList.add("collab-caret-label");
                                   label.style.backgroundColor = user.color;
+                                  label.style.left = "-0.5em";
                                   label.style.color = "white";
-                                  label.style.padding = "2px 4px";
+                                  label.style.padding = "3px 8px";
                                   label.style.position = "absolute";
-                                  label.style.top = "-1.5em";
+                                  label.style.top = "-1.8em";
                                   label.style.fontSize = "0.75em";
                                   label.style.whiteSpace = "nowrap";
+                                  label.style.borderRadius = "1em";
                                   label.innerText = user.name;
                                   caret.appendChild(label);
                                   return caret;

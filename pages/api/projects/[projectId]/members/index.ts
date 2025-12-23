@@ -31,7 +31,7 @@ async function projectRoleRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Returns project memberships associated projectId
  */
-async function getProjectMemberships(userId: number, query: Query, res: NextApiResponse) {
+async function getProjectMemberships(userId: string, query: Query, res: NextApiResponse) {
     const { projectId } = query;
 
     const collaborators = await ProjectService.getCollaborators(projectId);

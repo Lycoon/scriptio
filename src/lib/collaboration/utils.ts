@@ -1,3 +1,5 @@
+import jwt from "jsonwebtoken";
+
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 import * as encoding from "lib0/encoding";
@@ -158,3 +160,37 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         super.destroy();
     }
 }
+
+export const allowOnWebsocket = async (userId: string, projectId: string) => {
+    const payload = {
+        type: "admin-action",
+        projectId,
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1m" });
+    await fetch(`${process.env.COLLAB_WEBSOCKET_URL}/${projectId}/allow`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId }),
+    });
+};
+
+export const blacklistFromWebsocket = async (userId: string, projectId: string) => {
+    const payload = {
+        type: "admin-action",
+        projectId,
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1m" });
+    await fetch(`${process.env.COLLAB_WEBSOCKET_URL}/${projectId}/blacklist`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId }),
+    });
+};

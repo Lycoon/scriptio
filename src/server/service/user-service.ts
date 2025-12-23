@@ -4,7 +4,7 @@ import * as SecretService from "../../lib/utils/secrets";
 
 const repository = new UserRepository();
 
-export const updateRecoveryHash = async (userId: number) => {
+export const updateRecoveryHash = async (userId: string) => {
     const recoverHash = SecretService.generateToken();
 
     updateUser({
@@ -18,7 +18,7 @@ export const updateRecoveryHash = async (userId: number) => {
     return recoverHash;
 };
 
-export const updateEmailHash = async (userId: number) => {
+export const updateEmailHash = async (userId: string) => {
     const emailHash = SecretService.generateToken();
 
     updateUser({
@@ -45,11 +45,11 @@ export const updateUser = async (user: UserUpdate) => {
     return repository.updateUser(user);
 };
 
-export const deleteUserFromId = async (userId: number) => {
+export const deleteUserFromId = async (userId: string) => {
     return repository.deleteUser({ id: userId });
 };
 
-export const getUserFromId = async (userId: number, includeSecrets = false) => {
+export const getUserFromId = async (userId: string, includeSecrets = false) => {
     return repository.fetchUser({ id: userId }, includeSecrets);
 };
 

@@ -44,7 +44,7 @@ async function projectsRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Gets all projects from authenticated user
  */
-async function getProjects(userId: number, res: NextApiResponse) {
+async function getProjects(userId: string, res: NextApiResponse) {
     const projects = await ProjectService.getMemberships(userId);
     if (!projects) {
         throw new UserNotFoundError();
@@ -58,7 +58,7 @@ async function getProjects(userId: number, res: NextApiResponse) {
  *
  * Creates a new project
  */
-async function createProject(userId: number, body: CreateProjectBody, res: NextApiResponse) {
+async function createProject(userId: string, body: CreateProjectBody, res: NextApiResponse) {
     const { title, description, poster } = body;
 
     if (title.length < 1 || title.length > 256) {

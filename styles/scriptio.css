@@ -26,6 +26,18 @@ Scrippet is a CSS template designed for including short sections of screenplay-f
 Originally developed by John August - johnaugust.com
 */
 
+.collab-caret-label {
+    /* Prevent the collaboration caret from inheriting parent styles, such as with scene headings (uppercase & bold) */
+    text-transform: none !important;
+    font-weight: 400 !important;
+    font-style: normal !important;
+}
+
+.ProseMirror-trailingBreak {
+    /* Prevent text jump using collaboration caret */
+    display: none;
+}
+
 .ProseMirror:focus {
     /* Prevent outline from appearing when focused on screenplay */
     outline: none;

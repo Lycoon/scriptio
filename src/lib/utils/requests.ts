@@ -41,7 +41,7 @@ export const getCloudToken = async (projectId: string): Promise<string | null> =
     return null;
 };
 
-export const createProject = async (userId: number, body: CreateProjectBody) => {
+export const createProject = async (userId: string, body: CreateProjectBody) => {
     return request(`/api/projects`, "POST", body);
 };
 
@@ -55,7 +55,7 @@ export const editProject = (projectId: string, body: UpdateProjectBody) => {
 
 /* Collaborators */
 
-export const kickCollaborator = (projectId: string, userId: number) => {
+export const kickCollaborator = (projectId: string, userId: string) => {
     return request(`/api/projects/${projectId}/members/${userId}`, "DELETE");
 };
 
@@ -67,7 +67,7 @@ export const deleteInvite = async (projectId: string, email: string) => {
     return request(`/api/projects/${projectId}/invite`, "DELETE", { email });
 };
 
-export const updateMemberRole = async (projectId: string, userId: number, body: UpdateRoleBody) => {
+export const updateMemberRole = async (projectId: string, userId: string, body: UpdateRoleBody) => {
     return request(`/api/projects/${projectId}/members/${userId}`, "PATCH", body);
 };
 

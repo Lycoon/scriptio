@@ -31,7 +31,7 @@ async function passwordRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Hit when an authenticated user updates their password
  */
-async function updatePassword(userId: number, body: UpdatePasswordBody, res: NextApiResponse) {
+async function updatePassword(userId: string, body: UpdatePasswordBody, res: NextApiResponse) {
     if (body.password.length < 8) {
         throw new BodyFieldError(PASSWORD_REQUIREMENTS);
     }

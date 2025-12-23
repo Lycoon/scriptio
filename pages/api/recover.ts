@@ -22,7 +22,7 @@ const RequestRecoveryBodySchema = z.object({
 
 export type RecoverPasswordBody = z.infer<typeof RecoverPasswordBodySchema>;
 const RecoverPasswordBodySchema = z.object({
-    userId: z.coerce.number().int().positive(),
+    userId: z.string(),
     password: z.string(),
     recoverHash: z.string(),
 });

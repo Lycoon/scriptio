@@ -7,7 +7,8 @@ import {
     VERIFICATION_SENT,
 } from "@src/lib/messages";
 import { apiHandler } from "@src/lib/utils/api-handler";
-import { BodyFieldError, InternalServerError, Success, validate } from "@src/lib/utils/api-utils";
+import { BodyFieldError, ForbiddenError, InternalServerError, Success, validate } from "@src/lib/utils/api-utils";
+import { getSession } from "@src/lib/session";
 
 import * as SecretService from "@src/lib/utils/secrets";
 import * as ProjectService from "@src/server/service/project-service";
@@ -64,25 +65,31 @@ async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
 
     // We don't want to send verification email if a user logs in from a project invite token
     // We need to try/catch to ignore any failure occuring invitation logic
-    let inviteProcessed = false;
-
     if (inviteToken) {
         try {
             const invite = await ProjectService.getInvite(inviteToken);
             if (!invite || invite.email !== email || Misc.hasExpired(invite.createdAt, 7, "days")) {
                 // Failing to resolve invite token is passthrough, don't make the signup fail
-                return Success(res, null, VERIFICATION_SENT);
+                throw new ForbiddenError("Invalid invite token");
             }
 
             await ProjectService.upsertMember(invite.projectId, created.id);
             await ProjectService.deleteInviteFromToken(inviteToken);
+            await UserService.updateUser({
+                id: { id: created.id },
+                secrets: { emailHash: null },
+                verified: true,
+            });
 
-            inviteProcessed = true;
+            // Automatically authenticate a user that signed up from a project invitation
+            // It prevents double email address verification as he already clicked from his mail
+            const session = await getSession(req, res);
+            session.id = created.id;
+            session.email = created.email;
+            await session.save();
+
+            return Success(res, { redirectUrl: "/" });
         } catch (err) {}
-    }
-
-    if (inviteProcessed) {
-        return Success(res, null, VERIFICATION_SENT);
     }
 
     Mail.sendVerificationEmail(created.id, email, secrets.emailHash);

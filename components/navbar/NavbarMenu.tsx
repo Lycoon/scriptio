@@ -36,7 +36,7 @@ type NavbarMenuProps = {
 const NavbarMenu = ({ project }: NavbarMenuProps) => {
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
-    const { editor, updateSaveStatus } = projectCtx;
+    const { editor, updateConnectionStatus: updateSaveStatus } = projectCtx;
 
     const importFile = () => {
         if (!editor) return;

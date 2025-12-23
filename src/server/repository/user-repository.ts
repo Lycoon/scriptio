@@ -35,7 +35,7 @@ export interface SecretCreation {
     emailHash: string;
 }
 
-type idOrEmailType = { id: number } | { email: string };
+type idOrEmailType = { id: string } | { email: string };
 
 export class UserRepository {
     updateUser(user: UserUpdate) {

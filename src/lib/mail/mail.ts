@@ -16,19 +16,19 @@ const transporter = nodemailer.createTransport({
 
 export const sendProjectInviteEmail = async (email: string, projectTitle: string, token: string) => {
     const link = `${BASE_URL}/api/projects/accept-invite?token=${token}`;
-    const content = `You have been invited to join project ${projectTitle} as a collaborator. Click the button below to accept the invite.`;
+    const content = `You have been invited to join project '${projectTitle}' as a collaborator. Click the button below to accept the invite.`;
 
-    sendFormattedEmail(email, "Project invitation", "Project invitation", content, "Accept invitation", link);
+    sendFormattedEmail(email, "Project Invitation", "Project Invitation", content, "Join project", link);
 };
 
-export const sendRecoveryEmail = async (userId: number, email: string, recoverHash: string) => {
+export const sendRecoveryEmail = async (userId: string, email: string, recoverHash: string) => {
     const link = `${BASE_URL}/recovery?id=${userId}&code=${recoverHash}`;
     const content = `A request has been issued to update ${email} account password. Click the button below to change your password.`;
 
     sendFormattedEmail(email, "Change password", "Password change request", content, "Change password", link);
 };
 
-export const sendVerificationEmail = async (userId: number, email: string, emailHash: string) => {
+export const sendVerificationEmail = async (userId: string, email: string, emailHash: string) => {
     const link = `${BASE_URL}/api/verify?id=${userId}&token=${emailHash}`;
     const content = `Welcome ${email}! Click the button below to verify your email address after which you will be able to log in using your credentials.`;
 

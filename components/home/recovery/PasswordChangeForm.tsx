@@ -10,7 +10,7 @@ import { ApiResponse } from "@src/lib/utils/api-utils";
 import { RecoverPasswordBody } from "@pages/api/recover";
 
 type Props = {
-    userId: number;
+    userId: string;
     recoverHash: string;
 };
 

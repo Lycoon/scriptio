@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { cropImageBase64, join } from "@src/lib/utils/misc";
-import { ProjectCreation } from "@src/lib/utils/types";
 import { FormInfoType } from "../utils/FormInfo";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { createProject } from "@src/lib/utils/requests";
-import { SaveMode } from "@src/lib/utils/enums";
 import { useDesktop, useUser } from "@src/lib/utils/hooks";
 import UploadButton from "./UploadButton";
 import FormHeader from "./FormHeader";
@@ -24,7 +22,8 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
     const isDesktop = useDesktop();
 
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
-    const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const exitCreating = () => {
         setIsCreating(false);
@@ -36,6 +35,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
 
     const onSubmit = async (e: any) => {
         e.preventDefault();
+        console.log("submitting");
         resetFormInfo();
 
         if (!user) return;
@@ -68,11 +68,11 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
 
                 <div className={form.elements}>
                     <div className={form.element}>
-                        <p className={form.element_title}>Title</p>
+                        <p className={form.label}>Title</p>
                         <input name="title" className={form.input} onChange={resetFormInfo} required />
                     </div>
                     <div className={form.element}>
-                        <p className={form.element_title}>
+                        <p className={form.label}>
                             Description - <i>optional</i>
                         </p>
                         <textarea
@@ -82,7 +82,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                         />
                     </div>
                     <div className={form.element}>
-                        <p className={form.element_title}>
+                        <p className={form.label}>
                             Poster - <i>optional</i>
                         </p>
                         <UploadButton setSelectedFile={setSelectedFile} selectedFile={selectedFile} />

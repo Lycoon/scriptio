@@ -24,7 +24,7 @@ export type ProjectContextType = {
     charactersData: CharacterMap;
     updateCharactersData: (charactersData: SetStateAction<CharacterMap>) => void;
     connectionStatus: ConnectionStatus;
-    updateSaveStatus: (saveStatus: ConnectionStatus) => void;
+    updateConnectionStatus: (saveStatus: ConnectionStatus) => void;
 };
 
 const contextDefaults: ProjectContextType = {
@@ -39,7 +39,7 @@ const contextDefaults: ProjectContextType = {
     charactersData: {},
     updateCharactersData: () => {},
     connectionStatus: ConnectionStatus.Online,
-    updateSaveStatus: () => {},
+    updateConnectionStatus: () => {},
 };
 
 export function ProjectContextProvider({ children }: { children: ReactNode }) {
@@ -48,7 +48,7 @@ export function ProjectContextProvider({ children }: { children: ReactNode }) {
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [scenesData, setScenesData] = useState<ScenesData>([]);
     const [charactersData, setCharactersData] = useState<CharacterMap>({});
-    const [saveStatus, setSaveStatus] = useState<ConnectionStatus>(ConnectionStatus.Online);
+    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(ConnectionStatus.Online);
 
     const updateScreenplay = (screenplay_: Screenplay) => {
         setScreenplay(screenplay_);
@@ -70,8 +70,8 @@ export function ProjectContextProvider({ children }: { children: ReactNode }) {
         setCharactersData(charactersData);
     };
 
-    const updateSaveStatus = (saveStatus_: ConnectionStatus) => {
-        setSaveStatus(saveStatus_);
+    const updateConnectionStatus = (saveStatus_: ConnectionStatus) => {
+        setConnectionStatus(saveStatus_);
     };
 
     const value = useMemo(
@@ -86,10 +86,10 @@ export function ProjectContextProvider({ children }: { children: ReactNode }) {
             updateScenesData,
             charactersData,
             updateCharactersData,
-            saveStatus,
-            updateSaveStatus,
+            connectionStatus,
+            updateConnectionStatus,
         }),
-        [screenplay, project, editor, scenesData, charactersData, saveStatus]
+        [screenplay, project, editor, scenesData, charactersData, connectionStatus]
     );
 
     return (

@@ -10,7 +10,9 @@ import { deleteInvite, inviteCollaborator, kickCollaborator, updateMemberRole } 
 import { ProjectContext } from "@src/context/ProjectContext";
 
 import * as Roles from "@src/lib/utils/roles";
-import { UserContext } from "@src/context/UserContext";
+import Router from "@node_modules/next/router";
+import { ApiResponse } from "@src/lib/utils/api-utils";
+import { DashboardContext } from "@src/context/DashboardContext";
 
 const MAX_COLLABORATORS = 5;
 
@@ -94,6 +96,7 @@ const CollaboratorsSettings = () => {
 
 const MemberSlot = ({ data, mutateCollaborators }: { data: Collaborator; mutateCollaborators: () => void }) => {
     const { project: membership } = useContext(ProjectContext);
+    const { closeDashboard } = useContext(DashboardContext);
     const { user } = useUser();
 
     if (!membership || !user) return null;
@@ -105,8 +108,18 @@ const MemberSlot = ({ data, mutateCollaborators }: { data: Collaborator; mutateC
 
     const handleKick = async () => {
         const res = await kickCollaborator(membership.project.id, data.user.id);
+
         if (res.ok) {
-            mutateCollaborators();
+            if (res.status !== 204) {
+                // If user left the project by himself, redirect him to home
+                const json = (await res.json()) as ApiResponse;
+                if (json.data && json.data.redirectUrl) {
+                    closeDashboard();
+                    Router.push(json.data.redirectUrl);
+                }
+            } else {
+                mutateCollaborators();
+            }
         }
     };
 

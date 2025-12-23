@@ -15,13 +15,14 @@ import {
 
 import * as Roles from "@src/lib/utils/roles";
 import * as ProjectService from "@src/server/service/project-service";
+import * as CollabUtils from "@src/lib/collaboration/utils";
 
 import z from "zod";
 
 type Query = z.infer<typeof QuerySchema>;
 const QuerySchema = z.object({
     projectId: z.string(),
-    userId: z.coerce.number().int().positive(),
+    userId: z.string(),
 });
 
 export type UpdateRoleBody = z.infer<typeof UpdateRoleSchema>;
@@ -53,7 +54,7 @@ async function projectRoleRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Returns a project member given its userId and associated projectId
  */
-async function getProjectMember(userId: number, query: Query, res: NextApiResponse) {
+async function getProjectMember(userId: string, query: Query, res: NextApiResponse) {
     // We query the user role for this poject, throw 404 in case it doesn't belong to it
     const { projectId } = query;
 
@@ -70,7 +71,7 @@ async function getProjectMember(userId: number, query: Query, res: NextApiRespon
  *
  * Updates a project member role
  */
-async function updateProjectMemberRole(userId: number, query: Query, body: UpdateRoleBody, res: NextApiResponse) {
+async function updateProjectMemberRole(userId: string, query: Query, body: UpdateRoleBody, res: NextApiResponse) {
     const { role } = body;
     const { userId: userToUpdateId, projectId } = query;
 
@@ -105,9 +106,9 @@ async function updateProjectMemberRole(userId: number, query: Query, body: Updat
 /**
  * DELETE `/projects/[projectId]/members/[userid]`
  *
- * Removes a member from a project. A user can leave the project itself
+ * Removes a member from a project. A user can leave the project itself.
  */
-async function deleteProjectMember(userId: number, query: Query, res: NextApiResponse) {
+async function deleteProjectMember(userId: string, query: Query, res: NextApiResponse) {
     const { userId: userToDelete, projectId } = query;
 
     const member = await ProjectService.getMembership(projectId, userId);
@@ -116,10 +117,16 @@ async function deleteProjectMember(userId: number, query: Query, res: NextApiRes
     }
 
     const isSelf = userId === userToDelete;
-    if (isSelf && member.role !== ProjectRole.OWNER) {
-        // An owner cannot leave its project as a collaborator, he either needs to transfer ownership or delete project
-        await ProjectService.deleteProjectMember(projectId, userToDelete);
-        return SuccessNoContent(res);
+    if (isSelf) {
+        if (member.role !== ProjectRole.OWNER) {
+            // No need to check roles, any non-owner member can leave the project on its own
+            await ProjectService.deleteProjectMember(projectId, userToDelete);
+            return Success(res, { redirectUrl: "/" });
+        } else {
+            // An owner cannot leave its project as a collaborator
+            // He either needs to transfer ownership or delete project
+            throw new ForbiddenError("Owner cannot leave project");
+        }
     }
 
     if (!Roles.hasRoleOrGreater(member.role, ProjectRole.ADMIN)) {
@@ -131,15 +138,13 @@ async function deleteProjectMember(userId: number, query: Query, res: NextApiRes
         throw new NotFoundError();
     }
 
-    if (member.role === memberToDelete.role) {
-        throw new ForbiddenError("Project member of same role cannot be deleted");
-    }
-
     if (!Roles.hasRoleOrGreater(member.role, memberToDelete.role)) {
         throw new ForbiddenError("User does not have sufficient permissions");
     }
 
     await ProjectService.deleteProjectMember(projectId, userToDelete);
+    await CollabUtils.blacklistFromWebsocket(userToDelete, projectId);
+
     return SuccessNoContent(res);
 }
 

@@ -2,12 +2,14 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { VerificationStatus } from "@src/lib/utils/enums";
 import { apiHandler } from "@src/lib/utils/api-handler";
 
-import * as UserService from "@src/server/service/user-service";
-import z from "zod";
 import { validate } from "@src/lib/utils/api-utils";
 
+import * as UserService from "@src/server/service/user-service";
+import z from "zod";
+import { getSession } from "@src/lib/session";
+
 const QuerySchema = z.object({
-    id: z.coerce.number().int().positive(),
+    id: z.string(),
     token: z.string(),
 });
 
@@ -45,7 +47,13 @@ async function verifyUser(req: NextApiRequest, res: NextApiResponse) {
             return redirect(res, VerificationStatus.Failed);
         }
 
-        redirect(res, VerificationStatus.Success);
+        // Automatically authenticate a user that just clicked on his verification email
+        const session = await getSession(req, res);
+        session.id = user.id;
+        session.email = user.email;
+        await session.save();
+
+        res.redirect("/");
     } catch (error: any) {
         redirect(res, VerificationStatus.Failed);
     }

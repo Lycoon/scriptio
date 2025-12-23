@@ -2,10 +2,10 @@ import { NextApiRequest, NextApiResponse } from "@node_modules/next";
 import { getCookieUser } from "@src/lib/session";
 import { apiHandler } from "@src/lib/utils/api-handler";
 import { Success, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
-import jwt from "jsonwebtoken";
 
 import * as ProjectService from "@src/server/service/project-service";
 
+import jwt from "jsonwebtoken";
 import z from "zod";
 
 const QuerySchema = z.object({

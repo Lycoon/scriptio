@@ -75,7 +75,7 @@ export class ProjectRepository {
         };
     }
 
-    async fetchProjectMemberships(userId: number) {
+    async fetchProjectMemberships(userId: string) {
         const user = await prisma.user.findUnique({
             where: { id: userId },
             select: {
@@ -95,7 +95,7 @@ export class ProjectRepository {
         return Promise.all(user.projects.map((m) => this.hydrateMembership(m)));
     }
 
-    async fetchProjectMembership(projectId: string, userId: number) {
+    async fetchProjectMembership(projectId: string, userId: string) {
         const membership = await prisma.projectMember.findUnique({
             where: {
                 userId_projectId: {
@@ -152,7 +152,7 @@ export class ProjectRepository {
         });
     }
 
-    setProjectMember(projectId: string, userId: number, role: ProjectRole) {
+    setProjectMember(projectId: string, userId: string, role: ProjectRole) {
         return prisma.projectMember.upsert({
             where: {
                 userId_projectId: {
@@ -213,7 +213,7 @@ export class ProjectRepository {
         });
     }
 
-    deleteProjectMember(projectId: string, userId: number) {
+    deleteProjectMember(projectId: string, userId: string) {
         return prisma.projectMember.delete({
             where: {
                 userId_projectId: {
