@@ -26,153 +26,201 @@ Scrippet is a CSS template designed for including short sections of screenplay-f
 Originally developed by John August - johnaugust.com
 */
 
-.collab-caret-label {
-    /* Prevent the collaboration caret from inheriting parent styles, such as with scene headings (uppercase & bold) */
-    text-transform: none !important;
-    font-weight: 400 !important;
-    font-style: normal !important;
-}
-
-.ProseMirror-trailingBreak {
-    /* Prevent text jump using collaboration caret */
-    display: none;
-}
-
-.ProseMirror:focus {
-    /* Prevent outline from appearing when focused on screenplay */
-    outline: none;
-}
-
 .ProseMirror {
     position: absolute;
     width: 586px;
     min-height: 1100px;
-
+    
     /* Screenplay margins */
     margin-left: 1.5in;
     margin-right: 0.95in;
     padding-block: 1in;
-}
 
-.ProseMirror p,
-.ProseMirror span {
+    /* Prevent outline from appearing when focused on screenplay */
+    outline: none;
+
     /* Default screenplay text attributes */
-    color: var(--editor-text);
-    font-family: var(--font-courier), monospace;
-    font-size: 12pt;
-    text-align: left;
-    letter-spacing: -0.4px !important;
-    line-height: 17px !important;
-    margin-bottom: 17px;
-}
+    p, span {
+        color: var(--editor-text);
+        font-family: var(--font-courier), monospace;
+        font-size: 12pt;
+        text-align: left;
+        letter-spacing: -0.4px !important;
+        line-height: 17px !important;
+        min-height: 1lh;
+        margin-bottom: 17px;
+    }
 
-/* Editor styles */
-span.bold {
-    font-weight: bold;
-}
+    /* Editor styles */
+    span.bold {
+        font-weight: bold;
+    }
+    span.italic {
+        font-style: italic;
+    }
+    span.underline {
+        text-decoration: underline;
+    }
 
-span.italic {
-    font-style: italic;
-}
+    /* User settings */
+    .highlight-on-hover .ProseMirror > p:hover {
+        background-color: var(--editor-element-hover);
+        border-radius: 8px;
+    }
 
-span.underline {
-    text-decoration: underline;
-}
+    .scene-background .scene {
+        background-color: var(--editor-scene);
+    }
 
-/* User settings */
-.highlight-on-hover .ProseMirror > p:hover {
-    background-color: var(--editor-element-hover);
-    border-radius: 8px;
-}
+    /* Screenplay elements */
+    .is-empty > .ProseMirror-trailingBreak {
+        display: none; 
+    }
 
-.scene-background .scene {
-    background-color: var(--editor-scene);
-}
+    .is-empty {
+        cursor: text;
+        background-color: transparent; /* Catches the click */
+    }
 
-/* Editor elements */
-.action {
-    line-height: 17px !important;
-    text-align: justify;
-}
+    .action {
+        line-height: 17px !important;
+        text-align: justify;
+    }
 
-.scene {
-    background-color: none;
-    width: 100%;
-    padding-top: 2px;
-    padding-left: 4px;
-    display: inline-block;
-    text-transform: uppercase;
-    font-weight: bold;
-    line-height: 20px !important;
-    counter-increment: scenenumber;
-}
+    .scene {
+        background-color: none;
+        width: 100%;
+        padding-top: 2px;
+        display: inline-block;
+        text-transform: uppercase;
+        font-weight: bold;
+        line-height: 20px !important;
+        counter-increment: scenenumber;
+    }
 
-.scene::before {
-    content: counter(scenenumber) ".";
-    position: absolute;
-    margin-left: -75px;
-}
+    .scene::before {
+        content: counter(scenenumber) ".";
+        position: absolute;
+        margin-left: -60px;
+    }
 
-/* Dialogue */
-.dialogue {
-    padding-inline: 1.2in !important;
-}
+    /* Dialogue */
+    .dialogue {
+        padding-inline: 1.2in !important;
+    }
 
-.dialogue + .parenthetical {
-    margin-top: -17px !important;
-}
+    .dialogue + .parenthetical {
+        margin-top: -17px !important;
+    }
 
-.character {
-    padding-left: 2.2in !important;
-    text-transform: uppercase;
-}
+    .character {
+        padding-left: 2.2in !important;
+        text-transform: uppercase;
+    }
 
-.character + .parenthetical,
-.character + .dialogue {
-    margin-top: -17px !important;
-}
+    .character + .parenthetical,
+    .character + .dialogue {
+        margin-top: -17px !important;
+    }
 
-/* Parenthetical */
-.parenthetical {
-    padding-left: 1.9in !important;
-    padding-right: 2.1in !important;
-    margin-bottom: 0 !important;
-}
+    /* Parenthetical */
+    .parenthetical {
+        position: relative;
+        padding-left: 1.9in !important;
+        padding-right: 2.1in !important;
+        margin-bottom: 0 !important;
+    }
 
-.parenthetical::before {
-    content: "(";
-}
+    .parenthetical::before {
+        content: "(" !important;
 
-.parenthetical::after {
-    content: ")";
-}
+        /* Shenanigans to have cursor between both parenthesis otherwise it appears before first */
+        position: absolute;
+        top: 0; 
+        left: 1.9in;
+        margin-left: calc(-1ch); 
+        pointer-events: none;
+    }
 
-/* Transition */
-.transition {
-    text-transform: uppercase;
-    text-align: right !important;
-}
+    .parenthetical::after {
+        content: ")" !important;
+    }
 
-.transition::after {
-    content: ":";
-}
+    /* Transition */
+    .transition {
+        text-transform: uppercase;
+        text-align: right !important;
+    }
 
-.section {
-    text-transform: uppercase;
-    text-align: center !important;
-    text-decoration: underline;
-    line-height: 20px !important;
-    counter-increment: actnumber;
-}
+    .transition::after {
+        content: ":";
+    }
 
-/* Note */
-.note {
-    background-color: var(--editor-notes-color); /* a: 0.226 */
-    padding-inline: 8px;
-    padding-block: 4px;
+    .section {
+        text-transform: uppercase;
+        text-align: center !important;
+        text-decoration: underline;
+        line-height: 20px !important;
+        counter-increment: actnumber;
+    }
 
-    border-style: dashed;
-    border-width: 2px;
-    border-color: var(--editor-notes-color); /* a: 0.226 */
-    border-radius: 10px;
+    /* Note */
+    .note {
+        background-color: var(--editor-notes-color); /* a: 0.226 */
+        padding-inline: 8px;
+        padding-block: 4px;
+
+        border-style: dashed;
+        border-width: 2px;
+        border-color: var(--editor-notes-color); /* a: 0.226 */
+        border-radius: 10px;
+    }
+
+    /* Collaboration */
+
+    /* The presence of collab-caret at the end of a node forces a trailing break behind */
+    /* We disable its rendering to prevent text line stutters or ::after layout breaks */
+    .collab-caret ~ .ProseMirror-trailingBreak {
+        display: none;
+    }
+
+    .collab-caret {
+        position: absolute;
+        z-index: 100;
+        height: 1em;
+        width: 0 !important;
+        margin-left: -1px;
+
+        vertical-align: top;
+
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-select: none !important;
+        transition: transform 0.1s ease-out;
+    }
+
+    .collab-caret-label {
+        position: absolute;
+        top: -1.8em;
+        left: -0.5em;
+        padding: 3px 12px;
+        color: white;
+        font-size: 0.75em;
+        white-space: nowrap;
+        border-radius: 1em;
+        line-height: normal;
+
+        /* Prevent the collaboration caret from inheriting parent styles, such as with scene headings (uppercase & bold) */
+        text-transform: none !important;
+        font-weight: 400 !important;
+        font-style: normal !important;
+
+        pointer-events: none !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        
+        /* Fix for Firefox selection glitch */
+        display: block; 
+        width: max-content;
+    }
 }

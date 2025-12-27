@@ -6,7 +6,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import { computeFullScenesData } from "./screenplay";
 import { computeFullCharactersData } from "./characters";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import * as Y from "yjs";
@@ -23,6 +23,7 @@ import { Screenplay } from "../utils/types";
 
 import * as Node from "@src/Screenplay";
 import { ThrottledWebsocketProvider } from "../collaboration/utils";
+import { Placeholder } from "./placeholder-extension";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -107,6 +108,9 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 export const SCRIPTIO_EXTENSIONS = [
     Document.configure({
         content: "Screenplay+",
+    }),
+    Placeholder.configure({
+        placeholder: ""
     }),
     Text,
     Node.Screenplay,
@@ -197,19 +201,24 @@ const useLocal = (projectId: string) => {
 };
 
 const useCloud = (projectId: string, doc: Y.Doc | null) => {
-    const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+    const providerRef = useRef<ThrottledWebsocketProvider | null>(null);
     const [status, setStatus] = useState<string>("connecting");
     const [users, setUsers] = useState<any[]>([]);
 
     useEffect(() => {
         if (!doc || !projectId) {
-            if (provider) provider.destroy();
-            setProvider(null);
             setStatus("disabled");
             return;
         }
 
         const connect = async () => {
+            if (providerRef.current) {
+                providerRef.current.destroy();
+            }
+
+            if (!doc)
+                return;
+
             const token = await getCloudToken(projectId);
             if (!token) {
                 setStatus("unauthorized");
@@ -227,42 +236,45 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
                     },
                 }
             );
-            setProvider(cloudProvider);
 
-            const disconnect = () => {
-                removeAwarenessStates(cloudProvider.awareness, [doc.clientID], "window unload");
-                cloudProvider.destroy();
-            };
+            providerRef.current = cloudProvider;
 
-            // If a user disconnects, we remove its awareness state
-            window.addEventListener("beforeunload", disconnect);
-            cloudProvider.on("status", (event: any) => {
-                setStatus(event.status);
-            });
-
-            // Listen to connected users
             cloudProvider.awareness.on("update", () => {
                 const users = Array.from(cloudProvider.awareness.getStates().values())
                     .filter((state: any) => state.user)
                     .map((state: any) => state.user);
                 setUsers(users);
             });
-
             cloudProvider.on("connection-error", async () => {
                 console.error("Connection lost, trying to reconnect...");
                 cloudProvider.destroy();
                 setTimeout(() => connect(), 1000);
             });
-
-            return () => {
-                disconnect();
-            };
         };
 
         connect();
+
+        const handleCleanup = () => {
+            if (providerRef.current) {
+                // Explicitly remove awareness so other users see us leave immediately
+                removeAwarenessStates(
+                    providerRef.current.awareness, 
+                    [doc.clientID], 
+                    "window unload"
+                );
+                providerRef.current.destroy();
+                providerRef.current = null;
+            }
+        };
+
+        window.addEventListener("beforeunload", handleCleanup);
+        return () => {
+            window.removeEventListener("beforeunload", handleCleanup);
+            handleCleanup();
+        };
     }, [doc, projectId]);
 
-    return { provider, status, users };
+    return { cloudProvider: providerRef.current, status, users };
 };
 
 export const useScriptioEditor = (
@@ -275,8 +287,7 @@ export const useScriptioEditor = (
     const projectCtx = useContext(ProjectContext);
     const { settings } = useSettings();
     const { ydoc } = useLocal(project.id);
-    const { provider, status, users } = useCloud(project.id, ydoc);
-
+    const { cloudProvider, status, users } = useCloud(project.id, ydoc);
     const { onlineColor, onlineUsername } = settings;
 
     const scriptioEditor = useEditor(
@@ -284,13 +295,17 @@ export const useScriptioEditor = (
             immediatelyRender: false,
             extensions: [
                 ...SCRIPTIO_EXTENSIONS,
-                ...(ydoc && provider
+                ...(ydoc
                     ? [
                           Collaboration.configure({
                               document: ydoc,
                           }),
+                      ]
+                    : []),
+                ...(cloudProvider
+                    ? [
                           CollaborationCaret.configure({
-                              provider: provider,
+                              provider: cloudProvider,
                               user: {
                                   name: onlineUsername || "User_" + Math.floor(Math.random() * 1000),
                                   color: onlineColor || getRandomColor(),
@@ -299,22 +314,11 @@ export const useScriptioEditor = (
                                   const caret = document.createElement("span");
                                   caret.classList.add("collab-caret");
                                   caret.style.borderLeft = `2px solid ${user.color}`;
-                                  caret.style.marginLeft = "-1px";
-                                  caret.style.height = "1em";
-                                  caret.style.position = "absolute";
-                                  caret.style.zIndex = "10";
                                   const label = document.createElement("div");
                                   label.classList.add("collab-caret-label");
                                   label.style.backgroundColor = user.color;
-                                  label.style.left = "-0.5em";
-                                  label.style.color = "white";
-                                  label.style.padding = "3px 8px";
-                                  label.style.position = "absolute";
-                                  label.style.top = "-1.8em";
-                                  label.style.fontSize = "0.75em";
-                                  label.style.whiteSpace = "nowrap";
-                                  label.style.borderRadius = "1em";
                                   label.innerText = user.name;
+                                  label.contentEditable = "false";
                                   caret.appendChild(label);
                                   return caret;
                               },
@@ -352,7 +356,7 @@ export const useScriptioEditor = (
             );*/
             },
         },
-        [ydoc, provider]
+        [ydoc, cloudProvider]
     );
 
     return scriptioEditor;

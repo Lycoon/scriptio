@@ -8,7 +8,7 @@ declare global {
     namespace NodeJS {
         interface ProcessEnv {
             NODE_ENV: "development" | "production";
-            COLLAB_WEBSOCKET_URL: string;
+            NEXT_PUBLIC_COLLAB_WEBSOCKET_URL: string;
 
             // Token Secrets
             JWT_SECRET: string;

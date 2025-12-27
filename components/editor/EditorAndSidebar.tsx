@@ -54,7 +54,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
     );
 
     editor?.setOptions({
-        autofocus: "end",
+        autofocus: "start",
         editorProps: {
             handleKeyDown(view: any, event: any) {
                 const selection = view.state.selection;
@@ -62,6 +62,14 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
                 const nodeSize = node.content.size;
                 const nodePos = selection.$head.parentOffset;
                 const currNode = node.attrs.class as ScreenplayElement;
+
+                if (event.key === "Backspace") {
+                    if (currNode === ScreenplayElement.Scene && nodeSize === 1 && nodePos === 1) {
+                        const tr = view.state.tr.delete(selection.from - 1, selection.from);
+                        view.dispatch(tr);
+                        return true;
+                    }
+                }
 
                 if (event.code === "Space") {
                     // if starting action with INT. or EXT. switch to scene

@@ -26,6 +26,7 @@
         "@tiptap/extension-paragraph": "^3.13.0",
         "@tiptap/extension-text": "^3.13.0",
         "@tiptap/extension-underline": "^3.13.0",
+        "@tiptap/extension-placeholder": "^3.13.0",
         "@tiptap/react": "^3.13.0",
         "argon2": "^0.44.0",
         "chart.js": "^4.4.1",

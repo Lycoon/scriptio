@@ -77,9 +77,17 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     };
 
     private onThrottledAwareness = ({ added, updated, removed }: any, origin: any) => {
-        const changedClients = added.concat(updated).concat(removed);
-        for (const client of changedClients) {
-            this.awarenessQueue.add(client);
+        if (origin === "local") {
+            const changedClients = added.concat(updated).concat(removed);
+
+            for (const client of changedClients) {
+                this.awarenessQueue.add(client);
+            }
+
+            // If user joins or leaves, send awareness update now, bypass throttling
+            if (added.length > 0 || removed.length > 0) {
+                this.flush();
+            }
         }
     };
 
@@ -122,21 +130,16 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         }
 
         if (this.awarenessQueue.size > 0) {
-            if (this.awareness.getStates().size > 1) {
-                const changedClients = Array.from(this.awarenessQueue);
-                this.awarenessQueue.clear();
+            const changedClients = Array.from(this.awarenessQueue);
+            this.awarenessQueue.clear();
 
-                const encoder = encoding.createEncoder();
-                encoding.writeVarUint(encoder, 1);
-                encoding.writeVarUint8Array(
-                    encoder,
-                    awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
-                );
-                ws.send(encoding.toUint8Array(encoder));
-            } else {
-                // We are alone. Discard the updates to save bandwidth
-                this.awarenessQueue.clear();
-            }
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, 1);
+            encoding.writeVarUint8Array(
+                encoder,
+                awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
+            );
+            ws.send(encoding.toUint8Array(encoder));
         }
 
         this.lastFlushTime = Date.now();
@@ -168,7 +171,7 @@ export const allowOnWebsocket = async (userId: string, projectId: string) => {
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1m" });
-    await fetch(`${process.env.COLLAB_WEBSOCKET_URL}/${projectId}/allow`, {
+    await fetch(`${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}/${projectId}/allow`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -185,7 +188,7 @@ export const blacklistFromWebsocket = async (userId: string, projectId: string) 
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1m" });
-    await fetch(`${process.env.COLLAB_WEBSOCKET_URL}/${projectId}/blacklist`, {
+    await fetch(`${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}/${projectId}/blacklist`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
