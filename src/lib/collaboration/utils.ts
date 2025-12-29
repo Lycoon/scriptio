@@ -36,7 +36,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.awareness.off("update", (this as any)._awarenessUpdateHandler);
         this.awareness.on("update", this.onThrottledAwareness);
 
-        (this as any).messageHandlers[9] = () => {};
+        (this as any).messageHandlers[9] = () => { };
 
         this.startFlushLoop();
         this.setupIdleListeners();

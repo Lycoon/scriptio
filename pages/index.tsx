@@ -28,7 +28,8 @@ const HomePage: NextPage = () => {
     return (
         <>
             <Head>
-                <title>{!user ? "Scriptio" : "Scriptio • Projects"}</title>
+                <title>{!user ? "Screenwriting | Scriptio" : "Scriptio | Projects"}</title>
+                <meta name="description" content="Modern, elegant and affordable screenwriting software." />
             </Head>
             <HomePageWindow />
         </>

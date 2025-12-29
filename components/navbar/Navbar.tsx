@@ -1,18 +1,15 @@
 import Link from "next/link";
 import Router from "next/router";
 import { useContext, useEffect, useState } from "react";
-import { Page, ConnectionStatus } from "@src/lib/utils/enums";
+import { Page } from "@src/lib/utils/enums";
 import { useDesktop, usePage, useUser } from "@src/lib/utils/hooks";
 import { redirectHome } from "@src/lib/utils/redirects";
 
 import SettingsSVG from "@public/images/gear.svg";
-import LogoutSVG from "@public/images/logout.svg";
-import CheckmarkSVG from "@public/images/checkmark.svg";
 import EyeSVG from "@public/images/eye.svg";
 import BackSVG from "@public/images/back2.svg";
 import ExportSVG from "@public/images/export.svg";
 import OnlineSVG from "@public/images/online.svg";
-import OfflineSVG from "@public/images/offline.svg";
 
 import { useSWRConfig } from "swr";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -80,6 +77,9 @@ const Navbar = () => {
         // Not loggedin + on web
         NavbarButtons = () => <NotLoggedNavbar />;
     }
+
+    if (!user)
+        return;
 
     return (
         <nav className={join(navbar.container)}>

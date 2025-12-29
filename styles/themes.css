@@ -72,4 +72,19 @@ html.dark {
     --editor-style-bg-hover: #3c3c3c;
     --editor-style-bg-active: #5d5d5d;
     --editor-element-hover: #eeeeee;
+
+    --shadow-s:
+    inset 0 1px 2px #ffffff30,
+    0 1px 2px #00000030,
+    0 2px 4px #00000015;
+
+    --shadow-m:
+    inset 0 1px 2px #ffffff50,
+    0 2px 4px #00000030,
+    0 4px 8px #00000015;
+
+    --shadow-l:
+    inset 0 1px 2px #ffffff70,
+    0 4px 6px #00000030,
+    0 6px 10px #00000015;
 }
