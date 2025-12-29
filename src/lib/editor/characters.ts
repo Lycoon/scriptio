@@ -2,7 +2,6 @@ import { ProjectContextType } from "@src/context/ProjectContext";
 import { getNodeFlattenContent } from "./screenplay";
 import { ScreenplayElement } from "../utils/enums";
 import { saveCharacters } from "../utils/requests";
-import { JSONContent } from "@tiptap/react";
 import { Screenplay } from "../utils/types";
 
 export enum CharacterGender {

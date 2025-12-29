@@ -1,7 +1,7 @@
 .container {
     z-index: 1;
     position: relative;
-    padding-block: 30px;
+    padding-block: 25px;
     width: 100%;
     height: var(--navbar-height);
     background-color: var(--editor-bg);
@@ -27,22 +27,21 @@
 .right_btns {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 6px;
 
     height: 100%;
-    width: var(--format-sidebar-width);
+    width: var(--navbar-sidebar-width);
     margin-right: 30px;
 }
 
 .left_btns {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 24px;
 
     height: 100%;
-    width: calc(var(--navigation-sidebar-width) + 30px);
+    width: var(--navbar-sidebar-width);
 }
 
 .export_project_btn {
@@ -50,7 +49,7 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    flex: 1;
+    padding-inline: 10px;
     gap: 12px;
 
     border-radius: 64px;
@@ -63,11 +62,26 @@
     background-color: var(--secondary-hover);
 }
 
-.export_project_btn svg {
-    width: 18px;
-    height: 18px;
-    fill: var(--primary-text);
-    object-fit: contain;
+.navBtns {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    height: 100%;
+}
+
+.navBtn {
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.navBtn:hover {
+    color: var(--primary-text);
+}
+
+.navBtn.active {
+    color: var(--primary-text);
 }
 
 .back_btn {
@@ -75,7 +89,7 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    flex: 1;
+    padding-inline: 24px;
     gap: 12px;
 
     border-radius: 0 64px 64px 0;
@@ -87,17 +101,6 @@
 
 .back_btn:hover {
     background-color: var(--secondary-hover);
-}
-
-.back_btn svg {
-    width: 18px;
-    height: 18px;
-    fill: var(--primary-text);
-    object-fit: contain;
-}
-
-svg.status_icon {
-    fill: var(--success);
 }
 
 .title_box {
@@ -135,8 +138,7 @@ svg.status_icon {
     height: 100%;
 }
 
-.status {
-    color: var(--secondary-text);
+.status_icon {
     width: 20px;
     height: 20px;
 }
@@ -149,24 +151,23 @@ svg.status_icon {
     color: var(--success);
 }
 
-.tooltip_container {
+.tooltip {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-.tooltip_container:hover::after {
+.tooltip:hover::after {
     content: attr(data-hint);
     position: absolute;
-    top: 100%;
-    right: 0;
-    transform: none;
-    margin-top: 5px;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
 
-    background-color: #333;
+    background-color: var(--secondary);
     color: white;
     padding: 5px 10px;
-    border-radius: 4px;
+    border-radius: 8px;
     font-size: 12px;
     white-space: nowrap;
     pointer-events: none;

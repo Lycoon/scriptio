@@ -25,7 +25,8 @@ body,
     /* Default values */
     --format-sidebar-width: 280px;
     --navigation-sidebar-width: 380px;
-    --navbar-height: 100px;
+    --navbar-sidebar-width: 500px;
+    --navbar-height: 90px;
 }
 
 html {

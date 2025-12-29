@@ -7,7 +7,7 @@
 
 # collaboration
 /src/lib/collaboration/node_modules
-.wrangler
+.wrangler/
 
 # testing
 /coverage

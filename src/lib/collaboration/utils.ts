@@ -78,8 +78,12 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
     private onThrottledAwareness = ({ added, updated, removed }: any, origin: any) => {
         if (origin === "local") {
-            const changedClients = added.concat(updated).concat(removed);
+            const states = this.awareness.getStates();
+            if (states.size <= 1 && removed.length === 0) {
+                return;
+            }
 
+            const changedClients = added.concat(updated).concat(removed);
             for (const client of changedClients) {
                 this.awarenessQueue.add(client);
             }

@@ -25,7 +25,7 @@ export enum Page {
 
     // /projects/{id}/{page}
     Screenplay = "screenplay",
-    Statistics = "statistics",
+    Statistics = "stats",
     Edit = "edit",
     Export = "export",
 }
@@ -34,10 +34,7 @@ export enum Page {
 //            PROJECT             //
 // ------------------------------ //
 
-export enum ConnectionStatus {
-    Online,
-    Offline,
-}
+export type ConnectionStatus = "connected" | "disconnected" | "connecting";
 
 export enum SaveMode {
     Local = 1,

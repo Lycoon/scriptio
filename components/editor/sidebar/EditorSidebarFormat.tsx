@@ -1,15 +1,12 @@
 import EditorTab from "../EditorTab";
 
-import BoldSVG from "@public/images/bold.svg";
-import ItalicSVG from "@public/images/italic.svg";
-import UnderlineSVG from "@public/images/underline.svg";
-
 import { join } from "@src/lib/utils/misc";
 import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 import { Dispatch, SetStateAction, useContext } from "react";
 import { applyMarkToggle } from "@src/lib/editor/editor";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
+import { Bold, Italic, Underline } from "lucide-react";
 
 import sidebar from "./EditorSidebar.module.css";
 
@@ -34,13 +31,13 @@ const FormatButtons = ({ selectedStyles, setActiveStyles }: FormatButtonsProps) 
     return (
         <div className={sidebar.style_btns}>
             <div className={join(sidebar.style_btn, boldActive)} onClick={() => toggleStyle(Style.Bold)}>
-                <BoldSVG className={sidebar.style_btn_img} />
+                <Bold strokeWidth={3.5} />
             </div>
             <div className={join(sidebar.style_btn, italicActive)} onClick={() => toggleStyle(Style.Italic)}>
-                <ItalicSVG className={sidebar.style_btn_img} />
+                <Italic strokeWidth={2.5} />
             </div>
             <div className={join(sidebar.style_btn, underlineActive)} onClick={() => toggleStyle(Style.Underline)}>
-                <UnderlineSVG className={sidebar.style_btn_img} />
+                <Underline strokeWidth={2.5} />
             </div>
         </div>
     );

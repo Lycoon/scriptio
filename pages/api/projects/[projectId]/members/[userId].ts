@@ -75,6 +75,10 @@ async function updateProjectMemberRole(userId: string, query: Query, body: Updat
     const { role } = body;
     const { userId: userToUpdateId, projectId } = query;
 
+    const isSelf = userId === userToUpdateId;
+    if (isSelf)
+        throw new ForbiddenError("You cannot update your own role");
+
     if (!Roles.isValid(role)) throw new BodyFieldError("Unknown role");
     const newRole = role as ProjectRole;
 
@@ -88,12 +92,15 @@ async function updateProjectMemberRole(userId: string, query: Query, body: Updat
     }
 
     if (memberToUpdate.role === newRole) {
+        // User already has the role
         return SuccessNoContent(res);
     }
 
-    if (
-        member.role === memberToUpdate.role ||
-        !Roles.hasRoleOrGreater(member.role, newRole) ||
+    if (member.role === newRole) {
+        throw new ForbiddenError("You cannot assign the same role to another user");
+    }
+
+    if (!Roles.hasRoleOrGreater(member.role, newRole) ||
         !Roles.hasRoleOrGreater(member.role, memberToUpdate.role)
     ) {
         throw new ForbiddenError("User does not have sufficient permissions");

@@ -29,17 +29,17 @@ export type ProjectContextType = {
 
 const contextDefaults: ProjectContextType = {
     screenplay: DEFAULT_SCREENPLAY,
-    updateScreenplay: () => {},
+    updateScreenplay: () => { },
     project: undefined,
-    updateProject: () => {},
+    updateProject: () => { },
     editor: undefined,
-    updateEditor: () => {},
+    updateEditor: () => { },
     scenesData: [],
-    updateScenesData: () => {},
+    updateScenesData: () => { },
     charactersData: {},
-    updateCharactersData: () => {},
-    connectionStatus: ConnectionStatus.Online,
-    updateConnectionStatus: () => {},
+    updateCharactersData: () => { },
+    connectionStatus: "disconnected",
+    updateConnectionStatus: () => { },
 };
 
 export function ProjectContextProvider({ children }: { children: ReactNode }) {
@@ -48,7 +48,7 @@ export function ProjectContextProvider({ children }: { children: ReactNode }) {
     const [editor, setEditor] = useState<Editor | undefined>(undefined);
     const [scenesData, setScenesData] = useState<ScenesData>([]);
     const [charactersData, setCharactersData] = useState<CharacterMap>({});
-    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(ConnectionStatus.Online);
+    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
 
     const updateScreenplay = (screenplay_: Screenplay) => {
         setScreenplay(screenplay_);

@@ -1,10 +1,9 @@
 import { _MS_PER_DAY, getElapsedDaysFrom, getLastUpdate, join } from "@src/lib/utils/misc";
 
-import CalendarSVG from "@public/images/calendar.svg";
-
 import item from "./ProjectItem.module.css";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { Calendar } from "lucide-react";
 
 type Props = {
     project: ProjectMembershipPayload["project"];
@@ -24,7 +23,7 @@ const ProjectItem = ({ project }: Props) => {
                 <div>
                     <h2 className={item.title}>{project.title}</h2>
                     <div className={item.date}>
-                        <CalendarSVG className={item.calendar} alt="Calendar icon" />
+                        <Calendar size={18} />
                         <p className={item.date_text}>{lastUpdated}</p>
                     </div>
                 </div>

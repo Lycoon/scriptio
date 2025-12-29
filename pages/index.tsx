@@ -2,7 +2,6 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useContext, useEffect } from "react";
 import HomePageContainer from "@components/home/HomePageContainer";
-import Navbar from "@components/navbar/Navbar";
 import ProjectPageContainer from "@components/projects/ProjectPageContainer";
 import { useDesktop, useUser } from "@src/lib/utils/hooks";
 import DesktopHomePageContainer from "@components/home/DesktopHomePageContainer";
@@ -28,7 +27,7 @@ const HomePage: NextPage = () => {
     return (
         <>
             <Head>
-                <title>{!user ? "Screenwriting | Scriptio" : "Scriptio | Projects"}</title>
+                <title>{!user ? "Screenwriting • Scriptio" : "Scriptio • Projects"}</title>
                 <meta name="description" content="Modern, elegant and affordable screenwriting software." />
             </Head>
             <HomePageWindow />

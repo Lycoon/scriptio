@@ -1,15 +1,9 @@
 import Link from "next/link";
 import Router from "next/router";
 import { useContext, useEffect, useState } from "react";
-import { Page } from "@src/lib/utils/enums";
+import { ConnectionStatus, Page } from "@src/lib/utils/enums";
 import { useDesktop, usePage, useUser } from "@src/lib/utils/hooks";
-import { redirectHome } from "@src/lib/utils/redirects";
-
-import SettingsSVG from "@public/images/gear.svg";
-import EyeSVG from "@public/images/eye.svg";
-import BackSVG from "@public/images/back2.svg";
-import ExportSVG from "@public/images/export.svg";
-import OnlineSVG from "@public/images/online.svg";
+import { redirectHome, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
 
 import { useSWRConfig } from "swr";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -18,8 +12,10 @@ import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
 import { UserContext } from "@src/context/UserContext";
 import { DashboardContext } from "@src/context/DashboardContext";
+import { CircleArrowLeft, CircleCheckBig, Download, Eye, Settings, WifiOff, WifiSync } from "lucide-react";
 
 import navbar from "./Navbar.module.css";
+import form from "./../utils/Form.module.css";
 
 const NotLoggedNavbar = () => (
     <div className={navbar.notlogged_btns}>
@@ -35,10 +31,28 @@ const NotLoggedNavbar = () => (
     </div>
 );
 
+const StatusIndicator = () => {
+    const { connectionStatus } = useContext(ProjectContext);
+    const STATUS: Record<ConnectionStatus, string> = {
+        "connected": "Synced to cloud",
+        "disconnected": "No connection",
+        "connecting": "Reconnecting..."
+    }
+    return <>
+        <div className={navbar.tooltip} data-hint={STATUS[connectionStatus]}>
+            {connectionStatus === "connected" && <CircleCheckBig style={{ color: 'var(--success)' }} className={navbar.status_icon} />}
+            {connectionStatus === "disconnected" && <WifiOff style={{ color: 'var(--error)' }} className={navbar.status_icon} />}
+            {connectionStatus === "connecting" && <WifiSync style={{ color: 'var(--warning)' }} className={navbar.status_icon} />}
+        </div>
+    </>
+}
+
 const Navbar = () => {
     const { isZenMode, updateZenMode } = useContext(UserContext);
     const { openDashboard } = useContext(DashboardContext);
     const { project: membership } = useContext(ProjectContext);
+    const [hasNavbar, updateHasNavbar] = useState<boolean>(false);
+    const [hasScreenplay, updateHasScreenplay] = useState<boolean>(false);
 
     const page = usePage();
     const isDesktop = useDesktop();
@@ -78,26 +92,34 @@ const Navbar = () => {
         NavbarButtons = () => <NotLoggedNavbar />;
     }
 
-    if (!user)
+    const getNavStyle = (tabName: string) => {
+        return `${navbar.navBtn} ${form.label} ${page == tabName ? navbar.active : ''}`;
+    };
+
+    useEffect(() => {
+        updateHasNavbar(page === Page.Screenplay || page === Page.Statistics);
+        updateHasScreenplay(page === Page.Screenplay);
+    }, [page]);
+
+    if (!user || !page || !membership)
         return;
 
     return (
         <nav className={join(navbar.container)}>
-            {page === Page.Screenplay && (
-                <div className={navbar.left_btns}>
-                    <div className={navbar.back_btn} onClick={() => redirectHome()}>
-                        <BackSVG />
-                        <p>Back to projects</p>
-                    </div>
-                    <div className={navbar.export_project_btn} onClick={() => openDashboard("Export")}>
-                        <ExportSVG />
-                        <p>Export...</p>
-                    </div>
+            <nav className={navbar.left_btns}>
+                <div className={navbar.back_btn} onClick={() => redirectHome()}>
+                    <CircleArrowLeft size={18} />
+                    <p>Back to projects</p>
                 </div>
-            )}
-            {page === Page.Screenplay && membership && (
+                <div className={navbar.navBtns}>
+                    <p className={`${getNavStyle("screenplay")}`} onClick={() => redirectScreenplay(membership.project.id)}>Screenplay</p>
+                    <p className={`${getNavStyle("stats")}`} onClick={() => redirectStatistics(membership.project.id)}>Statistics</p>
+                    <p className={`${getNavStyle("board")}`}>Board</p>
+                </div>
+            </nav>
+            {hasScreenplay && (
                 <div className={navbar.title_div}>
-                    {<OnlineSVG className={navbar.status_icon} />}
+                    <StatusIndicator />
                     <input
                         type="text"
                         className={navbar.title_box}
@@ -106,18 +128,16 @@ const Navbar = () => {
                     />
                 </div>
             )}
-            {page === Page.Screenplay && (
-                <div className={navbar.right_btns}>
+            <div className={navbar.right_btns}>
+                {hasScreenplay && (
                     <div className={navbar.export_project_btn} onClick={toggleZenMode}>
-                        <EyeSVG />
-                        <p>Zen mode</p>
+                        <Eye size={18} />
                     </div>
-                    <div className={navbar.export_project_btn} onClick={() => openDashboard("Settings")}>
-                        <SettingsSVG />
-                        <p>Settings</p>
-                    </div>
+                )}
+                <div className={navbar.export_project_btn} onClick={() => openDashboard("Settings")}>
+                    <Settings size={18} />
                 </div>
-            )}
+            </div>
         </nav>
     );
 };

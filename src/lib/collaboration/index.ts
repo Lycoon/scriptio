@@ -24,12 +24,15 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
                 syncProtocol.readSyncMessage(decoder, new encoding.Encoder(), room.doc, room);
                 room.broadcast(fullMessage, sender);
                 room.scheduleSave();
+                console.log("Received sync");
                 break;
             case 1: // Awareness (cursor)
                 room.broadcast(fullMessage, sender);
+                console.log("Received awareness");
                 break;
             case 9: // Ping
                 sender.send(fullMessage);
+                console.log("Received ping");
                 break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);
@@ -69,15 +72,27 @@ export class ScreenplayRoom extends DurableObject {
             }
         });
 
-        this.ctx.blockConcurrencyWhile(async () => {
-            // Restoring project document
-            const storedDoc = await this.ctx.storage.get<Uint8Array>("doc");
-            if (storedDoc) Y.applyUpdate(this.doc, storedDoc);
+        this.ctx.storage.sql.exec(`
+            CREATE TABLE IF NOT EXISTS project (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                data BLOB
+            );
+            CREATE TABLE IF NOT EXISTS blacklist (
+                user_id TEXT PRIMARY KEY
+            );
+        `);
 
-            // Restoring blacklist
-            const storedBlacklist = await this.ctx.storage.get<string[]>("blacklist");
-            if (storedBlacklist) this.blacklist = new Set(storedBlacklist);
-        });
+        // Restore latest project state
+        const cursor = this.ctx.storage.sql.exec("SELECT data FROM project WHERE id = 1;");
+        for (const row of cursor) {
+            if (row.data) Y.applyUpdate(this.doc, new Uint8Array(row.data as ArrayBuffer));
+        }
+
+        // Restore blacklist
+        const blacklist = this.ctx.storage.sql.exec("SELECT user_id FROM blacklist;").toArray();
+        for (const row of blacklist) {
+            this.blacklist.add(row.user_id as string);
+        }
     }
 
     async fetch(request: Request): Promise<Response> {
@@ -97,7 +112,10 @@ export class ScreenplayRoom extends DurableObject {
                 }
 
                 console.log(`Blacklisted user ${userId} from project`);
-                await this.ctx.storage.put("blacklist", Array.from(this.blacklist));
+                this.ctx.storage.sql.exec(
+                    "INSERT OR IGNORE INTO blacklist (user_id) VALUES (?);",
+                    userId
+                );
                 return new Response(`User ${userId} blacklisted.`, { status: 200 });
             }
             return new Response("Missing userId", { status: 400 });
@@ -109,7 +127,10 @@ export class ScreenplayRoom extends DurableObject {
             if (userId) {
                 const wasBlacklisted = this.blacklist.delete(userId);
                 if (wasBlacklisted) {
-                    await this.ctx.storage.put("blacklist", Array.from(this.blacklist));
+                    this.ctx.storage.sql.exec(
+                        "DELETE FROM blacklist WHERE user_id = ?;",
+                        userId
+                    );
                 }
                 console.log(`Allowed user ${userId} to project`);
                 return new Response(`User ${userId} allowed.`, { status: 200 });
@@ -157,17 +178,16 @@ export class ScreenplayRoom extends DurableObject {
     }
 
     scheduleSave() {
-        if (this.saveTimeout) {
-            clearTimeout(this.saveTimeout);
-        }
-        this.saveTimeout = setTimeout(() => {
-            this.saveToDisk();
-        }, 3000);
+        if (this.saveTimeout) clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(() => this.saveToDisk(), 2000);
     }
 
     async saveToDisk() {
         const fullDocState = Y.encodeStateAsUpdate(this.doc);
-        await this.ctx.storage.put("doc", fullDocState);
+        this.ctx.storage.sql.exec(
+            "INSERT OR REPLACE INTO project (id, data) VALUES (1, ?);",
+            fullDocState
+        );
         this.saveTimeout = null;
     }
 

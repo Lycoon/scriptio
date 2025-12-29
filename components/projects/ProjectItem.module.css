@@ -63,12 +63,6 @@
     color: var(--secondary-text);
 }
 
-.calendar {
-    width: 18px;
-    height: 18px;
-    fill: var(--secondary-text);
-}
-
 .poster {
     width: 85px;
     aspect-ratio: 0.675;

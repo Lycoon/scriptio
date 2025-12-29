@@ -40,7 +40,7 @@
 .style_btn {
     width: 32px;
     height: 32px;
-    padding: 9px;
+    padding: 8px;
 
     display: flex;
     flex-direction: row;
@@ -61,6 +61,3 @@
     background-color: var(--editor-style-bg-hover);
 }
 
-.style_btn_img {
-    color: var(--primary-text);
-}

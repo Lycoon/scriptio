@@ -13,7 +13,6 @@ import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
-import { WebsocketProvider } from "y-websocket";
 import { removeAwarenessStates } from "@node_modules/y-protocols/awareness";
 import { useSettings } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
@@ -201,71 +200,90 @@ const useLocal = (projectId: string) => {
 };
 
 const useCloud = (projectId: string, doc: Y.Doc | null) => {
+    const retryCountRef = useRef(0);
     const providerRef = useRef<ThrottledWebsocketProvider | null>(null);
-    const [status, setStatus] = useState<string>("connecting");
+    const { updateConnectionStatus } = useContext(ProjectContext);
     const [users, setUsers] = useState<any[]>([]);
 
     useEffect(() => {
-        if (!doc || !projectId) {
-            setStatus("disabled");
-            return;
-        }
+        if (!doc || !projectId) return updateConnectionStatus("disconnected");
+        let isMounted = true;
 
         const connect = async () => {
-            if (providerRef.current) {
-                providerRef.current.destroy();
+            if (providerRef.current) providerRef.current.destroy();
+            if (!doc || !isMounted) return;
+
+            console.log("Connecting...");
+            updateConnectionStatus("connecting");
+
+            try {
+                const token = await getCloudToken(projectId);
+                if (!token) return updateConnectionStatus("disconnected");
+
+                const cloudProvider = new ThrottledWebsocketProvider(
+                    `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
+                    projectId,
+                    doc,
+                    {
+                        params: {
+                            token,
+                            clientId: doc.clientID.toString(),
+                        },
+                    }
+                );
+
+                providerRef.current = cloudProvider;
+                cloudProvider.awareness.on("update", () => {
+                    const users = Array.from(cloudProvider.awareness.getStates().values())
+                        .filter((state: any) => state.user)
+                        .map((state: any) => state.user);
+                    setUsers(users);
+                });
+                cloudProvider.on("connection-error", async () => {
+                    console.error("Connection lost, trying to reconnect...");
+                    handleRetry();
+                });
+                cloudProvider.on("status", (e) => {
+                    console.log("Changing status to: ", e.status);
+                    setTimeout(() => updateConnectionStatus(e.status), 1000);
+                })
+            } catch (e) {
+                handleRetry();
             }
-
-            if (!doc)
-                return;
-
-            const token = await getCloudToken(projectId);
-            if (!token) {
-                setStatus("unauthorized");
-                return;
-            }
-
-            const cloudProvider = new ThrottledWebsocketProvider(
-                `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
-                projectId,
-                doc,
-                {
-                    params: {
-                        token,
-                        clientId: doc.clientID.toString(),
-                    },
-                }
-            );
-
-            providerRef.current = cloudProvider;
-
-            cloudProvider.awareness.on("update", () => {
-                const users = Array.from(cloudProvider.awareness.getStates().values())
-                    .filter((state: any) => state.user)
-                    .map((state: any) => state.user);
-                setUsers(users);
-            });
-            cloudProvider.on("connection-error", async () => {
-                console.error("Connection lost, trying to reconnect...");
-                cloudProvider.destroy();
-                setTimeout(() => connect(), 1000);
-            });
         };
 
-        connect();
+        const handleRetry = () => {
+            if (providerRef.current) {
+                providerRef.current.destroy();
+                providerRef.current = null;
+            }
+
+            if (!isMounted) return;
+
+            // Exponential backoff: 1s, 2s, 4s, 8s, up to 30s max
+            const ms = 1000 * Math.pow(2, retryCountRef.current);
+            console.log("retry ms: ", ms);
+
+            const delay = Math.min(ms, 30000);
+            retryCountRef.current++;
+
+            setTimeout(connect, delay);
+        };
 
         const handleCleanup = () => {
             if (providerRef.current) {
                 // Explicitly remove awareness so other users see us leave immediately
                 removeAwarenessStates(
-                    providerRef.current.awareness, 
-                    [doc.clientID], 
+                    providerRef.current.awareness,
+                    [doc.clientID],
                     "window unload"
                 );
                 providerRef.current.destroy();
                 providerRef.current = null;
             }
         };
+
+        connect();
 
         window.addEventListener("beforeunload", handleCleanup);
         return () => {
@@ -297,33 +315,33 @@ export const useScriptioEditor = (
                 ...SCRIPTIO_EXTENSIONS,
                 ...(ydoc
                     ? [
-                          Collaboration.configure({
-                              document: ydoc,
-                          }),
-                      ]
+                        Collaboration.configure({
+                            document: ydoc,
+                        }),
+                    ]
                     : []),
                 ...(cloudProvider
                     ? [
-                          CollaborationCaret.configure({
-                              provider: cloudProvider,
-                              user: {
-                                  name: onlineUsername || "User_" + Math.floor(Math.random() * 1000),
-                                  color: onlineColor || getRandomColor(),
-                              },
-                              render: (user: any) => {
-                                  const caret = document.createElement("span");
-                                  caret.classList.add("collab-caret");
-                                  caret.style.borderLeft = `2px solid ${user.color}`;
-                                  const label = document.createElement("div");
-                                  label.classList.add("collab-caret-label");
-                                  label.style.backgroundColor = user.color;
-                                  label.innerText = user.name;
-                                  label.contentEditable = "false";
-                                  caret.appendChild(label);
-                                  return caret;
-                              },
-                          }),
-                      ]
+                        CollaborationCaret.configure({
+                            provider: cloudProvider,
+                            user: {
+                                name: onlineUsername || "User_" + Math.floor(Math.random() * 1000),
+                                color: onlineColor || getRandomColor(),
+                            },
+                            render: (user: any) => {
+                                const caret = document.createElement("span");
+                                caret.classList.add("collab-caret");
+                                caret.style.borderLeft = `2px solid ${user.color}`;
+                                const label = document.createElement("div");
+                                label.classList.add("collab-caret-label");
+                                label.style.backgroundColor = user.color;
+                                label.innerText = user.name;
+                                label.contentEditable = "false";
+                                caret.appendChild(label);
+                                return caret;
+                            },
+                        }),
+                    ]
                     : []),
             ],
 
@@ -356,7 +374,7 @@ export const useScriptioEditor = (
             );*/
             },
         },
-        [ydoc, cloudProvider]
+        [ydoc]
     );
 
     return scriptioEditor;
