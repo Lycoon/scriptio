@@ -7,8 +7,8 @@
     width: var(--format-sidebar-width);
 
     /* hiding it by default */
-    /*margin-left: calc(var(--nav-sidebar-width) * -1);*/
-    transition: margin-left 0.5s ease;
+    margin-right: calc(var(--format-sidebar-width) * -1);
+    transition: margin-right 0.5s ease;
 }
 
 .element {
@@ -47,7 +47,7 @@
     justify-content: center;
     align-items: center;
 
-    border-radius: 4px;
+    border-radius: 8px;
     background-color: var(--editor-style-bg);
 
     cursor: pointer;

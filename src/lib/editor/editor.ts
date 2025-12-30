@@ -23,6 +23,7 @@ import { Screenplay } from "../utils/types";
 import * as Node from "@src/Screenplay";
 import { ThrottledWebsocketProvider } from "../collaboration/utils";
 import { Placeholder } from "./placeholder-extension";
+import { PAGE_SIZES, PaginationPlus } from "@node_modules/tiptap-pagination-plus/dist";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -110,6 +111,13 @@ export const SCRIPTIO_EXTENSIONS = [
     }),
     Placeholder.configure({
         placeholder: ""
+    }),
+    PaginationPlus.configure({
+        pageBreakBackground: "#1d1d1d",
+        marginTop: 20,
+        marginBottom: 20,
+        marginLeft: 50,
+        marginRight: 50,
     }),
     Text,
     Node.Screenplay,
@@ -262,8 +270,6 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
 
             // Exponential backoff: 1s, 2s, 4s, 8s, up to 30s max
             const ms = 1000 * Math.pow(2, retryCountRef.current);
-            console.log("retry ms: ", ms);
-
             const delay = Math.min(ms, 30000);
             retryCountRef.current++;
 
@@ -376,6 +382,9 @@ export const useScriptioEditor = (
         },
         [ydoc]
     );
+
+    if (scriptioEditor)
+        scriptioEditor.chain().focus().updatePageSize(PAGE_SIZES.A4).run();
 
     return scriptioEditor;
 };

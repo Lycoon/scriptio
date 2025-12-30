@@ -28,6 +28,7 @@
         "@tiptap/extension-text": "^3.13.0",
         "@tiptap/extension-underline": "^3.13.0",
         "@tiptap/react": "^3.13.0",
+        "tiptap-pagination-plus": "^3.0.1",
         "argon2": "^0.44.0",
         "chart.js": "^4.4.1",
         "chartjs-plugin-datalabels": "^2.2.0",

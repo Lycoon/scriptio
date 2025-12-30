@@ -12,7 +12,7 @@ import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
 import { UserContext } from "@src/context/UserContext";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { CircleArrowLeft, CircleCheckBig, Download, Eye, Settings, WifiOff, WifiSync } from "lucide-react";
+import { CircleArrowLeft, CircleCheckBig, Download, Eye, EyeClosed, Settings, WifiOff, WifiSync } from "lucide-react";
 
 import navbar from "./Navbar.module.css";
 import form from "./../utils/Form.module.css";
@@ -131,7 +131,7 @@ const Navbar = () => {
             <div className={navbar.right_btns}>
                 {hasScreenplay && (
                     <div className={navbar.export_project_btn} onClick={toggleZenMode}>
-                        <Eye size={18} />
+                        {isZenMode ? <EyeClosed size={18} /> : <Eye size={18} />}
                     </div>
                 )}
                 <div className={navbar.export_project_btn} onClick={() => openDashboard("Settings")}>

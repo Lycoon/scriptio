@@ -24,6 +24,7 @@
 }
 
 .title {
+    width: 80%;
     font-size: 12px;
     overflow-x: hidden;
     white-space: nowrap;
@@ -39,7 +40,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    gap: 24px;
+    gap: 12px;
 }
 
 .header .preview {
@@ -51,7 +52,7 @@
     overflow-x: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: grey;
+    color: var(--secondary-text);
 }
 
 .icon {
