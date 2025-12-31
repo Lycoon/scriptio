@@ -9,7 +9,8 @@
         "export": "next export",
         "start": "next start",
         "tauri": "tauri",
-        "lint": "next lint"
+        "lint": "next lint",
+        "postinstall": "patch-package"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.113.0",
@@ -28,7 +29,6 @@
         "@tiptap/extension-text": "^3.13.0",
         "@tiptap/extension-underline": "^3.13.0",
         "@tiptap/react": "^3.13.0",
-        "tiptap-pagination-plus": "^3.0.1",
         "argon2": "^0.44.0",
         "chart.js": "^4.4.1",
         "chartjs-plugin-datalabels": "^2.2.0",
@@ -43,6 +43,7 @@
         "next": "^16.0.8",
         "next-themes": "^0.2.0",
         "nodemailer": "^6.9.8",
+        "patch-package": "^8.0.1",
         "pdfmake": "^0.2.9",
         "react": "^19.2.1",
         "react-chartjs-2": "^5.2.0",
@@ -50,6 +51,7 @@
         "render2": "^0.1.4",
         "swr": "^2.2.4",
         "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store",
+        "tiptap-pagination-plus": "^3.0.1",
         "y-indexeddb": "^9.0.12",
         "y-protocols": "^1.0.6",
         "y-websocket": "^3.0.0",

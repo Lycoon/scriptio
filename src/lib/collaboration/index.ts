@@ -27,6 +27,8 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
                 console.log("Received sync");
                 break;
             case 1: // Awareness (cursor)
+                const awarenessUpdate = decoding.readVarUint8Array(decoder);
+                awarenessProtocol.applyAwarenessUpdate(room.awareness, awarenessUpdate, sender);
                 room.broadcast(fullMessage, sender);
                 console.log("Received awareness");
                 break;
@@ -153,6 +155,7 @@ export class ScreenplayRoom extends DurableObject {
             this.ctx.acceptWebSocket(server);
             this.sessions.set(server, new Set());
 
+            // Send current project state to new user
             const encoder = encoding.createEncoder();
             syncProtocol.writeSyncStep1(encoder, this.doc);
 
@@ -161,6 +164,19 @@ export class ScreenplayRoom extends DurableObject {
             syncStep1.set([0], 0);
             syncStep1.set(payload, 1);
             server.send(syncStep1);
+
+            // Send current awareness state to new user
+            const awarenessStates = this.awareness.getStates();
+            if (awarenessStates.size > 0) {
+                const awarenessEncoder = encoding.createEncoder();
+                const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(
+                    this.awareness,
+                    Array.from(awarenessStates.keys())
+                );
+                encoding.writeVarUint(awarenessEncoder, 1);
+                encoding.writeVarUint8Array(awarenessEncoder, awarenessUpdate);
+                server.send(encoding.toUint8Array(awarenessEncoder));
+            }
 
             return new Response(null, { status: 101, webSocket: client });
         }
@@ -173,7 +189,7 @@ export class ScreenplayRoom extends DurableObject {
         const fullMessage = new Uint8Array(message);
         if (fullMessage.length === 0) return;
 
-        console.log("Received " + fullMessage.length + " bytes message update");
+        //console.log("Received " + fullMessage.length + " bytes message update");
         handleProtocolMessage(this, fullMessage, ws);
     }
 

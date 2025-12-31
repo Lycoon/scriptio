@@ -1,10 +1,8 @@
 /* Components */
-import ScreenplayEditor from "./EditorComponent";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
-import { ProjectContext } from "@src/context/ProjectContext";
 import { applyElement, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
 import { Popup } from "@components/popup/Popup";
 import { join } from "@src/lib/utils/misc";
@@ -17,6 +15,7 @@ import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 
 /* Styles */
 import styles from "./EditorAndSidebar.module.css";
+import { EditorContent } from "@node_modules/@tiptap/react/dist";
 
 type EditorAndSidebarProps = {
     project: ProjectMembershipPayload["project"];
@@ -25,7 +24,6 @@ type EditorAndSidebarProps = {
 
 const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
     const userCtx = useContext(UserContext);
-    const projectCtx = useContext(ProjectContext);
 
     const [isScrolled, setIsScrolled] = useState(false);
     const [selectedStyles, setSelectedStyles] = useState<Style>(Style.None);
@@ -56,6 +54,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
     editor?.setOptions({
         autofocus: "start",
         editorProps: {
+            handleScrollToSelection: () => true,
             handleKeyDown(view: any, event: any) {
                 const selection = view.state.selection;
                 const node = selection.$anchor.parent;
@@ -169,7 +168,7 @@ const EditorAndSidebar = ({ project, css }: EditorAndSidebarProps) => {
             <EditorSidebarNavigation />
             <div className={styles.container} onScroll={onScroll}>
                 <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
-                <ScreenplayEditor editor={editor} />
+                <EditorContent editor={editor} />
             </div>
             <EditorSidebarFormat
                 selectedStyles={selectedStyles}

@@ -22,7 +22,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private userIdleTimer: any = null;
 
     private readonly SOLO_USER_UPDATE = 15000;
-    private readonly MULTI_USER_UPDATE = 200;
+    private readonly MULTI_USER_UPDATE = 250;
     private readonly MAX_SILENCE_DURATION = 20000;
     private readonly MAX_IDLE_DURATION = 10 * 60 * 1000;
 
@@ -37,6 +37,12 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.awareness.on("update", this.onThrottledAwareness);
 
         (this as any).messageHandlers[9] = () => { };
+
+        this.on('status', (event: any) => {
+            if (event.status === 'connected') {
+                this.flush();
+            }
+        });
 
         this.startFlushLoop();
         this.setupIdleListeners();
@@ -79,10 +85,6 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private onThrottledAwareness = ({ added, updated, removed }: any, origin: any) => {
         if (origin === "local") {
             const states = this.awareness.getStates();
-            if (states.size <= 1 && removed.length === 0) {
-                return;
-            }
-
             const changedClients = added.concat(updated).concat(removed);
             for (const client of changedClients) {
                 this.awarenessQueue.add(client);

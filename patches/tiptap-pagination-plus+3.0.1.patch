@@ -1,0 +1,47 @@
+diff --git a/node_modules/tiptap-pagination-plus/dist/PaginationPlus.js b/node_modules/tiptap-pagination-plus/dist/PaginationPlus.js
+index cea0b8e..4e78097 100644
+--- a/node_modules/tiptap-pagination-plus/dist/PaginationPlus.js
++++ b/node_modules/tiptap-pagination-plus/dist/PaginationPlus.js
+@@ -92,10 +92,6 @@ export const PaginationPlus = Extension.create({
+       .rm-with-pagination table tbody > tr{
+         display: table-row !important;
+       }
+-      .rm-with-pagination *:has(>br.ProseMirror-trailingBreak:only-child) {
+-        display: table;
+-        width: 100%;
+-      }
+       .rm-with-pagination .rm-br-decoration {
+         display: table;
+         width: 100%;
+@@ -197,7 +193,6 @@ export const PaginationPlus = Extension.create({
+                         const pageCount = calculatePageCount(editor.view, this.options);
+                         const currentPageCount = getExistingPageCount(editor.view);
+                         const recalculatePageCount = needNewDecoration(editor.view, this.options, this.storage);
+-                        console.log("Recalculate Page Count", recalculatePageCount);
+                         if ((pageCount > 1 ? pageCount : 1) !== currentPageCount ||
+                             recalculatePageCount ||
+                             this.storage.pageBreakBackground !== this.options.pageBreakBackground ||
+@@ -335,7 +330,6 @@ const needNewDecoration = (view, pageOptions, storage) => {
+             const _pageHeaderHeight = pageOptions.contentMarginTop + pageOptions.marginTop + headerHeight;
+             const _pageFooterHeight = pageOptions.contentMarginBottom + pageOptions.marginBottom + footerHeight;
+             const _pageHeight = pageOptions.pageHeight - _pageHeaderHeight - _pageFooterHeight;
+-            console.log("Page Height", _pageHeight + _pageHeaderHeight, marginTop);
+             if (marginTop !== _pageHeight + _pageHeaderHeight) {
+                 recalculatePageCount = true;
+             }
+@@ -388,7 +382,6 @@ const calculatePageCount = (view, pageOptions) => {
+         const editorHeight = editorDom.scrollHeight;
+         let pageCount = Math.ceil(editorHeight / pageContentAreaHeight);
+         pageCount = pageCount <= 0 ? 1 : pageCount;
+-        console.log("returning pageCount", pageCount);
+         return pageCount;
+     }
+ };
+@@ -479,7 +472,6 @@ function createDecoration(state, pageOptions, isInitial = false) {
+         });
+         const fragment = document.createDocumentFragment();
+         const pageCount = calculatePageCount(view, pageOptions);
+-        console.log("We Need to create", pageCount, "pages");
+         for (let i = 0; i < pageCount; i++) {
+             if (i === 0) {
+                 fragment.appendChild(firstPage.cloneNode(true));

@@ -27,14 +27,15 @@ Originally developed by John August - johnaugust.com
 */
 
 .ProseMirror {
-    position: absolute;
-    width: 586px;
-    min-height: 1100px;
+    position: relative;
+    min-height: 100%;
+    margin-bottom: 30%;
+    left: 50%;
+    transform: translateX(-50%);
     
     /* Screenplay margins */
-    margin-left: 1.5in;
-    margin-right: 0.95in;
-    padding-block: 1in;
+    border: none !important;
+    background-color: var(--editor-script-bg) !important;
 
     /* Prevent outline from appearing when focused on screenplay */
     outline: none;
@@ -73,13 +74,18 @@ Originally developed by John August - johnaugust.com
     }
 
     /* Screenplay elements */
-    .is-empty > .ProseMirror-trailingBreak {
+    .is-empty > br.ProseMirror-trailingBreak {
         display: none; 
     }
 
     .is-empty {
         cursor: text;
         background-color: transparent; /* Catches the click */
+        overflow: hidden;
+
+        /* Critical: if width absent, the removal of last character on 3rd page and beyond
+        will cause an infinite loop in tiptap-pagination-plus extension. */
+        width: 100%;
     }
 
     .action {
@@ -166,6 +172,9 @@ Originally developed by John August - johnaugust.com
 
     /* Note */
     .note {
+        box-sizing: content-box;
+        width: auto;
+
         background-color: var(--editor-notes-color); /* a: 0.226 */
         padding-inline: 8px;
         padding-block: 4px;
@@ -180,7 +189,7 @@ Originally developed by John August - johnaugust.com
 
     /* The presence of collab-caret at the end of a node forces a trailing break behind */
     /* We disable its rendering to prevent text line stutters or ::after layout breaks */
-    .collab-caret ~ .ProseMirror-trailingBreak {
+    .collab-caret ~ br.ProseMirror-trailingBreak {
         display: none;
     }
 
