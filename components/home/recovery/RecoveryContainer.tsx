@@ -3,6 +3,7 @@ import PasswordChangeForm from "./PasswordChangeForm";
 import RecoveryForm from "./RecoveryForm";
 
 import layout from "../../utils/Layout.module.css";
+import LandingPageNavbar from "@components/navbar/LandingPageNavbar";
 
 type Props = {
     userId: string;
@@ -11,7 +12,10 @@ type Props = {
 
 const RecoveryContainer: NextPage<Props> = ({ userId, recoverHash }: Props) => {
     const form = recoverHash ? <PasswordChangeForm userId={userId} recoverHash={recoverHash} /> : <RecoveryForm />;
-    return <div className={layout.center_middle}>{form}</div>;
+    return <>
+        <div className={layout.center_middle}>{form}
+        </div>
+    </>
 };
 
 export default RecoveryContainer;

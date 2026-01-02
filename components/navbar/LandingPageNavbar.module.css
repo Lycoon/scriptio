@@ -1,0 +1,36 @@
+.navbar {
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2.5rem;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1.7rem;
+}
+
+.navLink {
+  color: var(--secondary-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.navLink:hover {
+  color: var(--primary-text);
+}
+
+.logoWrapper {
+  position: absolute;
+  margin-top: 22px;
+  top: 0;
+}
+
+.logo {
+  width: 90px;
+}

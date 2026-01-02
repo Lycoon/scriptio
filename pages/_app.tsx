@@ -9,7 +9,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Loading from "@components/utils/Loading";
 import { ThemeProvider } from "next-themes";
-import { useDesktop } from "@src/lib/utils/hooks";
+import { useDesktop, useUser } from "@src/lib/utils/hooks";
 
 import layout from "../components/utils/Layout.module.css";
 import { ProjectContextProvider } from "@src/context/ProjectContext";
@@ -18,6 +18,7 @@ import Head from "next/head";
 import { DashboardContextProvider } from "@src/context/DashboardContext";
 import DashboardModal from "@components/dashboard/DashboardModal";
 import Navbar from "@components/navbar/Navbar";
+import LandingPageNavbar from "@components/navbar/LandingPageNavbar";
 
 const DESCRIPTION = "Imagine, tell, amaze. Scriptio is your screenwriting companion designed with simplicity in mind and no frills.";
 const TITLE = "Scriptio | Minimalist tool for perfectionist screenwriters";
@@ -71,24 +72,39 @@ const DesktopNavbar = () => {
     );
 };
 
-function MyApp({ Component, pageProps }: AppProps) {
+const AppContent = ({ Component, pageProps }: AppProps) => {
+    const { user } = useUser();
     const [pageLoading, setPageLoading] = useState<boolean>(false);
     const router = useRouter();
-    const isDesktop = useDesktop();
 
     useEffect(() => {
-        const handleStart = () => {
-            setPageLoading(true);
-        };
-        const handleComplete = () => {
-            setPageLoading(false);
-        };
+        const handleStart = () => setPageLoading(true);
+        const handleComplete = () => setPageLoading(false);
 
         router.events.on("routeChangeStart", handleStart);
         router.events.on("routeChangeComplete", handleComplete);
         router.events.on("routeChangeError", handleComplete);
+
+        return () => {
+            // Good practice to cleanup listeners
+            router.events.off("routeChangeStart", handleStart);
+            router.events.off("routeChangeComplete", handleComplete);
+            router.events.off("routeChangeError", handleComplete);
+        }
     }, [router]);
 
+    return (
+        <div className="app-layout">
+            {user ? <Navbar /> : <LandingPageNavbar />}
+            <main className={`${layout.main} ${courier.variable} ${inter.variable} ${josefin.variable}`}>
+                {pageLoading ? <Loading /> : <Component {...pageProps} />}
+            </main>
+            <DashboardModal />
+        </div>
+    );
+};
+
+function MyApp({ Component, pageProps }: AppProps) {
     return (
         <>
             <Head>
@@ -117,15 +133,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                 <meta property="twitter:image" content={TITLE_IMG} key="tw-image" />
             </Head>
             <AppProviders>
-                <div className="app-layout">
-                    <Navbar />
-                    <main
-                        className={`${layout.main} ${courier.variable} ${inter.variable} ${josefin.variable}`}
-                    >
-                        {pageLoading ? <Loading /> : <Component {...pageProps} />}
-                    </main>
-                    <DashboardModal />
-                </div>
+                <AppContent {...pageProps} Component={Component} />
             </AppProviders>
         </>
     );

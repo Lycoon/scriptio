@@ -16,15 +16,13 @@ import z from "zod";
 
 const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 
-type UpdateSettingsBody = z.infer<typeof UpdateSettingsBodySchema>;
 const UpdateSettingsBodySchema = z.object({
-    highlightOnHover: z.boolean().optional(),
-    sceneBackground: z.boolean().optional(),
-    notesColor: z.string().regex(HEX_COLOR_REGEX, { message: "Invalid hex color code" }).optional(),
-    exportedNotesColor: z.string().regex(HEX_COLOR_REGEX, { message: "Invalid hex color code" }).optional(),
-    onlineUsername: z.string().optional(),
-    onlineColor: z.string().regex(HEX_COLOR_REGEX, { message: "Invalid hex color code" }).optional(),
+    keybinds: z.record(z.string(), z.string()).optional(),
+    theme: z.enum(["light", "dark"]).optional(),
+    language: z.literal("en").optional(),
 });
+
+type UpdateSettingsBody = z.infer<typeof UpdateSettingsBodySchema>;
 
 async function settingsRoute(req: NextApiRequest, res: NextApiResponse) {
     const user = await getCookieUser(req, res);
@@ -48,7 +46,7 @@ async function settingsRoute(req: NextApiRequest, res: NextApiResponse) {
  * Gets settings from authenticated user
  */
 async function getSettings(userId: string, res: NextApiResponse<any>) {
-    const user = await UserService.getUserFromId(userId);
+    const user = await UserService.getUserSettings(userId);
     if (!user) {
         throw new NotFoundError();
     }
@@ -61,15 +59,9 @@ async function getSettings(userId: string, res: NextApiResponse<any>) {
  * Updates settings from authenticated user
  */
 async function updateSettings(userId: string, body: UpdateSettingsBody, res: NextApiResponse) {
-    let settings: any = {};
-    settings.highlightOnHover = body.highlightOnHover;
-    settings.sceneBackground = body.sceneBackground;
-    settings.notesColor = body.notesColor;
-    settings.exportedNotesColor = body.exportedNotesColor;
-
     const updated = await UserService.updateUser({
         id: { id: userId },
-        settings,
+        settings: body,
     });
 
     if (!updated) {

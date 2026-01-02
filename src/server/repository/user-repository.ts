@@ -1,3 +1,4 @@
+import { UserSettings } from "@src/lib/utils/types";
 import prisma from "../db";
 
 export type UpdateSecrets = {
@@ -22,7 +23,7 @@ export interface UserUpdate {
     email?: string;
     verified?: boolean;
     secrets?: UpdateSecrets;
-    settings?: UpdateSettings;
+    settings?: Partial<UserSettings>;
 }
 
 export interface UserCreation {
@@ -47,9 +48,7 @@ export class UserRepository {
                 secrets: {
                     update: user.secrets,
                 },
-                settings: {
-                    update: user.settings,
-                },
+                settings: user.settings,
             },
         });
     }
@@ -90,6 +89,15 @@ export class UserRepository {
         return prisma.user.findUnique({
             where: idOrEmail,
             select: userQuerySelect,
+        });
+    }
+
+    fetchUserSettings(userId: string) {
+        return prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                settings: true,
+            },
         });
     }
 }

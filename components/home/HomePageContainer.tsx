@@ -1,3 +1,4 @@
+import LandingPageNavbar from '@components/navbar/LandingPageNavbar';
 import styles from './Landing.module.css';
 
 import { Feather, Layout, WifiOff, Code, CheckCircle, ArrowRight, MessageSquare, MessagesSquare, Eye, Clapperboard, ChartPie, Cloud } from 'lucide-react';
@@ -5,16 +6,6 @@ import { Feather, Layout, WifiOff, Code, CheckCircle, ArrowRight, MessageSquare,
 export default function HomePageContainer() {
     return (
         <div className={styles.wrapper}>
-            <div className={styles.navbar}>
-                <div className={styles.navLinks}>
-                    <a className={styles.navLink} href="#features">Features</a>
-                    <a className={styles.navLink} href="#pricing">Pricing</a>
-                </div>
-                <div className={styles.navLinks}>
-                    <a className={styles.navLink} href="/login">Log in</a>
-                    <a className={styles.navLink} href="/signup">Sign up</a>
-                </div>
-            </div>
             <div className={styles.gradientBackground}></div>
 
             <div className={styles.marqueeContainer}>

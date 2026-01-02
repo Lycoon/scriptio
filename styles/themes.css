@@ -1,7 +1,7 @@
 html.light {
     --primary: #ededf3;
-    --secondary: #f0f0f3;
-    --tertiary: #e6e6ec;
+    --secondary: #ffffff;
+    --tertiary: #d6d6d6;
 
     --primary-hover: #f0f0f3;
     --secondary-hover: #e6e6ec;
@@ -19,7 +19,8 @@ html.light {
     --project-item-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
     --export-project-selected: #cbd5e1;
 
-    --editor-bg: #f1f5f9;
+    --main-bg: var(--primary);
+
     --editor-script-bg: #ffffff;
     --editor-text: #1a1a1c;
     --editor-scene: #f1f5f9;
@@ -58,10 +59,11 @@ html.dark {
     --project-item-shadow: none;
     --export-project-selected: #505050;
 
+    --main-bg: var(--primary);
+
     --editor-scene: #dadada;
-    --editor-text: #000000;
-    --editor-script-bg: #ffffff;
-    --editor-bg: #1d1d1d;
+    --editor-text: #ffffff;
+    --editor-script-bg: #2e2e2e;
     --editor-sidebar: #272727;
     --editor-sidebar-list: #3c3c3c;
     --editor-tab-active: #3d3d3d;

@@ -2,19 +2,16 @@ import { useContext, useEffect, useState } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
 
 import CloseSVG from "@public/images/close.svg";
-import ProfileSVG from "@public/images/profile.svg";
-import ExportSVG from "@public/images/export.svg";
-import GearSVG from "@public/images/gear.svg";
-import LockSVG from "@public/images/lock.svg";
-import TeamSVG from "@public/images/team.svg";
-import FolderSVG from "@public/images/folder.svg";
 
-import SidebarMenu, { Category, MenuSection } from "./DashboardSidebar";
+import SidebarMenu, { MenuSection } from "./DashboardSidebar";
 import ProjectSettings from "./project/ProjectSettings";
 import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
+import { Download, Folder, Keyboard, KeyRound, Palette, Settings, User, Users } from "lucide-react";
+import KeybindsSettings from "./preferences/KeybindsSettings";
+import AppearanceSettings from "./preferences/AppearanceSettings";
 
 const MENU_STRUCTURE: MenuSection[] = [
     {
@@ -23,19 +20,34 @@ const MENU_STRUCTURE: MenuSection[] = [
             {
                 id: "General",
                 label: "General",
-                icon: <FolderSVG />,
+                icon: <Folder size={18} />,
             },
             {
                 id: "Export",
                 label: "Export",
-                icon: <ExportSVG />,
+                icon: <Download size={18} />,
             },
             {
                 id: "Collaborators",
                 label: "Collaborators",
-                icon: <TeamSVG />,
+                icon: <Users size={18} />,
             },
         ],
+    },
+    {
+        group: "Preferences",
+        items: [
+            {
+                id: "Keybinds",
+                label: "Keybinds",
+                icon: <Keyboard size={18} />,
+            },
+            {
+                id: "Appearance",
+                label: "Appearance",
+                icon: <Palette size={18} />,
+            }
+        ]
     },
     {
         group: "Account",
@@ -43,17 +55,17 @@ const MENU_STRUCTURE: MenuSection[] = [
             {
                 id: "Profile",
                 label: "Profile",
-                icon: <ProfileSVG />,
+                icon: <User size={18} />,
             },
             {
                 id: "Security",
                 label: "Security",
-                icon: <LockSVG />,
+                icon: <KeyRound size={18} />,
             },
             {
                 id: "Settings",
                 label: "Settings",
-                icon: <GearSVG />,
+                icon: <Settings size={18} />,
             },
         ],
     },
@@ -88,6 +100,8 @@ const DashboardModal = () => {
                         {activeTab === "Export" && <ExportProject />}
                         {activeTab === "Collaborators" && <CollaboratorsSettings />}
                         {activeTab === "Profile" && <ProfileSettings />}
+                        {activeTab === "Keybinds" && <KeybindsSettings />}
+                        {activeTab === "Appearance" && <AppearanceSettings />}
                         {/* Others... */}
                     </div>
                 </main>

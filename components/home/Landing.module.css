@@ -124,33 +124,6 @@
   padding: 0 1.5rem;
 }
 
-.navbar {
-  position: fixed;
-  width: 100%;
-  z-index: 1000;
-  
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2.5rem;
-}
-
-.navLinks {
-  display: flex;
-  gap: 1.7rem;
-}
-
-.navLink {
-  color: var(--secondary-text);
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s ease;
-}
-
-.navLink:hover {
-  color: var(--primary-text);
-}
-
 .hero {
   text-align: center;
   padding: 8rem 0 4rem;
@@ -347,7 +320,7 @@
 
 .mockEditor {
   margin-top: 2rem;
-  background-color: var(--editor-bg);
+  background-color: var(--main-bg);
   border: 1px solid var(--input-outline);
   border-radius: 8px 8px 0 0;
   height: 100%;

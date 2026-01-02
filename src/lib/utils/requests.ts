@@ -8,6 +8,7 @@ import { SignupBody } from "@pages/api/signup";
 import { LoginBody } from "@pages/api/login";
 import { RecoverPasswordBody, RequestRecoveryBody } from "@pages/api/recover";
 import { UpdatePasswordBody } from "@pages/api/users/password";
+import { UserSettings } from "./types";
 
 type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -77,7 +78,7 @@ export const changePassword = (body: UpdatePasswordBody) => {
     return request(`/api/users/password`, "PATCH", body);
 };
 
-export const editUserSettings = (body: UpdateSettings) => {
+export const editUserSettings = (body: Partial<UserSettings>) => {
     return request(`/api/users/settings`, "PATCH", body);
 };
 

@@ -1,4 +1,4 @@
-import { JSONContent } from "@tiptap/react";
+import { JSONContent, NodeType } from "@tiptap/react";
 import { ScreenplayElement } from "../utils/enums";
 import { ProjectContextType } from "@src/context/ProjectContext";
 
@@ -36,12 +36,12 @@ export const countOccurrences = (screenplay: JSONContent, word: string): number 
     return count;
 };
 
-export const getNodeFlattenContent = (content: any[]) => {
-    if (!content) return "";
+export const getNodeFlattenContent = (node: JSONContent[]) => {
+    if (!node) return "";
 
     let text = "";
-    for (let i = 0; i < content.length; i++) {
-        text += content[i]["text"];
+    for (let i = 0; i < node.length; i++) {
+        text += node[i]["text"];
     }
 
     return text;

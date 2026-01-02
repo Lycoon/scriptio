@@ -28,7 +28,6 @@ Originally developed by John August - johnaugust.com
 
 .ProseMirror {
     position: relative;
-    min-height: 100%;
     margin-bottom: 30%;
     left: 50%;
     transform: translateX(-50%);
@@ -46,7 +45,6 @@ Originally developed by John August - johnaugust.com
         font-family: var(--font-courier), monospace;
         font-size: 12pt;
         text-align: left;
-        letter-spacing: -0.4px !important;
         line-height: 17px !important;
         min-height: 1lh;
         margin-bottom: 17px;
@@ -89,25 +87,23 @@ Originally developed by John August - johnaugust.com
     }
 
     .action {
-        line-height: 17px !important;
         text-align: justify;
     }
 
     .scene {
         background-color: none;
         width: 100%;
-        padding-top: 2px;
+        margin-top: 1lh;
         display: inline-block;
         text-transform: uppercase;
         font-weight: bold;
-        line-height: 20px !important;
         counter-increment: scenenumber;
     }
 
     .scene::before {
-        content: counter(scenenumber) ".";
+        content: counter(scenenumber);
         position: absolute;
-        margin-left: -60px;
+        margin-left: -70px;
     }
 
     /* Dialogue */
@@ -116,7 +112,7 @@ Originally developed by John August - johnaugust.com
     }
 
     .dialogue + .parenthetical {
-        margin-top: -17px !important;
+        margin-top: -1lh !important;
     }
 
     .character {
@@ -126,7 +122,7 @@ Originally developed by John August - johnaugust.com
 
     .character + .parenthetical,
     .character + .dialogue {
-        margin-top: -17px !important;
+        margin-top: -1lh !important;
     }
 
     /* Parenthetical */
@@ -166,7 +162,6 @@ Originally developed by John August - johnaugust.com
         text-transform: uppercase;
         text-align: center !important;
         text-decoration: underline;
-        line-height: 20px !important;
         counter-increment: actnumber;
     }
 

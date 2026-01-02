@@ -97,7 +97,7 @@ const ProjectSettings = () => {
             </div>
 
             <div className={styles.formActions}>
-                <button type="submit" className={styles.saveBtn} disabled={loading || !isDirty}>
+                <button type="submit" className={`${styles.formBtn} ${styles.success}`} disabled={loading || !isDirty}>
                     Save changes
                 </button>
             </div>

@@ -3,6 +3,7 @@
     flex: 1;
     flex-direction: row;
     justify-content: center;
+    background-color: var(--main-bg);
 }
 
 .header {
@@ -27,30 +28,6 @@
     justify-content: space-around;
     align-items: center;
     gap: 12px;
-}
-
-.delete_btn {
-    height: 35px;
-    width: 35px;
-    padding: 6px;
-
-    cursor: pointer;
-
-    text-align: center;
-    border-color: var(--secondary);
-    border-width: 3px;
-    border-radius: 18px;
-    border-style: solid;
-}
-
-.delete_btn:hover {
-    border-color: var(--secondary-hover);
-}
-
-.delete_img {
-    height: 100%;
-    width: 100%;
-    color: var(--secondary);
 }
 
 .create_btn {

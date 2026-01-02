@@ -32,3 +32,15 @@ export type ProjectUpdate = {
     hasPoster?: boolean;
     characters?: CharacterMap;
 };
+
+export interface UserSettings {
+    "keybinds": Record<string, string>,
+    "theme": UserTheme,
+    "language": "en"
+}
+
+export type UserTheme = "light" | "dark";
+export interface UserThemeDefinition {
+    name: UserTheme;
+    style: string; // CSS class
+}

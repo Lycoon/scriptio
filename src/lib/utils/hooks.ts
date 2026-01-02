@@ -1,11 +1,14 @@
 import useSWR from "swr";
-import { UpdateSettings } from "../../server/repository/user-repository";
 import { useContext, useEffect, useState } from "react";
 import Router, { useRouter } from "next/router";
-import { CookieUser } from "./types";
+import { CookieUser, UserSettings } from "./types";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { Page } from "./enums";
+import { Page, ScreenplayElement } from "./enums";
 import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { KeyBindingMap, tinykeys } from "tinykeys";
+import { Editor } from "@tiptap/core";
+import { applyElement } from "../editor/editor";
+import { DEFAULT_KEYBINDS } from "./settings";
 
 const useDesktop = (): boolean => {
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
@@ -50,15 +53,8 @@ const useUser = (redirect: boolean = false): UseUserResult => {
     return { user, isLoading };
 };
 
-interface UseSettingsResult {
-    settings: UpdateSettings;
-    isLoading: boolean;
-    mutate: any;
-}
-
-const useSettings = (): UseSettingsResult => {
-    const { data, isLoading, mutate } = useSWR<UpdateSettings>("/api/users/settings");
-    const settings = data ?? {};
+const useSettings = () => {
+    const { data: settings, isLoading, mutate } = useSWR<UserSettings>("/api/users/settings");
 
     return {
         settings,
@@ -105,21 +101,91 @@ const useProjectCollaborators = (projectId: string | undefined) => {
     return { collaborators: data || [], isLoading, mutate };
 };
 
-const usePage = (): Page => {
+const usePage = (): Page | undefined => {
     const router = useRouter();
-    const [page, setPage] = useState<Page>(Page.Index);
+    const [page, setPage] = useState<Page | undefined>(undefined);
 
     useEffect(() => {
-        if (router.pathname) {
-            const paths = router.pathname.split("/");
+        if (!router.isReady) return;
 
-            if (paths.length === 1) setPage(Page.Index);
-            else if (paths[1] === "projects") setPage(paths[3] as Page);
-            else setPage(paths[1] as Page);
+        const segments = router.pathname.split("/").filter(Boolean);
+        if (segments.length === 0) {
+            setPage(Page.Index);
+            return;
         }
-    }, [router]);
+
+        const lastSegment = segments[segments.length - 1];
+        if (Object.values(Page).includes(lastSegment as Page)) {
+            setPage(lastSegment as Page);
+        } else {
+            // Fallback for 404s or unknown routes
+            setPage(Page.Index);
+        }
+
+    }, [router.pathname, router.isReady]);
 
     return page;
+};
+
+export const useShortcutHandler = (
+    userShortcuts: Record<string, string> | undefined,
+    editor: Editor | null
+) => {
+    useEffect(() => {
+        if (!editor) return;
+        const keyBindingMap: KeyBindingMap = {};
+        const userKeybinds = userShortcuts || {};
+
+        Object.entries(DEFAULT_KEYBINDS).forEach(([id, keybind]) => {
+            const combo = userKeybinds[id] || keybind.defaultCombo;
+            if (!combo) return;
+
+            // Overriding keybinds with user defined ones
+            keyBindingMap[combo] = () => {
+                console.log("id: ", id, " keybind: ", keybind);
+
+                if (!editor.isFocused) return;
+
+                //event.preventDefault();
+                switch (id) {
+                    case 'screenplay_scene':
+                        console.log("applying scene");
+                        applyElement(editor, ScreenplayElement.Scene);
+                        break;
+                    case 'screenplay_action':
+                        applyElement(editor, ScreenplayElement.Action);
+                        break;
+                    case 'screenplay_character':
+                        applyElement(editor, ScreenplayElement.Character);
+                        break;
+                    case 'screenplay_dialogue':
+                        applyElement(editor, ScreenplayElement.Dialogue);
+                        break;
+                    case 'screenplay_parenthetical':
+                        applyElement(editor, ScreenplayElement.Parenthetical);
+                        break;
+                    case 'screenplay_transition':
+                        applyElement(editor, ScreenplayElement.Transition);
+                        break;
+                    case 'screenplay_section':
+                        applyElement(editor, ScreenplayElement.Section);
+                        break;
+                    case 'screenplay_note':
+                        applyElement(editor, ScreenplayElement.Note);
+                        break;
+                    default:
+                        console.warn(`Unknown shortcut ID: ${id} set to ${keybind}`);
+                }
+            };
+        });
+
+        // const target = editor.view.dom;
+        const unsubscribe = tinykeys(window, keyBindingMap);
+
+        return () => {
+            unsubscribe();
+        };
+    }, [userShortcuts, editor]);
 };
 
 export {

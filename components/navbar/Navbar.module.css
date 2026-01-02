@@ -4,7 +4,7 @@
     padding-block: 25px;
     width: 100%;
     height: var(--navbar-height);
-    background-color: var(--editor-bg);
+    background-color: var(--main-bg);
 
     display: flex;
     flex-direction: row;
@@ -12,7 +12,7 @@
     align-items: center;
 }
 
-.title_div {
+.projectTitle {
     display: flex;
     flex-direction: row;
     gap: 12px;
@@ -100,7 +100,7 @@
 }
 
 .back_btn:hover {
-    background-color: var(--secondary-hover);
+    background-color: var(--primary-hover);
 }
 
 .title_box {

@@ -1,7 +1,12 @@
-import { ReactNode } from "react";
+import { ReactNode, useContext } from "react";
+import { mutate } from "swr";
+import Router from "next/router";
+import { DashboardContext } from "@src/context/DashboardContext";
+import { LogOut } from "lucide-react";
+
 import styles from "./DashboardModal.module.css";
 
-export type Category = "General" | "Export" | "Collaborators" | "Profile" | "Security" | "Settings";
+export type Category = "General" | "Export" | "Collaborators" | "Profile" | "Security" | "Settings" | "Keybinds" | "Appearance";
 
 export interface MenuItem {
     id: Category;
@@ -21,6 +26,15 @@ interface SidebarMenuProps {
 }
 
 const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) => {
+    const { closeDashboard } = useContext(DashboardContext);
+
+    const onLogOut = async () => {
+        await fetch("/api/logout");
+        mutate("/api/users/cookie", undefined);
+        Router.push("/");
+        closeDashboard();
+    };
+
     return (
         <aside className={styles.sidebar}>
             <h2 className={styles.sidebarTitle}>Dashboard</h2>
@@ -41,6 +55,12 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
                     </div>
                 ))}
             </nav>
+            <div className={styles.navMenu} style={{ marginTop: "auto" }}>
+                <button className={styles.navItem} onClick={onLogOut}>
+                    <LogOut size={18} />
+                    Log Out
+                </button>
+            </div>
         </aside>
     );
 };

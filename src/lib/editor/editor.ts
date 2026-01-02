@@ -113,15 +113,13 @@ export const SCRIPTIO_EXTENSIONS = [
         placeholder: ""
     }),
     PaginationPlus.configure({
-        pageBreakBackground: "#1d1d1d",
-        pageGapBorderSize: 0,
         pageGap: 20,
         marginTop: 0,
-        marginBottom: 0,
+        marginBottom: 96,
         marginLeft: 144,
         marginRight: 96,
-        contentMarginTop: 96,
-        contentMarginBottom: 96,
+        headerRight: `<p style="margin-top: 50px;">{page}.</p>`,
+        footerRight: "",
         pageHeight: PAGE_SIZES.A4.pageHeight,
         pageWidth: PAGE_SIZES.A4.pageWidth,
     }),
@@ -218,8 +216,6 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
     const providerRef = useRef<ThrottledWebsocketProvider | null>(null);
     const { updateConnectionStatus } = useContext(ProjectContext);
     const [users, setUsers] = useState<any[]>([]);
-
-    console.log("users: ", users);
 
     useEffect(() => {
         if (!doc || !projectId) return updateConnectionStatus("disconnected");
@@ -324,7 +320,7 @@ export const useScriptioEditor = (
 
     const scriptioEditor = useEditor(
         {
-            immediatelyRender: false,
+            immediatelyRender: true,
             extensions: [
                 ...SCRIPTIO_EXTENSIONS,
                 ...(ydoc

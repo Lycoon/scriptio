@@ -1,5 +1,6 @@
 import { ExportData } from "@components/projects/export/ExportProjectContainer";
 import { getNodeFlattenContent } from "@src/lib/editor/screenplay";
+import { Screenplay } from "@src/lib/utils/types";
 import { XMLBuilder } from "fast-xml-parser";
 
 const options = { attributeNamePrefix: "@_", textNodeName: "#text", ignoreAttributes: false, format: true };
@@ -27,20 +28,18 @@ const FDX_STYLE_TABLE: Record<string, string> = {
  * @param json editor content JSON
  * @returns .fdx format screenplay
  */
-export const convertToFDX = (json: any, exportData: ExportData): string => {
+export const convertToFDX = (json: Screenplay, exportData: ExportData): string => {
     let paragraphNodes: any = [];
     let nodes = json.content!;
     const characters = exportData.characters;
 
     for (let i = 0; i < nodes.length; i++) {
-        if (!nodes[i]["content"]) {
-            continue;
-        }
+        if (!nodes[i] || !nodes[i].content) continue;
 
-        const content = nodes[i]["content"];
+        const content = nodes[i].content!;
         const flatText: string = getNodeFlattenContent(nodes[i]);
-        const type: string = nodes[i]["attrs"]["class"];
-        const nextType: string = i >= nodes.length - 1 ? undefined : nodes[i + 1]["attrs"]["class"];
+        const type: string = nodes[i].attrs?.class;
+        const nextType: string = i >= nodes.length - 1 ? undefined : nodes[i + 1].attrs?.class;
 
         // Don't export unselected characters
         if (type === "character" && characters && !characters.includes(flatText)) {
@@ -60,7 +59,8 @@ export const convertToFDX = (json: any, exportData: ExportData): string => {
         let textNodes: any[] = [];
         for (let j = 0; j < content.length; j++) {
             // <Text Style="style">
-            const textFragment: string = content[j]["text"];
+            const childNode = content[j];
+            const textFragment: string = "text" in childNode ? childNode.text : "";
             const styledNode: any = { "#text": textFragment };
 
             const styles: string[] = (content[j]["marks"] ?? []).map((mark: any) => FDX_STYLE_TABLE[mark.type]);

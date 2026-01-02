@@ -117,11 +117,11 @@ const ExportProject = () => {
             </div>
 
             <div className={sharedStyles.formActions}>
-                <button onClick={handleExport} disabled={isExporting} className={sharedStyles.saveBtn}>
+                <button onClick={handleExport} disabled={isExporting} className={`${sharedStyles.formBtn} ${sharedStyles.success}`}>
                     {isExporting ? "Exporting..." : "Download"}
                 </button>
             </div>
-        </div>
+        </div >
     );
 };
 

@@ -85,10 +85,10 @@
     padding-top: 24px;
     display: flex;
     justify-content: flex-end;
+    gap: 12px;
 }
 
-.saveBtn {
-    background: var(--success);
+.formBtn {
     color: white;
     padding: 10px 24px;
     border-radius: 8px;
@@ -98,11 +98,19 @@
     transition: opacity 0.2s;
 }
 
-.saveBtn:hover {
+.formBtn:hover {
     opacity: 0.85;
 }
 
-.saveBtn:disabled {
+.formBtn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.formBtn.success {
+    background: var(--success);
+}
+
+.formBtn.danger {
+    background: var(--error);
 }

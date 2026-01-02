@@ -46,6 +46,9 @@
 }
 
 .memberEmail {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 230px;
     font-size: 0.95rem;
     font-weight: 500;
     color: var(--primary-text);

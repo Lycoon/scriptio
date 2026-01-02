@@ -60,9 +60,10 @@ export const getCharacterNames = (screenplay: Screenplay) => {
 
         if (type !== ScreenplayElement.Character || !currNode.content) continue;
 
-        const content: string = getNodeFlattenContent(currNode["content"]);
-        if (!characters.includes(content)) {
-            characters.push(content.toUpperCase());
+        const content = currNode.content;
+        const flattenText: string = getNodeFlattenContent(content);
+        if (!characters.includes(flattenText)) {
+            characters.push(flattenText.toUpperCase());
         }
     }
 

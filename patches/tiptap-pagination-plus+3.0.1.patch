@@ -1,8 +1,16 @@
 diff --git a/node_modules/tiptap-pagination-plus/dist/PaginationPlus.js b/node_modules/tiptap-pagination-plus/dist/PaginationPlus.js
-index cea0b8e..4e78097 100644
+index cea0b8e..0f34ec8 100644
 --- a/node_modules/tiptap-pagination-plus/dist/PaginationPlus.js
 +++ b/node_modules/tiptap-pagination-plus/dist/PaginationPlus.js
-@@ -92,10 +92,6 @@ export const PaginationPlus = Extension.create({
+@@ -21,6 +21,7 @@ const defaultOptions = {
+     contentMarginBottom: 10,
+     pageGapBorderColor: "#e5e5e5",
+ };
++
+ export const PaginationPlus = Extension.create({
+     name: "PaginationPlus",
+     addOptions() {
+@@ -92,10 +93,6 @@ export const PaginationPlus = Extension.create({
        .rm-with-pagination table tbody > tr{
          display: table-row !important;
        }
@@ -13,15 +21,42 @@ index cea0b8e..4e78097 100644
        .rm-with-pagination .rm-br-decoration {
          display: table;
          width: 100%;
-@@ -197,7 +193,6 @@ export const PaginationPlus = Extension.create({
-                         const pageCount = calculatePageCount(editor.view, this.options);
-                         const currentPageCount = getExistingPageCount(editor.view);
-                         const recalculatePageCount = needNewDecoration(editor.view, this.options, this.storage);
+@@ -194,10 +191,14 @@ export const PaginationPlus = Extension.create({
+                         return DecorationSet.create(state.doc, widgetList);
+                     },
+                     apply: (tr, oldDeco, oldState, newState) => {
+-                        const pageCount = calculatePageCount(editor.view, this.options);
+-                        const currentPageCount = getExistingPageCount(editor.view);
+-                        const recalculatePageCount = needNewDecoration(editor.view, this.options, this.storage);
 -                        console.log("Recalculate Page Count", recalculatePageCount);
++                        const currentView = safeGetView(editor);
++                        if (!currentView || !currentView.dom) {
++                            return oldDeco;
++                        }
++
++                        const pageCount = calculatePageCount(currentView, this.options);
++                        const currentPageCount = getExistingPageCount(currentView);
++                        const recalculatePageCount = needNewDecoration(currentView, this.options, this.storage);
                          if ((pageCount > 1 ? pageCount : 1) !== currentPageCount ||
                              recalculatePageCount ||
                              this.storage.pageBreakBackground !== this.options.pageBreakBackground ||
-@@ -335,7 +330,6 @@ const needNewDecoration = (view, pageOptions, storage) => {
+@@ -309,6 +310,15 @@ export const PaginationPlus = Extension.create({
+         };
+     },
+ });
++const safeGetView = (editor) => {
++    try {
++        // editor.view.dom is a getter that throws if not mounted
++        editor.view.dom;
++        return editor.view;
++    } catch (err) {
++        return null;
++    }
++};
+ const getExistingPageCount = (view) => {
+     const editorDom = view.dom;
+     const paginationElement = editorDom.querySelector("[data-rm-pagination]");
+@@ -335,7 +345,6 @@ const needNewDecoration = (view, pageOptions, storage) => {
              const _pageHeaderHeight = pageOptions.contentMarginTop + pageOptions.marginTop + headerHeight;
              const _pageFooterHeight = pageOptions.contentMarginBottom + pageOptions.marginBottom + footerHeight;
              const _pageHeight = pageOptions.pageHeight - _pageHeaderHeight - _pageFooterHeight;
@@ -29,7 +64,7 @@ index cea0b8e..4e78097 100644
              if (marginTop !== _pageHeight + _pageHeaderHeight) {
                  recalculatePageCount = true;
              }
-@@ -388,7 +382,6 @@ const calculatePageCount = (view, pageOptions) => {
+@@ -388,7 +397,6 @@ const calculatePageCount = (view, pageOptions) => {
          const editorHeight = editorDom.scrollHeight;
          let pageCount = Math.ceil(editorHeight / pageContentAreaHeight);
          pageCount = pageCount <= 0 ? 1 : pageCount;
@@ -37,7 +72,19 @@ index cea0b8e..4e78097 100644
          return pageCount;
      }
  };
-@@ -479,7 +472,6 @@ function createDecoration(state, pageOptions, isInitial = false) {
+@@ -453,9 +461,8 @@ function createDecoration(state, pageOptions, isInitial = false) {
+             pageSpace.style.position = "relative";
+             pageSpace.style.setProperty("width", "calc(100% + 2px)", "important");
+             pageSpace.style.left = "-1px";
+-            pageSpace.style.backgroundColor = _pageBreakBackground;
+-            pageSpace.style.borderLeftColor = _pageBreakBackground;
+-            pageSpace.style.borderRightColor = _pageBreakBackground;
++            pageSpace.style.border = "none";
++            pageSpace.style.setProperty('background-color', 'var(--main-bg)');
+             const pageHeader = document.createElement("div");
+             pageHeader.classList.add("rm-page-header");
+             // pageHeader.style.height = pageOptions.pageHeaderHeight + "px";
+@@ -479,7 +486,6 @@ function createDecoration(state, pageOptions, isInitial = false) {
          });
          const fragment = document.createDocumentFragment();
          const pageCount = calculatePageCount(view, pageOptions);

@@ -56,3 +56,7 @@ export const getUserFromId = async (userId: string, includeSecrets = false) => {
 export const getUserFromEmail = async (email: string, includeSecrets = false) => {
     return repository.fetchUser({ email }, includeSecrets);
 };
+
+export const getUserSettings = async (userId: string) => {
+    return repository.fetchUserSettings(userId);
+}

@@ -23,7 +23,7 @@ model User {
   email               String      @unique
   verified            Boolean     @default(false)
 
-  settings            Settings?
+  settings            Json?
   secrets             Secret?
 
   projects            ProjectMember[]
@@ -40,20 +40,6 @@ model Secret {
   recoverHash         String?
   lastEmailHash       DateTime    @default(now())
   lastRecoverHash     DateTime    @default(now())
-}
-
-model Settings {
-  id                  Int         @id @default(autoincrement())
-
-  userId              String      @unique 
-  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  highlightOnHover    Boolean     @default(false)
-  sceneBackground     Boolean     @default(true)
-  notesColor          String      @default("#FFFF68")
-  exportedNotesColor  String      @default("#FFFF68")
-  onlineUsername      String?
-  onlineColor         String?
 }
 
 model Project {

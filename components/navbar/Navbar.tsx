@@ -1,8 +1,7 @@
 import Link from "next/link";
-import Router from "next/router";
 import { useContext, useEffect, useState } from "react";
 import { ConnectionStatus, Page } from "@src/lib/utils/enums";
-import { useDesktop, usePage, useUser } from "@src/lib/utils/hooks";
+import { usePage, useUser } from "@src/lib/utils/hooks";
 import { redirectHome, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
 
 import { useSWRConfig } from "swr";
@@ -16,20 +15,6 @@ import { CircleArrowLeft, CircleCheckBig, Download, Eye, EyeClosed, Settings, Wi
 
 import navbar from "./Navbar.module.css";
 import form from "./../utils/Form.module.css";
-
-const NotLoggedNavbar = () => (
-    <div className={navbar.notlogged_btns}>
-        <Link className="notlogged-navbar-btn" href={"/about"}>
-            About
-        </Link>
-        <Link className="notlogged-navbar-btn" href={"/contact"}>
-            Contact
-        </Link>
-        <Link className="notlogged-navbar-btn" target={"_blank"} href={"https://paypal.me/lycoon"}>
-            Donate
-        </Link>
-    </div>
-);
 
 const StatusIndicator = () => {
     const { connectionStatus } = useContext(ProjectContext);
@@ -48,60 +33,38 @@ const StatusIndicator = () => {
 }
 
 const Navbar = () => {
-    const { isZenMode, updateZenMode } = useContext(UserContext);
+    const { isZenMode, updateIsZenMode } = useContext(UserContext);
     const { openDashboard } = useContext(DashboardContext);
     const { project: membership } = useContext(ProjectContext);
-    const [hasNavbar, updateHasNavbar] = useState<boolean>(false);
+    const [isInProject, updateIsInProject] = useState<boolean>(false);
     const [hasScreenplay, updateHasScreenplay] = useState<boolean>(false);
+    const [projectTitle, setProjectTitle] = useState<string>("");
 
     const page = usePage();
-    const isDesktop = useDesktop();
     const { mutate } = useSWRConfig();
     const { user } = useUser();
-
-    const [projectTitle, setProjectTitle] = useState<string>("");
-    useEffect(() => {
-        if (membership) setProjectTitle(membership.project.title);
-    }, [membership]);
-
-    const onLogOut = async () => {
-        // 1. This destroys the session on the server
-        await fetch("/api/logout");
-        // 2. This revalidates the SWR cache with an empty user
-        mutate("/api/users/cookie", undefined);
-        // 3. This redirects the user to the login page
-        Router.push("/");
-    };
 
     const deferredTitleUpdate = debounce(async (projectId: string, projectTitle: string) => {
         await editProject(projectId, { title: projectTitle });
         mutate(`/api/projects/${projectId}`, { ...membership, title: projectTitle });
     }, 1000);
 
-    const toggleZenMode = () => updateZenMode(!isZenMode);
-
-    let NavbarButtons;
-    if (user) {
-        // Logged in on web OR desktop app
-        NavbarButtons = () => <div></div>;
-    } else if (isDesktop) {
-        // Not logged in + on desktop app
-        NavbarButtons = () => <div></div>;
-    } else {
-        // Not loggedin + on web
-        NavbarButtons = () => <NotLoggedNavbar />;
-    }
+    const toggleZenMode = () => updateIsZenMode(!isZenMode);
 
     const getNavStyle = (tabName: string) => {
         return `${navbar.navBtn} ${form.label} ${page == tabName ? navbar.active : ''}`;
     };
 
     useEffect(() => {
-        updateHasNavbar(page === Page.Screenplay || page === Page.Statistics);
+        updateIsInProject(page === Page.Screenplay || page === Page.Statistics);
         updateHasScreenplay(page === Page.Screenplay);
     }, [page]);
 
-    if (!user || !page || !membership)
+    useEffect(() => {
+        if (membership) setProjectTitle(membership.project.title);
+    }, [membership]);
+
+    if (!user || !page)
         return;
 
     return (
@@ -109,16 +72,18 @@ const Navbar = () => {
             <nav className={navbar.left_btns}>
                 <div className={navbar.back_btn} onClick={() => redirectHome()}>
                     <CircleArrowLeft size={18} />
-                    <p>Back to projects</p>
+                    <p>Home</p>
                 </div>
-                <div className={navbar.navBtns}>
-                    <p className={`${getNavStyle("screenplay")}`} onClick={() => redirectScreenplay(membership.project.id)}>Screenplay</p>
-                    <p className={`${getNavStyle("stats")}`} onClick={() => redirectStatistics(membership.project.id)}>Statistics</p>
-                    <p className={`${getNavStyle("board")}`}>Board</p>
-                </div>
+                {isInProject && membership &&
+                    <div className={navbar.navBtns}>
+                        <p className={`${getNavStyle("screenplay")}`} onClick={() => { page !== Page.Screenplay && redirectScreenplay(membership.project.id) }}>Screenplay</p>
+                        <p className={`${getNavStyle("stats")}`} onClick={() => { page !== Page.Statistics && redirectStatistics(membership.project.id) }}>Statistics</p>
+                        <p className={`${getNavStyle("board")}`}>Board</p>
+                    </div>
+                }
             </nav>
-            {hasScreenplay && (
-                <div className={navbar.title_div}>
+            {hasScreenplay && membership &&
+                <div className={navbar.projectTitle}>
                     <StatusIndicator />
                     <input
                         type="text"
@@ -127,7 +92,7 @@ const Navbar = () => {
                         defaultValue={projectTitle}
                     />
                 </div>
-            )}
+            }
             <div className={navbar.right_btns}>
                 {hasScreenplay && (
                     <div className={navbar.export_project_btn} onClick={toggleZenMode}>
