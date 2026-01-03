@@ -75,8 +75,7 @@ async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
 
             await ProjectService.upsertMember(invite.projectId, created.id);
             await ProjectService.deleteInviteFromToken(inviteToken);
-            await UserService.updateUser({
-                id: { id: created.id },
+            await UserService.updateUserFromId(created.id, {
                 secrets: { emailHash: null },
                 verified: true,
             });
@@ -89,7 +88,7 @@ async function signupRoute(req: NextApiRequest, res: NextApiResponse) {
             await session.save();
 
             return Success(res, { redirectUrl: "/" });
-        } catch (err) {}
+        } catch (err) { }
     }
 
     Mail.sendVerificationEmail(created.id, email, secrets.emailHash);

@@ -33,13 +33,22 @@ export type ProjectUpdate = {
     characters?: CharacterMap;
 };
 
+/* User Settings */
 export interface UserSettings {
-    "keybinds": Record<string, string>,
-    "theme": UserTheme,
-    "language": "en"
+    keybinds: Record<string, string>,
+    theme: UserTheme,
+    language: UserLanguage,
+    online: UserOnlineSettings
 }
 
+export type UserLanguage = "en";
 export type UserTheme = "light" | "dark";
+
+export interface UserOnlineSettings {
+    color: string;
+    username: string;
+}
+
 export interface UserThemeDefinition {
     name: UserTheme;
     style: string; // CSS class

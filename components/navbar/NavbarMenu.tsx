@@ -4,7 +4,7 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { ConnectionStatus } from "@src/lib/utils/enums";
 import { UserContext } from "@src/context/UserContext";
 import { importFilePopup } from "@src/lib/editor/popup";
-import { convertFountainToHTML } from "@src/converters/import/fountain";
+import { convertFountainToHTML } from "@src/lib/converters/import/fountain";
 import dynamic from "next/dynamic";
 import { computeFullCharactersData } from "@src/lib/editor/characters";
 import { computeFullScenesData } from "@src/lib/editor/screenplay";

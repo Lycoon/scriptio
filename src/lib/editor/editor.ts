@@ -6,7 +6,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import { computeFullScenesData } from "./screenplay";
 import { computeFullCharactersData } from "./characters";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import debounce from "debounce";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import * as Y from "yjs";
@@ -194,12 +194,19 @@ const processAutoComplete = (
 
 const useLocal = (projectId: string) => {
     const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
+    const [isLocalReady, setIsLocalReady] = useState(false);
 
     useEffect(() => {
         if (!projectId) return;
 
         const doc = new Y.Doc();
         const localProvider = new IndexeddbPersistence(projectId, doc);
+
+        localProvider.on('synced', () => {
+            console.log("Local IndexedDB synced");
+            setIsLocalReady(true);
+        });
+
         setYdoc(doc);
 
         return () => {
@@ -208,29 +215,55 @@ const useLocal = (projectId: string) => {
         };
     }, [projectId]);
 
-    return { ydoc };
+    return { ydoc, isLocalReady };
 };
 
 const useCloud = (projectId: string, doc: Y.Doc | null) => {
-    const retryCountRef = useRef(0);
-    const providerRef = useRef<ThrottledWebsocketProvider | null>(null);
     const { updateConnectionStatus } = useContext(ProjectContext);
     const [users, setUsers] = useState<any[]>([]);
 
+    // Create provider synchronously - it will connect asynchronously
+    const [provider, setProvider] = useState<ThrottledWebsocketProvider | null>(null);
+    const isMountedRef = useRef(true);
+
+    // Stable function to refresh token and reconnect
+    const refreshAndReconnect = useCallback(async () => {
+        if (!provider || !projectId) return;
+
+        try {
+            const token = await getCloudToken(projectId);
+            if (token && isMountedRef.current) {
+                await provider.updateToken(token);
+            }
+        } catch (e) {
+            console.warn("Failed to refresh token:", e);
+        }
+    }, [provider, projectId]);
+
+    // Create provider when doc is ready
     useEffect(() => {
-        if (!doc || !projectId) return updateConnectionStatus("disconnected");
-        let isMounted = true;
+        isMountedRef.current = true;
 
-        const connect = async () => {
-            if (providerRef.current) providerRef.current.destroy();
-            if (!doc || !isMounted) return;
+        if (!doc || !projectId) {
+            updateConnectionStatus("disconnected");
+            return;
+        }
 
-            console.log("Connecting...");
+        // If provider already exists for this doc, don't recreate
+        if (provider) {
+            return;
+        }
+
+        const initializeProvider = async () => {
+            console.log("Initializing cloud provider...");
             updateConnectionStatus("connecting");
 
             try {
                 const token = await getCloudToken(projectId);
-                if (!token) return updateConnectionStatus("disconnected");
+                if (!token || !isMountedRef.current) {
+                    updateConnectionStatus("disconnected");
+                    return;
+                }
 
                 const cloudProvider = new ThrottledWebsocketProvider(
                     `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
@@ -244,65 +277,81 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
                     }
                 );
 
-                providerRef.current = cloudProvider;
+                // Awareness updates for user list
                 cloudProvider.awareness.on("update", () => {
+                    if (!isMountedRef.current) return;
                     const users = Array.from(cloudProvider.awareness.getStates().values())
                         .filter((state: any) => state.user)
                         .map((state: any) => state.user);
                     setUsers(users);
                 });
+
+                // Handle connection errors by reconnecting
                 cloudProvider.on("connection-error", async () => {
-                    console.error("Connection lost, trying to reconnect...");
-                    handleRetry();
+                    console.error("Connection error, attempting to refresh token and reconnect...");
+                    if (isMountedRef.current) {
+                        updateConnectionStatus("connecting");
+                        cloudProvider.scheduleReconnect();
+                    }
                 });
+
+                // Status updates
                 cloudProvider.on("status", (e) => {
-                    console.log("Changing status to: ", e.status);
-                    setTimeout(() => updateConnectionStatus(e.status), 1000);
-                })
+                    console.log("Connection status:", e.status);
+                    if (isMountedRef.current) {
+                        setTimeout(() => updateConnectionStatus(e.status), 500);
+                    }
+                });
+
+                // Set provider state - this will trigger editor creation with the provider
+                setProvider(cloudProvider);
+
             } catch (e) {
-                handleRetry();
+                console.error("Failed to initialize provider:", e);
+                if (isMountedRef.current) {
+                    updateConnectionStatus("disconnected");
+                }
             }
         };
 
-        const handleRetry = () => {
-            if (providerRef.current) {
-                providerRef.current.destroy();
-                providerRef.current = null;
-            }
-
-            if (!isMounted) return;
-
-            // Exponential backoff: 1s, 2s, 4s, 8s, up to 30s max
-            const ms = 1000 * Math.pow(2, retryCountRef.current);
-            const delay = Math.min(ms, 30000);
-            retryCountRef.current++;
-
-            setTimeout(connect, delay);
-        };
+        initializeProvider();
 
         const handleCleanup = () => {
-            if (providerRef.current) {
-                // Explicitly remove awareness so other users see us leave immediately
+            if (provider && doc) {
                 removeAwarenessStates(
-                    providerRef.current.awareness,
+                    (provider as ThrottledWebsocketProvider).awareness,
                     [doc.clientID],
                     "window unload"
                 );
-                providerRef.current.destroy();
-                providerRef.current = null;
             }
         };
 
-        connect();
-
         window.addEventListener("beforeunload", handleCleanup);
-        return () => {
-            window.removeEventListener("beforeunload", handleCleanup);
-            handleCleanup();
-        };
-    }, [doc, projectId]);
 
-    return { cloudProvider: providerRef.current, status, users };
+        return () => {
+            isMountedRef.current = false;
+            window.removeEventListener("beforeunload", handleCleanup);
+        };
+    }, [doc, projectId]); // Only run when doc or project changes
+
+    // Cleanup provider on unmount or project change
+    useEffect(() => {
+        return () => {
+            if (provider) {
+                console.log("Destroying cloud provider...");
+                if (doc) {
+                    removeAwarenessStates(
+                        provider.awareness,
+                        [doc.clientID],
+                        "component unmount"
+                    );
+                }
+                provider.destroy();
+            }
+        };
+    }, [provider, doc]);
+
+    return { provider, users, refreshAndReconnect };
 };
 
 export const useScriptioEditor = (
@@ -315,29 +364,36 @@ export const useScriptioEditor = (
     const projectCtx = useContext(ProjectContext);
     const { settings } = useSettings();
     const { ydoc } = useLocal(project.id);
-    const { cloudProvider, status, users } = useCloud(project.id, ydoc);
-    const { onlineColor, onlineUsername } = settings;
+    const { provider, refreshAndReconnect, users } = useCloud(project.id, ydoc);
+
+    const userInfo = useRef({
+        name: settings?.online?.username || "User_" + Math.floor(Math.random() * 1000),
+        color: settings?.online?.color || getRandomColor(),
+    });
+
+    useEffect(() => {
+        userInfo.current = {
+            name: settings?.online?.username || userInfo.current.name,
+            color: settings?.online?.color || userInfo.current.color,
+        };
+
+        // Update awareness with new user info if provider exists
+        if (provider) {
+            provider.awareness.setLocalStateField('user', userInfo.current);
+        }
+    }, [settings?.online?.username, settings?.online?.color, provider]);
 
     const scriptioEditor = useEditor(
         {
             immediatelyRender: true,
             extensions: [
                 ...SCRIPTIO_EXTENSIONS,
-                ...(ydoc
-                    ? [
-                        Collaboration.configure({
-                            document: ydoc,
-                        }),
-                    ]
-                    : []),
-                ...(cloudProvider
+                ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),
+                ...(provider
                     ? [
                         CollaborationCaret.configure({
-                            provider: cloudProvider,
-                            user: {
-                                name: onlineUsername || "User_" + Math.floor(Math.random() * 1000),
-                                color: onlineColor || getRandomColor(),
-                            },
+                            provider: provider,
+                            user: userInfo.current,
                             render: (user: any) => {
                                 const caret = document.createElement("span");
                                 caret.classList.add("collab-caret");
@@ -384,7 +440,7 @@ export const useScriptioEditor = (
             );*/
             },
         },
-        [ydoc, !!cloudProvider]
+        [ydoc, provider]
     );
 
     return scriptioEditor;

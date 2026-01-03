@@ -1,4 +1,4 @@
-import { ExportData } from "@components/projects/export/ExportProjectContainer";
+import { ExportData } from "@src/lib/converters/utils";
 import { getNodeFlattenContent } from "@src/lib/editor/screenplay";
 import { Screenplay } from "@src/lib/utils/types";
 import { XMLBuilder } from "fast-xml-parser";
@@ -37,7 +37,7 @@ export const convertToFDX = (json: Screenplay, exportData: ExportData): string =
         if (!nodes[i] || !nodes[i].content) continue;
 
         const content = nodes[i].content!;
-        const flatText: string = getNodeFlattenContent(nodes[i]);
+        const flatText: string = getNodeFlattenContent(content);
         const type: string = nodes[i].attrs?.class;
         const nextType: string = i >= nodes.length - 1 ? undefined : nodes[i + 1].attrs?.class;
 

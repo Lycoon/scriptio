@@ -1,0 +1,13 @@
+.element {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.element_header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    position: relative; /* for notes color input to not displace elements */
+}

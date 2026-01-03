@@ -7,8 +7,7 @@ const repository = new UserRepository();
 export const updateRecoveryHash = async (userId: string) => {
     const recoverHash = SecretService.generateToken();
 
-    updateUser({
-        id: { id: userId },
+    updateUserFromId(userId, {
         secrets: {
             recoverHash,
             lastRecoverHash: new Date(),
@@ -21,8 +20,7 @@ export const updateRecoveryHash = async (userId: string) => {
 export const updateEmailHash = async (userId: string) => {
     const emailHash = SecretService.generateToken();
 
-    updateUser({
-        id: { id: userId },
+    updateUserFromId(userId, {
         secrets: {
             emailHash,
             lastEmailHash: new Date(),
@@ -41,8 +39,8 @@ export const createUser = async (email: string, secrets: SecretCreation) => {
     return created;
 };
 
-export const updateUser = async (user: UserUpdate) => {
-    return repository.updateUser(user);
+export const updateUserFromId = async (userId: string, userUpdate: UserUpdate) => {
+    return repository.updateUserFromId(userId, userUpdate);
 };
 
 export const deleteUserFromId = async (userId: string) => {

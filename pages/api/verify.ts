@@ -37,8 +37,7 @@ async function verifyUser(req: NextApiRequest, res: NextApiResponse) {
             return redirect(res, VerificationStatus.Used);
         }
 
-        const updated = await UserService.updateUser({
-            id: { id },
+        const updated = await UserService.updateUserFromId(id, {
             secrets: { emailHash: null },
             verified: true,
         });

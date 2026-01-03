@@ -59,8 +59,7 @@ async function getSettings(userId: string, res: NextApiResponse<any>) {
  * Updates settings from authenticated user
  */
 async function updateSettings(userId: string, body: UpdateSettingsBody, res: NextApiResponse) {
-    const updated = await UserService.updateUser({
-        id: { id: userId },
+    const updated = await UserService.updateUserFromId(userId, {
         settings: body,
     });
 

@@ -1,20 +1,19 @@
 import assert from "assert";
 import { useContext, useState } from "react";
 import { CharacterGender, doesCharacterExist, upsertCharacterData, deleteCharacter } from "@src/lib/editor/characters";
-
-import CloseSVG from "@public/images/close.svg";
-
-import form from "../utils/Form.module.css";
-import form_info from "../utils/FormInfo.module.css";
-import settings from "../settings/SettingsPageContainer.module.css";
-import popup from "./Popup.module.css";
 import { join } from "@src/lib/utils/misc";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { ConnectionStatus } from "@src/lib/utils/enums";
 import { replaceOccurrences } from "@src/lib/editor/editor";
 import { UserContext } from "@src/context/UserContext";
 import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/editor/popup";
 import { countOccurrences } from "@src/lib/editor/screenplay";
+
+import CloseSVG from "@public/images/close.svg";
+
+import form from "@components/utils/Form.module.css";
+import form_info from "@components/utils/FormInfo.module.css";
+import styles from "@components/popup/PopupCharacterItem.module.css";
+import popup from "@components/popup/Popup.module.css";
 
 type NewNameWarningProps = {
     setNewNameWarning: (value: boolean) => void;
@@ -184,8 +183,8 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                             oldName: character?.name!,
                             newName,
                         })}
-                    <div className={settings.element}>
-                        <div className={settings.element_header}>
+                    <div className={styles.element}>
+                        <div className={styles.element_header}>
                             <p>Name</p>
                             <input
                                 className={join(form.input, popup.input)}
@@ -197,11 +196,11 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                             />
                         </div>
                     </div>
-                    <div className={settings.element}>
-                        <div className={settings.element_header}>
+                    <div className={styles.element}>
+                        <div className={styles.element_header}>
                             <p>Gender</p>
                             <select
-                                className={join(settings.select_form, popup.select)}
+                                className={popup.select}
                                 name="gender"
                                 defaultValue={def.gender}
                                 disabled={newNameWarning || takenNameError}
@@ -213,7 +212,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                         </div>
                         <hr />
                     </div>
-                    <div className={settings.element}>
+                    <div className={styles.element}>
                         <p>Synopsis</p>
                         <textarea
                             className={join(form.input, popup.textarea)}

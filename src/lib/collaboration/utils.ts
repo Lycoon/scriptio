@@ -28,6 +28,12 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
     private readonly ACTIVITY_EVENTS = ["mousedown", "mousemove", "keydown", "touchstart", "scroll"];
 
+    // Reconnection state
+    private reconnectAttempts: number = 0;
+    private maxReconnectAttempts: number = 10;
+    private reconnectTimeout: any = null;
+    private isDestroyed: boolean = false;
+
     constructor(serverUrl: string, room: string, doc: Y.Doc, options: any) {
         super(serverUrl, room, doc, options);
 
@@ -40,6 +46,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         this.on('status', (event: any) => {
             if (event.status === 'connected') {
+                this.reconnectAttempts = 0; // Reset on successful connection
                 this.flush();
             }
         });
@@ -48,7 +55,123 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.setupIdleListeners();
     }
 
+    /**
+     * Update the authentication token and reconnect.
+     * This allows refreshing expired tokens without destroying the provider.
+     */
+    public async updateToken(newToken: string): Promise<void> {
+        if (this.isDestroyed) {
+            console.warn("Cannot update token on destroyed provider");
+            return;
+        }
+
+        try {
+            // Update params with new token
+            this.params = {
+                ...this.params,
+                token: newToken
+            };
+            await this.reconnect();
+        } catch (e) {
+            console.warn("Failed to update token on provider", e);
+            throw e;
+        }
+    }
+
+    /**
+     * Reconnect the WebSocket without destroying the provider.
+     * Uses the current params (including any updated token).
+     */
+    public reconnect(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (this.isDestroyed) {
+                reject(new Error("Provider is destroyed"));
+                return;
+            }
+
+            try {
+                // Disconnect existing connection if any
+                if (this.wsconnected) {
+                    this.disconnect();
+                }
+
+                // Clear any pending reconnect
+                if (this.reconnectTimeout) {
+                    clearTimeout(this.reconnectTimeout);
+                    this.reconnectTimeout = null;
+                }
+
+                // Attempt to connect
+                this.connect();
+
+                // Wait for connection or error
+                const onConnect = () => {
+                    cleanup();
+                    resolve();
+                };
+
+                const onError = (err: any) => {
+                    cleanup();
+                    reject(err);
+                };
+
+                const cleanup = () => {
+                    this.off('status', statusHandler);
+                    this.off('connection-error', onError);
+                };
+
+                const statusHandler = (e: any) => {
+                    if (e.status === 'connected') {
+                        onConnect();
+                    }
+                };
+
+                this.on('status', statusHandler);
+                this.on('connection-error', onError);
+
+                // Timeout after 10 seconds
+                setTimeout(() => {
+                    cleanup();
+                    reject(new Error("Connection timeout"));
+                }, 10000);
+
+            } catch (e) {
+                console.warn("Failed to reconnect provider", e);
+                reject(e);
+            }
+        });
+    }
+
+    /**
+     * Attempt to reconnect with exponential backoff.
+     * Called automatically on connection errors.
+     */
+    public scheduleReconnect(): void {
+        if (this.isDestroyed || this.reconnectTimeout) return;
+
+        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            console.error("Max reconnection attempts reached");
+            //this.emit('max-reconnect-attempts', []);
+            return;
+        }
+
+        // Exponential backoff: 1s, 2s, 4s, 8s, up to 30s max
+        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+        this.reconnectAttempts++;
+
+        console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${delay}ms`);
+
+        this.reconnectTimeout = setTimeout(() => {
+            this.reconnectTimeout = null;
+            if (!this.isDestroyed) {
+                this.connect();
+            }
+        }, delay);
+    }
+
     private setupIdleListeners() {
+        if (typeof window === 'undefined') return;
+
         this.ACTIVITY_EVENTS.forEach((event) => {
             window.addEventListener(event, this.resetUserIdleTimer);
         });
@@ -56,6 +179,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     private resetUserIdleTimer = () => {
+        if (this.isDestroyed) return;
+
         if (!this.shouldConnect) {
             console.log("User back active: Reconnecting WebSocket.");
             this.connect();
@@ -70,6 +195,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     };
 
     private cleanupIdleListeners() {
+        if (typeof window === 'undefined') return;
+
         this.ACTIVITY_EVENTS.forEach((event) => {
             window.removeEventListener(event, this.resetUserIdleTimer);
         });
@@ -83,8 +210,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     };
 
     private onThrottledAwareness = ({ added, updated, removed }: any, origin: any) => {
-        if (origin === "local") {
-            const states = this.awareness.getStates();
+        if (origin !== this) {
             const changedClients = added.concat(updated).concat(removed);
             for (const client of changedClients) {
                 this.awarenessQueue.add(client);
@@ -104,6 +230,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     private checkAndFlush() {
+        if (this.isDestroyed) return;
+
         const now = time.getUnixTime();
         if (this.updateQueue.length > 0 || this.awarenessQueue.size > 0) {
             const userCount = this.awareness.getStates().size;
@@ -123,7 +251,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
     public flush() {
         const ws = this.ws;
-        if (!this.wsconnected || !ws || ws.readyState != 1) return;
+        if (!this.wsconnected || !ws || ws.readyState !== 1) return;
 
         if (this.updateQueue.length > 0) {
             const mergedUpdate = Y.mergeUpdates(this.updateQueue);
@@ -159,7 +287,18 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     destroy() {
-        if (this.flushInterval) clearInterval(this.flushInterval);
+        if (this.isDestroyed) return;
+        this.isDestroyed = true;
+
+        if (this.flushInterval) {
+            clearInterval(this.flushInterval);
+            this.flushInterval = null;
+        }
+
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
 
         this.cleanupIdleListeners();
         this.flush();

@@ -75,7 +75,6 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         if (!editor) return;
 
         editor.setOptions({
-            autofocus: "start",
             editorProps: {
                 handleScrollToSelection: () => true,
                 handleKeyDown(view: any, event: any) {

@@ -1,6 +1,6 @@
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import * as pdfMake from "pdfmake/build/pdfmake";
-import { ExportData, ExportDataPDF } from "@components/projects/export/ExportProjectContainer";
+import { ExportData, ExportDataPDF } from "@src/lib/converters/utils";
 import { BASE_URL } from "@src/lib/utils/constants";
 
 const fonts = {

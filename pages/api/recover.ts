@@ -86,8 +86,7 @@ async function recoverPassword(body: RecoverPasswordBody, res: NextApiResponse) 
         throw new InternalServerError(FAILED_PASSWORD_CHANGED);
     }
 
-    const updated = await UserService.updateUser({
-        id: { id: user.id },
+    const updated = await UserService.updateUserFromId(user.id, {
         secrets: {
             password: newPassword,
             recoverHash: null,

@@ -209,10 +209,24 @@ export class ScreenplayRoom extends DurableObject {
 
     async webSocketClose(ws: WebSocket) {
         const clientIds = this.sessions.get(ws);
-        if (clientIds) {
-            awarenessProtocol.removeAwarenessStates(this.awareness, Array.from(clientIds), null);
-            this.sessions.delete(ws);
+        if (clientIds && clientIds.size > 0) {
+            const clientIdsArray = Array.from(clientIds);
+
+            // Remove awareness states locally
+            awarenessProtocol.removeAwarenessStates(this.awareness, clientIdsArray, null);
+
+            // Broadcast awareness removal to remaining clients
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, 1);
+            encoding.writeVarUint8Array(
+                encoder,
+                awarenessProtocol.encodeAwarenessUpdate(this.awareness, clientIdsArray)
+            );
+            this.broadcast(encoding.toUint8Array(encoder), ws);
+
+            console.log(`User disconnected, removed awareness for clients: ${clientIdsArray.join(", ")}`);
         }
+        this.sessions.delete(ws);
     }
 
     broadcast(message: Uint8Array, sender: WebSocket | undefined) {

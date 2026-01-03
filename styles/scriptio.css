@@ -27,7 +27,6 @@ Originally developed by John August - johnaugust.com
 */
 
 .ProseMirror {
-    position: relative;
     margin-bottom: 30%;
     left: 50%;
     transform: translateX(-50%);

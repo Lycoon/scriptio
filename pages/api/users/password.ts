@@ -41,11 +41,8 @@ async function updatePassword(userId: string, body: UpdatePasswordBody, res: Nex
         throw new InternalServerError(FAILED_PASSWORD_CHANGED);
     }
 
-    const updated = await UserService.updateUser({
-        id: { id: userId },
-        secrets: {
-            password,
-        },
+    const updated = await UserService.updateUserFromId(userId, {
+        secrets: { password },
     });
 
     if (!updated) {

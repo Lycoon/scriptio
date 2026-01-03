@@ -1,9 +1,9 @@
 import { useContext, useState } from "react";
 import FileSaver from "file-saver";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { convertToFountain } from "@src/converters/export/fountain";
-import { convertToFDX } from "@src/converters/export/fdx";
-import { exportToPDF } from "@src/converters/export/pdf";
+import { convertToFountain } from "@src/lib/converters/export/fountain";
+import { convertToFDX } from "@src/lib/converters/export/fdx";
+import { exportToPDF } from "@src/lib/converters/export/pdf";
 import { useUser } from "@src/lib/utils/hooks";
 
 // Reusing form styles for consistency

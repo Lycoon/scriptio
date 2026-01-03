@@ -1,4 +1,5 @@
 import { UserSettings } from "@src/lib/utils/types";
+import { Prisma } from "@prisma/client";
 import prisma from "../db";
 
 export type UpdateSecrets = {
@@ -19,7 +20,6 @@ export type UpdateSettings = {
 };
 
 export interface UserUpdate {
-    id: idOrEmailType;
     email?: string;
     verified?: boolean;
     secrets?: UpdateSecrets;
@@ -39,16 +39,16 @@ export interface SecretCreation {
 type idOrEmailType = { id: string } | { email: string };
 
 export class UserRepository {
-    updateUser(user: UserUpdate) {
+    updateUserFromId(userId: string, userUpdate: UserUpdate) {
         return prisma.user.update({
-            where: user.id,
+            where: { id: userId },
             data: {
-                email: user.email,
-                verified: user.verified,
+                email: userUpdate.email,
+                verified: userUpdate.verified,
                 secrets: {
-                    update: user.secrets,
+                    update: userUpdate.secrets,
                 },
-                settings: user.settings,
+                settings: userUpdate.settings as Prisma.InputJsonValue,
             },
         });
     }

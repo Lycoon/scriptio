@@ -1,4 +1,4 @@
-import { ExportData } from "@components/projects/export/ExportProjectContainer";
+import { ExportData } from "@src/lib/converters/utils";
 import { getNodeFlattenContent } from "@src/lib/editor/screenplay";
 
 /**
