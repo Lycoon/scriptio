@@ -105,6 +105,23 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 //          EDITOR STATE          //
 // ------------------------------ //
 
+export const SCREENPLAYER_PAPER_FORMATS = {
+    "Letter": {
+        marginBottom: 96, // 1in
+        marginLeft: 144,  // 1.5in
+        marginRight: 96,  // 1in
+        pageHeight: PAGE_SIZES.LETTER.pageHeight,
+        pageWidth: PAGE_SIZES.LETTER.pageWidth,
+    },
+    "A4": {
+        marginBottom: 144, // 1.5in
+        marginLeft: 125,  // 1.3in
+        marginRight: 86,  // 0.9in
+        pageHeight: PAGE_SIZES.A4.pageHeight,
+        pageWidth: PAGE_SIZES.A4.pageWidth,
+    },
+}
+
 export const SCRIPTIO_EXTENSIONS = [
     Document.configure({
         content: "Screenplay+",
@@ -113,15 +130,13 @@ export const SCRIPTIO_EXTENSIONS = [
         placeholder: ""
     }),
     PaginationPlus.configure({
-        pageGap: 20,
+        // Default Settings
         marginTop: 0,
-        marginBottom: 96,
-        marginLeft: 144,
-        marginRight: 96,
+        pageGap: 20,
         headerRight: `<p style="margin-top: 50px;">{page}.</p>`,
         footerRight: "",
-        pageHeight: PAGE_SIZES.A4.pageHeight,
-        pageWidth: PAGE_SIZES.A4.pageWidth,
+        // Paper Format Dependent Settings
+        ...SCREENPLAYER_PAPER_FORMATS.Letter
     }),
     Text,
     Node.Screenplay,
@@ -365,6 +380,7 @@ export const useScriptioEditor = (
     const { settings } = useSettings();
     const { ydoc } = useLocal(project.id);
     const { provider, refreshAndReconnect, users } = useCloud(project.id, ydoc);
+    console.log("users: ", users);
 
     const userInfo = useRef({
         name: settings?.online?.username || "User_" + Math.floor(Math.random() * 1000),

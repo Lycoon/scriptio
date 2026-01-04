@@ -10,7 +10,18 @@ import * as awarenessProtocol from "y-protocols/awareness";
 
 export interface Env {
     SCREENPLAY_ROOM: DurableObjectNamespace;
-    JWT_SECRET: string; // Need to match the env variable from production
+    JWT_SECRET: string;
+}
+
+// Configuration
+const SAVE_DEBOUNCE_MS = 2000;
+const STALE_AWARENESS_TIMEOUT_MS = 60000; // 60 seconds
+const AWARENESS_CLEANUP_INTERVAL_MS = 30000; // Check every 30 seconds
+
+interface SessionInfo {
+    clientIds: Set<number>;
+    userId: string;
+    lastActivity: number;
 }
 
 function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, sender: WebSocket) {
@@ -21,29 +32,33 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
     try {
         switch (messageType) {
             case 0: // Sync (document updates)
+                console.log("Sync");
                 syncProtocol.readSyncMessage(decoder, new encoding.Encoder(), room.doc, room);
                 room.broadcast(fullMessage, sender);
                 room.scheduleSave();
-                console.log("Received sync");
+                room.updateSessionActivity(sender);
                 break;
+
             case 1: // Awareness (cursor)
+                console.log("Awareness");
                 const awarenessUpdate = decoding.readVarUint8Array(decoder);
                 awarenessProtocol.applyAwarenessUpdate(room.awareness, awarenessUpdate, sender);
                 room.broadcast(fullMessage, sender);
-                console.log("Received awareness");
+                room.updateSessionActivity(sender);
                 break;
-            case 9: // Ping
+
+            case 9: // Ping - respond immediately
                 sender.send(fullMessage);
-                console.log("Received ping");
+                room.updateSessionActivity(sender);
                 break;
+
             default:
-                console.warn(`Unknown message type received: ${messageType}`);
+                console.warn(`[Room] Unknown message type: ${messageType}`);
                 break;
         }
     } catch (e) {
-        const decoder = new TextDecoder("utf-8");
-        const text = decoder.decode(fullMessage);
-        console.error(`YJS Protocol Error: Failed to process message type ${messageType} with message ${text}`);
+        console.error(`[Room] Protocol error for message type ${messageType}:`, e);
+        // For non-awareness messages, still try to broadcast (might be important)
         if (messageType !== 1) {
             room.broadcast(fullMessage, sender);
         }
@@ -52,11 +67,12 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
 
 export class ScreenplayRoom extends DurableObject {
     doc: Y.Doc;
-    saveTimeout: any = null;
+    saveTimeout: ReturnType<typeof setTimeout> | null = null;
     awareness: awarenessProtocol.Awareness;
-    sessions: Map<WebSocket, Set<number>>;
+    sessions: Map<WebSocket, SessionInfo>;
     userConnections: Map<string, WebSocket>;
     blacklist: Set<string>;
+    cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
     constructor(ctx: DurableObjectState, env: Env) {
         super(ctx, env);
@@ -66,14 +82,18 @@ export class ScreenplayRoom extends DurableObject {
         this.userConnections = new Map();
         this.blacklist = new Set();
 
+        // Track client IDs when awareness updates come from a WebSocket
         this.awareness.on("update", ({ added, updated, removed }: any, origin: any) => {
             if (origin instanceof WebSocket) {
-                const clientIds = this.sessions.get(origin) || new Set();
-                added.forEach((id: number) => clientIds.add(id));
-                this.sessions.set(origin, clientIds);
+                const session = this.sessions.get(origin);
+                if (session) {
+                    added.forEach((id: number) => session.clientIds.add(id));
+                    session.lastActivity = Date.now();
+                }
             }
         });
 
+        // Initialize database
         this.ctx.storage.sql.exec(`
             CREATE TABLE IF NOT EXISTS project (
                 id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -84,88 +104,206 @@ export class ScreenplayRoom extends DurableObject {
             );
         `);
 
-        // Restore latest project state
+        // Restore project state
         const cursor = this.ctx.storage.sql.exec("SELECT data FROM project WHERE id = 1;");
         for (const row of cursor) {
-            if (row.data) Y.applyUpdate(this.doc, new Uint8Array(row.data as ArrayBuffer));
+            if (row.data) {
+                Y.applyUpdate(this.doc, new Uint8Array(row.data as ArrayBuffer));
+            }
         }
 
         // Restore blacklist
-        const blacklist = this.ctx.storage.sql.exec("SELECT user_id FROM blacklist;").toArray();
-        for (const row of blacklist) {
+        const blacklistRows = this.ctx.storage.sql.exec("SELECT user_id FROM blacklist;").toArray();
+        for (const row of blacklistRows) {
             this.blacklist.add(row.user_id as string);
+        }
+
+        // Start periodic stale awareness cleanup
+        this.startAwarenessCleanup();
+
+        console.log("[Room] Initialized");
+    }
+
+    /**
+     * Start periodic cleanup of stale awareness states
+     */
+    private startAwarenessCleanup(): void {
+        this.cleanupInterval = setInterval(() => {
+            this.cleanupStaleAwareness();
+        }, AWARENESS_CLEANUP_INTERVAL_MS);
+    }
+
+    /**
+     * Clean up awareness states from clients that haven't been active
+     */
+    private cleanupStaleAwareness(): void {
+        const now = Date.now();
+        const staleClientIds: number[] = [];
+        const staleSockets: WebSocket[] = [];
+
+        this.sessions.forEach((session, socket) => {
+            const timeSinceActivity = now - session.lastActivity;
+
+            if (timeSinceActivity > STALE_AWARENESS_TIMEOUT_MS) {
+                console.log(`[Room] Session for user ${session.userId} is stale (${timeSinceActivity}ms since activity)`);
+                staleClientIds.push(...session.clientIds);
+                staleSockets.push(socket);
+            }
+        });
+
+        if (staleClientIds.length > 0) {
+            // Remove stale awareness states
+            awarenessProtocol.removeAwarenessStates(this.awareness, staleClientIds, null);
+
+            // Broadcast removal to remaining clients
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, 1);
+            encoding.writeVarUint8Array(
+                encoder,
+                awarenessProtocol.encodeAwarenessUpdate(this.awareness, staleClientIds)
+            );
+            this.broadcast(encoding.toUint8Array(encoder), undefined);
+
+            // Clean up stale sessions
+            for (const socket of staleSockets) {
+                const session = this.sessions.get(socket);
+                if (session) {
+                    this.userConnections.delete(session.userId);
+                }
+                this.sessions.delete(socket);
+
+                // Try to close the socket if it's still open
+                try {
+                    if (socket.readyState === 1) {
+                        socket.close(4000, "Connection stale");
+                    }
+                } catch (e) {
+                    // Socket might already be closed
+                }
+            }
+
+            console.log(`[Room] Cleaned up ${staleClientIds.length} stale awareness states`);
+        }
+    }
+
+    /**
+     * Update the last activity time for a session
+     */
+    updateSessionActivity(socket: WebSocket): void {
+        const session = this.sessions.get(socket);
+        if (session) {
+            session.lastActivity = Date.now();
         }
     }
 
     async fetch(request: Request): Promise<Response> {
         const url = new URL(request.url);
 
-        // When a user is kicked from a project, its JWT cloud token is most likely still valid
-        // We want to block him at the websocket level by blacklisting its user id (until it is reinvited again)
+        // Blacklist endpoint - kick user from project
         if (request.method === "POST" && url.pathname === "/blacklist") {
-            const { userId } = (await request.json()) as any;
-            if (userId) {
-                this.blacklist.add(userId);
+            const { userId } = (await request.json()) as { userId?: string };
+            if (!userId) {
+                return new Response("Missing userId", { status: 400 });
+            }
 
-                const socket = this.userConnections.get(userId);
-                if (socket) {
-                    socket.close(4003, "You have been removed from this project.");
-                    this.userConnections.delete(userId);
+            this.blacklist.add(userId);
+
+            // Close existing connection for this user
+            const socket = this.userConnections.get(userId);
+            if (socket) {
+                // Clean up awareness before closing
+                const session = this.sessions.get(socket);
+                if (session && session.clientIds.size > 0) {
+                    const clientIds = Array.from(session.clientIds);
+                    awarenessProtocol.removeAwarenessStates(this.awareness, clientIds, null);
+                    this.broadcastAwarenessRemoval(clientIds, socket);
                 }
 
-                console.log(`Blacklisted user ${userId} from project`);
+                socket.close(4003, "You have been removed from this project.");
+                this.userConnections.delete(userId);
+                this.sessions.delete(socket);
+            }
+
+            this.ctx.storage.sql.exec(
+                "INSERT OR IGNORE INTO blacklist (user_id) VALUES (?);",
+                userId
+            );
+
+            console.log(`[Room] Blacklisted user ${userId}`);
+            return new Response(`User ${userId} blacklisted.`, { status: 200 });
+        }
+
+        // Allow endpoint - remove user from blacklist
+        if (request.method === "POST" && url.pathname === "/allow") {
+            const { userId } = (await request.json()) as { userId?: string };
+            if (!userId) {
+                return new Response("Missing userId", { status: 400 });
+            }
+
+            const wasBlacklisted = this.blacklist.delete(userId);
+            if (wasBlacklisted) {
                 this.ctx.storage.sql.exec(
-                    "INSERT OR IGNORE INTO blacklist (user_id) VALUES (?);",
+                    "DELETE FROM blacklist WHERE user_id = ?;",
                     userId
                 );
-                return new Response(`User ${userId} blacklisted.`, { status: 200 });
             }
-            return new Response("Missing userId", { status: 400 });
+
+            console.log(`[Room] Allowed user ${userId}`);
+            return new Response(`User ${userId} allowed.`, { status: 200 });
         }
 
-        // If a blacklisted user gets reinvited after being kicked, we need to remove it from blacklist
-        if (request.method === "POST" && url.pathname === "/allow") {
-            const { userId } = (await request.json()) as any;
-            if (userId) {
-                const wasBlacklisted = this.blacklist.delete(userId);
-                if (wasBlacklisted) {
-                    this.ctx.storage.sql.exec(
-                        "DELETE FROM blacklist WHERE user_id = ?;",
-                        userId
-                    );
-                }
-                console.log(`Allowed user ${userId} to project`);
-                return new Response(`User ${userId} allowed.`, { status: 200 });
-            }
-            return new Response("Missing userId", { status: 400 });
-        }
-
-        // First handshake with the worker. The connection is kept alive thanks to ping requests
+        // WebSocket upgrade
         if (request.headers.get("Upgrade") === "websocket") {
             const userId = request.headers.get("X-User-Id");
-            if (!userId) return new Response("Missing User Identity", { status: 400 });
+            if (!userId) {
+                return new Response("Missing User Identity", { status: 400 });
+            }
 
             if (this.blacklist.has(userId)) {
                 return new Response("Unauthorized: You have been kicked.", { status: 403 });
+            }
+
+            // Close any existing connection for this user (prevent duplicates)
+            const existingSocket = this.userConnections.get(userId);
+            if (existingSocket) {
+                console.log(`[Room] User ${userId} reconnecting, closing old connection`);
+                const existingSession = this.sessions.get(existingSocket);
+                if (existingSession && existingSession.clientIds.size > 0) {
+                    const clientIds = Array.from(existingSession.clientIds);
+                    awarenessProtocol.removeAwarenessStates(this.awareness, clientIds, null);
+                    this.broadcastAwarenessRemoval(clientIds, existingSocket);
+                }
+                this.sessions.delete(existingSocket);
+                try {
+                    existingSocket.close(4001, "New connection opened");
+                } catch (e) {
+                    // Socket might already be closed
+                }
             }
 
             const pair = new WebSocketPair();
             const [client, server] = Object.values(pair);
 
             this.ctx.acceptWebSocket(server);
-            this.sessions.set(server, new Set());
 
-            // Send current project state to new user
+            // Initialize session
+            this.sessions.set(server, {
+                clientIds: new Set(),
+                userId,
+                lastActivity: Date.now()
+            });
+            this.userConnections.set(userId, server);
+
+            // Send current document state (sync step 1)
             const encoder = encoding.createEncoder();
             syncProtocol.writeSyncStep1(encoder, this.doc);
-
             const payload = encoding.toUint8Array(encoder);
             const syncStep1 = new Uint8Array(payload.length + 1);
             syncStep1.set([0], 0);
             syncStep1.set(payload, 1);
             server.send(syncStep1);
 
-            // Send current awareness state to new user
+            // Send current awareness states
             const awarenessStates = this.awareness.getStates();
             if (awarenessStates.size > 0) {
                 const awarenessEncoder = encoding.createEncoder();
@@ -178,67 +316,117 @@ export class ScreenplayRoom extends DurableObject {
                 server.send(encoding.toUint8Array(awarenessEncoder));
             }
 
+            console.log(`[Room] User ${userId} connected. Total sessions: ${this.sessions.size}`);
             return new Response(null, { status: 101, webSocket: client });
         }
+
         return new Response("Expected WebSocket", { status: 400 });
     }
 
-    async webSocketMessage(ws: WebSocket, message: ArrayBuffer | string) {
+    async webSocketMessage(ws: WebSocket, message: ArrayBuffer | string): Promise<void> {
         if (!(message instanceof ArrayBuffer)) return;
 
         const fullMessage = new Uint8Array(message);
         if (fullMessage.length === 0) return;
 
-        //console.log("Received " + fullMessage.length + " bytes message update");
         handleProtocolMessage(this, fullMessage, ws);
     }
 
-    scheduleSave() {
-        if (this.saveTimeout) clearTimeout(this.saveTimeout);
-        this.saveTimeout = setTimeout(() => this.saveToDisk(), 2000);
-    }
-
-    async saveToDisk() {
-        const fullDocState = Y.encodeStateAsUpdate(this.doc);
-        this.ctx.storage.sql.exec(
-            "INSERT OR REPLACE INTO project (id, data) VALUES (1, ?);",
-            fullDocState
-        );
-        this.saveTimeout = null;
-    }
-
-    async webSocketClose(ws: WebSocket) {
-        const clientIds = this.sessions.get(ws);
-        if (clientIds && clientIds.size > 0) {
-            const clientIdsArray = Array.from(clientIds);
-
-            // Remove awareness states locally
-            awarenessProtocol.removeAwarenessStates(this.awareness, clientIdsArray, null);
-
-            // Broadcast awareness removal to remaining clients
-            const encoder = encoding.createEncoder();
-            encoding.writeVarUint(encoder, 1);
-            encoding.writeVarUint8Array(
-                encoder,
-                awarenessProtocol.encodeAwarenessUpdate(this.awareness, clientIdsArray)
-            );
-            this.broadcast(encoding.toUint8Array(encoder), ws);
-
-            console.log(`User disconnected, removed awareness for clients: ${clientIdsArray.join(", ")}`);
+    scheduleSave(): void {
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
         }
-        this.sessions.delete(ws);
+        this.saveTimeout = setTimeout(() => this.saveToDisk(), SAVE_DEBOUNCE_MS);
     }
 
-    broadcast(message: Uint8Array, sender: WebSocket | undefined) {
-        for (const client of this.sessions.keys()) {
+    async saveToDisk(): Promise<void> {
+        try {
+            const fullDocState = Y.encodeStateAsUpdate(this.doc);
+            this.ctx.storage.sql.exec(
+                "INSERT OR REPLACE INTO project (id, data) VALUES (1, ?);",
+                fullDocState
+            );
+            this.saveTimeout = null;
+            console.log("[Room] Document saved to disk");
+        } catch (e) {
+            console.error("[Room] Failed to save document:", e);
+        }
+    }
+
+    async webSocketClose(ws: WebSocket): Promise<void> {
+        const session = this.sessions.get(ws);
+
+        if (session) {
+            console.log(`[Room] User ${session.userId} disconnected`);
+
+            if (session.clientIds.size > 0) {
+                const clientIds = Array.from(session.clientIds);
+
+                // Remove awareness states
+                awarenessProtocol.removeAwarenessStates(this.awareness, clientIds, null);
+
+                // Broadcast removal to remaining clients
+                this.broadcastAwarenessRemoval(clientIds, ws);
+
+                console.log(`[Room] Removed awareness for clients: ${clientIds.join(", ")}`);
+            }
+
+            this.userConnections.delete(session.userId);
+        }
+
+        this.sessions.delete(ws);
+        console.log(`[Room] Remaining sessions: ${this.sessions.size}`);
+    }
+
+    async webSocketError(ws: WebSocket, error: any): Promise<void> {
+        console.error("[Room] WebSocket error:", error);
+        // The close handler will clean up
+    }
+
+    /**
+     * Broadcast awareness removal for specific client IDs
+     */
+    private broadcastAwarenessRemoval(clientIds: number[], excludeSocket?: WebSocket): void {
+        const encoder = encoding.createEncoder();
+        encoding.writeVarUint(encoder, 1);
+        encoding.writeVarUint8Array(
+            encoder,
+            awarenessProtocol.encodeAwarenessUpdate(this.awareness, clientIds)
+        );
+        this.broadcast(encoding.toUint8Array(encoder), excludeSocket);
+    }
+
+    /**
+     * Broadcast a message to all connected clients except the sender
+     */
+    broadcast(message: Uint8Array, sender: WebSocket | undefined): void {
+        for (const [client, session] of this.sessions) {
             if (client !== sender && client.readyState === 1) {
-                client.send(message);
+                try {
+                    client.send(message);
+                } catch (e) {
+                    console.error(`[Room] Failed to send to client ${session.userId}:`, e);
+                }
             }
         }
     }
+
+    /**
+     * Get the number of active connections
+     */
+    getConnectionCount(): number {
+        return this.sessions.size;
+    }
+
+    /**
+     * Get list of connected user IDs
+     */
+    getConnectedUsers(): string[] {
+        return Array.from(this.userConnections.keys());
+    }
 }
 
-async function getVerifiedPayload(token: string | null, secret: string) {
+async function getVerifiedPayload(token: string | null, secret: string): Promise<any | null> {
     if (!token) return null;
     try {
         return verify(token, secret) as any;
@@ -250,21 +438,30 @@ async function getVerifiedPayload(token: string | null, secret: string) {
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
-        const projectId = url.pathname.slice(1).replace(/\/$/, "") || "default";
 
-        if (request.method === "POST" && url.pathname.endsWith("/blacklist")) {
+        // Extract project ID from path (handle trailing slashes and nested paths)
+        const pathParts = url.pathname.split('/').filter(p => p && p !== 'blacklist' && p !== 'allow');
+        const projectId = pathParts[0] || "default";
+
+        // Blacklist/Allow endpoints
+        if (request.method === "POST" && (url.pathname.endsWith("/blacklist") || url.pathname.endsWith("/allow"))) {
             const authHeader = request.headers.get("Authorization");
-            const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+            const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
             const decoded = await getVerifiedPayload(token, env.JWT_SECRET);
-            if (!decoded || decoded.type !== "admin-action" || (decoded.projectId && decoded.projectId !== projectId)) {
+            if (!decoded || decoded.type !== "admin-action") {
                 return new Response("Unauthorized", { status: 401 });
+            }
+
+            if (decoded.projectId && decoded.projectId !== projectId) {
+                return new Response("Unauthorized: Project mismatch", { status: 401 });
             }
 
             const stub = env.SCREENPLAY_ROOM.get(env.SCREENPLAY_ROOM.idFromName(projectId));
             return stub.fetch(request);
         }
 
+        // WebSocket upgrade
         if (request.headers.get("Upgrade") === "websocket") {
             const token = url.searchParams.get("token");
             const decoded = await getVerifiedPayload(token, env.JWT_SECRET);
@@ -274,6 +471,10 @@ export default {
             }
 
             const userId = decoded.userId || decoded.sub;
+            if (!userId) {
+                return new Response("Invalid token: missing user ID", { status: 401 });
+            }
+
             const newRequest = new Request(request);
             newRequest.headers.set("X-User-Id", userId);
 

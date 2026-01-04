@@ -83,10 +83,8 @@ Originally developed by John August - johnaugust.com
         /* Critical: if width absent, the removal of last character on 3rd page and beyond
         will cause an infinite loop in tiptap-pagination-plus extension. */
         width: 100%;
-    }
-
-    .action {
-        text-align: justify;
+        display: inline-block;
+        min-height: 1lh;
     }
 
     .scene {

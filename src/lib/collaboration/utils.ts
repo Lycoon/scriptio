@@ -5,54 +5,129 @@ import * as Y from "yjs";
 import * as encoding from "lib0/encoding";
 import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
-import * as time from "lib0/time";
 
 declare const window: any;
 
 /**
  * This custom WebsocketProvider enables adaptive throttle depending on how many collaborators are currently
- * working on the project to save bandwith. While updates are more sparsed for a single-user, they are more
+ * working on the project to save bandwidth. While updates are more sparse for a single-user, they are more
  * frequent during multi-user editing.
  */
 export class ThrottledWebsocketProvider extends WebsocketProvider {
     private updateQueue: Uint8Array[] = [];
     private awarenessQueue: Set<number> = new Set();
-    private flushInterval: any = null;
-    private lastFlushTime: number = 0;
-    private userIdleTimer: any = null;
+    private flushInterval: ReturnType<typeof setInterval> | null = null;
+    private lastFlushTime: number = 0;  // Milliseconds (Date.now())
+    private lastMessageTime: number = 0; // Milliseconds (Date.now())
+    private userIdleTimer: ReturnType<typeof setTimeout> | null = null;
 
-    private readonly SOLO_USER_UPDATE = 15000;
-    private readonly MULTI_USER_UPDATE = 250;
-    private readonly MAX_SILENCE_DURATION = 20000;
-    private readonly MAX_IDLE_DURATION = 10 * 60 * 1000;
+    // Throttling configuration (all in milliseconds)
+    private readonly SOLO_USER_UPDATE_MS = 15000;     // 15s when alone
+    private readonly MULTI_USER_UPDATE_MS = 250;      // 250ms with others
+    private readonly MAX_SILENCE_DURATION_MS = 20000; // 20s max silence before ping
+    private readonly MAX_IDLE_DURATION_MS = 10 * 60 * 1000; // 10 minutes idle timeout
+    private readonly FLUSH_CHECK_INTERVAL_MS = 100;   // Check flush every 100ms
 
     private readonly ACTIVITY_EVENTS = ["mousedown", "mousemove", "keydown", "touchstart", "scroll"];
 
     // Reconnection state
     private reconnectAttempts: number = 0;
-    private maxReconnectAttempts: number = 10;
-    private reconnectTimeout: any = null;
+    private readonly MAX_RECONNECT_ATTEMPTS: number = 10;
+    private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
     private isDestroyed: boolean = false;
+
+    // Track our own state
+    private readonly localClientId: number;
+    private isIdleDisconnected: boolean = false;
+    private lastKnownUserCount: number = 1;
+
+    // Bound event handlers for proper cleanup
+    private boundResetIdleTimer: () => void;
 
     constructor(serverUrl: string, room: string, doc: Y.Doc, options: any) {
         super(serverUrl, room, doc, options);
 
+        this.localClientId = doc.clientID;
+        this.boundResetIdleTimer = this.resetUserIdleTimer.bind(this);
+        this.lastFlushTime = Date.now();
+        this.lastMessageTime = Date.now();
+
+        // Replace default handlers with throttled versions
         doc.off("update", (this as any)._updateHandler);
         doc.on("update", this.onThrottledUpdate);
         this.awareness.off("update", (this as any)._awarenessUpdateHandler);
         this.awareness.on("update", this.onThrottledAwareness);
 
-        (this as any).messageHandlers[9] = () => { };
+        // Handle ping responses (message type 9)
+        // This prevents the default handler from treating it as unknown
+        // and updates our message timestamp
+        (this as any).messageHandlers[9] = () => {
+            this.lastMessageTime = Date.now();
+        };
 
-        this.on('status', (event: any) => {
-            if (event.status === 'connected') {
-                this.reconnectAttempts = 0; // Reset on successful connection
-                this.flush();
+        // Handle connection status changes
+        this.on('status', this.onStatusChange);
+
+        // Start background processes
+        this.startFlushLoop();
+        this.setupIdleListeners();
+
+        console.log(`[WS] Provider initialized for room ${room}, clientId: ${this.localClientId}`);
+    }
+
+    /**
+     * Handle connection status changes
+     */
+    private onStatusChange = (event: { status: string }) => {
+        console.log(`[WS] Status changed: ${event.status}`);
+
+        if (event.status === 'connected') {
+            this.reconnectAttempts = 0;
+            this.isIdleDisconnected = false;
+            this.lastMessageTime = Date.now(); // Reset so we don't immediately ping
+
+            // Re-announce our awareness state on reconnection
+            const localState = this.awareness.getLocalState();
+            if (localState) {
+                // Trigger awareness update to be sent
+                this.awarenessQueue.add(this.localClientId);
+            }
+
+            // Flush any pending updates
+            this.flush();
+        } else if (event.status === 'disconnected') {
+            // Clear the last known user count when disconnected
+            this.lastKnownUserCount = 1;
+        }
+    };
+
+    /**
+     * Count active collaborators (excluding ourselves and stale states)
+     * Only counts users who have set a 'user' field in their awareness state
+     */
+    private getActiveUserCount(): number {
+        const states = this.awareness.getStates();
+        let count = 0;
+
+        states.forEach((state, clientId) => {
+            // Only count if:
+            // 1. It's not our own client
+            // 2. The state has a 'user' field (indicating active collaboration)
+            if (clientId !== this.localClientId && state && state.user) {
+                count++;
             }
         });
 
-        this.startFlushLoop();
-        this.setupIdleListeners();
+        // Include ourselves in the count
+        const totalCount = count + 1;
+
+        // Log when user count changes
+        if (totalCount !== this.lastKnownUserCount) {
+            console.log(`[WS] Active user count changed: ${this.lastKnownUserCount} -> ${totalCount}`);
+            this.lastKnownUserCount = totalCount;
+        }
+
+        return totalCount;
     }
 
     /**
@@ -61,9 +136,11 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      */
     public async updateToken(newToken: string): Promise<void> {
         if (this.isDestroyed) {
-            console.warn("Cannot update token on destroyed provider");
+            console.warn("[WS] Cannot update token on destroyed provider");
             return;
         }
+
+        console.log("[WS] Updating token and reconnecting...");
 
         try {
             // Update params with new token
@@ -73,7 +150,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             };
             await this.reconnect();
         } catch (e) {
-            console.warn("Failed to update token on provider", e);
+            console.warn("[WS] Failed to update token on provider", e);
             throw e;
         }
     }
@@ -90,6 +167,9 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             }
 
             try {
+                // Clean up awareness before disconnecting
+                this.cleanupLocalAwareness();
+
                 // Disconnect existing connection if any
                 if (this.wsconnected) {
                     this.disconnect();
@@ -101,13 +181,17 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                     this.reconnectTimeout = null;
                 }
 
-                // Attempt to connect
-                this.connect();
+                // Set up connection listeners
+                const cleanup = () => {
+                    this.off('status', statusHandler);
+                    this.off('connection-error', onError);
+                };
 
-                // Wait for connection or error
-                const onConnect = () => {
-                    cleanup();
-                    resolve();
+                const statusHandler = (e: { status: string }) => {
+                    if (e.status === 'connected') {
+                        cleanup();
+                        resolve();
+                    }
                 };
 
                 const onError = (err: any) => {
@@ -115,28 +199,23 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                     reject(err);
                 };
 
-                const cleanup = () => {
-                    this.off('status', statusHandler);
-                    this.off('connection-error', onError);
-                };
-
-                const statusHandler = (e: any) => {
-                    if (e.status === 'connected') {
-                        onConnect();
-                    }
-                };
-
                 this.on('status', statusHandler);
                 this.on('connection-error', onError);
 
                 // Timeout after 10 seconds
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                     cleanup();
                     reject(new Error("Connection timeout"));
                 }, 10000);
 
+                // Attempt to connect
+                this.connect();
+
+                // Clear timeout on success
+                this.once('status', () => clearTimeout(timeoutId));
+
             } catch (e) {
-                console.warn("Failed to reconnect provider", e);
+                console.warn("[WS] Failed to reconnect provider", e);
                 reject(e);
             }
         });
@@ -147,11 +226,12 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      * Called automatically on connection errors.
      */
     public scheduleReconnect(): void {
-        if (this.isDestroyed || this.reconnectTimeout) return;
+        if (this.isDestroyed || this.reconnectTimeout || this.isIdleDisconnected) {
+            return;
+        }
 
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error("Max reconnection attempts reached");
-            //this.emit('max-reconnect-attempts', []);
+        if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
+            console.error("[WS] Max reconnection attempts reached");
             return;
         }
 
@@ -159,153 +239,317 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
         this.reconnectAttempts++;
 
-        console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${delay}ms`);
+        console.log(`[WS] Scheduling reconnect attempt ${this.reconnectAttempts} in ${delay}ms`);
 
         this.reconnectTimeout = setTimeout(() => {
             this.reconnectTimeout = null;
-            if (!this.isDestroyed) {
+            if (!this.isDestroyed && !this.isIdleDisconnected) {
                 this.connect();
             }
         }, delay);
     }
 
-    private setupIdleListeners() {
+    /**
+     * Set up activity listeners for idle detection
+     */
+    private setupIdleListeners(): void {
         if (typeof window === 'undefined') return;
 
         this.ACTIVITY_EVENTS.forEach((event) => {
-            window.addEventListener(event, this.resetUserIdleTimer);
+            window.addEventListener(event, this.boundResetIdleTimer, { passive: true });
         });
+
+        // Start the idle timer
         this.resetUserIdleTimer();
     }
 
-    private resetUserIdleTimer = () => {
+    /**
+     * Reset the idle timer on user activity
+     * If we were idle-disconnected, attempt to reconnect
+     */
+    private resetUserIdleTimer(): void {
         if (this.isDestroyed) return;
 
-        if (!this.shouldConnect) {
-            console.log("User back active: Reconnecting WebSocket.");
+        // If we were idle-disconnected and user is now active, reconnect
+        if (this.isIdleDisconnected && !this.wsconnected) {
+            console.log("[WS] User active again after idle disconnect. Reconnecting...");
+            this.isIdleDisconnected = false;
+            this.reconnectAttempts = 0;
             this.connect();
         }
 
-        if (this.userIdleTimer) clearTimeout(this.userIdleTimer);
+        // Clear existing timer
+        if (this.userIdleTimer) {
+            clearTimeout(this.userIdleTimer);
+            this.userIdleTimer = null;
+        }
 
+        // Set new idle timer
         this.userIdleTimer = setTimeout(() => {
-            console.log("User inactive for 10 mins. Closing connection to save resources.");
-            this.disconnect();
-        }, this.MAX_IDLE_DURATION);
-    };
-
-    private cleanupIdleListeners() {
-        if (typeof window === 'undefined') return;
-
-        this.ACTIVITY_EVENTS.forEach((event) => {
-            window.removeEventListener(event, this.resetUserIdleTimer);
-        });
-        if (this.userIdleTimer) clearTimeout(this.userIdleTimer);
+            this.handleIdleTimeout();
+        }, this.MAX_IDLE_DURATION_MS);
     }
 
-    private onThrottledUpdate = (update: Uint8Array, origin: any) => {
-        if (origin !== this) {
-            this.updateQueue.push(update);
-        }
-    };
+    /**
+     * Handle idle timeout - disconnect to save resources
+     */
+    private handleIdleTimeout(): void {
+        if (this.isDestroyed || !this.wsconnected) return;
 
-    private onThrottledAwareness = ({ added, updated, removed }: any, origin: any) => {
-        if (origin !== this) {
-            const changedClients = added.concat(updated).concat(removed);
-            for (const client of changedClients) {
-                this.awarenessQueue.add(client);
-            }
+        console.log("[WS] User inactive for 10 minutes. Closing connection to save resources.");
 
-            // If user joins or leaves, send awareness update now, bypass throttling
-            if (added.length > 0 || removed.length > 0) {
-                this.flush();
-            }
-        }
-    };
+        // Mark as idle-disconnected so we don't auto-reconnect
+        this.isIdleDisconnected = true;
 
-    private startFlushLoop() {
-        this.flushInterval = setInterval(() => {
-            this.checkAndFlush();
-        }, 100);
-    }
+        // Clean up awareness state before disconnecting
+        this.cleanupLocalAwareness();
 
-    private checkAndFlush() {
-        if (this.isDestroyed) return;
+        // Flush any pending updates
+        this.flush();
 
-        const now = time.getUnixTime();
-        if (this.updateQueue.length > 0 || this.awarenessQueue.size > 0) {
-            const userCount = this.awareness.getStates().size;
-            const requiredDelay = userCount <= 1 ? this.SOLO_USER_UPDATE : this.MULTI_USER_UPDATE;
-
-            if (now - this.lastFlushTime > requiredDelay) {
-                this.flush();
-            }
-        }
-
-        const lastMessageReceived = (this as any).wsLastMessageReceived || 0;
-        if (now - lastMessageReceived > this.MAX_SILENCE_DURATION) {
-            this.sendPing();
-            (this as any).wsLastMessageReceived = now - this.MAX_SILENCE_DURATION + 1000;
-        }
-    }
-
-    public flush() {
-        const ws = this.ws;
-        if (!this.wsconnected || !ws || ws.readyState !== 1) return;
-
-        if (this.updateQueue.length > 0) {
-            const mergedUpdate = Y.mergeUpdates(this.updateQueue);
-            this.updateQueue = [];
-
-            const encoder = encoding.createEncoder();
-            encoding.writeVarUint(encoder, 0);
-            syncProtocol.writeUpdate(encoder, mergedUpdate);
-            ws.send(encoding.toUint8Array(encoder));
-        }
-
-        if (this.awarenessQueue.size > 0) {
-            const changedClients = Array.from(this.awarenessQueue);
-            this.awarenessQueue.clear();
-
-            const encoder = encoding.createEncoder();
-            encoding.writeVarUint(encoder, 1);
-            encoding.writeVarUint8Array(
-                encoder,
-                awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
-            );
-            ws.send(encoding.toUint8Array(encoder));
-        }
-
-        this.lastFlushTime = Date.now();
-    }
-
-    private sendPing() {
-        if (!this.wsconnected || !this.ws || this.ws.readyState !== 1) return;
-        const encoder = encoding.createEncoder();
-        encoding.writeVarUint(encoder, 9);
-        this.ws.send(encoding.toUint8Array(encoder));
-    }
-
-    destroy() {
-        if (this.isDestroyed) return;
-        this.isDestroyed = true;
-
-        if (this.flushInterval) {
-            clearInterval(this.flushInterval);
-            this.flushInterval = null;
-        }
-
+        // Cancel any pending reconnects
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
 
+        // Disconnect
+        this.disconnect();
+    }
+
+    /**
+     * Remove activity listeners
+     */
+    private cleanupIdleListeners(): void {
+        if (typeof window === 'undefined') return;
+
+        this.ACTIVITY_EVENTS.forEach((event) => {
+            window.removeEventListener(event, this.boundResetIdleTimer);
+        });
+
+        if (this.userIdleTimer) {
+            clearTimeout(this.userIdleTimer);
+            this.userIdleTimer = null;
+        }
+    }
+
+    /**
+     * Clean up local awareness state
+     * Call this before disconnecting to ensure other clients are notified
+     */
+    private cleanupLocalAwareness(): void {
+        try {
+            // Remove our awareness state
+            awarenessProtocol.removeAwarenessStates(
+                this.awareness,
+                [this.localClientId],
+                'local cleanup'
+            );
+
+            // Immediately send the removal if connected
+            if (this.wsconnected && this.ws && this.ws.readyState === 1) {
+                const encoder = encoding.createEncoder();
+                encoding.writeVarUint(encoder, 1); // awareness message type
+                encoding.writeVarUint8Array(
+                    encoder,
+                    awarenessProtocol.encodeAwarenessUpdate(this.awareness, [this.localClientId])
+                );
+                this.ws.send(encoding.toUint8Array(encoder));
+            }
+
+            console.log(`[WS] Cleaned up local awareness for clientId: ${this.localClientId}`);
+        } catch (e) {
+            console.warn("[WS] Failed to cleanup local awareness:", e);
+        }
+    }
+
+    /**
+     * Handle document updates (throttled)
+     */
+    private onThrottledUpdate = (update: Uint8Array, origin: any): void => {
+        if (origin !== this) {
+            this.updateQueue.push(update);
+        }
+    };
+
+    /**
+     * Handle awareness updates (throttled)
+     */
+    private onThrottledAwareness = ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }, origin: any): void => {
+        if (origin !== this) {
+            const changedClients = [...added, ...updated, ...removed];
+
+            for (const clientId of changedClients) {
+                this.awarenessQueue.add(clientId);
+            }
+
+            // If user joins or leaves (not just cursor move), send immediately
+            if (added.length > 0 || removed.length > 0) {
+                console.log(`[WS] User join/leave detected. Added: ${added.length}, Removed: ${removed.length}`);
+                this.flush();
+            }
+        }
+    };
+
+    /**
+     * Start the periodic flush check loop
+     */
+    private startFlushLoop(): void {
+        this.flushInterval = setInterval(() => {
+            this.checkAndFlush();
+        }, this.FLUSH_CHECK_INTERVAL_MS);
+    }
+
+    /**
+     * Check if we should flush and handle connection keepalive
+     */
+    private checkAndFlush(): void {
+        if (this.isDestroyed || !this.wsconnected) return;
+
+        const now = Date.now();
+
+        // Check if we have pending updates to send
+        if (this.updateQueue.length > 0 || this.awarenessQueue.size > 0) {
+            const userCount = this.getActiveUserCount();
+            const requiredDelay = userCount <= 1
+                ? this.SOLO_USER_UPDATE_MS
+                : this.MULTI_USER_UPDATE_MS;
+
+            const timeSinceLastFlush = now - this.lastFlushTime;
+
+            if (timeSinceLastFlush >= requiredDelay) {
+                console.log(`[WS] Flushing after ${timeSinceLastFlush}ms (threshold: ${requiredDelay}ms, users: ${userCount})`);
+                this.flush();
+            }
+        }
+
+        // Send ping if we haven't received any messages for too long
+        const timeSinceLastMessage = now - this.lastMessageTime;
+
+        if (timeSinceLastMessage > this.MAX_SILENCE_DURATION_MS) {
+            this.sendPing();
+            // Update to prevent ping spam, actual update happens in onMessageReceived
+            this.lastMessageTime = now;
+        }
+    }
+
+    /**
+     * Flush all pending updates to the server
+     */
+    public flush(): void {
+        const ws = this.ws;
+        if (!this.wsconnected || !ws || ws.readyState !== 1) {
+            return;
+        }
+
+        // Send document updates
+        if (this.updateQueue.length > 0) {
+            try {
+                const mergedUpdate = Y.mergeUpdates(this.updateQueue);
+                this.updateQueue = [];
+
+                const encoder = encoding.createEncoder();
+                encoding.writeVarUint(encoder, 0); // sync message type
+                syncProtocol.writeUpdate(encoder, mergedUpdate);
+                ws.send(encoding.toUint8Array(encoder));
+
+                console.log("[WS] Sent document update");
+            } catch (e) {
+                console.error("[WS] Failed to send document updates:", e);
+            }
+        }
+
+        // Send awareness updates
+        if (this.awarenessQueue.size > 0) {
+            try {
+                const changedClients = Array.from(this.awarenessQueue);
+                this.awarenessQueue.clear();
+
+                const encoder = encoding.createEncoder();
+                encoding.writeVarUint(encoder, 1); // awareness message type
+                encoding.writeVarUint8Array(
+                    encoder,
+                    awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
+                );
+                ws.send(encoding.toUint8Array(encoder));
+
+                console.log(`[WS] Sent awareness update for clients: ${changedClients.join(", ")}`);
+            } catch (e) {
+                console.error("[WS] Failed to send awareness updates:", e);
+            }
+        }
+
+        this.lastFlushTime = Date.now();
+    }
+
+    /**
+     * Send a ping to keep the connection alive
+     */
+    private sendPing(): void {
+        if (!this.wsconnected || !this.ws || this.ws.readyState !== 1) return;
+
+        try {
+            const encoder = encoding.createEncoder();
+            encoding.writeVarUint(encoder, 9); // ping message type
+            this.ws.send(encoding.toUint8Array(encoder));
+        } catch (e) {
+            console.warn("[WS] Failed to send ping:", e);
+        }
+    }
+
+    /**
+     * Check if currently connected
+     */
+    public get isConnected(): boolean {
+        return this.wsconnected && this.ws?.readyState === 1;
+    }
+
+    /**
+     * Check if idle-disconnected (waiting for user activity)
+     */
+    public get isIdle(): boolean {
+        return this.isIdleDisconnected;
+    }
+
+    /**
+     * Destroy the provider and clean up all resources
+     */
+    destroy(): void {
+        if (this.isDestroyed) return;
+
+        console.log("[WS] Destroying provider...");
+        this.isDestroyed = true;
+
+        // Stop the flush loop
+        if (this.flushInterval) {
+            clearInterval(this.flushInterval);
+            this.flushInterval = null;
+        }
+
+        // Cancel pending reconnects
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
+        // Clean up idle listeners
         this.cleanupIdleListeners();
+
+        // Clean up awareness
+        this.cleanupLocalAwareness();
+
+        // Flush any remaining updates
         this.flush();
+
+        // Remove our event handlers
         this.doc.off("update", this.onThrottledUpdate);
         this.awareness.off("update", this.onThrottledAwareness);
+        this.off('status', this.onStatusChange);
 
+        // Call parent destroy
         super.destroy();
+
+        console.log("[WS] Provider destroyed");
     }
 }
 

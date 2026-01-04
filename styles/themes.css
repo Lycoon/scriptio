@@ -1,5 +1,5 @@
 html.light {
-    --primary: #ededf3;
+    --primary: #f3f3f3;
     --secondary: #ffffff;
     --tertiary: #d6d6d6;
 
@@ -10,7 +10,7 @@ html.light {
     --primary-text: #1a1a1c;
     --secondary-text: #64748b;
 
-    --separator: #e2e8f0;
+    --separator: #d6d6d6;
     --input-outline: #cbd5e1;
     --navbar-outline: #e2e8f0;
     --header-background: #ffffff;
@@ -34,8 +34,7 @@ html.light {
     --editor-style-bg-hover: #f1f5f9;
     --editor-style-bg-active: #f1f5f9;
     --editor-element-hover: #f8fafc;
-
-    --upload-bg-hover: #f1f5f9;
+    --editor-shadow: rgba(0, 0, 0, 0.15);
 }
 
 html.dark {
@@ -74,6 +73,7 @@ html.dark {
     --editor-style-bg-hover: #3c3c3c;
     --editor-style-bg-active: #5d5d5d;
     --editor-element-hover: #eeeeee;
+    --editor-shadow: rgba(0, 0, 0, 0.4);
 
     --shadow-s:
     inset 0 1px 2px #ffffff30,

@@ -70,10 +70,12 @@ const Navbar = () => {
     return (
         <nav className={join(navbar.container)}>
             <nav className={navbar.left_btns}>
-                <div className={navbar.back_btn} onClick={() => redirectHome()}>
-                    <CircleArrowLeft size={18} />
-                    <p>Home</p>
-                </div>
+                {isInProject &&
+                    <div className={navbar.back_btn} onClick={() => redirectHome()}>
+                        <CircleArrowLeft size={18} />
+                        <p>Home</p>
+                    </div>
+                }
                 {isInProject && membership &&
                     <div className={navbar.navBtns}>
                         <p className={`${getNavStyle("screenplay")}`} onClick={() => { page !== Page.Screenplay && redirectScreenplay(membership.project.id) }}>Screenplay</p>

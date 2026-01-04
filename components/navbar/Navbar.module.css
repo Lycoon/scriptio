@@ -100,7 +100,7 @@
 }
 
 .back_btn:hover {
-    background-color: var(--primary-hover);
+    background-color: var(--secondary-hover);
 }
 
 .title_box {

@@ -18,7 +18,7 @@
 
 .slot {
     background: var(--primary);
-    border: 1px solid var(--separator);
+    border: 2px solid var(--separator);
     border-radius: 10px;
     height: 56px;
     display: flex;
@@ -27,7 +27,6 @@
 }
 
 .slot.empty {
-    background: var(--primary);
     border-style: dashed;
 }
 
@@ -147,7 +146,7 @@
     background: transparent;
     border: none;
     padding: 0;
-    color: white;
+    color: var(--primary-text);
     font-size: 0.9rem;
     outline: none;
     height: 56px;

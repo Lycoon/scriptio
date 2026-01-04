@@ -1,9 +1,9 @@
-import { TDocumentDefinitions } from "pdfmake/interfaces";
-import * as pdfMake from "pdfmake/build/pdfmake";
+import { TDocumentDefinitions, TFontDictionary } from "pdfmake/interfaces";
 import { ExportData, ExportDataPDF } from "@src/lib/converters/utils";
 import { BASE_URL } from "@src/lib/utils/constants";
+import * as pdfMake from "pdfmake/build/pdfmake";
 
-const fonts = {
+const FONTS: TFontDictionary = {
     CourierPrime: {
         normal: `${BASE_URL}/fonts/CourierPrimeRegular.ttf`,
         bold: `${BASE_URL}/fonts/CourierPrimeBold.ttf`,
@@ -56,33 +56,38 @@ const initPDF = (exportData: ExportData, pdfNodes: any[]): TDocumentDefinitions 
         info: {
             author: exportData.author,
         },
+        header: (currentPage, pageCount, pageSize) => {
+            return [{
+                text: `${currentPage}.`,
+                alignment: "right",
+                marginRight: 96,
+                marginTop: 48
+            }]
+        },
         content: pdfNodes,
-        pageMargins: [105, 70, 70, 70],
+        pageMargins: [144, 96, 96, 96],
+        pageSize: "A4",
         defaultStyle: {
             font: "CourierPrime",
             fontSize: 12,
-            alignment: "left",
-            characterSpacing: -0.4,
+            alignment: "left"
         },
         styles: {
             scene: {
                 bold: true,
-                fillColor: "#e4e4e4",
-                lineHeight: 0.85,
-                margin: [4, 0, 0, 0],
             },
             note: {
                 fillColor: exportData.notesColor ?? "#FFFF68",
                 margin: [6, 0, 0, 0],
             },
             character: {
-                margin: [170, 0, 0, 0],
+                margin: [211, 0, 0, 0],
             },
             dialogue: {
-                margin: [100, 0, 100, 0],
+                margin: [115, 0, 100, 0],
             },
             parenthetical: {
-                margin: [140, 0],
+                margin: [182, 0],
             },
             action: {
                 margin: [0, 0, 0, DEFAULT_OFFSET],
@@ -109,7 +114,7 @@ const initPDF = (exportData: ExportData, pdfNodes: any[]): TDocumentDefinitions 
  * @param author screenplay author
  * @param json editor content JSON
  */
-export const exportToPDF = async (json: any, exportData: ExportDataPDF): Promise<pdfMake.TCreatedPdf> => {
+export const exportToPDF = async (json: any, exportData: ExportDataPDF) => {
     const characters = exportData.characters;
     const nodes = json.content!;
     let pdfNodes = [];
@@ -142,7 +147,7 @@ export const exportToPDF = async (json: any, exportData: ExportDataPDF): Promise
 
         switch (type) {
             case "scene":
-                pdfNodes.push(getPDFTableTemplate(text.toUpperCase(), "scene"));
+                pdfNodes.push(getPDFNodeTemplate("scene", text.toUpperCase()));
                 addOffset(pdfNodes);
                 break;
             case "character":
@@ -185,5 +190,5 @@ export const exportToPDF = async (json: any, exportData: ExportDataPDF): Promise
         };
     }
 
-    return pdfMake.createPdf(pdf, undefined, fonts);
+    return pdfMake.createPdf(pdf, undefined, FONTS);
 };
