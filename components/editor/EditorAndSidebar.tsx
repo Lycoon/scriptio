@@ -9,7 +9,7 @@ import { join } from "@src/lib/utils/misc";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 /* Utils */
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { UserContext } from "@src/context/UserContext";
 import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 
@@ -17,15 +17,14 @@ import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 import styles from "./EditorAndSidebar.module.css";
 import { EditorContent } from "@node_modules/@tiptap/react/dist";
 import Loading from "@components/utils/Loading";
-import { useSettings, useShortcutHandler } from "@src/lib/utils/hooks";
-import { tinykeys } from "@node_modules/tinykeys/dist/tinykeys";
+import { useGlobalShortcuts, useSettings } from "@src/lib/utils/hooks";
 
 type EditorAndSidebarProps = {
     project: ProjectMembershipPayload["project"];
 };
 
 const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
-    const userCtx = useContext(UserContext);
+    const { isZenMode, updateIsZenMode, updateContextMenu } = useContext(UserContext);
     const { settings } = useSettings();
 
     const [isEditorReady, setIsEditorReady] = useState(false);
@@ -47,21 +46,25 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         if (applyStyle && editor) applyElement(editor, element);
     };
 
+    const globalActions = useMemo(
+        () => ({
+            toggleFocusMode: () => updateIsZenMode((prev) => !prev),
+            saveProject: () => console.log("Project Saved"),
+        }),
+        []
+    );
+
+    useGlobalShortcuts(settings?.keybinds, globalActions);
+
     const editor = useScriptioEditor(
         project,
         setActiveElement,
         setSelectedStyles,
         updateSuggestions,
-        updateSuggestionData
+        updateSuggestionData,
+        settings?.keybinds,
+        globalActions
     );
-
-    useShortcutHandler(settings?.keybinds, editor);
-
-    useEffect(() => {
-        tinykeys(window, {
-            "Mod+b": () => { console.log("Mod+b"); }
-        })
-    })
 
     useEffect(() => {
         if (editor) {
@@ -85,11 +88,16 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
                     const currNode = node.attrs.class as ScreenplayElement;
 
                     if (event.key === "Backspace") {
-                        if (currNode === ScreenplayElement.Scene && nodeSize === 1 && nodePos === 1) {
+                        // When deleting the last character, manually delete just the character.
+                        // This prevents an issue where paragraphs with display: inline-block
+                        // get deleted entirely instead of becoming empty.
+                        if (nodeSize === 1 && nodePos === 1) {
                             const tr = view.state.tr.delete(selection.from - 1, selection.from);
                             view.dispatch(tr);
                             return true;
                         }
+
+                        return false;
                     }
 
                     if (event.code === "Space") {
@@ -165,7 +173,7 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
 
         // Escape
         if (e.key === "Escape") {
-            userCtx.updateContextMenu(undefined);
+            updateContextMenu(undefined);
             updateSuggestions([]);
         }
     };
@@ -191,10 +199,10 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
             <Popup />
             <EditorSidebarNavigation />
             <div className={`${styles.container}`} onScroll={onScroll}>
-                { /* Upper editor shadow */}
+                {/* Upper editor shadow */}
                 <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
 
-                { /* Scriptio Editor */}
+                {/* Scriptio Editor */}
                 <div className={isEditorReady ? styles.visible : styles.hidden}>
                     <EditorContent editor={editor} />
                 </div>

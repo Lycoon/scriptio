@@ -145,7 +145,9 @@ export class ScreenplayRoom extends DurableObject {
             const timeSinceActivity = now - session.lastActivity;
 
             if (timeSinceActivity > STALE_AWARENESS_TIMEOUT_MS) {
-                console.log(`[Room] Session for user ${session.userId} is stale (${timeSinceActivity}ms since activity)`);
+                console.log(
+                    `[Room] Session for user ${session.userId} is stale (${timeSinceActivity}ms since activity)`
+                );
                 staleClientIds.push(...session.clientIds);
                 staleSockets.push(socket);
             }
@@ -224,10 +226,7 @@ export class ScreenplayRoom extends DurableObject {
                 this.sessions.delete(socket);
             }
 
-            this.ctx.storage.sql.exec(
-                "INSERT OR IGNORE INTO blacklist (user_id) VALUES (?);",
-                userId
-            );
+            this.ctx.storage.sql.exec("INSERT OR IGNORE INTO blacklist (user_id) VALUES (?);", userId);
 
             console.log(`[Room] Blacklisted user ${userId}`);
             return new Response(`User ${userId} blacklisted.`, { status: 200 });
@@ -242,10 +241,7 @@ export class ScreenplayRoom extends DurableObject {
 
             const wasBlacklisted = this.blacklist.delete(userId);
             if (wasBlacklisted) {
-                this.ctx.storage.sql.exec(
-                    "DELETE FROM blacklist WHERE user_id = ?;",
-                    userId
-                );
+                this.ctx.storage.sql.exec("DELETE FROM blacklist WHERE user_id = ?;", userId);
             }
 
             console.log(`[Room] Allowed user ${userId}`);
@@ -290,7 +286,7 @@ export class ScreenplayRoom extends DurableObject {
             this.sessions.set(server, {
                 clientIds: new Set(),
                 userId,
-                lastActivity: Date.now()
+                lastActivity: Date.now(),
             });
             this.userConnections.set(userId, server);
 
@@ -342,10 +338,7 @@ export class ScreenplayRoom extends DurableObject {
     async saveToDisk(): Promise<void> {
         try {
             const fullDocState = Y.encodeStateAsUpdate(this.doc);
-            this.ctx.storage.sql.exec(
-                "INSERT OR REPLACE INTO project (id, data) VALUES (1, ?);",
-                fullDocState
-            );
+            this.ctx.storage.sql.exec("INSERT OR REPLACE INTO project (id, data) VALUES (1, ?);", fullDocState);
             this.saveTimeout = null;
             console.log("[Room] Document saved to disk");
         } catch (e) {
@@ -389,10 +382,7 @@ export class ScreenplayRoom extends DurableObject {
     private broadcastAwarenessRemoval(clientIds: number[], excludeSocket?: WebSocket): void {
         const encoder = encoding.createEncoder();
         encoding.writeVarUint(encoder, 1);
-        encoding.writeVarUint8Array(
-            encoder,
-            awarenessProtocol.encodeAwarenessUpdate(this.awareness, clientIds)
-        );
+        encoding.writeVarUint8Array(encoder, awarenessProtocol.encodeAwarenessUpdate(this.awareness, clientIds));
         this.broadcast(encoding.toUint8Array(encoder), excludeSocket);
     }
 
@@ -440,7 +430,7 @@ export default {
         const url = new URL(request.url);
 
         // Extract project ID from path (handle trailing slashes and nested paths)
-        const pathParts = url.pathname.split('/').filter(p => p && p !== 'blacklist' && p !== 'allow');
+        const pathParts = url.pathname.split("/").filter((p) => p && p !== "blacklist" && p !== "allow");
         const projectId = pathParts[0] || "default";
 
         // Blacklist/Allow endpoints

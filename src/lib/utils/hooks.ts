@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import Router, { useRouter } from "next/router";
 import { CookieUser, UserSettings } from "./types";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -8,7 +8,7 @@ import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/
 import { KeyBindingMap, tinykeys } from "tinykeys";
 import { Editor } from "@tiptap/core";
 import { applyElement } from "../editor/editor";
-import { DEFAULT_KEYBINDS } from "./settings";
+import { DEFAULT_KEYBINDS, executeAction } from "./settings";
 
 const useDesktop = (): boolean => {
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
@@ -121,71 +121,51 @@ const usePage = (): Page | undefined => {
             // Fallback for 404s or unknown routes
             setPage(Page.Index);
         }
-
     }, [router.pathname, router.isReady]);
 
     return page;
 };
 
-export const useShortcutHandler = (
-    userShortcuts: Record<string, string> | undefined,
-    editor: Editor | null
-) => {
-    useEffect(() => {
-        if (!editor) return;
-        const keyBindingMap: KeyBindingMap = {};
-        const userKeybinds = userShortcuts || {};
+export const useEffectiveKeybinds = (userShortcuts: Record<string, string> | undefined) => {
+    return useMemo(() => {
+        const merged: Record<string, string> = {};
+        Object.keys(DEFAULT_KEYBINDS).forEach((id) => {
+            merged[id] = userShortcuts && userShortcuts[id] ? userShortcuts[id] : DEFAULT_KEYBINDS[id].defaultCombo;
+        });
+        return merged;
+    }, [userShortcuts]);
+};
 
-        Object.entries(DEFAULT_KEYBINDS).forEach(([id, keybind]) => {
-            const combo = userKeybinds[id] || keybind.defaultCombo;
+export const useGlobalShortcuts = (
+    userShortcuts: Record<string, string> | undefined,
+    context: { toggleFocusMode: () => void; saveProject: () => void }
+) => {
+    const effectiveKeybinds = useEffectiveKeybinds(userShortcuts);
+
+    useEffect(() => {
+        const keyBindingMap: KeyBindingMap = {};
+
+        Object.entries(DEFAULT_KEYBINDS).forEach(([id, def]) => {
+            // Only bind global shortcuts to the window
+            // Editor-only shortcuts are bound with TipTap extension
+            if (def.scope !== "global") return;
+
+            const combo = effectiveKeybinds[id];
             if (!combo) return;
 
-            // Overriding keybinds with user defined ones
-            keyBindingMap[combo] = () => {
-                console.log("id: ", id, " keybind: ", keybind);
+            keyBindingMap[combo] = (event: KeyboardEvent) => {
+                event.preventDefault();
 
-                if (!editor.isFocused) return;
-
-                //event.preventDefault();
-                switch (id) {
-                    case 'screenplay_scene':
-                        console.log("applying scene");
-                        applyElement(editor, ScreenplayElement.Scene);
-                        break;
-                    case 'screenplay_action':
-                        applyElement(editor, ScreenplayElement.Action);
-                        break;
-                    case 'screenplay_character':
-                        applyElement(editor, ScreenplayElement.Character);
-                        break;
-                    case 'screenplay_dialogue':
-                        applyElement(editor, ScreenplayElement.Dialogue);
-                        break;
-                    case 'screenplay_parenthetical':
-                        applyElement(editor, ScreenplayElement.Parenthetical);
-                        break;
-                    case 'screenplay_transition':
-                        applyElement(editor, ScreenplayElement.Transition);
-                        break;
-                    case 'screenplay_section':
-                        applyElement(editor, ScreenplayElement.Section);
-                        break;
-                    case 'screenplay_note':
-                        applyElement(editor, ScreenplayElement.Note);
-                        break;
-                    default:
-                        console.warn(`Unknown shortcut ID: ${id} set to ${keybind}`);
-                }
+                executeAction(id, {
+                    editor: null,
+                    toggleFocusMode: context.toggleFocusMode,
+                    saveProject: context.saveProject,
+                });
             };
         });
 
-        // const target = editor.view.dom;
-        const unsubscribe = tinykeys(window, keyBindingMap);
-
-        return () => {
-            unsubscribe();
-        };
-    }, [userShortcuts, editor]);
+        return tinykeys(window, keyBindingMap);
+    }, [effectiveKeybinds, context]);
 };
 
 export {

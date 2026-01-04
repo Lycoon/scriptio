@@ -30,7 +30,7 @@ Originally developed by John August - johnaugust.com
     margin-bottom: 30%;
     left: 50%;
     transform: translateX(-50%);
-    
+
     /* Screenplay margins */
     border: none !important;
     background-color: var(--editor-script-bg) !important;
@@ -38,8 +38,14 @@ Originally developed by John August - johnaugust.com
     /* Prevent outline from appearing when focused on screenplay */
     outline: none;
 
-    /* Default screenplay text attributes */
-    p, span {
+    /* Default screenplay paragraph attributes - direct children only
+       Critical: inline-block + width:100% ensures consistent sizing between empty 
+       and non-empty nodes, preventing pagination flickering and infinite loops.
+       Scoped with > to avoid affecting pagination header/footer elements */
+    > p {
+        display: inline-block;
+        vertical-align: top;
+        width: 100%;
         color: var(--editor-text);
         font-family: var(--font-courier), monospace;
         font-size: 12pt;
@@ -47,6 +53,20 @@ Originally developed by John August - johnaugust.com
         line-height: 17px !important;
         min-height: 1lh;
         margin-bottom: 17px;
+    }
+
+    /* Spans inside paragraphs - NO display/width overrides 
+       These must remain inline (default) to not break text flow */
+    > p span {
+        color: var(--editor-text);
+        font-family: var(--font-courier), monospace;
+        font-size: 12pt;
+        line-height: 17px !important;
+    }
+
+    .page-number,
+    .page-number > * {
+        font-family: var(--font-courier), monospace;
     }
 
     /* Editor styles */
@@ -72,26 +92,18 @@ Originally developed by John August - johnaugust.com
 
     /* Screenplay elements */
     .is-empty > br.ProseMirror-trailingBreak {
-        display: none; 
+        display: none;
     }
 
     .is-empty {
         cursor: text;
         background-color: transparent; /* Catches the click */
         overflow: hidden;
-
-        /* Critical: if width absent, the removal of last character on 3rd page and beyond
-        will cause an infinite loop in tiptap-pagination-plus extension. */
-        width: 100%;
-        display: inline-block;
-        min-height: 1lh;
     }
 
     .scene {
         background-color: none;
-        width: 100%;
         margin-top: 1lh;
-        display: inline-block;
         text-transform: uppercase;
         font-weight: bold;
         counter-increment: scenenumber;
@@ -103,23 +115,27 @@ Originally developed by John August - johnaugust.com
         margin-left: -70px;
     }
 
+    /* Dialogue block adjacent spacing
+       With inline-block elements, margins don't collapse. Instead of using 
+       negative margin-top on the following element, we remove margin-bottom 
+       from the preceding element using :has() */
+    .character:has(+ .parenthetical),
+    .character:has(+ .dialogue) {
+        margin-bottom: 0 !important;
+    }
+
+    .dialogue:has(+ .parenthetical) {
+        margin-bottom: 0 !important;
+    }
+
     /* Dialogue */
     .dialogue {
         padding-inline: 1.2in !important;
     }
 
-    .dialogue + .parenthetical {
-        margin-top: -1lh !important;
-    }
-
     .character {
         padding-left: 2.2in !important;
         text-transform: uppercase;
-    }
-
-    .character + .parenthetical,
-    .character + .dialogue {
-        margin-top: -1lh !important;
     }
 
     /* Parenthetical */
@@ -135,9 +151,9 @@ Originally developed by John August - johnaugust.com
 
         /* Shenanigans to have cursor between both parenthesis otherwise it appears before first */
         position: absolute;
-        top: 0; 
+        top: 0;
         left: 1.9in;
-        margin-left: calc(-1ch); 
+        margin-left: calc(-1ch);
         pointer-events: none;
     }
 
@@ -219,9 +235,9 @@ Originally developed by John August - johnaugust.com
         pointer-events: none !important;
         user-select: none !important;
         -webkit-user-select: none !important;
-        
+
         /* Fix for Firefox selection glitch */
-        display: block; 
+        display: block;
         width: max-content;
     }
 }

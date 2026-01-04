@@ -24,15 +24,17 @@ import * as Node from "@src/Screenplay";
 import { ThrottledWebsocketProvider } from "../collaboration/utils";
 import { Placeholder } from "./placeholder-extension";
 import { PAGE_SIZES, PaginationPlus } from "@node_modules/tiptap-pagination-plus/dist";
+import { KeybindsExtension } from "./keybinds-extension";
+import { executeAction } from "../utils/settings";
 
 // ------------------------------ //
 //          TEXT EDITION          //
 // ------------------------------ //
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
-    if (style & Style.Bold) editor.commands.toggleBold();
-    if (style & Style.Italic) editor.commands.toggleItalic();
-    if (style & Style.Underline) editor.commands.toggleUnderline();
+    if (style & Style.Bold) editor.chain().toggleBold().focus().run();
+    if (style & Style.Italic) editor.chain().toggleItalic().focus().run();
+    if (style & Style.Underline) editor.chain().toggleUnderline().focus().run();
 };
 
 export const applyElement = (editor: Editor, element: ScreenplayElement) => {
@@ -106,37 +108,37 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 // ------------------------------ //
 
 export const SCREENPLAYER_PAPER_FORMATS = {
-    "Letter": {
+    Letter: {
         marginBottom: 96, // 1in
-        marginLeft: 144,  // 1.5in
-        marginRight: 96,  // 1in
+        marginLeft: 144, // 1.5in
+        marginRight: 96, // 1in
         pageHeight: PAGE_SIZES.LETTER.pageHeight,
         pageWidth: PAGE_SIZES.LETTER.pageWidth,
     },
-    "A4": {
+    A4: {
         marginBottom: 144, // 1.5in
-        marginLeft: 125,  // 1.3in
-        marginRight: 86,  // 0.9in
+        marginLeft: 125, // 1.3in
+        marginRight: 86, // 0.9in
         pageHeight: PAGE_SIZES.A4.pageHeight,
         pageWidth: PAGE_SIZES.A4.pageWidth,
     },
-}
+};
 
 export const SCRIPTIO_EXTENSIONS = [
     Document.configure({
         content: "Screenplay+",
     }),
     Placeholder.configure({
-        placeholder: ""
+        placeholder: "",
     }),
     PaginationPlus.configure({
         // Default Settings
         marginTop: 0,
         pageGap: 20,
-        headerRight: `<p style="margin-top: 50px;">{page}.</p>`,
+        headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
         footerRight: "",
         // Paper Format Dependent Settings
-        ...SCREENPLAYER_PAPER_FORMATS.Letter
+        ...SCREENPLAYER_PAPER_FORMATS.Letter,
     }),
     Text,
     Node.Screenplay,
@@ -217,7 +219,7 @@ const useLocal = (projectId: string) => {
         const doc = new Y.Doc();
         const localProvider = new IndexeddbPersistence(projectId, doc);
 
-        localProvider.on('synced', () => {
+        localProvider.on("synced", () => {
             console.log("Local IndexedDB synced");
             setIsLocalReady(true);
         });
@@ -320,7 +322,6 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
 
                 // Set provider state - this will trigger editor creation with the provider
                 setProvider(cloudProvider);
-
             } catch (e) {
                 console.error("Failed to initialize provider:", e);
                 if (isMountedRef.current) {
@@ -355,11 +356,7 @@ const useCloud = (projectId: string, doc: Y.Doc | null) => {
             if (provider) {
                 console.log("Destroying cloud provider...");
                 if (doc) {
-                    removeAwarenessStates(
-                        provider.awareness,
-                        [doc.clientID],
-                        "component unmount"
-                    );
+                    removeAwarenessStates(provider.awareness, [doc.clientID], "component unmount");
                 }
                 provider.destroy();
             }
@@ -374,13 +371,14 @@ export const useScriptioEditor = (
     setActiveElement: (element: ScreenplayElement, applyStyle: boolean) => void,
     setSelectedStyles: (style: Style) => void,
     updateSuggestions: (suggestions: string[]) => void,
-    updateSuggestionsData: (data: SuggestionData) => void
+    updateSuggestionsData: (data: SuggestionData) => void,
+    userKeybinds: Record<string, string> | undefined,
+    globalContext: { toggleFocusMode: () => void; saveProject: () => void }
 ) => {
     const projectCtx = useContext(ProjectContext);
     const { settings } = useSettings();
     const { ydoc } = useLocal(project.id);
     const { provider, refreshAndReconnect, users } = useCloud(project.id, ydoc);
-    console.log("users: ", users);
 
     const userInfo = useRef({
         name: settings?.online?.username || "User_" + Math.floor(Math.random() * 1000),
@@ -392,10 +390,8 @@ export const useScriptioEditor = (
             name: settings?.online?.username || userInfo.current.name,
             color: settings?.online?.color || userInfo.current.color,
         };
-
-        // Update awareness with new user info if provider exists
         if (provider) {
-            provider.awareness.setLocalStateField('user', userInfo.current);
+            provider.awareness.setLocalStateField("user", userInfo.current);
         }
     }, [settings?.online?.username, settings?.online?.color, provider]);
 
@@ -407,24 +403,36 @@ export const useScriptioEditor = (
                 ...(ydoc ? [Collaboration.configure({ document: ydoc })] : []),
                 ...(provider
                     ? [
-                        CollaborationCaret.configure({
-                            provider: provider,
-                            user: userInfo.current,
-                            render: (user: any) => {
-                                const caret = document.createElement("span");
-                                caret.classList.add("collab-caret");
-                                caret.style.borderLeft = `2px solid ${user.color}`;
-                                const label = document.createElement("div");
-                                label.classList.add("collab-caret-label");
-                                label.style.backgroundColor = user.color;
-                                label.innerText = user.name;
-                                label.contentEditable = "false";
-                                caret.appendChild(label);
-                                return caret;
-                            },
-                        }),
-                    ]
+                          CollaborationCaret.configure({
+                              provider: provider,
+                              user: userInfo.current,
+                              render: (user: any) => {
+                                  const caret = document.createElement("span");
+                                  caret.classList.add("collab-caret");
+                                  caret.style.borderLeft = `2px solid ${user.color}`;
+                                  const label = document.createElement("div");
+                                  label.classList.add("collab-caret-label");
+                                  label.style.backgroundColor = user.color;
+                                  label.innerText = user.name;
+                                  label.contentEditable = "false";
+                                  caret.appendChild(label);
+                                  return caret;
+                              },
+                          }),
+                      ]
                     : []),
+                KeybindsExtension.configure({
+                    userKeybinds: userKeybinds || {},
+
+                    // The extension gives us the ID and the Editor Instance
+                    onAction: (id, editorInstance) => {
+                        executeAction(id, {
+                            editor: editorInstance,
+                            toggleFocusMode: globalContext.toggleFocusMode,
+                            saveProject: globalContext.saveProject,
+                        });
+                    },
+                }),
             ],
 
             // Update on each screenplay update

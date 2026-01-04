@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useState } from "react";
+import { createContext, Dispatch, ReactNode, SetStateAction, useState } from "react";
 import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
 import { PopupData, PopupUnionData } from "@src/lib/editor/popup";
 import { UserTheme } from "@src/lib/utils/types";
@@ -7,7 +7,7 @@ export type UserContextType = {
     theme: UserTheme;
     updateTheme: (theme: UserTheme) => void;
     isZenMode: boolean;
-    updateIsZenMode: (isZenMode: boolean) => void;
+    updateIsZenMode: Dispatch<SetStateAction<boolean>>;
     contextMenu: ContextMenuProps | undefined;
     updateContextMenu: (contextMenu: ContextMenuProps | undefined) => void;
     popup: PopupData<PopupUnionData> | undefined;
@@ -18,15 +18,15 @@ export type UserContextType = {
 
 const contextDefaults: UserContextType = {
     theme: "dark",
-    updateTheme: () => { },
+    updateTheme: () => {},
     isZenMode: false,
-    updateIsZenMode: () => { },
+    updateIsZenMode: () => {},
     contextMenu: undefined,
-    updateContextMenu: () => { },
+    updateContextMenu: () => {},
     popup: undefined,
-    updatePopup: () => { },
+    updatePopup: () => {},
     isDesktop: false,
-    updateIsDesktop: () => { },
+    updateIsDesktop: () => {},
 };
 
 type UserContextProps = {

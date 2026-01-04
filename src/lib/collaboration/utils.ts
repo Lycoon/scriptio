@@ -17,16 +17,16 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private updateQueue: Uint8Array[] = [];
     private awarenessQueue: Set<number> = new Set();
     private flushInterval: ReturnType<typeof setInterval> | null = null;
-    private lastFlushTime: number = 0;  // Milliseconds (Date.now())
+    private lastFlushTime: number = 0; // Milliseconds (Date.now())
     private lastMessageTime: number = 0; // Milliseconds (Date.now())
     private userIdleTimer: ReturnType<typeof setTimeout> | null = null;
 
     // Throttling configuration (all in milliseconds)
-    private readonly SOLO_USER_UPDATE_MS = 15000;     // 15s when alone
-    private readonly MULTI_USER_UPDATE_MS = 250;      // 250ms with others
+    private readonly SOLO_USER_UPDATE_MS = 15000; // 15s when alone
+    private readonly MULTI_USER_UPDATE_MS = 250; // 250ms with others
     private readonly MAX_SILENCE_DURATION_MS = 20000; // 20s max silence before ping
     private readonly MAX_IDLE_DURATION_MS = 10 * 60 * 1000; // 10 minutes idle timeout
-    private readonly FLUSH_CHECK_INTERVAL_MS = 100;   // Check flush every 100ms
+    private readonly FLUSH_CHECK_INTERVAL_MS = 100; // Check flush every 100ms
 
     private readonly ACTIVITY_EVENTS = ["mousedown", "mousemove", "keydown", "touchstart", "scroll"];
 
@@ -66,7 +66,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         };
 
         // Handle connection status changes
-        this.on('status', this.onStatusChange);
+        this.on("status", this.onStatusChange);
 
         // Start background processes
         this.startFlushLoop();
@@ -81,7 +81,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private onStatusChange = (event: { status: string }) => {
         console.log(`[WS] Status changed: ${event.status}`);
 
-        if (event.status === 'connected') {
+        if (event.status === "connected") {
             this.reconnectAttempts = 0;
             this.isIdleDisconnected = false;
             this.lastMessageTime = Date.now(); // Reset so we don't immediately ping
@@ -95,7 +95,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
             // Flush any pending updates
             this.flush();
-        } else if (event.status === 'disconnected') {
+        } else if (event.status === "disconnected") {
             // Clear the last known user count when disconnected
             this.lastKnownUserCount = 1;
         }
@@ -146,7 +146,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             // Update params with new token
             this.params = {
                 ...this.params,
-                token: newToken
+                token: newToken,
             };
             await this.reconnect();
         } catch (e) {
@@ -183,12 +183,12 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
                 // Set up connection listeners
                 const cleanup = () => {
-                    this.off('status', statusHandler);
-                    this.off('connection-error', onError);
+                    this.off("status", statusHandler);
+                    this.off("connection-error", onError);
                 };
 
                 const statusHandler = (e: { status: string }) => {
-                    if (e.status === 'connected') {
+                    if (e.status === "connected") {
                         cleanup();
                         resolve();
                     }
@@ -199,8 +199,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                     reject(err);
                 };
 
-                this.on('status', statusHandler);
-                this.on('connection-error', onError);
+                this.on("status", statusHandler);
+                this.on("connection-error", onError);
 
                 // Timeout after 10 seconds
                 const timeoutId = setTimeout(() => {
@@ -212,8 +212,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                 this.connect();
 
                 // Clear timeout on success
-                this.once('status', () => clearTimeout(timeoutId));
-
+                this.once("status", () => clearTimeout(timeoutId));
             } catch (e) {
                 console.warn("[WS] Failed to reconnect provider", e);
                 reject(e);
@@ -253,7 +252,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      * Set up activity listeners for idle detection
      */
     private setupIdleListeners(): void {
-        if (typeof window === 'undefined') return;
+        if (typeof window === "undefined") return;
 
         this.ACTIVITY_EVENTS.forEach((event) => {
             window.addEventListener(event, this.boundResetIdleTimer, { passive: true });
@@ -321,7 +320,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      * Remove activity listeners
      */
     private cleanupIdleListeners(): void {
-        if (typeof window === 'undefined') return;
+        if (typeof window === "undefined") return;
 
         this.ACTIVITY_EVENTS.forEach((event) => {
             window.removeEventListener(event, this.boundResetIdleTimer);
@@ -340,11 +339,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private cleanupLocalAwareness(): void {
         try {
             // Remove our awareness state
-            awarenessProtocol.removeAwarenessStates(
-                this.awareness,
-                [this.localClientId],
-                'local cleanup'
-            );
+            awarenessProtocol.removeAwarenessStates(this.awareness, [this.localClientId], "local cleanup");
 
             // Immediately send the removal if connected
             if (this.wsconnected && this.ws && this.ws.readyState === 1) {
@@ -375,7 +370,10 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     /**
      * Handle awareness updates (throttled)
      */
-    private onThrottledAwareness = ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }, origin: any): void => {
+    private onThrottledAwareness = (
+        { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
+        origin: any
+    ): void => {
         if (origin !== this) {
             const changedClients = [...added, ...updated, ...removed];
 
@@ -411,14 +409,14 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         // Check if we have pending updates to send
         if (this.updateQueue.length > 0 || this.awarenessQueue.size > 0) {
             const userCount = this.getActiveUserCount();
-            const requiredDelay = userCount <= 1
-                ? this.SOLO_USER_UPDATE_MS
-                : this.MULTI_USER_UPDATE_MS;
+            const requiredDelay = userCount <= 1 ? this.SOLO_USER_UPDATE_MS : this.MULTI_USER_UPDATE_MS;
 
             const timeSinceLastFlush = now - this.lastFlushTime;
 
             if (timeSinceLastFlush >= requiredDelay) {
-                console.log(`[WS] Flushing after ${timeSinceLastFlush}ms (threshold: ${requiredDelay}ms, users: ${userCount})`);
+                console.log(
+                    `[WS] Flushing after ${timeSinceLastFlush}ms (threshold: ${requiredDelay}ms, users: ${userCount})`
+                );
                 this.flush();
             }
         }
@@ -544,7 +542,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         // Remove our event handlers
         this.doc.off("update", this.onThrottledUpdate);
         this.awareness.off("update", this.onThrottledAwareness);
-        this.off('status', this.onStatusChange);
+        this.off("status", this.onStatusChange);
 
         // Call parent destroy
         super.destroy();
