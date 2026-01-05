@@ -25,7 +25,7 @@ import { ThrottledWebsocketProvider } from "../collaboration/utils";
 import { Placeholder } from "./placeholder-extension";
 import { PAGE_SIZES, PaginationPlus } from "@node_modules/tiptap-pagination-plus/dist";
 import { KeybindsExtension } from "./keybinds-extension";
-import { executeAction } from "../utils/settings";
+import { executeKeybindAction, KeybindId } from "../utils/keybinds";
 
 // ------------------------------ //
 //          TEXT EDITION          //
@@ -426,7 +426,7 @@ export const useScriptioEditor = (
 
                     // The extension gives us the ID and the Editor Instance
                     onAction: (id, editorInstance) => {
-                        executeAction(id, {
+                        executeKeybindAction(id, {
                             editor: editorInstance,
                             toggleFocusMode: globalContext.toggleFocusMode,
                             saveProject: globalContext.saveProject,

@@ -8,7 +8,7 @@ import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/
 import { KeyBindingMap, tinykeys } from "tinykeys";
 import { Editor } from "@tiptap/core";
 import { applyElement } from "../editor/editor";
-import { DEFAULT_KEYBINDS, executeAction } from "./settings";
+import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
 
 const useDesktop = (): boolean => {
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
@@ -129,25 +129,24 @@ const usePage = (): Page | undefined => {
 export const useEffectiveKeybinds = (userShortcuts: Record<string, string> | undefined) => {
     return useMemo(() => {
         const merged: Record<string, string> = {};
-        Object.keys(DEFAULT_KEYBINDS).forEach((id) => {
+        (Object.keys(DEFAULT_KEYBINDS) as Array<KeybindId>).forEach((id) => {
             merged[id] = userShortcuts && userShortcuts[id] ? userShortcuts[id] : DEFAULT_KEYBINDS[id].defaultCombo;
         });
         return merged;
     }, [userShortcuts]);
 };
 
-export const useGlobalShortcuts = (
-    userShortcuts: Record<string, string> | undefined,
+export const useGlobalKeybinds = (
+    userKeybinds: Record<string, string> | undefined,
     context: { toggleFocusMode: () => void; saveProject: () => void }
 ) => {
-    const effectiveKeybinds = useEffectiveKeybinds(userShortcuts);
+    const effectiveKeybinds = useEffectiveKeybinds(userKeybinds);
 
     useEffect(() => {
         const keyBindingMap: KeyBindingMap = {};
 
         Object.entries(DEFAULT_KEYBINDS).forEach(([id, def]) => {
-            // Only bind global shortcuts to the window
-            // Editor-only shortcuts are bound with TipTap extension
+            const keyId = id as KeybindId;
             if (def.scope !== "global") return;
 
             const combo = effectiveKeybinds[id];
@@ -156,7 +155,7 @@ export const useGlobalShortcuts = (
             keyBindingMap[combo] = (event: KeyboardEvent) => {
                 event.preventDefault();
 
-                executeAction(id, {
+                executeKeybindAction(keyId, {
                     editor: null,
                     toggleFocusMode: context.toggleFocusMode,
                     saveProject: context.saveProject,

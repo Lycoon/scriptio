@@ -1,10 +1,10 @@
 import { Extension, Editor } from "@tiptap/core";
-import { DEFAULT_KEYBINDS, DefaultKeyBind, toTipTapKeybind } from "../utils/settings";
+import { DEFAULT_KEYBINDS, DefaultKeyBind, KeybindId, toTipTapKeybind } from "../utils/keybinds";
 
 interface KeybindOptions {
     userKeybinds: Record<string, string>;
     // Update the signature to accept the Editor instance
-    onAction: (id: string, editor: Editor) => void;
+    onAction: (id: KeybindId, editor: Editor) => void;
 }
 
 export const KeybindsExtension = Extension.create<KeybindOptions>({
@@ -23,7 +23,7 @@ export const KeybindsExtension = Extension.create<KeybindOptions>({
         const shortcuts: Record<string, () => boolean> = {};
         const userMap = this.options.userKeybinds;
 
-        (Object.keys(DEFAULT_KEYBINDS) as Array<keyof DefaultKeyBind>).forEach((id) => {
+        (Object.keys(DEFAULT_KEYBINDS) as Array<KeybindId>).forEach((id) => {
             const def = DEFAULT_KEYBINDS[id];
             if (def.scope === "global") return;
 

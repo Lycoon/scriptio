@@ -8,7 +8,7 @@ import styles from "./KeybindsSettings.module.css";
 import { useSettings } from "@src/lib/utils/hooks";
 import { tinykeys } from "@node_modules/tinykeys/dist/tinykeys";
 import { editUserSettings } from "@src/lib/utils/requests";
-import { DEFAULT_KEYBINDS, DefaultKeyBind, prettyPrintKeybind, UserKeybindsMap } from "@src/lib/utils/settings";
+import { DEFAULT_KEYBINDS, DefaultKeyBind, prettyPrintKeybind, UserKeybindsMap } from "@src/lib/utils/keybinds";
 
 export type KeybindElementProps = {
     id: string;
@@ -20,7 +20,15 @@ export type KeybindElementProps = {
     tempCombo: string | null;
 };
 
-const KeybindElement = ({ id, kb, current, tempCombo, resetBinding, isListening, startListening }: KeybindElementProps) => {
+const KeybindElement = ({
+    id,
+    kb,
+    current,
+    tempCombo,
+    resetBinding,
+    isListening,
+    startListening,
+}: KeybindElementProps) => {
     const effective = current || kb.defaultCombo;
 
     return (
@@ -34,7 +42,7 @@ const KeybindElement = ({ id, kb, current, tempCombo, resetBinding, isListening,
                 <div
                     role="button"
                     tabIndex={0}
-                    className={`${styles.keyArea} ${isListening ? styles.listening : ""}`}
+                    className={styles.keyArea}
                     onClick={() => startListening(id)}
                     onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -55,7 +63,12 @@ const KeybindElement = ({ id, kb, current, tempCombo, resetBinding, isListening,
                 </div>
 
                 <div className={styles.keyAreaActions}>
-                    <button type="button" className={styles.clearBtn} onClick={() => resetBinding(id)} title="Clear user binding">
+                    <button
+                        type="button"
+                        className={styles.clearBtn}
+                        onClick={() => resetBinding(id)}
+                        title="Clear user binding"
+                    >
                         Reset
                     </button>
                 </div>
@@ -202,7 +215,7 @@ const KeybindsSettings = () => {
     const saveChanges = () => {
         setHasUpdatedKeybinds(false);
         editUserSettings({ keybinds: userKeybinds });
-    }
+    };
 
     return (
         <div className={sharedStyles.settingsForm}>
@@ -231,10 +244,19 @@ const KeybindsSettings = () => {
             </div>
 
             <div className={sharedStyles.formActions}>
-                <button type="button" onClick={resetDefaults} className={`${sharedStyles.formBtn} ${sharedStyles.danger}`}>
+                <button
+                    type="button"
+                    onClick={resetDefaults}
+                    className={`${sharedStyles.formBtn} ${sharedStyles.danger}`}
+                >
                     Reset to defaults
                 </button>
-                <button type="button" onClick={saveChanges} disabled={!hasUpdatedKeybinds} className={`${sharedStyles.formBtn} ${sharedStyles.success}`}>
+                <button
+                    type="button"
+                    onClick={saveChanges}
+                    disabled={!hasUpdatedKeybinds}
+                    className={`${sharedStyles.formBtn} ${sharedStyles.success}`}
+                >
                     Save changes
                 </button>
             </div>

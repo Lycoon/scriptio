@@ -25,9 +25,21 @@ export const toTipTapKeybind = (keybind: string): string => {
     return tipTapKeybind;
 };
 
+export type KeybindId =
+    | "save_project"
+    | "toggle_focus_mode"
+    | "screenplay_scene"
+    | "screenplay_action"
+    | "screenplay_character"
+    | "screenplay_dialogue"
+    | "screenplay_parenthetical"
+    | "screenplay_transition"
+    | "screenplay_section"
+    | "screenplay_note";
+
 export type KeybindScope = "global" | "editor";
 export type DefaultKeyBind = { label: string; defaultCombo: string; description: string; scope: KeybindScope };
-export type DefaultKeybindsMap = Record<string, DefaultKeyBind>;
+export type DefaultKeybindsMap = Record<KeybindId, DefaultKeyBind>;
 export type UserKeybindsMap = Record<string, string>; // id -> "ctrl+s" style
 
 export const DEFAULT_KEYBINDS: DefaultKeybindsMap = {
@@ -102,11 +114,11 @@ type ActionContext = {
     saveProject?: () => void; // Example global UI action
 };
 
-export const executeAction = (actionId: string, context: ActionContext): boolean => {
+export const executeKeybindAction = (keybindId: KeybindId, context: ActionContext): boolean => {
     const { editor, toggleFocusMode, saveProject } = context;
-    console.log("actionId: ", actionId);
+    console.log("actionId: ", keybindId);
 
-    switch (actionId) {
+    switch (keybindId) {
         // Global Actions
         case "save_project":
             if (saveProject) saveProject();

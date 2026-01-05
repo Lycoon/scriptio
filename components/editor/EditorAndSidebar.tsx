@@ -17,7 +17,7 @@ import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 import styles from "./EditorAndSidebar.module.css";
 import { EditorContent } from "@node_modules/@tiptap/react/dist";
 import Loading from "@components/utils/Loading";
-import { useGlobalShortcuts, useSettings } from "@src/lib/utils/hooks";
+import { useGlobalKeybinds, useSettings } from "@src/lib/utils/hooks";
 
 type EditorAndSidebarProps = {
     project: ProjectMembershipPayload["project"];
@@ -54,7 +54,7 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         []
     );
 
-    useGlobalShortcuts(settings?.keybinds, globalActions);
+    useGlobalKeybinds(settings?.keybinds, globalActions);
 
     const editor = useScriptioEditor(
         project,
