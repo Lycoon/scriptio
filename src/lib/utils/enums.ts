@@ -17,17 +17,13 @@ export enum PasswordRecoverStatus {
 export enum Page {
     // /{page}
     Index = "index",
-    Settings = "settings",
-    About = "about",
     Login = "login",
     Signup = "signup",
     Recover = "recover",
 
     // /projects/{id}/{page}
     Screenplay = "screenplay",
-    Statistics = "stats",
-    Edit = "edit",
-    Export = "export",
+    Statistics = "statistics",
 }
 
 // ------------------------------ //

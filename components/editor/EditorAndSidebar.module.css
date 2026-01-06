@@ -22,16 +22,16 @@
     left: 0;
 
     margin-inline: auto;
-    width: 800px;
+    width: 1000px;
     height: 40px;
-
     margin-bottom: -40px;
-    background: linear-gradient(to bottom, var(--editor-shadow) 0%, transparent 100%);
-    pointer-events: none;
-    z-index: 10;
 
     opacity: 0;
-    transition: opacity 0.3s ease;
+    z-index: 10;
+    pointer-events: none;
+
+    transition: opacity 0.7s ease;
+    background: radial-gradient(ellipse at top, var(--editor-shadow) 0%, transparent 85%);
 }
 
 .show_shadow {

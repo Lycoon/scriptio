@@ -20,12 +20,12 @@ export const redirectTitlePage = (projectId: string) => {
     Router.push(`/projects/${projectId}/title`);
 };
 
-export const redirectStory = (projectId: string) => {
-    Router.push(`/projects/${projectId}/story`);
+export const redirectBoard = (projectId: string) => {
+    Router.push(`/projects/${projectId}/board`);
 };
 
 export const redirectStatistics = (projectId: string) => {
-    Router.push(`/projects/${projectId}/stats`);
+    Router.push(`/projects/${projectId}/statistics`);
 };
 
 export const redirectReports = (projectId: string) => {
