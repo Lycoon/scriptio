@@ -3,25 +3,27 @@
 /* ==================== */
 
 .container {
+    cursor: pointer;
     width: 270px;
     aspect-ratio: 1.7;
     padding: 18px;
 
     border: none;
-    border-radius: 16px;
-    background-color: var(--secondary);
-    box-shadow: var(--project-item-shadow);
+    border-radius: 24px;
+    background-color: var(--project-item-bg);
 
-    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: var(--project-item-shadow);
 }
 
 .container:hover {
-    box-shadow: 0px 0px 8px 0px rgba(255, 255, 255, 0.65);
-    transition: box-shadow 0.2s;
+    transform: translateY(-8px);
+    box-shadow: var(--project-item-shadow-hover);
 }
 
 .container:active {
     transform: scale(0.97);
+    box-shadow: var(--project-item-shadow-active);
     transition: transform 0.07s;
 }
 
@@ -32,8 +34,9 @@
 .title {
     font-family: var(--font-josefin), sans-serif;
     font-weight: 400;
+    font-style: italic;
     font-size: 1.3rem;
-    max-width: 125px;
+    width: 130px;
     text-align: left;
 
     white-space: nowrap;
@@ -64,63 +67,7 @@
 }
 
 .poster {
-    width: 85px;
+    width: 75px;
     aspect-ratio: 0.675;
     border-radius: 6px;
-}
-
-/* ==================== */
-/*     Deletion mode    */
-/* ==================== */
-
-.delete {
-    border-style: dashed;
-    border-color: rgb(190, 73, 73);
-    border-width: 4px;
-
-    transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-    perspective: 1000px;
-
-    animation-duration: 1.3s;
-    animation-name: shake;
-    animation-delay: 0;
-    animation-iteration-count: infinite;
-    animation-direction: forward;
-}
-
-.delete:hover {
-    border-color: var(--seconday);
-    background-color: var(--secondary-hover);
-}
-
-.text_delete {
-    font-size: 1.4rem;
-}
-
-/* ==================== */
-/*       Animation      */
-/* ==================== */
-
-@keyframes shake {
-    10%,
-    90% {
-        transform: rotate(0.5deg);
-    }
-
-    20%,
-    80% {
-        transform: rotate(-0.5deg);
-    }
-
-    30%,
-    50%,
-    70% {
-        transform: rotate(0.5deg);
-    }
-
-    40%,
-    60% {
-        transform: rotate(-0.5deg);
-    }
 }

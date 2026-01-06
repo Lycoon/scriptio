@@ -35,14 +35,14 @@ export type ProjectUpdate = {
 
 /* User Settings */
 export interface UserSettings {
-    keybinds: Record<string, string>,
-    theme: UserTheme,
-    language: UserLanguage,
-    online: UserOnlineSettings
+    keybinds: Record<string, string>;
+    theme: UserTheme;
+    language: UserLanguage;
+    online: UserOnlineSettings;
 }
 
 export type UserLanguage = "en";
-export type UserTheme = "light" | "dark";
+export type UserTheme = "light" | "dark" | "latte" | "wonka";
 
 export interface UserOnlineSettings {
     color: string;

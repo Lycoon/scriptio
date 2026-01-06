@@ -9,7 +9,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Loading from "@components/utils/Loading";
 import { ThemeProvider } from "next-themes";
-import { useDesktop, useUser } from "@src/lib/utils/hooks";
+import { useUser } from "@src/lib/utils/hooks";
 
 import layout from "../components/utils/Layout.module.css";
 import { ProjectContextProvider } from "@src/context/ProjectContext";
@@ -20,7 +20,8 @@ import DashboardModal from "@components/dashboard/DashboardModal";
 import Navbar from "@components/navbar/Navbar";
 import LandingPageNavbar from "@components/navbar/LandingPageNavbar";
 
-const DESCRIPTION = "Imagine, tell, amaze. Scriptio is your screenwriting companion designed with simplicity in mind and no frills.";
+const DESCRIPTION =
+    "Imagine, tell, amaze. Scriptio is your screenwriting companion designed with simplicity in mind and no frills.";
 const TITLE = "Scriptio | Minimalist tool for perfectionist screenwriters";
 const TITLE_IMG = "https://scriptio.app/images/banner.png";
 const URL = "https://scriptio.app/";
@@ -35,7 +36,7 @@ const AppProviders = ({ children }: AppProvidersProps) => {
             value={{
                 revalidateOnFocus: false,
                 fetcher: fetchJson,
-                onSuccess: () => { },
+                onSuccess: () => {},
                 onError: (err) => {
                     console.error(err);
                 },
@@ -45,7 +46,13 @@ const AppProviders = ({ children }: AppProvidersProps) => {
                 <ProjectContextProvider>
                     <PopupContextProvider>
                         <DashboardContextProvider>
-                            <ThemeProvider attribute="class" defaultTheme="dark">
+                            <ThemeProvider
+                                attribute="class"
+                                disableTransitionOnChange
+                                defaultTheme="dark"
+                                themes={["dark", "light", "latte", "wonka"]}
+                                enableColorScheme={false}
+                            >
                                 {children}
                             </ThemeProvider>
                         </DashboardContextProvider>
@@ -54,7 +61,7 @@ const AppProviders = ({ children }: AppProvidersProps) => {
             </UserContextProvider>
         </SWRConfig>
     );
-}
+};
 
 const DesktopNavbar = () => {
     return (
@@ -90,7 +97,7 @@ const AppContent = ({ Component, pageProps }: AppProps) => {
             router.events.off("routeChangeStart", handleStart);
             router.events.off("routeChangeComplete", handleComplete);
             router.events.off("routeChangeError", handleComplete);
-        }
+        };
     }, [router]);
 
     return (

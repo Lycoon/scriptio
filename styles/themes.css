@@ -1,10 +1,11 @@
 html.light {
+    color-scheme: light;
     --primary: #f3f3f3;
     --secondary: #ffffff;
     --tertiary: #d6d6d6;
 
     --primary-hover: #f0f0f3;
-    --secondary-hover: #e6e6ec;
+    --secondary-hover: #f1f1f1;
     --tertiary-hover: #dbdbdf;
 
     --primary-text: #1a1a1c;
@@ -15,8 +16,10 @@ html.light {
     --navbar-outline: #e2e8f0;
     --header-background: #ffffff;
 
-    --project-item-bg: #ffffff;
-    --project-item-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
     --export-project-selected: #cbd5e1;
 
     --main-bg: var(--primary);
@@ -26,7 +29,7 @@ html.light {
     --editor-scene: #f1f5f9;
     --editor-sidebar: #ffffff;
     --editor-sidebar-list: #ededf3;
-    --editor-tab-active: #f1f5f9;
+    --editor-sidebar-hover: var(--primary);
     --editor-scroll-bg: #f8fafc;
     --editor-scroll-btn: #cbd5e1;
     --editor-scroll-btn-hover: #94a3b8;
@@ -38,6 +41,7 @@ html.light {
 }
 
 html.dark {
+    color-scheme: dark;
     --primary: #1d1d1d;
     --secondary: #2e2e2e;
     --tertiary: #3a3a3a;
@@ -54,8 +58,10 @@ html.dark {
     --navbar-outline: #414141;
     --header-background: #2e2e2e;
 
-    --project-item-bg: #2e2e2e;
-    --project-item-shadow: none;
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
     --export-project-selected: #505050;
 
     --main-bg: var(--primary);
@@ -65,7 +71,7 @@ html.dark {
     --editor-script-bg: #2e2e2e;
     --editor-sidebar: #272727;
     --editor-sidebar-list: #3c3c3c;
-    --editor-tab-active: #3d3d3d;
+    --editor-sidebar-hover: var(--primary);
     --editor-scroll-bg: #2e2e2e;
     --editor-scroll-btn: #464646;
     --editor-scroll-btn-hover: #4f4f4f;
@@ -75,18 +81,91 @@ html.dark {
     --editor-element-hover: #eeeeee;
     --editor-shadow: rgba(0, 0, 0, 0.4);
 
-    --shadow-s:
-    inset 0 1px 2px #ffffff30,
-    0 1px 2px #00000030,
-    0 2px 4px #00000015;
+    --shadow-s: inset 0 1px 2px #ffffff30, 0 1px 2px #00000030, 0 2px 4px #00000015;
+    --shadow-m: inset 0 1px 2px #ffffff50, 0 2px 4px #00000030, 0 4px 8px #00000015;
+    --shadow-l: inset 0 1px 2px #ffffff70, 0 4px 6px #00000030, 0 6px 10px #00000015;
+}
 
-    --shadow-m:
-    inset 0 1px 2px #ffffff50,
-    0 2px 4px #00000030,
-    0 4px 8px #00000015;
+html.latte {
+    color-scheme: light;
+    --primary: #f7edd9;
+    --secondary: #fff8e9;
+    --tertiary: #ecdab4;
 
-    --shadow-l:
-    inset 0 1px 2px #ffffff70,
-    0 4px 6px #00000030,
-    0 6px 10px #00000015;
+    --primary-hover: #ece0c7;
+    --secondary-hover: #f8f1e3;
+    --tertiary-hover: #dbdbdf;
+
+    --primary-text: #7a6129;
+    --secondary-text: #c09c50;
+
+    --separator: #e7d3a8;
+    --input-outline: #cbd5e1;
+    --navbar-outline: #e2e8f0;
+    --header-background: #ffffff;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #cbd5e1;
+
+    --main-bg: var(--primary);
+
+    --editor-script-bg: var(--secondary);
+    --editor-text: var(--primary-text);
+    --editor-scene: #f1f5f9;
+    --editor-sidebar: var(--secondary);
+    --editor-sidebar-list: #ededf3;
+    --editor-sidebar-hover: var(--primary);
+    --editor-scroll-bg: #a58238;
+    --editor-scroll-btn: #a58238;
+    --editor-scroll-btn-hover: #a58238;
+    --editor-style-bg: var(--primary);
+    --editor-style-bg-hover: var(--primary-hover);
+    --editor-style-bg-active: var(--primary-hover);
+    --editor-element-hover: #f8fafc;
+    --editor-shadow: rgba(180, 166, 119, 0.342);
+}
+
+html.wonka {
+    color-scheme: dark;
+    --primary: #1e1410;
+    --secondary: #2c1e1a;
+    --tertiary: #4d3b36;
+
+    --primary-hover: #422f28;
+    --secondary-hover: #3a2b27;
+    --tertiary-hover: #66514b;
+
+    --primary-text: #e6dcca;
+    --secondary-text: #a89b91;
+
+    --separator: var(--tertiary);
+    --input-outline: #cbd5e1;
+    --navbar-outline: #e2e8f0;
+    --header-background: #ffffff;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #cbd5e1;
+
+    --main-bg: var(--primary);
+
+    --editor-script-bg: var(--secondary);
+    --editor-text: var(--primary-text);
+    --editor-scene: #f1f5f9;
+    --editor-sidebar: var(--secondary);
+    --editor-sidebar-list: #ededf3;
+    --editor-sidebar-hover: var(--primary);
+    --editor-scroll-bg: #a58238;
+    --editor-scroll-btn: #a58238;
+    --editor-scroll-btn-hover: #a58238;
+    --editor-style-bg: var(--primary);
+    --editor-style-bg-hover: var(--primary-hover);
+    --editor-style-bg-active: var(--primary-hover);
+    --editor-element-hover: #f8fafc;
+    --editor-shadow: rgba(0, 0, 0, 0.4);
 }

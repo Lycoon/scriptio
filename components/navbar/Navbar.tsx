@@ -19,23 +19,32 @@ import form from "./../utils/Form.module.css";
 const StatusIndicator = () => {
     const { connectionStatus } = useContext(ProjectContext);
     const STATUS: Record<ConnectionStatus, string> = {
-        "connected": "Synced to cloud",
-        "disconnected": "No connection",
-        "connecting": "Reconnecting..."
-    }
-    return <>
-        <div className={navbar.tooltip} data-hint={STATUS[connectionStatus]}>
-            {connectionStatus === "connected" && <CircleCheckBig style={{ color: 'var(--success)' }} className={navbar.status_icon} />}
-            {connectionStatus === "disconnected" && <WifiOff style={{ color: 'var(--error)' }} className={navbar.status_icon} />}
-            {connectionStatus === "connecting" && <WifiSync style={{ color: 'var(--warning)' }} className={navbar.status_icon} />}
-        </div>
-    </>
-}
+        connected: "Synced to cloud",
+        disconnected: "No connection",
+        connecting: "Reconnecting...",
+    };
+    return (
+        <>
+            <div className={navbar.tooltip} data-hint={STATUS[connectionStatus]}>
+                {connectionStatus === "connected" && (
+                    <CircleCheckBig style={{ color: "var(--success)" }} className={navbar.status_icon} />
+                )}
+                {connectionStatus === "disconnected" && (
+                    <WifiOff style={{ color: "var(--error)" }} className={navbar.status_icon} />
+                )}
+                {connectionStatus === "connecting" && (
+                    <WifiSync style={{ color: "var(--warning)" }} className={navbar.status_icon} />
+                )}
+            </div>
+        </>
+    );
+};
 
 const Navbar = () => {
     const { isZenMode, updateIsZenMode } = useContext(UserContext);
     const { openDashboard } = useContext(DashboardContext);
     const { project: membership } = useContext(ProjectContext);
+
     const [isInProject, updateIsInProject] = useState<boolean>(false);
     const [hasScreenplay, updateHasScreenplay] = useState<boolean>(false);
     const [projectTitle, setProjectTitle] = useState<string>("");
@@ -49,10 +58,9 @@ const Navbar = () => {
         mutate(`/api/projects/${projectId}`, { ...membership, title: projectTitle });
     }, 1000);
 
-    const toggleZenMode = () => updateIsZenMode(!isZenMode);
-
+    const toggleZenMode = () => updateIsZenMode((prev) => !prev);
     const getNavStyle = (tabName: string) => {
-        return `${navbar.navBtn} ${form.label} ${page == tabName ? navbar.active : ''}`;
+        return `${navbar.navBtn} ${form.label} ${page == tabName ? navbar.active : ""}`;
     };
 
     useEffect(() => {
@@ -64,27 +72,40 @@ const Navbar = () => {
         if (membership) setProjectTitle(membership.project.title);
     }, [membership]);
 
-    if (!user || !page)
-        return;
+    if (!user || !page) return;
 
     return (
         <nav className={join(navbar.container)}>
             <nav className={navbar.left_btns}>
-                {isInProject &&
+                {isInProject && (
                     <div className={navbar.back_btn} onClick={() => redirectHome()}>
                         <CircleArrowLeft size={18} />
                         <p>Home</p>
                     </div>
-                }
-                {isInProject && membership &&
+                )}
+                {isInProject && membership && (
                     <div className={navbar.navBtns}>
-                        <p className={`${getNavStyle("screenplay")}`} onClick={() => { page !== Page.Screenplay && redirectScreenplay(membership.project.id) }}>Screenplay</p>
-                        <p className={`${getNavStyle("stats")}`} onClick={() => { page !== Page.Statistics && redirectStatistics(membership.project.id) }}>Statistics</p>
+                        <p
+                            className={`${getNavStyle("screenplay")}`}
+                            onClick={() => {
+                                page !== Page.Screenplay && redirectScreenplay(membership.project.id);
+                            }}
+                        >
+                            Screenplay
+                        </p>
+                        <p
+                            className={`${getNavStyle("stats")}`}
+                            onClick={() => {
+                                page !== Page.Statistics && redirectStatistics(membership.project.id);
+                            }}
+                        >
+                            Statistics
+                        </p>
                         <p className={`${getNavStyle("board")}`}>Board</p>
                     </div>
-                }
+                )}
             </nav>
-            {hasScreenplay && membership &&
+            {hasScreenplay && membership && (
                 <div className={navbar.projectTitle}>
                     <StatusIndicator />
                     <input
@@ -94,7 +115,7 @@ const Navbar = () => {
                         defaultValue={projectTitle}
                     />
                 </div>
-            }
+            )}
             <div className={navbar.right_btns}>
                 {hasScreenplay && (
                     <div className={navbar.export_project_btn} onClick={toggleZenMode}>

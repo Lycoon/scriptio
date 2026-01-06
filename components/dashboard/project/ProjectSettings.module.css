@@ -23,11 +23,6 @@
     transition: border-color 0.2s;
 }
 
-.input:focus,
-.textarea:focus {
-    border-color: var(--secondary-text);
-}
-
 .textarea {
     min-height: 120px;
     resize: vertical;

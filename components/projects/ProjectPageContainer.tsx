@@ -11,7 +11,6 @@ import Loading from "../utils/Loading";
 
 import page from "./ProjectPageContainer.module.css";
 import form from "../utils/Form.module.css";
-import Navbar from "@components/navbar/Navbar";
 
 const ProjectPageContainer = () => {
     const { projects, isLoading } = useProjectMemberships();

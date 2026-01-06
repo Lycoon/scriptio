@@ -12,7 +12,6 @@ import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
 import item from "./SidebarItem.module.css";
 
-
 const EditorSidebarNavigation = () => {
     const { scenesData, charactersData } = useContext(ProjectContext);
     const { isZenMode } = useContext(UserContext);
@@ -30,8 +29,7 @@ const EditorSidebarNavigation = () => {
                     {scenesData.length != 0 &&
                         scenesData.map((scene: SceneItem) => {
                             return <SidebarSceneItem key={scene.position} scene={scene} />;
-                        })
-                    }
+                        })}
                 </div>
             </div>
             <div className={sidebar_nav.element}>
@@ -43,8 +41,7 @@ const EditorSidebarNavigation = () => {
                     {characters != 0 &&
                         Object.entries(charactersData).map((item: [string, CharacterItem]) => {
                             return <SidebarCharacterItem key={item[0]} character={{ name: item[0], ...item[1] }} />;
-                        })
-                    }
+                        })}
                 </div>
             </div>
             <div className={sidebar_nav.element}>
@@ -56,11 +53,11 @@ const EditorSidebarNavigation = () => {
                     {characters != 0 &&
                         Object.entries(charactersData).map((item: [string, CharacterItem]) => {
                             return <SidebarCharacterItem key={item[0]} character={{ name: item[0], ...item[1] }} />;
-                        })
-                    }
+                        })}
                 </div>
             </div>
-        </div>)
+        </div>
+    );
 };
 
 export default EditorSidebarNavigation;

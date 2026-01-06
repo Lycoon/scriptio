@@ -9,7 +9,7 @@
 }
 
 .container:hover {
-    background-color: var(--editor-style-bg-hover);
+    background-color: var(--editor-sidebar-hover);
 }
 
 .container:not(:last-child) {

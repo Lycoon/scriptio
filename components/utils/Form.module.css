@@ -70,7 +70,6 @@
 
 .btn {
     font-size: 1rem;
-    color: #ffffff;
     color: var(--primary-text);
     background-color: var(--secondary);
     cursor: pointer;
@@ -107,7 +106,6 @@
 
 .input {
     font-size: 1.15rem;
-    border: none;
     border-radius: 7px;
     padding: 8px;
 }

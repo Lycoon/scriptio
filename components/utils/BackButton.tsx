@@ -1,8 +1,7 @@
 import form from "./Form.module.css";
-import btn from "./Button.module.css";
+import formEnd from "./../projects/FormEnd.module.css";
 
-import BackSVG from "@public/images/back.svg";
-import { join } from "@src/lib/utils/misc";
+import { ArrowLeftCircle } from "lucide-react";
 
 type Props = {
     onClick: () => void;
@@ -10,8 +9,8 @@ type Props = {
 
 const BackButton = ({ onClick }: Props) => {
     return (
-        <button className={join(form.btn, btn.back)} onClick={onClick}>
-            <BackSVG className={btn.back_icon} />
+        <button className={`${form.btn} ${formEnd.back}`} onClick={onClick}>
+            <ArrowLeftCircle size={20} />
             Back
         </button>
     );

@@ -52,6 +52,7 @@ hr {
 h1,
 h2,
 h3 {
+    color: var(--primary-text);
     font-family: var(--font-josefin), sans-serif;
 }
 
@@ -66,7 +67,7 @@ a {
 }
 
 a:hover {
-    color: #ffffff;
+    color: var(--secondary-text-hover);
 }
 
 select {
@@ -78,8 +79,16 @@ select {
     border-radius: 5px;
 }
 
-select:focus {
+textarea,
+input {
     outline: none;
+    border: none;
+    background: var(--secondary);
+    color: var(--primary-text);
+}
+
+svg {
+    color: var(--primary-text);
 }
 
 /* ==================== */

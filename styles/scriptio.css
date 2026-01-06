@@ -143,6 +143,9 @@ Originally developed by John August - johnaugust.com
         position: relative;
         padding-left: 1.9in !important;
         padding-right: 2.1in !important;
+    }
+
+    .parenthetical:has(+ .dialogue) {
         margin-bottom: 0 !important;
     }
 

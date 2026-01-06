@@ -57,7 +57,6 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         }
 
         const projectId = json.data.id;
-        setIsCreating(false);
         redirectScreenplay(projectId);
     };
 
