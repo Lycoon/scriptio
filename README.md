@@ -9,9 +9,9 @@
     <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lycoon/scriptio?style=for-the-badge">
 </p>
 
-<h2 align="center">
-Modern, elegant and cross-platform screenwriting software
-</h2>
+<h3 align="center">
+<b>Modern</b>, <b>elegant</b> and <b>cross-platform</b> screenwriting software
+</h3>
 
 <h3 align="center">
 Stop overpaying for <i>Final Draft</i><br>

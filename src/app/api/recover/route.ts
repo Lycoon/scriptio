@@ -14,6 +14,7 @@ import * as Misc from "@src/lib/utils/misc";
 import * as SecretService from "@src/lib/utils/secrets";
 import * as UserService from "@src/server/service/user-service";
 import z from "zod";
+import { NextRequest } from "@node_modules/next/server";
 
 export type RequestRecoveryBody = z.infer<typeof RequestRecoveryBodySchema>;
 const RequestRecoveryBodySchema = z.object({
@@ -43,18 +44,20 @@ async function recoverRoute(req: NextApiRequest, res: NextApiResponse) {
  *
  * Hit once a user asks to recover its password (when unautheticated)
  */
-async function requestRecovery(body: RequestRecoveryBody, res: NextApiResponse) {
-    const { email } = body;
+async function requestRecovery(req: NextRequest) {
+    const body = await req.json();
+    const { email } = validate(RequestRecoveryBodySchema, body);
+
     const user = await UserService.getUserFromEmail(email);
     if (!user) {
         // Don't tell the user if the email is registered or not
-        return Success(res, null, RECOVERY_REQUEST_FULFILLED);
+        return Success(null, RECOVERY_REQUEST_FULFILLED);
     }
 
     const recoverHash = await UserService.updateRecoveryHash(user.id);
     sendRecoveryEmail(user.id, user.email, recoverHash);
 
-    return Success(res, null, RECOVERY_REQUEST_FULFILLED);
+    return Success(null, RECOVERY_REQUEST_FULFILLED);
 }
 
 /**
@@ -62,8 +65,9 @@ async function requestRecovery(body: RequestRecoveryBody, res: NextApiResponse) 
  *
  * Hit when a user changes its password (when unauthenticated)
  */
-async function recoverPassword(body: RecoverPasswordBody, res: NextApiResponse) {
-    const { password, userId, recoverHash } = body;
+async function recoverPassword(req: NextRequest) {
+    const body = await req.json();
+    const { password, userId, recoverHash } = validate(RecoverPasswordBodySchema, body);
 
     if (password.length < 8) {
         throw new BodyFieldError(PASSWORD_REQUIREMENTS);
@@ -97,7 +101,8 @@ async function recoverPassword(body: RecoverPasswordBody, res: NextApiResponse) 
         throw new InternalServerError(FAILED_PASSWORD_CHANGED);
     }
 
-    return Success(res, null, RECOVERY_SUCCESS);
+    return Success(null, RECOVERY_SUCCESS);
 }
 
-export default apiHandler(recoverRoute);
+export const POST = apiHandler(requestRecovery);
+export const PATCH = apiHandler(recoverPassword);
