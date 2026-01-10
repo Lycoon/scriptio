@@ -6,6 +6,7 @@ import { changePassword } from "@src/lib/utils/requests";
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./SecuritySettings.module.css";
+import { ApiResponse } from "@src/lib/utils/api-utils";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -37,7 +38,7 @@ const SecuritySettings = () => {
 
         try {
             const res = await changePassword({ password: newPassword });
-            const data = await res.json();
+            const data = (await res.json()) as ApiResponse;
 
             if (res.ok) {
                 setMessage({ type: "success", text: data.message || "Password changed successfully" });
@@ -84,19 +85,6 @@ const SecuritySettings = () => {
                     placeholder="Enter new password..."
                     autoComplete="new-password"
                 />
-                {newPassword.length > 0 && (
-                    <div className={styles.strengthContainer}>
-                        <div className={styles.strengthBar}>
-                            <div
-                                className={`${styles.strengthFill} ${styles[`level${passwordStrength.level}`]}`}
-                                style={{ width: `${(passwordStrength.level / 4) * 100}%` }}
-                            />
-                        </div>
-                        <span className={`${styles.strengthLabel} ${styles[`level${passwordStrength.level}`]}`}>
-                            {passwordStrength.label}
-                        </span>
-                    </div>
-                )}
                 <p className={sharedStyles.helpText}>
                     Password must be at least {MIN_PASSWORD_LENGTH} characters long.
                 </p>
@@ -121,11 +109,7 @@ const SecuritySettings = () => {
             </div>
 
             {/* Message */}
-            {message && (
-                <div className={`${styles.message} ${styles[message.type]}`}>
-                    {message.text}
-                </div>
-            )}
+            {message && <div className={`${styles.message} ${styles[message.type]}`}>{message.text}</div>}
 
             <div className={sharedStyles.formActions}>
                 <button
