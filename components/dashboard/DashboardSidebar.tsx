@@ -1,12 +1,23 @@
+"use client";
+
 import { ReactNode, useContext } from "react";
 import { mutate } from "swr";
-import Router from "next/router";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { LogOut } from "lucide-react";
 
 import styles from "./DashboardModal.module.css";
+import { redirect } from "next/navigation";
+import { logout } from "@src/lib/utils/requests";
 
-export type Category = "General" | "Export" | "Collaborators" | "Profile" | "Security" | "Settings" | "Keybinds" | "Appearance";
+export type Category =
+    | "General"
+    | "Export"
+    | "Collaborators"
+    | "Profile"
+    | "Security"
+    | "Settings"
+    | "Keybinds"
+    | "Appearance";
 
 export interface MenuItem {
     id: Category;
@@ -29,10 +40,10 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
     const { closeDashboard } = useContext(DashboardContext);
 
     const onLogOut = async () => {
-        await fetch("/api/logout");
-        mutate("/api/users/cookie", undefined);
-        Router.push("/");
+        await logout();
+        await mutate("/api/users/cookie", undefined);
         closeDashboard();
+        redirect("/");
     };
 
     return (
@@ -40,7 +51,7 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
             <h2 className={styles.sidebarTitle}>Dashboard</h2>
             <nav className={styles.navMenu}>
                 {structure.map((section) => (
-                    <div key={section.group} className={styles.menuGroup}>
+                    <div key={section.group}>
                         <h4 className={styles.groupLabel}>{section.group}</h4>
                         {section.items.map((item) => (
                             <button

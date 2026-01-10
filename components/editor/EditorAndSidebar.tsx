@@ -1,9 +1,11 @@
+"use client";
+
 /* Components */
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
-import { applyElement, insertElement, useScriptioEditor } from "@src/lib/editor/editor";
+import { applyElement, insertElement, useScriptioEditor } from "@src/lib/screenplay/editor";
 import { Popup } from "@components/popup/Popup";
 import { join } from "@src/lib/utils/misc";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
@@ -17,14 +19,13 @@ import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 import styles from "./EditorAndSidebar.module.css";
 import { EditorContent } from "@node_modules/@tiptap/react/dist";
 import Loading from "@components/utils/Loading";
-import { useGlobalKeybinds, useSettings } from "@src/lib/utils/hooks";
+import { useGlobalKeybinds, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
+import { ProjectContext } from "@src/context/ProjectContext";
 
-type EditorAndSidebarProps = {
-    project: ProjectMembershipPayload["project"];
-};
-
-const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
+const EditorAndSidebar = () => {
+    const { membership, isLoading } = useProjectMembership();
     const { isZenMode, updateIsZenMode, updateContextMenu } = useContext(UserContext);
+    const { isYjsReady } = useContext(ProjectContext);
     const { settings } = useSettings();
 
     const [isEditorReady, setIsEditorReady] = useState(false);
@@ -57,7 +58,7 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
     useGlobalKeybinds(settings?.keybinds, globalActions);
 
     const editor = useScriptioEditor(
-        project,
+        membership?.project,
         setActiveElement,
         setSelectedStyles,
         updateSuggestions,
@@ -67,12 +68,12 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
     );
 
     useEffect(() => {
-        if (editor) {
-            // A small timeout ensures the websocket and pagination logic are ready
-            const timer = setTimeout(() => setIsEditorReady(true), 1000);
+        if (editor && isYjsReady) {
+            // A small timeout ensures the collaboration is synced
+            const timer = setTimeout(() => setIsEditorReady(true), 500);
             return () => clearTimeout(timer);
         }
-    }, [editor]);
+    }, [editor, isYjsReady]);
 
     useEffect(() => {
         if (!editor) return;
@@ -191,6 +192,8 @@ const EditorAndSidebar = ({ project }: EditorAndSidebarProps) => {
         const scrollTop = e.currentTarget.scrollTop;
         setIsScrolled(scrollTop > 0);
     };
+
+    if (!membership || isLoading) return <Loading />;
 
     return (
         <div className={join(styles.editor_and_sidebar)}>

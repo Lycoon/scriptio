@@ -1,14 +1,69 @@
+"use client";
+
 import useSWR from "swr";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import Router, { useRouter } from "next/router";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CookieUser, UserSettings } from "./types";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { Page, ScreenplayElement } from "./enums";
+import { Page } from "./enums";
 import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { KeyBindingMap, tinykeys } from "tinykeys";
-import { Editor } from "@tiptap/core";
-import { applyElement } from "../editor/editor";
 import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
+import { useParams, usePathname, useRouter } from "next/navigation";
+
+interface Position {
+    x: number;
+    y: number;
+}
+
+interface UseDraggableReturn {
+    position: Position;
+    handleMouseDown: (e: React.MouseEvent) => void;
+    isDragging: boolean;
+}
+
+const useDraggable = (initialPosition?: Position): UseDraggableReturn => {
+    const [position, setPosition] = useState<Position>(initialPosition || { x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const dragStartRef = useRef<Position>({ x: 0, y: 0 });
+    const positionStartRef = useRef<Position>({ x: 0, y: 0 });
+
+    const handleMouseDown = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault();
+            setIsDragging(true);
+            dragStartRef.current = { x: e.clientX, y: e.clientY };
+            positionStartRef.current = { ...position };
+        },
+        [position]
+    );
+
+    useEffect(() => {
+        if (!isDragging) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const deltaX = e.clientX - dragStartRef.current.x;
+            const deltaY = e.clientY - dragStartRef.current.y;
+            setPosition({
+                x: positionStartRef.current.x + deltaX,
+                y: positionStartRef.current.y + deltaY,
+            });
+        };
+
+        const handleMouseUp = () => {
+            setIsDragging(false);
+        };
+
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+
+        return () => {
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [isDragging]);
+
+    return { position, handleMouseDown, isDragging };
+};
 
 const useDesktop = (): boolean => {
     const [isDesktop, setIsDesktop] = useState<boolean>(false);
@@ -28,26 +83,27 @@ interface StateResult<T> {
 }
 
 const useProjectIdFromUrl = () => {
-    const router = useRouter();
+    const params = useParams();
     const [projectId, setProjectId] = useState<string | undefined>(undefined);
 
     useEffect(() => {
-        if (router.query.projectId) setProjectId(router.query.projectId as string);
-    }, [router.query.projectId]);
+        if (params.projectId) setProjectId(params.projectId as string);
+    }, [params]);
 
     return projectId;
 };
 
-interface UseUserResult {
-    user: CookieUser | undefined;
-    isLoading: boolean;
-}
+const useUser = () => {
+    const { data: user, isLoading, mutate } = useSWR("/api/users");
+    return { user, isLoading, mutate };
+};
 
-const useUser = (redirect: boolean = false): UseUserResult => {
+const useCookieUser = (redirect: boolean = false) => {
     const { data: user, isLoading } = useSWR<CookieUser>("/api/users/cookie");
+    const router = useRouter();
 
     if (redirect && !isLoading && !user) {
-        Router.push("/login");
+        router.push("/login");
     }
 
     return { user, isLoading };
@@ -81,9 +137,7 @@ const useProjectMembership = () => {
     );
 
     useEffect(() => {
-        // When the data has loaded, update the project
         if (data && !isLoading) {
-            console.log("updating project");
             updateProject(data);
         }
     }, [data]);
@@ -102,13 +156,13 @@ const useProjectCollaborators = (projectId: string | undefined) => {
 };
 
 const usePage = (): Page | undefined => {
-    const router = useRouter();
+    const pathname = usePathname();
     const [page, setPage] = useState<Page | undefined>(undefined);
 
     useEffect(() => {
-        if (!router.isReady) return;
+        if (!pathname) return;
 
-        const segments = router.pathname.split("/").filter(Boolean);
+        const segments = pathname.split("/").filter(Boolean);
         if (segments.length === 0) {
             setPage(Page.Index);
             return;
@@ -118,10 +172,9 @@ const usePage = (): Page | undefined => {
         if (Object.values(Page).includes(lastSegment as Page)) {
             setPage(lastSegment as Page);
         } else {
-            // Fallback for 404s or unknown routes
             setPage(Page.Index);
         }
-    }, [router.pathname, router.isReady]);
+    }, [pathname]);
 
     return page;
 };
@@ -168,7 +221,9 @@ export const useGlobalKeybinds = (
 };
 
 export {
+    useDraggable,
     useUser,
+    useCookieUser,
     useSettings,
     useProjectMemberships,
     useProjectMembership,

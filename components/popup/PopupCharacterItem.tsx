@@ -1,12 +1,20 @@
+"use client";
+
 import assert from "assert";
 import { useContext, useState } from "react";
-import { CharacterGender, doesCharacterExist, upsertCharacterData, deleteCharacter } from "@src/lib/editor/characters";
+import {
+    CharacterGender,
+    doesCharacterExist,
+    upsertCharacterData,
+    deleteCharacter,
+} from "@src/lib/screenplay/characters";
 import { join } from "@src/lib/utils/misc";
+import { useDraggable } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { replaceOccurrences } from "@src/lib/editor/editor";
+import { replaceOccurrences } from "@src/lib/screenplay/editor";
 import { UserContext } from "@src/context/UserContext";
-import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/editor/popup";
-import { countOccurrences } from "@src/lib/editor/screenplay";
+import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/screenplay/popup";
+import { countOccurrences } from "@src/lib/screenplay/screenplay";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -56,6 +64,7 @@ const TakenNameError = (newName: string) => {
 export const PopupCharacterItem = ({ type, data: { character } }: PopupData<PopupCharacterData>) => {
     const projectCtx = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
+    const { position, handleMouseDown, isDragging } = useDraggable();
 
     const [newNameWarning, setNewNameWarning] = useState<boolean>(false);
     const [takenNameError, setTakenNameError] = useState<boolean>(false);
@@ -168,8 +177,12 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
 
     return (
         <div className={popup.window}>
-            <div className={popup.container}>
-                <div className={popup.header}>
+            <div className={popup.container} style={{ transform: `translate(${position.x}px, ${position.y}px)` }}>
+                <div
+                    className={popup.header}
+                    onMouseDown={handleMouseDown}
+                    style={{ cursor: isDragging ? "grabbing" : "grab" }}
+                >
                     <h2 className={popup.title}>{def.title}</h2>
                     <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
                 </div>

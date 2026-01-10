@@ -1,8 +1,10 @@
+"use client";
+
 import { useContext, useEffect, useState } from "react";
 
 import styles from "./SuggestionMenu.module.css";
 import context from "./sidebar/ContextMenu.module.css";
-import { pasteTextAt } from "@src/lib/editor/editor";
+import { pasteTextAt } from "@src/lib/screenplay/editor";
 import { ProjectContext } from "@src/context/ProjectContext";
 
 type Props = {

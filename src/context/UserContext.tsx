@@ -1,6 +1,8 @@
+"use client";
+
 import { createContext, Dispatch, ReactNode, SetStateAction, useState } from "react";
 import { ContextMenuProps } from "@components/editor/sidebar/ContextMenu";
-import { PopupData, PopupUnionData } from "@src/lib/editor/popup";
+import { PopupData, PopupUnionData } from "@src/lib/screenplay/popup";
 import { UserTheme } from "@src/lib/utils/types";
 
 export type UserContextType = {

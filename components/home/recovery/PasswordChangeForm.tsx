@@ -1,4 +1,5 @@
-import Router from "next/router";
+"use client";
+
 import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 import { useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "@src/lib/messages";
@@ -7,7 +8,8 @@ import { recoverPassword } from "@src/lib/utils/requests";
 import form from "../../utils/Form.module.css";
 import recovery from "../recovery/RecoveryForm.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
-import { RecoverPasswordBody } from "@pages/api/recover";
+import { RecoverPasswordBody } from "@src/app/api/recover/route";
+import { redirect } from "next/navigation";
 
 type Props = {
     userId: string;
@@ -44,7 +46,7 @@ const PasswordChangeForm = ({ userId, recoverHash }: Props) => {
         if (res.ok) {
             setFormInfo({ content: json.message! });
             setTimeout(() => {
-                Router.push("/login");
+                redirect("/login");
             }, 3000);
         } else {
             setFormInfo({ content: json.message!, isError: true });

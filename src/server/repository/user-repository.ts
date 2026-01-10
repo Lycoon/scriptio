@@ -22,6 +22,8 @@ export type UpdateSettings = {
 export interface UserUpdate {
     email?: string;
     verified?: boolean;
+    username?: string;
+    color?: string;
     secrets?: UpdateSecrets;
     settings?: Partial<UserSettings>;
 }
@@ -45,10 +47,12 @@ export class UserRepository {
             data: {
                 email: userUpdate.email,
                 verified: userUpdate.verified,
+                settings: userUpdate.settings as Prisma.InputJsonValue,
+                username: userUpdate.username,
+                color: userUpdate.color,
                 secrets: {
                     update: userUpdate.secrets,
                 },
-                settings: userUpdate.settings as Prisma.InputJsonValue,
             },
         });
     }
@@ -83,6 +87,8 @@ export class UserRepository {
             verified: true,
             createdAt: true,
             settings: true,
+            username: true,
+            color: true,
             secrets: includeSecrets,
         };
 

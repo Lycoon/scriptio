@@ -1,3 +1,5 @@
+"use client";
+
 import form from "./FormInfo.module.css";
 
 type Props = {

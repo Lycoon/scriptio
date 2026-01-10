@@ -1,14 +1,13 @@
-import { UpdateSettings } from "../../server/repository/user-repository";
-import { CharacterMap, getPersistentCharacters } from "../editor/characters";
-import { UpdateProjectBody } from "@pages/api/projects/[projectId]";
-import { CreateProjectBody } from "@pages/api/projects";
-import { ApiResponse } from "./api-utils";
-import { UpdateRoleBody } from "@pages/api/projects/[projectId]/members/[userId]";
-import { SignupBody } from "@pages/api/signup";
-import { LoginBody } from "@pages/api/login";
-import { RecoverPasswordBody, RequestRecoveryBody } from "@pages/api/recover";
-import { UpdatePasswordBody } from "@pages/api/users/password";
+import { CreateProjectBody } from "@src/app/api/projects/route";
 import { UserSettings } from "./types";
+import { UpdateProjectBody } from "@src/app/api/projects/[projectId]/route";
+import { UpdateRoleBody } from "@src/app/api/projects/[projectId]/members/[userId]/route";
+import { UpdatePasswordBody } from "@src/app/api/users/password/route";
+import { SignupBody } from "@src/app/api/signup/route";
+import { LoginBody } from "@src/app/api/login/route";
+import { RecoverPasswordBody, RequestRecoveryBody } from "@src/app/api/recover/route";
+import { ApiResponse } from "./api-utils";
+import { UpdateUserBody } from "@src/app/api/users/route";
 
 type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -22,16 +21,6 @@ const request = async (url: string, method: RESTMethod, body?: Object) => {
 };
 
 /* Projects */
-
-export const saveCharacters = async (projectId: string, characters: CharacterMap): Promise<Response> => {
-    const persistentCharacters = getPersistentCharacters(characters); // Get rid of non-persistent characters
-    const res = await editProject(projectId, { characters: persistentCharacters });
-
-    //if (res.ok) projectCtx.updateSaveStatus(SaveStatus.Saved);
-    //else projectCtx.updateSaveStatus(SaveStatus.Error);
-
-    return res;
-};
 
 export const getCloudToken = async (projectId: string): Promise<string | null> => {
     const res = await request(`/api/projects/${projectId}/cloud-token`, "GET");
@@ -82,7 +71,15 @@ export const editUserSettings = (body: Partial<UserSettings>) => {
     return request(`/api/users/settings`, "PATCH", body);
 };
 
+export const editUserInfo = (body: UpdateUserBody) => {
+    return request(`/api/users`, "PATCH", body);
+};
+
 /* Auth */
+
+export const logout = () => {
+    return request(`/api/logout`, "POST");
+};
 
 export const signup = (body: SignupBody) => {
     return request(`/api/signup`, "POST", body);

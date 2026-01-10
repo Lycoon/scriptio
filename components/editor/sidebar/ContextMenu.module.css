@@ -1,27 +1,24 @@
 .menu {
     display: flex;
     flex-direction: column;
+    width: 150px;
 
     z-index: 1;
     position: absolute;
     overflow-y: auto;
-    border-radius: 6px;
-    background-color: var(--editor-style-bg-hover);
+    border-radius: 12px;
+    background-color: var(--editor-sidebar);
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
 }
 
 .menu_item {
-    padding-block: 6px;
-    padding-left: 8px;
+    padding-block: 8px;
+    padding-left: 12px;
     padding-right: 35px;
 
     font-size: 14px;
     border-bottom: 1px solid;
-    border-color: var(--editor-sidebar);
-}
-
-.menu_item.selected {
-    background-color: var(--editor-style-bg-active);
+    border-color: var(--separator);
 }
 
 .menu_item:last-child {
@@ -29,5 +26,5 @@
 }
 
 .menu_item:hover {
-    background-color: var(--editor-style-bg-active);
+    background-color: var(--editor-sidebar-hover);
 }

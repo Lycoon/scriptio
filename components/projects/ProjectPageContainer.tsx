@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import { useProjectMemberships } from "@src/lib/utils/hooks";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";

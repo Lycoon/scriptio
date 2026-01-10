@@ -1,11 +1,13 @@
+"use client";
+
 import { useContext, useEffect } from "react";
 import { UserContext } from "@src/context/UserContext";
-import { SceneItem } from "@src/lib/editor/screenplay";
+import { MergedSceneItem } from "@src/lib/screenplay/scenes";
 
 import context from "./ContextMenu.module.css";
-import { CharacterData, deleteCharacter } from "@src/lib/editor/characters";
-import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/editor/editor";
-import { addCharacterPopup, editCharacterPopup } from "@src/lib/editor/popup";
+import { CharacterData, deleteCharacter } from "@src/lib/screenplay/characters";
+import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/screenplay/editor";
+import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/screenplay/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
 
 /* ==================== */
@@ -45,22 +47,22 @@ export const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
 /* ========================== */
 
 export type SceneContextProps = {
-    scene: SceneItem;
+    scene: MergedSceneItem;
 };
 
 const SceneItemMenu = (props: any) => {
+    const userCtx = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
-
-    const position = props.props.position;
-    const nextPosition = props.props.nextPosition;
+    const scene: MergedSceneItem = props.props.scene;
 
     return (
         <>
-            <ContextMenuItem text={"Go to scene"} action={() => focusOnPosition(editor!, position)} />
-            <ContextMenuItem text={"Cut"} action={() => cutText(editor!, position, nextPosition)} />
+            <ContextMenuItem text={"Go to scene"} action={() => focusOnPosition(editor!, scene.position)} />
+            <ContextMenuItem text={"Edit"} action={() => editScenePopup(scene, userCtx)} />
+            <ContextMenuItem text={"Cut"} action={() => cutText(editor!, scene.position, scene.nextPosition)} />
             <ContextMenuItem
                 text={"Select in editor"}
-                action={() => selectTextInEditor(editor!, position, nextPosition)}
+                action={() => selectTextInEditor(editor!, scene.position, scene.nextPosition)}
             />
         </>
     );

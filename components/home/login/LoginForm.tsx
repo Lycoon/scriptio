@@ -1,38 +1,41 @@
+"use client";
+
 import Link from "next/link";
-import Router from "next/router";
 import { useEffect, useState } from "react";
 import FormInfo, { FormInfoType } from "../../utils/FormInfo";
-import { VerificationStatus } from "@src/lib/utils/enums";
+import { EmailVerifyStatus } from "@src/lib/utils/enums";
 import { login } from "@src/lib/utils/requests";
 
 import { useSWRConfig } from "swr";
 import { ApiResponse } from "@src/lib/utils/api-utils";
-import { LoginBody } from "@pages/api/login";
 
 import form from "../../utils/Form.module.css";
+import { LoginBody } from "@src/app/api/login/route";
+import { useRouter } from "next/navigation";
 
 type Props = {
-    verificationStatus: VerificationStatus;
+    status?: EmailVerifyStatus;
 };
 
-const LoginForm = ({ verificationStatus }: Props) => {
+const LoginForm = ({ status }: Props) => {
+    const router = useRouter();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const { mutate } = useSWRConfig();
 
     useEffect(() => {
-        switch (verificationStatus) {
-            case VerificationStatus.Failed:
+        switch (status) {
+            case "failed":
                 setFormInfo({
                     content: "An error occurred while verifying your account",
                     isError: true,
                 });
                 break;
-            case VerificationStatus.Success:
+            case "success":
                 setFormInfo({
                     content: "Your account has been successfully verified",
                 });
                 break;
-            case VerificationStatus.Used:
+            case "used":
                 setFormInfo({
                     content: "This email has already been registered",
                     isError: true,
@@ -56,7 +59,7 @@ const LoginForm = ({ verificationStatus }: Props) => {
         const res = await login(body);
         if (res.ok) {
             mutate("/api/users/cookie");
-            Router.push("/");
+            router.push("/");
         } else {
             const json = (await res.json()) as ApiResponse;
             setFormInfo({ content: json.message!, isError: true });

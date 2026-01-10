@@ -1,6 +1,6 @@
 import { DocumentType, NodeType, TextType } from "@tiptap/core";
 import { UpdateSecrets, UpdateSettings } from "../../server/repository/user-repository";
-import { CharacterMap } from "../editor/characters";
+import { CharacterMap } from "../screenplay/characters";
 
 export type Screenplay = DocumentType<
     Record<string, any> | undefined,
@@ -30,7 +30,6 @@ export type ProjectUpdate = {
     title?: string;
     description?: string;
     hasPoster?: boolean;
-    characters?: CharacterMap;
 };
 
 /* User Settings */
@@ -38,11 +37,10 @@ export interface UserSettings {
     keybinds: Record<string, string>;
     theme: UserTheme;
     language: UserLanguage;
-    online: UserOnlineSettings;
 }
 
 export type UserLanguage = "en";
-export type UserTheme = "light" | "dark" | "latte" | "wonka";
+export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint";
 
 export interface UserOnlineSettings {
     color: string;

@@ -1,6 +1,7 @@
+"use client";
+
 import { Category } from "@components/dashboard/DashboardSidebar";
 import { createContext, ReactNode, useState } from "react";
-// Import the type from your Sidebar componen
 
 export type DashboardContextType = {
     isOpen: boolean;

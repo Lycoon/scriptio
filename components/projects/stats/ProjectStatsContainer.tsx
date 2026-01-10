@@ -1,5 +1,7 @@
+"use client";
+
 import { useContext, useEffect, useState } from "react";
-import { getScreenplayData } from "@src/lib/editor/statistics";
+import { getScreenplayData } from "@src/lib/screenplay/statistics";
 import CharacterDistribution from "./CharacterDistribution";
 import CharacterFrequency from "./CharacterFrequency";
 import CharacterQuantity from "./CharacterQuantity";

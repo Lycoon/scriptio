@@ -1,3 +1,5 @@
+"use client";
+
 import { deleteProject } from "@src/lib/utils/requests";
 import { useProjectMembership } from "@src/lib/utils/hooks";
 import { redirectHome } from "@src/lib/utils/redirects";

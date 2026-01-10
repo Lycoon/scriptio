@@ -13,7 +13,6 @@ const projectMembershipSelect = {
             description: true,
             createdAt: true,
             updatedAt: true,
-            characters: true,
         },
     },
     role: true,
@@ -111,6 +110,15 @@ export class ProjectRepository {
         return this.hydrateMembership(membership);
     }
 
+    fetchProjectTitle(projectId: string) {
+        return prisma.project.findUnique({
+            where: { id: projectId },
+            select: {
+                title: true,
+            },
+        });
+    }
+
     fetchCollaborators(projectId: string): Promise<Collaborator[]> {
         return prisma.projectMember.findMany({
             where: { projectId },
@@ -141,7 +149,6 @@ export class ProjectRepository {
                 title: project.title,
                 description: project.description,
                 hasPoster: project.hasPoster,
-                characters: project.characters,
             },
         });
     }

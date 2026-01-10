@@ -1,41 +1,41 @@
-import Router from "next/router";
+import { redirect } from "next/navigation";
 
 export const redirectHome = () => {
-    Router.push("/");
+    redirect("/");
 };
 
 export const redirectExport = (projectId: string) => {
-    Router.push(`/projects/${projectId}/export`);
+    redirect(`/projects/${projectId}/export`);
 };
 
 export const redirectProjectInfo = (projectId: string) => {
-    Router.push(`/projects/${projectId}/edit`);
+    redirect(`/projects/${projectId}/edit`);
 };
 
 export const redirectScreenplay = (projectId: string) => {
-    Router.push(`/projects/${projectId}/screenplay`);
+    redirect(`/projects/${projectId}/screenplay`);
 };
 
 export const redirectTitlePage = (projectId: string) => {
-    Router.push(`/projects/${projectId}/title`);
+    redirect(`/projects/${projectId}/title`);
 };
 
 export const redirectBoard = (projectId: string) => {
-    Router.push(`/projects/${projectId}/board`);
+    redirect(`/projects/${projectId}/board`);
 };
 
 export const redirectStatistics = (projectId: string) => {
-    Router.push(`/projects/${projectId}/statistics`);
+    redirect(`/projects/${projectId}/statistics`);
 };
 
 export const redirectReports = (projectId: string) => {
-    Router.push(`/projects/${projectId}/reports`);
+    redirect(`/projects/${projectId}/reports`);
 };
 
 export const redirectLogin = () => {
-    Router.push("/login");
+    redirect("/login");
 };
 
 export const redirectSettings = () => {
-    Router.push("/settings");
+    redirect("/settings");
 };

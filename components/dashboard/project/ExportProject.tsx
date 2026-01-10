@@ -1,10 +1,12 @@
+"use client";
+
 import { useContext, useState } from "react";
 import FileSaver from "file-saver";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { convertToFountain } from "@src/lib/converters/export/fountain";
 import { convertToFDX } from "@src/lib/converters/export/fdx";
 import { exportToPDF } from "@src/lib/converters/export/pdf";
-import { useUser } from "@src/lib/utils/hooks";
+import { useCookieUser } from "@src/lib/utils/hooks";
 
 // Reusing form styles for consistency
 import form from "./../../utils/Form.module.css";
@@ -18,7 +20,7 @@ export enum ExportFormat {
 }
 
 const ExportProject = () => {
-    const { user } = useUser();
+    const { user } = useCookieUser();
     const { project: membership, screenplay } = useContext(ProjectContext);
 
     const [format, setFormat] = useState<ExportFormat>(ExportFormat.PDF);
@@ -117,11 +119,15 @@ const ExportProject = () => {
             </div>
 
             <div className={sharedStyles.formActions}>
-                <button onClick={handleExport} disabled={isExporting} className={`${sharedStyles.formBtn} ${sharedStyles.success}`}>
+                <button
+                    onClick={handleExport}
+                    disabled={isExporting}
+                    className={`${sharedStyles.formBtn} ${sharedStyles.success}`}
+                >
                     {isExporting ? "Exporting..." : "Download"}
                 </button>
             </div>
-        </div >
+        </div>
     );
 };
 

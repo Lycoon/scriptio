@@ -1,4 +1,5 @@
-// KeybindsSettings.tsx
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 
 import form from "./../../utils/Form.module.css";

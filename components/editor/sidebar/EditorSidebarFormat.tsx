@@ -1,9 +1,11 @@
+"use client";
+
 import EditorTab from "../EditorTab";
 
 import { join } from "@src/lib/utils/misc";
 import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 import { Dispatch, SetStateAction, useContext } from "react";
-import { applyMarkToggle } from "@src/lib/editor/editor";
+import { applyMarkToggle } from "@src/lib/screenplay/editor";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { Bold, Italic, Underline } from "lucide-react";

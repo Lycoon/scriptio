@@ -1,4 +1,6 @@
-import { SceneItem } from "@src/lib/editor/screenplay";
+"use client";
+
+import { SceneItem } from "@src/lib/screenplay/screenplay";
 import { join } from "@src/lib/utils/misc";
 
 import nav_item from "./SidebarItem.module.css";
@@ -11,7 +13,7 @@ const PageCounterItem = ({ scene }: Props) => {
     const length = +((scene.nextPosition - scene.position) / 1100).toFixed(1);
     const content = length + " p.";
 
-    return <p className={join(nav_item.preview, "unselectable")}>{content}</p>;
+    return <p className={join(nav_item.sceneLength, "unselectable")}>{content}</p>;
 };
 
 export default PageCounterItem;

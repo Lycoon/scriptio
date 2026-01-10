@@ -1,6 +1,8 @@
+"use client";
+
 import "chart.js/auto";
 import { Line } from "react-chartjs-2";
-import { Distribution, Frequency, getRandomColors, getScaledDistribution } from "@src/lib/editor/statistics";
+import { Distribution, Frequency, getRandomColors, getScaledDistribution } from "@src/lib/screenplay/statistics";
 
 type Props = {
     color: string;

@@ -22,6 +22,8 @@ model User {
   createdAt           DateTime    @default(now())
   email               String      @unique
   verified            Boolean     @default(false)
+  username            String?
+  color               String?
 
   settings            Json?
   secrets             Secret?
@@ -50,7 +52,6 @@ model Project {
   title               String
   description         String?
   hasPoster           Boolean     @default(false)
-  characters          Json?
 
   members             ProjectMember[]
   invitations         ProjectInvitation[]
@@ -76,6 +77,6 @@ model ProjectInvitation {
 
   project              Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId            String
-  
+
   @@unique([email, projectId])
 }

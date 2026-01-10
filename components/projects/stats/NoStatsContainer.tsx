@@ -1,3 +1,5 @@
+"use client";
+
 import BackButton from "@components/utils/BackButton";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 

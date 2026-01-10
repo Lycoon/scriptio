@@ -1,3 +1,5 @@
+"use client";
+
 import form from "./Form.module.css";
 import formEnd from "./../projects/FormEnd.module.css";
 

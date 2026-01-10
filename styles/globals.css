@@ -2,8 +2,7 @@
 @import "./themes.css";
 
 html,
-body,
-#__next {
+body {
     height: 100%;
     width: 100%;
     overflow: hidden;
@@ -16,6 +15,13 @@ body,
     overflow: hidden;
 }
 
+.app-layout > main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -23,8 +29,8 @@ body,
     font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
     /* Default values */
-    --format-sidebar-width: 280px;
-    --navigation-sidebar-width: 280px;
+    --format-sidebar-width: 300px;
+    --navigation-sidebar-width: 300px;
     --navbar-sidebar-width: 500px;
     --navbar-height: 90px;
 }
@@ -79,6 +85,7 @@ select {
     border-radius: 5px;
 }
 
+select,
 textarea,
 input {
     outline: none;

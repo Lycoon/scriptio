@@ -2,11 +2,7 @@
 //             WEBSITE            //
 // ------------------------------ //
 
-export enum VerificationStatus {
-    Success,
-    Failed,
-    Used,
-}
+export type EmailVerifyStatus = "success" | "failed" | "used";
 
 export enum PasswordRecoverStatus {
     Success,
@@ -19,11 +15,12 @@ export enum Page {
     Index = "index",
     Login = "login",
     Signup = "signup",
-    Recover = "recover",
+    Recover = "recovery",
 
     // /projects/{id}/{page}
     Screenplay = "screenplay",
     Statistics = "statistics",
+    Board = "board",
 }
 
 // ------------------------------ //

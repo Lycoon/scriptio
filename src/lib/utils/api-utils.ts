@@ -1,4 +1,4 @@
-import { NextApiResponse } from "@node_modules/next";
+import { NextResponse } from "next/server";
 import z from "zod";
 
 export interface ApiResponse<T = any> {
@@ -13,65 +13,57 @@ export class AppError extends Error {
         Object.setPrototypeOf(this, AppError.prototype);
     }
 }
-
 export class NotFoundError extends AppError {
     constructor(message = "Not found") {
         super(404, message);
     }
 }
-
 export class ProjectNotFoundError extends NotFoundError {
     constructor() {
         super("Project not found");
     }
 }
-
 export class UserNotFoundError extends NotFoundError {
     constructor() {
         super("User not found");
     }
 }
-
 export class ForbiddenError extends AppError {
     constructor(message = "Access denied") {
         super(403, message);
     }
 }
-
 export class BodyFieldError extends AppError {
     constructor(message = "One or more body fields are missing and/or invalid") {
         super(422, message);
     }
 }
-
 export class UnauthorizedError extends AppError {
     constructor(message = "Authentication required") {
         super(401, message);
     }
 }
-
 export class MissingBodyError extends AppError {
     constructor(message = "Missing body") {
         super(400, message);
     }
 }
-
 export class InternalServerError extends AppError {
     constructor(message = "Internal server error") {
         super(500, message);
     }
 }
 
-export const SuccessNoContent = (res: NextApiResponse) => {
-    res.status(204).end();
+export const SuccessNoContent = () => {
+    return new NextResponse(null, { status: 204 });
 };
 
-export const Success = <T>(res: NextApiResponse<ApiResponse<T>>, data: T, message?: string) => {
-    res.status(200).json({ status: "success", data, ...(message && { message }) });
+export const Success = <T>(data: T, message?: string) => {
+    return NextResponse.json({ status: "success", data, ...(message && { message }) }, { status: 200 });
 };
 
-export const SuccessCreated = <T>(res: NextApiResponse<ApiResponse<T>>, data: T, message?: string) => {
-    res.status(201).json({ status: "success", data, ...(message && { message }) });
+export const SuccessCreated = <T>(data: T, message?: string) => {
+    return NextResponse.json({ status: "success", data, ...(message && { message }) }, { status: 201 });
 };
 
 export function validate<T>(schema: z.ZodSchema<T>, data: unknown): T {

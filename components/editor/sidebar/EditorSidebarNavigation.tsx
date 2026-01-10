@@ -1,9 +1,11 @@
+"use client";
+
 import { join } from "@src/lib/utils/misc";
 import { useContext, useState } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
-import { SceneItem } from "@src/lib/editor/screenplay";
-import { CharacterItem } from "@src/lib/editor/characters";
+import { SceneItem } from "@src/lib/screenplay/screenplay";
+import { CharacterItem } from "@src/lib/screenplay/characters";
 import { Clapperboard, MapPinned, UserRound } from "lucide-react";
 import SidebarCharacterItem from "./SidebarCharacterItem";
 import SidebarSceneItem from "./SidebarSceneItem";

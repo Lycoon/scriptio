@@ -16,6 +16,10 @@ export async function destroy(projectId: string) {
     return repository.deleteProject(projectId);
 }
 
+export async function getProjectTitle(projectId: string) {
+    return repository.fetchProjectTitle(projectId);
+}
+
 export async function getMembership(projectId: string, userId: string) {
     return repository.fetchProjectMembership(projectId, userId);
 }

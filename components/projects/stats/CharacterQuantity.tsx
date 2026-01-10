@@ -1,6 +1,8 @@
+"use client";
+
 import "chart.js/auto";
 import { Doughnut } from "react-chartjs-2";
-import { getRandomColors, Quantity } from "@src/lib/editor/statistics";
+import { getRandomColors, Quantity } from "@src/lib/screenplay/statistics";
 
 type Props = {
     color: string;

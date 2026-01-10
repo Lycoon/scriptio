@@ -1,4 +1,4 @@
-import { applyElement } from "../editor/editor";
+import { applyElement } from "../screenplay/editor";
 import { ScreenplayElement } from "./enums";
 import { Editor } from "@tiptap/react";
 

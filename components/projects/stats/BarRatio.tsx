@@ -1,6 +1,8 @@
+"use client";
+
 import "chart.js/auto";
 import { Bar } from "react-chartjs-2";
-import { getRandomColors, StatsRatio } from "@src/lib/editor/statistics";
+import { getRandomColors, StatsRatio } from "@src/lib/screenplay/statistics";
 
 type Props = {
     color: string;

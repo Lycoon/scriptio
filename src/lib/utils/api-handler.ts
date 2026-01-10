@@ -1,23 +1,46 @@
-import { NextApiRequest, NextApiResponse } from "@node_modules/next";
+import { NextRequest, NextResponse } from "next/server";
 import { AppError } from "./api-utils";
+import { isRedirectError } from "@node_modules/next/dist/client/components/redirect-error";
 
-type Handler = (req: NextApiRequest, res: NextApiResponse) => Promise<void> | void;
+type AppHandler = (req: NextRequest, context: ApiContext) => Promise<NextResponse | Response | any>;
 
-export const apiHandler = (handler: Handler) => {
-    return async (req: NextApiRequest, res: NextApiResponse) => {
+export type ApiContext = {
+    routeParams: RouteParams;
+    searchParams: SearchParams;
+};
+
+export type RouteParams = Record<string, string>;
+export type SearchParams = Record<string, string>;
+
+export const apiHandler = (handler: AppHandler) => {
+    return async (req: NextRequest, { params }: { params?: Promise<RouteParams> | RouteParams } = {}) => {
         try {
-            await handler(req, res);
+            const url = new URL(req.url);
+            const searchParams = Object.fromEntries(url.searchParams);
+            const routeParams = params ? (params instanceof Promise ? await params : params) : {};
+            const result = await handler(req, { routeParams, searchParams });
+
+            if (result instanceof Response) return result;
+            return NextResponse.json(result, { status: 200 });
         } catch (err: any) {
-            if (err instanceof AppError) {
-                return res.status(err.statusCode).json({
-                    status: "error",
-                    message: err.message,
-                });
+            // If a redirect, rethrow it
+            if (isRedirectError(err)) {
+                throw err;
             }
-            return res.status(500).json({
-                status: "error",
-                message: "Something went wrong on our end.",
-            });
+
+            // Expected errors
+            if (err instanceof AppError) {
+                return NextResponse.json(
+                    {
+                        status: "error",
+                        message: err.message,
+                    },
+                    { status: err.statusCode }
+                );
+            }
+
+            // Unhandled errors
+            return NextResponse.json({ status: "error", message: err }, { status: 500 });
         }
     };
 };

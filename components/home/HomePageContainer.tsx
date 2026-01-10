@@ -1,4 +1,7 @@
+"use client";
+
 import styles from "./Landing.module.css";
+import navbar from "@components/navbar/LandingPageNavbar.module.css";
 
 import { Feather, Layout, WifiOff, Code, MessagesSquare, Eye, Clapperboard, ChartPie, Cloud } from "lucide-react";
 
@@ -25,7 +28,7 @@ export default function HomePageContainer() {
                 </ScriptStripe>
             </div>
 
-            <main className={styles.contentContainer}>
+            <div className={styles.contentContainer}>
                 {/* Hero Section */}
                 <section className={styles.hero}>
                     <div className={styles.logoContainer}>
@@ -210,7 +213,7 @@ export default function HomePageContainer() {
                         </div>
                     </div>
                 </section>
-            </main>
+            </div>
 
             {/* Footer */}
             <footer className={styles.footer}>
@@ -219,13 +222,13 @@ export default function HomePageContainer() {
                         <p>© 2026 Scriptio by ArkoLogic</p>
                     </div>
                     <div className={styles.footerLinks}>
-                        <a href="#" className={styles.navLink}>
+                        <a href="#" className={navbar.navLink}>
                             Privacy
                         </a>
-                        <a href="#" className={styles.navLink}>
+                        <a href="#" className={navbar.navLink}>
                             Terms
                         </a>
-                        <a href="https://github.com/Lycoon/scriptio" target="_blank" className={styles.navLink}>
+                        <a href="https://github.com/Lycoon/scriptio" target="_blank" className={navbar.navLink}>
                             GitHub
                         </a>
                     </div>

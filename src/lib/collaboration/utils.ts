@@ -39,7 +39,11 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     // Track our own state
     private readonly localClientId: number;
     private isIdleDisconnected: boolean = false;
+    private isSessionReplaced: boolean = false;
     private lastKnownUserCount: number = 1;
+
+    // Close codes from server
+    private readonly CLOSE_CODE_SESSION_REPLACED = 4001;
 
     // Bound event handlers for proper cleanup
     private boundResetIdleTimer: () => void;
@@ -72,6 +76,9 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.startFlushLoop();
         this.setupIdleListeners();
 
+        // Hook into WebSocket close events to detect session replacement
+        this.setupCloseHandler();
+
         console.log(`[WS] Provider initialized for room ${room}, clientId: ${this.localClientId}`);
     }
 
@@ -84,6 +91,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         if (event.status === "connected") {
             this.reconnectAttempts = 0;
             this.isIdleDisconnected = false;
+            this.isSessionReplaced = false;
             this.lastMessageTime = Date.now(); // Reset so we don't immediately ping
 
             // Re-announce our awareness state on reconnection
@@ -100,6 +108,72 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             this.lastKnownUserCount = 1;
         }
     };
+
+    /**
+     * Set up a hook to intercept WebSocket close events
+     * y-websocket doesn't expose close codes, so we need to intercept
+     */
+    private setupCloseHandler(): void {
+        const provider = this;
+        let currentWs: WebSocket | null = null;
+
+        const checkAndHookWs = () => {
+            // Don't hook if session was already replaced
+            if (provider.isSessionReplaced) return;
+
+            const ws = (provider as any).ws;
+            if (ws && ws !== currentWs) {
+                currentWs = ws;
+                const originalClose = ws.onclose;
+                ws.onclose = (event: CloseEvent) => {
+                    // Check if this is a session replacement close
+                    if (event.code === provider.CLOSE_CODE_SESSION_REPLACED) {
+                        provider.handleSessionReplaced();
+                        // Don't call original handler - we don't want y-websocket to reconnect
+                        return;
+                    }
+                    // For other close codes, call the original handler
+                    if (originalClose) {
+                        originalClose.call(ws, event);
+                    }
+                };
+            }
+        };
+
+        // Hook into new WebSocket connections when status changes
+        this.on("status", (event: { status: string }) => {
+            // Only hook when connecting, not when already replaced
+            if (event.status === "connecting" && !provider.isSessionReplaced) {
+                setTimeout(checkAndHookWs, 0);
+            }
+        });
+
+        // Initial check
+        checkAndHookWs();
+    }
+
+    /**
+     * Handle session replacement - stop all reconnection attempts
+     */
+    private handleSessionReplaced(): void {
+        console.log("[WS] Session was replaced by another connection. Stopping reconnection.");
+        this.isSessionReplaced = true;
+
+        // Cancel any pending reconnects from our custom logic
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
+        // Tell y-websocket to not reconnect
+        this.shouldConnect = false;
+
+        // Disconnect properly to clean up
+        this.disconnect();
+
+        // Emit custom event for UI to handle
+        this.emit("session-replaced", []);
+    }
 
     /**
      * Count active collaborators (excluding ourselves and stale states)
@@ -140,6 +214,11 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             return;
         }
 
+        if (this.isSessionReplaced) {
+            console.warn("[WS] Cannot update token - session was replaced");
+            return;
+        }
+
         console.log("[WS] Updating token and reconnecting...");
 
         try {
@@ -163,6 +242,11 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         return new Promise((resolve, reject) => {
             if (this.isDestroyed) {
                 reject(new Error("Provider is destroyed"));
+                return;
+            }
+
+            if (this.isSessionReplaced) {
+                reject(new Error("Session was replaced by another connection"));
                 return;
             }
 
@@ -225,7 +309,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      * Called automatically on connection errors.
      */
     public scheduleReconnect(): void {
-        if (this.isDestroyed || this.reconnectTimeout || this.isIdleDisconnected) {
+        if (this.isDestroyed || this.reconnectTimeout || this.isIdleDisconnected || this.isSessionReplaced) {
             return;
         }
 
@@ -242,7 +326,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         this.reconnectTimeout = setTimeout(() => {
             this.reconnectTimeout = null;
-            if (!this.isDestroyed && !this.isIdleDisconnected) {
+            if (!this.isDestroyed && !this.isIdleDisconnected && !this.isSessionReplaced) {
                 this.connect();
             }
         }, delay);
@@ -267,7 +351,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      * If we were idle-disconnected, attempt to reconnect
      */
     private resetUserIdleTimer(): void {
-        if (this.isDestroyed) return;
+        if (this.isDestroyed || this.isSessionReplaced) return;
 
         // If we were idle-disconnected and user is now active, reconnect
         if (this.isIdleDisconnected && !this.wsconnected) {
@@ -507,6 +591,13 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      */
     public get isIdle(): boolean {
         return this.isIdleDisconnected;
+    }
+
+    /**
+     * Check if session was replaced by another connection (same user connected elsewhere)
+     */
+    public get wasSessionReplaced(): boolean {
+        return this.isSessionReplaced;
     }
 
     /**

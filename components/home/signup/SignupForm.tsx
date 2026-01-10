@@ -1,16 +1,21 @@
+"use client";
+
 import { useState } from "react";
 import { ERROR_PASSWORD_MATCH } from "@src/lib/messages";
 import { signup } from "@src/lib/utils/requests";
 import FormInfo, { FormInfoType } from "../../utils/FormInfo";
-import Router, { useRouter } from "@node_modules/next/router";
 import { ApiResponse } from "@src/lib/utils/api-utils";
-import { SignupBody } from "@pages/api/signup";
 
 import form from "../../utils/Form.module.css";
+import { SignupBody } from "@src/app/api/signup/route";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const SignupForm = () => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
-    const { query } = useRouter();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const inviteToken = searchParams.get("inviteToken");
+    const emailParam = searchParams.get("email") ?? "";
 
     const resetFromInfo = () => {
         setFormInfo(null);
@@ -31,14 +36,14 @@ const SignupForm = () => {
         const body: SignupBody = {
             email,
             password: pwd1,
-            inviteToken: query.inviteToken as string,
+            inviteToken: inviteToken ?? undefined,
         };
 
         const res = await signup(body);
         const json = (await res.json()) as ApiResponse;
 
         if (res.ok && json.data && json.data.redirectUrl) {
-            Router.push(json.data.redirectUrl);
+            router.push(json.data.redirectUrl);
             return;
         }
 
@@ -56,12 +61,12 @@ const SignupForm = () => {
             <label className={form.element}>
                 <span className={form.label}>Email</span>
                 <input
-                    key={query.email as string}
+                    key={emailParam}
                     className={form.input}
                     name="email"
                     type="email"
                     onChange={resetFromInfo}
-                    defaultValue={query.email}
+                    defaultValue={emailParam}
                     required
                 />
             </label>

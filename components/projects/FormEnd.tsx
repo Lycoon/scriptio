@@ -1,3 +1,5 @@
+"use client";
+
 import form_end from "./FormEnd.module.css";
 import form from "../utils/Form.module.css";
 import { join } from "@src/lib/utils/misc";

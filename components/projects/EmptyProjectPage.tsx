@@ -1,10 +1,12 @@
-import empty from "./EmptyProjectPage.module.css";
+"use client";
+
+import styles from "./EmptyProjectPage.module.css";
 
 const EmptyProjectPage = (props: any) => {
     const setIsCreating = props.setIsCreating;
     return (
-        <button className={empty.container} onClick={() => setIsCreating(true)}>
-            <p className={empty.title}>Click to create your first project</p>
+        <button className={styles.container} onClick={() => setIsCreating(true)}>
+            <p className={styles.title}>Click to create your first project</p>
         </button>
     );
 };

@@ -1,3 +1,5 @@
+"use client";
+
 import { cropImageBase64 } from "@src/lib/utils/misc";
 import { editProject } from "@src/lib/utils/requests";
 import { useEffect, useState } from "react";

@@ -1,3 +1,5 @@
+"use client";
+
 import { _MS_PER_DAY, getElapsedDaysFrom, getLastUpdate, join } from "@src/lib/utils/misc";
 
 import item from "./ProjectItem.module.css";

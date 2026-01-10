@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { useEffect, useState, ChangeEvent, DragEvent } from "react";
 import upload from "./UploadButton.module.css";

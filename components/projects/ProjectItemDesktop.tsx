@@ -1,3 +1,5 @@
+"use client";
+
 import { getElapsedDaysFrom, getLastUpdate } from "@src/lib/utils/misc";
 
 import { redirectScreenplay } from "@src/lib/utils/redirects";

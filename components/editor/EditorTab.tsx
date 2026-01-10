@@ -1,3 +1,5 @@
+"use client";
+
 import { join } from "@src/lib/utils/misc";
 import tab from "./EditorTab.module.css";
 

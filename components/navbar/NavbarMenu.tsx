@@ -1,15 +1,16 @@
+"use client";
+
 import { redirectExport, redirectProjectInfo, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
 import { useContext } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { ConnectionStatus } from "@src/lib/utils/enums";
 import { UserContext } from "@src/context/UserContext";
-import { importFilePopup } from "@src/lib/editor/popup";
+import { importFilePopup } from "@src/lib/screenplay/popup";
 import { convertFountainToHTML } from "@src/lib/converters/import/fountain";
 import dynamic from "next/dynamic";
-import { computeFullCharactersData } from "@src/lib/editor/characters";
-import { computeFullScenesData } from "@src/lib/editor/screenplay";
+import { computeFullScenesData } from "@src/lib/screenplay/screenplay";
 import { generateJSON } from "@tiptap/react";
-import { SCRIPTIO_EXTENSIONS, replaceScreenplay } from "@src/lib/editor/editor";
+import { SCRIPTIO_EXTENSIONS, replaceScreenplay } from "@src/lib/screenplay/editor";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { Screenplay } from "@src/lib/utils/types";
 
@@ -55,7 +56,6 @@ const NavbarMenu = ({ project }: NavbarMenuProps) => {
                     const json = generateJSON(html, SCRIPTIO_EXTENSIONS) as Screenplay;
 
                     replaceScreenplay(editor, json);
-                    computeFullCharactersData(json, projectCtx);
                     computeFullScenesData(json, projectCtx);
                 };
 

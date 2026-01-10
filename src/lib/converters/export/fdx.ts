@@ -1,5 +1,5 @@
 import { ExportData } from "@src/lib/converters/utils";
-import { getNodeFlattenContent } from "@src/lib/editor/screenplay";
+import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { Screenplay } from "@src/lib/utils/types";
 import { XMLBuilder } from "fast-xml-parser";
 

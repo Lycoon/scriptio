@@ -1,24 +1,26 @@
+"use client";
+
 import { useState } from "react";
 import { cropImageBase64, join } from "@src/lib/utils/misc";
 import { FormInfoType } from "../utils/FormInfo";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { createProject } from "@src/lib/utils/requests";
-import { useDesktop, useUser } from "@src/lib/utils/hooks";
+import { useCookieUser, useDesktop } from "@src/lib/utils/hooks";
 import UploadButton from "./UploadButton";
 import FormHeader from "./FormHeader";
 import FormEnd from "./FormEnd";
 
 import form from "../utils/Form.module.css";
 import layout from "../utils/Layout.module.css";
-import { CreateProjectBody } from "@pages/api/projects";
 import { ApiResponse } from "@src/lib/utils/api-utils";
+import { CreateProjectBody } from "@src/app/api/projects/route";
 
 type Props = {
     setIsCreating: (isCreating: boolean) => void;
 };
 
 const CreateProjectPage = ({ setIsCreating }: Props) => {
-    const { user } = useUser();
+    const { user } = useCookieUser();
     const isDesktop = useDesktop();
 
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
@@ -35,7 +37,6 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
 
     const onSubmit = async (e: any) => {
         e.preventDefault();
-        console.log("submitting");
         resetFormInfo();
 
         if (!user) return;

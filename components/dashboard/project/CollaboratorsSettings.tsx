@@ -1,18 +1,19 @@
+"use client";
+
 import { useContext, useState } from "react";
-import { useProjectCollaborators, useProjectInvites, useProjectMembership, useUser } from "@src/lib/utils/hooks";
+import { useCookieUser, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
 import { ProjectRole } from "@prisma/client";
-import { Collaborator, ProjectInvite } from "@src/server/repository/project-repository";
+import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 import form from "./../../utils/Form.module.css";
 import shared from "./ProjectSettings.module.css";
 import styles from "./CollaboratorsSettings.module.css";
 import { deleteInvite, inviteCollaborator, kickCollaborator, updateMemberRole } from "@src/lib/utils/requests";
-import { ProjectContext } from "@src/context/ProjectContext";
 
 import * as Roles from "@src/lib/utils/roles";
-import Router from "@node_modules/next/router";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { DashboardContext } from "@src/context/DashboardContext";
+import { redirect } from "next/navigation";
 
 const MAX_COLLABORATORS = 5;
 
@@ -77,13 +78,21 @@ const CollaboratorsSettings = () => {
                                     <MemberSlot
                                         key={index}
                                         data={slot.data}
+                                        membership={membership}
                                         mutateCollaborators={mutateCollaborators}
                                     />
                                 );
                             case "INVITE":
-                                return <InviteSlot key={index} data={slot.data} mutateInvites={mutateInvites} />;
+                                return (
+                                    <InviteSlot
+                                        key={index}
+                                        data={slot.data}
+                                        membership={membership}
+                                        mutateInvites={mutateInvites}
+                                    />
+                                );
                             case "EMPTY":
-                                return <EmptySlot key={index} mutateInvites={mutateInvites} />;
+                                return <EmptySlot key={index} membership={membership} mutateInvites={mutateInvites} />;
                             default:
                                 return null;
                         }
@@ -94,12 +103,17 @@ const CollaboratorsSettings = () => {
     );
 };
 
-const MemberSlot = ({ data, mutateCollaborators }: { data: Collaborator; mutateCollaborators: () => void }) => {
-    const { project: membership } = useContext(ProjectContext);
-    const { closeDashboard } = useContext(DashboardContext);
-    const { user } = useUser();
+interface MemberSlotProps {
+    data: Collaborator;
+    membership: ProjectMembershipPayload;
+    mutateCollaborators: () => void;
+}
 
-    if (!membership || !user) return null;
+const MemberSlot = ({ data, membership, mutateCollaborators }: MemberSlotProps) => {
+    const { closeDashboard } = useContext(DashboardContext);
+    const { user } = useCookieUser();
+
+    if (!user) return null;
 
     const isOwner = data.role === ProjectRole.OWNER;
     const isAdmin = Roles.hasRoleOrGreater(membership.role, ProjectRole.ADMIN);
@@ -115,7 +129,7 @@ const MemberSlot = ({ data, mutateCollaborators }: { data: Collaborator; mutateC
                 const json = (await res.json()) as ApiResponse;
                 if (json.data && json.data.redirectUrl) {
                     closeDashboard();
-                    Router.push(json.data.redirectUrl);
+                    redirect(json.data.redirectUrl);
                 }
             } else {
                 mutateCollaborators();
@@ -162,10 +176,13 @@ const MemberSlot = ({ data, mutateCollaborators }: { data: Collaborator; mutateC
     );
 };
 
-const InviteSlot = ({ data, mutateInvites }: { data: ProjectInvite; mutateInvites: () => void }) => {
-    const { project: membership } = useContext(ProjectContext);
-    if (!membership) return null;
+interface InviteSlotProps {
+    data: ProjectInvite;
+    membership: ProjectMembershipPayload;
+    mutateInvites: () => void;
+}
 
+const InviteSlot = ({ data, membership, mutateInvites }: InviteSlotProps) => {
     const canInvite = Roles.hasRoleOrGreater(membership.role, ProjectRole.ADMIN);
     const handleCancelInvite = async () => {
         const res = await deleteInvite(membership.project.id, data.email);
@@ -192,11 +209,13 @@ const InviteSlot = ({ data, mutateInvites }: { data: ProjectInvite; mutateInvite
     );
 };
 
-const EmptySlot = ({ mutateInvites }: { mutateInvites: () => void }) => {
-    const { project: membership } = useContext(ProjectContext);
-    const [email, setEmail] = useState("");
+interface EmptySlotProps {
+    membership: ProjectMembershipPayload;
+    mutateInvites: () => void;
+}
 
-    if (!membership) return null;
+const EmptySlot = ({ membership, mutateInvites }: EmptySlotProps) => {
+    const [email, setEmail] = useState("");
 
     const canInvite = Roles.hasRoleOrGreater(membership.role, ProjectRole.ADMIN);
     const handleInvite = async () => {

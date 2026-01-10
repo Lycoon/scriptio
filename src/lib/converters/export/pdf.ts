@@ -12,7 +12,10 @@ const FONTS: TFontDictionary = {
     },
 };
 
+// Units are in points (pt)
+// Conversion from inches to points -> x72
 const DEFAULT_OFFSET = 12;
+
 const addOffset = (pdfNodes: any[]) => {
     pdfNodes.push(getPDFNodeTemplate("offset", ""));
 };
@@ -57,37 +60,40 @@ const initPDF = (exportData: ExportData, pdfNodes: any[]): TDocumentDefinitions 
             author: exportData.author,
         },
         header: (currentPage, pageCount, pageSize) => {
-            return [{
-                text: `${currentPage}.`,
-                alignment: "right",
-                marginRight: 96,
-                marginTop: 48
-            }]
+            return [
+                {
+                    text: `${currentPage}.`,
+                    alignment: "right",
+                    marginRight: 72,
+                    marginTop: 36,
+                },
+            ];
         },
         content: pdfNodes,
-        pageMargins: [144, 96, 96, 96],
-        pageSize: "A4",
+        pageMargins: [108, 72, 72, 72], // [1.5in, 1in, 1in, 1in]
+        pageSize: "LETTER",
         defaultStyle: {
             font: "CourierPrime",
             fontSize: 12,
-            alignment: "left"
+            alignment: "left",
         },
         styles: {
             scene: {
                 bold: true,
+                margin: [0, DEFAULT_OFFSET, 0, 0],
             },
             note: {
                 fillColor: exportData.notesColor ?? "#FFFF68",
                 margin: [6, 0, 0, 0],
             },
             character: {
-                margin: [211, 0, 0, 0],
+                margin: [158, 0, 0, 0],
             },
             dialogue: {
-                margin: [115, 0, 100, 0],
+                margin: [86, 0, 86, 0],
             },
             parenthetical: {
-                margin: [182, 0],
+                margin: [137, 0, 151, 0],
             },
             action: {
                 margin: [0, 0, 0, DEFAULT_OFFSET],
