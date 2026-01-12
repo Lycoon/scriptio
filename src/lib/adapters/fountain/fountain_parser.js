@@ -6,15 +6,12 @@
     "use strict";
 
     var regex = {
-        title_page:
-            /^((?:title|credit|author[s]?|source|notes|draft date|date|contact|copyright)\:)/gim,
+        title_page: /^((?:title|credit|author[s]?|source|notes|draft date|date|contact|copyright)\:)/gim,
 
-        scene_heading:
-            /^((?:\*{0,3}_?)?(?:(?:int|ext|est|i\/e)[. ]).+)|^(?:\.(?!\.+))(.+)/i,
+        scene_heading: /^((?:\*{0,3}_?)?(?:(?:int|ext|est|i\/e)[. ]).+)|^(?:\.(?!\.+))(.+)/i,
         scene_number: /( *#(.+)# *)/,
 
-        transition:
-            /^((?:FADE (?:TO BLACK|OUT)|CUT TO BLACK)\.|.+ TO\:)|^(?:> *)(.+)/,
+        transition: /^((?:FADE (?:TO BLACK|OUT)|CUT TO BLACK)\.|.+ TO\:)|^(?:> *)(.+)/,
 
         dialogue: /^(.*)(\^?)?(?:\n(?!\n+))([\s\S]+)/,
         parenthetical: /^(\(.+\))$/,
@@ -32,14 +29,10 @@
         page_break: /^\={3,}$/,
         line_break: /^ {2}$/,
 
-        emphasis:
-            /(_|\*{1,3}|_\*{1,3}|\*{1,3}_)(.+)(_|\*{1,3}|_\*{1,3}|\*{1,3}_)/g,
-        bold_italic_underline:
-            /(_{1}\*{3}(?=.+\*{3}_{1})|\*{3}_{1}(?=.+_{1}\*{3}))(.+?)(\*{3}_{1}|_{1}\*{3})/g,
-        bold_underline:
-            /(_{1}\*{2}(?=.+\*{2}_{1})|\*{2}_{1}(?=.+_{1}\*{2}))(.+?)(\*{2}_{1}|_{1}\*{2})/g,
-        italic_underline:
-            /(?:_{1}\*{1}(?=.+\*{1}_{1})|\*{1}_{1}(?=.+_{1}\*{1}))(.+?)(\*{1}_{1}|_{1}\*{1})/g,
+        emphasis: /(_|\*{1,3}|_\*{1,3}|\*{1,3}_)(.+)(_|\*{1,3}|_\*{1,3}|\*{1,3}_)/g,
+        bold_italic_underline: /(_{1}\*{3}(?=.+\*{3}_{1})|\*{3}_{1}(?=.+_{1}\*{3}))(.+?)(\*{3}_{1}|_{1}\*{3})/g,
+        bold_underline: /(_{1}\*{2}(?=.+\*{2}_{1})|\*{2}_{1}(?=.+_{1}\*{2}))(.+?)(\*{2}_{1}|_{1}\*{2})/g,
+        italic_underline: /(?:_{1}\*{1}(?=.+\*{1}_{1})|\*{1}_{1}(?=.+_{1}\*{1}))(.+?)(\*{1}_{1}|_{1}\*{1})/g,
         bold_italic: /(\*{3}(?=.+\*{3}))(.+?)(\*{3})/g,
         bold: /(\*{2}(?=.+\*{2}))(.+?)(\*{2})/g,
         italic: /(\*{1}(?=.+\*{1}))(.+?)(\*{1})/g,
@@ -85,12 +78,15 @@
                 line = line.replace(match[0], "");
             }
 
+            // forced action (lines starting with !)
+            if (line.charAt(0) === "!") {
+                tokens.push({ type: "action", text: line.substring(1) });
+                continue;
+            }
+
             // title page
             if (regex.title_page.test(line)) {
-                match = line
-                    .replace(regex.title_page, "\n$1")
-                    .split(regex.splitter)
-                    .reverse();
+                match = line.replace(regex.title_page, "\n$1").split(regex.splitter).reverse();
                 for (x = 0, xlen = match.length; x < xlen; x++) {
                     parts = match[x].replace(regex.cleaner, "").split(/\:\n*/);
                     tokens.push({
@@ -151,15 +147,18 @@
 
                         if (text.length > 0) {
                             tokens.push({
-                                type: regex.parenthetical.test(text)
-                                    ? "parenthetical"
-                                    : "dialogue",
+                                type: regex.parenthetical.test(text) ? "parenthetical" : "dialogue",
                                 text: text,
                             });
                         }
                     }
 
-                    tokens.push({ type: "character", text: match[1].trim() });
+                    // Strip @ prefix for forced character names
+                    var characterName = match[1].trim();
+                    if (characterName.charAt(0) === "@") {
+                        characterName = characterName.substring(1);
+                    }
+                    tokens.push({ type: "character", text: characterName });
                     tokens.push({
                         type: "dialogue_begin",
                         dual: match[2] ? "right" : dual ? "left" : undefined,
@@ -193,8 +192,7 @@
             // boneyard
             if ((match = line.match(regex.boneyard))) {
                 tokens.push({
-                    type:
-                        match[0][0] === "/" ? "boneyard_begin" : "boneyard_end",
+                    type: match[0][0] === "/" ? "boneyard_begin" : "boneyard_end",
                 });
                 continue;
             }
@@ -292,51 +290,37 @@
             switch (token.type) {
                 case "title":
                     title_page.push("<h1>" + token.text + "</h1>");
-                    title = token.text
-                        .replace("<br />", " ")
-                        .replace(/<(?:.|\n)*?>/g, "");
+                    title = token.text.replace("<br />", " ").replace(/<(?:.|\n)*?>/g, "");
                     break;
                 case "credit":
                     title_page.push('<p class="credit">' + token.text + "</p>");
                     break;
                 case "author":
-                    title_page.push(
-                        '<p class="authors">' + token.text + "</p>"
-                    );
+                    title_page.push('<p class="authors">' + token.text + "</p>");
                     break;
                 case "authors":
-                    title_page.push(
-                        '<p class="authors">' + token.text + "</p>"
-                    );
+                    title_page.push('<p class="authors">' + token.text + "</p>");
                     break;
                 case "source":
                     title_page.push('<p class="source">' + token.text + "</p>");
                     break;
                 case "draft_date":
-                    title_page.push(
-                        '<p class="draft-date">' + token.text + "</p>"
-                    );
+                    title_page.push('<p class="draft-date">' + token.text + "</p>");
                     break;
                 case "date":
                     title_page.push('<p class="date">' + token.text + "</p>");
                     break;
                 case "contact":
-                    title_page.push(
-                        '<p class="contact">' + token.text + "</p>"
-                    );
+                    title_page.push('<p class="contact">' + token.text + "</p>");
                     break;
                 case "copyright":
-                    title_page.push(
-                        '<p class="copyright">' + token.text + "</p>"
-                    );
+                    title_page.push('<p class="copyright">' + token.text + "</p>");
                     break;
 
                 case "scene_heading":
                     html.push(
                         '<p class="scene"' +
-                            (token.scene_number
-                                ? ' id="' + token.scene_number + '">'
-                                : ">") +
+                            (token.scene_number ? ' id="' + token.scene_number + '">' : ">") +
                             token.text +
                             "</p>"
                     );
@@ -367,9 +351,7 @@
                     if (token.text.charAt(0) === "(") {
                         token.text = token.text.slice(1);
                     }
-                    html.push(
-                        '<p class="parenthetical">' + token.text + "</p>"
-                    );
+                    html.push('<p class="parenthetical">' + token.text + "</p>");
                     break;
                 case "dialogue":
                     html.push('<p class="dialogue">' + token.text + "</p>");
@@ -387,13 +369,7 @@
                     break;
                 */
                 case "section":
-                    html.push(
-                        '<p class="section" data-depth="' +
-                            token.depth +
-                            '">' +
-                            token.text +
-                            "</p>"
-                    );
+                    html.push('<p class="section" data-depth="' + token.depth + '">' + token.text + "</p>");
                     break;
                 case "synopsis":
                     html.push('<p class="synopsis">' + token.text + "</p>");
@@ -451,4 +427,4 @@
     } else {
         this.fountain = fountain;
     }
-}.call(this));
+}).call(this);

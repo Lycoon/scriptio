@@ -12,7 +12,7 @@ import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { Download, Folder, Keyboard, KeyRound, Palette, Settings, User, Users } from "lucide-react";
+import { FileDown, Folder, Keyboard, KeyRound, Palette, User, Users } from "lucide-react";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
 import SecuritySettings from "./account/SecuritySettings";
@@ -28,8 +28,8 @@ const PROJECT_MENU: MenuSection = {
         },
         {
             id: "Export",
-            label: "Export",
-            icon: <Download size={18} />,
+            label: "Import/Export",
+            icon: <FileDown size={18} />,
         },
         {
             id: "Collaborators",

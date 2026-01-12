@@ -52,6 +52,7 @@ Originally developed by John August - johnaugust.com
         line-height: 17px !important;
         min-height: 1lh;
         margin-bottom: 17px;
+        letter-spacing: -0.3px;
     }
 
     /* Spans inside paragraphs - NO display/width overrides 
@@ -132,6 +133,10 @@ Originally developed by John August - johnaugust.com
     .character {
         padding-left: 2.2in !important;
         text-transform: uppercase;
+    }
+
+    .character.contd::after {
+        content: " (CONT'D)";
     }
 
     /* Parenthetical */

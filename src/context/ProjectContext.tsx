@@ -4,19 +4,22 @@ import { createContext, ReactNode, useCallback, useEffect, useMemo, useRef, useS
 import { Editor } from "@tiptap/react";
 import { ThrottledWebsocketProvider } from "@src/lib/collaboration/utils";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
+import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
 import { ComputedScenesData, MergedScenesData, PersistentSceneItem, mergeScenesData } from "@src/lib/screenplay/scenes";
 import { computeFullScenesData } from "@src/lib/screenplay/screenplay";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
-import { useSettings } from "@src/lib/utils/hooks";
+import { useSettings, useUser } from "@src/lib/utils/hooks";
 import type { Doc } from "yjs";
 import {
     CollaboratorInfo,
     ConnectionStatus,
     getCharactersMap,
+    getLocationsMap,
     getScenesMap,
     useProjectYjs,
 } from "@src/lib/project/project-yjs";
 import { Screenplay } from "@src/lib/utils/types";
+import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 import debounce from "debounce";
 
 // -------------------------------- //
@@ -24,6 +27,7 @@ import debounce from "debounce";
 // -------------------------------- //
 
 const CHARACTER_UPDATE_DELAY = 500;
+const LOCATION_UPDATE_DELAY = 500;
 const SCENE_UPDATE_DELAY = 500;
 
 const EMPTY_SCREENPLAY: Screenplay = {
@@ -68,6 +72,16 @@ export interface ProjectContextType {
     // Characters data
     charactersData: CharacterMap;
     updateCharactersData: (data: CharacterMap | ((prev: CharacterMap) => CharacterMap)) => void;
+
+    // Locations data
+    locationsData: LocationMap;
+    updateLocationsData: (data: LocationMap | ((prev: LocationMap) => LocationMap)) => void;
+
+    // Screenplay format state (for navbar dropdown)
+    selectedElement: ScreenplayElement;
+    setSelectedElement: (element: ScreenplayElement) => void;
+    selectedStyles: Style;
+    setSelectedStyles: (styles: Style | ((prev: Style) => Style)) => void;
 }
 
 // -------------------------------- //
@@ -93,6 +107,12 @@ const defaultContextValue: ProjectContextType = {
     updateComputedScenes: () => {},
     charactersData: {},
     updateCharactersData: () => {},
+    locationsData: {},
+    updateLocationsData: () => {},
+    selectedElement: ScreenplayElement.Action,
+    setSelectedElement: () => {},
+    selectedStyles: Style.None,
+    setSelectedStyles: () => {},
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -108,11 +128,11 @@ interface ProjectProviderProps {
 
 export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) => {
     // Get user settings for collaboration
-    const { settings } = useSettings();
+    const { user } = useUser();
 
     // Memoize user info to prevent recreating on every render
-    const userName = settings?.online?.username;
-    const userColor = settings?.online?.color;
+    const userName = user?.username;
+    const userColor = user?.color;
 
     // Initialize Yjs with stable user info
     const {
@@ -141,18 +161,37 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [charactersData, setCharactersData] = useState<CharacterMap>({});
     const [persistentCharacters, setPersistentCharacters] = useState<CharacterMap>({});
 
+    // Locations state
+    const [locationsData, setLocationsData] = useState<LocationMap>({});
+    const [persistentLocations, setPersistentLocations] = useState<LocationMap>({});
+
+    // Screenplay format state
+    const [selectedElement, setSelectedElementState] = useState<ScreenplayElement>(ScreenplayElement.Action);
+    const [selectedStyles, setSelectedStylesState] = useState<Style>(Style.None);
+
     // Debounced character merge function
     const debouncedCharacterMergeRef = useRef(
         debounce((persistent: CharacterMap, sp: Screenplay) => {
+            console.log("debouncedCharacterMergeRef");
             const mergedCharacters = mergeCharactersData(persistent, sp);
             setCharactersData(mergedCharacters);
         }, CHARACTER_UPDATE_DELAY)
+    );
+
+    // Debounced location merge function
+    const debouncedLocationMergeRef = useRef(
+        debounce((persistent: LocationMap, sp: Screenplay) => {
+            console.log("debouncedLocationMergeRef");
+            const mergedLocations = mergeLocationsData(persistent, sp);
+            setLocationsData(mergedLocations);
+        }, LOCATION_UPDATE_DELAY)
     );
 
     // Debounced scene computation function
     const debouncedSceneUpdateRef = useRef(
         debounce((sp: Screenplay, updateFn: (scenes: ComputedScenesData) => void) => {
             // Pass a minimal context object with just the update function
+            console.log("debouncedSceneUpdateRef");
             computeFullScenesData(sp, { updateComputedScenes: updateFn } as ProjectContextType);
         }, SCENE_UPDATE_DELAY)
     );
@@ -171,10 +210,24 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     }, [yjsUsers]);
 
     useEffect(() => {
+        debouncedCharacterMergeRef.current(persistentCharacters, screenplay);
+    }, [persistentCharacters, screenplay]);
+
+    useEffect(() => {
+        debouncedLocationMergeRef.current(persistentLocations, screenplay);
+    }, [persistentLocations, screenplay]);
+
+    useEffect(() => {
+        debouncedSceneUpdateRef.current(screenplay, setComputedScenes);
+    }, [screenplay]);
+
+    useEffect(() => {
         if (!ydoc) {
             setPersistentCharacters({});
             return;
         }
+
+        console.log("sync persistent characters");
 
         const charactersMap = getCharactersMap(ydoc);
         const syncPersistentCharacters = () => {
@@ -193,18 +246,39 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         };
     }, [ydoc]);
 
+    // Sync persistent locations from Yjs
     useEffect(() => {
-        debouncedCharacterMergeRef.current(persistentCharacters, screenplay);
-    }, [persistentCharacters, screenplay]);
-    useEffect(() => {
-        debouncedSceneUpdateRef.current(screenplay, setComputedScenes);
-    }, [screenplay]);
+        if (!ydoc) {
+            setPersistentLocations({});
+            return;
+        }
+
+        console.log("sync persistent locations");
+
+        const locationsMap = getLocationsMap(ydoc);
+        const syncPersistentLocations = () => {
+            const newPersistentLocations: LocationMap = {};
+            locationsMap.forEach((value, key) => {
+                newPersistentLocations[key] = value;
+            });
+            setPersistentLocations(newPersistentLocations);
+        };
+
+        syncPersistentLocations();
+        locationsMap.observe(syncPersistentLocations);
+
+        return () => {
+            locationsMap.unobserve(syncPersistentLocations);
+        };
+    }, [ydoc]);
 
     useEffect(() => {
         if (!ydoc) {
             setPersistentScenes(new Map());
             return;
         }
+
+        console.log("sync persistent scenes");
 
         const scenesMap = getScenesMap(ydoc);
         const syncPersistentScenes = () => {
@@ -225,6 +299,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     // Merge persistent scenes (from Yjs) with computed scenes (from screenplay)
     useEffect(() => {
+        console.log("merge scenes");
         const mergedScenes = mergeScenesData(persistentScenes, computedScenes);
         setScenesData(mergedScenes);
     }, [persistentScenes, computedScenes]);
@@ -253,8 +328,20 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setCharactersData(data);
     }, []);
 
+    const updateLocationsData = useCallback((data: LocationMap | ((prev: LocationMap) => LocationMap)) => {
+        setLocationsData(data);
+    }, []);
+
     const updateConnectionStatus = useCallback((status: ConnectionStatus) => {
         setConnectionStatus(status);
+    }, []);
+
+    const setSelectedElement = useCallback((element: ScreenplayElement) => {
+        setSelectedElementState(element);
+    }, []);
+
+    const setSelectedStyles = useCallback((styles: Style | ((prev: Style) => Style)) => {
+        setSelectedStylesState(styles);
     }, []);
 
     const contextValue = useMemo<ProjectContextType>(
@@ -275,8 +362,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             updateComputedScenes,
             charactersData,
             updateCharactersData,
+            locationsData,
+            updateLocationsData,
             isLockedByServer,
             isSessionReplaced,
+            selectedElement,
+            setSelectedElement,
+            selectedStyles,
+            setSelectedStyles,
         }),
         [
             project,
@@ -295,8 +388,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             updateComputedScenes,
             charactersData,
             updateCharactersData,
+            locationsData,
+            updateLocationsData,
             isLockedByServer,
             isSessionReplaced,
+            selectedElement,
+            setSelectedElement,
+            selectedStyles,
+            setSelectedStyles,
         ]
     );
 

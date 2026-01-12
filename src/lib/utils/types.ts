@@ -1,6 +1,5 @@
 import { DocumentType, NodeType, TextType } from "@tiptap/core";
 import { UpdateSecrets, UpdateSettings } from "../../server/repository/user-repository";
-import { CharacterMap } from "../screenplay/characters";
 
 export type Screenplay = DocumentType<
     Record<string, any> | undefined,

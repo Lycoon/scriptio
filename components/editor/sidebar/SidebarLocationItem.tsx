@@ -1,47 +1,43 @@
 "use client";
 
 import { useContext } from "react";
-import { CharacterContextProps, ContextMenuType } from "./ContextMenu";
+import { LocationContextProps, ContextMenuType } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { pasteText } from "@src/lib/screenplay/editor";
-
 import { ProjectContext } from "@src/context/ProjectContext";
 import { join } from "@src/lib/utils/misc";
 
 import LinkSVG from "@public/images/link.svg";
 import item from "./SidebarItem.module.css";
 
-const SidebarCharacterItem = ({ character }: CharacterContextProps) => {
+const SidebarLocationItem = ({ location }: LocationContextProps) => {
     const { updateContextMenu } = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
 
     const handleDropdown = (e: any) => {
         e.preventDefault();
         updateContextMenu({
-            type: ContextMenuType.CharacterItem,
+            type: ContextMenuType.LocationItem,
             position: { x: e.clientX, y: e.clientY },
             typeSpecificProps: {
-                character,
+                location,
             },
         });
     };
 
     const handleDoubleClick = () => {
-        // paste character name on double click
-        pasteText(editor!, character.name);
+        // paste location name on double click
+        if (editor) pasteText(editor, location.name);
     };
 
     return (
         <div onContextMenu={handleDropdown} onDoubleClick={handleDoubleClick} className={item.container}>
             <div className={item.data}>
-                {character.color && (
-                    <span className={item.color_indicator} style={{ backgroundColor: character.color }} />
-                )}
-                <p className={join(item.title, "unselectable")}>{character.name}</p>
-                {character.persistent && <LinkSVG className={item.icon} />}
+                <p className={join(item.title, "unselectable")}>{location.name}</p>
+                {location.persistent && <LinkSVG className={item.icon} />}
             </div>
         </div>
     );
 };
 
-export default SidebarCharacterItem;
+export default SidebarLocationItem;

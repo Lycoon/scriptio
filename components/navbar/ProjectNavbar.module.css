@@ -107,11 +107,12 @@
 .title_box {
     border: none;
     background: none;
-    font-size: 1rem;
+    font-size: 0.9rem;
     border-radius: 6px;
-    padding-inline: 6px;
-    padding-bottom: 3px;
+    padding: 4px 8px;
     color: var(--primary-text);
+    width: 120px;
+    max-width: 180px;
 }
 
 .title_box:focus {
@@ -121,6 +122,12 @@
 
 .title_box:hover {
     background-color: var(--secondary-hover);
+}
+
+.title_separator {
+    width: 1px;
+    height: 24px;
+    background-color: var(--separator);
 }
 
 .notlogged_btns {

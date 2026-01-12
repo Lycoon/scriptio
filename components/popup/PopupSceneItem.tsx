@@ -8,6 +8,7 @@ import { UserContext } from "@src/context/UserContext";
 import { PopupData, PopupSceneData, closePopup } from "@src/lib/screenplay/popup";
 import { upsertSceneData, deleteScenePersistence } from "@src/lib/screenplay/scenes";
 import { v4 as uuidv4 } from "uuid";
+import { ColorPicker } from "@components/utils/ColorPicker";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -21,7 +22,7 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
     const { position, handleMouseDown, isDragging } = useDraggable();
 
     const [synopsis, setSynopsis] = useState<string>(scene.synopsis || "");
-    const [color, setColor] = useState<string>(scene.color || "#808080");
+    const [color, setColor] = useState<string | undefined>(scene.color);
 
     const onSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,7 +33,7 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
                 position: scene.position,
                 id: scene.id || uuidv4(),
                 synopsis,
-                color: color !== "#808080" ? color : undefined,
+                color,
             },
             projectCtx
         );
@@ -66,13 +67,7 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
                     <div className={styles.element}>
                         <div className={styles.element_header}>
                             <p>Color</p>
-                            <input
-                                type="color"
-                                className={popup.input}
-                                value={color}
-                                onChange={(e) => setColor(e.target.value)}
-                                style={{ cursor: "pointer", padding: 0 }}
-                            />
+                            <ColorPicker value={color} onChange={setColor} />
                         </div>
                         <hr />
                     </div>

@@ -11,6 +11,14 @@ export const Screenplay = Node.create({
     defining: true,
     draggable: false,
 
+    parseHTML() {
+        return [
+            {
+                tag: "p",
+            },
+        ];
+    },
+
     addAttributes() {
         return {
             class: {
@@ -43,6 +51,8 @@ export const CustomBold = Bold.extend({
                     return e.getAttribute("class") === "bold" && null;
                 },
             },
+            { tag: "strong" },
+            { tag: "b" },
         ];
     },
 
@@ -69,6 +79,8 @@ export const CustomItalic = Italic.extend({
                     return e.getAttribute("class") === "italic" && null;
                 },
             },
+            { tag: "italic" },
+            { tag: "i" },
         ];
     },
 
@@ -95,6 +107,8 @@ export const CustomUnderline = Underline.extend({
                     return e.getAttribute("class") === "underline" && null;
                 },
             },
+            { tag: "underline" },
+            { tag: "u" },
         ];
     },
 

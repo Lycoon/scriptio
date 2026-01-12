@@ -1,7 +1,6 @@
 "use client";
 
 /* Components */
-import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
 import ContextMenu from "./sidebar/ContextMenu";
 import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
@@ -11,7 +10,7 @@ import { join } from "@src/lib/utils/misc";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 /* Utils */
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { UserContext } from "@src/context/UserContext";
 import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 
@@ -21,18 +20,17 @@ import { EditorContent } from "@node_modules/@tiptap/react/dist";
 import Loading from "@components/utils/Loading";
 import { useGlobalKeybinds, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
+import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 
 const EditorAndSidebar = () => {
     const { membership, isLoading } = useProjectMembership();
     const { isZenMode, updateIsZenMode, updateContextMenu } = useContext(UserContext);
-    const { isYjsReady } = useContext(ProjectContext);
+    const { isYjsReady, selectedElement, setSelectedElement, selectedStyles, setSelectedStyles } =
+        useContext(ProjectContext);
     const { settings } = useSettings();
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [selectedStyles, setSelectedStyles] = useState<Style>(Style.None);
-    const [selectedElement, setSelectedElement] = useState<ScreenplayElement>(ScreenplayElement.Action);
-    const [isNavigationActive, setIsNavigationActive] = useState<boolean>(true);
 
     /* Suggestion menu */
     const [suggestions, updateSuggestions] = useState<string[]>([]);
@@ -41,11 +39,6 @@ const EditorAndSidebar = () => {
         cursor: 0,
         cursorInNode: 0,
     });
-
-    const setActiveElement = (element: ScreenplayElement, applyStyle = true) => {
-        setSelectedElement(element);
-        if (applyStyle && editor) applyElement(editor, element);
-    };
 
     const globalActions = useMemo(
         () => ({
@@ -57,14 +50,31 @@ const EditorAndSidebar = () => {
 
     useGlobalKeybinds(settings?.keybinds, globalActions);
 
+    // Simple function to update element state (used by the editor hook)
+    const updateActiveElement = useCallback(
+        (element: ScreenplayElement) => {
+            setSelectedElement(element);
+        },
+        [setSelectedElement]
+    );
+
     const editor = useScriptioEditor(
         membership?.project,
-        setActiveElement,
+        updateActiveElement,
         setSelectedStyles,
         updateSuggestions,
         updateSuggestionData,
         settings?.keybinds,
         globalActions
+    );
+
+    // Function to set element and apply to editor (used by keyboard handlers)
+    const setActiveElement = useCallback(
+        (element: ScreenplayElement, applyStyle = true) => {
+            setSelectedElement(element);
+            if (applyStyle && editor) applyElement(editor, element);
+        },
+        [setSelectedElement, editor]
     );
 
     useEffect(() => {
@@ -147,45 +157,67 @@ const EditorAndSidebar = () => {
         });
     }, [editor]);
 
-    const pressedKeyEvent = (e: KeyboardEvent) => {
-        // Tab
-        if (e.key === "Tab") {
-            e.preventDefault();
+    // Use refs to avoid recreating the event handler on every render
+    const selectedElementRef = useRef(selectedElement);
+    const setActiveElementRef = useRef(setActiveElement);
+    const updateContextMenuRef = useRef(updateContextMenu);
+    const updateSuggestionsRef = useRef(updateSuggestions);
 
-            switch (selectedElement) {
-                case ScreenplayElement.Action:
-                    setActiveElement(ScreenplayElement.Character);
-                    break;
-                case ScreenplayElement.Parenthetical:
-                    setActiveElement(ScreenplayElement.Dialogue);
-                    break;
-                case ScreenplayElement.Character:
-                    setActiveElement(ScreenplayElement.Action);
-                    break;
-                case ScreenplayElement.Dialogue:
-                    setActiveElement(ScreenplayElement.Parenthetical);
-            }
-        }
-
-        // Ctrl + S
-        if (e.ctrlKey && e.key === "s") {
-            e.preventDefault();
-        }
-
-        // Escape
-        if (e.key === "Escape") {
-            updateContextMenu(undefined);
-            updateSuggestions([]);
-        }
-    };
-
-    // Initialize event listeners on mount
     useEffect(() => {
+        selectedElementRef.current = selectedElement;
+    }, [selectedElement]);
+
+    useEffect(() => {
+        setActiveElementRef.current = setActiveElement;
+    }, [setActiveElement]);
+
+    useEffect(() => {
+        updateContextMenuRef.current = updateContextMenu;
+    }, [updateContextMenu]);
+
+    useEffect(() => {
+        updateSuggestionsRef.current = updateSuggestions;
+    }, [updateSuggestions]);
+
+    // Initialize event listeners on mount only
+    useEffect(() => {
+        const pressedKeyEvent = (e: KeyboardEvent) => {
+            // Tab
+            if (e.key === "Tab") {
+                e.preventDefault();
+
+                switch (selectedElementRef.current) {
+                    case ScreenplayElement.Action:
+                        setActiveElementRef.current(ScreenplayElement.Character);
+                        break;
+                    case ScreenplayElement.Parenthetical:
+                        setActiveElementRef.current(ScreenplayElement.Dialogue);
+                        break;
+                    case ScreenplayElement.Character:
+                        setActiveElementRef.current(ScreenplayElement.Action);
+                        break;
+                    case ScreenplayElement.Dialogue:
+                        setActiveElementRef.current(ScreenplayElement.Parenthetical);
+                }
+            }
+
+            // Ctrl + S
+            if (e.ctrlKey && e.key === "s") {
+                e.preventDefault();
+            }
+
+            // Escape
+            if (e.key === "Escape") {
+                updateContextMenuRef.current(undefined);
+                updateSuggestionsRef.current([]);
+            }
+        };
+
         addEventListener("keydown", pressedKeyEvent);
         return () => {
             removeEventListener("keydown", pressedKeyEvent);
         };
-    }, [pressedKeyEvent]);
+    }, []);
 
     const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         if (suggestions.length > 0) updateSuggestions([]);
@@ -216,12 +248,7 @@ const EditorAndSidebar = () => {
                     </div>
                 )}
             </div>
-            <EditorSidebarFormat
-                selectedStyles={selectedStyles}
-                setActiveStyles={setSelectedStyles}
-                selectedElement={selectedElement}
-                setActiveElement={setActiveElement}
-            />
+            <EditorSidebarFormat />
         </div>
     );
 };

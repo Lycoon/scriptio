@@ -29,8 +29,8 @@ body {
     font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
     /* Default values */
-    --format-sidebar-width: 300px;
-    --navigation-sidebar-width: 300px;
+    --format-sidebar-width: 250px;
+    --navigation-sidebar-width: 400px;
     --navbar-sidebar-width: 500px;
     --navbar-height: 90px;
 }

@@ -1,114 +1,50 @@
 "use client";
 
-import EditorTab from "../EditorTab";
-
 import { join } from "@src/lib/utils/misc";
-import { ScreenplayElement, Style } from "@src/lib/utils/enums";
-import { Dispatch, SetStateAction, useContext } from "react";
-import { applyMarkToggle } from "@src/lib/screenplay/editor";
-import { ProjectContext } from "@src/context/ProjectContext";
+import { useContext } from "react";
 import { UserContext } from "@src/context/UserContext";
-import { Bold, Italic, Underline } from "lucide-react";
 
+import form from "./../../utils/Form.module.css";
+import sidebar_nav from "./EditorSidebarNavigation.module.css";
 import sidebar from "./EditorSidebar.module.css";
+import { MapPinned, UserRound } from "lucide-react";
+import { ProjectContext } from "@src/context/ProjectContext";
+import SidebarCharacterItem from "./SidebarCharacterItem";
+import SidebarLocationItem from "./SidebarLocationItem";
+import { CharacterItem } from "@src/lib/screenplay/characters";
+import { LocationItem } from "@src/lib/screenplay/locations";
 
-type FormatButtonsProps = {
-    selectedStyles: Style;
-    setActiveStyles: Dispatch<SetStateAction<Style>>;
-};
-
-const FormatButtons = ({ selectedStyles, setActiveStyles }: FormatButtonsProps) => {
-    const { editor } = useContext(ProjectContext);
-
-    const toggleStyle = (style: Style) => {
-        setActiveStyles((prev) => prev ^ style);
-        applyMarkToggle(editor!, style);
-    };
-
-    const getActiveStyleCSS = (style: Style) => (selectedStyles & style ? sidebar.active_style : "");
-    const boldActive = getActiveStyleCSS(Style.Bold);
-    const italicActive = getActiveStyleCSS(Style.Italic);
-    const underlineActive = getActiveStyleCSS(Style.Underline);
-
-    return (
-        <div className={sidebar.style_btns}>
-            <div className={join(sidebar.style_btn, boldActive)} onClick={() => toggleStyle(Style.Bold)}>
-                <Bold strokeWidth={3.5} />
-            </div>
-            <div className={join(sidebar.style_btn, italicActive)} onClick={() => toggleStyle(Style.Italic)}>
-                <Italic strokeWidth={2.5} />
-            </div>
-            <div className={join(sidebar.style_btn, underlineActive)} onClick={() => toggleStyle(Style.Underline)}>
-                <Underline strokeWidth={2.5} />
-            </div>
-        </div>
-    );
-};
-
-type Props = {
-    selectedStyles: Style;
-    setActiveStyles: Dispatch<SetStateAction<Style>>;
-    selectedElement: ScreenplayElement;
-    setActiveElement: (activeElement: ScreenplayElement) => void;
-};
-
-const EditorSidebarFormat = ({ selectedStyles, setActiveStyles, selectedElement, setActiveElement }: Props) => {
+const EditorSidebarFormat = () => {
+    const { charactersData, locationsData } = useContext(ProjectContext);
     const { isZenMode } = useContext(UserContext);
     const isActive = isZenMode ? "" : sidebar.active;
+    const characters = Object.keys(charactersData).length;
+    const locations = Object.keys(locationsData).length;
 
     return (
-        <div className={join(sidebar.container, sidebar.tabs, isActive)}>
-            <div className={sidebar.element}>
-                <div className={sidebar.tabs}>
-                    <FormatButtons selectedStyles={selectedStyles} setActiveStyles={setActiveStyles} />
-                    <EditorTab
-                        content="SCENE HEADING"
-                        element={ScreenplayElement.Scene}
-                        currentElement={selectedElement}
-                        setActiveElement={setActiveElement}
-                    />
-                    <EditorTab
-                        content="Action"
-                        element={ScreenplayElement.Action}
-                        currentElement={selectedElement}
-                        setActiveElement={setActiveElement}
-                    />
-                    <EditorTab
-                        content="CHARACTER"
-                        element={ScreenplayElement.Character}
-                        currentElement={selectedElement}
-                        setActiveElement={setActiveElement}
-                    />
-                    <EditorTab
-                        content="Dialogue"
-                        element={ScreenplayElement.Dialogue}
-                        currentElement={selectedElement}
-                        setActiveElement={setActiveElement}
-                    />
-                    <EditorTab
-                        content="(Parenthetical)"
-                        element={ScreenplayElement.Parenthetical}
-                        currentElement={selectedElement}
-                        setActiveElement={setActiveElement}
-                    />
-                    <EditorTab
-                        content="TRANSITION:"
-                        element={ScreenplayElement.Transition}
-                        currentElement={selectedElement}
-                        setActiveElement={setActiveElement}
-                    />
-                    <EditorTab
-                        content="Section"
-                        element={ScreenplayElement.Section}
-                        currentElement={selectedElement}
-                        setActiveElement={setActiveElement}
-                    />
-                    <EditorTab
-                        content="[[Note]]"
-                        element={ScreenplayElement.Note}
-                        currentElement={selectedElement}
-                        setActiveElement={setActiveElement}
-                    />
+        <div className={join(sidebar.container, isActive)}>
+            <div className={sidebar_nav.element}>
+                <div className={sidebar_nav.list_header}>
+                    <UserRound size={18} />
+                    <p className={form.label}>Characters</p>
+                </div>
+                <div className={sidebar_nav.list}>
+                    {characters != 0 &&
+                        Object.entries(charactersData).map((item: [string, CharacterItem]) => {
+                            return <SidebarCharacterItem key={item[0]} character={{ name: item[0], ...item[1] }} />;
+                        })}
+                </div>
+            </div>
+            <div className={sidebar_nav.element}>
+                <div className={sidebar_nav.list_header}>
+                    <MapPinned size={18} />
+                    <p className={form.label}>Locations</p>
+                </div>
+                <div className={sidebar_nav.list}>
+                    {locations != 0 &&
+                        Object.entries(locationsData).map((item: [string, LocationItem]) => {
+                            return <SidebarLocationItem key={item[0]} location={{ name: item[0], ...item[1] }} />;
+                        })}
                 </div>
             </div>
         </div>

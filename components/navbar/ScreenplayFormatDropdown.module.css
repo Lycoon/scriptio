@@ -1,0 +1,123 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: 100%;
+}
+
+.style_btns {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+
+.style_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--secondary-text);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.style_btn:hover {
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+}
+
+.style_btn.active_style {
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+}
+
+.separator {
+    width: 1px;
+    height: 20px;
+    background-color: var(--separator);
+    margin-inline: 4px;
+}
+
+.dropdown_wrapper {
+    position: relative;
+}
+
+.dropdown_trigger {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 10px;
+    width: 140px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--primary-text);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.dropdown_trigger:hover {
+    background-color: var(--tertiary);
+}
+
+.selected_label {
+    font-family: var(--font-courier);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chevron {
+    transition: transform 0.2s ease;
+    color: var(--secondary-text);
+}
+
+.chevron_open {
+    transform: rotate(180deg);
+}
+
+.dropdown_menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 180px;
+    padding: 6px;
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+}
+
+.dropdown_item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--primary-text);
+    font-size: 0.85rem;
+    font-family: var(--font-courier);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.dropdown_item:hover {
+    background-color: var(--tertiary);
+}
+
+.dropdown_item_active {
+    background-color: var(--tertiary);
+    font-weight: 600;
+}

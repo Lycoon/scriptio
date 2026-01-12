@@ -6,20 +6,22 @@ import { ProjectContext } from "@src/context/ProjectContext";
 
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
-import { useContext, useEffect, useRef } from "react";
-import { SuggestionData } from "@components/editor/SuggestionMenu";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
-import { useSettings, useUser } from "../utils/hooks";
+import { useCallback, useContext, useEffect, useRef } from "react";
+import { SuggestionData } from "@components/editor/SuggestionMenu";
+import { useUser } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { Screenplay } from "../utils/types";
+import debounce from "debounce";
 
 import * as Node from "@src/Screenplay";
 import { Placeholder } from "./placeholder-extension";
 import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
 import { KeybindsExtension } from "./keybinds-extension";
 import { executeKeybindAction } from "../utils/keybinds";
+import { ContdExtension } from "./contd-extension";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
     if (style & Style.Bold) editor.chain().toggleBold().focus().run();
@@ -92,16 +94,26 @@ export const getStylesFromMarks = (marks: any[]): Style => {
     return style;
 };
 
-export const SCREENPLAYER_PAPER_FORMATS = {
+//
+// Elements have default bottom margins which force early unnecessary page breaks
+// though there is still room for text. We extend the writable area
+// by two lines (1 element + 1 bottom-margin) to have consistent layout
+//
+// TODO: Update tiptap-pagination-plus to ignore margin overflows or store in node whether it is
+// last of its page (could be extended for CONT'D feature)
+//
+
+const TWO_LINE_HEIGHTS = 17 * 2;
+export const SCREENPLAY_FORMATS = {
     Letter: {
-        marginBottom: 96,
+        marginBottom: 96 - TWO_LINE_HEIGHTS,
         marginLeft: 144,
         marginRight: 96,
         pageHeight: PAGE_SIZES.LETTER.pageHeight,
         pageWidth: PAGE_SIZES.LETTER.pageWidth,
     },
     A4: {
-        marginBottom: 144,
+        marginBottom: 144 - TWO_LINE_HEIGHTS,
         marginLeft: 125,
         marginRight: 86,
         pageHeight: PAGE_SIZES.A4.pageHeight,
@@ -109,25 +121,31 @@ export const SCREENPLAYER_PAPER_FORMATS = {
     },
 };
 
-export const SCRIPTIO_EXTENSIONS = [
+export const BASE_EXTENSIONS = [
     Document.configure({
         content: "Screenplay+",
-    }),
-    Placeholder.configure({
-        placeholder: "",
-    }),
-    PaginationPlus.configure({
-        marginTop: 0,
-        pageGap: 20,
-        headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
-        footerRight: "",
-        ...SCREENPLAYER_PAPER_FORMATS.Letter,
     }),
     Text,
     Node.Screenplay,
     Node.CustomBold,
     Node.CustomItalic,
     Node.CustomUnderline,
+];
+
+const EXTENSIONS = [
+    ...BASE_EXTENSIONS,
+    Placeholder.configure({
+        placeholder: "",
+    }),
+    ContdExtension,
+    PaginationPlus.configure({
+        marginTop: 0,
+        pageGap: 20,
+        contentMarginTop: 31, // Header is 68px height (1in = 96px = 31px + 68px)
+        headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
+        footerRight: "",
+        ...SCREENPLAY_FORMATS.Letter,
+    }),
 ];
 
 export const useScriptioEditor = (
@@ -142,6 +160,14 @@ export const useScriptioEditor = (
     const projectCtx = useContext(ProjectContext);
     const { user } = useUser();
     const { ydoc, provider, isYjsReady } = projectCtx;
+
+    const debouncedUpdateRef = useRef(
+        debounce((editor: Editor) => {
+            console.log("Updating screenplay...");
+            const screenplay = editor.getJSON();
+            projectCtx.updateScreenplay(screenplay);
+        }, 300)
+    );
 
     const userInfoRef = useRef({
         name: user?.username || "User_" + Math.floor(Math.random() * 1000),
@@ -162,7 +188,7 @@ export const useScriptioEditor = (
         {
             immediatelyRender: false,
             extensions: [
-                ...SCRIPTIO_EXTENSIONS,
+                ...EXTENSIONS,
                 ...(ydoc && isYjsReady
                     ? [
                           Collaboration.configure({
@@ -204,8 +230,7 @@ export const useScriptioEditor = (
             ],
 
             onUpdate({ editor }) {
-                const screenplay = editor.getJSON();
-                projectCtx.updateScreenplay(screenplay);
+                debouncedUpdateRef.current(editor);
             },
 
             onSelectionUpdate({ editor, transaction }) {

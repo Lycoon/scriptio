@@ -6,6 +6,7 @@ import { MergedSceneItem } from "@src/lib/screenplay/scenes";
 
 import context from "./ContextMenu.module.css";
 import { CharacterData, deleteCharacter } from "@src/lib/screenplay/characters";
+import { LocationData, deleteLocation } from "@src/lib/screenplay/locations";
 import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/screenplay/editor";
 import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/screenplay/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -106,6 +107,26 @@ const CharacterListMenu = (props: any) => {
     return <ContextMenuItem text={"Add character"} action={() => addCharacterPopup(userCtx)} />;
 };
 
+/* ======================== */
+/*  Location context menu   */
+/* ======================== */
+
+export type LocationContextProps = {
+    location: LocationData;
+};
+
+const LocationItemMenu = (props: any) => {
+    const projectCtx = useContext(ProjectContext);
+    const location: LocationData = props.props.location;
+
+    return (
+        <>
+            <ContextMenuItem text={"Remove"} action={() => deleteLocation(location.name, projectCtx)} />
+            <ContextMenuItem text={"Paste"} action={() => pasteText(projectCtx.editor!, location.name)} />
+        </>
+    );
+};
+
 const renderContextMenu = (contextMenu: ContextMenuProps) => {
     switch (contextMenu.type) {
         case ContextMenuType.SceneList:
@@ -116,6 +137,8 @@ const renderContextMenu = (contextMenu: ContextMenuProps) => {
             return <CharacterListMenu props={contextMenu.typeSpecificProps} />;
         case ContextMenuType.CharacterItem:
             return <CharacterItemMenu props={contextMenu.typeSpecificProps} />;
+        case ContextMenuType.LocationItem:
+            return <LocationItemMenu props={contextMenu.typeSpecificProps} />;
     }
 };
 

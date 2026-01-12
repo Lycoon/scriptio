@@ -16,6 +16,7 @@ import { CircleArrowLeft, CircleCheckBig, Eye, EyeClosed, Settings, WifiOff, Wif
 
 import navbar from "./ProjectNavbar.module.css";
 import form from "./../utils/Form.module.css";
+import ScreenplayFormatDropdown from "./ScreenplayFormatDropdown";
 
 const StatusIndicator = () => {
     const { connectionStatus } = useContext(ProjectContext);
@@ -147,7 +148,7 @@ const ProjectNavbar = () => {
                     </div>
                 )}
             </nav>
-            {/* Center - Project title and connection status */}
+            {/* Center - Project title, format dropdown, and connection status */}
             {hasProjectHeader && membership && (
                 <div className={navbar.projectTitle}>
                     <StatusIndicator />
@@ -157,6 +158,12 @@ const ProjectNavbar = () => {
                         onChange={(e) => deferredTitleUpdate(membership.project.id, e.target.value)}
                         defaultValue={projectTitle}
                     />
+                    {hasScreenplay && (
+                        <>
+                            <div className={navbar.title_separator} />
+                            <ScreenplayFormatDropdown />
+                        </>
+                    )}
                 </div>
             )}
             {/* Right side - Collaborators + Zen mode toggle + Settings */}

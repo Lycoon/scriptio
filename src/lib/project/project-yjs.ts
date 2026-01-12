@@ -224,6 +224,7 @@ export const useCloudSync = (projectId: string | null, ydoc: Y.Doc | null, userI
 
     const isMountedRef = useRef(true);
     const providerRef = useRef<ThrottledWebsocketProvider | null>(null);
+    const lastUsersJsonRef = useRef<string>("");
 
     // Use ref for userInfo to avoid triggering effects on every render
     const userInfoRef = useRef(userInfo);
@@ -294,14 +295,20 @@ export const useCloudSync = (projectId: string | null, ydoc: Y.Doc | null, userI
                 // Set user info in awareness
                 cloudProvider.awareness.setLocalStateField("user", userInfoRef.current);
 
-                // Track connected users
+                // Track connected users - only update state if users actually changed
                 cloudProvider.awareness.on("update", () => {
                     if (!isMountedRef.current) return;
 
                     const connectedUsers = Array.from(cloudProvider.awareness.getStates().values())
                         .filter((state: any) => state.user)
                         .map((state: any) => state.user as CollaboratorInfo);
-                    setUsers(connectedUsers);
+
+                    // Only update if users changed to avoid unnecessary re-renders
+                    const usersJson = JSON.stringify(connectedUsers);
+                    if (usersJson !== lastUsersJsonRef.current) {
+                        lastUsersJsonRef.current = usersJson;
+                        setUsers(connectedUsers);
+                    }
                 });
 
                 // Handle connection errors

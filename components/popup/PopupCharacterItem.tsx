@@ -15,6 +15,7 @@ import { replaceOccurrences } from "@src/lib/screenplay/editor";
 import { UserContext } from "@src/context/UserContext";
 import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/screenplay/popup";
 import { countOccurrences } from "@src/lib/screenplay/screenplay";
+import { ColorPicker } from "@components/utils/ColorPicker";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -73,6 +74,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     const [newName, setNewName] = useState<string>("");
     const [newGender, setNewGender] = useState<CharacterGender>(CharacterGender.FEMALE);
     const [newSynopsis, setNewSynopsis] = useState<string>("");
+    const [newColor, setNewColor] = useState<string | undefined>(character?.color);
 
     const onCreate = (e: any) => {
         e.preventDefault();
@@ -91,6 +93,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                 name: _name.toUpperCase(),
                 gender: _gender,
                 synopsis: _synopsis,
+                color: newColor,
                 persistent: true,
             },
             projectCtx
@@ -131,6 +134,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                 name: character.name,
                 gender: _newGender,
                 synopsis: _newSynopsis,
+                color: newColor,
                 persistent: true,
             },
             projectCtx
@@ -151,6 +155,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                 name: newName,
                 gender: newGender,
                 synopsis: newSynopsis,
+                color: newColor,
                 persistent: true,
             },
             projectCtx
@@ -165,6 +170,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
         name: "",
         synopsis: "",
         gender: "",
+        color: undefined,
     };
 
     if (type === PopupType.EditCharacter) {
@@ -173,6 +179,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
         def.name = character?.name;
         def.synopsis = character?.synopsis;
         def.gender = character?.gender;
+        def.color = character?.color;
     }
 
     return (
@@ -222,6 +229,13 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                                 <option value="1">Male</option>
                                 <option value="2">Other</option>
                             </select>
+                        </div>
+                        <hr />
+                    </div>
+                    <div className={styles.element}>
+                        <div className={styles.element_header}>
+                            <p>Color</p>
+                            <ColorPicker value={newColor} onChange={setNewColor} />
                         </div>
                         <hr />
                     </div>
