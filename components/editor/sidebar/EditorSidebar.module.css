@@ -4,6 +4,7 @@
     gap: 20px;
     height: 100%;
     margin-inline: 30px;
+    padding-bottom: 30px;
     width: var(--format-sidebar-width);
     background-color: var(--main-bg);
 

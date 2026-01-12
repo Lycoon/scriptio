@@ -8,7 +8,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
-import { useCallback, useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import { useUser } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
@@ -103,7 +103,7 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 // last of its page (could be extended for CONT'D feature)
 //
 
-const TWO_LINE_HEIGHTS = 17 * 2;
+const TWO_LINE_HEIGHTS = 17 * 3;
 export const SCREENPLAY_FORMATS = {
     Letter: {
         marginBottom: 96 - TWO_LINE_HEIGHTS,
@@ -143,6 +143,12 @@ const EXTENSIONS = [
         pageGap: 20,
         contentMarginTop: 31, // Header is 68px height (1in = 96px = 31px + 68px)
         headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
+        customHeader: {
+            1: {
+                headerLeft: "",
+                headerRight: `<p class="page-number" style="margin-top: 50px;"></p>`,
+            },
+        },
         footerRight: "",
         ...SCREENPLAY_FORMATS.Letter,
     }),

@@ -48,9 +48,7 @@ export class PDFAdapter extends ScreenplayAdapter<PDFExportOptions> {
                     addOffset(pdfNodes);
                     break;
                 case "character":
-                    const characterText = contdIndices.has(i)
-                        ? text.toUpperCase() + " (CONT'D)"
-                        : text.toUpperCase();
+                    const characterText = contdIndices.has(i) ? text.toUpperCase() + " (CONT'D)" : text.toUpperCase();
                     pdfNodes.push(getPDFNodeTemplate("character", characterText));
                     break;
                 case "dialogue":

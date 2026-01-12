@@ -26,11 +26,22 @@ Scrippet is a CSS template designed for including short sections of screenplay-f
 Originally developed by John August - johnaugust.com
 */
 
+.rm-page-header,
+.rm-page-footer,
+.rm-pagination-gap {
+    user-select: none;
+    cursor: default !important;
+}
+
+.rm-pagination-gap {
+    border: none !important;
+    background-color: var(--main-bg) !important;
+}
+
 .ProseMirror {
     margin-bottom: 30%;
     left: 50%;
     transform: translateX(-50%);
-
     border: none !important;
     background-color: var(--editor-script-bg) !important;
 
@@ -122,7 +133,7 @@ Originally developed by John August - johnaugust.com
     }
 
     .dialogue:has(+ .parenthetical) {
-        margin-bottom: 0 !important;
+        margin-bottom: 3px !important;
     }
 
     /* Dialogue */

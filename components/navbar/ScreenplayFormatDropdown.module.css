@@ -26,12 +26,12 @@
 }
 
 .style_btn:hover {
-    background-color: var(--tertiary);
+    background-color: var(--secondary-hover);
     color: var(--primary-text);
 }
 
 .style_btn.active_style {
-    background-color: var(--tertiary);
+    background-color: var(--secondary-hover);
     color: var(--primary-text);
 }
 
@@ -57,16 +57,17 @@
     border: none;
     border-radius: 6px;
     background: transparent;
-    color: var(--primary-text);
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.15s ease;
     white-space: nowrap;
+    color: var(--primary-text);
+    background-color: var(--secondary);
 }
 
 .dropdown_trigger:hover {
-    background-color: var(--tertiary);
+    background-color: var(--secondary-hover);
 }
 
 .selected_label {
@@ -95,7 +96,7 @@
     border: 1px solid var(--separator);
     border-radius: 10px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    z-index: 100;
+    z-index: 1;
 }
 
 .dropdown_item {
@@ -104,20 +105,20 @@
     padding: 8px 12px;
     border: none;
     border-radius: 6px;
-    background: transparent;
-    color: var(--primary-text);
     font-size: 0.85rem;
-    font-family: var(--font-courier);
     text-align: left;
     cursor: pointer;
+    font-family: var(--font-courier);
+    color: var(--primary-text);
+    background-color: var(--secondary);
     transition: background-color 0.15s ease;
 }
 
 .dropdown_item:hover {
-    background-color: var(--tertiary);
+    background-color: var(--secondary-hover);
 }
 
 .dropdown_item_active {
-    background-color: var(--tertiary);
+    background-color: var(--secondary-hover);
     font-weight: 600;
 }
