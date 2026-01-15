@@ -1,7 +1,9 @@
 import { Screenplay } from "@src/lib/utils/types";
-import { BaseExportOptions, ScreenplayAdapter } from "../screenplay-adapter";
+import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { XMLBuilder } from "@node_modules/fast-xml-parser/src/fxp";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
+import * as Y from "yjs";
+import { ProjectData, ProjectState, YJS_FRAGMENTS } from "@src/lib/project/project-yjs";
 
 const options = { attributeNamePrefix: "@_", textNodeName: "#text", ignoreAttributes: false, format: true };
 const builder = new XMLBuilder(options);
@@ -23,13 +25,13 @@ const FDX_STYLE_TABLE: Record<string, string> = {
     underline: "Underline",
 };
 
-export class FinalDraftAdapter extends ScreenplayAdapter<BaseExportOptions> {
+export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
     label = "Final Draft";
     extension = "fdx";
 
-    convertTo(screenplay: Screenplay, options: BaseExportOptions): Promise<Blob> {
+    convertTo(project: ProjectState, options: BaseExportOptions): Promise<Blob> {
         let paragraphNodes: any = [];
-        let nodes = screenplay.content!;
+        let nodes = project.screenplay;
         const characters = options.characters;
 
         for (let i = 0; i < nodes.length; i++) {
@@ -59,7 +61,7 @@ export class FinalDraftAdapter extends ScreenplayAdapter<BaseExportOptions> {
             for (let j = 0; j < content.length; j++) {
                 // <Text Style="style">
                 const childNode = content[j];
-                const textFragment: string = "text" in childNode ? childNode.text : "";
+                const textFragment: string = "text" in childNode ? childNode.text! : "";
                 const styledNode: any = { "#text": textFragment };
 
                 const styles: string[] = (content[j].marks ?? []).map((mark: any) => FDX_STYLE_TABLE[mark.type]);
@@ -99,7 +101,7 @@ export class FinalDraftAdapter extends ScreenplayAdapter<BaseExportOptions> {
         return Promise.resolve(blob);
     }
 
-    convertFrom(rawContent: string): Screenplay {
+    convertFrom(rawContent: ArrayBuffer): ProjectData {
         throw new Error("Method not implemented.");
     }
 }

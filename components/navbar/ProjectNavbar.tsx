@@ -1,11 +1,10 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ConnectionStatus, Page } from "@src/lib/utils/enums";
 import { useCookieUser, usePage } from "@src/lib/utils/hooks";
 import { redirectBoard, redirectHome, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
 
-import { useSWRConfig } from "swr";
 import { ProjectContext } from "@src/context/ProjectContext";
 import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
@@ -82,15 +81,18 @@ const ProjectNavbar = () => {
     const [hasScreenplay, updateHasScreenplay] = useState<boolean>(false);
     const [hasProjectHeader, updateHasProjectHeader] = useState<boolean>(false);
     const [projectTitle, setProjectTitle] = useState<string>("");
+    const isLocalEdit = useRef(false);
 
     const page = usePage();
-    const { mutate } = useSWRConfig();
     const { user } = useCookieUser();
 
-    const deferredTitleUpdate = debounce(async (projectId: string, projectTitle: string) => {
-        await editProject(projectId, { title: projectTitle });
-        mutate(`/api/projects/${projectId}`, { ...membership, title: projectTitle });
-    }, 1000);
+    const deferredTitleUpdate = useMemo(
+        () =>
+            debounce(async (projectId: string, newTitle: string) => {
+                await editProject(projectId, { title: newTitle });
+            }, 1000),
+        []
+    );
 
     const toggleZenMode = () => updateIsZenMode((prev) => !prev);
     const getNavStyle = (tabName: string) => {
@@ -104,8 +106,17 @@ const ProjectNavbar = () => {
     }, [page]);
 
     useEffect(() => {
-        if (membership) setProjectTitle(membership.project.title);
+        if (membership && !isLocalEdit.current) {
+            setProjectTitle(membership.project.title);
+        }
     }, [membership]);
+
+    // Update browser tab title when project title changes
+    useEffect(() => {
+        if (projectTitle && isInProject) {
+            document.title = `Scriptio • ${projectTitle}`;
+        }
+    }, [projectTitle, isInProject]);
 
     if (!user || !page) return;
 
@@ -130,7 +141,7 @@ const ProjectNavbar = () => {
                             Screenplay
                         </p>
                         <p
-                            className={`${getNavStyle("stats")}`}
+                            className={`${getNavStyle("statistics")}`}
                             onClick={() => {
                                 page !== Page.Statistics && redirectStatistics(membership.project.id);
                             }}
@@ -155,8 +166,16 @@ const ProjectNavbar = () => {
                     <input
                         type="text"
                         className={navbar.title_box}
-                        onChange={(e) => deferredTitleUpdate(membership.project.id, e.target.value)}
-                        defaultValue={projectTitle}
+                        size={Math.max(projectTitle.length, 3)}
+                        onChange={(e) => {
+                            isLocalEdit.current = true;
+                            setProjectTitle(e.target.value);
+                            deferredTitleUpdate(membership.project.id, e.target.value);
+                        }}
+                        onBlur={() => {
+                            isLocalEdit.current = false;
+                        }}
+                        value={projectTitle}
                     />
                     {hasScreenplay && (
                         <>

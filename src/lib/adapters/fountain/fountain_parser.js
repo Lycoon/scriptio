@@ -155,9 +155,11 @@
 
                     // Strip @ prefix for forced character names
                     var characterName = match[1].trim();
-                    if (characterName.charAt(0) === "@") {
-                        characterName = characterName.substring(1);
-                    }
+                    if (characterName.charAt(0) === "@") characterName = characterName.substring(1);
+
+                    // If (CONT'D) is contained in character name, remove it
+                    characterName = characterName.replace(/\(cont'd\)/gi, "").trim();
+
                     tokens.push({ type: "character", text: characterName });
                     tokens.push({
                         type: "dialogue_begin",

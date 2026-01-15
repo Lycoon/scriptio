@@ -12,11 +12,12 @@ import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { FileDown, Folder, Keyboard, KeyRound, Palette, User, Users } from "lucide-react";
+import { FileDown, Folder, Keyboard, KeyRound, Palette, PanelsTopLeft, User, Users } from "lucide-react";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
 import SecuritySettings from "./account/SecuritySettings";
 import ProfileSettings from "./account/ProfileSettings";
+import LayoutSettings from "./project/LayoutSettings";
 
 const PROJECT_MENU: MenuSection = {
     group: "Project",
@@ -25,6 +26,11 @@ const PROJECT_MENU: MenuSection = {
             id: "General",
             label: "General",
             icon: <Folder size={18} />,
+        },
+        {
+            id: "Layout",
+            label: "Layout",
+            icon: <PanelsTopLeft size={18} />,
         },
         {
             id: "Export",
@@ -122,6 +128,7 @@ const DashboardModal = () => {
                     <div className={styles.scrollArea}>
                         {/* Project tabs - only rendered when in project context */}
                         {isInProject && activeTab === "General" && <ProjectSettings />}
+                        {isInProject && activeTab === "Layout" && <LayoutSettings />}
                         {isInProject && activeTab === "Export" && <ExportProject />}
                         {isInProject && activeTab === "Collaborators" && <CollaboratorsSettings />}
                         {/* Preferences tabs */}

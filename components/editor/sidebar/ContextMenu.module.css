@@ -1,7 +1,7 @@
 .menu {
     display: flex;
     flex-direction: column;
-    width: 150px;
+    width: max-content;
 
     z-index: 1;
     position: absolute;
@@ -12,6 +12,9 @@
 }
 
 .menu_item {
+    display: flex;
+    gap: 10px;
+
     padding-block: 8px;
     padding-left: 12px;
     padding-right: 35px;

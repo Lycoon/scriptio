@@ -30,7 +30,59 @@ const BoardCanvas = () => {
     const [isPanning, setIsPanning] = useState(false);
     const [isSnapping, setIsSnapping] = useState(false);
     const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+    const [isCameraReady, setIsCameraReady] = useState(false);
+    const hasInitializedCamera = useRef(false);
     const panStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
+
+    // Center camera to fit all cards
+    const centerCameraOnCards = useCallback(
+        (cardsToFit: BoardCardData[]) => {
+            const container = containerRef.current;
+            if (!container || cardsToFit.length === 0) return;
+
+            // Calculate bounding box of all cards
+            let minX = Infinity;
+            let minY = Infinity;
+            let maxX = -Infinity;
+            let maxY = -Infinity;
+
+            for (const card of cardsToFit) {
+                minX = Math.min(minX, card.x);
+                minY = Math.min(minY, card.y);
+                maxX = Math.max(maxX, card.x + card.width);
+                maxY = Math.max(maxY, card.y + card.height);
+            }
+
+            // Add padding around the bounding box
+            const padding = 100;
+            minX -= padding;
+            minY -= padding;
+            maxX += padding;
+            maxY += padding;
+
+            const boundsWidth = maxX - minX;
+            const boundsHeight = maxY - minY;
+            const boundsCenterX = (minX + maxX) / 2;
+            const boundsCenterY = (minY + maxY) / 2;
+
+            const rect = container.getBoundingClientRect();
+            const viewportWidth = rect.width;
+            const viewportHeight = rect.height;
+
+            // Calculate scale to fit bounds in viewport
+            const scaleX = viewportWidth / boundsWidth;
+            const scaleY = viewportHeight / boundsHeight;
+            const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), MIN_SCALE), MAX_SCALE);
+
+            // Calculate offset to center the bounds
+            const newOffsetX = viewportWidth / 2 - boundsCenterX * newScale;
+            const newOffsetY = viewportHeight / 2 - boundsCenterY * newScale;
+
+            setScale(newScale);
+            setOffset({ x: newOffsetX, y: newOffsetY });
+        },
+        []
+    );
 
     // Sync cards with Yjs
     useEffect(() => {
@@ -44,8 +96,28 @@ const BoardCanvas = () => {
                 try {
                     const parsed = typeof cardsData === "string" ? JSON.parse(cardsData) : cardsData;
                     setCards(parsed);
+
+                    // Center camera on first load
+                    if (!hasInitializedCamera.current) {
+                        hasInitializedCamera.current = true;
+                        if (parsed.length > 0) {
+                            // Small delay to ensure container is rendered
+                            setTimeout(() => {
+                                centerCameraOnCards(parsed);
+                                setIsCameraReady(true);
+                            }, 50);
+                        } else {
+                            setIsCameraReady(true);
+                        }
+                    }
                 } catch (e) {
                     console.error("[BoardCanvas] Failed to parse cards:", e);
+                }
+            } else {
+                // No cards data yet, mark camera as ready
+                if (!hasInitializedCamera.current) {
+                    hasInitializedCamera.current = true;
+                    setIsCameraReady(true);
                 }
             }
         };
@@ -56,7 +128,7 @@ const BoardCanvas = () => {
         return () => {
             boardMap.unobserve(syncCards);
         };
-    }, [ydoc, isYjsReady]);
+    }, [ydoc, isYjsReady, centerCameraOnCards]);
 
     // Save cards to Yjs
     const saveCards = useCallback(
@@ -293,7 +365,7 @@ const BoardCanvas = () => {
 
                 <div
                     ref={canvasRef}
-                    className={styles.canvas}
+                    className={`${styles.canvas} ${!isCameraReady ? styles.canvas_hidden : ""}`}
                     style={{
                         transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
                     }}

@@ -7,6 +7,10 @@ import { removeAwarenessStates } from "y-protocols/awareness";
 import { getRandomColor } from "@src/lib/utils/misc";
 import { ThrottledWebsocketProvider } from "../collaboration/utils";
 import { getCloudToken } from "../utils/requests";
+import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
+import { ScreenplaySchema } from "../screenplay/editor";
+import { JSONContent } from "@tiptap/react";
+import { Screenplay } from "../utils/types";
 
 // -------------------------------- //
 //          TYPE DEFINITIONS        //
@@ -15,7 +19,7 @@ import { getCloudToken } from "../utils/requests";
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
 
 export interface ProjectYjsState {
-    ydoc: Y.Doc | null;
+    ydoc: ProjectState | null;
     provider: ThrottledWebsocketProvider | null;
     isLocalReady: boolean;
     isCloudReady: boolean;
@@ -45,7 +49,60 @@ export const YJS_FRAGMENTS = {
     LOCATIONS: "locations",
     METADATA: "metadata",
     BOARD: "board",
+    LAYOUT: "layout",
 } as const;
+
+export type ProjectData = {
+    screenplay: JSONContent[];
+    characters: any;
+    scenes: any;
+    cards: any;
+    locations: any;
+    metadata: any;
+    board: any;
+    layout: any;
+};
+
+export class ProjectState extends Y.Doc {
+    get screenplay(): JSONContent[] {
+        const fragment = this.getXmlFragment(YJS_FRAGMENTS.SCREENPLAY);
+        const screenplay = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
+        const json = screenplay.toJSON().content;
+        return json;
+    }
+
+    get screenplayFragment(): Y.XmlFragment {
+        return this.getXmlFragment(YJS_FRAGMENTS.SCREENPLAY);
+    }
+
+    get characters(): Y.Map<any> {
+        return this.getMap(YJS_FRAGMENTS.CHARACTERS);
+    }
+
+    get scenes(): Y.Map<any> {
+        return this.getMap(YJS_FRAGMENTS.SCENES);
+    }
+
+    get cards(): Y.Map<any> {
+        return this.getMap(YJS_FRAGMENTS.CARDS);
+    }
+
+    get locations(): Y.Map<any> {
+        return this.getMap(YJS_FRAGMENTS.LOCATIONS);
+    }
+
+    get metadata(): Y.Map<any> {
+        return this.getMap(YJS_FRAGMENTS.METADATA);
+    }
+
+    get board(): Y.Map<any> {
+        return this.getMap(YJS_FRAGMENTS.BOARD);
+    }
+
+    get layout(): Y.Map<any> {
+        return this.getMap(YJS_FRAGMENTS.LAYOUT);
+    }
+}
 
 // -------------------------------- //
 //          FRAGMENT GETTERS        //
@@ -77,6 +134,10 @@ export const getMetadataMap = (ydoc: Y.Doc): Y.Map<any> => {
 
 export const getBoardMap = (ydoc: Y.Doc): Y.Map<any> => {
     return ydoc.getMap(YJS_FRAGMENTS.BOARD);
+};
+
+export const getLayoutMap = (ydoc: Y.Doc): Y.Map<any> => {
+    return ydoc.getMap(YJS_FRAGMENTS.LAYOUT);
 };
 
 // -------------------------------- //
@@ -170,7 +231,7 @@ export const useProjectLock = (projectId: string | null) => {
  * Hook to initialize local IndexedDB persistence for the Yjs document.
  */
 export const useLocalPersistence = (projectId: string | null) => {
-    const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
+    const [ydoc, setYdoc] = useState<ProjectState | null>(null);
     const [isLocalReady, setIsLocalReady] = useState(false);
     const persistenceRef = useRef<IndexeddbPersistence | null>(null);
 
@@ -182,7 +243,7 @@ export const useLocalPersistence = (projectId: string | null) => {
         }
 
         // Create new Yjs document
-        const doc = new Y.Doc();
+        const doc = new ProjectState();
 
         // FIXED: Added missing parenthesis
         const localProvider = new IndexeddbPersistence(`scriptio-${projectId}`, doc);
@@ -289,11 +350,9 @@ export const useCloudSync = (projectId: string | null, ydoc: Y.Doc | null, userI
                             token,
                             clientId: ydoc.clientID.toString(),
                         },
+                        userInfo: userInfoRef.current,
                     }
                 );
-
-                // Set user info in awareness
-                cloudProvider.awareness.setLocalStateField("user", userInfoRef.current);
 
                 // Track connected users - only update state if users actually changed
                 cloudProvider.awareness.on("update", () => {
@@ -380,7 +439,7 @@ export const useCloudSync = (projectId: string | null, ydoc: Y.Doc | null, userI
 
     useEffect(() => {
         if (providerRef.current) {
-            providerRef.current.awareness.setLocalStateField("user", userInfo);
+            providerRef.current.setUserInfo(userInfo);
         }
     }, [userInfo]);
 
@@ -428,11 +487,8 @@ export const useProjectYjs = ({
     );
 
     const { ydoc, isLocalReady } = useLocalPersistence(projectId);
-    const { provider, users, connectionStatus, refreshAndReconnect, isLockedByServer, isSessionReplaced } = useCloudSync(
-        projectId,
-        ydoc,
-        userInfo
-    );
+    const { provider, users, connectionStatus, refreshAndReconnect, isLockedByServer, isSessionReplaced } =
+        useCloudSync(projectId, ydoc, userInfo);
     const isReady = isLocalReady && ydoc !== null;
     const isCloudReady = connectionStatus === "connected";
 

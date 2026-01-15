@@ -4,6 +4,7 @@ import { useContext, useState } from "react";
 import { useCookieUser, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
 import { ProjectRole } from "@prisma/client";
 import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { Info } from "lucide-react";
 
 import form from "./../../utils/Form.module.css";
 import shared from "./ProjectSettings.module.css";
@@ -41,33 +42,36 @@ const CollaboratorsSettings = () => {
     return (
         <div className={styles.container}>
             <section className={styles.section}>
-                <label className={form.label}>
-                    Project Team ({collaborators.length + invites.length}/{MAX_COLLABORATORS})
-                </label>
+                <div className={styles.labelRow}>
+                    <label className={form.label}>
+                        Project Team ({collaborators.length + invites.length}/{MAX_COLLABORATORS})
+                    </label>
+                    <div className={styles.infoIconWrapper}>
+                        <Info size={16} className={styles.infoIcon} />
+                        <div className={styles.permissionsHint}>
+                            <div className={styles.hintItem}>
+                                <span className={styles.hintRole}>Owner</span>
+                                Can delete the project and transfer ownership
+                            </div>
+                            <div className={styles.hintItem}>
+                                <span className={styles.hintRole}>Admin</span>
+                                Can invite, promote, demote, and kick collaborators
+                            </div>
+                            <div className={styles.hintItem}>
+                                <span className={styles.hintRole}>Editor</span>
+                                Can modify screenplay and other project content
+                            </div>
+                            <div className={styles.hintItem}>
+                                <span className={styles.hintRole}>Viewer</span>
+                                Read-only access. Cannot make any changes
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <p className={shared.helpText}>
                     Manage your team members and pending invitations. You can invite any non-Pro user to be part of your
                     project. The project remains collaborative until owner has Pro plan.
                 </p>
-
-                {/* Project Roles Information */}
-                <div className={styles.permissionsHint}>
-                    <div className={styles.hintItem}>
-                        <span className={styles.hintRole}>Owner</span>
-                        Can delete the project and transfer ownership
-                    </div>
-                    <div className={styles.hintItem}>
-                        <span className={styles.hintRole}>Admin</span>
-                        Can invite, promote, demote, and kick collaborators
-                    </div>
-                    <div className={styles.hintItem}>
-                        <span className={styles.hintRole}>Editor</span>
-                        Can modify screenplay and other project content
-                    </div>
-                    <div className={styles.hintItem}>
-                        <span className={styles.hintRole}>Viewer</span>
-                        Read-only access. Cannot make any changes
-                    </div>
-                </div>
 
                 {/* Project Collaborators */}
                 <div className={styles.slotGrid}>

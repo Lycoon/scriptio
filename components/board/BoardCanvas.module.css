@@ -45,6 +45,12 @@
     top: 0;
     left: 0;
     transform-origin: 0 0;
+    opacity: 1;
+    transition: opacity 0.15s ease;
+}
+
+.canvas_hidden {
+    opacity: 0;
 }
 
 /* Card styles */
@@ -52,13 +58,11 @@
     position: absolute;
     display: flex;
     flex-direction: column;
-    background-color: white;
     border-radius: 8px;
-    border: 2px solid;
+    border: 8px solid;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     cursor: move;
     user-select: none;
-    overflow: hidden;
     transition: box-shadow 0.15s ease;
 }
 
@@ -73,14 +77,14 @@
 }
 
 .card_header {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 8px 10px;
     height: 40px;
     flex-shrink: 0;
-    margin: -1px -1px 0 -1px;
-    border-radius: 6px 6px 0 0;
+    overflow: visible;
 }
 
 .card_color_btn {
@@ -111,7 +115,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    cursor: text;
+    cursor: inherit;
     line-height: 24px;
 }
 
@@ -140,6 +144,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    background-color: white;
 }
 
 .card_description {

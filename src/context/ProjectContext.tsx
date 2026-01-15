@@ -8,18 +8,20 @@ import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
 import { ComputedScenesData, MergedScenesData, PersistentSceneItem, mergeScenesData } from "@src/lib/screenplay/scenes";
 import { computeFullScenesData } from "@src/lib/screenplay/screenplay";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
-import { useSettings, useUser } from "@src/lib/utils/hooks";
+import { useUser } from "@src/lib/utils/hooks";
 import type { Doc } from "yjs";
 import {
     CollaboratorInfo,
     ConnectionStatus,
     getCharactersMap,
+    getLayoutMap,
     getLocationsMap,
     getScenesMap,
+    ProjectState,
     useProjectYjs,
 } from "@src/lib/project/project-yjs";
 import { Screenplay } from "@src/lib/utils/types";
-import { ScreenplayElement, Style } from "@src/lib/utils/enums";
+import { ScreenplayElement, Style, PageFormat } from "@src/lib/utils/enums";
 import debounce from "debounce";
 
 // -------------------------------- //
@@ -46,7 +48,7 @@ export interface ProjectContextType {
     updateProject: (project: ProjectMembershipPayload) => void;
 
     // Yjs document and provider (shared across all project pages)
-    ydoc: Doc | null;
+    ydoc: ProjectState | null;
     provider: ThrottledWebsocketProvider | null;
     isYjsReady: boolean;
     isLockedByServer: boolean;
@@ -82,6 +84,14 @@ export interface ProjectContextType {
     setSelectedElement: (element: ScreenplayElement) => void;
     selectedStyles: Style;
     setSelectedStyles: (styles: Style | ((prev: Style) => Style)) => void;
+
+    // Character dialogue highlighting
+    highlightedCharacters: Set<string>;
+    toggleCharacterHighlight: (characterName: string) => void;
+
+    // Page format
+    pageFormat: PageFormat;
+    setPageFormat: (format: PageFormat) => void;
 }
 
 // -------------------------------- //
@@ -113,6 +123,10 @@ const defaultContextValue: ProjectContextType = {
     setSelectedElement: () => {},
     selectedStyles: Style.None,
     setSelectedStyles: () => {},
+    highlightedCharacters: new Set<string>(),
+    toggleCharacterHighlight: () => {},
+    pageFormat: "Letter",
+    setPageFormat: () => {},
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -168,6 +182,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     // Screenplay format state
     const [selectedElement, setSelectedElementState] = useState<ScreenplayElement>(ScreenplayElement.Action);
     const [selectedStyles, setSelectedStylesState] = useState<Style>(Style.None);
+
+    // Character dialogue highlighting state
+    const [highlightedCharacters, setHighlightedCharacters] = useState<Set<string>>(new Set());
+
+    // Page format state
+    const [pageFormat, setPageFormatState] = useState<PageFormat>("Letter");
 
     // Debounced character merge function
     const debouncedCharacterMergeRef = useRef(
@@ -304,6 +324,31 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setScenesData(mergedScenes);
     }, [persistentScenes, computedScenes]);
 
+    // Sync layout settings (pageFormat) from Yjs
+    useEffect(() => {
+        if (!ydoc) {
+            setPageFormatState("Letter");
+            return;
+        }
+
+        console.log("sync layout settings");
+
+        const layoutMap = getLayoutMap(ydoc);
+        const syncLayout = () => {
+            const pageSize = layoutMap.get("pageSize") as PageFormat | undefined;
+            if (pageSize && (pageSize === "A4" || pageSize === "Letter")) {
+                setPageFormatState(pageSize);
+            }
+        };
+
+        syncLayout();
+        layoutMap.observe(syncLayout);
+
+        return () => {
+            layoutMap.unobserve(syncLayout);
+        };
+    }, [ydoc]);
+
     // Stable update functions
     const updateProject = useCallback((newProject: ProjectMembershipPayload) => {
         setProject(newProject);
@@ -344,6 +389,30 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setSelectedStylesState(styles);
     }, []);
 
+    const toggleCharacterHighlight = useCallback((characterName: string) => {
+        setHighlightedCharacters((prev) => {
+            const newSet = new Set(prev);
+            const upperName = characterName.toUpperCase();
+            if (newSet.has(upperName)) {
+                newSet.delete(upperName);
+            } else {
+                newSet.add(upperName);
+            }
+            return newSet;
+        });
+    }, []);
+
+    const setPageFormat = useCallback(
+        (format: PageFormat) => {
+            setPageFormatState(format);
+            if (ydoc) {
+                const layoutMap = getLayoutMap(ydoc);
+                layoutMap.set("pageSize", format);
+            }
+        },
+        [ydoc]
+    );
+
     const contextValue = useMemo<ProjectContextType>(
         () => ({
             project,
@@ -370,6 +439,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setSelectedElement,
             selectedStyles,
             setSelectedStyles,
+            highlightedCharacters,
+            toggleCharacterHighlight,
+            pageFormat,
+            setPageFormat,
         }),
         [
             project,
@@ -396,6 +469,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setSelectedElement,
             selectedStyles,
             setSelectedStyles,
+            highlightedCharacters,
+            toggleCharacterHighlight,
+            pageFormat,
+            setPageFormat,
         ]
     );
 

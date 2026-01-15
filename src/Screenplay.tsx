@@ -4,7 +4,7 @@ import Underline from "@tiptap/extension-underline";
 import { Node } from "@tiptap/core";
 
 export const Screenplay = Node.create({
-    name: "Screenplay",
+    name: "scr",
     group: "block",
     content: "text*",
 

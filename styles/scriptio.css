@@ -39,9 +39,11 @@ Originally developed by John August - johnaugust.com
 }
 
 .ProseMirror {
-    margin-bottom: 30%;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 10%;
+    transform: translateX(calc(var(--sidebar-offset, 0px) * -1));
+    transition: transform 0.5s ease;
     border: none !important;
     background-color: var(--editor-script-bg) !important;
 
@@ -257,5 +259,12 @@ Originally developed by John August - johnaugust.com
         /* Fix for Firefox selection glitch */
         display: block;
         width: max-content;
+    }
+
+    /* Character dialogue highlighting */
+    .character-highlight {
+        background-color: var(--highlight-bg);
+        border-left: 3px solid var(--highlight-color);
+        margin-left: -3px;
     }
 }

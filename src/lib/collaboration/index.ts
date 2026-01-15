@@ -40,10 +40,23 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
                 break;
 
             case 1: // Awareness (cursor)
-                console.log("Awareness");
                 const awarenessUpdate = decoding.readVarUint8Array(decoder);
                 awarenessProtocol.applyAwarenessUpdate(room.awareness, awarenessUpdate, sender);
                 room.broadcast(fullMessage, sender);
+                room.updateSessionActivity(sender);
+                break;
+
+            case 3: // Awareness query (messageQueryAwareness) - client is requesting awareness states
+                const currentStates = room.awareness.getStates();
+                if (currentStates.size > 0) {
+                    const respEncoder = encoding.createEncoder();
+                    encoding.writeVarUint(respEncoder, 1); // awareness message type
+                    encoding.writeVarUint8Array(
+                        respEncoder,
+                        awarenessProtocol.encodeAwarenessUpdate(room.awareness, Array.from(currentStates.keys()))
+                    );
+                    sender.send(encoding.toUint8Array(respEncoder));
+                }
                 room.updateSessionActivity(sender);
                 break;
 
@@ -299,7 +312,7 @@ export class ScreenplayRoom extends DurableObject {
             syncStep1.set(payload, 1);
             server.send(syncStep1);
 
-            // Send current awareness states
+            // Send current awareness states to the new client
             const awarenessStates = this.awareness.getStates();
             if (awarenessStates.size > 0) {
                 const awarenessEncoder = encoding.createEncoder();
@@ -313,6 +326,14 @@ export class ScreenplayRoom extends DurableObject {
             }
 
             console.log(`[Room] User ${userId} connected. Total sessions: ${this.sessions.size}`);
+
+            // Request all existing clients to re-broadcast their awareness
+            // This ensures the new client receives everyone's current state,
+            // especially important after a DurableObject restart where
+            // the server's awareness cache may be empty or stale
+            if (this.sessions.size > 1) {
+                this.broadcastAwarenessRequest(server);
+            }
             return new Response(null, { status: 101, webSocket: client });
         }
 
@@ -384,6 +405,18 @@ export class ScreenplayRoom extends DurableObject {
         encoding.writeVarUint(encoder, 1);
         encoding.writeVarUint8Array(encoder, awarenessProtocol.encodeAwarenessUpdate(this.awareness, clientIds));
         this.broadcast(encoding.toUint8Array(encoder), excludeSocket);
+    }
+
+    /**
+     * Request all existing clients to re-broadcast their awareness state.
+     * This is used when a new client connects to ensure they receive
+     * everyone's current awareness state.
+     */
+    private broadcastAwarenessRequest(excludeSocket?: WebSocket): void {
+        const encoder = encoding.createEncoder();
+        encoding.writeVarUint(encoder, 3); // Message type 3: messageQueryAwareness
+        this.broadcast(encoding.toUint8Array(encoder), excludeSocket);
+        console.log("[Room] Sent awareness request to existing clients");
     }
 
     /**

@@ -1,19 +1,20 @@
 import { Screenplay } from "../../utils/types";
-import { BaseExportOptions, ScreenplayAdapter } from "../screenplay-adapter";
+import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 
 import fountain from "./fountain_parser";
-import { generateJSON } from "@tiptap/react";
+import { generateJSON, JSONContent } from "@tiptap/react";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { BASE_EXTENSIONS } from "@src/lib/screenplay/editor";
+import { ProjectData, ProjectState } from "@src/lib/project/project-yjs";
 
-export class FountainAdapter extends ScreenplayAdapter {
+export class FountainAdapter extends ProjectAdapter {
     label = "Fountain Script";
     extension = "fountain";
 
-    convertTo(screenplay: Screenplay, options: BaseExportOptions): Promise<Blob> {
+    convertTo(project: ProjectState, options: BaseExportOptions): Promise<Blob> {
         let fountain = "";
         let sceneCount = 1;
-        let nodes = screenplay.content!;
+        let nodes = project.screenplay;
         const characters = options.characters;
 
         for (let i = 0; i < nodes.length; i++) {
@@ -45,7 +46,7 @@ export class FountainAdapter extends ScreenplayAdapter {
             for (let j = 0; j < content.length; j++) {
                 const styles: string[] = Object.values(content[j].marks ?? []);
                 const childNode = content[j];
-                let textFragment: string = "text" in childNode ? childNode.text : "";
+                let textFragment: string = "text" in childNode ? childNode.text! : "";
 
                 if (styles.includes("bold")) textFragment = "**" + textFragment + "**";
                 if (styles.includes("italic")) textFragment = "*" + textFragment + "*";
@@ -89,14 +90,22 @@ export class FountainAdapter extends ScreenplayAdapter {
 
             fountain += "\n";
         }
+
         const blob = new Blob([fountain], { type: "text/plain;charset=utf-8" });
         return Promise.resolve(blob);
     }
 
-    convertFrom(rawContent: string): Screenplay {
-        const output = fountain.parse(rawContent, true);
+    convertFrom(rawContent: ArrayBuffer): Partial<ProjectData> {
+        const decoder = new TextDecoder("utf-8");
+        const text = decoder.decode(rawContent);
+        const output = fountain.parse(text, true);
         const html = output["html"]["script"];
-        const json = generateJSON(html, BASE_EXTENSIONS) as Screenplay;
-        return json;
+        const json = generateJSON(html, BASE_EXTENSIONS) as JSONContent[];
+
+        const project: Partial<ProjectData> = {
+            screenplay: json,
+        };
+
+        return project;
     }
 }

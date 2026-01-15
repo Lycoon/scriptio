@@ -1,4 +1,7 @@
 .editor_and_sidebar {
+    /* Offset to center editor on viewport when sidebars are visible */
+    --sidebar-offset: 0px;
+
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -7,6 +10,11 @@
     flex: 1;
     min-height: 0;
     width: 100%;
+}
+
+.sidebars_visible {
+    /* (left sidebar total - right sidebar total) / 2 = (460px - 310px) / 2 = 75px */
+    --sidebar-offset: calc((var(--navigation-sidebar-width) + 60px - var(--format-sidebar-width) - 60px) / 2);
 }
 
 .container {
@@ -20,17 +28,17 @@
 .editor_shadow {
     position: sticky;
     top: 0;
-    left: 0;
 
-    width: 100%;
+    width: 1000px;
     height: 40px;
-    margin-bottom: -40px;
+    margin: 0 auto -40px auto;
+    transform: translateX(calc(var(--sidebar-offset) * -1));
 
     opacity: 0;
     z-index: 1;
     pointer-events: none;
 
-    transition: opacity 0.7s ease;
+    transition: opacity 0.7s ease, transform 0.5s ease;
     background: linear-gradient(to bottom, var(--editor-shadow) 0%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
     -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);

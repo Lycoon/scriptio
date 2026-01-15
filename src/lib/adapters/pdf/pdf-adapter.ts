@@ -1,23 +1,25 @@
 import { Screenplay } from "@src/lib/utils/types";
-import { BaseExportOptions, ScreenplayAdapter } from "../screenplay-adapter";
-import * as pdfMake from "pdfmake/build/pdfmake";
+import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { addOffset, FONTS, getPDFNodeTemplate, getPDFTableTemplate, initPDF } from "./pdf-utils";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { computeContdIndices } from "@src/lib/screenplay/contd";
+import { ProjectData, ProjectState } from "@src/lib/project/project-yjs";
+import * as pdfMake from "pdfmake/build/pdfmake";
 
 export type PDFExportOptions = BaseExportOptions & {
     format: "A4" | "LETTER";
     watermark: boolean;
+    password?: string;
 };
 
-export class PDFAdapter extends ScreenplayAdapter<PDFExportOptions> {
+export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
     label = "PDF";
     extension = "pdf";
 
-    convertTo(screenplay: Screenplay, options: PDFExportOptions): Promise<Blob> {
+    convertTo(project: ProjectState, options: PDFExportOptions): Promise<Blob> {
         const characters = options.characters;
-        const nodes = screenplay.content!;
-        const contdIndices = computeContdIndices(screenplay);
+        const nodes = project.screenplay;
+        const contdIndices = computeContdIndices(nodes);
         let pdfNodes = [];
 
         for (let i = 0; i < nodes.length; i++) {
@@ -85,6 +87,9 @@ export class PDFAdapter extends ScreenplayAdapter<PDFExportOptions> {
                 italics: false,
             };
         }
+        if (options.password) {
+            pdf.userPassword = options.password;
+        }
 
         const doc = pdfMake.createPdf(pdf, undefined, FONTS);
         return new Promise<Blob>((resolve) => {
@@ -94,7 +99,7 @@ export class PDFAdapter extends ScreenplayAdapter<PDFExportOptions> {
         });
     }
 
-    convertFrom(rawContent: string): Screenplay {
+    convertFrom(rawContent: ArrayBuffer): Partial<ProjectData> {
         throw new Error("Method not implemented.");
     }
 }

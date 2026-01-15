@@ -11,6 +11,7 @@ import { logout } from "@src/lib/utils/requests";
 
 export type Category =
     | "General"
+    | "Layout"
     | "Export"
     | "Collaborators"
     | "Profile"

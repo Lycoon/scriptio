@@ -111,8 +111,8 @@
     border-radius: 6px;
     padding: 4px 8px;
     color: var(--primary-text);
-    width: 120px;
-    max-width: 180px;
+    width: auto;
+    max-width: 200px;
 }
 
 .title_box:focus {

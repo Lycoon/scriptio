@@ -17,16 +17,19 @@ export enum ExportFormat {
     PDF = "pdf",
     FOUNTAIN = "fountain",
     FDX = "fdx",
+    SCRIPTIO = "scriptio",
 }
 
 const ExportProject = () => {
     const { user } = useCookieUser();
-    const { project: membership, screenplay, editor } = useContext(ProjectContext);
+    const { project: membership, ydoc, editor, pageFormat } = useContext(ProjectContext);
     const userContext = useContext(UserContext);
 
     const [format, setFormat] = useState<ExportFormat>(ExportFormat.PDF);
     const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
     const [includeNotes, setIncludeNotes] = useState<boolean>(false);
+    const [enablePassword, setEnablePassword] = useState<boolean>(false);
+    const [password, setPassword] = useState<string>("");
     const [isExporting, setExporting] = useState(false);
 
     // Reference for the hidden file input
@@ -47,7 +50,7 @@ const ExportProject = () => {
 
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const content = e.target?.result as string;
+            const content = e.target?.result as ArrayBuffer;
             if (!content || !editor) return;
 
             const confirmImport = () => {
@@ -58,10 +61,8 @@ const ExportProject = () => {
             importFilePopup(userContext, confirmImport);
         };
 
-        reader.readAsText(file);
-
-        // Reset input so the same file can be selected again if needed
-        event.target.value = "";
+        reader.readAsArrayBuffer(file);
+        event.target.value = ""; // Reset input so the same file can be selected again if needed
     };
 
     const handleExport = async () => {
@@ -78,15 +79,21 @@ const ExportProject = () => {
             return;
         }
 
+        if (!ydoc) {
+            console.error("No project state loaded");
+            return;
+        }
+
         if (format === ExportFormat.PDF) {
             const pdfOptions: PDFExportOptions = {
                 ...baseOptions,
-                format: "A4",
+                format: pageFormat === "A4" ? "A4" : "LETTER",
                 watermark: includeWatermark,
+                password: enablePassword && password ? password : undefined,
             };
-            await adapter.export(screenplay, pdfOptions);
+            await adapter.export(ydoc, pdfOptions);
         } else {
-            await adapter.export(screenplay, baseOptions);
+            await adapter.export(ydoc, baseOptions);
         }
 
         setExporting(false);
@@ -103,7 +110,7 @@ const ExportProject = () => {
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileImport}
-                    accept=".fountain,.txt,.fdx"
+                    accept=".fountain,.txt,.fdx,.scriptio"
                     style={{ display: "none" }}
                 />
 
@@ -129,11 +136,9 @@ const ExportProject = () => {
 
                     <div className={styles.optionInfo}>
                         <span className={styles.optionTitle}>Select File</span>
-                        <span className={styles.optionDesc}>Upload .fountain, .fdx or .txt</span>
+                        <span className={styles.optionDesc}>Upload .fountain, .fdx, .scriptio, or .txt</span>
                     </div>
                 </div>
-
-                <p className={sharedStyles.helpText}>Warning: This will replace your current screenplay.</p>
             </div>
 
             {/* --- Export Format Selection --- */}
@@ -147,12 +152,14 @@ const ExportProject = () => {
                     <option value={ExportFormat.PDF}>PDF Document (.pdf)</option>
                     <option value={ExportFormat.FOUNTAIN}>Fountain (.fountain)</option>
                     <option value={ExportFormat.FDX}>Final Draft (.fdx)</option>
+                    <option value={ExportFormat.SCRIPTIO}>Scriptio (.scriptio)</option>
                 </select>
                 <p className={sharedStyles.helpText}>
                     {format === ExportFormat.PDF && "Standard industry format. Best for sharing and printing."}
                     {format === ExportFormat.FOUNTAIN &&
                         "Plain text format based on markdown, great for compatibility."}
                     {format === ExportFormat.FDX && "Compatible with Final Draft industry software."}
+                    {format === ExportFormat.SCRIPTIO && "Scriptio own format, to keep your project local"}
                 </p>
             </div>
 
@@ -183,6 +190,35 @@ const ExportProject = () => {
                             <span className={styles.optionTitle}>Watermark</span>
                             <span className={styles.optionDesc}>Overlay the author's name on pages.</span>
                         </div>
+                    </div>
+                )}
+
+                {/* Password Protection Toggle (PDF Only) */}
+                {format === ExportFormat.PDF && (
+                    <div
+                        className={`${styles.optionCard} ${styles.optionCardExpandable} ${
+                            enablePassword ? styles.active : ""
+                        }`}
+                        onClick={() => setEnablePassword(!enablePassword)}
+                    >
+                        <div className={styles.optionRow}>
+                            <div className={styles.checkbox}>
+                                {enablePassword && <div className={styles.checkInner} />}
+                            </div>
+                            <div className={styles.optionInfo}>
+                                <span className={styles.optionTitle}>Password Protection</span>
+                                <span className={styles.optionDesc}>Require a password to open the PDF.</span>
+                            </div>
+                        </div>
+                        {enablePassword && (
+                            <input
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Enter password"
+                                className={`${sharedStyles.input} ${styles.passwordInput}`}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        )}
                     </div>
                 )}
             </div>

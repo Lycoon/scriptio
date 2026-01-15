@@ -1,7 +1,7 @@
 import FileSaver from "file-saver";
 import { replaceScreenplay } from "../screenplay/editor";
-import { Screenplay } from "../utils/types";
 import { Editor } from "@tiptap/react";
+import { ProjectData, ProjectState } from "../project/project-yjs";
 
 export type BaseExportOptions = {
     title: string;
@@ -11,16 +11,16 @@ export type BaseExportOptions = {
     notesColor?: string;
 };
 
-export abstract class ScreenplayAdapter<TExportOptions extends BaseExportOptions = BaseExportOptions> {
+export abstract class ProjectAdapter<TExportOptions extends BaseExportOptions = BaseExportOptions> {
     abstract label: string; // e.g., "Final Draft (.fdx)"
     abstract extension: string; // e.g., "fdx"
 
-    abstract convertTo(content: Screenplay, options: TExportOptions): Promise<Blob>;
-    abstract convertFrom(rawContent: string): Screenplay;
+    abstract convertTo(project: ProjectState, options: TExportOptions): Promise<Blob>;
+    abstract convertFrom(rawContent: ArrayBuffer): Partial<ProjectData>;
 
-    public async export(screenplay: Screenplay, options: TExportOptions): Promise<void> {
+    public async export(project: ProjectState, options: TExportOptions): Promise<void> {
         try {
-            const blob = await this.convertTo(screenplay, options);
+            const blob = await this.convertTo(project, options);
             FileSaver.saveAs(blob, `${options.title}.${this.extension}`);
         } catch (error) {
             console.error(`Failed to export to ${this.label}`, error);
@@ -28,10 +28,10 @@ export abstract class ScreenplayAdapter<TExportOptions extends BaseExportOptions
         }
     }
 
-    public import(rawContent: string, editor: Editor): void {
+    public import(rawContent: ArrayBuffer, editor: Editor): void {
         try {
-            const screenplay = this.convertFrom(rawContent);
-            replaceScreenplay(editor, screenplay);
+            const project = this.convertFrom(rawContent);
+            if (project.screenplay) replaceScreenplay(editor, project.screenplay);
         } catch (error) {
             console.error(`Failed to import from ${this.label}`, error);
             throw new Error("Import failed or file is corrupt");

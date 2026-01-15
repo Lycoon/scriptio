@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import styles from "./BoardCanvas.module.css";
+import { ColorPicker } from "../utils/ColorPicker";
 
 export interface BoardCardData {
     id: string;
@@ -27,11 +28,9 @@ const CARD_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b
 
 const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu }: BoardCardProps) => {
     const cardRef = useRef<HTMLDivElement>(null);
-    const colorPickerRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
-    const [showColorPicker, setShowColorPicker] = useState(false);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [localTitle, setLocalTitle] = useState(card.title);
     const [localDescription, setLocalDescription] = useState(card.description);
@@ -42,26 +41,6 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
         setLocalTitle(card.title);
         setLocalDescription(card.description);
     }, [card.title, card.description]);
-
-    // Close color picker when clicking outside
-    useEffect(() => {
-        if (!showColorPicker) return;
-
-        const handleClickOutside = (e: MouseEvent) => {
-            if (
-                colorPickerRef.current &&
-                !colorPickerRef.current.contains(e.target as Node) &&
-                !(e.target as HTMLElement).closest(`.${styles.card_color_btn}`)
-            ) {
-                setShowColorPicker(false);
-            }
-        };
-
-        window.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            window.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [showColorPicker]);
 
     const snapToGrid = useCallback(
         (value: number) => {
@@ -188,9 +167,8 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
     }, [card, localDescription, onUpdate]);
 
     const handleColorChange = useCallback(
-        (color: string) => {
-            onUpdate({ ...card, color });
-            setShowColorPicker(false);
+        (color: string | undefined) => {
+            onUpdate({ ...card, color: color || "" });
         },
         [card, onUpdate]
     );
@@ -239,22 +217,20 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
                 width: card.width,
                 height: card.height,
                 borderColor: card.color,
+                backgroundColor: card.color,
             }}
             onMouseDown={handleMouseDown}
             onDoubleClick={handleDoubleClick}
             onContextMenu={handleRightClick}
         >
             <div className={styles.card_header} style={{ backgroundColor: card.color }}>
-                <div
-                    className={styles.card_color_btn}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setShowColorPicker(!showColorPicker);
-                    }}
-                >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <circle cx="12" cy="12" r="10" />
-                    </svg>
+                <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+                    <ColorPicker
+                        value={card.color || undefined}
+                        onChange={handleColorChange}
+                        colors={CARD_COLORS}
+                        allowClear={false}
+                    />
                 </div>
                 {isEditingTitle ? (
                     <input
@@ -275,22 +251,6 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
                     </span>
                 )}
             </div>
-
-            {showColorPicker && (
-                <div ref={colorPickerRef} className={styles.color_picker}>
-                    {CARD_COLORS.map((color) => (
-                        <button
-                            key={color}
-                            className={styles.color_option}
-                            style={{ backgroundColor: color }}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleColorChange(color);
-                            }}
-                        />
-                    ))}
-                </div>
-            )}
 
             <div className={styles.card_content}>
                 {isEditing ? (

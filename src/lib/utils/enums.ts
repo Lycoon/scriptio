@@ -39,6 +39,8 @@ export enum SaveMode {
 //            EDITOR              //
 // ------------------------------ //
 
+export type PageFormat = "A4" | "Letter";
+
 export enum Style {
     None = 0,
     Bold = 1,

@@ -1,5 +1,5 @@
-import { Screenplay } from "../utils/types";
 import { getNodeFlattenContent } from "./screenplay";
+import { JSONContent } from "@tiptap/react";
 
 /**
  * Computes which character node indices should display "(CONT'D)" suffix.
@@ -9,17 +9,16 @@ import { getNodeFlattenContent } from "./screenplay";
  * @param screenplay - The TipTap screenplay document
  * @returns A Set of node indices that should have CONT'D appended
  */
-export function computeContdIndices(screenplay: Screenplay): Set<number> {
+export function computeContdIndices(screenplay: JSONContent[]): Set<number> {
     const contdIndices = new Set<number>();
-    const nodes = screenplay.content;
 
-    if (!nodes || nodes.length === 0) return contdIndices;
+    if (!screenplay || screenplay.length === 0) return contdIndices;
 
     let lastCharacterInScene: string | null = null;
     let wasInterrupted = false;
 
-    for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
+    for (let i = 0; i < screenplay.length; i++) {
+        const node = screenplay[i];
         const type: string = node.attrs?.class;
 
         // Scene headings reset tracking (new scene = no CONT'D)
@@ -38,7 +37,6 @@ export function computeContdIndices(screenplay: Screenplay): Set<number> {
 
             lastCharacterInScene = characterName;
             wasInterrupted = false;
-            continue;
         }
 
         // Dialogue and parenthetical are part of the character's speech block

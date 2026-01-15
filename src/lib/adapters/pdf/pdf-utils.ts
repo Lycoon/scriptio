@@ -15,7 +15,7 @@ export const FONTS: TFontDictionary = {
 // Units are in points (pt)
 // Conversion from inches to points -> x72
 //
-const DEFAULT_OFFSET = 13; // ~17px (1 line height)
+const DEFAULT_OFFSET = 11; // ~17px (1 line height)
 const ONE_INCH = 72;
 
 const CHARACTER_L = 2.2 * ONE_INCH;
@@ -73,6 +73,9 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             author: options.author,
         },
         header: (currentPage, pageCount, pageSize) => {
+            if (currentPage === 1) {
+                return;
+            }
             return [
                 {
                     text: `${currentPage}.`,
@@ -89,6 +92,7 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             font: "CourierPrime",
             fontSize: 12,
             alignment: "left",
+            characterSpacing: -0.3,
         },
         styles: {
             scene: {

@@ -10,6 +10,17 @@ import { LocationData, deleteLocation } from "@src/lib/screenplay/locations";
 import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/screenplay/editor";
 import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/screenplay/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
+import {
+    ArrowDownRight,
+    ClipboardPaste,
+    Highlighter,
+    LucideIcon,
+    Pencil,
+    Scissors,
+    SquareDashedMousePointer,
+    Trash2,
+    UserRound,
+} from "lucide-react";
 
 /* ==================== */
 /*     Context menu     */
@@ -33,11 +44,13 @@ export const enum ContextMenuType {
 type ContextMenuItemProps = {
     text: string;
     action: () => void;
+    icon: LucideIcon;
 };
 
-export const ContextMenuItem = ({ text, action }: ContextMenuItemProps) => {
+export const ContextMenuItem = ({ text, action, icon: Icon }: ContextMenuItemProps) => {
     return (
         <div onClick={action} className={context.menu_item}>
+            <Icon size={16} />
             <p className="unselectable">{text}</p>
         </div>
     );
@@ -58,11 +71,20 @@ const SceneItemMenu = (props: any) => {
 
     return (
         <>
-            <ContextMenuItem text={"Go to scene"} action={() => focusOnPosition(editor!, scene.position)} />
-            <ContextMenuItem text={"Edit"} action={() => editScenePopup(scene, userCtx)} />
-            <ContextMenuItem text={"Cut"} action={() => cutText(editor!, scene.position, scene.nextPosition)} />
+            <ContextMenuItem
+                text={"Go to scene"}
+                icon={ArrowDownRight}
+                action={() => focusOnPosition(editor!, scene.position)}
+            />
+            <ContextMenuItem text={"Edit"} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
+            <ContextMenuItem
+                text={"Cut"}
+                icon={Scissors}
+                action={() => cutText(editor!, scene.position, scene.nextPosition)}
+            />
             <ContextMenuItem
                 text={"Select in editor"}
+                icon={SquareDashedMousePointer}
                 action={() => selectTextInEditor(editor!, scene.position, scene.nextPosition)}
             />
         </>
@@ -77,7 +99,7 @@ const SceneListMenu = (props: any) => {
     };
 
     return <></>;
-    return <>{<ContextMenuItem text={"Add scene"} action={addScene} />}</>;
+    //return <>{<ContextMenuItem text={"Add scene"} action={addScene} />}</>;
 };
 
 /* ======================== */
@@ -91,20 +113,30 @@ export type CharacterContextProps = {
 const CharacterItemMenu = (props: any) => {
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
+    const { toggleCharacterHighlight } = projectCtx;
     const character: CharacterData = props.props.character;
 
     return (
         <>
-            <ContextMenuItem text={"Edit"} action={() => editCharacterPopup(character, userCtx)} />
-            <ContextMenuItem text={"Remove"} action={() => deleteCharacter(character.name, projectCtx)} />
-            <ContextMenuItem text={"Paste"} action={() => pasteText(projectCtx.editor!, character.name)} />
+            <ContextMenuItem text={"Edit"} icon={Pencil} action={() => editCharacterPopup(character, userCtx)} />
+            <ContextMenuItem text={"Remove"} icon={Trash2} action={() => deleteCharacter(character.name, projectCtx)} />
+            <ContextMenuItem
+                text={"Paste"}
+                icon={ClipboardPaste}
+                action={() => pasteText(projectCtx.editor!, character.name)}
+            />
+            <ContextMenuItem
+                text={"Highlight"}
+                icon={Highlighter}
+                action={() => toggleCharacterHighlight(character.name)}
+            />
         </>
     );
 };
 
 const CharacterListMenu = (props: any) => {
     const userCtx = useContext(UserContext);
-    return <ContextMenuItem text={"Add character"} action={() => addCharacterPopup(userCtx)} />;
+    return <ContextMenuItem icon={UserRound} text={"Add character"} action={() => addCharacterPopup(userCtx)} />;
 };
 
 /* ======================== */
@@ -121,8 +153,12 @@ const LocationItemMenu = (props: any) => {
 
     return (
         <>
-            <ContextMenuItem text={"Remove"} action={() => deleteLocation(location.name, projectCtx)} />
-            <ContextMenuItem text={"Paste"} action={() => pasteText(projectCtx.editor!, location.name)} />
+            <ContextMenuItem icon={Trash2} text={"Remove"} action={() => deleteLocation(location.name, projectCtx)} />
+            <ContextMenuItem
+                icon={ClipboardPaste}
+                text={"Paste"}
+                action={() => pasteText(projectCtx.editor!, location.name)}
+            />
         </>
     );
 };

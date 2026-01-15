@@ -27,13 +27,14 @@ const PopupImportFile = ({ data: { confirmImport } }: PopupData<PopupImportFileD
                     onMouseDown={handleMouseDown}
                     style={{ cursor: isDragging ? "grabbing" : "grab" }}
                 >
-                    <h2 className={popup.title}>Import screenplay</h2>
+                    <h2 className={popup.title}>Confirm Import</h2>
                     <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
                 </div>
                 <div className={popup.info}>
                     <p>
-                        Are you sure you want to import a screenplay? This will <b>overwrite</b> your current
-                        screenplay. You can export your screenplay before importing a new one.
+                        Are you sure you want to <b>overwrite</b> your current project?
+                        <br />
+                        You can export your project before importing a new one.
                     </p>
                 </div>
                 <button className={join(form.btn, popup.confirm, popup.import_confirm)} onClick={onConfirmImport}>

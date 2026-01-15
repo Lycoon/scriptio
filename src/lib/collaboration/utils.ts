@@ -42,25 +42,54 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private isSessionReplaced: boolean = false;
     private lastKnownUserCount: number = 1;
 
+    // Store userInfo so we can restore it on reconnection
+    private userInfo: { name: string; color: string } | null = null;
+
     // Close codes from server
     private readonly CLOSE_CODE_SESSION_REPLACED = 4001;
 
     // Bound event handlers for proper cleanup
     private boundResetIdleTimer: () => void;
 
-    constructor(serverUrl: string, room: string, doc: Y.Doc, options: any) {
-        super(serverUrl, room, doc, options);
+    constructor(serverUrl: string, room: string, doc: Y.Doc, options: any & { userInfo?: { name: string; color: string } }) {
+        // Pass connect: false to prevent immediate connection
+        // We'll connect after setting up user info
+        super(serverUrl, room, doc, { ...options, connect: false });
 
         this.localClientId = doc.clientID;
         this.boundResetIdleTimer = this.resetUserIdleTimer.bind(this);
         this.lastFlushTime = Date.now();
         this.lastMessageTime = Date.now();
 
+        // Store and set user info BEFORE connecting so awareness is correct from the start
+        if (options.userInfo) {
+            this.userInfo = options.userInfo;
+            this.awareness.setLocalStateField("user", options.userInfo);
+        }
+
         // Replace default handlers with throttled versions
         doc.off("update", (this as any)._updateHandler);
         doc.on("update", this.onThrottledUpdate);
         this.awareness.off("update", (this as any)._awarenessUpdateHandler);
         this.awareness.on("update", this.onThrottledAwareness);
+
+        // Handle awareness query (message type 3 = messageQueryAwareness)
+        // When the server requests awareness, immediately send our current state
+        (this as any).messageHandlers[3] = (
+            encoder: encoding.Encoder,
+            _decoder: any,
+            _provider: any,
+            _emitSynced: any,
+            _messageType: any
+        ) => {
+            this.lastMessageTime = Date.now();
+            // Write awareness update to the encoder (y-websocket will send it)
+            encoding.writeVarUint(encoder, 1); // messageAwareness
+            encoding.writeVarUint8Array(
+                encoder,
+                awarenessProtocol.encodeAwarenessUpdate(this.awareness, [this.localClientId])
+            );
+        };
 
         // Handle ping responses (message type 9)
         // This prevents the default handler from treating it as unknown
@@ -80,31 +109,31 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.setupCloseHandler();
 
         console.log(`[WS] Provider initialized for room ${room}, clientId: ${this.localClientId}`);
+
+        // Now connect after everything is set up (including user info)
+        this.connect();
     }
 
     /**
      * Handle connection status changes
      */
     private onStatusChange = (event: { status: string }) => {
-        console.log(`[WS] Status changed: ${event.status}`);
-
         if (event.status === "connected") {
             this.reconnectAttempts = 0;
             this.isIdleDisconnected = false;
             this.isSessionReplaced = false;
-            this.lastMessageTime = Date.now(); // Reset so we don't immediately ping
+            this.lastMessageTime = Date.now();
 
-            // Re-announce our awareness state on reconnection
-            const localState = this.awareness.getLocalState();
-            if (localState) {
-                // Trigger awareness update to be sent
-                this.awarenessQueue.add(this.localClientId);
+            // Restore user info if it was lost during reconnection
+            // y-websocket may clear awareness state internally during reconnect
+            if (this.userInfo && !this.awareness.getLocalState()?.user) {
+                this.awareness.setLocalStateField("user", this.userInfo);
             }
 
-            // Flush any pending updates
+            // Queue and send our awareness update
+            this.awarenessQueue.add(this.localClientId);
             this.flush();
         } else if (event.status === "disconnected") {
-            // Clear the last known user count when disconnected
             this.lastKnownUserCount = 1;
         }
     };
@@ -205,6 +234,15 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     /**
+     * Update the user info for awareness.
+     * This stores the info and sets it on the awareness state.
+     */
+    public setUserInfo(userInfo: { name: string; color: string }): void {
+        this.userInfo = userInfo;
+        this.awareness.setLocalStateField("user", userInfo);
+    }
+
+    /**
      * Update the authentication token and reconnect.
      * This allows refreshing expired tokens without destroying the provider.
      */
@@ -251,12 +289,17 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             }
 
             try {
-                // Clean up awareness before disconnecting
+                // Clean up awareness before disconnecting (notifies other clients we're leaving)
                 this.cleanupLocalAwareness();
 
                 // Disconnect existing connection if any
                 if (this.wsconnected) {
                     this.disconnect();
+                }
+
+                // Restore user info after cleanup (it will also be restored in onStatusChange)
+                if (this.userInfo) {
+                    this.awareness.setLocalStateField("user", this.userInfo);
                 }
 
                 // Clear any pending reconnect
@@ -554,8 +597,6 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                     awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
                 );
                 ws.send(encoding.toUint8Array(encoder));
-
-                console.log(`[WS] Sent awareness update for clients: ${changedClients.join(", ")}`);
             } catch (e) {
                 console.error("[WS] Failed to send awareness updates:", e);
             }

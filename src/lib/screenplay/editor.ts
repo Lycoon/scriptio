@@ -1,6 +1,6 @@
 "use client";
 
-import { Editor, useEditor } from "@tiptap/react";
+import { Editor, getSchema, JSONContent, useEditor } from "@tiptap/react";
 import { ScreenplayElement, Style } from "../utils/enums";
 import { ProjectContext } from "@src/context/ProjectContext";
 
@@ -13,7 +13,6 @@ import { SuggestionData } from "@components/editor/SuggestionMenu";
 import { useUser } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
-import { Screenplay } from "../utils/types";
 import debounce from "debounce";
 
 import * as Node from "@src/Screenplay";
@@ -22,6 +21,7 @@ import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
 import { KeybindsExtension } from "./keybinds-extension";
 import { executeKeybindAction } from "../utils/keybinds";
 import { ContdExtension } from "./contd-extension";
+import { createCharacterHighlightExtension, refreshCharacterHighlights } from "./character-highlight-extension";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
     if (style & Style.Bold) editor.chain().toggleBold().focus().run();
@@ -30,11 +30,18 @@ export const applyMarkToggle = (editor: Editor, style: Style) => {
 };
 
 export const applyElement = (editor: Editor, element: ScreenplayElement) => {
-    editor.chain().focus().setNode("Screenplay", { class: element }).run();
+    editor.chain().focus().setNode("scr", { class: element }).run();
 };
 
 export const focusOnPosition = (editor: Editor, position: number) => {
     editor.commands.focus(position);
+
+    // Scroll the view to center on the focused position
+    const { node } = editor.view.domAtPos(position);
+    const element = node instanceof HTMLElement ? node : node.parentElement;
+    if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
 };
 
 export const selectTextInEditor = (editor: Editor, start: number, end: number) => {
@@ -63,21 +70,27 @@ export const pasteTextAt = (editor: Editor, text: string, position: number) => {
 
 export const insertElement = (editor: Editor, element: ScreenplayElement, position: number) => {
     const newNode = {
-        type: "Screenplay",
+        type: "scr",
         attrs: {
             class: element,
         },
         content: [],
     };
 
-    editor.chain().insertContentAt(position, newNode).focus(position).run();
+    editor
+        .chain()
+        .insertContentAt(position, newNode)
+        // Focus at position + 1 to ensure the cursor is inside the new empty node
+        .setTextSelection(position + 1)
+        .scrollIntoView() // Good practice to ensure the new line is visible
+        .run();
 };
 
 export const replaceOccurrences = (editor: Editor, oldWord: string, newWord: string) => {
     editor.chain().focus().insertContentAt({ from: 0, to: 4 }, newWord).run();
 };
 
-export const replaceScreenplay = (editor: Editor, screenplay: Screenplay) => {
+export const replaceScreenplay = (editor: Editor, screenplay: JSONContent[]) => {
     editor.commands.setContent(screenplay, {
         emitUpdate: true,
     });
@@ -106,6 +119,7 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 const TWO_LINE_HEIGHTS = 17 * 3;
 export const SCREENPLAY_FORMATS = {
     Letter: {
+        marginTop: 0,
         marginBottom: 96 - TWO_LINE_HEIGHTS,
         marginLeft: 144,
         marginRight: 96,
@@ -113,6 +127,7 @@ export const SCREENPLAY_FORMATS = {
         pageWidth: PAGE_SIZES.LETTER.pageWidth,
     },
     A4: {
+        marginTop: 0,
         marginBottom: 144 - TWO_LINE_HEIGHTS,
         marginLeft: 125,
         marginRight: 86,
@@ -122,37 +137,23 @@ export const SCREENPLAY_FORMATS = {
 };
 
 export const BASE_EXTENSIONS = [
-    Document.configure({
-        content: "Screenplay+",
-    }),
     Text,
+
+    ContdExtension,
     Node.Screenplay,
     Node.CustomBold,
     Node.CustomItalic,
     Node.CustomUnderline,
-];
 
-const EXTENSIONS = [
-    ...BASE_EXTENSIONS,
     Placeholder.configure({
         placeholder: "",
     }),
-    ContdExtension,
-    PaginationPlus.configure({
-        marginTop: 0,
-        pageGap: 20,
-        contentMarginTop: 31, // Header is 68px height (1in = 96px = 31px + 68px)
-        headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
-        customHeader: {
-            1: {
-                headerLeft: "",
-                headerRight: `<p class="page-number" style="margin-top: 50px;"></p>`,
-            },
-        },
-        footerRight: "",
-        ...SCREENPLAY_FORMATS.Letter,
+    Document.configure({
+        content: "Screenplay+",
     }),
 ];
+
+export const ScreenplaySchema = getSchema(BASE_EXTENSIONS);
 
 export const useScriptioEditor = (
     project: ProjectMembershipPayload["project"] | undefined,
@@ -165,7 +166,7 @@ export const useScriptioEditor = (
 ) => {
     const projectCtx = useContext(ProjectContext);
     const { user } = useUser();
-    const { ydoc, provider, isYjsReady } = projectCtx;
+    const { ydoc, provider, isYjsReady, highlightedCharacters, charactersData, pageFormat } = projectCtx;
 
     const debouncedUpdateRef = useRef(
         debounce((editor: Editor) => {
@@ -180,6 +181,19 @@ export const useScriptioEditor = (
         color: user?.color || getRandomColor(),
     });
 
+    // Refs for character highlighting - these are read by the extension plugin
+    const highlightedCharactersRef = useRef<Set<string>>(highlightedCharacters);
+    const charactersDataRef = useRef(charactersData);
+
+    // Keep refs in sync with state
+    useEffect(() => {
+        highlightedCharactersRef.current = highlightedCharacters;
+    }, [highlightedCharacters]);
+
+    useEffect(() => {
+        charactersDataRef.current = charactersData;
+    }, [charactersData]);
+
     useEffect(() => {
         userInfoRef.current = {
             name: user?.username || userInfoRef.current.name,
@@ -190,11 +204,21 @@ export const useScriptioEditor = (
         }
     }, [user?.username, user?.color, provider]);
 
+    // Create the character highlight extension with callback functions that read from refs
+    const characterHighlightExtension = createCharacterHighlightExtension({
+        getHighlightedCharacters: () => highlightedCharactersRef.current,
+        getCharacterColor: (name: string) => {
+            const upperName = name.toUpperCase();
+            const key = Object.keys(charactersDataRef.current).find((k) => k.toUpperCase() === upperName);
+            return key ? charactersDataRef.current[key]?.color : undefined;
+        },
+    });
+
     const scriptioEditor = useEditor(
         {
             immediatelyRender: false,
             extensions: [
-                ...EXTENSIONS,
+                ...BASE_EXTENSIONS,
                 ...(ydoc && isYjsReady
                     ? [
                           Collaboration.configure({
@@ -223,6 +247,20 @@ export const useScriptioEditor = (
                           }),
                       ]
                     : []),
+                PaginationPlus.configure({
+                    pageGap: 20,
+                    contentMarginTop: 31, // Header is 68px height (1in = 96px = 31px + 68px)
+                    headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
+                    customHeader: {
+                        1: {
+                            // Overwrite first page header with empty header
+                            headerLeft: "",
+                            headerRight: `<p class="page-number" style="margin-top: 50px;"></p>`,
+                        },
+                    },
+                    footerRight: "",
+                    ...SCREENPLAY_FORMATS[pageFormat],
+                }),
                 KeybindsExtension.configure({
                     userKeybinds: userKeybinds || {},
                     onAction: (id, editorInstance) => {
@@ -233,6 +271,7 @@ export const useScriptioEditor = (
                         });
                     },
                 }),
+                characterHighlightExtension,
             ],
 
             onUpdate({ editor }) {
@@ -258,6 +297,20 @@ export const useScriptioEditor = (
             projectCtx.updateEditor(null);
         };
     }, [scriptioEditor]);
+
+    // Refresh character highlights when highlighted characters or character colors change
+    useEffect(() => {
+        if (scriptioEditor) {
+            refreshCharacterHighlights(scriptioEditor);
+        }
+    }, [scriptioEditor, highlightedCharacters, charactersData]);
+
+    // Sync editor page size when pageFormat changes (e.g., from another collaborator)
+    useEffect(() => {
+        if (scriptioEditor) {
+            scriptioEditor.chain().focus().updatePageSize(SCREENPLAY_FORMATS[pageFormat]).run();
+        }
+    }, [scriptioEditor, pageFormat]);
 
     return scriptioEditor;
 };

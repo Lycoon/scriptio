@@ -82,7 +82,7 @@ const ProfileSettings = () => {
         <div className={sharedStyles.settingsForm}>
             {/* Username */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Display Name</label>
+                <label className={form.label}>Username</label>
                 <input
                     type="text"
                     value={username}
@@ -98,7 +98,7 @@ const ProfileSettings = () => {
 
             {/* Color */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Cursor Color</label>
+                <label className={form.label}>Color</label>
                 <div className={styles.colorSection}>
                     <div className={styles.colorPresets}>
                         {PRESET_COLORS.map((presetColor) => (
@@ -122,9 +122,6 @@ const ProfileSettings = () => {
                         <span className={styles.colorValue}>{color.toUpperCase()}</span>
                     </div>
                 </div>
-                <p className={sharedStyles.helpText}>
-                    Choose a color that represents your cursor when collaborating in real-time.
-                </p>
             </div>
 
             {/* Message */}

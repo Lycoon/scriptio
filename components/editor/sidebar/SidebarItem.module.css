@@ -75,9 +75,14 @@
     color: var(--secondary-text);
 }
 
-.icon {
-    height: 13px;
-    width: 13px;
-    margin-right: 6px;
-    color: var(--secondary-text);
+.icons_row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.highlight_icon {
+    flex-shrink: 0;
 }

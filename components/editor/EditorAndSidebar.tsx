@@ -120,24 +120,18 @@ const EditorAndSidebar = () => {
                     }
 
                     if (event.key === "Enter") {
-                        // autocomplete open
+                        // Autocomplete open
                         if (suggestions.length > 0) {
                             event.preventDefault();
                             return true; // prevent default new line
                         }
 
-                        // empty element
-                        if (nodeSize === 0) {
-                            setActiveElement(ScreenplayElement.Action);
-                            return true; // prevent default new line
-                        }
-
-                        // breaking line in the middle of an element
+                        // Breaking line in the middle of an element
                         if (nodePos < nodeSize) {
                             return false;
                         }
 
-                        // default case, most likely a new element
+                        // Default case, most likely a new element
                         let newNode = ScreenplayElement.Action;
                         if (nodePos !== 0) {
                             switch (currNode) {
@@ -147,8 +141,8 @@ const EditorAndSidebar = () => {
                             }
                         }
 
-                        insertElement(editor, newNode, selection.anchor);
-                        return true; // prevent default new line
+                        insertElement(editor, newNode, selection.$anchor.after());
+                        return true;
                     }
 
                     return false;
@@ -228,25 +222,23 @@ const EditorAndSidebar = () => {
     if (!membership || isLoading) return <Loading />;
 
     return (
-        <div className={join(styles.editor_and_sidebar)}>
+        <div
+            className={`${styles.editor_and_sidebar} ${isEditorReady ? styles.visible : styles.hidden} ${
+                !isZenMode && styles.sidebars_visible
+            }`}
+        >
             <ContextMenu />
             {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
             <Popup />
             <EditorSidebarNavigation />
-            <div className={`${styles.container}`} onScroll={onScroll}>
+            <div className={styles.container} onScroll={onScroll}>
                 {/* Upper editor shadow */}
                 <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
 
                 {/* Scriptio Editor */}
-                <div className={isEditorReady ? styles.visible : styles.hidden}>
+                <div>
                     <EditorContent editor={editor} />
                 </div>
-
-                {!isEditorReady && (
-                    <div className={`${styles.loading}`}>
-                        <Loading />
-                    </div>
-                )}
             </div>
             <EditorSidebarFormat />
         </div>

@@ -119,7 +119,7 @@ async function deleteProjectMember(req: NextRequest, { routeParams }: ApiContext
         if (member.role !== ProjectRole.OWNER) {
             // No need to check roles, any non-owner member can leave the project on its own
             await ProjectService.deleteProjectMember(projectId, userToDelete);
-            redirect("/");
+            return Success({ redirectUrl: "/" });
         } else {
             // An owner cannot leave its project as a collaborator
             // He either needs to transfer ownership or delete project

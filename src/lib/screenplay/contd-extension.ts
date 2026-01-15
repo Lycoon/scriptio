@@ -2,7 +2,6 @@ import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { computeContdIndices } from "./contd";
-import { Screenplay } from "../utils/types";
 
 const contdPluginKey = new PluginKey("contd");
 
@@ -11,8 +10,8 @@ const contdPluginKey = new PluginKey("contd");
  * Uses the shared computeContdIndices utility for the logic.
  */
 function computeContdDecorations(doc: any): DecorationSet {
-    const screenplay = doc.toJSON() as Screenplay;
-    const contdIndices = computeContdIndices(screenplay);
+    const screenplay = doc.toJSON();
+    const contdIndices = computeContdIndices(screenplay.content);
 
     if (contdIndices.size === 0) {
         return DecorationSet.empty;

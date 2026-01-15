@@ -53,12 +53,10 @@ export const ColorPicker = ({ value, onChange, colors = DEFAULT_COLORS, allowCle
         <div className={styles.container} ref={containerRef}>
             <button
                 type="button"
-                className={styles.trigger}
+                className={`${styles.trigger} ${!value ? styles.trigger_empty : ""}`}
                 onClick={() => setIsOpen(!isOpen)}
                 style={{ backgroundColor: value || "transparent" }}
-            >
-                {!value && <span className={styles.no_color}>None</span>}
-            </button>
+            />
 
             {isOpen && (
                 <div className={styles.dropdown}>
