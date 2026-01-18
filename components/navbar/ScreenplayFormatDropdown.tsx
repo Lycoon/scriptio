@@ -63,7 +63,7 @@ const ScreenplayFormatDropdown = () => {
 
     const toggleStyle = useCallback(
         (style: Style) => {
-            setSelectedStyles((prev) => prev ^ style);
+            setSelectedStyles((prev) => (prev ^ style) as Style);
             if (editor) applyMarkToggle(editor, style);
         },
         [editor, setSelectedStyles]
@@ -101,7 +101,7 @@ const ScreenplayFormatDropdown = () => {
             <div className={styles.dropdown_wrapper}>
                 <button className={styles.dropdown_trigger} onClick={() => setIsOpen(!isOpen)}>
                     <span className={styles.selected_label}>{ELEMENT_LABELS[selectedElement]}</span>
-                    <ChevronDown size={16} className={join(styles.chevron, isOpen && styles.chevron_open)} />
+                    <ChevronDown size={16} className={`${styles.chevron} ${isOpen && styles.chevron_open}`} />
                 </button>
 
                 {isOpen && (
@@ -109,10 +109,9 @@ const ScreenplayFormatDropdown = () => {
                         {ELEMENTS_ORDER.map((element) => (
                             <button
                                 key={element}
-                                className={join(
-                                    styles.dropdown_item,
-                                    element === selectedElement && styles.dropdown_item_active
-                                )}
+                                className={`${styles.dropdown_item}
+                                    ${element === selectedElement && styles.dropdown_item_active}
+                                `}
                                 onClick={() => handleElementSelect(element)}
                             >
                                 {ELEMENT_LABELS[element]}
