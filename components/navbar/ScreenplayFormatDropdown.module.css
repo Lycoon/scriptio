@@ -22,7 +22,9 @@
     border-radius: 6px;
     cursor: pointer;
     color: var(--secondary-text);
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
 }
 
 .style_btn:hover {
@@ -92,7 +94,8 @@
     transform: translateX(-50%);
     min-width: 180px;
     padding: 6px;
-    background-color: var(--secondary);
+    background-color: color-mix(in srgb, var(--secondary) 40%, transparent);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--separator);
     border-radius: 10px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -110,7 +113,7 @@
     cursor: pointer;
     font-family: var(--font-courier);
     color: var(--primary-text);
-    background-color: var(--secondary);
+    background-color: transparent;
     transition: background-color 0.15s ease;
 }
 

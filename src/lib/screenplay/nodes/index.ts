@@ -7,6 +7,8 @@ export { TransitionNode } from "./transition-node";
 export { SectionNode } from "./section-node";
 export { NoteNode } from "./note-node";
 
+export { ScriptioBold, ScriptioItalic, ScriptioUnderline } from "./marks-node";
+
 export type { SceneNodeOptions } from "./scene-node";
 export type { ActionNodeOptions } from "./action-node";
 export type { CharacterNodeOptions } from "./character-node";

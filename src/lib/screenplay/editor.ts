@@ -14,7 +14,7 @@ import { useUser } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
-import { ScreenplayNodes, CustomBold, CustomItalic, CustomUnderline } from "@src/Screenplay";
+import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline } from "@src/lib/screenplay/nodes";
 import { Placeholder } from "./extensions/placeholder-extension";
 import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
 import { KeybindsExtension } from "./extensions/keybinds-extension";
@@ -187,13 +187,14 @@ export const BASE_EXTENSIONS = [
     ...ScreenplayNodes,
 
     // Mark extensions
-    CustomBold,
-    CustomItalic,
-    CustomUnderline,
+    ScriptioBold,
+    ScriptioItalic,
+    ScriptioUnderline,
 
     Placeholder.configure({
         placeholder: "",
     }),
+
     Document.configure({
         // Allow any of the screenplay element types as document content
         // Action is listed first to make it the default node type for empty documents

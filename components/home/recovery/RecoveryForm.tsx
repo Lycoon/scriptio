@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { requestRecovery } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
-import { RequestRecoveryBody } from "@pages/api/recover";
 
 import form from "../../utils/Form.module.css";
 import recovery from "./RecoveryForm.module.css";
+import { RequestRecoveryBody } from "@src/app/api/recover/route";
 
 const RecoveryForm = () => {
     const [sentEmail, setSetSentEmail] = useState(false);
