@@ -6,7 +6,6 @@
     padding-bottom: 30px;
     height: 100%;
     width: var(--navigation-sidebar-width);
-    background-color: var(--main-bg);
 
     /* hiding it by default */
     margin-left: calc(var(--navigation-sidebar-width) * -1);

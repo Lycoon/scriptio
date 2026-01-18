@@ -3,13 +3,26 @@
 /**
  * scenes.ts
  *
- * Scene persistence using Yjs Y.Map storage.
- * Mirrors the character architecture for consistency.
+ * Scene management with transient (computed) and persistent (Yjs) data.
+ *
+ * Architecture:
+ * - SceneItem: Transient data computed from parsing the screenplay.
+ *   These hold position info, title, preview, and optionally an id if the scene
+ *   has been persisted (scene heading has a data-scene-id attribute).
+ *
+ * - PersistentScene: User-editable metadata stored in Yjs.
+ *   Only scenes that have been explicitly edited (synopsis, color) or created
+ *   from the UI are persisted. Keyed by scene id (UUID).
+ *
+ * - Scene: Full scene data combining SceneItem with optional persistent data.
+ *   This is what gets exposed to the UI.
  */
 
-import { ProjectContextType } from "@src/context/ProjectContext";
-import { getScenesMap } from "@src/lib/project/project-yjs";
 import { v4 as uuidv4 } from "uuid";
+import { getNodeData } from "./screenplay";
+import { ScreenplayElement } from "../utils/enums";
+import { Screenplay } from "../utils/types";
+import { JSONContent } from "@tiptap/react";
 
 // -------------------------------- //
 //          TYPE DEFINITIONS        //
@@ -18,129 +31,111 @@ import { v4 as uuidv4 } from "uuid";
 /**
  * Computed scene data from screenplay parsing.
  * These are transient and recalculated on every screenplay change.
+ * The id is optional - only present if the scene heading has a data-scene-id attribute.
  */
-export type ComputedScene = {
+export type TransientScene = {
+    id?: string;
     title: string;
     preview: string;
     position: number;
     nextPosition: number;
 };
 
-export type ComputedScenesData = ComputedScene[];
-
 /**
  * Persistent scene metadata stored in Yjs.
- * These are user-editable and synced across collaborators.
+ * Only contains user-editable fields.
+ * Keyed by scene id (UUID) in the Yjs map.
  */
-export type PersistentSceneItem = {
-    id: string;
+export type PersistentScene = {
     synopsis?: string;
     color?: string;
 };
 
 /**
- * Merged scene data combining computed and persistent data.
+ * Map of persistent scenes keyed by scene id.
+ */
+export type PersistentSceneMap = { [id: string]: PersistentScene };
+
+/**
+ * Full scene data combining transient and persistent data.
  * This is what gets exposed to the UI.
  */
-export type MergedSceneItem = ComputedScene & {
-    id: string | null;
+export type Scene = TransientScene & {
     synopsis?: string;
     color?: string;
-    isPersistent: boolean;
-};
-
-export type MergedScenesData = MergedSceneItem[];
-
-/**
- * Scene data for CRUD operations.
- */
-export type SceneData = {
-    title: string;
-    position: number;
-} & PersistentSceneItem;
-
-// -------------------------------- //
-//       SCENE IDENTIFICATION       //
-// -------------------------------- //
-
-/**
- * Generate a unique key for a scene based on title and position.
- * This handles duplicate headings (e.g., multiple "INT. OFFICE - DAY").
- */
-export const getSceneKey = (title: string, position: number): string => {
-    return `${title}::${position}`;
-};
-
-/**
- * Parse a scene key back to title and position.
- */
-export const parseSceneKey = (key: string): { title: string; position: number } => {
-    const lastSeparator = key.lastIndexOf("::");
-    const title = key.substring(0, lastSeparator);
-    const positionStr = key.substring(lastSeparator + 2);
-    return { title, position: parseInt(positionStr, 10) };
 };
 
 // -------------------------------- //
-//       CRUD OPERATIONS (YJS)      //
+//       SCENE PARSING              //
 // -------------------------------- //
 
 /**
- * Create or update a scene's persistent metadata in Yjs.
+ * Extract a preview of the scene content (first ~30 characters after the heading).
  */
-export const upsertSceneData = (data: SceneData, projectCtx: ProjectContextType) => {
-    const { ydoc } = projectCtx;
-    if (!ydoc) {
-        console.warn("[Scenes] Cannot upsert: Yjs document not available");
-        return;
+const getScenePreview = (nodes: JSONContent[], cursor: number): string => {
+    let preview = "";
+
+    for (let i = cursor; i < nodes.length && preview.length <= 30; i++) {
+        const node = getNodeData(nodes[i]);
+        if (node.type === ScreenplayElement.None) continue;
+        if (node.type === ScreenplayElement.Scene) break; // stop when next scene is found
+
+        preview += node.flattenText + " ";
     }
 
-    const scenesMap = getScenesMap(ydoc);
-    const key = getSceneKey(data.title, data.position);
-
-    const sceneItem: PersistentSceneItem = {
-        id: data.id || uuidv4(),
-        synopsis: data.synopsis,
-        color: data.color,
-    };
-
-    scenesMap.set(key, sceneItem);
-    console.log(`[Scenes] Upserted scene: ${key}`);
+    return preview.trim();
 };
 
 /**
- * Delete a scene's persistent metadata from Yjs.
+ * Parse the screenplay and compute scene items.
+ * Scenes are identified by scene headings (ScreenplayElement.Scene).
+ * If a scene heading has a data-scene-id attribute, the id is extracted.
  */
-export const deleteScenePersistence = (title: string, position: number, projectCtx: ProjectContextType) => {
-    const { ydoc } = projectCtx;
-    if (!ydoc) {
-        console.warn("[Scenes] Cannot delete: Yjs document not available");
-        return;
+export const computeSceneItems = (screenplay: Screenplay): TransientScene[] => {
+    if (!screenplay) {
+        return [];
     }
 
-    const scenesMap = getScenesMap(ydoc);
-    const key = getSceneKey(title, position);
+    const scenes: TransientScene[] = [];
+    let cursor = 1;
+    let sceneNumber = 0;
 
-    if (scenesMap.has(key)) {
-        scenesMap.delete(key);
-        console.log(`[Scenes] Deleted scene: ${key}`);
+    for (let i = 0; i < screenplay.length; i++) {
+        const node = getNodeData(screenplay[i]);
+
+        if (node.type === ScreenplayElement.None) {
+            cursor += 2; // empty screenplay element count for new line
+            continue;
+        }
+
+        if (node.type === ScreenplayElement.Scene) {
+            if (sceneNumber !== 0) {
+                // Set nextPosition for the previous scene
+                scenes[scenes.length - 1].nextPosition = cursor;
+            }
+
+            // Extract scene id from data attribute if present
+            const sceneId: string | undefined = screenplay[i].attrs?.["scene-id"];
+
+            scenes.push({
+                id: sceneId,
+                position: cursor,
+                nextPosition: -1,
+                title: node.flattenText.toUpperCase(),
+                preview: getScenePreview(screenplay, i + 1),
+            });
+
+            sceneNumber++;
+        }
+
+        cursor += node.flattenText.length + 2; // new line counts for 2 characters
     }
-};
 
-/**
- * Get a scene's persistent data by title and position.
- */
-export const getScenePersistence = (
-    title: string,
-    position: number,
-    projectCtx: ProjectContextType
-): PersistentSceneItem | undefined => {
-    const { ydoc } = projectCtx;
-    if (!ydoc) return undefined;
+    if (scenes.length > 0) {
+        scenes[scenes.length - 1].nextPosition = cursor;
+    }
 
-    const scenesMap = getScenesMap(ydoc);
-    const key = getSceneKey(title, position);
-    return scenesMap.get(key);
+    return scenes;
 };
 
 // -------------------------------- //
@@ -148,77 +143,40 @@ export const getScenePersistence = (
 // -------------------------------- //
 
 /**
- * Create default persistent data for a scene.
+ * Merge computed scene items with persistent scene data from Yjs.
+ * Returns full Scene objects for UI consumption.
  */
-export const createDefaultSceneItem = (): Omit<PersistentSceneItem, "id"> => ({
-    synopsis: "",
-});
+export const mergeScenesData = (persistentScenes: PersistentSceneMap, screenplay: Screenplay): Scene[] => {
+    const sceneItems = computeSceneItems(screenplay);
 
-/**
- * Merge computed scenes with persistent scene data from Yjs.
- */
-export const mergeScenesData = (
-    persistentScenes: Map<string, PersistentSceneItem>,
-    computedScenes: ComputedScenesData
-): MergedScenesData => {
-    return computedScenes.map((computed) => {
-        const key = getSceneKey(computed.title, computed.position);
-        const persistent = persistentScenes.get(key);
-
-        if (persistent) {
+    return sceneItems.map((item) => {
+        if (item.id && persistentScenes[item.id]) {
+            const persistent = persistentScenes[item.id];
             return {
-                ...computed,
-                id: persistent.id,
+                ...item,
                 synopsis: persistent.synopsis,
                 color: persistent.color,
-                notes: persistent.notes,
-                isPersistent: true,
             };
         }
 
-        return {
-            ...computed,
-            id: null,
-            synopsis: "",
-            isPersistent: false,
-        };
+        return { ...item };
     });
 };
 
 // -------------------------------- //
-//       PERSISTENCE UTILITIES      //
+//       UTILITY FUNCTIONS          //
 // -------------------------------- //
 
 /**
- * Check if a scene is persistent (stored in Yjs).
+ * Generate a new scene id.
  */
-export const isScenePersistent = (title: string, position: number, projectCtx: ProjectContextType): boolean => {
-    const { ydoc } = projectCtx;
-    if (!ydoc) return false;
-
-    const scenesMap = getScenesMap(ydoc);
-    const key = getSceneKey(title, position);
-    return scenesMap.has(key);
+export const generateSceneId = (): string => {
+    return uuidv4();
 };
 
 /**
- * Make a scene persistent by adding it to Yjs.
+ * Create default persistent scene data.
  */
-export const makeScenePersistent = (
-    title: string,
-    position: number,
-    projectCtx: ProjectContextType,
-    data?: Partial<PersistentSceneItem>
-) => {
-    upsertSceneData(
-        {
-            title,
-            position,
-            id: data?.id || uuidv4(),
-            synopsis: data?.synopsis || "",
-            color: data?.color,
-            notes: data?.notes,
-        },
-        projectCtx
-    );
-};
+export const createDefaultPersistentScene = (): PersistentScene => ({
+    synopsis: "",
+});

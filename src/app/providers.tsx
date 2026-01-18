@@ -25,7 +25,7 @@ export function Providers({ children }: { children: ReactNode }) {
                         attribute="class"
                         disableTransitionOnChange
                         defaultTheme="dark"
-                        themes={["dark", "light", "latte", "wonka", "mint"]}
+                        themes={["dark", "light", "latte", "wonka", "mint", "blossom"]}
                         enableColorScheme={false}
                     >
                         {children}

@@ -11,6 +11,10 @@ import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { JSONContent } from "@tiptap/react";
 import { Screenplay } from "../utils/types";
+import { PageFormat } from "../utils/enums";
+
+// Re-export repository for convenient access
+export { ProjectRepository, createProjectRepository } from "./project-repository";
 
 // -------------------------------- //
 //          TYPE DEFINITIONS        //
@@ -40,17 +44,16 @@ export interface UserInfo {
     color: string;
 }
 
-// Fragment names for different data types in the Yjs document
-export const YJS_FRAGMENTS = {
-    SCREENPLAY: "screenplay",
-    CHARACTERS: "characters",
-    SCENES: "scenes",
-    CARDS: "cards",
-    LOCATIONS: "locations",
-    METADATA: "metadata",
-    BOARD: "board",
-    LAYOUT: "layout",
-} as const;
+export type ProjectMetadata = {
+    version: number;
+    id: string;
+    title: string;
+};
+
+export type LayoutData = {
+    pageSize: PageFormat;
+    displaySceneNumbers: boolean;
+};
 
 export type ProjectData = {
     screenplay: JSONContent[];
@@ -58,86 +61,89 @@ export type ProjectData = {
     scenes: any;
     cards: any;
     locations: any;
-    metadata: any;
+    metadata: ProjectMetadata;
     board: any;
-    layout: any;
+    layout: LayoutData;
 };
 
 export class ProjectState extends Y.Doc {
-    get screenplay(): JSONContent[] {
-        const fragment = this.getXmlFragment(YJS_FRAGMENTS.SCREENPLAY);
+    KEYS = {
+        SCREENPLAY: "screenplay",
+        CHARACTERS: "characters",
+        SCENES: "scenes",
+        CARDS: "cards",
+        LOCATIONS: "locations",
+        METADATA: "metadata",
+        BOARD: "board",
+        LAYOUT: "layout",
+    } as const;
+
+    metadata(): Y.Map<any> {
+        return this.getMap(this.KEYS.METADATA);
+    }
+    screenplay(): Screenplay {
+        const fragment = this.getXmlFragment(this.KEYS.SCREENPLAY);
         const screenplay = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
-        const json = screenplay.toJSON().content;
+        const json = screenplay.toJSON().content ?? [];
         return json;
     }
-
-    get screenplayFragment(): Y.XmlFragment {
-        return this.getXmlFragment(YJS_FRAGMENTS.SCREENPLAY);
+    screenplayFragment(): Y.XmlFragment {
+        return this.getXmlFragment(this.KEYS.SCREENPLAY);
     }
-
-    get characters(): Y.Map<any> {
-        return this.getMap(YJS_FRAGMENTS.CHARACTERS);
+    characters(): Y.Map<any> {
+        return this.getMap(this.KEYS.CHARACTERS);
     }
-
-    get scenes(): Y.Map<any> {
-        return this.getMap(YJS_FRAGMENTS.SCENES);
+    locations(): Y.Map<any> {
+        return this.getMap(this.KEYS.LOCATIONS);
     }
-
-    get cards(): Y.Map<any> {
-        return this.getMap(YJS_FRAGMENTS.CARDS);
+    scenes(): Y.Map<any> {
+        return this.getMap(this.KEYS.SCENES);
     }
-
-    get locations(): Y.Map<any> {
-        return this.getMap(YJS_FRAGMENTS.LOCATIONS);
+    cards(): Y.Map<any> {
+        return this.getMap(this.KEYS.CARDS);
     }
-
-    get metadata(): Y.Map<any> {
-        return this.getMap(YJS_FRAGMENTS.METADATA);
+    board(): Y.Map<any> {
+        return this.getMap(this.KEYS.BOARD);
     }
-
-    get board(): Y.Map<any> {
-        return this.getMap(YJS_FRAGMENTS.BOARD);
-    }
-
-    get layout(): Y.Map<any> {
-        return this.getMap(YJS_FRAGMENTS.LAYOUT);
+    layout(): Y.Map<any> {
+        return this.getMap(this.KEYS.LAYOUT);
     }
 }
 
 // -------------------------------- //
-//          FRAGMENT GETTERS        //
+//       HELPER FUNCTIONS           //
 // -------------------------------- //
 
-export const getScreenplayFragment = (ydoc: Y.Doc): Y.XmlFragment => {
-    return ydoc.getXmlFragment(YJS_FRAGMENTS.SCREENPLAY);
+/**
+ * Get the characters Y.Map from a ProjectState.
+ * Convenience function for direct access without repository.
+ */
+export const getCharactersMap = (ydoc: ProjectState): Y.Map<any> => {
+    return ydoc.characters();
 };
 
-export const getCharactersMap = (ydoc: Y.Doc): Y.Map<any> => {
-    return ydoc.getMap(YJS_FRAGMENTS.CHARACTERS);
+/**
+ * Get the locations Y.Map from a ProjectState.
+ * Convenience function for direct access without repository.
+ */
+export const getLocationsMap = (ydoc: ProjectState): Y.Map<any> => {
+    return ydoc.locations();
 };
 
-export const getScenesMap = (ydoc: Y.Doc): Y.Map<any> => {
-    return ydoc.getMap(YJS_FRAGMENTS.SCENES);
+/**
+ * Get the scenes Y.Map from a ProjectState.
+ * Convenience function for direct access without repository.
+ */
+export const getScenesMap = (ydoc: ProjectState): Y.Map<any> => {
+    return ydoc.scenes();
 };
 
-export const getCardsMap = (ydoc: Y.Doc): Y.Map<any> => {
-    return ydoc.getMap(YJS_FRAGMENTS.CARDS);
-};
-
-export const getLocationsMap = (ydoc: Y.Doc): Y.Map<any> => {
-    return ydoc.getMap(YJS_FRAGMENTS.LOCATIONS);
-};
-
-export const getMetadataMap = (ydoc: Y.Doc): Y.Map<any> => {
-    return ydoc.getMap(YJS_FRAGMENTS.METADATA);
-};
-
-export const getBoardMap = (ydoc: Y.Doc): Y.Map<any> => {
-    return ydoc.getMap(YJS_FRAGMENTS.BOARD);
-};
-
-export const getLayoutMap = (ydoc: Y.Doc): Y.Map<any> => {
-    return ydoc.getMap(YJS_FRAGMENTS.LAYOUT);
+/**
+ * Get the board Y.Map from a ProjectState.
+ * Convenience function for direct access without repository.
+ */
+export const getBoardMap = (ydoc: ProjectState): Y.Map<any> => {
+    return ydoc.board();
 };
 
 // -------------------------------- //

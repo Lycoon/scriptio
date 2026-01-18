@@ -6,9 +6,9 @@ import { useDraggable } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { PopupData, PopupSceneData, closePopup } from "@src/lib/screenplay/popup";
-import { upsertSceneData, deleteScenePersistence } from "@src/lib/screenplay/scenes";
-import { v4 as uuidv4 } from "uuid";
+import { generateSceneId } from "@src/lib/screenplay/scenes";
 import { ColorPicker } from "@components/utils/ColorPicker";
+import { ScreenplayElement } from "@src/lib/utils/enums";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -17,7 +17,7 @@ import styles from "@components/popup/PopupCharacterItem.module.css";
 import popup from "@components/popup/Popup.module.css";
 
 export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) => {
-    const projectCtx = useContext(ProjectContext);
+    const { repository, editor } = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
     const { position, handleMouseDown, isDragging } = useDraggable();
 
@@ -27,24 +27,62 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
     const onSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        upsertSceneData(
-            {
-                title: scene.title,
-                position: scene.position,
-                id: scene.id || uuidv4(),
-                synopsis,
-                color,
-            },
-            projectCtx
-        );
+        if (!repository) {
+            console.warn("[PopupSceneItem] Repository not available");
+            return;
+        }
+
+        // If scene already has an id, update it; otherwise create a new persistent scene
+        const isNewPersistentScene = !scene.id;
+        const sceneId = scene.id || generateSceneId();
+        repository.upsertScene(sceneId, { synopsis, color });
+
+        // If this is a new persistent scene, update the scene heading node with the scene-id
+        if (isNewPersistentScene && editor) {
+            // Find and update the scene node at the given position
+            const { doc, tr } = editor.state;
+            const resolvedPos = doc.resolve(scene.position);
+            const nodeAtPos = resolvedPos.parent;
+
+            // Verify we're at a scene node
+            if (nodeAtPos.type.name === ScreenplayElement.Scene) {
+                const nodeStart = resolvedPos.before();
+                tr.setNodeMarkup(nodeStart, undefined, {
+                    ...nodeAtPos.attrs,
+                    "scene-id": sceneId,
+                });
+                editor.view.dispatch(tr);
+            }
+        }
 
         closePopup(userCtx);
     };
 
     const onDelete = () => {
-        deleteScenePersistence(scene.title, scene.position, projectCtx);
+        if (!repository || !scene.id) {
+            closePopup(userCtx);
+            return;
+        }
+
+        // Remove the scene-id attribute from the editor node
+        if (editor) {
+            const { doc, tr } = editor.state;
+            const resolvedPos = doc.resolve(scene.position);
+            const nodeAtPos = resolvedPos.parent;
+
+            if (nodeAtPos.type.name === ScreenplayElement.Scene) {
+                const nodeStart = resolvedPos.before();
+                const { "scene-id": _, ...attrsWithoutSceneId } = nodeAtPos.attrs;
+                tr.setNodeMarkup(nodeStart, undefined, attrsWithoutSceneId);
+                editor.view.dispatch(tr);
+            }
+        }
+
+        repository.deleteScene(scene.id);
         closePopup(userCtx);
     };
+
+    const isPersistent = !!scene.id;
 
     return (
         <div className={popup.window}>
@@ -83,7 +121,7 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
                     <button className={join(form.btn, popup.confirm)} type="submit">
                         Save
                     </button>
-                    {scene.isPersistent && (
+                    {isPersistent && (
                         <button type="button" className={join(form.btn, popup.cancel)} onClick={onDelete}>
                             Remove Metadata
                         </button>

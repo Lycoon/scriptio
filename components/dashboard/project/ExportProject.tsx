@@ -7,6 +7,7 @@ import { useCookieUser } from "@src/lib/utils/hooks";
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "./ProjectSettings.module.css";
 import styles from "./ExportProject.module.css";
+import optionCard from "./OptionCard.module.css";
 import { importFilePopup } from "@src/lib/screenplay/popup";
 import { UserContext } from "@src/context/UserContext";
 import { getAdapterByExtension, getAdapterByFilename } from "@src/lib/adapters/registry";
@@ -22,7 +23,8 @@ export enum ExportFormat {
 
 const ExportProject = () => {
     const { user } = useCookieUser();
-    const { project: membership, ydoc, editor, pageFormat } = useContext(ProjectContext);
+    const { project: membership, repository, editor, pageFormat, displaySceneNumbers } = useContext(ProjectContext);
+    const ydoc = repository?.getState();
     const userContext = useContext(UserContext);
 
     const [format, setFormat] = useState<ExportFormat>(ExportFormat.PDF);
@@ -90,6 +92,7 @@ const ExportProject = () => {
                 format: pageFormat === "A4" ? "A4" : "LETTER",
                 watermark: includeWatermark,
                 password: enablePassword && password ? password : undefined,
+                displaySceneNumbers,
             };
             await adapter.export(ydoc, pdfOptions);
         } else {
@@ -115,9 +118,9 @@ const ExportProject = () => {
                 />
 
                 {/* Styled Clickable Div */}
-                <div className={styles.optionCard} onClick={() => fileInputRef.current?.click()}>
+                <div className={optionCard.optionCard} onClick={() => fileInputRef.current?.click()}>
                     {/* SVG Icon matching the visual weight of the checkboxes in other options */}
-                    <div className={styles.checkbox} style={{ border: "none", background: "transparent" }}>
+                    <div className={optionCard.checkbox} style={{ border: "none", background: "transparent" }}>
                         <svg
                             width="20"
                             height="20"
@@ -134,9 +137,9 @@ const ExportProject = () => {
                         </svg>
                     </div>
 
-                    <div className={styles.optionInfo}>
-                        <span className={styles.optionTitle}>Select File</span>
-                        <span className={styles.optionDesc}>Upload .fountain, .fdx, .scriptio, or .txt</span>
+                    <div className={optionCard.optionInfo}>
+                        <span className={optionCard.optionTitle}>Select File</span>
+                        <span className={optionCard.optionDesc}>Upload .fountain, .fdx, .scriptio, or .txt</span>
                     </div>
                 </div>
             </div>
@@ -167,28 +170,28 @@ const ExportProject = () => {
             <div className={styles.options}>
                 {/* Notes Toggle */}
                 <div
-                    className={`${styles.optionCard} ${includeNotes ? styles.active : ""}`}
+                    className={`${optionCard.optionCard} ${includeNotes ? optionCard.active : ""}`}
                     onClick={() => setIncludeNotes(!includeNotes)}
                 >
-                    <div className={styles.checkbox}>{includeNotes && <div className={styles.checkInner} />}</div>
-                    <div className={styles.optionInfo}>
-                        <span className={styles.optionTitle}>Include Notes</span>
-                        <span className={styles.optionDesc}>Export inline notes.</span>
+                    <div className={optionCard.checkbox}>{includeNotes && <div className={optionCard.checkInner} />}</div>
+                    <div className={optionCard.optionInfo}>
+                        <span className={optionCard.optionTitle}>Include Notes</span>
+                        <span className={optionCard.optionDesc}>Export inline notes.</span>
                     </div>
                 </div>
 
                 {/* Watermark Toggle (PDF Only) */}
                 {format === ExportFormat.PDF && (
                     <div
-                        className={`${styles.optionCard} ${includeWatermark ? styles.active : ""}`}
+                        className={`${optionCard.optionCard} ${includeWatermark ? optionCard.active : ""}`}
                         onClick={() => setIncludeWatermark(!includeWatermark)}
                     >
-                        <div className={styles.checkbox}>
-                            {includeWatermark && <div className={styles.checkInner} />}
+                        <div className={optionCard.checkbox}>
+                            {includeWatermark && <div className={optionCard.checkInner} />}
                         </div>
-                        <div className={styles.optionInfo}>
-                            <span className={styles.optionTitle}>Watermark</span>
-                            <span className={styles.optionDesc}>Overlay the author's name on pages.</span>
+                        <div className={optionCard.optionInfo}>
+                            <span className={optionCard.optionTitle}>Watermark</span>
+                            <span className={optionCard.optionDesc}>Overlay the author's name on pages.</span>
                         </div>
                     </div>
                 )}
@@ -196,18 +199,18 @@ const ExportProject = () => {
                 {/* Password Protection Toggle (PDF Only) */}
                 {format === ExportFormat.PDF && (
                     <div
-                        className={`${styles.optionCard} ${styles.optionCardExpandable} ${
-                            enablePassword ? styles.active : ""
+                        className={`${optionCard.optionCard} ${optionCard.optionCardExpandable} ${
+                            enablePassword ? optionCard.active : ""
                         }`}
                         onClick={() => setEnablePassword(!enablePassword)}
                     >
-                        <div className={styles.optionRow}>
-                            <div className={styles.checkbox}>
-                                {enablePassword && <div className={styles.checkInner} />}
+                        <div className={optionCard.optionRow}>
+                            <div className={optionCard.checkbox}>
+                                {enablePassword && <div className={optionCard.checkInner} />}
                             </div>
-                            <div className={styles.optionInfo}>
-                                <span className={styles.optionTitle}>Password Protection</span>
-                                <span className={styles.optionDesc}>Require a password to open the PDF.</span>
+                            <div className={optionCard.optionInfo}>
+                                <span className={optionCard.optionTitle}>Password Protection</span>
+                                <span className={optionCard.optionDesc}>Require a password to open the PDF.</span>
                             </div>
                         </div>
                         {enablePassword && (

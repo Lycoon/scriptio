@@ -1,5 +1,5 @@
 import { Extension, Editor } from "@tiptap/core";
-import { DEFAULT_KEYBINDS, DefaultKeyBind, KeybindId, toTipTapKeybind } from "../utils/keybinds";
+import { DEFAULT_KEYBINDS, DefaultKeyBind, KeybindId, toTipTapKeybind } from "../../utils/keybinds";
 
 interface KeybindOptions {
     userKeybinds: Record<string, string>;

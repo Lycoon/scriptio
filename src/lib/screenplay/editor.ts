@@ -13,15 +13,23 @@ import { SuggestionData } from "@components/editor/SuggestionMenu";
 import { useUser } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
-import debounce from "debounce";
 
-import * as Node from "@src/Screenplay";
-import { Placeholder } from "./placeholder-extension";
+import { ScreenplayNodes, CustomBold, CustomItalic, CustomUnderline } from "@src/Screenplay";
+import { Placeholder } from "./extensions/placeholder-extension";
 import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
-import { KeybindsExtension } from "./keybinds-extension";
+import { KeybindsExtension } from "./extensions/keybinds-extension";
 import { executeKeybindAction } from "../utils/keybinds";
-import { ContdExtension } from "./contd-extension";
-import { createCharacterHighlightExtension, refreshCharacterHighlights } from "./character-highlight-extension";
+import { ContdExtension } from "./extensions/contd-extension";
+import {
+    createCharacterHighlightExtension,
+    refreshCharacterHighlights,
+} from "./extensions/character-highlight-extension";
+import {
+    createSearchHighlightExtension,
+    refreshSearchHighlights,
+    SearchMatch,
+} from "./extensions/search-highlight-extension";
+import { FountainExtension } from "./extensions/fountain-extension";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
     if (style & Style.Bold) editor.chain().toggleBold().focus().run();
@@ -30,7 +38,8 @@ export const applyMarkToggle = (editor: Editor, style: Style) => {
 };
 
 export const applyElement = (editor: Editor, element: ScreenplayElement) => {
-    editor.chain().focus().setNode("scr", { class: element }).run();
+    // Use the element value directly as the node name since they now match
+    editor.chain().focus().setNode(element, { class: element }).run();
 };
 
 export const focusOnPosition = (editor: Editor, position: number) => {
@@ -69,8 +78,9 @@ export const pasteTextAt = (editor: Editor, text: string, position: number) => {
 };
 
 export const insertElement = (editor: Editor, element: ScreenplayElement, position: number) => {
+    // Use the element value directly as the node type since they now match
     const newNode = {
-        type: "scr",
+        type: element,
         attrs: {
             class: element,
         },
@@ -87,7 +97,38 @@ export const insertElement = (editor: Editor, element: ScreenplayElement, positi
 };
 
 export const replaceOccurrences = (editor: Editor, oldWord: string, newWord: string) => {
-    editor.chain().focus().insertContentAt({ from: 0, to: 4 }, newWord).run();
+    const { doc, tr } = editor.state;
+    const escapedWord = oldWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    // Collect all matches first, then replace in reverse document order
+    const allMatches: { from: number; to: number }[] = [];
+
+    doc.descendants((node, pos) => {
+        if (!node.isText) return;
+
+        const text = node.text || "";
+        // Create a fresh regex for each node to avoid lastIndex issues
+        const regex = new RegExp(escapedWord, "gi");
+        let match;
+
+        while ((match = regex.exec(text)) !== null) {
+            allMatches.push({
+                from: pos + match.index,
+                to: pos + match.index + match[0].length,
+            });
+        }
+    });
+
+    // Sort by position descending and replace in reverse order to preserve positions
+    allMatches.sort((a, b) => b.from - a.from);
+
+    for (const { from, to } of allMatches) {
+        tr.replaceWith(from, to, editor.schema.text(newWord));
+    }
+
+    if (tr.docChanged) {
+        editor.view.dispatch(tr);
+    }
 };
 
 export const replaceScreenplay = (editor: Editor, screenplay: JSONContent[]) => {
@@ -118,7 +159,7 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 
 const TWO_LINE_HEIGHTS = 17 * 3;
 export const SCREENPLAY_FORMATS = {
-    Letter: {
+    LETTER: {
         marginTop: 0,
         marginBottom: 96 - TWO_LINE_HEIGHTS,
         marginLeft: 144,
@@ -140,16 +181,23 @@ export const BASE_EXTENSIONS = [
     Text,
 
     ContdExtension,
-    Node.Screenplay,
-    Node.CustomBold,
-    Node.CustomItalic,
-    Node.CustomUnderline,
+    FountainExtension,
+
+    // Individual screenplay element nodes
+    ...ScreenplayNodes,
+
+    // Mark extensions
+    CustomBold,
+    CustomItalic,
+    CustomUnderline,
 
     Placeholder.configure({
         placeholder: "",
     }),
     Document.configure({
-        content: "Screenplay+",
+        // Allow any of the screenplay element types as document content
+        // Action is listed first to make it the default node type for empty documents
+        content: "(action|scene|character|dialogue|parenthetical|transition|section|note)+",
     }),
 ];
 
@@ -166,15 +214,19 @@ export const useScriptioEditor = (
 ) => {
     const projectCtx = useContext(ProjectContext);
     const { user } = useUser();
-    const { ydoc, provider, isYjsReady, highlightedCharacters, charactersData, pageFormat } = projectCtx;
-
-    const debouncedUpdateRef = useRef(
-        debounce((editor: Editor) => {
-            console.log("Updating screenplay...");
-            const screenplay = editor.getJSON();
-            projectCtx.updateScreenplay(screenplay);
-        }, 300)
-    );
+    const {
+        repository,
+        provider,
+        isYjsReady,
+        highlightedCharacters,
+        characters,
+        pageFormat: pageSize,
+        searchTerm,
+        searchFilters,
+        currentSearchIndex,
+        setSearchMatches,
+    } = projectCtx;
+    const projectState = repository?.getState();
 
     const userInfoRef = useRef({
         name: user?.username || "User_" + Math.floor(Math.random() * 1000),
@@ -183,7 +235,13 @@ export const useScriptioEditor = (
 
     // Refs for character highlighting - these are read by the extension plugin
     const highlightedCharactersRef = useRef<Set<string>>(highlightedCharacters);
-    const charactersDataRef = useRef(charactersData);
+    const charactersDataRef = useRef(characters);
+
+    // Refs for search highlighting - these are read by the search extension plugin
+    const searchTermRef = useRef<string>(searchTerm);
+    const searchFiltersRef = useRef<Set<ScreenplayElement>>(searchFilters);
+    const currentSearchIndexRef = useRef<number>(currentSearchIndex);
+    const setSearchMatchesRef = useRef(setSearchMatches);
 
     // Keep refs in sync with state
     useEffect(() => {
@@ -191,8 +249,24 @@ export const useScriptioEditor = (
     }, [highlightedCharacters]);
 
     useEffect(() => {
-        charactersDataRef.current = charactersData;
-    }, [charactersData]);
+        charactersDataRef.current = characters;
+    }, [characters]);
+
+    useEffect(() => {
+        searchTermRef.current = searchTerm;
+    }, [searchTerm]);
+
+    useEffect(() => {
+        searchFiltersRef.current = searchFilters;
+    }, [searchFilters]);
+
+    useEffect(() => {
+        currentSearchIndexRef.current = currentSearchIndex;
+    }, [currentSearchIndex]);
+
+    useEffect(() => {
+        setSearchMatchesRef.current = setSearchMatches;
+    }, [setSearchMatches]);
 
     useEffect(() => {
         userInfoRef.current = {
@@ -208,9 +282,21 @@ export const useScriptioEditor = (
     const characterHighlightExtension = createCharacterHighlightExtension({
         getHighlightedCharacters: () => highlightedCharactersRef.current,
         getCharacterColor: (name: string) => {
+            const current = charactersDataRef.current;
+            if (!current) return undefined;
             const upperName = name.toUpperCase();
-            const key = Object.keys(charactersDataRef.current).find((k) => k.toUpperCase() === upperName);
-            return key ? charactersDataRef.current[key]?.color : undefined;
+            const key = Object.keys(current).find((k) => k.toUpperCase() === upperName);
+            return key ? current[key]?.color : undefined;
+        },
+    });
+
+    // Create the search highlight extension with callback functions that read from refs
+    const searchHighlightExtension = createSearchHighlightExtension({
+        getSearchTerm: () => searchTermRef.current,
+        getEnabledFilters: () => searchFiltersRef.current,
+        getCurrentMatchIndex: () => currentSearchIndexRef.current,
+        onMatchesFound: (matches: SearchMatch[]) => {
+            setSearchMatchesRef.current(matches);
         },
     });
 
@@ -219,11 +305,11 @@ export const useScriptioEditor = (
             immediatelyRender: false,
             extensions: [
                 ...BASE_EXTENSIONS,
-                ...(ydoc && isYjsReady
+                ...(projectState && isYjsReady
                     ? [
                           Collaboration.configure({
-                              document: ydoc,
-                              fragment: ydoc.getXmlFragment("screenplay"),
+                              document: projectState,
+                              fragment: projectState.getXmlFragment("screenplay"),
                           }),
                       ]
                     : []),
@@ -259,7 +345,7 @@ export const useScriptioEditor = (
                         },
                     },
                     footerRight: "",
-                    ...SCREENPLAY_FORMATS[pageFormat],
+                    ...SCREENPLAY_FORMATS[pageSize],
                 }),
                 KeybindsExtension.configure({
                     userKeybinds: userKeybinds || {},
@@ -272,11 +358,8 @@ export const useScriptioEditor = (
                     },
                 }),
                 characterHighlightExtension,
+                searchHighlightExtension,
             ],
-
-            onUpdate({ editor }) {
-                debouncedUpdateRef.current(editor);
-            },
 
             onSelectionUpdate({ editor, transaction }) {
                 const anchor = (transaction as any).curSelection.$anchor;
@@ -286,7 +369,7 @@ export const useScriptioEditor = (
                 if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
             },
         },
-        [ydoc, provider, isYjsReady]
+        [projectState, provider, isYjsReady]
     );
 
     useEffect(() => {
@@ -303,14 +386,21 @@ export const useScriptioEditor = (
         if (scriptioEditor) {
             refreshCharacterHighlights(scriptioEditor);
         }
-    }, [scriptioEditor, highlightedCharacters, charactersData]);
+    }, [scriptioEditor, highlightedCharacters, characters]);
+
+    // Refresh search highlights when search state changes
+    useEffect(() => {
+        if (scriptioEditor) {
+            refreshSearchHighlights(scriptioEditor);
+        }
+    }, [scriptioEditor, searchTerm, searchFilters, currentSearchIndex]);
 
     // Sync editor page size when pageFormat changes (e.g., from another collaborator)
     useEffect(() => {
         if (scriptioEditor) {
-            scriptioEditor.chain().focus().updatePageSize(SCREENPLAY_FORMATS[pageFormat]).run();
+            scriptioEditor.chain().focus().updatePageSize(SCREENPLAY_FORMATS[pageSize]).run();
         }
-    }, [scriptioEditor, pageFormat]);
+    }, [scriptioEditor, pageSize]);
 
     return scriptioEditor;
 };

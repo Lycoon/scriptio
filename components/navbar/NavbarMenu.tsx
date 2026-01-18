@@ -6,11 +6,10 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { ConnectionStatus } from "@src/lib/utils/enums";
 import { UserContext } from "@src/context/UserContext";
 import { importFilePopup } from "@src/lib/screenplay/popup";
-import { convertFountainToHTML } from "@src/lib/adapters/import/fountain";
+import { convertFountainToHTML } from "@src/lib/adapters/fountain/fountain-import";
 import dynamic from "next/dynamic";
-import { computeFullScenesData } from "@src/lib/screenplay/screenplay";
 import { generateJSON } from "@tiptap/react";
-import { EXTENSIONS, replaceScreenplay } from "@src/lib/screenplay/editor";
+import { BASE_EXTENSIONS, replaceScreenplay } from "@src/lib/screenplay/editor";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { Screenplay } from "@src/lib/utils/types";
 
@@ -53,10 +52,10 @@ const NavbarMenu = ({ project }: NavbarMenuProps) => {
             reader.onload = (e: any) => {
                 const confirmImport = () => {
                     const html = convertFountainToHTML(e.target.result);
-                    const json = generateJSON(html, EXTENSIONS) as Screenplay;
+                    const json = generateJSON(html, BASE_EXTENSIONS) as Screenplay;
 
                     replaceScreenplay(editor, json);
-                    computeFullScenesData(json, projectCtx);
+                    // Scenes are automatically recomputed when screenplay changes
                 };
 
                 importFilePopup(userCtx, confirmImport);

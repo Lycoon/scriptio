@@ -57,6 +57,26 @@ export const getPDFNodeTemplate = (style: string, text: string) => {
     };
 };
 
+export const getSceneWithNumberTemplate = (sceneNumber: number, text: string) => {
+    return {
+        columns: [
+            {
+                text: `${sceneNumber}`,
+                width: 30,
+                bold: true,
+                margin: [-50, 0, 0, 0],
+            },
+            {
+                text,
+                width: "*",
+                bold: true,
+                margin: [-30, 0, 0, 0],
+            },
+        ],
+        margin: [0, DEFAULT_OFFSET, 0, 0],
+    };
+};
+
 export const getWatermarkData = (text: string) => {
     return {
         text,

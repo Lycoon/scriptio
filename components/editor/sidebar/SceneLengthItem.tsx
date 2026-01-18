@@ -1,12 +1,12 @@
 "use client";
 
-import { SceneItem } from "@src/lib/screenplay/screenplay";
+import { Scene } from "@src/lib/screenplay/scenes";
 import { join } from "@src/lib/utils/misc";
 
 import nav_item from "./SidebarItem.module.css";
 
 type Props = {
-    scene: SceneItem;
+    scene: Scene;
 };
 
 const PageCounterItem = ({ scene }: Props) => {

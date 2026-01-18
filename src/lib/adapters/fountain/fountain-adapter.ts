@@ -14,7 +14,7 @@ export class FountainAdapter extends ProjectAdapter {
     convertTo(project: ProjectState, options: BaseExportOptions): Promise<Blob> {
         let fountain = "";
         let sceneCount = 1;
-        let nodes = project.screenplay;
+        let nodes = project.screenplay();
         const characters = options.characters;
 
         for (let i = 0; i < nodes.length; i++) {

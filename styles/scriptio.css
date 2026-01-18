@@ -129,6 +129,11 @@ Originally developed by John August - johnaugust.com
         margin-left: -70px;
     }
 
+    /* Hide scene numbers when disabled */
+    &.hide-scene-numbers .scene::before {
+        display: none;
+    }
+
     .character:has(+ .parenthetical),
     .character:has(+ .dialogue) {
         margin-bottom: 0 !important;
@@ -180,12 +185,13 @@ Originally developed by John August - johnaugust.com
 
     /* Transition */
     .transition {
+        position: relative;
         text-transform: uppercase;
         text-align: right !important;
     }
 
     .transition::after {
-        content: ":";
+        content: ":" !important;
     }
 
     .section {
@@ -266,5 +272,16 @@ Originally developed by John August - johnaugust.com
         background-color: var(--highlight-bg);
         border-left: 3px solid var(--highlight-color);
         margin-left: -3px;
+    }
+
+    /* Search highlighting */
+    .search-highlight {
+        background-color: rgba(255, 213, 0, 0.3);
+        border-radius: 2px;
+    }
+
+    .search-highlight-current {
+        background-color: rgba(255, 213, 0, 0.6);
+        box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.8);
     }
 }

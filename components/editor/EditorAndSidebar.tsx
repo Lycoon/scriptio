@@ -25,7 +25,7 @@ import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 const EditorAndSidebar = () => {
     const { membership, isLoading } = useProjectMembership();
     const { isZenMode, updateIsZenMode, updateContextMenu } = useContext(UserContext);
-    const { isYjsReady, selectedElement, setSelectedElement, selectedStyles, setSelectedStyles } =
+    const { isYjsReady, selectedElement, setSelectedElement, selectedStyles, setSelectedStyles, displaySceneNumbers } =
         useContext(ProjectContext);
     const { settings } = useSettings();
 
@@ -84,6 +84,18 @@ const EditorAndSidebar = () => {
             return () => clearTimeout(timer);
         }
     }, [editor, isYjsReady]);
+
+    // Toggle scene numbers visibility class on the editor
+    useEffect(() => {
+        if (!editor) return;
+
+        const editorElement = editor.view.dom;
+        if (displaySceneNumbers) {
+            editorElement.classList.remove("hide-scene-numbers");
+        } else {
+            editorElement.classList.add("hide-scene-numbers");
+        }
+    }, [editor, displaySceneNumbers]);
 
     useEffect(() => {
         if (!editor) return;

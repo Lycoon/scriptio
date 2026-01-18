@@ -15,11 +15,11 @@ import { CharacterItem } from "@src/lib/screenplay/characters";
 import { LocationItem } from "@src/lib/screenplay/locations";
 
 const EditorSidebarFormat = () => {
-    const { charactersData, locationsData } = useContext(ProjectContext);
+    const { characters: charactersData, locations: locationsData } = useContext(ProjectContext);
     const { isZenMode } = useContext(UserContext);
     const isActive = isZenMode ? "" : sidebar.active;
-    const characters = Object.keys(charactersData).length;
-    const locations = Object.keys(locationsData).length;
+    const characters = Object.keys(charactersData || {}).length;
+    const locations = Object.keys(locationsData || {}).length;
 
     return (
         <div className={join(sidebar.container, isActive)}>
@@ -30,6 +30,7 @@ const EditorSidebarFormat = () => {
                 </div>
                 <div className={sidebar_nav.list}>
                     {characters != 0 &&
+                        charactersData &&
                         Object.entries(charactersData).map((item: [string, CharacterItem]) => {
                             return <SidebarCharacterItem key={item[0]} character={{ name: item[0], ...item[1] }} />;
                         })}
@@ -42,6 +43,7 @@ const EditorSidebarFormat = () => {
                 </div>
                 <div className={sidebar_nav.list}>
                     {locations != 0 &&
+                        locationsData &&
                         Object.entries(locationsData).map((item: [string, LocationItem]) => {
                             return <SidebarLocationItem key={item[0]} location={{ name: item[0], ...item[1] }} />;
                         })}

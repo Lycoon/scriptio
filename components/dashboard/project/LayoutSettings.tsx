@@ -7,9 +7,10 @@ import { PageFormat } from "@src/lib/utils/enums";
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "./ProjectSettings.module.css";
 import styles from "./LayoutSettings.module.css";
+import optionCard from "./OptionCard.module.css";
 
 const LayoutSettings = () => {
-    const { pageFormat, setPageFormat } = useContext(ProjectContext);
+    const { pageFormat, setPageFormat, displaySceneNumbers, setDisplaySceneNumbers } = useContext(ProjectContext);
 
     const handleFormatChange = (newFormat: PageFormat) => {
         setPageFormat(newFormat);
@@ -24,14 +25,29 @@ const LayoutSettings = () => {
                     onChange={(e) => handleFormatChange(e.target.value as PageFormat)}
                     className={`${sharedStyles.input} ${styles.input}`}
                 >
-                    <option value="Letter">US Letter (8.5" x 11")</option>
+                    <option value="LETTER">US Letter (8.5" x 11")</option>
                     <option value="A4">A4 (210mm x 297mm)</option>
                 </select>
                 <p className={sharedStyles.helpText}>
-                    {pageFormat === "Letter" &&
+                    {pageFormat === "LETTER" &&
                         "Standard format used in the United States. Industry standard for Hollywood screenplays."}
                     {pageFormat === "A4" && "International standard format. Common in Europe and most other countries."}
                 </p>
+            </div>
+
+            <div className={sharedStyles.formGroup}>
+                <label className={form.label}>Scenes</label>
+                <div
+                    className={`${optionCard.optionCard} ${displaySceneNumbers ? optionCard.active : ""}`}
+                    onClick={() => setDisplaySceneNumbers(!displaySceneNumbers)}
+                >
+                    <div className={optionCard.checkbox}>
+                        {displaySceneNumbers && <div className={optionCard.checkInner} />}
+                    </div>
+                    <div className={optionCard.optionInfo}>
+                        <span className={optionCard.optionTitle}>Display scene numbers</span>
+                    </div>
+                </div>
             </div>
         </div>
     );

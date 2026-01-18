@@ -1,10 +1,7 @@
-import { DocumentType, NodeType, TextType } from "@tiptap/core";
+import { DocumentType, JSONContent, NodeType, TextType } from "@tiptap/core";
 import { UpdateSecrets, UpdateSettings } from "../../server/repository/user-repository";
 
-export type Screenplay = DocumentType<
-    Record<string, any> | undefined,
-    NodeType<string, undefined | Record<string, any>, any, (NodeType | TextType)[]>[]
->;
+export type Screenplay = JSONContent[];
 
 export type CookieUser = {
     id: string;
@@ -39,7 +36,7 @@ export interface UserSettings {
 }
 
 export type UserLanguage = "en";
-export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint";
+export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint" | "blossom";
 
 export interface UserOnlineSettings {
     color: string;

@@ -20,7 +20,8 @@ interface ContextMenuState {
 }
 
 const BoardCanvas = () => {
-    const { ydoc, isYjsReady } = useContext(ProjectContext);
+    const { repository, isYjsReady } = useContext(ProjectContext);
+    const ydoc = repository?.getState();
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
 

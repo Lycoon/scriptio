@@ -6,7 +6,6 @@
     margin-inline: 30px;
     padding-bottom: 30px;
     width: var(--format-sidebar-width);
-    background-color: var(--main-bg);
 
     /* hiding it by default */
     margin-right: calc(var(--format-sidebar-width) * -1);

@@ -29,6 +29,7 @@ const AppearanceSettings = () => {
                     <option value={"latte"}>Latte</option>
                     <option value={"wonka"}>Wonka</option>
                     <option value={"mint"}>Mint</option>
+                    <option value={"blossom"}>Blossom</option>
                 </select>
                 <p className={sharedStyles.helpText}>
                     {theme === "dark" && "Cozy, low-glare theme made for night owls and late-hour focus."}
@@ -37,6 +38,8 @@ const AppearanceSettings = () => {
                     {theme === "wonka" && "Velvety, cocoa-based theme that blends deep luxury with eye-resting focus"}
                     {theme === "mint" &&
                         "Refreshing, mint-infused theme that blends botanical serenity with eye-resting balance"}
+                    {theme === "blossom" &&
+                        "Gentle, petal-infused theme that blends floral warmth with eye-resting softness"}
                 </p>
             </div>
 

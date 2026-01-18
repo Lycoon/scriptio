@@ -16,6 +16,7 @@ import { CircleArrowLeft, CircleCheckBig, Eye, EyeClosed, Settings, WifiOff, Wif
 import navbar from "./ProjectNavbar.module.css";
 import form from "./../utils/Form.module.css";
 import ScreenplayFormatDropdown from "./ScreenplayFormatDropdown";
+import ScreenplaySearch from "./ScreenplaySearch";
 
 const StatusIndicator = () => {
     const { connectionStatus } = useContext(ProjectContext);
@@ -185,9 +186,10 @@ const ProjectNavbar = () => {
                     )}
                 </div>
             )}
-            {/* Right side - Collaborators + Zen mode toggle + Settings */}
+            {/* Right side - Collaborators + Search + Zen mode toggle + Settings */}
             <div className={navbar.right_btns}>
                 {hasProjectHeader && <CollaboratorsDisplay />}
+                {hasScreenplay && <ScreenplaySearch />}
                 {hasScreenplay && (
                     <div className={navbar.export_project_btn} onClick={toggleZenMode}>
                         {isZenMode ? <EyeClosed size={18} /> : <Eye size={18} />}

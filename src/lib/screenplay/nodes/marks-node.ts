@@ -10,19 +10,6 @@ import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
 import Underline from "@tiptap/extension-underline";
 
-// Re-export screenplay nodes from new location
-export {
-    ScreenplayNodes,
-    SceneNode,
-    ActionNode,
-    CharacterNode,
-    DialogueNode,
-    ParentheticalNode,
-    TransitionNode,
-    SectionNode,
-    NoteNode,
-} from "./lib/screenplay/nodes";
-
 /**
  * Custom Bold mark using class-based styling.
  */

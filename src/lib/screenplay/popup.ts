@@ -1,6 +1,6 @@
 import { UserContextType } from "@src/context/UserContext";
 import { CharacterData } from "./characters";
-import { MergedSceneItem } from "./scenes";
+import { Scene } from "./scenes";
 
 // ------------------------------ //
 //      SPECIFIC POPUP DATA       //
@@ -14,7 +14,7 @@ export type PopupCharacterData = {
 };
 
 export type PopupSceneData = {
-    scene: MergedSceneItem;
+    scene: Scene;
 };
 
 // ------------------------------ //
@@ -63,7 +63,7 @@ export const importFilePopup = (userCtx: UserContextType, confirmImport: () => v
     });
 };
 
-export const editScenePopup = (scene: MergedSceneItem, userCtx: UserContextType) => {
+export const editScenePopup = (scene: Scene, userCtx: UserContextType) => {
     userCtx.updatePopup({
         type: PopupType.EditScene,
         data: { scene },

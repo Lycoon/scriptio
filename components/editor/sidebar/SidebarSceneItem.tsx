@@ -43,7 +43,7 @@ const SidebarSceneItem = ({ scene }: SceneContextProps) => {
                         <span className={nav_item.color_indicator} style={{ backgroundColor: scene.color }} />
                     )}
                     <p className={join(nav_item.title, "unselectable")}>{scene.title}</p>
-                    {/*scene.isPersistent && <LinkSVG className={nav_item.icon} />*/}
+                    {/*scene.id && <LinkSVG className={nav_item.icon} />*/}
                 </div>
                 <SceneLengthItem scene={scene} />
             </div>

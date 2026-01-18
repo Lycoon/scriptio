@@ -1,42 +1,24 @@
 "use client";
 
-import { createContext, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Editor } from "@tiptap/react";
 import { ThrottledWebsocketProvider } from "@src/lib/collaboration/utils";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
-import { ComputedScenesData, MergedScenesData, PersistentSceneItem, mergeScenesData } from "@src/lib/screenplay/scenes";
-import { computeFullScenesData } from "@src/lib/screenplay/screenplay";
+import { mergeScenesData, PersistentSceneMap, Scene } from "@src/lib/screenplay/scenes";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { useUser } from "@src/lib/utils/hooks";
-import type { Doc } from "yjs";
 import {
     CollaboratorInfo,
     ConnectionStatus,
-    getCharactersMap,
-    getLayoutMap,
-    getLocationsMap,
-    getScenesMap,
-    ProjectState,
+    createProjectRepository,
+    LayoutData,
+    ProjectRepository,
     useProjectYjs,
 } from "@src/lib/project/project-yjs";
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, Style, PageFormat } from "@src/lib/utils/enums";
-import debounce from "debounce";
-
-// -------------------------------- //
-//          CONSTANTS               //
-// -------------------------------- //
-
-const CHARACTER_UPDATE_DELAY = 500;
-const LOCATION_UPDATE_DELAY = 500;
-const SCENE_UPDATE_DELAY = 500;
-
-const EMPTY_SCREENPLAY: Screenplay = {
-    type: "doc",
-    content: [],
-    attrs: {},
-};
+import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 
 // -------------------------------- //
 //          TYPE DEFINITIONS        //
@@ -47,37 +29,25 @@ export interface ProjectContextType {
     project: ProjectMembershipPayload | null;
     updateProject: (project: ProjectMembershipPayload) => void;
 
-    // Yjs document and provider (shared across all project pages)
-    ydoc: ProjectState | null;
+    // Project repository (provides access to Yjs document and all project data)
+    repository: ProjectRepository | null;
     provider: ThrottledWebsocketProvider | null;
     isYjsReady: boolean;
     isLockedByServer: boolean;
     isSessionReplaced: boolean;
 
     // Connection state
-    connectionStatus: ConnectionStatus;
     updateConnectionStatus: (status: ConnectionStatus) => void;
+    connectionStatus: ConnectionStatus;
     users: CollaboratorInfo[];
 
     // Editor (only set when on screenplay page)
     editor: Editor | null;
     updateEditor: (editor: Editor | null) => void;
-
-    // Screenplay data
     screenplay: Screenplay;
-    updateScreenplay: (screenplay: Screenplay) => void;
-
-    // Scenes data (merged persistent + computed)
-    scenesData: MergedScenesData;
-    updateComputedScenes: (data: ComputedScenesData | ((prev: ComputedScenesData) => ComputedScenesData)) => void;
-
-    // Characters data
-    charactersData: CharacterMap;
-    updateCharactersData: (data: CharacterMap | ((prev: CharacterMap) => CharacterMap)) => void;
-
-    // Locations data
-    locationsData: LocationMap;
-    updateLocationsData: (data: LocationMap | ((prev: LocationMap) => LocationMap)) => void;
+    characters: CharacterMap | undefined;
+    locations: LocationMap | undefined;
+    scenes: Scene[];
 
     // Screenplay format state (for navbar dropdown)
     selectedElement: ScreenplayElement;
@@ -92,6 +62,18 @@ export interface ProjectContextType {
     // Page format
     pageFormat: PageFormat;
     setPageFormat: (format: PageFormat) => void;
+    displaySceneNumbers: boolean;
+    setDisplaySceneNumbers: (display: boolean) => void;
+
+    // Search state
+    searchTerm: string;
+    setSearchTerm: (term: string) => void;
+    searchFilters: Set<ScreenplayElement>;
+    setSearchFilters: (filters: Set<ScreenplayElement>) => void;
+    currentSearchIndex: number;
+    setCurrentSearchIndex: (index: number) => void;
+    searchMatches: SearchMatch[];
+    setSearchMatches: (matches: SearchMatch[]) => void;
 }
 
 // -------------------------------- //
@@ -101,7 +83,7 @@ export interface ProjectContextType {
 const defaultContextValue: ProjectContextType = {
     project: null,
     updateProject: () => {},
-    ydoc: null,
+    repository: null,
     provider: null,
     isYjsReady: false,
     isLockedByServer: false,
@@ -111,22 +93,37 @@ const defaultContextValue: ProjectContextType = {
     users: [],
     editor: null,
     updateEditor: () => {},
-    screenplay: EMPTY_SCREENPLAY,
-    updateScreenplay: () => {},
-    scenesData: [],
-    updateComputedScenes: () => {},
-    charactersData: {},
-    updateCharactersData: () => {},
-    locationsData: {},
-    updateLocationsData: () => {},
     selectedElement: ScreenplayElement.Action,
     setSelectedElement: () => {},
     selectedStyles: Style.None,
     setSelectedStyles: () => {},
     highlightedCharacters: new Set<string>(),
     toggleCharacterHighlight: () => {},
-    pageFormat: "Letter",
+    pageFormat: "LETTER",
     setPageFormat: () => {},
+    displaySceneNumbers: true,
+    setDisplaySceneNumbers: () => {},
+    characters: {},
+    locations: {},
+    scenes: [],
+    screenplay: [],
+    // Search state defaults
+    searchTerm: "",
+    setSearchTerm: () => {},
+    searchFilters: new Set<ScreenplayElement>([
+        ScreenplayElement.Scene,
+        ScreenplayElement.Action,
+        ScreenplayElement.Character,
+        ScreenplayElement.Dialogue,
+        ScreenplayElement.Parenthetical,
+        ScreenplayElement.Transition,
+        ScreenplayElement.Section,
+    ]),
+    setSearchFilters: () => {},
+    currentSearchIndex: 0,
+    setCurrentSearchIndex: () => {},
+    searchMatches: [],
+    setSearchMatches: () => {},
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -164,20 +161,18 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         userColor,
     });
 
+    // Create repository instance when ydoc is available
+    const repository = useMemo(() => createProjectRepository(ydoc), [ydoc]);
+    const [screenplay, updateScreenplay] = useState<Screenplay>([]);
+    const [scenes, updateScenes] = useState<Scene[]>([]);
+    const [characters, updateCharacters] = useState<CharacterMap>();
+    const [locations, updateLocations] = useState<LocationMap>();
+
     // Local state
     const [project, setProject] = useState<ProjectMembershipPayload | null>(null);
     const [editor, setEditor] = useState<Editor | null>(null);
-    const [screenplay, setScreenplay] = useState<Screenplay>(EMPTY_SCREENPLAY);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
-
-    // Characters state
-    const [charactersData, setCharactersData] = useState<CharacterMap>({});
-    const [persistentCharacters, setPersistentCharacters] = useState<CharacterMap>({});
-
-    // Locations state
-    const [locationsData, setLocationsData] = useState<LocationMap>({});
-    const [persistentLocations, setPersistentLocations] = useState<LocationMap>({});
 
     // Screenplay format state
     const [selectedElement, setSelectedElementState] = useState<ScreenplayElement>(ScreenplayElement.Action);
@@ -187,39 +182,93 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [highlightedCharacters, setHighlightedCharacters] = useState<Set<string>>(new Set());
 
     // Page format state
-    const [pageFormat, setPageFormatState] = useState<PageFormat>("Letter");
+    const [pageFormat, setPageFormatState] = useState<PageFormat>("LETTER");
 
-    // Debounced character merge function
-    const debouncedCharacterMergeRef = useRef(
-        debounce((persistent: CharacterMap, sp: Screenplay) => {
-            console.log("debouncedCharacterMergeRef");
-            const mergedCharacters = mergeCharactersData(persistent, sp);
-            setCharactersData(mergedCharacters);
-        }, CHARACTER_UPDATE_DELAY)
+    // Display scene numbers state
+    const [displaySceneNumbers, setDisplaySceneNumbersState] = useState<boolean>(true);
+
+    // Search state
+    const [searchTerm, setSearchTermState] = useState<string>("");
+    const [searchFilters, setSearchFiltersState] = useState<Set<ScreenplayElement>>(
+        new Set([
+            ScreenplayElement.Scene,
+            ScreenplayElement.Action,
+            ScreenplayElement.Character,
+            ScreenplayElement.Dialogue,
+            ScreenplayElement.Parenthetical,
+            ScreenplayElement.Transition,
+            ScreenplayElement.Section,
+        ])
     );
+    const [currentSearchIndex, setCurrentSearchIndexState] = useState<number>(0);
+    const [searchMatches, setSearchMatchesState] = useState<SearchMatch[]>([]);
 
-    // Debounced location merge function
-    const debouncedLocationMergeRef = useRef(
-        debounce((persistent: LocationMap, sp: Screenplay) => {
-            console.log("debouncedLocationMergeRef");
-            const mergedLocations = mergeLocationsData(persistent, sp);
-            setLocationsData(mergedLocations);
-        }, LOCATION_UPDATE_DELAY)
-    );
+    useEffect(() => {
+        if (!repository) return;
 
-    // Debounced scene computation function
-    const debouncedSceneUpdateRef = useRef(
-        debounce((sp: Screenplay, updateFn: (scenes: ComputedScenesData) => void) => {
-            // Pass a minimal context object with just the update function
-            console.log("debouncedSceneUpdateRef");
-            computeFullScenesData(sp, { updateComputedScenes: updateFn } as ProjectContextType);
-        }, SCENE_UPDATE_DELAY)
-    );
+        // Helper function to recompute all derived data from screenplay
+        const recomputeFromScreenplay = (newScreenplay: Screenplay) => {
+            const allScenes = mergeScenesData(repository.scenes, newScreenplay);
+            const allCharacters = mergeCharactersData(repository.characters, newScreenplay);
+            const allLocations = mergeLocationsData(repository.locations, newScreenplay);
 
-    // Scenes state
-    const [scenesData, setScenesData] = useState<MergedScenesData>([]);
-    const [computedScenes, setComputedScenes] = useState<ComputedScenesData>([]);
-    const [persistentScenes, setPersistentScenes] = useState<Map<string, PersistentSceneItem>>(new Map());
+            updateScreenplay(newScreenplay);
+            updateScenes(allScenes);
+            updateCharacters(allCharacters);
+            updateLocations(allLocations);
+        };
+
+        // Initial computation
+        const initialScreenplay = repository.getScreenplay();
+        recomputeFromScreenplay(initialScreenplay);
+
+        // Observe screenplay changes
+        const unsubscribeScreenplay = repository.observeScreenplay((newScreenplay: Screenplay) => {
+            recomputeFromScreenplay(newScreenplay);
+        });
+
+        // Observe layout changes
+        const unsubscribeLayout = repository.observeLayout((layout: Partial<LayoutData>) => {
+            const _pageSize = layout.pageSize;
+            const _displaySceneNumber = layout.displaySceneNumbers;
+
+            if (_pageSize && (_pageSize === "A4" || _pageSize === "LETTER")) {
+                setPageFormatState(_pageSize);
+            }
+            if (_displaySceneNumber !== undefined) {
+                setDisplaySceneNumbersState(_displaySceneNumber);
+            }
+        });
+
+        // Observe character changes - get current screenplay from repository
+        const unsubscribeCharacters = repository.observeCharacters((_characters: CharacterMap) => {
+            const currentScreenplay = repository.getScreenplay();
+            const allCharacters = mergeCharactersData(_characters, currentScreenplay);
+            updateCharacters(allCharacters);
+        });
+
+        // Observe location changes - get current screenplay from repository
+        const unsubscribeLocations = repository.observeLocations((_locations: LocationMap) => {
+            const currentScreenplay = repository.getScreenplay();
+            const allLocations = mergeLocationsData(_locations, currentScreenplay);
+            updateLocations(allLocations);
+        });
+
+        // Observe scene changes - get current screenplay from repository
+        const unsubscribeScenes = repository.observeScenes((_scenes: PersistentSceneMap) => {
+            const currentScreenplay = repository.getScreenplay();
+            const allScenes = mergeScenesData(_scenes, currentScreenplay);
+            updateScenes(allScenes);
+        });
+
+        return () => {
+            unsubscribeScreenplay();
+            unsubscribeLayout();
+            unsubscribeCharacters();
+            unsubscribeLocations();
+            unsubscribeScenes();
+        };
+    }, [repository]);
 
     useEffect(() => {
         setConnectionStatus(yjsConnectionStatus);
@@ -229,126 +278,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setUsers(yjsUsers);
     }, [yjsUsers]);
 
-    useEffect(() => {
-        debouncedCharacterMergeRef.current(persistentCharacters, screenplay);
-    }, [persistentCharacters, screenplay]);
-
-    useEffect(() => {
-        debouncedLocationMergeRef.current(persistentLocations, screenplay);
-    }, [persistentLocations, screenplay]);
-
-    useEffect(() => {
-        debouncedSceneUpdateRef.current(screenplay, setComputedScenes);
-    }, [screenplay]);
-
-    useEffect(() => {
-        if (!ydoc) {
-            setPersistentCharacters({});
-            return;
-        }
-
-        console.log("sync persistent characters");
-
-        const charactersMap = getCharactersMap(ydoc);
-        const syncPersistentCharacters = () => {
-            const newPersistentCharacters: CharacterMap = {};
-            charactersMap.forEach((value, key) => {
-                newPersistentCharacters[key] = value;
-            });
-            setPersistentCharacters(newPersistentCharacters);
-        };
-
-        syncPersistentCharacters();
-        charactersMap.observe(syncPersistentCharacters);
-
-        return () => {
-            charactersMap.unobserve(syncPersistentCharacters);
-        };
-    }, [ydoc]);
-
-    // Sync persistent locations from Yjs
-    useEffect(() => {
-        if (!ydoc) {
-            setPersistentLocations({});
-            return;
-        }
-
-        console.log("sync persistent locations");
-
-        const locationsMap = getLocationsMap(ydoc);
-        const syncPersistentLocations = () => {
-            const newPersistentLocations: LocationMap = {};
-            locationsMap.forEach((value, key) => {
-                newPersistentLocations[key] = value;
-            });
-            setPersistentLocations(newPersistentLocations);
-        };
-
-        syncPersistentLocations();
-        locationsMap.observe(syncPersistentLocations);
-
-        return () => {
-            locationsMap.unobserve(syncPersistentLocations);
-        };
-    }, [ydoc]);
-
-    useEffect(() => {
-        if (!ydoc) {
-            setPersistentScenes(new Map());
-            return;
-        }
-
-        console.log("sync persistent scenes");
-
-        const scenesMap = getScenesMap(ydoc);
-        const syncPersistentScenes = () => {
-            const newPersistentScenes = new Map<string, PersistentSceneItem>();
-            scenesMap.forEach((value, key) => {
-                newPersistentScenes.set(key, value);
-            });
-            setPersistentScenes(newPersistentScenes);
-        };
-
-        syncPersistentScenes();
-        scenesMap.observe(syncPersistentScenes);
-
-        return () => {
-            scenesMap.unobserve(syncPersistentScenes);
-        };
-    }, [ydoc]);
-
-    // Merge persistent scenes (from Yjs) with computed scenes (from screenplay)
-    useEffect(() => {
-        console.log("merge scenes");
-        const mergedScenes = mergeScenesData(persistentScenes, computedScenes);
-        setScenesData(mergedScenes);
-    }, [persistentScenes, computedScenes]);
-
-    // Sync layout settings (pageFormat) from Yjs
-    useEffect(() => {
-        if (!ydoc) {
-            setPageFormatState("Letter");
-            return;
-        }
-
-        console.log("sync layout settings");
-
-        const layoutMap = getLayoutMap(ydoc);
-        const syncLayout = () => {
-            const pageSize = layoutMap.get("pageSize") as PageFormat | undefined;
-            if (pageSize && (pageSize === "A4" || pageSize === "Letter")) {
-                setPageFormatState(pageSize);
-            }
-        };
-
-        syncLayout();
-        layoutMap.observe(syncLayout);
-
-        return () => {
-            layoutMap.unobserve(syncLayout);
-        };
-    }, [ydoc]);
-
     // Stable update functions
     const updateProject = useCallback((newProject: ProjectMembershipPayload) => {
         setProject(newProject);
@@ -356,25 +285,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     const updateEditor = useCallback((newEditor: Editor | null) => {
         setEditor(newEditor);
-    }, []);
-
-    const updateScreenplay = useCallback((newScreenplay: Screenplay) => {
-        setScreenplay(newScreenplay);
-    }, []);
-
-    const updateComputedScenes = useCallback(
-        (data: ComputedScenesData | ((prev: ComputedScenesData) => ComputedScenesData)) => {
-            setComputedScenes(data);
-        },
-        []
-    );
-
-    const updateCharactersData = useCallback((data: CharacterMap | ((prev: CharacterMap) => CharacterMap)) => {
-        setCharactersData(data);
-    }, []);
-
-    const updateLocationsData = useCallback((data: LocationMap | ((prev: LocationMap) => LocationMap)) => {
-        setLocationsData(data);
     }, []);
 
     const updateConnectionStatus = useCallback((status: ConnectionStatus) => {
@@ -405,19 +315,44 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const setPageFormat = useCallback(
         (format: PageFormat) => {
             setPageFormatState(format);
-            if (ydoc) {
-                const layoutMap = getLayoutMap(ydoc);
-                layoutMap.set("pageSize", format);
-            }
+            repository?.setPageSize(format);
         },
-        [ydoc]
+        [repository]
     );
+
+    const setDisplaySceneNumbers = useCallback(
+        (display: boolean) => {
+            setDisplaySceneNumbersState(display);
+            repository?.setDisplaySceneNumber(display);
+        },
+        [repository]
+    );
+
+    const setSearchTerm = useCallback((term: string) => {
+        setSearchTermState(term);
+        // Reset to first match when search term changes
+        setCurrentSearchIndexState(0);
+    }, []);
+
+    const setSearchFilters = useCallback((filters: Set<ScreenplayElement>) => {
+        setSearchFiltersState(filters);
+        // Reset to first match when filters change
+        setCurrentSearchIndexState(0);
+    }, []);
+
+    const setCurrentSearchIndex = useCallback((index: number) => {
+        setCurrentSearchIndexState(index);
+    }, []);
+
+    const setSearchMatches = useCallback((matches: SearchMatch[]) => {
+        setSearchMatchesState(matches);
+    }, []);
 
     const contextValue = useMemo<ProjectContextType>(
         () => ({
             project,
             updateProject,
-            ydoc,
+            repository,
             provider,
             isYjsReady,
             connectionStatus,
@@ -425,14 +360,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             users,
             editor,
             updateEditor,
-            screenplay,
-            updateScreenplay,
-            scenesData,
-            updateComputedScenes,
-            charactersData,
-            updateCharactersData,
-            locationsData,
-            updateLocationsData,
             isLockedByServer,
             isSessionReplaced,
             selectedElement,
@@ -443,11 +370,25 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             toggleCharacterHighlight,
             pageFormat,
             setPageFormat,
+            displaySceneNumbers,
+            setDisplaySceneNumbers,
+            screenplay,
+            scenes,
+            locations,
+            characters,
+            searchTerm,
+            setSearchTerm,
+            searchFilters,
+            setSearchFilters,
+            currentSearchIndex,
+            setCurrentSearchIndex,
+            searchMatches,
+            setSearchMatches,
         }),
         [
             project,
             updateProject,
-            ydoc,
+            repository,
             provider,
             isYjsReady,
             connectionStatus,
@@ -455,14 +396,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             users,
             editor,
             updateEditor,
-            screenplay,
-            updateScreenplay,
-            scenesData,
-            updateComputedScenes,
-            charactersData,
-            updateCharactersData,
-            locationsData,
-            updateLocationsData,
             isLockedByServer,
             isSessionReplaced,
             selectedElement,
@@ -473,6 +406,20 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             toggleCharacterHighlight,
             pageFormat,
             setPageFormat,
+            displaySceneNumbers,
+            setDisplaySceneNumbers,
+            screenplay,
+            scenes,
+            locations,
+            characters,
+            searchTerm,
+            setSearchTerm,
+            searchFilters,
+            setSearchFilters,
+            currentSearchIndex,
+            setCurrentSearchIndex,
+            searchMatches,
+            setSearchMatches,
         ]
     );
 

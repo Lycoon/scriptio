@@ -38,7 +38,7 @@ export type LocationItem = {
  * This will automatically sync to all connected collaborators.
  */
 export const upsertLocationData = (data: LocationData, projectCtx: ProjectContextType) => {
-    const { ydoc } = projectCtx;
+    const ydoc = projectCtx.repository?.getState();
     if (!ydoc) {
         console.warn("[Locations] Cannot upsert: Yjs document not available");
         return;
@@ -61,7 +61,7 @@ export const upsertLocationData = (data: LocationData, projectCtx: ProjectContex
  * Delete a location from the Yjs document.
  */
 export const deleteLocation = (name: string, projectCtx: ProjectContextType) => {
-    const { ydoc } = projectCtx;
+    const ydoc = projectCtx.repository?.getState();
     if (!ydoc) {
         console.warn("[Locations] Cannot delete: Yjs document not available");
         return;
@@ -78,7 +78,7 @@ export const deleteLocation = (name: string, projectCtx: ProjectContextType) => 
  * Rename a location in the Yjs document.
  */
 export const renameLocation = (oldName: string, newName: string, projectCtx: ProjectContextType) => {
-    const { ydoc } = projectCtx;
+    const ydoc = projectCtx.repository?.getState();
     if (!ydoc) {
         console.warn("[Locations] Cannot rename: Yjs document not available");
         return;
@@ -100,17 +100,19 @@ export const renameLocation = (oldName: string, newName: string, projectCtx: Pro
  * Check if a location exists (case-insensitive).
  */
 export const doesLocationExist = (name: string, projectCtx: ProjectContextType): boolean => {
+    if (!projectCtx.locations) return false;
     const nameUppered = name.toUpperCase();
-    return Object.keys(projectCtx.locationsData).some((key) => key.toUpperCase() === nameUppered);
+    return Object.keys(projectCtx.locations).some((key) => key.toUpperCase() === nameUppered);
 };
 
 /**
  * Get a location by name (case-insensitive).
  */
 export const getLocation = (name: string, projectCtx: ProjectContextType): LocationItem | undefined => {
+    if (!projectCtx.locations) return undefined;
     const nameUppered = name.toUpperCase();
-    const key = Object.keys(projectCtx.locationsData).find((k) => k.toUpperCase() === nameUppered);
-    return key ? projectCtx.locationsData[key] : undefined;
+    const key = Object.keys(projectCtx.locations).find((k) => k.toUpperCase() === nameUppered);
+    return key ? projectCtx.locations[key] : undefined;
 };
 
 // -------------------------------- //
@@ -139,13 +141,11 @@ export const extractLocationFromSceneHeading = (sceneHeading: string): string | 
  * Extract all unique locations from the screenplay.
  */
 export const getLocationNames = (screenplay: Screenplay): string[] => {
-    if (!screenplay.content) return [];
+    if (!screenplay) return [];
 
-    const nodes = screenplay.content;
     const locations: string[] = [];
-
-    for (let i = 0; i < nodes.length; i++) {
-        const currNode = nodes[i];
+    for (let i = 0; i < screenplay.length; i++) {
+        const currNode = screenplay[i];
         const type: string = currNode.attrs?.["class"];
 
         if (type !== ScreenplayElement.Scene || !currNode.content) continue;
@@ -166,12 +166,12 @@ export const getLocationNames = (screenplay: Screenplay): string[] => {
  * Count how many times a location appears in scene headings.
  */
 export const countLocationAppearances = (screenplay: Screenplay, locationName: string): number => {
-    if (!screenplay.content) return 0;
+    if (!screenplay) return 0;
 
     const upperName = locationName.toUpperCase();
     let count = 0;
 
-    for (const node of screenplay.content) {
+    for (const node of screenplay) {
         const type: string = node.attrs?.["class"];
 
         if (type === ScreenplayElement.Scene && node.content) {
@@ -205,18 +205,13 @@ export const createDefaultLocationItem = (): LocationItem => ({
  * - Persistent locations (from Yjs) take precedence
  * - Auto-detected locations (from screenplay) fill in the rest with default values
  */
-export const mergeLocationsData = (
-    persistentLocations: LocationMap,
-    screenplay: Screenplay
-): LocationMap => {
+export const mergeLocationsData = (persistentLocations: LocationMap, screenplay: Screenplay): LocationMap => {
     const result: LocationMap = { ...persistentLocations };
     const namesFromScreenplay = getLocationNames(screenplay);
 
     for (const name of namesFromScreenplay) {
         // Check if location already exists (case-insensitive)
-        const existingKey = Object.keys(result).find(
-            (k) => k.toUpperCase() === name.toUpperCase()
-        );
+        const existingKey = Object.keys(result).find((k) => k.toUpperCase() === name.toUpperCase());
 
         // Only add if not already present
         if (!existingKey) {
@@ -235,7 +230,7 @@ export const mergeLocationsData = (
  * Check if a location is persistent (stored in Yjs).
  */
 export const isLocationPersistent = (name: string, projectCtx: ProjectContextType): boolean => {
-    const { ydoc } = projectCtx;
+    const ydoc = projectCtx.repository?.getState();
     if (!ydoc) return false;
 
     const locationsMap = getLocationsMap(ydoc);
@@ -256,18 +251,14 @@ export const isLocationPersistent = (name: string, projectCtx: ProjectContextTyp
  * If the location already exists in Yjs, updates it to be persistent.
  * If not, creates a new persistent location entry.
  */
-export const makeLocationPersistent = (
-    name: string,
-    projectCtx: ProjectContextType,
-    data?: Partial<LocationItem>
-) => {
-    const { ydoc, locationsData } = projectCtx;
+export const makeLocationPersistent = (name: string, projectCtx: ProjectContextType, data?: Partial<LocationItem>) => {
+    const ydoc = projectCtx.repository?.getState();
     if (!ydoc) return;
 
     const locationsMap = getLocationsMap(ydoc);
 
-    // Get existing data from merged locationsData (could be auto-detected)
-    const existingData = locationsData[name] || createDefaultLocationItem();
+    // Get existing data from merged locations (could be auto-detected)
+    const existingData = projectCtx.locations?.[name] || createDefaultLocationItem();
 
     const locationItem: LocationItem = {
         ...existingData,

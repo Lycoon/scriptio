@@ -1,15 +1,23 @@
-import { Screenplay } from "@src/lib/utils/types";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
-import { addOffset, FONTS, getPDFNodeTemplate, getPDFTableTemplate, initPDF } from "./pdf-utils";
+import {
+    addOffset,
+    FONTS,
+    getPDFNodeTemplate,
+    getPDFTableTemplate,
+    getSceneWithNumberTemplate,
+    initPDF,
+} from "./pdf-utils";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { computeContdIndices } from "@src/lib/screenplay/contd";
 import { ProjectData, ProjectState } from "@src/lib/project/project-yjs";
 import * as pdfMake from "pdfmake/build/pdfmake";
+import { PageFormat } from "@src/lib/utils/enums";
 
 export type PDFExportOptions = BaseExportOptions & {
-    format: "A4" | "LETTER";
+    format: PageFormat;
     watermark: boolean;
     password?: string;
+    displaySceneNumbers?: boolean;
 };
 
 export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
@@ -18,9 +26,11 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
     convertTo(project: ProjectState, options: PDFExportOptions): Promise<Blob> {
         const characters = options.characters;
-        const nodes = project.screenplay;
+        const nodes = project.screenplay();
         const contdIndices = computeContdIndices(nodes);
+        const displaySceneNumbers = options.displaySceneNumbers ?? true;
         let pdfNodes = [];
+        let sceneNumber = 0;
 
         for (let i = 0; i < nodes.length; i++) {
             if (!nodes[i].content) {
@@ -46,7 +56,12 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
             switch (type) {
                 case "scene":
-                    pdfNodes.push(getPDFNodeTemplate("scene", text.toUpperCase()));
+                    sceneNumber++;
+                    if (displaySceneNumbers) {
+                        pdfNodes.push(getSceneWithNumberTemplate(sceneNumber, text.toUpperCase()));
+                    } else {
+                        pdfNodes.push(getPDFNodeTemplate("scene", text.toUpperCase()));
+                    }
                     addOffset(pdfNodes);
                     break;
                 case "character":

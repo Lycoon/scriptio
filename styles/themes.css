@@ -210,7 +210,50 @@ html.mint {
     --editor-style-bg-hover: var(--primary-hover);
     --editor-style-bg-active: var(--primary-hover);
     --editor-element-hover: #f8fafc;
-    --editor-shadow: rgba(91, 197, 142, 0.342);
+    --editor-shadow: #9bc29e81;
+
+    --editor-scroll-bg: var(--secondary);
+    --editor-scroll-btn: var(--tertiary);
+    --editor-scroll-btn-hover: var(--tertiary-hover);
+}
+
+html.blossom {
+    color-scheme: light;
+
+    --main-bg: var(--primary);
+    --primary: #ffe7f3;
+    --secondary: #fff6fb;
+    --tertiary: #ffbbdd;
+
+    --primary-hover: #ffe7f3;
+    --secondary-hover: #fff1f9;
+    --tertiary-hover: #ffa0d0;
+
+    --primary-text: #bb4bbb;
+    --secondary-text: #a579a5;
+
+    --separator: #dd8add;
+    --input-outline: #cbd5e1;
+    --navbar-outline: #e2e8f0;
+    --header-background: #ffffff;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #cbd5e1;
+
+    --editor-script-bg: white;
+    --editor-text: black;
+    --editor-scene: #f1f5f9;
+    --editor-sidebar: var(--secondary);
+    --editor-sidebar-list: #ededf3;
+    --editor-sidebar-hover: var(--primary);
+    --editor-style-bg: var(--primary);
+    --editor-style-bg-hover: var(--primary-hover);
+    --editor-style-bg-active: var(--primary-hover);
+    --editor-element-hover: #f8fafc;
+    --editor-shadow: #ffbaffa6;
 
     --editor-scroll-bg: var(--secondary);
     --editor-scroll-btn: var(--tertiary);

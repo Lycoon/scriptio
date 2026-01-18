@@ -1,8 +1,8 @@
 import { Editor, Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { ScreenplayElement } from "../utils/enums";
-import { getNodeFlattenContent } from "./screenplay";
+import { ScreenplayElement } from "../../utils/enums";
+import { getNodeFlattenContent } from "../screenplay";
 
 const characterHighlightPluginKey = new PluginKey("characterHighlight");
 

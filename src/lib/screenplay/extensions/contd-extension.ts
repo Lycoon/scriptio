@@ -1,7 +1,7 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { computeContdIndices } from "./contd";
+import { computeContdIndices } from "../contd";
 
 const contdPluginKey = new PluginKey("contd");
 

@@ -6,7 +6,7 @@ import {
     CharacterGender,
     doesCharacterExist,
     upsertCharacterData,
-    deleteCharacter,
+    renameCharacter,
 } from "@src/lib/screenplay/characters";
 import { join } from "@src/lib/utils/misc";
 import { useDraggable } from "@src/lib/utils/hooks";
@@ -146,10 +146,13 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     const onNewNameConfirm = () => {
         assert(character, "A character must be defined on edit mode");
 
-        // delete old character and insert with new name
+        // Replace occurrences in the editor text
         replaceOccurrences(projectCtx.editor!, character.name, newName);
-        deleteCharacter(character.name, projectCtx);
 
+        // Rename the character in the Yjs document (atomic delete + create)
+        renameCharacter(character.name, newName, projectCtx);
+
+        // Update the character data with new values
         upsertCharacterData(
             {
                 name: newName,

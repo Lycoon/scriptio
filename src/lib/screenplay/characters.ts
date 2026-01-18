@@ -46,7 +46,7 @@ export type CharacterItem = {
  * This will automatically sync to all connected collaborators.
  */
 export const upsertCharacterData = (data: CharacterData, projectCtx: ProjectContextType) => {
-    const { ydoc } = projectCtx;
+    const ydoc = projectCtx.repository?.getState();
     if (!ydoc) {
         console.warn("[Characters] Cannot upsert: Yjs document not available");
         return;
@@ -71,7 +71,7 @@ export const upsertCharacterData = (data: CharacterData, projectCtx: ProjectCont
  * Delete a character from the Yjs document.
  */
 export const deleteCharacter = (name: string, projectCtx: ProjectContextType) => {
-    const { ydoc } = projectCtx;
+    const ydoc = projectCtx.repository?.getState();
     if (!ydoc) {
         console.warn("[Characters] Cannot delete: Yjs document not available");
         return;
@@ -85,24 +85,37 @@ export const deleteCharacter = (name: string, projectCtx: ProjectContextType) =>
 };
 
 /**
- * Rename a character in the Yjs document.
+ * Rename a character in the Yjs document (case-insensitive lookup).
+ * If the character exists in the persistent map, it will be renamed.
+ * If not, this is a no-op (the character will be created by upsertCharacterData).
  */
 export const renameCharacter = (oldName: string, newName: string, projectCtx: ProjectContextType) => {
-    const { ydoc } = projectCtx;
+    const ydoc = projectCtx.repository?.getState();
     if (!ydoc) {
         console.warn("[Characters] Cannot rename: Yjs document not available");
         return;
     }
 
     const charactersMap = getCharactersMap(ydoc);
-    const character = charactersMap.get(oldName);
 
-    if (character) {
+    // Find the character with case-insensitive matching
+    const oldNameUpper = oldName.toUpperCase();
+    let existingKey: string | undefined;
+    let character: any;
+
+    charactersMap.forEach((value, key) => {
+        if (key.toUpperCase() === oldNameUpper) {
+            existingKey = key;
+            character = value;
+        }
+    });
+
+    if (existingKey && character) {
         ydoc.transact(() => {
-            charactersMap.delete(oldName);
-            charactersMap.set(newName, character);
+            charactersMap.delete(existingKey!);
+            charactersMap.set(newName.toUpperCase(), character);
         });
-        console.log(`[Characters] Renamed character: ${oldName} -> ${newName}`);
+        console.log(`[Characters] Renamed character: ${existingKey} -> ${newName.toUpperCase()}`);
     }
 };
 
@@ -110,17 +123,19 @@ export const renameCharacter = (oldName: string, newName: string, projectCtx: Pr
  * Check if a character exists (case-insensitive).
  */
 export const doesCharacterExist = (name: string, projectCtx: ProjectContextType): boolean => {
+    if (!projectCtx.characters) return false;
     const nameUppered = name.toUpperCase();
-    return Object.keys(projectCtx.charactersData).some((key) => key.toUpperCase() === nameUppered);
+    return Object.keys(projectCtx.characters).some((key) => key.toUpperCase() === nameUppered);
 };
 
 /**
  * Get a character by name (case-insensitive).
  */
 export const getCharacter = (name: string, projectCtx: ProjectContextType): CharacterItem | undefined => {
+    if (!projectCtx.characters) return undefined;
     const nameUppered = name.toUpperCase();
-    const key = Object.keys(projectCtx.charactersData).find((k) => k.toUpperCase() === nameUppered);
-    return key ? projectCtx.charactersData[key] : undefined;
+    const key = Object.keys(projectCtx.characters).find((k) => k.toUpperCase() === nameUppered);
+    return key ? projectCtx.characters[key] : undefined;
 };
 
 // -------------------------------- //
@@ -131,13 +146,12 @@ export const getCharacter = (name: string, projectCtx: ProjectContextType): Char
  * Extract all character names from the screenplay.
  */
 export const getCharacterNames = (screenplay: Screenplay): string[] => {
-    if (!screenplay.content) return [];
+    if (!screenplay) return [];
 
-    const nodes = screenplay.content;
     const characters: string[] = [];
 
-    for (let i = 0; i < nodes.length; i++) {
-        const currNode = nodes[i];
+    for (let i = 0; i < screenplay.length; i++) {
+        const currNode = screenplay[i];
         const type: string = currNode.attrs?.["class"];
 
         if (type !== ScreenplayElement.Character || !currNode.content) continue;
@@ -161,12 +175,12 @@ export const getCharacterNames = (screenplay: Screenplay): string[] => {
  * Count how many times a character appears in the screenplay.
  */
 export const countCharacterAppearances = (screenplay: Screenplay, characterName: string): number => {
-    if (!screenplay.content) return 0;
+    if (!screenplay) return 0;
 
     const upperName = characterName.toUpperCase();
     let count = 0;
 
-    for (const node of screenplay.content) {
+    for (const node of screenplay) {
         const type: string = node.attrs?.["class"];
 
         if (type === ScreenplayElement.Character && node.content) {
@@ -201,18 +215,13 @@ export const createDefaultCharacterItem = (): CharacterItem => ({
  * - Persistent characters (from Yjs) take precedence
  * - Auto-detected characters (from screenplay) fill in the rest with default values
  */
-export const mergeCharactersData = (
-    persistentCharacters: CharacterMap,
-    screenplay: Screenplay
-): CharacterMap => {
+export const mergeCharactersData = (persistentCharacters: CharacterMap, screenplay: Screenplay): CharacterMap => {
     const result: CharacterMap = { ...persistentCharacters };
     const namesFromScreenplay = getCharacterNames(screenplay);
 
     for (const name of namesFromScreenplay) {
         // Check if character already exists (case-insensitive)
-        const existingKey = Object.keys(result).find(
-            (k) => k.toUpperCase() === name.toUpperCase()
-        );
+        const existingKey = Object.keys(result).find((k) => k.toUpperCase() === name.toUpperCase());
 
         // Only add if not already present
         if (!existingKey) {
@@ -221,56 +230,4 @@ export const mergeCharactersData = (
     }
 
     return result;
-};
-
-// -------------------------------- //
-//       PERSISTENCE UTILITIES      //
-// -------------------------------- //
-
-/**
- * Check if a character is persistent (stored in Yjs).
- */
-export const isCharacterPersistent = (name: string, projectCtx: ProjectContextType): boolean => {
-    const { ydoc } = projectCtx;
-    if (!ydoc) return false;
-
-    const charactersMap = getCharactersMap(ydoc);
-    const upperName = name.toUpperCase();
-
-    let found = false;
-    charactersMap.forEach((_, key) => {
-        if (key.toUpperCase() === upperName) {
-            found = true;
-        }
-    });
-
-    return found;
-};
-
-/**
- * Make a character persistent by adding it to Yjs.
- * If the character already exists in Yjs, updates it to be persistent.
- * If not, creates a new persistent character entry.
- */
-export const makeCharacterPersistent = (
-    name: string,
-    projectCtx: ProjectContextType,
-    data?: Partial<CharacterItem>
-) => {
-    const { ydoc, charactersData } = projectCtx;
-    if (!ydoc) return;
-
-    const charactersMap = getCharactersMap(ydoc);
-
-    // Get existing data from merged charactersData (could be auto-detected)
-    const existingData = charactersData[name] || createDefaultCharacterItem();
-
-    const characterItem: CharacterItem = {
-        ...existingData,
-        ...data,
-        persistent: true,
-    };
-
-    charactersMap.set(name, characterItem);
-    console.log(`[Characters] Made character persistent: ${name}`);
 };

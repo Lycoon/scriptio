@@ -2,7 +2,7 @@
 
 import { useContext, useEffect } from "react";
 import { UserContext } from "@src/context/UserContext";
-import { MergedSceneItem } from "@src/lib/screenplay/scenes";
+import { Scene } from "@src/lib/screenplay/scenes";
 
 import context from "./ContextMenu.module.css";
 import { CharacterData, deleteCharacter } from "@src/lib/screenplay/characters";
@@ -61,13 +61,13 @@ export const ContextMenuItem = ({ text, action, icon: Icon }: ContextMenuItemPro
 /* ========================== */
 
 export type SceneContextProps = {
-    scene: MergedSceneItem;
+    scene: Scene;
 };
 
 const SceneItemMenu = (props: any) => {
     const userCtx = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
-    const scene: MergedSceneItem = props.props.scene;
+    const scene: Scene = props.props.scene;
 
     return (
         <>
