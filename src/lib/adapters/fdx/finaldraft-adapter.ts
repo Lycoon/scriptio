@@ -1,9 +1,7 @@
-import { Screenplay } from "@src/lib/utils/types";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
-import { XMLBuilder } from "@node_modules/fast-xml-parser/src/fxp";
+import { XMLBuilder, XMLParser } from "@node_modules/fast-xml-parser/src/fxp";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
-import * as Y from "yjs";
-import { ProjectData, ProjectState, YJS_FRAGMENTS } from "@src/lib/project/project-yjs";
+import { ProjectData, ProjectState } from "@src/lib/project/project-yjs";
 
 const options = { attributeNamePrefix: "@_", textNodeName: "#text", ignoreAttributes: false, format: true };
 const builder = new XMLBuilder(options);
@@ -25,13 +23,22 @@ const FDX_STYLE_TABLE: Record<string, string> = {
     underline: "Underline",
 };
 
+// Reverse lookup tables for parsing FDX files
+const FDX_ELEMENT_REVERSE: Record<string, string> = Object.fromEntries(
+    Object.entries(FDX_ELEMENT_TABLE).map(([k, v]) => [v, k])
+);
+
+const FDX_STYLE_REVERSE: Record<string, string> = Object.fromEntries(
+    Object.entries(FDX_STYLE_TABLE).map(([k, v]) => [v, k])
+);
+
 export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
     label = "Final Draft";
     extension = "fdx";
 
     convertTo(project: ProjectState, options: BaseExportOptions): Promise<Blob> {
         let paragraphNodes: any = [];
-        let nodes = project.screenplay;
+        let nodes = project.screenplay();
         const characters = options.characters;
 
         for (let i = 0; i < nodes.length; i++) {
@@ -101,7 +108,82 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
         return Promise.resolve(blob);
     }
 
-    convertFrom(rawContent: ArrayBuffer): ProjectData {
-        throw new Error("Method not implemented.");
+    convertFrom(rawContent: ArrayBuffer): Partial<ProjectData> {
+        const decoder = new TextDecoder("utf-8");
+        const xmlText = decoder.decode(rawContent);
+
+        const parser = new XMLParser(options);
+        const parsed = parser.parse(xmlText);
+
+        const paragraphs = parsed?.FinalDraft?.Content?.Paragraph;
+        if (!paragraphs) {
+            throw new Error("Invalid FDX file: no paragraphs found");
+        }
+
+        // Ensure paragraphs is always an array
+        const paragraphList = Array.isArray(paragraphs) ? paragraphs : [paragraphs];
+
+        const screenplay: any[] = [];
+
+        for (const paragraph of paragraphList) {
+            const fdxType = paragraph["@_Type"] || "Action";
+            const elementType = FDX_ELEMENT_REVERSE[fdxType] || "action";
+
+            const textNodes = paragraph.Text;
+            if (!textNodes) {
+                // Empty paragraph
+                screenplay.push({
+                    type: elementType,
+                    attrs: { class: elementType },
+                    content: [],
+                });
+                continue;
+            }
+
+            // Ensure textNodes is always an array
+            const textList = Array.isArray(textNodes) ? textNodes : [textNodes];
+
+            const content: any[] = [];
+
+            for (const textNode of textList) {
+                // Handle both string content and object with #text
+                const text = typeof textNode === "string" ? textNode : textNode["#text"] || "";
+
+                if (!text) continue;
+
+                const jsonNode: any = {
+                    type: "text",
+                    text: text,
+                };
+
+                // Parse styles (e.g., "Bold+Italic+Underline")
+                const styleAttr = typeof textNode === "object" ? textNode["@_Style"] : undefined;
+                if (styleAttr) {
+                    const styles = styleAttr.split("+");
+                    const marks: any[] = [];
+
+                    for (const style of styles) {
+                        const markType = FDX_STYLE_REVERSE[style];
+                        if (markType) {
+                            marks.push({ type: markType });
+                        }
+                    }
+
+                    if (marks.length > 0) {
+                        jsonNode.marks = marks;
+                    }
+                }
+
+                content.push(jsonNode);
+            }
+
+            screenplay.push({
+                type: elementType,
+                attrs: { class: elementType },
+                content: content.length > 0 ? content : undefined,
+            });
+        }
+
+        return { screenplay };
     }
 }
