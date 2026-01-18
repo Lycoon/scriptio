@@ -1,15 +1,13 @@
 "use client";
 
-import { EmailVerifyStatus } from "@src/lib/utils/enums";
 import LoginForm from "./LoginForm";
-
 import layout from "../../utils/Layout.module.css";
+import { useSearchParams } from "@node_modules/next/navigation";
 
-type Props = {
-    status?: EmailVerifyStatus;
-};
+const LoginContainer = () => {
+    const searchParams = useSearchParams();
+    const status = searchParams.get("status") as "success" | "failed" | "used" | null;
 
-const LoginContainer = ({ status }: Props) => {
     return (
         <>
             <div className={layout.center_middle}>

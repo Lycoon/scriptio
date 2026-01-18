@@ -4,12 +4,16 @@ import PasswordChangeForm from "./PasswordChangeForm";
 import RecoveryForm from "./RecoveryForm";
 
 import layout from "../../utils/Layout.module.css";
+import { useSearchParams } from "@node_modules/next/navigation";
 
-export default function RecoveryContainer({ userId, recoverHash }: { userId: string; recoverHash: string }) {
-    const form = recoverHash ? <PasswordChangeForm userId={userId} recoverHash={recoverHash} /> : <RecoveryForm />;
+export default function RecoveryContainer() {
+    const searchParams = useSearchParams();
+    const id = searchParams.get("id");
+    const code = searchParams.get("code");
+
     return (
-        <>
-            <div className={layout.center_middle}>{form}</div>
-        </>
+        <div className={layout.center_middle}>
+            {id && code ? <PasswordChangeForm userId={id} code={code} /> : <RecoveryForm />}
+        </div>
     );
 }

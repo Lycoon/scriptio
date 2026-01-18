@@ -116,6 +116,8 @@ Originally developed by John August - johnaugust.com
     }
 
     .scene {
+        position: relative;
+        overflow: visible;
         background-color: none;
         margin-top: 1lh;
         text-transform: uppercase;
@@ -124,9 +126,10 @@ Originally developed by John August - johnaugust.com
     }
 
     .scene::before {
-        content: counter(scenenumber);
         position: absolute;
-        margin-left: -70px;
+        content: counter(scenenumber);
+        right: 100%;
+        margin-right: 20px;
     }
 
     /* Hide scene numbers when disabled */

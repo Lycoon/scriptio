@@ -115,7 +115,7 @@ const ProjectNavbar = () => {
     // Update browser tab title when project title changes
     useEffect(() => {
         if (projectTitle && isInProject) {
-            document.title = `Scriptio • ${projectTitle}`;
+            document.title = `${projectTitle}`;
         }
     }, [projectTitle, isInProject]);
 

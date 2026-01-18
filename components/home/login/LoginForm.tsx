@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import FormInfo, { FormInfoType } from "../../utils/FormInfo";
-import { EmailVerifyStatus } from "@src/lib/utils/enums";
 import { login } from "@src/lib/utils/requests";
 
 import { useSWRConfig } from "swr";
@@ -13,11 +12,7 @@ import form from "../../utils/Form.module.css";
 import { LoginBody } from "@src/app/api/login/route";
 import { useRouter } from "next/navigation";
 
-type Props = {
-    status?: EmailVerifyStatus;
-};
-
-const LoginForm = ({ status }: Props) => {
+const LoginForm = ({ status }: { status: "success" | "failed" | "used" | null }) => {
     const router = useRouter();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const { mutate } = useSWRConfig();
@@ -58,7 +53,7 @@ const LoginForm = ({ status }: Props) => {
 
         const res = await login(body);
         if (res.ok) {
-            mutate("/api/users/cookie");
+            await mutate("/api/users/cookie");
             router.push("/");
         } else {
             const json = (await res.json()) as ApiResponse;

@@ -85,9 +85,6 @@ const SecuritySettings = () => {
                     placeholder="Enter new password..."
                     autoComplete="new-password"
                 />
-                <p className={sharedStyles.helpText}>
-                    Password must be at least {MIN_PASSWORD_LENGTH} characters long.
-                </p>
             </div>
 
             {/* Confirm Password */}

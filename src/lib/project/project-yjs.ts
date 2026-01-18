@@ -410,12 +410,12 @@ export const useCloudSync = (projectId: string | null, ydoc: Y.Doc | null, userI
                 });
 
                 // Handle session replacement (same user connected from another tab/device)
-                cloudProvider.on("session-replaced", () => {
+                /*cloudProvider.on("session-replaced", () => {
                     console.log("[ProjectYjs] Session was replaced by another connection");
                     if (isMountedRef.current) {
                         setIsSessionReplaced(true);
                     }
-                });
+                });*/
 
                 providerRef.current = cloudProvider;
                 setProvider(cloudProvider);

@@ -1,4 +1,3 @@
-import { NextApiRequest, NextApiResponse } from "next";
 import { sendRecoveryEmail } from "@src/lib/mail/mail";
 import {
     ERROR_RECOVERY_LINK_EXPIRED,
@@ -27,17 +26,6 @@ const RecoverPasswordBodySchema = z.object({
     password: z.string(),
     recoverHash: z.string(),
 });
-
-async function recoverRoute(req: NextApiRequest, res: NextApiResponse) {
-    switch (req.method) {
-        case "POST":
-            const recoveryBody = validate(RequestRecoveryBodySchema, req.body);
-            return requestRecovery(recoveryBody, res);
-        case "PATCH":
-            const updatePwdBody = validate(RecoverPasswordBodySchema, req.body);
-            return recoverPassword(updatePwdBody, res);
-    }
-}
 
 /**
  * POST `/recover`

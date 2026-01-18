@@ -2,7 +2,7 @@ import SignupContainer from "@components/home/signup/SignupContainer";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Scriptio • Sign up",
+    title: "Sign up | Scriptio",
 };
 
 export default function SignupPage() {

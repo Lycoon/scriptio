@@ -51,7 +51,12 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     // Bound event handlers for proper cleanup
     private boundResetIdleTimer: () => void;
 
-    constructor(serverUrl: string, room: string, doc: Y.Doc, options: any & { userInfo?: { name: string; color: string } }) {
+    constructor(
+        serverUrl: string,
+        room: string,
+        doc: Y.Doc,
+        options: any & { userInfo?: { name: string; color: string } }
+    ) {
         // Pass connect: false to prevent immediate connection
         // We'll connect after setting up user info
         super(serverUrl, room, doc, { ...options, connect: false });
@@ -201,7 +206,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.disconnect();
 
         // Emit custom event for UI to handle
-        this.emit("session-replaced", []);
+        //this.emit("session-replaced", []);
     }
 
     /**

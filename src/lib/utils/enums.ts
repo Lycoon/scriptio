@@ -2,8 +2,6 @@
 //             WEBSITE            //
 // ------------------------------ //
 
-export type EmailVerifyStatus = "success" | "failed" | "used";
-
 export enum PasswordRecoverStatus {
     Success,
     Failed,

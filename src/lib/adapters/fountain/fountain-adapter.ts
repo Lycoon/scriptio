@@ -44,7 +44,8 @@ export class FountainAdapter extends ProjectAdapter {
             // Handle styled text fragments
             let fullText: string = "";
             for (let j = 0; j < content.length; j++) {
-                const styles: string[] = Object.values(content[j].marks ?? []);
+                console.log("Marks: ", content[j].marks);
+                const styles: string[] = (content[j].marks ?? []).map((mark) => mark.type);
                 const childNode = content[j];
                 let textFragment: string = "text" in childNode ? childNode.text! : "";
 

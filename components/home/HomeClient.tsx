@@ -15,7 +15,7 @@ export default function HomeClient() {
     const { user, isLoading } = useCookieUser();
 
     useEffect(() => {
-        if (user) document.title = "Scriptio • Projects";
+        if (user) document.title = "Projects | Scriptio";
     }, [user]);
 
     if (isLoading) {

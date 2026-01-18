@@ -1,4 +1,4 @@
-import { ProjectData, ProjectState } from "@src/lib/project/project-yjs";
+import { LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-yjs";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import * as fflate from "fflate";
 
@@ -23,14 +23,14 @@ export class ScriptioAdapter extends ProjectAdapter {
             Y.applyUpdate(tmpDoc, decompressed);
 
             const project: ProjectData = {
-                screenplay: tmpDoc.screenplay,
-                metadata: tmpDoc.metadata.toJSON(),
-                characters: tmpDoc.characters.toJSON(),
-                scenes: tmpDoc.scenes.toJSON(),
-                cards: tmpDoc.cards.toJSON(),
-                locations: tmpDoc.locations.toJSON(),
-                board: tmpDoc.board.toJSON(),
-                layout: tmpDoc.layout.toJSON(),
+                screenplay: tmpDoc.screenplay(),
+                metadata: tmpDoc.metadata().toJSON() as ProjectMetadata,
+                characters: tmpDoc.characters().toJSON(),
+                scenes: tmpDoc.scenes().toJSON(),
+                cards: tmpDoc.cards().toJSON(),
+                locations: tmpDoc.locations().toJSON(),
+                board: tmpDoc.board().toJSON(),
+                layout: tmpDoc.layout().toJSON() as LayoutData,
             };
 
             return project;

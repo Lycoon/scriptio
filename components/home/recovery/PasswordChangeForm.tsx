@@ -13,10 +13,10 @@ import { redirect } from "next/navigation";
 
 type Props = {
     userId: string;
-    recoverHash: string;
+    code: string;
 };
 
-const PasswordChangeForm = ({ userId, recoverHash }: Props) => {
+const PasswordChangeForm = ({ userId, code }: Props) => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const resetFromInfo = () => {
         setFormInfo(null);
@@ -36,7 +36,7 @@ const PasswordChangeForm = ({ userId, recoverHash }: Props) => {
 
         const body: RecoverPasswordBody = {
             userId,
-            recoverHash,
+            recoverHash: code,
             password: pwd1,
         };
 
