@@ -5,7 +5,7 @@ import { validate } from "@src/lib/utils/api-utils";
 import * as UserService from "@src/server/service/user-service";
 import z from "zod";
 import { authenticate, getSession } from "@src/lib/session";
-import { NextRequest, NextResponse } from "@node_modules/next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { CookieUser } from "@src/lib/utils/types";
 

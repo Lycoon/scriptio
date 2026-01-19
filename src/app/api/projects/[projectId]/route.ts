@@ -17,7 +17,7 @@ import {
 } from "@src/lib/utils/api-utils";
 
 import z from "zod";
-import { NextRequest } from "@node_modules/next/server";
+import { NextRequest } from "next/server";
 
 const QuerySchema = z.object({
     projectId: z.string(),

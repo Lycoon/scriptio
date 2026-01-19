@@ -13,7 +13,7 @@ import * as Misc from "@src/lib/utils/misc";
 import * as SecretService from "@src/lib/utils/secrets";
 import * as UserService from "@src/server/service/user-service";
 import z from "zod";
-import { NextRequest } from "@node_modules/next/server";
+import { NextRequest } from "next/server";
 
 export type RequestRecoveryBody = z.infer<typeof RequestRecoveryBodySchema>;
 const RequestRecoveryBodySchema = z.object({

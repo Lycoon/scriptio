@@ -7,7 +7,7 @@ import * as UserService from "@src/server/service/user-service";
 import z from "zod";
 
 import { InternalServerError, Success, SuccessNoContent, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
-import { NextRequest } from "@node_modules/next/server";
+import { NextRequest } from "next/server";
 
 export type UpdateUserBody = z.infer<typeof UpdateUserBodySchema>;
 

@@ -2,20 +2,51 @@
     position: absolute;
     display: flex;
     flex-direction: column;
+    padding: 6px;
 
-    z-index: 1;
-    border-radius: 6px;
-    background-color: var(--secondary);
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    border-radius: 10px;
+    background-color: color-mix(in srgb, var(--secondary) 60%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--separator);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 
-    max-width: 160px;
+    min-width: 120px;
+    max-width: 200px;
     max-height: 180px;
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+.menu_item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-align: left;
+    cursor: pointer;
+    color: var(--primary-text);
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.menu_item:hover {
+    background-color: color-mix(in srgb, var(--primary-text) 10%, transparent);
+}
+
+.selected {
+    background-color: color-mix(in srgb, var(--primary-text) 15%, transparent);
+}
+
+.selected:hover {
+    background-color: color-mix(in srgb, var(--primary-text) 15%, transparent);
 }
 
 .item {
     overflow-x: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    margin: 0;
 }

@@ -29,61 +29,58 @@ const BoardCanvas = () => {
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const [scale, setScale] = useState(1);
     const [isPanning, setIsPanning] = useState(false);
-    const [isSnapping, setIsSnapping] = useState(false);
+    const [isSnapping, setIsSnapping] = useState(true);
     const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
     const [isCameraReady, setIsCameraReady] = useState(false);
     const hasInitializedCamera = useRef(false);
     const panStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
 
     // Center camera to fit all cards
-    const centerCameraOnCards = useCallback(
-        (cardsToFit: BoardCardData[]) => {
-            const container = containerRef.current;
-            if (!container || cardsToFit.length === 0) return;
+    const centerCameraOnCards = useCallback((cardsToFit: BoardCardData[]) => {
+        const container = containerRef.current;
+        if (!container || cardsToFit.length === 0) return;
 
-            // Calculate bounding box of all cards
-            let minX = Infinity;
-            let minY = Infinity;
-            let maxX = -Infinity;
-            let maxY = -Infinity;
+        // Calculate bounding box of all cards
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
 
-            for (const card of cardsToFit) {
-                minX = Math.min(minX, card.x);
-                minY = Math.min(minY, card.y);
-                maxX = Math.max(maxX, card.x + card.width);
-                maxY = Math.max(maxY, card.y + card.height);
-            }
+        for (const card of cardsToFit) {
+            minX = Math.min(minX, card.x);
+            minY = Math.min(minY, card.y);
+            maxX = Math.max(maxX, card.x + card.width);
+            maxY = Math.max(maxY, card.y + card.height);
+        }
 
-            // Add padding around the bounding box
-            const padding = 100;
-            minX -= padding;
-            minY -= padding;
-            maxX += padding;
-            maxY += padding;
+        // Add padding around the bounding box
+        const padding = 100;
+        minX -= padding;
+        minY -= padding;
+        maxX += padding;
+        maxY += padding;
 
-            const boundsWidth = maxX - minX;
-            const boundsHeight = maxY - minY;
-            const boundsCenterX = (minX + maxX) / 2;
-            const boundsCenterY = (minY + maxY) / 2;
+        const boundsWidth = maxX - minX;
+        const boundsHeight = maxY - minY;
+        const boundsCenterX = (minX + maxX) / 2;
+        const boundsCenterY = (minY + maxY) / 2;
 
-            const rect = container.getBoundingClientRect();
-            const viewportWidth = rect.width;
-            const viewportHeight = rect.height;
+        const rect = container.getBoundingClientRect();
+        const viewportWidth = rect.width;
+        const viewportHeight = rect.height;
 
-            // Calculate scale to fit bounds in viewport
-            const scaleX = viewportWidth / boundsWidth;
-            const scaleY = viewportHeight / boundsHeight;
-            const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), MIN_SCALE), MAX_SCALE);
+        // Calculate scale to fit bounds in viewport
+        const scaleX = viewportWidth / boundsWidth;
+        const scaleY = viewportHeight / boundsHeight;
+        const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), MIN_SCALE), MAX_SCALE);
 
-            // Calculate offset to center the bounds
-            const newOffsetX = viewportWidth / 2 - boundsCenterX * newScale;
-            const newOffsetY = viewportHeight / 2 - boundsCenterY * newScale;
+        // Calculate offset to center the bounds
+        const newOffsetX = viewportWidth / 2 - boundsCenterX * newScale;
+        const newOffsetY = viewportHeight / 2 - boundsCenterY * newScale;
 
-            setScale(newScale);
-            setOffset({ x: newOffsetX, y: newOffsetY });
-        },
-        []
-    );
+        setScale(newScale);
+        setOffset({ x: newOffsetX, y: newOffsetY });
+    }, []);
 
     // Sync cards with Yjs
     useEffect(() => {
@@ -145,13 +142,13 @@ const BoardCanvas = () => {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Shift") {
-                setIsSnapping(true);
+                setIsSnapping(false);
             }
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
             if (e.key === "Shift") {
-                setIsSnapping(false);
+                setIsSnapping(true);
             }
         };
 
@@ -412,7 +409,7 @@ const BoardCanvas = () => {
 
                 <div className={styles.hints}>
                     <span>Double-click to create card</span>
-                    <span>Hold Shift to snap to grid</span>
+                    <span>Hold Shift to move freely</span>
                 </div>
             </div>
         </div>

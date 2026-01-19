@@ -2,7 +2,7 @@
 
 import LoginForm from "./LoginForm";
 import layout from "../../utils/Layout.module.css";
-import { useSearchParams } from "@node_modules/next/navigation";
+import { useSearchParams } from "next/navigation";
 
 const LoginContainer = () => {
     const searchParams = useSearchParams();

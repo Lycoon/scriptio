@@ -8,7 +8,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
-import { useContext, useEffect, useRef } from "react";
+import { useCallback, useContext, useEffect, useRef } from "react";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import { useUser } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
@@ -221,13 +221,42 @@ export const useScriptioEditor = (
         isYjsReady,
         highlightedCharacters,
         characters,
+        locations,
         pageFormat: pageSize,
         searchTerm,
         searchFilters,
         currentSearchIndex,
         setSearchMatches,
     } = projectCtx;
+
+    // Refs for autocomplete data
+    const charactersRef = useRef(characters);
+    const locationsRef = useRef(locations);
     const projectState = repository?.getState();
+
+    // Ref to track current suggestions and avoid unnecessary state updates
+    const currentSuggestionsRef = useRef<string[]>([]);
+    const setSuggestions = useCallback(
+        (suggestions: string[]) => {
+            // Skip update if suggestions haven't changed (both empty or same content)
+            const current = currentSuggestionsRef.current;
+            if (
+                suggestions.length === 0 &&
+                current.length === 0
+            ) {
+                return;
+            }
+            if (
+                suggestions.length === current.length &&
+                suggestions.every((s, i) => s === current[i])
+            ) {
+                return;
+            }
+            currentSuggestionsRef.current = suggestions;
+            updateSuggestions(suggestions);
+        },
+        [updateSuggestions]
+    );
 
     const userInfoRef = useRef({
         name: user?.username || "User_" + Math.floor(Math.random() * 1000),
@@ -252,6 +281,14 @@ export const useScriptioEditor = (
     useEffect(() => {
         charactersDataRef.current = characters;
     }, [characters]);
+
+    useEffect(() => {
+        charactersRef.current = characters;
+    }, [characters]);
+
+    useEffect(() => {
+        locationsRef.current = locations;
+    }, [locations]);
 
     useEffect(() => {
         searchTermRef.current = searchTerm;
@@ -364,10 +401,120 @@ export const useScriptioEditor = (
 
             onSelectionUpdate({ editor, transaction }) {
                 const anchor = (transaction as any).curSelection.$anchor;
-                const elementAnchor = anchor.parent.attrs.class;
+                const node = anchor.parent;
+                const elementAnchor = node.attrs.class as ScreenplayElement;
 
                 setActiveElement(elementAnchor, false);
                 if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
+
+                // Clear suggestions when moving cursor (not typing)
+                // onUpdate will handle showing suggestions when typing
+                if (!transaction.docChanged) {
+                    setSuggestions([]);
+                }
+            },
+
+            onUpdate({ editor, transaction }) {
+                // Only show autocomplete when document content changes (typing)
+                if (!transaction.docChanged) return;
+
+                const anchor = (transaction as any).curSelection.$anchor;
+                const node = anchor.parent;
+                const elementAnchor = node.attrs.class as ScreenplayElement;
+
+                const nodeSize: number = node.content.size;
+                const cursorInNode: number = anchor.parentOffset;
+                const cursor: number = anchor.pos;
+
+                // Character autocomplete
+                if (elementAnchor === ScreenplayElement.Character) {
+                    const currentCharacters = charactersRef.current;
+
+                    // Skip if no characters or node is empty
+                    if (!currentCharacters || nodeSize === 0) {
+                        setSuggestions([]);
+                        return;
+                    }
+
+                    // Only show suggestions when cursor is at the end of the text
+                    if (cursorInNode !== nodeSize) {
+                        setSuggestions([]);
+                        return;
+                    }
+
+                    const text = node.textContent;
+                    const trimmed: string = text.slice(0, cursorInNode).toUpperCase();
+                    const suggestions = Object.keys(currentCharacters)
+                        .filter((name) => {
+                            const upperName = name.toUpperCase();
+                            return (
+                                upperName !== trimmed &&
+                                upperName.startsWith(trimmed) &&
+                                upperName !== text.toUpperCase()
+                            );
+                        })
+                        .slice(0, 10);
+
+                    if (suggestions.length > 0) {
+                        const pagePos = editor.view.coordsAtPos(cursor);
+                        updateSuggestionsData({
+                            position: { x: pagePos.left, y: pagePos.top },
+                            cursor,
+                            cursorInNode,
+                        });
+                    }
+                    setSuggestions(suggestions);
+                } else if (elementAnchor === ScreenplayElement.Scene) {
+                    // Scene/Location autocomplete
+                    const currentLocations = locationsRef.current;
+                    if (!currentLocations) {
+                        setSuggestions([]);
+                        return;
+                    }
+
+                    // Only show suggestions when cursor is at the end
+                    if (cursorInNode !== nodeSize) {
+                        setSuggestions([]);
+                        return;
+                    }
+
+                    const text = node.textContent.toUpperCase();
+
+                    // Check if we're after a prefix like "INT. " or "EXT. "
+                    const prefixMatch = text.match(/^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)\s*/i);
+                    if (!prefixMatch) {
+                        setSuggestions([]);
+                        return;
+                    }
+
+                    const prefixLength = prefixMatch[0].length;
+                    const afterPrefix = text.slice(prefixLength);
+                    let suggestions = Object.keys(currentLocations);
+
+                    if (afterPrefix.length > 0) {
+                        suggestions = suggestions
+                            .filter((location) => {
+                                const upperLocation = location.toUpperCase();
+                                return upperLocation.startsWith(afterPrefix) && upperLocation !== afterPrefix;
+                            })
+                            .slice(0, 10);
+                    } else {
+                        suggestions = suggestions.slice(0, 10);
+                    }
+
+                    if (suggestions.length > 0) {
+                        const pagePos = editor.view.coordsAtPos(cursor);
+                        updateSuggestionsData({
+                            position: { x: pagePos.left, y: pagePos.top },
+                            cursor,
+                            cursorInNode,
+                            textOffset: prefixLength,
+                        });
+                    }
+                    setSuggestions(suggestions);
+                } else {
+                    setSuggestions([]);
+                }
             },
         },
         [projectState, provider, isYjsReady]

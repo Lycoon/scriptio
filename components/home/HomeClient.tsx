@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useCookieUser, useDesktop } from "@src/lib/utils/hooks";
 import HomePageContainer from "@components/home/HomePageContainer";
 import ProjectPageContainer from "@components/projects/ProjectPageContainer";
-import DesktopHomePageContainer from "@components/home/DesktopHomePageContainer";
 import Loading from "@components/utils/Loading";
 import HomeNavbar from "@components/navbar/HomeNavbar";
 import LandingPageNavbar from "@components/navbar/LandingPageNavbar";
@@ -23,7 +22,7 @@ export default function HomeClient() {
     }
 
     // Desktop app
-    if (isDesktop) {
+    /*if (isDesktop) {
         return (
             <>
                 <HomeNavbar />
@@ -31,7 +30,7 @@ export default function HomeClient() {
                 <DashboardModal />
             </>
         );
-    }
+    }*/
 
     // Authenticated user - show projects with HomeNavbar
     if (user) {

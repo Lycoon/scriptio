@@ -24,7 +24,7 @@ const HomeNavbar = () => {
 
             {/* Right side - settings */}
             <div className={navbar.right_btns}>
-                <div className={navbar.export_project_btn} onClick={() => openDashboard("Settings")}>
+                <div className={navbar.export_project_btn} onClick={() => openDashboard("Profile")}>
                     <Settings size={18} />
                 </div>
             </div>

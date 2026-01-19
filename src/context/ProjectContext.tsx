@@ -101,7 +101,7 @@ const defaultContextValue: ProjectContextType = {
     toggleCharacterHighlight: () => {},
     pageFormat: "LETTER",
     setPageFormat: () => {},
-    displaySceneNumbers: true,
+    displaySceneNumbers: false,
     setDisplaySceneNumbers: () => {},
     characters: {},
     locations: {},
@@ -185,7 +185,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [pageFormat, setPageFormatState] = useState<PageFormat>("LETTER");
 
     // Display scene numbers state
-    const [displaySceneNumbers, setDisplaySceneNumbersState] = useState<boolean>(true);
+    const [displaySceneNumbers, setDisplaySceneNumbersState] = useState<boolean>(false);
 
     // Search state
     const [searchTerm, setSearchTermState] = useState<string>("");

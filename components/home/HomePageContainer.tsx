@@ -2,14 +2,15 @@
 
 import styles from "./Landing.module.css";
 import navbar from "@components/navbar/LandingPageNavbar.module.css";
-
-import { Feather, Layout, WifiOff, Code, MessagesSquare, Eye, Clapperboard, ChartPie, Cloud } from "lucide-react";
+import { useState, useEffect } from "react";
+import { WifiOff, MessagesSquare, Eye, Clapperboard, ChartPie, Cloud } from "lucide-react";
 
 export default function HomePageContainer() {
     return (
         <div className={styles.wrapper}>
             <div className={styles.gradientBackground}></div>
 
+            {/* Layer 0: Marquee Stripes (Background) */}
             <div className={styles.marqueeContainer}>
                 <ScriptStripe speed="slow" direction="left">
                     INT. COFFEE SHOP - DAY — The steam rises slowly from the cup.
@@ -28,71 +29,30 @@ export default function HomePageContainer() {
                 </ScriptStripe>
             </div>
 
+            {/* Layer 1: Main Content Container */}
             <div className={styles.contentContainer}>
                 {/* Hero Section */}
-                <section className={styles.hero}>
-                    <div className={styles.logoContainer}>
+                <section id="about" className={styles.hero}>
+                    {/* Layer 1.1: Preview Image (Behind Content, In Front of Stripes) */}
+                    <div className={styles.heroBackgroundWrapper}>
                         <img
-                            src="/images/scriptio.png"
-                            alt="Scriptio Logo"
-                            className={styles.logoImage}
-                            width={600}
-                            height={180}
+                            src="/images/preview.png"
+                            alt="Scriptio Interface Preview"
+                            className={styles.heroBackgroundImage}
                         />
                     </div>
 
-                    <div className={styles.catchphrase}>Screenwriters First.</div>
-                    <div className={styles.subheadline}>
-                        Stop overpaying for Final Draft. Stop struggling with FadeIn clunky interface. Break free from
-                        Arc Studio, WriterSolo or Celtx free plan limits.
+                    {/* Layer 1.2: Branding (Logo) */}
+                    <div className={styles.heroHeader}>
+                        <img src="/images/scriptio.png" alt="Scriptio Logo" className={styles.heroLogo} />
+                        <span className={styles.catchphrase}>Screenwriters First.</span>
                     </div>
-                </section>
 
-                {/* Pillars Section */}
-                <section id="about" className={styles.pillarsSection}>
-                    <div className={styles.pillarsGrid}>
-                        {/* Pillar 1 */}
-                        <div className={`${styles.glassCard} ${styles.pillarCard}`}>
-                            <div className={styles.pillarHeader}>
-                                <div className={styles.iconCircle}>
-                                    <Layout size={28} />
-                                </div>
-                                <h3 className={styles.pillarTitle}>Modernity</h3>
-                            </div>
-                            <p className={styles.pillarText}>
-                                Cloud or offline. Browser or Desktop. Experience a fluid interface, customizable themes,
-                                and also <strong>real-time collaboration</strong> without friction
-                            </p>
-                        </div>
-
-                        {/* Pillar 2 */}
-                        <div className={`${styles.glassCard} ${styles.pillarCard}`}>
-                            <div className={styles.pillarHeader}>
-                                <div className={styles.iconCircle}>
-                                    <Feather size={28} />
-                                </div>
-                                <h3 className={styles.pillarTitle}>Simplicity</h3>
-                            </div>
-                            <p className={styles.pillarText}>
-                                Designed from the ground up to free your mind with intuitive workflow. We focus on
-                                getting the best out of existing screenwriting tools
-                            </p>
-                        </div>
-
-                        {/* Pillar 3 */}
-                        <div className={`${styles.glassCard} ${styles.pillarCard}`}>
-                            <div className={styles.pillarHeader}>
-                                <div className={styles.iconCircle}>
-                                    <Code size={28} />
-                                </div>
-                                <h3 className={styles.pillarTitle}>Transparency</h3>
-                            </div>
-                            <p className={styles.pillarText}>
-                                Nothing to hide. In an effort of building trust, Scriptio is{" "}
-                                <strong>source-available</strong> as opposed to most well-established screenwriting
-                                software
-                            </p>
-                        </div>
+                    {/* Layer 1.3: Text Carousel & CTA */}
+                    <div className={styles.heroContent}>
+                        <a href="/signup" className={styles.ctaButton}>
+                            Start writing
+                        </a>
                     </div>
                 </section>
 
@@ -114,12 +74,6 @@ export default function HomePageContainer() {
                                 Type without interface clutter. Focus mode emphasizes the current line while fading out
                                 the noise.
                             </p>
-                            <div className={styles.mockEditor}>
-                                <div className={styles.mockLine} style={{ width: "40%" }}></div>
-                                <div className={styles.mockLine} style={{ width: "80%" }}></div>
-                                <div className={styles.mockLine} style={{ width: "90%" }}></div>
-                                <div className={styles.mockLine} style={{ width: "60%" }}></div>
-                            </div>
                         </div>
 
                         {/* Cloud Sync */}

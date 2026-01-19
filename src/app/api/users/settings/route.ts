@@ -12,7 +12,7 @@ import {
 
 import * as UserService from "@src/server/service/user-service";
 import z from "zod";
-import { NextRequest } from "@node_modules/next/server";
+import { NextRequest } from "next/server";
 
 const UpdateSettingsBodySchema = z.object({
     keybinds: z.record(z.string(), z.string()).optional(),

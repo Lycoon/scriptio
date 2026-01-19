@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AppError } from "./api-utils";
-import { isRedirectError } from "@node_modules/next/dist/client/components/redirect-error";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 type AppHandler = (req: NextRequest, context: ApiContext) => Promise<NextResponse | Response | any>;
 

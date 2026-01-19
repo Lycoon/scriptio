@@ -7,7 +7,6 @@ import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 import { applyElement, insertElement, useScriptioEditor } from "@src/lib/screenplay/editor";
 import { Popup } from "@components/popup/Popup";
 import { join } from "@src/lib/utils/misc";
-import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
 /* Utils */
 import { useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";

@@ -96,7 +96,9 @@
     border-radius: 4px;
     cursor: pointer;
     opacity: 0.7;
-    transition: opacity 0.15s ease, background-color 0.15s ease;
+    transition:
+        opacity 0.15s ease,
+        background-color 0.15s ease;
     color: white;
     flex-shrink: 0;
 }
@@ -154,6 +156,7 @@
     line-height: 1.4;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: pre-wrap;
 }
 
 .card_description_input {
@@ -212,7 +215,9 @@
     border: 2px solid transparent;
     border-radius: 50%;
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .color_option:hover {

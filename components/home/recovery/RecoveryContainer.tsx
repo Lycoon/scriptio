@@ -4,7 +4,7 @@ import PasswordChangeForm from "./PasswordChangeForm";
 import RecoveryForm from "./RecoveryForm";
 
 import layout from "../../utils/Layout.module.css";
-import { useSearchParams } from "@node_modules/next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export default function RecoveryContainer() {
     const searchParams = useSearchParams();

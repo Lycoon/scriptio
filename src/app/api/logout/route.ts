@@ -1,4 +1,4 @@
-import { NextRequest } from "@node_modules/next/server";
+import { NextRequest } from "next/server";
 import { getSession } from "@src/lib/session";
 import { apiHandler } from "@src/lib/utils/api-handler";
 import { SuccessNoContent } from "@src/lib/utils/api-utils";

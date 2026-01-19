@@ -195,7 +195,7 @@ const ProjectNavbar = () => {
                         {isZenMode ? <EyeClosed size={18} /> : <Eye size={18} />}
                     </div>
                 )}
-                <div className={navbar.export_project_btn} onClick={() => openDashboard("Settings")}>
+                <div className={navbar.export_project_btn} onClick={() => openDashboard("General")}>
                     <Settings size={18} />
                 </div>
             </div>

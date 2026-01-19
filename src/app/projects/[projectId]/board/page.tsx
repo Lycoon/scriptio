@@ -1,5 +1,5 @@
 import * as ProjectService from "@src/server/service/project-service";
-import { Metadata } from "@node_modules/next";
+import { Metadata } from "next";
 import BoardClientPage from "@components/board/BoardClientPage";
 
 type Props = {

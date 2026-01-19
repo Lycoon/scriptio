@@ -1,6 +1,6 @@
 import EditorAndSidebar from "@components/editor/EditorAndSidebar";
 import * as ProjectService from "@src/server/service/project-service";
-import { Metadata } from "@node_modules/next";
+import { Metadata } from "next";
 
 type Props = {
     params: { projectId: string };

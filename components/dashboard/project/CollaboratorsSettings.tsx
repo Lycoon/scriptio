@@ -1,7 +1,8 @@
 "use client";
 
-import { useContext, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { useCookieUser, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
+import { CookieUser } from "@src/lib/utils/types";
 import { ProjectRole } from "@prisma/client";
 import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { Info } from "lucide-react";
@@ -22,22 +23,29 @@ const CollaboratorsSettings = () => {
     const { membership } = useProjectMembership();
     const { invites, mutate: mutateInvites } = useProjectInvites(membership?.project.id);
     const { collaborators, mutate: mutateCollaborators } = useProjectCollaborators(membership?.project.id);
+    const { user } = useCookieUser();
 
-    if (!membership) return null;
+    const slots = useMemo(() => {
+        if (!membership) return [];
 
-    const owner = collaborators.find((c) => c.role === ProjectRole.OWNER);
-    const otherMembers = collaborators.filter((c) => c.role !== ProjectRole.OWNER);
+        const owner = collaborators.find((c) => c.role === ProjectRole.OWNER);
+        const otherMembers = collaborators.filter((c) => c.role !== ProjectRole.OWNER);
 
-    const slots: { type: "MEMBER" | "INVITE" | "EMPTY"; data: any }[] = [];
+        const result: { type: "MEMBER" | "INVITE" | "EMPTY"; data: any; key: string }[] = [];
 
-    if (owner) slots.push({ type: "MEMBER", data: owner });
-    otherMembers.forEach((m) => slots.push({ type: "MEMBER", data: m }));
-    invites.forEach((i) => slots.push({ type: "INVITE", data: i }));
+        if (owner) result.push({ type: "MEMBER", data: owner, key: `member-${owner.user.id}` });
+        otherMembers.forEach((m) => result.push({ type: "MEMBER", data: m, key: `member-${m.user.id}` }));
+        invites.forEach((i) => result.push({ type: "INVITE", data: i, key: `invite-${i.email}` }));
 
-    const remaining = MAX_COLLABORATORS - slots.length;
-    for (let i = 0; i < remaining; i++) {
-        slots.push({ type: "EMPTY", data: null });
-    }
+        const remaining = MAX_COLLABORATORS - result.length;
+        for (let i = 0; i < remaining; i++) {
+            result.push({ type: "EMPTY", data: null, key: `empty-${i}` });
+        }
+
+        return result;
+    }, [membership, collaborators, invites]);
+
+    if (!membership || !user) return null;
 
     return (
         <div className={styles.container}>
@@ -75,28 +83,29 @@ const CollaboratorsSettings = () => {
 
                 {/* Project Collaborators */}
                 <div className={styles.slotGrid}>
-                    {slots.map((slot, index) => {
+                    {slots.map((slot) => {
                         switch (slot.type) {
                             case "MEMBER":
                                 return (
                                     <MemberSlot
-                                        key={index}
+                                        key={slot.key}
                                         data={slot.data}
                                         membership={membership}
                                         mutateCollaborators={mutateCollaborators}
+                                        user={user}
                                     />
                                 );
                             case "INVITE":
                                 return (
                                     <InviteSlot
-                                        key={index}
+                                        key={slot.key}
                                         data={slot.data}
                                         membership={membership}
                                         mutateInvites={mutateInvites}
                                     />
                                 );
                             case "EMPTY":
-                                return <EmptySlot key={index} membership={membership} mutateInvites={mutateInvites} />;
+                                return <EmptySlot key={slot.key} membership={membership} mutateInvites={mutateInvites} />;
                             default:
                                 return null;
                         }
@@ -111,13 +120,11 @@ interface MemberSlotProps {
     data: Collaborator;
     membership: ProjectMembershipPayload;
     mutateCollaborators: () => void;
+    user: CookieUser;
 }
 
-const MemberSlot = ({ data, membership, mutateCollaborators }: MemberSlotProps) => {
+const MemberSlot = ({ data, membership, mutateCollaborators, user }: MemberSlotProps) => {
     const { closeDashboard } = useContext(DashboardContext);
-    const { user } = useCookieUser();
-
-    if (!user) return null;
 
     const isOwner = data.role === ProjectRole.OWNER;
     const isAdmin = Roles.hasRoleOrGreater(membership.role, ProjectRole.ADMIN);

@@ -3,7 +3,7 @@ import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
 import { validate } from "@src/lib/utils/api-utils";
 
 import z from "zod";
-import { redirect } from "@node_modules/next/navigation";
+import { redirect } from "next/navigation";
 
 const QuerySchema = z.object({
     objectId: z.string(),

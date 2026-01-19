@@ -18,7 +18,7 @@ import * as CollabUtils from "@src/lib/collaboration/utils";
 
 import z from "zod";
 import { NextRequest } from "next/server";
-import { redirect } from "@node_modules/next/navigation";
+import { redirect } from "next/navigation";
 
 const QuerySchema = z.object({
     projectId: z.string(),

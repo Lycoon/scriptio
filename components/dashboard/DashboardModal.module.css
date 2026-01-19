@@ -109,7 +109,6 @@
     flex: 1;
     scrollbar-gutter: stable;
     padding-right: 20px;
-    scroll-behavior: smooth;
 }
 
 .input {

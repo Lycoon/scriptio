@@ -16,7 +16,7 @@ import * as Misc from "@src/lib/utils/misc";
 import * as Mail from "@src/lib/mail/mail";
 
 import z from "zod";
-import { NextRequest } from "@node_modules/next/server";
+import { NextRequest } from "next/server";
 import { CookieUser } from "@src/lib/utils/types";
 
 export type SignupBody = z.infer<typeof SignupBodySchema>;
