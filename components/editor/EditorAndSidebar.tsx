@@ -235,7 +235,7 @@ const EditorAndSidebar = () => {
     return (
         <div
             className={`${styles.editor_and_sidebar} ${isEditorReady ? styles.visible : styles.hidden} ${
-                !isZenMode && styles.sidebars_visible
+                !isZenMode ? styles.sidebars_visible : ""
             }`}
         >
             <ContextMenu />
@@ -243,11 +243,11 @@ const EditorAndSidebar = () => {
             <Popup />
             <EditorSidebarNavigation />
             <div className={styles.container} onScroll={onScroll}>
-                {/* Upper editor shadow */}
-                <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
+                <div className={styles.editor_wrapper}>
+                    {/* Upper editor shadow */}
+                    <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
 
-                {/* Scriptio Editor */}
-                <div>
+                    {/* Scriptio Editor */}
                     <EditorContent editor={editor} />
                 </div>
             </div>

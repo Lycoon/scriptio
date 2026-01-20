@@ -1,5 +1,5 @@
 .menu {
-    position: absolute;
+    position: fixed;
     display: flex;
     flex-direction: column;
     padding: 6px;

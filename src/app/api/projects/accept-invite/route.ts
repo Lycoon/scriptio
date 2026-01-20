@@ -8,6 +8,7 @@ import * as Misc from "@src/lib/utils/misc";
 import z from "zod";
 import { NextRequest } from "next/server";
 import { redirect } from "next/navigation";
+import { getCookieUser } from "@src/lib/session";
 
 const QuerySchema = z.object({
     token: z.string(),
@@ -35,7 +36,11 @@ async function acceptProjectInvite(req: NextRequest, { searchParams }: ApiContex
         // If user exists, we can add him as a project member
         await ProjectService.upsertMember(invite.projectId, user.id);
         await ProjectService.deleteInviteFromToken(token);
-        redirect(`/projects/${invite.projectId}/screenplay`);
+
+        // If user is not logged in, redirect to login with invitation email as placeholder
+        const cookieUser = await getCookieUser();
+        if (cookieUser) redirect(`/projects/${invite.projectId}/screenplay`);
+        else redirect(`/login?email=${invite.email}`);
     } else {
         // If email is not registered on Scriptio we redirect to signup with the same token
         redirect(`/signup?email=${invite.email}&inviteToken=${token}`);

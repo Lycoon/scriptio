@@ -11,8 +11,9 @@ import { ApiResponse } from "@src/lib/utils/api-utils";
 import form from "../../utils/Form.module.css";
 import { LoginBody } from "@src/app/api/login/route";
 import { useRouter } from "next/navigation";
+import { AccountVerificationStatus } from "./LoginContainer";
 
-const LoginForm = ({ status }: { status: "success" | "failed" | "used" | null }) => {
+const LoginForm = ({ status, email }: { status: AccountVerificationStatus; email: string | null }) => {
     const router = useRouter();
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const { mutate } = useSWRConfig();
@@ -72,7 +73,14 @@ const LoginForm = ({ status }: { status: "success" | "failed" | "used" | null })
             <div className={form.element}>
                 <label className={form.element}>
                     <span className={form.label}>Email</span>
-                    <input className={form.input} name="email" type="email" onChange={resetFromInfo} required />
+                    <input
+                        className={form.input}
+                        name="email"
+                        type="email"
+                        onChange={resetFromInfo}
+                        defaultValue={email ?? ""}
+                        required
+                    />
                 </label>
 
                 <label className={form.element}>

@@ -236,6 +236,26 @@ export const useScriptioEditor = (
 
     // Ref to track current suggestions and avoid unnecessary state updates
     const currentSuggestionsRef = useRef<string[]>([]);
+    const currentSuggestionDataRef = useRef<SuggestionData | null>(null);
+
+    const setSuggestionData = useCallback(
+        (data: SuggestionData) => {
+            // Skip update if data hasn't meaningfully changed
+            const current = currentSuggestionDataRef.current;
+            if (
+                current &&
+                current.cursor === data.cursor &&
+                current.cursorInNode === data.cursorInNode &&
+                current.textOffset === data.textOffset
+            ) {
+                return;
+            }
+            currentSuggestionDataRef.current = data;
+            updateSuggestionsData(data);
+        },
+        [updateSuggestionsData]
+    );
+
     const setSuggestions = useCallback(
         (suggestions: string[]) => {
             // Skip update if suggestions haven't changed (both empty or same content)
@@ -457,7 +477,7 @@ export const useScriptioEditor = (
 
                     if (suggestions.length > 0) {
                         const pagePos = editor.view.coordsAtPos(cursor);
-                        updateSuggestionsData({
+                        setSuggestionData({
                             position: { x: pagePos.left, y: pagePos.top },
                             cursor,
                             cursorInNode,
@@ -504,7 +524,7 @@ export const useScriptioEditor = (
 
                     if (suggestions.length > 0) {
                         const pagePos = editor.view.coordsAtPos(cursor);
-                        updateSuggestionsData({
+                        setSuggestionData({
                             position: { x: pagePos.left, y: pagePos.top },
                             cursor,
                             cursorInNode,

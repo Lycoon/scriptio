@@ -1,15 +1,13 @@
 "use client";
 
-import { useContext, useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useContext, useRef, useEffect, useCallback, useState } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { scrollToMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 import { Search, ChevronUp, ChevronDown, X } from "lucide-react";
-import debounce from "debounce";
-
 import styles from "./ScreenplaySearch.module.css";
 
-const DEBOUNCE_MS = 150;
+const DEBOUNCE_MS = 300;
 
 const FILTER_LABELS: Record<ScreenplayElement, string> = {
     [ScreenplayElement.Scene]: "Scene Heading",
@@ -37,7 +35,6 @@ const FILTER_ORDER: ScreenplayElement[] = [
 const ScreenplaySearch = () => {
     const {
         editor,
-        searchTerm,
         setSearchTerm,
         searchFilters,
         setSearchFilters,
@@ -47,20 +44,18 @@ const ScreenplaySearch = () => {
     } = useContext(ProjectContext);
 
     const [isOpen, setIsOpen] = useState(false);
-    const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Debounced search term update to avoid freezing on every keystroke
-    const debouncedSetSearchTerm = useMemo(
-        () => debounce((term: string) => setSearchTerm(term), DEBOUNCE_MS),
-        [setSearchTerm]
-    );
-
-    // Sync local search term when context search term changes externally
+    // Cleanup debounce on unmount
     useEffect(() => {
-        setLocalSearchTerm(searchTerm);
-    }, [searchTerm]);
+        return () => {
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+            }
+        };
+    }, []);
 
     // Close search when clicking outside
     useEffect(() => {
@@ -83,25 +78,37 @@ const ScreenplaySearch = () => {
         }
     }, [isOpen]);
 
-    // Callbacks - defined before useEffects that use them
     const handleOpen = useCallback(() => {
         setIsOpen(true);
     }, []);
 
     const handleClose = useCallback(() => {
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
         setIsOpen(false);
-        setLocalSearchTerm("");
-        debouncedSetSearchTerm.clear();
+        if (inputRef.current) {
+            inputRef.current.value = "";
+        }
         setSearchTerm("");
-    }, [setSearchTerm, debouncedSetSearchTerm]);
+    }, [setSearchTerm]);
 
+    // Use uncontrolled input with debounced updates to context
     const handleSearchChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
             const value = e.target.value;
-            setLocalSearchTerm(value);
-            debouncedSetSearchTerm(value);
+
+            // Clear pending debounce
+            if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+            }
+
+            // Debounce the expensive search operation
+            debounceRef.current = setTimeout(() => {
+                setSearchTerm(value);
+            }, DEBOUNCE_MS);
         },
-        [debouncedSetSearchTerm]
+        [setSearchTerm],
     );
 
     const toggleFilter = useCallback(
@@ -114,14 +121,13 @@ const ScreenplaySearch = () => {
             }
             setSearchFilters(newFilters);
         },
-        [searchFilters, setSearchFilters]
+        [searchFilters, setSearchFilters],
     );
 
     const goToNextMatch = useCallback(() => {
         if (searchMatches.length === 0 || !editor) return;
         const nextIndex = (currentSearchIndex + 1) % searchMatches.length;
         setCurrentSearchIndex(nextIndex);
-        // Scroll immediately without waiting for state update
         scrollToMatch(editor, searchMatches[nextIndex]);
     }, [editor, searchMatches, currentSearchIndex, setCurrentSearchIndex]);
 
@@ -129,18 +135,15 @@ const ScreenplaySearch = () => {
         if (searchMatches.length === 0 || !editor) return;
         const prevIndex = (currentSearchIndex - 1 + searchMatches.length) % searchMatches.length;
         setCurrentSearchIndex(prevIndex);
-        // Scroll immediately without waiting for state update
         scrollToMatch(editor, searchMatches[prevIndex]);
     }, [editor, searchMatches, currentSearchIndex, setCurrentSearchIndex]);
 
     // Handle keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Escape to close
             if (e.key === "Escape" && isOpen) {
                 handleClose();
             }
-            // Enter to go to next match
             if (e.key === "Enter" && isOpen && searchMatches.length > 0) {
                 e.preventDefault();
                 if (e.shiftKey) {
@@ -164,7 +167,7 @@ const ScreenplaySearch = () => {
                         type="text"
                         className={styles.search_input}
                         placeholder="Search..."
-                        value={localSearchTerm}
+                        defaultValue=""
                         onChange={handleSearchChange}
                     />
                 )}

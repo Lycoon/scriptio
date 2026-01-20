@@ -3,8 +3,8 @@
     flex-direction: column;
     width: max-content;
 
-    z-index: 1;
-    position: absolute;
+    z-index: 100;
+    position: fixed;
     overflow-y: auto;
     border-radius: 12px;
     background-color: var(--editor-sidebar);
