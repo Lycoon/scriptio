@@ -34,7 +34,8 @@ function base64ToUint8Array(base64: string): Uint8Array {
 
 const DB_NAME = "sqlite:scriptio.db";
 
-type Database = Awaited<ReturnType<typeof import("@tauri-apps/plugin-sql").default>>;
+// Use any for database type to avoid TypeScript issues with Tauri plugin types
+type Database = any;
 
 /**
  * SQLite persistence provider for Yjs documents.
@@ -77,10 +78,10 @@ export class SqlitePersistence extends Observable<string> {
             `);
 
             // Load existing document state
-            const result = await this.db.select<{ data: string }[]>(
+            const result = await this.db.select(
                 "SELECT data FROM yjs_documents WHERE project_id = ?",
                 [this.projectId],
-            );
+            ) as { data: string }[];
 
             if (result.length > 0 && result[0].data) {
                 try {

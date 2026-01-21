@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useProjectMemberships } from "@src/lib/utils/hooks";
-import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { useCookieUser, useProjectMemberships, ExtendedProjectMembershipPayload } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
+import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
+import { redirectScreenplay } from "@src/lib/utils/redirects";
 
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./CreateProjectPage";
@@ -15,13 +16,47 @@ import page from "./ProjectPageContainer.module.css";
 import form from "../utils/Form.module.css";
 
 const ProjectPageContainer = () => {
-    const { projects, isLoading } = useProjectMemberships();
+    const { user } = useCookieUser();
+    const { projects, isLoading, mutate } = useProjectMemberships();
     const [isCreating, setIsCreating] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const parent = useRef(null);
 
     useEffect(() => {
         parent.current && autoAnimate(parent.current);
     }, [parent]);
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsImporting(true);
+
+        try {
+            const result = await importFileAsProject(file, user);
+
+            if (result.success && result.projectId) {
+                // Refresh the project list
+                await mutate();
+                // Redirect to the new project
+                redirectScreenplay(result.projectId);
+            } else {
+                console.error("Import failed:", result.error);
+                // Could show a toast/notification here
+            }
+        } catch (error) {
+            console.error("Import error:", error);
+        } finally {
+            setIsImporting(false);
+            // Reset input so the same file can be selected again
+            event.target.value = "";
+        }
+    };
 
     if (isLoading || !projects) return <Loading />;
 
@@ -32,11 +67,26 @@ const ProjectPageContainer = () => {
     } else {
         return (
             <div className={page.container}>
+                {/* Hidden file input for import */}
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileImport}
+                    accept={getSupportedImportExtensions()}
+                    style={{ display: "none" }}
+                />
                 <div className={page.center}>
                     <div className={page.header}>
                         <div className={page.header_info}>
                             <h1>Projects</h1>
                             <div className={page.header_btns}>
+                                <button
+                                    className={join(page.import_btn, form.btn)}
+                                    onClick={handleImportClick}
+                                    disabled={isImporting}
+                                >
+                                    {isImporting ? "Importing..." : "Import"}
+                                </button>
                                 <button className={join(page.create_btn, form.btn)} onClick={() => setIsCreating(true)}>
                                     Create
                                 </button>
@@ -45,8 +95,14 @@ const ProjectPageContainer = () => {
                         <hr />
                     </div>
                     <div ref={parent} className={page.grid}>
-                        {projects.map((membership: ProjectMembershipPayload) => {
-                            return <ProjectItem key={membership.project.id} project={membership.project} />;
+                        {projects.map((membership: ExtendedProjectMembershipPayload) => {
+                            return (
+                                <ProjectItem
+                                    key={membership.project.id}
+                                    project={membership.project}
+                                    isLocalOnly={membership.isLocalOnly}
+                                />
+                            );
                         })}
                     </div>
                 </div>

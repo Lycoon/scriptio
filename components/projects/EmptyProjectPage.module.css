@@ -6,12 +6,26 @@
     flex: 1;
 
     border: none;
-    cursor: pointer;
 
     background: none;
 }
 
-.container:hover .title {
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 70px;
+}
+
+.main_btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.main_btn:hover .title {
     transition: transform 0.5s;
     transform: scale(1.03);
 }
@@ -19,9 +33,35 @@
 .title {
     font-style: italic;
     font-size: 2.8rem;
-    padding-bottom: 70px;
     color: var(--primary-text);
 
     transition: transform 0.5s;
     transform: scale(1);
+}
+
+.or_text {
+    font-size: 1rem;
+    color: var(--secondary-text);
+    margin: 8px 0;
+}
+
+.import_btn {
+    background: none;
+    border: 1px solid var(--secondary-text);
+    border-radius: 20px;
+    padding: 10px 24px;
+    cursor: pointer;
+    color: var(--primary-text);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.import_btn:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-text);
+}
+
+.import_btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

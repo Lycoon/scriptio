@@ -5,13 +5,14 @@ import { _MS_PER_DAY, getElapsedDaysFrom, getLastUpdate, join } from "@src/lib/u
 import item from "./ProjectItem.module.css";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
-import { Calendar } from "lucide-react";
+import { Calendar, Cloud, HardDrive } from "lucide-react";
 
 type Props = {
     project: ProjectMembershipPayload["project"];
+    isLocalOnly?: boolean;
 };
 
-const ProjectItem = ({ project }: Props) => {
+const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
     const elapsedDays = getElapsedDaysFrom(project.updatedAt);
     const lastUpdated = getLastUpdate(elapsedDays);
 
@@ -23,7 +24,12 @@ const ProjectItem = ({ project }: Props) => {
         <button className={join(item.container)} onClick={() => redirectScreenplay(project.id)}>
             <div className={item.title_flex}>
                 <div>
-                    <h2 className={item.title}>{project.title}</h2>
+                    <div className={item.title_row}>
+                        <h2 className={item.title}>{project.title}</h2>
+                        <span className={item.sync_icon} title={isLocalOnly ? "Local only" : "Synced to cloud"}>
+                            {isLocalOnly ? <HardDrive size={14} /> : <Cloud size={14} />}
+                        </span>
+                    </div>
                     <div className={item.date}>
                         <Calendar size={18} />
                         <p className={item.date_text}>{lastUpdated}</p>

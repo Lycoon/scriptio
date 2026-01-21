@@ -14,23 +14,23 @@ export default function HomeClient() {
     const { user, isLoading } = useCookieUser();
 
     useEffect(() => {
-        if (user) document.title = "Projects | Scriptio";
-    }, [user]);
+        if (user || isDesktop) document.title = "Projects | Scriptio";
+    }, [user, isDesktop]);
 
     if (isLoading) {
         return <Loading />;
     }
 
-    // Desktop app
-    /*if (isDesktop) {
+    // Desktop app - always show projects page (offline-first, no landing page)
+    if (isDesktop) {
         return (
             <>
                 <HomeNavbar />
-                <DesktopHomePageContainer />
+                <ProjectPageContainer />
                 <DashboardModal />
             </>
         );
-    }*/
+    }
 
     // Authenticated user - show projects with HomeNavbar
     if (user) {

@@ -9,6 +9,7 @@ import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/
 import { KeyBindingMap, tinykeys } from "tinykeys";
 import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import { ProjectRole } from "@prisma/client";
 
 interface Position {
     x: number;
@@ -119,12 +120,114 @@ const useSettings = () => {
     };
 };
 
+/**
+ * Extended project membership type that includes sync status.
+ */
+export interface ExtendedProjectMembershipPayload extends ProjectMembershipPayload {
+    isLocalOnly: boolean;
+}
+
+/**
+ * Hook to fetch local projects from SQLite (desktop only).
+ * Returns empty array on web.
+ */
+const useLocalProjects = () => {
+    const [localProjects, setLocalProjects] = useState<ExtendedProjectMembershipPayload[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const isDesktop = useDesktop();
+
+    const refresh = useCallback(async () => {
+        if (!isDesktop) {
+            setLocalProjects([]);
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const { getLocalProjects } = await import("@src/lib/persistence/local-projects");
+            const projects = await getLocalProjects();
+
+            const memberships: ExtendedProjectMembershipPayload[] = projects.map((p) => ({
+                role: ProjectRole.OWNER,
+                isLocalOnly: true,
+                project: {
+                    id: p.id,
+                    title: p.title,
+                    description: p.description,
+                    hasPoster: false,
+                    poster: null,
+                    createdAt: p.createdAt,
+                    updatedAt: p.updatedAt,
+                },
+            }));
+
+            setLocalProjects(memberships);
+        } catch (error) {
+            console.error("[useLocalProjects] Failed to load local projects:", error);
+            setLocalProjects([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isDesktop]);
+
+    useEffect(() => {
+        refresh();
+    }, [refresh]);
+
+    return { localProjects, isLoading, refresh };
+};
+
+/**
+ * Hook to fetch all projects (remote + local).
+ * Remote projects are fetched via API, local projects from SQLite on desktop.
+ */
 const useProjectMemberships = () => {
-    const { data, isLoading, mutate } = useSWR<ProjectMembershipPayload[]>("/api/projects");
+    const isDesktop = useDesktop();
+    const { data: remoteProjects, isLoading: isRemoteLoading, mutate } = useSWR<ProjectMembershipPayload[]>(
+        // On desktop without auth, don't fetch remote - it will fail
+        // The fetcher will handle auth errors gracefully
+        "/api/projects"
+    );
+    const { localProjects, isLoading: isLocalLoading, refresh: refreshLocal } = useLocalProjects();
+
+    // Merge remote and local projects, sorted by updatedAt
+    const projects = useMemo(() => {
+        const remote: ExtendedProjectMembershipPayload[] = (remoteProjects || []).map((p) => ({
+            ...p,
+            isLocalOnly: false,
+        }));
+
+        // Filter out local projects that might have been synced (same ID in remote)
+        const remoteIds = new Set(remote.map((p) => p.project.id));
+        const localOnly = localProjects.filter((p) => !remoteIds.has(p.project.id));
+
+        // Combine and sort by updatedAt descending
+        const combined = [...remote, ...localOnly];
+        combined.sort((a, b) => {
+            const dateA = new Date(a.project.updatedAt).getTime();
+            const dateB = new Date(b.project.updatedAt).getTime();
+            return dateB - dateA;
+        });
+
+        return combined;
+    }, [remoteProjects, localProjects]);
+
+    // Combined loading state - on desktop, wait for local to be ready
+    // On web, only wait for remote
+    const isLoading = isDesktop
+        ? isLocalLoading || (isRemoteLoading && localProjects.length === 0)
+        : isRemoteLoading;
+
+    // Combined mutate function
+    const refreshAll = useCallback(async () => {
+        await Promise.all([mutate(), refreshLocal()]);
+    }, [mutate, refreshLocal]);
+
     return {
-        projects: data || [],
+        projects,
         isLoading,
-        mutate,
+        mutate: refreshAll,
+        refreshLocal,
     };
 };
 
@@ -231,4 +334,5 @@ export {
     useProjectCollaborators,
     usePage,
     useDesktop,
+    useLocalProjects,
 };

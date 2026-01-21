@@ -36,6 +36,12 @@
     border-radius: 20px !important;
 }
 
+.import_btn {
+    font-weight: bold;
+    padding-inline: 40px !important;
+    border-radius: 20px !important;
+}
+
 .center {
     display: flex;
     flex-direction: column;
