@@ -1,9 +1,16 @@
 import { getIronSession, IronSession, type SessionOptions } from "iron-session";
 import { CookieUser } from "@src/lib/utils/types";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import jwt from "jsonwebtoken";
 
 export interface SessionData {
     user?: CookieUser;
+}
+
+export interface DesktopTokenPayload {
+    id: string;
+    email: string;
+    createdAt: string; // ISO string in JWT
 }
 
 export const sessionOptions: SessionOptions = {
@@ -25,11 +32,67 @@ export const getSession = async (): Promise<IronSession<SessionData>> => {
 };
 
 /*
- * Used to get the user from the session (in /api/users/cookie)
+ * Check if the request is from a desktop client via Authorization header
+ */
+const getDesktopUser = async (): Promise<CookieUser | undefined> => {
+    const headersList = await headers();
+    const authHeader = headersList.get("authorization");
+
+    if (!authHeader?.startsWith("Bearer ")) {
+        return undefined;
+    }
+
+    const token = authHeader.slice(7);
+    try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET as string) as DesktopTokenPayload;
+        return {
+            id: payload.id,
+            email: payload.email,
+            createdAt: new Date(payload.createdAt),
+        };
+    } catch {
+        return undefined;
+    }
+};
+
+/*
+ * Used to get the user from either:
+ * 1. Desktop: JWT in Authorization header (Bearer token)
+ * 2. Web: Session cookie
  */
 export const getCookieUser = async (): Promise<CookieUser | undefined> => {
+    // First, check for desktop JWT auth
+    const desktopUser = await getDesktopUser();
+    if (desktopUser) {
+        return desktopUser;
+    }
+
+    // Fall back to cookie-based session for web
     const session = await getSession();
     return session.user;
+};
+
+/*
+ * Check if the current request is from a desktop client
+ */
+export const isDesktopRequest = async (): Promise<boolean> => {
+    const headersList = await headers();
+    return headersList.get("x-client-type") === "desktop";
+};
+
+/*
+ * Generate a long-lived JWT for desktop authentication
+ */
+export const generateDesktopToken = (user: CookieUser): string => {
+    const payload: DesktopTokenPayload = {
+        id: user.id,
+        email: user.email,
+        createdAt: user.createdAt.toISOString(),
+    };
+
+    return jwt.sign(payload, process.env.JWT_SECRET as string, {
+        expiresIn: "30d", // Desktop tokens last 30 days
+    });
 };
 
 export const authenticate = async ({ id, email, createdAt }: CookieUser) => {

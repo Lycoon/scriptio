@@ -9,7 +9,7 @@ import {
 } from "./pdf-utils";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { computeContdIndices } from "@src/lib/screenplay/contd";
-import { ProjectData, ProjectState } from "@src/lib/project/project-yjs";
+import { ProjectData, ProjectState } from "@src/lib/project/project-state";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import { PageFormat } from "@src/lib/utils/enums";
 

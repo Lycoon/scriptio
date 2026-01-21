@@ -8,6 +8,7 @@ import { LogOut } from "lucide-react";
 import styles from "./DashboardModal.module.css";
 import { redirect } from "next/navigation";
 import { logout } from "@src/lib/utils/requests";
+import { isTauri } from "@tauri-apps/api/core";
 
 export type Category =
     | "General"
@@ -42,6 +43,13 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
 
     const onLogOut = async () => {
         await logout();
+
+        // On desktop, clear the stored JWT token
+        if (isTauri()) {
+            const { clearDesktopToken } = await import("@src/lib/desktop-auth");
+            await clearDesktopToken();
+        }
+
         await mutate("/api/users/cookie", undefined);
         closeDashboard();
         redirect("/");

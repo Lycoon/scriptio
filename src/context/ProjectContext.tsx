@@ -2,23 +2,19 @@
 
 import { createContext, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Editor } from "@tiptap/react";
-import { ThrottledWebsocketProvider } from "@src/lib/collaboration/utils";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
 import { mergeScenesData, PersistentSceneMap, Scene } from "@src/lib/screenplay/scenes";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { useUser } from "@src/lib/utils/hooks";
-import {
-    CollaboratorInfo,
-    ConnectionStatus,
-    createProjectRepository,
-    LayoutData,
-    ProjectRepository,
-    useProjectYjs,
-} from "@src/lib/project/project-yjs";
+import { CollaboratorInfo, ConnectionStatus, LayoutData, useProjectYjs } from "@src/lib/project/project-state";
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, Style, PageFormat } from "@src/lib/utils/enums";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
+
+// Import types only - these don't cause module loading
+import type { ThrottledWebsocketProvider } from "@src/lib/collaboration/utils";
+import type { ProjectRepository } from "@src/lib/project/project-repository";
 
 // -------------------------------- //
 //          TYPE DEFINITIONS        //
@@ -161,8 +157,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         userColor,
     });
 
-    // Create repository instance when ydoc is available
-    const repository = useMemo(() => createProjectRepository(ydoc), [ydoc]);
+    // Repository state - loaded dynamically
+    const [repository, setRepository] = useState<ProjectRepository | null>(null);
     const [screenplay, updateScreenplay] = useState<Screenplay>([]);
     const [scenes, updateScenes] = useState<Scene[]>([]);
     const [characters, updateCharacters] = useState<CharacterMap>();
@@ -198,10 +194,33 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             ScreenplayElement.Parenthetical,
             ScreenplayElement.Transition,
             ScreenplayElement.Section,
-        ])
+        ]),
     );
     const [currentSearchIndex, setCurrentSearchIndexState] = useState<number>(0);
     const [searchMatches, setSearchMatchesState] = useState<SearchMatch[]>([]);
+
+    // Create repository instance when ydoc is available (dynamically imported)
+    useEffect(() => {
+        if (!ydoc) {
+            setRepository(null);
+            return;
+        }
+
+        let isMounted = true;
+
+        const loadRepository = async () => {
+            const { createProjectRepository } = await import("@src/lib/project/project-repository");
+            if (isMounted) {
+                setRepository(createProjectRepository(ydoc));
+            }
+        };
+
+        loadRepository();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [ydoc]);
 
     useEffect(() => {
         if (!repository) return;
@@ -219,7 +238,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         };
 
         // Initial computation
-        const initialScreenplay = repository.getScreenplay();
+        const initialScreenplay = repository.screenplay;
         recomputeFromScreenplay(initialScreenplay);
 
         // Observe screenplay changes
@@ -242,21 +261,21 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
         // Observe character changes - get current screenplay from repository
         const unsubscribeCharacters = repository.observeCharacters((_characters: CharacterMap) => {
-            const currentScreenplay = repository.getScreenplay();
+            const currentScreenplay = repository.screenplay;
             const allCharacters = mergeCharactersData(_characters, currentScreenplay);
             updateCharacters(allCharacters);
         });
 
         // Observe location changes - get current screenplay from repository
         const unsubscribeLocations = repository.observeLocations((_locations: LocationMap) => {
-            const currentScreenplay = repository.getScreenplay();
+            const currentScreenplay = repository.screenplay;
             const allLocations = mergeLocationsData(_locations, currentScreenplay);
             updateLocations(allLocations);
         });
 
         // Observe scene changes - get current screenplay from repository
         const unsubscribeScenes = repository.observeScenes((_scenes: PersistentSceneMap) => {
-            const currentScreenplay = repository.getScreenplay();
+            const currentScreenplay = repository.screenplay;
             const allScenes = mergeScenesData(_scenes, currentScreenplay);
             updateScenes(allScenes);
         });
@@ -317,7 +336,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setPageFormatState(format);
             repository?.setPageSize(format);
         },
-        [repository]
+        [repository],
     );
 
     const setDisplaySceneNumbers = useCallback(
@@ -325,7 +344,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setDisplaySceneNumbersState(display);
             repository?.setDisplaySceneNumber(display);
         },
-        [repository]
+        [repository],
     );
 
     const setSearchTerm = useCallback((term: string) => {
@@ -420,7 +439,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setCurrentSearchIndex,
             searchMatches,
             setSearchMatches,
-        ]
+        ],
     );
 
     return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;

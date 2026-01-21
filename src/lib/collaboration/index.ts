@@ -33,8 +33,20 @@ function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, se
         switch (messageType) {
             case 0: // Sync (document updates)
                 console.log("Sync");
-                syncProtocol.readSyncMessage(decoder, new encoding.Encoder(), room.doc, room);
-                room.broadcast(fullMessage, sender);
+                const syncEncoder = encoding.createEncoder();
+                encoding.writeVarUint(syncEncoder, 0); // Message type 0 (sync)
+                const syncMessageType = syncProtocol.readSyncMessage(decoder, syncEncoder, room.doc, room);
+
+                // If there's a response to send (e.g., SyncStep2 in response to SyncStep1),
+                // send it back to the client. This is essential for the client to know sync is complete.
+                if (encoding.length(syncEncoder) > 1) {
+                    sender.send(encoding.toUint8Array(syncEncoder));
+                }
+
+                // Only broadcast document updates to other clients, not sync step responses
+                if (syncMessageType === syncProtocol.messageYjsUpdate) {
+                    room.broadcast(fullMessage, sender);
+                }
                 room.scheduleSave();
                 room.updateSessionActivity(sender);
                 break;

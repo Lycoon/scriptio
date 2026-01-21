@@ -1,7 +1,7 @@
 import FileSaver from "file-saver";
 import { replaceScreenplay } from "../screenplay/editor";
 import { Editor } from "@tiptap/react";
-import { ProjectData, ProjectState } from "../project/project-yjs";
+import { ProjectData, ProjectState } from "../project/project-state";
 
 export type BaseExportOptions = {
     title: string;

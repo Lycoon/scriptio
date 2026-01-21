@@ -5,17 +5,17 @@ import { ThemeProvider } from "next-themes";
 import { SWRConfig } from "swr";
 import { UserContextProvider } from "@src/context/UserContext";
 import { DashboardContextProvider } from "@src/context/DashboardContext";
-import fetchJson from "@src/lib/fetchJson";
+import fetcher from "@src/lib/fetcher";
 
 export function Providers({ children }: { children: ReactNode }) {
     return (
         <SWRConfig
             value={{
                 revalidateOnFocus: true,
-                fetcher: fetchJson,
+                fetcher,
                 onSuccess: () => {},
                 onError: (err) => {
-                    console.error(err);
+                    console.error("[Fetcher] An unexpected error occurred: ", err);
                 },
             }}
         >

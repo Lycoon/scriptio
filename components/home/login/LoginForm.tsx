@@ -12,6 +12,7 @@ import form from "../../utils/Form.module.css";
 import { LoginBody } from "@src/app/api/login/route";
 import { useRouter } from "next/navigation";
 import { AccountVerificationStatus } from "./LoginContainer";
+import { isTauri } from "@tauri-apps/api/core";
 
 const LoginForm = ({ status, email }: { status: AccountVerificationStatus; email: string | null }) => {
     const router = useRouter();
@@ -54,6 +55,14 @@ const LoginForm = ({ status, email }: { status: AccountVerificationStatus; email
 
         const res = await login(body);
         if (res.ok) {
+            const json = (await res.json()) as ApiResponse;
+
+            // On desktop, store the JWT token
+            if (isTauri() && json.data?.token) {
+                const { setDesktopToken } = await import("@src/lib/desktop-auth");
+                await setDesktopToken(json.data.token);
+            }
+
             await mutate("/api/users/cookie");
             router.push("/");
         } else {

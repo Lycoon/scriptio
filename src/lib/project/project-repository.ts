@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { Screenplay } from "../utils/types";
-import { LayoutData, ProjectState } from "./project-yjs";
+import { LayoutData, ProjectState } from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
@@ -47,10 +47,8 @@ export class ProjectRepository {
      * Get the screenplay as a Screenplay (ProseMirror JSONContent) object.
      * This converts the Y.js XmlFragment to a ProseMirror document structure.
      */
-    getScreenplay(): Screenplay {
-        const fragment = this.ydoc.getXmlFragment(this.ydoc.KEYS.SCREENPLAY);
-        const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
-        return proseMirrorNode.content.toJSON() as Screenplay;
+    get screenplay(): Screenplay {
+        return this.ydoc.screenplay();
     }
 
     /**
@@ -67,7 +65,7 @@ export class ProjectRepository {
         const observer = () => {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
-                const screenplay = this.getScreenplay();
+                const screenplay = this.screenplay;
                 callback(screenplay);
             }, delay);
         };

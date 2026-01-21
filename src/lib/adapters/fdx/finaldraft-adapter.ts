@@ -1,7 +1,7 @@
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { XMLBuilder, XMLParser } from "@node_modules/fast-xml-parser/src/fxp";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
-import { ProjectData, ProjectState } from "@src/lib/project/project-yjs";
+import { ProjectData, ProjectState } from "@src/lib/project/project-state";
 
 const options = { attributeNamePrefix: "@_", textNodeName: "#text", ignoreAttributes: false, format: true };
 const builder = new XMLBuilder(options);
@@ -25,11 +25,11 @@ const FDX_STYLE_TABLE: Record<string, string> = {
 
 // Reverse lookup tables for parsing FDX files
 const FDX_ELEMENT_REVERSE: Record<string, string> = Object.fromEntries(
-    Object.entries(FDX_ELEMENT_TABLE).map(([k, v]) => [v, k])
+    Object.entries(FDX_ELEMENT_TABLE).map(([k, v]) => [v, k]),
 );
 
 const FDX_STYLE_REVERSE: Record<string, string> = Object.fromEntries(
-    Object.entries(FDX_STYLE_TABLE).map(([k, v]) => [v, k])
+    Object.entries(FDX_STYLE_TABLE).map(([k, v]) => [v, k]),
 );
 
 export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {

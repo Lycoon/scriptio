@@ -1,4 +1,4 @@
-import { LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-yjs";
+import { LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import * as fflate from "fflate";
 

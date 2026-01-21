@@ -5,7 +5,7 @@ import fountain from "./fountain_parser";
 import { generateJSON, JSONContent } from "@tiptap/react";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { BASE_EXTENSIONS } from "@src/lib/screenplay/editor";
-import { ProjectData, ProjectState } from "@src/lib/project/project-yjs";
+import { ProjectData, ProjectState } from "@src/lib/project/project-state";
 
 export class FountainAdapter extends ProjectAdapter {
     label = "Fountain Script";

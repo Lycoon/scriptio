@@ -2,7 +2,7 @@
 
 import { useContext, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { getBoardMap } from "@src/lib/project/project-yjs";
+import { getBoardMap } from "@src/lib/project/project-state";
 import BoardCard, { BoardCardData } from "./BoardCard";
 import styles from "./BoardCanvas.module.css";
 import { v4 as uuidv4 } from "uuid";
@@ -135,7 +135,7 @@ const BoardCanvas = () => {
             const boardMap = getBoardMap(ydoc);
             boardMap.set("cards", JSON.stringify(newCards));
         },
-        [ydoc, isYjsReady]
+        [ydoc, isYjsReady],
     );
 
     // Handle keyboard events for snapping
@@ -187,7 +187,7 @@ const BoardCanvas = () => {
                 offsetY: offset.y,
             };
         },
-        [offset]
+        [offset],
     );
 
     const handleMouseMove = useCallback(
@@ -202,7 +202,7 @@ const BoardCanvas = () => {
                 y: panStart.current.offsetY + dy,
             });
         },
-        [isPanning]
+        [isPanning],
     );
 
     const handleMouseUp = useCallback(() => {
@@ -246,7 +246,7 @@ const BoardCanvas = () => {
             setScale(newScale);
             setOffset({ x: newOffsetX, y: newOffsetY });
         },
-        [scale, offset]
+        [scale, offset],
     );
 
     // Zoom from buttons - centered on viewport
@@ -271,7 +271,7 @@ const BoardCanvas = () => {
             setScale(newScale);
             setOffset({ x: newOffsetX, y: newOffsetY });
         },
-        [scale, offset]
+        [scale, offset],
     );
 
     // Create new card on double-click
@@ -305,7 +305,7 @@ const BoardCanvas = () => {
             setCards(newCards);
             saveCards(newCards);
         },
-        [cards, offset, scale, isSnapping, saveCards]
+        [cards, offset, scale, isSnapping, saveCards],
     );
 
     // Update card
@@ -315,7 +315,7 @@ const BoardCanvas = () => {
             setCards(newCards);
             saveCards(newCards);
         },
-        [cards, saveCards]
+        [cards, saveCards],
     );
 
     // Delete card
@@ -326,7 +326,7 @@ const BoardCanvas = () => {
             saveCards(newCards);
             setContextMenu(null);
         },
-        [cards, saveCards]
+        [cards, saveCards],
     );
 
     // Context menu for card

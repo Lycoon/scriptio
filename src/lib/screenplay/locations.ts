@@ -11,7 +11,7 @@ import { ProjectContextType } from "@src/context/ProjectContext";
 import { getNodeFlattenContent } from "./screenplay";
 import { ScreenplayElement } from "../utils/enums";
 import { Screenplay } from "../utils/types";
-import { getLocationsMap } from "@src/lib/project/project-yjs";
+import { getLocationsMap } from "@src/lib/project/project-state";
 
 // -------------------------------- //
 //          TYPE DEFINITIONS        //

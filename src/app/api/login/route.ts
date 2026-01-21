@@ -1,5 +1,5 @@
 import { NOT_VERIFIED, WRONG_CREDENTIALS } from "@src/lib/messages";
-import { authenticate, getSession } from "@src/lib/session";
+import { authenticate, generateDesktopToken, isDesktopRequest } from "@src/lib/session";
 import { apiHandler } from "@src/lib/utils/api-handler";
 
 import { NextRequest } from "next/server";
@@ -8,7 +8,6 @@ import * as UserService from "@src/server/service/user-service";
 import { Success, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
 
 import z from "zod";
-import { id } from "@node_modules/zod/v4/locales/index.cjs";
 
 export type LoginBody = z.infer<typeof LoginBodySchema>;
 const LoginBodySchema = z.object({
@@ -19,7 +18,9 @@ const LoginBodySchema = z.object({
 /**
  * POST `/login`
  *
- * Authenticates a user into the application, issuing a cookie
+ * Authenticates a user into the application.
+ * - Web clients: Issues an HTTP-only session cookie
+ * - Desktop clients: Returns a JWT token (detected via x-client-type: desktop header)
  */
 async function loginRoute(req: NextRequest) {
     const body = await req.json();
@@ -39,6 +40,19 @@ async function loginRoute(req: NextRequest) {
         throw new UnauthorizedError(WRONG_CREDENTIALS);
     }
 
+    // Check if this is a desktop client request
+    const isDesktop = await isDesktopRequest();
+
+    if (isDesktop) {
+        // Desktop: Return JWT token for local storage
+        const token = generateDesktopToken(user);
+        return Success({
+            user: { id: user.id, email: user.email, createdAt: user.createdAt },
+            token,
+        });
+    }
+
+    // Web: Issue session cookie
     const cookie = await authenticate(user);
     return Success(cookie);
 }

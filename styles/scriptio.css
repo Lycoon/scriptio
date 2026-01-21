@@ -49,12 +49,11 @@ Originally developed by John August - johnaugust.com
     outline: none;
 
     /* Default screenplay paragraph attributes - direct children only
-       Critical: inline-block + width:100% ensures consistent sizing between empty 
+       Critical: block + width:100% ensures consistent sizing between empty 
        and non-empty nodes, preventing pagination flickering and infinite loops.
        Scoped with > to avoid affecting pagination header/footer elements */
     > p {
-        display: inline-block;
-        vertical-align: top;
+        display: block;
         width: 100%;
         color: var(--editor-text);
         font-family: var(--font-courier), monospace;

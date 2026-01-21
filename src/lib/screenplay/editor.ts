@@ -211,7 +211,7 @@ export const useScriptioEditor = (
     updateSuggestions: (suggestions: string[]) => void,
     updateSuggestionsData: (data: SuggestionData) => void,
     userKeybinds: Record<string, string> | undefined,
-    globalContext: { toggleFocusMode: () => void; saveProject: () => void }
+    globalContext: { toggleFocusMode: () => void; saveProject: () => void },
 ) => {
     const projectCtx = useContext(ProjectContext);
     const { user } = useUser();
@@ -253,29 +253,23 @@ export const useScriptioEditor = (
             currentSuggestionDataRef.current = data;
             updateSuggestionsData(data);
         },
-        [updateSuggestionsData]
+        [updateSuggestionsData],
     );
 
     const setSuggestions = useCallback(
         (suggestions: string[]) => {
             // Skip update if suggestions haven't changed (both empty or same content)
             const current = currentSuggestionsRef.current;
-            if (
-                suggestions.length === 0 &&
-                current.length === 0
-            ) {
+            if (suggestions.length === 0 && current.length === 0) {
                 return;
             }
-            if (
-                suggestions.length === current.length &&
-                suggestions.every((s, i) => s === current[i])
-            ) {
+            if (suggestions.length === current.length && suggestions.every((s, i) => s === current[i])) {
                 return;
             }
             currentSuggestionsRef.current = suggestions;
             updateSuggestions(suggestions);
         },
-        [updateSuggestions]
+        [updateSuggestions],
     );
 
     const userInfoRef = useRef({
@@ -367,7 +361,7 @@ export const useScriptioEditor = (
                     ? [
                           Collaboration.configure({
                               document: projectState,
-                              fragment: projectState.getXmlFragment("screenplay"),
+                              fragment: projectState.screenplayFragment(),
                           }),
                       ]
                     : []),
@@ -537,7 +531,7 @@ export const useScriptioEditor = (
                 }
             },
         },
-        [projectState, provider, isYjsReady]
+        [projectState, provider, isYjsReady],
     );
 
     useEffect(() => {

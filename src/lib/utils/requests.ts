@@ -8,13 +8,32 @@ import { LoginBody } from "@src/app/api/login/route";
 import { RecoverPasswordBody, RequestRecoveryBody } from "@src/app/api/recover/route";
 import { ApiResponse } from "./api-utils";
 import { UpdateUserBody } from "@src/app/api/users/route";
+import { isTauri } from "@tauri-apps/api/core";
 
 type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
 const request = async (url: string, method: RESTMethod, body?: Object) => {
     const json = JSON.stringify(body);
-    return fetch(url, {
-        headers: { "Content-Type": "application/json" },
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+    // In desktop mode, add client type header and use full API URL
+    let fullUrl = url;
+    if (isTauri()) {
+        headers["x-client-type"] = "desktop";
+        fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+
+        // Add auth token if available (dynamic import to avoid SSR issues)
+        const { getDesktopToken } = await import("@src/lib/desktop-auth");
+        const token = await getDesktopToken();
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+    }
+
+    return fetch(fullUrl, {
+        headers,
         method,
         body: json,
     });
