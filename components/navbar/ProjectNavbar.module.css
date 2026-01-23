@@ -293,3 +293,9 @@
     font-weight: 600;
     color: var(--secondary-text);
 }
+
+.logo {
+    color: var(--primary-text);
+    width: 90px;
+    margin-left: 30px;
+}

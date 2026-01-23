@@ -9,17 +9,29 @@ import { DashboardContext } from "@src/context/DashboardContext";
 import styles from "./DangerZone.module.css";
 import form from "../../utils/Form.module.css";
 
-const DangerZone = () => {
+interface DangerZoneProps {
+    projectId: string | null;
+    isLocalOnly: boolean;
+}
+
+const DangerZone = ({ projectId, isLocalOnly }: DangerZoneProps) => {
     const { membership } = useProjectMembership();
     const { closeDashboard } = useContext(DashboardContext);
 
-    if (!membership) return null;
+    if (!projectId) return null;
 
     const handleDeleteProject = async () => {
         const confirmed = window.confirm(
             "Are you sure you want to delete this project? This action is permanent and cannot be undone."
         );
-        if (confirmed) {
+        if (!confirmed) return;
+
+        if (isLocalOnly) {
+            const { deleteLocalProject } = await import("@src/lib/persistence/local-projects");
+            await deleteLocalProject(projectId);
+            closeDashboard();
+            redirectHome();
+        } else if (membership) {
             const res = await deleteProject(membership.project.id);
             if (res.ok) {
                 closeDashboard();
@@ -40,18 +52,20 @@ const DangerZone = () => {
         <div className={styles.dangerZone}>
             <h4 className={styles.dangerTitle}>Danger Zone</h4>
             <div className={styles.dangerContainer}>
-                {/* Transfer Ownership */}
-                <div className={styles.dangerItem}>
-                    <div className={styles.dangerText}>
-                        <p className={form.label}>Transfer ownership</p>
-                        <p className={styles.dangerDescription}>
-                            Transfer your owner role to another user. You will be given editor role.
-                        </p>
+                {/* Transfer Ownership - only for remote projects */}
+                {!isLocalOnly && membership && (
+                    <div className={styles.dangerItem}>
+                        <div className={styles.dangerText}>
+                            <p className={form.label}>Transfer ownership</p>
+                            <p className={styles.dangerDescription}>
+                                Transfer your owner role to another user. You will be given editor role.
+                            </p>
+                        </div>
+                        <button className={styles.dangerBtn} onClick={handleTransferOwnership}>
+                            Transfer
+                        </button>
                     </div>
-                    <button className={styles.dangerBtn} onClick={handleTransferOwnership}>
-                        Transfer
-                    </button>
-                </div>
+                )}
 
                 {/* Delete Project */}
                 <div className={styles.dangerItem}>

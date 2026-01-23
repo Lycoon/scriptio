@@ -1,8 +1,9 @@
 "use client";
 
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { isTauri } from "@tauri-apps/api/core";
 import { ConnectionStatus, Page } from "@src/lib/utils/enums";
-import { useCookieUser, usePage } from "@src/lib/utils/hooks";
+import { useCookieUser, usePage, useProjectIdFromPath } from "@src/lib/utils/hooks";
 import { redirectBoard, redirectHome, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -86,11 +87,18 @@ const ProjectNavbar = () => {
 
     const page = usePage();
     const { user } = useCookieUser();
+    const projectId = useProjectIdFromPath();
 
     const deferredTitleUpdate = useMemo(
         () =>
             debounce(async (projectId: string, newTitle: string) => {
-                await editProject(projectId, { title: newTitle });
+                // Check if it's a local project (exists in local SQLite)
+                const { isLocalProject, updateLocalProject } = await import("@src/lib/persistence/local-projects");
+                if (await isLocalProject(projectId)) {
+                    await updateLocalProject(projectId, { title: newTitle });
+                } else {
+                    await editProject(projectId, { title: newTitle });
+                }
             }, 1000),
         []
     );
@@ -106,11 +114,27 @@ const ProjectNavbar = () => {
         updateHasProjectHeader(page === Page.Screenplay || page === Page.Board);
     }, [page]);
 
+    // Load project title - from membership or local storage
     useEffect(() => {
         if (membership && !isLocalEdit.current) {
             setProjectTitle(membership.project.title);
+            return;
         }
-    }, [membership]);
+
+        // For local projects, load title from SQLite
+        if (projectId && !membership && isTauri()) {
+            const loadLocalTitle = async () => {
+                const { isLocalProject, getLocalProject } = await import("@src/lib/persistence/local-projects");
+                if (await isLocalProject(projectId)) {
+                    const localProject = await getLocalProject(projectId);
+                    if (localProject && !isLocalEdit.current) {
+                        setProjectTitle(localProject.title);
+                    }
+                }
+            };
+            loadLocalTitle();
+        }
+    }, [membership, projectId]);
 
     // Update browser tab title when project title changes
     useEffect(() => {
@@ -119,7 +143,8 @@ const ProjectNavbar = () => {
         }
     }, [projectTitle, isInProject]);
 
-    if (!user || !page) return;
+    // On desktop (Tauri), allow navbar without user for local projects
+    if ((!user && !isTauri()) || !page) return null;
 
     return (
         <nav className={join(navbar.container)}>
@@ -131,12 +156,12 @@ const ProjectNavbar = () => {
                         <p>Home</p>
                     </div>
                 )}
-                {isInProject && membership && (
+                {isInProject && projectId && (
                     <div className={navbar.navBtns}>
                         <p
                             className={`${getNavStyle("screenplay")}`}
                             onClick={() => {
-                                page !== Page.Screenplay && redirectScreenplay(membership.project.id);
+                                page !== Page.Screenplay && redirectScreenplay(projectId);
                             }}
                         >
                             Screenplay
@@ -144,7 +169,7 @@ const ProjectNavbar = () => {
                         <p
                             className={`${getNavStyle("statistics")}`}
                             onClick={() => {
-                                page !== Page.Statistics && redirectStatistics(membership.project.id);
+                                page !== Page.Statistics && redirectStatistics(projectId);
                             }}
                         >
                             Statistics
@@ -152,7 +177,7 @@ const ProjectNavbar = () => {
                         <p
                             className={`${getNavStyle("board")}`}
                             onClick={() => {
-                                page !== Page.Board && redirectBoard(membership.project.id);
+                                page !== Page.Board && redirectBoard(projectId);
                             }}
                         >
                             Board
@@ -161,7 +186,7 @@ const ProjectNavbar = () => {
                 )}
             </nav>
             {/* Center - Project title, format dropdown, and connection status */}
-            {hasProjectHeader && membership && (
+            {hasProjectHeader && projectId && (
                 <div className={navbar.projectTitle}>
                     <StatusIndicator />
                     <input
@@ -171,7 +196,7 @@ const ProjectNavbar = () => {
                         onChange={(e) => {
                             isLocalEdit.current = true;
                             setProjectTitle(e.target.value);
-                            deferredTitleUpdate(membership.project.id, e.target.value);
+                            deferredTitleUpdate(projectId, e.target.value);
                         }}
                         onBlur={() => {
                             isLocalEdit.current = false;

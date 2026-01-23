@@ -5,7 +5,7 @@ import { _MS_PER_DAY, getElapsedDaysFrom, getLastUpdate, join } from "@src/lib/u
 import item from "./ProjectItem.module.css";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
-import { Calendar, Cloud, HardDrive } from "lucide-react";
+import { CloudCheck, HardDrive } from "lucide-react";
 
 type Props = {
     project: ProjectMembershipPayload["project"];
@@ -26,12 +26,11 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
                 <div>
                     <div className={item.title_row}>
                         <h2 className={item.title}>{project.title}</h2>
-                        <span className={item.sync_icon} title={isLocalOnly ? "Local only" : "Synced to cloud"}>
-                            {isLocalOnly ? <HardDrive size={14} /> : <Cloud size={14} />}
-                        </span>
                     </div>
                     <div className={item.date}>
-                        <Calendar size={18} />
+                        <span className={item.sync_icon} title={isLocalOnly ? "Local only" : "Synced to cloud"}>
+                            {isLocalOnly ? <HardDrive className={item.icon} size={20} /> : <CloudCheck className={item.icon} size={20} />}
+                        </span>
                         <p className={item.date_text}>{lastUpdated}</p>
                     </div>
                 </div>

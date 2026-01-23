@@ -35,8 +35,8 @@
     font-family: var(--font-josefin), sans-serif;
     font-weight: 400;
     font-style: italic;
-    font-size: 1.3rem;
-    max-width: 110px;
+    font-size: 1.2rem;
+    max-width: 130px;
     text-align: left;
 
     white-space: nowrap;
@@ -48,7 +48,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .sync_icon {
@@ -72,6 +72,10 @@
     flex-direction: row;
     gap: 7px;
     margin-top: 10px;
+}
+
+.icon {
+    color: var(--secondary-text);
 }
 
 .date_text {

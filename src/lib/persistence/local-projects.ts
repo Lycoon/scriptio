@@ -2,7 +2,12 @@
  * Local projects persistence for desktop app.
  * Stores project metadata in SQLite for offline-first functionality.
  * These projects exist only locally until synced to the cloud.
+ *
+ * IMPORTANT: All exported functions are guarded to return safe defaults
+ * when not running in Tauri. This prevents SQLite errors in the browser.
  */
+
+import { isTauri } from "@tauri-apps/api/core";
 
 const DB_NAME = "sqlite:scriptio.db";
 
@@ -25,8 +30,13 @@ let initPromise: Promise<Database> | null = null;
 /**
  * Initialize the database connection and create table if needed.
  * Uses singleton pattern to avoid multiple connections.
+ * Only call this from within guarded functions.
  */
 async function getDb(): Promise<Database> {
+    if (!isTauri()) {
+        throw new Error("SQLite is only available in Tauri environment");
+    }
+
     if (dbInstance) return dbInstance;
 
     if (initPromise) return initPromise;
@@ -55,24 +65,30 @@ async function getDb(): Promise<Database> {
 
 /**
  * Generate a UUID for local projects.
- * Uses 'local-' prefix to distinguish from cloud projects.
+ * Uses standard UUID format so projects can sync to cloud later.
  */
 export function generateLocalProjectId(): string {
-    const uuid = crypto.randomUUID();
-    return `local-${uuid}`;
+    return crypto.randomUUID();
 }
 
 /**
- * Check if a project ID is a local-only project.
+ * Check if a project exists in local SQLite storage.
+ * Returns false when not in Tauri environment.
  */
-export function isLocalProject(projectId: string): boolean {
-    return projectId.startsWith("local-");
+export async function isLocalProject(projectId: string): Promise<boolean> {
+    if (!isTauri()) return false;
+    return localProjectExists(projectId);
 }
 
 /**
  * Create a new local project.
+ * Throws error if not in Tauri environment.
  */
 export async function createLocalProject(title: string, description?: string): Promise<LocalProject> {
+    if (!isTauri()) {
+        throw new Error("Cannot create local project outside Tauri environment");
+    }
+
     const db = await getDb();
     const now = Date.now();
     const id = generateLocalProjectId();
@@ -93,8 +109,11 @@ export async function createLocalProject(title: string, description?: string): P
 
 /**
  * Get all local projects.
+ * Returns empty array when not in Tauri environment.
  */
 export async function getLocalProjects(): Promise<LocalProject[]> {
+    if (!isTauri()) return [];
+
     const db = await getDb();
 
     const results = await db.select("SELECT * FROM local_projects ORDER BY updated_at DESC") as {
@@ -116,8 +135,11 @@ export async function getLocalProjects(): Promise<LocalProject[]> {
 
 /**
  * Get a single local project by ID.
+ * Returns null when not in Tauri environment.
  */
 export async function getLocalProject(id: string): Promise<LocalProject | null> {
+    if (!isTauri()) return null;
+
     const db = await getDb();
 
     const results = await db.select("SELECT * FROM local_projects WHERE id = ?", [id]) as {
@@ -142,11 +164,14 @@ export async function getLocalProject(id: string): Promise<LocalProject | null> 
 
 /**
  * Update a local project's metadata.
+ * No-op when not in Tauri environment.
  */
 export async function updateLocalProject(
     id: string,
     updates: { title?: string; description?: string }
 ): Promise<void> {
+    if (!isTauri()) return;
+
     const db = await getDb();
     const now = Date.now();
 
@@ -174,8 +199,11 @@ export async function updateLocalProject(
 /**
  * Update the updated_at timestamp for a local project.
  * Called when the project content changes.
+ * No-op when not in Tauri environment.
  */
 export async function touchLocalProject(id: string): Promise<void> {
+    if (!isTauri()) return;
+
     const db = await getDb();
     const now = Date.now();
 
@@ -187,16 +215,22 @@ export async function touchLocalProject(id: string): Promise<void> {
 
 /**
  * Delete a local project (metadata only - Yjs doc cleanup handled separately).
+ * No-op when not in Tauri environment.
  */
 export async function deleteLocalProject(id: string): Promise<void> {
+    if (!isTauri()) return;
+
     const db = await getDb();
     await db.execute("DELETE FROM local_projects WHERE id = ?", [id]);
 }
 
 /**
  * Check if a local project exists.
+ * Returns false when not in Tauri environment.
  */
 export async function localProjectExists(id: string): Promise<boolean> {
+    if (!isTauri()) return false;
+
     const db = await getDb();
     const results = await db.select(
         "SELECT COUNT(*) as count FROM local_projects WHERE id = ?",

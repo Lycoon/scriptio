@@ -3,12 +3,13 @@
 import { ReactNode, useContext } from "react";
 import { mutate } from "swr";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { LogOut } from "lucide-react";
+import { LogIn, LogOut } from "lucide-react";
 
 import styles from "./DashboardModal.module.css";
 import { redirect } from "next/navigation";
 import { logout } from "@src/lib/utils/requests";
 import { isTauri } from "@tauri-apps/api/core";
+import { useCookieUser } from "@src/lib/utils/hooks";
 
 export type Category =
     | "General"
@@ -19,7 +20,8 @@ export type Category =
     | "Security"
     | "Settings"
     | "Keybinds"
-    | "Appearance";
+    | "Appearance"
+    | "Login";
 
 export interface MenuItem {
     id: Category;
@@ -40,6 +42,7 @@ interface SidebarMenuProps {
 
 const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) => {
     const { closeDashboard } = useContext(DashboardContext);
+    const { user } = useCookieUser();
 
     const onLogOut = async () => {
         await logout();
@@ -76,10 +79,17 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
                 ))}
             </nav>
             <div className={styles.navMenu} style={{ marginTop: "auto" }}>
-                <button className={styles.navItem} onClick={onLogOut}>
-                    <LogOut size={18} />
-                    Log Out
-                </button>
+                {user ? (
+                    <button className={styles.navItem} onClick={onLogOut}>
+                        <LogOut size={18} />
+                        Log Out
+                    </button>
+                ) : (
+                    <button className={styles.navItem} onClick={() => onTabChange("Login")}>
+                        <LogIn size={18} />
+                        Log In
+                    </button>
+                )}
             </div>
         </aside>
     );

@@ -11,12 +11,21 @@ export function Providers({ children }: { children: ReactNode }) {
     return (
         <SWRConfig
             value={{
-                revalidateOnFocus: true,
+                revalidateOnFocus: false,
                 fetcher,
-                onSuccess: () => {},
+                onSuccess: () => { },
                 onError: (err) => {
                     console.error("[Fetcher] An unexpected error occurred: ", err);
                 },
+                shouldRetryOnError: (err) => {
+                    // Don't retry on auth errors (401, 403)
+                    // This prevents infinite retry loops when not authenticated
+                    if (err?.status === 401 || err?.status === 403) {
+                        return false;
+                    }
+                    return true;
+                },
+                errorRetryCount: 3,
             }}
         >
             <UserContextProvider>

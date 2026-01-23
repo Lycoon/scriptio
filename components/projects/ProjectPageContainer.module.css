@@ -4,6 +4,7 @@
     flex-direction: row;
     justify-content: center;
     background-color: var(--main-bg);
+    overflow-y: hidden;
 }
 
 .header {
@@ -11,7 +12,8 @@
     flex-direction: column;
     justify-content: space-between;
 
-    margin-top: 70px;
+    margin-top: 50px;
+    padding-inline: 20px;
     width: 100%;
 }
 
@@ -20,6 +22,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 8px;
 }
 
 .header_btns {
@@ -31,23 +34,47 @@
 }
 
 .create_btn {
-    font-weight: bold;
+    font-weight: 500;
     padding-inline: 40px !important;
-    border-radius: 20px !important;
+    border-width: 3px;
 }
 
 .import_btn {
-    font-weight: bold;
+    font-weight: 500;
     padding-inline: 40px !important;
-    border-radius: 20px !important;
+    border-width: 3px;
+
+    background: none !important;
+}
+
+.import_btn:hover {
+    transition: border-color 0.2s;
+    border-color: var(--tertiary-hover);
 }
 
 .center {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    align-items: center;
-    gap: 50px;
+    height: 100%;
+    overflow: hidden;
+}
+
+.gridWrapper {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+}
+
+.gridScroll {
+    overflow-y: auto;
+    height: 100%;
+    padding: 50px 20px 40px;
+    scrollbar-width: none;
+}
+
+.gridScroll::-webkit-scrollbar {
+    display: none;
 }
 
 .grid {
@@ -55,6 +82,22 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 40px;
     row-gap: 30px;
+}
+
+.bottomShadow {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 40px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.7s ease;
+    background: linear-gradient(to top, var(--editor-shadow) 0%, transparent 100%);
+}
+
+.showShadow {
+    opacity: 1;
 }
 
 @media (max-width: 1300px) {

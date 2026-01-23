@@ -7,6 +7,7 @@ import { ProjectContext, ProjectProvider } from "@src/context/ProjectContext";
 import { useProjectMembership } from "@src/lib/utils/hooks";
 import { ReactNode, useContext } from "react";
 import ProjectNavbar from "@components/navbar/ProjectNavbar";
+import { isTauri } from "@tauri-apps/api/core";
 
 interface ProjectLayoutInnerProps {
     children: ReactNode;
@@ -16,11 +17,21 @@ const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
     const { isYjsReady } = useContext(ProjectContext);
     const { membership, isLoading: isMembershipLoading } = useProjectMembership();
 
-    if (isMembershipLoading || !isYjsReady) {
+    // On desktop (Tauri), we support offline-first - don't require API membership
+    const isDesktop = isTauri();
+
+    // On web, wait for membership to load
+    if (!isDesktop && isMembershipLoading) {
         return <Loading />;
     }
 
-    if (!membership) {
+    // Always wait for Yjs to be ready (local or cloud data)
+    if (!isYjsReady) {
+        return <Loading />;
+    }
+
+    // On web, redirect if no membership (unauthorized access)
+    if (!isDesktop && !membership) {
         redirect("/");
     }
 

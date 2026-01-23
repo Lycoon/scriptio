@@ -10,6 +10,7 @@ import { KeyBindingMap, tinykeys } from "tinykeys";
 import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { ProjectRole } from "@prisma/client";
+import { isTauri } from "@tauri-apps/api/core";
 
 interface Position {
     x: number;
@@ -134,10 +135,10 @@ export interface ExtendedProjectMembershipPayload extends ProjectMembershipPaylo
 const useLocalProjects = () => {
     const [localProjects, setLocalProjects] = useState<ExtendedProjectMembershipPayload[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const isDesktop = useDesktop();
 
     const refresh = useCallback(async () => {
-        if (!isDesktop) {
+        // Use isTauri() directly for synchronous check (avoids timing issues with useDesktop hook)
+        if (!isTauri()) {
             setLocalProjects([]);
             setIsLoading(false);
             return;
@@ -168,7 +169,7 @@ const useLocalProjects = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [isDesktop]);
+    }, []);
 
     useEffect(() => {
         refresh();
@@ -182,7 +183,6 @@ const useLocalProjects = () => {
  * Remote projects are fetched via API, local projects from SQLite on desktop.
  */
 const useProjectMemberships = () => {
-    const isDesktop = useDesktop();
     const { data: remoteProjects, isLoading: isRemoteLoading, mutate } = useSWR<ProjectMembershipPayload[]>(
         // On desktop without auth, don't fetch remote - it will fail
         // The fetcher will handle auth errors gracefully
@@ -214,7 +214,7 @@ const useProjectMemberships = () => {
 
     // Combined loading state - on desktop, wait for local to be ready
     // On web, only wait for remote
-    const isLoading = isDesktop
+    const isLoading = isTauri()
         ? isLocalLoading || (isRemoteLoading && localProjects.length === 0)
         : isRemoteLoading;
 
@@ -323,6 +323,61 @@ export const useGlobalKeybinds = (
     }, [effectiveKeybinds, context]);
 };
 
+/**
+ * Hook to get local project info from SQLite (desktop only).
+ * Used when on desktop without auth to get project metadata.
+ */
+const useLocalProjectInfo = (projectId: string | null) => {
+    const [title, setTitle] = useState<string>("Untitled");
+    const [description, setDescription] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!projectId || !isTauri()) {
+            setIsLoading(false);
+            return;
+        }
+
+        const loadLocalProject = async () => {
+            try {
+                const { getLocalProject } = await import("@src/lib/persistence/local-projects");
+                const localProject = await getLocalProject(projectId);
+                if (localProject) {
+                    setTitle(localProject.title);
+                    setDescription(localProject.description);
+                }
+            } catch (error) {
+                console.error("[useLocalProjectInfo] Failed to load local project:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadLocalProject();
+    }, [projectId]);
+
+    return { title, description, isLoading };
+};
+
+/**
+ * Hook to get project ID from URL path.
+ */
+const useProjectIdFromPath = () => {
+    const [projectId, setProjectId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const pathParts = window.location.pathname.split("/");
+            const projectsIndex = pathParts.indexOf("projects");
+            if (projectsIndex !== -1 && pathParts[projectsIndex + 1]) {
+                setProjectId(pathParts[projectsIndex + 1]);
+            }
+        }
+    }, []);
+
+    return projectId;
+};
+
 export {
     useDraggable,
     useUser,
@@ -335,4 +390,6 @@ export {
     usePage,
     useDesktop,
     useLocalProjects,
+    useLocalProjectInfo,
+    useProjectIdFromPath,
 };

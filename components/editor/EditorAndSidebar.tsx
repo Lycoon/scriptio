@@ -10,6 +10,7 @@ import { join } from "@src/lib/utils/misc";
 
 /* Utils */
 import { useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { isTauri } from "@tauri-apps/api/core";
 import { UserContext } from "@src/context/UserContext";
 import { ScreenplayElement, Style } from "@src/lib/utils/enums";
 
@@ -230,7 +231,10 @@ const EditorAndSidebar = () => {
         setIsScrolled(scrollTop > 0);
     };
 
-    if (!membership || isLoading) return <Loading />;
+    // On desktop (Tauri), we can work without API membership (offline mode)
+    // On web, we require membership
+    const isDesktop = isTauri();
+    if (!isDesktop && (!membership || isLoading)) return <Loading />;
 
     return (
         <div

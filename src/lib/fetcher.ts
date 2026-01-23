@@ -1,4 +1,4 @@
-import { invoke, isTauri } from "@tauri-apps/api/core";
+import { isTauri } from "@tauri-apps/api/core";
 import { getDesktopToken } from "./desktop-auth";
 
 /**
@@ -10,28 +10,30 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 /**
  * Fetcher for desktop environment - calls remote API with JWT auth.
  * Desktop app connects to your hosted API server with JWT in Authorization header.
+ *
+ * Note: Login/recovery requests don't use this fetcher - they make direct fetch calls.
+ * This fetcher is used by SWR for authenticated data fetching.
  */
 async function fetchFromDesktop<JSON = unknown>(input: RequestInfo, init?: RequestInit): Promise<JSON> {
-    const url = typeof input === "string" ? input : input.url;
     const token = await getDesktopToken();
 
-    // Build full URL for remote API
+    // No token = not logged in. Skip the remote request entirely.
+    // The app will fall back to local SQLite storage via useLocalProjects().
+    if (!token) {
+        throw { message: "Not authenticated", status: 401 };
+    }
+
+    const url = typeof input === "string" ? input : input.url;
     const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
         "x-client-type": "desktop",
+        "Authorization": `Bearer ${token}`,
     };
 
-    // Merge any existing headers from init
     if (init?.headers) {
-        const existingHeaders = init.headers as Record<string, string>;
-        Object.assign(headers, existingHeaders);
-    }
-
-    // Add auth token if available (not needed for login)
-    if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+        Object.assign(headers, init.headers as Record<string, string>);
     }
 
     const response = await fetch(fullUrl, {
@@ -45,7 +47,8 @@ async function fetchFromDesktop<JSON = unknown>(input: RequestInfo, init?: Reque
         return data.data;
     }
 
-    throw data;
+    const error = { ...data, status: response.status };
+    throw error;
 }
 
 /**
@@ -59,7 +62,9 @@ async function fetchFromBrowser<JSON = unknown>(input: RequestInfo, init?: Reque
         return data.data;
     }
 
-    throw data;
+    // Include status code in the error for SWR's shouldRetryOnError
+    const error = { ...data, status: response.status };
+    throw error;
 }
 
 /**

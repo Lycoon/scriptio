@@ -1,8 +1,9 @@
 "use client";
 
-import { useContext, useState, useRef } from "react";
+import { useContext, useState, useRef, useEffect } from "react";
+import { isTauri } from "@tauri-apps/api/core";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { useCookieUser } from "@src/lib/utils/hooks";
+import { useCookieUser, useLocalProjectInfo, useProjectIdFromPath } from "@src/lib/utils/hooks";
 
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "./ProjectSettings.module.css";
@@ -27,6 +28,10 @@ const ExportProject = () => {
     const ydoc = repository?.getState();
     const userContext = useContext(UserContext);
 
+    // For local projects on desktop without auth
+    const projectId = useProjectIdFromPath();
+    const { title: localTitle } = useLocalProjectInfo(projectId);
+
     const [format, setFormat] = useState<ExportFormat>(ExportFormat.PDF);
     const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
     const [includeNotes, setIncludeNotes] = useState<boolean>(false);
@@ -37,7 +42,9 @@ const ExportProject = () => {
     // Reference for the hidden file input
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    if (!membership || !user) return null;
+    // On desktop, allow export without user/membership (local projects)
+    const isDesktop = isTauri();
+    if (!isDesktop && (!membership || !user)) return null;
 
     // --- Import Logic ---
     const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,9 +76,14 @@ const ExportProject = () => {
 
     const handleExport = async () => {
         setExporting(true);
+
+        // Use membership title if available, otherwise use local title
+        const projectTitle = membership?.project.title || localTitle;
+        const authorId = user?.id || "Unknown";
+
         let baseOptions: BaseExportOptions = {
-            title: membership.project.title,
-            author: user.id || "Unknown",
+            title: projectTitle,
+            author: authorId,
             includeNotes,
         };
 
@@ -199,9 +211,8 @@ const ExportProject = () => {
                 {/* Password Protection Toggle (PDF Only) */}
                 {format === ExportFormat.PDF && (
                     <div
-                        className={`${optionCard.optionCard} ${optionCard.optionCardExpandable} ${
-                            enablePassword ? optionCard.active : ""
-                        }`}
+                        className={`${optionCard.optionCard} ${optionCard.optionCardExpandable} ${enablePassword ? optionCard.active : ""
+                            }`}
                         onClick={() => setEnablePassword(!enablePassword)}
                     >
                         <div className={optionCard.optionRow}>
@@ -232,7 +243,7 @@ const ExportProject = () => {
                     disabled={isExporting}
                     className={`${sharedStyles.formBtn} ${sharedStyles.success}`}
                 >
-                    {isExporting ? "Exporting..." : "Download"}
+                    {isExporting ? "Exporting..." : "Export"}
                 </button>
             </div>
         </div>

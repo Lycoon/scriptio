@@ -157,7 +157,7 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 // last of its page (could be extended for CONT'D feature)
 //
 
-const TWO_LINE_HEIGHTS = 17 * 3;
+const TWO_LINE_HEIGHTS = 17 * 2;
 export const SCREENPLAY_FORMATS = {
     LETTER: {
         marginTop: 0,
@@ -359,31 +359,31 @@ export const useScriptioEditor = (
                 ...BASE_EXTENSIONS,
                 ...(projectState && isYjsReady
                     ? [
-                          Collaboration.configure({
-                              document: projectState,
-                              fragment: projectState.screenplayFragment(),
-                          }),
-                      ]
+                        Collaboration.configure({
+                            document: projectState,
+                            fragment: projectState.screenplayFragment(),
+                        }),
+                    ]
                     : []),
                 ...(provider && isYjsReady
                     ? [
-                          CollaborationCaret.configure({
-                              provider: provider,
-                              user: userInfoRef.current,
-                              render: (user: any) => {
-                                  const caret = document.createElement("span");
-                                  caret.classList.add("collab-caret");
-                                  caret.style.borderLeft = `2px solid ${user.color}`;
-                                  const label = document.createElement("div");
-                                  label.classList.add("collab-caret-label");
-                                  label.style.backgroundColor = user.color;
-                                  label.innerText = user.name;
-                                  label.contentEditable = "false";
-                                  caret.appendChild(label);
-                                  return caret;
-                              },
-                          }),
-                      ]
+                        CollaborationCaret.configure({
+                            provider: provider,
+                            user: userInfoRef.current,
+                            render: (user: any) => {
+                                const caret = document.createElement("span");
+                                caret.classList.add("collab-caret");
+                                caret.style.borderLeft = `2px solid ${user.color}`;
+                                const label = document.createElement("div");
+                                label.classList.add("collab-caret-label");
+                                label.style.backgroundColor = user.color;
+                                label.innerText = user.name;
+                                label.contentEditable = "false";
+                                caret.appendChild(label);
+                                return caret;
+                            },
+                        }),
+                    ]
                     : []),
                 PaginationPlus.configure({
                     pageGap: 20,

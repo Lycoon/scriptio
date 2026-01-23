@@ -3,7 +3,8 @@
 import { cropImageBase64 } from "@src/lib/utils/misc";
 import { editProject } from "@src/lib/utils/requests";
 import { useEffect, useState } from "react";
-import { useProjectMembership } from "@src/lib/utils/hooks";
+import { isTauri } from "@tauri-apps/api/core";
+import { useProjectMembership, useLocalProjectInfo, useProjectIdFromPath } from "@src/lib/utils/hooks";
 import UploadButton from "@components/projects/UploadButton";
 import DangerZone from "./DangerZone";
 
@@ -12,10 +13,21 @@ import styles from "./ProjectSettings.module.css";
 
 const ProjectSettings = () => {
     const { membership } = useProjectMembership();
+    const projectId = useProjectIdFromPath();
+    const { title: localTitle, description: localDescription } = useLocalProjectInfo(projectId);
+
     const [isDirty, setDirty] = useState<boolean>(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(membership?.project.poster || null);
     const [loading, setLoading] = useState(false);
+
+    // Determine if this is a local-only project (desktop without membership)
+    const isDesktop = isTauri();
+    const isLocalOnly = isDesktop && !membership;
+
+    // Get project data from membership or local info
+    const projectTitle = membership?.project.title || localTitle;
+    const projectDescription = membership?.project.description || localDescription;
 
     useEffect(() => {
         if (!selectedFile) return;
@@ -28,27 +40,41 @@ const ProjectSettings = () => {
     const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (!membership) return;
+        if (!projectId) return;
         setLoading(true);
         setDirty(false);
 
         const target = e.target as any;
-        const body: any = {
-            title: target.title.value,
-            description: target.description.value,
-        };
+        const newTitle = target.title.value;
+        const newDescription = target.description.value;
 
-        if (selectedFile) {
-            body.poster = await cropImageBase64(selectedFile, 600, 900);
+        if (isLocalOnly) {
+            // Save to local SQLite
+            try {
+                const { updateLocalProject } = await import("@src/lib/persistence/local-projects");
+                await updateLocalProject(projectId, { title: newTitle, description: newDescription });
+            } catch (error) {
+                console.error("[ProjectSettings] Failed to save local project:", error);
+            }
+        } else if (membership) {
+            // Save to remote API
+            const body: any = {
+                title: newTitle,
+                description: newDescription,
+            };
+
+            if (selectedFile) {
+                body.poster = await cropImageBase64(selectedFile, 600, 900);
+            }
+
+            await editProject(membership.project.id, body);
         }
 
-        const res = await editProject(membership.project.id, body);
-        if (res.ok) {
-        }
         setLoading(false);
     };
 
-    if (!membership) return null;
+    // On web, require membership. On desktop, allow local projects.
+    if (!isDesktop && !membership) return null;
 
     return (
         <form onSubmit={handleSave} className={styles.settingsForm}>
@@ -58,7 +84,7 @@ const ProjectSettings = () => {
                 <input
                     name="title"
                     type="text"
-                    defaultValue={membership.project.title}
+                    defaultValue={projectTitle}
                     onChange={() => setDirty(true)}
                     className={styles.input}
                     placeholder="Enter project name..."
@@ -70,40 +96,42 @@ const ProjectSettings = () => {
                 <label className={form.label}>Description</label>
                 <textarea
                     name="description"
-                    defaultValue={membership.project.description ?? ""}
+                    defaultValue={projectDescription ?? ""}
                     onChange={() => setDirty(true)}
                     className={styles.textarea}
                     placeholder="What is this screenplay about?"
                 />
             </div>
 
-            {/* Poster */}
-            <div className={styles.formGroup}>
-                <label className={form.label}>Poster</label>
-                <div className={styles.posterUploadArea}>
-                    <div className={styles.posterPreview}>
-                        {previewUrl ? (
-                            <img src={previewUrl} alt="Preview" />
-                        ) : (
-                            <div className={styles.posterPlaceholder}>No Poster</div>
-                        )}
-                    </div>
-                    <div className={styles.uploadControls}>
-                        <p className={styles.helpText}>
-                            Recommended: 600x900 pixels (2:3 ratio). <br />
-                            Supports PNG, JPG.
-                        </p>
-                        <UploadButton setSelectedFile={setSelectedFile} selectedFile={selectedFile} />
+            {/* Poster - only show for remote projects */}
+            {!isLocalOnly && (
+                <div className={styles.formGroup}>
+                    <label className={form.label}>Poster</label>
+                    <div className={styles.posterUploadArea}>
+                        <div className={styles.posterPreview}>
+                            {previewUrl ? (
+                                <img src={previewUrl} alt="Preview" />
+                            ) : (
+                                <div className={styles.posterPlaceholder}>No Poster</div>
+                            )}
+                        </div>
+                        <div className={styles.uploadControls}>
+                            <p className={styles.helpText}>
+                                Recommended: 600x900 pixels (2:3 ratio). <br />
+                                Supports PNG, JPG.
+                            </p>
+                            <UploadButton setSelectedFile={setSelectedFile} selectedFile={selectedFile} />
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             <div className={styles.formActions}>
                 <button type="submit" className={`${styles.formBtn} ${styles.success}`} disabled={loading || !isDirty}>
                     Save changes
                 </button>
             </div>
-            <DangerZone />
+            <DangerZone projectId={projectId} isLocalOnly={isLocalOnly} />
         </form>
     );
 };

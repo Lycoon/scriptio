@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCookieUser, useProjectMemberships, ExtendedProjectMembershipPayload } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
@@ -20,12 +20,28 @@ const ProjectPageContainer = () => {
     const { projects, isLoading, mutate } = useProjectMemberships();
     const [isCreating, setIsCreating] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
+    const [showShadow, setShowShadow] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
     const parent = useRef(null);
 
     useEffect(() => {
         parent.current && autoAnimate(parent.current);
     }, [parent]);
+
+    const checkOverflow = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const canScroll = el.scrollHeight > el.clientHeight;
+        const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 10;
+        setShowShadow(canScroll && !isAtBottom);
+    }, []);
+
+    useEffect(() => {
+        checkOverflow();
+        window.addEventListener("resize", checkOverflow);
+        return () => window.removeEventListener("resize", checkOverflow);
+    }, [checkOverflow, projects]);
 
     const handleImportClick = () => {
         fileInputRef.current?.click();
@@ -81,29 +97,34 @@ const ProjectPageContainer = () => {
                             <h1>Projects</h1>
                             <div className={page.header_btns}>
                                 <button
-                                    className={join(page.import_btn, form.btn)}
+                                    className={`${page.import_btn} ${form.btn}`}
                                     onClick={handleImportClick}
                                     disabled={isImporting}
                                 >
-                                    {isImporting ? "Importing..." : "Import"}
+                                    {isImporting ? "Importing..." : "Import..."}
                                 </button>
-                                <button className={join(page.create_btn, form.btn)} onClick={() => setIsCreating(true)}>
+                                <button className={`${page.create_btn} ${form.btn}`} onClick={() => setIsCreating(true)}>
                                     Create
                                 </button>
                             </div>
                         </div>
                         <hr />
                     </div>
-                    <div ref={parent} className={page.grid}>
-                        {projects.map((membership: ExtendedProjectMembershipPayload) => {
-                            return (
-                                <ProjectItem
-                                    key={membership.project.id}
-                                    project={membership.project}
-                                    isLocalOnly={membership.isLocalOnly}
-                                />
-                            );
-                        })}
+                    <div className={page.gridWrapper}>
+                        <div ref={scrollRef} className={page.gridScroll} onScroll={checkOverflow}>
+                            <div ref={parent} className={page.grid}>
+                                {projects.map((membership: ExtendedProjectMembershipPayload) => {
+                                    return (
+                                        <ProjectItem
+                                            key={membership.project.id}
+                                            project={membership.project}
+                                            isLocalOnly={membership.isLocalOnly}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div className={join(page.bottomShadow, showShadow ? page.showShadow : "")} />
                     </div>
                 </div>
             </div>

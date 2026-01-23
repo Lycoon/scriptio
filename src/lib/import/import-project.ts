@@ -5,7 +5,7 @@
 
 import { ProjectState } from "@src/lib/project/project-state";
 import { getAdapterByFilename } from "@src/lib/adapters/registry";
-import { createLocalProject, isLocalProject } from "@src/lib/persistence/local-projects";
+import { createLocalProject } from "@src/lib/persistence/local-projects";
 import { SqlitePersistence } from "@src/lib/persistence/sqlite-persistence";
 import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
 import { ScreenplaySchema } from "@src/lib/screenplay/editor";

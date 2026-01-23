@@ -3,6 +3,7 @@
 import { useContext, useEffect, useMemo } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { ProjectContext } from "@src/context/ProjectContext";
+import { useCookieUser } from "@src/lib/utils/hooks";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -18,6 +19,7 @@ import AppearanceSettings from "./preferences/AppearanceSettings";
 import SecuritySettings from "./account/SecuritySettings";
 import ProfileSettings from "./account/ProfileSettings";
 import LayoutSettings from "./project/LayoutSettings";
+import DashboardLogin from "./account/DashboardLogin";
 
 const PROJECT_MENU: MenuSection = {
     group: "Project",
@@ -84,25 +86,39 @@ const ACCOUNT_MENU: MenuSection = {
 
 const DashboardModal = () => {
     const { isOpen, closeDashboard, activeTab, setActiveTab } = useContext(DashboardContext);
-    const { project } = useContext(ProjectContext);
+    const { project, isYjsReady } = useContext(ProjectContext);
+    const { user } = useCookieUser();
 
-    const isInProject = project !== null;
+    // We're in a project if either:
+    // - We have API membership data (cloud project), OR
+    // - Yjs is ready (local project on desktop without auth)
+    const isInProject = project !== null || isYjsReady;
+    const isSignedIn = !!user;
 
-    // Build menu structure based on whether we're in a project context
+    // Build menu structure based on whether we're in a project context and signed in
     const menuStructure = useMemo<MenuSection[]>(() => {
-        if (isInProject) {
-            return [PROJECT_MENU, PREFERENCES_MENU, ACCOUNT_MENU];
-        }
-        return [PREFERENCES_MENU, ACCOUNT_MENU];
-    }, [isInProject]);
+        const sections: MenuSection[] = [];
+        if (isInProject) sections.push(PROJECT_MENU);
+        sections.push(PREFERENCES_MENU);
+        if (isSignedIn) sections.push(ACCOUNT_MENU);
+        return sections;
+    }, [isInProject, isSignedIn]);
 
-    // If active tab is a project tab but we're not in a project, switch to first available tab
+    // If active tab is a project tab but we're not in a project, or an account tab but not signed in, switch to first available tab
     useEffect(() => {
         const projectTabIds = PROJECT_MENU.items.map((item) => item.id);
-        if (!isInProject && projectTabIds.includes(activeTab)) {
+        const accountTabIds = ACCOUNT_MENU.items.map((item) => item.id);
+        if (
+            (!isInProject && projectTabIds.includes(activeTab)) ||
+            (!isSignedIn && accountTabIds.includes(activeTab))
+        ) {
             setActiveTab(PREFERENCES_MENU.items[0].id);
         }
-    }, [isInProject, activeTab, setActiveTab]);
+        // If user just signed in while on Login tab, switch to Profile
+        if (isSignedIn && activeTab === "Login") {
+            setActiveTab("Profile");
+        }
+    }, [isInProject, isSignedIn, activeTab, setActiveTab]);
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -134,9 +150,11 @@ const DashboardModal = () => {
                         {/* Preferences tabs */}
                         {activeTab === "Keybinds" && <KeybindsSettings />}
                         {activeTab === "Appearance" && <AppearanceSettings />}
-                        {/* Account tabs */}
-                        {activeTab === "Profile" && <ProfileSettings />}
-                        {activeTab === "Security" && <SecuritySettings />}
+                        {/* Account tabs - only when signed in */}
+                        {isSignedIn && activeTab === "Profile" && <ProfileSettings />}
+                        {isSignedIn && activeTab === "Security" && <SecuritySettings />}
+                        {/* Login tab - only when signed out */}
+                        {!isSignedIn && activeTab === "Login" && <DashboardLogin />}
                     </div>
                 </div>
             </div>

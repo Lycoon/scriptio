@@ -165,10 +165,6 @@ export class ProjectState extends Y.Doc {
     layout(): Y.Map<any> {
         return this.getMap(this.KEYS.LAYOUT);
     }
-
-    destroy(): void {
-        this.destroy();
-    }
 }
 
 // -------------------------------- //
@@ -208,89 +204,6 @@ export const getBoardMap = (ydoc: ProjectState): Y.Map<any> => {
 };
 
 // -------------------------------- //
-//          PROJECT LOCK            //
-// -------------------------------- //
-
-/**
- * Hook to prevent the same user from opening the same project in multiple tabs.
- * Uses BroadcastChannel API to communicate between tabs.
- */
-export const useProjectLock = (projectId: string | null) => {
-    const [isLocked, setIsLocked] = useState(false);
-    const [isChecking, setIsChecking] = useState(true);
-    const channelRef = useRef<BroadcastChannel | null>(null);
-    const isOwnerRef = useRef(false);
-    const isLockedRef = useRef(false);
-
-    useEffect(() => {
-        if (!projectId || typeof window === "undefined") {
-            setIsChecking(false);
-            return;
-        }
-
-        const channelName = `scriptio-project-lock-${projectId}`;
-        const channel = new BroadcastChannel(channelName);
-        channelRef.current = channel;
-
-        let checkTimeout: NodeJS.Timeout;
-
-        // Handle messages from other tabs
-        channel.onmessage = (event) => {
-            if (event.data.type === "lock-check") {
-                // Another tab is checking if the project is open
-                // If we own the lock, respond that it's taken
-                if (isOwnerRef.current) {
-                    channel.postMessage({ type: "lock-taken" });
-                }
-            } else if (event.data.type === "lock-taken") {
-                // Another tab already has this project open
-                isLockedRef.current = true;
-                setIsLocked(true);
-                setIsChecking(false);
-                isOwnerRef.current = false;
-            } else if (event.data.type === "lock-released") {
-                // The other tab released the lock, we can try to acquire it
-                // But for simplicity, user should manually refresh
-            }
-        };
-
-        // Check if another tab has the project open
-        channel.postMessage({ type: "lock-check" });
-
-        // Wait a short time for responses, then claim the lock if no response
-        checkTimeout = setTimeout(() => {
-            if (!isOwnerRef.current && !isLockedRef.current) {
-                isOwnerRef.current = true;
-                setIsChecking(false);
-            }
-        }, 100);
-
-        // Cleanup: release lock when tab closes
-        const handleUnload = () => {
-            if (isOwnerRef.current) {
-                channel.postMessage({ type: "lock-released" });
-            }
-        };
-
-        window.addEventListener("beforeunload", handleUnload);
-
-        return () => {
-            clearTimeout(checkTimeout);
-            window.removeEventListener("beforeunload", handleUnload);
-            if (isOwnerRef.current) {
-                channel.postMessage({ type: "lock-released" });
-            }
-            channel.close();
-            channelRef.current = null;
-            isOwnerRef.current = false;
-            isLockedRef.current = false;
-        };
-    }, [projectId]);
-
-    return { isLocked, isChecking };
-};
-
-// -------------------------------- //
 //          LOCAL PERSISTENCE       //
 // -------------------------------- //
 
@@ -307,14 +220,12 @@ interface PersistenceProvider {
 export const useLocalPersistence = (projectId: string | null) => {
     const [ydoc, setYdoc] = useState<ProjectState | null>(null);
     const [isLocalReady, setIsLocalReady] = useState(false);
-    const [hasLocalContent, setHasLocalContent] = useState(false);
     const persistenceRef = useRef<PersistenceProvider | null>(null);
 
     useEffect(() => {
         if (!projectId || typeof window === "undefined") {
             setYdoc(null);
             setIsLocalReady(false);
-            setHasLocalContent(false);
             return;
         }
 
@@ -346,15 +257,7 @@ export const useLocalPersistence = (projectId: string | null) => {
 
             localProvider.on("synced", () => {
                 if (isDestroyed) return;
-
                 console.log("[ProjectYjs] Local storage synced");
-
-                // Check if there's actual content in the document
-                const screenplay = state.screenplay;
-                const hasContent = screenplay.length > 0;
-                console.log("[ProjectYjs] Local has content:", hasContent);
-
-                setHasLocalContent(hasContent);
                 setIsLocalReady(true);
             });
 
@@ -379,11 +282,10 @@ export const useLocalPersistence = (projectId: string | null) => {
                 return null;
             });
             setIsLocalReady(false);
-            setHasLocalContent(false);
         };
     }, [projectId]);
 
-    return { ydoc, isLocalReady, hasLocalContent };
+    return { ydoc, isLocalReady };
 };
 
 // -------------------------------- //
@@ -453,15 +355,31 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
             setConnectionStatus("connecting");
 
             try {
+                // Check if we're in Tauri environment first
+                const { isTauri } = await import("@tauri-apps/api/core");
+                const isDesktop = isTauri();
+
+                // Local projects (exist in local SQLite) don't sync to cloud - only check in Tauri
+                if (isDesktop) {
+                    const { isLocalProject } = await import("../persistence/local-projects");
+                    if (await isLocalProject(projectId)) {
+                        console.log("[ProjectYjs] Local project - skipping cloud sync");
+                        setConnectionStatus("disconnected");
+                        setIsCloudSynced(true); // Mark as "synced" so isReady becomes true
+                        return;
+                    }
+                }
+
                 const token = await getCloudToken(projectId);
                 if (!token || !isMountedRef.current) {
+                    console.log("[ProjectYjs] No auth token - skipping cloud sync");
                     setConnectionStatus("disconnected");
+                    setIsCloudSynced(true); // Mark as "synced" so isReady becomes true
                     return;
                 }
 
                 // Dynamically import collaboration utils
                 const { ThrottledWebsocketProvider } = await import("../collaboration/utils");
-                const { isTauri } = await import("@tauri-apps/api/core");
 
                 const cloudProvider = new ThrottledWebsocketProvider(
                     `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
@@ -475,7 +393,7 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                         userInfo: userInfoRef.current,
                         // Disable BroadcastChannel in Tauri - it can interfere with sync
                         // See: https://github.com/tauri-apps/tauri/issues/10226
-                        disableBc: isTauri(),
+                        disableBc: isDesktop,
                     },
                 );
 
@@ -570,6 +488,8 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 console.error("[ProjectYjs] Failed to initialize provider:", e);
                 if (isMountedRef.current) {
                     setConnectionStatus("disconnected");
+                    // Allow proceeding with local data when cloud sync fails
+                    setIsCloudSynced(true);
                 }
             }
         };
@@ -656,7 +576,7 @@ export const useProjectYjs = ({
         [userName, userColor],
     );
 
-    const { ydoc, isLocalReady, hasLocalContent } = useLocalPersistence(projectId);
+    const { ydoc, isLocalReady } = useLocalPersistence(projectId);
     const {
         provider,
         users,
@@ -667,15 +587,10 @@ export const useProjectYjs = ({
         isSessionReplaced,
     } = useCloudSync(projectId, ydoc, userInfo);
 
-    // isReady should be true when:
-    // 1. The ydoc exists, AND
-    // 2. Local storage is synced, AND
-    // 3. Either:
-    //    a. Local storage has content (can show immediately, cloud will merge), OR
-    //    b. Cloud sync has completed (for first-time users with empty local storage)
-    // This ensures offline-first behavior while also handling fresh installs
+    // isReady: project is ready when ydoc exists and local storage is synced
+    // Cloud sync happens in the background and will merge data when it arrives
     const isCloudReady = connectionStatus === "connected";
-    const isReady = ydoc !== null && isLocalReady && (hasLocalContent || isCloudSynced);
+    const isReady = ydoc !== null && isLocalReady;
 
     return {
         ydoc,
