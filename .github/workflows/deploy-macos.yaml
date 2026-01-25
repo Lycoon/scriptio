@@ -10,14 +10,10 @@ jobs:
         steps:
             - uses: actions/checkout@v6
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-
             - name: Setup Node.js
               uses: actions/setup-node@v6
               with:
                   node-version: "25.2.1"
-                  cache: "pnpm"
 
             - name: Setup Rust
               uses: dtolnay/rust-toolchain@stable
@@ -25,10 +21,10 @@ jobs:
                   targets: aarch64-apple-darwin, x86_64-apple-darwin
 
             - name: Install dependencies
-              run: pnpm install
+              run: npm install
 
             - name: Build MacOS bundle
-              run: pnpm tauri:build:macos
+              run: npm tauri:build:macos
 
             - name: Upload to App Store Connect
               run: |
