@@ -24,7 +24,7 @@ jobs:
               run: npm install
 
             - name: Build MacOS bundle
-              run: npm tauri:build:macos
+              run: npm run tauri:build:macos
 
             - name: Upload to App Store Connect
               run: |
