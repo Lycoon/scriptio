@@ -1,0 +1,31 @@
+name: Build MacOS
+
+on:
+    push:
+        branches: [dev]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '25.2.1'
+          cache: 'pnpm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build MacOS bundle
+        run: pnpm tauri:build:macos

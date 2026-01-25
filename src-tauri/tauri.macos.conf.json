@@ -1,0 +1,16 @@
+{
+    "app": {
+        "macos": {
+
+        }
+    },
+    "bundle": {
+        "macOS": {
+            "category": "Productivity",
+            "entitlements": "./Entitlements.plist",
+            "files": {
+                "embedded.provisionprofile": "path/to/profile-name.provisionprofile"
+            }
+        }
+    }
+}
