@@ -5,13 +5,9 @@ import { BodyFieldError, ForbiddenError, InternalServerError, Success, validate 
 
 import * as UserService from "@src/server/service/user-service";
 import * as SecretService from "@src/lib/utils/secrets";
-import z from "zod";
 import { NextRequest } from "next/server";
-
-export type UpdatePasswordBody = z.infer<typeof UpdatePasswordBodySchema>;
-const UpdatePasswordBodySchema = z.object({
-    password: z.string(),
-});
+import { UpdatePasswordBodySchema } from "@src/lib/utils/api-bodies";
+export type { UpdatePasswordBody } from "@src/lib/utils/api-bodies";
 
 /**
  * PATCH `/users/password`

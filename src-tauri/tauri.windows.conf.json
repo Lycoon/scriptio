@@ -1,0 +1,23 @@
+{
+    "identifier": "ArkoLogic.Scriptio",
+    "app": {
+        "windows": [{
+            "title": "Scriptio | Screenwriting Software",
+            "width": 1300,
+            "height": 950,
+            "resizable": true,
+            "fullscreen": false
+        }]
+    },
+    "bundle": {
+        "publisher": "CN=B3E169FD-9F36-409A-8CED-F0B22D3EA253",
+        "windows": {
+            "allowDowngrades": true,
+            "nsis": null,
+            "wix": null,
+            "webviewInstallMode": {
+                "type": "offlineInstaller"
+            }
+        }
+    }
+}

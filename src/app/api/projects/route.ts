@@ -13,14 +13,8 @@ import {
     validate,
 } from "@src/lib/utils/api-utils";
 
-import z from "zod";
-
-export type CreateProjectBody = z.infer<typeof CreateProjectBodySchema>;
-const CreateProjectBodySchema = z.object({
-    title: z.string(),
-    description: z.string().optional(),
-    poster: z.string().optional(),
-});
+import { CreateProjectBodySchema } from "@src/lib/utils/api-bodies";
+export type { CreateProjectBody } from "@src/lib/utils/api-bodies";
 
 /**
  * GET `/projects`

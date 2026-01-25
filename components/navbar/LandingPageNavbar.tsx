@@ -1,7 +1,6 @@
 "use client";
 
 import { usePage } from "@src/lib/utils/hooks";
-import { Page } from "@src/lib/utils/enums";
 import Link from "next/link";
 
 import styles from "./LandingPageNavbar.module.css";
@@ -13,7 +12,7 @@ export default function LandingPageNavbar() {
     return (
         <div className={styles.navbar}>
             <div className={styles.navLinks}>
-                {page === Page.Index ? (
+                {page === "index" ? (
                     <>
                         <Link className={styles.navLink} href="#features">
                             Features

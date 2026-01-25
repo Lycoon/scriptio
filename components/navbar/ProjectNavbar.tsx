@@ -3,7 +3,7 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { ConnectionStatus, Page } from "@src/lib/utils/enums";
-import { useCookieUser, usePage, useProjectIdFromPath } from "@src/lib/utils/hooks";
+import { useCookieUser, usePage, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import { redirectBoard, redirectHome, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -87,7 +87,7 @@ const ProjectNavbar = () => {
 
     const page = usePage();
     const { user } = useCookieUser();
-    const projectId = useProjectIdFromPath();
+    const projectId = useProjectIdFromUrl();
 
     const deferredTitleUpdate = useMemo(
         () =>
@@ -109,9 +109,9 @@ const ProjectNavbar = () => {
     };
 
     useEffect(() => {
-        updateIsInProject(page === Page.Screenplay || page === Page.Statistics || page === Page.Board);
-        updateHasScreenplay(page === Page.Screenplay);
-        updateHasProjectHeader(page === Page.Screenplay || page === Page.Board);
+        updateIsInProject(page === "screenplay" || page === "statistics" || page === "board");
+        updateHasScreenplay(page === "screenplay");
+        updateHasProjectHeader(page === "screenplay" || page === "board");
     }, [page]);
 
     // Load project title - from membership or local storage
@@ -161,7 +161,7 @@ const ProjectNavbar = () => {
                         <p
                             className={`${getNavStyle("screenplay")}`}
                             onClick={() => {
-                                page !== Page.Screenplay && redirectScreenplay(projectId);
+                                page !== "screenplay" && redirectScreenplay(projectId);
                             }}
                         >
                             Screenplay
@@ -169,7 +169,7 @@ const ProjectNavbar = () => {
                         <p
                             className={`${getNavStyle("statistics")}`}
                             onClick={() => {
-                                page !== Page.Statistics && redirectStatistics(projectId);
+                                page !== "statistics" && redirectStatistics(projectId);
                             }}
                         >
                             Statistics
@@ -177,7 +177,7 @@ const ProjectNavbar = () => {
                         <p
                             className={`${getNavStyle("board")}`}
                             onClick={() => {
-                                page !== Page.Board && redirectBoard(projectId);
+                                page !== "board" && redirectBoard(projectId);
                             }}
                         >
                             Board

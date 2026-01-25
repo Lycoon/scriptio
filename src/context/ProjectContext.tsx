@@ -78,34 +78,34 @@ export interface ProjectContextType {
 
 const defaultContextValue: ProjectContextType = {
     project: null,
-    updateProject: () => {},
+    updateProject: () => { },
     repository: null,
     provider: null,
     isYjsReady: false,
     isLockedByServer: false,
     isSessionReplaced: false,
     connectionStatus: "disconnected",
-    updateConnectionStatus: () => {},
+    updateConnectionStatus: () => { },
     users: [],
     editor: null,
-    updateEditor: () => {},
+    updateEditor: () => { },
     selectedElement: ScreenplayElement.Action,
-    setSelectedElement: () => {},
+    setSelectedElement: () => { },
     selectedStyles: Style.None,
-    setSelectedStyles: () => {},
+    setSelectedStyles: () => { },
     highlightedCharacters: new Set<string>(),
-    toggleCharacterHighlight: () => {},
+    toggleCharacterHighlight: () => { },
     pageFormat: "LETTER",
-    setPageFormat: () => {},
+    setPageFormat: () => { },
     displaySceneNumbers: false,
-    setDisplaySceneNumbers: () => {},
+    setDisplaySceneNumbers: () => { },
     characters: {},
     locations: {},
     scenes: [],
     screenplay: [],
     // Search state defaults
     searchTerm: "",
-    setSearchTerm: () => {},
+    setSearchTerm: () => { },
     searchFilters: new Set<ScreenplayElement>([
         ScreenplayElement.Scene,
         ScreenplayElement.Action,
@@ -115,11 +115,11 @@ const defaultContextValue: ProjectContextType = {
         ScreenplayElement.Transition,
         ScreenplayElement.Section,
     ]),
-    setSearchFilters: () => {},
+    setSearchFilters: () => { },
     currentSearchIndex: 0,
-    setCurrentSearchIndex: () => {},
+    setCurrentSearchIndex: () => { },
     searchMatches: [],
-    setSearchMatches: () => {},
+    setSearchMatches: () => { },
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -299,6 +299,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     // Stable update functions
     const updateProject = useCallback((newProject: ProjectMembershipPayload) => {
+        document.title = `${newProject.project.title}`;
         setProject(newProject);
     }, []);
 

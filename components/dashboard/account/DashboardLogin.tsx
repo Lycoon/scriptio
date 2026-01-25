@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { login } from "@src/lib/utils/requests";
 import { ApiResponse } from "@src/lib/utils/api-utils";
-import { LoginBody } from "@src/app/api/login/route";
+import { LoginBody } from "@src/lib/utils/api-bodies";
 import { isTauri } from "@tauri-apps/api/core";
 
 import sharedStyles from "../project/ProjectSettings.module.css";

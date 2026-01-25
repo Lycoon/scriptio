@@ -9,7 +9,7 @@ import { useSWRConfig } from "swr";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 
 import form from "../../utils/Form.module.css";
-import { LoginBody } from "@src/app/api/login/route";
+import { LoginBody } from "@src/lib/utils/api-bodies";
 import { useRouter } from "next/navigation";
 import { AccountVerificationStatus } from "./LoginContainer";
 import { isTauri } from "@tauri-apps/api/core";

@@ -11,7 +11,7 @@ import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
 import { ScreenplaySchema } from "@src/lib/screenplay/editor";
 import { JSONContent } from "@tiptap/react";
 import { createProject } from "@src/lib/utils/requests";
-import { CreateProjectBody } from "@src/app/api/projects/route";
+import { CreateProjectBody } from "@src/lib/utils/api-bodies";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { CookieUser } from "@src/lib/utils/types";
 import { isTauri } from "@tauri-apps/api/core";

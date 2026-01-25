@@ -4,11 +4,11 @@ import useSWR from "swr";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CookieUser, UserSettings } from "./types";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { Page } from "./enums";
+import { isPage, Page } from "./enums";
 import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { KeyBindingMap, tinykeys } from "tinykeys";
 import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProjectRole } from "@prisma/client";
 import { isTauri } from "@tauri-apps/api/core";
 
@@ -85,12 +85,14 @@ interface StateResult<T> {
 }
 
 const useProjectIdFromUrl = () => {
-    const params = useParams();
-    const [projectId, setProjectId] = useState<string | undefined>(undefined);
+    const searchParams = useSearchParams();
+    const [projectId, setProjectId] = useState<string>("");
 
     useEffect(() => {
-        if (params.projectId) setProjectId(params.projectId as string);
-    }, [params]);
+        const projectId = searchParams.get("projectId");
+        if (projectId)
+            setProjectId(projectId as string);
+    }, [searchParams]);
 
     return projectId;
 };
@@ -267,16 +269,15 @@ const usePage = (): Page | undefined => {
 
         const segments = pathname.split("/").filter(Boolean);
         if (segments.length === 0) {
-            setPage(Page.Index);
+            setPage("index");
             return;
         }
 
         const lastSegment = segments[segments.length - 1];
-        if (Object.values(Page).includes(lastSegment as Page)) {
+        if (isPage(lastSegment))
             setPage(lastSegment as Page);
-        } else {
-            setPage(Page.Index);
-        }
+        else
+            setPage("index");
     }, [pathname]);
 
     return page;
@@ -359,25 +360,6 @@ const useLocalProjectInfo = (projectId: string | null) => {
     return { title, description, isLoading };
 };
 
-/**
- * Hook to get project ID from URL path.
- */
-const useProjectIdFromPath = () => {
-    const [projectId, setProjectId] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const pathParts = window.location.pathname.split("/");
-            const projectsIndex = pathParts.indexOf("projects");
-            if (projectsIndex !== -1 && pathParts[projectsIndex + 1]) {
-                setProjectId(pathParts[projectsIndex + 1]);
-            }
-        }
-    }, []);
-
-    return projectId;
-};
-
 export {
     useDraggable,
     useUser,
@@ -391,5 +373,5 @@ export {
     useDesktop,
     useLocalProjects,
     useLocalProjectInfo,
-    useProjectIdFromPath,
+    useProjectIdFromUrl,
 };

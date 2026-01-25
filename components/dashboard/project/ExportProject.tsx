@@ -3,7 +3,7 @@
 import { useContext, useState, useRef, useEffect } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { useCookieUser, useLocalProjectInfo, useProjectIdFromPath } from "@src/lib/utils/hooks";
+import { useCookieUser, useLocalProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "./ProjectSettings.module.css";
@@ -29,7 +29,7 @@ const ExportProject = () => {
     const userContext = useContext(UserContext);
 
     // For local projects on desktop without auth
-    const projectId = useProjectIdFromPath();
+    const projectId = useProjectIdFromUrl();
     const { title: localTitle } = useLocalProjectInfo(projectId);
 
     const [format, setFormat] = useState<ExportFormat>(ExportFormat.PDF);

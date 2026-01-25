@@ -8,18 +8,12 @@ export enum PasswordRecoverStatus {
     Expired,
 }
 
-export enum Page {
-    // /{page}
-    Index = "index",
-    Login = "login",
-    Signup = "signup",
-    Recover = "recovery",
+export const ALL_PAGES = ["index", "login", "signup", "recovery", "screenplay", "board", "statistics"] as const;
+export type Page = (typeof ALL_PAGES)[number];
 
-    // /projects/{id}/{page}
-    Screenplay = "screenplay",
-    Statistics = "statistics",
-    Board = "board",
-}
+export const isPage = (value: string): value is Page => {
+    return ALL_PAGES.includes(value as Page);
+};
 
 // ------------------------------ //
 //            PROJECT             //

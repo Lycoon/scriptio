@@ -4,18 +4,11 @@ import { deleteUserFromId, getUserFromId } from "@src/server/service/user-servic
 import { apiHandler } from "@src/lib/utils/api-handler";
 
 import * as UserService from "@src/server/service/user-service";
-import z from "zod";
 
 import { InternalServerError, Success, SuccessNoContent, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
 import { NextRequest } from "next/server";
-
-export type UpdateUserBody = z.infer<typeof UpdateUserBodySchema>;
-
-const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
-const UpdateUserBodySchema = z.object({
-    username: z.string().optional(),
-    color: z.string().regex(HEX_COLOR_REGEX).optional(),
-});
+import { UpdateUserBodySchema } from "@src/lib/utils/api-bodies";
+export type { UpdateUserBody } from "@src/lib/utils/api-bodies";
 
 /**
  * GET `/users`

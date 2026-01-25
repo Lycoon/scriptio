@@ -18,17 +18,11 @@ import {
 
 import z from "zod";
 import { NextRequest } from "next/server";
+import { UpdateProjectBodySchema } from "@src/lib/utils/api-bodies";
+export type { UpdateProjectBody } from "@src/lib/utils/api-bodies";
 
 const QuerySchema = z.object({
     projectId: z.string(),
-});
-
-export type UpdateProjectBody = z.infer<typeof UpdateProjectBodySchema>;
-const UpdateProjectBodySchema = z.object({
-    title: z.string().optional(),
-    description: z.string().optional(),
-    poster: z.string().optional(),
-    characters: z.any().optional(),
 });
 
 /**

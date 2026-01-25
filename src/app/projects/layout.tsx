@@ -2,10 +2,10 @@
 
 import Loading from "@components/utils/Loading";
 import DashboardModal from "@components/dashboard/DashboardModal";
-import { redirect, useParams } from "next/navigation";
+import { redirect, useParams, useSearchParams } from "next/navigation";
 import { ProjectContext, ProjectProvider } from "@src/context/ProjectContext";
 import { useProjectMembership } from "@src/lib/utils/hooks";
-import { ReactNode, useContext } from "react";
+import { ReactNode, Suspense, useContext } from "react";
 import ProjectNavbar from "@components/navbar/ProjectNavbar";
 import { isTauri } from "@tauri-apps/api/core";
 
@@ -44,15 +44,25 @@ const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
     );
 };
 
-export default function ProjectLayout({ children }: { children: ReactNode }) {
-    const params = useParams();
-    const projectId = params.projectId as string;
+function ProjectLayoutContent({ children }: { children: ReactNode }) {
+    const params = useSearchParams();
+    const projectId = params.get("projectId");
 
-    if (!projectId) return null;
+    if (!projectId) {
+        redirect("/");
+    }
 
     return (
         <ProjectProvider projectId={projectId}>
             <ProjectLayoutInner>{children}</ProjectLayoutInner>
         </ProjectProvider>
+    );
+}
+
+export default function ProjectLayout({ children }: { children: ReactNode }) {
+    return (
+        <Suspense fallback={<Loading />}>
+            <ProjectLayoutContent>{children}</ProjectLayoutContent>
+        </Suspense>
     );
 }

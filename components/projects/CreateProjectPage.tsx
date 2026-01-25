@@ -14,7 +14,7 @@ import FormEnd from "./FormEnd";
 import form from "../utils/Form.module.css";
 import layout from "../utils/Layout.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
-import { CreateProjectBody } from "@src/app/api/projects/route";
+import { CreateProjectBody } from "@src/lib/utils/api-bodies";
 
 type Props = {
     setIsCreating: (isCreating: boolean) => void;

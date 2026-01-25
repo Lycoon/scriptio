@@ -19,15 +19,12 @@ import * as CollabUtils from "@src/lib/collaboration/utils";
 import z from "zod";
 import { NextRequest } from "next/server";
 import { redirect } from "next/navigation";
+import { UpdateRoleSchema } from "@src/lib/utils/api-bodies";
+export type { UpdateRoleBody } from "@src/lib/utils/api-bodies";
 
 const QuerySchema = z.object({
     projectId: z.string(),
     userId: z.string(),
-});
-
-export type UpdateRoleBody = z.infer<typeof UpdateRoleSchema>;
-const UpdateRoleSchema = z.object({
-    role: z.string(),
 });
 
 /**

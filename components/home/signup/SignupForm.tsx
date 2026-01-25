@@ -7,7 +7,7 @@ import FormInfo, { FormInfoType } from "../../utils/FormInfo";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 
 import form from "../../utils/Form.module.css";
-import { SignupBody } from "@src/app/api/signup/route";
+import { SignupBody } from "@src/lib/utils/api-bodies";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const SignupForm = () => {

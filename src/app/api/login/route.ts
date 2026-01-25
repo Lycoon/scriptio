@@ -7,13 +7,8 @@ import * as SecretService from "@src/lib/utils/secrets";
 import * as UserService from "@src/server/service/user-service";
 import { Success, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
 
-import z from "zod";
-
-export type LoginBody = z.infer<typeof LoginBodySchema>;
-const LoginBodySchema = z.object({
-    email: z.email(),
-    password: z.string(),
-});
+import { LoginBodySchema } from "@src/lib/utils/api-bodies";
+export type { LoginBody } from "@src/lib/utils/api-bodies";
 
 /**
  * POST `/login`

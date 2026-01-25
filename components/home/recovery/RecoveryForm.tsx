@@ -7,7 +7,7 @@ import { join } from "@src/lib/utils/misc";
 
 import form from "../../utils/Form.module.css";
 import recovery from "./RecoveryForm.module.css";
-import { RequestRecoveryBody } from "@src/app/api/recover/route";
+import { RequestRecoveryBody } from "@src/lib/utils/api-bodies";
 
 const RecoveryForm = () => {
     const [sentEmail, setSetSentEmail] = useState(false);

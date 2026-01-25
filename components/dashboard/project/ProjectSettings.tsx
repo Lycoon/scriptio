@@ -4,7 +4,7 @@ import { cropImageBase64 } from "@src/lib/utils/misc";
 import { editProject } from "@src/lib/utils/requests";
 import { useEffect, useState } from "react";
 import { isTauri } from "@tauri-apps/api/core";
-import { useProjectMembership, useLocalProjectInfo, useProjectIdFromPath } from "@src/lib/utils/hooks";
+import { useProjectMembership, useLocalProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import UploadButton from "@components/projects/UploadButton";
 import DangerZone from "./DangerZone";
 
@@ -13,7 +13,7 @@ import styles from "./ProjectSettings.module.css";
 
 const ProjectSettings = () => {
     const { membership } = useProjectMembership();
-    const projectId = useProjectIdFromPath();
+    const projectId = useProjectIdFromUrl();
     const { title: localTitle, description: localDescription } = useLocalProjectInfo(projectId);
 
     const [isDirty, setDirty] = useState<boolean>(false);

@@ -12,20 +12,9 @@ import { BodyFieldError, InternalServerError, Success, validate } from "@src/lib
 import * as Misc from "@src/lib/utils/misc";
 import * as SecretService from "@src/lib/utils/secrets";
 import * as UserService from "@src/server/service/user-service";
-import z from "zod";
 import { NextRequest } from "next/server";
-
-export type RequestRecoveryBody = z.infer<typeof RequestRecoveryBodySchema>;
-const RequestRecoveryBodySchema = z.object({
-    email: z.email(),
-});
-
-export type RecoverPasswordBody = z.infer<typeof RecoverPasswordBodySchema>;
-const RecoverPasswordBodySchema = z.object({
-    userId: z.string(),
-    password: z.string(),
-    recoverHash: z.string(),
-});
+import { RequestRecoveryBodySchema, RecoverPasswordBodySchema } from "@src/lib/utils/api-bodies";
+export type { RequestRecoveryBody, RecoverPasswordBody } from "@src/lib/utils/api-bodies";
 
 /**
  * POST `/recover`

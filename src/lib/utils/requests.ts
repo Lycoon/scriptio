@@ -1,13 +1,16 @@
-import { CreateProjectBody } from "@src/app/api/projects/route";
 import { UserSettings } from "./types";
-import { UpdateProjectBody } from "@src/app/api/projects/[projectId]/route";
-import { UpdateRoleBody } from "@src/app/api/projects/[projectId]/members/[userId]/route";
-import { UpdatePasswordBody } from "@src/app/api/users/password/route";
-import { SignupBody } from "@src/app/api/signup/route";
-import { LoginBody } from "@src/app/api/login/route";
-import { RecoverPasswordBody, RequestRecoveryBody } from "@src/app/api/recover/route";
 import { ApiResponse } from "./api-utils";
-import { UpdateUserBody } from "@src/app/api/users/route";
+import {
+    CreateProjectBody,
+    UpdateProjectBody,
+    UpdateRoleBody,
+    UpdatePasswordBody,
+    SignupBody,
+    LoginBody,
+    RecoverPasswordBody,
+    RequestRecoveryBody,
+    UpdateUserBody,
+} from "./api-bodies";
 import { isTauri } from "@tauri-apps/api/core";
 
 type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

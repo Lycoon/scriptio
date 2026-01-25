@@ -15,16 +15,10 @@ import * as UserService from "@src/server/service/user-service";
 import * as Misc from "@src/lib/utils/misc";
 import * as Mail from "@src/lib/mail/mail";
 
-import z from "zod";
 import { NextRequest } from "next/server";
 import { CookieUser } from "@src/lib/utils/types";
-
-export type SignupBody = z.infer<typeof SignupBodySchema>;
-const SignupBodySchema = z.object({
-    email: z.email(),
-    password: z.string(),
-    inviteToken: z.string().optional(),
-});
+import { SignupBodySchema } from "@src/lib/utils/api-bodies";
+export type { SignupBody } from "@src/lib/utils/api-bodies";
 
 /**
  * POST `/signup`

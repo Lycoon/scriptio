@@ -8,7 +8,7 @@ import { recoverPassword } from "@src/lib/utils/requests";
 import form from "../../utils/Form.module.css";
 import recovery from "../recovery/RecoveryForm.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
-import { RecoverPasswordBody } from "@src/app/api/recover/route";
+import { RecoverPasswordBody } from "@src/lib/utils/api-bodies";
 import { redirect } from "next/navigation";
 
 type Props = {
