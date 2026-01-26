@@ -20,6 +20,9 @@ jobs:
               with:
                   targets: x86_64-pc-windows-msvc, aarch64-pc-windows-msvc
 
+            - name: Install msixbundle-cli
+              run: cargo install msixbundle-cli
+
             - name: Install dependencies
               run: npm install
 
