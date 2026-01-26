@@ -15,14 +15,13 @@ export const FONTS: TFontDictionary = {
 // Units are in points (pt)
 // Conversion from inches to points -> x72
 //
-const DEFAULT_OFFSET = 11; // ~17px (1 line height)
-const ONE_INCH = 72;
+const ONE_INCH = 72.0;
 
-const CHARACTER_L = 2.2 * ONE_INCH;
-const DIALOGUE_L = 1.2 * ONE_INCH;
-const DIALOGUE_R = 1.2 * ONE_INCH;
-const PARENTHETICAL_L = 1.9 * ONE_INCH;
-const PARENTHETICAL_R = 2.1 * ONE_INCH;
+const CHARACTER_L = 2.5 * ONE_INCH;
+const DIALOGUE_L = 1.3 * ONE_INCH;
+const DIALOGUE_R = 1.0 * ONE_INCH;
+const PARENTHETICAL_L = 2.0 * ONE_INCH;
+const PARENTHETICAL_R = 2.0 * ONE_INCH;
 
 const PAGE_LEFT = 1.5 * ONE_INCH;
 const PAGE_RIGHT = ONE_INCH;
@@ -73,7 +72,6 @@ export const getSceneWithNumberTemplate = (sceneNumber: number, text: string) =>
                 margin: [-30, 0, 0, 0],
             },
         ],
-        margin: [0, DEFAULT_OFFSET, 0, 0],
     };
 };
 
@@ -113,15 +111,14 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             fontSize: 12,
             alignment: "left",
             characterSpacing: -0.3,
+            lineHeight: 0.9,
         },
         styles: {
             scene: {
                 bold: true,
-                margin: [0, DEFAULT_OFFSET, 0, 0],
             },
             note: {
                 fillColor: options.notesColor ?? "#FFFF68",
-                margin: [6, 0, 0, 0],
             },
             character: {
                 margin: [CHARACTER_L, 0, 0, 0],
@@ -132,21 +129,15 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             parenthetical: {
                 margin: [PARENTHETICAL_L, 0, PARENTHETICAL_R, 0],
             },
-            action: {
-                margin: [0, 0, 0, DEFAULT_OFFSET],
-            },
             transition: {
                 alignment: "right",
-                margin: [0, 0, 0, DEFAULT_OFFSET],
             },
             section: {
                 alignment: "center",
                 decoration: "underline",
-                margin: [0, 0, 0, DEFAULT_OFFSET],
             },
-            offset: {
-                margin: [0, 0, 0, DEFAULT_OFFSET],
-            },
+            action: {},
+            offset: {},
         },
     };
 };

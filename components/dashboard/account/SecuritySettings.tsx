@@ -70,8 +70,6 @@ const SecuritySettings = () => {
         return { label: "Strong", level: 4 };
     };
 
-    const passwordStrength = getPasswordStrength();
-
     return (
         <form onSubmit={handleSubmit} className={sharedStyles.settingsForm}>
             {/* New Password */}

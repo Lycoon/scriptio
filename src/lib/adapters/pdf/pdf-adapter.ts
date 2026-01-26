@@ -77,18 +77,21 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     break;
                 case "transition":
                     pdfNodes.push(getPDFNodeTemplate("transition", text.toUpperCase() + ":"));
+                    addOffset(pdfNodes);
                     break;
                 case "section":
                     pdfNodes.push(getPDFNodeTemplate("section", text.toUpperCase()));
+                    addOffset(pdfNodes);
                     break;
                 case "note":
                     if (options.includeNotes) {
                         pdfNodes.push(getPDFTableTemplate(text, "note"));
-                        addOffset(pdfNodes);
+                        //addOffset(pdfNodes);
                     }
                     break;
                 default:
                     pdfNodes.push(getPDFNodeTemplate("action", text));
+                    addOffset(pdfNodes);
             }
         }
 

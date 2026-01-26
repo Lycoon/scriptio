@@ -2,7 +2,6 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import styles from "./BoardCanvas.module.css";
-import { ColorPicker } from "../utils/ColorPicker";
 
 export interface BoardCardData {
     id: string;
@@ -22,11 +21,22 @@ interface BoardCardProps {
     gridSize: number;
     onUpdate: (card: BoardCardData) => void;
     onContextMenu: (e: React.MouseEvent, card: BoardCardData) => void;
+    onStartConnection: (cardId: string, side: string, initialX: number, initialY: number) => void;
+    onCompleteConnection: (cardId: string) => void;
+    isConnecting: boolean;
 }
 
-const CARD_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899", "#6b7280"];
-
-const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu }: BoardCardProps) => {
+const BoardCard = ({
+    card,
+    scale,
+    isSnapping,
+    gridSize,
+    onUpdate,
+    onContextMenu,
+    onStartConnection,
+    onCompleteConnection,
+    isConnecting,
+}: BoardCardProps) => {
     const cardRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -49,7 +59,7 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
             }
             return value;
         },
-        [isSnapping, gridSize]
+        [isSnapping, gridSize],
     );
 
     const handleMouseDown = useCallback(
@@ -67,7 +77,7 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
             };
             setIsDragging(true);
         },
-        [isEditing, isEditingTitle, scale]
+        [isEditing, isEditingTitle, scale],
     );
 
     const handleMouseMove = useCallback(
@@ -103,7 +113,7 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
                 });
             }
         },
-        [isDragging, isResizing, card, onUpdate, scale, snapToGrid]
+        [isDragging, isResizing, card, onUpdate, scale, snapToGrid],
     );
 
     const handleMouseUp = useCallback(() => {
@@ -122,7 +132,7 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
             };
             setIsResizing(true);
         },
-        [card.width, card.height]
+        [card.width, card.height],
     );
 
     useEffect(() => {
@@ -166,13 +176,6 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
         }
     }, [card, localDescription, onUpdate]);
 
-    const handleColorChange = useCallback(
-        (color: string | undefined) => {
-            onUpdate({ ...card, color: color || "" });
-        },
-        [card, onUpdate]
-    );
-
     const handleTitleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
             e.stopPropagation();
@@ -184,7 +187,7 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
                 handleTitleBlur();
             }
         },
-        [card.title, handleTitleBlur]
+        [card.title, handleTitleBlur],
     );
 
     const handleDescriptionKeyDown = useCallback(
@@ -195,7 +198,7 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
                 setLocalDescription(card.description);
             }
         },
-        [card.description]
+        [card.description],
     );
 
     const handleRightClick = useCallback(
@@ -204,13 +207,35 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
             e.stopPropagation();
             onContextMenu(e, card);
         },
-        [card, onContextMenu]
+        [card, onContextMenu],
+    );
+
+    const handleConnectionHandleMouseDown = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            e.preventDefault();
+            // Pass the center of the card as initial position (in canvas coordinates)
+            const centerX = card.x + card.width / 2;
+            const centerY = card.y + card.height / 2;
+            onStartConnection(card.id, "center", centerX, centerY);
+        },
+        [card.id, card.x, card.y, card.width, card.height, onStartConnection],
+    );
+
+    const handleCardMouseUp = useCallback(
+        (e: React.MouseEvent) => {
+            if (isConnecting) {
+                e.stopPropagation();
+                onCompleteConnection(card.id);
+            }
+        },
+        [card.id, isConnecting, onCompleteConnection],
     );
 
     return (
         <div
             ref={cardRef}
-            className={`${styles.card} ${isDragging ? styles.card_dragging : ""}`}
+            className={`${styles.card} ${isDragging ? styles.card_dragging : ""} ${isConnecting ? styles.card_connecting : ""}`}
             style={{
                 left: card.x,
                 top: card.y,
@@ -220,18 +245,11 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
                 backgroundColor: card.color,
             }}
             onMouseDown={handleMouseDown}
+            onMouseUp={handleCardMouseUp}
             onDoubleClick={handleDoubleClick}
             onContextMenu={handleRightClick}
         >
             <div className={styles.card_header} style={{ backgroundColor: card.color }}>
-                <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
-                    <ColorPicker
-                        value={card.color || undefined}
-                        onChange={handleColorChange}
-                        colors={CARD_COLORS}
-                        allowClear={false}
-                    />
-                </div>
                 {isEditingTitle ? (
                     <input
                         type="text"
@@ -252,8 +270,15 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
                 )}
             </div>
 
-            <div className={styles.card_content}>
-                {isEditing ? (
+            <div
+                className={styles.card_content}
+                style={{ backgroundColor: `color-mix(in srgb, ${card.color} 20%, white)` }}
+                onDoubleClick={handleDoubleClick}
+            >
+                <p className={styles.card_description} style={{ display: isEditing ? "none" : undefined }}>
+                    {card.description}
+                </p>
+                {isEditing && (
                     <textarea
                         className={styles.card_description_input}
                         value={localDescription}
@@ -265,12 +290,13 @@ const BoardCard = ({ card, scale, isSnapping, gridSize, onUpdate, onContextMenu 
                         placeholder="Description"
                         autoFocus
                     />
-                ) : (
-                    <p className={styles.card_description}>{card.description}</p>
                 )}
             </div>
 
             <div className={styles.card_resize_handle} onMouseDown={handleResizeStart} />
+
+            {/* Connection handle */}
+            <div className={styles.connection_handle} onMouseDown={handleConnectionHandleMouseDown} />
         </div>
     );
 };

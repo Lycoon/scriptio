@@ -45,7 +45,7 @@ function hexToRgba(hex: string, alpha: number): string {
 function computeHighlightDecorations(
     doc: any,
     highlightedCharacters: Set<string>,
-    getCharacterColor: (name: string) => string | undefined
+    getCharacterColor: (name: string) => string | undefined,
 ): DecorationSet {
     if (highlightedCharacters.size === 0) {
         return DecorationSet.empty;
@@ -66,7 +66,7 @@ function computeHighlightDecorations(
                     Decoration.node(pos, pos + node.nodeSize, {
                         class: "character-highlight",
                         style: `--highlight-color: ${currentColor}; --highlight-bg: ${hexToRgba(currentColor, 0.15)};`,
-                    })
+                    }),
                 );
             } else {
                 currentColor = null;
@@ -79,8 +79,8 @@ function computeHighlightDecorations(
             decorations.push(
                 Decoration.node(pos, pos + node.nodeSize, {
                     class: "character-highlight",
-                    style: `--highlight-color: ${currentColor}; --highlight-bg: ${hexToRgba(currentColor, 0.12)};`,
-                })
+                    style: `--highlight-color: ${currentColor}; --highlight-bg: ${hexToRgba(currentColor, 0.15)};`,
+                }),
             );
         } else {
             // Reset when hitting non-dialogue elements (action, scene heading, transition, etc.)

@@ -39,6 +39,14 @@ Originally developed by John August - johnaugust.com
 }
 
 .ProseMirror {
+    --character-l-margin: 2.5in;
+    --dialogue-l-margin: 1.3in;
+    --dialogue-r-margin: 1in;
+    --parenthetical-l-margin: 2in;
+    --parenthetical-r-margin: 2in;
+    --line-height: 17px;
+    --font-size: 12pt;
+
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 10%;
@@ -57,12 +65,12 @@ Originally developed by John August - johnaugust.com
         width: 100%;
         color: var(--editor-text);
         font-family: var(--font-courier), monospace;
-        font-size: 12pt;
+        font-size: var(--font-size);
         text-align: left;
-        line-height: 17px !important;
-        min-height: 1lh;
-        margin-bottom: 17px;
+        line-height: var(--line-height) !important;
+        margin-bottom: var(--line-height);
         letter-spacing: -0.3px;
+        min-height: 1lh;
     }
 
     /* Spans inside paragraphs - NO display/width overrides 
@@ -70,8 +78,8 @@ Originally developed by John August - johnaugust.com
     > p span {
         color: var(--editor-text);
         font-family: var(--font-courier), monospace;
-        font-size: 12pt;
-        line-height: 17px !important;
+        font-size: var(--font-size);
+        line-height: var(--line-height) !important;
     }
 
     .page-number,
@@ -145,11 +153,12 @@ Originally developed by John August - johnaugust.com
 
     /* Dialogue */
     .dialogue {
-        padding-inline: 1.2in !important;
+        padding-left: var(--dialogue-l-margin) !important;
+        padding-right: var(--dialogue-r-margin) !important;
     }
 
     .character {
-        padding-left: 2.2in !important;
+        padding-left: var(--character-l-margin) !important;
         text-transform: uppercase;
     }
 
@@ -160,8 +169,8 @@ Originally developed by John August - johnaugust.com
     /* Parenthetical */
     .parenthetical {
         position: relative;
-        padding-left: 1.9in !important;
-        padding-right: 2.1in !important;
+        padding-left: var(--parenthetical-l-margin) !important;
+        padding-right: var(--parenthetical-r-margin) !important;
     }
 
     .parenthetical:has(+ .dialogue) {
@@ -174,7 +183,7 @@ Originally developed by John August - johnaugust.com
         /* Shenanigans to have cursor between both parenthesis otherwise it appears before first */
         position: absolute;
         top: 0;
-        left: 1.9in;
+        left: var(--parenthetical-l-margin);
         margin-left: calc(-1ch);
         pointer-events: none;
     }
@@ -213,9 +222,9 @@ Originally developed by John August - johnaugust.com
         padding-inline: 8px;
         padding-block: 4px;
 
+        border-color: var(--editor-notes-color); /* a: 0.226 */
         border-style: dashed;
         border-width: 1px;
-        border-color: var(--editor-notes-color); /* a: 0.226 */
         border-radius: 10px;
     }
 
