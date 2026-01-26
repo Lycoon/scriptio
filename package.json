@@ -10,7 +10,7 @@
         "tauri": "tauri",
         "tauri:dev": "tauri dev",
         "tauri:standalone": "next build && tauri dev --no-watch",
-        "tauri:build:windows": "tauri-windows-bundle build --arch x64,arm64 --runner npm",
+        "tauri:build:windows": "tauri-windows-bundle build --arch x64,arm64 --verbose --runner npm",
         "tauri:build:macos": "npm run tauri build -- --bundles app --target universal-apple-darwin",
         "export": "next export",
         "start": "next start",

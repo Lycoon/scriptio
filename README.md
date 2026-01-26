@@ -15,22 +15,22 @@
 
 <h3 align="center">
 Stop overpaying for <i>Final Draft</i><br>
-Stop truggling with <i>Fade In</i> interface<br>
+Stop struggling with <i>Fade In</i> interface<br>
 Stop settling for <i>Celtx</i> free plan limits<br>
 </h3>
 
 # Features
 
--   **Seamless cloud synchronization**
--   **Cross-platform** (browser)
--   **Industry-standard formats** (PDF, Fountain, Final Draft)
--   **Smart formatting** (context aware auto-completion)
--   **Customization** (themes & custom keybinds)
--   **Focus mode** (distraction-free writing)
--   **Statistics** (distribution, frequency)
--   **Scene/Character Management** (navigation, color highlighting, synopsis)
--   **Beat Board** (story cards, outlining)
--   **Real-time collaboration**
+- **Seamless cloud synchronization**
+- **Cross-platform** (browser)
+- **Industry-standard formats** (PDF, Fountain, Final Draft)
+- **Smart formatting** (context aware auto-completion)
+- **Customization** (themes & custom keybinds)
+- **Focus mode** (distraction-free writing)
+- **Statistics** (distribution, frequency)
+- **Scene/Character Management** (navigation, color highlighting, synopsis)
+- **Beat Board** (story cards, outlining)
+- **Real-time collaboration**
 
 # Core Values
 
@@ -56,11 +56,11 @@ Designed from the ground up to free your mind with intuitive workflow. We focus 
 
 Your feedback is very welcome and ensures Scriptio remains driven by screenwriters—in all their diversity. These ideas are either considered for integration or already in progress. The order does not reflect priority. It is a high priority to make Scriptio feature-rich, without sacrificing its simplicity or stability.
 
--   **Support more formats** (Celtx, FadeIn, docx...)
--   **Production reports** (character outline exports, casting...)
--   **Desktop app** (for fully offline workflow)
--   **Mobile app**
--   **More statistics**
+- **Support more formats** (Celtx, FadeIn, docx...)
+- **Production reports** (character outline exports, casting...)
+- **Desktop app** (for fully offline workflow)
+- **Mobile app**
+- **More statistics**
 
 # Disclaimer
 
