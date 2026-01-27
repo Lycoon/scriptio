@@ -3,8 +3,8 @@
 import { useContext, useRef, useEffect, useCallback, useState } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { ScreenplayElement } from "@src/lib/utils/enums";
-import { scrollToMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
-import { Search, ChevronUp, ChevronDown, X } from "lucide-react";
+import { scrollToMatch, SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
+import { Search, ChevronUp, ChevronDown, X, Replace, ReplaceAll } from "lucide-react";
 import styles from "./ScreenplaySearch.module.css";
 
 const DEBOUNCE_MS = 300;
@@ -35,6 +35,7 @@ const FILTER_ORDER: ScreenplayElement[] = [
 const ScreenplaySearch = () => {
     const {
         editor,
+        searchTerm,
         setSearchTerm,
         searchFilters,
         setSearchFilters,
@@ -44,9 +45,11 @@ const ScreenplaySearch = () => {
     } = useContext(ProjectContext);
 
     const [isOpen, setIsOpen] = useState(false);
+    const [replaceValue, setReplaceValue] = useState("");
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const replaceInputRef = useRef<HTMLInputElement>(null);
 
     // Cleanup debounce on unmount
     useEffect(() => {
@@ -91,6 +94,7 @@ const ScreenplaySearch = () => {
             inputRef.current.value = "";
         }
         setSearchTerm("");
+        setReplaceValue("");
     }, [setSearchTerm]);
 
     // Use uncontrolled input with debounced updates to context
@@ -138,6 +142,50 @@ const ScreenplaySearch = () => {
         scrollToMatch(editor, searchMatches[prevIndex]);
     }, [editor, searchMatches, currentSearchIndex, setCurrentSearchIndex]);
 
+    const handleReplace = useCallback(() => {
+        if (!editor || searchMatches.length === 0) return;
+
+        const match = searchMatches[currentSearchIndex];
+        if (!match) return;
+
+        // Calculate position adjustment for matches after the current one
+        const lengthDiff = replaceValue.length - (match.to - match.from);
+        const nextMatchIndex = (currentSearchIndex + 1) % searchMatches.length;
+        const nextMatch = searchMatches.length > 1 ? searchMatches[nextMatchIndex] : null;
+
+        editor
+            .chain()
+            .focus()
+            .setTextSelection({ from: match.from, to: match.to })
+            .insertContent(replaceValue)
+            .run();
+
+        // Scroll to next match with adjusted position
+        if (nextMatch) {
+            const adjustedMatch = nextMatch.from > match.from
+                ? { ...nextMatch, from: nextMatch.from + lengthDiff, to: nextMatch.to + lengthDiff }
+                : nextMatch;
+            scrollToMatch(editor, adjustedMatch);
+        }
+    }, [editor, searchMatches, currentSearchIndex, replaceValue]);
+
+    const handleReplaceAll = useCallback(() => {
+        if (!editor || searchMatches.length === 0) return;
+
+        // Replace from end to start to preserve positions
+        const sortedMatches = [...searchMatches].sort((a, b) => b.from - a.from);
+
+        editor.chain().focus();
+
+        // Create a single transaction for all replacements
+        const { tr } = editor.state;
+        sortedMatches.forEach((match: SearchMatch) => {
+            tr.replaceWith(match.from, match.to, editor.state.schema.text(replaceValue));
+        });
+
+        editor.view.dispatch(tr);
+    }, [editor, searchMatches, replaceValue]);
+
     // Handle keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -167,7 +215,7 @@ const ScreenplaySearch = () => {
                         type="text"
                         className={styles.search_input}
                         placeholder="Search..."
-                        defaultValue=""
+                        defaultValue={searchTerm}
                         onChange={handleSearchChange}
                     />
                 )}
@@ -205,6 +253,36 @@ const ScreenplaySearch = () => {
                         <button className={styles.close_btn} onClick={handleClose}>
                             <X size={16} />
                         </button>
+                    </div>
+
+                    {/* Replace section */}
+                    <div className={styles.replace_section}>
+                        <input
+                            ref={replaceInputRef}
+                            type="text"
+                            className={styles.replace_input}
+                            placeholder="Replace with..."
+                            value={replaceValue}
+                            onChange={(e) => setReplaceValue(e.target.value)}
+                        />
+                        <div className={styles.replace_actions}>
+                            <button
+                                className={styles.replace_btn}
+                                onClick={handleReplace}
+                                disabled={searchMatches.length === 0}
+                                title="Replace"
+                            >
+                                <Replace size={16} />
+                            </button>
+                            <button
+                                className={styles.replace_btn}
+                                onClick={handleReplaceAll}
+                                disabled={searchMatches.length === 0}
+                                title="Replace All"
+                            >
+                                <ReplaceAll size={16} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Filters section */}
