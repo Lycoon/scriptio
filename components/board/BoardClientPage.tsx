@@ -1,19 +1,14 @@
 "use client";
 
-import { useContext } from "react";
 import Loading from "@components/utils/Loading";
-import { useCookieUser, useProjectMembership } from "@src/lib/utils/hooks";
-import { ProjectContext } from "@src/context/ProjectContext";
+import { useProjectMembership } from "@src/lib/utils/hooks";
 import BoardCanvas from "./BoardCanvas";
+import { isTauri } from "@node_modules/@tauri-apps/api/core";
 
 export default function BoardClientPage() {
-    const { user } = useCookieUser(true);
     const { membership, isLoading } = useProjectMembership();
-    const { isYjsReady } = useContext(ProjectContext);
 
-    if (!user || !membership || isLoading || !isYjsReady) {
-        return <Loading />;
-    }
+    if (!isTauri() && (!membership || isLoading)) return <Loading />;
 
     return <BoardCanvas />;
 }

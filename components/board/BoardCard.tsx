@@ -67,6 +67,7 @@ const BoardCard = ({
             if (isEditing || isEditingTitle || (e.target as HTMLElement).closest(`.${styles.card_resize_handle}`))
                 return;
             e.stopPropagation();
+            e.preventDefault(); // Prevent Chromium's text selection from interfering with drag
 
             const rect = cardRef.current?.getBoundingClientRect();
             if (!rect) return;

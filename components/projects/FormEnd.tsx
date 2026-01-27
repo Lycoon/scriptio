@@ -1,9 +1,9 @@
 "use client";
 
+import BackButton from "@components/utils/BackButton";
+
 import form_end from "./FormEnd.module.css";
 import form from "../utils/Form.module.css";
-import { join } from "@src/lib/utils/misc";
-import BackButton from "@components/utils/BackButton";
 
 type Props = {
     submitText: string;
@@ -15,7 +15,7 @@ const FormEnd = ({ submitText, onBack, isSubmitting }: Props) => {
     return (
         <div className={form_end.container}>
             <BackButton onClick={onBack} />
-            <button disabled={isSubmitting} className={join(form.btn, form_end.submit)} type="submit">
+            <button disabled={isSubmitting} className={`${form.btn} ${form_end.submit}`} type="submit">
                 {submitText}
             </button>
         </div>

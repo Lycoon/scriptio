@@ -100,7 +100,7 @@ const ProjectNavbar = () => {
                     await editProject(projectId, { title: newTitle });
                 }
             }, 1000),
-        []
+        [],
     );
 
     const toggleZenMode = () => updateIsZenMode((prev) => !prev);
@@ -166,14 +166,14 @@ const ProjectNavbar = () => {
                         >
                             Screenplay
                         </p>
-                        <p
+                        {/*<p
                             className={`${getNavStyle("statistics")}`}
                             onClick={() => {
                                 page !== "statistics" && redirectStatistics(projectId);
                             }}
                         >
                             Statistics
-                        </p>
+                        </p>*/}
                         <p
                             className={`${getNavStyle("board")}`}
                             onClick={() => {

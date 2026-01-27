@@ -2,10 +2,13 @@
  * SQLite persistence provider for Yjs documents in Tauri desktop app.
  * This replaces y-indexeddb for more reliable local storage on desktop.
  *
- * Storage location (managed by Tauri):
- * - Windows: %APPDATA%/com.tauri.dev/
- * - macOS: ~/Library/Application Support/com.tauri.dev/
- * - Linux: ~/.local/share/com.tauri.dev/
+ * Storage location (managed by Tauri, based on app identifier "ArkoLogic.Scriptio"):
+ * - Windows: %APPDATA%\ArkoLogic.Scriptio\
+ * - macOS: ~/Library/Application Support/ArkoLogic.Scriptio/
+ * - Linux: ~/.local/share/arkologic.scriptio/
+ *
+ * For store distribution (Microsoft Store/Mac App Store), the paths are automatically
+ * virtualized/sandboxed by the OS, and Tauri's path APIs handle this correctly.
  *
  * Note: We use Base64 encoding for binary data because Tauri's SQL plugin
  * has issues with Uint8Array serialization (see: https://github.com/tauri-apps/plugins-workspace/issues/105)
