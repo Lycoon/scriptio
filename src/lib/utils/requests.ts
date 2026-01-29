@@ -44,13 +44,13 @@ const request = async (url: string, method: RESTMethod, body?: Object) => {
 
 /* Projects */
 
-export const getCloudToken = async (projectId: string): Promise<string | null> => {
+export const getCloudToken = async (projectId: string): Promise<{ token: string | null; status: number }> => {
     const res = await request(`/api/projects/${projectId}/cloud-token`, "GET");
     if (res.ok) {
         const { data: token } = (await res.json()) as ApiResponse;
-        return token;
+        return { token, status: res.status };
     }
-    return null;
+    return { token: null, status: res.status };
 };
 
 export const createProject = async (userId: string, body: CreateProjectBody) => {

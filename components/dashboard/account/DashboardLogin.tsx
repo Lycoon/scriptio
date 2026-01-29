@@ -21,25 +21,30 @@ const DashboardLogin = () => {
         setLoading(true);
         setMessage(null);
 
-        const body: LoginBody = { email, password };
-        const res = await login(body);
+        try {
+            const body: LoginBody = { email, password };
+            const res = await login(body);
 
-        if (res.ok) {
-            const json = (await res.json()) as ApiResponse;
+            if (res.ok) {
+                const json = (await res.json()) as ApiResponse;
 
-            if (isTauri() && json.data?.token) {
-                const { setDesktopToken } = await import("@src/lib/desktop-auth");
-                await setDesktopToken(json.data.token);
+                if (isTauri() && json.data?.token) {
+                    const { setDesktopToken } = await import("@src/lib/desktop-auth");
+                    await setDesktopToken(json.data.token);
+                }
+
+                await mutate("/api/users/cookie");
+                setMessage({ type: "success", text: "Logged in successfully" });
+            } else {
+                const json = (await res.json()) as ApiResponse;
+                setMessage({ type: "error", text: json.message || "Login failed" });
             }
-
-            await mutate("/api/users/cookie");
-            setMessage({ type: "success", text: "Logged in successfully" });
-        } else {
-            const json = (await res.json()) as ApiResponse;
-            setMessage({ type: "error", text: json.message || "Login failed" });
+        } catch (err) {
+            console.error("[DashboardLogin] Login failed:", err);
+            setMessage({ type: "error", text: "An unexpected error occurred" });
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     return (

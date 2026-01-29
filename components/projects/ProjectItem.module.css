@@ -12,7 +12,9 @@
     border-radius: 24px;
     background-color: var(--project-item-bg);
 
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
     box-shadow: var(--project-item-shadow);
 }
 
@@ -42,6 +44,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-right: 8px;
 }
 
 .title_row {

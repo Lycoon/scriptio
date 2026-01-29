@@ -14,7 +14,7 @@ import styles from "./ProjectSettings.module.css";
 const ProjectSettings = () => {
     const { membership } = useProjectMembership();
     const projectId = useProjectIdFromUrl();
-    const { title: localTitle, description: localDescription } = useLocalProjectInfo(projectId);
+    const { title: localTitle, description: localDescription, isLoading: localLoading } = useLocalProjectInfo(projectId);
 
     const [isDirty, setDirty] = useState<boolean>(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -75,6 +75,8 @@ const ProjectSettings = () => {
 
     // On web, require membership. On desktop, allow local projects.
     if (!isDesktop && !membership) return null;
+    // Wait for local project info to load before rendering the form
+    if (isLocalOnly && localLoading) return null;
 
     return (
         <form onSubmit={handleSave} className={styles.settingsForm}>

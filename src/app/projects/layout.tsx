@@ -2,6 +2,7 @@
 
 import Loading from "@components/utils/Loading";
 import DashboardModal from "@components/dashboard/DashboardModal";
+import ProjectUnavailableDialog from "@components/projects/ProjectUnavailableDialog";
 import { redirect, useParams, useSearchParams } from "next/navigation";
 import { ProjectContext, ProjectProvider } from "@src/context/ProjectContext";
 import { useProjectMembership } from "@src/lib/utils/hooks";
@@ -14,7 +15,7 @@ interface ProjectLayoutInnerProps {
 }
 
 const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
-    const { isYjsReady } = useContext(ProjectContext);
+    const { isYjsReady, isProjectUnavailable } = useContext(ProjectContext);
     const { membership, isLoading: isMembershipLoading } = useProjectMembership();
 
     // On desktop (Tauri), we support offline-first - don't require API membership
@@ -33,6 +34,11 @@ const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
     // On web, redirect if no membership (unauthorized access)
     if (!isDesktop && !membership) {
         redirect("/");
+    }
+
+    // On desktop, show dialog when cloud project is unavailable
+    if (isDesktop && isProjectUnavailable) {
+        return <ProjectUnavailableDialog />;
     }
 
     return (

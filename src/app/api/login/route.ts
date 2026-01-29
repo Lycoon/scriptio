@@ -20,6 +20,7 @@ export type { LoginBody } from "@src/lib/utils/api-bodies";
 async function loginRoute(req: NextRequest) {
     const body = await req.json();
     const { email, password } = validate(LoginBodySchema, body);
+    console.log(email, password);
 
     const user = await UserService.getUserFromEmail(email, true);
     if (!user || !user.secrets) {

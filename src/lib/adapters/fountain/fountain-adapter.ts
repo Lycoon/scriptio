@@ -101,10 +101,10 @@ export class FountainAdapter extends ProjectAdapter {
         const text = decoder.decode(rawContent);
         const output = fountain.parse(text, true);
         const html = output["html"]["script"];
-        const json = generateJSON(html, BASE_EXTENSIONS) as JSONContent[];
+        const json = generateJSON(html, BASE_EXTENSIONS) as JSONContent;
 
         const project: Partial<ProjectData> = {
-            screenplay: json,
+            screenplay: json.content as JSONContent[],
         };
 
         return project;

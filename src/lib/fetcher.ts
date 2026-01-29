@@ -29,17 +29,23 @@ async function fetchFromDesktop<JSON = unknown>(input: RequestInfo, init?: Reque
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
         "x-client-type": "desktop",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
     };
 
     if (init?.headers) {
         Object.assign(headers, init.headers as Record<string, string>);
     }
 
-    const response = await fetch(fullUrl, {
-        ...init,
-        headers,
-    });
+    let response: Response;
+    try {
+        response = await fetch(fullUrl, {
+            ...init,
+            headers,
+        });
+    } catch {
+        // Network error (server unreachable) - throw structured error so SWR won't retry
+        throw { message: "Server unreachable", status: 0, isNetworkError: true };
+    }
 
     const data: any = await response.json();
 

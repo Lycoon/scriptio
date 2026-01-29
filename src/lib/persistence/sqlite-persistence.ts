@@ -69,22 +69,11 @@ export class SqlitePersistence extends Observable<string> {
             const Database = (await import("@tauri-apps/plugin-sql")).default;
             this.db = await Database.load(DB_NAME);
 
-            // Create table if it doesn't exist
-            // Using TEXT for data because Tauri SQL plugin has issues with BLOB/Uint8Array serialization
-            // Data is stored as Base64 encoded string
-            await this.db.execute(`
-                CREATE TABLE IF NOT EXISTS yjs_documents (
-                    project_id TEXT PRIMARY KEY,
-                    data TEXT NOT NULL,
-                    updated_at INTEGER NOT NULL
-                )
-            `);
-
-            // Load existing document state
+            // Load existing document state from local_projects table
             const result = await this.db.select(
-                "SELECT data FROM yjs_documents WHERE project_id = ?",
+                "SELECT data FROM local_projects WHERE id = ?",
                 [this.projectId],
-            ) as { data: string }[];
+            ) as { data: string | null }[];
 
             if (result.length > 0 && result[0].data) {
                 try {
@@ -96,7 +85,7 @@ export class SqlitePersistence extends Observable<string> {
                         `[SqlitePersistence] Corrupted data for project ${this.projectId}, clearing local cache:`,
                         updateError,
                     );
-                    await this.db.execute("DELETE FROM yjs_documents WHERE project_id = ?", [this.projectId]);
+                    await this.db.execute("UPDATE local_projects SET data = NULL WHERE id = ?", [this.projectId]);
                     console.log(`[SqlitePersistence] Cleared corrupted data, will sync from cloud`);
                 }
             } else {
@@ -141,8 +130,8 @@ export class SqlitePersistence extends Observable<string> {
             const base64Data = uint8ArrayToBase64(state);
 
             await this.db.execute(
-                `INSERT OR REPLACE INTO yjs_documents (project_id, data, updated_at) VALUES (?, ?, ?)`,
-                [this.projectId, base64Data, Date.now()],
+                `UPDATE local_projects SET data = ?, updated_at = ? WHERE id = ?`,
+                [base64Data, Date.now(), this.projectId],
             );
 
             console.log(`[SqlitePersistence] Saved ${state.length} bytes for project ${this.projectId}`);
@@ -176,7 +165,7 @@ export class SqlitePersistence extends Observable<string> {
         if (!this.db) return;
 
         try {
-            await this.db.execute("DELETE FROM yjs_documents WHERE project_id = ?", [this.projectId]);
+            await this.db.execute("UPDATE local_projects SET data = NULL WHERE id = ?", [this.projectId]);
             console.log(`[SqlitePersistence] Cleared data for project ${this.projectId}`);
         } catch (error) {
             console.error("[SqlitePersistence] Clear failed:", error);

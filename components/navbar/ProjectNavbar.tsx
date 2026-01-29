@@ -92,9 +92,8 @@ const ProjectNavbar = () => {
     const deferredTitleUpdate = useMemo(
         () =>
             debounce(async (projectId: string, newTitle: string) => {
-                // Check if it's a local project (exists in local SQLite)
-                const { isLocalProject, updateLocalProject } = await import("@src/lib/persistence/local-projects");
-                if (await isLocalProject(projectId)) {
+                const { isLocalOnlyProject, updateLocalProject } = await import("@src/lib/persistence/local-projects");
+                if (await isLocalOnlyProject(projectId)) {
                     await updateLocalProject(projectId, { title: newTitle });
                 } else {
                     await editProject(projectId, { title: newTitle });

@@ -52,7 +52,9 @@ async function getDb(): Promise<Database> {
                 title TEXT NOT NULL,
                 description TEXT,
                 created_at INTEGER NOT NULL,
-                updated_at INTEGER NOT NULL
+                updated_at INTEGER NOT NULL,
+                is_synced INTEGER NOT NULL DEFAULT 0,
+                data TEXT
             )
         `);
 
@@ -81,21 +83,34 @@ export async function isLocalProject(projectId: string): Promise<boolean> {
 }
 
 /**
- * Create a new local project.
+ * Create a new local-only project with a generated ID.
  * Throws error if not in Tauri environment.
  */
 export async function createLocalProject(title: string, description?: string): Promise<LocalProject> {
+    return createLocalProjectWithId(generateLocalProjectId(), title, description, false);
+}
+
+/**
+ * Create a local project with a specific ID.
+ * When synced is true, the project also exists on the server (cloud-synced).
+ * Throws error if not in Tauri environment.
+ */
+export async function createLocalProjectWithId(
+    id: string,
+    title: string,
+    description?: string,
+    synced: boolean = false,
+): Promise<LocalProject> {
     if (!isTauri()) {
         throw new Error("Cannot create local project outside Tauri environment");
     }
 
     const db = await getDb();
     const now = Date.now();
-    const id = generateLocalProjectId();
 
     await db.execute(
-        `INSERT INTO local_projects (id, title, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
-        [id, title, description || null, now, now]
+        `INSERT INTO local_projects (id, title, description, created_at, updated_at, is_synced) VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, title, description || null, now, now, synced ? 1 : 0]
     );
 
     return {
@@ -214,7 +229,7 @@ export async function touchLocalProject(id: string): Promise<void> {
 }
 
 /**
- * Delete a local project (metadata only - Yjs doc cleanup handled separately).
+ * Delete a local project.
  * No-op when not in Tauri environment.
  */
 export async function deleteLocalProject(id: string): Promise<void> {
@@ -222,6 +237,90 @@ export async function deleteLocalProject(id: string): Promise<void> {
 
     const db = await getDb();
     await db.execute("DELETE FROM local_projects WHERE id = ?", [id]);
+}
+
+/**
+ * Migrate a cloud project to a new local project.
+ * Creates a new local project entry and copies the document data.
+ * Cleans up the old project entry afterward.
+ */
+export async function migrateToLocalProject(
+    oldProjectId: string,
+    title: string,
+    description?: string
+): Promise<LocalProject> {
+    if (!isTauri()) {
+        throw new Error("Cannot migrate project outside Tauri environment");
+    }
+
+    const db = await getDb();
+
+    // Read data from old project entry
+    const result = await db.select(
+        "SELECT data FROM local_projects WHERE id = ?",
+        [oldProjectId]
+    ) as { data: string | null }[];
+
+    const newProject = await createLocalProject(title, description);
+
+    // Copy Yjs data to new project entry
+    if (result.length > 0 && result[0].data) {
+        await db.execute(
+            "UPDATE local_projects SET data = ?, updated_at = ? WHERE id = ?",
+            [result[0].data, Date.now(), newProject.id]
+        );
+    }
+
+    // Clean up old project entry
+    await db.execute("DELETE FROM local_projects WHERE id = ?", [oldProjectId]);
+
+    return newProject;
+}
+
+/**
+ * Discard a cloud project's local data.
+ * Used when the user chooses not to keep a local copy of a deleted cloud project.
+ */
+export async function discardCloudProjectData(projectId: string): Promise<void> {
+    if (!isTauri()) return;
+    const db = await getDb();
+    await db.execute("DELETE FROM local_projects WHERE id = ?", [projectId]);
+}
+
+/**
+ * Check if a project is local-only (not cloud-synced).
+ * Returns false when not in Tauri environment or project doesn't exist locally.
+ */
+export async function isLocalOnlyProject(id: string): Promise<boolean> {
+    if (!isTauri()) return false;
+
+    const db = await getDb();
+    const results = await db.select(
+        "SELECT is_synced FROM local_projects WHERE id = ?",
+        [id]
+    ) as { is_synced: number }[];
+
+    if (results.length === 0) return false;
+    return results[0].is_synced === 0;
+}
+
+/**
+ * Ensure remote projects have local entries for offline-first persistence.
+ * Inserts any missing projects as cloud-synced (is_synced = 1).
+ * No-op when not in Tauri environment.
+ */
+export async function ensureLocalEntries(
+    projects: { id: string; title: string; description: string | null; createdAt: Date; updatedAt: Date }[],
+): Promise<void> {
+    if (!isTauri() || projects.length === 0) return;
+
+    const db = await getDb();
+    for (const p of projects) {
+        await db.execute(
+            `INSERT OR IGNORE INTO local_projects (id, title, description, created_at, updated_at, is_synced) VALUES (?, ?, ?, ?, ?, 1)`,
+            [p.id, p.title, p.description, p.createdAt.getTime(), p.updatedAt.getTime()]
+        );
+    }
 }
 
 /**

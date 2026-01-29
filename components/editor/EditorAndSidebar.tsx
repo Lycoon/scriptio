@@ -45,7 +45,7 @@ const EditorAndSidebar = () => {
             toggleFocusMode: () => updateIsZenMode((prev) => !prev),
             saveProject: () => console.log("Project Saved"),
         }),
-        []
+        [],
     );
 
     useGlobalKeybinds(settings?.keybinds, globalActions);
@@ -55,7 +55,7 @@ const EditorAndSidebar = () => {
         (element: ScreenplayElement) => {
             setSelectedElement(element);
         },
-        [setSelectedElement]
+        [setSelectedElement],
     );
 
     const editor = useScriptioEditor(
@@ -65,7 +65,7 @@ const EditorAndSidebar = () => {
         updateSuggestions,
         updateSuggestionData,
         settings?.keybinds,
-        globalActions
+        globalActions,
     );
 
     // Function to set element and apply to editor (used by keyboard handlers)
@@ -74,7 +74,7 @@ const EditorAndSidebar = () => {
             setSelectedElement(element);
             if (applyStyle && editor) applyElement(editor, element);
         },
-        [setSelectedElement, editor]
+        [setSelectedElement, editor],
     );
 
     useEffect(() => {
@@ -252,7 +252,7 @@ const EditorAndSidebar = () => {
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
 
                     {/* Scriptio Editor */}
-                    <EditorContent editor={editor} />
+                    <EditorContent editor={editor} spellCheck={false} />
                 </div>
             </div>
             <EditorSidebarFormat />

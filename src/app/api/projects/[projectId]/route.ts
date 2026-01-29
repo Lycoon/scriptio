@@ -111,7 +111,7 @@ async function deleteProject(req: NextRequest, { routeParams }: ApiContext) {
     const member = await ProjectService.getMembership(projectId, cookie.id);
 
     if (!member) {
-        throw new ProjectNotFoundError();
+        throw new ForbiddenError();
     }
 
     if (!Roles.hasRoleOrGreater(member.role, ProjectRole.OWNER)) {

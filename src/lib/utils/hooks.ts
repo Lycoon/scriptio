@@ -36,7 +36,7 @@ const useDraggable = (initialPosition?: Position): UseDraggableReturn => {
             dragStartRef.current = { x: e.clientX, y: e.clientY };
             positionStartRef.current = { ...position };
         },
-        [position]
+        [position],
     );
 
     useEffect(() => {
@@ -90,8 +90,7 @@ const useProjectIdFromUrl = () => {
 
     useEffect(() => {
         const projectId = searchParams.get("projectId");
-        if (projectId)
-            setProjectId(projectId as string);
+        if (projectId) setProjectId(projectId as string);
     }, [searchParams]);
 
     return projectId;
@@ -103,14 +102,30 @@ const useUser = () => {
 };
 
 const useCookieUser = (redirect: boolean = false) => {
-    const { data: user, isLoading } = useSWR<CookieUser>("/api/users/cookie");
+    const { data: user, isLoading, error } = useSWR<CookieUser>("/api/users/cookie");
+    const [localUser, setLocalUser] = useState<CookieUser | undefined>(undefined);
     const router = useRouter();
 
-    if (redirect && !isLoading && !user) {
+    // On desktop, if the server is unreachable but we have a stored token,
+    // decode the JWT locally to get user info for the UI.
+    useEffect(() => {
+        if (!isTauri() || user || isLoading || !error) return;
+
+        const loadLocalUser = async () => {
+            const { getDesktopUserFromToken } = await import("@src/lib/desktop-auth");
+            const decoded = await getDesktopUserFromToken();
+            if (decoded) setLocalUser(decoded);
+        };
+        loadLocalUser();
+    }, [error, user, isLoading]);
+
+    const effectiveUser = user || localUser;
+
+    if (redirect && !isLoading && !effectiveUser) {
         router.push("/login");
     }
 
-    return { user, isLoading };
+    return { user: effectiveUser, isLoading };
 };
 
 const useSettings = () => {
@@ -185,12 +200,36 @@ const useLocalProjects = () => {
  * Remote projects are fetched via API, local projects from SQLite on desktop.
  */
 const useProjectMemberships = () => {
-    const { data: remoteProjects, isLoading: isRemoteLoading, mutate } = useSWR<ProjectMembershipPayload[]>(
+    const {
+        data: remoteProjects,
+        isLoading: isRemoteLoading,
+        mutate,
+    } = useSWR<ProjectMembershipPayload[]>(
         // On desktop without auth, don't fetch remote - it will fail
         // The fetcher will handle auth errors gracefully
-        "/api/projects"
+        "/api/projects",
     );
     const { localProjects, isLoading: isLocalLoading, refresh: refreshLocal } = useLocalProjects();
+
+    // On desktop, ensure remote projects have local entries for offline persistence
+    useEffect(() => {
+        if (!isTauri() || !remoteProjects || remoteProjects.length === 0) return;
+
+        const sync = async () => {
+            const { ensureLocalEntries } = await import("@src/lib/persistence/local-projects");
+            await ensureLocalEntries(
+                remoteProjects.map((p) => ({
+                    id: p.project.id,
+                    title: p.project.title,
+                    description: p.project.description,
+                    createdAt: new Date(p.project.createdAt),
+                    updatedAt: new Date(p.project.updatedAt),
+                })),
+            );
+            await refreshLocal();
+        };
+        sync();
+    }, [remoteProjects, refreshLocal]);
 
     // Merge remote and local projects, sorted by updatedAt
     const projects = useMemo(() => {
@@ -216,9 +255,7 @@ const useProjectMemberships = () => {
 
     // Combined loading state - on desktop, wait for local to be ready
     // On web, only wait for remote
-    const isLoading = isTauri()
-        ? isLocalLoading || (isRemoteLoading && localProjects.length === 0)
-        : isRemoteLoading;
+    const isLoading = isTauri() ? isLocalLoading || (isRemoteLoading && localProjects.length === 0) : isRemoteLoading;
 
     // Combined mutate function
     const refreshAll = useCallback(async () => {
@@ -238,7 +275,7 @@ const useProjectMembership = () => {
     const projectId = useProjectIdFromUrl();
 
     const { data, isLoading, mutate } = useSWR<ProjectMembershipPayload>(
-        projectId ? `/api/projects/${projectId}` : null
+        projectId ? `/api/projects/${projectId}` : null,
     );
 
     useEffect(() => {
@@ -274,10 +311,8 @@ const usePage = (): Page | undefined => {
         }
 
         const lastSegment = segments[segments.length - 1];
-        if (isPage(lastSegment))
-            setPage(lastSegment as Page);
-        else
-            setPage("index");
+        if (isPage(lastSegment)) setPage(lastSegment as Page);
+        else setPage("index");
     }, [pathname]);
 
     return page;
@@ -295,7 +330,7 @@ export const useEffectiveKeybinds = (userShortcuts: Record<string, string> | und
 
 export const useGlobalKeybinds = (
     userKeybinds: Record<string, string> | undefined,
-    context: { toggleFocusMode: () => void; saveProject: () => void }
+    context: { toggleFocusMode: () => void; saveProject: () => void },
 ) => {
     const effectiveKeybinds = useEffectiveKeybinds(userKeybinds);
 

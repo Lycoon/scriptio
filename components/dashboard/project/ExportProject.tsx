@@ -185,7 +185,9 @@ const ExportProject = () => {
                     className={`${optionCard.optionCard} ${includeNotes ? optionCard.active : ""}`}
                     onClick={() => setIncludeNotes(!includeNotes)}
                 >
-                    <div className={optionCard.checkbox}>{includeNotes && <div className={optionCard.checkInner} />}</div>
+                    <div className={optionCard.checkbox}>
+                        {includeNotes && <div className={optionCard.checkInner} />}
+                    </div>
                     <div className={optionCard.optionInfo}>
                         <span className={optionCard.optionTitle}>Include Notes</span>
                         <span className={optionCard.optionDesc}>Export inline notes.</span>
@@ -211,8 +213,9 @@ const ExportProject = () => {
                 {/* Password Protection Toggle (PDF Only) */}
                 {format === ExportFormat.PDF && (
                     <div
-                        className={`${optionCard.optionCard} ${optionCard.optionCardExpandable} ${enablePassword ? optionCard.active : ""
-                            }`}
+                        className={`${optionCard.optionCard} ${optionCard.optionCardExpandable} ${
+                            enablePassword ? optionCard.active : ""
+                        }`}
                         onClick={() => setEnablePassword(!enablePassword)}
                     >
                         <div className={optionCard.optionRow}>

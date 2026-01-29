@@ -1,6 +1,6 @@
 import { getCookieUser } from "@src/lib/session";
 import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
-import { Success, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
+import { ForbiddenError, Success, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
 
 import * as ProjectService from "@src/server/service/project-service";
 
@@ -21,7 +21,7 @@ async function projectCloudTokenRoute(req: NextRequest, { routeParams }: ApiCont
     const { projectId } = validate(QuerySchema, routeParams);
     const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {
-        throw new UnauthorizedError();
+        throw new ForbiddenError();
     }
 
     const payload = {

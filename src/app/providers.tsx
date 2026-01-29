@@ -18,9 +18,8 @@ export function Providers({ children }: { children: ReactNode }) {
                     console.error("[Fetcher] An unexpected error occurred: ", err);
                 },
                 shouldRetryOnError: (err) => {
-                    // Don't retry on auth errors (401, 403)
-                    // This prevents infinite retry loops when not authenticated
-                    if (err?.status === 401 || err?.status === 403) {
+                    // Don't retry on auth errors (401, 403) or network errors (server unreachable)
+                    if (err?.status === 401 || err?.status === 403 || err?.isNetworkError) {
                         return false;
                     }
                     return true;

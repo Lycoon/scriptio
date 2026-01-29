@@ -42,16 +42,41 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         const title = e.target.title.value;
         const description = e.target.description.value;
 
-        // Desktop without auth: create local project in SQLite
-        if (isTauri() && !user) {
+        // Desktop: offline-first project creation
+        // Always create locally. If signed in, try cloud first to use its ID.
+        if (isTauri()) {
             let projectId: string | null = null;
             try {
-                const { createLocalProject } = await import("@src/lib/persistence/local-projects");
-                const localProject = await createLocalProject(title, description);
-                projectId = localProject.id;
+                // If signed in, try creating on server to get the cloud project ID
+                if (user) {
+                    try {
+                        const body: CreateProjectBody = { title, description };
+                        if (selectedFile) {
+                            body.poster = await cropImageBase64(selectedFile, 686, 1016);
+                        }
+                        const res = await createProject(user.id, body);
+                        const json = (await res.json()) as ApiResponse;
+                        if (res.ok) {
+                            projectId = json.data.id;
+                        }
+                    } catch {
+                        // Server unreachable - will generate a local ID below
+                    }
+                }
+
+                // Always create local SQLite entry, using the cloud ID if available
+                const { createLocalProject, createLocalProjectWithId } = await import(
+                    "@src/lib/persistence/local-projects"
+                );
+                if (projectId) {
+                    await createLocalProjectWithId(projectId, title, description, true);
+                } else {
+                    const localProject = await createLocalProject(title, description);
+                    projectId = localProject.id;
+                }
             } catch (error) {
-                console.log("Failed to create local project:", error);
-                setFormInfo({ content: "Failed to create project locally", isError: true });
+                console.log("Failed to create project:", error);
+                setFormInfo({ content: "Failed to create project", isError: true });
             }
             // Redirect outside try-catch since Next.js redirect() throws NEXT_REDIRECT
             if (projectId) {
@@ -60,7 +85,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
             return;
         }
 
-        // Web or desktop with auth: create via API
+        // Web: create via API
         if (!user) return;
 
         const body: CreateProjectBody = {

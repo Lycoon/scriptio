@@ -64,3 +64,27 @@ export async function hasDesktopToken(): Promise<boolean> {
     const token = await getDesktopToken();
     return token !== null;
 }
+
+/**
+ * Decode the stored JWT to extract user info without server verification.
+ * Used as a fallback when the server is unreachable.
+ */
+export async function getDesktopUserFromToken(): Promise<{
+    id: string;
+    email: string;
+    createdAt: Date;
+} | null> {
+    const token = await getDesktopToken();
+    if (!token) return null;
+
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return {
+            id: payload.id,
+            email: payload.email,
+            createdAt: new Date(payload.createdAt),
+        };
+    } catch {
+        return null;
+    }
+}

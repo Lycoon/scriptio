@@ -31,6 +31,7 @@ export interface ProjectContextType {
     isYjsReady: boolean;
     isLockedByServer: boolean;
     isSessionReplaced: boolean;
+    isProjectUnavailable: boolean;
 
     // Connection state
     updateConnectionStatus: (status: ConnectionStatus) => void;
@@ -84,6 +85,7 @@ const defaultContextValue: ProjectContextType = {
     isYjsReady: false,
     isLockedByServer: false,
     isSessionReplaced: false,
+    isProjectUnavailable: false,
     connectionStatus: "disconnected",
     updateConnectionStatus: () => { },
     users: [],
@@ -151,6 +153,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         refreshAndReconnect,
         isLockedByServer,
         isSessionReplaced,
+        isProjectUnavailable,
     } = useProjectYjs({
         projectId,
         userName,
@@ -382,6 +385,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             updateEditor,
             isLockedByServer,
             isSessionReplaced,
+            isProjectUnavailable,
             selectedElement,
             setSelectedElement,
             selectedStyles,
@@ -418,6 +422,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             updateEditor,
             isLockedByServer,
             isSessionReplaced,
+            isProjectUnavailable,
             selectedElement,
             setSelectedElement,
             selectedStyles,

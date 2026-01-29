@@ -5,7 +5,7 @@
 
 import { ProjectState } from "@src/lib/project/project-state";
 import { getAdapterByFilename } from "@src/lib/adapters/registry";
-import { createLocalProject } from "@src/lib/persistence/local-projects";
+import { createLocalProject, createLocalProjectWithId } from "@src/lib/persistence/local-projects";
 import { SqlitePersistence } from "@src/lib/persistence/sqlite-persistence";
 import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
 import { ScreenplaySchema } from "@src/lib/screenplay/editor";
@@ -138,13 +138,28 @@ export async function importFileAsProject(
         // Create project title from filename if not provided
         const projectTitle = title || file.name.replace(/\.[^/.]+$/, "");
 
-        let projectId: string;
+        let projectId: string | null = null;
 
-        if (user && user.id) {
-            // User is logged in - create remote project
+        if (isTauri()) {
+            // Desktop: offline-first - try cloud to get ID, always create locally
+            if (user && user.id) {
+                try {
+                    projectId = await createRemoteProject(user.id, projectTitle);
+                } catch {
+                    // Server unreachable - will generate a local ID below
+                }
+            }
+            if (projectId) {
+                await createLocalProjectWithId(projectId, projectTitle, undefined, true);
+            } else {
+                const localProject = await createLocalProject(projectTitle);
+                projectId = localProject.id;
+            }
+        } else if (user && user.id) {
+            // Web: create remote project
             projectId = await createRemoteProject(user.id, projectTitle);
         } else {
-            // Not logged in - create local-only project (desktop offline mode)
+            // Web without auth: create local-only project (IndexedDB)
             const localProject = await createLocalProject(projectTitle);
             projectId = localProject.id;
         }

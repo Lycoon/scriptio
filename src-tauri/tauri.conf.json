@@ -1,29 +1,23 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Scriptio",
-  "identifier": "ArkoLogic.Scriptio",
-  "version": "2.0.0",
-  "build": {
-    "frontendDist": "../out",
-    "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build:tauri"
-  },
-  "app": {
-    "security": {
-      "csp": null
+    "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+    "productName": "Scriptio",
+    "identifier": "ArkoLogic.Scriptio",
+    "version": "2.0.0",
+    "build": {
+        "frontendDist": "../out",
+        "devUrl": "http://localhost:3000",
+        "beforeDevCommand": "npm run dev",
+        "beforeBuildCommand": "npm run build:tauri"
+    },
+    "app": {
+        "security": {
+            "csp": null
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": "all",
+        "publisher": "Arko Logic",
+        "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
     }
-  },
-  "bundle": {
-    "active": true,
-    "targets": "all",
-    "publisher": "Arko Logic",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ]
-  }
 }

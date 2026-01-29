@@ -38,6 +38,7 @@ export interface ProjectYjsState {
     users: CollaboratorInfo[];
     isLockedByServer: boolean;
     isSessionReplaced: boolean;
+    isProjectUnavailable: boolean;
 }
 
 export interface CollaboratorInfo {
@@ -302,6 +303,7 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
     const [isCloudSynced, setIsCloudSynced] = useState(false);
     const [isLockedByServer, setIsLockedByServer] = useState(false);
     const [isSessionReplaced, setIsSessionReplaced] = useState(false);
+    const [isProjectUnavailable, setIsProjectUnavailable] = useState(false);
 
     const isMountedRef = useRef(true);
     const providerRef = useRef<ThrottledWebsocketProvider | null>(null);
@@ -322,7 +324,7 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
         if (!providerRef.current || !projectId) return;
 
         try {
-            const token = await getCloudToken(projectId);
+            const { token } = await getCloudToken(projectId);
             if (token && isMountedRef.current) {
                 await providerRef.current.updateToken(token);
             }
@@ -339,6 +341,7 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
     // Initialize provider when doc is ready
     useEffect(() => {
         isMountedRef.current = true;
+        setIsProjectUnavailable(false);
 
         if (!ydoc || !projectId || typeof window === "undefined") {
             setConnectionStatus("disconnected");
@@ -359,22 +362,27 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 const { isTauri } = await import("@tauri-apps/api/core");
                 const isDesktop = isTauri();
 
-                // Local projects (exist in local SQLite) don't sync to cloud - only check in Tauri
+                // Local-only projects (not cloud-synced) don't need cloud sync
                 if (isDesktop) {
-                    const { isLocalProject } = await import("../persistence/local-projects");
-                    if (await isLocalProject(projectId)) {
-                        console.log("[ProjectYjs] Local project - skipping cloud sync");
+                    const { isLocalOnlyProject } = await import("../persistence/local-projects");
+                    if (await isLocalOnlyProject(projectId)) {
+                        console.log("[ProjectYjs] Local-only project - skipping cloud sync");
                         setConnectionStatus("disconnected");
-                        setIsCloudSynced(true); // Mark as "synced" so isReady becomes true
+                        setIsCloudSynced(true);
                         return;
                     }
                 }
 
-                const token = await getCloudToken(projectId);
+                const { token, status } = await getCloudToken(projectId);
                 if (!token || !isMountedRef.current) {
-                    console.log("[ProjectYjs] No auth token - skipping cloud sync");
+                    console.log("[ProjectYjs] No auth token - skipping cloud sync (status:", status, ")");
                     setConnectionStatus("disconnected");
                     setIsCloudSynced(true); // Mark as "synced" so isReady becomes true
+
+                    // On desktop, 403 means the cloud project was deleted or user was removed
+                    if (status === 403 && isDesktop) {
+                        setIsProjectUnavailable(true);
+                    }
                     return;
                 }
 
@@ -547,6 +555,7 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
         refreshAndReconnect,
         isLockedByServer,
         isSessionReplaced,
+        isProjectUnavailable,
     };
 };
 
@@ -585,6 +594,7 @@ export const useProjectYjs = ({
         refreshAndReconnect,
         isLockedByServer,
         isSessionReplaced,
+        isProjectUnavailable,
     } = useCloudSync(projectId, ydoc, userInfo);
 
     // isReady: project is ready when ydoc exists and local storage is synced
@@ -604,6 +614,7 @@ export const useProjectYjs = ({
         refreshAndReconnect,
         isLockedByServer,
         isSessionReplaced,
+        isProjectUnavailable,
     };
 };
 
