@@ -156,6 +156,8 @@ export const refreshSearchHighlights = (editor: Editor) => {
 
 /**
  * Scrolls the editor to show the match at the given position, centered in the view.
+ * Uses instant scrolling to avoid stutter from overlapping smooth scroll animations
+ * when rapidly navigating between matches (especially on Chromium-based browsers).
  */
 export const scrollToMatch = (editor: Editor, match: SearchMatch) => {
     if (!editor || !match) return;
@@ -165,7 +167,6 @@ export const scrollToMatch = (editor: Editor, match: SearchMatch) => {
     const element = node instanceof HTMLElement ? node : node.parentElement;
 
     if (element) {
-        // Scroll the element into view, centered
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.scrollIntoView({ behavior: "instant", block: "center" });
     }
 };

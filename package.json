@@ -1,7 +1,7 @@
 {
     "name": "scriptio",
     "private": true,
-    "version": "2.0.0",
+    "version": "2.0.1",
     "scripts": {
         "dev": "docker compose up -d --wait && npx prisma db push && next dev",
         "build": "npx prisma generate && next build",
@@ -27,6 +27,12 @@
         "@formkit/auto-animate": "^0.7.0",
         "@prisma/client": "^6.19.0",
         "@svgr/core": "^8.1.0",
+        "@tauri-apps/api": "^2.0.0",
+        "@tauri-apps/plugin-dialog": "^2.6.0",
+        "@tauri-apps/plugin-fs": "^2.4.5",
+        "@tauri-apps/plugin-opener": "^2.5.3",
+        "@tauri-apps/plugin-sql": "^2.0.0",
+        "@tauri-apps/plugin-store": "^2.0.0",
         "@tiptap/extension-bold": "^3.13.0",
         "@tiptap/extension-collaboration": "^3.13.0",
         "@tiptap/extension-collaboration-caret": "^3.13.0",
@@ -37,9 +43,6 @@
         "@tiptap/extension-placeholder": "^3.13.0",
         "@tiptap/extension-text": "^3.13.0",
         "@tiptap/extension-underline": "^3.13.0",
-        "@tauri-apps/api": "^2.0.0",
-        "@tauri-apps/plugin-sql": "^2.0.0",
-        "@tauri-apps/plugin-store": "^2.0.0",
         "@tiptap/react": "^3.13.0",
         "argon2": "^0.44.0",
         "chart.js": "^4.4.1",
@@ -74,8 +77,8 @@
         "zod": "^4.1.13"
     },
     "devDependencies": {
+        "@choochmeque/tauri-windows-bundle": "^0.1.14",
         "@cloudflare/workers-types": "^4.20251216.0",
-        "cross-env": "^7.0.3",
         "@svgr/webpack": "^8.1.0",
         "@tauri-apps/cli": "^2.9.6",
         "@types/file-saver": "^2.0.5",
@@ -89,6 +92,7 @@
         "@types/uuid": "^10.0.0",
         "@typescript-eslint/eslint-plugin": "^8.49.0",
         "@typescript-eslint/parser": "^8.49.0",
+        "cross-env": "^7.0.3",
         "eslint": "^9.39.1",
         "eslint-config-next": "^16.0.8",
         "eslint-config-prettier": "^8.8.0",
@@ -98,8 +102,7 @@
         "typescript": "^5.1.3",
         "typescript-plugin-css-modules": "^5.2.0",
         "wait-on": "^9.0.3",
-        "wrangler": "^4.35.0",
-        "@choochmeque/tauri-windows-bundle": "^0.1.13"
+        "wrangler": "^4.35.0"
     },
     "browser": {
         "tokenize": false

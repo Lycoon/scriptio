@@ -45,6 +45,7 @@ export interface ProjectContextType {
     characters: CharacterMap | undefined;
     locations: LocationMap | undefined;
     scenes: Scene[];
+    updateScenes: (scenes: Scene[]) => void;
 
     // Screenplay format state (for navbar dropdown)
     selectedElement: ScreenplayElement;
@@ -104,6 +105,7 @@ const defaultContextValue: ProjectContextType = {
     characters: {},
     locations: {},
     scenes: [],
+    updateScenes: () => { },
     screenplay: [],
     // Search state defaults
     searchTerm: "",
@@ -398,6 +400,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setDisplaySceneNumbers,
             screenplay,
             scenes,
+            updateScenes,
             locations,
             characters,
             searchTerm,
@@ -435,6 +438,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setDisplaySceneNumbers,
             screenplay,
             scenes,
+            updateScenes,
             locations,
             characters,
             searchTerm,

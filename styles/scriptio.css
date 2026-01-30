@@ -44,6 +44,7 @@ Originally developed by John August - johnaugust.com
     --dialogue-r-margin: 1in;
     --parenthetical-l-margin: 2in;
     --parenthetical-r-margin: 2in;
+    --page-margin-left: 144px;
     --line-height: 17px;
     --font-size: 12pt;
 
@@ -292,5 +293,24 @@ Originally developed by John August - johnaugust.com
     .search-highlight-current {
         background-color: rgba(255, 213, 0, 0.6);
         box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.8);
+    }
+
+    /* Scene bookmark decoration */
+    .scene-bookmark {
+        position: relative;
+    }
+
+    .scene-bookmark::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: calc(-1 * var(--page-margin-left) - 4px);
+        width: 8px;
+        height: 100%;
+        min-height: 17px;
+        background-color: var(--scene-color);
+        clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
+        border-radius: 0 0 2px 2px;
+        pointer-events: none;
     }
 }

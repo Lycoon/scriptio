@@ -40,16 +40,19 @@
 }
 
 .import_btn {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
     font-weight: 500;
     padding-inline: 40px !important;
     border-width: 3px;
-
     background: none !important;
 }
 
 .import_btn:hover {
     transition: border-color 0.2s;
-    border-color: var(--tertiary-hover);
+    border-color: var(--tertiary-hover) !important;
 }
 
 .center {

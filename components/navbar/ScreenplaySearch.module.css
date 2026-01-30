@@ -64,12 +64,12 @@
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    min-width: 220px;
+    width: 220px;
     padding: 8px;
     background-color: color-mix(in srgb, var(--secondary) 40%, transparent);
     backdrop-filter: blur(12px);
     border: 1px solid var(--separator);
-    border-radius: 10px;
+    border-radius: 16px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     z-index: 1;
 }
@@ -148,6 +148,7 @@
 
 .replace_input {
     flex: 1;
+    min-width: 0;
     border: 1px solid var(--separator);
     background: transparent;
     padding: 6px 10px;
@@ -169,6 +170,7 @@
 .replace_actions {
     display: flex;
     flex-direction: row;
+    flex-shrink: 0;
     gap: 4px;
 }
 

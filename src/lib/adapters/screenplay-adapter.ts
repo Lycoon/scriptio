@@ -1,4 +1,5 @@
 import FileSaver from "file-saver";
+import { isTauri } from "@tauri-apps/api/core";
 import { replaceScreenplay } from "../screenplay/editor";
 import { Editor } from "@tiptap/react";
 import { ProjectData, ProjectState } from "../project/project-state";
@@ -21,11 +22,33 @@ export abstract class ProjectAdapter<TExportOptions extends BaseExportOptions = 
     public async export(project: ProjectState, options: TExportOptions): Promise<void> {
         try {
             const blob = await this.convertTo(project, options);
-            FileSaver.saveAs(blob, `${options.title}.${this.extension}`);
+
+            if (isTauri()) {
+                await this.exportDesktop(blob, options);
+            } else {
+                FileSaver.saveAs(blob, `${options.title}.${this.extension}`);
+            }
         } catch (error) {
             console.error(`Failed to export to ${this.label}`, error);
             throw new Error("Export failed");
         }
+    }
+
+    private async exportDesktop(blob: Blob, options: TExportOptions): Promise<void> {
+        const { save } = await import("@tauri-apps/plugin-dialog");
+        const { writeFile } = await import("@tauri-apps/plugin-fs");
+        const { revealItemInDir } = await import("@tauri-apps/plugin-opener");
+
+        const filePath = await save({
+            defaultPath: `${options.title}.${this.extension}`,
+            filters: [{ name: this.label, extensions: [this.extension] }],
+        });
+
+        if (!filePath) return;
+
+        const buffer = new Uint8Array(await blob.arrayBuffer());
+        await writeFile(filePath, buffer);
+        await revealItemInDir(filePath);
     }
 
     public import(rawContent: ArrayBuffer, editor: Editor): void {

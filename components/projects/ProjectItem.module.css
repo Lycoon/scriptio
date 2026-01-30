@@ -34,9 +34,9 @@
 /* ==================== */
 
 .title {
-    font-family: var(--font-josefin), sans-serif;
-    font-weight: 400;
+    font-family: var(--font-inter), sans-serif;
     font-style: italic;
+    font-weight: 400;
     font-size: 1.2rem;
     max-width: 130px;
     text-align: left;

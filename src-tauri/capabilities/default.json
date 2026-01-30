@@ -13,6 +13,9 @@
         "sql:allow-load",
         "sql:allow-execute",
         "sql:allow-select",
-        "sql:allow-close"
+        "sql:allow-close",
+        "dialog:allow-save",
+        "fs:allow-write-file",
+        "opener:allow-reveal-item-in-dir"
     ]
 }

@@ -86,8 +86,8 @@
 }
 
 .btn:hover {
-    transition: background-color 0.2s;
-    background-color: var(--secondary-hover);
+    transition: border-color 0.2s;
+    border-color: var(--tertiary-hover) !important;
 }
 
 .btn:active {

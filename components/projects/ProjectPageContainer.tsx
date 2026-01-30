@@ -5,6 +5,7 @@ import { useCookieUser, useProjectMemberships, ExtendedProjectMembershipPayload 
 import { join } from "@src/lib/utils/misc";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
+import { FileDown } from "lucide-react";
 
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./CreateProjectPage";
@@ -101,9 +102,13 @@ const ProjectPageContainer = () => {
                                     onClick={handleImportClick}
                                     disabled={isImporting}
                                 >
+                                    <FileDown size={18} />
                                     {isImporting ? "Importing..." : "Import..."}
                                 </button>
-                                <button className={`${page.create_btn} ${form.btn}`} onClick={() => setIsCreating(true)}>
+                                <button
+                                    className={`${page.create_btn} ${form.btn}`}
+                                    onClick={() => setIsCreating(true)}
+                                >
                                     Create
                                 </button>
                             </div>

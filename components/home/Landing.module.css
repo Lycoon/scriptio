@@ -198,7 +198,7 @@
 
 .catchphrase {
     color: var(--primary-text);
-    font-family: var(--font-josefin);
+    font-family: var(--font-playfair);
     font-size: 2.5rem;
     font-weight: bold;
     text-shadow:
@@ -224,7 +224,7 @@
     padding: 1rem 3rem;
     background-color: var(--primary-text);
     color: var(--primary);
-    font-family: var(--font-josefin);
+    font-family: var(--font-playfair);
     font-size: 1.1rem;
     font-weight: 700;
     border-radius: 50px;

@@ -2,7 +2,7 @@
     "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
     "productName": "Scriptio",
     "identifier": "ArkoLogic.Scriptio",
-    "version": "2.0.0",
+    "version": "../package.json",
     "build": {
         "frontendDist": "../out",
         "devUrl": "http://localhost:3000",
@@ -12,7 +12,12 @@
     "app": {
         "security": {
             "csp": null
-        }
+        },
+        "windows": [
+            {
+                "dragDropEnabled": false
+            }
+        ]
     },
     "bundle": {
         "active": true,

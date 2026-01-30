@@ -29,6 +29,10 @@ import {
     refreshSearchHighlights,
     SearchMatch,
 } from "./extensions/search-highlight-extension";
+import {
+    createSceneBookmarkExtension,
+    refreshSceneBookmarks,
+} from "./extensions/scene-bookmark-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
@@ -223,6 +227,7 @@ export const useScriptioEditor = (
         characters,
         locations,
         pageFormat: pageSize,
+        scenes,
         searchTerm,
         searchFilters,
         currentSearchIndex,
@@ -281,6 +286,9 @@ export const useScriptioEditor = (
     const highlightedCharactersRef = useRef<Set<string>>(highlightedCharacters);
     const charactersDataRef = useRef(characters);
 
+    // Ref for scene bookmarks
+    const scenesRef = useRef(scenes);
+
     // Refs for search highlighting - these are read by the search extension plugin
     const searchTermRef = useRef<string>(searchTerm);
     const searchFiltersRef = useRef<Set<ScreenplayElement>>(searchFilters);
@@ -303,6 +311,10 @@ export const useScriptioEditor = (
     useEffect(() => {
         locationsRef.current = locations;
     }, [locations]);
+
+    useEffect(() => {
+        scenesRef.current = scenes;
+    }, [scenes]);
 
     useEffect(() => {
         searchTermRef.current = searchTerm;
@@ -339,6 +351,16 @@ export const useScriptioEditor = (
             const upperName = name.toUpperCase();
             const key = Object.keys(current).find((k) => k.toUpperCase() === upperName);
             return key ? current[key]?.color : undefined;
+        },
+    });
+
+    // Create the scene bookmark extension with callback that reads from ref
+    const sceneBookmarkExtension = createSceneBookmarkExtension({
+        getSceneColor: (sceneId: string) => {
+            const current = scenesRef.current;
+            if (!current) return undefined;
+            const scene = current.find((s) => s.id === sceneId);
+            return scene?.color;
         },
     });
 
@@ -411,6 +433,7 @@ export const useScriptioEditor = (
                 }),
                 characterHighlightExtension,
                 searchHighlightExtension,
+                sceneBookmarkExtension,
             ],
 
             onSelectionUpdate({ editor, transaction }) {
@@ -457,14 +480,17 @@ export const useScriptioEditor = (
                     }
 
                     const text = node.textContent;
-                    const trimmed: string = text.slice(0, cursorInNode).toUpperCase();
+                    const trimmed: string = text.slice(0, cursorInNode).toUpperCase().trim();
+                    // Clean the current text the same way getCharacterNames does,
+                    // so we can exclude the currently-typed name from suggestions
+                    const currentCleanName = trimmed.replace(/\s*\(.*?\)\s*$/, "").trim();
                     const suggestions = Object.keys(currentCharacters)
                         .filter((name) => {
                             const upperName = name.toUpperCase();
                             return (
-                                upperName !== trimmed &&
+                                upperName !== currentCleanName &&
                                 upperName.startsWith(trimmed) &&
-                                upperName !== text.toUpperCase()
+                                upperName !== text.toUpperCase().trim()
                             );
                         })
                         .slice(0, 10);
@@ -506,10 +532,11 @@ export const useScriptioEditor = (
                     let suggestions = Object.keys(currentLocations);
 
                     if (afterPrefix.length > 0) {
+                        const cleanAfterPrefix = afterPrefix.trim();
                         suggestions = suggestions
                             .filter((location) => {
                                 const upperLocation = location.toUpperCase();
-                                return upperLocation.startsWith(afterPrefix) && upperLocation !== afterPrefix;
+                                return upperLocation.startsWith(afterPrefix) && upperLocation !== cleanAfterPrefix;
                             })
                             .slice(0, 10);
                     } else {
@@ -550,6 +577,13 @@ export const useScriptioEditor = (
         }
     }, [scriptioEditor, highlightedCharacters, characters]);
 
+    // Refresh scene bookmarks when scenes change
+    useEffect(() => {
+        if (scriptioEditor) {
+            refreshSceneBookmarks(scriptioEditor);
+        }
+    }, [scriptioEditor, scenes]);
+
     // Refresh search highlights when search state changes
     useEffect(() => {
         if (scriptioEditor) {
@@ -559,8 +593,15 @@ export const useScriptioEditor = (
 
     // Sync editor page size when pageFormat changes (e.g., from another collaborator)
     useEffect(() => {
-        if (scriptioEditor) {
-            scriptioEditor.chain().focus().updatePageSize(SCREENPLAY_FORMATS[pageSize]).run();
+        if (!scriptioEditor || scriptioEditor.isDestroyed) return;
+        try {
+            scriptioEditor.chain().updatePageSize(SCREENPLAY_FORMATS[pageSize]).run();
+            scriptioEditor.view.dom.style.setProperty(
+                "--page-margin-left",
+                `${SCREENPLAY_FORMATS[pageSize].marginLeft}px`,
+            );
+        } catch {
+            // Editor view not mounted yet — will apply on next render
         }
     }, [scriptioEditor, pageSize]);
 

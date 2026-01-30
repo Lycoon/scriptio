@@ -79,7 +79,7 @@ const ProjectSettings = () => {
     if (isLocalOnly && localLoading) return null;
 
     return (
-        <form onSubmit={handleSave} className={styles.settingsForm}>
+        <form key={projectTitle} onSubmit={handleSave} className={styles.settingsForm}>
             {/* Title */}
             <div className={styles.formGroup}>
                 <label className={form.label}>Title</label>

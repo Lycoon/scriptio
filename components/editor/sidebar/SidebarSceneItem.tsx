@@ -12,7 +12,20 @@ import LinkSVG from "@public/images/link.svg";
 
 import nav_item from "./SidebarItem.module.css";
 
-const SidebarSceneItem = ({ scene }: SceneContextProps) => {
+type SidebarSceneItemProps = SceneContextProps & {
+    index: number;
+    showDropIndicator: boolean;
+    isDragging: boolean;
+    onPointerDown: (index: number, e: React.PointerEvent) => void;
+};
+
+const SidebarSceneItem = ({
+    scene,
+    index,
+    showDropIndicator,
+    isDragging,
+    onPointerDown,
+}: SidebarSceneItemProps) => {
     const { updateContextMenu } = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
 
@@ -35,8 +48,19 @@ const SidebarSceneItem = ({ scene }: SceneContextProps) => {
     // Show synopsis if available, otherwise show preview
     const displayText = scene.synopsis || scene.preview;
 
+    const containerClass = join(
+        nav_item.container,
+        showDropIndicator ? nav_item.drop_indicator_top : "",
+        isDragging ? nav_item.dragging : ""
+    );
+
     return (
-        <div onContextMenu={handleDropdown} onDoubleClick={handleDoubleClick} className={nav_item.container}>
+        <div
+            onPointerDown={(e) => onPointerDown(index, e)}
+            onContextMenu={handleDropdown}
+            onDoubleClick={handleDoubleClick}
+            className={containerClass}
+        >
             <div className={nav_item.header}>
                 <div className={nav_item.title_row}>
                     {scene.color && (
