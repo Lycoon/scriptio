@@ -127,6 +127,7 @@ export class ProjectState extends Y.Doc {
         METADATA: "metadata",
         BOARD: "board",
         LAYOUT: "layout",
+        COMMENTS: "comments",
     } as const;
 
     metadata(): Y.Map<any> {
@@ -165,6 +166,10 @@ export class ProjectState extends Y.Doc {
 
     layout(): Y.Map<any> {
         return this.getMap(this.KEYS.LAYOUT);
+    }
+
+    comments(): Y.Map<any> {
+        return this.getMap(this.KEYS.COMMENTS);
     }
 }
 

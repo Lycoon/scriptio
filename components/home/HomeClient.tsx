@@ -9,13 +9,21 @@ import HomeNavbar from "@components/navbar/HomeNavbar";
 import LandingPageNavbar from "@components/navbar/LandingPageNavbar";
 import DashboardModal from "@components/dashboard/DashboardModal";
 import { isTauri } from "@tauri-apps/api/core";
+import { useTheme } from "next-themes";
 
 export default function HomeClient() {
     const { user, isLoading } = useCookieUser();
+    const { setTheme } = useTheme();
 
     useEffect(() => {
         if (user) document.title = "Projects | Scriptio";
     }, [user]);
+
+    useEffect(() => {
+        if (!isLoading && !user && !isTauri()) {
+            setTheme("dark");
+        }
+    }, [user, isLoading, setTheme]);
 
     if (isLoading) {
         return <Loading />;

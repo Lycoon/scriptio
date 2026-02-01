@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-    title: "Sign up | Scriptio",
+    title: "Sign up | Scriptio®",
 };
 
 export default function SignupPage() {

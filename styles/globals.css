@@ -59,8 +59,8 @@ h1,
 h2,
 h3 {
     color: var(--primary-text);
-    font-family: var(--font-playfair), sans-serif;
-    font-weight: 700;
+    font-family: var(--font-josefin), sans-serif;
+    font-weight: bold;
 }
 
 p,

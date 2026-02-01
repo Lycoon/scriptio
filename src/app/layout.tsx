@@ -1,6 +1,6 @@
 import "@styles/globals.css";
 
-import { playfair, inter, courier } from "@styles/fonts";
+import { playfair, inter, courier, josefin } from "@styles/fonts";
 import layout from "@components/utils/Layout.module.css";
 import { Providers } from "./providers";
 import { Metadata } from "next";
@@ -16,7 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <body>
                 <Providers>
                     <div className="app-layout">
-                        <main className={`${layout.main} ${courier.variable} ${inter.variable} ${playfair.variable}`}>
+                        <main
+                            className={`${layout.main} ${courier.variable} ${inter.variable} ${playfair.variable} ${josefin.variable}`}
+                        >
                             {children}
                         </main>
                     </div>

@@ -21,6 +21,8 @@ import Loading from "@components/utils/Loading";
 import { useGlobalKeybinds, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
 import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
+import CommentCards from "./CommentCards";
+import { ContextMenuType } from "./sidebar/ContextMenu";
 
 const EditorAndSidebar = () => {
     const { membership, isLoading } = useProjectMembership();
@@ -87,7 +89,7 @@ const EditorAndSidebar = () => {
 
     // Toggle scene numbers visibility class on the editor
     useEffect(() => {
-        if (!editor) return;
+        if (!editor || editor.isDestroyed || !editor.view?.dom) return;
 
         const editorElement = editor.view.dom;
         if (displaySceneNumbers) {
@@ -231,6 +233,23 @@ const EditorAndSidebar = () => {
         setIsScrolled(scrollTop > 0);
     };
 
+    const onEditorContextMenu = useCallback(
+        (e: React.MouseEvent) => {
+            if (!editor) return;
+
+            const { from, to } = editor.state.selection;
+            if (from === to) return; // No text selected
+
+            e.preventDefault();
+            updateContextMenu({
+                type: ContextMenuType.EditorSelection,
+                position: { x: e.clientX, y: e.clientY },
+                typeSpecificProps: { from, to },
+            });
+        },
+        [editor, updateContextMenu],
+    );
+
     // On desktop (Tauri), we can work without API membership (offline mode)
     // On web, we require membership
     const isDesktop = isTauri();
@@ -252,8 +271,11 @@ const EditorAndSidebar = () => {
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
 
                     {/* Scriptio Editor */}
-                    <EditorContent editor={editor} spellCheck={false} />
+                    <div onContextMenu={onEditorContextMenu}>
+                        <EditorContent editor={editor} spellCheck={false} />
+                    </div>
                 </div>
+                <CommentCards />
             </div>
             <EditorSidebarFormat />
         </div>

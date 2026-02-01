@@ -108,10 +108,7 @@ const DashboardModal = () => {
     useEffect(() => {
         const projectTabIds = PROJECT_MENU.items.map((item) => item.id);
         const accountTabIds = ACCOUNT_MENU.items.map((item) => item.id);
-        if (
-            (!isInProject && projectTabIds.includes(activeTab)) ||
-            (!isSignedIn && accountTabIds.includes(activeTab))
-        ) {
+        if ((!isInProject && projectTabIds.includes(activeTab)) || (!isSignedIn && accountTabIds.includes(activeTab))) {
             setActiveTab(PREFERENCES_MENU.items[0].id);
         }
         // If user just signed in while on Login tab, switch to Profile

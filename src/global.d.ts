@@ -29,6 +29,7 @@ declare global {
 
             // SMTP
             SMTP_HOST: string;
+            SMTP_PORT: number;
             SMTP_USER: string;
             SMTP_SECRET: string;
         }

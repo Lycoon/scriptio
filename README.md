@@ -1,36 +1,33 @@
 <p align="center">
   <a href="https://scriptio.app" target="_blank" rel="noopener noreferrer">
-    <img src="public/images/banner.png" alt="Scriptio Banner" width="100%">
+    <img src="https://pub-17d379be4340438abc6e67ea9e797303.r2.dev/mail_banner.png" alt="Scriptio Banner" width="100%">
   </a>
-</p>
-
-<p align="center">
-  <img alt="GitHub branch check runs" src="https://img.shields.io/github/check-runs/Lycoon/scriptio/dev?style=for-the-badge">
-    <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lycoon/scriptio?style=for-the-badge">
 </p>
 
 <h3 align="center">
 <b>Modern</b>, <b>elegant</b> and <b>cross-platform</b> screenwriting software
 </h3>
 
-<h3 align="center">
-Stop overpaying for <i>Final Draft</i><br>
-Stop struggling with <i>Fade In</i> interface<br>
-Stop settling for <i>Celtx</i> free plan limits<br>
-</h3>
+<p align="center">
+  <img alt="GitHub branch check runs" src="https://img.shields.io/github/check-runs/Lycoon/scriptio/dev?style=for-the-badge">
+    <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lycoon/scriptio?style=for-the-badge">
+</p>
 
 # Features
 
-- **Seamless cloud synchronization**
-- **Cross-platform** (browser)
-- **Industry-standard formats** (PDF, Fountain, Final Draft)
+- **Cloud Synchronization**
+- **Real-time Collaboration**
+- **Cross-platform** (Windows, MacOS, browser)
+- **Industry-standard Formats** (PDF, Fountain, Final Draft)
+- **Scene Management** (easy navigation, reordering)
+- **Character Management** (color highlighting, synopsis)
+- **Beat Board** (story cards, outlining)
 - **Smart formatting** (context aware auto-completion)
 - **Customization** (themes & custom keybinds)
-- **Focus mode** (distraction-free writing)
 - **Statistics** (distribution, frequency)
-- **Scene/Character Management** (navigation, color highlighting, synopsis)
-- **Beat Board** (story cards, outlining)
-- **Real-time collaboration**
+- **Search & Replace** (advanced filtering)
+- **Script Comments** (inline annotations)
+- **Focus mode** (distraction-free writing)
 
 # Core Values
 
@@ -58,7 +55,6 @@ Your feedback is very welcome and ensures Scriptio remains driven by screenwrite
 
 - **Support more formats** (Celtx, FadeIn, docx...)
 - **Production reports** (character outline exports, casting...)
-- **Desktop app** (for fully offline workflow)
 - **Mobile app**
 - **More statistics**
 

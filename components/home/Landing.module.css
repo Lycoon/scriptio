@@ -122,12 +122,12 @@
     background: #1d1d1d;
     background: radial-gradient(
         circle,
-        rgba(29, 29, 29, 1) 0%,
-        rgba(58, 58, 58, 1) 20%,
-        rgba(29, 29, 29, 1) 40%,
-        rgba(29, 29, 29, 1) 60%,
-        rgba(58, 58, 58, 1) 80%,
-        rgba(29, 29, 29, 1) 100%
+        rgb(15, 15, 15) 0%,
+        rgb(15, 15, 15) 20%,
+        rgb(15, 15, 15) 40%,
+        rgb(15, 15, 15) 60%,
+        rgb(15, 15, 15) 80%,
+        rgb(15, 15, 15) 100%
     );
     will-change: background-position;
     opacity: 0.6;
@@ -173,9 +173,8 @@
 }
 
 .heroBackgroundImage {
-    max-width: 120%;
-    max-height: 80vh;
-    opacity: 0.75;
+    max-width: 110%;
+    max-height: 70vh;
 }
 
 /* 1. Header & Branding */
@@ -190,15 +189,15 @@
 }
 
 .heroLogo {
-    height: 160px;
+    height: 230px;
     width: auto;
     object-fit: contain;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.9));
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9));
 }
 
 .catchphrase {
     color: var(--primary-text);
-    font-family: var(--font-playfair);
+    font-family: var(--font-josefin), sans-serif;
     font-size: 2.5rem;
     font-weight: bold;
     text-shadow:
@@ -224,7 +223,7 @@
     padding: 1rem 3rem;
     background-color: var(--primary-text);
     color: var(--primary);
-    font-family: var(--font-playfair);
+    font-family: var(--font-josefin), sans-serif;
     font-size: 1.1rem;
     font-weight: 700;
     border-radius: 50px;
@@ -285,6 +284,7 @@
 }
 
 .sectionTitle {
+    font-family: var(--font-josefin), sans-serif;
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
     color: var(--primary-text);
@@ -355,6 +355,7 @@
 }
 
 .pillarTitle {
+    font-family: var(--font-josefin), sans-serif;
     font-size: 1.5rem;
     color: var(--primary-text);
 }
@@ -366,8 +367,7 @@
 
 .bentoGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(3, 350px);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
 }
 
@@ -420,4 +420,72 @@
     display: flex;
     flex-direction: row;
     gap: 12px;
+}
+
+/* --- PAGE CONTAINER (Privacy, Contact, etc.) --- */
+
+.pageWrapper {
+    composes: wrapper;
+    display: flex;
+    flex-direction: column;
+}
+
+.pageContainer {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 120px 2rem 4rem;
+    flex: 1;
+}
+
+.pageTitle {
+    font-family: var(--font-josefin), sans-serif;
+    font-size: 2.5rem;
+    color: var(--primary-text);
+    margin-bottom: 3.5rem;
+}
+
+.pageSectionTitle {
+    font-family: var(--font-josefin), sans-serif;
+    font-size: 1.5rem;
+    color: var(--primary-text);
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.pageText {
+    color: var(--secondary-text);
+    line-height: 1.7;
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+    text-align: justify;
+}
+
+.pageText a {
+    color: var(--primary-text);
+    text-decoration: underline;
+}
+
+.pageContainer ul {
+    padding-left: 2rem;
+}
+
+.contactForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.contactForm input,
+.contactForm select,
+.contactForm textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.contactForm select {
+    height: 2.75rem;
 }

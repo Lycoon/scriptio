@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { ScreenplaySchema } from "../screenplay/editor";
-import { Screenplay } from "../utils/types";
+import { Comment, CommentReply, Screenplay } from "../utils/types";
 import { LayoutData, ProjectState } from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
@@ -220,6 +220,60 @@ export class ProjectRepository {
     }
     setDisplaySceneNumber(display: boolean) {
         this.ydoc.layout().set("displaySceneNumber", display);
+    }
+
+    // -------------------------------- //
+    //            COMMENTS              //
+    // -------------------------------- //
+
+    get comments(): Record<string, Comment> {
+        return this.ydoc.comments().toJSON() as Record<string, Comment>;
+    }
+
+    getComment(commentId: string): Comment | undefined {
+        return this.ydoc.comments().get(commentId) as Comment | undefined;
+    }
+
+    addComment(comment: Omit<Comment, "id">): string {
+        const id = uuidv4();
+        const map = this.ydoc.comments();
+        map.set(id, { ...comment, id });
+        return id;
+    }
+
+    updateComment(commentId: string, data: Partial<Comment>): void {
+        const map = this.ydoc.comments();
+        const existing = map.get(commentId) as Comment | undefined;
+        if (!existing) return;
+        map.set(commentId, { ...existing, ...data });
+    }
+
+    resolveComment(commentId: string): void {
+        this.updateComment(commentId, { resolved: true });
+    }
+
+    addReply(commentId: string, reply: Omit<CommentReply, "id">): string | undefined {
+        const map = this.ydoc.comments();
+        const existing = map.get(commentId) as Comment | undefined;
+        if (!existing) return undefined;
+        const id = uuidv4();
+        const replies = [...(existing.replies ?? []), { ...reply, id }];
+        map.set(commentId, { ...existing, replies });
+        return id;
+    }
+
+    deleteComment(commentId: string): void {
+        const map = this.ydoc.comments();
+        if (map.has(commentId)) {
+            map.delete(commentId);
+        }
+    }
+
+    observeComments(callback: (comments: Record<string, Comment>) => void): () => void {
+        const map = this.ydoc.comments();
+        const observer = () => callback(map.toJSON() as Record<string, Comment>);
+        map.observe(observer);
+        return () => map.unobserve(observer);
     }
 }
 

@@ -1,4 +1,4 @@
-import { Courier_Prime, Inter, Playfair_Display } from "next/font/google";
+import { Courier_Prime, Inter, Playfair_Display, Josefin_Sans } from "next/font/google";
 
 export const courier = Courier_Prime({
     subsets: ["latin"],
@@ -16,4 +16,10 @@ export const playfair = Playfair_Display({
     subsets: ["latin"],
     weight: ["400", "700"],
     variable: "--font-playfair",
+});
+
+export const josefin = Josefin_Sans({
+    subsets: ["latin"],
+    weight: ["400", "700"],
+    variable: "--font-josefin",
 });

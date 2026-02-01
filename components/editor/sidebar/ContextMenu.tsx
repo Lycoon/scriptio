@@ -10,11 +10,13 @@ import { LocationData, deleteLocation } from "@src/lib/screenplay/locations";
 import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/screenplay/editor";
 import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/screenplay/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
+import { useUser } from "@src/lib/utils/hooks";
 import {
     ArrowDownRight,
     ClipboardPaste,
     Highlighter,
     LucideIcon,
+    MessageSquarePlus,
     Pencil,
     Scissors,
     SquareDashedMousePointer,
@@ -39,6 +41,7 @@ export const enum ContextMenuType {
     CharacterItem,
     LocationItem,
     Suggestion,
+    EditorSelection,
 }
 
 type ContextMenuItemProps = {
@@ -163,6 +166,44 @@ const LocationItemMenu = (props: any) => {
     );
 };
 
+/* ============================== */
+/*  Editor Selection context menu  */
+/* ============================== */
+
+export type EditorSelectionContextProps = {
+    from: number;
+    to: number;
+};
+
+const EditorSelectionMenu = (props: any) => {
+    const projectCtx = useContext(ProjectContext);
+    const { repository, editor, setActiveCommentId } = projectCtx;
+    const { from, to } = props.props as EditorSelectionContextProps;
+    const { user } = useUser();
+
+    const handleAddComment = () => {
+        if (!repository || !editor) return;
+
+        const commentId = repository.addComment({
+            text: "",
+            author: user?.username || "Anonymous",
+            createdAt: Date.now(),
+            resolved: false,
+            replies: [],
+        });
+
+        // Restore the original selection (lost when clicking the context menu) and apply the mark
+        editor.chain().setTextSelection({ from, to }).setComment(commentId).run();
+        setActiveCommentId(commentId);
+    };
+
+    return (
+        <>
+            <ContextMenuItem text={"Add Comment"} icon={MessageSquarePlus} action={handleAddComment} />
+        </>
+    );
+};
+
 const renderContextMenu = (contextMenu: ContextMenuProps) => {
     switch (contextMenu.type) {
         case ContextMenuType.SceneList:
@@ -175,6 +216,8 @@ const renderContextMenu = (contextMenu: ContextMenuProps) => {
             return <CharacterItemMenu props={contextMenu.typeSpecificProps} />;
         case ContextMenuType.LocationItem:
             return <LocationItemMenu props={contextMenu.typeSpecificProps} />;
+        case ContextMenuType.EditorSelection:
+            return <EditorSelectionMenu props={contextMenu.typeSpecificProps} />;
     }
 };
 

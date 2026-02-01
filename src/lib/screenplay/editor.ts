@@ -33,6 +33,7 @@ import {
     createSceneBookmarkExtension,
     refreshSceneBookmarks,
 } from "./extensions/scene-bookmark-extension";
+import { CommentMark } from "./extensions/comment-highlight-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
@@ -206,7 +207,7 @@ export const BASE_EXTENSIONS = [
     }),
 ];
 
-export const ScreenplaySchema = getSchema(BASE_EXTENSIONS);
+export const ScreenplaySchema = getSchema([...BASE_EXTENSIONS, CommentMark]);
 
 export const useScriptioEditor = (
     project: ProjectMembershipPayload["project"] | undefined,
@@ -232,6 +233,7 @@ export const useScriptioEditor = (
         searchFilters,
         currentSearchIndex,
         setSearchMatches,
+        setActiveCommentId,
     } = projectCtx;
 
     // Refs for autocomplete data
@@ -364,6 +366,13 @@ export const useScriptioEditor = (
         },
     });
 
+    // Create the comment mark extension
+    const commentMarkExtension = CommentMark.configure({
+        onCommentActivated: (commentId: string | null) => {
+            setActiveCommentId(commentId);
+        },
+    });
+
     // Create the search highlight extension with callback functions that read from refs
     const searchHighlightExtension = createSearchHighlightExtension({
         getSearchTerm: () => searchTermRef.current,
@@ -434,6 +443,7 @@ export const useScriptioEditor = (
                 characterHighlightExtension,
                 searchHighlightExtension,
                 sceneBookmarkExtension,
+                commentMarkExtension,
             ],
 
             onSelectionUpdate({ editor, transaction }) {

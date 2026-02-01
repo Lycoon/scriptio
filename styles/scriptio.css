@@ -295,6 +295,19 @@ Originally developed by John August - johnaugust.com
         box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.8);
     }
 
+    /* Comment highlighting */
+    .comment-highlight {
+        background-color: rgba(255, 213, 0, 0.2);
+        border-bottom: 2px solid rgba(255, 213, 0, 0.5);
+        cursor: pointer;
+        border-radius: 2px;
+    }
+
+    .comment-highlight-active {
+        background-color: rgba(255, 213, 0, 0.4);
+        border-bottom-color: rgba(255, 213, 0, 0.8);
+    }
+
     /* Scene bookmark decoration */
     .scene-bookmark {
         position: relative;

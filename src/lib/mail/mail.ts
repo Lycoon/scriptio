@@ -6,8 +6,8 @@ var hogan = require("hogan.js");
 const transporter = nodemailer.createTransport({
     pool: true,
     host: process.env.SMTP_HOST,
-    port: 465,
-    secure: true, // use TLS
+    port: process.env.SMTP_PORT,
+    secure: true,
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_SECRET,
@@ -38,7 +38,7 @@ export const sendVerificationEmail = async (userId: string, email: string, email
         "Verify your account",
         content,
         "Verify your account",
-        link
+        link,
     );
 };
 
@@ -48,18 +48,39 @@ const sendFormattedEmail = async (
     subject: string,
     bodyText: string,
     buttonText: string,
-    link: string
+    link: string,
 ) => {
     const template = fs.readFileSync("./src/lib/mail/template.html").toString();
+    const signature = fs.readFileSync("./src/lib/mail/signature.html").toString();
     const compiled = hogan.compile(template);
     const rendered = compiled.render({
         bodyText,
         buttonText,
         welcomeMessage,
         link,
+        signature,
     });
 
     sendEmail(email, subject, rendered, bodyText);
+};
+
+export const sendContactEmail = async (email: string, reason: string, message: string) => {
+    const html = `
+        <h2>New Contact Form Submission</h2>
+        <p><strong>From:</strong> ${email}</p>
+        <p><strong>Reason:</strong> ${reason}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message.replace(/\n/g, "<br>")}</p>
+    `;
+    const text = `From: ${email}\nReason: ${reason}\nMessage:\n${message}`;
+    transporter.sendMail({
+        from: "Scriptio Form <no-reply@scriptio.app>",
+        replyTo: email,
+        to: "contact@scriptio.app",
+        subject: `[Contact] ${reason}`,
+        html,
+        text,
+    });
 };
 
 const sendEmail = async (to: string, subject: string, html: string, text: string) => {

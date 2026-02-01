@@ -8,7 +8,7 @@ import { mergeScenesData, PersistentSceneMap, Scene } from "@src/lib/screenplay/
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { useUser } from "@src/lib/utils/hooks";
 import { CollaboratorInfo, ConnectionStatus, LayoutData, useProjectYjs } from "@src/lib/project/project-state";
-import { Screenplay } from "@src/lib/utils/types";
+import { Comment, Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, Style, PageFormat } from "@src/lib/utils/enums";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 
@@ -72,6 +72,11 @@ export interface ProjectContextType {
     setCurrentSearchIndex: (index: number) => void;
     searchMatches: SearchMatch[];
     setSearchMatches: (matches: SearchMatch[]) => void;
+
+    // Comments state
+    comments: Comment[];
+    activeCommentId: string | null;
+    setActiveCommentId: (id: string | null) => void;
 }
 
 // -------------------------------- //
@@ -124,6 +129,10 @@ const defaultContextValue: ProjectContextType = {
     setCurrentSearchIndex: () => { },
     searchMatches: [],
     setSearchMatches: () => { },
+    // Comments state defaults
+    comments: [],
+    activeCommentId: null,
+    setActiveCommentId: () => { },
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -203,6 +212,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     );
     const [currentSearchIndex, setCurrentSearchIndexState] = useState<number>(0);
     const [searchMatches, setSearchMatchesState] = useState<SearchMatch[]>([]);
+
+    // Comments state
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [activeCommentId, setActiveCommentIdState] = useState<string | null>(null);
 
     // Create repository instance when ydoc is available (dynamically imported)
     useEffect(() => {
@@ -285,12 +298,20 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             updateScenes(allScenes);
         });
 
+        // Observe comments changes
+        const initialComments = Object.values(repository.comments);
+        setComments(initialComments);
+        const unsubscribeComments = repository.observeComments((commentsMap) => {
+            setComments(Object.values(commentsMap));
+        });
+
         return () => {
             unsubscribeScreenplay();
             unsubscribeLayout();
             unsubscribeCharacters();
             unsubscribeLocations();
             unsubscribeScenes();
+            unsubscribeComments();
         };
     }, [repository]);
 
@@ -373,6 +394,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setSearchMatchesState(matches);
     }, []);
 
+    const setActiveCommentId = useCallback((id: string | null) => {
+        setActiveCommentIdState(id);
+    }, []);
+
     const contextValue = useMemo<ProjectContextType>(
         () => ({
             project,
@@ -411,6 +436,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setCurrentSearchIndex,
             searchMatches,
             setSearchMatches,
+            comments,
+            activeCommentId,
+            setActiveCommentId,
         }),
         [
             project,
@@ -449,6 +477,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setCurrentSearchIndex,
             searchMatches,
             setSearchMatches,
+            comments,
+            activeCommentId,
+            setActiveCommentId,
         ],
     );
 

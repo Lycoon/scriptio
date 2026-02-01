@@ -3,7 +3,7 @@ import RecoveryContainer from "@components/home/recovery/RecoveryContainer";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-    title: "Recover password | Scriptio",
+    title: "Recover password | Scriptio®",
 };
 
 export default function RecoveryPage() {

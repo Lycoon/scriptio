@@ -47,3 +47,20 @@ export interface UserThemeDefinition {
     name: UserTheme;
     style: string; // CSS class
 }
+
+/* Comments */
+export type CommentReply = {
+    id: string;
+    text: string;
+    author: string;
+    createdAt: number;
+};
+
+export type Comment = {
+    id: string;
+    text: string;
+    author: string;
+    createdAt: number;
+    resolved: boolean;
+    replies: CommentReply[];
+};

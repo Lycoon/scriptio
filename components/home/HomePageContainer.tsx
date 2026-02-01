@@ -1,9 +1,8 @@
 "use client";
 
 import styles from "./Landing.module.css";
-import navbar from "@components/navbar/LandingPageNavbar.module.css";
-import { useState, useEffect } from "react";
 import { WifiOff, MessagesSquare, Eye, Clapperboard, ChartPie, Cloud } from "lucide-react";
+import Footer from "./Footer";
 
 export default function HomePageContainer() {
     return (
@@ -44,8 +43,7 @@ export default function HomePageContainer() {
 
                     {/* Layer 1.2: Branding (Logo) */}
                     <div className={styles.heroHeader}>
-                        <img src="/images/scriptio.png" alt="Scriptio Logo" className={styles.heroLogo} />
-                        <span className={styles.catchphrase}>Screenwriters First.</span>
+                        <img src="/images/scriptio_full.png" alt="Scriptio Logo" className={styles.heroLogo} />
                     </div>
 
                     {/* Layer 1.3: Text Carousel & CTA */}
@@ -65,10 +63,10 @@ export default function HomePageContainer() {
 
                     <div className={styles.bentoGrid}>
                         {/* Distraction-Free Editor */}
-                        <div className={`${styles.glassCard} ${styles.bentoCell} ${styles.span2}`}>
+                        <div className={`${styles.glassCard} ${styles.bentoCell}`}>
                             <div className={styles.bentoHeader}>
                                 <Eye size={24} style={{ color: "var(--secondary-text)" }} />
-                                <h3 className={styles.pillarTitle}>Distraction-Free Editor</h3>
+                                <h3 className={styles.pillarTitle}>First-class Editor</h3>
                             </div>
                             <p className={styles.pillarText}>
                                 Type without interface clutter. Focus mode emphasizes the current line while fading out
@@ -111,7 +109,7 @@ export default function HomePageContainer() {
                         </div>
 
                         {/* Scene Navigation */}
-                        <div className={`${styles.glassCard} ${styles.bentoCell} ${styles.span2}`}>
+                        <div className={`${styles.glassCard} ${styles.bentoCell}`}>
                             <div className={styles.bentoHeader}>
                                 <Clapperboard size={24} style={{ color: "var(--secondary-text)" }} />
                                 <h3 className={styles.pillarTitle}>Scene Navigation</h3>
@@ -156,7 +154,7 @@ export default function HomePageContainer() {
                         </div>
 
                         {/* Real-time Collaboration */}
-                        <div className={`${styles.glassCard} ${styles.bentoCell} ${styles.span2}`}>
+                        <div className={`${styles.glassCard} ${styles.bentoCell}`}>
                             <div className={styles.bentoHeader}>
                                 <MessagesSquare size={24} style={{ color: "var(--secondary-text)" }} />
                                 <h3 className={styles.pillarTitle}>Real-time Collaboration</h3>
@@ -169,25 +167,7 @@ export default function HomePageContainer() {
                 </section>
             </div>
 
-            {/* Footer */}
-            <footer className={styles.footer}>
-                <div className={styles.footerContent}>
-                    <div>
-                        <p>© 2026 Scriptio by ArkoLogic</p>
-                    </div>
-                    <div className={styles.footerLinks}>
-                        <a href="#" className={navbar.navLink}>
-                            Privacy
-                        </a>
-                        <a href="#" className={navbar.navLink}>
-                            Terms
-                        </a>
-                        <a href="https://github.com/Lycoon/scriptio" target="_blank" className={navbar.navLink}>
-                            GitHub
-                        </a>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 }
