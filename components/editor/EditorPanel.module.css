@@ -1,0 +1,55 @@
+.editor_panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background-color: var(--main-bg);
+}
+
+.container {
+    position: relative;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: clip;
+    z-index: 0;
+}
+
+.editor_wrapper {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.editor_shadow {
+    position: sticky;
+    top: 0;
+
+    width: 100%;
+    max-width: 1000px;
+    height: 40px;
+    margin: 0 auto -40px auto;
+
+    opacity: 0;
+    z-index: 1;
+    pointer-events: none;
+
+    transition: opacity 0.7s ease;
+    background: linear-gradient(to bottom, var(--editor-shadow) 0%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+}
+
+.show_shadow {
+    opacity: 1;
+}
+
+.visible {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+}

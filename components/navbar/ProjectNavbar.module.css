@@ -52,6 +52,7 @@
     align-items: center;
     padding-inline: 10px;
     gap: 12px;
+    height: 100%;
 
     border-radius: 64px;
     border: 2px solid var(--tertiary);
@@ -67,22 +68,53 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 20px;
+    gap: 6px;
     height: 100%;
 }
 
-.navBtn {
+/* Segmented panel switcher */
+.panel_switcher {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 64px;
+    background-color: var(--secondary);
+    height: 100%;
+}
+
+.panel_btn {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 14px;
+    height: 100%;
+    border-radius: 64px;
+
+    font-size: 0.75rem;
+    font-weight: 500;
     text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    color: var(--secondary-text);
     cursor: pointer;
-    transition: color 0.3s ease;
+    user-select: none;
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
 }
 
-.navBtn:hover {
+.panel_btn:hover {
     color: var(--primary-text);
+    background-color: var(--secondary-hover);
 }
 
-.navBtn.active {
+.panel_btn_active {
     color: var(--primary-text);
+    background-color: var(--tertiary);
 }
 
 .back_btn {

@@ -4,17 +4,21 @@ export const redirectHome = () => {
     redirect("/");
 };
 
+export const redirectProject = (projectId: string) => {
+    redirect(`/projects?projectId=${projectId}`);
+};
 
+// Legacy aliases for backwards compatibility during migration
 export const redirectScreenplay = (projectId: string) => {
-    redirect(`/projects/screenplay?projectId=${projectId}`);
+    redirectProject(projectId);
 };
 
 export const redirectBoard = (projectId: string) => {
-    redirect(`/projects/board?projectId=${projectId}`);
+    redirectProject(projectId);
 };
 
 export const redirectStatistics = (projectId: string) => {
-    redirect(`/projects/statistics?projectId=${projectId}`);
+    redirectProject(projectId);
 };
 
 export const redirectLogin = () => {

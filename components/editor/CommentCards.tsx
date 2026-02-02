@@ -236,7 +236,10 @@ const CommentCards = () => {
 
         const containerRect = scrollContainer.getBoundingClientRect();
         const editorRect = editorDom.getBoundingClientRect();
-        const left = editorRect.right - containerRect.left + 12;
+        const CARD_WIDTH = 250;
+        const idealLeft = editorRect.right - containerRect.left + 12;
+        const maxLeft = containerRect.width - CARD_WIDTH - 8;
+        const left = Math.min(idealLeft, Math.max(0, maxLeft));
         const markPositions = getCommentPositions(editor);
 
         // Sort comments by their position in the document
@@ -272,7 +275,7 @@ const CommentCards = () => {
         positionCards();
     }, [positionCards]);
 
-    // Reposition on document changes and window resize
+    // Reposition on document changes, window resize, and container resize (zen mode, split view, etc.)
     useEffect(() => {
         if (!editor || editor.isDestroyed) return;
 
@@ -282,9 +285,18 @@ const CommentCards = () => {
         editor.on("transaction", handleTransaction);
         window.addEventListener("resize", positionCards);
 
+        const editorDom = editor.view?.dom;
+        const scrollContainer = editorDom?.closest("[class*='container']") as HTMLElement | null;
+        let resizeObserver: ResizeObserver | undefined;
+        if (scrollContainer) {
+            resizeObserver = new ResizeObserver(positionCards);
+            resizeObserver.observe(scrollContainer);
+        }
+
         return () => {
             editor.off("transaction", handleTransaction);
             window.removeEventListener("resize", positionCards);
+            resizeObserver?.disconnect();
         };
     }, [editor, positionCards]);
 

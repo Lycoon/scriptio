@@ -1,30 +1,30 @@
 "use client";
 
-/* Components */
-import EditorSidebarNavigation from "./sidebar/EditorSidebarNavigation";
-import ContextMenu from "./sidebar/ContextMenu";
-import SuggestionMenu, { SuggestionData } from "./SuggestionMenu";
 import { applyElement, insertElement, useScriptioEditor } from "@src/lib/screenplay/editor";
-import { Popup } from "@components/popup/Popup";
+import { SuggestionData } from "./SuggestionMenu";
 import { join } from "@src/lib/utils/misc";
 
-/* Utils */
 import { useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { UserContext } from "@src/context/UserContext";
-import { ScreenplayElement, Style } from "@src/lib/utils/enums";
+import { ScreenplayElement } from "@src/lib/utils/enums";
 
-/* Styles */
-import styles from "./EditorAndSidebar.module.css";
+import styles from "./EditorPanel.module.css";
 import { EditorContent } from "@node_modules/@tiptap/react/dist";
 import Loading from "@components/utils/Loading";
 import { useGlobalKeybinds, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
-import EditorSidebarFormat from "./sidebar/EditorSidebarFormat";
 import CommentCards from "./CommentCards";
 import { ContextMenuType } from "./sidebar/ContextMenu";
 
-const EditorAndSidebar = () => {
+interface EditorPanelProps {
+    suggestions: string[];
+    updateSuggestions: (suggestions: string[]) => void;
+    suggestionData: SuggestionData;
+    updateSuggestionData: (data: SuggestionData) => void;
+}
+
+const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSuggestionData }: EditorPanelProps) => {
     const { membership, isLoading } = useProjectMembership();
     const { isZenMode, updateIsZenMode, updateContextMenu } = useContext(UserContext);
     const { isYjsReady, selectedElement, setSelectedElement, selectedStyles, setSelectedStyles, displaySceneNumbers } =
@@ -33,14 +33,6 @@ const EditorAndSidebar = () => {
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-
-    /* Suggestion menu */
-    const [suggestions, updateSuggestions] = useState<string[]>([]);
-    const [suggestionData, updateSuggestionData] = useState<SuggestionData>({
-        position: { x: 0, y: 0 },
-        cursor: 0,
-        cursorInNode: 0,
-    });
 
     const globalActions = useMemo(
         () => ({
@@ -52,7 +44,6 @@ const EditorAndSidebar = () => {
 
     useGlobalKeybinds(settings?.keybinds, globalActions);
 
-    // Simple function to update element state (used by the editor hook)
     const updateActiveElement = useCallback(
         (element: ScreenplayElement) => {
             setSelectedElement(element);
@@ -70,7 +61,6 @@ const EditorAndSidebar = () => {
         globalActions,
     );
 
-    // Function to set element and apply to editor (used by keyboard handlers)
     const setActiveElement = useCallback(
         (element: ScreenplayElement, applyStyle = true) => {
             setSelectedElement(element);
@@ -81,13 +71,11 @@ const EditorAndSidebar = () => {
 
     useEffect(() => {
         if (editor && isYjsReady) {
-            // A small timeout ensures the collaboration is synced
             const timer = setTimeout(() => setIsEditorReady(true), 500);
             return () => clearTimeout(timer);
         }
     }, [editor, isYjsReady]);
 
-    // Toggle scene numbers visibility class on the editor
     useEffect(() => {
         if (!editor || editor.isDestroyed || !editor.view?.dom) return;
 
@@ -113,20 +101,15 @@ const EditorAndSidebar = () => {
                     const currNode = node.attrs.class as ScreenplayElement;
 
                     if (event.key === "Backspace") {
-                        // When deleting the last character, manually delete just the character.
-                        // This prevents an issue where paragraphs with display: inline-block
-                        // get deleted entirely instead of becoming empty.
                         if (nodeSize === 1 && nodePos === 1) {
                             const tr = view.state.tr.delete(selection.from - 1, selection.from);
                             view.dispatch(tr);
                             return true;
                         }
-
                         return false;
                     }
 
                     if (event.code === "Space") {
-                        // if starting action with INT. or EXT. switch to scene
                         if (currNode === ScreenplayElement.Action && node.textContent.match(/^\b(int|ext)\./gi)) {
                             setActiveElement(ScreenplayElement.Scene);
                         }
@@ -134,18 +117,15 @@ const EditorAndSidebar = () => {
                     }
 
                     if (event.key === "Enter") {
-                        // Autocomplete open
                         if (suggestions.length > 0) {
                             event.preventDefault();
-                            return true; // prevent default new line
+                            return true;
                         }
 
-                        // Breaking line in the middle of an element
                         if (nodePos < nodeSize) {
                             return false;
                         }
 
-                        // Default case, most likely a new element
                         let newNode = ScreenplayElement.Action;
                         if (nodePos !== 0) {
                             switch (currNode) {
@@ -165,7 +145,6 @@ const EditorAndSidebar = () => {
         });
     }, [editor]);
 
-    // Use refs to avoid recreating the event handler on every render
     const selectedElementRef = useRef(selectedElement);
     const setActiveElementRef = useRef(setActiveElement);
     const updateContextMenuRef = useRef(updateContextMenu);
@@ -187,10 +166,8 @@ const EditorAndSidebar = () => {
         updateSuggestionsRef.current = updateSuggestions;
     }, [updateSuggestions]);
 
-    // Initialize event listeners on mount only
     useEffect(() => {
         const pressedKeyEvent = (e: KeyboardEvent) => {
-            // Tab
             if (e.key === "Tab") {
                 e.preventDefault();
 
@@ -209,12 +186,10 @@ const EditorAndSidebar = () => {
                 }
             }
 
-            // Ctrl + S
             if (e.ctrlKey && e.key === "s") {
                 e.preventDefault();
             }
 
-            // Escape
             if (e.key === "Escape") {
                 updateContextMenuRef.current(undefined);
                 updateSuggestionsRef.current([]);
@@ -238,7 +213,7 @@ const EditorAndSidebar = () => {
             if (!editor) return;
 
             const { from, to } = editor.state.selection;
-            if (from === to) return; // No text selected
+            if (from === to) return;
 
             e.preventDefault();
             updateContextMenu({
@@ -250,36 +225,22 @@ const EditorAndSidebar = () => {
         [editor, updateContextMenu],
     );
 
-    // On desktop (Tauri), we can work without API membership (offline mode)
-    // On web, we require membership
     const isDesktop = isTauri();
     if (!isDesktop && (!membership || isLoading)) return <Loading />;
 
     return (
-        <div
-            className={`${styles.editor_and_sidebar} ${isEditorReady ? styles.visible : styles.hidden} ${
-                !isZenMode ? styles.sidebars_visible : ""
-            }`}
-        >
-            <ContextMenu />
-            {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
-            <Popup />
-            <EditorSidebarNavigation />
+        <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
             <div className={styles.container} onScroll={onScroll}>
                 <div className={styles.editor_wrapper}>
-                    {/* Upper editor shadow */}
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
-
-                    {/* Scriptio Editor */}
                     <div onContextMenu={onEditorContextMenu}>
                         <EditorContent editor={editor} spellCheck={false} />
                     </div>
                 </div>
                 <CommentCards />
             </div>
-            <EditorSidebarFormat />
         </div>
     );
 };
 
-export default EditorAndSidebar;
+export default EditorPanel;

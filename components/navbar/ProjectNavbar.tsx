@@ -2,20 +2,32 @@
 
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { isTauri } from "@tauri-apps/api/core";
-import { ConnectionStatus, Page } from "@src/lib/utils/enums";
-import { useCookieUser, usePage, useProjectIdFromUrl } from "@src/lib/utils/hooks";
-import { redirectBoard, redirectHome, redirectScreenplay, redirectStatistics } from "@src/lib/utils/redirects";
+import { ConnectionStatus } from "@src/lib/utils/enums";
+import { useCookieUser, useProjectIdFromUrl } from "@src/lib/utils/hooks";
+import { redirectHome } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
+import { PanelType, useViewContext } from "@src/context/ViewContext";
 import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
 import { UserContext } from "@src/context/UserContext";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { CircleArrowLeft, CircleCheckBig, Eye, EyeClosed, Settings, WifiOff, WifiSync } from "lucide-react";
+import {
+    CircleArrowLeft,
+    CircleCheckBig,
+    Clapperboard,
+    Eye,
+    EyeClosed,
+    LayoutDashboard,
+    PanelRight,
+    PanelRightClose,
+    Settings,
+    WifiOff,
+    WifiSync,
+} from "lucide-react";
 
 import navbar from "./ProjectNavbar.module.css";
-import form from "./../utils/Form.module.css";
 import ScreenplayFormatDropdown from "./ScreenplayFormatDropdown";
 import ScreenplaySearch from "./ScreenplaySearch";
 
@@ -79,15 +91,16 @@ const ProjectNavbar = () => {
     const { openDashboard } = useContext(DashboardContext);
     const { project: membership } = useContext(ProjectContext);
 
-    const [isInProject, updateIsInProject] = useState<boolean>(false);
-    const [hasScreenplay, updateHasScreenplay] = useState<boolean>(false);
-    const [hasProjectHeader, updateHasProjectHeader] = useState<boolean>(false);
     const [projectTitle, setProjectTitle] = useState<string>("");
     const isLocalEdit = useRef(false);
 
-    const page = usePage();
     const { user } = useCookieUser();
     const projectId = useProjectIdFromUrl();
+
+    const viewContext = useViewContext();
+
+    const isInProject = !!projectId;
+    const hasScreenplay = viewContext.visiblePanels.includes("screenplay");
 
     const deferredTitleUpdate = useMemo(
         () =>
@@ -103,15 +116,25 @@ const ProjectNavbar = () => {
     );
 
     const toggleZenMode = () => updateIsZenMode((prev) => !prev);
-    const getNavStyle = (tabName: string) => {
-        return `${navbar.navBtn} ${form.label} ${page == tabName ? navbar.active : ""}`;
+
+    const handlePanelClick = (panel: PanelType) => {
+        if (viewContext.primaryPanel === panel && !viewContext.isSplit) return;
+        viewContext.setPrimaryPanel(panel);
     };
 
-    useEffect(() => {
-        updateIsInProject(page === "screenplay" || page === "statistics" || page === "board");
-        updateHasScreenplay(page === "screenplay");
-        updateHasProjectHeader(page === "screenplay" || page === "board");
-    }, [page]);
+    const handleSplitToggle = () => {
+        if (viewContext.isSplit) {
+            viewContext.setSecondaryPanel(null);
+        } else {
+            const other: PanelType = viewContext.primaryPanel === "screenplay" ? "board" : "screenplay";
+            viewContext.setSecondaryPanel(other);
+        }
+    };
+
+    const getPanelBtnStyle = (panel: PanelType) => {
+        const isActive = viewContext.primaryPanel === panel && !viewContext.isSplit;
+        return `${navbar.panel_btn} ${isActive ? navbar.panel_btn_active : ""}`;
+    };
 
     // Load project title - from membership or local storage
     useEffect(() => {
@@ -143,49 +166,40 @@ const ProjectNavbar = () => {
     }, [projectTitle, isInProject]);
 
     // On desktop (Tauri), allow navbar without user for local projects
-    if ((!user && !isTauri()) || !page) return null;
+    if (!user && !isTauri()) return null;
 
     return (
         <nav className={join(navbar.container)}>
-            {/* Left side - Back button + Navigation tabs */}
+            {/* Left side - Back button + Panel switcher */}
             <nav className={navbar.left_btns}>
                 {isInProject && (
                     <div className={navbar.back_btn} onClick={() => redirectHome()}>
                         <CircleArrowLeft size={18} />
-                        <p>Home</p>
                     </div>
                 )}
                 {isInProject && projectId && (
                     <div className={navbar.navBtns}>
-                        <p
-                            className={`${getNavStyle("screenplay")}`}
-                            onClick={() => {
-                                page !== "screenplay" && redirectScreenplay(projectId);
-                            }}
+                        <div className={navbar.panel_switcher}>
+                            <div className={getPanelBtnStyle("screenplay")} onClick={() => handlePanelClick("screenplay")}>
+                                <Clapperboard size={14} />
+                                Screenplay
+                            </div>
+                            <div className={getPanelBtnStyle("board")} onClick={() => handlePanelClick("board")}>
+                                <LayoutDashboard size={14} />
+                                Board
+                            </div>
+                        </div>
+                        <div
+                            className={`${navbar.export_project_btn} ${viewContext.isSplit ? navbar.panel_btn_active : ""}`}
+                            onClick={handleSplitToggle}
                         >
-                            Screenplay
-                        </p>
-                        {/*<p
-                            className={`${getNavStyle("statistics")}`}
-                            onClick={() => {
-                                page !== "statistics" && redirectStatistics(projectId);
-                            }}
-                        >
-                            Statistics
-                        </p>*/}
-                        <p
-                            className={`${getNavStyle("board")}`}
-                            onClick={() => {
-                                page !== "board" && redirectBoard(projectId);
-                            }}
-                        >
-                            Board
-                        </p>
+                            {viewContext.isSplit ? <PanelRightClose size={18} /> : <PanelRight size={18} />}
+                        </div>
                     </div>
                 )}
             </nav>
             {/* Center - Project title, format dropdown, and connection status */}
-            {hasProjectHeader && projectId && (
+            {isInProject && projectId && (
                 <div className={navbar.projectTitle}>
                     <StatusIndicator />
                     <input
@@ -212,7 +226,7 @@ const ProjectNavbar = () => {
             )}
             {/* Right side - Collaborators + Search + Zen mode toggle + Settings */}
             <div className={navbar.right_btns}>
-                {hasProjectHeader && <CollaboratorsDisplay />}
+                {isInProject && <CollaboratorsDisplay />}
                 {hasScreenplay && <ScreenplaySearch />}
                 {hasScreenplay && (
                     <div className={navbar.export_project_btn} onClick={toggleZenMode}>

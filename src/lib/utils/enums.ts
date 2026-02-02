@@ -16,6 +16,13 @@ export const isPage = (value: string): value is Page => {
 };
 
 // ------------------------------ //
+//            PANELS              //
+// ------------------------------ //
+
+export const PANEL_TYPES = ["screenplay", "board", "statistics"] as const;
+export type PanelType = (typeof PANEL_TYPES)[number];
+
+// ------------------------------ //
 //            PROJECT             //
 // ------------------------------ //
 

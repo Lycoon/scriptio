@@ -1,0 +1,23 @@
+.workspace {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    background-color: var(--main-bg);
+}
+
+.sidebars_visible {
+    /* Intentionally empty - sidebars handle their own visibility */
+}
+
+.visible {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
