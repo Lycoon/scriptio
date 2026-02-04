@@ -16,7 +16,8 @@ import { ProjectMembershipPayload } from "@src/server/repository/project-reposit
 
 import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline } from "@src/lib/screenplay/nodes";
 import { Placeholder } from "./extensions/placeholder-extension";
-import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
+import { PAGE_SIZES } from "tiptap-pagination-plus";
+import { PaginationPlus } from "./extensions/pagination-extension";
 import { KeybindsExtension } from "./extensions/keybinds-extension";
 import { executeKeybindAction } from "../utils/keybinds";
 import { ContdExtension } from "./extensions/contd-extension";
@@ -29,12 +30,11 @@ import {
     refreshSearchHighlights,
     SearchMatch,
 } from "./extensions/search-highlight-extension";
-import {
-    createSceneBookmarkExtension,
-    refreshSceneBookmarks,
-} from "./extensions/scene-bookmark-extension";
+import { createSceneBookmarkExtension, refreshSceneBookmarks } from "./extensions/scene-bookmark-extension";
+import { createSceneNumberRightExtension, refreshSceneNumberRight } from "./extensions/scene-number-right-extension";
 import { CommentMark } from "./extensions/comment-highlight-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
+import { PagePositionExtension } from "./extensions/page-position-extension";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
     if (style & Style.Bold) editor.chain().toggleBold().focus().run();
@@ -158,8 +158,8 @@ export const getStylesFromMarks = (marks: any[]): Style => {
 // though there is still room for text. We extend the writable area
 // by two lines (1 element + 1 bottom-margin) to have consistent layout
 //
-// TODO: Update tiptap-pagination-plus to ignore margin overflows or store in node whether it is
-// last of its page (could be extended for CONT'D feature)
+// Page-position detection is handled by PagePositionExtension (page-position-extension.ts)
+// which tracks first/last nodes per page via DOM measurement after pagination layout
 //
 
 const TWO_LINE_HEIGHTS = 17 * 2;
@@ -234,6 +234,8 @@ export const useScriptioEditor = (
         currentSearchIndex,
         setSearchMatches,
         setActiveCommentId,
+        sceneNumberOnRight,
+        displaySceneNumbers,
     } = projectCtx;
 
     // Refs for autocomplete data
@@ -297,6 +299,10 @@ export const useScriptioEditor = (
     const currentSearchIndexRef = useRef<number>(currentSearchIndex);
     const setSearchMatchesRef = useRef(setSearchMatches);
 
+    // Refs for right scene numbers
+    const sceneNumberOnRightRef = useRef<boolean>(sceneNumberOnRight);
+    const displaySceneNumbersRef = useRef<boolean>(displaySceneNumbers);
+
     // Keep refs in sync with state
     useEffect(() => {
         highlightedCharactersRef.current = highlightedCharacters;
@@ -333,6 +339,14 @@ export const useScriptioEditor = (
     useEffect(() => {
         setSearchMatchesRef.current = setSearchMatches;
     }, [setSearchMatches]);
+
+    useEffect(() => {
+        sceneNumberOnRightRef.current = sceneNumberOnRight;
+    }, [sceneNumberOnRight]);
+
+    useEffect(() => {
+        displaySceneNumbersRef.current = displaySceneNumbers;
+    }, [displaySceneNumbers]);
 
     useEffect(() => {
         userInfoRef.current = {
@@ -383,6 +397,11 @@ export const useScriptioEditor = (
         },
     });
 
+    // Create the scene number right extension with callback that checks both settings
+    const sceneNumberRightExtension = createSceneNumberRightExtension({
+        isEnabled: () => sceneNumberOnRightRef.current && displaySceneNumbersRef.current,
+    });
+
     const scriptioEditor = useEditor(
         {
             immediatelyRender: false,
@@ -390,31 +409,31 @@ export const useScriptioEditor = (
                 ...BASE_EXTENSIONS,
                 ...(projectState && isYjsReady
                     ? [
-                        Collaboration.configure({
-                            document: projectState,
-                            fragment: projectState.screenplayFragment(),
-                        }),
-                    ]
+                          Collaboration.configure({
+                              document: projectState,
+                              fragment: projectState.screenplayFragment(),
+                          }),
+                      ]
                     : []),
                 ...(provider && isYjsReady
                     ? [
-                        CollaborationCaret.configure({
-                            provider: provider,
-                            user: userInfoRef.current,
-                            render: (user: any) => {
-                                const caret = document.createElement("span");
-                                caret.classList.add("collab-caret");
-                                caret.style.borderLeft = `2px solid ${user.color}`;
-                                const label = document.createElement("div");
-                                label.classList.add("collab-caret-label");
-                                label.style.backgroundColor = user.color;
-                                label.innerText = user.name;
-                                label.contentEditable = "false";
-                                caret.appendChild(label);
-                                return caret;
-                            },
-                        }),
-                    ]
+                          CollaborationCaret.configure({
+                              provider: provider,
+                              user: userInfoRef.current,
+                              render: (user: any) => {
+                                  const caret = document.createElement("span");
+                                  caret.classList.add("collab-caret");
+                                  caret.style.borderLeft = `2px solid ${user.color}`;
+                                  const label = document.createElement("div");
+                                  label.classList.add("collab-caret-label");
+                                  label.style.backgroundColor = user.color;
+                                  label.innerText = user.name;
+                                  label.contentEditable = "false";
+                                  caret.appendChild(label);
+                                  return caret;
+                              },
+                          }),
+                      ]
                     : []),
                 PaginationPlus.configure({
                     pageGap: 20,
@@ -430,6 +449,9 @@ export const useScriptioEditor = (
                     footerRight: "",
                     ...SCREENPLAY_FORMATS[pageSize],
                 }),
+                /*PagePositionExtension.configure({
+                    pageHeight: SCREENPLAY_FORMATS[pageSize].pageHeight,
+                }),*/
                 KeybindsExtension.configure({
                     userKeybinds: userKeybinds || {},
                     onAction: (id, editorInstance) => {
@@ -443,6 +465,7 @@ export const useScriptioEditor = (
                 characterHighlightExtension,
                 searchHighlightExtension,
                 sceneBookmarkExtension,
+                sceneNumberRightExtension,
                 commentMarkExtension,
             ],
 
@@ -593,6 +616,13 @@ export const useScriptioEditor = (
             refreshSceneBookmarks(scriptioEditor);
         }
     }, [scriptioEditor, scenes]);
+
+    // Refresh right scene numbers when settings change
+    useEffect(() => {
+        if (scriptioEditor) {
+            refreshSceneNumberRight(scriptioEditor);
+        }
+    }, [scriptioEditor, sceneNumberOnRight, displaySceneNumbers]);
 
     // Refresh search highlights when search state changes
     useEffect(() => {

@@ -13,6 +13,9 @@
     overflow-y: auto;
     overflow-x: clip;
     z-index: 0;
+
+    /* Performance: isolate layout calculations from sidebars */
+    contain: layout style;
 }
 
 .editor_wrapper {

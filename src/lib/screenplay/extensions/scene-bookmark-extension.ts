@@ -12,10 +12,7 @@ type SceneBookmarkConfig = {
  * Computes decorations for scene headings that have an assigned color.
  * Adds a bookmark decoration on the left edge of the scene heading.
  */
-function computeBookmarkDecorations(
-    doc: any,
-    getSceneColor: (sceneId: string) => string | undefined,
-): DecorationSet {
+function computeBookmarkDecorations(doc: any, getSceneColor: (sceneId: string) => string | undefined): DecorationSet {
     const decorations: Decoration[] = [];
 
     doc.forEach((node: any, pos: number) => {
@@ -38,6 +35,35 @@ function computeBookmarkDecorations(
     return DecorationSet.create(doc, decorations);
 }
 
+/**
+ * Check if the transaction affects any Scene nodes (which would require recomputation)
+ */
+function didSceneNodesChange(tr: any): boolean {
+    if (!tr.docChanged) return false;
+
+    // Check if any step affects a Scene node
+    for (const step of tr.steps) {
+        const stepMap = step.getMap();
+        let affectsScene = false;
+        stepMap.forEach((oldStart: number, oldEnd: number) => {
+            try {
+                const $pos = tr.docs[0]?.resolve(oldStart);
+                if ($pos) {
+                    const node = $pos.nodeAfter || $pos.parent;
+                    if (node?.attrs?.class === "scene") {
+                        affectsScene = true;
+                    }
+                }
+            } catch {
+                // Position out of bounds, skip
+            }
+        });
+        if (affectsScene) return true;
+    }
+
+    return false;
+}
+
 export const createSceneBookmarkExtension = (config: SceneBookmarkConfig) => {
     return Extension.create({
         name: "sceneBookmark",
@@ -52,8 +78,22 @@ export const createSceneBookmarkExtension = (config: SceneBookmarkConfig) => {
                         init(_, { doc }) {
                             return computeBookmarkDecorations(doc, getSceneColor);
                         },
-                        apply(tr, _oldDecorations) {
-                            return computeBookmarkDecorations(tr.doc, getSceneColor);
+                        apply(tr, oldDecorations, _oldState, newState) {
+                            // Always recompute when explicitly refreshed (color changed from UI)
+                            if (tr.getMeta("sceneBookmarkRefresh")) {
+                                return computeBookmarkDecorations(tr.doc, getSceneColor);
+                            }
+
+                            // If document changed, check if Scene nodes were affected
+                            if (tr.docChanged) {
+                                if (didSceneNodesChange(tr)) {
+                                    return computeBookmarkDecorations(tr.doc, getSceneColor);
+                                }
+                                // Simple text edit - just map existing decorations to new positions
+                                return oldDecorations.map(tr.mapping, newState.doc);
+                            }
+
+                            return oldDecorations;
                         },
                     },
                     props: {

@@ -5,7 +5,7 @@
     align-items: center;
     gap: 12px;
     background: var(--secondary);
-    border: 1px solid var(--separator);
+    border: 1px solid var(--tertiary);
     padding: 16px;
     border-radius: 8px;
     cursor: pointer;
@@ -29,7 +29,7 @@
 
 .optionCard.active {
     background: rgba(var(--primary-rgb), 0.1);
-    border-color: var(--primary-text);
+    border-color: var(--secondary-text);
 }
 
 .optionInfo {
@@ -58,11 +58,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.2s, background-color 0.2s;
+    transition:
+        border-color 0.2s,
+        background-color 0.2s;
     flex-shrink: 0;
 }
 
-.active .checkbox {
+.optionCard.active > .checkbox,
+.optionCard.active > .optionRow > .checkbox {
     border-color: var(--primary-text);
     background: var(--primary-text);
 }

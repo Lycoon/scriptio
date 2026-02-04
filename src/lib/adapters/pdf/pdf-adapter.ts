@@ -18,6 +18,10 @@ export type PDFExportOptions = BaseExportOptions & {
     watermark: boolean;
     password?: string;
     displaySceneNumbers?: boolean;
+    sceneHeadingBold?: boolean;
+    sceneHeadingDoubleSpace?: boolean;
+    sceneNumberOnRight?: boolean;
+    contdLabel?: string;
 };
 
 export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
@@ -29,6 +33,10 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         const nodes = project.screenplay();
         const contdIndices = computeContdIndices(nodes);
         const displaySceneNumbers = options.displaySceneNumbers ?? true;
+        const sceneHeadingBold = options.sceneHeadingBold ?? true;
+        const sceneHeadingDoubleSpace = options.sceneHeadingDoubleSpace ?? false;
+        const sceneNumberOnRight = options.sceneNumberOnRight ?? false;
+        const contdLabel = options.contdLabel ?? "(CONT'D)";
         let pdfNodes = [];
         let sceneNumber = 0;
 
@@ -58,14 +66,25 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 case "scene":
                     sceneNumber++;
                     if (displaySceneNumbers) {
-                        pdfNodes.push(getSceneWithNumberTemplate(sceneNumber, text.toUpperCase()));
+                        pdfNodes.push(
+                            getSceneWithNumberTemplate(sceneNumber, text.toUpperCase(), {
+                                bold: sceneHeadingBold,
+                                showRightNumber: sceneNumberOnRight,
+                                doubleSpace: sceneHeadingDoubleSpace,
+                            }),
+                        );
                     } else {
-                        pdfNodes.push(getPDFNodeTemplate("scene", text.toUpperCase()));
+                        pdfNodes.push(
+                            getPDFNodeTemplate("scene", text.toUpperCase(), {
+                                bold: sceneHeadingBold,
+                                doubleSpace: sceneHeadingDoubleSpace,
+                            }),
+                        );
                     }
                     addOffset(pdfNodes);
                     break;
                 case "character":
-                    const characterText = contdIndices.has(i) ? text.toUpperCase() + " (CONT'D)" : text.toUpperCase();
+                    const characterText = contdIndices.has(i) ? text.toUpperCase() + " " + contdLabel : text.toUpperCase();
                     pdfNodes.push(getPDFNodeTemplate("character", characterText));
                     break;
                 case "dialogue":

@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext } from "react";
+import { useContext, memo, useCallback } from "react";
 import { LocationContextProps, ContextMenuType } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { pasteText } from "@src/lib/screenplay/editor";
@@ -10,11 +10,11 @@ import { join } from "@src/lib/utils/misc";
 import LinkSVG from "@public/images/link.svg";
 import item from "./SidebarItem.module.css";
 
-const SidebarLocationItem = ({ location }: LocationContextProps) => {
+const SidebarLocationItem = memo(({ location }: LocationContextProps) => {
     const { updateContextMenu } = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
 
-    const handleDropdown = (e: any) => {
+    const handleDropdown = useCallback((e: any) => {
         e.preventDefault();
         updateContextMenu({
             type: ContextMenuType.LocationItem,
@@ -23,12 +23,12 @@ const SidebarLocationItem = ({ location }: LocationContextProps) => {
                 location,
             },
         });
-    };
+    }, [updateContextMenu, location]);
 
-    const handleDoubleClick = () => {
+    const handleDoubleClick = useCallback(() => {
         // paste location name on double click
         if (editor) pasteText(editor, location.name);
-    };
+    }, [editor, location.name]);
 
     return (
         <div onContextMenu={handleDropdown} onDoubleClick={handleDoubleClick} className={item.container}>
@@ -38,6 +38,8 @@ const SidebarLocationItem = ({ location }: LocationContextProps) => {
             </div>
         </div>
     );
-};
+});
+
+SidebarLocationItem.displayName = "SidebarLocationItem";
 
 export default SidebarLocationItem;

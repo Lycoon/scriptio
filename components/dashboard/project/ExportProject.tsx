@@ -24,7 +24,17 @@ export enum ExportFormat {
 
 const ExportProject = () => {
     const { user } = useCookieUser();
-    const { project: membership, repository, editor, pageFormat, displaySceneNumbers } = useContext(ProjectContext);
+    const {
+        project: membership,
+        repository,
+        editor,
+        pageFormat,
+        displaySceneNumbers,
+        sceneHeadingBold,
+        sceneHeadingDoubleSpace,
+        sceneNumberOnRight,
+        contdLabel,
+    } = useContext(ProjectContext);
     const ydoc = repository?.getState();
     const userContext = useContext(UserContext);
 
@@ -105,6 +115,10 @@ const ExportProject = () => {
                 watermark: includeWatermark,
                 password: enablePassword && password ? password : undefined,
                 displaySceneNumbers,
+                sceneHeadingBold,
+                sceneHeadingDoubleSpace,
+                sceneNumberOnRight,
+                contdLabel,
             };
             await adapter.export(ydoc, pdfOptions);
         } else {

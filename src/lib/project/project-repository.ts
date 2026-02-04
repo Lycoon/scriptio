@@ -218,8 +218,20 @@ export class ProjectRepository {
     setPageSize(pageSize: PageFormat) {
         this.ydoc.layout().set("pageSize", pageSize);
     }
-    setDisplaySceneNumber(display: boolean) {
-        this.ydoc.layout().set("displaySceneNumber", display);
+    setDisplaySceneNumbers(display: boolean) {
+        this.ydoc.layout().set("displaySceneNumbers", display);
+    }
+    setSceneHeadingBold(bold: boolean) {
+        this.ydoc.layout().set("sceneHeadingBold", bold);
+    }
+    setSceneHeadingDoubleSpace(doubleSpace: boolean) {
+        this.ydoc.layout().set("sceneHeadingDoubleSpace", doubleSpace);
+    }
+    setSceneNumberOnRight(onRight: boolean) {
+        this.ydoc.layout().set("sceneNumberOnRight", onRight);
+    }
+    setContdLabel(label: string) {
+        this.ydoc.layout().set("contdLabel", label);
     }
 
     // -------------------------------- //

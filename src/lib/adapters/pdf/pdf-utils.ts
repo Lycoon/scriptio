@@ -49,30 +49,72 @@ export const getPDFTableTemplate = (text: string, type: string) => {
     };
 };
 
-export const getPDFNodeTemplate = (style: string, text: string) => {
-    return {
+export interface SceneOptions {
+    bold?: boolean;
+    doubleSpace?: boolean;
+}
+
+export const getPDFNodeTemplate = (style: string, text: string, options?: SceneOptions) => {
+    const node: any = {
         text,
         style: [style],
     };
+
+    // Handle scene-specific options
+    if (style === "scene" && options) {
+        if (options.bold === false) {
+            node.bold = false;
+        }
+        if (options.doubleSpace) {
+            node.margin = [0, 12, 0, 0]; // Add extra top margin (one line height = ~12pt)
+        }
+    }
+
+    return node;
 };
 
-export const getSceneWithNumberTemplate = (sceneNumber: number, text: string) => {
-    return {
-        columns: [
-            {
-                text: `${sceneNumber}`,
-                width: 30,
-                bold: true,
-                margin: [-50, 0, 0, 0],
-            },
-            {
-                text,
-                width: "*",
-                bold: true,
-                margin: [-30, 0, 0, 0],
-            },
-        ],
-    };
+export interface SceneWithNumberOptions {
+    bold?: boolean;
+    showRightNumber?: boolean;
+    doubleSpace?: boolean;
+}
+
+export const getSceneWithNumberTemplate = (
+    sceneNumber: number,
+    text: string,
+    options?: SceneWithNumberOptions,
+) => {
+    const bold = options?.bold ?? true;
+    const showRightNumber = options?.showRightNumber ?? false;
+    const doubleSpace = options?.doubleSpace ?? false;
+    const topMargin = doubleSpace ? 12 : 0; // Add extra top margin (one line height = ~12pt)
+
+    const columns: any[] = [
+        {
+            text: `${sceneNumber}`,
+            width: 30,
+            bold,
+            margin: [-50, topMargin, 0, 0],
+        },
+        {
+            text,
+            width: "*",
+            bold,
+            margin: [-30, topMargin, 0, 0],
+        },
+    ];
+
+    if (showRightNumber) {
+        columns.push({
+            text: `${sceneNumber}`,
+            width: 30,
+            bold,
+            alignment: "right",
+            margin: [0, topMargin, -50, 0],
+        });
+    }
+
+    return { columns };
 };
 
 export const getWatermarkData = (text: string) => {

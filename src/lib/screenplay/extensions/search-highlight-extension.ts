@@ -114,9 +114,25 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
                             onMatchesFound(result.matches);
                             return result.decorations;
                         },
-                        apply(tr, _oldDecorations) {
+                        apply(tr, oldDecorations, _oldState, newState) {
                             const searchTerm = getSearchTerm();
-                            // Recompute decorations on any transaction
+
+                            // Fast path: if no search term and wasn't searching before, skip computation
+                            if (!searchTerm && !previousSearchTerm) {
+                                return DecorationSet.empty;
+                            }
+
+                            // Fast path: if search term hasn't changed and document hasn't changed,
+                            // only recompute if explicitly refreshed (e.g., current match index changed)
+                            if (
+                                searchTerm === previousSearchTerm &&
+                                !tr.docChanged &&
+                                !tr.getMeta("searchHighlightRefresh")
+                            ) {
+                                return oldDecorations;
+                            }
+
+                            // Recompute decorations
                             const result = computeSearchDecorations(
                                 tr.doc,
                                 searchTerm,

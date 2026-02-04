@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext } from "react";
+import { useContext, memo, useCallback } from "react";
 import { CharacterContextProps, ContextMenuType } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { pasteText } from "@src/lib/screenplay/editor";
@@ -13,14 +13,17 @@ import item from "./SidebarItem.module.css";
 
 const DEFAULT_HIGHLIGHT_COLOR = "#6366f1"; // Indigo - matches extension default
 
-const SidebarCharacterItem = ({ character }: CharacterContextProps) => {
-    const { updateContextMenu } = useContext(UserContext);
-    const { editor, highlightedCharacters } = useContext(ProjectContext);
+type SidebarCharacterItemProps = CharacterContextProps & {
+    isHighlighted: boolean;
+};
 
-    const isHighlighted = highlightedCharacters.has(character.name.toUpperCase());
+const SidebarCharacterItem = memo(({ character, isHighlighted }: SidebarCharacterItemProps) => {
+    const { updateContextMenu } = useContext(UserContext);
+    const { editor } = useContext(ProjectContext);
+
     const highlightColor = character.color || DEFAULT_HIGHLIGHT_COLOR;
 
-    const handleDropdown = (e: any) => {
+    const handleDropdown = useCallback((e: any) => {
         e.preventDefault();
         updateContextMenu({
             type: ContextMenuType.CharacterItem,
@@ -29,12 +32,12 @@ const SidebarCharacterItem = ({ character }: CharacterContextProps) => {
                 character,
             },
         });
-    };
+    }, [updateContextMenu, character]);
 
-    const handleDoubleClick = () => {
+    const handleDoubleClick = useCallback(() => {
         // paste character name on double click
-        pasteText(editor!, character.name);
-    };
+        if (editor) pasteText(editor, character.name);
+    }, [editor, character.name]);
 
     return (
         <div onContextMenu={handleDropdown} onDoubleClick={handleDoubleClick} className={item.container}>
@@ -54,6 +57,8 @@ const SidebarCharacterItem = ({ character }: CharacterContextProps) => {
             </div>
         </div>
     );
-};
+});
+
+SidebarCharacterItem.displayName = "SidebarCharacterItem";
 
 export default SidebarCharacterItem;

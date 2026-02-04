@@ -1,5 +1,8 @@
 .container {
-    position: relative;
+    position: absolute; /* Remove from document flow */
+    right: 0;
+    top: 0;
+    bottom: 0;
     z-index: 2;
     display: flex;
     flex-direction: column;
@@ -9,9 +12,13 @@
     padding-bottom: 30px;
     width: var(--format-sidebar-width);
 
-    /* hiding it by default */
-    margin-right: calc(var(--format-sidebar-width) * -1);
-    transition: margin-right 0.5s ease;
+    /* Use transform instead of margin for hiding (GPU accelerated, no layout) */
+    transform: translateX(calc(var(--format-sidebar-width) + 60px));
+    transition: transform 0.5s ease;
+
+    /* Performance: full containment + own compositing layer */
+    contain: strict;
+    will-change: transform;
 }
 
 .element {
@@ -19,11 +26,13 @@
     padding-top: 10px;
     padding-bottom: 38px;
     border-radius: 35px;
+
+    /* Performance: isolate layout calculations from editor */
+    contain: layout style paint;
 }
 
 .active {
-    margin-right: 30px;
-    transition: margin-right 0.5s ease;
+    transform: translateX(0);
 }
 
 .tabs {

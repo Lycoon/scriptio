@@ -61,6 +61,10 @@ export type ProjectMetadata = {
 export type LayoutData = {
     pageSize: PageFormat;
     displaySceneNumbers: boolean;
+    sceneHeadingBold: boolean;
+    sceneHeadingDoubleSpace: boolean;
+    sceneNumberOnRight: boolean;
+    contdLabel: string;
 };
 
 export type ProjectData = {

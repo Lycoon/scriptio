@@ -55,6 +55,8 @@ export interface PlaceholderOptions {
   includeChildren: boolean
 }
 
+const placeholderPluginKey = new PluginKey('placeholder')
+
 /**
  * This extension allows you to add a placeholder to your editor.
  * A placeholder is a text that appears when the editor or a node is empty.
@@ -75,52 +77,101 @@ export const Placeholder = Extension.create<PlaceholderOptions>({
   },
 
   addProseMirrorPlugins() {
+    const editor = this.editor
+    const options = this.options
+
+    /**
+     * Computes placeholder decorations for the entire document.
+     * Only called when the set of empty nodes changes or the anchor moves.
+     */
+    function computePlaceholderDecorations(doc: ProsemirrorNode, anchor: number): DecorationSet {
+      const active = editor.isEditable || !options.showOnlyWhenEditable
+      if (!active) return DecorationSet.empty
+
+      const decorations: Decoration[] = []
+      const isEmptyDoc = editor.isEmpty
+
+      doc.descendants((node, pos) => {
+        const hasAnchor = anchor >= pos && anchor <= pos + node.nodeSize
+        const isEmpty = !node.isLeaf && isNodeEmpty(node)
+
+        if ((hasAnchor || !options.showOnlyCurrent) && isEmpty) {
+          const classes = [options.emptyNodeClass]
+
+          if (isEmptyDoc) {
+            classes.push(options.emptyEditorClass)
+          }
+
+          const decoration = Decoration.node(pos, pos + node.nodeSize, {
+            class: classes.join(' '),
+            'data-placeholder':
+              typeof options.placeholder === 'function'
+                ? options.placeholder({
+                    editor,
+                    node,
+                    pos,
+                    hasAnchor,
+                  })
+                : options.placeholder,
+          })
+
+          decorations.push(decoration)
+        }
+
+        return options.includeChildren
+      })
+
+      return DecorationSet.create(doc, decorations)
+    }
+
     return [
       new Plugin({
-        key: new PluginKey('placeholder'),
-        props: {
-          decorations: ({ doc, selection }) => {
-            const active = this.editor.isEditable || !this.options.showOnlyWhenEditable
-            const { anchor } = selection
-            const decorations: Decoration[] = []
+        key: placeholderPluginKey,
+        state: {
+          init(_, state) {
+            return computePlaceholderDecorations(state.doc, state.selection.anchor)
+          },
+          apply(tr, oldDecorations, oldState, newState) {
+            const oldAnchor = oldState.selection.anchor
+            const newAnchor = newState.selection.anchor
 
-            if (!active) {
-              return null
-            }
+            // Check if we need to recompute:
+            // 1. Anchor moved to a different node
+            // 2. A node became empty or non-empty
+            const anchorNodeChanged = oldState.doc.resolve(oldAnchor).parent !== newState.doc.resolve(newAnchor).parent
 
-            const isEmptyDoc = this.editor.isEmpty
+            if (tr.docChanged) {
+              // Check if the node at the cursor changed emptiness
+              try {
+                const newNode = newState.doc.resolve(newAnchor).parent
+                const wasEmpty = !oldState.doc.resolve(oldAnchor).parent.content.size
+                const isEmpty = !newNode.content.size
 
-            doc.descendants((node, pos) => {
-              const hasAnchor = anchor >= pos && anchor <= pos + node.nodeSize
-              const isEmpty = !node.isLeaf && isNodeEmpty(node)
-
-              if ((hasAnchor || !this.options.showOnlyCurrent) && isEmpty) {
-                const classes = [this.options.emptyNodeClass]
-
-                if (isEmptyDoc) {
-                  classes.push(this.options.emptyEditorClass)
+                // If emptiness changed or anchor moved to different node, recompute
+                if (wasEmpty !== isEmpty || anchorNodeChanged) {
+                  return computePlaceholderDecorations(newState.doc, newAnchor)
                 }
-
-                const decoration = Decoration.node(pos, pos + node.nodeSize, {
-                  class: classes.join(' '),
-                  'data-placeholder':
-                    typeof this.options.placeholder === 'function'
-                      ? this.options.placeholder({
-                          editor: this.editor,
-                          node,
-                          pos,
-                          hasAnchor,
-                        })
-                      : this.options.placeholder,
-                })
-
-                decorations.push(decoration)
+              } catch {
+                // Position resolution failed, recompute to be safe
+                return computePlaceholderDecorations(newState.doc, newAnchor)
               }
 
-              return this.options.includeChildren
-            })
+              // Simple text edit in non-empty node — just remap positions (O(log n))
+              return oldDecorations.map(tr.mapping, newState.doc)
+            }
 
-            return DecorationSet.create(doc, decorations)
+            // Selection-only change: recompute if anchor moved to different node
+            // (showOnlyCurrent mode needs this, but also hasAnchor attribute changes)
+            if (anchorNodeChanged) {
+              return computePlaceholderDecorations(newState.doc, newAnchor)
+            }
+
+            return oldDecorations
+          },
+        },
+        props: {
+          decorations(state) {
+            return this.getState(state)
           },
         },
       }),

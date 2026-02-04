@@ -220,6 +220,10 @@ const CommentCards = () => {
     const { user } = useUser();
     const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
+    // Performance: RAF debouncing refs to prevent layout thrashing
+    const transactionDebounceRef = useRef<number | null>(null);
+    const resizeThrottleRef = useRef<number | null>(null);
+
     const unresolvedComments = useMemo(
         () => comments.filter((c) => !c.resolved),
         [comments],
@@ -279,8 +283,16 @@ const CommentCards = () => {
     useEffect(() => {
         if (!editor || editor.isDestroyed) return;
 
+        // Performance: Debounce transaction handler to prevent layout thrashing during typing
         const handleTransaction = ({ transaction }: any) => {
-            if (transaction.docChanged) positionCards();
+            if (!transaction.docChanged) return;
+            if (transactionDebounceRef.current !== null) {
+                cancelAnimationFrame(transactionDebounceRef.current);
+            }
+            transactionDebounceRef.current = requestAnimationFrame(() => {
+                transactionDebounceRef.current = null;
+                positionCards();
+            });
         };
         editor.on("transaction", handleTransaction);
         window.addEventListener("resize", positionCards);
@@ -289,7 +301,14 @@ const CommentCards = () => {
         const scrollContainer = editorDom?.closest("[class*='container']") as HTMLElement | null;
         let resizeObserver: ResizeObserver | undefined;
         if (scrollContainer) {
-            resizeObserver = new ResizeObserver(positionCards);
+            // Performance: Throttle ResizeObserver to once per animation frame
+            resizeObserver = new ResizeObserver(() => {
+                if (resizeThrottleRef.current !== null) return;
+                resizeThrottleRef.current = requestAnimationFrame(() => {
+                    resizeThrottleRef.current = null;
+                    positionCards();
+                });
+            });
             resizeObserver.observe(scrollContainer);
         }
 
@@ -297,6 +316,13 @@ const CommentCards = () => {
             editor.off("transaction", handleTransaction);
             window.removeEventListener("resize", positionCards);
             resizeObserver?.disconnect();
+            // Cleanup pending animation frames
+            if (transactionDebounceRef.current !== null) {
+                cancelAnimationFrame(transactionDebounceRef.current);
+            }
+            if (resizeThrottleRef.current !== null) {
+                cancelAnimationFrame(resizeThrottleRef.current);
+            }
         };
     }, [editor, positionCards]);
 

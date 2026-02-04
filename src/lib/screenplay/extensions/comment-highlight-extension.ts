@@ -75,6 +75,10 @@ export const CommentMark = Mark.create<CommentOptions, CommentStorage>({
         if (newId !== this.storage.activeCommentId) {
             this.storage.activeCommentId = newId;
             this.options.onCommentActivated(newId);
+            // Dispatch a transaction to update decorations only when active comment changes
+            this.editor.view.dispatch(
+                this.editor.state.tr.setMeta("activeCommentChanged", newId),
+            );
         }
     },
 
@@ -126,31 +130,59 @@ export const CommentMark = Mark.create<CommentOptions, CommentStorage>({
     addProseMirrorPlugins() {
         const extensionStorage = this.storage;
 
+        /**
+         * Compute decorations for the active comment.
+         * Only called when activeCommentId changes or document changes.
+         */
+        function computeActiveCommentDecorations(doc: any, activeId: string | null): DecorationSet {
+            if (!activeId) return DecorationSet.empty;
+
+            const decorations: Decoration[] = [];
+
+            doc.descendants((node: any, pos: number) => {
+                const commentMark = node.marks.find(
+                    (mark: any) =>
+                        mark.type.name === "comment" && mark.attrs.commentId === activeId,
+                );
+                if (commentMark) {
+                    decorations.push(
+                        Decoration.inline(pos, pos + node.nodeSize, {
+                            class: "comment-highlight-active",
+                        }),
+                    );
+                }
+            });
+
+            return DecorationSet.create(doc, decorations);
+        }
+
         return [
             new Plugin({
                 key: activeCommentPluginKey,
+                state: {
+                    init(_, { doc }) {
+                        return computeActiveCommentDecorations(doc, extensionStorage.activeCommentId);
+                    },
+                    apply(tr, oldDecorations, _oldState, newState) {
+                        // Only recompute when active comment changes
+                        const activeCommentChanged = tr.getMeta("activeCommentChanged");
+                        if (activeCommentChanged !== undefined) {
+                            return computeActiveCommentDecorations(
+                                newState.doc,
+                                extensionStorage.activeCommentId,
+                            );
+                        }
+                        // For document changes, just remap positions (O(log n))
+                        // Comment marks don't change from simple text edits
+                        if (tr.docChanged) {
+                            return oldDecorations.map(tr.mapping, newState.doc);
+                        }
+                        return oldDecorations;
+                    },
+                },
                 props: {
                     decorations(state) {
-                        const activeId = extensionStorage.activeCommentId;
-                        if (!activeId) return DecorationSet.empty;
-
-                        const decorations: Decoration[] = [];
-
-                        state.doc.descendants((node, pos) => {
-                            const commentMark = node.marks.find(
-                                (mark) =>
-                                    mark.type.name === "comment" && mark.attrs.commentId === activeId,
-                            );
-                            if (commentMark) {
-                                decorations.push(
-                                    Decoration.inline(pos, pos + node.nodeSize, {
-                                        class: "comment-highlight-active",
-                                    }),
-                                );
-                            }
-                        });
-
-                        return DecorationSet.create(state.doc, decorations);
+                        return this.getState(state);
                     },
                 },
             }),

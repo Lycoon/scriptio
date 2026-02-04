@@ -91,6 +91,35 @@ function computeHighlightDecorations(
     return DecorationSet.create(doc, decorations);
 }
 
+/**
+ * Check if the transaction affects any Character nodes (which would require recomputation)
+ */
+function didCharacterNodesChange(tr: any): boolean {
+    if (!tr.docChanged) return false;
+
+    // Check if any step affects a Character node
+    for (const step of tr.steps) {
+        // Get positions affected by this step
+        const stepMap = step.getMap();
+        stepMap.forEach((oldStart: number, oldEnd: number) => {
+            // Check nodes at affected positions in the old doc
+            try {
+                const $pos = tr.docs[0]?.resolve(oldStart);
+                if ($pos) {
+                    const node = $pos.nodeAfter || $pos.parent;
+                    if (node?.attrs?.class === ScreenplayElement.Character) {
+                        return true;
+                    }
+                }
+            } catch {
+                // Position out of bounds, skip
+            }
+        });
+    }
+
+    return false;
+}
+
 export const createCharacterHighlightExtension = (config: CharacterHighlightConfig) => {
     return Extension.create({
         name: "characterHighlight",
@@ -105,11 +134,28 @@ export const createCharacterHighlightExtension = (config: CharacterHighlightConf
                         init(_, { doc }) {
                             return computeHighlightDecorations(doc, getHighlightedCharacters(), getCharacterColor);
                         },
-                        apply(tr, _oldDecorations) {
-                            // Recompute decorations on any transaction
-                            // This ensures we pick up both document changes and external state changes
-                            // (like toggling character highlighting)
-                            return computeHighlightDecorations(tr.doc, getHighlightedCharacters(), getCharacterColor);
+                        apply(tr, oldDecorations, _oldState, newState) {
+                            // Always recompute when explicitly refreshed (highlight toggled from UI)
+                            if (tr.getMeta("characterHighlightRefresh")) {
+                                return computeHighlightDecorations(tr.doc, getHighlightedCharacters(), getCharacterColor);
+                            }
+
+                            // If no highlighted characters, return empty
+                            if (getHighlightedCharacters().size === 0) {
+                                return DecorationSet.empty;
+                            }
+
+                            // If document changed, check if Character nodes were affected
+                            if (tr.docChanged) {
+                                // For efficiency, check if the change might affect character highlighting
+                                if (didCharacterNodesChange(tr)) {
+                                    return computeHighlightDecorations(tr.doc, getHighlightedCharacters(), getCharacterColor);
+                                }
+                                // Simple text edit - just map existing decorations to new positions
+                                return oldDecorations.map(tr.mapping, newState.doc);
+                            }
+
+                            return oldDecorations;
                         },
                     },
                     props: {

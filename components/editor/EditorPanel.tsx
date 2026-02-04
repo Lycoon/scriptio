@@ -27,8 +27,18 @@ interface EditorPanelProps {
 const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSuggestionData }: EditorPanelProps) => {
     const { membership, isLoading } = useProjectMembership();
     const { isZenMode, updateIsZenMode, updateContextMenu } = useContext(UserContext);
-    const { isYjsReady, selectedElement, setSelectedElement, selectedStyles, setSelectedStyles, displaySceneNumbers } =
-        useContext(ProjectContext);
+    const {
+        isYjsReady,
+        selectedElement,
+        setSelectedElement,
+        selectedStyles,
+        setSelectedStyles,
+        displaySceneNumbers,
+        sceneHeadingBold,
+        sceneHeadingDoubleSpace,
+        sceneNumberOnRight,
+        contdLabel,
+    } = useContext(ProjectContext);
     const { settings } = useSettings();
 
     const [isEditorReady, setIsEditorReady] = useState(false);
@@ -80,12 +90,41 @@ const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSug
         if (!editor || editor.isDestroyed || !editor.view?.dom) return;
 
         const editorElement = editor.view.dom;
+
+        // Scene numbers visibility
         if (displaySceneNumbers) {
             editorElement.classList.remove("hide-scene-numbers");
         } else {
             editorElement.classList.add("hide-scene-numbers");
         }
-    }, [editor, displaySceneNumbers]);
+
+        // Scene heading bold
+        if (sceneHeadingBold) {
+            editorElement.classList.remove("scene-heading-normal");
+        } else {
+            editorElement.classList.add("scene-heading-normal");
+        }
+
+        // Scene heading double space
+        if (sceneHeadingDoubleSpace) {
+            editorElement.classList.add("scene-heading-double-space");
+        } else {
+            editorElement.classList.remove("scene-heading-double-space");
+        }
+
+        // Scene number on right (class kept for potential future CSS use)
+        if (sceneNumberOnRight) {
+            editorElement.classList.add("scene-number-right");
+        } else {
+            editorElement.classList.remove("scene-number-right");
+        }
+
+        // CONT'D label
+        editorElement.style.setProperty("--contd-label", `"${contdLabel}"`);
+
+        // Focus editor to trigger pagination recompute
+        editor.commands.focus();
+    }, [editor, displaySceneNumbers, sceneHeadingBold, sceneHeadingDoubleSpace, sceneNumberOnRight, contdLabel]);
 
     useEffect(() => {
         if (!editor) return;

@@ -1,14 +1,12 @@
 "use client";
 
-import { useContext } from "react";
+import { useContext, memo, useCallback } from "react";
 import { ContextMenuType, SceneContextProps } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { join } from "@src/lib/utils/misc";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { focusOnPosition } from "@src/lib/screenplay/editor";
 import SceneLengthItem from "../sidebar/SceneLengthItem";
-
-import LinkSVG from "@public/images/link.svg";
 
 import nav_item from "./SidebarItem.module.css";
 
@@ -19,13 +17,7 @@ type SidebarSceneItemProps = SceneContextProps & {
     onPointerDown: (index: number, e: React.PointerEvent) => void;
 };
 
-const SidebarSceneItem = ({
-    scene,
-    index,
-    showDropIndicator,
-    isDragging,
-    onPointerDown,
-}: SidebarSceneItemProps) => {
+const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, onPointerDown }: SidebarSceneItemProps) => {
     const { updateContextMenu } = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
 
@@ -40,10 +32,14 @@ const SidebarSceneItem = ({
         });
     };
 
-    const handleDoubleClick = () => {
+    const handleDoubleClick = useCallback(() => {
         // focus on double click in scene list
-        focusOnPosition(editor!, scene.position);
-    };
+        if (editor) focusOnPosition(editor, scene.position);
+    }, [editor, scene.position]);
+
+    const handlePointerDown = useCallback((e: React.PointerEvent) => {
+        onPointerDown(index, e);
+    }, [onPointerDown, index]);
 
     // Show synopsis if available, otherwise show preview
     const displayText = scene.synopsis || scene.preview;
@@ -51,12 +47,12 @@ const SidebarSceneItem = ({
     const containerClass = join(
         nav_item.container,
         showDropIndicator ? nav_item.drop_indicator_top : "",
-        isDragging ? nav_item.dragging : ""
+        isDragging ? nav_item.dragging : "",
     );
 
     return (
         <div
-            onPointerDown={(e) => onPointerDown(index, e)}
+            onPointerDown={handlePointerDown}
             onContextMenu={handleDropdown}
             onDoubleClick={handleDoubleClick}
             className={containerClass}
@@ -74,6 +70,8 @@ const SidebarSceneItem = ({
             <p className={join(nav_item.preview, "unselectable")}>{displayText}</p>
         </div>
     );
-};
+});
+
+SidebarSceneItem.displayName = "SidebarSceneItem";
 
 export default SidebarSceneItem;

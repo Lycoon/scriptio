@@ -1,9 +1,12 @@
 .split_panel_container {
+    position: absolute;
+    inset: 0; /* Fill entire workspace */
     display: grid;
-    flex: 1;
     min-height: 0;
     min-width: 0;
-    position: relative;
+
+    /* Performance: isolate layout from sidebars */
+    contain: layout style;
 }
 
 .panel {

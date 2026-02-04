@@ -62,6 +62,14 @@ export interface ProjectContextType {
     setPageFormat: (format: PageFormat) => void;
     displaySceneNumbers: boolean;
     setDisplaySceneNumbers: (display: boolean) => void;
+    sceneHeadingBold: boolean;
+    setSceneHeadingBold: (bold: boolean) => void;
+    sceneHeadingDoubleSpace: boolean;
+    setSceneHeadingDoubleSpace: (doubleSpace: boolean) => void;
+    sceneNumberOnRight: boolean;
+    setSceneNumberOnRight: (onRight: boolean) => void;
+    contdLabel: string;
+    setContdLabel: (label: string) => void;
 
     // Search state
     searchTerm: string;
@@ -107,6 +115,14 @@ const defaultContextValue: ProjectContextType = {
     setPageFormat: () => { },
     displaySceneNumbers: false,
     setDisplaySceneNumbers: () => { },
+    sceneHeadingBold: true,
+    setSceneHeadingBold: () => { },
+    sceneHeadingDoubleSpace: false,
+    setSceneHeadingDoubleSpace: () => { },
+    sceneNumberOnRight: false,
+    setSceneNumberOnRight: () => { },
+    contdLabel: "(CONT'D)",
+    setContdLabel: () => { },
     characters: {},
     locations: {},
     scenes: [],
@@ -197,6 +213,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     // Display scene numbers state
     const [displaySceneNumbers, setDisplaySceneNumbersState] = useState<boolean>(false);
 
+    // Scene heading formatting state
+    const [sceneHeadingBold, setSceneHeadingBoldState] = useState<boolean>(true);
+    const [sceneHeadingDoubleSpace, setSceneHeadingDoubleSpaceState] = useState<boolean>(false);
+    const [sceneNumberOnRight, setSceneNumberOnRightState] = useState<boolean>(false);
+    const [contdLabel, setContdLabelState] = useState<string>("(CONT'D)");
+
     // Search state
     const [searchTerm, setSearchTermState] = useState<string>("");
     const [searchFilters, setSearchFiltersState] = useState<Set<ScreenplayElement>>(
@@ -267,13 +289,29 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         // Observe layout changes
         const unsubscribeLayout = repository.observeLayout((layout: Partial<LayoutData>) => {
             const _pageSize = layout.pageSize;
-            const _displaySceneNumber = layout.displaySceneNumbers;
+            const _displaySceneNumbers = layout.displaySceneNumbers;
+            const _sceneHeadingBold = layout.sceneHeadingBold;
+            const _sceneHeadingDoubleSpace = layout.sceneHeadingDoubleSpace;
+            const _sceneNumberOnRight = layout.sceneNumberOnRight;
+            const _contdLabel = layout.contdLabel;
 
             if (_pageSize && (_pageSize === "A4" || _pageSize === "LETTER")) {
                 setPageFormatState(_pageSize);
             }
-            if (_displaySceneNumber !== undefined) {
-                setDisplaySceneNumbersState(_displaySceneNumber);
+            if (_displaySceneNumbers !== undefined) {
+                setDisplaySceneNumbersState(_displaySceneNumbers);
+            }
+            if (_sceneHeadingBold !== undefined) {
+                setSceneHeadingBoldState(_sceneHeadingBold);
+            }
+            if (_sceneHeadingDoubleSpace !== undefined) {
+                setSceneHeadingDoubleSpaceState(_sceneHeadingDoubleSpace);
+            }
+            if (_sceneNumberOnRight !== undefined) {
+                setSceneNumberOnRightState(_sceneNumberOnRight);
+            }
+            if (_contdLabel !== undefined) {
+                setContdLabelState(_contdLabel);
             }
         });
 
@@ -369,7 +407,39 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const setDisplaySceneNumbers = useCallback(
         (display: boolean) => {
             setDisplaySceneNumbersState(display);
-            repository?.setDisplaySceneNumber(display);
+            repository?.setDisplaySceneNumbers(display);
+        },
+        [repository],
+    );
+
+    const setSceneHeadingBold = useCallback(
+        (bold: boolean) => {
+            setSceneHeadingBoldState(bold);
+            repository?.setSceneHeadingBold(bold);
+        },
+        [repository],
+    );
+
+    const setSceneHeadingDoubleSpace = useCallback(
+        (doubleSpace: boolean) => {
+            setSceneHeadingDoubleSpaceState(doubleSpace);
+            repository?.setSceneHeadingDoubleSpace(doubleSpace);
+        },
+        [repository],
+    );
+
+    const setSceneNumberOnRight = useCallback(
+        (onRight: boolean) => {
+            setSceneNumberOnRightState(onRight);
+            repository?.setSceneNumberOnRight(onRight);
+        },
+        [repository],
+    );
+
+    const setContdLabel = useCallback(
+        (label: string) => {
+            setContdLabelState(label);
+            repository?.setContdLabel(label);
         },
         [repository],
     );
@@ -423,6 +493,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setPageFormat,
             displaySceneNumbers,
             setDisplaySceneNumbers,
+            sceneHeadingBold,
+            setSceneHeadingBold,
+            sceneHeadingDoubleSpace,
+            setSceneHeadingDoubleSpace,
+            sceneNumberOnRight,
+            setSceneNumberOnRight,
+            contdLabel,
+            setContdLabel,
             screenplay,
             scenes,
             updateScenes,
@@ -464,6 +542,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setPageFormat,
             displaySceneNumbers,
             setDisplaySceneNumbers,
+            sceneHeadingBold,
+            setSceneHeadingBold,
+            sceneHeadingDoubleSpace,
+            setSceneHeadingDoubleSpace,
+            sceneNumberOnRight,
+            setSceneNumberOnRight,
+            contdLabel,
+            setContdLabel,
             screenplay,
             scenes,
             updateScenes,

@@ -2,3 +2,11 @@
     width: 100%;
     height: 100%;
 }
+
+.subOption {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--main-bg);
+    border-radius: 6px;
+    border: 1px solid var(--secondary-text);
+}
