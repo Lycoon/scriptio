@@ -26,33 +26,71 @@ function escapeRegex(str: string): string {
 }
 
 /**
- * Computes decorations for search matches.
- * Returns both the DecorationSet and the list of matches for navigation.
+ * Merge overlapping or adjacent ranges into a minimal set of non-overlapping ranges.
  */
-function computeSearchDecorations(
+function mergeOverlappingRanges(ranges: Array<{ from: number; to: number }>): Array<{ from: number; to: number }> {
+    if (ranges.length <= 1) return ranges;
+    const sorted = ranges.slice().sort((a, b) => a.from - b.from);
+    const merged: Array<{ from: number; to: number }> = [sorted[0]];
+    for (let i = 1; i < sorted.length; i++) {
+        const last = merged[merged.length - 1];
+        if (sorted[i].from <= last.to) {
+            last.to = Math.max(last.to, sorted[i].to);
+        } else {
+            merged.push(sorted[i]);
+        }
+    }
+    return merged;
+}
+
+/**
+ * Extract the document ranges affected by a transaction's steps.
+ * Ranges are expanded to parent node boundaries so regex matches at edit
+ * boundaries are correctly found.
+ */
+function getChangedRanges(tr: any): Array<{ from: number; to: number }> {
+    const ranges: Array<{ from: number; to: number }> = [];
+    for (let i = 0; i < tr.mapping.maps.length; i++) {
+        const stepMap = tr.mapping.maps[i];
+        stepMap.forEach((oldStart: number, oldEnd: number, newStart: number, newEnd: number) => {
+            // Map through any subsequent steps to get final document positions
+            const mappedFrom = tr.mapping.slice(i + 1).map(newStart, -1);
+            const mappedTo = tr.mapping.slice(i + 1).map(newEnd, 1);
+            try {
+                const $from = tr.doc.resolve(mappedFrom);
+                const $to = tr.doc.resolve(mappedTo);
+                ranges.push({
+                    from: $from.start($from.depth),
+                    to: $to.end($to.depth),
+                });
+            } catch {
+                ranges.push({ from: mappedFrom, to: mappedTo });
+            }
+        });
+    }
+    return mergeOverlappingRanges(ranges);
+}
+
+/**
+ * Scan text nodes within a specific range for search matches.
+ */
+function scanRangeForMatches(
     doc: any,
+    from: number,
+    to: number,
     searchTerm: string,
     enabledFilters: Set<ScreenplayElement>,
-    currentMatchIndex: number
-): { decorations: DecorationSet; matches: SearchMatch[] } {
-    if (!searchTerm || searchTerm.trim() === "") {
-        return { decorations: DecorationSet.empty, matches: [] };
-    }
-
-    const decorations: Decoration[] = [];
+): SearchMatch[] {
     const matches: SearchMatch[] = [];
     const regex = new RegExp(escapeRegex(searchTerm), "gi");
 
-    doc.descendants((node: any, pos: number) => {
-        // Only search in text nodes
+    doc.nodesBetween(from, to, (node: any, pos: number) => {
         if (!node.isText) return;
 
-        // Get the parent node to check its type
         const resolvedPos = doc.resolve(pos);
         const parent = resolvedPos.parent;
         const nodeClass = parent?.attrs?.class as ScreenplayElement | undefined;
 
-        // Skip if the node type is not in the enabled filters
         if (nodeClass && !enabledFilters.has(nodeClass)) {
             return;
         }
@@ -61,36 +99,115 @@ function computeSearchDecorations(
         let match;
 
         while ((match = regex.exec(text)) !== null) {
-            const from = pos + match.index;
-            const to = from + match[0].length;
+            const matchFrom = pos + match.index;
+            const matchTo = matchFrom + match[0].length;
 
             matches.push({
-                from,
-                to,
+                from: matchFrom,
+                to: matchTo,
                 nodeType: nodeClass || ScreenplayElement.None,
             });
         }
     });
 
-    // Create decorations from matches
+    return matches;
+}
+
+/**
+ * Computes decorations for search matches across the entire document.
+ * Returns both the DecorationSet and the list of matches for navigation.
+ */
+function computeSearchDecorations(
+    doc: any,
+    searchTerm: string,
+    enabledFilters: Set<ScreenplayElement>,
+    currentMatchIndex: number,
+): { decorations: DecorationSet; matches: SearchMatch[] } {
+    if (!searchTerm || searchTerm.trim() === "") {
+        return { decorations: DecorationSet.empty, matches: [] };
+    }
+
+    const matches = scanRangeForMatches(doc, 0, doc.content.size, searchTerm, enabledFilters);
+    const decorations: Decoration[] = [];
+
     matches.forEach((match, index) => {
         const isCurrentMatch = index === currentMatchIndex;
         decorations.push(
             Decoration.inline(match.from, match.to, {
                 class: isCurrentMatch ? "search-highlight search-highlight-current" : "search-highlight",
-            })
+            }),
         );
     });
 
     return { decorations: DecorationSet.create(doc, decorations), matches };
 }
 
+/**
+ * Rebuild the matches array from a DecorationSet by extracting positions
+ * and resolving node types from the document.
+ */
+function matchesFromDecorations(doc: any, decoSet: DecorationSet): SearchMatch[] {
+    const decos = decoSet.find(0, doc.content.size);
+    return decos.map((d) => {
+        let nodeType = ScreenplayElement.None;
+        try {
+            const nodeClass = doc.resolve(d.from).parent?.attrs?.class;
+            if (nodeClass) nodeType = nodeClass as ScreenplayElement;
+        } catch { /* position out of bounds */ }
+        return { from: d.from, to: d.to, nodeType };
+    });
+}
+
+/**
+ * Apply the currentMatchIndex CSS class to exactly one decoration in the set.
+ * Returns a new DecorationSet with the correct "current" highlight applied.
+ */
+function applyCurrentMatchClass(
+    doc: any,
+    decoSet: DecorationSet,
+    matches: SearchMatch[],
+    currentMatchIndex: number,
+): DecorationSet {
+    if (currentMatchIndex < 0 || currentMatchIndex >= matches.length) {
+        return decoSet;
+    }
+
+    const currentMatch = matches[currentMatchIndex];
+    // Find decorations at the current match position
+    const atCurrent = decoSet.find(currentMatch.from, currentMatch.to);
+    // Check if the current decoration already has the correct class
+    const existing = atCurrent.find((d) => {
+        const spec = (d as any).type?.attrs?.class;
+        return spec && spec.includes("search-highlight-current");
+    });
+    if (existing) return decoSet;
+
+    // Remove the old decoration at this position and add one with the current class
+    const toRemove = atCurrent.filter((d) => {
+        const spec = (d as any).type?.attrs?.class;
+        return spec && spec.includes("search-highlight");
+    });
+    let result = decoSet;
+    if (toRemove.length > 0) {
+        result = result.remove(toRemove);
+    }
+    result = result.add(doc, [
+        Decoration.inline(currentMatch.from, currentMatch.to, {
+            class: "search-highlight search-highlight-current",
+        }),
+    ]);
+
+    return result;
+}
+
 export const createSearchHighlightExtension = (config: SearchHighlightConfig) => {
     const { getSearchTerm, getEnabledFilters, getCurrentMatchIndex, onMatchesFound } = config;
 
-    // Track previous matches to avoid unnecessary state updates
+    // Track previous state to avoid unnecessary updates
     let previousMatchCount = 0;
     let previousSearchTerm = "";
+    // Cached matches array for incremental updates
+    let cachedMatches: SearchMatch[] = [];
 
     return Extension.create({
         name: "searchHighlight",
@@ -106,24 +223,23 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
                                 doc,
                                 searchTerm,
                                 getEnabledFilters(),
-                                getCurrentMatchIndex()
+                                getCurrentMatchIndex(),
                             );
-                            // Notify about matches on init
                             previousMatchCount = result.matches.length;
                             previousSearchTerm = searchTerm;
+                            cachedMatches = result.matches;
                             onMatchesFound(result.matches);
                             return result.decorations;
                         },
                         apply(tr, oldDecorations, _oldState, newState) {
                             const searchTerm = getSearchTerm();
 
-                            // Fast path: if no search term and wasn't searching before, skip computation
+                            // Fast path: no search term and wasn't searching before
                             if (!searchTerm && !previousSearchTerm) {
                                 return DecorationSet.empty;
                             }
 
-                            // Fast path: if search term hasn't changed and document hasn't changed,
-                            // only recompute if explicitly refreshed (e.g., current match index changed)
+                            // Fast path: nothing changed
                             if (
                                 searchTerm === previousSearchTerm &&
                                 !tr.docChanged &&
@@ -132,21 +248,84 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
                                 return oldDecorations;
                             }
 
-                            // Recompute decorations
-                            const result = computeSearchDecorations(
-                                tr.doc,
-                                searchTerm,
-                                getEnabledFilters(),
-                                getCurrentMatchIndex()
-                            );
-                            // Only notify about matches if the count or search term changed
-                            // This prevents excessive React state updates during navigation
-                            if (result.matches.length !== previousMatchCount || searchTerm !== previousSearchTerm) {
-                                previousMatchCount = result.matches.length;
+                            // Full rebuild needed when: search term changed, filters changed, or
+                            // explicit refresh (current match index changed)
+                            if (searchTerm !== previousSearchTerm || tr.getMeta("searchHighlightRefresh")) {
+                                const enabledFilters = getEnabledFilters();
+                                const currentMatchIndex = getCurrentMatchIndex();
+                                const result = computeSearchDecorations(
+                                    newState.doc,
+                                    searchTerm,
+                                    enabledFilters,
+                                    currentMatchIndex,
+                                );
+                                cachedMatches = result.matches;
+                                if (result.matches.length !== previousMatchCount || searchTerm !== previousSearchTerm) {
+                                    previousMatchCount = result.matches.length;
+                                    previousSearchTerm = searchTerm;
+                                    onMatchesFound(result.matches);
+                                }
                                 previousSearchTerm = searchTerm;
-                                onMatchesFound(result.matches);
+                                return result.decorations;
                             }
-                            return result.decorations;
+
+                            // Incremental update: document changed but search term is the same.
+                            // Map existing decorations to new positions, then patch only changed ranges.
+                            const mapped = oldDecorations.map(tr.mapping, newState.doc);
+                            const changedRanges = getChangedRanges(tr);
+
+                            if (changedRanges.length === 0) {
+                                return mapped;
+                            }
+
+                            const enabledFilters = getEnabledFilters();
+                            let result = mapped;
+
+                            // Remove stale decorations in changed ranges
+                            for (const range of changedRanges) {
+                                const stale = result.find(range.from, range.to);
+                                if (stale.length > 0) {
+                                    result = result.remove(stale);
+                                }
+                            }
+
+                            // Scan only the changed ranges for new matches
+                            const newDecorations: Decoration[] = [];
+                            for (const range of changedRanges) {
+                                const rangeMatches = scanRangeForMatches(
+                                    newState.doc,
+                                    range.from,
+                                    range.to,
+                                    searchTerm,
+                                    enabledFilters,
+                                );
+                                for (const m of rangeMatches) {
+                                    newDecorations.push(
+                                        Decoration.inline(m.from, m.to, {
+                                            class: "search-highlight",
+                                        }),
+                                    );
+                                }
+                            }
+                            if (newDecorations.length > 0) {
+                                result = result.add(newState.doc, newDecorations);
+                            }
+
+                            // Rebuild matches array from the decoration set
+                            const newMatches = matchesFromDecorations(newState.doc, result);
+                            cachedMatches = newMatches;
+
+                            // Apply current match highlight
+                            const currentMatchIndex = getCurrentMatchIndex();
+                            result = applyCurrentMatchClass(newState.doc, result, newMatches, currentMatchIndex);
+
+                            // Notify if match count changed
+                            if (newMatches.length !== previousMatchCount) {
+                                previousMatchCount = newMatches.length;
+                                onMatchesFound(newMatches);
+                            }
+
+                            return result;
                         },
                     },
                     props: {

@@ -32,6 +32,7 @@ import {
 } from "./extensions/search-highlight-extension";
 import { createSceneBookmarkExtension, refreshSceneBookmarks } from "./extensions/scene-bookmark-extension";
 import { createSceneNumberRightExtension, refreshSceneNumberRight } from "./extensions/scene-number-right-extension";
+import { createSceneIdDedupExtension } from "./extensions/scene-id-dedup-extension";
 import { CommentMark } from "./extensions/comment-highlight-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
 import { PagePositionExtension } from "./extensions/page-position-extension";
@@ -286,12 +287,18 @@ export const useScriptioEditor = (
         color: user?.color || getRandomColor(),
     });
 
+    // Ref to track the last reported active element, so onTransaction can detect stale values
+    const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
+
     // Refs for character highlighting - these are read by the extension plugin
     const highlightedCharactersRef = useRef<Set<string>>(highlightedCharacters);
     const charactersDataRef = useRef(characters);
 
     // Ref for scene bookmarks
     const scenesRef = useRef(scenes);
+
+    // Ref for repository (used by scene-id dedup extension)
+    const repositoryRef = useRef(repository);
 
     // Refs for search highlighting - these are read by the search extension plugin
     const searchTermRef = useRef<string>(searchTerm);
@@ -323,6 +330,10 @@ export const useScriptioEditor = (
     useEffect(() => {
         scenesRef.current = scenes;
     }, [scenes]);
+
+    useEffect(() => {
+        repositoryRef.current = repository;
+    }, [repository]);
 
     useEffect(() => {
         searchTermRef.current = searchTerm;
@@ -377,6 +388,13 @@ export const useScriptioEditor = (
             if (!current) return undefined;
             const scene = current.find((s) => s.id === sceneId);
             return scene?.color;
+        },
+    });
+
+    // Create the scene-id dedup extension to handle paste of persistent scenes
+    const sceneIdDedupExtension = createSceneIdDedupExtension({
+        duplicatePersistentScene: (originalId: string, newId: string) => {
+            repositoryRef.current?.duplicateScene(originalId, newId);
         },
     });
 
@@ -466,6 +484,7 @@ export const useScriptioEditor = (
                 searchHighlightExtension,
                 sceneBookmarkExtension,
                 sceneNumberRightExtension,
+                sceneIdDedupExtension,
                 commentMarkExtension,
             ],
 
@@ -474,6 +493,7 @@ export const useScriptioEditor = (
                 const node = anchor.parent;
                 const elementAnchor = node.attrs.class as ScreenplayElement;
 
+                lastReportedElementRef.current = elementAnchor;
                 setActiveElement(elementAnchor, false);
                 if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
 
@@ -577,7 +597,9 @@ export const useScriptioEditor = (
                     }
 
                     if (suggestions.length > 0) {
-                        const pagePos = editor.view.coordsAtPos(cursor);
+                        // Use side=-1 to get coordinates at the text cursor position,
+                        // not after any widget decorations (scene number) at the same pos
+                        const pagePos = editor.view.coordsAtPos(cursor, -1);
                         setSuggestionData({
                             position: { x: pagePos.left, y: pagePos.top },
                             cursor,
@@ -588,6 +610,18 @@ export const useScriptioEditor = (
                     setSuggestions(suggestions);
                 } else {
                     setSuggestions([]);
+                }
+            },
+
+            onTransaction({ editor, transaction }) {
+                // Catch element type changes from appendTransaction (e.g. Fountain extension
+                // transforming an Action into a Scene Heading) that onSelectionUpdate misses,
+                // since onSelectionUpdate fires before appendTransaction processes.
+                const { $from } = editor.state.selection;
+                const currentElement = $from.parent.attrs.class as ScreenplayElement;
+                if (currentElement !== lastReportedElementRef.current) {
+                    lastReportedElementRef.current = currentElement;
+                    setActiveElement(currentElement, false);
                 }
             },
         },

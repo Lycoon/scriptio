@@ -25,7 +25,7 @@
     flex: 1;
     overflow: hidden;
     background-color: var(--main-bg);
-    cursor: grab;
+    cursor: default;
 }
 
 .container.panning {
@@ -431,6 +431,22 @@
 
 .connection_handle:hover::before {
     opacity: 1;
+}
+
+/* Selected card highlight */
+.card_selected {
+    box-shadow:
+        0 0 0 3px var(--primary-text),
+        0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Selection rectangle */
+.selection_rect {
+    position: absolute;
+    border: 1px solid var(--primary-hover);
+    background-color: rgba(59, 130, 246, 0.1);
+    pointer-events: none;
+    z-index: 999;
 }
 
 /* Card highlight when connecting */

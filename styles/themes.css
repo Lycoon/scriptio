@@ -1,3 +1,8 @@
+html {
+    --editor-script-bg: white;
+    --editor-text: black;
+}
+
 html.light {
     color-scheme: light;
 
@@ -24,8 +29,8 @@ html.light {
     --project-item-shadow-active: 12px 12px 0 var(--tertiary);
     --export-project-selected: #cbd5e1;
 
-    --editor-script-bg: #ffffff;
-    --editor-text: #1a1a1c;
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
     --editor-scene: #f1f5f9;
     --editor-sidebar: #ffffff;
     --editor-sidebar-list: #ededf3;
@@ -67,9 +72,9 @@ html.dark {
     --project-item-shadow-active: 12px 12px 0 var(--tertiary);
     --export-project-selected: #505050;
 
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
     --editor-scene: #dadada;
-    --editor-text: #ffffff;
-    --editor-script-bg: #2e2e2e;
     --editor-sidebar: #272727;
     --editor-sidebar-list: #3c3c3c;
     --editor-sidebar-hover: var(--primary);
@@ -114,8 +119,8 @@ html.latte {
     --project-item-shadow-active: 12px 12px 0 var(--tertiary);
     --export-project-selected: #cbd5e1;
 
-    --editor-script-bg: white;
-    --editor-text: black;
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
     --editor-scene: #f1f5f9;
     --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
@@ -157,8 +162,8 @@ html.wonka {
     --project-item-shadow-active: 12px 12px 0 var(--tertiary);
     --export-project-selected: #cbd5e1;
 
-    --editor-script-bg: white;
-    --editor-text: black;
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
     --editor-scene: #f1f5f9;
     --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
@@ -200,8 +205,8 @@ html.mint {
     --project-item-shadow-active: 12px 12px 0 var(--tertiary);
     --export-project-selected: #cbd5e1;
 
-    --editor-script-bg: white;
-    --editor-text: black;
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
     --editor-scene: #f1f5f9;
     --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
@@ -243,8 +248,8 @@ html.blossom {
     --project-item-shadow-active: 12px 12px 0 var(--tertiary);
     --export-project-selected: #cbd5e1;
 
-    --editor-script-bg: white;
-    --editor-text: black;
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
     --editor-scene: #f1f5f9;
     --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
@@ -258,4 +263,10 @@ html.blossom {
     --editor-scroll-bg: var(--secondary);
     --editor-scroll-btn: var(--tertiary);
     --editor-scroll-btn-hover: var(--tertiary-hover);
+}
+
+/* Themed editor: use the theme's own background and text colors instead of black & white */
+html.themed-editor {
+    --editor-script-bg: var(--themed-editor-script-bg);
+    --editor-text: var(--themed-editor-text);
 }

@@ -18,11 +18,12 @@ interface SplitPanelContainerProps {
 
 const PanelRenderer = ({
     panel,
+    isVisible,
     suggestions,
     updateSuggestions,
     suggestionData,
     updateSuggestionData,
-}: { panel: PanelType } & SplitPanelContainerProps) => {
+}: { panel: PanelType; isVisible: boolean } & SplitPanelContainerProps) => {
     switch (panel) {
         case "screenplay":
             return (
@@ -34,7 +35,7 @@ const PanelRenderer = ({
                 />
             );
         case "board":
-            return <BoardCanvas />;
+            return <BoardCanvas isVisible={isVisible} />;
         case "statistics":
             return <StatisticsClientPage />;
     }
@@ -46,14 +47,19 @@ const SplitPanelContainer = ({
     suggestionData,
     updateSuggestionData,
 }: SplitPanelContainerProps) => {
-    const { primaryPanel, secondaryPanel, splitRatio, isSplit, mountedPanels, visiblePanels } = useViewContext();
+    const { primaryPanel, secondaryPanel, splitRatio, isSplit } = useViewContext();
 
     const gridStyle = useMemo(() => {
         if (!isSplit) {
             return { gridTemplateColumns: "1fr" };
         }
+        // Use calc() with percentages instead of fractional fr units.
+        // Fractional fr values (e.g. 0.5fr) trigger expensive grid track
+        // recalculations on every layout pass, causing editor freezes.
+        const leftPct = splitRatio * 100;
+        const rightPct = (1 - splitRatio) * 100;
         return {
-            gridTemplateColumns: `${splitRatio}fr 6px ${1 - splitRatio}fr`,
+            gridTemplateColumns: `1fr 6px 1fr`,
         };
     }, [isSplit, splitRatio]);
 
@@ -62,20 +68,17 @@ const SplitPanelContainer = ({
     return (
         <div className={styles.split_panel_container} style={gridStyle}>
             {allPanels.map((panel) => {
-                if (!mountedPanels.has(panel)) return null;
-
                 const isPrimary = panel === primaryPanel;
                 const isSecondary = panel === secondaryPanel;
                 const isVisible = isPrimary || isSecondary;
 
+                if (!isVisible) return null;
+
                 return (
-                    <div
-                        key={panel}
-                        className={isVisible ? styles.panel : styles.panel_hidden}
-                        style={isVisible ? { order: isPrimary ? 0 : 2 } : undefined}
-                    >
+                    <div key={panel} className={styles.panel} style={{ order: isPrimary ? 0 : 2 }}>
                         <PanelRenderer
                             panel={panel}
+                            isVisible={isVisible}
                             suggestions={suggestions}
                             updateSuggestions={updateSuggestions}
                             suggestionData={suggestionData}
@@ -84,7 +87,11 @@ const SplitPanelContainer = ({
                     </div>
                 );
             })}
-            {isSplit && <div style={{ order: 1, height: "100%" }}><DragHandle /></div>}
+            {isSplit && (
+                <div style={{ order: 1, height: "100%" }}>
+                    <DragHandle />
+                </div>
+            )}
         </div>
     );
 };

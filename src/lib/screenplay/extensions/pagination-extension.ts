@@ -11,14 +11,7 @@
 
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import {
-    ReplaceStep,
-    ReplaceAroundStep,
-    AddMarkStep,
-    RemoveMarkStep,
-    RemoveNodeMarkStep,
-    AttrStep,
-} from "@tiptap/pm/transform";
+import { ReplaceAroundStep } from "@tiptap/pm/transform";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Editor } from "@tiptap/core";
@@ -750,6 +743,25 @@ export const PaginationPlus = Extension.create<PaginationPlusOptions, Pagination
         const editor = this.editor;
         const extension = this;
 
+        const buildNewDecoration = (opts: PaginationPlusOptions, newState: any) => {
+            const view = safeGetView(editor);
+            if (view) updateCssVariables(view.dom as HTMLElement, opts);
+            const headerHeight =
+                "headerHeight" in extension.storage
+                    ? extension.storage.headerHeight
+                    : new Map<number, number>();
+            const footerHeight =
+                "footerHeight" in extension.storage
+                    ? extension.storage.footerHeight
+                    : new Map<number, number>();
+            const widgetList = createDecoration(opts, headerHeight, footerHeight);
+            extension.storage = { ...opts, headerHeight, footerHeight };
+            return {
+                decorations: DecorationSet.create(newState.doc, [...widgetList]),
+                footerHeight,
+            };
+        };
+
         return [
             new Plugin({
                 key: paginationKey,
@@ -766,54 +778,29 @@ export const PaginationPlus = Extension.create<PaginationPlusOptions, Pagination
                         };
                     },
                     apply: (tr, oldDeco, _oldState, newState) => {
-                        const currentView = safeGetView(editor);
-                        if (!currentView || !currentView.dom) {
-                            return oldDeco;
+                        // PERFORMANCE: apply() must NEVER read from the DOM.
+                        // All DOM measurement (offsetTop, offsetHeight, etc.) happens
+                        // exclusively in the debounced RAF inside view.update().
+                        // apply() only rebuilds decorations when:
+                        //   1. The RAF signals a page count change via page_count_meta
+                        //   2. Plugin options changed (e.g. updatePageSize command)
+
+                        const isPageCountMeta = tr.getMeta(page_count_meta_key) !== undefined;
+
+                        if (isPageCountMeta) {
+                            // RAF detected a page count change — rebuild decorations
+                            const opts = editor.storage.PaginationPlus as PaginationPlusOptions;
+                            return buildNewDecoration(opts, newState);
                         }
 
-                        // PERFORMANCE OPTIMIZATION: Skip expensive calculation for simple text edits
-                        // Only recalculate when structure might have changed significantly
-                        const isSimpleTextEdit =
-                            tr.docChanged &&
-                            tr.steps.length === 1 &&
-                            tr.steps[0] instanceof ReplaceStep &&
-                            (tr.steps[0] as ReplaceStep).slice.content.size < 50;
-
-                        if (isSimpleTextEdit && lastCalculatedPageCount !== null) {
-                            // For simple text edits, don't recalculate page count
-                            // Just return old decorations - they'll update in the debounced view.update
-                            return oldDeco;
+                        if (!tr.docChanged) {
+                            // Check if options changed (e.g. updatePageSize commands)
+                            const opts = editor.storage.PaginationPlus as PaginationPlusOptions;
+                            if (!deepEqualIterative(opts, extension.storage)) {
+                                return buildNewDecoration(opts, newState);
+                            }
                         }
 
-                        const opts = editor.storage.PaginationPlus as PaginationPlusOptions;
-                        const pageCount = calculatePageCount(currentView, opts);
-                        lastCalculatedPageCount = pageCount;
-                        const currentPageCount = getExistingPageCount(currentView);
-
-                        const getNewDecoration = () => {
-                            updateCssVariables(editor.view.dom as HTMLElement, opts);
-                            const headerHeight =
-                                "headerHeight" in extension.storage
-                                    ? extension.storage.headerHeight
-                                    : new Map<number, number>();
-                            const footerHeight =
-                                "footerHeight" in extension.storage
-                                    ? extension.storage.footerHeight
-                                    : new Map<number, number>();
-                            const widgetList = createDecoration(opts, headerHeight, footerHeight);
-                            extension.storage = { ...opts, headerHeight, footerHeight };
-                            return {
-                                decorations: DecorationSet.create(newState.doc, [...widgetList]),
-                                footerHeight,
-                            };
-                        };
-
-                        if (
-                            (pageCount > 1 ? pageCount : 1) !== currentPageCount ||
-                            !deepEqualIterative(opts, extension.storage)
-                        ) {
-                            return getNewDecoration();
-                        }
                         return oldDeco;
                     },
                 },
@@ -825,128 +812,152 @@ export const PaginationPlus = Extension.create<PaginationPlusOptions, Pagination
                 view: () => {
                     // Track if we need a page count update to avoid double RAF
                     let needsPageCountUpdate = false;
+                    let initialRun = true;
+                    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
                     return {
-                        update: (view) => {
-                            // PERFORMANCE OPTIMIZATION: Debounce the expensive calculation
+                        update: (view, prevState) => {
+                            // PERFORMANCE: Skip when doc hasn't changed
+                            // (cursor moves, selection changes, focus events)
+                            // Always run on the very first update to compute initial page breaks
+                            if (!initialRun && view.state.doc.eq(prevState.doc)) {
+                                return;
+                            }
+
+                            // Debounce: wait for a pause in typing before measuring the DOM.
+                            // This avoids forced reflows on every keystroke.
+                            // Use a short delay on initial run so page breaks appear quickly.
                             if (pendingViewUpdate !== null) {
                                 cancelAnimationFrame(pendingViewUpdate);
+                                pendingViewUpdate = null;
                             }
+                            if (debounceTimer !== null) {
+                                clearTimeout(debounceTimer);
+                            }
+
+                            const delay = initialRun ? 50 : 300;
+                            initialRun = false;
 
                             // Invalidate height cache for next frame
                             invalidateHeightCache();
 
-                            pendingViewUpdate = requestAnimationFrame(() => {
-                                pendingViewUpdate = null;
+                            debounceTimer = setTimeout(() => {
+                                debounceTimer = null;
 
-                                const opts = editor.storage.PaginationPlus as PaginationPlusOptions;
-                                const pageCount = calculatePageCount(view, opts);
-                                lastCalculatedPageCount = pageCount;
-                                const currentPageCount = getExistingPageCount(view);
+                                pendingViewUpdate = requestAnimationFrame(() => {
+                                    pendingViewUpdate = null;
 
-                                // Performance: Instead of nested RAF, dispatch synchronously
-                                // if page count changed. The dispatch will trigger another
-                                // view.update which will be debounced by our RAF above.
-                                if (currentPageCount !== pageCount) {
-                                    if (!needsPageCountUpdate) {
-                                        needsPageCountUpdate = true;
-                                        // Use queueMicrotask instead of nested RAF to avoid
-                                        // creating multiple layout phases
-                                        queueMicrotask(() => {
-                                            needsPageCountUpdate = false;
-                                            const tr = view.state.tr.setMeta(page_count_meta_key, {});
-                                            view.dispatch(tr);
-                                        });
+                                    const opts = editor.storage.PaginationPlus as PaginationPlusOptions;
+                                    const pageCount = calculatePageCount(view, opts);
+                                    lastCalculatedPageCount = pageCount;
+                                    const currentPageCount = getExistingPageCount(view);
+
+                                    if (currentPageCount !== pageCount) {
+                                        if (!needsPageCountUpdate) {
+                                            needsPageCountUpdate = true;
+                                            queueMicrotask(() => {
+                                                needsPageCountUpdate = false;
+                                                const tr = view.state.tr.setMeta(page_count_meta_key, {});
+                                                view.dispatch(tr);
+                                            });
+                                        }
+                                        return;
                                     }
-                                    return;
-                                }
 
-                                // All DOM reads are batched here (cached within this frame)
-                                const headerHeight = getHeaderHeight(
-                                    view.dom as HTMLElement,
-                                    getCustomPages(opts.customHeader, {}),
-                                    "content",
-                                );
-                                const footerHeight = getFooterHeight(
-                                    view.dom as HTMLElement,
-                                    getCustomPages({}, opts.customFooter),
-                                    "content",
-                                );
-
-                                const footerHeightForCurrentPages = new Map<number, number>();
-                                for (let i = 0; i <= pageCount; i++) {
-                                    if (footerHeight.has(i)) {
-                                        footerHeightForCurrentPages.set(i, footerHeight.get(i) || 0);
-                                    }
-                                }
-
-                                const headerHeightForCurrentPages = new Map<number, number>();
-                                for (let i = 0; i <= pageCount; i++) {
-                                    if (headerHeight.has(i)) {
-                                        headerHeightForCurrentPages.set(i, headerHeight.get(i) || 0);
-                                    }
-                                }
-
-                                const pagesSetToCheck = new Set([
-                                    1,
-                                    ...footerHeightForCurrentPages.keys(),
-                                    ...headerHeightForCurrentPages.keys(),
-                                ]);
-                                let missingPageNumber: number | undefined = undefined;
-                                for (let i = 1; i <= pageCount; i++) {
-                                    if (!pagesSetToCheck.has(i)) {
-                                        missingPageNumber = i;
-                                        break;
-                                    }
-                                }
-                                if (missingPageNumber) {
-                                    pagesSetToCheck.add(missingPageNumber);
-                                }
-                                pagesSetToCheck.delete(0);
-
-                                const pageContentHeightVariable: Record<string, string> = {};
-                                let maxContentHeight: number | undefined = undefined;
-
-                                for (const page of pagesSetToCheck) {
-                                    const hHeight = headerHeightForCurrentPages.has(page)
-                                        ? headerHeightForCurrentPages.get(page) || 0
-                                        : headerHeightForCurrentPages.get(0) || 0;
-                                    const fHeight = footerHeightForCurrentPages.has(page)
-                                        ? footerHeightForCurrentPages.get(page) || 0
-                                        : footerHeightForCurrentPages.get(0) || 0;
-                                    const { _pageHeaderHeight, _pageHeight } = getHeight(opts, hHeight, fHeight);
-                                    const contentHeight = page === 1 ? _pageHeight + _pageHeaderHeight : _pageHeight;
-
-                                    if (page === 1) {
-                                        pageContentHeightVariable[`rm-page-content-first`] = `${contentHeight}px`;
-                                    }
-                                    if (page === missingPageNumber) {
-                                        pageContentHeightVariable[`rm-page-content-general`] = `${contentHeight}px`;
-                                    } else {
-                                        pageContentHeightVariable[`rm-page-content-${page}`] = `${contentHeight}px`;
-                                    }
-                                    if (maxContentHeight === undefined || contentHeight < maxContentHeight) {
-                                        maxContentHeight = contentHeight;
-                                    }
-                                }
-
-                                // Batch all DOM writes together (after all reads)
-                                if (maxContentHeight) {
-                                    (view.dom as HTMLElement).style.setProperty(
-                                        `--rm-max-content-child-height`,
-                                        `${maxContentHeight - 10}px`,
+                                    // All DOM reads batched here
+                                    const headerHeight = getHeaderHeight(
+                                        view.dom as HTMLElement,
+                                        getCustomPages(opts.customHeader, {}),
+                                        "content",
                                     );
-                                }
+                                    const footerHeight = getFooterHeight(
+                                        view.dom as HTMLElement,
+                                        getCustomPages({}, opts.customFooter),
+                                        "content",
+                                    );
 
-                                Object.entries(pageContentHeightVariable).forEach(([key, value]) => {
-                                    (view.dom as HTMLElement).style.setProperty(`--${key}`, value);
+                                    const footerHeightForCurrentPages = new Map<number, number>();
+                                    for (let i = 0; i <= pageCount; i++) {
+                                        if (footerHeight.has(i)) {
+                                            footerHeightForCurrentPages.set(i, footerHeight.get(i) || 0);
+                                        }
+                                    }
+
+                                    const headerHeightForCurrentPages = new Map<number, number>();
+                                    for (let i = 0; i <= pageCount; i++) {
+                                        if (headerHeight.has(i)) {
+                                            headerHeightForCurrentPages.set(i, headerHeight.get(i) || 0);
+                                        }
+                                    }
+
+                                    const pagesSetToCheck = new Set([
+                                        1,
+                                        ...footerHeightForCurrentPages.keys(),
+                                        ...headerHeightForCurrentPages.keys(),
+                                    ]);
+                                    let missingPageNumber: number | undefined = undefined;
+                                    for (let i = 1; i <= pageCount; i++) {
+                                        if (!pagesSetToCheck.has(i)) {
+                                            missingPageNumber = i;
+                                            break;
+                                        }
+                                    }
+                                    if (missingPageNumber) {
+                                        pagesSetToCheck.add(missingPageNumber);
+                                    }
+                                    pagesSetToCheck.delete(0);
+
+                                    const pageContentHeightVariable: Record<string, string> = {};
+                                    let maxContentHeight: number | undefined = undefined;
+
+                                    for (const page of pagesSetToCheck) {
+                                        const hHeight = headerHeightForCurrentPages.has(page)
+                                            ? headerHeightForCurrentPages.get(page) || 0
+                                            : headerHeightForCurrentPages.get(0) || 0;
+                                        const fHeight = footerHeightForCurrentPages.has(page)
+                                            ? footerHeightForCurrentPages.get(page) || 0
+                                            : footerHeightForCurrentPages.get(0) || 0;
+                                        const { _pageHeaderHeight, _pageHeight } = getHeight(opts, hHeight, fHeight);
+                                        const contentHeight =
+                                            page === 1 ? _pageHeight + _pageHeaderHeight : _pageHeight;
+
+                                        if (page === 1) {
+                                            pageContentHeightVariable[`rm-page-content-first`] =
+                                                `${contentHeight}px`;
+                                        }
+                                        if (page === missingPageNumber) {
+                                            pageContentHeightVariable[`rm-page-content-general`] =
+                                                `${contentHeight}px`;
+                                        } else {
+                                            pageContentHeightVariable[`rm-page-content-${page}`] =
+                                                `${contentHeight}px`;
+                                        }
+                                        if (maxContentHeight === undefined || contentHeight < maxContentHeight) {
+                                            maxContentHeight = contentHeight;
+                                        }
+                                    }
+
+                                    // Batch all DOM writes together (after all reads)
+                                    if (maxContentHeight) {
+                                        (view.dom as HTMLElement).style.setProperty(
+                                            `--rm-max-content-child-height`,
+                                            `${maxContentHeight - 10}px`,
+                                        );
+                                    }
+
+                                    Object.entries(pageContentHeightVariable).forEach(([key, value]) => {
+                                        (view.dom as HTMLElement).style.setProperty(`--${key}`, value);
+                                    });
+
+                                    refreshPage(view.dom as HTMLElement);
                                 });
-
-                                refreshPage(view.dom as HTMLElement);
-                            });
+                            }, delay);
                         },
                         destroy: () => {
-                            // Clean up pending animation frame on destroy
+                            if (debounceTimer !== null) {
+                                clearTimeout(debounceTimer);
+                                debounceTimer = null;
+                            }
                             if (pendingViewUpdate !== null) {
                                 cancelAnimationFrame(pendingViewUpdate);
                                 pendingViewUpdate = null;

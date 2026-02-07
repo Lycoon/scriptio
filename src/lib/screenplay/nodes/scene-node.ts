@@ -50,8 +50,9 @@ export const SceneNode = Node.create<SceneNodeOptions>({
             },
             "scene-id": {
                 default: null,
-                // Preserve scene-id when node is split or content is cleared
-                keepOnSplit: true,
+                // Do NOT preserve scene-id on split — the split-off node should
+                // be a fresh scene heading without persistent data linkage.
+                keepOnSplit: false,
                 parseHTML: (element) => element.getAttribute("scene-id") || element.getAttribute("data-scene-id"),
                 renderHTML: (attributes) => {
                     if (!attributes["scene-id"]) {

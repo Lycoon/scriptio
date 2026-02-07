@@ -33,6 +33,7 @@ export interface UserSettings {
     keybinds: Record<string, string>;
     theme: UserTheme;
     language: UserLanguage;
+    themedEditor: boolean;
 }
 
 export type UserLanguage = "en";

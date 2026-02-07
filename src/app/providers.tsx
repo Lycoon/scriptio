@@ -1,11 +1,28 @@
 "use client"; // 👈 CRITICAL: This makes hooks and context work
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { SWRConfig } from "swr";
 import { UserContextProvider } from "@src/context/UserContext";
 import { DashboardContextProvider } from "@src/context/DashboardContext";
+import { useSettings } from "@src/lib/utils/hooks";
 import fetcher from "@src/lib/fetcher";
+
+/**
+ * Syncs the "themed-editor" CSS class on <html> with the user's persisted setting.
+ * Runs at the root so it applies before any editor is rendered.
+ */
+function EditorThemeSync() {
+    const { settings } = useSettings();
+
+    useEffect(() => {
+        if (settings?.themedEditor !== undefined) {
+            document.documentElement.classList.toggle("themed-editor", settings.themedEditor);
+        }
+    }, [settings?.themedEditor]);
+
+    return null;
+}
 
 export function Providers({ children }: { children: ReactNode }) {
     return (
@@ -36,6 +53,7 @@ export function Providers({ children }: { children: ReactNode }) {
                         themes={["dark", "light", "latte", "wonka", "mint", "blossom"]}
                         enableColorScheme={false}
                     >
+                        <EditorThemeSync />
                         {children}
                     </ThemeProvider>
                 </DashboardContextProvider>

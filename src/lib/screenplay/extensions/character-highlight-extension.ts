@@ -99,22 +99,22 @@ function didCharacterNodesChange(tr: any): boolean {
 
     // Check if any step affects a Character node
     for (const step of tr.steps) {
-        // Get positions affected by this step
         const stepMap = step.getMap();
+        let affectsCharacter = false;
         stepMap.forEach((oldStart: number, oldEnd: number) => {
-            // Check nodes at affected positions in the old doc
             try {
                 const $pos = tr.docs[0]?.resolve(oldStart);
                 if ($pos) {
                     const node = $pos.nodeAfter || $pos.parent;
                     if (node?.attrs?.class === ScreenplayElement.Character) {
-                        return true;
+                        affectsCharacter = true;
                     }
                 }
             } catch {
                 // Position out of bounds, skip
             }
         });
+        if (affectsCharacter) return true;
     }
 
     return false;

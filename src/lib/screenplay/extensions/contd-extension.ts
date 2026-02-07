@@ -2,8 +2,12 @@ import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ReplaceAroundStep } from "@tiptap/pm/transform";
+import { STRUCTURAL_REFRESH_META, scheduleStructuralRefresh, cancelStructuralRefresh } from "./structural-refresh";
 
 const contdPluginKey = new PluginKey("contd");
+
+// Deferred recomputation flag — set in apply(), checked in view.update()
+let contdNeedsRecompute = false;
 
 /**
  * Checks if a transaction structurally changes dialogue blocks
@@ -39,6 +43,8 @@ function computeContdDecorations(doc: any): DecorationSet {
     let lastCharacterInScene: string | null = null;
     let wasInterrupted = false;
     let nodeIndex = 0;
+
+    console.log("Computing CONT'D decorations...");
 
     // First pass: determine which indices need CONT'D
     doc.forEach((node: any) => {
@@ -77,7 +83,7 @@ function computeContdDecorations(doc: any): DecorationSet {
             decorations.push(
                 Decoration.node(pos, pos + node.nodeSize, {
                     class: "contd",
-                })
+                }),
             );
         }
         nodeIndex++;
@@ -98,17 +104,37 @@ export const ContdExtension = Extension.create({
                         return computeContdDecorations(doc);
                     },
                     apply(tr, oldDecorations, _oldState, newState) {
+                        // Full recompute on deferred structural refresh
+                        if (tr.getMeta(STRUCTURAL_REFRESH_META)) {
+                            contdNeedsRecompute = false;
+                            return computeContdDecorations(tr.doc);
+                        }
+
                         if (!tr.docChanged) return oldDecorations;
 
-                        // Only recompute when dialogue block structure changes
-                        // (new nodes added/deleted, node types changed)
-                        if (didDialogueBlockChange(tr)) {
-                            return computeContdDecorations(tr.doc);
+                        // On structural change: defer full recompute to next frame,
+                        // return fast O(log n) position remap for now.
+                        // Also detect node deletion via Backspace/Delete (childCount changes).
+                        if (_oldState.doc.childCount !== newState.doc.childCount || didDialogueBlockChange(tr)) {
+                            contdNeedsRecompute = true;
+                            return oldDecorations.map(tr.mapping, newState.doc);
                         }
 
                         // Simple text edit within existing node — just remap positions (O(log n))
                         return oldDecorations.map(tr.mapping, newState.doc);
                     },
+                },
+                view() {
+                    return {
+                        update(view) {
+                            if (contdNeedsRecompute) {
+                                scheduleStructuralRefresh(view);
+                            }
+                        },
+                        destroy() {
+                            cancelStructuralRefresh();
+                        },
+                    };
                 },
                 props: {
                     decorations(state) {

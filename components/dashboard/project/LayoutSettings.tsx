@@ -1,8 +1,9 @@
 "use client";
 
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { PageFormat } from "@src/lib/utils/enums";
+import { Check } from "lucide-react";
 
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "./ProjectSettings.module.css";
@@ -24,6 +25,24 @@ const LayoutSettings = () => {
         contdLabel,
         setContdLabel,
     } = useContext(ProjectContext);
+
+    // Strip wrapping parentheses for display — the system stores "(CONT'D)" but the
+    // user should only type the inner text; parentheses are added back on commit.
+    const stripParens = (s: string) => (s.startsWith("(") && s.endsWith(")") ? s.slice(1, -1) : s);
+
+    // Local state for the continuation input to avoid triggering editor.commands.focus()
+    // on every keystroke (which steals focus from the input and causes freezes)
+    const [localContdLabel, setLocalContdLabel] = useState(() => stripParens(contdLabel));
+    const hasContdChanges = `(${localContdLabel})` !== contdLabel;
+
+    const commitContdLabel = () => {
+        if (hasContdChanges) setContdLabel(`(${localContdLabel})`);
+    };
+
+    // Keep local state in sync when the context value changes externally (e.g. collaboration)
+    useEffect(() => {
+        setLocalContdLabel(stripParens(contdLabel));
+    }, [contdLabel]);
 
     const handleFormatChange = (newFormat: PageFormat) => {
         setPageFormat(newFormat);
@@ -115,13 +134,26 @@ const LayoutSettings = () => {
 
             <div className={sharedStyles.formGroup}>
                 <label className={form.label}>Continuation</label>
-                <input
-                    type="text"
-                    value={contdLabel}
-                    onChange={(e) => setContdLabel(e.target.value)}
-                    className={`${sharedStyles.input} ${styles.input}`}
-                    placeholder="(CONT'D)"
-                />
+                <div className={styles.contdInputRow}>
+                    <input
+                        type="text"
+                        value={localContdLabel}
+                        onChange={(e) => setLocalContdLabel(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") commitContdLabel();
+                        }}
+                        className={`${sharedStyles.input} ${styles.input}`}
+                        placeholder="CONT'D"
+                    />
+                    <button
+                        className={`${styles.contdConfirmBtn} ${hasContdChanges ? styles.contdConfirmBtnActive : ""}`}
+                        disabled={!hasContdChanges}
+                        onClick={commitContdLabel}
+                        title="Apply continuation label"
+                    >
+                        <Check size={16} />
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -36,27 +36,33 @@ function computeBookmarkDecorations(doc: any, getSceneColor: (sceneId: string) =
 }
 
 /**
- * Check if the transaction affects any Scene nodes (which would require recomputation)
+ * Check if the transaction affects any Scene nodes (which would require recomputation).
+ * Uses nodesBetween on both old and new docs to accurately check if the affected
+ * range overlaps with a scene node, avoiding false positives from adjacent nodes.
  */
 function didSceneNodesChange(tr: any): boolean {
     if (!tr.docChanged) return false;
 
-    // Check if any step affects a Scene node
     for (const step of tr.steps) {
         const stepMap = step.getMap();
         let affectsScene = false;
-        stepMap.forEach((oldStart: number, oldEnd: number) => {
+        stepMap.forEach((oldStart: number, oldEnd: number, newStart: number, newEnd: number) => {
+            // Check old doc: did the change occur inside a scene node?
             try {
-                const $pos = tr.docs[0]?.resolve(oldStart);
-                if ($pos) {
-                    const node = $pos.nodeAfter || $pos.parent;
-                    if (node?.attrs?.class === "scene") {
-                        affectsScene = true;
-                    }
+                const oldDoc = tr.docs[0];
+                if (oldDoc) {
+                    oldDoc.nodesBetween(oldStart, oldEnd, (node: any) => {
+                        if (node.attrs?.class === "scene") affectsScene = true;
+                    });
                 }
-            } catch {
-                // Position out of bounds, skip
-            }
+            } catch { /* position out of bounds */ }
+
+            // Check new doc: did the change produce a scene node?
+            try {
+                tr.doc.nodesBetween(newStart, newEnd, (node: any) => {
+                    if (node.attrs?.class === "scene") affectsScene = true;
+                });
+            } catch { /* position out of bounds */ }
         });
         if (affectsScene) return true;
     }

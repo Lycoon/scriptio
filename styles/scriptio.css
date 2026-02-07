@@ -200,6 +200,10 @@ Originally developed by John August - johnaugust.com
         text-transform: uppercase;
     }
 
+    .character::after {
+        text-transform: none;
+    }
+
     .character.contd::after {
         content: " " var(--contd-label, "(CONT'D)");
     }

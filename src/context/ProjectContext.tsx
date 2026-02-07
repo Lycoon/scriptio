@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Editor } from "@tiptap/react";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
@@ -93,7 +93,7 @@ export interface ProjectContextType {
 
 const defaultContextValue: ProjectContextType = {
     project: null,
-    updateProject: () => { },
+    updateProject: () => {},
     repository: null,
     provider: null,
     isYjsReady: false,
@@ -101,36 +101,36 @@ const defaultContextValue: ProjectContextType = {
     isSessionReplaced: false,
     isProjectUnavailable: false,
     connectionStatus: "disconnected",
-    updateConnectionStatus: () => { },
+    updateConnectionStatus: () => {},
     users: [],
     editor: null,
-    updateEditor: () => { },
+    updateEditor: () => {},
     selectedElement: ScreenplayElement.Action,
-    setSelectedElement: () => { },
+    setSelectedElement: () => {},
     selectedStyles: Style.None,
-    setSelectedStyles: () => { },
+    setSelectedStyles: () => {},
     highlightedCharacters: new Set<string>(),
-    toggleCharacterHighlight: () => { },
+    toggleCharacterHighlight: () => {},
     pageFormat: "LETTER",
-    setPageFormat: () => { },
+    setPageFormat: () => {},
     displaySceneNumbers: false,
-    setDisplaySceneNumbers: () => { },
+    setDisplaySceneNumbers: () => {},
     sceneHeadingBold: true,
-    setSceneHeadingBold: () => { },
+    setSceneHeadingBold: () => {},
     sceneHeadingDoubleSpace: false,
-    setSceneHeadingDoubleSpace: () => { },
+    setSceneHeadingDoubleSpace: () => {},
     sceneNumberOnRight: false,
-    setSceneNumberOnRight: () => { },
+    setSceneNumberOnRight: () => {},
     contdLabel: "(CONT'D)",
-    setContdLabel: () => { },
+    setContdLabel: () => {},
     characters: {},
     locations: {},
     scenes: [],
-    updateScenes: () => { },
+    updateScenes: () => {},
     screenplay: [],
     // Search state defaults
     searchTerm: "",
-    setSearchTerm: () => { },
+    setSearchTerm: () => {},
     searchFilters: new Set<ScreenplayElement>([
         ScreenplayElement.Scene,
         ScreenplayElement.Action,
@@ -140,18 +140,32 @@ const defaultContextValue: ProjectContextType = {
         ScreenplayElement.Transition,
         ScreenplayElement.Section,
     ]),
-    setSearchFilters: () => { },
+    setSearchFilters: () => {},
     currentSearchIndex: 0,
-    setCurrentSearchIndex: () => { },
+    setCurrentSearchIndex: () => {},
     searchMatches: [],
-    setSearchMatches: () => { },
+    setSearchMatches: () => {},
     // Comments state defaults
     comments: [],
     activeCommentId: null,
-    setActiveCommentId: () => { },
+    setActiveCommentId: () => {},
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
+
+// Stable context for rarely-changing infrastructure values.
+// Prevents ProjectLayoutInner from re-rendering on every screenplay change.
+interface ProjectReadyContextType {
+    isYjsReady: boolean;
+    isProjectUnavailable: boolean;
+}
+
+const ProjectReadyContext = createContext<ProjectReadyContextType>({
+    isYjsReady: false,
+    isProjectUnavailable: false,
+});
+
+export const useProjectReady = () => useContext(ProjectReadyContext);
 
 // -------------------------------- //
 //          PROVIDER                //
@@ -569,5 +583,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         ],
     );
 
-    return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;
+    const readyValue = useMemo(() => ({ isYjsReady, isProjectUnavailable }), [isYjsReady, isProjectUnavailable]);
+
+    return (
+        <ProjectReadyContext.Provider value={readyValue}>
+            <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>
+        </ProjectReadyContext.Provider>
+    );
 };

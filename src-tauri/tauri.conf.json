@@ -15,6 +15,7 @@
         },
         "windows": [
             {
+                "incognito": true,
                 "dragDropEnabled": false
             }
         ]

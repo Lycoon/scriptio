@@ -24,6 +24,7 @@ interface BoardCardProps {
     onStartConnection: (cardId: string, side: string, initialX: number, initialY: number) => void;
     onCompleteConnection: (cardId: string) => void;
     isConnecting: boolean;
+    isSelected: boolean;
 }
 
 const BoardCard = ({
@@ -36,6 +37,7 @@ const BoardCard = ({
     onStartConnection,
     onCompleteConnection,
     isConnecting,
+    isSelected,
 }: BoardCardProps) => {
     const cardRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -236,7 +238,7 @@ const BoardCard = ({
     return (
         <div
             ref={cardRef}
-            className={`${styles.card} ${isDragging ? styles.card_dragging : ""} ${isConnecting ? styles.card_connecting : ""}`}
+            className={`${styles.card} ${isDragging ? styles.card_dragging : ""} ${isConnecting ? styles.card_connecting : ""} ${isSelected ? styles.card_selected : ""}`}
             style={{
                 left: card.x,
                 top: card.y,

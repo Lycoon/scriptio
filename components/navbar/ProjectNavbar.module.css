@@ -109,12 +109,12 @@
 
 .panel_btn:hover {
     color: var(--primary-text);
-    background-color: var(--secondary-hover);
+    background-color: var(--primary);
 }
 
 .panel_btn_active {
     color: var(--primary-text);
-    background-color: var(--tertiary);
+    background-color: var(--primary);
 }
 
 .back_btn {

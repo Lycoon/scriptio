@@ -13,15 +13,13 @@
     overflow-y: auto;
     overflow-x: clip;
     z-index: 0;
-
-    /* Performance: isolate layout calculations from sidebars */
-    contain: layout style;
 }
 
 .editor_wrapper {
     width: 100%;
     max-width: 1000px;
     margin: 0 auto;
+    contain: layout;
 }
 
 .editor_shadow {

@@ -94,7 +94,7 @@
     transform: translateX(-50%);
     min-width: 180px;
     padding: 6px;
-    background-color: color-mix(in srgb, var(--secondary) 40%, transparent);
+    background-color: color-mix(in srgb, var(--primary) 60%, transparent);
     backdrop-filter: blur(12px);
     border: 1px solid var(--separator);
     border-radius: 10px;
@@ -118,10 +118,10 @@
 }
 
 .dropdown_item:hover {
-    background-color: var(--secondary-hover);
+    background-color: color-mix(in srgb, var(--primary-text) 10%, transparent);
 }
 
 .dropdown_item_active {
-    background-color: var(--secondary-hover);
+    background-color: color-mix(in srgb, var(--primary-text) 15%, transparent);
     font-weight: 600;
 }

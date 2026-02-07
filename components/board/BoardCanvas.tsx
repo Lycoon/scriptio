@@ -40,7 +40,7 @@ interface ArrowContextMenuState {
     arrow: BoardArrowData;
 }
 
-const BoardCanvas = () => {
+const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     const { repository, isYjsReady } = useContext(ProjectContext);
     const ydoc = repository?.getState();
     const containerRef = useRef<HTMLDivElement>(null);
@@ -57,8 +57,17 @@ const BoardCanvas = () => {
     const [isCameraReady, setIsCameraReady] = useState(false);
     const [connectingFrom, setConnectingFrom] = useState<{ cardId: string; side: string } | null>(null);
     const [connectingLine, setConnectingLine] = useState<{ x: number; y: number } | null>(null);
+    const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
+    const [selectionRect, setSelectionRect] = useState<{
+        startX: number;
+        startY: number;
+        endX: number;
+        endY: number;
+    } | null>(null);
     const hasInitializedCamera = useRef(false);
     const panStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
+    const selectionStart = useRef<{ x: number; y: number } | null>(null);
+    const isSelecting = useRef(false);
 
     // Center camera to fit all cards
     const centerCameraOnCards = useCallback((cardsToFit: BoardCardData[]) => {
@@ -186,9 +195,17 @@ const BoardCanvas = () => {
 
     // Handle keyboard events for snapping
     useEffect(() => {
+        if (!isVisible) {
+            setIsSnapping(true); // Reset snap state when hidden
+            return;
+        }
+
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Shift") {
                 setIsSnapping(false);
+            }
+            if (e.key === "Escape") {
+                setSelectedCardIds(new Set());
             }
         };
 
@@ -205,10 +222,16 @@ const BoardCanvas = () => {
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
         };
-    }, []);
+    }, [isVisible]);
 
     // Close context menus on click anywhere
     useEffect(() => {
+        if (!isVisible) {
+            if (cardContextMenu) setCardContextMenu(null);
+            if (arrowContextMenu) setArrowContextMenu(null);
+            return;
+        }
+
         const handleClick = () => {
             if (cardContextMenu) setCardContextMenu(null);
             if (arrowContextMenu) setArrowContextMenu(null);
@@ -218,13 +241,13 @@ const BoardCanvas = () => {
         return () => {
             window.removeEventListener("click", handleClick);
         };
-    }, [cardContextMenu, arrowContextMenu]);
+    }, [cardContextMenu, arrowContextMenu, isVisible]);
 
-    // Panning with left-click
-    const handleMouseDown = useCallback(
+    // Panning with middle-click
+    const handlePanMouseDown = useCallback(
         (e: React.MouseEvent) => {
-            if (e.button !== 0) return;
-            if ((e.target as HTMLElement).closest(`.${styles.card}`)) return;
+            if (e.button !== 1) return;
+            e.preventDefault(); // Prevent autoscroll on middle-click
 
             setIsPanning(true);
             panStart.current = {
@@ -237,7 +260,39 @@ const BoardCanvas = () => {
         [offset],
     );
 
-    const handleMouseMove = useCallback(
+    // Selection rectangle with left-click on empty canvas
+    const handleSelectionMouseDown = useCallback(
+        (e: React.MouseEvent) => {
+            if (e.button !== 0) return;
+            if ((e.target as HTMLElement).closest(`.${styles.card}`)) return;
+            if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
+            if ((e.target as HTMLElement).closest(`.${styles.hints}`)) return;
+            if ((e.target as HTMLElement).closest(`.${styles.context_menu}`)) return;
+
+            const container = containerRef.current;
+            if (!container) return;
+
+            const rect = container.getBoundingClientRect();
+            const canvasX = (e.clientX - rect.left - offset.x) / scale;
+            const canvasY = (e.clientY - rect.top - offset.y) / scale;
+
+            selectionStart.current = { x: canvasX, y: canvasY };
+            isSelecting.current = true;
+            setSelectionRect({ startX: canvasX, startY: canvasY, endX: canvasX, endY: canvasY });
+            setSelectedCardIds(new Set());
+        },
+        [offset, scale],
+    );
+
+    const handleContainerMouseDown = useCallback(
+        (e: React.MouseEvent) => {
+            handlePanMouseDown(e);
+            handleSelectionMouseDown(e);
+        },
+        [handlePanMouseDown, handleSelectionMouseDown],
+    );
+
+    const handlePanMouseMove = useCallback(
         (e: MouseEvent) => {
             if (!isPanning) return;
 
@@ -252,20 +307,99 @@ const BoardCanvas = () => {
         [isPanning],
     );
 
-    const handleMouseUp = useCallback(() => {
+    const handlePanMouseUp = useCallback(() => {
         setIsPanning(false);
     }, []);
 
     useEffect(() => {
         if (isPanning) {
-            window.addEventListener("mousemove", handleMouseMove);
-            window.addEventListener("mouseup", handleMouseUp);
+            window.addEventListener("mousemove", handlePanMouseMove);
+            window.addEventListener("mouseup", handlePanMouseUp);
             return () => {
-                window.removeEventListener("mousemove", handleMouseMove);
-                window.removeEventListener("mouseup", handleMouseUp);
+                window.removeEventListener("mousemove", handlePanMouseMove);
+                window.removeEventListener("mouseup", handlePanMouseUp);
             };
         }
-    }, [isPanning, handleMouseMove, handleMouseUp]);
+    }, [isPanning, handlePanMouseMove, handlePanMouseUp]);
+
+    // Keep refs in sync for selection handlers to avoid stale closures
+    const offsetRef = useRef(offset);
+    const scaleRef = useRef(scale);
+    const cardsRef = useRef(cards);
+    useEffect(() => { offsetRef.current = offset; }, [offset]);
+    useEffect(() => { scaleRef.current = scale; }, [scale]);
+    useEffect(() => { cardsRef.current = cards; }, [cards]);
+
+    // Selection rectangle global listeners
+    useEffect(() => {
+        if (!selectionRect) return;
+
+        const onMouseMove = (e: MouseEvent) => {
+            if (!isSelecting.current) return;
+
+            const container = containerRef.current;
+            if (!container) return;
+
+            const rect = container.getBoundingClientRect();
+            const currentOffset = offsetRef.current;
+            const currentScale = scaleRef.current;
+            const canvasX = (e.clientX - rect.left - currentOffset.x) / currentScale;
+            const canvasY = (e.clientY - rect.top - currentOffset.y) / currentScale;
+
+            setSelectionRect((prev) =>
+                prev ? { ...prev, endX: canvasX, endY: canvasY } : null,
+            );
+        };
+
+        const onMouseUp = () => {
+            if (!isSelecting.current) {
+                isSelecting.current = false;
+                selectionStart.current = null;
+                setSelectionRect(null);
+                return;
+            }
+
+            setSelectionRect((currentRect) => {
+                if (!currentRect) return null;
+
+                // Calculate normalized selection box
+                const left = Math.min(currentRect.startX, currentRect.endX);
+                const top = Math.min(currentRect.startY, currentRect.endY);
+                const right = Math.max(currentRect.startX, currentRect.endX);
+                const bottom = Math.max(currentRect.startY, currentRect.endY);
+
+                // Only select if the rectangle has meaningful size (prevent click-only)
+                const width = right - left;
+                const height = bottom - top;
+
+                if (width > 5 || height > 5) {
+                    // Find cards that intersect the selection box
+                    const selected = new Set<string>();
+                    for (const card of cardsRef.current) {
+                        const cardRight = card.x + card.width;
+                        const cardBottom = card.y + card.height;
+
+                        if (card.x < right && cardRight > left && card.y < bottom && cardBottom > top) {
+                            selected.add(card.id);
+                        }
+                    }
+                    setSelectedCardIds(selected);
+                }
+
+                return null; // Clear the selection rect
+            });
+
+            isSelecting.current = false;
+            selectionStart.current = null;
+        };
+
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+        return () => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+        };
+    }, [selectionRect !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Zoom with mouse wheel - centered on cursor
     const handleWheel = useCallback(
@@ -328,6 +462,9 @@ const BoardCanvas = () => {
             if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.hints}`)) return;
 
+            // Clear selection when creating a new card
+            setSelectedCardIds(new Set());
+
             const container = containerRef.current;
             if (!container) return;
 
@@ -355,14 +492,37 @@ const BoardCanvas = () => {
         [cards, offset, scale, isSnapping, saveCards],
     );
 
-    // Update card
+    // Update card (with multi-drag support)
     const handleUpdateCard = useCallback(
         (updatedCard: BoardCardData) => {
+            if (selectedCardIds.has(updatedCard.id) && selectedCardIds.size > 1) {
+                // Multi-drag: apply same delta to all selected cards
+                const oldCard = cards.find((c) => c.id === updatedCard.id);
+                if (oldCard) {
+                    const dx = updatedCard.x - oldCard.x;
+                    const dy = updatedCard.y - oldCard.y;
+                    // Only apply multi-drag for position changes, not resize
+                    if (dx !== 0 || dy !== 0) {
+                        const isResize = updatedCard.width !== oldCard.width || updatedCard.height !== oldCard.height;
+                        if (!isResize) {
+                            const newCards = cards.map((c) => {
+                                if (c.id === updatedCard.id) return updatedCard;
+                                if (selectedCardIds.has(c.id)) return { ...c, x: c.x + dx, y: c.y + dy };
+                                return c;
+                            });
+                            setCards(newCards);
+                            saveCards(newCards);
+                            return;
+                        }
+                    }
+                }
+            }
+            // Single card update (existing logic)
             const newCards = cards.map((c) => (c.id === updatedCard.id ? updatedCard : c));
             setCards(newCards);
             saveCards(newCards);
         },
-        [cards, saveCards],
+        [cards, selectedCardIds, saveCards],
     );
 
     // Delete card (and connected arrows)
@@ -393,8 +553,11 @@ const BoardCanvas = () => {
 
     // Context menu for card
     const handleCardContextMenu = useCallback((e: React.MouseEvent, card: BoardCardData) => {
+        const containerRect = containerRef.current?.getBoundingClientRect();
+        const x = containerRect ? e.clientX - containerRect.left : e.clientX;
+        const y = containerRect ? e.clientY - containerRect.top : e.clientY;
         setCardContextMenu({
-            position: { x: e.clientX, y: e.clientY },
+            position: { x, y },
             card,
         });
     }, []);
@@ -403,8 +566,11 @@ const BoardCanvas = () => {
     const handleArrowContextMenu = useCallback((e: React.MouseEvent, arrow: BoardArrowData) => {
         e.preventDefault();
         e.stopPropagation();
+        const containerRect = containerRef.current?.getBoundingClientRect();
+        const x = containerRect ? e.clientX - containerRect.left : e.clientX;
+        const y = containerRect ? e.clientY - containerRect.top : e.clientY;
         setArrowContextMenu({
-            position: { x: e.clientX, y: e.clientY },
+            position: { x, y },
             arrow,
         });
     }, []);
@@ -572,7 +738,7 @@ const BoardCanvas = () => {
             <div
                 ref={containerRef}
                 className={`${styles.container} ${isPanning ? styles.panning : ""}`}
-                onMouseDown={handleMouseDown}
+                onMouseDown={handleContainerMouseDown}
                 onDoubleClick={handleDoubleClick}
                 onWheel={handleWheel}
             >
@@ -709,8 +875,22 @@ const BoardCanvas = () => {
                             onStartConnection={handleStartConnection}
                             onCompleteConnection={handleCompleteConnection}
                             isConnecting={!!connectingFrom}
+                            isSelected={selectedCardIds.has(card.id)}
                         />
                     ))}
+
+                    {/* Selection rectangle */}
+                    {selectionRect && (
+                        <div
+                            className={styles.selection_rect}
+                            style={{
+                                left: Math.min(selectionRect.startX, selectionRect.endX),
+                                top: Math.min(selectionRect.startY, selectionRect.endY),
+                                width: Math.abs(selectionRect.endX - selectionRect.startX),
+                                height: Math.abs(selectionRect.endY - selectionRect.startY),
+                            }}
+                        />
+                    )}
                 </div>
 
                 {/* Card Context Menu */}
@@ -772,6 +952,8 @@ const BoardCanvas = () => {
                 </div>
 
                 <div className={styles.hints}>
+                    <span>Middle-click to pan</span>
+                    <span>Drag to select cards</span>
                     <span>Double-click to create card</span>
                     <span>Hold Shift to move freely</span>
                 </div>

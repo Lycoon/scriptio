@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, memo, useCallback } from "react";
+import { useContext, memo, useCallback, Ref } from "react";
 import { ContextMenuType, SceneContextProps } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { join } from "@src/lib/utils/misc";
@@ -14,10 +14,12 @@ type SidebarSceneItemProps = SceneContextProps & {
     index: number;
     showDropIndicator: boolean;
     isDragging: boolean;
+    isCurrent: boolean;
+    scrollRef?: Ref<HTMLDivElement>;
     onPointerDown: (index: number, e: React.PointerEvent) => void;
 };
 
-const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, onPointerDown }: SidebarSceneItemProps) => {
+const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, scrollRef, onPointerDown }: SidebarSceneItemProps) => {
     const { updateContextMenu } = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
 
@@ -48,10 +50,12 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, on
         nav_item.container,
         showDropIndicator ? nav_item.drop_indicator_top : "",
         isDragging ? nav_item.dragging : "",
+        isCurrent ? nav_item.current : "",
     );
 
     return (
         <div
+            ref={scrollRef}
             onPointerDown={handlePointerDown}
             onContextMenu={handleDropdown}
             onDoubleClick={handleDoubleClick}

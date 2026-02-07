@@ -15,9 +15,6 @@
     /* Use transform instead of margin for hiding (GPU accelerated, no layout) */
     transform: translateX(calc((var(--navigation-sidebar-width) + 60px) * -1));
     transition: transform 0.5s ease;
-
-    /* Performance: full containment + own compositing layer */
-    contain: strict;
     will-change: transform;
 }
 
@@ -32,9 +29,6 @@
     padding-bottom: 30px;
     padding-top: 20px;
     border-radius: 35px;
-
-    /* Performance: isolate layout calculations from editor */
-    contain: layout style paint;
 }
 
 .active {

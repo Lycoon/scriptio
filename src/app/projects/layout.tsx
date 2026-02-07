@@ -4,10 +4,10 @@ import Loading from "@components/utils/Loading";
 import DashboardModal from "@components/dashboard/DashboardModal";
 import ProjectUnavailableDialog from "@components/projects/ProjectUnavailableDialog";
 import { redirect, useSearchParams } from "next/navigation";
-import { ProjectContext, ProjectProvider } from "@src/context/ProjectContext";
+import { ProjectProvider, useProjectReady } from "@src/context/ProjectContext";
 import { ViewProvider } from "@src/context/ViewContext";
 import { useProjectMembership } from "@src/lib/utils/hooks";
-import { ReactNode, Suspense, useContext } from "react";
+import { ReactNode, Suspense } from "react";
 import ProjectNavbar from "@components/navbar/ProjectNavbar";
 import { isTauri } from "@tauri-apps/api/core";
 
@@ -16,7 +16,7 @@ interface ProjectLayoutInnerProps {
 }
 
 const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
-    const { isYjsReady, isProjectUnavailable } = useContext(ProjectContext);
+    const { isYjsReady, isProjectUnavailable } = useProjectReady();
     const { membership, isLoading: isMembershipLoading } = useProjectMembership();
 
     // On desktop (Tauri), we support offline-first - don't require API membership

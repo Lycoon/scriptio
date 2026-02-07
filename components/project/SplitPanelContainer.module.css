@@ -4,9 +4,6 @@
     display: grid;
     min-height: 0;
     min-width: 0;
-
-    /* Performance: isolate layout from sidebars */
-    contain: layout style;
 }
 
 .panel {
@@ -15,15 +12,6 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-}
-
-.panel_hidden {
-    visibility: hidden;
-    position: absolute;
-    pointer-events: none;
-    width: 0;
-    height: 0;
-    overflow: hidden;
 }
 
 /* Drag handle */

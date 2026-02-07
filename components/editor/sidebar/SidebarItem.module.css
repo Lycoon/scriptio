@@ -88,6 +88,10 @@
     flex-shrink: 0;
 }
 
+.current {
+    background-color: var(--editor-sidebar-hover);
+}
+
 .drop_indicator_top {
     box-shadow: inset 0 2px 0 0 var(--tertiary-hover);
 }

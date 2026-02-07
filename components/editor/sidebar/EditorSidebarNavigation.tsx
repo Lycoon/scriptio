@@ -22,35 +22,87 @@ const EditorSidebarNavigation = () => {
     // both resolve to the same gap (N+1), eliminating visual flicker at separators.
     const [indicatorIndex, setIndicatorIndex] = useState<number | null>(null);
 
+    // Track which scene the cursor is currently in
+    const [currentSceneIndex, setCurrentSceneIndex] = useState<number | null>(null);
+
     const listRef = useRef<HTMLDivElement>(null);
+    const currentSceneRef = useRef<HTMLDivElement>(null);
+    const scenesRef = useRef(scenes);
+
+    // Keep scenesRef in sync so the editor callback can read the latest scenes
+    useEffect(() => {
+        scenesRef.current = scenes;
+    }, [scenes]);
+
+    // Listen to editor selection changes to track the current scene
+    useEffect(() => {
+        if (!editor) return;
+
+        const onSelectionUpdate = () => {
+            const cursorPos = editor.state.selection.$anchor.pos;
+            const currentScenes = scenesRef.current;
+            let foundIndex: number | null = null;
+
+            for (let i = 0; i < currentScenes.length; i++) {
+                const scene = currentScenes[i];
+                if (cursorPos >= scene.position && (scene.nextPosition === -1 || cursorPos < scene.nextPosition)) {
+                    foundIndex = i;
+                    break;
+                }
+            }
+
+            setCurrentSceneIndex((prev) => (prev !== foundIndex ? foundIndex : prev));
+        };
+
+        editor.on("selectionUpdate", onSelectionUpdate);
+        editor.on("update", onSelectionUpdate);
+
+        // Compute initial value
+        onSelectionUpdate();
+
+        return () => {
+            editor.off("selectionUpdate", onSelectionUpdate);
+            editor.off("update", onSelectionUpdate);
+        };
+    }, [editor]);
+
+    // Auto-scroll the current scene item into view
+    useEffect(() => {
+        if (currentSceneRef.current) {
+            currentSceneRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }, [currentSceneIndex]);
 
     const handlePointerDown = useCallback((index: number, e: React.PointerEvent) => {
         if (e.button !== 0) return;
         setDragIndex(index);
     }, []);
 
-    const handlePointerMove = useCallback((e: React.PointerEvent) => {
-        if (dragIndex === null || !listRef.current) return;
+    const handlePointerMove = useCallback(
+        (e: React.PointerEvent) => {
+            if (dragIndex === null || !listRef.current) return;
 
-        // Read rects live so scrolling doesn't cause offset drift
-        const children = listRef.current.children;
-        for (let i = 0; i < children.length; i++) {
-            const rect = children[i].getBoundingClientRect();
-            if (e.clientY >= rect.top && e.clientY < rect.bottom) {
-                const half = e.clientY < rect.top + rect.height / 2 ? "top" : "bottom";
-                setIndicatorIndex(half === "top" ? i : i + 1);
-                return;
+            // Read rects live so scrolling doesn't cause offset drift
+            const children = listRef.current.children;
+            for (let i = 0; i < children.length; i++) {
+                const rect = children[i].getBoundingClientRect();
+                if (e.clientY >= rect.top && e.clientY < rect.bottom) {
+                    const half = e.clientY < rect.top + rect.height / 2 ? "top" : "bottom";
+                    setIndicatorIndex(half === "top" ? i : i + 1);
+                    return;
+                }
             }
-        }
 
-        // Below all items → drop after last
-        if (children.length > 0) {
-            const lastRect = children[children.length - 1].getBoundingClientRect();
-            if (e.clientY >= lastRect.bottom) {
-                setIndicatorIndex(children.length);
+            // Below all items → drop after last
+            if (children.length > 0) {
+                const lastRect = children[children.length - 1].getBoundingClientRect();
+                if (e.clientY >= lastRect.bottom) {
+                    setIndicatorIndex(children.length);
+                }
             }
-        }
-    }, [dragIndex]);
+        },
+        [dragIndex],
+    );
 
     const handleDrop = useCallback(() => {
         if (dragIndex === null || indicatorIndex === null || !editor) {
@@ -81,9 +133,8 @@ const EditorSidebarNavigation = () => {
             insertPos = scenes[targetIndex].position - 1;
         } else {
             // targetIndex can be scenes.length (drop after last item)
-            const refPos = targetIndex < scenes.length
-                ? scenes[targetIndex].position - 1
-                : editor.state.doc.content.size;
+            const refPos =
+                targetIndex < scenes.length ? scenes[targetIndex].position - 1 : editor.state.doc.content.size;
             insertPos = refPos - (to - from);
         }
 
@@ -130,17 +181,19 @@ const EditorSidebarNavigation = () => {
                 >
                     {scenes.length != 0 &&
                         scenes.map((scene: Scene, index: number) => {
-                            const isNoOp = dragIndex === null
-                                || indicatorIndex === dragIndex
-                                || indicatorIndex === dragIndex + 1;
+                            const isNoOp =
+                                dragIndex === null || indicatorIndex === dragIndex || indicatorIndex === dragIndex + 1;
                             const showIndicator = !isNoOp && indicatorIndex === index;
+                            const isCurrent = index === currentSceneIndex;
                             return (
                                 <SidebarSceneItem
                                     key={scene.position}
+                                    scrollRef={isCurrent ? currentSceneRef : undefined}
                                     scene={scene}
                                     index={index}
                                     showDropIndicator={showIndicator}
                                     isDragging={dragIndex === index}
+                                    isCurrent={isCurrent}
                                     onPointerDown={handlePointerDown}
                                 />
                             );

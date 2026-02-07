@@ -167,6 +167,17 @@ export class ProjectRepository {
     }
 
     /**
+     * Duplicate a scene's persistent data under a new id.
+     * Used when a persistent scene heading is copy-pasted.
+     */
+    duplicateScene(originalId: string, newId: string): void {
+        const original = this.getScene(originalId);
+        if (original) {
+            this.upsertScene(newId, { ...original });
+        }
+    }
+
+    /**
      * Delete a scene's persistent data.
      */
     deleteScene(sceneId: string): void {

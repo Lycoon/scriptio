@@ -18,6 +18,7 @@ const UpdateSettingsBodySchema = z.object({
     keybinds: z.record(z.string(), z.string()).optional(),
     theme: z.enum(["light", "dark", "latte", "wonka", "mint", "blossom"]).optional(),
     language: z.literal("en").optional(),
+    themedEditor: z.boolean().optional(),
 });
 
 export type UpdateSettingsBody = z.infer<typeof UpdateSettingsBodySchema>;
