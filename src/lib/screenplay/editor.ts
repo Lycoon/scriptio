@@ -17,7 +17,7 @@ import { ProjectMembershipPayload } from "@src/server/repository/project-reposit
 import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline } from "@src/lib/screenplay/nodes";
 import { Placeholder } from "./extensions/placeholder-extension";
 import { PAGE_SIZES } from "tiptap-pagination-plus";
-import { PaginationPlus } from "./extensions/pagination-extension";
+import { PaginationPlus } from "tiptap-pagination-plus";
 import { KeybindsExtension } from "./extensions/keybinds-extension";
 import { executeKeybindAction } from "../utils/keybinds";
 import { ContdExtension } from "./extensions/contd-extension";

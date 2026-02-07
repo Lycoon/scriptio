@@ -59,7 +59,7 @@ const SplitPanelContainer = ({
         const leftPct = splitRatio * 100;
         const rightPct = (1 - splitRatio) * 100;
         return {
-            gridTemplateColumns: `1fr 6px 1fr`,
+            gridTemplateColumns: `${leftPct}% 6px ${rightPct}%`,
         };
     }, [isSplit, splitRatio]);
 
