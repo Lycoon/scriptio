@@ -107,11 +107,7 @@ const SecuritySettings = () => {
             {message && <div className={`${styles.message} ${styles[message.type]}`}>{message.text}</div>}
 
             <div className={sharedStyles.formActions}>
-                <button
-                    type="submit"
-                    className={`${sharedStyles.formBtn} ${sharedStyles.success}`}
-                    disabled={loading || !isValid}
-                >
+                <button type="submit" className={`${sharedStyles.formBtn}`} disabled={loading || !isValid}>
                     {loading ? "Updating..." : "Update Password"}
                 </button>
             </div>

@@ -379,6 +379,7 @@
 .glassCard::before {
     content: "";
     position: absolute;
+    z-index: 2;
     inset: 0;
     border-radius: inherit;
     padding: 2px;
@@ -405,12 +406,42 @@
         background-position 1s ease;
 }
 
+.bentoContent {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+}
+
 .bentoHeader {
     display: flex;
     flex-direction: row;
     gap: 12px;
     align-items: center;
     margin-bottom: 10px;
+}
+
+.bentoImage {
+    display: block; /* Removes default bottom space under images */
+    width: 100%; /* Ensures it fits the wrapper */
+    height: auto;
+}
+
+.bentoImageWrapper {
+    position: relative;
+    display: block;
+    overflow: hidden;
+}
+
+.bentoImageWrapper::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 25%;
+    background: linear-gradient(to bottom, #646464 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
 }
 
 .bentoHeader svg {
@@ -437,7 +468,6 @@
 .bentoCell {
     display: flex;
     flex-direction: column;
-    padding: 2rem;
     position: relative;
 }
 

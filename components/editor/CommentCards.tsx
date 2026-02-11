@@ -3,7 +3,7 @@
 import { useContext, useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { Comment, CommentReply } from "@src/lib/utils/types";
-import { Check, Send, X } from "lucide-react";
+import { Send, Trash2, X } from "lucide-react";
 import { useUser } from "@src/lib/utils/hooks";
 import { getCommentPositions } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import styles from "./CommentCard.module.css";
@@ -49,13 +49,12 @@ type CommentCardProps = {
     isActive: boolean;
     onActivate: () => void;
     onDeactivate: () => void;
-    onResolve: () => void;
     onSave: (text: string) => void;
     onDelete: () => void;
     onReply: (text: string) => void;
 };
 
-const CommentCard = ({ comment, isActive, onActivate, onDeactivate, onResolve, onSave, onDelete, onReply }: CommentCardProps) => {
+const CommentCard = ({ comment, isActive, onActivate, onDeactivate, onSave, onDelete, onReply }: CommentCardProps) => {
     const isNew = comment.text === "";
     const [isEditing, setIsEditing] = useState(isNew);
     const [draft, setDraft] = useState(comment.text);
@@ -76,6 +75,7 @@ const CommentCard = ({ comment, isActive, onActivate, onDeactivate, onResolve, o
         }
         onSave(trimmed);
         setIsEditing(false);
+        onDeactivate();
     };
 
     const handleCancel = () => {
@@ -119,7 +119,7 @@ const CommentCard = ({ comment, isActive, onActivate, onDeactivate, onResolve, o
     // Compact card for non-active comments
     if (!isActive && !isNew) {
         return (
-            <div className={styles.comment_card} onClick={(e) => { e.stopPropagation(); onActivate(); }}>
+            <div className={styles.comment_card} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onActivate(); }}>
                 <div className={styles.comment_header}>
                     <span className={styles.comment_author}>{comment.author}</span>
                     <span className={styles.comment_time}>{formatTimestamp(comment.createdAt)}</span>
@@ -135,7 +135,7 @@ const CommentCard = ({ comment, isActive, onActivate, onDeactivate, onResolve, o
     }
 
     return (
-        <div className={`${styles.comment_card} ${styles.comment_card_active}`} onClick={(e) => e.stopPropagation()}>
+        <div className={`${styles.comment_card} ${styles.comment_card_active}`} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
             {/* Original comment */}
             <div className={styles.comment_header}>
                 <span className={styles.comment_author}>{comment.author}</span>
@@ -194,13 +194,13 @@ const CommentCard = ({ comment, isActive, onActivate, onDeactivate, onResolve, o
                         </button>
                     </div>
 
-                    {/* Actions: Cancel + Resolve */}
+                    {/* Actions: Cancel + Delete */}
                     <div className={styles.comment_actions}>
                         <button className={styles.comment_btn} onClick={(e) => { e.stopPropagation(); onDeactivate(); }} title="Cancel">
                             <X size={14} /> Cancel
                         </button>
-                        <button className={`${styles.comment_btn} ${styles.comment_btn_resolve}`} onClick={(e) => { e.stopPropagation(); onResolve(); }} title="Resolve">
-                            <Check size={14} /> Resolve
+                        <button className={`${styles.comment_btn} ${styles.comment_btn_danger}`} onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete">
+                            <Trash2 size={14} /> Delete
                         </button>
                     </div>
                 </>
@@ -215,10 +215,19 @@ const CommentCard = ({ comment, isActive, onActivate, onDeactivate, onResolve, o
 
 const CARD_GAP = 8;
 
+type ActiveLine = {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    svgHeight: number;
+};
+
 const CommentCards = () => {
     const { editor, comments, activeCommentId, setActiveCommentId, repository } = useContext(ProjectContext);
     const { user } = useUser();
     const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+    const [activeLine, setActiveLine] = useState<ActiveLine | null>(null);
 
     // Performance: RAF debouncing refs to prevent layout thrashing
     const transactionDebounceRef = useRef<number | null>(null);
@@ -272,6 +281,7 @@ const CommentCards = () => {
                 // Position out of range
             }
         }
+
     }, [editor, unresolvedComments]);
 
     // Position on mount and when comments change
@@ -327,9 +337,46 @@ const CommentCards = () => {
     }, [editor, positionCards]);
 
     // Reposition after active card changes (expanded height differs from compact)
+    // Also compute the connecting line for the active comment
     useEffect(() => {
-        requestAnimationFrame(positionCards);
-    }, [activeCommentId, positionCards]);
+        requestAnimationFrame(() => {
+            positionCards();
+
+            // Compute connecting line only for active comment
+            if (!activeCommentId || !editor || editor.isDestroyed || !editor.view?.dom) {
+                setActiveLine(null);
+                return;
+            }
+
+            const el = cardRefs.current.get(activeCommentId);
+            if (!el) { setActiveLine(null); return; }
+
+            const markPositions = getCommentPositions(editor);
+            const range = markPositions.get(activeCommentId);
+            if (!range) { setActiveLine(null); return; }
+
+            const editorDom = editor.view.dom;
+            const scrollContainer = editorDom.closest("[class*='container']") as HTMLElement | null;
+            if (!scrollContainer) { setActiveLine(null); return; }
+
+            try {
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const fromCoords = editor.view.coordsAtPos(range.from);
+                const toCoords = editor.view.coordsAtPos(range.to);
+                const lineHeight = fromCoords.bottom - fromCoords.top;
+
+                setActiveLine({
+                    x1: toCoords.right - containerRect.left,
+                    y1: fromCoords.top - containerRect.top + scrollContainer.scrollTop + lineHeight / 2,
+                    x2: parseFloat(el.style.left),
+                    y2: parseFloat(el.style.top) + el.offsetHeight / 2,
+                    svgHeight: scrollContainer.scrollHeight,
+                });
+            } catch {
+                setActiveLine(null);
+            }
+        });
+    }, [activeCommentId, positionCards, editor]);
 
     const setCardRef = useCallback((id: string, el: HTMLDivElement | null) => {
         if (el) cardRefs.current.set(id, el);
@@ -340,6 +387,26 @@ const CommentCards = () => {
 
     return (
         <>
+            {activeLine && (
+                <svg
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: activeLine.svgHeight,
+                        pointerEvents: "none",
+                        zIndex: 9,
+                    }}
+                >
+                    <path
+                        d={`M ${activeLine.x1} ${activeLine.y1} C ${(activeLine.x1 + activeLine.x2) / 2} ${activeLine.y1}, ${(activeLine.x1 + activeLine.x2) / 2} ${activeLine.y2}, ${activeLine.x2} ${activeLine.y2}`}
+                        stroke="rgba(255, 213, 0, 0.4)"
+                        strokeWidth={1.5}
+                        fill="none"
+                    />
+                </svg>
+            )}
             {unresolvedComments.map((comment) => {
                 const isActive = comment.id === activeCommentId;
                 return (
@@ -353,11 +420,6 @@ const CommentCards = () => {
                             isActive={isActive}
                             onActivate={() => setActiveCommentId(comment.id)}
                             onDeactivate={() => setActiveCommentId(null)}
-                            onResolve={() => {
-                                editor?.commands.unsetComment(comment.id);
-                                repository?.resolveComment(comment.id);
-                                setActiveCommentId(null);
-                            }}
                             onSave={(text: string) => {
                                 repository?.updateComment(comment.id, { text });
                             }}

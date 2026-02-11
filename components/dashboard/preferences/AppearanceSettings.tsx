@@ -77,7 +77,7 @@ const AppearanceSettings = () => {
             </div>
 
             <div className={sharedStyles.formActions}>
-                <button onClick={onSave} className={`${sharedStyles.formBtn} ${sharedStyles.success}`}>
+                <button onClick={onSave} className={`${sharedStyles.formBtn} `}>
                     Save Changes
                 </button>
             </div>

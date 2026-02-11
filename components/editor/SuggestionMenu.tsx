@@ -23,6 +23,7 @@ export type SuggestionData = {
     cursorInNode: number;
     /** Offset within the node where the replaceable text starts (e.g., after "INT. " prefix) */
     textOffset?: number;
+    nodeType?: "character" | "scene";
 };
 
 const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
@@ -79,7 +80,7 @@ const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
                 onSelect?.();
             }
         },
-        [editor, onSelect]
+        [editor, onSelect],
     );
 
     useEffect(() => {
@@ -96,8 +97,10 @@ const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
                 e.stopImmediatePropagation();
                 setSelectedIdx((prev) => (prev + 1) % len);
             } else if (e.key === "Enter") {
-                e.preventDefault();
-                e.stopImmediatePropagation();
+                if (suggestionDataRef.current.nodeType !== "character") {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                }
                 selectSuggestion(selectedIdxRef.current);
             }
         };

@@ -28,6 +28,12 @@
     resize: vertical;
 }
 
+.input:disabled {
+    color: var(--secondary-text);
+    cursor: default;
+    opacity: 0.7;
+}
+
 .posterUploadArea {
     display: flex;
     align-items: center;
@@ -80,30 +86,26 @@
     padding-top: 24px;
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
+    gap: 8px;
 }
 
 .formBtn {
-    color: white;
-    padding: 10px 24px;
-    border-radius: 8px;
+    background-color: var(--secondary);
+    border: 2px solid var(--tertiary);
+    padding: 10px 36px;
+    border-radius: 40px;
     font-weight: 600;
     cursor: pointer;
-    border: none;
-    transition: opacity 0.2s;
+    transition: background-color 0.2s;
 }
 
 .formBtn:hover {
-    opacity: 0.85;
+    background-color: var(--secondary-hover);
 }
 
 .formBtn:disabled {
-    opacity: 0.5;
+    opacity: 0.7;
     cursor: not-allowed;
-}
-
-.formBtn.success {
-    background: var(--success);
 }
 
 .formBtn.danger {

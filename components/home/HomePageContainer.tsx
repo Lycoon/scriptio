@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./Landing.module.css";
-import { WifiOff, MessagesSquare, Eye, Clapperboard, ChartPie, Cloud, Globe } from "lucide-react";
+import { WifiOff, MessagesSquare, Eye, Clapperboard, ChartPie, Cloud, Globe, Search } from "lucide-react";
 import Footer from "./Footer";
 
 export default function HomePageContainer() {
@@ -96,106 +96,193 @@ export default function HomePageContainer() {
                     </div>
 
                     <div className={styles.bentoGrid}>
-                        {/* Distraction-Free Editor */}
+                        {/* First-class Editor */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoHeader}>
-                                <Eye size={24} style={{ color: "var(--secondary-text)" }} />
-                                <h3 className={styles.pillarTitle}>First-class Editor</h3>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <Eye size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>First-class Editor</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Type without interface clutter. Focus mode emphasizes the current line while fading
+                                    out the noise.
+                                </p>
                             </div>
-                            <p className={styles.pillarText}>
-                                Type without interface clutter. Focus mode emphasizes the current line while fading out
-                                the noise.
-                            </p>
+                            <div className={styles.bentoImageWrapper}>
+                                <img
+                                    src="/images/previews/auto-complete.png"
+                                    alt="Auto-complete Preview"
+                                    className={styles.bentoImage}
+                                />
+                            </div>
                         </div>
 
                         {/* Cloud Sync */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoHeader}>
-                                <Cloud size={24} style={{ color: "var(--secondary-text)" }} />
-                                <h3 className={styles.pillarTitle}>Cloud Sync</h3>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <Cloud size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Cloud Sync</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Never hit Save again. Your words are synced to the cloud regularly. Switch devices,
+                                    close tabs, or lose power—your story is always safe.
+                                </p>
                             </div>
-                            <p className={styles.pillarText}>
-                                Never hit Save again. Your words are synced to the cloud regularly. Switch devices,
-                                close tabs, or lose power—your story is always safe.
-                            </p>
+                            <div className={styles.bentoImageWrapper}>
+                                <img
+                                    src="/images/previews/auto-complete.png"
+                                    alt="Editor Preview"
+                                    className={styles.bentoImage}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Advanced Search */}
+                        <div className={`${styles.glassCard} ${styles.bentoCell}`}>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <Search size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Advanced Search</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Search your script with precision using filters for scene, character, and dialogue.
+                                    Replace with confidence using live preview.
+                                </p>
+                            </div>
+                            <div className={styles.bentoImageWrapper}>
+                                <img
+                                    src="/images/previews/search.png"
+                                    alt="Search Preview"
+                                    className={styles.bentoImage}
+                                />
+                            </div>
                         </div>
 
                         {/* Themes */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoHeader}>
-                                <h3 className={styles.pillarTitle}>Custom Themes</h3>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <h3 className={styles.pillarTitle}>Custom Themes</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Whether you write at the crack of dawn or burn the midnight oil, find the perfect
+                                    contrast for your eyes.
+                                </p>
                             </div>
-                            <p className={styles.pillarText}>
-                                Whether you write at the crack of dawn or burn the midnight oil, find the perfect
-                                contrast for your eyes.
-                            </p>
+                            <img src="/images/previews/themes.png" alt="Themes Preview" className={styles.bentoImage} />
                         </div>
 
                         {/* Industry Formats */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoHeader}>
-                                <h3 className={styles.pillarTitle}>Industry Formats</h3>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <h3 className={styles.pillarTitle}>Industry Formats</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Complete interoperability, allowing you to effortlessly import existing scripts or
+                                    export in universally accepted formats like PDF, FDX, and Fountain
+                                </p>
                             </div>
-                            <p className={styles.pillarText}>
-                                Complete interoperability, allowing you to effortlessly import existing scripts or
-                                export in universally accepted formats like PDF, FDX, and Fountain
-                            </p>
+                            <img
+                                src="/images/previews/formats.png"
+                                alt="Formats Preview"
+                                className={styles.bentoImage}
+                            />
                         </div>
 
                         {/* Scene Navigation */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoHeader}>
-                                <Clapperboard size={24} style={{ color: "var(--secondary-text)" }} />
-                                <h3 className={styles.pillarTitle}>Scene Navigation</h3>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <Clapperboard size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Scene Navigation</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Navigate your screenplay at the speed of thought with a dynamic scene outline. Track
+                                    pacing with automatic length estimates and move fluidly through your story.
+                                </p>
                             </div>
-                            <p className={styles.pillarText}>
-                                Navigate your screenplay at the speed of thought with a dynamic scene outline. Track
-                                pacing with automatic length estimates and move fluidly through your story.
-                            </p>
+                            <img
+                                src="/images/previews/scene-navigation.png"
+                                alt="Scene Navigation Preview"
+                                className={styles.bentoImage}
+                            />
                         </div>
 
                         {/* Character Management */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoHeader}>
-                                <h3 className={styles.pillarTitle}>Character Management</h3>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <h3 className={styles.pillarTitle}>Character Management</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Rename your characters in a snap, describe and assign them traits to generate
+                                    statistics
+                                </p>
                             </div>
-                            <p className={styles.pillarText}>
-                                Rename your characters in a snap, describe and assign them traits to generate statistics
-                            </p>
+                            <img
+                                src="/images/previews/character-highlight.png"
+                                alt="Character Highlight Preview"
+                                className={styles.bentoImage}
+                            />
                         </div>
 
                         {/* Offline */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoHeader}>
-                                <WifiOff size={24} style={{ color: "var(--secondary-text)" }} />
-                                <h3 className={styles.pillarTitle}>Offline First</h3>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <WifiOff size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Offline First</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    No internet? No problem. Your project is in safe hands, keep working with no
+                                    friction. Once connection is back, your project will be synced back seamlessly.
+                                </p>
                             </div>
-                            <p className={styles.pillarText}>
-                                No internet? No problem. Your project is in safe hands, keep working with no friction.
-                                Once connection is back, your project will be synced back seamlessly.
-                            </p>
+                            <img
+                                src="/images/previews/auto-complete.png"
+                                alt="Editor Preview"
+                                className={styles.bentoImage}
+                            />
                         </div>
 
                         {/* Statistics */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoHeader}>
-                                <ChartPie size={24} style={{ color: "var(--secondary-text)" }} />
-                                <h3 className={styles.pillarTitle}>Statistics</h3>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <ChartPie size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Statistics</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Rename your characters in a snap, describe and assign them traits to generate
+                                    statistics
+                                </p>
                             </div>
-                            <p className={styles.pillarText}>
-                                Rename your characters in a snap, describe and assign them traits to generate statistics
-                            </p>
+                            <img
+                                src="/images/previews/auto-complete.png"
+                                alt="Editor Preview"
+                                className={styles.bentoImage}
+                            />
                         </div>
 
                         {/* Real-time Collaboration */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoHeader}>
-                                <MessagesSquare size={24} style={{ color: "var(--secondary-text)" }} />
-                                <h3 className={styles.pillarTitle}>Real-time Collaboration</h3>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <MessagesSquare size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Real-time Collaboration</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Manage a project with up to 5 collaborators. Write and brainstorm together in
+                                    realtime.
+                                </p>
                             </div>
-                            <p className={styles.pillarText}>
-                                Manage a project with up to 5 collaborators. Write together in realtime.
-                            </p>
+                            <img
+                                src="/images/previews/collaboration.png"
+                                alt="Collaboration Preview"
+                                className={styles.bentoImage}
+                            />
                         </div>
                     </div>
                 </section>

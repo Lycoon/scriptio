@@ -121,11 +121,6 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
                     <button className={join(form.btn, popup.confirm)} type="submit">
                         Save
                     </button>
-                    {isPersistent && (
-                        <button type="button" className={join(form.btn, popup.cancel)} onClick={onDelete}>
-                            Remove Metadata
-                        </button>
-                    )}
                 </form>
             </div>
         </div>

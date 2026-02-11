@@ -1,7 +1,27 @@
-.dangerTitle {
-    color: #df3c3c;
-    margin-bottom: 16px;
-    font-size: 1.1rem;
+.arrowBtn {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid var(--separator);
+    background: var(--secondary);
+    color: var(--secondary-text);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.arrowBtn:hover {
+    border-color: var(--error);
+}
+
+.arrowBtn:hover > svg {
+    color: var(--error);
 }
 
 .dangerContainer {
@@ -22,6 +42,10 @@
     border-bottom: 1px solid var(--separator);
 }
 
+.dangerLabel {
+    color: var(--error) !important;
+}
+
 .dangerDescription {
     font-size: 0.85rem;
     color: #666;
@@ -30,11 +54,12 @@
 
 .dangerBtn {
     background-color: var(--error);
+    color: white;
     border: none;
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: 40px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
     transition: opacity 0.2s;
     min-width: 110px;
     margin-left: 30px;
@@ -44,10 +69,89 @@
     opacity: 0.85;
 }
 
-.secondaryBtn {
-    background-color: white;
-    border: 1px solid #d1d5db;
-    padding: 8px 16px;
-    border-radius: 6px;
+/* Confirmation dialog */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    width: 460px;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    background: var(--main-bg);
+    padding: 32px;
+}
+
+.modalTitle {
+    font-size: 1.2rem;
+    color: var(--primary-text);
+    margin: 0 0 8px 0;
+}
+
+.modalDescription {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+}
+
+.modalInput {
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.modalActions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modalBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 40px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
     cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.modalBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.modalBtnDanger {
+    background: var(--error);
+    color: white;
+}
+
+.modalBtnDanger:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.modalBtnCancel {
+    background: transparent;
+    color: var(--secondary-text);
+    border-radius: 40px;
+    border: 2px solid var(--secondary-text);
+}
+
+.modalBtnCancel:hover:not(:disabled) {
+    color: var(--primary-text);
+    border-color: var(--primary-text);
 }

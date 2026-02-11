@@ -1,6 +1,7 @@
 .colorSection {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     gap: 12px;
 }
 
@@ -8,6 +9,15 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    align-items: center;
+    flex: 1;
+}
+
+.colorCustom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
 }
 
 .colorPreset {
@@ -28,29 +38,21 @@
     box-shadow: 0 0 0 2px var(--secondary);
 }
 
-.customColor {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.customColorSwatch {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
 }
 
 .colorPicker {
-    width: 40px;
-    height: 32px;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
     padding: 0;
     border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: transparent;
-}
-
-.colorPicker::-webkit-color-swatch-wrapper {
-    padding: 0;
-}
-
-.colorPicker::-webkit-color-swatch {
-    border: 1px solid var(--separator);
-    border-radius: 6px;
 }
 
 .colorValue {
@@ -114,3 +116,4 @@
     color: var(--error);
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
+

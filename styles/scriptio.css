@@ -224,7 +224,7 @@ Originally developed by John August - johnaugust.com
 
         /* Shenanigans to have cursor between both parenthesis otherwise it appears before first */
         position: absolute;
-        top: 0;
+        /*top: 0;*/
         left: var(--parenthetical-l-margin);
         margin-left: calc(-1ch);
         pointer-events: none;

@@ -6,7 +6,7 @@ import { getBoardMap } from "@src/lib/project/project-state";
 import BoardCard, { BoardCardData } from "./BoardCard";
 import styles from "./BoardCanvas.module.css";
 import { v4 as uuidv4 } from "uuid";
-import { Trash2, Plus, Minus } from "lucide-react";
+import { Trash2, Plus, Minus, Copy } from "lucide-react";
 
 const GRID_SIZE = 20;
 const MIN_SCALE = 0.25;
@@ -551,13 +551,27 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         [cards, saveCards],
     );
 
+    // Duplicate card
+    const handleDuplicateCard = useCallback(
+        (card: BoardCardData) => {
+            const newCard: BoardCardData = {
+                ...card,
+                id: uuidv4(),
+                x: card.x + 20,
+                y: card.y + 20,
+            };
+            const newCards = [...cards, newCard];
+            setCards(newCards);
+            saveCards(newCards);
+            setCardContextMenu(null);
+        },
+        [cards, saveCards],
+    );
+
     // Context menu for card
     const handleCardContextMenu = useCallback((e: React.MouseEvent, card: BoardCardData) => {
-        const containerRect = containerRef.current?.getBoundingClientRect();
-        const x = containerRect ? e.clientX - containerRect.left : e.clientX;
-        const y = containerRect ? e.clientY - containerRect.top : e.clientY;
         setCardContextMenu({
-            position: { x, y },
+            position: { x: e.clientX, y: e.clientY },
             card,
         });
     }, []);
@@ -566,11 +580,8 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     const handleArrowContextMenu = useCallback((e: React.MouseEvent, arrow: BoardArrowData) => {
         e.preventDefault();
         e.stopPropagation();
-        const containerRect = containerRef.current?.getBoundingClientRect();
-        const x = containerRect ? e.clientX - containerRect.left : e.clientX;
-        const y = containerRect ? e.clientY - containerRect.top : e.clientY;
         setArrowContextMenu({
-            position: { x, y },
+            position: { x: e.clientX, y: e.clientY },
             arrow,
         });
     }, []);
@@ -911,6 +922,13 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                                     onClick={() => handleChangeCardColor(cardContextMenu.card.id, color)}
                                 />
                             ))}
+                        </div>
+                        <div
+                            className={styles.context_menu_item}
+                            onClick={() => handleDuplicateCard(cardContextMenu.card)}
+                        >
+                            <Copy size={16} />
+                            <p className="unselectable">Duplicate</p>
                         </div>
                         <div
                             className={styles.context_menu_item}

@@ -13,6 +13,14 @@
     align-items: center;
 }
 
+.center {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: 100%;
+}
+
 .projectTitle {
     display: flex;
     flex-direction: row;
@@ -157,11 +165,6 @@
     background-color: var(--secondary-hover);
 }
 
-.title_separator {
-    width: 1px;
-    height: 24px;
-    background-color: var(--separator);
-}
 
 .notlogged_btns {
     display: flex;

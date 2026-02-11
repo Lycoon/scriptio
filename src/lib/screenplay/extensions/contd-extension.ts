@@ -44,8 +44,6 @@ function computeContdDecorations(doc: any): DecorationSet {
     let wasInterrupted = false;
     let nodeIndex = 0;
 
-    console.log("Computing CONT'D decorations...");
-
     // First pass: determine which indices need CONT'D
     doc.forEach((node: any) => {
         const type: string = node.attrs?.class;

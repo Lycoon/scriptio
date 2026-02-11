@@ -554,6 +554,7 @@ export const useScriptioEditor = (
                             position: { x: pagePos.left, y: pagePos.top },
                             cursor,
                             cursorInNode,
+                            nodeType: "character",
                         });
                     }
                     setSuggestions(suggestions);
@@ -574,7 +575,7 @@ export const useScriptioEditor = (
                     const text = node.textContent.toUpperCase();
 
                     // Check if we're after a prefix like "INT. " or "EXT. "
-                    const prefixMatch = text.match(/^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)\s*/i);
+                    const prefixMatch = text.match(/^(INT\. |EXT\. |INT\/EXT\. |I\/E\. )\s*/i);
                     if (!prefixMatch) {
                         setSuggestions([]);
                         return;
@@ -605,6 +606,7 @@ export const useScriptioEditor = (
                             cursor,
                             cursorInNode,
                             textOffset: prefixLength,
+                            nodeType: "scene",
                         });
                     }
                     setSuggestions(suggestions);

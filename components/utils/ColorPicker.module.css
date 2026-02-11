@@ -65,20 +65,23 @@
     box-shadow: 0 0 0 2px var(--accent);
 }
 
-.clear_btn {
-    margin-top: 10px;
-    width: 100%;
-    padding: 6px 12px;
-    font-size: 12px;
-    color: var(--text-muted);
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 4px;
+.clear_option {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--secondary-text);
+    border-radius: 50%;
     cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    background: transparent;
+    color: var(--secondary-text);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.clear_btn:hover {
-    background: var(--bg-tertiary);
+.clear_option:hover {
+    transform: scale(1.15);
+    border-color: var(--text);
     color: var(--text);
 }

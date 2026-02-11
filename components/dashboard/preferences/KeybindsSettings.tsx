@@ -256,7 +256,7 @@ const KeybindsSettings = () => {
                     type="button"
                     onClick={saveChanges}
                     disabled={!hasUpdatedKeybinds}
-                    className={`${sharedStyles.formBtn} ${sharedStyles.success}`}
+                    className={`${sharedStyles.formBtn}`}
                 >
                     Save changes
                 </button>

@@ -70,12 +70,17 @@ export const ColorPicker = ({ value, onChange, colors = DEFAULT_COLORS, allowCle
                                 onClick={() => handleColorSelect(color)}
                             />
                         ))}
+                        {allowClear && value && (
+                            <button
+                                type="button"
+                                className={styles.clear_option}
+                                onClick={handleClear}
+                                title="Clear color"
+                            >
+                                ✕
+                            </button>
+                        )}
                     </div>
-                    {allowClear && value && (
-                        <button type="button" className={styles.clear_btn} onClick={handleClear}>
-                            Clear color
-                        </button>
-                    )}
                 </div>
             )}
         </div>

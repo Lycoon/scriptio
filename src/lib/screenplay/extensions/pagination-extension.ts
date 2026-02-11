@@ -140,7 +140,10 @@ function deepEqualIterative(a: any, b: any): boolean {
     return true;
 }
 
-function getCustomPages(customHeader: Record<number, HeaderOptions>, customFooter: Record<number, FooterOptions>): number[] {
+function getCustomPages(
+    customHeader: Record<number, HeaderOptions>,
+    customFooter: Record<number, FooterOptions>,
+): number[] {
     return [...Object.keys(customHeader), ...Object.keys(customFooter)].map(Number);
 }
 
@@ -206,11 +209,7 @@ function getHeader(
     return pageHeader;
 }
 
-const getHeight = (
-    pageOptions: PaginationPlusOptions,
-    _headerHeight: number,
-    _footerHeight: number,
-) => {
+const getHeight = (pageOptions: PaginationPlusOptions, _headerHeight: number, _footerHeight: number) => {
     const _pageHeaderHeight = pageOptions.contentMarginTop + pageOptions.marginTop + _headerHeight;
     const _pageFooterHeight = pageOptions.contentMarginBottom + pageOptions.marginBottom + _footerHeight;
     const _pageHeight = pageOptions.pageHeight - _pageHeaderHeight - _pageFooterHeight;
@@ -390,7 +389,8 @@ const calculatePageCount = (
             // offset* properties are cheaper as they use cached layout values
             const lastElementBottom = lastElementOfEditor.offsetTop + lastElementOfEditor.offsetHeight;
             const breakerParent = lastPageBreak.offsetParent as HTMLElement | null;
-            const lastPageBreakBottom = (breakerParent?.offsetTop || 0) + lastPageBreak.offsetTop + lastPageBreak.offsetHeight;
+            const lastPageBreakBottom =
+                (breakerParent?.offsetTop || 0) + lastPageBreak.offsetTop + lastPageBreak.offsetHeight;
             const lastPageGap = lastElementBottom - lastPageBreakBottom;
 
             if (lastPageGap > 0) {
@@ -424,8 +424,14 @@ function createDecoration(
     headerHeightMap: Map<number, number>,
     footerHeightMap: Map<number, number>,
 ): Decoration[] {
-    const commonHeaderOptions: RequiredHeaderOptions = { headerLeft: pageOptions.headerLeft, headerRight: pageOptions.headerRight };
-    const commonFooterOptions: RequiredFooterOptions = { footerLeft: pageOptions.footerLeft, footerRight: pageOptions.footerRight };
+    const commonHeaderOptions: RequiredHeaderOptions = {
+        headerLeft: pageOptions.headerLeft,
+        headerRight: pageOptions.headerRight,
+    };
+    const commonFooterOptions: RequiredFooterOptions = {
+        footerLeft: pageOptions.footerLeft,
+        footerRight: pageOptions.footerRight,
+    };
 
     const pageWidget = Decoration.widget(
         0,
@@ -451,9 +457,7 @@ function createDecoration(
                 page.style.position = "relative";
                 page.style.float = "left";
                 page.style.clear = "both";
-                const marginTop = firstPage
-                    ? `calc(${_pageHeaderHeight}px + ${_pageHeight}px)`
-                    : _pageHeight + "px";
+                const marginTop = firstPage ? `calc(${_pageHeaderHeight}px + ${_pageHeight}px)` : _pageHeight + "px";
                 if (pageNumber) {
                     page.style.marginTop = `var(--rm-page-content-${pageNumber}, ${marginTop})`;
                 } else {
@@ -747,13 +751,9 @@ export const PaginationPlus = Extension.create<PaginationPlusOptions, Pagination
             const view = safeGetView(editor);
             if (view) updateCssVariables(view.dom as HTMLElement, opts);
             const headerHeight =
-                "headerHeight" in extension.storage
-                    ? extension.storage.headerHeight
-                    : new Map<number, number>();
+                "headerHeight" in extension.storage ? extension.storage.headerHeight : new Map<number, number>();
             const footerHeight =
-                "footerHeight" in extension.storage
-                    ? extension.storage.footerHeight
-                    : new Map<number, number>();
+                "footerHeight" in extension.storage ? extension.storage.footerHeight : new Map<number, number>();
             const widgetList = createDecoration(opts, headerHeight, footerHeight);
             extension.storage = { ...opts, headerHeight, footerHeight };
             return {
@@ -922,15 +922,12 @@ export const PaginationPlus = Extension.create<PaginationPlusOptions, Pagination
                                             page === 1 ? _pageHeight + _pageHeaderHeight : _pageHeight;
 
                                         if (page === 1) {
-                                            pageContentHeightVariable[`rm-page-content-first`] =
-                                                `${contentHeight}px`;
+                                            pageContentHeightVariable[`rm-page-content-first`] = `${contentHeight}px`;
                                         }
                                         if (page === missingPageNumber) {
-                                            pageContentHeightVariable[`rm-page-content-general`] =
-                                                `${contentHeight}px`;
+                                            pageContentHeightVariable[`rm-page-content-general`] = `${contentHeight}px`;
                                         } else {
-                                            pageContentHeightVariable[`rm-page-content-${page}`] =
-                                                `${contentHeight}px`;
+                                            pageContentHeightVariable[`rm-page-content-${page}`] = `${contentHeight}px`;
                                         }
                                         if (maxContentHeight === undefined || contentHeight < maxContentHeight) {
                                             maxContentHeight = contentHeight;
@@ -998,14 +995,19 @@ export const PaginationPlus = Extension.create<PaginationPlusOptions, Pagination
 
     addCommands() {
         return {
-            updatePageBreakBackground:
-                (color: string) =>
-                () => {
-                    this.storage.pageBreakBackground = color;
-                    return true;
-                },
+            updatePageBreakBackground: (color: string) => () => {
+                this.storage.pageBreakBackground = color;
+                return true;
+            },
             updatePageSize:
-                (size: { pageHeight: number; pageWidth: number; marginTop: number; marginBottom: number; marginLeft: number; marginRight: number }) =>
+                (size: {
+                    pageHeight: number;
+                    pageWidth: number;
+                    marginTop: number;
+                    marginBottom: number;
+                    marginLeft: number;
+                    marginRight: number;
+                }) =>
                 () => {
                     this.storage.pageHeight = size.pageHeight;
                     this.storage.pageWidth = size.pageWidth;
@@ -1015,68 +1017,54 @@ export const PaginationPlus = Extension.create<PaginationPlusOptions, Pagination
                     this.storage.marginRight = size.marginRight;
                     return true;
                 },
-            updatePageWidth:
-                (width: number) =>
-                () => {
-                    this.storage.pageWidth = width;
-                    return true;
-                },
-            updatePageHeight:
-                (height: number) =>
-                () => {
-                    this.storage.pageHeight = height;
-                    return true;
-                },
-            updatePageGap:
-                (gap: number) =>
-                () => {
-                    this.storage.pageGap = gap;
-                    return true;
-                },
-            updateMargins:
-                (margins: { top: number; bottom: number; left: number; right: number }) =>
-                () => {
-                    this.storage.marginTop = margins.top;
-                    this.storage.marginBottom = margins.bottom;
-                    this.storage.marginLeft = margins.left;
-                    this.storage.marginRight = margins.right;
-                    return true;
-                },
-            updateContentMargins:
-                (margins: { top: number; bottom: number }) =>
-                () => {
-                    this.storage.contentMarginTop = margins.top;
-                    this.storage.contentMarginBottom = margins.bottom;
-                    return true;
-                },
-            updateHeaderContent:
-                (left: string, right: string, pageNumber?: number) =>
-                () => {
-                    if (pageNumber) {
-                        this.storage.customHeader = {
-                            ...this.options.customHeader,
-                            [pageNumber]: { headerLeft: left, headerRight: right },
-                        };
-                    } else {
-                        this.storage.headerLeft = left;
-                        this.storage.headerRight = right;
-                    }
-                    return true;
-                },
-            updateFooterContent:
-                (left: string, right: string, pageNumber?: number) =>
-                () => {
-                    if (pageNumber) {
-                        this.storage.customFooter = {
-                            ...this.options.customFooter,
-                            [pageNumber]: { footerLeft: left, footerRight: right },
-                        };
-                    } else {
-                        this.storage.footerLeft = left;
-                        this.storage.footerRight = right;
-                    }
-                    return true;
-                },
+            updatePageWidth: (width: number) => () => {
+                this.storage.pageWidth = width;
+                return true;
+            },
+            updatePageHeight: (height: number) => () => {
+                this.storage.pageHeight = height;
+                return true;
+            },
+            updatePageGap: (gap: number) => () => {
+                this.storage.pageGap = gap;
+                return true;
+            },
+            updateMargins: (margins: { top: number; bottom: number; left: number; right: number }) => () => {
+                this.storage.marginTop = margins.top;
+                this.storage.marginBottom = margins.bottom;
+                this.storage.marginLeft = margins.left;
+                this.storage.marginRight = margins.right;
+                return true;
+            },
+            updateContentMargins: (margins: { top: number; bottom: number }) => () => {
+                this.storage.contentMarginTop = margins.top;
+                this.storage.contentMarginBottom = margins.bottom;
+                return true;
+            },
+            updateHeaderContent: (left: string, right: string, pageNumber?: number) => () => {
+                if (pageNumber) {
+                    this.storage.customHeader = {
+                        ...this.options.customHeader,
+                        [pageNumber]: { headerLeft: left, headerRight: right },
+                    };
+                } else {
+                    this.storage.headerLeft = left;
+                    this.storage.headerRight = right;
+                }
+                return true;
+            },
+            updateFooterContent: (left: string, right: string, pageNumber?: number) => () => {
+                if (pageNumber) {
+                    this.storage.customFooter = {
+                        ...this.options.customFooter,
+                        [pageNumber]: { footerLeft: left, footerRight: right },
+                    };
+                } else {
+                    this.storage.footerLeft = left;
+                    this.storage.footerRight = right;
+                }
+                return true;
+            },
         };
     },
 });

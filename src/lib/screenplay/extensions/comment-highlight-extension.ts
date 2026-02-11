@@ -24,6 +24,7 @@ const activeCommentPluginKey = new PluginKey("activeCommentHighlight");
 
 export const CommentMark = Mark.create<CommentOptions, CommentStorage>({
     name: "comment",
+    keepOnSplit: false,
 
     addOptions() {
         return {

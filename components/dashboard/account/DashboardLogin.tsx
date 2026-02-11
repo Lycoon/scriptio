@@ -56,7 +56,10 @@ const DashboardLogin = () => {
                 <input
                     type="email"
                     value={email}
-                    onChange={(e) => { setEmail(e.target.value); setMessage(null); }}
+                    onChange={(e) => {
+                        setEmail(e.target.value);
+                        setMessage(null);
+                    }}
                     className={sharedStyles.input}
                     placeholder="Enter your email..."
                     required
@@ -70,7 +73,10 @@ const DashboardLogin = () => {
                 <input
                     type="password"
                     value={password}
-                    onChange={(e) => { setPassword(e.target.value); setMessage(null); }}
+                    onChange={(e) => {
+                        setPassword(e.target.value);
+                        setMessage(null);
+                    }}
                     className={sharedStyles.input}
                     placeholder="Enter your password..."
                     required
@@ -84,11 +90,7 @@ const DashboardLogin = () => {
             )}
 
             <div className={sharedStyles.formActions}>
-                <button
-                    type="submit"
-                    className={`${sharedStyles.formBtn} ${sharedStyles.success}`}
-                    disabled={loading}
-                >
+                <button type="submit" className={`${sharedStyles.formBtn}`} disabled={loading}>
                     {loading ? "Logging in..." : "Log in"}
                 </button>
             </div>

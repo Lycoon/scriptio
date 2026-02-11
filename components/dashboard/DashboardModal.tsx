@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useCookieUser } from "@src/lib/utils/hooks";
@@ -94,6 +94,7 @@ const DashboardModal = () => {
     // - Yjs is ready (local project on desktop without auth)
     const isInProject = project !== null || isYjsReady;
     const isSignedIn = !!user;
+    const [dangerOpen, setDangerOpen] = useState(false);
 
     // Build menu structure based on whether we're in a project context and signed in
     const menuStructure = useMemo<MenuSection[]>(() => {
@@ -118,6 +119,10 @@ const DashboardModal = () => {
     }, [isInProject, isSignedIn, activeTab, setActiveTab]);
 
     useEffect(() => {
+        setDangerOpen(false);
+    }, [activeTab]);
+
+    useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === "Escape") closeDashboard();
         };
@@ -140,7 +145,7 @@ const DashboardModal = () => {
 
                     <div className={styles.scrollArea}>
                         {/* Project tabs - only rendered when in project context */}
-                        {isInProject && activeTab === "General" && <ProjectSettings />}
+                        {isInProject && activeTab === "General" && <ProjectSettings dangerOpen={dangerOpen} onDangerToggle={() => setDangerOpen((v) => !v)} />}
                         {isInProject && activeTab === "Layout" && <LayoutSettings />}
                         {isInProject && activeTab === "Export" && <ExportProject />}
                         {isInProject && activeTab === "Collaborators" && <CollaboratorsSettings />}
@@ -148,7 +153,7 @@ const DashboardModal = () => {
                         {activeTab === "Keybinds" && <KeybindsSettings />}
                         {activeTab === "Appearance" && <AppearanceSettings />}
                         {/* Account tabs - only when signed in */}
-                        {isSignedIn && activeTab === "Profile" && <ProfileSettings />}
+                        {isSignedIn && activeTab === "Profile" && <ProfileSettings dangerOpen={dangerOpen} onDangerToggle={() => setDangerOpen((v) => !v)} />}
                         {isSignedIn && activeTab === "Security" && <SecuritySettings />}
                         {/* Login tab - only when signed out */}
                         {!isSignedIn && activeTab === "Login" && <DashboardLogin />}

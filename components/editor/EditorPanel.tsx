@@ -38,6 +38,7 @@ const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSug
         sceneHeadingDoubleSpace,
         sceneNumberOnRight,
         contdLabel,
+        setActiveCommentId,
     } = useContext(ProjectContext);
     const { settings } = useSettings();
 
@@ -264,12 +265,20 @@ const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSug
         [editor, updateContextMenu],
     );
 
+    // Clear active comment on mousedown anywhere in the container.
+    // Uses mousedown so it fires *before* ProseMirror processes the click;
+    // the editor's onSelectionUpdate will then override with the correct
+    // comment ID if the cursor lands on a comment mark.
+    const handleContainerMouseDown = useCallback(() => {
+        setActiveCommentId(null);
+    }, [setActiveCommentId]);
+
     const isDesktop = isTauri();
     if (!isDesktop && (!membership || isLoading)) return <Loading />;
 
     return (
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
-            <div className={styles.container} onScroll={onScroll}>
+            <div className={styles.container} onScroll={onScroll} onMouseDown={handleContainerMouseDown}>
                 <div className={styles.editor_wrapper}>
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
                     <div onContextMenu={onEditorContextMenu}>

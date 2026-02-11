@@ -7,11 +7,12 @@ import { isTauri } from "@tauri-apps/api/core";
 import { useProjectMembership, useLocalProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import UploadButton from "@components/projects/UploadButton";
 import DangerZone from "./DangerZone";
-
+import { ArrowRight } from "lucide-react";
 import form from "./../../utils/Form.module.css";
 import styles from "./ProjectSettings.module.css";
+import dangerStyles from "./DangerZone.module.css";
 
-const ProjectSettings = () => {
+const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; onDangerToggle: () => void }) => {
     const { membership } = useProjectMembership();
     const projectId = useProjectIdFromUrl();
     const { title: localTitle, description: localDescription, isLoading: localLoading } = useLocalProjectInfo(projectId);
@@ -78,6 +79,10 @@ const ProjectSettings = () => {
     // Wait for local project info to load before rendering the form
     if (isLocalOnly && localLoading) return null;
 
+    if (dangerOpen) {
+        return <DangerZone projectId={projectId} isLocalOnly={isLocalOnly} isOpen={true} />;
+    }
+
     return (
         <form key={projectTitle} onSubmit={handleSave} className={styles.settingsForm}>
             {/* Title */}
@@ -132,8 +137,10 @@ const ProjectSettings = () => {
                 <button type="submit" className={`${styles.formBtn} ${styles.success}`} disabled={loading || !isDirty}>
                     Save changes
                 </button>
+                <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title="Danger zone">
+                    <ArrowRight size={16} />
+                </button>
             </div>
-            <DangerZone projectId={projectId} isLocalOnly={isLocalOnly} />
         </form>
     );
 };
