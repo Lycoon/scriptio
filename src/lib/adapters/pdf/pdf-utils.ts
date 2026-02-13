@@ -179,7 +179,9 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
                 decoration: "underline",
             },
             action: {},
-            offset: {},
+            offset: {
+                marginBottom: 13.2,
+            },
         },
     };
 };
