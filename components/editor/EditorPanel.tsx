@@ -39,6 +39,7 @@ const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSug
         sceneNumberOnRight,
         contdLabel,
         setActiveCommentId,
+        setFocusedEditorType,
     } = useContext(ProjectContext);
     const { settings } = useSettings();
 
@@ -278,7 +279,7 @@ const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSug
 
     return (
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
-            <div className={styles.container} onScroll={onScroll} onMouseDown={handleContainerMouseDown}>
+            <div className={styles.container} onScroll={onScroll} onMouseDown={handleContainerMouseDown} onFocus={() => setFocusedEditorType("screenplay")}>
                 <div className={styles.editor_wrapper}>
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
                     <div onContextMenu={onEditorContextMenu}>

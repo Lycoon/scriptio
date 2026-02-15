@@ -1,15 +1,28 @@
 "use client";
 
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+    createContext,
+    ReactNode,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { Editor } from "@tiptap/react";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
 import { mergeScenesData, PersistentSceneMap, Scene } from "@src/lib/screenplay/scenes";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { useUser } from "@src/lib/utils/hooks";
-import { CollaboratorInfo, ConnectionStatus, LayoutData, useProjectYjs } from "@src/lib/project/project-state";
+import {
+    CollaboratorInfo,
+    ConnectionStatus,
+    LayoutData,
+    useProjectYjs,
+} from "@src/lib/project/project-state";
 import { Comment, Screenplay } from "@src/lib/utils/types";
-import { ScreenplayElement, Style, PageFormat } from "@src/lib/utils/enums";
+import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 
 // Import types only - these don't cause module loading
@@ -85,6 +98,22 @@ export interface ProjectContextType {
     comments: Comment[];
     activeCommentId: string | null;
     setActiveCommentId: (id: string | null) => void;
+
+    // Project metadata (for title page placeholders)
+    projectTitle: string;
+    setProjectTitle: (title: string) => void;
+    projectAuthor: string;
+    setProjectAuthor: (author: string) => void;
+
+    // Title page editor (only set when on title page view)
+    titlePageEditor: Editor | null;
+    updateTitlePageEditor: (editor: Editor | null) => void;
+    selectedTitlePageElement: TitlePageElement;
+    setSelectedTitlePageElement: (element: TitlePageElement) => void;
+
+    // Focus tracking for format dropdown context switching
+    focusedEditorType: "screenplay" | "title" | null;
+    setFocusedEditorType: (type: "screenplay" | "title" | null) => void;
 }
 
 // -------------------------------- //
@@ -149,6 +178,19 @@ const defaultContextValue: ProjectContextType = {
     comments: [],
     activeCommentId: null,
     setActiveCommentId: () => {},
+    // Project metadata defaults
+    projectTitle: "",
+    setProjectTitle: () => {},
+    projectAuthor: "",
+    setProjectAuthor: () => {},
+    // Title page defaults
+    titlePageEditor: null,
+    updateTitlePageEditor: () => {},
+    selectedTitlePageElement: TitlePageElement.Title,
+    setSelectedTitlePageElement: () => {},
+    // Focus tracking defaults
+    focusedEditorType: null,
+    setFocusedEditorType: () => {},
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -215,7 +257,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
 
     // Screenplay format state
-    const [selectedElement, setSelectedElementState] = useState<ScreenplayElement>(ScreenplayElement.Action);
+    const [selectedElement, setSelectedElementState] = useState<ScreenplayElement>(
+        ScreenplayElement.Action,
+    );
     const [selectedStyles, setSelectedStylesState] = useState<Style>(Style.None);
 
     // Character dialogue highlighting state
@@ -252,6 +296,21 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     // Comments state
     const [comments, setComments] = useState<Comment[]>([]);
     const [activeCommentId, setActiveCommentIdState] = useState<string | null>(null);
+
+    // Project metadata state (for title page placeholders)
+    const [projectTitle, setProjectTitleState] = useState<string>("");
+    const [projectAuthor, setProjectAuthorState] = useState<string>("");
+
+    // Title page state
+    const [titlePageEditor, setTitlePageEditor] = useState<Editor | null>(null);
+    const [selectedTitlePageElement, setSelectedTitlePageElementState] = useState<TitlePageElement>(
+        TitlePageElement.Title,
+    );
+
+    // Focus tracking state
+    const [focusedEditorType, setFocusedEditorTypeState] = useState<"screenplay" | "title" | null>(
+        null,
+    );
 
     // Create repository instance when ydoc is available (dynamically imported)
     useEffect(() => {
@@ -357,6 +416,23 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setComments(Object.values(commentsMap));
         });
 
+        // Observe metadata changes (for title page placeholders)
+        const initialTitle = repository.getTitle();
+        const initialAuthor = repository.getAuthor();
+        setProjectTitleState(initialTitle);
+        setProjectAuthorState(initialAuthor);
+        const unsubscribeMetadata = repository.observeMetadata((metadata) => {
+            console.log("metadata updated: ", metadata.title);
+            if (metadata.title !== undefined) setProjectTitleState(metadata.title);
+            if (metadata.author !== undefined) setProjectAuthorState(metadata.author);
+        });
+
+        // Seed Yjs metadata from the database project record if not yet set
+        if (!initialTitle && project?.project.title) {
+            repository.setTitle(project.project.title);
+            setProjectTitleState(project.project.title);
+        }
+
         return () => {
             unsubscribeScreenplay();
             unsubscribeLayout();
@@ -364,6 +440,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             unsubscribeLocations();
             unsubscribeScenes();
             unsubscribeComments();
+            unsubscribeMetadata();
         };
     }, [repository]);
 
@@ -482,6 +559,34 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setActiveCommentIdState(id);
     }, []);
 
+    const setProjectTitle = useCallback(
+        (title: string) => {
+            setProjectTitleState(title);
+            repository?.setTitle(title);
+        },
+        [repository],
+    );
+
+    const setProjectAuthor = useCallback(
+        (author: string) => {
+            setProjectAuthorState(author);
+            repository?.setAuthor(author);
+        },
+        [repository],
+    );
+
+    const updateTitlePageEditor = useCallback((newEditor: Editor | null) => {
+        setTitlePageEditor(newEditor);
+    }, []);
+
+    const setSelectedTitlePageElement = useCallback((element: TitlePageElement) => {
+        setSelectedTitlePageElementState(element);
+    }, []);
+
+    const setFocusedEditorType = useCallback((type: "screenplay" | "title" | null) => {
+        setFocusedEditorTypeState(type);
+    }, []);
+
     const contextValue = useMemo<ProjectContextType>(
         () => ({
             project,
@@ -531,6 +636,16 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             comments,
             activeCommentId,
             setActiveCommentId,
+            projectTitle,
+            setProjectTitle,
+            projectAuthor,
+            setProjectAuthor,
+            titlePageEditor,
+            updateTitlePageEditor,
+            selectedTitlePageElement,
+            setSelectedTitlePageElement,
+            focusedEditorType,
+            setFocusedEditorType,
         }),
         [
             project,
@@ -580,10 +695,23 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             comments,
             activeCommentId,
             setActiveCommentId,
+            projectTitle,
+            setProjectTitle,
+            projectAuthor,
+            setProjectAuthor,
+            titlePageEditor,
+            updateTitlePageEditor,
+            selectedTitlePageElement,
+            setSelectedTitlePageElement,
+            focusedEditorType,
+            setFocusedEditorType,
         ],
     );
 
-    const readyValue = useMemo(() => ({ isYjsReady, isProjectUnavailable }), [isYjsReady, isProjectUnavailable]);
+    const readyValue = useMemo(
+        () => ({ isYjsReady, isProjectUnavailable }),
+        [isYjsReady, isProjectUnavailable],
+    );
 
     return (
         <ProjectReadyContext.Provider value={readyValue}>

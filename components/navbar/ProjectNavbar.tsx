@@ -19,6 +19,7 @@ import {
     Clapperboard,
     Eye,
     EyeClosed,
+    FileText,
     LayoutDashboard,
     PanelRight,
     PanelRightClose,
@@ -101,6 +102,7 @@ const ProjectNavbar = () => {
 
     const isInProject = !!projectId;
     const hasScreenplay = viewContext.visiblePanels.includes("screenplay");
+    const hasTitlePage = viewContext.visiblePanels.includes("title");
 
     const deferredTitleUpdate = useMemo(
         () =>
@@ -126,7 +128,12 @@ const ProjectNavbar = () => {
         if (viewContext.isSplit) {
             viewContext.setSecondaryPanel(null);
         } else {
-            const other: PanelType = viewContext.primaryPanel === "screenplay" ? "board" : "screenplay";
+            const other: PanelType =
+                viewContext.primaryPanel === "screenplay"
+                    ? "board"
+                    : viewContext.primaryPanel === "title"
+                      ? "screenplay"
+                      : "screenplay";
             viewContext.setSecondaryPanel(other);
         }
     };
@@ -188,6 +195,10 @@ const ProjectNavbar = () => {
                                 <LayoutDashboard size={14} />
                                 Board
                             </div>
+                            <div className={getPanelBtnStyle("title")} onClick={() => handlePanelClick("title")}>
+                                <FileText size={14} />
+                                Title Page
+                            </div>
                         </div>
                         <div
                             className={`${navbar.export_project_btn} ${viewContext.isSplit ? navbar.panel_btn_active : ""}`}
@@ -218,7 +229,7 @@ const ProjectNavbar = () => {
                             value={projectTitle}
                         />
                     </div>
-                    {hasScreenplay && (
+                    {(hasScreenplay || hasTitlePage) && (
                         <div className={navbar.projectTitle}>
                             <ScreenplayFormatDropdown />
                         </div>

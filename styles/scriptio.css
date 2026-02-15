@@ -405,3 +405,46 @@ Originally developed by John August - johnaugust.com
         text-transform: uppercase;
     }
 }
+
+/* ============================================ */
+/*           TITLE PAGE ELEMENTS                */
+/* ============================================ */
+
+/* Base styling for all title-page text lines */
+.ProseMirror > p.tp-align-left,
+.ProseMirror > p.tp-align-center,
+.ProseMirror > p.tp-align-right {
+    font-size: var(--font-size);
+    line-height: var(--line-height) !important;
+    margin-bottom: 0;
+}
+
+/* Text alignment classes (used by tp-text node) */
+.tp-align-left {
+    text-align: left;
+}
+
+.tp-align-center {
+    text-align: center !important;
+}
+
+.tp-align-right {
+    text-align: right;
+}
+
+/* Format atom nodes — indivisible placeholders */
+.ProseMirror .tp-format-node {
+    display: inline;
+    cursor: default;
+    user-select: all;
+}
+
+.ProseMirror .tp-format-node.tp-format-placeholder {
+    color: var(--secondary-text);
+    font-style: italic;
+}
+
+.ProseMirror .tp-format-node.ProseMirror-selectednode {
+    background: var(--selection-bg, rgba(100, 150, 255, 0.3));
+    border-radius: 2px;
+}

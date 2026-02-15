@@ -56,6 +56,7 @@ export type ProjectMetadata = {
     version: number;
     id: string;
     title: string;
+    author: string;
 };
 
 export type LayoutData = {
@@ -69,6 +70,7 @@ export type LayoutData = {
 
 export type ProjectData = {
     screenplay: JSONContent[];
+    titlepage?: JSONContent[];
     characters: any;
     scenes: any;
     cards: any;
@@ -124,6 +126,7 @@ async function getScreenplayEditor() {
 export class ProjectState extends Y.Doc {
     KEYS = {
         SCREENPLAY: "screenplay",
+        TITLEPAGE: "titlepage",
         CHARACTERS: "characters",
         SCENES: "scenes",
         CARDS: "cards",
@@ -146,6 +149,10 @@ export class ProjectState extends Y.Doc {
 
     screenplayFragment(): Y.XmlFragment {
         return this.getXmlFragment(this.KEYS.SCREENPLAY);
+    }
+
+    titlepageFragment(): Y.XmlFragment {
+        return this.getXmlFragment(this.KEYS.TITLEPAGE);
     }
 
     characters(): Y.Map<any> {

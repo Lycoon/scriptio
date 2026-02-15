@@ -78,6 +78,63 @@ export class ProjectRepository {
     }
 
     // -------------------------------- //
+    //          METADATA                //
+    // -------------------------------- //
+
+    getTitle(): string {
+        return this.ydoc.metadata().get("title") ?? "";
+    }
+
+    getAuthor(): string {
+        return this.ydoc.metadata().get("author") ?? "";
+    }
+
+    setTitle(title: string): void {
+        this.ydoc.metadata().set("title", title);
+    }
+
+    setAuthor(author: string): void {
+        this.ydoc.metadata().set("author", author);
+    }
+
+    observeMetadata(callback: (metadata: Record<string, any>) => void): () => void {
+        const map = this.ydoc.metadata();
+        const observer = () => callback(map.toJSON());
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
+    // -------------------------------- //
+    //          TITLE PAGE              //
+    // -------------------------------- //
+
+    /**
+     * Observe changes to the title page fragment.
+     * The callback will be invoked whenever the title page content changes.
+     *
+     * @param callback - Function to call when title page changes
+     * @param delay - Debounce delay in milliseconds
+     * @returns Cleanup function to unsubscribe from changes
+     */
+    observeTitlePage(callback: () => void, delay: number = 300): () => void {
+        const fragment = this.ydoc.titlepageFragment();
+        let timeout: NodeJS.Timeout;
+
+        const observer = () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                callback();
+            }, delay);
+        };
+
+        fragment.observeDeep(observer);
+        return () => {
+            clearTimeout(timeout);
+            fragment.unobserveDeep(observer);
+        };
+    }
+
+    // -------------------------------- //
     //          CHARACTERS              //
     // -------------------------------- //
 

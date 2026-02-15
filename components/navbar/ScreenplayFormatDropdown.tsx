@@ -2,10 +2,11 @@
 
 import { useContext, useState, useRef, useEffect, useCallback } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { ScreenplayElement, Style } from "@src/lib/utils/enums";
+import { ScreenplayElement, TitlePageElement, Style } from "@src/lib/utils/enums";
 import { applyElement, applyMarkToggle } from "@src/lib/screenplay/editor";
+import { applyTitlePageElement, applyTitlePageMarkToggle } from "@src/lib/titlepage/editor";
 import { join } from "@src/lib/utils/misc";
-import { Bold, Italic, Underline, ChevronDown } from "lucide-react";
+import { Bold, Italic, Underline, ChevronDown, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 
 import styles from "./ScreenplayFormatDropdown.module.css";
 
@@ -32,11 +33,37 @@ const ELEMENTS_ORDER: ScreenplayElement[] = [
     ScreenplayElement.Note,
 ];
 
+const TITLEPAGE_ELEMENT_LABELS: Record<TitlePageElement, string> = {
+    [TitlePageElement.Title]: "Title",
+    [TitlePageElement.Author]: "Author",
+    [TitlePageElement.Date]: "Date",
+    [TitlePageElement.None]: "None",
+};
+
+const TITLEPAGE_ELEMENTS_ORDER: TitlePageElement[] = [
+    TitlePageElement.Title,
+    TitlePageElement.Author,
+    TitlePageElement.Date,
+    TitlePageElement.None,
+];
+
 const ScreenplayFormatDropdown = () => {
-    const { editor, selectedElement, setSelectedElement, selectedStyles, setSelectedStyles } =
-        useContext(ProjectContext);
+    const {
+        editor,
+        selectedElement,
+        setSelectedElement,
+        selectedStyles,
+        setSelectedStyles,
+        titlePageEditor,
+        selectedTitlePageElement,
+        setSelectedTitlePageElement,
+        focusedEditorType,
+    } = useContext(ProjectContext);
+
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const isTitleContext = focusedEditorType === "title";
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -53,23 +80,58 @@ const ScreenplayFormatDropdown = () => {
     }, [isOpen]);
 
     const handleElementSelect = useCallback(
-        (element: ScreenplayElement) => {
-            setSelectedElement(element);
-            if (editor) applyElement(editor, element);
+        (element: ScreenplayElement | TitlePageElement) => {
+            if (isTitleContext) {
+                setSelectedTitlePageElement(element as TitlePageElement);
+                if (titlePageEditor) applyTitlePageElement(titlePageEditor, element as TitlePageElement);
+            } else {
+                setSelectedElement(element as ScreenplayElement);
+                if (editor) applyElement(editor, element as ScreenplayElement);
+            }
             setIsOpen(false);
         },
-        [editor, setSelectedElement]
+        [isTitleContext, editor, titlePageEditor, setSelectedElement, setSelectedTitlePageElement],
     );
 
     const toggleStyle = useCallback(
         (style: Style) => {
             setSelectedStyles((prev) => (prev ^ style) as Style);
-            if (editor) applyMarkToggle(editor, style);
+            if (isTitleContext && titlePageEditor) {
+                applyTitlePageMarkToggle(titlePageEditor, style);
+            } else if (editor) {
+                applyMarkToggle(editor, style);
+            }
         },
-        [editor, setSelectedStyles]
+        [isTitleContext, editor, titlePageEditor, setSelectedStyles],
     );
 
     const getActiveStyleClass = (style: Style) => (selectedStyles & style ? styles.active_style : "");
+
+    // Get current text alignment from the selected tp-text node
+    const getCurrentAlign = useCallback(() => {
+        if (!titlePageEditor) return "left";
+        const parent = titlePageEditor.state.selection.$anchor.parent;
+        return parent.attrs.textAlign || "left";
+    }, [titlePageEditor]);
+
+    const setAlignment = useCallback(
+        (align: string) => {
+            if (!titlePageEditor) return;
+            titlePageEditor
+                .chain()
+                .focus()
+                .updateAttributes("tp-text", { textAlign: align })
+                .run();
+        },
+        [titlePageEditor],
+    );
+
+    // Resolve which labels, order, and selected element to display
+    const activeLabels = isTitleContext ? TITLEPAGE_ELEMENT_LABELS : ELEMENT_LABELS;
+    const activeOrder = isTitleContext ? TITLEPAGE_ELEMENTS_ORDER : ELEMENTS_ORDER;
+    const activeSelected = isTitleContext ? selectedTitlePageElement : selectedElement;
+
+    const currentAlign = isTitleContext ? getCurrentAlign() : "left";
 
     return (
         <div className={styles.container} ref={dropdownRef}>
@@ -95,26 +157,55 @@ const ScreenplayFormatDropdown = () => {
                 </div>
             </div>
 
+            {/* Alignment buttons (title page only) */}
+            {isTitleContext && (
+                <>
+                    <div className={styles.separator} />
+                    <div className={styles.style_btns}>
+                        <div
+                            className={join(styles.style_btn, currentAlign === "left" ? styles.active_style : "")}
+                            onClick={() => setAlignment("left")}
+                        >
+                            <AlignLeft size={16} />
+                        </div>
+                        <div
+                            className={join(styles.style_btn, currentAlign === "center" ? styles.active_style : "")}
+                            onClick={() => setAlignment("center")}
+                        >
+                            <AlignCenter size={16} />
+                        </div>
+                        <div
+                            className={join(styles.style_btn, currentAlign === "right" ? styles.active_style : "")}
+                            onClick={() => setAlignment("right")}
+                        >
+                            <AlignRight size={16} />
+                        </div>
+                    </div>
+                </>
+            )}
+
             <div className={styles.separator} />
 
             {/* Element dropdown */}
             <div className={styles.dropdown_wrapper}>
                 <button className={styles.dropdown_trigger} onClick={() => setIsOpen(!isOpen)}>
-                    <span className={styles.selected_label}>{ELEMENT_LABELS[selectedElement]}</span>
+                    <span className={styles.selected_label}>
+                        {activeLabels[activeSelected as keyof typeof activeLabels]}
+                    </span>
                     <ChevronDown size={16} className={`${styles.chevron} ${isOpen && styles.chevron_open}`} />
                 </button>
 
                 {isOpen && (
                     <div className={styles.dropdown_menu}>
-                        {ELEMENTS_ORDER.map((element) => (
+                        {activeOrder.map((element) => (
                             <button
                                 key={element}
                                 className={`${styles.dropdown_item}
-                                    ${element === selectedElement && styles.dropdown_item_active}
+                                    ${element === activeSelected && styles.dropdown_item_active}
                                 `}
                                 onClick={() => handleElementSelect(element)}
                             >
-                                {ELEMENT_LABELS[element]}
+                                {activeLabels[element as keyof typeof activeLabels]}
                             </button>
                         ))}
                     </div>

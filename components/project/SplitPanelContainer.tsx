@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { PanelType, useViewContext } from "@src/context/ViewContext";
 import EditorPanel from "@components/editor/EditorPanel";
+import TitlePagePanel from "@components/editor/TitlePagePanel";
 import BoardCanvas from "@components/board/BoardCanvas";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
@@ -38,6 +39,8 @@ const PanelRenderer = ({
             return <BoardCanvas isVisible={isVisible} />;
         case "statistics":
             return <StatisticsClientPage />;
+        case "title":
+            return <TitlePagePanel />;
     }
 };
 
@@ -63,7 +66,7 @@ const SplitPanelContainer = ({
         };
     }, [isSplit, splitRatio]);
 
-    const allPanels: PanelType[] = ["screenplay", "board", "statistics"];
+    const allPanels: PanelType[] = ["screenplay", "board", "statistics", "title"];
 
     return (
         <div className={styles.split_panel_container} style={gridStyle}>

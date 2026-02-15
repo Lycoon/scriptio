@@ -19,7 +19,7 @@ export const isPage = (value: string): value is Page => {
 //            PANELS              //
 // ------------------------------ //
 
-export const PANEL_TYPES = ["screenplay", "board", "statistics"] as const;
+export const PANEL_TYPES = ["screenplay", "board", "statistics", "title"] as const;
 export type PanelType = (typeof PANEL_TYPES)[number];
 
 // ------------------------------ //
@@ -57,5 +57,13 @@ export enum ScreenplayElement {
     Transition = "transition",
     Section = "section",
     Note = "note",
+    None = "none",
+}
+
+// Title page format marks - applied as indivisible inline marks on text
+export enum TitlePageElement {
+    Title = "tp-title",
+    Author = "tp-author",
+    Date = "tp-date",
     None = "none",
 }
