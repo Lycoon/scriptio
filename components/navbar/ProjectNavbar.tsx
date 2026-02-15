@@ -90,7 +90,7 @@ const CollaboratorsDisplay = () => {
 const ProjectNavbar = () => {
     const { isZenMode, updateIsZenMode } = useContext(UserContext);
     const { openDashboard } = useContext(DashboardContext);
-    const { project: membership } = useContext(ProjectContext);
+    const { project: membership, setProjectTitle: setContextTitle } = useContext(ProjectContext);
 
     const [projectTitle, setProjectTitle] = useState<string>("");
     const isLocalEdit = useRef(false);
@@ -221,6 +221,7 @@ const ProjectNavbar = () => {
                             onChange={(e) => {
                                 isLocalEdit.current = true;
                                 setProjectTitle(e.target.value);
+                                setContextTitle(e.target.value);
                                 deferredTitleUpdate(projectId, e.target.value);
                             }}
                             onBlur={() => {

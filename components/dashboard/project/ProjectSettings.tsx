@@ -2,9 +2,10 @@
 
 import { cropImageBase64 } from "@src/lib/utils/misc";
 import { editProject } from "@src/lib/utils/requests";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useProjectMembership, useLocalProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
+import { ProjectContext } from "@src/context/ProjectContext";
 import UploadButton from "@components/projects/UploadButton";
 import DangerZone from "./DangerZone";
 import { ArrowRight } from "lucide-react";
@@ -13,9 +14,14 @@ import styles from "./ProjectSettings.module.css";
 import dangerStyles from "./DangerZone.module.css";
 
 const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; onDangerToggle: () => void }) => {
-    const { membership } = useProjectMembership();
+    const { membership, mutate } = useProjectMembership();
+    const { setProjectTitle: setContextTitle } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
-    const { title: localTitle, description: localDescription, isLoading: localLoading } = useLocalProjectInfo(projectId);
+    const {
+        title: localTitle,
+        description: localDescription,
+        isLoading: localLoading,
+    } = useLocalProjectInfo(projectId);
 
     const [isDirty, setDirty] = useState<boolean>(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -70,6 +76,11 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
 
             await editProject(membership.project.id, body);
         }
+
+        // Sync title to Yjs metadata (updates title page editor)
+        setContextTitle(newTitle);
+        // Revalidate SWR so navbar and browser tab update via updateProject()
+        mutate();
 
         setLoading(false);
     };
@@ -134,7 +145,7 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
             )}
 
             <div className={styles.formActions}>
-                <button type="submit" className={`${styles.formBtn} ${styles.success}`} disabled={loading || !isDirty}>
+                <button type="submit" className={`${styles.formBtn}`} disabled={loading || !isDirty}>
                     Save changes
                 </button>
                 <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title="Danger zone">

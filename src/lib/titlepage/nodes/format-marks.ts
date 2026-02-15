@@ -1,5 +1,6 @@
 import { Node } from "@tiptap/core";
 import { TitlePageElement } from "../../utils/enums";
+import { titlePageMetadataRef } from "../metadata-ref";
 
 /**
  * Title page format nodes.
@@ -83,8 +84,10 @@ function createFormatNode(name: TitlePageElement) {
                 dom.setAttribute("data-tp-type", name);
 
                 const refresh = () => {
-                    const s = (editor.storage as any).titlePageMetadata;
-                    const value = resolveValue(name, s);
+                    // Read from the module-level ref which is updated
+                    // synchronously during every React render, bypassing
+                    // any TipTap storage timing issues.
+                    const value = resolveValue(name, titlePageMetadataRef);
                     dom.textContent = value || placeholder;
                     dom.classList.toggle("tp-format-placeholder", !value);
                 };

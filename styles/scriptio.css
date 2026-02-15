@@ -439,6 +439,13 @@ Originally developed by John August - johnaugust.com
     user-select: all;
 }
 
+.ProseMirror .tp-format-node:not(.tp-format-placeholder) {
+    background: var(--format-node-bg, rgba(100, 150, 255, 0.08));
+    border-bottom: 1px dotted var(--format-node-border, rgba(100, 150, 255, 0.3));
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
 .ProseMirror .tp-format-node.tp-format-placeholder {
     color: var(--secondary-text);
     font-style: italic;

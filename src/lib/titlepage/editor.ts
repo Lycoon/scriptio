@@ -18,6 +18,8 @@ import { Placeholder } from "../screenplay/extensions/placeholder-extension";
 import { getStylesFromMarks, SCREENPLAY_FORMATS } from "../screenplay/editor";
 import { PaginationPlus } from "tiptap-pagination-plus";
 
+import { titlePageMetadataRef } from "./metadata-ref";
+
 const TitlePageMetadata = Extension.create({
     name: "titlePageMetadata",
     addStorage() {
@@ -99,11 +101,7 @@ export const applyTitlePageElement = (editor: Editor, element: TitlePageElement)
 };
 
 function isFormatNode(name: string): boolean {
-    return (
-        name === TitlePageElement.Title ||
-        name === TitlePageElement.Author ||
-        name === TitlePageElement.Date
-    );
+    return name === TitlePageElement.Title || name === TitlePageElement.Author || name === TitlePageElement.Date;
 }
 
 export const applyTitlePageMarkToggle = (editor: Editor, style: Style) => {
@@ -120,20 +118,11 @@ export const getActiveTitlePageElement = (editor: Editor): TitlePageElement => {
     const nodeAfter = $anchor.nodeAfter;
     const nodeBefore = $anchor.nodeBefore;
 
-    if (
-        nodeAfter?.type.name === TitlePageElement.Title ||
-        nodeBefore?.type.name === TitlePageElement.Title
-    )
+    if (nodeAfter?.type.name === TitlePageElement.Title || nodeBefore?.type.name === TitlePageElement.Title)
         return TitlePageElement.Title;
-    if (
-        nodeAfter?.type.name === TitlePageElement.Author ||
-        nodeBefore?.type.name === TitlePageElement.Author
-    )
+    if (nodeAfter?.type.name === TitlePageElement.Author || nodeBefore?.type.name === TitlePageElement.Author)
         return TitlePageElement.Author;
-    if (
-        nodeAfter?.type.name === TitlePageElement.Date ||
-        nodeBefore?.type.name === TitlePageElement.Date
-    )
+    if (nodeAfter?.type.name === TitlePageElement.Date || nodeBefore?.type.name === TitlePageElement.Date)
         return TitlePageElement.Date;
 
     // Also check if the selection itself is a node selection
@@ -202,6 +191,8 @@ export const DEFAULT_TITLEPAGE_CONTENT = [
     EMPTY(),
     EMPTY(),
     EMPTY(),
+    EMPTY(),
+    EMPTY(),
     LINE("center", [FORMAT_NODE(TitlePageElement.Title)]),
     EMPTY("center"),
     LINE("center", [TEXT("by")]),
@@ -252,6 +243,12 @@ export const useTitlePageEditor = () => {
     } = projectCtx;
 
     const projectState = repository?.getState();
+
+    // Keep the module-level ref in sync on every render so that format
+    // node views always resolve the latest values, even when created
+    // asynchronously by the Collaboration extension.
+    titlePageMetadataRef.projectTitle = projectTitle || "";
+    titlePageMetadataRef.projectAuthor = projectAuthor || "";
 
     const userInfoRef = useRef({
         name: user?.username || "User_" + Math.floor(Math.random() * 1000),
@@ -361,9 +358,7 @@ export const useTitlePageEditor = () => {
             storage.projectAuthor = projectAuthor || "";
             // Refresh all format node views with updated values
             storage.nodeViewUpdaters?.forEach((fn: () => void) => fn());
-            titlePageEditor.view.dispatch(
-                titlePageEditor.state.tr.setMeta("titlePageMetadataUpdate", true),
-            );
+            titlePageEditor.view.dispatch(titlePageEditor.state.tr.setMeta("titlePageMetadataUpdate", true));
         }
     }, [titlePageEditor, projectTitle, projectAuthor]);
 
