@@ -29,6 +29,7 @@ const PanelRenderer = ({
         case "screenplay":
             return (
                 <EditorPanel
+                    isVisible={isVisible}
                     suggestions={suggestions}
                     updateSuggestions={updateSuggestions}
                     suggestionData={suggestionData}
@@ -40,7 +41,7 @@ const PanelRenderer = ({
         case "statistics":
             return <StatisticsClientPage />;
         case "title":
-            return <TitlePagePanel />;
+            return <TitlePagePanel isVisible={isVisible} />;
     }
 };
 
@@ -50,7 +51,7 @@ const SplitPanelContainer = ({
     suggestionData,
     updateSuggestionData,
 }: SplitPanelContainerProps) => {
-    const { primaryPanel, secondaryPanel, splitRatio, isSplit } = useViewContext();
+    const { primaryPanel, secondaryPanel, splitRatio, isSplit, mountedPanels } = useViewContext();
 
     const gridStyle = useMemo(() => {
         if (!isSplit) {
@@ -75,10 +76,15 @@ const SplitPanelContainer = ({
                 const isSecondary = panel === secondaryPanel;
                 const isVisible = isPrimary || isSecondary;
 
-                if (!isVisible) return null;
+                // Lazy mount: only render panels that have been visited at least once
+                if (!mountedPanels.has(panel)) return null;
 
                 return (
-                    <div key={panel} className={styles.panel} style={{ order: isPrimary ? 0 : 2 }}>
+                    <div
+                        key={panel}
+                        className={isVisible ? styles.panel : styles.panel_hidden}
+                        style={isVisible ? { order: isPrimary ? 0 : 2 } : undefined}
+                    >
                         <PanelRenderer
                             panel={panel}
                             isVisible={isVisible}

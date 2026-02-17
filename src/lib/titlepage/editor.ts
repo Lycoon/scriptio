@@ -192,13 +192,11 @@ export const DEFAULT_TITLEPAGE_CONTENT = [
     EMPTY(),
     EMPTY(),
     EMPTY(),
-    EMPTY(),
     LINE("center", [FORMAT_NODE(TitlePageElement.Title)]),
     EMPTY("center"),
     LINE("center", [TEXT("by")]),
     EMPTY("center"),
     LINE("center", [FORMAT_NODE(TitlePageElement.Author)]),
-    // Push date to bottom
     EMPTY(),
     EMPTY(),
     EMPTY(),

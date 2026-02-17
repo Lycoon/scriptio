@@ -54,6 +54,7 @@ export abstract class ProjectAdapter<TExportOptions extends BaseExportOptions = 
     public import(rawContent: ArrayBuffer, editor: Editor): void {
         try {
             const project = this.convertFrom(rawContent);
+            console.log("Converted project data:", project);
             if (project.screenplay) replaceScreenplay(editor, project.screenplay);
         } catch (error) {
             console.error(`Failed to import from ${this.label}`, error);

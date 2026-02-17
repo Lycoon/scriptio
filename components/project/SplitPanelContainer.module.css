@@ -14,6 +14,22 @@
     flex-direction: column;
 }
 
+/* Mounted-but-hidden panels: kept alive in the DOM so editors
+   don't reinitialise; pulled out of grid flow via absolute positioning.
+   visibility:hidden (not display:none) preserves layout for ProseMirror. */
+.panel_hidden {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: -1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
 /* Drag handle */
 .drag_handle {
     width: 6px;

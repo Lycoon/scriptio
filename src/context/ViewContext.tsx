@@ -10,6 +10,7 @@ interface ViewContextType {
     splitRatio: number;
     isSplit: boolean;
     visiblePanels: PanelType[];
+    mountedPanels: Set<PanelType>;
     setPrimaryPanel: (panel: PanelType) => void;
     setSecondaryPanel: (panel: PanelType | null) => void;
     setSplitRatio: (ratio: number) => void;
@@ -23,6 +24,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [primaryPanel, setPrimaryPanelState] = useState<PanelType>("screenplay");
     const [secondaryPanel, setSecondaryPanelState] = useState<PanelType | null>(null);
     const [splitRatio, setSplitRatio] = useState(0.5);
+    const [mountedPanels, setMountedPanels] = useState<Set<PanelType>>(() => new Set(["screenplay"]));
 
     const isSplit = secondaryPanel !== null;
 
@@ -35,12 +37,26 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const setPrimaryPanel = useCallback((panel: PanelType) => {
         setPrimaryPanelState(panel);
         setSecondaryPanelState(null);
+        setMountedPanels((prev) => {
+            if (prev.has(panel)) return prev;
+            const next = new Set(prev);
+            next.add(panel);
+            return next;
+        });
     }, []);
 
     const setSecondaryPanel = useCallback(
         (panel: PanelType | null) => {
             if (panel === primaryPanel) return;
             setSecondaryPanelState(panel);
+            if (panel) {
+                setMountedPanels((prev) => {
+                    if (prev.has(panel)) return prev;
+                    const next = new Set(prev);
+                    next.add(panel);
+                    return next;
+                });
+            }
         },
         [primaryPanel],
     );
@@ -52,11 +68,12 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             splitRatio,
             isSplit,
             visiblePanels,
+            mountedPanels,
             setPrimaryPanel,
             setSecondaryPanel,
             setSplitRatio,
         }),
-        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, setPrimaryPanel, setSecondaryPanel],
+        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, setPrimaryPanel, setSecondaryPanel],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

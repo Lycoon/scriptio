@@ -12,6 +12,7 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: clip;
+    scrollbar-gutter: stable;
     z-index: 0;
 }
 

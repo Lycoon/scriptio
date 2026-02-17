@@ -18,13 +18,14 @@ import CommentCards from "./CommentCards";
 import { ContextMenuType } from "./sidebar/ContextMenu";
 
 interface EditorPanelProps {
+    isVisible: boolean;
     suggestions: string[];
     updateSuggestions: (suggestions: string[]) => void;
     suggestionData: SuggestionData;
     updateSuggestionData: (data: SuggestionData) => void;
 }
 
-const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSuggestionData }: EditorPanelProps) => {
+const EditorPanel = ({ isVisible, suggestions, updateSuggestions, suggestionData, updateSuggestionData }: EditorPanelProps) => {
     const { membership, isLoading } = useProjectMembership();
     const { isZenMode, updateIsZenMode, updateContextMenu } = useContext(UserContext);
     const {
@@ -124,9 +125,11 @@ const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSug
         // CONT'D label
         editorElement.style.setProperty("--contd-label", `"${contdLabel}"`);
 
-        // Focus editor to trigger pagination recompute
-        editor.commands.focus();
-    }, [editor, displaySceneNumbers, sceneHeadingBold, sceneHeadingDoubleSpace, sceneNumberOnRight, contdLabel]);
+        // Focus editor to trigger pagination recompute (only when visible to avoid stealing focus)
+        if (isVisible) {
+            editor.commands.focus();
+        }
+    }, [editor, isVisible, displaySceneNumbers, sceneHeadingBold, sceneHeadingDoubleSpace, sceneNumberOnRight, contdLabel]);
 
     useEffect(() => {
         if (!editor) return;
@@ -208,6 +211,8 @@ const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSug
     }, [updateSuggestions]);
 
     useEffect(() => {
+        if (!isVisible) return;
+
         const pressedKeyEvent = (e: KeyboardEvent) => {
             if (e.key === "Tab") {
                 e.preventDefault();
@@ -241,7 +246,7 @@ const EditorPanel = ({ suggestions, updateSuggestions, suggestionData, updateSug
         return () => {
             removeEventListener("keydown", pressedKeyEvent);
         };
-    }, []);
+    }, [isVisible]);
 
     const onScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         if (suggestions.length > 0) updateSuggestions([]);

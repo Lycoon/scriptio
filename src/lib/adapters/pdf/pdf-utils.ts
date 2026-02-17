@@ -17,6 +17,8 @@ export const FONTS: TFontDictionary = {
 //
 const ONE_INCH = 72.0;
 
+const LINE_HEIGHT_PT = 12; // One line of 12pt Courier = 12pt
+
 const CHARACTER_L = 2.5 * ONE_INCH;
 const DIALOGUE_L = 1.3 * ONE_INCH;
 const DIALOGUE_R = 1.0 * ONE_INCH;
@@ -29,7 +31,7 @@ const PAGE_TOP = ONE_INCH;
 const PAGE_BOTTOM = ONE_INCH;
 
 export const addOffset = (pdfNodes: any[]) => {
-    pdfNodes.push(getPDFNodeTemplate("offset", ""));
+    pdfNodes.push({ text: " ", fontSize: 0, style: ["offset"] });
 };
 
 export const getPDFTableTemplate = (text: string, type: string) => {
@@ -66,7 +68,7 @@ export const getPDFNodeTemplate = (style: string, text: string, options?: SceneO
             node.bold = false;
         }
         if (options.doubleSpace) {
-            node.margin = [0, 12, 0, 0]; // Add extra top margin (one line height = ~12pt)
+            node.margin = [0, LINE_HEIGHT_PT, 0, 0];
         }
     }
 
@@ -79,15 +81,11 @@ export interface SceneWithNumberOptions {
     doubleSpace?: boolean;
 }
 
-export const getSceneWithNumberTemplate = (
-    sceneNumber: number,
-    text: string,
-    options?: SceneWithNumberOptions,
-) => {
+export const getSceneWithNumberTemplate = (sceneNumber: number, text: string, options?: SceneWithNumberOptions) => {
     const bold = options?.bold ?? true;
     const showRightNumber = options?.showRightNumber ?? false;
     const doubleSpace = options?.doubleSpace ?? false;
-    const topMargin = doubleSpace ? 12 : 0; // Add extra top margin (one line height = ~12pt)
+    const topMargin = doubleSpace ? LINE_HEIGHT_PT : 0;
 
     const columns: any[] = [
         {
@@ -146,14 +144,14 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             ];
         },
         content: pdfNodes,
-        pageMargins: [PAGE_LEFT, PAGE_RIGHT, PAGE_TOP, PAGE_BOTTOM],
+        pageMargins: [PAGE_LEFT, PAGE_TOP, PAGE_RIGHT, PAGE_BOTTOM],
         pageSize: options.format,
         defaultStyle: {
             font: "CourierPrime",
             fontSize: 12,
             alignment: "left",
-            characterSpacing: -0.3,
-            lineHeight: 0.9,
+            characterSpacing: -0.7,
+            lineHeight: 1.0,
         },
         styles: {
             scene: {
@@ -180,7 +178,7 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             },
             action: {},
             offset: {
-                marginBottom: 13.2,
+                marginBottom: LINE_HEIGHT_PT,
             },
         },
     };

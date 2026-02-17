@@ -10,7 +10,7 @@ import { isTauri } from "@tauri-apps/api/core";
 
 import styles from "./TitlePagePanel.module.css";
 
-const TitlePagePanel = () => {
+const TitlePagePanel = ({ isVisible }: { isVisible?: boolean }) => {
     const { membership, isLoading } = useProjectMembership();
     const { isYjsReady, setFocusedEditorType } = useContext(ProjectContext);
     const [isEditorReady, setIsEditorReady] = useState(false);
