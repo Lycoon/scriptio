@@ -61,6 +61,7 @@ const ScreenplayFormatDropdown = () => {
     } = useContext(ProjectContext);
 
     const [isOpen, setIsOpen] = useState(false);
+    const [selectedAlign, setSelectedAlign] = useState<string>("left");
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const isTitleContext = focusedEditorType === "title";
@@ -107,23 +108,39 @@ const ScreenplayFormatDropdown = () => {
 
     const getActiveStyleClass = (style: Style) => (selectedStyles & style ? styles.active_style : "");
 
-    // Get current text alignment from the selected tp-text node
-    const getCurrentAlign = useCallback(() => {
-        if (!titlePageEditor) return "left";
-        const parent = titlePageEditor.state.selection.$anchor.parent;
-        return parent.attrs.textAlign || "left";
-    }, [titlePageEditor]);
+    // Sync alignment state from active editor on selection/content changes
+    useEffect(() => {
+        const activeEditor = isTitleContext ? titlePageEditor : editor;
+        if (!activeEditor) return;
+
+        const updateAlign = () => {
+            const align = activeEditor.state.selection.$anchor.parent.attrs.textAlign || "left";
+            setSelectedAlign(align);
+        };
+
+        activeEditor.on("selectionUpdate", updateAlign);
+        activeEditor.on("transaction", updateAlign);
+        updateAlign();
+
+        return () => {
+            activeEditor.off("selectionUpdate", updateAlign);
+            activeEditor.off("transaction", updateAlign);
+        };
+    }, [isTitleContext, titlePageEditor, editor]);
 
     const setAlignment = useCallback(
         (align: string) => {
-            if (!titlePageEditor) return;
-            titlePageEditor
-                .chain()
-                .focus()
-                .updateAttributes("tp-text", { textAlign: align })
-                .run();
+            setSelectedAlign(align);
+            if (isTitleContext) {
+                if (!titlePageEditor) return;
+                titlePageEditor.chain().focus().updateAttributes("tp-text", { textAlign: align }).run();
+            } else {
+                if (!editor) return;
+                const nodeType = editor.state.selection.$anchor.parent.type.name;
+                editor.chain().focus().updateAttributes(nodeType, { textAlign: align === "left" ? null : align }).run();
+            }
         },
-        [titlePageEditor],
+        [isTitleContext, titlePageEditor, editor],
     );
 
     // Resolve which labels, order, and selected element to display
@@ -131,7 +148,7 @@ const ScreenplayFormatDropdown = () => {
     const activeOrder = isTitleContext ? TITLEPAGE_ELEMENTS_ORDER : ELEMENTS_ORDER;
     const activeSelected = isTitleContext ? selectedTitlePageElement : selectedElement;
 
-    const currentAlign = isTitleContext ? getCurrentAlign() : "left";
+    const currentAlign = selectedAlign;
 
     return (
         <div className={styles.container} ref={dropdownRef}>
@@ -157,32 +174,28 @@ const ScreenplayFormatDropdown = () => {
                 </div>
             </div>
 
-            {/* Alignment buttons (title page only) */}
-            {isTitleContext && (
-                <>
-                    <div className={styles.separator} />
-                    <div className={styles.style_btns}>
-                        <div
-                            className={join(styles.style_btn, currentAlign === "left" ? styles.active_style : "")}
-                            onClick={() => setAlignment("left")}
-                        >
-                            <AlignLeft size={16} />
-                        </div>
-                        <div
-                            className={join(styles.style_btn, currentAlign === "center" ? styles.active_style : "")}
-                            onClick={() => setAlignment("center")}
-                        >
-                            <AlignCenter size={16} />
-                        </div>
-                        <div
-                            className={join(styles.style_btn, currentAlign === "right" ? styles.active_style : "")}
-                            onClick={() => setAlignment("right")}
-                        >
-                            <AlignRight size={16} />
-                        </div>
-                    </div>
-                </>
-            )}
+            {/* Alignment buttons */}
+            <div className={styles.separator} />
+            <div className={styles.style_btns}>
+                <div
+                    className={join(styles.style_btn, currentAlign === "left" ? styles.active_style : "")}
+                    onClick={() => setAlignment("left")}
+                >
+                    <AlignLeft size={16} />
+                </div>
+                <div
+                    className={join(styles.style_btn, currentAlign === "center" ? styles.active_style : "")}
+                    onClick={() => setAlignment("center")}
+                >
+                    <AlignCenter size={16} />
+                </div>
+                <div
+                    className={join(styles.style_btn, currentAlign === "right" ? styles.active_style : "")}
+                    onClick={() => setAlignment("right")}
+                >
+                    <AlignRight size={16} />
+                </div>
+            </div>
 
             <div className={styles.separator} />
 

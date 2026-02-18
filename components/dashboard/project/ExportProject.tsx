@@ -89,11 +89,11 @@ const ExportProject = () => {
 
         // Use membership title if available, otherwise use local title
         const projectTitle = membership?.project.title || localTitle;
-        const authorId = user?.id || "Unknown";
+        const authorEmail = user?.email || "Unknown";
 
         let baseOptions: BaseExportOptions = {
             title: projectTitle,
-            author: authorId,
+            author: authorEmail,
             includeNotes,
         };
 

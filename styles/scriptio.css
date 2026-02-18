@@ -384,25 +384,24 @@
 /* ============================================ */
 
 /* Base styling for all title-page text lines */
-.ProseMirror > p.tp-align-left,
-.ProseMirror > p.tp-align-center,
-.ProseMirror > p.tp-align-right {
+.ProseMirror > p.align-left,
+.ProseMirror > p.align-center,
+.ProseMirror > p.align-right {
     font-size: var(--font-size);
     line-height: var(--line-height) !important;
-    margin-bottom: 0;
 }
 
-/* Text alignment classes (used by tp-text node) */
-.tp-align-left {
-    text-align: left;
+/* Text alignment classes (shared by title page and screenplay nodes) */
+.align-left {
+    text-align: left !important;
 }
 
-.tp-align-center {
+.align-center {
     text-align: center !important;
 }
 
-.tp-align-right {
-    text-align: right;
+.align-right {
+    text-align: right !important;
 }
 
 /* Format atom nodes — indivisible placeholders */

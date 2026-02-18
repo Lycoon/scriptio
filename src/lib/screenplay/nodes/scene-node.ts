@@ -1,5 +1,6 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ScreenplayElement } from "../../utils/enums";
+import { ALIGN_CLASSES } from "./index";
 
 export interface SceneNodeOptions {
     HTMLAttributes: Record<string, any>;
@@ -46,7 +47,7 @@ export const SceneNode = Node.create<SceneNodeOptions>({
         return {
             class: {
                 default: ScreenplayElement.Scene,
-                parseHTML: (element) => element.getAttribute("class") || ScreenplayElement.Scene,
+                parseHTML: (element) => element.getAttribute("class")?.split(" ")[0] || ScreenplayElement.Scene,
             },
             "scene-id": {
                 default: null,
@@ -61,6 +62,19 @@ export const SceneNode = Node.create<SceneNodeOptions>({
                     return { "scene-id": attributes["scene-id"] };
                 },
             },
+            textAlign: {
+                default: null,
+                parseHTML: (element) => {
+                    if (element.classList.contains("align-center")) return "center";
+                    if (element.classList.contains("align-right")) return "right";
+                    return null;
+                },
+                renderHTML: (attributes) => {
+                    if (!attributes.textAlign) return {};
+                    const cls = ALIGN_CLASSES[attributes.textAlign];
+                    return cls ? { class: cls } : {};
+                },
+            },
         };
     },
 
@@ -70,8 +84,7 @@ export const SceneNode = Node.create<SceneNodeOptions>({
                 tag: "p",
                 getAttrs: (element) => {
                     const el = element as HTMLElement;
-                    const classAttr = el.getAttribute("class");
-                    if (classAttr === ScreenplayElement.Scene) {
+                    if (el.classList.contains(ScreenplayElement.Scene)) {
                         return {
                             "scene-id": el.getAttribute("scene-id") || el.getAttribute("data-scene-id") || null,
                         };

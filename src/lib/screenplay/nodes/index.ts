@@ -38,6 +38,12 @@ export const ScreenplayNodes = [
     NoteNode,
 ];
 
+export const ALIGN_CLASSES: Record<string, string> = {
+    left: "align-left",
+    center: "align-center",
+    right: "align-right",
+};
+
 export const SCREENPLAY_NODE_NAMES = {
     scene: "scene",
     action: "action",

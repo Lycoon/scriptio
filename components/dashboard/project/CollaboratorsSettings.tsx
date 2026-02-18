@@ -105,7 +105,9 @@ const CollaboratorsSettings = () => {
                                     />
                                 );
                             case "EMPTY":
-                                return <EmptySlot key={slot.key} membership={membership} mutateInvites={mutateInvites} />;
+                                return (
+                                    <EmptySlot key={slot.key} membership={membership} mutateInvites={mutateInvites} />
+                                );
                             default:
                                 return null;
                         }

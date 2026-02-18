@@ -1,4 +1,5 @@
 import { TDocumentDefinitions, TFontDictionary } from "pdfmake/interfaces";
+import { JSONContent } from "@tiptap/react";
 import { BASE_URL } from "@src/lib/utils/constants";
 import { PDFExportOptions } from "./pdf-adapter";
 
@@ -34,6 +35,52 @@ export const addOffset = (pdfNodes: any[]) => {
     pdfNodes.push({ text: " ", fontSize: 0, style: ["offset"] });
 };
 
+export type PdfText = string | any[];
+
+/**
+ * Convert Tiptap inline content (with marks) to a pdfMake rich-text array.
+ * If `uppercase` is true every text fragment is uppercased.
+ */
+export const buildRichText = (content: JSONContent[], uppercase?: boolean): PdfText => {
+    // Fast path: single fragment with no marks → plain string
+    if (content.length === 1 && (!content[0].marks || content[0].marks.length === 0)) {
+        const t = content[0].text ?? "";
+        return uppercase ? t.toUpperCase() : t;
+    }
+
+    const fragments: any[] = [];
+    for (let i = 0; i < content.length; i++) {
+        const child = content[i];
+        let t = child.text ?? "";
+        if (uppercase) t = t.toUpperCase();
+
+        const marks: string[] = (child.marks ?? []).map((m: any) => m.type);
+        const fragment: any = { text: t };
+
+        if (marks.includes("bold")) fragment.bold = true;
+        if (marks.includes("italic")) fragment.italics = true;
+        if (marks.includes("underline")) fragment.decoration = "underline";
+
+        fragments.push(fragment);
+    }
+    return fragments;
+};
+
+/**
+ * Prepend / append plain text to a PdfText value.
+ * If the value is a string, simple concatenation is used.
+ * If the value is an array (rich text), plain-text fragments are added at the edges.
+ */
+export const wrapPdfText = (text: PdfText, prefix?: string, suffix?: string): PdfText => {
+    if (typeof text === "string") {
+        return (prefix ?? "") + text + (suffix ?? "");
+    }
+    const arr = [...text];
+    if (prefix) arr.unshift({ text: prefix });
+    if (suffix) arr.push({ text: suffix });
+    return arr;
+};
+
 export const getPDFTableTemplate = (text: string, type: string) => {
     return {
         layout: "noBorders",
@@ -56,7 +103,7 @@ export interface SceneOptions {
     doubleSpace?: boolean;
 }
 
-export const getPDFNodeTemplate = (style: string, text: string, options?: SceneOptions) => {
+export const getPDFNodeTemplate = (style: string, text: PdfText, options?: SceneOptions, alignment?: string) => {
     const node: any = {
         text,
         style: [style],
@@ -72,6 +119,10 @@ export const getPDFNodeTemplate = (style: string, text: string, options?: SceneO
         }
     }
 
+    if (alignment) {
+        node.alignment = alignment;
+    }
+
     return node;
 };
 
@@ -79,13 +130,25 @@ export interface SceneWithNumberOptions {
     bold?: boolean;
     showRightNumber?: boolean;
     doubleSpace?: boolean;
+    alignment?: string;
 }
 
-export const getSceneWithNumberTemplate = (sceneNumber: number, text: string, options?: SceneWithNumberOptions) => {
+export const getSceneWithNumberTemplate = (sceneNumber: number, text: PdfText, options?: SceneWithNumberOptions) => {
     const bold = options?.bold ?? true;
     const showRightNumber = options?.showRightNumber ?? false;
     const doubleSpace = options?.doubleSpace ?? false;
     const topMargin = doubleSpace ? LINE_HEIGHT_PT : 0;
+
+    const textColumn: any = {
+        text,
+        width: "*",
+        bold,
+        margin: [-30, topMargin, 0, 0],
+    };
+
+    if (options?.alignment) {
+        textColumn.alignment = options.alignment;
+    }
 
     const columns: any[] = [
         {
@@ -94,12 +157,7 @@ export const getSceneWithNumberTemplate = (sceneNumber: number, text: string, op
             bold,
             margin: [-50, topMargin, 0, 0],
         },
-        {
-            text,
-            width: "*",
-            bold,
-            margin: [-30, topMargin, 0, 0],
-        },
+        textColumn,
     ];
 
     if (showRightNumber) {
@@ -129,6 +187,8 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
     return {
         info: {
             author: options.author,
+            title: options.title,
+            creator: "Scriptio",
         },
         header: (currentPage, pageCount, pageSize) => {
             if (currentPage === 1) {
@@ -150,8 +210,7 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             font: "CourierPrime",
             fontSize: 12,
             alignment: "left",
-            characterSpacing: -0.7,
-            lineHeight: 1.0,
+            lineHeight: 0.9,
         },
         styles: {
             scene: {

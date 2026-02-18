@@ -135,6 +135,13 @@
     min-width: 80px;
 }
 
+.cancelBtn:disabled,
+.kickBtn:disabled,
+.addBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .addBtn {
     background: var(--primary-text);
     color: var(--primary);
@@ -195,7 +202,9 @@
     gap: 6px;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.2s, visibility 0.2s;
+    transition:
+        opacity 0.2s,
+        visibility 0.2s;
     z-index: 100;
     white-space: nowrap;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

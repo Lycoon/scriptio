@@ -8,9 +8,9 @@ import { Node, mergeAttributes } from "@tiptap/core";
  */
 
 const ALIGN_CLASSES: Record<string, string> = {
-    left: "tp-align-left",
-    center: "tp-align-center",
-    right: "tp-align-right",
+    left: "align-left",
+    center: "align-center",
+    right: "align-right",
 };
 
 export const TitlePageTextNode = Node.create({
@@ -25,8 +25,8 @@ export const TitlePageTextNode = Node.create({
             textAlign: {
                 default: "left",
                 parseHTML: (element: HTMLElement) => {
-                    if (element.classList.contains("tp-align-center")) return "center";
-                    if (element.classList.contains("tp-align-right")) return "right";
+                    if (element.classList.contains("align-center")) return "center";
+                    if (element.classList.contains("align-right")) return "right";
                     return "left";
                 },
                 renderHTML: (attributes: Record<string, any>) => {
@@ -43,17 +43,11 @@ export const TitlePageTextNode = Node.create({
                 tag: "p",
                 getAttrs: (element) => {
                     const el = element as HTMLElement;
-                    // Accept any <p> with tp-align-* class or plain <p> for backward compat
-                    const hasAlign = el.classList.contains("tp-align-left")
-                        || el.classList.contains("tp-align-center")
-                        || el.classList.contains("tp-align-right");
-                    // Also accept old title page node classes for backward compat
-                    const hasOldClass = el.classList.contains("tp-title")
-                        || el.classList.contains("tp-author")
-                        || el.classList.contains("tp-date")
-                        || el.classList.contains("tp-other")
-                        || el.classList.contains("tp-contact");
-                    if (hasAlign || hasOldClass) return {};
+                    const hasAlign =
+                        el.classList.contains("align-left") ||
+                        el.classList.contains("align-center") ||
+                        el.classList.contains("align-right");
+                    if (hasAlign) return {};
                     return false;
                 },
             },

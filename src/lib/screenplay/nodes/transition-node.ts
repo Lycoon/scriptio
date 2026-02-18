@@ -1,5 +1,6 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ScreenplayElement } from "../../utils/enums";
+import { ALIGN_CLASSES } from "./index";
 
 export interface TransitionNodeOptions {
     HTMLAttributes: Record<string, any>;
@@ -22,7 +23,20 @@ export const TransitionNode = Node.create<TransitionNodeOptions>({
         return {
             class: {
                 default: ScreenplayElement.Transition,
-                parseHTML: (element) => element.getAttribute("class") || ScreenplayElement.Transition,
+                parseHTML: (element) => element.getAttribute("class")?.split(" ")[0] || ScreenplayElement.Transition,
+            },
+            textAlign: {
+                default: null,
+                parseHTML: (element) => {
+                    if (element.classList.contains("align-center")) return "center";
+                    if (element.classList.contains("align-right")) return "right";
+                    return null;
+                },
+                renderHTML: (attributes) => {
+                    if (!attributes.textAlign) return {};
+                    const cls = ALIGN_CLASSES[attributes.textAlign];
+                    return cls ? { class: cls } : {};
+                },
             },
         };
     },
@@ -33,8 +47,7 @@ export const TransitionNode = Node.create<TransitionNodeOptions>({
                 tag: "p",
                 getAttrs: (element) => {
                     const el = element as HTMLElement;
-                    const classAttr = el.getAttribute("class");
-                    if (classAttr === ScreenplayElement.Transition) {
+                    if (el.classList.contains(ScreenplayElement.Transition)) {
                         return {};
                     }
                     return false;

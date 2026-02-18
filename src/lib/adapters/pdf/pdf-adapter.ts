@@ -1,11 +1,13 @@
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import {
     addOffset,
+    buildRichText,
     FONTS,
     getPDFNodeTemplate,
     getPDFTableTemplate,
     getSceneWithNumberTemplate,
     initPDF,
+    wrapPdfText,
 } from "./pdf-utils";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { computeContdIndices } from "@src/lib/screenplay/contd";
@@ -46,12 +48,13 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
             }
 
             const content = nodes[i].content!;
-            const text: string = getNodeFlattenContent(content);
+            const plainText: string = getNodeFlattenContent(content);
             const type: string = nodes[i].attrs?.class;
             const nextType: string = i >= nodes.length - 1 ? "action" : nodes[i + 1].attrs?.class;
+            const align: string | undefined = nodes[i].attrs?.textAlign || undefined;
 
             // Don't export unselected characters
-            if (type === "character" && characters && !characters.includes(text)) {
+            if (type === "character" && characters && !characters.includes(plainText)) {
                 let j = i + 1;
                 for (; j < nodes.length; j++) {
                     const typeJ: string = nodes[j].attrs?.class;
@@ -63,54 +66,71 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
             }
 
             switch (type) {
-                case "scene":
+                case "scene": {
+                    const rich = buildRichText(content, true);
                     sceneNumber++;
                     if (displaySceneNumbers) {
                         pdfNodes.push(
-                            getSceneWithNumberTemplate(sceneNumber, text.toUpperCase(), {
+                            getSceneWithNumberTemplate(sceneNumber, rich, {
                                 bold: sceneHeadingBold,
                                 showRightNumber: sceneNumberOnRight,
                                 doubleSpace: sceneHeadingDoubleSpace,
+                                alignment: align,
                             }),
                         );
                     } else {
                         pdfNodes.push(
-                            getPDFNodeTemplate("scene", text.toUpperCase(), {
+                            getPDFNodeTemplate("scene", rich, {
                                 bold: sceneHeadingBold,
                                 doubleSpace: sceneHeadingDoubleSpace,
-                            }),
+                            }, align),
                         );
                     }
                     addOffset(pdfNodes);
                     break;
-                case "character":
-                    const characterText = contdIndices.has(i) ? text.toUpperCase() + " " + contdLabel : text.toUpperCase();
-                    pdfNodes.push(getPDFNodeTemplate("character", characterText));
+                }
+                case "character": {
+                    let rich = buildRichText(content, true);
+                    if (contdIndices.has(i)) {
+                        rich = wrapPdfText(rich, undefined, " " + contdLabel);
+                    }
+                    pdfNodes.push(getPDFNodeTemplate("character", rich, undefined, align));
                     break;
-                case "dialogue":
-                    pdfNodes.push(getPDFNodeTemplate("dialogue", text));
+                }
+                case "dialogue": {
+                    const rich = buildRichText(content);
+                    pdfNodes.push(getPDFNodeTemplate("dialogue", rich, undefined, align));
                     if (nextType !== "parenthetical") addOffset(pdfNodes);
                     break;
-                case "parenthetical":
-                    pdfNodes.push(getPDFNodeTemplate("parenthetical", "(" + text + ")"));
+                }
+                case "parenthetical": {
+                    const rich = wrapPdfText(buildRichText(content), "(", ")");
+                    pdfNodes.push(getPDFNodeTemplate("parenthetical", rich, undefined, align));
                     break;
-                case "transition":
-                    pdfNodes.push(getPDFNodeTemplate("transition", text.toUpperCase() + ":"));
+                }
+                case "transition": {
+                    const rich = wrapPdfText(buildRichText(content, true), undefined, ":");
+                    pdfNodes.push(getPDFNodeTemplate("transition", rich, undefined, align));
                     addOffset(pdfNodes);
                     break;
-                case "section":
-                    pdfNodes.push(getPDFNodeTemplate("section", text.toUpperCase()));
+                }
+                case "section": {
+                    const rich = buildRichText(content, true);
+                    pdfNodes.push(getPDFNodeTemplate("section", rich, undefined, align));
                     addOffset(pdfNodes);
                     break;
+                }
                 case "note":
                     if (options.includeNotes) {
-                        pdfNodes.push(getPDFTableTemplate(text, "note"));
+                        pdfNodes.push(getPDFTableTemplate(plainText, "note"));
                         //addOffset(pdfNodes);
                     }
                     break;
-                default:
-                    pdfNodes.push(getPDFNodeTemplate("action", text));
+                default: {
+                    const rich = buildRichText(content);
+                    pdfNodes.push(getPDFNodeTemplate("action", rich, undefined, align));
                     addOffset(pdfNodes);
+                }
             }
         }
 
