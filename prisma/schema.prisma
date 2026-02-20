@@ -51,6 +51,7 @@ model Project {
 
   title               String
   description         String?
+  author              String?
   hasPoster           Boolean     @default(false)
 
   members             ProjectMember[]

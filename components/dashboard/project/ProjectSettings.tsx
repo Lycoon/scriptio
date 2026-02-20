@@ -20,6 +20,7 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
     const {
         title: localTitle,
         description: localDescription,
+        author: localAuthor,
         isLoading: localLoading,
     } = useLocalProjectInfo(projectId);
 
@@ -35,6 +36,7 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
     // Get project data from membership or local info
     const projectTitle = membership?.project.title || localTitle;
     const projectDescription = membership?.project.description || localDescription;
+    const projectAuthor = membership?.project.author || localAuthor;
 
     useEffect(() => {
         if (!selectedFile) return;
@@ -54,12 +56,13 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         const target = e.target as any;
         const newTitle = target.title.value;
         const newDescription = target.description.value;
+        const newAuthor = target.author.value;
 
         if (isLocalOnly) {
             // Save to local SQLite
             try {
                 const { updateLocalProject } = await import("@src/lib/persistence/local-projects");
-                await updateLocalProject(projectId, { title: newTitle, description: newDescription });
+                await updateLocalProject(projectId, { title: newTitle, description: newDescription, author: newAuthor });
             } catch (error) {
                 console.error("[ProjectSettings] Failed to save local project:", error);
             }
@@ -68,6 +71,7 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
             const body: any = {
                 title: newTitle,
                 description: newDescription,
+                author: newAuthor,
             };
 
             if (selectedFile) {
@@ -106,6 +110,19 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                     onChange={() => setDirty(true)}
                     className={styles.input}
                     placeholder="Enter project name..."
+                />
+            </div>
+
+            {/* Author */}
+            <div className={styles.formGroup}>
+                <label className={form.label}>Author</label>
+                <input
+                    name="author"
+                    type="text"
+                    defaultValue={projectAuthor ?? ""}
+                    onChange={() => setDirty(true)}
+                    className={styles.input}
+                    placeholder="Author name..."
                 />
             </div>
 

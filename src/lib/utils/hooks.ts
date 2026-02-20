@@ -172,6 +172,7 @@ const useLocalProjects = () => {
                     id: p.id,
                     title: p.title,
                     description: p.description,
+                    author: p.author,
                     hasPoster: false,
                     poster: null,
                     createdAt: p.createdAt,
@@ -366,6 +367,7 @@ export const useGlobalKeybinds = (
 const useLocalProjectInfo = (projectId: string | null) => {
     const [title, setTitle] = useState<string>("Untitled");
     const [description, setDescription] = useState<string | null>(null);
+    const [author, setAuthor] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -381,6 +383,7 @@ const useLocalProjectInfo = (projectId: string | null) => {
                 if (localProject) {
                     setTitle(localProject.title);
                     setDescription(localProject.description);
+                    setAuthor(localProject.author);
                 }
             } catch (error) {
                 console.error("[useLocalProjectInfo] Failed to load local project:", error);
@@ -392,7 +395,7 @@ const useLocalProjectInfo = (projectId: string | null) => {
         loadLocalProject();
     }, [projectId]);
 
-    return { title, description, isLoading };
+    return { title, description, author, isLoading };
 };
 
 export {

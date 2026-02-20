@@ -7,6 +7,7 @@ import { ProjectData, ProjectState } from "../project/project-state";
 export type BaseExportOptions = {
     title: string;
     author: string;
+    projectAuthor?: string;
     includeNotes: boolean;
     characters?: string[]; // undefined means all characters
     notesColor?: string;

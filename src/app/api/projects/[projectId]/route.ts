@@ -64,13 +64,16 @@ async function updateProject(req: NextRequest, { routeParams }: ApiContext) {
     }
 
     const body = await req.json();
-    const { title, description, poster } = validate(UpdateProjectBodySchema, body);
+    const { title, description, author, poster } = validate(UpdateProjectBodySchema, body);
 
     if (title && (title.length < 1 || title.length > 256)) {
         throw new BodyFieldError("Title must be between 1 and 256 characters");
     }
     if (description && description.length > 2048) {
         throw new BodyFieldError("Description must be at most 2048-character long");
+    }
+    if (author && author.length > 256) {
+        throw new BodyFieldError("Author must be at most 256-character long");
     }
 
     if (!Roles.hasRoleOrGreater(member.role, ProjectRole.EDITOR)) {
@@ -86,6 +89,7 @@ async function updateProject(req: NextRequest, { routeParams }: ApiContext) {
         projectId,
         title,
         description,
+        author,
         hasPoster,
     });
 

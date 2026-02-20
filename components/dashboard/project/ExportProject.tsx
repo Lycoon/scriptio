@@ -40,7 +40,7 @@ const ExportProject = () => {
 
     // For local projects on desktop without auth
     const projectId = useProjectIdFromUrl();
-    const { title: localTitle } = useLocalProjectInfo(projectId);
+    const { title: localTitle, author: localAuthor } = useLocalProjectInfo(projectId);
 
     const [format, setFormat] = useState<ExportFormat>(ExportFormat.PDF);
     const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
@@ -90,10 +90,12 @@ const ExportProject = () => {
         // Use membership title if available, otherwise use local title
         const projectTitle = membership?.project.title || localTitle;
         const authorEmail = user?.email || "Unknown";
+        const projectAuthor = membership?.project.author || localAuthor || undefined;
 
         let baseOptions: BaseExportOptions = {
             title: projectTitle,
             author: authorEmail,
+            projectAuthor,
             includeNotes,
         };
 

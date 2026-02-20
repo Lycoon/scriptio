@@ -41,6 +41,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
 
         const title = e.target.title.value;
         const description = e.target.description.value;
+        const author = e.target.author.value;
 
         // Desktop: offline-first project creation
         // Always create locally. If signed in, try cloud first to use its ID.
@@ -50,7 +51,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                 // If signed in, try creating on server to get the cloud project ID
                 if (user) {
                     try {
-                        const body: CreateProjectBody = { title, description };
+                        const body: CreateProjectBody = { title, description, author };
                         if (selectedFile) {
                             body.poster = await cropImageBase64(selectedFile, 686, 1016);
                         }
@@ -69,9 +70,9 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                     "@src/lib/persistence/local-projects"
                 );
                 if (projectId) {
-                    await createLocalProjectWithId(projectId, title, description, true);
+                    await createLocalProjectWithId(projectId, title, description, true, author);
                 } else {
-                    const localProject = await createLocalProject(title, description);
+                    const localProject = await createLocalProject(title, description, author);
                     projectId = localProject.id;
                 }
             } catch (error) {
@@ -91,6 +92,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         const body: CreateProjectBody = {
             title,
             description,
+            author,
         };
 
         if (selectedFile) {
@@ -127,6 +129,12 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                             className={join(form.input, form.input_desc)}
                             onChange={resetFormInfo}
                         />
+                    </div>
+                    <div className={form.element}>
+                        <p className={form.label}>
+                            Author - <i>optional</i>
+                        </p>
+                        <input name="author" className={form.input} onChange={resetFormInfo} />
                     </div>
                     <div className={form.element}>
                         <p className={form.label}>

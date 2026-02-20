@@ -18,6 +18,7 @@ export type ProjectCreation = {
     userId: string;
     title: string;
     description?: string;
+    author?: string;
     hasPoster?: boolean;
 };
 
@@ -25,6 +26,7 @@ export type ProjectUpdate = {
     projectId: string;
     title?: string;
     description?: string;
+    author?: string;
     hasPoster?: boolean;
 };
 

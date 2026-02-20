@@ -18,10 +18,9 @@ export interface LocalProject {
     id: string;
     title: string;
     description: string | null;
+    author: string | null;
     createdAt: Date;
     updatedAt: Date;
-    // Local-only projects don't have posters stored in S3
-    // Could add local poster path in future if needed
 }
 
 let dbInstance: Database | null = null;
@@ -51,12 +50,16 @@ async function getDb(): Promise<Database> {
                 id TEXT PRIMARY KEY,
                 title TEXT NOT NULL,
                 description TEXT,
+                author TEXT,
                 created_at INTEGER NOT NULL,
                 updated_at INTEGER NOT NULL,
                 is_synced INTEGER NOT NULL DEFAULT 0,
                 data TEXT
             )
         `);
+
+        // Add author column to existing tables (no-op if already exists)
+        await db.execute(`ALTER TABLE local_projects ADD COLUMN author TEXT`).catch(() => {});
 
         dbInstance = db;
         return db;
@@ -86,8 +89,8 @@ export async function isLocalProject(projectId: string): Promise<boolean> {
  * Create a new local-only project with a generated ID.
  * Throws error if not in Tauri environment.
  */
-export async function createLocalProject(title: string, description?: string): Promise<LocalProject> {
-    return createLocalProjectWithId(generateLocalProjectId(), title, description, false);
+export async function createLocalProject(title: string, description?: string, author?: string): Promise<LocalProject> {
+    return createLocalProjectWithId(generateLocalProjectId(), title, description, false, author);
 }
 
 /**
@@ -100,6 +103,7 @@ export async function createLocalProjectWithId(
     title: string,
     description?: string,
     synced: boolean = false,
+    author?: string,
 ): Promise<LocalProject> {
     if (!isTauri()) {
         throw new Error("Cannot create local project outside Tauri environment");
@@ -109,14 +113,15 @@ export async function createLocalProjectWithId(
     const now = Date.now();
 
     await db.execute(
-        `INSERT INTO local_projects (id, title, description, created_at, updated_at, is_synced) VALUES (?, ?, ?, ?, ?, ?)`,
-        [id, title, description || null, now, now, synced ? 1 : 0]
+        `INSERT INTO local_projects (id, title, description, author, created_at, updated_at, is_synced) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, title, description || null, author || null, now, now, synced ? 1 : 0]
     );
 
     return {
         id,
         title,
         description: description || null,
+        author: author || null,
         createdAt: new Date(now),
         updatedAt: new Date(now),
     };
@@ -135,6 +140,7 @@ export async function getLocalProjects(): Promise<LocalProject[]> {
         id: string;
         title: string;
         description: string | null;
+        author: string | null;
         created_at: number;
         updated_at: number;
     }[];
@@ -143,6 +149,7 @@ export async function getLocalProjects(): Promise<LocalProject[]> {
         id: row.id,
         title: row.title,
         description: row.description,
+        author: row.author,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
     }));
@@ -161,6 +168,7 @@ export async function getLocalProject(id: string): Promise<LocalProject | null> 
         id: string;
         title: string;
         description: string | null;
+        author: string | null;
         created_at: number;
         updated_at: number;
     }[];
@@ -172,6 +180,7 @@ export async function getLocalProject(id: string): Promise<LocalProject | null> 
         id: row.id,
         title: row.title,
         description: row.description,
+        author: row.author,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
     };
@@ -183,7 +192,7 @@ export async function getLocalProject(id: string): Promise<LocalProject | null> 
  */
 export async function updateLocalProject(
     id: string,
-    updates: { title?: string; description?: string }
+    updates: { title?: string; description?: string; author?: string }
 ): Promise<void> {
     if (!isTauri()) return;
 
@@ -201,6 +210,11 @@ export async function updateLocalProject(
     if (updates.description !== undefined) {
         setClauses.push("description = ?");
         values.push(updates.description);
+    }
+
+    if (updates.author !== undefined) {
+        setClauses.push("author = ?");
+        values.push(updates.author);
     }
 
     values.push(id);
@@ -310,15 +324,15 @@ export async function isLocalOnlyProject(id: string): Promise<boolean> {
  * No-op when not in Tauri environment.
  */
 export async function ensureLocalEntries(
-    projects: { id: string; title: string; description: string | null; createdAt: Date; updatedAt: Date }[],
+    projects: { id: string; title: string; description: string | null; author?: string | null; createdAt: Date; updatedAt: Date }[],
 ): Promise<void> {
     if (!isTauri() || projects.length === 0) return;
 
     const db = await getDb();
     for (const p of projects) {
         await db.execute(
-            `INSERT OR IGNORE INTO local_projects (id, title, description, created_at, updated_at, is_synced) VALUES (?, ?, ?, ?, ?, 1)`,
-            [p.id, p.title, p.description, p.createdAt.getTime(), p.updatedAt.getTime()]
+            `INSERT OR IGNORE INTO local_projects (id, title, description, author, created_at, updated_at, is_synced) VALUES (?, ?, ?, ?, ?, ?, 1)`,
+            [p.id, p.title, p.description, p.author || null, p.createdAt.getTime(), p.updatedAt.getTime()]
         );
     }
 }

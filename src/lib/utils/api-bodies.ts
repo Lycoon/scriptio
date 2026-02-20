@@ -28,6 +28,7 @@ export type RecoverPasswordBody = z.infer<typeof RecoverPasswordBodySchema>;
 export const CreateProjectBodySchema = z.object({
     title: z.string(),
     description: z.string().optional(),
+    author: z.string().optional(),
     poster: z.string().optional(),
 });
 export type CreateProjectBody = z.infer<typeof CreateProjectBodySchema>;
@@ -35,6 +36,7 @@ export type CreateProjectBody = z.infer<typeof CreateProjectBodySchema>;
 export const UpdateProjectBodySchema = z.object({
     title: z.string().optional(),
     description: z.string().optional(),
+    author: z.string().optional(),
     poster: z.string().optional(),
     characters: z.any().optional(),
 });

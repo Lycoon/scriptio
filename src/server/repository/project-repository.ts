@@ -11,6 +11,7 @@ const projectMembershipSelect = {
             title: true,
             hasPoster: true,
             description: true,
+            author: true,
             createdAt: true,
             updatedAt: true,
         },
@@ -131,6 +132,7 @@ export class ProjectRepository {
             data: {
                 title: project.title,
                 description: project.description,
+                author: project.author,
                 hasPoster: project.hasPoster,
                 members: {
                     create: {
@@ -148,6 +150,7 @@ export class ProjectRepository {
             data: {
                 title: project.title,
                 description: project.description,
+                author: project.author,
                 hasPoster: project.hasPoster,
             },
         });

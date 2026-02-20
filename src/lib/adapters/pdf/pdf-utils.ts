@@ -183,6 +183,95 @@ export const getWatermarkData = (text: string) => {
     };
 };
 
+/**
+ * Resolve a title page format node (tp-title, tp-author, tp-date) to its display value.
+ */
+const resolveTitlePageNode = (type: string, options: PDFExportOptions): string => {
+    switch (type) {
+        case "tp-title":
+            return options.title || "";
+        case "tp-author":
+            return options.projectAuthor || "";
+        case "tp-date":
+            return new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            });
+        default:
+            return "";
+    }
+};
+
+/**
+ * Convert a tp-text block's inline content to pdfMake rich text.
+ * Handles plain text, format nodes (tp-title, tp-author, tp-date), and marks (bold/italic/underline).
+ */
+const buildTitlePageRichText = (content: JSONContent[], options: PDFExportOptions): PdfText => {
+    if (!content || content.length === 0) return " ";
+
+    const fragments: any[] = [];
+
+    for (const child of content) {
+        // Format atom nodes (tp-title, tp-author, tp-date)
+        if (child.type === "tp-title" || child.type === "tp-author" || child.type === "tp-date") {
+            const value = resolveTitlePageNode(child.type, options);
+            if (value) fragments.push({ text: value });
+            continue;
+        }
+
+        // Regular text nodes
+        const text = child.text ?? "";
+        if (!text) continue;
+
+        const marks: string[] = (child.marks ?? []).map((m: any) => m.type);
+        const fragment: any = { text };
+
+        if (marks.includes("bold")) fragment.bold = true;
+        if (marks.includes("italic")) fragment.italics = true;
+        if (marks.includes("underline")) fragment.decoration = "underline";
+
+        fragments.push(fragment);
+    }
+
+    // Fast path: single plain fragment → plain string
+    if (fragments.length === 1 && Object.keys(fragments[0]).length === 1 && "text" in fragments[0]) {
+        return fragments[0].text;
+    }
+
+    return fragments.length > 0 ? fragments : " ";
+};
+
+/**
+ * Build PDF title page nodes from the actual title page TipTap document.
+ * Each tp-text block becomes a pdfMake paragraph with alignment preserved.
+ * Format nodes (tp-title, tp-author, tp-date) are resolved to their values.
+ */
+export const buildTitlePage = (titlePageContent: JSONContent[], options: PDFExportOptions): any[] => {
+    const pdfNodes: any[] = [];
+
+    for (const node of titlePageContent) {
+        if (node.type !== "tp-text") continue;
+
+        const alignment = node.attrs?.textAlign || "left";
+        const richText = buildTitlePageRichText(node.content || [], options);
+
+        pdfNodes.push({
+            text: richText,
+            alignment,
+            fontSize: 12,
+            marginBottom: LINE_HEIGHT_PT,
+        });
+    }
+
+    // Page break after title page
+    if (pdfNodes.length > 0) {
+        pdfNodes.push({ text: "", pageBreak: "after" });
+    }
+
+    return pdfNodes;
+};
+
 export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDefinitions => {
     return {
         info: {
@@ -191,7 +280,7 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             creator: "Scriptio",
         },
         header: (currentPage, pageCount, pageSize) => {
-            if (currentPage === 1) {
+            if (currentPage <= 2) {
                 return;
             }
             return [

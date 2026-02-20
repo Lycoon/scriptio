@@ -2,6 +2,7 @@ import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import {
     addOffset,
     buildRichText,
+    buildTitlePage,
     FONTS,
     getPDFNodeTemplate,
     getPDFTableTemplate,
@@ -134,7 +135,10 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
             }
         }
 
-        let pdf = initPDF(options, pdfNodes);
+        const titlePageContent = project.titlepage();
+        const titlePage = buildTitlePage(titlePageContent, options);
+        const allNodes = [...titlePage, ...pdfNodes];
+        let pdf = initPDF(options, allNodes);
         if (options.watermark) {
             pdf.watermark = {
                 text: options.author,

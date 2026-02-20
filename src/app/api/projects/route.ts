@@ -47,7 +47,7 @@ async function createProject(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { title, description, poster } = validate(CreateProjectBodySchema, body);
+    const { title, description, author, poster } = validate(CreateProjectBodySchema, body);
 
     if (title.length < 1 || title.length > 256) {
         throw new BodyFieldError("Title must be between 1 and 256 characters");
@@ -55,10 +55,14 @@ async function createProject(req: NextRequest) {
     if (description && description.length > 2048) {
         throw new BodyFieldError("Description must be at most 2048-character long");
     }
+    if (author && author.length > 256) {
+        throw new BodyFieldError("Author must be at most 256-character long");
+    }
 
     const newProject = await ProjectService.create({
         title,
         description,
+        author,
         userId: cookie.id,
         hasPoster: poster !== undefined,
     });

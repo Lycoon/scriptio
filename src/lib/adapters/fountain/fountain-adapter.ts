@@ -11,8 +11,82 @@ export class FountainAdapter extends ProjectAdapter {
     label = "Fountain Script";
     extension = "fountain";
 
+    /**
+     * Resolve a title page format node to its Fountain key and display value.
+     */
+    private resolveTitlePageNode(
+        type: string,
+        options: BaseExportOptions,
+    ): { key: string; value: string } | null {
+        switch (type) {
+            case "tp-title":
+                return { key: "Title", value: options.title || "" };
+            case "tp-author":
+                return { key: "Author", value: options.projectAuthor || "" };
+            case "tp-date":
+                return {
+                    key: "Draft date",
+                    value: new Date().toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                    }),
+                };
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Build Fountain title page from the actual title page TipTap document.
+     * Maps format nodes to Fountain keys (Title, Author, Draft date)
+     * and plain text lines to Credit.
+     */
+    private buildFountainTitlePage(project: ProjectState, options: BaseExportOptions): string {
+        const titlePageContent = project.titlepage();
+        if (!titlePageContent || titlePageContent.length === 0) return "";
+
+        const lines: string[] = [];
+
+        for (const node of titlePageContent) {
+            if (node.type !== "tp-text") continue;
+
+            const content = node.content;
+
+            // Empty line (no content) — skip in Fountain title page (key-value only)
+            if (!content || content.length === 0) continue;
+
+            // Check if this line contains a format node
+            const formatChild = content.find(
+                (c: any) => c.type === "tp-title" || c.type === "tp-author" || c.type === "tp-date",
+            );
+
+            if (formatChild) {
+                const resolved = this.resolveTitlePageNode(formatChild.type!, options);
+                if (resolved && resolved.value) {
+                    lines.push(`${resolved.key}: ${resolved.value}`);
+                }
+                continue;
+            }
+
+            // Plain text line — flatten and use as Credit
+            const text = content
+                .map((c: any) => c.text ?? "")
+                .join("")
+                .trim();
+            if (text) {
+                lines.push(`Credit: ${text}`);
+            }
+        }
+
+        if (lines.length === 0) return "";
+        return lines.join("\n") + "\n\n";
+    }
+
     convertTo(project: ProjectState, options: BaseExportOptions): Promise<Blob> {
-        let fountain = "";
+        // Build title page from actual document
+        let fountain = this.buildFountainTitlePage(project, options);
+
         let sceneCount = 1;
         let nodes = project.screenplay();
         const characters = options.characters;

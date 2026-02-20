@@ -46,7 +46,7 @@ import {
 import { createSceneIdDedupExtension } from "./extensions/scene-id-dedup-extension";
 import { CommentMark } from "./extensions/comment-highlight-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
-import { PagePositionExtension } from "./extensions/page-position-extension";
+import { OrphanPreventionExtension } from "./extensions/orphan-prevention-extension";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
     if (style & Style.Bold) editor.chain().toggleBold().focus().run();
@@ -490,9 +490,7 @@ export const useScriptioEditor = (
                     footerRight: "",
                     ...SCREENPLAY_FORMATS[pageSize],
                 }),
-                /*PagePositionExtension.configure({
-                    pageHeight: SCREENPLAY_FORMATS[pageSize].pageHeight,
-                }),*/
+                OrphanPreventionExtension,
                 KeybindsExtension.configure({
                     userKeybinds: userKeybinds || {},
                     onAction: (id, editorInstance) => {

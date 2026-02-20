@@ -26,6 +26,7 @@ export type ConnectionStatus = "disconnected" | "connecting" | "connected";
 import * as Y from "yjs";
 import type { ThrottledWebsocketProvider } from "../collaboration/utils";
 import { ScreenplaySchema } from "../screenplay/editor";
+import { TitlePageSchema } from "../titlepage/editor";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 
 export interface ProjectYjsState {
@@ -149,6 +150,12 @@ export class ProjectState extends Y.Doc {
 
     screenplayFragment(): Y.XmlFragment {
         return this.getXmlFragment(this.KEYS.SCREENPLAY);
+    }
+
+    titlepage(): JSONContent[] {
+        const fragment = this.titlepageFragment();
+        const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, TitlePageSchema);
+        return proseMirrorNode.content.toJSON() as JSONContent[];
     }
 
     titlepageFragment(): Y.XmlFragment {
