@@ -4,6 +4,7 @@ import { useContext, useEffect, useState } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { PageFormat } from "@src/lib/utils/enums";
 import { Check } from "lucide-react";
+import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "./ProjectSettings.module.css";
@@ -48,18 +49,21 @@ const LayoutSettings = () => {
         setPageFormat(newFormat);
     };
 
+    const pageFormatOptions: DropdownOption[] = [
+        { value: "LETTER", label: 'US Letter (8.5" x 11")' },
+        { value: "A4", label: "A4 (210mm x 297mm)" },
+    ];
+
     return (
         <div className={sharedStyles.settingsForm}>
             <div className={sharedStyles.formGroup}>
                 <label className={form.label}>Page Format</label>
-                <select
+                <Dropdown
                     value={pageFormat}
-                    onChange={(e) => handleFormatChange(e.target.value as PageFormat)}
+                    onChange={(value) => handleFormatChange(value as PageFormat)}
+                    options={pageFormatOptions}
                     className={`${sharedStyles.input} ${styles.input}`}
-                >
-                    <option value="LETTER">US Letter (8.5" x 11")</option>
-                    <option value="A4">A4 (210mm x 297mm)</option>
-                </select>
+                />
                 <p className={sharedStyles.helpText}>
                     {pageFormat === "LETTER" &&
                         "Standard format used in the United States. Industry standard for Hollywood screenplays."}

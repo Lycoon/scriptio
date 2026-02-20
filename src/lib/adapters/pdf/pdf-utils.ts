@@ -42,6 +42,10 @@ export type PdfText = string | any[];
  * If `uppercase` is true every text fragment is uppercased.
  */
 export const buildRichText = (content: JSONContent[], uppercase?: boolean): PdfText => {
+    if (!content || content.length === 0) {
+        return " ";
+    }
+
     // Fast path: single fragment with no marks → plain string
     if (content.length === 1 && (!content[0].marks || content[0].marks.length === 0)) {
         const t = content[0].text ?? "";
@@ -280,7 +284,7 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             creator: "Scriptio",
         },
         header: (currentPage, pageCount, pageSize) => {
-            if (currentPage <= 2) {
+            if (currentPage <= 1) {
                 return;
             }
             return [
@@ -302,9 +306,7 @@ export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDe
             lineHeight: 0.9,
         },
         styles: {
-            scene: {
-                bold: true,
-            },
+            scene: {},
             note: {
                 fillColor: options.notesColor ?? "#FFFF68",
             },

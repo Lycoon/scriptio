@@ -44,11 +44,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         let sceneNumber = 0;
 
         for (let i = 0; i < nodes.length; i++) {
-            if (!nodes[i].content) {
-                continue;
-            }
-
-            const content = nodes[i].content!;
+            const content = nodes[i].content || [];
             const plainText: string = getNodeFlattenContent(content);
             const type: string = nodes[i].attrs?.class;
             const nextType: string = i >= nodes.length - 1 ? "action" : nodes[i + 1].attrs?.class;

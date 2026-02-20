@@ -12,37 +12,43 @@ function yieldToMain(): Promise<void> {
     });
 }
 
+async function isOrphanable(node: HTMLElement): Promise<boolean> {
+    return node.classList.contains("character") || node.classList.contains("scene");
+}
+
 async function computeAndDispatch(view: EditorView, isCancelled: () => boolean): Promise<void> {
     const editorDom = view.dom as HTMLElement;
     const editorTop = editorDom.getBoundingClientRect().top;
 
     const gapEls = Array.from(editorDom.querySelectorAll(".breaker"));
-
     if (gapEls.length === 0) {
         if (!isCancelled()) view.dispatch(view.state.tr.setMeta(pluginKey, DecorationSet.empty));
         return;
     }
 
     const paragraphs = Array.from(editorDom.children).filter((el) => el.tagName === "P") as HTMLElement[];
-
     const decorations: Decoration[] = [];
 
+    let lastNodeIdx = 0;
     for (const gapEl of gapEls) {
         if (isCancelled()) return;
 
-        const gapTop = gapEl.getBoundingClientRect().top - editorTop;
+        const breakerRect = gapEl.getBoundingClientRect();
+        let breakerTop = breakerRect.top - editorTop;
         let lastNode: HTMLElement | null = null;
-        let lastNodeIdx = -1;
-        let breakerTop = 0;
         let lastNodeTop = 0;
-        for (let i = 0; i < paragraphs.length; i++) {
-            const pTop = paragraphs[i].getBoundingClientRect().top - editorTop;
-            //console.log(`Paragraph ${i} top: ${pTop}px (gap at ${gapTop}px)`);
-            if (pTop < gapTop) {
+        let lastNodeHeight = 0;
+
+        for (let i = lastNodeIdx + 1; i < paragraphs.length; i++) {
+            const pRect = paragraphs[i].getBoundingClientRect();
+            const pTop = pRect.top - editorTop;
+            // We put -6px because when a node starts on next page it sometimes flow up to previous one
+            // and outranges the breaker top by few pixels, gets detected as last node while it's not.
+            if (pTop < breakerTop - 6) {
                 lastNode = paragraphs[i];
                 lastNodeIdx = i;
-                breakerTop = gapTop;
                 lastNodeTop = pTop;
+                lastNodeHeight = pRect.height;
             } else break;
         }
 
@@ -65,23 +71,24 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean):
             // straddling node, meaning it would be left alone at the bottom of the page.
             if (lastNodeIdx > 0) {
                 const prevNode = paragraphs[lastNodeIdx - 1];
-                const isOrphanCandidate =
-                    prevNode.classList.contains("character") || prevNode.classList.contains("scene");
+                const isLastOrphanable = await isOrphanable(lastNode);
+                const isPrevOrphanable = await isOrphanable(prevNode);
 
-                if (isOrphanCandidate) {
-                    const prevBottom = prevNode.getBoundingClientRect().bottom - editorTop;
-                    // "close enough" = prevNode is immediately above lastNode (≤ 4 line-heights apart).
+                if (isPrevOrphanable) {
+                    const prevRect = prevNode.getBoundingClientRect();
+                    const prevBottom = prevRect.bottom - editorTop;
                     console.log(
-                        `Orphan candidate at ${lastNodeTop}px, breaker top at ${breakerTop}px: ${breakerTop - lastNodeTop}px gap (threshold: ${2 * 17}px)`,
+                        `Orphan candidate at ${prevBottom}px, breaker top at ${breakerTop}px: ${breakerTop - lastNodeTop}px gap (threshold: ${2 * 17}px)`,
                     );
-                    if (breakerTop - lastNodeTop <= 2 * 17) {
+                    if (breakerTop - prevBottom <= 2 * 17 + 6) {
                         try {
+                            const height = prevRect.height;
                             const pos = view.posAtDOM(prevNode, 0);
                             const resolved = view.state.doc.resolve(pos);
                             const start = resolved.before(resolved.depth);
                             decorations.push(
                                 Decoration.node(start, start + resolved.parent.nodeSize, {
-                                    style: "background-color: green;",
+                                    style: `background-color: green;`,
                                 }),
                             );
                         } catch {

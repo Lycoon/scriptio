@@ -14,6 +14,7 @@ import { UserContext } from "@src/context/UserContext";
 import { getAdapterByExtension, getAdapterByFilename } from "@src/lib/adapters/registry";
 import { BaseExportOptions } from "@src/lib/adapters/screenplay-adapter";
 import { PDFExportOptions } from "@src/lib/adapters/pdf/pdf-adapter";
+import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 
 export enum ExportFormat {
     PDF = "pdf",
@@ -130,6 +131,13 @@ const ExportProject = () => {
         setExporting(false);
     };
 
+    const formatOptions: DropdownOption[] = [
+        { value: ExportFormat.PDF, label: "PDF Document (.pdf)" },
+        { value: ExportFormat.FOUNTAIN, label: "Fountain (.fountain)" },
+        { value: ExportFormat.FDX, label: "Final Draft (.fdx)" },
+        { value: ExportFormat.SCRIPTIO, label: "Scriptio (.scriptio)" },
+    ];
+
     return (
         <div className={sharedStyles.settingsForm}>
             {/* --- Import Section --- */}
@@ -175,16 +183,12 @@ const ExportProject = () => {
             {/* --- Export Format Selection --- */}
             <div className={sharedStyles.formGroup}>
                 <label className={form.label}>Export</label>
-                <select
+                <Dropdown
                     value={format}
-                    onChange={(e) => setFormat(e.target.value as ExportFormat)}
+                    onChange={(value) => setFormat(value as ExportFormat)}
+                    options={formatOptions}
                     className={`${sharedStyles.input} ${styles.input}`}
-                >
-                    <option value={ExportFormat.PDF}>PDF Document (.pdf)</option>
-                    <option value={ExportFormat.FOUNTAIN}>Fountain (.fountain)</option>
-                    <option value={ExportFormat.FDX}>Final Draft (.fdx)</option>
-                    <option value={ExportFormat.SCRIPTIO}>Scriptio (.scriptio)</option>
-                </select>
+                />
                 <p className={sharedStyles.helpText}>
                     {format === ExportFormat.PDF && "Standard industry format. Best for sharing and printing."}
                     {format === ExportFormat.FOUNTAIN &&

@@ -8,6 +8,64 @@ import { UserTheme } from "@src/lib/utils/types";
 import { editUserSettings } from "@src/lib/utils/requests";
 import { useTheme } from "next-themes";
 import { useSettings } from "@src/lib/utils/hooks";
+import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
+
+const THEME_COLORS: Record<
+    string,
+    { primary: string; secondary: string; tertiary: string; text: string; subtext: string }
+> = {
+    dark: {
+        primary: "#1d1d1d",
+        secondary: "#2e2e2e",
+        tertiary: "#3a3a3a",
+        text: "#ffffff",
+        subtext: "#9b9b9b",
+    },
+    light: {
+        primary: "#f3f3f3",
+        secondary: "#ffffff",
+        tertiary: "#e2e2e2",
+        text: "#1a1a1c",
+        subtext: "#64748b",
+    },
+    latte: {
+        primary: "#f7edd9",
+        secondary: "#fff8e9",
+        tertiary: "#ecdab4",
+        text: "#7a6129",
+        subtext: "#c09c50",
+    },
+    wonka: {
+        primary: "#1e1410",
+        secondary: "#2c1e1a",
+        tertiary: "#4d3b36",
+        text: "#e6dcca",
+        subtext: "#a89b91",
+    },
+    mint: {
+        primary: "#dcf5de",
+        secondary: "#ecfdec",
+        tertiary: "#bce0bc",
+        text: "#354937",
+        subtext: "#7d977f",
+    },
+    blossom: {
+        primary: "#ffe7f3",
+        secondary: "#fff6fb",
+        tertiary: "#ffbbdd",
+        text: "#bb4bbb",
+        subtext: "#a579a5",
+    },
+};
+
+const THEME_LABELS: Record<string, string> = {
+    dark: "Dark",
+    light: "Light",
+    latte: "Latte",
+    wonka: "Wonka",
+    mint: "Mint",
+    blossom: "Blossom",
+};
 
 const AppearanceSettings = () => {
     const { theme, setTheme } = useTheme();
@@ -28,23 +86,37 @@ const AppearanceSettings = () => {
         editUserSettings({ theme: theme as UserTheme });
     };
 
+    const themeOptions: DropdownOption[] = Object.entries(THEME_COLORS).map(([key, colors]) => ({
+        value: key,
+        triggerLabel: (
+            <div className={styles.color_preview}>
+                <div className={styles.swatch} style={{ backgroundColor: colors.primary }} />
+                <div className={styles.swatch} style={{ backgroundColor: colors.secondary }} />
+                <div className={styles.swatch} style={{ backgroundColor: colors.tertiary }} />
+                <span style={{ marginLeft: "8px" }}>{THEME_LABELS[key]}</span>
+            </div>
+        ),
+        label: (
+            <div className={styles.color_preview}>
+                <div className={styles.swatch} style={{ backgroundColor: colors.primary }} title="Primary" />
+                <div className={styles.swatch} style={{ backgroundColor: colors.secondary }} title="Secondary" />
+                <div className={styles.swatch} style={{ backgroundColor: colors.tertiary }} title="Tertiary" />
+                <span style={{ marginLeft: "8px" }}>{THEME_LABELS[key]}</span>
+            </div>
+        ),
+    }));
+
     return (
         <div className={sharedStyles.settingsForm}>
             {/* Theme Selection */}
             <div className={sharedStyles.formGroup}>
                 <label className={form.label}>Theme</label>
-                <select
-                    value={theme}
-                    onChange={(e) => setTheme(e.target.value)}
+                <Dropdown
+                    value={theme || "dark"}
+                    onChange={(value) => setTheme(value)}
+                    options={themeOptions}
                     className={`${sharedStyles.input} ${styles.input}`}
-                >
-                    <option value={"dark"}>Dark</option>
-                    <option value={"light"}>Light</option>
-                    <option value={"latte"}>Latte</option>
-                    <option value={"wonka"}>Wonka</option>
-                    <option value={"mint"}>Mint</option>
-                    <option value={"blossom"}>Blossom</option>
-                </select>
+                />
                 <p className={sharedStyles.helpText}>
                     {theme === "dark" && "Cozy, low-glare theme made for night owls and late-hour focus."}
                     {theme === "light" && "Crisp, airy theme that feels natural and comfortable during the day."}

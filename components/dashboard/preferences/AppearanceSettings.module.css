@@ -2,3 +2,19 @@
     width: 100%;
     height: 100%;
 }
+
+/* Swatch Styles specific to AppearanceSettings */
+
+.color_preview {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--separator);
+    flex-shrink: 0;
+}

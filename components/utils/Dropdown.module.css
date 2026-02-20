@@ -1,0 +1,81 @@
+.dropdown_wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown_trigger {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    cursor: pointer;
+    user-select: none;
+    /* We expect the consumer to compose this with their input style (e.g. sharedStyles.input) */
+}
+
+/* If the consumer doesn't provide input styles, we might need defaults, but 
+   AppearanceSettings and ExportProject both use sharedStyles.input. 
+   We will assume the consumer passes that class. */
+
+.selected_content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chevron {
+    transition: transform 0.2s ease;
+    color: var(--secondary-text);
+    flex-shrink: 0;
+}
+
+.chevron_open {
+    transform: rotate(180deg);
+}
+
+.dropdown_menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    padding: 6px;
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    box-shadow: var(--project-item-shadow);
+    z-index: 50;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.dropdown_item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+    color: var(--primary-text);
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+    font-family: var(--font-inter);
+}
+
+.dropdown_item:hover {
+    background-color: var(--primary);
+}
+
+.item_content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
