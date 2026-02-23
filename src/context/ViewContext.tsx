@@ -24,7 +24,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [primaryPanel, setPrimaryPanelState] = useState<PanelType>("screenplay");
     const [secondaryPanel, setSecondaryPanelState] = useState<PanelType | null>(null);
     const [splitRatio, setSplitRatio] = useState(0.5);
-    const [mountedPanels, setMountedPanels] = useState<Set<PanelType>>(() => new Set(["screenplay"]));
+    const [mountedPanels, setMountedPanels] = useState<Set<PanelType>>(() => new Set(["screenplay", "title"]));
 
     const isSplit = secondaryPanel !== null;
 

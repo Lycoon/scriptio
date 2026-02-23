@@ -1,3 +1,5 @@
+@import "./fonts.css";
+
 .rm-page-header,
 .rm-page-footer,
 .rm-pagination-gap {
@@ -19,14 +21,16 @@
 }
 
 .ProseMirror {
+    --font-screenplay: "CourierPrime", "FreeMono", "Cousine", "SarasaMonoSC", monospace;
+    --font-size: 12pt;
+
     --character-l-margin: 2.5in;
     --dialogue-l-margin: 1.3in;
     --dialogue-r-margin: 1in;
     --parenthetical-l-margin: 2in;
     --parenthetical-r-margin: 2in;
-    --page-margin-left: 144px;
+    --page-margin-left: 1.5in;
     --line-height: 17px;
-    --font-size: 12pt;
 
     margin-left: auto;
     margin-right: auto;
@@ -45,12 +49,11 @@
         display: block;
         width: 100%;
         color: var(--editor-text);
-        font-family: var(--font-courier), monospace;
+        font-family: var(--font-screenplay);
         font-size: var(--font-size);
         text-align: left;
         line-height: var(--line-height) !important;
         margin-bottom: var(--line-height);
-        letter-spacing: -0.3px;
         min-height: 1lh;
     }
 
@@ -58,7 +61,7 @@
        These must remain inline (default) to not break text flow */
     > p span {
         color: var(--editor-text);
-        font-family: var(--font-courier), monospace;
+        font-family: var(--font-screenplay);
         font-size: var(--font-size);
         line-height: var(--line-height) !important;
     }
@@ -66,7 +69,7 @@
     .page-number,
     .page-number > * {
         color: var(--editor-text);
-        font-family: var(--font-courier), monospace;
+        font-family: var(--font-screenplay);
     }
 
     /* Editor styles */
@@ -115,7 +118,7 @@
         position: absolute;
         content: counter(scenenumber);
         right: 100%;
-        margin-right: 20px;
+        margin-right: 50px;
     }
 
     /* Hide scene numbers when disabled */

@@ -14,12 +14,7 @@ import { useUser } from "../utils/hooks";
 import { getRandomColor } from "../utils/misc";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 
-import {
-    ScreenplayNodes,
-    ScriptioBold,
-    ScriptioItalic,
-    ScriptioUnderline,
-} from "@src/lib/screenplay/nodes";
+import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline } from "@src/lib/screenplay/nodes";
 import { Placeholder } from "./extensions/placeholder-extension";
 import { PAGE_SIZES } from "tiptap-pagination-plus";
 import { PaginationPlus } from "tiptap-pagination-plus";
@@ -35,18 +30,13 @@ import {
     refreshSearchHighlights,
     SearchMatch,
 } from "./extensions/search-highlight-extension";
-import {
-    createSceneBookmarkExtension,
-    refreshSceneBookmarks,
-} from "./extensions/scene-bookmark-extension";
-import {
-    createSceneNumberRightExtension,
-    refreshSceneNumberRight,
-} from "./extensions/scene-number-right-extension";
+import { createSceneBookmarkExtension, refreshSceneBookmarks } from "./extensions/scene-bookmark-extension";
+import { createSceneNumberRightExtension, refreshSceneNumberRight } from "./extensions/scene-number-right-extension";
 import { createSceneIdDedupExtension } from "./extensions/scene-id-dedup-extension";
 import { CommentMark } from "./extensions/comment-highlight-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
 import { OrphanPreventionExtension } from "./extensions/orphan-prevention-extension";
+import { DynamicOrphanPreventionExtension } from "./extensions/dynamic-orphan-prevention";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
     if (style & Style.Bold) editor.chain().toggleBold().focus().run();
@@ -83,12 +73,7 @@ export const copyText = (editor: Editor, start: number, end: number) => {
 };
 
 export const replaceRange = (editor: Editor, start: number, end: number, text: string) => {
-    editor
-        .chain()
-        .focus(start)
-        .setTextSelection({ from: start, to: end })
-        .insertContent(text)
-        .run();
+    editor.chain().focus(start).setTextSelection({ from: start, to: end }).insertContent(text).run();
 };
 
 export const pasteText = (editor: Editor, text: string) => {
@@ -99,11 +84,7 @@ export const pasteTextAt = (editor: Editor, text: string, position: number) => {
     editor.commands.insertContentAt(position, text);
 };
 
-export const insertElement = (
-    editor: Editor,
-    element: ScreenplayElement | TitlePageElement,
-    position: number,
-) => {
+export const insertElement = (editor: Editor, element: ScreenplayElement | TitlePageElement, position: number) => {
     // Use the element value directly as the node type since they now match
     const newNode = {
         type: element,
@@ -293,10 +274,7 @@ export const useScriptioEditor = (
             if (suggestions.length === 0 && current.length === 0) {
                 return;
             }
-            if (
-                suggestions.length === current.length &&
-                suggestions.every((s, i) => s === current[i])
-            ) {
+            if (suggestions.length === current.length && suggestions.every((s, i) => s === current[i])) {
                 return;
             }
             currentSuggestionsRef.current = suggestions;
@@ -516,8 +494,7 @@ export const useScriptioEditor = (
 
                 lastReportedElementRef.current = elementAnchor;
                 setActiveElement(elementAnchor, false);
-                if (anchor.nodeBefore)
-                    setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
+                if (anchor.nodeBefore) setSelectedStyles(getStylesFromMarks(anchor.nodeBefore.marks));
 
                 // Clear suggestions when moving cursor (not typing)
                 // onUpdate will handle showing suggestions when typing
@@ -612,10 +589,7 @@ export const useScriptioEditor = (
                         suggestions = suggestions
                             .filter((location) => {
                                 const upperLocation = location.toUpperCase();
-                                return (
-                                    upperLocation.startsWith(afterPrefix) &&
-                                    upperLocation !== cleanAfterPrefix
-                                );
+                                return upperLocation.startsWith(afterPrefix) && upperLocation !== cleanAfterPrefix;
                             })
                             .slice(0, 10);
                     } else {

@@ -1,335 +1,133 @@
-import { TDocumentDefinitions, TFontDictionary } from "pdfmake/interfaces";
-import { JSONContent } from "@tiptap/react";
-import { BASE_URL } from "@src/lib/utils/constants";
-import { PDFExportOptions } from "./pdf-adapter";
-
-export const FONTS: TFontDictionary = {
-    CourierPrime: {
-        normal: `${BASE_URL}/fonts/CourierPrimeRegular.ttf`,
-        bold: `${BASE_URL}/fonts/CourierPrimeBold.ttf`,
-        italics: `${BASE_URL}/fonts/CourierPrimeItalic.ttf`,
-        bolditalics: `${BASE_URL}/fonts/CourierPrimeBoldItalic.ttf`,
-    },
-};
-
-//
-// Units are in points (pt)
-// Conversion from inches to points -> x72
-//
-const ONE_INCH = 72.0;
-
-const LINE_HEIGHT_PT = 12; // One line of 12pt Courier = 12pt
-
-const CHARACTER_L = 2.5 * ONE_INCH;
-const DIALOGUE_L = 1.3 * ONE_INCH;
-const DIALOGUE_R = 1.0 * ONE_INCH;
-const PARENTHETICAL_L = 2.0 * ONE_INCH;
-const PARENTHETICAL_R = 2.0 * ONE_INCH;
-
-const PAGE_LEFT = 1.5 * ONE_INCH;
-const PAGE_RIGHT = ONE_INCH;
-const PAGE_TOP = ONE_INCH;
-const PAGE_BOTTOM = ONE_INCH;
-
-export const addOffset = (pdfNodes: any[]) => {
-    pdfNodes.push({ text: " ", fontSize: 0, style: ["offset"] });
-};
-
-export type PdfText = string | any[];
+/**
+ * Unicode script detection for PDF font selection.
+ *
+ * Maps characters to the correct font family based on their Unicode range,
+ * mirroring the @font-face unicode-range declarations in styles/fonts.css.
+ *
+ * Font assignments:
+ *   - CourierPrime (default)  — Latin, punctuation, symbols
+ *   - CourierBadi             — Cyrillic + Arabic
+ *   - Cousine                 — Greek + Hebrew
+ *   - SarasaMonoSC            — CJK (Chinese, Japanese, Korean)
+ */
 
 /**
- * Convert Tiptap inline content (with marks) to a pdfMake rich-text array.
- * If `uppercase` is true every text fragment is uppercased.
+ * Font family name for a non-default script, or `null` for the
+ * document default (CourierPrime). Using `null` avoids setting a
+ * redundant `font` property on pdfMake fragments.
  */
-export const buildRichText = (content: JSONContent[], uppercase?: boolean): PdfText => {
-    if (!content || content.length === 0) {
-        return " ";
-    }
+export type ScriptFont = "FreeMono" | "Cousine" | "SarasaMonoSC" | null;
 
-    // Fast path: single fragment with no marks → plain string
-    if (content.length === 1 && (!content[0].marks || content[0].marks.length === 0)) {
-        const t = content[0].text ?? "";
-        return uppercase ? t.toUpperCase() : t;
-    }
-
-    const fragments: any[] = [];
-    for (let i = 0; i < content.length; i++) {
-        const child = content[i];
-        let t = child.text ?? "";
-        if (uppercase) t = t.toUpperCase();
-
-        const marks: string[] = (child.marks ?? []).map((m: any) => m.type);
-        const fragment: any = { text: t };
-
-        if (marks.includes("bold")) fragment.bold = true;
-        if (marks.includes("italic")) fragment.italics = true;
-        if (marks.includes("underline")) fragment.decoration = "underline";
-
-        fragments.push(fragment);
-    }
-    return fragments;
-};
-
-/**
- * Prepend / append plain text to a PdfText value.
- * If the value is a string, simple concatenation is used.
- * If the value is an array (rich text), plain-text fragments are added at the edges.
- */
-export const wrapPdfText = (text: PdfText, prefix?: string, suffix?: string): PdfText => {
-    if (typeof text === "string") {
-        return (prefix ?? "") + text + (suffix ?? "");
-    }
-    const arr = [...text];
-    if (prefix) arr.unshift({ text: prefix });
-    if (suffix) arr.push({ text: suffix });
-    return arr;
-};
-
-export const getPDFTableTemplate = (text: string, type: string) => {
-    return {
-        layout: "noBorders",
-        table: {
-            widths: ["*"],
-            body: [
-                [
-                    {
-                        text,
-                        style: [type],
-                    },
-                ],
-            ],
-        },
-    };
-};
-
-export interface SceneOptions {
-    bold?: boolean;
-    doubleSpace?: boolean;
+export interface ScriptSegment {
+    text: string;
+    font: ScriptFont;
 }
 
-export const getPDFNodeTemplate = (style: string, text: PdfText, options?: SceneOptions, alignment?: string) => {
-    const node: any = {
-        text,
-        style: [style],
-    };
-
-    // Handle scene-specific options
-    if (style === "scene" && options) {
-        if (options.bold === false) {
-            node.bold = false;
-        }
-        if (options.doubleSpace) {
-            node.margin = [0, LINE_HEIGHT_PT, 0, 0];
-        }
+/**
+ * Determine which font family a Unicode code point requires.
+ * Returns `null` when the default font (CourierPrime) handles the character.
+ *
+ * Ranges are checked in frequency order: Latin (fast path) first,
+ * then smaller script blocks, then the large CJK ranges last.
+ */
+export const getFontForCodePoint = (cp: number): ScriptFont => {
+    // ── Fast path: Latin + common symbols (vast majority of screenplay text) ──
+    if (
+        cp <= 0x024f || // ASCII + Latin-1 Supplement + Latin Extended-A/B
+        (cp >= 0x1e00 && cp <= 0x1eff) || // Latin Extended Additional
+        (cp >= 0x2000 && cp <= 0x218f) || // General Punctuation → Number Forms
+        (cp >= 0x0400 && cp <= 0x052f) || // Cyrillic (also covers Cyrillic Supplement)
+        (cp >= 0x2de0 && cp <= 0x2dff) || // Cyrillic Extended-A
+        (cp >= 0xa640 && cp <= 0xa69f) // Cyrillic Extended-B
+    ) {
+        return null;
     }
 
-    if (alignment) {
-        node.alignment = alignment;
+    // ── Cousine: Greek ──
+    // U+0370..03FF  Greek and Coptic
+    // U+1F00..1FFF  Greek Extended
+    if ((cp >= 0x0370 && cp <= 0x03ff) || (cp >= 0x1f00 && cp <= 0x1fff)) {
+        return "Cousine";
     }
 
-    return node;
-};
-
-export interface SceneWithNumberOptions {
-    bold?: boolean;
-    showRightNumber?: boolean;
-    doubleSpace?: boolean;
-    alignment?: string;
-}
-
-export const getSceneWithNumberTemplate = (sceneNumber: number, text: PdfText, options?: SceneWithNumberOptions) => {
-    const bold = options?.bold ?? true;
-    const showRightNumber = options?.showRightNumber ?? false;
-    const doubleSpace = options?.doubleSpace ?? false;
-    const topMargin = doubleSpace ? LINE_HEIGHT_PT : 0;
-
-    const textColumn: any = {
-        text,
-        width: "*",
-        bold,
-        margin: [-30, topMargin, 0, 0],
-    };
-
-    if (options?.alignment) {
-        textColumn.alignment = options.alignment;
+    // ── Cousine: Hebrew ──
+    // U+0590..05FF  Hebrew
+    // U+FB1D..FB4F  Hebrew Presentation Forms
+    if ((cp >= 0x0590 && cp <= 0x05ff) || (cp >= 0xfb1d && cp <= 0xfb4f)) {
+        return "Cousine";
     }
 
-    const columns: any[] = [
-        {
-            text: `${sceneNumber}`,
-            width: 30,
-            bold,
-            margin: [-50, topMargin, 0, 0],
-        },
-        textColumn,
-    ];
-
-    if (showRightNumber) {
-        columns.push({
-            text: `${sceneNumber}`,
-            width: 30,
-            bold,
-            alignment: "right",
-            margin: [0, topMargin, -50, 0],
-        });
+    // ── CourierBadi: Arabic ──
+    // U+0600..06FF  Arabic
+    // U+0750..077F  Arabic Supplement
+    // U+08A0..08FF  Arabic Extended-A
+    // U+FB50..FDFF  Arabic Presentation Forms-A
+    // U+FE70..FEFF  Arabic Presentation Forms-B
+    if (
+        (cp >= 0x0600 && cp <= 0x06ff) ||
+        (cp >= 0x0750 && cp <= 0x077f) ||
+        (cp >= 0x08a0 && cp <= 0x08ff) ||
+        (cp >= 0xfb50 && cp <= 0xfdff) ||
+        (cp >= 0xfe70 && cp <= 0xfeff)
+    ) {
+        return "FreeMono";
     }
 
-    return { columns };
-};
+    // ── NoroshiMono: CJK / Japanese / Korean ──
+    if (
+        (cp >= 0x1100 && cp <= 0x11ff) || // Hangul Jamo
+        (cp >= 0x2e80 && cp <= 0x2fff) || // CJK Radicals & Ideographic Description (Extended)
+        (cp >= 0x3000 && cp <= 0x33ff) || // CJK Symbols/Kana/Bopomofo
+        (cp >= 0x3400 && cp <= 0x4dbf) || // Extension A
+        (cp >= 0x4e00 && cp <= 0x9fff) || // Unified Ideographs (Main)
+        (cp >= 0xa960 && cp <= 0xa97f) || // Hangul Jamo Extended-A
+        (cp >= 0xac00 && cp <= 0xd7af) || // Hangul Syllables
+        (cp >= 0xf900 && cp <= 0xfaff) || // Compatibility Ideographs
+        (cp >= 0xfe30 && cp <= 0xfe4f) || // Compatibility Forms
+        (cp >= 0xff00 && cp <= 0xffef) || // Halfwidth/Fullwidth
+        (cp >= 0x20000 && cp <= 0x323af) // Extensions B through H (Modern limit)
+    ) {
+        return "SarasaMonoSC";
+    }
 
-export const getWatermarkData = (text: string) => {
-    return {
-        text,
-        color: "grey",
-        opacity: 0.15,
-        bold: true,
-        italics: false,
-    };
+    // ── Fallback: unrecognised scripts use the default font ──
+    return null;
 };
 
 /**
- * Resolve a title page format node (tp-title, tp-author, tp-date) to its display value.
+ * Split a string into consecutive segments grouped by the font needed
+ * to render them. Adjacent characters requiring the same font are merged
+ * into a single segment.
+ *
+ * Characters handled by the default font (CourierPrime) have `font: null`.
+ * Uses `codePointAt()` to correctly handle surrogate pairs (CJK Extension B+).
  */
-const resolveTitlePageNode = (type: string, options: PDFExportOptions): string => {
-    switch (type) {
-        case "tp-title":
-            return options.title || "";
-        case "tp-author":
-            return options.projectAuthor || "";
-        case "tp-date":
-            return new Date().toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-            });
-        default:
-            return "";
-    }
-};
+export const splitByScript = (text: string): ScriptSegment[] => {
+    if (!text) return [];
 
-/**
- * Convert a tp-text block's inline content to pdfMake rich text.
- * Handles plain text, format nodes (tp-title, tp-author, tp-date), and marks (bold/italic/underline).
- */
-const buildTitlePageRichText = (content: JSONContent[], options: PDFExportOptions): PdfText => {
-    if (!content || content.length === 0) return " ";
+    const segments: ScriptSegment[] = [];
+    let currentFont: ScriptFont = null;
+    let start = 0;
 
-    const fragments: any[] = [];
+    for (let i = 0; i < text.length; ) {
+        const cp = text.codePointAt(i)!;
+        const charLen = cp > 0xffff ? 2 : 1;
+        const font = getFontForCodePoint(cp);
 
-    for (const child of content) {
-        // Format atom nodes (tp-title, tp-author, tp-date)
-        if (child.type === "tp-title" || child.type === "tp-author" || child.type === "tp-date") {
-            const value = resolveTitlePageNode(child.type, options);
-            if (value) fragments.push({ text: value });
-            continue;
+        if (i === 0) {
+            currentFont = font;
+        } else if (font !== currentFont) {
+            segments.push({ text: text.slice(start, i), font: currentFont });
+            currentFont = font;
+            start = i;
         }
 
-        // Regular text nodes
-        const text = child.text ?? "";
-        if (!text) continue;
-
-        const marks: string[] = (child.marks ?? []).map((m: any) => m.type);
-        const fragment: any = { text };
-
-        if (marks.includes("bold")) fragment.bold = true;
-        if (marks.includes("italic")) fragment.italics = true;
-        if (marks.includes("underline")) fragment.decoration = "underline";
-
-        fragments.push(fragment);
+        i += charLen;
     }
 
-    // Fast path: single plain fragment → plain string
-    if (fragments.length === 1 && Object.keys(fragments[0]).length === 1 && "text" in fragments[0]) {
-        return fragments[0].text;
+    if (start < text.length) {
+        segments.push({ text: text.slice(start), font: currentFont });
     }
 
-    return fragments.length > 0 ? fragments : " ";
-};
-
-/**
- * Build PDF title page nodes from the actual title page TipTap document.
- * Each tp-text block becomes a pdfMake paragraph with alignment preserved.
- * Format nodes (tp-title, tp-author, tp-date) are resolved to their values.
- */
-export const buildTitlePage = (titlePageContent: JSONContent[], options: PDFExportOptions): any[] => {
-    const pdfNodes: any[] = [];
-
-    for (const node of titlePageContent) {
-        if (node.type !== "tp-text") continue;
-
-        const alignment = node.attrs?.textAlign || "left";
-        const richText = buildTitlePageRichText(node.content || [], options);
-
-        pdfNodes.push({
-            text: richText,
-            alignment,
-            fontSize: 12,
-            marginBottom: LINE_HEIGHT_PT,
-        });
-    }
-
-    // Page break after title page
-    if (pdfNodes.length > 0) {
-        pdfNodes.push({ text: "", pageBreak: "after" });
-    }
-
-    return pdfNodes;
-};
-
-export const initPDF = (options: PDFExportOptions, pdfNodes: any[]): TDocumentDefinitions => {
-    return {
-        info: {
-            author: options.author,
-            title: options.title,
-            creator: "Scriptio",
-        },
-        header: (currentPage, pageCount, pageSize) => {
-            if (currentPage <= 1) {
-                return;
-            }
-            return [
-                {
-                    text: `${currentPage}.`,
-                    alignment: "right",
-                    marginRight: 72,
-                    marginTop: 36,
-                },
-            ];
-        },
-        content: pdfNodes,
-        pageMargins: [PAGE_LEFT, PAGE_TOP, PAGE_RIGHT, PAGE_BOTTOM],
-        pageSize: options.format,
-        defaultStyle: {
-            font: "CourierPrime",
-            fontSize: 12,
-            alignment: "left",
-            lineHeight: 0.9,
-        },
-        styles: {
-            scene: {},
-            note: {
-                fillColor: options.notesColor ?? "#FFFF68",
-            },
-            character: {
-                margin: [CHARACTER_L, 0, 0, 0],
-            },
-            dialogue: {
-                margin: [DIALOGUE_L, 0, DIALOGUE_R, 0],
-            },
-            parenthetical: {
-                margin: [PARENTHETICAL_L, 0, PARENTHETICAL_R, 0],
-            },
-            transition: {
-                alignment: "right",
-            },
-            section: {
-                alignment: "center",
-                decoration: "underline",
-            },
-            action: {},
-            offset: {
-                marginBottom: LINE_HEIGHT_PT,
-            },
-        },
-    };
+    return segments;
 };

@@ -1,0 +1,89 @@
+/* CourierPrime */
+/* Used for screenplay latin/cyrillic characters */
+@font-face {
+    font-family: "CourierPrime";
+    src: url("/fonts/CourierPrime-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: "CourierPrime";
+    src: url("/fonts/CourierPrime-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+}
+@font-face {
+    font-family: "CourierPrime";
+    src: url("/fonts/CourierPrime-Italic.ttf") format("truetype");
+    font-weight: 400;
+    font-style: italic;
+}
+@font-face {
+    font-family: "CourierPrime";
+    src: url("/fonts/CourierPrime-BoldItalic.ttf") format("truetype");
+    font-weight: 700;
+    font-style: italic;
+}
+
+/* FreeMono */
+/* Used for screenplay Arabic characters */
+@font-face {
+    font-family: "FreeMono";
+    src: url("/fonts/FreeMono-Regular.ttf") format("truetype");
+    unicode-range: 
+        /* Arabic Ranges */ U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+/* SarasaMonoSC */
+/* Used for screenplay CJK characters */
+@font-face {
+    font-family: "SarasaMonoSC";
+    src: url("/fonts/SarasaMonoSC-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: "SarasaMonoSC";
+    src: url("/fonts/SarasaMonoSC-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+}
+@font-face {
+    font-family: "SarasaMonoSC";
+    src: url("/fonts/SarasaMonoSC-Italic.ttf") format("truetype");
+    font-weight: 400;
+    font-style: italic;
+}
+@font-face {
+    font-family: "SarasaMonoSC";
+    src: url("/fonts/SarasaMonoSC-BoldItalic.ttf") format("truetype");
+    font-weight: 700;
+    font-style: italic;
+}
+
+/* Cousine */
+/* Used for screenplay Hebrew/Greek characters */
+@font-face {
+    font-family: "Cousine";
+    src: url("/fonts/Cousine-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Cousine";
+    src: url("/fonts/Cousine-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Cousine";
+    src: url("/fonts/Cousine-Italic.ttf") format("truetype");
+    font-weight: 400;
+    font-style: italic;
+}
+@font-face {
+    font-family: "Cousine";
+    src: url("/fonts/Cousine-BoldItalic.ttf") format("truetype");
+    font-weight: 700;
+    font-style: italic;
+}

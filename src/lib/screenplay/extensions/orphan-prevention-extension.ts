@@ -58,11 +58,58 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean):
                 const pos = view.posAtDOM(lastNode, 0);
                 const resolved = view.state.doc.resolve(pos);
                 const start = resolved.before(resolved.depth);
-                decorations.push(
-                    Decoration.node(start, start + resolved.parent.nodeSize, {
-                        style: "background-color: red;",
-                    }),
-                );
+                
+                const isStraddling = (lastNodeTop + lastNodeHeight) > (breakerTop + 6);
+                
+                // Clear labels for this specific gap synchronously to avoid flashing across yields
+                gapEl.querySelectorAll(".injected-dialogue-label").forEach(el => el.remove());
+                
+                // If it's dialogue straddling a page break (actually physically crossing the breaker gap)
+                if (isStraddling && lastNode.classList.contains("dialogue")) {
+                    const nodeRect = lastNode.getBoundingClientRect();
+                    const computedStyle = window.getComputedStyle(lastNode);
+                    
+                    const moreElem = document.createElement("div");
+                    moreElem.className = "dialogue dialogue-more injected-dialogue-label";
+                    moreElem.innerText = "(MORE)";
+                    moreElem.style.position = "absolute";
+                    moreElem.style.top = "0px";
+                    moreElem.style.left = `${nodeRect.left - breakerRect.left}px`;
+                    moreElem.style.width = `${nodeRect.width}px`;
+                    moreElem.style.textAlign = "center";
+                    moreElem.style.pointerEvents = "none";
+                    moreElem.style.zIndex = "10";
+                    
+                    moreElem.style.fontFamily = computedStyle.fontFamily;
+                    moreElem.style.fontSize = computedStyle.fontSize;
+                    moreElem.style.color = computedStyle.color;
+                    moreElem.style.lineHeight = computedStyle.lineHeight;
+
+                    const contElem = document.createElement("div");
+                    contElem.className = "dialogue dialogue-contd injected-dialogue-label";
+                    contElem.innerText = "(CONT'D)";
+                    contElem.style.position = "absolute";
+                    contElem.style.bottom = "0px";
+                    contElem.style.left = `${nodeRect.left - breakerRect.left}px`;
+                    contElem.style.width = `${nodeRect.width}px`;
+                    contElem.style.textAlign = "center";
+                    contElem.style.pointerEvents = "none";
+                    contElem.style.zIndex = "10";
+                    
+                    contElem.style.fontFamily = computedStyle.fontFamily;
+                    contElem.style.fontSize = computedStyle.fontSize;
+                    contElem.style.lineHeight = computedStyle.lineHeight;
+                    contElem.style.color = computedStyle.color;
+                    
+                    gapEl.appendChild(moreElem);
+                    gapEl.appendChild(contElem);
+                } else if (isStraddling) {
+                    decorations.push(
+                        Decoration.node(start, start + resolved.parent.nodeSize, {
+                            style: "background-color: red;",
+                        }),
+                    );
+                }
             } catch {
                 // detached or invalid position — skip
             }
@@ -141,6 +188,7 @@ export const OrphanPreventionExtension = Extension.create({
                     // disconnect — zero cost after initial mount.
                     const observer = new MutationObserver(() => {
                         if ((view.dom as HTMLElement).querySelector(".rm-pagination-gap")) {
+                            observer.disconnect(); // Disconnect to prevent infinite loops from our own DOM mutations
                             schedule();
                         }
                     });
@@ -148,6 +196,11 @@ export const OrphanPreventionExtension = Extension.create({
                         childList: true,
                         subtree: true,
                     });
+
+                    // Ensure the editor has relative positioning so our absolute widgets flow inside it
+                    if (window.getComputedStyle(view.dom).position === "static") {
+                        (view.dom as HTMLElement).style.position = "relative";
+                    }
 
                     schedule();
                     return {

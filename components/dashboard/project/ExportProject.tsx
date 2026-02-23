@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useState, useRef, useEffect } from "react";
+import { useContext, useState, useRef } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useCookieUser, useLocalProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
@@ -13,8 +13,8 @@ import { importFilePopup } from "@src/lib/screenplay/popup";
 import { UserContext } from "@src/context/UserContext";
 import { getAdapterByExtension, getAdapterByFilename } from "@src/lib/adapters/registry";
 import { BaseExportOptions } from "@src/lib/adapters/screenplay-adapter";
-import { PDFExportOptions } from "@src/lib/adapters/pdf/pdf-adapter";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
+import { PDFExportOptions } from "@src/lib/adapters/pdf/pdf-adapter";
 
 export enum ExportFormat {
     PDF = "pdf",
@@ -29,6 +29,7 @@ const ExportProject = () => {
         project: membership,
         repository,
         editor,
+        titlePageEditor,
         pageFormat,
         displaySceneNumbers,
         sceneHeadingBold,
@@ -122,8 +123,10 @@ const ExportProject = () => {
                 sceneHeadingDoubleSpace,
                 sceneNumberOnRight,
                 contdLabel,
+                editorElement: editor?.view?.dom,
+                titlePageElement: titlePageEditor?.view?.dom,
             };
-            await adapter.export(ydoc, pdfOptions);
+            await adapter.export(ydoc, pdfOptions as any);
         } else {
             await adapter.export(ydoc, baseOptions);
         }
@@ -132,7 +135,7 @@ const ExportProject = () => {
     };
 
     const formatOptions: DropdownOption[] = [
-        { value: ExportFormat.PDF, label: "PDF Document (.pdf)" },
+        { value: ExportFormat.PDF, label: "PDF (.pdf)" },
         { value: ExportFormat.FOUNTAIN, label: "Fountain (.fountain)" },
         { value: ExportFormat.FDX, label: "Final Draft (.fdx)" },
         { value: ExportFormat.SCRIPTIO, label: "Scriptio (.scriptio)" },
