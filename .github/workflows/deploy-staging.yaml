@@ -1,15 +1,25 @@
-name: Build & Deploy Web
+name: Build & Deploy Staging
 
 on:
     push:
-        branches: [release]
+        branches: [staging]
 
 jobs:
     build_and_push:
         runs-on: ubuntu-latest
+        env:
+            IMAGE_NAME: ghcr.io/lycoon/scriptio-app
         steps:
             - name: Checkout the repo
               uses: actions/checkout@v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Set environment variables
+              run: |
+                  echo "APP_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+                  echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
             - name: Login to GHCR
               uses: docker/login-action@v3
@@ -18,11 +28,20 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Build image
-              run: docker compose build app
-
-            - name: Push image to GHCR
-              run: docker push ghcr.io/lycoon/scriptio-app:latest
+            - name: Build and push Staging
+              uses: docker/build-push-action@v6
+              with:
+                  context: .
+                  push: true
+                  tags: |
+                      ${{ env.IMAGE_NAME }}:staging
+                      ${{ env.IMAGE_NAME }}:staging-${{ env.APP_VERSION }}
+                  build-args: |
+                      NEXT_PUBLIC_API_URL=https://staging.scriptio.app
+                      NEXT_PUBLIC_COMMIT_SHA=${{ env.COMMIT_SHA }}
+                      NEXT_PUBLIC_APP_VERSION=${{ env.APP_VERSION }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
 
     deploy:
         runs-on: ubuntu-latest
@@ -50,5 +69,5 @@ jobs:
                   port: ${{ secrets.SSH_PORT }}
                   script: |
                       cd ${{ secrets.APP_PATH }}
-                      docker compose pull app
-                      docker compose --profile prod up -d
+                      docker compose pull app-staging
+                      docker compose --env-file .env.staging --profile staging up -d
