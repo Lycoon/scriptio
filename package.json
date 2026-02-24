@@ -3,7 +3,7 @@
     "private": true,
     "version": "2.0.1",
     "scripts": {
-        "dev": "docker compose up -d --wait && npx prisma db push && next dev",
+        "dev": "docker compose up --profile dev -d --wait && npx prisma db push && next dev",
         "build": "npx prisma generate && next build",
         "build:tauri": "npx prisma generate && npx tsx src/build-tauri.ts",
         "worker:dev": "wrangler dev -c src/lib/collaboration/wrangler.toml",
