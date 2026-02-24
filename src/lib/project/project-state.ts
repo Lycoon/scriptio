@@ -67,6 +67,7 @@ export type LayoutData = {
     sceneHeadingDoubleSpace: boolean;
     sceneNumberOnRight: boolean;
     contdLabel: string;
+    moreLabel: string;
 };
 
 export type ProjectData = {

@@ -83,6 +83,8 @@ export interface ProjectContextType {
     setSceneNumberOnRight: (onRight: boolean) => void;
     contdLabel: string;
     setContdLabel: (label: string) => void;
+    moreLabel: string;
+    setMoreLabel: (label: string) => void;
 
     // Search state
     searchTerm: string;
@@ -152,6 +154,8 @@ const defaultContextValue: ProjectContextType = {
     setSceneNumberOnRight: () => {},
     contdLabel: "(CONT'D)",
     setContdLabel: () => {},
+    moreLabel: "(MORE)",
+    setMoreLabel: () => {},
     characters: {},
     locations: {},
     scenes: [],
@@ -276,6 +280,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [sceneHeadingDoubleSpace, setSceneHeadingDoubleSpaceState] = useState<boolean>(false);
     const [sceneNumberOnRight, setSceneNumberOnRightState] = useState<boolean>(false);
     const [contdLabel, setContdLabelState] = useState<string>("(CONT'D)");
+    const [moreLabel, setMoreLabelState] = useState<string>("(MORE)");
 
     // Search state
     const [searchTerm, setSearchTermState] = useState<string>("");
@@ -367,6 +372,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             const _sceneHeadingDoubleSpace = layout.sceneHeadingDoubleSpace;
             const _sceneNumberOnRight = layout.sceneNumberOnRight;
             const _contdLabel = layout.contdLabel;
+            const _moreLabel = layout.moreLabel;
 
             if (_pageSize && (_pageSize === "A4" || _pageSize === "LETTER")) {
                 setPageFormatState(_pageSize);
@@ -385,6 +391,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             }
             if (_contdLabel !== undefined) {
                 setContdLabelState(_contdLabel);
+            }
+            if (_moreLabel !== undefined) {
+                setMoreLabelState(_moreLabel);
             }
         });
 
@@ -535,6 +544,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    const setMoreLabel = useCallback(
+        (label: string) => {
+            setMoreLabelState(label);
+            repository?.setMoreLabel(label);
+        },
+        [repository],
+    );
+
     const setSearchTerm = useCallback((term: string) => {
         setSearchTermState(term);
         // Reset to first match when search term changes
@@ -620,6 +637,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setSceneNumberOnRight,
             contdLabel,
             setContdLabel,
+            moreLabel,
+            setMoreLabel,
             screenplay,
             scenes,
             updateScenes,
@@ -679,6 +698,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setSceneNumberOnRight,
             contdLabel,
             setContdLabel,
+            moreLabel,
+            setMoreLabel,
             screenplay,
             scenes,
             updateScenes,

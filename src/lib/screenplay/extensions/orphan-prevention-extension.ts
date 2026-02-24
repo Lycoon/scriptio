@@ -4,6 +4,14 @@ import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 
 const pluginKey = new PluginKey("orphanPrevention");
 
+declare module "@tiptap/core" {
+    interface Commands<ReturnType> {
+        orphanPrevention: {
+            forceOrphanUpdate: () => ReturnType;
+        };
+    }
+}
+
 function yieldToMain(): Promise<void> {
     return new Promise<void>((resolve) => {
         const { port1, port2 } = new MessageChannel();
@@ -16,7 +24,17 @@ async function isOrphanable(node: HTMLElement): Promise<boolean> {
     return node.classList.contains("character") || node.classList.contains("scene");
 }
 
-async function computeAndDispatch(view: EditorView, isCancelled: () => boolean): Promise<void> {
+export interface OrphanPreventionOptions {
+    getContdLabel: () => string;
+    getMoreLabel: () => string;
+}
+
+export interface OrphanPreventionExtensionOptions {
+    getContdLabel: () => string;
+    getMoreLabel: () => string;
+}
+
+async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, options: OrphanPreventionOptions): Promise<void> {
     const editorDom = view.dom as HTMLElement;
     const editorTop = editorDom.getBoundingClientRect().top;
 
@@ -70,12 +88,12 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean):
                     const computedStyle = window.getComputedStyle(lastNode);
                     
                     const moreElem = document.createElement("div");
-                    moreElem.className = "dialogue dialogue-more injected-dialogue-label";
-                    moreElem.innerText = "(MORE)";
+                    moreElem.className = "injected-dialogue-label";
+                    moreElem.innerText = options.getMoreLabel();
                     moreElem.style.position = "absolute";
                     moreElem.style.top = "0px";
-                    moreElem.style.left = `${nodeRect.left - breakerRect.left}px`;
-                    moreElem.style.width = `${nodeRect.width}px`;
+                    moreElem.style.left = "0px";
+                    moreElem.style.width = "100%";
                     moreElem.style.textAlign = "center";
                     moreElem.style.pointerEvents = "none";
                     moreElem.style.zIndex = "10";
@@ -85,16 +103,26 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean):
                     moreElem.style.color = computedStyle.color;
                     moreElem.style.lineHeight = computedStyle.lineHeight;
 
+                    // Find the preceding character name
+                    let characterName = "";
+                    for (let j = lastNodeIdx - 1; j >= 0; j--) {
+                        if (paragraphs[j].classList.contains("character")) {
+                            characterName = paragraphs[j].innerText.trim();
+                            break;
+                        }
+                    }
+
                     const contElem = document.createElement("div");
-                    contElem.className = "dialogue dialogue-contd injected-dialogue-label";
-                    contElem.innerText = "(CONT'D)";
+                    contElem.className = "injected-dialogue-label";
+                    contElem.innerText = characterName ? `${characterName} ${options.getContdLabel()}` : options.getContdLabel();
                     contElem.style.position = "absolute";
                     contElem.style.bottom = "0px";
-                    contElem.style.left = `${nodeRect.left - breakerRect.left}px`;
-                    contElem.style.width = `${nodeRect.width}px`;
+                    contElem.style.left = "0px";
+                    contElem.style.width = "100%";
                     contElem.style.textAlign = "center";
                     contElem.style.pointerEvents = "none";
                     contElem.style.zIndex = "10";
+                    contElem.style.textTransform = "uppercase";
                     
                     contElem.style.fontFamily = computedStyle.fontFamily;
                     contElem.style.fontSize = computedStyle.fontSize;
@@ -154,19 +182,49 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean):
     view.dispatch(view.state.tr.setMeta(pluginKey, DecorationSet.create(view.state.doc, decorations)));
 }
 
-export const OrphanPreventionExtension = Extension.create({
+export const OrphanPreventionExtension = Extension.create<OrphanPreventionExtensionOptions>({
     name: "orphanPrevention",
+    
+    addOptions() {
+        return {
+            getContdLabel: () => "(CONT'D)",
+            getMoreLabel: () => "(MORE)",
+        };
+    },
+
+    addCommands() {
+        return {
+            forceOrphanUpdate:
+                () =>
+                ({ tr, dispatch }) => {
+                    if (dispatch) {
+                        tr.setMeta(pluginKey, "force-update");
+                    }
+                    return true;
+                },
+        };
+    },
 
     addProseMirrorPlugins() {
+        const options = this.options;
         return [
             new Plugin({
                 key: pluginKey,
                 state: {
-                    init: () => DecorationSet.empty,
+                    init: () => ({ decos: DecorationSet.empty }),
                     apply(tr, old, _, newState) {
                         const meta = tr.getMeta(pluginKey);
-                        if (meta instanceof DecorationSet) return meta;
-                        if (tr.docChanged) return old.map(tr.mapping, newState.doc);
+                        if (meta instanceof DecorationSet) return { decos: meta };
+                        
+                        let nextDecos = old.decos;
+                        if (tr.docChanged) {
+                            nextDecos = old.decos.map(tr.mapping, newState.doc);
+                        }
+                        
+                        if (meta === "force-update" || tr.docChanged) {
+                            return { decos: nextDecos };
+                        }
+                        
                         return old;
                     },
                 },
@@ -179,7 +237,7 @@ export const OrphanPreventionExtension = Extension.create({
                         const gen = ++generation;
                         raf = requestAnimationFrame(() => {
                             raf = null;
-                            computeAndDispatch(view, () => generation !== gen);
+                            computeAndDispatch(view, () => generation !== gen, options);
                         });
                     };
 
@@ -205,7 +263,12 @@ export const OrphanPreventionExtension = Extension.create({
                     schedule();
                     return {
                         update(view, prev) {
-                            if (view.state.doc !== prev.doc) schedule();
+                            if (
+                                view.state.doc !== prev.doc ||
+                                pluginKey.getState(view.state) !== pluginKey.getState(prev)
+                            ) {
+                                schedule();
+                            }
                         },
                         destroy() {
                             generation++;
@@ -216,7 +279,8 @@ export const OrphanPreventionExtension = Extension.create({
                 },
                 props: {
                     decorations(state) {
-                        return this.getState(state) as DecorationSet;
+                        const pluginState = this.getState(state);
+                        return pluginState ? pluginState.decos : DecorationSet.empty;
                     },
                 },
             }),

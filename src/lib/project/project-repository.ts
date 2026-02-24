@@ -301,6 +301,9 @@ export class ProjectRepository {
     setContdLabel(label: string) {
         this.ydoc.layout().set("contdLabel", label);
     }
+    setMoreLabel(label: string) {
+        this.ydoc.layout().set("moreLabel", label);
+    }
 
     // -------------------------------- //
     //            COMMENTS              //

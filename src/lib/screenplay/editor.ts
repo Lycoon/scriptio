@@ -36,7 +36,6 @@ import { createSceneIdDedupExtension } from "./extensions/scene-id-dedup-extensi
 import { CommentMark } from "./extensions/comment-highlight-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
 import { OrphanPreventionExtension } from "./extensions/orphan-prevention-extension";
-import { DynamicOrphanPreventionExtension } from "./extensions/dynamic-orphan-prevention";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
     if (style & Style.Bold) editor.chain().toggleBold().focus().run();
@@ -238,6 +237,8 @@ export const useScriptioEditor = (
         setActiveCommentId,
         sceneNumberOnRight,
         displaySceneNumbers,
+        contdLabel,
+        moreLabel,
     } = projectCtx;
 
     // Refs for autocomplete data
@@ -311,6 +312,10 @@ export const useScriptioEditor = (
     const sceneNumberOnRightRef = useRef<boolean>(sceneNumberOnRight);
     const displaySceneNumbersRef = useRef<boolean>(displaySceneNumbers);
 
+    // Ref for contd label
+    const contdLabelRef = useRef<string>(contdLabel);
+    const moreLabelRef = useRef<string>(moreLabel);
+
     // Keep refs in sync with state
     useEffect(() => {
         highlightedCharactersRef.current = highlightedCharacters;
@@ -359,6 +364,14 @@ export const useScriptioEditor = (
     useEffect(() => {
         displaySceneNumbersRef.current = displaySceneNumbers;
     }, [displaySceneNumbers]);
+
+    useEffect(() => {
+        contdLabelRef.current = contdLabel;
+    }, [contdLabel]);
+
+    useEffect(() => {
+        moreLabelRef.current = moreLabel;
+    }, [moreLabel]);
 
     useEffect(() => {
         userInfoRef.current = {
@@ -468,7 +481,10 @@ export const useScriptioEditor = (
                     footerRight: "",
                     ...SCREENPLAY_FORMATS[pageSize],
                 }),
-                OrphanPreventionExtension,
+                OrphanPreventionExtension.configure({
+                    getContdLabel: () => contdLabelRef.current,
+                    getMoreLabel: () => moreLabelRef.current
+                }),
                 KeybindsExtension.configure({
                     userKeybinds: userKeybinds || {},
                     onAction: (id, editorInstance) => {
@@ -679,6 +695,12 @@ export const useScriptioEditor = (
             // Editor view not mounted yet — will apply on next render
         }
     }, [scriptioEditor, pageSize]);
+
+    // Force orphan prevention element update when labels change
+    useEffect(() => {
+        if (!scriptioEditor || scriptioEditor.isDestroyed) return;
+        scriptioEditor.commands.forceOrphanUpdate();
+    }, [scriptioEditor, contdLabel, moreLabel]);
 
     return scriptioEditor;
 };

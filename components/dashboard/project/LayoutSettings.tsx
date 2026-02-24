@@ -25,6 +25,8 @@ const LayoutSettings = () => {
         setSceneNumberOnRight,
         contdLabel,
         setContdLabel,
+        moreLabel,
+        setMoreLabel,
     } = useContext(ProjectContext);
 
     // Strip wrapping parentheses for display — the system stores "(CONT'D)" but the
@@ -34,16 +36,27 @@ const LayoutSettings = () => {
     // Local state for the continuation input to avoid triggering editor.commands.focus()
     // on every keystroke (which steals focus from the input and causes freezes)
     const [localContdLabel, setLocalContdLabel] = useState(() => stripParens(contdLabel));
+    const [localMoreLabel, setLocalMoreLabel] = useState(() => stripParens(moreLabel));
+
     const hasContdChanges = `(${localContdLabel})` !== contdLabel;
+    const hasMoreChanges = `(${localMoreLabel})` !== moreLabel;
 
     const commitContdLabel = () => {
         if (hasContdChanges) setContdLabel(`(${localContdLabel})`);
+    };
+
+    const commitMoreLabel = () => {
+        if (hasMoreChanges) setMoreLabel(`(${localMoreLabel})`);
     };
 
     // Keep local state in sync when the context value changes externally (e.g. collaboration)
     useEffect(() => {
         setLocalContdLabel(stripParens(contdLabel));
     }, [contdLabel]);
+
+    useEffect(() => {
+        setLocalMoreLabel(stripParens(moreLabel));
+    }, [moreLabel]);
 
     const handleFormatChange = (newFormat: PageFormat) => {
         setPageFormat(newFormat);
@@ -141,6 +154,27 @@ const LayoutSettings = () => {
                 <div className={styles.contdInputRow}>
                     <input
                         type="text"
+                        value={localMoreLabel}
+                        onChange={(e) => setLocalMoreLabel(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") commitMoreLabel();
+                        }}
+                        className={`${sharedStyles.input} ${styles.input}`}
+                        placeholder="MORE"
+                    />
+                    <button
+                        className={`${styles.contdConfirmBtn} ${hasMoreChanges ? styles.contdConfirmBtnActive : ""}`}
+                        disabled={!hasMoreChanges}
+                        onClick={commitMoreLabel}
+                        title="Apply dialogue continuation label (bottom of page)"
+                    >
+                        <Check size={16} />
+                    </button>
+                </div>
+
+                <div className={styles.contdInputRow} style={{ marginTop: '0.5rem' }}>
+                    <input
+                        type="text"
                         value={localContdLabel}
                         onChange={(e) => setLocalContdLabel(e.target.value)}
                         onKeyDown={(e) => {
@@ -153,7 +187,7 @@ const LayoutSettings = () => {
                         className={`${styles.contdConfirmBtn} ${hasContdChanges ? styles.contdConfirmBtnActive : ""}`}
                         disabled={!hasContdChanges}
                         onClick={commitContdLabel}
-                        title="Apply continuation label"
+                        title="Apply character continuation label (top of page)"
                     >
                         <Check size={16} />
                     </button>

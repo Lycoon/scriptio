@@ -36,6 +36,7 @@ const ExportProject = () => {
         sceneHeadingDoubleSpace,
         sceneNumberOnRight,
         contdLabel,
+        moreLabel,
     } = useContext(ProjectContext);
     const ydoc = repository?.getState();
     const userContext = useContext(UserContext);
@@ -50,6 +51,7 @@ const ExportProject = () => {
     const [enablePassword, setEnablePassword] = useState<boolean>(false);
     const [password, setPassword] = useState<string>("");
     const [isExporting, setExporting] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     // Reference for the hidden file input
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +101,7 @@ const ExportProject = () => {
             author: authorEmail,
             projectAuthor,
             includeNotes,
+            onProgress: (p) => { console.log("progress: ", p);setProgress(p) },
         };
 
         const adapter = getAdapterByExtension(format);
@@ -123,6 +126,7 @@ const ExportProject = () => {
                 sceneHeadingDoubleSpace,
                 sceneNumberOnRight,
                 contdLabel,
+                moreLabel,
                 editorElement: editor?.view?.dom,
                 titlePageElement: titlePageEditor?.view?.dom,
             };
@@ -132,10 +136,11 @@ const ExportProject = () => {
         }
 
         setExporting(false);
+        setProgress(0);
     };
 
     const formatOptions: DropdownOption[] = [
-        { value: ExportFormat.PDF, label: "PDF (.pdf)" },
+        { value: ExportFormat.PDF, label: "PDF Document (.pdf)" },
         { value: ExportFormat.FOUNTAIN, label: "Fountain (.fountain)" },
         { value: ExportFormat.FDX, label: "Final Draft (.fdx)" },
         { value: ExportFormat.SCRIPTIO, label: "Scriptio (.scriptio)" },
@@ -265,7 +270,7 @@ const ExportProject = () => {
 
             <div className={sharedStyles.formActions}>
                 <button onClick={handleExport} disabled={isExporting} className={`${sharedStyles.formBtn}`}>
-                    {isExporting ? "Exporting..." : "Export"}
+                    {isExporting ? `Exporting${progress > 0 ? ` (${Math.round(progress)}%)` : "..."}` : "Export"}
                 </button>
             </div>
         </div>

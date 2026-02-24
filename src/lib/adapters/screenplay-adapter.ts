@@ -11,6 +11,7 @@ export type BaseExportOptions = {
     includeNotes: boolean;
     characters?: string[]; // undefined means all characters
     notesColor?: string;
+    onProgress?: (progress: number) => void;
 };
 
 export abstract class ProjectAdapter<TExportOptions extends BaseExportOptions = BaseExportOptions> {
