@@ -2,9 +2,7 @@ name: Build Web
 
 on:
     push:
-        branches-ignore: [release]
-    pull_request:
-        branches: [release, dev]
+        branches: [dev]
 
 jobs:
     check_build:
@@ -14,4 +12,4 @@ jobs:
               uses: actions/checkout@v6
 
             - name: Build image
-              run: docker compose build app
+              run: docker compose build app-prod

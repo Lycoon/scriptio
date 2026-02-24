@@ -1,14 +1,14 @@
 services:
-    app:
+    app-prod:
         image: ghcr.io/lycoon/scriptio-app:latest
-        container_name: scriptio
+        container_name: scriptio-prod
         profiles: ["prod"]
-        env_file: .env
         build: .
         environment:
-            - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@prod-db:5432/${DB_NAME}?schema=public
+            - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db-prod:5432/${DB_NAME}?schema=public
         depends_on:
-            - prod-db
+            db-prod:
+                condition: service_healthy
         networks:
             - webproxy
             - internal
@@ -20,23 +20,69 @@ services:
             - traefik.http.routers.scriptio-app.tls=true
             - traefik.http.routers.scriptio-app.tls.certresolver=letsencrypt
 
+    app-staging:
+        image: ghcr.io/lycoon/scriptio-app:staging
+        container_name: scriptio-staging
+        profiles: ["staging"]
+        build: .
+        environment:
+            - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db-staging:5432/${DB_NAME}?schema=public
+        depends_on:
+            db-staging:
+                condition: service_healthy
+        networks:
+            - webproxy
+            - internal
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=webproxy
+            - traefik.http.routers.scriptio-staging.rule=Host(`staging.scriptio.app`)
+            - traefik.http.routers.scriptio-staging.entrypoints=secure
+            - traefik.http.routers.scriptio-staging.tls=true
+            - traefik.http.routers.scriptio-staging.tls.certresolver=letsencrypt
+            - traefik.http.routers.scriptio-staging.middlewares=staging-auth
+            - traefik.http.middlewares.staging-auth.basicauth.users=${STAGING_AUTH_USERS}
+
     # Production Database
-    prod-db:
+    db-prod:
         image: postgres:17-alpine
         profiles: ["prod"]
-        env_file: .env
         restart: unless-stopped
         environment:
             POSTGRES_USER: ${DB_USER}
             POSTGRES_PASSWORD: ${DB_PASSWORD}
             POSTGRES_DB: ${DB_NAME}
         volumes:
-            - ./database:/var/lib/postgresql/data
+            - ./db_prod:/var/lib/postgresql/data
         networks:
             - internal
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    # Staging Database
+    db-staging:
+        image: postgres:17-alpine
+        profiles: ["staging"]
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        volumes:
+            - ./db_staging:/var/lib/postgresql/data
+        networks:
+            - internal
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
     # Testing Database
-    test-db:
+    db-test:
         image: postgres:17-alpine
         restart: unless-stopped
         ports:
@@ -46,7 +92,7 @@ services:
             POSTGRES_PASSWORD: ${DB_PASSWORD}
             POSTGRES_DB: ${DB_NAME}
         volumes:
-            - ./test_database:/var/lib/postgresql/data
+            - ./db_test:/var/lib/postgresql/data
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
             interval: 5s
