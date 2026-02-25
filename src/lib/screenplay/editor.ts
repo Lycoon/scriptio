@@ -684,13 +684,26 @@ export const useScriptioEditor = (
 
     // Sync editor page size when pageFormat changes (e.g., from another collaborator)
     useEffect(() => {
-        if (!scriptioEditor || scriptioEditor.isDestroyed) return;
+        if (!scriptioEditor || scriptioEditor.isDestroyed || !scriptioEditor.view) return;
         try {
-            scriptioEditor.chain().updatePageSize(SCREENPLAY_FORMATS[pageSize]).run();
-            scriptioEditor.view.dom.style.setProperty(
-                "--page-margin-left",
-                `${SCREENPLAY_FORMATS[pageSize].marginLeft}px`,
-            );
+            const format = SCREENPLAY_FORMATS[pageSize];
+            // 1. Update the Pagination engine variables
+            scriptioEditor.chain().updatePageSize(format).run();
+            // 2. Safely apply the CSS layout var
+            const dom = scriptioEditor.view.dom as HTMLElement;
+            if (dom) {
+                dom.style.setProperty("--page-margin-left", `${format.marginLeft}px`);
+                // 3. Force ProseMirror to flush/repaint its view to catch dynamic dimensions
+                // The extension's `updatePageSize` only sets variables. It does not dispatch
+                // an update to re-evaluate the DOM when called asynchronously from React.
+                scriptioEditor.commands.command(({ tr, dispatch }) => {
+                    if (dispatch) {
+                        tr.setMeta("pageFormatUpdate", true);
+                        dispatch(tr);
+                    }
+                    return true;
+                });
+            }
         } catch {
             // Editor view not mounted yet — will apply on next render
         }
