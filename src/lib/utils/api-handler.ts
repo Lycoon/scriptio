@@ -40,7 +40,9 @@ export const apiHandler = (handler: AppHandler) => {
             }
 
             // Unhandled errors
-            return NextResponse.json({ status: "error", message: err }, { status: 500 });
+            const message = err instanceof Error ? err.message : String(err);
+            console.error("[apiHandler] Unhandled error:", err);
+            return NextResponse.json({ status: "error", message }, { status: 500 });
         }
     };
 };

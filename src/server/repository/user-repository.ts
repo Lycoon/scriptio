@@ -67,9 +67,6 @@ export class UserRepository {
                         emailHash: user.secrets.emailHash,
                     },
                 },
-                settings: {
-                    create: {},
-                },
             },
         });
     }
