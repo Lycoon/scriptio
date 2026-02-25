@@ -13,11 +13,17 @@ export interface DesktopTokenPayload {
     createdAt: string; // ISO string in JWT
 }
 
+if (!process.env.COOKIE_SECRET || process.env.COOKIE_SECRET.length < 32) {
+    throw new Error(
+        "Missing or invalid COOKIE_SECRET environment variable (must be at least 32 characters)"
+    );
+}
+
 export const sessionOptions: SessionOptions = {
-    password: process.env.COOKIE_SECRET as string,
+    password: process.env.COOKIE_SECRET,
     cookieName: "auth-cookie",
     cookieOptions: {
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV !== "development",
     },
 };
 
