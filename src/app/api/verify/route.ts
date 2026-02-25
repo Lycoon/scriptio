@@ -4,8 +4,8 @@ import { validate } from "@src/lib/utils/api-utils";
 
 import * as UserService from "@src/server/service/user-service";
 import z from "zod";
-import { authenticate, getSession } from "@src/lib/session";
-import { NextRequest, NextResponse } from "next/server";
+import { authenticate } from "@src/lib/session";
+import { NextRequest } from "next/server";
 import { redirect } from "next/navigation";
 import { CookieUser } from "@src/lib/utils/types";
 
@@ -21,34 +21,33 @@ const QuerySchema = z.object({
  * scriptio.app/api/verify?id=userId&token=emailHash
  */
 async function verifyUser(req: NextRequest, { searchParams }: ApiContext) {
+    let target = "/login?status=failed";
+
     try {
         const { id, token } = validate(QuerySchema, searchParams);
 
         const user = await UserService.getUserFromId(id, true);
         if (!user || token !== user.secrets?.emailHash) {
-            return redirect("/login?status=failed");
+            // target stays "/login?status=failed"
+        } else if (user.verified) {
+            target = "/login?status=used";
+        } else {
+            const updated = await UserService.updateUserFromId(id, {
+                secrets: { emailHash: null },
+                verified: true,
+            });
+
+            if (updated) {
+                // Automatically authenticate a user that just clicked on his verification email
+                await authenticate(updated as CookieUser);
+                target = "/";
+            }
         }
-
-        if (user.verified) {
-            redirect("/login?status=used");
-        }
-
-        const updated = await UserService.updateUserFromId(id, {
-            secrets: { emailHash: null },
-            verified: true,
-        });
-
-        if (!updated) {
-            redirect("/login?status=failed");
-        }
-
-        // Automatically authenticate a user that just clicked on his verification email
-        await authenticate(updated as CookieUser);
-
-        redirect("/");
-    } catch (error: any) {
-        redirect("/login?status=failed");
+    } catch {
+        target = "/login?status=failed";
     }
+
+    redirect(target);
 }
 
 export const GET = apiHandler(verifyUser);
