@@ -3,6 +3,8 @@ services:
         image: ghcr.io/lycoon/scriptio-app:latest
         container_name: scriptio-prod
         profiles: ["prod"]
+        restart: unless-stopped
+        env_file: .env.prod
         build: .
         environment:
             - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db-prod:5432/${DB_NAME}?schema=public
@@ -24,6 +26,8 @@ services:
         image: ghcr.io/lycoon/scriptio-app:staging
         container_name: scriptio-staging
         profiles: ["staging"]
+        restart: unless-stopped
+        env_file: .env.staging
         build: .
         environment:
             - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db-staging:5432/${DB_NAME}?schema=public
