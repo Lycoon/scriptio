@@ -436,12 +436,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (metadata.author !== undefined) setProjectAuthorState(metadata.author);
         });
 
-        // Seed Yjs metadata from the database project record if not yet set
-        if (!initialTitle && project?.project.title) {
-            repository.setTitle(project.project.title);
-            setProjectTitleState(project.project.title);
-        }
-
         return () => {
             unsubscribeScreenplay();
             unsubscribeLayout();
@@ -452,6 +446,17 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             unsubscribeMetadata();
         };
     }, [repository]);
+
+    // Seed Yjs metadata from the database project record if not yet set
+    useEffect(() => {
+        if (!repository || !project) return;
+        
+        const initialTitle = repository.getTitle();
+        if (!initialTitle && project.project.title) {
+            repository.setTitle(project.project.title);
+            setProjectTitleState(project.project.title);
+        }
+    }, [repository, project]);
 
     useEffect(() => {
         setConnectionStatus(yjsConnectionStatus);

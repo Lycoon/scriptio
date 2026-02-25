@@ -160,7 +160,6 @@ export const TITLEPAGE_BASE_EXTENSIONS = [
 
 export const TitlePageSchema = getSchema(TITLEPAGE_BASE_EXTENSIONS);
 
-// Helper for default content
 const LINE = (align: string = "left", content?: any[]) => ({
     type: "tp-text",
     attrs: { textAlign: align },
@@ -168,13 +167,10 @@ const LINE = (align: string = "left", content?: any[]) => ({
 });
 
 const TEXT = (text: string) => ({ type: "text", text });
-
-const FORMAT_NODE = (type: TitlePageElement) => ({ type });
-
+const FORMAT_NODE = (type: TitlePageElement, marks?: any[]) => (marks ? { type, marks } : { type });
 const EMPTY = (align: string = "left") => LINE(align);
 
 export const DEFAULT_TITLEPAGE_CONTENT = [
-    // Push title to roughly 1/3 down the page
     EMPTY(),
     EMPTY(),
     EMPTY(),
@@ -185,7 +181,7 @@ export const DEFAULT_TITLEPAGE_CONTENT = [
     EMPTY(),
     EMPTY(),
     EMPTY(),
-    LINE("center", [FORMAT_NODE(TitlePageElement.Title)]),
+    LINE("center", [FORMAT_NODE(TitlePageElement.Title, [{ type: "underline", attrs: { class: "underline" } }])]),
     LINE("center", [TEXT("by")]),
     LINE("center", [FORMAT_NODE(TitlePageElement.Author)]),
     EMPTY(),
@@ -297,6 +293,16 @@ export const useTitlePageEditor = () => {
         [projectState, provider, isYjsReady],
     );
 
+    // Update storage synchronously during render. This ensures that when TipTap
+    // delays nodeView mount due to immediatelyRender: false, the data is already available.
+    if (titlePageEditor && typeof titlePageEditor.storage === "object") {
+        const storage = (titlePageEditor.storage as any).titlePageMetadata;
+        if (storage) {
+            storage.projectTitle = projectTitle || "";
+            storage.projectAuthor = projectAuthor || "";
+        }
+    }
+
     // Register editor in ProjectContext
     useEffect(() => {
         if (titlePageEditor) {
@@ -309,18 +315,40 @@ export const useTitlePageEditor = () => {
 
     // Initialize default template if title page is empty
     useEffect(() => {
-        if (!titlePageEditor || !isYjsReady || !repository) return;
+        if (!titlePageEditor || !isYjsReady || !repository || !titlePageEditor.view) return;
 
         const state = repository.getState();
         const meta = state.metadata();
 
         if (!meta.get("titlepageInitialized")) {
-            state.transact(() => {
-                if (!meta.get("titlepageInitialized")) {
-                    meta.set("titlepageInitialized", true);
-                    titlePageEditor.commands.setContent(DEFAULT_TITLEPAGE_CONTENT);
+            // Apply content first, then set the flag — if setContent throws, the flag
+            // stays unset so the next render will retry rather than leaving a blank page.
+            titlePageEditor.commands.setContent(DEFAULT_TITLEPAGE_CONTENT);
+
+            // Apply underline to the title format node as a separate transaction —
+            // the same operation the navbar button performs. Marks on inline atom nodes
+            // are not preserved by the Collaboration extension's Yjs conversion when
+            // embedded in the setContent JSON, so we apply them explicitly here.
+            const { state, view } = titlePageEditor;
+            const tr = state.tr;
+            let modified = false;
+
+            tr.doc.descendants((node, pos) => {
+                if (node.type.name === TitlePageElement.Title) {
+                    const markType = state.schema.marks.underline;
+                    if (markType) {
+                        tr.addMark(pos, pos + node.nodeSize, markType.create({ class: "underline" }));
+                        modified = true;
+                    }
+                    return false;
                 }
             });
+
+            if (modified && view) {
+                view.dispatch(tr);
+            }
+
+            meta.set("titlepageInitialized", true);
         }
     }, [titlePageEditor, isYjsReady, repository]);
 
@@ -333,7 +361,9 @@ export const useTitlePageEditor = () => {
             storage.projectAuthor = projectAuthor || "";
             // Refresh all format node views with updated values
             storage.nodeViewUpdaters?.forEach((fn: () => void) => fn());
-            titlePageEditor.view.dispatch(titlePageEditor.state.tr.setMeta("titlePageMetadataUpdate", true));
+            if (titlePageEditor.view && !titlePageEditor.view.isDestroyed) {
+                titlePageEditor.view.dispatch(titlePageEditor.state.tr.setMeta("titlePageMetadataUpdate", true));
+            }
         }
     }, [titlePageEditor, projectTitle, projectAuthor]);
 

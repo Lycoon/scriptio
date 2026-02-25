@@ -125,15 +125,17 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                                 This will permanently delete your account and all associated data. This action cannot be
                                 undone.
                             </p>
-                            <p className={dangerStyles.modalDescription}>
+                            <label htmlFor="delete-confirm" className={dangerStyles.modalDescription} style={{ display: "block" }}>
                                 Type <strong>{DELETE_CONFIRMATION_PHRASE}</strong> to confirm.
-                            </p>
+                            </label>
                             <input
+                                id="delete-confirm"
                                 type="text"
                                 className={`${sharedStyles.input} ${dangerStyles.modalInput}`}
                                 placeholder={DELETE_CONFIRMATION_PHRASE}
                                 value={deleteConfirmInput}
                                 onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                                autoComplete="off"
                             />
                             <div className={dangerStyles.modalActions}>
                                 <button
@@ -166,20 +168,22 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         <div className={sharedStyles.settingsForm}>
             {/* Email */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Email</label>
-                <input type="email" value={user?.email ?? ""} disabled className={sharedStyles.input} />
+                <label htmlFor="email" className={form.label}>Email</label>
+                <input id="email" type="email" value={user?.email ?? ""} disabled className={sharedStyles.input} autoComplete="email" />
             </div>
 
             {/* Username */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Username</label>
+                <label htmlFor="username" className={form.label}>Username</label>
                 <input
+                    id="username"
                     type="text"
                     value={username}
                     onChange={handleUsernameChange}
                     className={sharedStyles.input}
                     placeholder="Enter your display name..."
                     maxLength={32}
+                    autoComplete="username"
                 />
                 <p className={sharedStyles.helpText}>
                     This name will be visible to collaborators when you work on shared projects.
@@ -205,11 +209,13 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                     <div className={styles.colorCustom}>
                         <span className={styles.colorValue}>{color.toUpperCase()}</span>
                         <label
+                            htmlFor="custom-color"
                             className={`${styles.colorPreset} ${styles.customColorSwatch} ${!PRESET_COLORS.includes(color) ? styles.selected : ""}`}
                             style={{ backgroundColor: color }}
                             title="Custom color"
                         >
                             <input
+                                id="custom-color"
                                 type="color"
                                 value={color}
                                 onChange={(e) => handleColorChange(e.target.value)}

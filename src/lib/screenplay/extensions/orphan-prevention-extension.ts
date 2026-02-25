@@ -69,7 +69,7 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, 
                 lastNodeHeight = pRect.height;
             } else break;
         }
-
+        
         if (lastNode) {
             // Red: node that straddles the page break (debug reference).
             try {
@@ -82,6 +82,14 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, 
                 // Clear labels for this specific gap synchronously to avoid flashing across yields
                 gapEl.querySelectorAll(".injected-dialogue-label").forEach(el => el.remove());
                 
+                // Debug visually: Highlight the strictly identified `lastNode` right before the page gap.
+                decorations.push(
+                    Decoration.node(start, start + resolved.parent.nodeSize, {
+                        style: "background-color: rgba(255, 0, 0, 0.2) !important; outline: 2px solid red;",
+                        class: "orphan-debug-last-node"
+                    })
+                );
+
                 // If it's dialogue straddling a page break (actually physically crossing the breaker gap)
                 if (isStraddling && lastNode.classList.contains("dialogue")) {
                     const nodeRect = lastNode.getBoundingClientRect();
@@ -140,37 +148,6 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, 
                 }
             } catch {
                 // detached or invalid position — skip
-            }
-
-            // Green: orphan — a character or scene heading immediately above the
-            // straddling node, meaning it would be left alone at the bottom of the page.
-            if (lastNodeIdx > 0) {
-                const prevNode = paragraphs[lastNodeIdx - 1];
-                const isLastOrphanable = await isOrphanable(lastNode);
-                const isPrevOrphanable = await isOrphanable(prevNode);
-
-                if (isPrevOrphanable) {
-                    const prevRect = prevNode.getBoundingClientRect();
-                    const prevBottom = prevRect.bottom - editorTop;
-                    console.log(
-                        `Orphan candidate at ${prevBottom}px, breaker top at ${breakerTop}px: ${breakerTop - lastNodeTop}px gap (threshold: ${2 * 17}px)`,
-                    );
-                    if (breakerTop - prevBottom <= 2 * 17 + 6) {
-                        try {
-                            const height = prevRect.height;
-                            const pos = view.posAtDOM(prevNode, 0);
-                            const resolved = view.state.doc.resolve(pos);
-                            const start = resolved.before(resolved.depth);
-                            decorations.push(
-                                Decoration.node(start, start + resolved.parent.nodeSize, {
-                                    style: `background-color: green;`,
-                                }),
-                            );
-                        } catch {
-                            // detached or invalid position — skip
-                        }
-                    }
-                }
             }
         }
 

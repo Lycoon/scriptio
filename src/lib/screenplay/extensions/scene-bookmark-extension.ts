@@ -118,6 +118,6 @@ export const createSceneBookmarkExtension = (config: SceneBookmarkConfig) => {
  * Call this when scenes or their colors change.
  */
 export const refreshSceneBookmarks = (editor: Editor) => {
-    if (!editor) return;
+    if (!editor || !editor.view) return;
     editor.view.dispatch(editor.state.tr.setMeta("sceneBookmarkRefresh", true));
 };

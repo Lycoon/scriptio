@@ -698,7 +698,7 @@ export const useScriptioEditor = (
 
     // Force orphan prevention element update when labels change
     useEffect(() => {
-        if (!scriptioEditor || scriptioEditor.isDestroyed) return;
+        if (!scriptioEditor || scriptioEditor.isDestroyed || !scriptioEditor.view) return;
         scriptioEditor.commands.forceOrphanUpdate();
     }, [scriptioEditor, contdLabel, moreLabel]);
 
