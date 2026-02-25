@@ -47,6 +47,7 @@ function createFormatNode(name: TitlePageElement) {
         group: "inline",
         inline: true,
         atom: true,
+        marks: "_",
         selectable: true,
         draggable: false,
 
@@ -77,11 +78,23 @@ function createFormatNode(name: TitlePageElement) {
         },
 
         addNodeView() {
-            return ({ editor }) => {
+            return ({ node, editor }) => {
                 const dom = document.createElement("span");
-                dom.className = `${name} tp-format-node`;
                 dom.contentEditable = "false";
                 dom.setAttribute("data-tp-type", name);
+
+                // Apply base classes plus any mark-driven classes (e.g. underline)
+                const applyMarkClasses = (marks: readonly any[]) => {
+                    const markClasses = marks
+                        .map((m: any) => m.attrs?.class || m.type.name)
+                        .filter(Boolean);
+                    // Preserve tp-format-placeholder before rebuilding className
+                    const isPlaceholder = dom.classList.contains("tp-format-placeholder");
+                    dom.className = [`${name} tp-format-node`, ...markClasses].join(" ");
+                    if (isPlaceholder) dom.classList.add("tp-format-placeholder");
+                };
+
+                applyMarkClasses(node.marks);
 
                 const refresh = () => {
                     // Read from the module-level ref which is updated
@@ -101,6 +114,11 @@ function createFormatNode(name: TitlePageElement) {
 
                 return {
                     dom,
+                    // Called by ProseMirror when this node's attrs or marks change
+                    update(updatedNode: any) {
+                        applyMarkClasses(updatedNode.marks);
+                        return true;
+                    },
                     destroy() {
                         updaters?.delete(refresh);
                     },

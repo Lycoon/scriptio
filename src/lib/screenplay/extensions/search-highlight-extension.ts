@@ -344,7 +344,7 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
  * Call this when search term, filters, or current match index changes.
  */
 export const refreshSearchHighlights = (editor: Editor) => {
-    if (!editor) return;
+    if (!editor || !editor.view) return;
     // Dispatch an empty transaction to trigger decoration recomputation
     editor.view.dispatch(editor.state.tr.setMeta("searchHighlightRefresh", true));
 };

@@ -145,6 +145,6 @@ export const createSceneNumberRightExtension = (config: SceneNumberRightConfig) 
  * Call this when the sceneNumberOnRight setting changes.
  */
 export const refreshSceneNumberRight = (editor: Editor) => {
-    if (!editor) return;
+    if (!editor || !editor.view) return;
     editor.view.dispatch(editor.state.tr.setMeta("sceneNumberRightRefresh", true));
 };

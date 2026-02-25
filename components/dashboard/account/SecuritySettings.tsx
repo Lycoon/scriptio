@@ -74,8 +74,9 @@ const SecuritySettings = () => {
         <form onSubmit={handleSubmit} className={sharedStyles.settingsForm}>
             {/* New Password */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>New Password</label>
+                <label htmlFor="new-password" className={form.label}>New Password</label>
                 <input
+                    id="new-password"
                     type="password"
                     value={newPassword}
                     onChange={handleNewPasswordChange}
@@ -87,8 +88,9 @@ const SecuritySettings = () => {
 
             {/* Confirm Password */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Confirm Password</label>
+                <label htmlFor="confirm-password" className={form.label}>Confirm Password</label>
                 <input
+                    id="confirm-password"
                     type="password"
                     value={confirmPassword}
                     onChange={handleConfirmPasswordChange}
