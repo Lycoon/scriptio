@@ -85,7 +85,7 @@ async function signupRoute(req: NextRequest) {
     }
 
     Mail.sendVerificationEmail(created.id, email, secrets.emailHash);
-    Success(null, VERIFICATION_SENT);
+    return Success(null, VERIFICATION_SENT);
 }
 
 export const POST = apiHandler(signupRoute);
