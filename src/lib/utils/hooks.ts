@@ -129,11 +129,14 @@ const useCookieUser = (redirect: boolean = false) => {
 };
 
 const useSettings = () => {
-    const { data: settings, isLoading, mutate } = useSWR<UserSettings>("/api/users/settings");
+    const { user, isLoading: isUserLoading } = useCookieUser();
+    const { data: settings, isLoading, mutate } = useSWR<UserSettings>(
+        !isUserLoading && user ? "/api/users/settings" : null,
+    );
 
     return {
         settings,
-        isLoading,
+        isLoading: isUserLoading || isLoading,
         mutate,
     };
 };
