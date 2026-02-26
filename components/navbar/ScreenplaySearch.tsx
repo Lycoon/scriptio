@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useRef, useEffect, useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { scrollToMatch, SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
@@ -8,18 +9,6 @@ import { Search, ChevronUp, ChevronDown, X, Replace, ReplaceAll } from "lucide-r
 import styles from "./ScreenplaySearch.module.css";
 
 const DEBOUNCE_MS = 300;
-
-const FILTER_LABELS: Record<ScreenplayElement, string> = {
-    [ScreenplayElement.Scene]: "Scene Heading",
-    [ScreenplayElement.Action]: "Action",
-    [ScreenplayElement.Character]: "Character",
-    [ScreenplayElement.Dialogue]: "Dialogue",
-    [ScreenplayElement.Parenthetical]: "Parenthetical",
-    [ScreenplayElement.Transition]: "Transition",
-    [ScreenplayElement.Section]: "Section",
-    [ScreenplayElement.Note]: "Note",
-    [ScreenplayElement.None]: "None",
-};
 
 const FILTER_ORDER: ScreenplayElement[] = [
     ScreenplayElement.Scene,
@@ -33,6 +22,20 @@ const FILTER_ORDER: ScreenplayElement[] = [
 ];
 
 const ScreenplaySearch = () => {
+    const t = useTranslations("search");
+
+    const FILTER_LABELS: Record<ScreenplayElement, string> = {
+        [ScreenplayElement.Scene]: t("elements.scene"),
+        [ScreenplayElement.Action]: t("elements.action"),
+        [ScreenplayElement.Character]: t("elements.character"),
+        [ScreenplayElement.Dialogue]: t("elements.dialogue"),
+        [ScreenplayElement.Parenthetical]: t("elements.parenthetical"),
+        [ScreenplayElement.Transition]: t("elements.transition"),
+        [ScreenplayElement.Section]: t("elements.section"),
+        [ScreenplayElement.Note]: t("elements.note"),
+        [ScreenplayElement.None]: t("elements.none"),
+    };
+
     const {
         editor,
         searchTerm,
@@ -214,7 +217,7 @@ const ScreenplaySearch = () => {
                         ref={inputRef}
                         type="text"
                         className={styles.search_input}
-                        placeholder="Search..."
+                        placeholder={t("placeholder")}
                         defaultValue={searchTerm}
                         onChange={handleSearchChange}
                     />
@@ -240,8 +243,8 @@ const ScreenplaySearch = () => {
                         </button>
                         <span className={styles.match_count}>
                             {searchMatches.length > 0
-                                ? `${currentSearchIndex + 1} of ${searchMatches.length}`
-                                : "No matches"}
+                                ? t("matchCount", { current: currentSearchIndex + 1, total: searchMatches.length })
+                                : t("noMatches")}
                         </span>
                         <button
                             className={styles.nav_btn}
@@ -261,7 +264,7 @@ const ScreenplaySearch = () => {
                             ref={replaceInputRef}
                             type="text"
                             className={styles.replace_input}
-                            placeholder="Replace with..."
+                            placeholder={t("replacePlaceholder")}
                             value={replaceValue}
                             onChange={(e) => setReplaceValue(e.target.value)}
                         />
@@ -270,7 +273,7 @@ const ScreenplaySearch = () => {
                                 className={styles.replace_btn}
                                 onClick={handleReplace}
                                 disabled={searchMatches.length === 0}
-                                title="Replace"
+                                title={t("replace")}
                             >
                                 <Replace size={16} />
                             </button>
@@ -278,7 +281,7 @@ const ScreenplaySearch = () => {
                                 className={styles.replace_btn}
                                 onClick={handleReplaceAll}
                                 disabled={searchMatches.length === 0}
-                                title="Replace All"
+                                title={t("replaceAll")}
                             >
                                 <ReplaceAll size={16} />
                             </button>
@@ -287,7 +290,7 @@ const ScreenplaySearch = () => {
 
                     {/* Filters section */}
                     <div className={styles.filters_section}>
-                        <span className={styles.filters_label}>Filter by element:</span>
+                        <span className={styles.filters_label}>{t("filterByElement")}</span>
                         <div className={styles.filters_list}>
                             {FILTER_ORDER.map((element) => (
                                 <label key={element} className={styles.filter_item}>

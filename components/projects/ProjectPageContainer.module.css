@@ -43,6 +43,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    white-space: nowrap;
 
     font-weight: 500;
     padding-inline: 40px !important;
@@ -61,6 +62,13 @@
     justify-content: flex-start;
     height: 100%;
     overflow: hidden;
+    width: clamp(320px, 80%, 860px);
+}
+
+@media (max-width: 600px) {
+    .center {
+        width: 100%;
+    }
 }
 
 .gridWrapper {
@@ -81,10 +89,9 @@
 }
 
 .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
-    row-gap: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .bottomShadow {
@@ -101,16 +108,4 @@
 
 .showShadow {
     opacity: 1;
-}
-
-@media (max-width: 1300px) {
-    .project-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 800px) {
-    .project-grid {
-        grid-template-columns: repeat(1, 1fr);
-    }
 }

@@ -1,0 +1,266 @@
+{
+    "navbar": {
+        "screenplay": "脚本",
+        "board": "ボード",
+        "titlePage": "タイトルページ",
+        "synced": "クラウドに同期済み",
+        "noConnection": "接続なし",
+        "reconnecting": "再接続中..."
+    },
+    "common": {
+        "save": "変更を保存",
+        "cancel": "キャンセル",
+        "loading": "読み込み中..."
+    },
+    "sidebar": {
+        "title": "ダッシュボード",
+        "logOut": "ログアウト",
+        "logIn": "ログイン"
+    },
+    "appearance": {
+        "theme": "テーマ",
+        "themeHelp": {
+            "dark": "夜更かしする方や深夜の集中作業に適した、低グレアのダークテーマ。",
+            "light": "日中に自然で快適な、すっきりとした明るいテーマ。",
+            "latte": "温かみと読みやすさを融合した、柔らかなクリーム系テーマ。",
+            "wonka": "深みのある高級感と目への優しさを兼ね備えた、ベルベットカカオ系テーマ。",
+            "mint": "植物の穏やかさと視覚的バランスを融合した、さわやかなミント系テーマ。",
+            "blossom": "花びらの温もりと視覚的な柔らかさを融合した、繊細なブロッサム系テーマ。"
+        },
+        "editor": "エディタ",
+        "themedEditor": "テーマエディタ",
+        "themedEditorDesc": "テーマの色をエディタの背景とテキストに適用する"
+    },
+    "keybinds": {
+        "screenplayElements": "脚本要素",
+        "typing": "入力中…（Escでキャンセル）",
+        "notSet": "未設定",
+        "modifiersOnly": "修飾キーのみ — 通常のキーも押してください",
+        "defaultPrefix": "デフォルト：{combo}",
+        "reset": "リセット",
+        "resetTitle": "ユーザー設定をクリア",
+        "resetDefaults": "デフォルトに戻す",
+        "save": "変更を保存"
+    },
+    "language": {
+        "label": "表示言語",
+        "helpText": "アプリ全体で使用する言語を選択してください。"
+    },
+    "modal": {
+        "groups": {
+            "project": "プロジェクト",
+            "preferences": "環境設定",
+            "account": "アカウント"
+        },
+        "tabs": {
+            "General": "一般",
+            "Layout": "レイアウト",
+            "Export": "インポート/エクスポート",
+            "Collaborators": "コラボレーター",
+            "Keybinds": "ショートカット",
+            "Appearance": "外観",
+            "Language": "言語",
+            "Profile": "プロフィール",
+            "Security": "セキュリティ",
+            "Settings": "設定",
+            "Login": "ログイン",
+            "About": "このアプリについて"
+        }
+    },
+    "dangerZone": {
+        "transferOwnership": "所有権の移転",
+        "transferDesc": "オーナー権限を別のユーザーに移転します。移転後はエディター権限が付与されます。",
+        "transferBtn": "移転",
+        "transferPrompt": "新しいオーナーのメールアドレスを入力してください：",
+        "deleteProject": "プロジェクトを削除",
+        "deleteProjectDesc": "プロジェクトを削除すると元に戻せません。よく確認してください。",
+        "deleteBtn": "削除",
+        "modalTitle": "プロジェクトを削除",
+        "modalDesc": "この操作は永続的で取り消せません。このプロジェクトに関連するすべてのデータが失われます。",
+        "deleting": "削除中...",
+        "confirmDeleteBtn": "プロジェクトを削除"
+    },
+    "profile": {
+        "email": "メールアドレス",
+        "username": "ユーザー名",
+        "usernamePlaceholder": "表示名を入力してください...",
+        "usernameHelp": "共有プロジェクトで共同作業する際、この名前がコラボレーターに表示されます。",
+        "color": "カラー",
+        "customColor": "カスタムカラー",
+        "selectColor": "カラーを選択 {color}",
+        "successMessage": "プロフィールを更新しました",
+        "failedUpdate": "プロフィールの更新に失敗しました",
+        "errorSaving": "保存中にエラーが発生しました",
+        "saving": "保存中...",
+        "dangerZoneTitle": "危険ゾーン",
+        "deleteAccount": "アカウントを削除",
+        "deleteAccountDesc": "アカウントとすべての関連データを完全に削除します。この操作は取り消せません。",
+        "deleteBtn": "削除",
+        "deleteModalTitle": "アカウントを削除",
+        "deleteModalDesc": "アカウントとすべての関連データが完全に削除されます。この操作は取り消せません。",
+        "deleteConfirmPhrase": "アカウントの削除を確認します",
+        "deleteConfirmLabel": "<ph/>と入力して確認してください。",
+        "deleting": "削除中...",
+        "deleteAccountBtn": "アカウントを削除する"
+    },
+    "projects": {
+        "untitled": "無題",
+        "newProject": "新しいプロジェクト",
+        "pageTitle": "プロジェクト",
+        "importBtn": "インポート...",
+        "importing": "インポート中...",
+        "createBtn": "作成",
+        "empty": {
+            "createFirst": "クリックして最初のプロジェクトを作成",
+            "or": "または",
+            "importExisting": "既存のスクリプトをインポート"
+        },
+        "item": {
+            "posterAlt": "映画ポスター",
+            "localOnly": "ローカルのみ",
+            "syncedToCloud": "クラウドに同期済み",
+            "today": "今日",
+            "yesterday": "昨日",
+            "daysAgo": "{days}日前",
+            "monthsAgo": "{months}ヶ月前",
+            "moreThanYearAgo": "1年以上前"
+        },
+        "form": {
+            "formTitle": "プロジェクトを作成",
+            "titleField": "タイトル",
+            "descriptionField": "説明",
+            "authorField": "著者",
+            "posterField": "ポスター",
+            "optional": "任意",
+            "submitBtn": "作成",
+            "failedToCreate": "プロジェクトの作成に失敗しました"
+        }
+    },
+    "editorSidebar": {
+        "scenes": "シーン",
+        "characters": "キャラクター",
+        "locations": "場所"
+    },
+    "formatDropdown": {
+        "elements": {
+            "scene": "シーン見出し",
+            "action": "アクション",
+            "character": "キャラクター",
+            "dialogue": "セリフ",
+            "parenthetical": "（ト書き注）",
+            "transition": "トランジション：",
+            "section": "セクション",
+            "note": "【メモ】",
+            "none": "なし"
+        },
+        "titlePageElements": {
+            "title": "タイトル",
+            "author": "著者",
+            "date": "日付",
+            "none": "なし"
+        }
+    },
+    "search": {
+        "placeholder": "検索...",
+        "noMatches": "一致なし",
+        "matchCount": "{total}件中{current}件目",
+        "replacePlaceholder": "置換後の文字列...",
+        "replace": "置換",
+        "replaceAll": "すべて置換",
+        "filterByElement": "要素でフィルター：",
+        "elements": {
+            "scene": "シーン見出し",
+            "action": "アクション",
+            "character": "キャラクター",
+            "dialogue": "セリフ",
+            "parenthetical": "ト書き注",
+            "transition": "トランジション",
+            "section": "セクション",
+            "note": "メモ",
+            "none": "なし"
+        }
+    },
+    "collaborators": {
+        "projectTeam": "プロジェクトチーム ({count}/{max})",
+        "teamHelp": "チームメンバーと保留中の招待を管理します。Proプランを持たないユーザーをプロジェクトに招待できます。オーナーがProプランを持っている間、プロジェクトは共同作業可能な状態が維持されます。",
+        "roles": {
+            "owner": "オーナー",
+            "admin": "管理者",
+            "editor": "編集者",
+            "viewer": "閲覧者"
+        },
+        "roleDesc": {
+            "owner": "プロジェクトの削除と所有権の移転が可能",
+            "admin": "コラボレーターの招待、昇格、降格、削除が可能",
+            "editor": "脚本やその他のプロジェクトコンテンツを編集可能",
+            "viewer": "読み取り専用アクセス。変更を加えることはできません"
+        },
+        "you": "（自分）",
+        "leave": "退出",
+        "kick": "除外",
+        "pending": "保留中",
+        "cancel": "キャンセル",
+        "emailPlaceholder": "メールアドレスを入力...",
+        "invite": "招待"
+    },
+    "export": {
+        "importLabel": "インポート",
+        "selectFile": "ファイルを選択",
+        "selectFileDesc": ".fountain、.fdx、.scriptio、または .txt をアップロード",
+        "exportLabel": "エクスポート",
+        "formatOptions": {
+            "pdf": "PDF ドキュメント (.pdf)",
+            "fountain": "Fountain (.fountain)",
+            "fdx": "Final Draft (.fdx)",
+            "scriptio": "Scriptio (.scriptio)"
+        },
+        "formatHelp": {
+            "pdf": "業界標準フォーマット。共有や印刷に最適。",
+            "fountain": "Markdownベースのプレーンテキスト形式で、互換性に優れています。",
+            "fdx": "業界ソフトウェアFinal Draftと互換。",
+            "scriptio": "Scriptio独自の形式。プロジェクトをローカルに保存するために使用"
+        },
+        "includeNotes": "ノートを含める",
+        "includeNotesDesc": "インラインノートをエクスポートします。",
+        "watermark": "透かし",
+        "watermarkDesc": "ページに著者名を重ねて表示します。",
+        "passwordProtection": "パスワード保護",
+        "passwordProtectionDesc": "PDFを開くためにパスワードが必要です。",
+        "passwordPlaceholder": "パスワードを入力",
+        "exportBtn": "エクスポート",
+        "exporting": "エクスポート中...",
+        "exportingProgress": "エクスポート中 ({progress}%)"
+    },
+    "layout": {
+        "pageFormat": "ページフォーマット",
+        "pageFormatHelp": {
+            "letter": "米国の標準形式。ハリウッド脚本の業界標準。",
+            "a4": "国際標準形式。ヨーロッパやほとんどの国で一般的。"
+        },
+        "sceneHeadings": "シーン見出し",
+        "bold": "太字",
+        "boldDesc": "シーン見出しが太字で表示されます",
+        "extraSpace": "上部に余白を追加",
+        "extraSpaceDesc": "シーン見出しの前に追加のスペースを挿入します",
+        "sceneNumbering": "シーン番号",
+        "sceneNumberingDesc": "左余白にシーン番号を表示",
+        "duplicateRight": "右余白にも複製",
+        "duplicateRightDesc": "両側に番号を表示",
+        "continuation": "継続",
+        "moreTitle": "台詞継続ラベルを適用（ページ下部）",
+        "contdTitle": "キャラクター継続ラベルを適用（ページ上部）"
+    },
+    "projectSettings": {
+        "titleLabel": "タイトル",
+        "titlePlaceholder": "プロジェクト名を入力...",
+        "authorLabel": "著者",
+        "authorPlaceholder": "著者名...",
+        "descriptionLabel": "説明",
+        "descriptionPlaceholder": "この脚本はどんな内容ですか？",
+        "posterLabel": "ポスター",
+        "noPoster": "ポスターなし",
+        "posterHelp": "推奨: 600x900ピクセル (2:3比率)。PNG、JPG対応。",
+        "saveChanges": "変更を保存",
+        "dangerZoneTitle": "危険ゾーン"
+    }
+}

@@ -1,0 +1,266 @@
+{
+    "navbar": {
+        "screenplay": "Drehbuch",
+        "board": "Board",
+        "titlePage": "Titelseite",
+        "synced": "Mit der Cloud synchronisiert",
+        "noConnection": "Keine Verbindung",
+        "reconnecting": "Verbindung wird hergestellt..."
+    },
+    "common": {
+        "save": "Änderungen speichern",
+        "cancel": "Abbrechen",
+        "loading": "Lädt..."
+    },
+    "sidebar": {
+        "title": "Dashboard",
+        "logOut": "Abmelden",
+        "logIn": "Anmelden"
+    },
+    "appearance": {
+        "theme": "Theme",
+        "themeHelp": {
+            "dark": "Augenschonendes Dunkeltheme für Nachtschwärmer und späte Arbeitsstunden.",
+            "light": "Klares, luftiges Theme – tagsüber natürlich und angenehm.",
+            "latte": "Weiches, cremefarbenes Theme, das Wärme und Lesbarkeit verbindet.",
+            "wonka": "Samtiges, kakaobasiertes Theme mit tiefem Luxusgefühl und augenschonender Wirkung.",
+            "mint": "Erfrischendes Minztheme, das botanische Ruhe mit visueller Balance verbindet.",
+            "blossom": "Zartes Blütentheme, das florale Wärme mit sanfter Optik vereint."
+        },
+        "editor": "Editor",
+        "themedEditor": "Thematisierter Editor",
+        "themedEditorDesc": "Theme-Farben für Editorhintergrund und Text verwenden"
+    },
+    "keybinds": {
+        "screenplayElements": "Drehbuchelemente",
+        "typing": "Eingabe… (Esc zum Abbrechen)",
+        "notSet": "Nicht belegt",
+        "modifiersOnly": "Nur Modifikatoren — bitte auch eine normale Taste drücken",
+        "defaultPrefix": "Standard: {combo}",
+        "reset": "Zurücksetzen",
+        "resetTitle": "Benutzerbelegung löschen",
+        "resetDefaults": "Standardwerte wiederherstellen",
+        "save": "Änderungen speichern"
+    },
+    "language": {
+        "label": "Anzeigesprache",
+        "helpText": "Wähle die Sprache, die in der gesamten App verwendet wird."
+    },
+    "modal": {
+        "groups": {
+            "project": "Projekt",
+            "preferences": "Einstellungen",
+            "account": "Konto"
+        },
+        "tabs": {
+            "General": "Allgemein",
+            "Layout": "Layout",
+            "Export": "Import/Export",
+            "Collaborators": "Mitarbeiter",
+            "Keybinds": "Tastenkürzel",
+            "Appearance": "Erscheinungsbild",
+            "Language": "Sprache",
+            "Profile": "Profil",
+            "Security": "Sicherheit",
+            "Settings": "Einstellungen",
+            "Login": "Anmelden",
+            "About": "Über"
+        }
+    },
+    "dangerZone": {
+        "transferOwnership": "Eigentümerschaft übertragen",
+        "transferDesc": "Übertrage deine Eigentümerrolle an einen anderen Nutzer. Du erhältst anschließend die Editorrolle.",
+        "transferBtn": "Übertragen",
+        "transferPrompt": "Gib die E-Mail-Adresse des neuen Eigentümers ein:",
+        "deleteProject": "Projekt löschen",
+        "deleteProjectDesc": "Ein gelöschtes Projekt kann nicht wiederhergestellt werden. Bitte sei dir sicher.",
+        "deleteBtn": "Löschen",
+        "modalTitle": "Projekt löschen",
+        "modalDesc": "Diese Aktion ist dauerhaft und kann nicht rückgängig gemacht werden. Alle mit diesem Projekt verbundenen Daten gehen verloren.",
+        "deleting": "Wird gelöscht...",
+        "confirmDeleteBtn": "Projekt löschen"
+    },
+    "profile": {
+        "email": "E-Mail",
+        "username": "Benutzername",
+        "usernamePlaceholder": "Anzeigenamen eingeben...",
+        "usernameHelp": "Dieser Name ist für Mitarbeiter sichtbar, wenn du an gemeinsamen Projekten arbeitest.",
+        "color": "Farbe",
+        "customColor": "Benutzerdefinierte Farbe",
+        "selectColor": "Farbe auswählen {color}",
+        "successMessage": "Profil erfolgreich aktualisiert",
+        "failedUpdate": "Profil konnte nicht aktualisiert werden",
+        "errorSaving": "Beim Speichern ist ein Fehler aufgetreten",
+        "saving": "Wird gespeichert...",
+        "dangerZoneTitle": "Gefahrenbereich",
+        "deleteAccount": "Konto löschen",
+        "deleteAccountDesc": "Lösche dauerhaft dein Konto und alle zugehörigen Daten. Diese Aktion ist unwiderruflich.",
+        "deleteBtn": "Löschen",
+        "deleteModalTitle": "Konto löschen",
+        "deleteModalDesc": "Dein Konto und alle zugehörigen Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "deleteConfirmPhrase": "Ich bestätige die Löschung meines Kontos",
+        "deleteConfirmLabel": "Gib <ph/> ein, um zu bestätigen.",
+        "deleting": "Wird gelöscht...",
+        "deleteAccountBtn": "Mein Konto löschen"
+    },
+    "projects": {
+        "untitled": "Ohne Titel",
+        "newProject": "Neues Projekt",
+        "pageTitle": "Projekte",
+        "importBtn": "Importieren...",
+        "importing": "Wird importiert...",
+        "createBtn": "Erstellen",
+        "empty": {
+            "createFirst": "Klicke, um dein erstes Projekt zu erstellen",
+            "or": "oder",
+            "importExisting": "Vorhandenes Skript importieren"
+        },
+        "item": {
+            "posterAlt": "Filmplakat",
+            "localOnly": "Nur lokal",
+            "syncedToCloud": "Mit Cloud synchronisiert",
+            "today": "Heute",
+            "yesterday": "Gestern",
+            "daysAgo": "Vor {days, plural, one {# Tag} other {# Tagen}}",
+            "monthsAgo": "Vor {months, plural, one {# Monat} other {# Monaten}}",
+            "moreThanYearAgo": "Vor mehr als einem Jahr"
+        },
+        "form": {
+            "formTitle": "Projekt erstellen",
+            "titleField": "Titel",
+            "descriptionField": "Beschreibung",
+            "authorField": "Autor",
+            "posterField": "Plakat",
+            "optional": "optional",
+            "submitBtn": "Erstellen",
+            "failedToCreate": "Projekt konnte nicht erstellt werden"
+        }
+    },
+    "editorSidebar": {
+        "scenes": "Szenen",
+        "characters": "Charaktere",
+        "locations": "Schauplätze"
+    },
+    "formatDropdown": {
+        "elements": {
+            "scene": "SZENENÜBERSCHRIFT",
+            "action": "Handlung",
+            "character": "FIGUR",
+            "dialogue": "Dialog",
+            "parenthetical": "(Klammertext)",
+            "transition": "ÜBERGANG:",
+            "section": "Abschnitt",
+            "note": "[[Notiz]]",
+            "none": "Keiner"
+        },
+        "titlePageElements": {
+            "title": "Titel",
+            "author": "Autor",
+            "date": "Datum",
+            "none": "Keiner"
+        }
+    },
+    "search": {
+        "placeholder": "Suchen...",
+        "noMatches": "Keine Treffer",
+        "matchCount": "{current} von {total}",
+        "replacePlaceholder": "Ersetzen durch...",
+        "replace": "Ersetzen",
+        "replaceAll": "Alle ersetzen",
+        "filterByElement": "Nach Element filtern:",
+        "elements": {
+            "scene": "Szenenüberschrift",
+            "action": "Handlung",
+            "character": "Figur",
+            "dialogue": "Dialog",
+            "parenthetical": "Klammertext",
+            "transition": "Übergang",
+            "section": "Abschnitt",
+            "note": "Notiz",
+            "none": "Keiner"
+        }
+    },
+    "collaborators": {
+        "projectTeam": "Projektteam ({count}/{max})",
+        "teamHelp": "Verwalte Teammitglieder und ausstehende Einladungen. Du kannst jeden Nicht-Pro-Nutzer einladen, an deinem Projekt teilzunehmen. Das Projekt bleibt kollaborativ, solange der Eigentümer einen Pro-Plan hat.",
+        "roles": {
+            "owner": "Eigentümer",
+            "admin": "Admin",
+            "editor": "Editor",
+            "viewer": "Betrachter"
+        },
+        "roleDesc": {
+            "owner": "Kann das Projekt löschen und die Eigentümerschaft übertragen",
+            "admin": "Kann Mitarbeiter einladen, befördern, herabstufen und entfernen",
+            "editor": "Kann das Drehbuch und andere Projektinhalte bearbeiten",
+            "viewer": "Nur-Lese-Zugriff. Kann keine Änderungen vornehmen"
+        },
+        "you": "(du)",
+        "leave": "Verlassen",
+        "kick": "Entfernen",
+        "pending": "Ausstehend",
+        "cancel": "Abbrechen",
+        "emailPlaceholder": "E-Mail eingeben...",
+        "invite": "Einladen"
+    },
+    "export": {
+        "importLabel": "Importieren",
+        "selectFile": "Datei auswählen",
+        "selectFileDesc": ".fountain, .fdx, .scriptio oder .txt hochladen",
+        "exportLabel": "Exportieren",
+        "formatOptions": {
+            "pdf": "PDF-Dokument (.pdf)",
+            "fountain": "Fountain (.fountain)",
+            "fdx": "Final Draft (.fdx)",
+            "scriptio": "Scriptio (.scriptio)"
+        },
+        "formatHelp": {
+            "pdf": "Standard-Industrieformat. Ideal zum Teilen und Drucken.",
+            "fountain": "Klartextformat auf Markdown-Basis, ideal für Kompatibilität.",
+            "fdx": "Kompatibel mit der Branchensoftware Final Draft.",
+            "scriptio": "Eigenes Scriptio-Format, um das Projekt lokal zu speichern"
+        },
+        "includeNotes": "Notizen einschließen",
+        "includeNotesDesc": "Inline-Notizen exportieren.",
+        "watermark": "Wasserzeichen",
+        "watermarkDesc": "Den Namen des Autors auf den Seiten einblenden.",
+        "passwordProtection": "Kennwortschutz",
+        "passwordProtectionDesc": "Ein Kennwort zum Öffnen der PDF-Datei erforderlich.",
+        "passwordPlaceholder": "Kennwort eingeben",
+        "exportBtn": "Exportieren",
+        "exporting": "Wird exportiert...",
+        "exportingProgress": "Wird exportiert ({progress}%)"
+    },
+    "layout": {
+        "pageFormat": "Seitenformat",
+        "pageFormatHelp": {
+            "letter": "Standardformat in den USA. Branchenstandard für Hollywood-Drehbücher.",
+            "a4": "Internationales Standardformat. In Europa und den meisten anderen Ländern üblich."
+        },
+        "sceneHeadings": "Szenenüberschriften",
+        "bold": "Fett",
+        "boldDesc": "Szenenüberschriften werden fett dargestellt",
+        "extraSpace": "Zusätzlicher Abstand oben",
+        "extraSpaceDesc": "Zusätzlichen Abstand vor Szenenüberschriften einfügen",
+        "sceneNumbering": "Szenennummerierung",
+        "sceneNumberingDesc": "Szenennummern im linken Rand anzeigen",
+        "duplicateRight": "Im rechten Rand duplizieren",
+        "duplicateRightDesc": "Nummer auf beiden Seiten anzeigen",
+        "continuation": "Fortsetzung",
+        "moreTitle": "Dialogfortsetzungskürzel anwenden (unten auf der Seite)",
+        "contdTitle": "Figurfortsetzungskürzel anwenden (oben auf der Seite)"
+    },
+    "projectSettings": {
+        "titleLabel": "Titel",
+        "titlePlaceholder": "Projektname eingeben...",
+        "authorLabel": "Autor",
+        "authorPlaceholder": "Autorenname...",
+        "descriptionLabel": "Beschreibung",
+        "descriptionPlaceholder": "Wovon handelt dieses Drehbuch?",
+        "posterLabel": "Plakat",
+        "noPoster": "Kein Plakat",
+        "posterHelp": "Empfohlen: 600x900 Pixel (Verhältnis 2:3). Unterstützt PNG und JPG.",
+        "saveChanges": "Änderungen speichern",
+        "dangerZoneTitle": "Gefahrenbereich"
+    }
+}

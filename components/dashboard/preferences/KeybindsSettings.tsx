@@ -10,6 +10,7 @@ import { useSettings } from "@src/lib/utils/hooks";
 import { tinykeys } from "@node_modules/tinykeys/dist/tinykeys";
 import { editUserSettings } from "@src/lib/utils/requests";
 import { DEFAULT_KEYBINDS, DefaultKeyBind, prettyPrintKeybind, UserKeybindsMap } from "@src/lib/utils/keybinds";
+import { useTranslations } from "next-intl";
 
 export type KeybindElementProps = {
     id: string;
@@ -31,12 +32,13 @@ const KeybindElement = ({
     startListening,
 }: KeybindElementProps) => {
     const effective = current || kb.defaultCombo;
+    const t = useTranslations("keybinds");
 
     return (
         <div key={id} className={styles.optionCard}>
             <div className={styles.optionInfo}>
                 <span className={styles.optionTitle}>{kb.label}</span>
-                <span className={styles.optionDesc}>{`Default: ${prettyPrintKeybind(kb.defaultCombo)}`}</span>
+                <span className={styles.optionDesc}>{t("defaultPrefix", { combo: prettyPrintKeybind(kb.defaultCombo) })}</span>
             </div>
 
             <div className={styles.keyAreaWrap}>
@@ -53,13 +55,13 @@ const KeybindElement = ({
                     }}
                 >
                     {isListening ? (
-                        <span className={styles.keyText}>Type… (Esc to cancel)</span>
+                        <span className={styles.keyText}>{t("typing")}</span>
                     ) : tempCombo && isListening ? (
                         <span className={styles.keyText}>{prettyPrintKeybind(tempCombo)}</span>
                     ) : effective ? (
                         <span className={styles.keyText}>{prettyPrintKeybind(effective)}</span>
                     ) : (
-                        <span className={styles.keyText}>Not set</span>
+                        <span className={styles.keyText}>{t("notSet")}</span>
                     )}
                 </div>
 
@@ -68,9 +70,9 @@ const KeybindElement = ({
                         type="button"
                         className={styles.clearBtn}
                         onClick={() => resetBinding(id)}
-                        title="Clear user binding"
+                        title={t("resetTitle")}
                     >
-                        Reset
+                        {t("reset")}
                     </button>
                 </div>
             </div>
@@ -84,6 +86,7 @@ const KeybindsSettings = () => {
         updateSetting?: (key: string, value: any) => Promise<void>;
     };
 
+    const t = useTranslations("keybinds");
     const [userKeybinds, setUserKeybinds] = useState<UserKeybindsMap>({});
     const [listeningFor, setListeningFor] = useState<string | null>(null);
     const [tempCombo, setTempCombo] = useState<string | null>(null);
@@ -156,7 +159,7 @@ const KeybindsSettings = () => {
             e.preventDefault();
             const combo = formatComboFromEvent(e);
             if (!combo) {
-                setTempCombo("Modifiers only — press a regular key");
+                setTempCombo(t("modifiersOnly"));
                 return;
             }
             setTempCombo(combo);
@@ -221,7 +224,7 @@ const KeybindsSettings = () => {
     return (
         <div className={sharedStyles.settingsForm}>
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Screenplay Elements</label>
+                <label className={form.label}>{t("screenplayElements")}</label>
             </div>
 
             <div className={styles.options}>
@@ -250,7 +253,7 @@ const KeybindsSettings = () => {
                     onClick={resetDefaults}
                     className={`${sharedStyles.formBtn} ${sharedStyles.danger}`}
                 >
-                    Reset to defaults
+                    {t("resetDefaults")}
                 </button>
                 <button
                     type="button"
@@ -258,7 +261,7 @@ const KeybindsSettings = () => {
                     disabled={!hasUpdatedKeybinds}
                     className={`${sharedStyles.formBtn}`}
                 >
-                    Save changes
+                    {t("save")}
                 </button>
             </div>
         </div>

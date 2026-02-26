@@ -6,6 +6,7 @@ import { redirectHome } from "@src/lib/utils/redirects";
 import { useContext, useState } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import styles from "./DangerZone.module.css";
 import form from "../../utils/Form.module.css";
@@ -21,6 +22,8 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
     const { closeDashboard } = useContext(DashboardContext);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [loading, setLoading] = useState(false);
+    const t = useTranslations("dangerZone");
+    const tCommon = useTranslations("common");
 
     if (!projectId || !isOpen) return null;
 
@@ -45,7 +48,7 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
     };
 
     const handleTransferOwnership = () => {
-        const newOwner = window.prompt("Enter the email of the new owner:");
+        const newOwner = window.prompt(t("transferPrompt"));
         if (newOwner) {
             console.log(`Transferring ownership to: ${newOwner}`);
             // Add your transfer logic here
@@ -59,13 +62,11 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
                 {!isLocalOnly && membership && (
                     <div className={styles.dangerItem}>
                         <div>
-                            <p className={`${form.label} ${styles.dangerLabel}`}>Transfer ownership</p>
-                            <p className={styles.dangerDescription}>
-                                Transfer your owner role to another user. You will be given editor role.
-                            </p>
+                            <p className={`${form.label} ${styles.dangerLabel}`}>{t("transferOwnership")}</p>
+                            <p className={styles.dangerDescription}>{t("transferDesc")}</p>
                         </div>
                         <button className={styles.dangerBtn} onClick={handleTransferOwnership}>
-                            Transfer
+                            {t("transferBtn")}
                         </button>
                     </div>
                 )}
@@ -73,13 +74,11 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
                 {/* Delete Project */}
                 <div className={styles.dangerItem}>
                     <div>
-                        <p className={`${form.label} ${styles.dangerLabel}`}>Delete project</p>
-                        <p className={styles.dangerDescription}>
-                            Once you delete a project, there is no going back. Please be certain.
-                        </p>
+                        <p className={`${form.label} ${styles.dangerLabel}`}>{t("deleteProject")}</p>
+                        <p className={styles.dangerDescription}>{t("deleteProjectDesc")}</p>
                     </div>
                     <button className={styles.dangerBtn} onClick={() => setShowDeleteDialog(true)}>
-                        Delete
+                        {t("deleteBtn")}
                     </button>
                 </div>
             </div>
@@ -88,11 +87,8 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
             {showDeleteDialog && (
                 <div className={styles.overlay}>
                     <div className={styles.modal}>
-                        <h2 className={styles.modalTitle}>Delete project</h2>
-                        <p className={styles.modalDescription}>
-                            This action is permanent and cannot be undone. All data associated with this project will be
-                            lost.
-                        </p>
+                        <h2 className={styles.modalTitle}>{t("modalTitle")}</h2>
+                        <p className={styles.modalDescription}>{t("modalDesc")}</p>
                         <div className={styles.modalActions}>
                             <button
                                 className={`${styles.modalBtn} ${styles.modalBtnDanger}`}
@@ -100,14 +96,14 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
                                 disabled={loading}
                             >
                                 <Trash2 size={16} color="#ffffff" />
-                                {loading ? "Deleting..." : "Delete project"}
+                                {loading ? t("deleting") : t("confirmDeleteBtn")}
                             </button>
                             <button
                                 className={`${styles.modalBtn} ${styles.modalBtnCancel}`}
                                 onClick={() => setShowDeleteDialog(false)}
                                 disabled={loading}
                             >
-                                Cancel
+                                {tCommon("cancel")}
                             </button>
                         </div>
                     </div>

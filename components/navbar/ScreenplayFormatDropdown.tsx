@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useState, useRef, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { ScreenplayElement, TitlePageElement, Style } from "@src/lib/utils/enums";
 import { applyElement, applyMarkToggle } from "@src/lib/screenplay/editor";
@@ -9,18 +10,6 @@ import { join } from "@src/lib/utils/misc";
 import { Bold, Italic, Underline, ChevronDown, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 
 import styles from "./ScreenplayFormatDropdown.module.css";
-
-const ELEMENT_LABELS: Record<ScreenplayElement, string> = {
-    [ScreenplayElement.Scene]: "SCENE HEADING",
-    [ScreenplayElement.Action]: "Action",
-    [ScreenplayElement.Character]: "CHARACTER",
-    [ScreenplayElement.Dialogue]: "Dialogue",
-    [ScreenplayElement.Parenthetical]: "(Parenthetical)",
-    [ScreenplayElement.Transition]: "TRANSITION:",
-    [ScreenplayElement.Section]: "Section",
-    [ScreenplayElement.Note]: "[[Note]]",
-    [ScreenplayElement.None]: "None",
-};
 
 const ELEMENTS_ORDER: ScreenplayElement[] = [
     ScreenplayElement.Scene,
@@ -33,13 +22,6 @@ const ELEMENTS_ORDER: ScreenplayElement[] = [
     ScreenplayElement.Note,
 ];
 
-const TITLEPAGE_ELEMENT_LABELS: Record<TitlePageElement, string> = {
-    [TitlePageElement.Title]: "Title",
-    [TitlePageElement.Author]: "Author",
-    [TitlePageElement.Date]: "Date",
-    [TitlePageElement.None]: "None",
-};
-
 const TITLEPAGE_ELEMENTS_ORDER: TitlePageElement[] = [
     TitlePageElement.Title,
     TitlePageElement.Author,
@@ -48,6 +30,27 @@ const TITLEPAGE_ELEMENTS_ORDER: TitlePageElement[] = [
 ];
 
 const ScreenplayFormatDropdown = () => {
+    const t = useTranslations("formatDropdown");
+
+    const ELEMENT_LABELS: Record<ScreenplayElement, string> = {
+        [ScreenplayElement.Scene]: t("elements.scene"),
+        [ScreenplayElement.Action]: t("elements.action"),
+        [ScreenplayElement.Character]: t("elements.character"),
+        [ScreenplayElement.Dialogue]: t("elements.dialogue"),
+        [ScreenplayElement.Parenthetical]: t("elements.parenthetical"),
+        [ScreenplayElement.Transition]: t("elements.transition"),
+        [ScreenplayElement.Section]: t("elements.section"),
+        [ScreenplayElement.Note]: t("elements.note"),
+        [ScreenplayElement.None]: t("elements.none"),
+    };
+
+    const TITLEPAGE_ELEMENT_LABELS: Record<TitlePageElement, string> = {
+        [TitlePageElement.Title]: t("titlePageElements.title"),
+        [TitlePageElement.Author]: t("titlePageElements.author"),
+        [TitlePageElement.Date]: t("titlePageElements.date"),
+        [TitlePageElement.None]: t("titlePageElements.none"),
+    };
+
     const {
         editor,
         selectedElement,

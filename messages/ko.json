@@ -1,0 +1,266 @@
+{
+    "navbar": {
+        "screenplay": "시나리오",
+        "board": "보드",
+        "titlePage": "타이틀 페이지",
+        "synced": "클라우드에 동기화됨",
+        "noConnection": "연결 없음",
+        "reconnecting": "재연결 중..."
+    },
+    "common": {
+        "save": "변경사항 저장",
+        "cancel": "취소",
+        "loading": "불러오는 중..."
+    },
+    "sidebar": {
+        "title": "대시보드",
+        "logOut": "로그아웃",
+        "logIn": "로그인"
+    },
+    "appearance": {
+        "theme": "테마",
+        "themeHelp": {
+            "dark": "야행성 사용자와 늦은 밤 집중을 위한 낮은 눈부심의 다크 테마.",
+            "light": "낮 동안 자연스럽고 편안한 밝고 상쾌한 테마.",
+            "latte": "따뜻함과 가독성을 조화롭게 결합한 부드러운 크림 계열 테마.",
+            "wonka": "깊은 고급스러움과 눈 편안함을 결합한 벨벳 카카오 계열 테마.",
+            "mint": "식물의 평온함과 눈의 균형을 결합한 상쾌한 민트 계열 테마.",
+            "blossom": "꽃잎의 따뜻함과 눈의 부드러움을 결합한 섬세한 블로섬 테마."
+        },
+        "editor": "에디터",
+        "themedEditor": "테마 에디터",
+        "themedEditorDesc": "에디터 배경과 텍스트에 테마 색상 적용"
+    },
+    "keybinds": {
+        "screenplayElements": "시나리오 요소",
+        "typing": "입력 중… (Esc로 취소)",
+        "notSet": "미설정",
+        "modifiersOnly": "수정키만 입력됨 — 일반 키를 함께 누르세요",
+        "defaultPrefix": "기본값: {combo}",
+        "reset": "초기화",
+        "resetTitle": "사용자 설정 지우기",
+        "resetDefaults": "기본값으로 재설정",
+        "save": "변경사항 저장"
+    },
+    "language": {
+        "label": "표시 언어",
+        "helpText": "앱 전체에서 사용할 언어를 선택하세요."
+    },
+    "modal": {
+        "groups": {
+            "project": "프로젝트",
+            "preferences": "환경설정",
+            "account": "계정"
+        },
+        "tabs": {
+            "General": "일반",
+            "Layout": "레이아웃",
+            "Export": "가져오기/내보내기",
+            "Collaborators": "협업자",
+            "Keybinds": "단축키",
+            "Appearance": "외관",
+            "Language": "언어",
+            "Profile": "프로필",
+            "Security": "보안",
+            "Settings": "설정",
+            "Login": "로그인",
+            "About": "정보"
+        }
+    },
+    "dangerZone": {
+        "transferOwnership": "소유권 이전",
+        "transferDesc": "소유자 역할을 다른 사용자에게 이전합니다. 이전 후 편집자 역할이 부여됩니다.",
+        "transferBtn": "이전",
+        "transferPrompt": "새 소유자의 이메일을 입력하세요:",
+        "deleteProject": "프로젝트 삭제",
+        "deleteProjectDesc": "프로젝트를 삭제하면 되돌릴 수 없습니다. 신중하게 결정하세요.",
+        "deleteBtn": "삭제",
+        "modalTitle": "프로젝트 삭제",
+        "modalDesc": "이 작업은 영구적이며 취소할 수 없습니다. 이 프로젝트와 관련된 모든 데이터가 삭제됩니다.",
+        "deleting": "삭제 중...",
+        "confirmDeleteBtn": "프로젝트 삭제"
+    },
+    "profile": {
+        "email": "이메일",
+        "username": "사용자 이름",
+        "usernamePlaceholder": "표시 이름을 입력하세요...",
+        "usernameHelp": "공유 프로젝트에서 협업할 때 이 이름이 다른 협업자에게 표시됩니다.",
+        "color": "색상",
+        "customColor": "사용자 정의 색상",
+        "selectColor": "색상 선택 {color}",
+        "successMessage": "프로필이 성공적으로 업데이트되었습니다",
+        "failedUpdate": "프로필 업데이트에 실패했습니다",
+        "errorSaving": "저장 중 오류가 발생했습니다",
+        "saving": "저장 중...",
+        "dangerZoneTitle": "위험 구역",
+        "deleteAccount": "계정 삭제",
+        "deleteAccountDesc": "계정과 모든 관련 데이터를 영구적으로 삭제합니다. 이 작업은 취소할 수 없습니다.",
+        "deleteBtn": "삭제",
+        "deleteModalTitle": "계정 삭제",
+        "deleteModalDesc": "계정과 모든 관련 데이터가 영구적으로 삭제됩니다. 이 작업은 취소할 수 없습니다.",
+        "deleteConfirmPhrase": "계정 삭제를 확인합니다",
+        "deleteConfirmLabel": "<ph/>를 입력하여 확인하세요.",
+        "deleting": "삭제 중...",
+        "deleteAccountBtn": "내 계정 삭제"
+    },
+    "projects": {
+        "untitled": "제목 없음",
+        "newProject": "새 프로젝트",
+        "pageTitle": "프로젝트",
+        "importBtn": "가져오기...",
+        "importing": "가져오는 중...",
+        "createBtn": "만들기",
+        "empty": {
+            "createFirst": "클릭하여 첫 번째 프로젝트를 만드세요",
+            "or": "또는",
+            "importExisting": "기존 스크립트 가져오기"
+        },
+        "item": {
+            "posterAlt": "영화 포스터",
+            "localOnly": "로컬 전용",
+            "syncedToCloud": "클라우드에 동기화됨",
+            "today": "오늘",
+            "yesterday": "어제",
+            "daysAgo": "{days}일 전",
+            "monthsAgo": "{months}개월 전",
+            "moreThanYearAgo": "1년 이상 전"
+        },
+        "form": {
+            "formTitle": "프로젝트 만들기",
+            "titleField": "제목",
+            "descriptionField": "설명",
+            "authorField": "작가",
+            "posterField": "포스터",
+            "optional": "선택사항",
+            "submitBtn": "만들기",
+            "failedToCreate": "프로젝트 생성에 실패했습니다"
+        }
+    },
+    "editorSidebar": {
+        "scenes": "장면",
+        "characters": "캐릭터",
+        "locations": "장소"
+    },
+    "formatDropdown": {
+        "elements": {
+            "scene": "씬 헤딩",
+            "action": "액션",
+            "character": "캐릭터",
+            "dialogue": "대사",
+            "parenthetical": "(괄호)",
+            "transition": "전환:",
+            "section": "섹션",
+            "note": "[[메모]]",
+            "none": "없음"
+        },
+        "titlePageElements": {
+            "title": "제목",
+            "author": "작가",
+            "date": "날짜",
+            "none": "없음"
+        }
+    },
+    "search": {
+        "placeholder": "검색...",
+        "noMatches": "결과 없음",
+        "matchCount": "{total}개 중 {current}번째",
+        "replacePlaceholder": "바꿀 내용...",
+        "replace": "바꾸기",
+        "replaceAll": "모두 바꾸기",
+        "filterByElement": "요소로 필터:",
+        "elements": {
+            "scene": "씬 헤딩",
+            "action": "액션",
+            "character": "캐릭터",
+            "dialogue": "대사",
+            "parenthetical": "괄호",
+            "transition": "전환",
+            "section": "섹션",
+            "note": "메모",
+            "none": "없음"
+        }
+    },
+    "collaborators": {
+        "projectTeam": "프로젝트 팀 ({count}/{max})",
+        "teamHelp": "팀 멤버와 대기 중인 초대를 관리하세요. Pro 플랜이 없는 사용자를 프로젝트에 초대할 수 있습니다. 소유자가 Pro 플랜을 보유하는 동안 프로젝트는 협업 가능 상태를 유지합니다.",
+        "roles": {
+            "owner": "소유자",
+            "admin": "관리자",
+            "editor": "편집자",
+            "viewer": "뷰어"
+        },
+        "roleDesc": {
+            "owner": "프로젝트를 삭제하고 소유권을 이전할 수 있습니다",
+            "admin": "협업자를 초대, 승격, 강등, 내보낼 수 있습니다",
+            "editor": "시나리오 및 기타 프로젝트 콘텐츠를 수정할 수 있습니다",
+            "viewer": "읽기 전용 접근. 변경할 수 없습니다"
+        },
+        "you": "(나)",
+        "leave": "나가기",
+        "kick": "내보내기",
+        "pending": "대기 중",
+        "cancel": "취소",
+        "emailPlaceholder": "이메일 입력...",
+        "invite": "초대"
+    },
+    "export": {
+        "importLabel": "가져오기",
+        "selectFile": "파일 선택",
+        "selectFileDesc": ".fountain, .fdx, .scriptio 또는 .txt 업로드",
+        "exportLabel": "내보내기",
+        "formatOptions": {
+            "pdf": "PDF 문서 (.pdf)",
+            "fountain": "Fountain (.fountain)",
+            "fdx": "Final Draft (.fdx)",
+            "scriptio": "Scriptio (.scriptio)"
+        },
+        "formatHelp": {
+            "pdf": "업계 표준 형식. 공유 및 인쇄에 최적화.",
+            "fountain": "마크다운 기반 일반 텍스트 형식, 호환성이 뛰어납니다.",
+            "fdx": "Final Draft 업계 소프트웨어와 호환.",
+            "scriptio": "Scriptio 고유 형식, 프로젝트를 로컬에 보관"
+        },
+        "includeNotes": "노트 포함",
+        "includeNotesDesc": "인라인 노트를 내보냅니다.",
+        "watermark": "워터마크",
+        "watermarkDesc": "페이지에 작가 이름을 오버레이합니다.",
+        "passwordProtection": "비밀번호 보호",
+        "passwordProtectionDesc": "PDF를 열 때 비밀번호가 필요합니다.",
+        "passwordPlaceholder": "비밀번호 입력",
+        "exportBtn": "내보내기",
+        "exporting": "내보내는 중...",
+        "exportingProgress": "내보내는 중 ({progress}%)"
+    },
+    "layout": {
+        "pageFormat": "페이지 형식",
+        "pageFormatHelp": {
+            "letter": "미국 표준 형식. 할리우드 시나리오의 업계 표준.",
+            "a4": "국제 표준 형식. 유럽 및 대부분의 국가에서 통용됩니다."
+        },
+        "sceneHeadings": "씬 헤딩",
+        "bold": "굵게",
+        "boldDesc": "씬 헤딩이 굵게 표시됩니다",
+        "extraSpace": "위 추가 간격",
+        "extraSpaceDesc": "씬 헤딩 앞에 추가 간격을 삽입합니다",
+        "sceneNumbering": "씬 번호 매기기",
+        "sceneNumberingDesc": "왼쪽 여백에 씬 번호 표시",
+        "duplicateRight": "오른쪽 여백에 복제",
+        "duplicateRightDesc": "양쪽에 번호 표시",
+        "continuation": "이어지기",
+        "moreTitle": "대사 이어지기 레이블 적용 (페이지 하단)",
+        "contdTitle": "캐릭터 이어지기 레이블 적용 (페이지 상단)"
+    },
+    "projectSettings": {
+        "titleLabel": "제목",
+        "titlePlaceholder": "프로젝트 이름 입력...",
+        "authorLabel": "작가",
+        "authorPlaceholder": "작가 이름...",
+        "descriptionLabel": "설명",
+        "descriptionPlaceholder": "이 시나리오는 어떤 내용인가요?",
+        "posterLabel": "포스터",
+        "noPoster": "포스터 없음",
+        "posterHelp": "권장: 600x900픽셀 (2:3 비율). PNG, JPG 지원.",
+        "saveChanges": "변경사항 저장",
+        "dangerZoneTitle": "위험 구역"
+    }
+}

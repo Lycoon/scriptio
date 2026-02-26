@@ -38,7 +38,7 @@ export interface UserSettings {
     themedEditor: boolean;
 }
 
-export type UserLanguage = "en";
+export type UserLanguage = "en" | "es" | "fr" | "zh" | "ko" | "ja" | "de" | "pl";
 export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint" | "blossom";
 
 export interface UserOnlineSettings {

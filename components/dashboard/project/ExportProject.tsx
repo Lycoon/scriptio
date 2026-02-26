@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { isTauri } from "@tauri-apps/api/core";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useCookieUser, useLocalProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
@@ -24,6 +25,7 @@ export enum ExportFormat {
 }
 
 const ExportProject = () => {
+    const t = useTranslations("export");
     const { user } = useCookieUser();
     const {
         project: membership,
@@ -140,17 +142,17 @@ const ExportProject = () => {
     };
 
     const formatOptions: DropdownOption[] = [
-        { value: ExportFormat.PDF, label: "PDF Document (.pdf)" },
-        { value: ExportFormat.FOUNTAIN, label: "Fountain (.fountain)" },
-        { value: ExportFormat.FDX, label: "Final Draft (.fdx)" },
-        { value: ExportFormat.SCRIPTIO, label: "Scriptio (.scriptio)" },
+        { value: ExportFormat.PDF, label: t("formatOptions.pdf") },
+        { value: ExportFormat.FOUNTAIN, label: t("formatOptions.fountain") },
+        { value: ExportFormat.FDX, label: t("formatOptions.fdx") },
+        { value: ExportFormat.SCRIPTIO, label: t("formatOptions.scriptio") },
     ];
 
     return (
         <div className={sharedStyles.settingsForm}>
             {/* --- Import Section --- */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Import</label>
+                <label className={form.label}>{t("importLabel")}</label>
 
                 {/* Hidden Input */}
                 <input
@@ -182,15 +184,15 @@ const ExportProject = () => {
                     </div>
 
                     <div className={optionCard.optionInfo}>
-                        <span className={optionCard.optionTitle}>Select File</span>
-                        <span className={optionCard.optionDesc}>Upload .fountain, .fdx, .scriptio, or .txt</span>
+                        <span className={optionCard.optionTitle}>{t("selectFile")}</span>
+                        <span className={optionCard.optionDesc}>{t("selectFileDesc")}</span>
                     </div>
                 </div>
             </div>
 
             {/* --- Export Format Selection --- */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Export</label>
+                <label className={form.label}>{t("exportLabel")}</label>
                 <Dropdown
                     value={format}
                     onChange={(value) => setFormat(value as ExportFormat)}
@@ -198,11 +200,10 @@ const ExportProject = () => {
                     className={`${sharedStyles.input} ${styles.input}`}
                 />
                 <p className={sharedStyles.helpText}>
-                    {format === ExportFormat.PDF && "Standard industry format. Best for sharing and printing."}
-                    {format === ExportFormat.FOUNTAIN &&
-                        "Plain text format based on markdown, great for compatibility."}
-                    {format === ExportFormat.FDX && "Compatible with Final Draft industry software."}
-                    {format === ExportFormat.SCRIPTIO && "Scriptio own format, to keep your project local"}
+                    {format === ExportFormat.PDF && t("formatHelp.pdf")}
+                    {format === ExportFormat.FOUNTAIN && t("formatHelp.fountain")}
+                    {format === ExportFormat.FDX && t("formatHelp.fdx")}
+                    {format === ExportFormat.SCRIPTIO && t("formatHelp.scriptio")}
                 </p>
             </div>
 
@@ -217,8 +218,8 @@ const ExportProject = () => {
                         {includeNotes && <div className={optionCard.checkInner} />}
                     </div>
                     <div className={optionCard.optionInfo}>
-                        <span className={optionCard.optionTitle}>Include Notes</span>
-                        <span className={optionCard.optionDesc}>Export inline notes.</span>
+                        <span className={optionCard.optionTitle}>{t("includeNotes")}</span>
+                        <span className={optionCard.optionDesc}>{t("includeNotesDesc")}</span>
                     </div>
                 </div>
 
@@ -232,8 +233,8 @@ const ExportProject = () => {
                             {includeWatermark && <div className={optionCard.checkInner} />}
                         </div>
                         <div className={optionCard.optionInfo}>
-                            <span className={optionCard.optionTitle}>Watermark</span>
-                            <span className={optionCard.optionDesc}>Overlay the author's name on pages.</span>
+                            <span className={optionCard.optionTitle}>{t("watermark")}</span>
+                            <span className={optionCard.optionDesc}>{t("watermarkDesc")}</span>
                         </div>
                     </div>
                 )}
@@ -251,15 +252,15 @@ const ExportProject = () => {
                                 {enablePassword && <div className={optionCard.checkInner} />}
                             </div>
                             <div className={optionCard.optionInfo}>
-                                <span className={optionCard.optionTitle}>Password Protection</span>
-                                <span className={optionCard.optionDesc}>Require a password to open the PDF.</span>
+                                <span className={optionCard.optionTitle}>{t("passwordProtection")}</span>
+                                <span className={optionCard.optionDesc}>{t("passwordProtectionDesc")}</span>
                             </div>
                         </div>
                         {enablePassword && (
                             <input
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter password"
+                                placeholder={t("passwordPlaceholder")}
                                 className={`${sharedStyles.input} ${styles.passwordInput}`}
                                 onClick={(e) => e.stopPropagation()}
                             />
@@ -270,7 +271,9 @@ const ExportProject = () => {
 
             <div className={sharedStyles.formActions}>
                 <button onClick={handleExport} disabled={isExporting} className={`${sharedStyles.formBtn}`}>
-                    {isExporting ? `Exporting${progress > 0 ? ` (${Math.round(progress)}%)` : "..."}` : "Export"}
+                    {isExporting
+                        ? (progress > 0 ? t("exportingProgress", { progress: Math.round(progress) }) : t("exporting"))
+                        : t("exportBtn")}
                 </button>
             </div>
         </div>

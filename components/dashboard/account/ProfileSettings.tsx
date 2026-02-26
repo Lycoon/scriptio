@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { editUserInfo, logout } from "@src/lib/utils/requests";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
@@ -11,8 +12,6 @@ import styles from "./ProfileSettings.module.css";
 import dangerStyles from "../project/DangerZone.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { useUser } from "@src/lib/utils/hooks";
-
-const DELETE_CONFIRMATION_PHRASE = "I confirm my account deletion";
 
 const PRESET_COLORS = [
     "#ef4444", // red
@@ -28,6 +27,9 @@ const PRESET_COLORS = [
 const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; onDangerToggle: () => void }) => {
     const { user, mutate } = useUser();
     const router = useRouter();
+    const t = useTranslations("profile");
+    const tCommon = useTranslations("common");
+    const confirmPhrase = t("deleteConfirmPhrase");
 
     const [username, setUsername] = useState("");
     const [color, setColor] = useState(PRESET_COLORS[0]);
@@ -86,15 +88,15 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
             });
 
             if (res.ok) {
-                setMessage({ type: "success", text: "Profile updated successfully" });
+                setMessage({ type: "success", text: t("successMessage") });
                 setDirty(false);
                 mutate();
             } else {
                 const data = (await res.json()) as ApiResponse;
-                setMessage({ type: "error", text: data.message || "Failed to update profile" });
+                setMessage({ type: "error", text: data.message || t("failedUpdate") });
             }
         } catch {
-            setMessage({ type: "error", text: "An error occurred while saving" });
+            setMessage({ type: "error", text: t("errorSaving") });
         } finally {
             setLoading(false);
         }
@@ -106,13 +108,11 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                 <div className={dangerStyles.dangerContainer}>
                     <div className={dangerStyles.dangerItem}>
                         <div>
-                            <p className={`${form.label} ${dangerStyles.dangerLabel}`}>Delete account</p>
-                            <p className={dangerStyles.dangerDescription}>
-                                Permanently delete your account and all associated data. This cannot be undone.
-                            </p>
+                            <p className={`${form.label} ${dangerStyles.dangerLabel}`}>{t("deleteAccount")}</p>
+                            <p className={dangerStyles.dangerDescription}>{t("deleteAccountDesc")}</p>
                         </div>
                         <button className={dangerStyles.dangerBtn} onClick={() => setShowDeleteDialog(true)}>
-                            Delete
+                            {t("deleteBtn")}
                         </button>
                     </div>
                 </div>
@@ -120,19 +120,16 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                 {showDeleteDialog && (
                     <div className={dangerStyles.overlay}>
                         <div className={dangerStyles.modal}>
-                            <h2 className={dangerStyles.modalTitle}>Delete account</h2>
-                            <p className={dangerStyles.modalDescription}>
-                                This will permanently delete your account and all associated data. This action cannot be
-                                undone.
-                            </p>
+                            <h2 className={dangerStyles.modalTitle}>{t("deleteModalTitle")}</h2>
+                            <p className={dangerStyles.modalDescription}>{t("deleteModalDesc")}</p>
                             <label htmlFor="delete-confirm" className={dangerStyles.modalDescription} style={{ display: "block" }}>
-                                Type <strong>{DELETE_CONFIRMATION_PHRASE}</strong> to confirm.
+                                {t.rich("deleteConfirmLabel", { ph: () => <strong>{confirmPhrase}</strong> })}
                             </label>
                             <input
                                 id="delete-confirm"
                                 type="text"
                                 className={`${sharedStyles.input} ${dangerStyles.modalInput}`}
-                                placeholder={DELETE_CONFIRMATION_PHRASE}
+                                placeholder={confirmPhrase}
                                 value={deleteConfirmInput}
                                 onChange={(e) => setDeleteConfirmInput(e.target.value)}
                                 autoComplete="off"
@@ -141,10 +138,10 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                                 <button
                                     className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnDanger}`}
                                     onClick={handleDeleteAccount}
-                                    disabled={deleteLoading || deleteConfirmInput !== DELETE_CONFIRMATION_PHRASE}
+                                    disabled={deleteLoading || deleteConfirmInput !== confirmPhrase}
                                 >
                                     <Trash2 size={16} color="#ffffff" />
-                                    {deleteLoading ? "Deleting..." : "Delete my account"}
+                                    {deleteLoading ? t("deleting") : t("deleteAccountBtn")}
                                 </button>
                                 <button
                                     className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnCancel}`}
@@ -154,7 +151,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                                     }}
                                     disabled={deleteLoading}
                                 >
-                                    Cancel
+                                    {tCommon("cancel")}
                                 </button>
                             </div>
                         </div>
@@ -168,31 +165,29 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         <div className={sharedStyles.settingsForm}>
             {/* Email */}
             <div className={sharedStyles.formGroup}>
-                <label htmlFor="email" className={form.label}>Email</label>
+                <label htmlFor="email" className={form.label}>{t("email")}</label>
                 <input id="email" type="email" value={user?.email ?? ""} disabled className={sharedStyles.input} autoComplete="email" />
             </div>
 
             {/* Username */}
             <div className={sharedStyles.formGroup}>
-                <label htmlFor="username" className={form.label}>Username</label>
+                <label htmlFor="username" className={form.label}>{t("username")}</label>
                 <input
                     id="username"
                     type="text"
                     value={username}
                     onChange={handleUsernameChange}
                     className={sharedStyles.input}
-                    placeholder="Enter your display name..."
+                    placeholder={t("usernamePlaceholder")}
                     maxLength={32}
                     autoComplete="username"
                 />
-                <p className={sharedStyles.helpText}>
-                    This name will be visible to collaborators when you work on shared projects.
-                </p>
+                <p className={sharedStyles.helpText}>{t("usernameHelp")}</p>
             </div>
 
             {/* Color */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Color</label>
+                <label className={form.label}>{t("color")}</label>
                 <div className={styles.colorSection}>
                     <div className={styles.colorPresets}>
                         {PRESET_COLORS.map((presetColor) => (
@@ -202,7 +197,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                                 className={`${styles.colorPreset} ${color === presetColor ? styles.selected : ""}`}
                                 style={{ backgroundColor: presetColor }}
                                 onClick={() => handleColorChange(presetColor)}
-                                aria-label={`Select color ${presetColor}`}
+                                aria-label={t("selectColor", { color: presetColor })}
                             />
                         ))}
                     </div>
@@ -212,7 +207,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                             htmlFor="custom-color"
                             className={`${styles.colorPreset} ${styles.customColorSwatch} ${!PRESET_COLORS.includes(color) ? styles.selected : ""}`}
                             style={{ backgroundColor: color }}
-                            title="Custom color"
+                            title={t("customColor")}
                         >
                             <input
                                 id="custom-color"
@@ -231,9 +226,9 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
 
             <div className={sharedStyles.formActions}>
                 <button onClick={handleSave} className={`${sharedStyles.formBtn}`} disabled={loading || !isDirty}>
-                    {loading ? "Saving..." : "Save Changes"}
+                    {loading ? t("saving") : tCommon("save")}
                 </button>
-                <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title="Danger zone">
+                <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title={t("dangerZoneTitle")}>
                     <ArrowRight size={16} />
                 </button>
             </div>

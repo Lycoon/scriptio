@@ -94,10 +94,6 @@
     }
 
     /* Screenplay elements */
-    .is-empty > br.ProseMirror-trailingBreak {
-        display: none;
-    }
-
     .is-empty {
         cursor: text;
         background-color: transparent; /* Catches the click */
@@ -208,6 +204,21 @@
 
     .parenthetical::after {
         content: ")" !important;
+    }
+
+    /* When empty, <br> creates a second line box that pushes ) to the next line.
+       Clip it with max-height (overflow: hidden already set on .is-empty),
+       and merge both parens into ::before so () appears together on the first line. */
+    .parenthetical.is-empty {
+        max-height: 1lh;
+    }
+
+    .parenthetical.is-empty::before {
+        content: "()" !important;
+    }
+
+    .parenthetical.is-empty::after {
+        content: "" !important;
     }
 
     /* Transition */

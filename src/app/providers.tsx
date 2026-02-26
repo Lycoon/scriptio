@@ -2,9 +2,11 @@
 
 import { ReactNode, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
+import { NextIntlClientProvider } from "next-intl";
 import { SWRConfig } from "swr";
 import { UserContextProvider } from "@src/context/UserContext";
 import { DashboardContextProvider } from "@src/context/DashboardContext";
+import { LocaleContextProvider, useLocale } from "@src/context/LocaleContext";
 import { useSettings } from "@src/lib/utils/hooks";
 import fetcher from "@src/lib/fetcher";
 
@@ -21,6 +23,31 @@ function EditorThemeSync() {
         }
     }, [settings?.themedEditor]);
 
+    return null;
+}
+
+/**
+ * Reads locale/messages from LocaleContext and feeds NextIntlClientProvider.
+ * Needed because useLocale() must be called inside LocaleContextProvider.
+ */
+function IntlBridge({ children }: { children: ReactNode }) {
+    const { locale, messages } = useLocale();
+    return (
+        <NextIntlClientProvider locale={locale} messages={messages}>
+            {children}
+        </NextIntlClientProvider>
+    );
+}
+
+/**
+ * Syncs <html lang=""> attribute to the active locale.
+ * Mirrors the EditorThemeSync pattern.
+ */
+function LocaleSync() {
+    const { locale } = useLocale();
+    useEffect(() => {
+        document.documentElement.lang = locale;
+    }, [locale]);
     return null;
 }
 
@@ -46,16 +73,21 @@ export function Providers({ children }: { children: ReactNode }) {
         >
             <UserContextProvider>
                 <DashboardContextProvider>
-                    <ThemeProvider
-                        attribute="class"
-                        disableTransitionOnChange
-                        defaultTheme="dark"
-                        themes={["dark", "light", "latte", "wonka", "mint", "blossom"]}
-                        enableColorScheme={false}
-                    >
-                        <EditorThemeSync />
-                        {children}
-                    </ThemeProvider>
+                    <LocaleContextProvider>
+                        <IntlBridge>
+                            <ThemeProvider
+                                attribute="class"
+                                disableTransitionOnChange
+                                defaultTheme="dark"
+                                themes={["dark", "light", "latte", "wonka", "mint", "blossom"]}
+                                enableColorScheme={false}
+                            >
+                                <EditorThemeSync />
+                                <LocaleSync />
+                                {children}
+                            </ThemeProvider>
+                        </IntlBridge>
+                    </LocaleContextProvider>
                 </DashboardContextProvider>
             </UserContextProvider>
         </SWRConfig>

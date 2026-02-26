@@ -3,6 +3,7 @@
 import { join } from "@src/lib/utils/misc";
 import { useContext } from "react";
 import { UserContext } from "@src/context/UserContext";
+import { useTranslations } from "next-intl";
 
 import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
@@ -15,6 +16,7 @@ import { CharacterItem } from "@src/lib/screenplay/characters";
 import { LocationItem } from "@src/lib/screenplay/locations";
 
 const EditorSidebarFormat = () => {
+    const t = useTranslations("editorSidebar");
     const { characters: charactersData, locations: locationsData, highlightedCharacters } = useContext(ProjectContext);
     const { isZenMode } = useContext(UserContext);
     const isActive = isZenMode ? "" : sidebar.active;
@@ -26,7 +28,7 @@ const EditorSidebarFormat = () => {
             <div className={sidebar_nav.element}>
                 <div className={sidebar_nav.list_header}>
                     <UserRound size={18} />
-                    <p className={form.label}>Characters</p>
+                    <p className={form.label}>{t("characters")}</p>
                 </div>
                 <div className={sidebar_nav.list}>
                     {characters != 0 &&
@@ -40,7 +42,7 @@ const EditorSidebarFormat = () => {
             <div className={sidebar_nav.element}>
                 <div className={sidebar_nav.list_header}>
                     <MapPinned size={18} />
-                    <p className={form.label}>Locations</p>
+                    <p className={form.label}>{t("locations")}</p>
                 </div>
                 <div className={sidebar_nav.list}>
                     {locations != 0 &&
