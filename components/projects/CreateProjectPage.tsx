@@ -15,6 +15,7 @@ import form from "../utils/Form.module.css";
 import layout from "../utils/Layout.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { CreateProjectBody } from "@src/lib/utils/api-bodies";
+import { useTranslations } from "next-intl";
 
 type Props = {
     setIsCreating: (isCreating: boolean) => void;
@@ -22,6 +23,7 @@ type Props = {
 
 const CreateProjectPage = ({ setIsCreating }: Props) => {
     const { user } = useCookieUser();
+    const t = useTranslations("projects");
 
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -77,7 +79,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                 }
             } catch (error) {
                 console.log("Failed to create project:", error);
-                setFormInfo({ content: "Failed to create project", isError: true });
+                setFormInfo({ content: t("form.failedToCreate"), isError: true });
             }
             // Redirect outside try-catch since Next.js redirect() throws NEXT_REDIRECT
             if (projectId) {
@@ -113,16 +115,16 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
     return (
         <div className={layout.center_row}>
             <form className={form.container} onSubmit={onSubmit}>
-                <FormHeader title={"Create project"} formInfo={formInfo} />
+                <FormHeader title={t("form.formTitle")} formInfo={formInfo} />
 
                 <div className={form.elements}>
                     <div className={form.element}>
-                        <p className={form.label}>Title</p>
+                        <p className={form.label}>{t("form.titleField")}</p>
                         <input name="title" className={form.input} onChange={resetFormInfo} required />
                     </div>
                     <div className={form.element}>
                         <p className={form.label}>
-                            Description - <i>optional</i>
+                            {t("form.descriptionField")} - <i>{t("form.optional")}</i>
                         </p>
                         <textarea
                             name="description"
@@ -132,19 +134,19 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                     </div>
                     <div className={form.element}>
                         <p className={form.label}>
-                            Author - <i>optional</i>
+                            {t("form.authorField")} - <i>{t("form.optional")}</i>
                         </p>
                         <input name="author" className={form.input} onChange={resetFormInfo} />
                     </div>
                     <div className={form.element}>
                         <p className={form.label}>
-                            Poster - <i>optional</i>
+                            {t("form.posterField")} - <i>{t("form.optional")}</i>
                         </p>
                         <UploadButton setSelectedFile={setSelectedFile} selectedFile={selectedFile} />
                     </div>
                 </div>
 
-                <FormEnd submitText={"Create"} onBack={() => exitCreating()} />
+                <FormEnd submitText={t("form.submitBtn")} onBack={() => exitCreating()} />
             </form>
         </div>
     );

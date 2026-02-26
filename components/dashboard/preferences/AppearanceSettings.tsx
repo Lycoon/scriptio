@@ -8,6 +8,7 @@ import { UserTheme } from "@src/lib/utils/types";
 import { editUserSettings } from "@src/lib/utils/requests";
 import { useTheme } from "next-themes";
 import { useSettings } from "@src/lib/utils/hooks";
+import { useTranslations } from "next-intl";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 
 const THEME_COLORS: Record<
@@ -70,6 +71,8 @@ const THEME_LABELS: Record<string, string> = {
 const AppearanceSettings = () => {
     const { theme, setTheme } = useTheme();
     const { settings, mutate } = useSettings();
+    const t = useTranslations("appearance");
+    const tCommon = useTranslations("common");
 
     const themedEditor = settings?.themedEditor ?? false;
 
@@ -110,7 +113,7 @@ const AppearanceSettings = () => {
         <div className={sharedStyles.settingsForm}>
             {/* Theme Selection */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Theme</label>
+                <label className={form.label}>{t("theme")}</label>
                 <Dropdown
                     value={theme || "dark"}
                     onChange={(value) => setTheme(value)}
@@ -118,20 +121,13 @@ const AppearanceSettings = () => {
                     className={`${sharedStyles.input} ${styles.input}`}
                 />
                 <p className={sharedStyles.helpText}>
-                    {theme === "dark" && "Cozy, low-glare theme made for night owls and late-hour focus."}
-                    {theme === "light" && "Crisp, airy theme that feels natural and comfortable during the day."}
-                    {theme === "latte" && "Soft, cream-based theme that blends warmth with readability."}
-                    {theme === "wonka" && "Velvety, cocoa-based theme that blends deep luxury with eye-resting focus"}
-                    {theme === "mint" &&
-                        "Refreshing, mint-infused theme that blends botanical serenity with eye-resting balance"}
-                    {theme === "blossom" &&
-                        "Gentle, petal-infused theme that blends floral warmth with eye-resting softness"}
+                    {theme && t(`themeHelp.${theme}` as Parameters<typeof t>[0])}
                 </p>
             </div>
 
             {/* Editor Appearance */}
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Editor</label>
+                <label className={form.label}>{t("editor")}</label>
                 <div
                     className={`${optionCard.optionCard} ${themedEditor ? optionCard.active : ""}`}
                     onClick={toggleThemedEditor}
@@ -140,17 +136,15 @@ const AppearanceSettings = () => {
                         {themedEditor && <div className={optionCard.checkInner} />}
                     </div>
                     <div className={optionCard.optionInfo}>
-                        <span className={optionCard.optionTitle}>Themed editor</span>
-                        <span className={optionCard.optionDesc}>
-                            Use theme colors for the editor background and text
-                        </span>
+                        <span className={optionCard.optionTitle}>{t("themedEditor")}</span>
+                        <span className={optionCard.optionDesc}>{t("themedEditorDesc")}</span>
                     </div>
                 </div>
             </div>
 
             <div className={sharedStyles.formActions}>
                 <button onClick={onSave} className={`${sharedStyles.formBtn} `}>
-                    Save Changes
+                    {tCommon("save")}
                 </button>
             </div>
         </div>

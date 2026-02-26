@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useCookieUser, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
 import { CookieUser } from "@src/lib/utils/types";
 import { ProjectRole } from "@prisma/client";
@@ -20,6 +21,7 @@ import { redirect } from "next/navigation";
 const MAX_COLLABORATORS = 5;
 
 const CollaboratorsSettings = () => {
+    const t = useTranslations("collaborators");
     const { membership } = useProjectMembership();
     const { invites, mutate: mutateInvites } = useProjectInvites(membership?.project.id);
     const { collaborators, mutate: mutateCollaborators } = useProjectCollaborators(membership?.project.id);
@@ -52,34 +54,31 @@ const CollaboratorsSettings = () => {
             <section className={styles.section}>
                 <div className={styles.labelRow}>
                     <label className={form.label}>
-                        Project Team ({collaborators.length + invites.length}/{MAX_COLLABORATORS})
+                        {t("projectTeam", { count: collaborators.length + invites.length, max: MAX_COLLABORATORS })}
                     </label>
                     <div className={styles.infoIconWrapper}>
                         <Info size={16} className={styles.infoIcon} />
                         <div className={styles.permissionsHint}>
                             <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>Owner</span>
-                                Can delete the project and transfer ownership
+                                <span className={styles.hintRole}>{t("roles.owner")}</span>
+                                {t("roleDesc.owner")}
                             </div>
                             <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>Admin</span>
-                                Can invite, promote, demote, and kick collaborators
+                                <span className={styles.hintRole}>{t("roles.admin")}</span>
+                                {t("roleDesc.admin")}
                             </div>
                             <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>Editor</span>
-                                Can modify screenplay and other project content
+                                <span className={styles.hintRole}>{t("roles.editor")}</span>
+                                {t("roleDesc.editor")}
                             </div>
                             <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>Viewer</span>
-                                Read-only access. Cannot make any changes
+                                <span className={styles.hintRole}>{t("roles.viewer")}</span>
+                                {t("roleDesc.viewer")}
                             </div>
                         </div>
                     </div>
                 </div>
-                <p className={shared.helpText}>
-                    Manage your team members and pending invitations. You can invite any non-Pro user to be part of your
-                    project. The project remains collaborative until owner has Pro plan.
-                </p>
+                <p className={shared.helpText}>{t("teamHelp")}</p>
 
                 {/* Project Collaborators */}
                 <div className={styles.slotGrid}>
@@ -126,6 +125,7 @@ interface MemberSlotProps {
 }
 
 const MemberSlot = ({ data, membership, mutateCollaborators, user }: MemberSlotProps) => {
+    const t = useTranslations("collaborators");
     const { closeDashboard } = useContext(DashboardContext);
 
     const isOwner = data.role === ProjectRole.OWNER;
@@ -162,7 +162,7 @@ const MemberSlot = ({ data, membership, mutateCollaborators, user }: MemberSlotP
             <div className={styles.memberItem}>
                 <div className={styles.memberInfo}>
                     <span className={styles.memberEmail}>
-                        {data.user.email} {isSelf && "(you)"}
+                        {data.user.email} {isSelf && t("you")}
                     </span>
                 </div>
 
@@ -173,14 +173,14 @@ const MemberSlot = ({ data, membership, mutateCollaborators, user }: MemberSlotP
                         onChange={(e) => updateRole(e.target.value as ProjectRole)}
                         disabled={!isAdmin || isSelf}
                     >
-                        <option value="OWNER">Owner</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="EDITOR">Editor</option>
-                        <option value="VIEWER">Viewer</option>
+                        <option value="OWNER">{t("roles.owner")}</option>
+                        <option value="ADMIN">{t("roles.admin")}</option>
+                        <option value="EDITOR">{t("roles.editor")}</option>
+                        <option value="VIEWER">{t("roles.viewer")}</option>
                     </select>
                     {
                         <button onClick={handleKick} className={styles.kickBtn} disabled={!canKick}>
-                            {isSelf ? "Leave" : "Kick"}
+                            {isSelf ? t("leave") : t("kick")}
                         </button>
                     }
                 </div>
@@ -196,6 +196,7 @@ interface InviteSlotProps {
 }
 
 const InviteSlot = ({ data, membership, mutateInvites }: InviteSlotProps) => {
+    const t = useTranslations("collaborators");
     const canInvite = Roles.hasRoleOrGreater(membership.role, ProjectRole.ADMIN);
     const handleCancelInvite = async () => {
         const res = await deleteInvite(membership.project.id, data.email);
@@ -209,12 +210,12 @@ const InviteSlot = ({ data, membership, mutateInvites }: InviteSlotProps) => {
             <div className={styles.memberItem}>
                 <div className={styles.memberInfo}>
                     <span className={styles.memberEmail}>{data.email}</span>
-                    <span className={styles.pendingBadge}>Pending</span>
+                    <span className={styles.pendingBadge}>{t("pending")}</span>
                 </div>
 
                 <div className={styles.memberActions}>
                     <button onClick={handleCancelInvite} className={styles.cancelBtn} disabled={!canInvite}>
-                        Cancel
+                        {t("cancel")}
                     </button>
                 </div>
             </div>
@@ -228,6 +229,7 @@ interface EmptySlotProps {
 }
 
 const EmptySlot = ({ membership, mutateInvites }: EmptySlotProps) => {
+    const t = useTranslations("collaborators");
     const [email, setEmail] = useState("");
 
     const canInvite = Roles.hasRoleOrGreater(membership.role, ProjectRole.ADMIN);
@@ -243,14 +245,14 @@ const EmptySlot = ({ membership, mutateInvites }: EmptySlotProps) => {
         <div className={`${styles.slot} ${styles.empty}`}>
             <div className={styles.inviteAction}>
                 <input
-                    placeholder="Enter email..."
+                    placeholder={t("emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className={styles.miniInput}
                 />
                 <div className={styles.memberActions}>
                     <button onClick={handleInvite} disabled={!email || !canInvite} className={styles.addBtn}>
-                        Invite
+                        {t("invite")}
                     </button>
                 </div>
             </div>

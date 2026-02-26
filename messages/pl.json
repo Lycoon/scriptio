@@ -1,0 +1,266 @@
+{
+    "navbar": {
+        "screenplay": "Scenariusz",
+        "board": "Tablica",
+        "titlePage": "Strona tytułowa",
+        "synced": "Zsynchronizowano z chmurą",
+        "noConnection": "Brak połączenia",
+        "reconnecting": "Łączenie..."
+    },
+    "common": {
+        "save": "Zapisz zmiany",
+        "cancel": "Anuluj",
+        "loading": "Ładowanie..."
+    },
+    "sidebar": {
+        "title": "Panel",
+        "logOut": "Wyloguj się",
+        "logIn": "Zaloguj się"
+    },
+    "appearance": {
+        "theme": "Motyw",
+        "themeHelp": {
+            "dark": "Ciemny motyw o niskim olśnieniu, stworzony dla nocnych marków i późnonocnej koncentracji.",
+            "light": "Jasny, przewiewny motyw, naturalny i komfortowy w ciągu dnia.",
+            "latte": "Miękki, kremowy motyw łączący ciepło z czytelnością.",
+            "wonka": "Aksamitny, kakaowy motyw łączący głęboki luksus z komfortem dla oczu.",
+            "mint": "Orzeźwiający, miętowy motyw łączący botaniczny spokój z wizualną równowagą.",
+            "blossom": "Delikatny, kwiatowy motyw łączący ciepło płatków z miękkością dla oczu."
+        },
+        "editor": "Edytor",
+        "themedEditor": "Edytor z motywem",
+        "themedEditorDesc": "Użyj kolorów motywu dla tła i tekstu edytora"
+    },
+    "keybinds": {
+        "screenplayElements": "Elementy scenariusza",
+        "typing": "Wpisz… (Esc aby anulować)",
+        "notSet": "Nieustawiony",
+        "modifiersOnly": "Tylko modyfikatory — naciśnij też zwykły klawisz",
+        "defaultPrefix": "Domyślny: {combo}",
+        "reset": "Resetuj",
+        "resetTitle": "Wyczyść skrót użytkownika",
+        "resetDefaults": "Przywróć domyślne",
+        "save": "Zapisz zmiany"
+    },
+    "language": {
+        "label": "Język wyświetlania",
+        "helpText": "Wybierz język używany w całej aplikacji."
+    },
+    "modal": {
+        "groups": {
+            "project": "Projekt",
+            "preferences": "Preferencje",
+            "account": "Konto"
+        },
+        "tabs": {
+            "General": "Ogólne",
+            "Layout": "Układ",
+            "Export": "Import/Eksport",
+            "Collaborators": "Współpracownicy",
+            "Keybinds": "Skróty klawiszowe",
+            "Appearance": "Wygląd",
+            "Language": "Język",
+            "Profile": "Profil",
+            "Security": "Bezpieczeństwo",
+            "Settings": "Ustawienia",
+            "Login": "Logowanie",
+            "About": "O aplikacji"
+        }
+    },
+    "dangerZone": {
+        "transferOwnership": "Przekaż własność",
+        "transferDesc": "Przekaż rolę właściciela innemu użytkownikowi. Otrzymasz rolę edytora.",
+        "transferBtn": "Przekaż",
+        "transferPrompt": "Wprowadź adres e-mail nowego właściciela:",
+        "deleteProject": "Usuń projekt",
+        "deleteProjectDesc": "Po usunięciu projektu nie ma możliwości jego przywrócenia. Upewnij się przed kontynuacją.",
+        "deleteBtn": "Usuń",
+        "modalTitle": "Usuń projekt",
+        "modalDesc": "Ta operacja jest trwała i nieodwracalna. Wszystkie dane powiązane z tym projektem zostaną utracone.",
+        "deleting": "Usuwanie...",
+        "confirmDeleteBtn": "Usuń projekt"
+    },
+    "profile": {
+        "email": "E-mail",
+        "username": "Nazwa użytkownika",
+        "usernamePlaceholder": "Wprowadź swoją nazwę wyświetlaną...",
+        "usernameHelp": "Ta nazwa będzie widoczna dla współpracowników podczas pracy nad wspólnymi projektami.",
+        "color": "Kolor",
+        "customColor": "Kolor niestandardowy",
+        "selectColor": "Wybierz kolor {color}",
+        "successMessage": "Profil zaktualizowany pomyślnie",
+        "failedUpdate": "Nie udało się zaktualizować profilu",
+        "errorSaving": "Wystąpił błąd podczas zapisywania",
+        "saving": "Zapisywanie...",
+        "dangerZoneTitle": "Strefa niebezpieczna",
+        "deleteAccount": "Usuń konto",
+        "deleteAccountDesc": "Trwale usuń swoje konto i wszystkie powiązane dane. Tej operacji nie można cofnąć.",
+        "deleteBtn": "Usuń",
+        "deleteModalTitle": "Usuń konto",
+        "deleteModalDesc": "Twoje konto i wszystkie powiązane dane zostaną trwale usunięte. Tej operacji nie można cofnąć.",
+        "deleteConfirmPhrase": "Potwierdzam usunięcie mojego konta",
+        "deleteConfirmLabel": "Wpisz <ph/>, aby potwierdzić.",
+        "deleting": "Usuwanie...",
+        "deleteAccountBtn": "Usuń moje konto"
+    },
+    "projects": {
+        "untitled": "Bez tytułu",
+        "newProject": "Nowy projekt",
+        "pageTitle": "Projekty",
+        "importBtn": "Importuj...",
+        "importing": "Importowanie...",
+        "createBtn": "Utwórz",
+        "empty": {
+            "createFirst": "Kliknij, aby utworzyć pierwszy projekt",
+            "or": "lub",
+            "importExisting": "Importuj istniejący skrypt"
+        },
+        "item": {
+            "posterAlt": "Plakat filmowy",
+            "localOnly": "Tylko lokalnie",
+            "syncedToCloud": "Zsynchronizowano z chmurą",
+            "today": "Dzisiaj",
+            "yesterday": "Wczoraj",
+            "daysAgo": "{days, plural, one {# dzień temu} few {# dni temu} many {# dni temu} other {# dni temu}}",
+            "monthsAgo": "{months, plural, one {# miesiąc temu} few {# miesiące temu} many {# miesięcy temu} other {# miesięcy temu}}",
+            "moreThanYearAgo": "Ponad rok temu"
+        },
+        "form": {
+            "formTitle": "Utwórz projekt",
+            "titleField": "Tytuł",
+            "descriptionField": "Opis",
+            "authorField": "Autor",
+            "posterField": "Plakat",
+            "optional": "opcjonalnie",
+            "submitBtn": "Utwórz",
+            "failedToCreate": "Nie udało się utworzyć projektu"
+        }
+    },
+    "editorSidebar": {
+        "scenes": "Sceny",
+        "characters": "Postacie",
+        "locations": "Lokacje"
+    },
+    "formatDropdown": {
+        "elements": {
+            "scene": "NAGŁÓWEK SCENY",
+            "action": "Akcja",
+            "character": "POSTAĆ",
+            "dialogue": "Dialog",
+            "parenthetical": "(Nawias)",
+            "transition": "PRZEJŚCIE:",
+            "section": "Sekcja",
+            "note": "[[Uwaga]]",
+            "none": "Brak"
+        },
+        "titlePageElements": {
+            "title": "Tytuł",
+            "author": "Autor",
+            "date": "Data",
+            "none": "Brak"
+        }
+    },
+    "search": {
+        "placeholder": "Szukaj...",
+        "noMatches": "Brak wyników",
+        "matchCount": "{current} z {total}",
+        "replacePlaceholder": "Zastąp przez...",
+        "replace": "Zastąp",
+        "replaceAll": "Zastąp wszystko",
+        "filterByElement": "Filtruj według elementu:",
+        "elements": {
+            "scene": "Nagłówek sceny",
+            "action": "Akcja",
+            "character": "Postać",
+            "dialogue": "Dialog",
+            "parenthetical": "Nawias",
+            "transition": "Przejście",
+            "section": "Sekcja",
+            "note": "Uwaga",
+            "none": "Brak"
+        }
+    },
+    "collaborators": {
+        "projectTeam": "Zespół projektu ({count}/{max})",
+        "teamHelp": "Zarządzaj członkami zespołu i oczekującymi zaproszeniami. Możesz zaprosić dowolnego użytkownika bez planu Pro do udziału w projekcie. Projekt pozostaje współdzielony, dopóki właściciel ma plan Pro.",
+        "roles": {
+            "owner": "Właściciel",
+            "admin": "Admin",
+            "editor": "Edytor",
+            "viewer": "Obserwator"
+        },
+        "roleDesc": {
+            "owner": "Może usunąć projekt i przekazać własność",
+            "admin": "Może zapraszać, awansować, degradować i usuwać współpracowników",
+            "editor": "Może modyfikować scenariusz i inne treści projektu",
+            "viewer": "Dostęp tylko do odczytu. Nie może wprowadzać żadnych zmian"
+        },
+        "you": "(ty)",
+        "leave": "Opuść",
+        "kick": "Wyrzuć",
+        "pending": "Oczekuje",
+        "cancel": "Anuluj",
+        "emailPlaceholder": "Wpisz adres e-mail...",
+        "invite": "Zaproś"
+    },
+    "export": {
+        "importLabel": "Importuj",
+        "selectFile": "Wybierz plik",
+        "selectFileDesc": "Prześlij .fountain, .fdx, .scriptio lub .txt",
+        "exportLabel": "Eksportuj",
+        "formatOptions": {
+            "pdf": "Dokument PDF (.pdf)",
+            "fountain": "Fountain (.fountain)",
+            "fdx": "Final Draft (.fdx)",
+            "scriptio": "Scriptio (.scriptio)"
+        },
+        "formatHelp": {
+            "pdf": "Standardowy format branżowy. Najlepszy do udostępniania i drukowania.",
+            "fountain": "Format zwykłego tekstu oparty na Markdown, doskonały dla zgodności.",
+            "fdx": "Kompatybilny z oprogramowaniem branżowym Final Draft.",
+            "scriptio": "Własny format Scriptio, aby zachować projekt lokalnie"
+        },
+        "includeNotes": "Uwzględnij notatki",
+        "includeNotesDesc": "Eksportuj wbudowane notatki.",
+        "watermark": "Znak wodny",
+        "watermarkDesc": "Nakładanie nazwy autora na strony.",
+        "passwordProtection": "Ochrona hasłem",
+        "passwordProtectionDesc": "Wymagaj hasła do otwarcia pliku PDF.",
+        "passwordPlaceholder": "Wprowadź hasło",
+        "exportBtn": "Eksportuj",
+        "exporting": "Eksportowanie...",
+        "exportingProgress": "Eksportowanie ({progress}%)"
+    },
+    "layout": {
+        "pageFormat": "Format strony",
+        "pageFormatHelp": {
+            "letter": "Format standardowy w USA. Branżowy standard dla scenariuszy hollywoodzkich.",
+            "a4": "Międzynarodowy format standardowy. Powszechny w Europie i większości krajów."
+        },
+        "sceneHeadings": "Nagłówki scen",
+        "bold": "Pogrubienie",
+        "boldDesc": "Nagłówki scen będą wyświetlane pogrubione",
+        "extraSpace": "Dodatkowe miejsce powyżej",
+        "extraSpaceDesc": "Dodaj dodatkowe odstępy przed nagłówkami scen",
+        "sceneNumbering": "Numerowanie scen",
+        "sceneNumberingDesc": "Wyświetlaj numery scen na lewym marginesie",
+        "duplicateRight": "Powiel na prawym marginesie",
+        "duplicateRightDesc": "Wyświetlaj numer po obu stronach",
+        "continuation": "Kontynuacja",
+        "moreTitle": "Zastosuj etykietę kontynuacji dialogu (dół strony)",
+        "contdTitle": "Zastosuj etykietę kontynuacji postaci (góra strony)"
+    },
+    "projectSettings": {
+        "titleLabel": "Tytuł",
+        "titlePlaceholder": "Wprowadź nazwę projektu...",
+        "authorLabel": "Autor",
+        "authorPlaceholder": "Imię i nazwisko autora...",
+        "descriptionLabel": "Opis",
+        "descriptionPlaceholder": "O czym jest ten scenariusz?",
+        "posterLabel": "Plakat",
+        "noPoster": "Brak plakatu",
+        "posterHelp": "Zalecane: 600x900 pikseli (proporcje 2:3). Obsługuje PNG i JPG.",
+        "saveChanges": "Zapisz zmiany",
+        "dangerZoneTitle": "Strefa niebezpieczna"
+    }
+}

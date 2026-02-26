@@ -13,81 +13,49 @@ import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { FileDown, Folder, Keyboard, KeyRound, Palette, PanelsTopLeft, User, Users } from "lucide-react";
+import { FileDown, Folder, Globe, Keyboard, KeyRound, Palette, PanelsTopLeft, User, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
+import LanguageSettings from "./preferences/LanguageSettings";
 import SecuritySettings from "./account/SecuritySettings";
 import ProfileSettings from "./account/ProfileSettings";
 import LayoutSettings from "./project/LayoutSettings";
 import DashboardLogin from "./account/DashboardLogin";
-
-const PROJECT_MENU: MenuSection = {
-    group: "Project",
-    items: [
-        {
-            id: "General",
-            label: "General",
-            icon: <Folder size={18} />,
-        },
-        {
-            id: "Layout",
-            label: "Layout",
-            icon: <PanelsTopLeft size={18} />,
-        },
-        {
-            id: "Export",
-            label: "Import/Export",
-            icon: <FileDown size={18} />,
-        },
-        {
-            id: "Collaborators",
-            label: "Collaborators",
-            icon: <Users size={18} />,
-        },
-    ],
-};
-
-const PREFERENCES_MENU: MenuSection = {
-    group: "Preferences",
-    items: [
-        {
-            id: "Keybinds",
-            label: "Keybinds",
-            icon: <Keyboard size={18} />,
-        },
-        {
-            id: "Appearance",
-            label: "Appearance",
-            icon: <Palette size={18} />,
-        },
-    ],
-};
-
-const ACCOUNT_MENU: MenuSection = {
-    group: "Account",
-    items: [
-        {
-            id: "Profile",
-            label: "Profile",
-            icon: <User size={18} />,
-        },
-        {
-            id: "Security",
-            label: "Security",
-            icon: <KeyRound size={18} />,
-        } /*
-        {
-            id: "Settings",
-            label: "Settings",
-            icon: <Settings size={18} />,
-        },*/,
-    ],
-};
+import AboutSettings from "./AboutSettings";
 
 const DashboardModal = () => {
     const { isOpen, closeDashboard, activeTab, setActiveTab } = useContext(DashboardContext);
     const { project, isYjsReady } = useContext(ProjectContext);
     const { user } = useCookieUser();
+    const t = useTranslations("modal");
+
+    const PROJECT_MENU = useMemo<MenuSection>(() => ({
+        group: t("groups.project"),
+        items: [
+            { id: "General",       label: t("tabs.General"),       icon: <Folder size={18} /> },
+            { id: "Layout",        label: t("tabs.Layout"),        icon: <PanelsTopLeft size={18} /> },
+            { id: "Export",        label: t("tabs.Export"),        icon: <FileDown size={18} /> },
+            { id: "Collaborators", label: t("tabs.Collaborators"), icon: <Users size={18} /> },
+        ],
+    }), [t]);
+
+    const PREFERENCES_MENU = useMemo<MenuSection>(() => ({
+        group: t("groups.preferences"),
+        items: [
+            { id: "Keybinds",   label: t("tabs.Keybinds"),   icon: <Keyboard size={18} /> },
+            { id: "Appearance", label: t("tabs.Appearance"), icon: <Palette size={18} /> },
+            { id: "Language",   label: t("tabs.Language"),   icon: <Globe size={18} /> },
+        ],
+    }), [t]);
+
+    const ACCOUNT_MENU = useMemo<MenuSection>(() => ({
+        group: t("groups.account"),
+        items: [
+            { id: "Profile",   label: t("tabs.Profile"),   icon: <User size={18} /> },
+            { id: "Security",  label: t("tabs.Security"),  icon: <KeyRound size={18} /> },
+        ],
+    }), [t]);
 
     // We're in a project if either:
     // - We have API membership data (cloud project), OR
@@ -103,7 +71,7 @@ const DashboardModal = () => {
         sections.push(PREFERENCES_MENU);
         if (isSignedIn) sections.push(ACCOUNT_MENU);
         return sections;
-    }, [isInProject, isSignedIn]);
+    }, [isInProject, isSignedIn, PROJECT_MENU, PREFERENCES_MENU, ACCOUNT_MENU]);
 
     // If active tab is a project tab but we're not in a project, or an account tab but not signed in, switch to first available tab
     useEffect(() => {
@@ -139,7 +107,7 @@ const DashboardModal = () => {
 
                 <div className={styles.content}>
                     <header className={styles.contentHeader}>
-                        <h3>{activeTab}</h3>
+                        <h3>{t(`tabs.${activeTab}` as Parameters<typeof t>[0])}</h3>
                         <CloseSVG className={styles.close_btn} onClick={closeDashboard} />
                     </header>
 
@@ -152,11 +120,14 @@ const DashboardModal = () => {
                         {/* Preferences tabs */}
                         {activeTab === "Keybinds" && <KeybindsSettings />}
                         {activeTab === "Appearance" && <AppearanceSettings />}
+                        {activeTab === "Language" && <LanguageSettings />}
                         {/* Account tabs - only when signed in */}
                         {isSignedIn && activeTab === "Profile" && <ProfileSettings dangerOpen={dangerOpen} onDangerToggle={() => setDangerOpen((v) => !v)} />}
                         {isSignedIn && activeTab === "Security" && <SecuritySettings />}
                         {/* Login tab - only when signed out */}
                         {!isSignedIn && activeTab === "Login" && <DashboardLogin />}
+                        {/* About tab */}
+                        {activeTab === "About" && <AboutSettings />}
                     </div>
                 </div>
             </div>

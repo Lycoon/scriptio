@@ -1,0 +1,266 @@
+{
+    "navbar": {
+        "screenplay": "Screenplay",
+        "board": "Board",
+        "titlePage": "Title Page",
+        "synced": "Synced to cloud",
+        "noConnection": "No connection",
+        "reconnecting": "Reconnecting..."
+    },
+    "common": {
+        "save": "Save Changes",
+        "cancel": "Cancel",
+        "loading": "Loading..."
+    },
+    "sidebar": {
+        "title": "Dashboard",
+        "logOut": "Log Out",
+        "logIn": "Log In"
+    },
+    "appearance": {
+        "theme": "Theme",
+        "themeHelp": {
+            "dark": "Cozy, low-glare theme made for night owls and late-hour focus.",
+            "light": "Crisp, airy theme that feels natural and comfortable during the day.",
+            "latte": "Soft, cream-based theme that blends warmth with readability.",
+            "wonka": "Velvety, cocoa-based theme that blends deep luxury with eye-resting focus.",
+            "mint": "Refreshing, mint-infused theme that blends botanical serenity with eye-resting balance.",
+            "blossom": "Gentle, petal-infused theme that blends floral warmth with eye-resting softness."
+        },
+        "editor": "Editor",
+        "themedEditor": "Themed editor",
+        "themedEditorDesc": "Use theme colors for the editor background and text"
+    },
+    "keybinds": {
+        "screenplayElements": "Screenplay Elements",
+        "typing": "Type… (Esc to cancel)",
+        "notSet": "Not set",
+        "modifiersOnly": "Modifiers only — press a regular key",
+        "defaultPrefix": "Default: {combo}",
+        "reset": "Reset",
+        "resetTitle": "Clear user binding",
+        "resetDefaults": "Reset to defaults",
+        "save": "Save changes"
+    },
+    "language": {
+        "label": "Display Language",
+        "helpText": "Choose the language used throughout the app."
+    },
+    "modal": {
+        "groups": {
+            "project": "Project",
+            "preferences": "Preferences",
+            "account": "Account"
+        },
+        "tabs": {
+            "General": "General",
+            "Layout": "Layout",
+            "Export": "Import/Export",
+            "Collaborators": "Collaborators",
+            "Keybinds": "Keybinds",
+            "Appearance": "Appearance",
+            "Language": "Language",
+            "Profile": "Profile",
+            "Security": "Security",
+            "Settings": "Settings",
+            "Login": "Login",
+            "About": "About"
+        }
+    },
+    "dangerZone": {
+        "transferOwnership": "Transfer ownership",
+        "transferDesc": "Transfer your owner role to another user. You will be given editor role.",
+        "transferBtn": "Transfer",
+        "transferPrompt": "Enter the email of the new owner:",
+        "deleteProject": "Delete project",
+        "deleteProjectDesc": "Once you delete a project, there is no going back. Please be certain.",
+        "deleteBtn": "Delete",
+        "modalTitle": "Delete project",
+        "modalDesc": "This action is permanent and cannot be undone. All data associated with this project will be lost.",
+        "deleting": "Deleting...",
+        "confirmDeleteBtn": "Delete project"
+    },
+    "profile": {
+        "email": "Email",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your display name...",
+        "usernameHelp": "This name will be visible to collaborators when you work on shared projects.",
+        "color": "Color",
+        "customColor": "Custom color",
+        "selectColor": "Select color {color}",
+        "successMessage": "Profile updated successfully",
+        "failedUpdate": "Failed to update profile",
+        "errorSaving": "An error occurred while saving",
+        "saving": "Saving...",
+        "dangerZoneTitle": "Danger zone",
+        "deleteAccount": "Delete account",
+        "deleteAccountDesc": "Permanently delete your account and all associated data. This cannot be undone.",
+        "deleteBtn": "Delete",
+        "deleteModalTitle": "Delete account",
+        "deleteModalDesc": "This will permanently delete your account and all associated data. This action cannot be undone.",
+        "deleteConfirmPhrase": "I confirm my account deletion",
+        "deleteConfirmLabel": "Type <ph/> to confirm.",
+        "deleting": "Deleting...",
+        "deleteAccountBtn": "Delete my account"
+    },
+    "projects": {
+        "untitled": "Untitled",
+        "newProject": "New Project",
+        "pageTitle": "Projects",
+        "importBtn": "Import...",
+        "importing": "Importing...",
+        "createBtn": "Create",
+        "empty": {
+            "createFirst": "Click to create your first project",
+            "or": "or",
+            "importExisting": "Import an existing script"
+        },
+        "item": {
+            "posterAlt": "Movie poster",
+            "localOnly": "Local only",
+            "syncedToCloud": "Synced to cloud",
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "daysAgo": "{days, plural, one {# day ago} other {# days ago}}",
+            "monthsAgo": "{months, plural, one {# month ago} other {# months ago}}",
+            "moreThanYearAgo": "More than 1 year ago"
+        },
+        "form": {
+            "formTitle": "Create project",
+            "titleField": "Title",
+            "descriptionField": "Description",
+            "authorField": "Author",
+            "posterField": "Poster",
+            "optional": "optional",
+            "submitBtn": "Create",
+            "failedToCreate": "Failed to create project"
+        }
+    },
+    "editorSidebar": {
+        "scenes": "Scenes",
+        "characters": "Characters",
+        "locations": "Locations"
+    },
+    "formatDropdown": {
+        "elements": {
+            "scene": "SCENE HEADING",
+            "action": "Action",
+            "character": "CHARACTER",
+            "dialogue": "Dialogue",
+            "parenthetical": "(Parenthetical)",
+            "transition": "TRANSITION:",
+            "section": "Section",
+            "note": "[[Note]]",
+            "none": "None"
+        },
+        "titlePageElements": {
+            "title": "Title",
+            "author": "Author",
+            "date": "Date",
+            "none": "None"
+        }
+    },
+    "search": {
+        "placeholder": "Search...",
+        "noMatches": "No matches",
+        "matchCount": "{current} of {total}",
+        "replacePlaceholder": "Replace with...",
+        "replace": "Replace",
+        "replaceAll": "Replace All",
+        "filterByElement": "Filter by element:",
+        "elements": {
+            "scene": "Scene Heading",
+            "action": "Action",
+            "character": "Character",
+            "dialogue": "Dialogue",
+            "parenthetical": "Parenthetical",
+            "transition": "Transition",
+            "section": "Section",
+            "note": "Note",
+            "none": "None"
+        }
+    },
+    "collaborators": {
+        "projectTeam": "Project Team ({count}/{max})",
+        "teamHelp": "Manage your team members and pending invitations. You can invite any non-Pro user to be part of your project. The project remains collaborative until owner has Pro plan.",
+        "roles": {
+            "owner": "Owner",
+            "admin": "Admin",
+            "editor": "Editor",
+            "viewer": "Viewer"
+        },
+        "roleDesc": {
+            "owner": "Can delete the project and transfer ownership",
+            "admin": "Can invite, promote, demote, and kick collaborators",
+            "editor": "Can modify screenplay and other project content",
+            "viewer": "Read-only access. Cannot make any changes"
+        },
+        "you": "(you)",
+        "leave": "Leave",
+        "kick": "Kick",
+        "pending": "Pending",
+        "cancel": "Cancel",
+        "emailPlaceholder": "Enter email...",
+        "invite": "Invite"
+    },
+    "export": {
+        "importLabel": "Import",
+        "selectFile": "Select File",
+        "selectFileDesc": "Upload .fountain, .fdx, .scriptio, or .txt",
+        "exportLabel": "Export",
+        "formatOptions": {
+            "pdf": "PDF Document (.pdf)",
+            "fountain": "Fountain (.fountain)",
+            "fdx": "Final Draft (.fdx)",
+            "scriptio": "Scriptio (.scriptio)"
+        },
+        "formatHelp": {
+            "pdf": "Standard industry format. Best for sharing and printing.",
+            "fountain": "Plain text format based on markdown, great for compatibility.",
+            "fdx": "Compatible with Final Draft industry software.",
+            "scriptio": "Scriptio own format, to keep your project local"
+        },
+        "includeNotes": "Include Notes",
+        "includeNotesDesc": "Export inline notes.",
+        "watermark": "Watermark",
+        "watermarkDesc": "Overlay the author's name on pages.",
+        "passwordProtection": "Password Protection",
+        "passwordProtectionDesc": "Require a password to open the PDF.",
+        "passwordPlaceholder": "Enter password",
+        "exportBtn": "Export",
+        "exporting": "Exporting...",
+        "exportingProgress": "Exporting ({progress}%)"
+    },
+    "layout": {
+        "pageFormat": "Page Format",
+        "pageFormatHelp": {
+            "letter": "Standard format used in the United States. Industry standard for Hollywood screenplays.",
+            "a4": "International standard format. Common in Europe and most other countries."
+        },
+        "sceneHeadings": "Scene Headings",
+        "bold": "Bold",
+        "boldDesc": "Scene headings will appear in bold",
+        "extraSpace": "Extra space above",
+        "extraSpaceDesc": "Add extra spacing before scene headings",
+        "sceneNumbering": "Scene numbering",
+        "sceneNumberingDesc": "Show scene numbers in left margin",
+        "duplicateRight": "Duplicate in right margin",
+        "duplicateRightDesc": "Show number on both sides",
+        "continuation": "Continuation",
+        "moreTitle": "Apply dialogue continuation label (bottom of page)",
+        "contdTitle": "Apply character continuation label (top of page)"
+    },
+    "projectSettings": {
+        "titleLabel": "Title",
+        "titlePlaceholder": "Enter project name...",
+        "authorLabel": "Author",
+        "authorPlaceholder": "Author name...",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "What is this screenplay about?",
+        "posterLabel": "Poster",
+        "noPoster": "No Poster",
+        "posterHelp": "Recommended: 600x900 pixels (2:3 ratio). Supports PNG, JPG.",
+        "saveChanges": "Save changes",
+        "dangerZoneTitle": "Danger zone"
+    }
+}

@@ -207,6 +207,7 @@
         visibility 0.2s;
     z-index: 100;
     white-space: nowrap;
+    width: max-content;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -222,7 +223,7 @@
     font-weight: 700;
     color: var(--primary-text);
     margin-right: 6px;
-    min-width: 45px;
+    min-width: 80px;
     display: inline-block;
 }
 

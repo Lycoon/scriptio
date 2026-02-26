@@ -4,28 +4,29 @@
 
 .container {
     cursor: pointer;
-    width: 270px;
-    aspect-ratio: 1.7;
-    padding: 18px;
+    width: 100%;
+    padding: 16px 16px;
 
-    border: none;
-    border-radius: 24px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+
+    border-radius: 18px;
+    border-style: solid;
+    border-width: 3px;
+    border-color: var(--tertiary);
     background-color: var(--project-item-bg);
 
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease;
-    box-shadow: var(--project-item-shadow);
+    transition: border-color 0.2s;
 }
 
 .container:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--project-item-shadow-hover);
+    border-color: var(--tertiary-hover);
 }
 
 .container:active {
-    transform: scale(0.97);
-    box-shadow: var(--project-item-shadow-active);
+    transform: scale(0.99);
     transition: transform 0.07s;
 }
 
@@ -33,25 +34,39 @@
 /*        General       */
 /* ==================== */
 
+.poster {
+    width: 52px;
+    aspect-ratio: 0.675;
+    border-radius: 5px;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
 .title {
     font-family: var(--font-inter), sans-serif;
     font-style: italic;
     font-weight: 400;
-    font-size: 1.2rem;
-    max-width: 130px;
+    font-size: 1.3rem;
     text-align: left;
 
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-right: 8px;
+    padding-right: 0.2em;
 }
 
-.title_row {
+.date {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .sync_icon {
@@ -60,21 +75,7 @@
     justify-content: center;
     color: var(--secondary-text);
     opacity: 0.7;
-}
-
-.title_flex {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-}
-
-.date {
-    display: flex;
-    flex-direction: row;
-    gap: 7px;
-    margin-top: 10px;
+    flex-shrink: 0;
 }
 
 .icon {
@@ -82,14 +83,7 @@
 }
 
 .date_text {
-    font-size: 0.9rem;
-    max-width: 120px;
+    font-size: 0.85rem;
     text-align: left;
     color: var(--secondary-text);
-}
-
-.poster {
-    width: 75px;
-    aspect-ratio: 0.675;
-    border-radius: 6px;
 }

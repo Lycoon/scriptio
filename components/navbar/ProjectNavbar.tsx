@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { isTauri } from "@tauri-apps/api/core";
 import { ConnectionStatus } from "@src/lib/utils/enums";
 import { useCookieUser, useProjectIdFromUrl } from "@src/lib/utils/hooks";
@@ -34,10 +35,11 @@ import ScreenplaySearch from "./ScreenplaySearch";
 
 const StatusIndicator = () => {
     const { connectionStatus } = useContext(ProjectContext);
+    const t = useTranslations("navbar");
     const STATUS: Record<ConnectionStatus, string> = {
-        connected: "Synced to cloud",
-        disconnected: "No connection",
-        connecting: "Reconnecting...",
+        connected: t("synced"),
+        disconnected: t("noConnection"),
+        connecting: t("reconnecting"),
     };
     return (
         <>
@@ -98,6 +100,7 @@ const ProjectNavbar = () => {
     const { user } = useCookieUser();
     const projectId = useProjectIdFromUrl();
 
+    const t = useTranslations("navbar");
     const viewContext = useViewContext();
 
     const isInProject = !!projectId;
@@ -189,15 +192,15 @@ const ProjectNavbar = () => {
                         <div className={navbar.panel_switcher}>
                             <div className={getPanelBtnStyle("screenplay")} onClick={() => handlePanelClick("screenplay")}>
                                 <Clapperboard size={14} />
-                                Screenplay
+                                {t("screenplay")}
                             </div>
                             <div className={getPanelBtnStyle("board")} onClick={() => handlePanelClick("board")}>
                                 <LayoutDashboard size={14} />
-                                Board
+                                {t("board")}
                             </div>
                             <div className={getPanelBtnStyle("title")} onClick={() => handlePanelClick("title")}>
                                 <FileText size={14} />
-                                Title Page
+                                {t("titlePage")}
                             </div>
                         </div>
                         <div

@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { PageFormat } from "@src/lib/utils/enums";
 import { Check } from "lucide-react";
@@ -12,6 +13,7 @@ import styles from "./LayoutSettings.module.css";
 import optionCard from "./OptionCard.module.css";
 
 const LayoutSettings = () => {
+    const t = useTranslations("layout");
     const {
         pageFormat,
         setPageFormat,
@@ -70,7 +72,7 @@ const LayoutSettings = () => {
     return (
         <div className={sharedStyles.settingsForm}>
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Page Format</label>
+                <label className={form.label}>{t("pageFormat")}</label>
                 <Dropdown
                     value={pageFormat}
                     onChange={(value) => handleFormatChange(value as PageFormat)}
@@ -78,14 +80,13 @@ const LayoutSettings = () => {
                     className={`${sharedStyles.input} ${styles.input}`}
                 />
                 <p className={sharedStyles.helpText}>
-                    {pageFormat === "LETTER" &&
-                        "Standard format used in the United States. Industry standard for Hollywood screenplays."}
-                    {pageFormat === "A4" && "International standard format. Common in Europe and most other countries."}
+                    {pageFormat === "LETTER" && t("pageFormatHelp.letter")}
+                    {pageFormat === "A4" && t("pageFormatHelp.a4")}
                 </p>
             </div>
 
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Scene Headings</label>
+                <label className={form.label}>{t("sceneHeadings")}</label>
                 <div
                     className={`${optionCard.optionCard} ${sceneHeadingBold ? optionCard.active : ""}`}
                     onClick={() => setSceneHeadingBold(!sceneHeadingBold)}
@@ -94,8 +95,8 @@ const LayoutSettings = () => {
                         {sceneHeadingBold && <div className={optionCard.checkInner} />}
                     </div>
                     <div className={optionCard.optionInfo}>
-                        <span className={optionCard.optionTitle}>Bold</span>
-                        <span className={optionCard.optionDesc}>Scene headings will appear in bold</span>
+                        <span className={optionCard.optionTitle}>{t("bold")}</span>
+                        <span className={optionCard.optionDesc}>{t("boldDesc")}</span>
                     </div>
                 </div>
 
@@ -107,8 +108,8 @@ const LayoutSettings = () => {
                         {sceneHeadingDoubleSpace && <div className={optionCard.checkInner} />}
                     </div>
                     <div className={optionCard.optionInfo}>
-                        <span className={optionCard.optionTitle}>Extra space above</span>
-                        <span className={optionCard.optionDesc}>Add extra spacing before scene headings</span>
+                        <span className={optionCard.optionTitle}>{t("extraSpace")}</span>
+                        <span className={optionCard.optionDesc}>{t("extraSpaceDesc")}</span>
                     </div>
                 </div>
 
@@ -123,8 +124,8 @@ const LayoutSettings = () => {
                             {displaySceneNumbers && <div className={optionCard.checkInner} />}
                         </div>
                         <div className={optionCard.optionInfo}>
-                            <span className={optionCard.optionTitle}>Scene numbering</span>
-                            <span className={optionCard.optionDesc}>Show scene numbers in left margin</span>
+                            <span className={optionCard.optionTitle}>{t("sceneNumbering")}</span>
+                            <span className={optionCard.optionDesc}>{t("sceneNumberingDesc")}</span>
                         </div>
                     </div>
                     {displaySceneNumbers && (
@@ -141,8 +142,8 @@ const LayoutSettings = () => {
                                 {sceneNumberOnRight && <div className={optionCard.checkInner} />}
                             </div>
                             <div className={optionCard.optionInfo}>
-                                <span className={optionCard.optionTitle}>Duplicate in right margin</span>
-                                <span className={optionCard.optionDesc}>Show number on both sides</span>
+                                <span className={optionCard.optionTitle}>{t("duplicateRight")}</span>
+                                <span className={optionCard.optionDesc}>{t("duplicateRightDesc")}</span>
                             </div>
                         </div>
                     )}
@@ -150,7 +151,7 @@ const LayoutSettings = () => {
             </div>
 
             <div className={sharedStyles.formGroup}>
-                <label className={form.label}>Continuation</label>
+                <label className={form.label}>{t("continuation")}</label>
                 <div className={styles.contdInputRow}>
                     <input
                         type="text"
@@ -166,7 +167,7 @@ const LayoutSettings = () => {
                         className={`${styles.contdConfirmBtn} ${hasMoreChanges ? styles.contdConfirmBtnActive : ""}`}
                         disabled={!hasMoreChanges}
                         onClick={commitMoreLabel}
-                        title="Apply dialogue continuation label (bottom of page)"
+                        title={t("moreTitle")}
                     >
                         <Check size={16} />
                     </button>
@@ -187,7 +188,7 @@ const LayoutSettings = () => {
                         className={`${styles.contdConfirmBtn} ${hasContdChanges ? styles.contdConfirmBtnActive : ""}`}
                         disabled={!hasContdChanges}
                         onClick={commitContdLabel}
-                        title="Apply character continuation label (top of page)"
+                        title={t("contdTitle")}
                     >
                         <Check size={16} />
                     </button>

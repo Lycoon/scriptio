@@ -19,6 +19,7 @@ import {
     MessageSquarePlus,
     Pencil,
     Scissors,
+    Search,
     SquareDashedMousePointer,
     Trash2,
     UserRound,
@@ -197,9 +198,17 @@ const EditorSelectionMenu = (props: any) => {
         setActiveCommentId(commentId);
     };
 
+    const handleSearchOnWeb = () => {
+        if (!editor) return;
+        const selectedText = editor.state.doc.textBetween(from, to, " ");
+        if (!selectedText.trim()) return;
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedText)}`, "_blank");
+    };
+
     return (
         <>
             <ContextMenuItem text={"Add Comment"} icon={MessageSquarePlus} action={handleAddComment} />
+            <ContextMenuItem text={"Search on web"} icon={Search} action={handleSearchOnWeb} />
         </>
     );
 };

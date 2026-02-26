@@ -6,6 +6,7 @@ import { join } from "@src/lib/utils/misc";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { FileDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./CreateProjectPage";
@@ -19,6 +20,7 @@ import form from "../utils/Form.module.css";
 const ProjectPageContainer = () => {
     const { user } = useCookieUser();
     const { projects, isLoading, mutate } = useProjectMemberships();
+    const t = useTranslations("projects");
     const [isCreating, setIsCreating] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
     const [showShadow, setShowShadow] = useState(false);
@@ -95,7 +97,7 @@ const ProjectPageContainer = () => {
                 <div className={page.center}>
                     <div className={page.header}>
                         <div className={page.header_info}>
-                            <h1>Projects</h1>
+                            <h1>{t("pageTitle")}</h1>
                             <div className={page.header_btns}>
                                 <button
                                     className={`${page.import_btn} ${form.btn}`}
@@ -103,13 +105,13 @@ const ProjectPageContainer = () => {
                                     disabled={isImporting}
                                 >
                                     <FileDown size={18} />
-                                    {isImporting ? "Importing..." : "Import..."}
+                                    {isImporting ? t("importing") : t("importBtn")}
                                 </button>
                                 <button
                                     className={`${page.create_btn} ${form.btn}`}
                                     onClick={() => setIsCreating(true)}
                                 >
-                                    Create
+                                    {t("createBtn")}
                                 </button>
                             </div>
                         </div>

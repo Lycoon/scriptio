@@ -2,6 +2,7 @@
 
 import { join } from "@src/lib/utils/misc";
 import { useContext, useState, useCallback, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { Scene } from "@src/lib/screenplay/scenes";
@@ -12,6 +13,7 @@ import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
 
 const EditorSidebarNavigation = () => {
+    const t = useTranslations("editorSidebar");
     const { scenes, updateScenes, editor } = useContext(ProjectContext);
     const { isZenMode } = useContext(UserContext);
     const isActive = isZenMode ? "" : sidebar_nav.active;
@@ -172,7 +174,7 @@ const EditorSidebarNavigation = () => {
             <div className={sidebar_nav.element}>
                 <div className={sidebar_nav.list_header}>
                     <Clapperboard size={18} />
-                    <p className={form.label}>Scenes</p>
+                    <p className={form.label}>{t("scenes")}</p>
                 </div>
                 <div
                     ref={listRef}

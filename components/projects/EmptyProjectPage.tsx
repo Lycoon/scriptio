@@ -5,6 +5,7 @@ import { useCookieUser } from "@src/lib/utils/hooks";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import styles from "./EmptyProjectPage.module.css";
+import { useTranslations } from "next-intl";
 
 type Props = {
     setIsCreating: (isCreating: boolean) => void;
@@ -14,6 +15,7 @@ const EmptyProjectPage = ({ setIsCreating }: Props) => {
     const { user } = useCookieUser();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isImporting, setIsImporting] = useState(false);
+    const t = useTranslations("projects");
 
     const handleImportClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -53,15 +55,15 @@ const EmptyProjectPage = ({ setIsCreating }: Props) => {
             />
             <div className={styles.content}>
                 <button className={styles.main_btn} onClick={() => setIsCreating(true)}>
-                    <p className={styles.title}>Click to create your first project</p>
+                    <p className={styles.title}>{t("empty.createFirst")}</p>
                 </button>
-                <p className={styles.or_text}>or</p>
+                <p className={styles.or_text}>{t("empty.or")}</p>
                 <button
                     className={styles.import_btn}
                     onClick={handleImportClick}
                     disabled={isImporting}
                 >
-                    {isImporting ? "Importing..." : "Import an existing script"}
+                    {isImporting ? t("importing") : t("empty.importExisting")}
                 </button>
             </div>
         </div>

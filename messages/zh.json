@@ -1,0 +1,266 @@
+{
+    "navbar": {
+        "screenplay": "剧本",
+        "board": "版块",
+        "titlePage": "标题页",
+        "synced": "已同步至云端",
+        "noConnection": "无连接",
+        "reconnecting": "正在重新连接..."
+    },
+    "common": {
+        "save": "保存更改",
+        "cancel": "取消",
+        "loading": "加载中..."
+    },
+    "sidebar": {
+        "title": "控制台",
+        "logOut": "退出登录",
+        "logIn": "登录"
+    },
+    "appearance": {
+        "theme": "主题",
+        "themeHelp": {
+            "dark": "低眩光深色主题，专为夜猫子和深夜专注而设计。",
+            "light": "清爽明亮的主题，白天使用自然舒适。",
+            "latte": "柔和奶油色调主题，兼顾温暖感与可读性。",
+            "wonka": "丝绒可可色调主题，深邃奢华与护眼舒适并重。",
+            "mint": "清新薄荷主题，融合自然宁静与视觉平衡。",
+            "blossom": "淡雅花瓣主题，花卉温柔与视觉柔和相得益彰。"
+        },
+        "editor": "编辑器",
+        "themedEditor": "主题化编辑器",
+        "themedEditorDesc": "将主题颜色应用于编辑器背景和文字"
+    },
+    "keybinds": {
+        "screenplayElements": "剧本元素",
+        "typing": "按键中…（Esc 取消）",
+        "notSet": "未设置",
+        "modifiersOnly": "仅修饰键 — 请同时按一个普通按键",
+        "defaultPrefix": "默认：{combo}",
+        "reset": "重置",
+        "resetTitle": "清除自定义绑定",
+        "resetDefaults": "恢复默认值",
+        "save": "保存更改"
+    },
+    "language": {
+        "label": "显示语言",
+        "helpText": "选择整个应用程序使用的语言。"
+    },
+    "modal": {
+        "groups": {
+            "project": "项目",
+            "preferences": "偏好设置",
+            "account": "账户"
+        },
+        "tabs": {
+            "General": "常规",
+            "Layout": "布局",
+            "Export": "导入/导出",
+            "Collaborators": "协作者",
+            "Keybinds": "快捷键",
+            "Appearance": "外观",
+            "Language": "语言",
+            "Profile": "个人资料",
+            "Security": "安全",
+            "Settings": "设置",
+            "Login": "登录",
+            "About": "关于"
+        }
+    },
+    "dangerZone": {
+        "transferOwnership": "转让所有权",
+        "transferDesc": "将您的所有者角色转让给其他用户，您将获得编辑者角色。",
+        "transferBtn": "转让",
+        "transferPrompt": "请输入新所有者的邮箱地址：",
+        "deleteProject": "删除项目",
+        "deleteProjectDesc": "项目一旦删除，无法恢复，请确认后再操作。",
+        "deleteBtn": "删除",
+        "modalTitle": "删除项目",
+        "modalDesc": "此操作不可逆，项目的所有相关数据将永久丢失。",
+        "deleting": "删除中...",
+        "confirmDeleteBtn": "删除项目"
+    },
+    "profile": {
+        "email": "邮箱",
+        "username": "用户名",
+        "usernamePlaceholder": "输入您的显示名称...",
+        "usernameHelp": "在共享项目中协作时，此名称对其他协作者可见。",
+        "color": "颜色",
+        "customColor": "自定义颜色",
+        "selectColor": "选择颜色 {color}",
+        "successMessage": "个人资料更新成功",
+        "failedUpdate": "个人资料更新失败",
+        "errorSaving": "保存时发生错误",
+        "saving": "保存中...",
+        "dangerZoneTitle": "危险区域",
+        "deleteAccount": "删除账户",
+        "deleteAccountDesc": "永久删除您的账户及所有关联数据，此操作不可撤销。",
+        "deleteBtn": "删除",
+        "deleteModalTitle": "删除账户",
+        "deleteModalDesc": "此操作将永久删除您的账户及所有关联数据，且无法撤销。",
+        "deleteConfirmPhrase": "我确认删除我的账户",
+        "deleteConfirmLabel": "输入 <ph/> 以确认。",
+        "deleting": "删除中...",
+        "deleteAccountBtn": "删除我的账户"
+    },
+    "projects": {
+        "untitled": "无标题",
+        "newProject": "新建项目",
+        "pageTitle": "项目",
+        "importBtn": "导入...",
+        "importing": "导入中...",
+        "createBtn": "创建",
+        "empty": {
+            "createFirst": "点击以创建您的第一个项目",
+            "or": "或",
+            "importExisting": "导入现有剧本"
+        },
+        "item": {
+            "posterAlt": "电影海报",
+            "localOnly": "仅本地",
+            "syncedToCloud": "已同步至云端",
+            "today": "今天",
+            "yesterday": "昨天",
+            "daysAgo": "{days} 天前",
+            "monthsAgo": "{months} 个月前",
+            "moreThanYearAgo": "一年多前"
+        },
+        "form": {
+            "formTitle": "创建项目",
+            "titleField": "标题",
+            "descriptionField": "描述",
+            "authorField": "作者",
+            "posterField": "海报",
+            "optional": "可选",
+            "submitBtn": "创建",
+            "failedToCreate": "项目创建失败"
+        }
+    },
+    "editorSidebar": {
+        "scenes": "场景",
+        "characters": "角色",
+        "locations": "地点"
+    },
+    "formatDropdown": {
+        "elements": {
+            "scene": "场景标题",
+            "action": "动作",
+            "character": "角色",
+            "dialogue": "对白",
+            "parenthetical": "（旁注）",
+            "transition": "转场：",
+            "section": "章节",
+            "note": "【注释】",
+            "none": "无"
+        },
+        "titlePageElements": {
+            "title": "标题",
+            "author": "作者",
+            "date": "日期",
+            "none": "无"
+        }
+    },
+    "search": {
+        "placeholder": "搜索...",
+        "noMatches": "无结果",
+        "matchCount": "{total} 条中第 {current} 条",
+        "replacePlaceholder": "替换为...",
+        "replace": "替换",
+        "replaceAll": "全部替换",
+        "filterByElement": "按元素筛选：",
+        "elements": {
+            "scene": "场景标题",
+            "action": "动作",
+            "character": "角色",
+            "dialogue": "对白",
+            "parenthetical": "旁注",
+            "transition": "转场",
+            "section": "章节",
+            "note": "注释",
+            "none": "无"
+        }
+    },
+    "collaborators": {
+        "projectTeam": "项目团队 ({count}/{max})",
+        "teamHelp": "管理您的团队成员和待处理的邀请。您可以邀请任何非 Pro 用户加入您的项目。只要项目所有者拥有 Pro 计划，项目就可以协作。",
+        "roles": {
+            "owner": "所有者",
+            "admin": "管理员",
+            "editor": "编辑",
+            "viewer": "查看者"
+        },
+        "roleDesc": {
+            "owner": "可以删除项目并转让所有权",
+            "admin": "可以邀请、晋升、降级和踢出协作者",
+            "editor": "可以修改剧本和其他项目内容",
+            "viewer": "只读权限，无法进行任何更改"
+        },
+        "you": "（你）",
+        "leave": "离开",
+        "kick": "踢出",
+        "pending": "待处理",
+        "cancel": "取消",
+        "emailPlaceholder": "输入邮箱...",
+        "invite": "邀请"
+    },
+    "export": {
+        "importLabel": "导入",
+        "selectFile": "选择文件",
+        "selectFileDesc": "上传 .fountain、.fdx、.scriptio 或 .txt",
+        "exportLabel": "导出",
+        "formatOptions": {
+            "pdf": "PDF 文档 (.pdf)",
+            "fountain": "Fountain (.fountain)",
+            "fdx": "Final Draft (.fdx)",
+            "scriptio": "Scriptio (.scriptio)"
+        },
+        "formatHelp": {
+            "pdf": "行业标准格式，最适合分享和打印。",
+            "fountain": "基于 Markdown 的纯文本格式，兼容性佳。",
+            "fdx": "兼容 Final Draft 行业软件。",
+            "scriptio": "Scriptio 专属格式，用于本地保存项目"
+        },
+        "includeNotes": "包含注释",
+        "includeNotesDesc": "导出内联注释。",
+        "watermark": "水印",
+        "watermarkDesc": "在页面上叠加作者姓名。",
+        "passwordProtection": "密码保护",
+        "passwordProtectionDesc": "需要密码才能打开 PDF。",
+        "passwordPlaceholder": "输入密码",
+        "exportBtn": "导出",
+        "exporting": "导出中...",
+        "exportingProgress": "导出中 ({progress}%)"
+    },
+    "layout": {
+        "pageFormat": "页面格式",
+        "pageFormatHelp": {
+            "letter": "美国标准格式，好莱坞剧本的行业标准。",
+            "a4": "国际标准格式，欧洲及大多数国家通用。"
+        },
+        "sceneHeadings": "场景标题",
+        "bold": "加粗",
+        "boldDesc": "场景标题将以粗体显示",
+        "extraSpace": "上方额外空间",
+        "extraSpaceDesc": "在场景标题前添加额外间距",
+        "sceneNumbering": "场景编号",
+        "sceneNumberingDesc": "在左边距显示场景编号",
+        "duplicateRight": "在右边距重复",
+        "duplicateRightDesc": "两侧均显示编号",
+        "continuation": "续接",
+        "moreTitle": "应用对话续接标签（页面底部）",
+        "contdTitle": "应用角色续接标签（页面顶部）"
+    },
+    "projectSettings": {
+        "titleLabel": "标题",
+        "titlePlaceholder": "输入项目名称...",
+        "authorLabel": "作者",
+        "authorPlaceholder": "作者姓名...",
+        "descriptionLabel": "描述",
+        "descriptionPlaceholder": "这个剧本讲的是什么？",
+        "posterLabel": "海报",
+        "noPoster": "无海报",
+        "posterHelp": "推荐尺寸：600x900 像素（2:3 比例），支持 PNG、JPG。",
+        "saveChanges": "保存更改",
+        "dangerZoneTitle": "危险区域"
+    }
+}

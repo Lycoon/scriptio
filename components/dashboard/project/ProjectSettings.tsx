@@ -1,6 +1,7 @@
 "use client";
 
 import { cropImageBase64 } from "@src/lib/utils/misc";
+import { useTranslations } from "next-intl";
 import { editProject } from "@src/lib/utils/requests";
 import { useContext, useEffect, useState } from "react";
 import { isTauri } from "@tauri-apps/api/core";
@@ -14,6 +15,7 @@ import styles from "./ProjectSettings.module.css";
 import dangerStyles from "./DangerZone.module.css";
 
 const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; onDangerToggle: () => void }) => {
+    const t = useTranslations("projectSettings");
     const { membership, mutate } = useProjectMembership();
     const { setProjectTitle: setContextTitle } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
@@ -102,59 +104,56 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         <form key={projectTitle} onSubmit={handleSave} className={styles.settingsForm}>
             {/* Title */}
             <div className={styles.formGroup}>
-                <label className={form.label}>Title</label>
+                <label className={form.label}>{t("titleLabel")}</label>
                 <input
                     name="title"
                     type="text"
                     defaultValue={projectTitle}
                     onChange={() => setDirty(true)}
                     className={styles.input}
-                    placeholder="Enter project name..."
+                    placeholder={t("titlePlaceholder")}
                 />
             </div>
 
             {/* Author */}
             <div className={styles.formGroup}>
-                <label className={form.label}>Author</label>
+                <label className={form.label}>{t("authorLabel")}</label>
                 <input
                     name="author"
                     type="text"
                     defaultValue={projectAuthor ?? ""}
                     onChange={() => setDirty(true)}
                     className={styles.input}
-                    placeholder="Author name..."
+                    placeholder={t("authorPlaceholder")}
                 />
             </div>
 
             {/* Description */}
             <div className={styles.formGroup}>
-                <label className={form.label}>Description</label>
+                <label className={form.label}>{t("descriptionLabel")}</label>
                 <textarea
                     name="description"
                     defaultValue={projectDescription ?? ""}
                     onChange={() => setDirty(true)}
                     className={styles.textarea}
-                    placeholder="What is this screenplay about?"
+                    placeholder={t("descriptionPlaceholder")}
                 />
             </div>
 
             {/* Poster - only show for remote projects */}
             {!isLocalOnly && (
                 <div className={styles.formGroup}>
-                    <label className={form.label}>Poster</label>
+                    <label className={form.label}>{t("posterLabel")}</label>
                     <div className={styles.posterUploadArea}>
                         <div className={styles.posterPreview}>
                             {previewUrl ? (
                                 <img src={previewUrl} alt="Preview" />
                             ) : (
-                                <div className={styles.posterPlaceholder}>No Poster</div>
+                                <div className={styles.posterPlaceholder}>{t("noPoster")}</div>
                             )}
                         </div>
                         <div className={styles.uploadControls}>
-                            <p className={styles.helpText}>
-                                Recommended: 600x900 pixels (2:3 ratio). <br />
-                                Supports PNG, JPG.
-                            </p>
+                            <p className={styles.helpText}>{t("posterHelp")}</p>
                             <UploadButton setSelectedFile={setSelectedFile} selectedFile={selectedFile} />
                         </div>
                     </div>
@@ -163,9 +162,9 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
 
             <div className={styles.formActions}>
                 <button type="submit" className={`${styles.formBtn}`} disabled={loading || !isDirty}>
-                    Save changes
+                    {t("saveChanges")}
                 </button>
-                <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title="Danger zone">
+                <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title={t("dangerZoneTitle")}>
                     <ArrowRight size={16} />
                 </button>
             </div>
