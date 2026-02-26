@@ -284,7 +284,9 @@ function renderLines(
                 doc.setTextColor(0, 0, 0);
 
                 // Center the contd text horizontally on the page
-                const contdText = `${lastCharacterName.trim()} ${payload.contdLabel}`;
+                // Prevent double CONT'D if the DOM already injected it via `.contd::after`
+                const cleanedName = lastCharacterName.replace(payload.contdLabel, "").trim();
+                const contdText = `${cleanedName} ${payload.contdLabel}`;
                 const contdX = pageSize.width / 2;
                 doc.text(contdText, contdX, currentY, { align: "center", baseline: "top" });
 
@@ -304,8 +306,9 @@ function renderLines(
         }
 
         // ── Render every run in this line ────────────────────────────
-        let runX = -1;
         let isParenOpen = false;
+        let lastRunX = -1;
+        let lastRunWidth = 0;
 
         for (let ri = 0; ri < line.runs.length; ri++) {
             const run = line.runs[ri];
@@ -314,31 +317,40 @@ function renderLines(
             doc.setFont(run.fontFamily, style);
             doc.setFontSize(FONT_SIZE);
 
-            if (ri === 0 || run.absolutePosition || (ri > 0 && line.runs[ri - 1].absolutePosition)) {
-                runX = (run.x - pageLeftPx) * PX_TO_PT;
+            // Calculate the absolute X coordinate based on the browser's bounding rect.
+            // This prevents "skipped line breaks" causing text to run off the page:
+            // if a line is physically wrapped by the browser, its starting element
+            // `run.x` will correctly reflect the left margin boundary, automatically
+            // resetting the drawing cursor!
+            let runX = (run.x - pageLeftPx) * PX_TO_PT;
 
-                if (run.text === "(" && ri === 0 && !run.absolutePosition) {
-                    const parenWidth = doc.getTextWidth("(");
-                    runX -= parenWidth;
-                    isParenOpen = true;
-                }
+            // Pseudo-elements injected by pdf-adapter (like the closing parenthesis) 
+            // are given an x of 0. We must place them relative to the previous run.
+            if (run.x === 0 && ri > 0 && lastRunX !== -1) {
+                runX = lastRunX + lastRunWidth;
+            }
+
+            if (run.text === "(" && ri === 0 && !run.absolutePosition) {
+                const parenWidth = doc.getTextWidth("(");
+                runX -= parenWidth;
+                isParenOpen = true;
             } else if (ri === 1 && isParenOpen) {
-                runX = (run.x - pageLeftPx) * PX_TO_PT;
                 isParenOpen = false;
             }
 
             doc.setTextColor(0, 0, 0);
             doc.text(run.text, runX, currentY, { baseline: "top" });
 
+            const textWidth = doc.getTextWidth(run.text);
+            lastRunX = runX;
+            lastRunWidth = textWidth;
+
             if (run.underline) {
-                const tw = doc.getTextWidth(run.text);
                 const underlineY = currentY + FONT_SIZE * 0.95;
                 doc.setDrawColor(0, 0, 0);
                 doc.setLineWidth(0.5);
-                doc.line(runX, underlineY, runX + tw, underlineY);
+                doc.line(runX, underlineY, runX + textWidth, underlineY);
             }
-
-            runX += doc.getTextWidth(run.text);
         }
     }
 

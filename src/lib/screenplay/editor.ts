@@ -687,15 +687,25 @@ export const useScriptioEditor = (
         if (!scriptioEditor || scriptioEditor.isDestroyed || !scriptioEditor.view) return;
         try {
             const format = SCREENPLAY_FORMATS[pageSize];
-            // 1. Update the Pagination engine variables
-            scriptioEditor.chain().updatePageSize(format).run();
-            // 2. Safely apply the CSS layout var
+            // 1. Bypass PaginationPlus Reference Bug
+            // `tiptap-pagination-plus` loses the reference to its TipTap bound `storage` internally.
+            // When `updatePageSize` is called, it mutates the wrong object. We must mutate the bound object directly.
+            const storage = scriptioEditor.storage.PaginationPlus;
+            if (storage) {
+                storage.pageHeight = format.pageHeight;
+                storage.pageWidth = format.pageWidth;
+                storage.marginTop = format.marginTop;
+                storage.marginBottom = format.marginBottom;
+                storage.marginLeft = format.marginLeft;
+                storage.marginRight = format.marginRight;
+            }
+
+            // 2. Set the custom layout variable used by our frontend (e.g., for bookmarks)
             const dom = scriptioEditor.view.dom as HTMLElement;
             if (dom) {
                 dom.style.setProperty("--page-margin-left", `${format.marginLeft}px`);
+                
                 // 3. Force ProseMirror to flush/repaint its view to catch dynamic dimensions
-                // The extension's `updatePageSize` only sets variables. It does not dispatch
-                // an update to re-evaluate the DOM when called asynchronously from React.
                 scriptioEditor.commands.command(({ tr, dispatch }) => {
                     if (dispatch) {
                         tr.setMeta("pageFormatUpdate", true);
