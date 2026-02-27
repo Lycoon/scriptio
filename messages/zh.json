@@ -262,5 +262,63 @@
         "posterHelp": "推荐尺寸：600x900 像素（2:3 比例），支持 PNG、JPG。",
         "saveChanges": "保存更改",
         "dangerZoneTitle": "危险区域"
+    },
+    "contextMenu": {
+        "goToScene": "转到场景",
+        "edit": "编辑",
+        "cut": "剪切",
+        "selectInEditor": "在编辑器中选择",
+        "remove": "移除",
+        "paste": "粘贴",
+        "highlight": "高亮",
+        "addCharacter": "添加角色",
+        "addComment": "添加评论",
+        "searchOnWeb": "在网上搜索"
+    },
+    "popup": {
+        "character": {
+            "create": "创建角色",
+            "edit": "编辑角色",
+            "name": "名字",
+            "gender": "性别",
+            "genderFemale": "女",
+            "genderMale": "男",
+            "genderOther": "其他",
+            "color": "颜色",
+            "synopsis": "简介",
+            "confirm": "确认",
+            "takenNameError": "名为 {newName} 的角色已存在。请选择一个不同的名字或编辑现有角色。",
+            "updateOccurrences": "您确定要将单词 {oldName} 的 {count} 个出现更新为 {newName} 吗？请特别注意更新后可能不受欢迎的常用词。",
+            "yes": "是",
+            "noDoNotChange": "否，不更改"
+        },
+        "import": {
+            "title": "确认导入",
+            "warning": "您确定要<b>覆盖</b>当前项目吗？",
+            "info": "您可以在导入新项目之前导出当前项目。",
+            "yesImport": "是的，导入",
+            "no": "否"
+        },
+        "scene": {
+            "edit": "编辑场景",
+            "sceneTitle": "场景",
+            "color": "颜色",
+            "synopsis": "简介",
+            "synopsisPlaceholder": "写一段关于这个场景的简短描述...",
+            "save": "保存"
+        }
+    },
+    "board": {
+        "duplicate": "复制",
+        "delete": "删除",
+        "hints": {
+            "pan": "中键点击以平移",
+            "select": "拖动以选择卡片",
+            "create": "双击以创建卡片",
+            "move": "按住 Shift 自由移动"
+        },
+        "untitled": "无标题",
+        "titlePlaceholder": "标题",
+        "descriptionPlaceholder": "描述"
     }
 }

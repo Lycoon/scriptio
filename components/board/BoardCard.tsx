@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import styles from "./BoardCanvas.module.css";
+import { useTranslations } from "next-intl";
 
 export interface BoardCardData {
     id: string;
@@ -39,6 +40,7 @@ const BoardCard = ({
     isConnecting,
     isSelected,
 }: BoardCardProps) => {
+    const t = useTranslations("board");
     const cardRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -263,12 +265,12 @@ const BoardCard = ({
                         onKeyDown={handleTitleKeyDown}
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
-                        placeholder="Title"
+                        placeholder={t("titlePlaceholder")}
                         autoFocus
                     />
                 ) : (
                     <span className={styles.card_header_title} onDoubleClick={handleTitleDoubleClick}>
-                        {card.title || "Untitled"}
+                        {card.title || t("untitled")}
                     </span>
                 )}
             </div>
@@ -290,7 +292,7 @@ const BoardCard = ({
                         onKeyDown={handleDescriptionKeyDown}
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
-                        placeholder="Description"
+                        placeholder={t("descriptionPlaceholder")}
                         autoFocus
                     />
                 )}

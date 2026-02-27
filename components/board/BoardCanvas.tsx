@@ -7,6 +7,7 @@ import BoardCard, { BoardCardData } from "./BoardCard";
 import styles from "./BoardCanvas.module.css";
 import { v4 as uuidv4 } from "uuid";
 import { Trash2, Plus, Minus, Copy } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const GRID_SIZE = 20;
 const MIN_SCALE = 0.25;
@@ -42,6 +43,7 @@ interface ArrowContextMenuState {
 
 const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     const { repository, isYjsReady } = useContext(ProjectContext);
+    const t = useTranslations("board");
     const ydoc = repository?.getState();
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -928,14 +930,14 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                             onClick={() => handleDuplicateCard(cardContextMenu.card)}
                         >
                             <Copy size={16} />
-                            <p className="unselectable">Duplicate</p>
+                            <p className="unselectable">{t("duplicate")}</p>
                         </div>
                         <div
                             className={styles.context_menu_item}
                             onClick={() => handleDeleteCard(cardContextMenu.card.id)}
                         >
                             <Trash2 size={16} />
-                            <p className="unselectable">Delete</p>
+                            <p className="unselectable">{t("delete")}</p>
                         </div>
                     </div>
                 )}
@@ -954,7 +956,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                             onClick={() => handleDeleteArrow(arrowContextMenu.arrow.id)}
                         >
                             <Trash2 size={16} />
-                            <p className="unselectable">Delete</p>
+                            <p className="unselectable">{t("delete")}</p>
                         </div>
                     </div>
                 )}
@@ -970,10 +972,10 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                 </div>
 
                 <div className={styles.hints}>
-                    <span>Middle-click to pan</span>
-                    <span>Drag to select cards</span>
-                    <span>Double-click to create card</span>
-                    <span>Hold Shift to move freely</span>
+                    <span>{t("hints.pan")}</span>
+                    <span>{t("hints.select")}</span>
+                    <span>{t("hints.create")}</span>
+                    <span>{t("hints.move")}</span>
                 </div>
             </div>
         </div>

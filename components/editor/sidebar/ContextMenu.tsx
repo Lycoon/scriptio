@@ -11,6 +11,7 @@ import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } fro
 import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/screenplay/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useUser } from "@src/lib/utils/hooks";
+import { useTranslations } from "next-intl";
 import {
     ArrowDownRight,
     ClipboardPaste,
@@ -69,6 +70,7 @@ export type SceneContextProps = {
 };
 
 const SceneItemMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
     const scene: Scene = props.props.scene;
@@ -76,18 +78,18 @@ const SceneItemMenu = (props: any) => {
     return (
         <>
             <ContextMenuItem
-                text={"Go to scene"}
+                text={t("goToScene")}
                 icon={ArrowDownRight}
                 action={() => focusOnPosition(editor!, scene.position)}
             />
-            <ContextMenuItem text={"Edit"} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
+            <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
             <ContextMenuItem
-                text={"Cut"}
+                text={t("cut")}
                 icon={Scissors}
                 action={() => cutText(editor!, scene.position, scene.nextPosition)}
             />
             <ContextMenuItem
-                text={"Select in editor"}
+                text={t("selectInEditor")}
                 icon={SquareDashedMousePointer}
                 action={() => selectTextInEditor(editor!, scene.position, scene.nextPosition)}
             />
@@ -115,6 +117,7 @@ export type CharacterContextProps = {
 };
 
 const CharacterItemMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
     const { toggleCharacterHighlight } = projectCtx;
@@ -122,15 +125,15 @@ const CharacterItemMenu = (props: any) => {
 
     return (
         <>
-            <ContextMenuItem text={"Edit"} icon={Pencil} action={() => editCharacterPopup(character, userCtx)} />
-            <ContextMenuItem text={"Remove"} icon={Trash2} action={() => deleteCharacter(character.name, projectCtx)} />
+            <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editCharacterPopup(character, userCtx)} />
+            <ContextMenuItem text={t("remove")} icon={Trash2} action={() => deleteCharacter(character.name, projectCtx)} />
             <ContextMenuItem
-                text={"Paste"}
+                text={t("paste")}
                 icon={ClipboardPaste}
                 action={() => pasteText(projectCtx.editor!, character.name)}
             />
             <ContextMenuItem
-                text={"Highlight"}
+                text={t("highlight")}
                 icon={Highlighter}
                 action={() => toggleCharacterHighlight(character.name)}
             />
@@ -139,8 +142,9 @@ const CharacterItemMenu = (props: any) => {
 };
 
 const CharacterListMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
-    return <ContextMenuItem icon={UserRound} text={"Add character"} action={() => addCharacterPopup(userCtx)} />;
+    return <ContextMenuItem icon={UserRound} text={t("addCharacter")} action={() => addCharacterPopup(userCtx)} />;
 };
 
 /* ======================== */
@@ -152,15 +156,16 @@ export type LocationContextProps = {
 };
 
 const LocationItemMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
     const location: LocationData = props.props.location;
 
     return (
         <>
-            <ContextMenuItem icon={Trash2} text={"Remove"} action={() => deleteLocation(location.name, projectCtx)} />
+            <ContextMenuItem icon={Trash2} text={t("remove")} action={() => deleteLocation(location.name, projectCtx)} />
             <ContextMenuItem
                 icon={ClipboardPaste}
-                text={"Paste"}
+                text={t("paste")}
                 action={() => pasteText(projectCtx.editor!, location.name)}
             />
         </>
@@ -177,6 +182,7 @@ export type EditorSelectionContextProps = {
 };
 
 const EditorSelectionMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
     const { repository, editor, setActiveCommentId } = projectCtx;
     const { from, to } = props.props as EditorSelectionContextProps;
@@ -207,8 +213,8 @@ const EditorSelectionMenu = (props: any) => {
 
     return (
         <>
-            <ContextMenuItem text={"Add Comment"} icon={MessageSquarePlus} action={handleAddComment} />
-            <ContextMenuItem text={"Search on web"} icon={Search} action={handleSearchOnWeb} />
+            <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={handleAddComment} />
+            <ContextMenuItem text={t("searchOnWeb")} icon={Search} action={handleSearchOnWeb} />
         </>
     );
 };

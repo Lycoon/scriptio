@@ -1,6 +1,6 @@
 "use client";
 
-import { ForwardedRef, MutableRefObject, RefObject, forwardRef } from "react";
+import { ForwardedRef, forwardRef } from "react";
 import dropdown from "./DropdownItem.module.css";
 
 type Props = {
