@@ -222,6 +222,8 @@
         },
         "includeNotes": "Inclure les notes",
         "includeNotesDesc": "Exporter les notes intégrées.",
+        "readable": "JSON lisible",
+        "readableDesc": "Exporter en JSON brut plutôt qu'en binaire compressé. Fichier plus volumineux, inspectable avec n'importe quel éditeur de texte.",
         "watermark": "Filigrane",
         "watermarkDesc": "Superposer le nom de l'auteur sur les pages.",
         "passwordProtection": "Protection par mot de passe",

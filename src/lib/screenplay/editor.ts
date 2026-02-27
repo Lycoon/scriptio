@@ -481,10 +481,10 @@ export const useScriptioEditor = (
                     footerRight: "",
                     ...SCREENPLAY_FORMATS[pageSize],
                 }),
-                OrphanPreventionExtension.configure({
+                /*OrphanPreventionExtension.configure({
                     getContdLabel: () => contdLabelRef.current,
                     getMoreLabel: () => moreLabelRef.current
-                }),
+                }),*/
                 KeybindsExtension.configure({
                     userKeybinds: userKeybinds || {},
                     onAction: (id, editorInstance) => {
@@ -704,7 +704,7 @@ export const useScriptioEditor = (
             const dom = scriptioEditor.view.dom as HTMLElement;
             if (dom) {
                 dom.style.setProperty("--page-margin-left", `${format.marginLeft}px`);
-                
+
                 // 3. Force ProseMirror to flush/repaint its view to catch dynamic dimensions
                 scriptioEditor.commands.command(({ tr, dispatch }) => {
                     if (dispatch) {
@@ -720,10 +720,10 @@ export const useScriptioEditor = (
     }, [scriptioEditor, pageSize]);
 
     // Force orphan prevention element update when labels change
-    useEffect(() => {
+    /*useEffect(() => {
         if (!scriptioEditor || scriptioEditor.isDestroyed || !scriptioEditor.view) return;
         scriptioEditor.commands.forceOrphanUpdate();
-    }, [scriptioEditor, contdLabel, moreLabel]);
+    }, [scriptioEditor, contdLabel, moreLabel]);*/
 
     return scriptioEditor;
 };

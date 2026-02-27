@@ -264,6 +264,11 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         console.log("[WS] Updating token and reconnecting...");
 
+        // Snapshot current params so we can roll back if reconnect fails.
+        // Without this, a failed reconnect would leave the provider holding
+        // a new (possibly invalid) token with no active connection.
+        const previousParams = { ...this.params };
+
         try {
             // Update params with new token
             this.params = {
@@ -272,7 +277,10 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             };
             await this.reconnect();
         } catch (e) {
-            console.warn("[WS] Failed to update token on provider", e);
+            // Restore original params — the old token stays in effect so that
+            // a future updateToken() call or reconnect attempt can succeed.
+            this.params = previousParams;
+            console.warn("[WS] Failed to update token, params restored to previous state", e);
             throw e;
         }
     }
@@ -321,12 +329,17 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
                 const statusHandler = (e: { status: string }) => {
                     if (e.status === "connected") {
+                        // Clear the timeout only here — on actual success — so that
+                        // an intermediate "connecting" event doesn't silently disarm
+                        // the timeout and leave the promise permanently unresolved.
+                        clearTimeout(timeoutId);
                         cleanup();
                         resolve();
                     }
                 };
 
                 const onError = (err: any) => {
+                    clearTimeout(timeoutId);
                     cleanup();
                     reject(err);
                 };
@@ -334,7 +347,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                 this.on("status", statusHandler);
                 this.on("connection-error", onError);
 
-                // Timeout after 10 seconds
+                // Timeout after 10 seconds; only disarmed by success/error above.
                 const timeoutId = setTimeout(() => {
                     cleanup();
                     reject(new Error("Connection timeout"));
@@ -342,9 +355,6 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
                 // Attempt to connect
                 this.connect();
-
-                // Clear timeout on success
-                this.once("status", () => clearTimeout(timeoutId));
             } catch (e) {
                 console.warn("[WS] Failed to reconnect provider", e);
                 reject(e);

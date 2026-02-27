@@ -15,6 +15,7 @@ import { join } from "@src/lib/utils/misc";
 import { UserContext } from "@src/context/UserContext";
 import { DashboardContext } from "@src/context/DashboardContext";
 import {
+    BarChart2,
     CircleArrowLeft,
     CircleCheckBig,
     Clapperboard,
@@ -28,6 +29,7 @@ import {
     WifiOff,
     WifiSync,
 } from "lucide-react";
+import AnalyticsModal from "@components/analytics/AnalyticsModal";
 
 import navbar from "./ProjectNavbar.module.css";
 import ScreenplayFormatDropdown from "./ScreenplayFormatDropdown";
@@ -95,6 +97,7 @@ const ProjectNavbar = () => {
     const { project: membership, setProjectTitle: setContextTitle } = useContext(ProjectContext);
 
     const [projectTitle, setProjectTitle] = useState<string>("");
+    const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
     const isLocalEdit = useRef(false);
 
     const { user } = useCookieUser();
@@ -209,6 +212,12 @@ const ProjectNavbar = () => {
                         >
                             {viewContext.isSplit ? <PanelRightClose size={18} /> : <PanelRight size={18} />}
                         </div>
+                        <div
+                            className={`${navbar.export_project_btn} ${isAnalyticsOpen ? navbar.panel_btn_active : ""}`}
+                            onClick={() => setIsAnalyticsOpen(true)}
+                        >
+                            <BarChart2 size={18} />
+                        </div>
                     </div>
                 )}
             </nav>
@@ -242,6 +251,8 @@ const ProjectNavbar = () => {
                     )}
                 </div>
             )}
+            <AnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setIsAnalyticsOpen(false)} />
+
             {/* Right side - Collaborators + Search + Zen mode toggle + Settings */}
             <div className={navbar.right_btns}>
                 {isInProject && <CollaboratorsDisplay />}

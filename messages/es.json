@@ -222,6 +222,8 @@
         },
         "includeNotes": "Incluir notas",
         "includeNotesDesc": "Exportar notas en línea.",
+        "readable": "JSON legible",
+        "readableDesc": "Exportar como JSON plano en lugar de binario comprimido. Archivo más grande, inspeccionable con cualquier editor de texto.",
         "watermark": "Marca de agua",
         "watermarkDesc": "Superponer el nombre del autor en las páginas.",
         "passwordProtection": "Protección con contraseña",

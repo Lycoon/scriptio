@@ -16,6 +16,7 @@ import { getAdapterByExtension, getAdapterByFilename } from "@src/lib/adapters/r
 import { BaseExportOptions } from "@src/lib/adapters/screenplay-adapter";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import { PDFExportOptions } from "@src/lib/adapters/pdf/pdf-adapter";
+import { ScriptioExportOptions } from "@src/lib/adapters/scriptio/scriptio-adapter";
 
 export enum ExportFormat {
     PDF = "pdf",
@@ -52,6 +53,7 @@ const ExportProject = () => {
     const [includeNotes, setIncludeNotes] = useState<boolean>(false);
     const [enablePassword, setEnablePassword] = useState<boolean>(false);
     const [password, setPassword] = useState<string>("");
+    const [readableExport, setReadableExport] = useState<boolean>(false);
     const [isExporting, setExporting] = useState(false);
     const [progress, setProgress] = useState(0);
 
@@ -133,6 +135,12 @@ const ExportProject = () => {
                 titlePageElement: titlePageEditor?.view?.dom,
             };
             await adapter.export(ydoc, pdfOptions as any);
+        } else if (format === ExportFormat.SCRIPTIO) {
+            const scriptioOptions: ScriptioExportOptions = {
+                ...baseOptions,
+                readable: readableExport,
+            };
+            await adapter.export(ydoc, scriptioOptions as any);
         } else {
             await adapter.export(ydoc, baseOptions);
         }
@@ -222,6 +230,22 @@ const ExportProject = () => {
                         <span className={optionCard.optionDesc}>{t("includeNotesDesc")}</span>
                     </div>
                 </div>
+
+                {/* Readable JSON Toggle (Scriptio Only) */}
+                {format === ExportFormat.SCRIPTIO && (
+                    <div
+                        className={`${optionCard.optionCard} ${readableExport ? optionCard.active : ""}`}
+                        onClick={() => setReadableExport(!readableExport)}
+                    >
+                        <div className={optionCard.checkbox}>
+                            {readableExport && <div className={optionCard.checkInner} />}
+                        </div>
+                        <div className={optionCard.optionInfo}>
+                            <span className={optionCard.optionTitle}>{t("readable")}</span>
+                            <span className={optionCard.optionDesc}>{t("readableDesc")}</span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Watermark Toggle (PDF Only) */}
                 {format === ExportFormat.PDF && (

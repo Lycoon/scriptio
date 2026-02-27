@@ -179,10 +179,25 @@ export class ScreenplayRoom extends DurableObject {
         });
 
         if (staleClientIds.length > 0) {
-            // Remove stale awareness states
+            // Step 1: Remove stale sessions from both maps FIRST so that:
+            //   a) The subsequent broadcast only reaches genuinely active clients.
+            //   b) When socket.close() triggers webSocketClose(), sessions.get(ws)
+            //      returns undefined and the handler becomes a safe no-op — no
+            //      double-removal of awareness states or duplicate broadcasts.
+            for (const socket of staleSockets) {
+                const session = this.sessions.get(socket);
+                if (session) {
+                    this.userConnections.delete(session.userId);
+                }
+                this.sessions.delete(socket);
+            }
+
+            // Step 2: Remove stale awareness states from the server-side doc.
             awarenessProtocol.removeAwarenessStates(this.awareness, staleClientIds, null);
 
-            // Broadcast removal to remaining clients
+            // Step 3: Broadcast removal only to remaining active clients
+            // (stale sockets are already gone from this.sessions, so broadcast
+            //  won't try to send to them).
             const encoder = encoding.createEncoder();
             encoding.writeVarUint(encoder, 1);
             encoding.writeVarUint8Array(
@@ -191,15 +206,9 @@ export class ScreenplayRoom extends DurableObject {
             );
             this.broadcast(encoding.toUint8Array(encoder), undefined);
 
-            // Clean up stale sessions
+            // Step 4: Close the stale sockets last — webSocketClose will find
+            // no session entry and exit immediately.
             for (const socket of staleSockets) {
-                const session = this.sessions.get(socket);
-                if (session) {
-                    this.userConnections.delete(session.userId);
-                }
-                this.sessions.delete(socket);
-
-                // Try to close the socket if it's still open
                 try {
                     if (socket.readyState === 1) {
                         socket.close(4000, "Connection stale");
@@ -315,14 +324,12 @@ export class ScreenplayRoom extends DurableObject {
             });
             this.userConnections.set(userId, server);
 
-            // Send current document state (sync step 1)
-            const encoder = encoding.createEncoder();
-            syncProtocol.writeSyncStep1(encoder, this.doc);
-            const payload = encoding.toUint8Array(encoder);
-            const syncStep1 = new Uint8Array(payload.length + 1);
-            syncStep1.set([0], 0);
-            syncStep1.set(payload, 1);
-            server.send(syncStep1);
+            // Send current document state (sync step 1) using the same encoder
+            // pattern as all other outgoing messages — avoids fragile manual byte prepend.
+            const syncEncoder = encoding.createEncoder();
+            encoding.writeVarUint(syncEncoder, 0); // message type: sync
+            syncProtocol.writeSyncStep1(syncEncoder, this.doc);
+            server.send(encoding.toUint8Array(syncEncoder));
 
             // Send current awareness states to the new client
             const awarenessStates = this.awareness.getStates();

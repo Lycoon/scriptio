@@ -222,6 +222,8 @@
         },
         "includeNotes": "包含注释",
         "includeNotesDesc": "导出内联注释。",
+        "readable": "人类可读的 JSON",
+        "readableDesc": "以纯 JSON 格式导出，而非压缩二进制格式。文件较大，可用任何文本编辑器查看。",
         "watermark": "水印",
         "watermarkDesc": "在页面上叠加作者姓名。",
         "passwordProtection": "密码保护",
