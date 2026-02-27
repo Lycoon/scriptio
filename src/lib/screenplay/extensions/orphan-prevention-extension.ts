@@ -92,7 +92,6 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, 
 
                 // If it's dialogue straddling a page break (actually physically crossing the breaker gap)
                 if (isStraddling && lastNode.classList.contains("dialogue")) {
-                    const nodeRect = lastNode.getBoundingClientRect();
                     const computedStyle = window.getComputedStyle(lastNode);
                     
                     const moreElem = document.createElement("div");
@@ -188,10 +187,10 @@ export const OrphanPreventionExtension = Extension.create<OrphanPreventionExtens
             new Plugin({
                 key: pluginKey,
                 state: {
-                    init: () => ({ decos: DecorationSet.empty }),
+                    init: () => ({ decos: DecorationSet.empty, version: 0 }),
                     apply(tr, old, _, newState) {
                         const meta = tr.getMeta(pluginKey);
-                        if (meta instanceof DecorationSet) return { decos: meta };
+                        if (meta instanceof DecorationSet) return { decos: meta, version: old.version };
                         
                         let nextDecos = old.decos;
                         if (tr.docChanged) {
@@ -199,7 +198,7 @@ export const OrphanPreventionExtension = Extension.create<OrphanPreventionExtens
                         }
                         
                         if (meta === "force-update" || tr.docChanged) {
-                            return { decos: nextDecos };
+                            return { decos: nextDecos, version: old.version + 1 };
                         }
                         
                         return old;
@@ -240,9 +239,11 @@ export const OrphanPreventionExtension = Extension.create<OrphanPreventionExtens
                     schedule();
                     return {
                         update(view, prev) {
+                            const prevPluginState = pluginKey.getState(prev);
+                            const currPluginState = pluginKey.getState(view.state);
                             if (
                                 view.state.doc !== prev.doc ||
-                                pluginKey.getState(view.state) !== pluginKey.getState(prev)
+                                (prevPluginState && currPluginState && prevPluginState.version !== currPluginState.version)
                             ) {
                                 schedule();
                             }

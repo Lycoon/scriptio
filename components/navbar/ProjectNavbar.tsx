@@ -217,21 +217,23 @@ const ProjectNavbar = () => {
                 <div className={navbar.center}>
                     <div className={navbar.projectTitle}>
                         <StatusIndicator />
-                        <input
-                            type="text"
-                            className={navbar.title_box}
-                            size={Math.max(projectTitle.length, 3)}
-                            onChange={(e) => {
-                                isLocalEdit.current = true;
-                                setProjectTitle(e.target.value);
-                                setContextTitle(e.target.value);
-                                deferredTitleUpdate(projectId, e.target.value);
-                            }}
-                            onBlur={() => {
-                                isLocalEdit.current = false;
-                            }}
-                            value={projectTitle}
-                        />
+                        <div className={navbar.title_wrapper} data-value={projectTitle}>
+                            <input
+                                type="text"
+                                className={navbar.title_box}
+                                size={1}
+                                onChange={(e) => {
+                                    isLocalEdit.current = true;
+                                    setProjectTitle(e.target.value);
+                                    setContextTitle(e.target.value);
+                                    deferredTitleUpdate(projectId, e.target.value);
+                                }}
+                                onBlur={() => {
+                                    isLocalEdit.current = false;
+                                }}
+                                value={projectTitle}
+                            />
+                        </div>
                     </div>
                     {(hasScreenplay || hasTitlePage) && (
                         <div className={navbar.projectTitle}>

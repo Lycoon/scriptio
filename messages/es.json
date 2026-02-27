@@ -262,5 +262,63 @@
         "posterHelp": "Recomendado: 600x900 píxeles (proporción 2:3). Compatible con PNG y JPG.",
         "saveChanges": "Guardar cambios",
         "dangerZoneTitle": "Zona de peligro"
+    },
+    "contextMenu": {
+        "goToScene": "Ir a la escena",
+        "edit": "Editar",
+        "cut": "Cortar",
+        "selectInEditor": "Seleccionar en el editor",
+        "remove": "Eliminar",
+        "paste": "Pegar",
+        "highlight": "Resaltar",
+        "addCharacter": "Añadir personaje",
+        "addComment": "Añadir comentario",
+        "searchOnWeb": "Buscar en la web"
+    },
+    "popup": {
+        "character": {
+            "create": "Crear personaje",
+            "edit": "Editar personaje",
+            "name": "Nombre",
+            "gender": "Género",
+            "genderFemale": "Mujer",
+            "genderMale": "Hombre",
+            "genderOther": "Otro",
+            "color": "Color",
+            "synopsis": "Sinopsis",
+            "confirm": "Confirmar",
+            "takenNameError": "Ya existe un personaje con el nombre {newName}. Por favor, elige un nombre diferente o edita el personaje existente.",
+            "updateOccurrences": "¿Estás seguro de que quieres actualizar {count} ocurrencias de la palabra {oldName} a {newName}? Ten especial cuidado con las palabras comunes cuya actualización podría ser indeseada.",
+            "yes": "Sí",
+            "noDoNotChange": "No, no cambiar"
+        },
+        "import": {
+            "title": "Confirmar importación",
+            "warning": "¿Estás seguro de que quieres <b>sobrescribir</b> tu proyecto actual?",
+            "info": "Puedes exportar tu proyecto antes de importar uno nuevo.",
+            "yesImport": "Sí, importar",
+            "no": "No"
+        },
+        "scene": {
+            "edit": "Editar escena",
+            "sceneTitle": "Escena",
+            "color": "Color",
+            "synopsis": "Sinopsis",
+            "synopsisPlaceholder": "Escribe una breve descripción de esta escena...",
+            "save": "Guardar"
+        }
+    },
+    "board": {
+        "duplicate": "Duplicar",
+        "delete": "Eliminar",
+        "hints": {
+            "pan": "Clic central para desplazar",
+            "select": "Arrastrar para seleccionar tarjetas",
+            "create": "Doble clic para crear tarjeta",
+            "move": "Mantener Shift para mover libremente"
+        },
+        "untitled": "Sin título",
+        "titlePlaceholder": "Título",
+        "descriptionPlaceholder": "Descripción"
     }
 }

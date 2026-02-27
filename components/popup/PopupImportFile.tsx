@@ -9,10 +9,12 @@ import { useDraggable } from "@src/lib/utils/hooks";
 import { PopupData, PopupImportFileData, closePopup } from "@src/lib/screenplay/popup";
 import { useContext } from "react";
 import { UserContext } from "@src/context/UserContext";
+import { useTranslations } from "next-intl";
 
 const PopupImportFile = ({ data: { confirmImport } }: PopupData<PopupImportFileData>) => {
     const userCtx = useContext(UserContext);
     const { position, handleMouseDown, isDragging } = useDraggable();
+    const t = useTranslations("popup.import");
 
     const onConfirmImport = () => {
         confirmImport();
@@ -27,21 +29,21 @@ const PopupImportFile = ({ data: { confirmImport } }: PopupData<PopupImportFileD
                     onMouseDown={handleMouseDown}
                     style={{ cursor: isDragging ? "grabbing" : "grab" }}
                 >
-                    <h2 className={popup.title}>Confirm Import</h2>
+                    <h2 className={popup.title}>{t("title")}</h2>
                     <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
                 </div>
                 <div className={popup.info}>
                     <p>
-                        Are you sure you want to <b>overwrite</b> your current project?
+                        {t.rich("warning", { b: (chunks) => <b>{chunks}</b> })}
                         <br />
-                        You can export your project before importing a new one.
+                        {t("info")}
                     </p>
                 </div>
                 <button className={join(form.btn, popup.confirm, popup.import_confirm)} onClick={onConfirmImport}>
-                    Yes, import
+                    {t("yesImport")}
                 </button>
                 <button className={join(form.btn, popup.cancel)} onClick={() => closePopup(userCtx)}>
-                    No
+                    {t("no")}
                 </button>
             </div>
         </div>

@@ -9,6 +9,7 @@ import { PopupData, PopupSceneData, closePopup } from "@src/lib/screenplay/popup
 import { generateSceneId } from "@src/lib/screenplay/scenes";
 import { ColorPicker } from "@components/utils/ColorPicker";
 import { ScreenplayElement } from "@src/lib/utils/enums";
+import { useTranslations } from "next-intl";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -20,6 +21,7 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
     const { repository, editor } = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
     const { position, handleMouseDown, isDragging } = useDraggable();
+    const t = useTranslations("popup.scene");
 
     const [synopsis, setSynopsis] = useState<string>(scene.synopsis || "");
     const [color, setColor] = useState<string | undefined>(scene.color);
@@ -92,34 +94,34 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
                     onMouseDown={handleMouseDown}
                     style={{ cursor: isDragging ? "grabbing" : "grab" }}
                 >
-                    <h2 className={popup.title}>Edit Scene</h2>
+                    <h2 className={popup.title}>{t("edit")}</h2>
                     <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
                 </div>
                 <form className={popup.form} onSubmit={onSubmit}>
                     <div className={styles.element}>
                         <div className={styles.element_header}>
-                            <p>Scene</p>
+                            <p>{t("sceneTitle")}</p>
                             <input className={join(form.input, popup.input)} value={scene.title} disabled />
                         </div>
                     </div>
                     <div className={styles.element}>
                         <div className={styles.element_header}>
-                            <p>Color</p>
+                            <p>{t("color")}</p>
                             <ColorPicker value={color} onChange={setColor} />
                         </div>
                         <hr />
                     </div>
                     <div className={styles.element}>
-                        <p>Synopsis</p>
+                        <p>{t("synopsis")}</p>
                         <textarea
                             className={join(form.input, popup.textarea)}
                             value={synopsis}
                             onChange={(e) => setSynopsis(e.target.value)}
-                            placeholder="Write a brief description of this scene..."
+                            placeholder={t("synopsisPlaceholder")}
                         />
                     </div>
                     <button className={join(form.btn, popup.confirm)} type="submit">
-                        Save
+                        {t("save")}
                     </button>
                 </form>
             </div>

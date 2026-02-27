@@ -262,5 +262,63 @@
         "posterHelp": "Recommandé : 600x900 pixels (ratio 2:3). Supporte PNG et JPG.",
         "saveChanges": "Enregistrer",
         "dangerZoneTitle": "Zone dangereuse"
+    },
+    "contextMenu": {
+        "goToScene": "Aller à la scène",
+        "edit": "Modifier",
+        "cut": "Couper",
+        "selectInEditor": "Sélectionner dans l'éditeur",
+        "remove": "Supprimer",
+        "paste": "Coller",
+        "highlight": "Surligner",
+        "addCharacter": "Ajouter un personnage",
+        "addComment": "Ajouter un commentaire",
+        "searchOnWeb": "Rechercher sur le web"
+    },
+    "popup": {
+        "character": {
+            "create": "Créer un personnage",
+            "edit": "Modifier le personnage",
+            "name": "Nom",
+            "gender": "Genre",
+            "genderFemale": "Femme",
+            "genderMale": "Homme",
+            "genderOther": "Autre",
+            "color": "Couleur",
+            "synopsis": "Synopsis",
+            "confirm": "Confirmer",
+            "takenNameError": "Un personnage avec le nom {newName} existe déjà. Veuillez choisir un autre nom ou modifier le personnage existant.",
+            "updateOccurrences": "Êtes-vous sûr de vouloir mettre à jour {count} occurrences du mot {oldName} par {newName} ? Faites particulièrement attention aux mots courants dont la modification pourrait être indésirable.",
+            "yes": "Oui",
+            "noDoNotChange": "Non, ne pas modifier"
+        },
+        "import": {
+            "title": "Confirmer l'importation",
+            "warning": "Êtes-vous sûr de vouloir <b>écraser</b> votre projet actuel ?",
+            "info": "Vous pouvez exporter votre projet avant d'en importer un nouveau.",
+            "yesImport": "Oui, importer",
+            "no": "Non"
+        },
+        "scene": {
+            "edit": "Modifier la scène",
+            "sceneTitle": "Scène",
+            "color": "Couleur",
+            "synopsis": "Synopsis",
+            "synopsisPlaceholder": "Écrivez une brève description de cette scène...",
+            "save": "Enregistrer"
+        }
+    },
+    "board": {
+        "duplicate": "Dupliquer",
+        "delete": "Supprimer",
+        "hints": {
+            "pan": "Clic-milieu pour déplacer",
+            "select": "Glissez pour sélectionner des cartes",
+            "create": "Double-cliquez pour créer une carte",
+            "move": "Maintenez Maj pour vous déplacer librement"
+        },
+        "untitled": "Sans titre",
+        "titlePlaceholder": "Titre",
+        "descriptionPlaceholder": "Description"
     }
 }

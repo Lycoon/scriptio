@@ -262,5 +262,63 @@
         "posterHelp": "Empfohlen: 600x900 Pixel (Verhältnis 2:3). Unterstützt PNG und JPG.",
         "saveChanges": "Änderungen speichern",
         "dangerZoneTitle": "Gefahrenbereich"
+    },
+    "contextMenu": {
+        "goToScene": "Gehe zu Szene",
+        "edit": "Bearbeiten",
+        "cut": "Ausschneiden",
+        "selectInEditor": "Im Editor auswählen",
+        "remove": "Entfernen",
+        "paste": "Einfügen",
+        "highlight": "Hervorheben",
+        "addCharacter": "Charakter hinzufügen",
+        "addComment": "Kommentar hinzufügen",
+        "searchOnWeb": "Im Web suchen"
+    },
+    "popup": {
+        "character": {
+            "create": "Charakter erstellen",
+            "edit": "Charakter bearbeiten",
+            "name": "Name",
+            "gender": "Geschlecht",
+            "genderFemale": "Weiblich",
+            "genderMale": "Männlich",
+            "genderOther": "Divers",
+            "color": "Farbe",
+            "synopsis": "Zusammenfassung",
+            "confirm": "Bestätigen",
+            "takenNameError": "Ein Charakter mit dem Namen {newName} existiert bereits. Bitte wähle einen anderen Namen oder bearbeite den bestehenden Charakter.",
+            "updateOccurrences": "Bist du sicher, dass du {count} Vorkommen des Wortes {oldName} zu {newName} aktualisieren möchtest? Sei besonders vorsichtig bei häufigen Wörtern, deren Änderung unerwünscht sein könnte.",
+            "yes": "Ja",
+            "noDoNotChange": "Nein, nicht ändern"
+        },
+        "import": {
+            "title": "Import bestätigen",
+            "warning": "Bist du sicher, dass du dein aktuelles Projekt <b>überschreiben</b> möchtest?",
+            "info": "Du kannst dein Projekt exportieren, bevor du ein neues importierst.",
+            "yesImport": "Ja, importieren",
+            "no": "Nein"
+        },
+        "scene": {
+            "edit": "Szene bearbeiten",
+            "sceneTitle": "Szene",
+            "color": "Farbe",
+            "synopsis": "Zusammenfassung",
+            "synopsisPlaceholder": "Schreibe eine kurze Beschreibung dieser Szene...",
+            "save": "Speichern"
+        }
+    },
+    "board": {
+        "duplicate": "Duplizieren",
+        "delete": "Löschen",
+        "hints": {
+            "pan": "Mittelklick zum Verschieben",
+            "select": "Ziehen zum Auswählen von Karten",
+            "create": "Doppelklick zum Erstellen einer Karte",
+            "move": "Umschalttaste halten für freies Bewegen"
+        },
+        "untitled": "Unbenannt",
+        "titlePlaceholder": "Titel",
+        "descriptionPlaceholder": "Beschreibung"
     }
 }

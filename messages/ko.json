@@ -262,5 +262,63 @@
         "posterHelp": "권장: 600x900픽셀 (2:3 비율). PNG, JPG 지원.",
         "saveChanges": "변경사항 저장",
         "dangerZoneTitle": "위험 구역"
+    },
+    "contextMenu": {
+        "goToScene": "장면으로 이동",
+        "edit": "편집",
+        "cut": "잘라내기",
+        "selectInEditor": "에디터에서 선택",
+        "remove": "삭제",
+        "paste": "붙여넣기",
+        "highlight": "강조",
+        "addCharacter": "캐릭터 추가",
+        "addComment": "댓글 추가",
+        "searchOnWeb": "웹에서 검색"
+    },
+    "popup": {
+        "character": {
+            "create": "캐릭터 생성",
+            "edit": "캐릭터 편집",
+            "name": "이름",
+            "gender": "성별",
+            "genderFemale": "여성",
+            "genderMale": "남성",
+            "genderOther": "기타",
+            "color": "색상",
+            "synopsis": "시놉시스",
+            "confirm": "확인",
+            "takenNameError": "{newName}이라는 이름의 캐릭터가 이미 존재합니다. 다른 이름을 선택하거나 기존 캐릭터를 편집하세요.",
+            "updateOccurrences": "{oldName} 단어의 {count}개 항목을 {newName}(으)로 업데이트하시겠습니까? 원치 않는 업데이트가 될 수 있는 일반적인 단어에 각별히 주의하세요.",
+            "yes": "예",
+            "noDoNotChange": "아니요, 변경하지 않습니다"
+        },
+        "import": {
+            "title": "가져오기 확인",
+            "warning": "현재 프로젝트를 <b>덮어쓰시겠습니까</b>?",
+            "info": "새 프로젝트를 가져오기 전에 현재 프로젝트를 내보낼 수 있습니다.",
+            "yesImport": "예, 가져옵니다",
+            "no": "아니요"
+        },
+        "scene": {
+            "edit": "장면 편집",
+            "sceneTitle": "장면",
+            "color": "색상",
+            "synopsis": "시놉시스",
+            "synopsisPlaceholder": "이 장면에 대한 간단한 설명을 작성하세요...",
+            "save": "저장"
+        }
+    },
+    "board": {
+        "duplicate": "복제",
+        "delete": "삭제",
+        "hints": {
+            "pan": "가운데 클릭하여 이동",
+            "select": "드래그하여 카드 선택",
+            "create": "더블 클릭하여 카드 생성",
+            "move": "자유롭게 이동하려면 Shift 키를 누르세요"
+        },
+        "untitled": "제목 없음",
+        "titlePlaceholder": "제목",
+        "descriptionPlaceholder": "설명"
     }
 }

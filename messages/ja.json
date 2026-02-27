@@ -262,5 +262,63 @@
         "posterHelp": "推奨: 600x900ピクセル (2:3比率)。PNG、JPG対応。",
         "saveChanges": "変更を保存",
         "dangerZoneTitle": "危険ゾーン"
+    },
+    "contextMenu": {
+        "goToScene": "シーンへ移動",
+        "edit": "編集",
+        "cut": "切り取り",
+        "selectInEditor": "エディタで選択",
+        "remove": "削除",
+        "paste": "貼り付け",
+        "highlight": "ハイライト",
+        "addCharacter": "キャラクターを追加",
+        "addComment": "コメントを追加",
+        "searchOnWeb": "ウェブで検索"
+    },
+    "popup": {
+        "character": {
+            "create": "キャラクター作成",
+            "edit": "キャラクター編集",
+            "name": "名前",
+            "gender": "性別",
+            "genderFemale": "女性",
+            "genderMale": "男性",
+            "genderOther": "その他",
+            "color": "色",
+            "synopsis": "あらすじ",
+            "confirm": "確認",
+            "takenNameError": "{newName}という名前のキャラクターは既に存在します。別の名前を選択するか、既存のキャラクターを編集してください。",
+            "updateOccurrences": "{oldName}という単語の{count}個の出現を{newName}に更新してもよろしいですか？予期せぬ更新となる可能性がある一般的な単語には特に注意してください。",
+            "yes": "はい",
+            "noDoNotChange": "いいえ、変更しません"
+        },
+        "import": {
+            "title": "インポートの確認",
+            "warning": "現在のプロジェクトを<b>上書き</b>してもよろしいですか？",
+            "info": "新しいプロジェクトをインポートする前に、現在のプロジェクトをエクスポートできます。",
+            "yesImport": "はい、インポートします",
+            "no": "いいえ"
+        },
+        "scene": {
+            "edit": "シーン編集",
+            "sceneTitle": "シーン",
+            "color": "色",
+            "synopsis": "あらすじ",
+            "synopsisPlaceholder": "このシーンの簡単な説明を書いてください...",
+            "save": "保存"
+        }
+    },
+    "board": {
+        "duplicate": "複製",
+        "delete": "削除",
+        "hints": {
+            "pan": "中クリックで移動",
+            "select": "ドラッグでカードを選択",
+            "create": "ダブルクリックでカードを作成",
+            "move": "Shiftキーを押しながらで自由に移動"
+        },
+        "untitled": "無題",
+        "titlePlaceholder": "タイトル",
+        "descriptionPlaceholder": "説明"
     }
 }

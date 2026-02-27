@@ -16,6 +16,7 @@ import { UserContext } from "@src/context/UserContext";
 import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/screenplay/popup";
 import { countOccurrences } from "@src/lib/screenplay/screenplay";
 import { ColorPicker } from "@components/utils/ColorPicker";
+import { useTranslations } from "next-intl";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -30,33 +31,32 @@ type NewNameWarningProps = {
     nameOccurrences: number;
     oldName: string;
     newName: string;
+    t: any;
 };
 
 const NewNameWarning = (props: NewNameWarningProps) => {
     return (
         <div className={join(popup.info, form_info.warn)}>
             <p>
-                Are you sure you want to update {props.nameOccurrences} occurrences of word {props.oldName} to{" "}
-                {props.newName}? Take extra care of common words whose update might be unwated.
+                {props.t("updateOccurrences", { count: props.nameOccurrences, oldName: props.oldName, newName: props.newName })}
             </p>
             <div className={popup.info_btns}>
                 <button className={join(form.btn, popup.info_btn)} type="button" onClick={props.onNewNameConfirm}>
-                    Yes
+                    {props.t("yes")}
                 </button>
                 <button className={join(form.btn, popup.info_btn)} onClick={() => props.setNewNameWarning(false)}>
-                    No, do not change
+                    {props.t("noDoNotChange")}
                 </button>
             </div>
         </div>
     );
 };
 
-const TakenNameError = (newName: string) => {
+const TakenNameError = (newName: string, t: any) => {
     return (
         <div className={join(popup.info, form_info.error)}>
             <p>
-                A character with the name {newName} already exists. Please choose a different name or edit the existing
-                character instead.
+                {t("takenNameError", { newName })}
             </p>
         </div>
     );
@@ -66,6 +66,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     const projectCtx = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
     const { position, handleMouseDown, isDragging } = useDraggable();
+    const t = useTranslations("popup.character");
 
     const [newNameWarning, setNewNameWarning] = useState<boolean>(false);
     const [takenNameError, setTakenNameError] = useState<boolean>(false);
@@ -168,7 +169,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     };
 
     let def: any = {
-        title: "Create Character",
+        title: t("create"),
         onSubmit: onCreate,
         name: "",
         synopsis: "",
@@ -177,7 +178,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     };
 
     if (type === PopupType.EditCharacter) {
-        def.title = "Edit Character";
+        def.title = t("edit");
         def.onSubmit = onEdit;
         def.name = character?.name;
         def.synopsis = character?.synopsis;
@@ -197,7 +198,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                     <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
                 </div>
                 <form className={popup.form} onSubmit={def.onSubmit}>
-                    {takenNameError && TakenNameError(newName)}
+                    {takenNameError && TakenNameError(newName, t)}
                     {newNameWarning &&
                         NewNameWarning({
                             setNewNameWarning,
@@ -205,10 +206,11 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                             nameOccurrences,
                             oldName: character?.name!,
                             newName,
+                            t
                         })}
                     <div className={styles.element}>
                         <div className={styles.element_header}>
-                            <p>Name</p>
+                            <p>{t("name")}</p>
                             <input
                                 className={join(form.input, popup.input)}
                                 name="name"
@@ -221,29 +223,29 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                     </div>
                     <div className={styles.element}>
                         <div className={styles.element_header}>
-                            <p>Gender</p>
+                            <p>{t("gender")}</p>
                             <select
                                 className={popup.select}
                                 name="gender"
                                 defaultValue={def.gender}
                                 disabled={newNameWarning || takenNameError}
                             >
-                                <option value="0">Female</option>
-                                <option value="1">Male</option>
-                                <option value="2">Other</option>
+                                <option value="0">{t("genderFemale")}</option>
+                                <option value="1">{t("genderMale")}</option>
+                                <option value="2">{t("genderOther")}</option>
                             </select>
                         </div>
                         <hr />
                     </div>
                     <div className={styles.element}>
                         <div className={styles.element_header}>
-                            <p>Color</p>
+                            <p>{t("color")}</p>
                             <ColorPicker value={newColor} onChange={setNewColor} />
                         </div>
                         <hr />
                     </div>
                     <div className={styles.element}>
-                        <p>Synopsis</p>
+                        <p>{t("synopsis")}</p>
                         <textarea
                             className={join(form.input, popup.textarea)}
                             name="synopsis"
@@ -256,7 +258,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                         className={join(form.btn, popup.confirm)}
                         type="submit"
                     >
-                        Confirm
+                        {t("confirm")}
                     </button>
                 </form>
             </div>

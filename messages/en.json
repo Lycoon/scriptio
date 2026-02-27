@@ -262,5 +262,63 @@
         "posterHelp": "Recommended: 600x900 pixels (2:3 ratio). Supports PNG, JPG.",
         "saveChanges": "Save changes",
         "dangerZoneTitle": "Danger zone"
+    },
+    "contextMenu": {
+        "goToScene": "Go to scene",
+        "edit": "Edit",
+        "cut": "Cut",
+        "selectInEditor": "Select in editor",
+        "remove": "Remove",
+        "paste": "Paste",
+        "highlight": "Highlight",
+        "addCharacter": "Add character",
+        "addComment": "Add Comment",
+        "searchOnWeb": "Search on web"
+    },
+    "popup": {
+        "character": {
+            "create": "Create Character",
+            "edit": "Edit Character",
+            "name": "Name",
+            "gender": "Gender",
+            "genderFemale": "Female",
+            "genderMale": "Male",
+            "genderOther": "Other",
+            "color": "Color",
+            "synopsis": "Synopsis",
+            "confirm": "Confirm",
+            "takenNameError": "A character with the name {newName} already exists. Please choose a different name or edit the existing character instead.",
+            "updateOccurrences": "Are you sure you want to update {count} occurrences of word {oldName} to {newName}? Take extra care of common words whose update might be unwated.",
+            "yes": "Yes",
+            "noDoNotChange": "No, do not change"
+        },
+        "import": {
+            "title": "Confirm Import",
+            "warning": "Are you sure you want to <b>overwrite</b> your current project?",
+            "info": "You can export your project before importing a new one.",
+            "yesImport": "Yes, import",
+            "no": "No"
+        },
+        "scene": {
+            "edit": "Edit Scene",
+            "sceneTitle": "Scene",
+            "color": "Color",
+            "synopsis": "Synopsis",
+            "synopsisPlaceholder": "Write a brief description of this scene...",
+            "save": "Save"
+        }
+    },
+    "board": {
+        "duplicate": "Duplicate",
+        "delete": "Delete",
+        "hints": {
+            "pan": "Middle-click to pan",
+            "select": "Drag to select cards",
+            "create": "Double-click to create card",
+            "move": "Hold Shift to move freely"
+        },
+        "untitled": "Untitled",
+        "titlePlaceholder": "Title",
+        "descriptionPlaceholder": "Description"
     }
 }

@@ -262,5 +262,63 @@
         "posterHelp": "Zalecane: 600x900 pikseli (proporcje 2:3). Obsługuje PNG i JPG.",
         "saveChanges": "Zapisz zmiany",
         "dangerZoneTitle": "Strefa niebezpieczna"
+    },
+    "contextMenu": {
+        "goToScene": "Przejdź do sceny",
+        "edit": "Edytuj",
+        "cut": "Wytnij",
+        "selectInEditor": "Wybierz w edytorze",
+        "remove": "Usuń",
+        "paste": "Wklej",
+        "highlight": "Podświetl",
+        "addCharacter": "Dodaj postać",
+        "addComment": "Dodaj komentarz",
+        "searchOnWeb": "Szukaj w sieci"
+    },
+    "popup": {
+        "character": {
+            "create": "Utwórz postać",
+            "edit": "Edytuj postać",
+            "name": "Imię",
+            "gender": "Płeć",
+            "genderFemale": "Kobieta",
+            "genderMale": "Mężczyzna",
+            "genderOther": "Inna",
+            "color": "Kolor",
+            "synopsis": "Streszczenie",
+            "confirm": "Potwierdź",
+            "takenNameError": "Postać o imieniu {newName} już istnieje. Wybierz inne imię lub edytuj istniejącą postać.",
+            "updateOccurrences": "Czy na pewno chcesz zaktualizować {count} wystąpień słowa {oldName} na {newName}? Zwróć szczególną uwagę na popularne słowa, których aktualizacja może być niepożądana.",
+            "yes": "Tak",
+            "noDoNotChange": "Nie, nie zmieniaj"
+        },
+        "import": {
+            "title": "Potwierdź import",
+            "warning": "Czy na pewno chcesz <b>nadpisać</b> swój obecny projekt?",
+            "info": "Możesz wyeksportować swój projekt przed zaimportowaniem nowego.",
+            "yesImport": "Tak, importuj",
+            "no": "Nie"
+        },
+        "scene": {
+            "edit": "Edytuj scenę",
+            "sceneTitle": "Scena",
+            "color": "Kolor",
+            "synopsis": "Streszczenie",
+            "synopsisPlaceholder": "Napisz krótki opis tej sceny...",
+            "save": "Zapisz"
+        }
+    },
+    "board": {
+        "duplicate": "Duplikuj",
+        "delete": "Usuń",
+        "hints": {
+            "pan": "Środkowy przycisk myszy, aby przesunąć",
+            "select": "Przeciągnij, aby wybrać karty",
+            "create": "Kliknij dwukrotnie, aby utworzyć kartę",
+            "move": "Przytrzymaj Shift, aby swobodnie przenosić"
+        },
+        "untitled": "Bez tytułu",
+        "titlePlaceholder": "Tytuł",
+        "descriptionPlaceholder": "Opis"
     }
 }
