@@ -500,7 +500,7 @@ export const useScriptioEditor = (
                 sceneBookmarkExtension,
                 sceneNumberRightExtension,
                 sceneIdDedupExtension,
-                commentMarkExtension,
+                /*commentMarkExtension,*/
             ],
 
             onSelectionUpdate({ editor, transaction }) {
