@@ -222,6 +222,8 @@
         },
         "includeNotes": "Uwzględnij notatki",
         "includeNotesDesc": "Eksportuj wbudowane notatki.",
+        "readable": "Czytelny JSON",
+        "readableDesc": "Eksportuj jako zwykły JSON zamiast skompresowanego formatu binarnego. Większy plik, możliwy do podglądu w dowolnym edytorze tekstu.",
         "watermark": "Znak wodny",
         "watermarkDesc": "Nakładanie nazwy autora na strony.",
         "passwordProtection": "Ochrona hasłem",

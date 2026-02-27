@@ -222,6 +222,8 @@
         },
         "includeNotes": "Notizen einschließen",
         "includeNotesDesc": "Inline-Notizen exportieren.",
+        "readable": "Menschenlesbares JSON",
+        "readableDesc": "Als einfaches JSON statt komprimiertem Binärformat exportieren. Größere Datei, mit jedem Texteditor inspizierbar.",
         "watermark": "Wasserzeichen",
         "watermarkDesc": "Den Namen des Autors auf den Seiten einblenden.",
         "passwordProtection": "Kennwortschutz",
