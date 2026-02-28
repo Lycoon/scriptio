@@ -34,7 +34,11 @@ export interface OrphanPreventionExtensionOptions {
     getMoreLabel: () => string;
 }
 
-async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, options: OrphanPreventionOptions): Promise<void> {
+async function computeAndDispatch(
+    view: EditorView,
+    isCancelled: () => boolean,
+    options: OrphanPreventionOptions,
+): Promise<void> {
     const editorDom = view.dom as HTMLElement;
     const editorTop = editorDom.getBoundingClientRect().top;
 
@@ -69,31 +73,31 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, 
                 lastNodeHeight = pRect.height;
             } else break;
         }
-        
+
         if (lastNode) {
             // Red: node that straddles the page break (debug reference).
             try {
                 const pos = view.posAtDOM(lastNode, 0);
                 const resolved = view.state.doc.resolve(pos);
                 const start = resolved.before(resolved.depth);
-                
-                const isStraddling = (lastNodeTop + lastNodeHeight) > (breakerTop + 6);
-                
+
+                const isStraddling = lastNodeTop + lastNodeHeight > breakerTop + 6;
+
                 // Clear labels for this specific gap synchronously to avoid flashing across yields
-                gapEl.querySelectorAll(".injected-dialogue-label").forEach(el => el.remove());
-                
+                gapEl.querySelectorAll(".injected-dialogue-label").forEach((el) => el.remove());
+
                 // Debug visually: Highlight the strictly identified `lastNode` right before the page gap.
                 decorations.push(
                     Decoration.node(start, start + resolved.parent.nodeSize, {
-                        style: "background-color: rgba(255, 0, 0, 0.2) !important; outline: 2px solid red;",
-                        class: "orphan-debug-last-node"
-                    })
+                        /*style: "background-color: rgba(255, 0, 0, 0.2) !important; outline: 2px solid red;",*/
+                        class: "orphan-debug-last-node",
+                    }),
                 );
 
                 // If it's dialogue straddling a page break (actually physically crossing the breaker gap)
                 if (isStraddling && lastNode.classList.contains("dialogue")) {
                     const computedStyle = window.getComputedStyle(lastNode);
-                    
+
                     const moreElem = document.createElement("div");
                     moreElem.className = "injected-dialogue-label";
                     moreElem.innerText = options.getMoreLabel();
@@ -104,7 +108,7 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, 
                     moreElem.style.textAlign = "center";
                     moreElem.style.pointerEvents = "none";
                     moreElem.style.zIndex = "10";
-                    
+
                     moreElem.style.fontFamily = computedStyle.fontFamily;
                     moreElem.style.fontSize = computedStyle.fontSize;
                     moreElem.style.color = computedStyle.color;
@@ -121,7 +125,9 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, 
 
                     const contElem = document.createElement("div");
                     contElem.className = "injected-dialogue-label";
-                    contElem.innerText = characterName ? `${characterName} ${options.getContdLabel()}` : options.getContdLabel();
+                    contElem.innerText = characterName
+                        ? `${characterName} ${options.getContdLabel()}`
+                        : options.getContdLabel();
                     contElem.style.position = "absolute";
                     contElem.style.bottom = "0px";
                     contElem.style.left = "0px";
@@ -130,12 +136,12 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, 
                     contElem.style.pointerEvents = "none";
                     contElem.style.zIndex = "10";
                     contElem.style.textTransform = "uppercase";
-                    
+
                     contElem.style.fontFamily = computedStyle.fontFamily;
                     contElem.style.fontSize = computedStyle.fontSize;
                     contElem.style.lineHeight = computedStyle.lineHeight;
                     contElem.style.color = computedStyle.color;
-                    
+
                     gapEl.appendChild(moreElem);
                     gapEl.appendChild(contElem);
                 } else if (isStraddling) {
@@ -160,7 +166,7 @@ async function computeAndDispatch(view: EditorView, isCancelled: () => boolean, 
 
 export const OrphanPreventionExtension = Extension.create<OrphanPreventionExtensionOptions>({
     name: "orphanPrevention",
-    
+
     addOptions() {
         return {
             getContdLabel: () => "(CONT'D)",
@@ -191,16 +197,16 @@ export const OrphanPreventionExtension = Extension.create<OrphanPreventionExtens
                     apply(tr, old, _, newState) {
                         const meta = tr.getMeta(pluginKey);
                         if (meta instanceof DecorationSet) return { decos: meta, version: old.version };
-                        
+
                         let nextDecos = old.decos;
                         if (tr.docChanged) {
                             nextDecos = old.decos.map(tr.mapping, newState.doc);
                         }
-                        
+
                         if (meta === "force-update" || tr.docChanged) {
                             return { decos: nextDecos, version: old.version + 1 };
                         }
-                        
+
                         return old;
                     },
                 },
@@ -243,7 +249,9 @@ export const OrphanPreventionExtension = Extension.create<OrphanPreventionExtens
                             const currPluginState = pluginKey.getState(view.state);
                             if (
                                 view.state.doc !== prev.doc ||
-                                (prevPluginState && currPluginState && prevPluginState.version !== currPluginState.version)
+                                (prevPluginState &&
+                                    currPluginState &&
+                                    prevPluginState.version !== currPluginState.version)
                             ) {
                                 schedule();
                             }

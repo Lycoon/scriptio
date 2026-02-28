@@ -481,10 +481,10 @@ export const useScriptioEditor = (
                     footerRight: "",
                     ...SCREENPLAY_FORMATS[pageSize],
                 }),
-                /*OrphanPreventionExtension.configure({
+                OrphanPreventionExtension.configure({
                     getContdLabel: () => contdLabelRef.current,
-                    getMoreLabel: () => moreLabelRef.current
-                }),*/
+                    getMoreLabel: () => moreLabelRef.current,
+                }),
                 KeybindsExtension.configure({
                     userKeybinds: userKeybinds || {},
                     onAction: (id, editorInstance) => {
@@ -500,7 +500,7 @@ export const useScriptioEditor = (
                 sceneBookmarkExtension,
                 sceneNumberRightExtension,
                 sceneIdDedupExtension,
-                /*commentMarkExtension,*/
+                commentMarkExtension,
             ],
 
             onSelectionUpdate({ editor, transaction }) {
