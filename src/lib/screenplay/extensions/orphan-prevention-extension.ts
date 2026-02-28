@@ -145,11 +145,11 @@ async function computeAndDispatch(
                     gapEl.appendChild(moreElem);
                     gapEl.appendChild(contElem);
                 } else if (isStraddling) {
-                    decorations.push(
+                    /*decorations.push(
                         Decoration.node(start, start + resolved.parent.nodeSize, {
                             style: "background-color: red;",
                         }),
-                    );
+                    );*/
                 }
             } catch {
                 // detached or invalid position — skip
