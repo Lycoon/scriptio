@@ -1,5 +1,5 @@
 import { DOMSerializer } from "@node_modules/prosemirror-model/dist";
-import { Extension } from "@tiptap/core";
+import { Editor, Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
@@ -112,37 +112,6 @@ function syncVars(dom: HTMLElement, o: PaginationPlusOptions) {
 }
 
 // ---------------------------------------------------------------------------
-// Page break computation
-// ---------------------------------------------------------------------------
-
-function computePageBreaks(doc: any, options: PaginationPlusOptions): PageBreakInfo[] {
-    const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
-    const breaks: PageBreakInfo[] = [];
-    let pagePos = 0;
-    let pagenum = 1;
-
-    doc.forEach((node: any, offset: number) => {
-        const height = node.attrs?.height as number | null;
-        if (height == null) return;
-
-        pagePos += height;
-
-        if (pagePos > contentHeight) {
-            const freespace = contentHeight - (pagePos - height);
-            breaks.push({
-                pos: offset,
-                pagenum: pagenum + 1,
-                freespace: Math.max(0, freespace),
-            });
-            pagenum++;
-            pagePos = height;
-        }
-    });
-
-    return breaks;
-}
-
-// ---------------------------------------------------------------------------
 // Decoration builders
 // ---------------------------------------------------------------------------
 
@@ -228,8 +197,6 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationPlus
     headerArea.className = "pagination-header-area";
     headerArea.style.height = `${options.marginTop}px`;
     headerArea.innerHTML = renderHeader(breakInfo.pagenum, options);
-
-    console.log("options.marginTop: ", options.marginTop);
 
     overlay.appendChild(footerArea);
     overlay.appendChild(divider);
@@ -371,19 +338,30 @@ const createPaginationPlugin = (extension: any) =>
                 // Nothing pagination-related changed
                 if (!tr.docChanged && !forceUpdate && !formatUpdate) return value;
 
-                // Heights were just committed by appendTransaction → compute page breaks
+                // Heights were just committed by appendTransaction via setNodeMarkup.
+                // Breaks were already computed (with fresh heights) in the previous apply.
+                // Rebuild decorations from those pre-computed breaks — can't use map()
+                // because setNodeMarkup's ReplaceAroundStep destroys widget decorations
+                // at the replaced node's position (same pattern as editor.js which always
+                // creates fresh decorations rather than relying on map() to preserve them).
                 if (heightUpdate) {
-                    const breaks = computePageBreaks(newState.doc, options);
-                    const decset = buildDecorations(newState.doc, breaks, options);
-                    return { decset, heightUpdates: [], breaks };
+                    return {
+                        decset: buildDecorations(newState.doc, value.breaks, options),
+                        heightUpdates: [],
+                        breaks: value.breaks,
+                    };
                 }
 
-                // Detect which nodes changed
+                const fullRemeasure = forceUpdate || formatUpdate;
+
+                // Determine changed node positions from step maps
                 const changedPositions = new Set<number>();
-                if (tr.docChanged) {
+                let maxChangedPos = -1;
+                if (tr.docChanged && !fullRemeasure) {
                     tr.steps.forEach((step) => {
                         const map = step.getMap();
                         map.forEach((_oS: number, _oE: number, newStart: number, newEnd: number) => {
+                            if (newEnd > maxChangedPos) maxChangedPos = newEnd;
                             newState.doc.nodesBetween(newStart, newEnd, (_node, pos) => {
                                 changedPositions.add(pos);
                             });
@@ -391,37 +369,108 @@ const createPaginationPlugin = (extension: any) =>
                     });
                 }
 
-                // Measure heights for dirty nodes
+                // Map old breaks through the transaction for short-circuit comparison
+                const mappedOldBreaks = !fullRemeasure
+                    ? value.breaks.map((b) => ({ ...b, pos: tr.mapping.map(b.pos) }))
+                    : [];
+                const oldBreakByPos = new Map<number, { info: PageBreakInfo; index: number }>();
+                mappedOldBreaks.forEach((b, i) => oldBreakByPos.set(b.pos, { info: b, index: i }));
+
+                // --- Single pass: measure dirty heights + compute page breaks ---
+                let editor = extension.editor as Editor;
+                if (editor.isInitialized && !extension.editor.view?.dom) return value;
+
                 const editorDOM = extension.editor.view.dom as HTMLElement;
                 const serializer = DOMSerializer.fromSchema(newState.schema);
                 const heightUpdates: { pos: number; height: number }[] = [];
 
-                newState.doc.descendants((node, pos) => {
-                    if (!("height" in node.attrs)) return;
+                const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
+                const breaks: PageBreakInfo[] = [];
+                let pagePos = 0;
+                let pagenum = 1;
+                const childCount = newState.doc.childCount;
+                let offset = 0;
 
-                    const cached = node.attrs.height as number | null;
-                    const isDirty = forceUpdate || formatUpdate || cached === null || changedPositions.has(pos);
+                for (let i = 0; i < childCount; i++) {
+                    const node = newState.doc.child(i);
+                    const pos = offset;
+                    offset += node.nodeSize;
 
-                    if (!isDirty) return;
+                    if (!("height" in node.attrs)) continue;
 
-                    const element = serializer.serializeNode(node) as HTMLElement;
-                    const height = getHTMLHeight(element, editorDOM, node.type.name, options);
+                    // Use cached height or measure if dirty
+                    let height = node.attrs.height as number | null;
+                    const isDirty = fullRemeasure || height === null || changedPositions.has(pos);
 
-                    if (height !== cached) heightUpdates.push({ pos, height });
-                });
+                    if (isDirty) {
+                        const element = serializer.serializeNode(node) as HTMLElement;
+                        height = getHTMLHeight(element, editorDOM, node.type.name, options);
+                        if (height !== node.attrs.height) {
+                            heightUpdates.push({ pos, height });
+                        }
+                    }
 
-                // Heights need committing first → defer break computation to the next apply
+                    if (height == null) continue;
+
+                    // Accumulate height on current page
+                    pagePos += height;
+
+                    // Page break needed — record it and reset page position
+                    if (pagePos > contentHeight) {
+                        const freespace = contentHeight - (pagePos - height);
+                        const breakInfo: PageBreakInfo = {
+                            pos,
+                            pagenum: pagenum + 1,
+                            freespace: Math.max(0, freespace),
+                        };
+                        breaks.push(breakInfo);
+                        pagenum++;
+                        pagePos = height;
+
+                        // Short-circuit: past the changed range and break matches an old break
+                        // -> the layout is back in sync, copy remaining old breaks and stop.
+                        if (!fullRemeasure && pos > maxChangedPos) {
+                            const old = oldBreakByPos.get(breakInfo.pos);
+                            if (old && old.info.freespace === breakInfo.freespace) {
+                                for (let j = old.index + 1; j < mappedOldBreaks.length; j++) {
+                                    pagenum++;
+                                    breaks.push({
+                                        pos: mappedOldBreaks[j].pos,
+                                        pagenum,
+                                        freespace: mappedOldBreaks[j].freespace,
+                                    });
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Heights need committing — appendTransaction will fire setNodeMarkup,
+                // then the heightUpdate apply will rebuild decorations from these breaks.
+                // Just remap old decorations for now (never rendered — view updates only
+                // after all transactions complete).
                 if (heightUpdates.length > 0) {
                     return {
                         decset: value.decset.map(tr.mapping, tr.doc),
                         heightUpdates,
-                        breaks: value.breaks,
+                        breaks,
                     };
                 }
 
-                // No height changes but doc or format changed → recompute breaks with cached heights
-                const breaks = computePageBreaks(newState.doc, options);
-                const decset = buildDecorations(newState.doc, breaks, options);
+                // No pending height commits — this is the final state the view will render.
+                // Check if breaks actually changed compared to mapped old breaks.
+                const breaksChanged =
+                    fullRemeasure ||
+                    breaks.length !== mappedOldBreaks.length ||
+                    breaks.some(
+                        (b, i) => b.pos !== mappedOldBreaks[i].pos || b.freespace !== mappedOldBreaks[i].freespace,
+                    );
+
+                const decset = breaksChanged
+                    ? buildDecorations(newState.doc, breaks, options)
+                    : value.decset.map(tr.mapping, tr.doc);
+
                 return { decset, heightUpdates: [], breaks };
             },
         },
