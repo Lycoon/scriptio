@@ -24,11 +24,11 @@
     --font-screenplay: "CourierPrime", "FreeMono", "Cousine", "SarasaMonoSC", monospace;
     --font-size: 12pt;
 
-    --character-l-margin: 2.5in;
-    --dialogue-l-margin: 1.3in;
-    --dialogue-r-margin: 1in;
-    --parenthetical-l-margin: 2in;
-    --parenthetical-r-margin: 2in;
+    --character-l-margin: 4in; /* 1.5in page + 2.5in element */
+    --dialogue-l-margin: 2.8in; /* 1.5in page + 1.3in element */
+    --dialogue-r-margin: 2in; /* 1in page + 1in element */
+    --parenthetical-l-margin: 3.5in; /* 1.5in page + 2in element */
+    --parenthetical-r-margin: 3in; /* 1in page + 2in element */
     --line-height: 17px;
 
     margin-left: auto;
@@ -55,8 +55,8 @@
         margin-top: var(--line-height);
         margin-bottom: 0;
         min-height: 1lh;
-        padding-left: var(--page-margin-left);
-        padding-right: var(--page-margin-right);
+        padding-left: 1.5in;
+        padding-right: 1in;
         box-sizing: border-box;
     }
 
@@ -159,12 +159,12 @@
     /* Dialogue */
     .dialogue {
         margin-top: 0;
-        padding-left: calc(var(--page-margin-left) + var(--dialogue-l-margin)) !important;
-        padding-right: calc(var(--page-margin-right) + var(--dialogue-r-margin)) !important;
+        padding-left: var(--dialogue-l-margin) !important;
+        padding-right: var(--dialogue-r-margin) !important;
     }
 
     .character {
-        padding-left: calc(var(--page-margin-left) + var(--character-l-margin)) !important;
+        padding-left: var(--character-l-margin) !important;
         text-transform: uppercase;
     }
 
@@ -180,8 +180,8 @@
     .parenthetical {
         position: relative;
         margin-top: 0;
-        padding-left: calc(var(--page-margin-left) + var(--parenthetical-l-margin)) !important;
-        padding-right: calc(var(--page-margin-right) + var(--parenthetical-r-margin)) !important;
+        padding-left: var(--parenthetical-l-margin) !important;
+        padding-right: var(--parenthetical-r-margin) !important;
     }
 
     .parenthetical::before {
@@ -190,7 +190,7 @@
         /* Shenanigans to have cursor between both parenthesis otherwise it appears before first */
         position: absolute;
         /*top: 0;*/
-        left: calc(var(--page-margin-left) + var(--parenthetical-l-margin));
+        left: var(--parenthetical-l-margin);
         margin-left: calc(-1ch);
         pointer-events: none;
     }
@@ -300,7 +300,9 @@
 
     /* Character dialogue highlighting - use box-shadow instead of background to avoid page break bleeding */
     .character-highlight {
-        box-shadow: inset 3px 0 0 0 var(--highlight-color), inset 0 0 0 1000px var(--highlight-bg);
+        box-shadow:
+            inset 3px 0 0 0 var(--highlight-color),
+            inset 0 0 0 1000px var(--highlight-bg);
     }
 
     /* Search highlighting */
@@ -337,10 +339,9 @@
         content: "";
         position: absolute;
         top: 0;
-        left: calc(-1 * var(--page-margin-left) - 4px);
+        left: -4px;
         width: 8px;
-        height: 100%;
-        min-height: 17px;
+        height: var(--line-height); /* fixed to one line — never stretches over wrapped headings */
         background-color: var(--scene-color);
         clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
         border-radius: 0 0 2px 2px;
@@ -370,8 +371,8 @@
         bottom: calc(100% - 1lh);
         left: 0;
         width: 100%;
-        padding-left: calc(var(--page-margin-left) + var(--dialogue-l-margin));
-        padding-right: calc(var(--page-margin-right) + var(--dialogue-r-margin));
+        padding-left: var(--dialogue-l-margin);
+        padding-right: var(--dialogue-r-margin);
         text-align: center;
     }
 
@@ -379,7 +380,7 @@
         top: calc(100% - 1lh);
         left: 0;
         width: 100%;
-        padding-left: calc(var(--page-margin-left) + var(--character-l-margin));
+        padding-left: var(--character-l-margin);
         text-transform: uppercase;
     }
 }
