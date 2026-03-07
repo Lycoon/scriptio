@@ -1,4 +1,6 @@
 import { DOMSerializer } from "@node_modules/prosemirror-model/dist";
+import { CircularBuffer } from "@src/lib/utils/circular-buffer";
+import { ScreenplayElement } from "@src/lib/utils/enums";
 import { Editor, Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
@@ -6,6 +8,35 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+interface NodeInfo {
+    pos: number;
+    type: ScreenplayElement;
+    height: number;
+    positionTop: number;
+}
+
+interface BreakLogic {
+    /** Node must not be the last on a page — pull it to the next page with its following node. */
+    keepWithNext: boolean;
+    /** Node must not be the first on a page — reserved for future use (e.g. dialogue after character). */
+    keepWithPrevious: boolean;
+}
+
+const BREAK_LOGIC: Partial<Record<ScreenplayElement, BreakLogic>> = {
+    // Scene headings and character cues must never be stranded at the bottom of a page.
+    [ScreenplayElement.Scene]: { keepWithNext: true, keepWithPrevious: false },
+    [ScreenplayElement.Character]: { keepWithNext: true, keepWithPrevious: false },
+    // A parenthetical alone at the bottom (without its dialogue) is also an orphan.
+    [ScreenplayElement.Parenthetical]: { keepWithNext: true, keepWithPrevious: false },
+    // All other types are fine at a page boundary.
+    [ScreenplayElement.Action]: { keepWithNext: false, keepWithPrevious: false },
+    [ScreenplayElement.Dialogue]: { keepWithNext: false, keepWithPrevious: false },
+    [ScreenplayElement.Transition]: { keepWithNext: false, keepWithPrevious: false },
+    [ScreenplayElement.Section]: { keepWithNext: false, keepWithPrevious: false },
+    [ScreenplayElement.Note]: { keepWithNext: false, keepWithPrevious: false },
+    [ScreenplayElement.None]: { keepWithNext: false, keepWithPrevious: false },
+};
 
 export interface PageSize {
     pageHeight: number;
@@ -391,6 +422,7 @@ const createPaginationPlugin = (extension: any) =>
                 const childCount = newState.doc.childCount;
                 let offset = 0;
 
+                let lastNodes: CircularBuffer<NodeInfo> = new CircularBuffer(3);
                 for (let i = 0; i < childCount; i++) {
                     const node = newState.doc.child(i);
                     const pos = offset;
@@ -415,17 +447,62 @@ const createPaginationPlugin = (extension: any) =>
                     // Accumulate height on current page
                     pagePos += height;
 
+                    // We keep last 3 nodes for orphan resolution on page break
+                    lastNodes.push({
+                        pos,
+                        type: node.type.name as ScreenplayElement,
+                        height,
+                        positionTop: pagePos - height,
+                    });
+
                     // Page break needed — record it and reset page position
                     if (pagePos > contentHeight) {
-                        const freespace = contentHeight - (pagePos - height);
+                        // --- Orphan resolution ---
+                        // Walk back through the window: if the last fitted node has keepWithNext,
+                        // slide the break back to its position (and carry its height to the next page).
+                        // Repeat once more for the double-orphan case (e.g. Character → Parenthetical).
+                        let breakPos = pos;
+                        let carryHeight = height; // cumulative height that moves to the next page
+                        let backCount = 0; // how many nodes slid back to the next page
+
+                        for (let back = 1; back <= 2; back++) {
+                            const prev = lastNodes.at(back); // at(1) = last fitted, at(2) = one before
+                            if (!prev) break;
+                            if (BREAK_LOGIC[prev.type]?.keepWithNext) {
+                                breakPos = prev.pos;
+                                carryHeight += prev.height;
+                                backCount = back;
+                            } else {
+                                break; // stop as soon as we find a node that may end a page
+                            }
+                        }
+
+                        // freespace = space left on the ending page before the first node that moved down.
+                        // lastNodes.at(backCount) is that first node; its positionTop is the accumulated
+                        // page height just before it was added, which equals the used space above it.
+                        const firstMovingNode = lastNodes.at(backCount);
+                        const freespace = contentHeight - (firstMovingNode?.positionTop ?? pagePos - height);
                         const breakInfo: PageBreakInfo = {
-                            pos,
+                            pos: breakPos,
                             pagenum: pagenum + 1,
                             freespace: Math.max(0, freespace),
                         };
                         breaks.push(breakInfo);
                         pagenum++;
-                        pagePos = height;
+                        pagePos = carryHeight;
+
+                        // positionTop values in the buffer are page-relative — reset and re-seed
+                        // with the carry nodes (those that moved to the next page) using new-page
+                        // positionTop values, so orphan checking works correctly on the next break.
+                        const carryNodes: NodeInfo[] = [];
+                        let carryTop = 0;
+                        for (let back = backCount; back >= 0; back--) {
+                            const n = lastNodes.at(back)!;
+                            carryNodes.push({ ...n, positionTop: carryTop });
+                            carryTop += n.height;
+                        }
+                        lastNodes = new CircularBuffer(3);
+                        for (const n of carryNodes) lastNodes.push(n);
 
                         // Short-circuit: past the changed range and break matches an old break
                         // -> the layout is back in sync, copy remaining old breaks and stop.
