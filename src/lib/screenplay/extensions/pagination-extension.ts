@@ -6,6 +6,24 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Matches --line-height in scriptio.css. Used for split thresholds. */
+const LINE_HEIGHT = 17; // px
+
+/** Minimum freespace (in px) on the current page to even attempt a sentence split.
+ *  Below this, it is not worth splitting — just move the whole node to the next page. */
+const MIN_SPLIT_FREESPACE = LINE_HEIGHT * 3;
+
+/** Minimum lines the bottom half of a split must have.
+ *  If the remainder would be shorter, we force-fit the whole node on the next page instead. */
+const MIN_SPLIT_BOTTOM_LINES = 2;
+
+/** Sentence segmenter for straddling splits. Created once at module load. */
+const sentenceSegmenter = "Segmenter" in Intl ? new Intl.Segmenter("en", { granularity: "sentence" }) : null;
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -19,23 +37,32 @@ interface NodeInfo {
 interface BreakLogic {
     /** Node must not be the last on a page — pull it to the next page with its following node. */
     keepWithNext: boolean;
-    /** Node must not be the first on a page — reserved for future use (e.g. dialogue after character). */
-    keepWithPrevious: boolean;
+    /** Node can be split mid-text at sentence boundaries when straddling a page break. */
+    canSplit: boolean;
+    /** Minimum node height (px) before attempting a split; 0 means always try. */
+    minSplitHeight: number;
+    /** Show (MORE) and CHARACTER (CONT'D) labels around the break — true for dialogue splits. */
+    showMoreContd: boolean;
 }
 
 const BREAK_LOGIC: Partial<Record<ScreenplayElement, BreakLogic>> = {
     // Scene headings and character cues must never be stranded at the bottom of a page.
-    [ScreenplayElement.Scene]: { keepWithNext: true, keepWithPrevious: false },
-    [ScreenplayElement.Character]: { keepWithNext: true, keepWithPrevious: false },
-    // A parenthetical alone at the bottom (without its dialogue) is also an orphan.
-    [ScreenplayElement.Parenthetical]: { keepWithNext: true, keepWithPrevious: false },
-    // All other types are fine at a page boundary.
-    [ScreenplayElement.Action]: { keepWithNext: false, keepWithPrevious: false },
-    [ScreenplayElement.Dialogue]: { keepWithNext: false, keepWithPrevious: false },
-    [ScreenplayElement.Transition]: { keepWithNext: false, keepWithPrevious: false },
-    [ScreenplayElement.Section]: { keepWithNext: false, keepWithPrevious: false },
-    [ScreenplayElement.Note]: { keepWithNext: false, keepWithPrevious: false },
-    [ScreenplayElement.None]: { keepWithNext: false, keepWithPrevious: false },
+    [ScreenplayElement.Scene]: { keepWithNext: true, canSplit: false, minSplitHeight: 0, showMoreContd: false },
+    [ScreenplayElement.Character]: { keepWithNext: true, canSplit: false, minSplitHeight: 0, showMoreContd: false },
+    [ScreenplayElement.Parenthetical]: { keepWithNext: true, canSplit: false, minSplitHeight: 0, showMoreContd: false },
+    // Action and Dialogue can straddle pages at sentence boundaries.
+    [ScreenplayElement.Action]: {
+        keepWithNext: false,
+        canSplit: true,
+        minSplitHeight: LINE_HEIGHT * 4,
+        showMoreContd: false,
+    },
+    [ScreenplayElement.Dialogue]: { keepWithNext: false, canSplit: true, minSplitHeight: 0, showMoreContd: true },
+    // Everything else just moves whole to the next page.
+    [ScreenplayElement.Transition]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
+    [ScreenplayElement.Section]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
+    [ScreenplayElement.Note]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
+    [ScreenplayElement.None]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
 };
 
 export interface PageSize {
@@ -79,9 +106,11 @@ export interface PaginationPlusOptions {
 }
 
 export interface PageBreakInfo {
-    pos: number; // document position where the break decoration is inserted (before the first node on the new page)
+    pos: number; // document position of the break; may be mid-node for sentence splits
     pagenum: number; // page number AFTER this break
     freespace: number; // empty space remaining at the bottom of the ending page's content area
+    contdName: string; // non-empty only for dialogue splits: Character cue name for the (CONT'D) label
+    splitNodeType: ScreenplayElement | null; // non-null when the break is mid-node (sentence split); drives overlay escape
 }
 
 declare module "@tiptap/core" {
@@ -191,6 +220,20 @@ function createFirstPageWidget(options: PaginationPlusOptions): HTMLElement {
     return container;
 }
 
+/**
+ * Returns the CSS variable names for the left and right padding of a split node type.
+ * Used to compute the negative offsets needed to make the overlay escape the parent
+ * <p> element's content area and span the full page width.
+ */
+function getSplitPaddingVars(nodeType: ScreenplayElement): [string, string] {
+    switch (nodeType) {
+        case ScreenplayElement.Dialogue:
+            return ["var(--dialogue-l-margin)", "var(--dialogue-r-margin)"];
+        default: // Action uses the base page margins
+            return ["var(--page-margin-left)", "var(--page-margin-right)"];
+    }
+}
+
 function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationPlusOptions): HTMLElement {
     const container = document.createElement("div");
     container.className = "pagination-page-break";
@@ -210,6 +253,17 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationPlus
     overlay.className = "pagination-overlay";
     overlay.style.top = "0";
     overlay.style.height = `${spacerHeight}px`;
+
+    // For mid-node splits, the widget is inserted inside a padded <p> element.
+    // The overlay's position:absolute is relative to the container, which is bounded
+    // by the <p>'s content area — so left:0/right:0 only reaches the text column edges,
+    // not the page edges. We escape the parent padding by negating it with the same CSS
+    // variables that define the node type's padding, restoring full-page coverage.
+    if (breakInfo.splitNodeType !== null) {
+        const [leftVar, rightVar] = getSplitPaddingVars(breakInfo.splitNodeType);
+        overlay.style.left = `calc(-1 * ${leftVar})`;
+        overlay.style.right = `calc(-1 * ${rightVar})`;
+    }
 
     // Footer area of the ending page (fixed size = marginBottom)
     const footerArea = document.createElement("div");
@@ -232,6 +286,26 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationPlus
     overlay.appendChild(footerArea);
     overlay.appendChild(divider);
     overlay.appendChild(headerArea);
+
+    // For dialogue/parenthetical splits: add (MORE) at the end of the current page
+    // and CHARACTER (CONT'D) at the top of the next page.
+    // Both are position:absolute inside the overlay so they don't affect flow layout.
+    if (breakInfo.contdName) {
+        // (MORE) — centred at the dialogue column, one line above the footer area.
+        // CSS: bottom: calc(100% - 1lh) positions it just after the last content line on page N.
+        const moreEl = document.createElement("div");
+        moreEl.className = "page-more-overlay";
+        moreEl.textContent = "(MORE)";
+        overlay.appendChild(moreEl);
+
+        // CHARACTER (CONT'D) — left-aligned at the character column, one line before the new content.
+        // CSS: top: calc(100% - 1lh) positions it just before the first content line on page N+1.
+        const contdEl = document.createElement("div");
+        contdEl.className = "page-contd-overlay";
+        contdEl.textContent = `${breakInfo.contdName} (CONT'D)`;
+        overlay.appendChild(contdEl);
+    }
+
     container.appendChild(spacer);
     container.appendChild(overlay);
     return container;
@@ -340,6 +414,81 @@ const setupTestDiv = (editorDom: HTMLElement, options: PaginationPlusOptions): H
 };
 
 // ---------------------------------------------------------------------------
+// Sentence splitting
+// ---------------------------------------------------------------------------
+
+interface SplitResult {
+    /** Absolute document position of the split point (inside the straddling node's text). */
+    pos: number;
+    /** Rendered height of the portion staying on the current page. */
+    topHeight: number;
+    /** Rendered height of the portion moving to the next page. */
+    bottomHeight: number;
+}
+
+/**
+ * Attempts to split a straddling Action or Dialogue node at a sentence boundary.
+ *
+ * Strategy: use Intl.Segmenter to break the node's text into sentences, then find the
+ * longest sentence prefix whose rendered height fits within `freespace`. If the remaining
+ * bottom portion would be shorter than MIN_SPLIT_BOTTOM_LINES, the split is rejected and
+ * the whole node moves to the next page (same as the legacy behaviour).
+ *
+ * Height is measured using plain textContent (no inline marks) which is accurate for
+ * monospace fonts where bold/italic do not change character widths.
+ *
+ * Returns null when no valid split exists.
+ */
+function trySplitNode(
+    node: any, // ProseMirror Node
+    nodeDocPos: number,
+    freespace: number,
+    nodeElement: HTMLElement,
+    editorDOM: HTMLElement,
+    options: PaginationPlusOptions,
+): SplitResult | null {
+    if (!sentenceSegmenter) return null;
+
+    const text = node.textContent as string;
+    const sentences = Array.from(sentenceSegmenter.segment(text), (s: any) => s.segment as string);
+
+    // A single sentence cannot be split at a boundary — move the whole node.
+    if (sentences.length <= 1) return null;
+
+    // Try progressively shorter prefixes (all-but-last, all-but-last-two, …)
+    // until one fits in the available freespace.
+    for (let i = sentences.length - 2; i >= 0; i--) {
+        const topText = sentences.slice(0, i + 1).join("");
+
+        // Measure the top half: clone the element (preserving tag + CSS class) with only the top text.
+        // Using textContent instead of innerHTML is intentional — for a monospace font, inline marks
+        // (bold, italic) do not change character widths, so the line count is the same.
+        const topElement = nodeElement.cloneNode(false) as HTMLElement;
+        topElement.textContent = topText;
+        const topHeight = getHTMLHeight(topElement, editorDOM, node.type.name, options);
+
+        if (topHeight <= freespace) {
+            // Measure the bottom half to guard against a degenerate single-line remainder.
+            const bottomText = sentences.slice(i + 1).join("");
+            const bottomElement = nodeElement.cloneNode(false) as HTMLElement;
+            bottomElement.textContent = bottomText;
+            const bottomHeight = getHTMLHeight(bottomElement, editorDOM, node.type.name, options);
+
+            // Bottom too short — not worth a split; force the whole node to the next page.
+            if (bottomHeight < LINE_HEIGHT * MIN_SPLIT_BOTTOM_LINES) return null;
+
+            // The split position in document space:
+            // nodeDocPos + 1 skips the node's opening token; topText.length then walks
+            // through the text characters (marks are zero-width in ProseMirror's position space).
+            return { pos: nodeDocPos + 1 + topText.length, topHeight, bottomHeight };
+        }
+    }
+
+    // No prefix fits — the first sentence alone is too tall; move the whole node.
+    return null;
+}
+
+// ---------------------------------------------------------------------------
 // Plugin
 // ---------------------------------------------------------------------------
 
@@ -373,8 +522,7 @@ const createPaginationPlugin = (extension: any) =>
                 // Breaks were already computed (with fresh heights) in the previous apply.
                 // Rebuild decorations from those pre-computed breaks — can't use map()
                 // because setNodeMarkup's ReplaceAroundStep destroys widget decorations
-                // at the replaced node's position (same pattern as editor.js which always
-                // creates fresh decorations rather than relying on map() to preserve them).
+                // at the replaced node's position
                 if (heightUpdate) {
                     return {
                         decset: buildDecorations(newState.doc, value.breaks, options),
@@ -422,6 +570,10 @@ const createPaginationPlugin = (extension: any) =>
                 const childCount = newState.doc.childCount;
                 let offset = 0;
 
+                // Tracks the most recent Character cue text so we can label split-dialogue breaks
+                // with "CHARACTER (CONT'D)" on the next page.
+                let lastCharName = "";
+
                 let lastNodes: CircularBuffer<NodeInfo> = new CircularBuffer(3);
                 for (let i = 0; i < childCount; i++) {
                     const node = newState.doc.child(i);
@@ -430,12 +582,18 @@ const createPaginationPlugin = (extension: any) =>
 
                     if (!("height" in node.attrs)) continue;
 
-                    // Use cached height or measure if dirty
+                    const nodeType = node.type.name as ScreenplayElement;
+                    const logic = BREAK_LOGIC[nodeType];
+
+                    // Use cached height or measure if dirty.
+                    // element is hoisted so the overflow block can reuse it for split measurement
+                    // without serialising the node a second time.
                     let height = node.attrs.height as number | null;
                     const isDirty = fullRemeasure || height === null || changedPositions.has(pos);
+                    let element: HTMLElement | null = null;
 
                     if (isDirty) {
-                        const element = serializer.serializeNode(node) as HTMLElement;
+                        element = serializer.serializeNode(node) as HTMLElement;
                         height = getHTMLHeight(element, editorDOM, node.type.name, options);
                         if (height !== node.attrs.height) {
                             heightUpdates.push({ pos, height });
@@ -444,26 +602,59 @@ const createPaginationPlugin = (extension: any) =>
 
                     if (height == null) continue;
 
+                    // Track the most recent Character name for CONT'D labels.
+                    if (nodeType === ScreenplayElement.Character) {
+                        lastCharName = node.textContent.trim();
+                    }
+
                     // Accumulate height on current page
                     pagePos += height;
 
-                    // We keep last 3 nodes for orphan resolution on page break
-                    lastNodes.push({
-                        pos,
-                        type: node.type.name as ScreenplayElement,
-                        height,
-                        positionTop: pagePos - height,
-                    });
+                    // We keep the last 3 nodes for orphan resolution on page break
+                    lastNodes.push({ pos, type: nodeType, height, positionTop: pagePos - height });
 
                     // Page break needed — record it and reset page position
                     if (pagePos > contentHeight) {
+                        // freespace = how much room was left on the page before this node was added
+                        const freespaceBeforeNode = contentHeight - (pagePos - height);
+
+                        // --- Sentence split (Action / Dialogue only) ---
+                        // Tried BEFORE orphan resolution: a successful split keeps the top portion
+                        // on the current page without moving any preceding nodes.
+                        if (
+                            logic?.canSplit &&
+                            freespaceBeforeNode > MIN_SPLIT_FREESPACE &&
+                            height > logic.minSplitHeight
+                        ) {
+                            // Serialize lazily — only needed here when the node was not already dirty.
+                            if (!element) element = serializer.serializeNode(node) as HTMLElement;
+
+                            const split = trySplitNode(node, pos, freespaceBeforeNode, element, editorDOM, options);
+                            if (split) {
+                                breaks.push({
+                                    pos: split.pos,
+                                    pagenum: ++pagenum,
+                                    freespace: Math.max(0, freespaceBeforeNode - split.topHeight),
+                                    // contdName non-empty for dialogue: triggers (MORE)/(CONT'D) labels.
+                                    contdName: logic.showMoreContd ? lastCharName : "",
+                                    // splitNodeType drives the overlay padding-escape in createPageBreakWidget.
+                                    splitNodeType: nodeType,
+                                });
+                                // The bottom half of the split node is the first item on the new page.
+                                pagePos = split.bottomHeight;
+                                lastNodes = new CircularBuffer(3);
+                                lastNodes.push({ pos, type: nodeType, height: split.bottomHeight, positionTop: 0 });
+                                continue; // split handled — skip orphan resolution for this node
+                            }
+                        }
+
                         // --- Orphan resolution ---
-                        // Walk back through the window: if the last fitted node has keepWithNext,
+                        // Walk back through the buffer: if the last fitted node has keepWithNext,
                         // slide the break back to its position (and carry its height to the next page).
                         // Repeat once more for the double-orphan case (e.g. Character → Parenthetical).
                         let breakPos = pos;
                         let carryHeight = height; // cumulative height that moves to the next page
-                        let backCount = 0; // how many nodes slid back to the next page
+                        let backCount = 0; // how many nodes slid back
 
                         for (let back = 1; back <= 2; back++) {
                             const prev = lastNodes.at(back); // at(1) = last fitted, at(2) = one before
@@ -473,27 +664,29 @@ const createPaginationPlugin = (extension: any) =>
                                 carryHeight += prev.height;
                                 backCount = back;
                             } else {
-                                break; // stop as soon as we find a node that may end a page
+                                break; // stop as soon as we find a node that is safe to end a page
                             }
                         }
 
-                        // freespace = space left on the ending page before the first node that moved down.
-                        // lastNodes.at(backCount) is that first node; its positionTop is the accumulated
-                        // page height just before it was added, which equals the used space above it.
+                        // freespace = space left before the first node that moved down.
+                        // lastNodes.at(backCount) is that first node; positionTop is its accumulated
+                        // page height just before it was added — i.e. the used space above it.
                         const firstMovingNode = lastNodes.at(backCount);
                         const freespace = contentHeight - (firstMovingNode?.positionTop ?? pagePos - height);
                         const breakInfo: PageBreakInfo = {
                             pos: breakPos,
                             pagenum: pagenum + 1,
                             freespace: Math.max(0, freespace),
+                            contdName: "", // orphan-resolution breaks are always whole-node
+                            splitNodeType: null,
                         };
                         breaks.push(breakInfo);
                         pagenum++;
                         pagePos = carryHeight;
 
                         // positionTop values in the buffer are page-relative — reset and re-seed
-                        // with the carry nodes (those that moved to the next page) using new-page
-                        // positionTop values, so orphan checking works correctly on the next break.
+                        // with the carry nodes using new-page positionTop values so orphan checking
+                        // works correctly on the next break.
                         const carryNodes: NodeInfo[] = [];
                         let carryTop = 0;
                         for (let back = backCount; back >= 0; back--) {
@@ -504,18 +697,20 @@ const createPaginationPlugin = (extension: any) =>
                         lastNodes = new CircularBuffer(3);
                         for (const n of carryNodes) lastNodes.push(n);
 
-                        // Short-circuit: past the changed range and break matches an old break
-                        // -> the layout is back in sync, copy remaining old breaks and stop.
+                        // Short-circuit: past the changed range and this break matches an old break
+                        // (same position, freespace, and contdName) → layout is back in sync;
+                        // copy the remaining old breaks and stop the loop early.
                         if (!fullRemeasure && pos > maxChangedPos) {
                             const old = oldBreakByPos.get(breakInfo.pos);
-                            if (old && old.info.freespace === breakInfo.freespace) {
+                            if (
+                                old &&
+                                old.info.freespace === breakInfo.freespace &&
+                                old.info.contdName === breakInfo.contdName
+                            ) {
                                 for (let j = old.index + 1; j < mappedOldBreaks.length; j++) {
                                     pagenum++;
-                                    breaks.push({
-                                        pos: mappedOldBreaks[j].pos,
-                                        pagenum,
-                                        freespace: mappedOldBreaks[j].freespace,
-                                    });
+                                    // Spread preserves all fields (contdName, splitNodeType, …); override pagenum only.
+                                    breaks.push({ ...mappedOldBreaks[j], pagenum });
                                 }
                                 break;
                             }
@@ -541,7 +736,10 @@ const createPaginationPlugin = (extension: any) =>
                     fullRemeasure ||
                     breaks.length !== mappedOldBreaks.length ||
                     breaks.some(
-                        (b, i) => b.pos !== mappedOldBreaks[i].pos || b.freespace !== mappedOldBreaks[i].freespace,
+                        (b, i) =>
+                            b.pos !== mappedOldBreaks[i].pos ||
+                            b.freespace !== mappedOldBreaks[i].freespace ||
+                            b.contdName !== mappedOldBreaks[i].contdName,
                     );
 
                 const decset = breaksChanged
