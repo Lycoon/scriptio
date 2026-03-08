@@ -240,7 +240,7 @@
             "a4": "Formato estándar internacional. Común en Europa y la mayoría de los países."
         },
         "sceneHeadings": "Encabezados de escena",
-        "bold": "Negrita",
+        "bold": "Bold",
         "boldDesc": "Los encabezados de escena aparecerán en negrita",
         "extraSpace": "Espacio extra arriba",
         "extraSpaceDesc": "Añadir espacio extra antes de los encabezados de escena",
@@ -249,8 +249,30 @@
         "duplicateRight": "Duplicar en margen derecho",
         "duplicateRightDesc": "Mostrar número en ambos lados",
         "continuation": "Continuación",
-        "moreTitle": "Aplicar etiqueta de continuación de diálogo (pie de página)",
-        "contdTitle": "Aplicar etiqueta de continuación de personaje (inicio de página)"
+        "moreTitle": "(MORE) Label",
+        "contdTitle": "(CONT'D) Label",
+        "margins": "Márgenes",
+        "marginLeft": "L",
+        "marginRight": "R",
+        "marginElements": {
+            "action": "Acción",
+            "scene": "Encabezado de escena",
+            "character": "Personaje",
+            "dialogue": "Diálogo",
+            "parenthetical": "Paréntesis",
+            "transition": "Transición",
+            "section": "Sección"
+        },
+        "elements": "Element Configuration",
+        "style": "Style",
+        "alignment": "Alignment",
+        "italic": "Italic",
+        "underline": "Underline",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "sceneSpacing": "Spacing",
+        "sceneSpacingDesc": "Spacing above scene headings"
     },
     "projectSettings": {
         "titleLabel": "Título",

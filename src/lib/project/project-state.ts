@@ -60,14 +60,41 @@ export type ProjectMetadata = {
     author: string;
 };
 
+export type ElementMargin = { left: number; right: number }; // values in inches
+
+/** Default margins per screenplay element (total from page edge, in inches). */
+export const DEFAULT_ELEMENT_MARGINS: Record<string, ElementMargin> = {
+    action: { left: 1.5, right: 1.0 },
+    scene: { left: 1.5, right: 1.0 },
+    character: { left: 4.0, right: 1.0 },
+    dialogue: { left: 2.8, right: 2.0 },
+    parenthetical: { left: 3.5, right: 3.0 },
+    transition: { left: 1.5, right: 1.0 },
+    section: { left: 1.5, right: 1.0 },
+};
+
+export type ElementStyle = { bold?: boolean; italic?: boolean; underline?: boolean; align?: "left" | "center" | "right" };
+
+/** Default styling per screenplay element */
+export const DEFAULT_ELEMENT_STYLES: Record<string, ElementStyle> = {
+    action: { align: "left" },
+    scene: { bold: true, align: "left" },
+    character: { align: "left" },
+    dialogue: { align: "left" },
+    parenthetical: { align: "left" },
+    transition: { align: "right" },
+    section: { align: "center", underline: true },
+};
+
 export type LayoutData = {
     pageSize: PageFormat;
     displaySceneNumbers: boolean;
-    sceneHeadingBold: boolean;
-    sceneHeadingDoubleSpace: boolean;
+    sceneHeadingSpacing: number;
     sceneNumberOnRight: boolean;
     contdLabel: string;
     moreLabel: string;
+    elementMargins: Record<string, ElementMargin>;
+    elementStyles: Record<string, ElementStyle>;
 };
 
 export type ProjectData = {

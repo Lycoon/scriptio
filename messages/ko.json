@@ -240,7 +240,7 @@
             "a4": "국제 표준 형식. 유럽 및 대부분의 국가에서 통용됩니다."
         },
         "sceneHeadings": "씬 헤딩",
-        "bold": "굵게",
+        "bold": "Bold",
         "boldDesc": "씬 헤딩이 굵게 표시됩니다",
         "extraSpace": "위 추가 간격",
         "extraSpaceDesc": "씬 헤딩 앞에 추가 간격을 삽입합니다",
@@ -249,8 +249,30 @@
         "duplicateRight": "오른쪽 여백에 복제",
         "duplicateRightDesc": "양쪽에 번호 표시",
         "continuation": "이어지기",
-        "moreTitle": "대사 이어지기 레이블 적용 (페이지 하단)",
-        "contdTitle": "캐릭터 이어지기 레이블 적용 (페이지 상단)"
+        "moreTitle": "(MORE) Label",
+        "contdTitle": "(CONT'D) Label",
+        "margins": "여백",
+        "marginLeft": "좌",
+        "marginRight": "우",
+        "marginElements": {
+            "action": "액션",
+            "scene": "씬 헤딩",
+            "character": "캐릭터",
+            "dialogue": "대사",
+            "parenthetical": "괄호 지시",
+            "transition": "전환",
+            "section": "섹션"
+        },
+        "elements": "Element Configuration",
+        "style": "Style",
+        "alignment": "Alignment",
+        "italic": "Italic",
+        "underline": "Underline",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "sceneSpacing": "Spacing",
+        "sceneSpacingDesc": "Spacing above scene headings"
     },
     "projectSettings": {
         "titleLabel": "제목",

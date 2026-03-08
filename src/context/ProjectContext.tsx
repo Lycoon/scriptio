@@ -20,6 +20,7 @@ import {
     ConnectionStatus,
     LayoutData,
     useProjectYjs,
+    ElementStyle,
 } from "@src/lib/project/project-state";
 import { Comment, Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
@@ -75,16 +76,18 @@ export interface ProjectContextType {
     setPageFormat: (format: PageFormat) => void;
     displaySceneNumbers: boolean;
     setDisplaySceneNumbers: (display: boolean) => void;
-    sceneHeadingBold: boolean;
-    setSceneHeadingBold: (bold: boolean) => void;
-    sceneHeadingDoubleSpace: boolean;
-    setSceneHeadingDoubleSpace: (doubleSpace: boolean) => void;
+        sceneHeadingSpacing: number;
+    setSceneHeadingSpacing: (spacing: number) => void;
     sceneNumberOnRight: boolean;
     setSceneNumberOnRight: (onRight: boolean) => void;
     contdLabel: string;
     setContdLabel: (label: string) => void;
     moreLabel: string;
     setMoreLabel: (label: string) => void;
+    elementMargins: Record<string, { left: number; right: number }>;
+    setElementMargins: (margins: Record<string, { left: number; right: number }>) => void;
+    elementStyles: Record<string, ElementStyle>;
+    setElementStyles: (styles: Record<string, ElementStyle>) => void;
 
     // Search state
     searchTerm: string;
@@ -146,16 +149,18 @@ const defaultContextValue: ProjectContextType = {
     setPageFormat: () => {},
     displaySceneNumbers: false,
     setDisplaySceneNumbers: () => {},
-    sceneHeadingBold: true,
-    setSceneHeadingBold: () => {},
-    sceneHeadingDoubleSpace: false,
-    setSceneHeadingDoubleSpace: () => {},
-    sceneNumberOnRight: false,
+            sceneHeadingSpacing: 1,
+    setSceneHeadingSpacing: () => {},
+            sceneNumberOnRight: false,
     setSceneNumberOnRight: () => {},
     contdLabel: "(CONT'D)",
     setContdLabel: () => {},
     moreLabel: "(MORE)",
     setMoreLabel: () => {},
+    elementMargins: {},
+    setElementMargins: () => {},
+    elementStyles: {},
+    setElementStyles: () => {},
     characters: {},
     locations: {},
     scenes: [],
@@ -249,38 +254,26 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     // Repository state - loaded dynamically
     const [repository, setRepository] = useState<ProjectRepository | null>(null);
-    const [screenplay, updateScreenplay] = useState<Screenplay>([]);
-    const [scenes, updateScenes] = useState<Scene[]>([]);
-    const [characters, updateCharacters] = useState<CharacterMap>();
-    const [locations, updateLocations] = useState<LocationMap>();
 
-    // Local state
     const [project, setProject] = useState<ProjectMembershipPayload | null>(null);
     const [editor, setEditor] = useState<Editor | null>(null);
-    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
-    const [users, setUsers] = useState<CollaboratorInfo[]>([]);
-
-    // Screenplay format state
-    const [selectedElement, setSelectedElementState] = useState<ScreenplayElement>(
-        ScreenplayElement.Action,
-    );
+    const [screenplay, setScreenplay] = useState<Screenplay>([]);
+    const [characters, setCharacters] = useState<CharacterMap | undefined>(undefined);
+    const [locations, setLocations] = useState<LocationMap | undefined>(undefined);
+    const [scenes, setScenes] = useState<Scene[]>([]);
+    const [selectedElement, setSelectedElementState] = useState<ScreenplayElement>(ScreenplayElement.Action);
     const [selectedStyles, setSelectedStylesState] = useState<Style>(Style.None);
-
-    // Character dialogue highlighting state
     const [highlightedCharacters, setHighlightedCharacters] = useState<Set<string>>(new Set());
-
-    // Page format state
     const [pageFormat, setPageFormatState] = useState<PageFormat>("LETTER");
-
-    // Display scene numbers state
     const [displaySceneNumbers, setDisplaySceneNumbersState] = useState<boolean>(false);
-
-    // Scene heading formatting state
-    const [sceneHeadingBold, setSceneHeadingBoldState] = useState<boolean>(true);
-    const [sceneHeadingDoubleSpace, setSceneHeadingDoubleSpaceState] = useState<boolean>(false);
+    const [sceneHeadingSpacing, setSceneHeadingSpacingState] = useState<number>(1);
     const [sceneNumberOnRight, setSceneNumberOnRightState] = useState<boolean>(false);
     const [contdLabel, setContdLabelState] = useState<string>("(CONT'D)");
     const [moreLabel, setMoreLabelState] = useState<string>("(MORE)");
+    const [elementMargins, setElementMarginsState] = useState<Record<string, { left: number; right: number }>>({});
+    const [elementStyles, setElementStylesState] = useState<Record<string, ElementStyle>>({});
+    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
+    const [users, setUsers] = useState<CollaboratorInfo[]>([]);
 
     // Search state
     const [searchTerm, setSearchTermState] = useState<string>("");
@@ -368,8 +361,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         const unsubscribeLayout = repository.observeLayout((layout: Partial<LayoutData>) => {
             const _pageSize = layout.pageSize;
             const _displaySceneNumbers = layout.displaySceneNumbers;
-            const _sceneHeadingBold = layout.sceneHeadingBold;
-            const _sceneHeadingDoubleSpace = layout.sceneHeadingDoubleSpace;
+            
+            const _sceneHeadingSpacing = layout.sceneHeadingSpacing;
             const _sceneNumberOnRight = layout.sceneNumberOnRight;
             const _contdLabel = layout.contdLabel;
             const _moreLabel = layout.moreLabel;
@@ -380,11 +373,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (_displaySceneNumbers !== undefined) {
                 setDisplaySceneNumbersState(_displaySceneNumbers);
             }
-            if (_sceneHeadingBold !== undefined) {
-                setSceneHeadingBoldState(_sceneHeadingBold);
-            }
-            if (_sceneHeadingDoubleSpace !== undefined) {
-                setSceneHeadingDoubleSpaceState(_sceneHeadingDoubleSpace);
+            
+            if (_sceneHeadingSpacing !== undefined) {
+                setSceneHeadingSpacingState(_sceneHeadingSpacing);
             }
             if (_sceneNumberOnRight !== undefined) {
                 setSceneNumberOnRightState(_sceneNumberOnRight);
@@ -394,6 +385,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             }
             if (_moreLabel !== undefined) {
                 setMoreLabelState(_moreLabel);
+            }
+            if (layout.elementMargins !== undefined) {
+                setElementMarginsState(layout.elementMargins);
+            }
+            if (layout.elementStyles !== undefined) {
+                setElementStylesState(layout.elementStyles);
             }
         });
 
@@ -476,6 +473,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setEditor(newEditor);
     }, []);
 
+    const updateScreenplay = useCallback((newScreenplay: Screenplay) => {
+        setScreenplay(newScreenplay);
+    }, []);
+
+    const updateScenes = useCallback((newScenes: Scene[]) => {
+        setScenes(newScenes);
+    }, []);
+
+    const updateCharacters = useCallback((newCharacters: CharacterMap) => {
+        setCharacters(newCharacters);
+    }, []);
+
+    const updateLocations = useCallback((newLocations: LocationMap) => {
+        setLocations(newLocations);
+    }, []);
+
     const updateConnectionStatus = useCallback((status: ConnectionStatus) => {
         setConnectionStatus(status);
     }, []);
@@ -517,18 +530,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
-    const setSceneHeadingBold = useCallback(
-        (bold: boolean) => {
-            setSceneHeadingBoldState(bold);
-            repository?.setSceneHeadingBold(bold);
-        },
-        [repository],
-    );
-
-    const setSceneHeadingDoubleSpace = useCallback(
-        (doubleSpace: boolean) => {
-            setSceneHeadingDoubleSpaceState(doubleSpace);
-            repository?.setSceneHeadingDoubleSpace(doubleSpace);
+    const setSceneHeadingSpacing = useCallback(
+        (spacing: number) => {
+            setSceneHeadingSpacingState(spacing);
+            repository?.setSceneHeadingSpacing(spacing);
         },
         [repository],
     );
@@ -553,6 +558,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         (label: string) => {
             setMoreLabelState(label);
             repository?.setMoreLabel(label);
+        },
+        [repository],
+    );
+
+    const setElementMargins = useCallback(
+        (margins: Record<string, { left: number; right: number }>) => {
+            setElementMarginsState(margins);
+            repository?.setElementMargins(margins);
+        },
+        [repository],
+    );
+
+    const setElementStyles = useCallback(
+        (styles: Record<string, ElementStyle>) => {
+            setElementStylesState(styles);
+            repository?.setElementStyles(styles);
         },
         [repository],
     );
@@ -634,16 +655,18 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setPageFormat,
             displaySceneNumbers,
             setDisplaySceneNumbers,
-            sceneHeadingBold,
-            setSceneHeadingBold,
-            sceneHeadingDoubleSpace,
-            setSceneHeadingDoubleSpace,
+            sceneHeadingSpacing,
+            setSceneHeadingSpacing,
             sceneNumberOnRight,
             setSceneNumberOnRight,
             contdLabel,
             setContdLabel,
             moreLabel,
             setMoreLabel,
+            elementMargins,
+            setElementMargins,
+            elementStyles,
+            setElementStyles,
             screenplay,
             scenes,
             updateScenes,
@@ -695,16 +718,18 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setPageFormat,
             displaySceneNumbers,
             setDisplaySceneNumbers,
-            sceneHeadingBold,
-            setSceneHeadingBold,
-            sceneHeadingDoubleSpace,
-            setSceneHeadingDoubleSpace,
+            sceneHeadingSpacing,
+            setSceneHeadingSpacing,
             sceneNumberOnRight,
             setSceneNumberOnRight,
             contdLabel,
             setContdLabel,
             moreLabel,
             setMoreLabel,
+            elementMargins,
+            setElementMargins,
+            elementStyles,
+            setElementStyles,
             screenplay,
             scenes,
             updateScenes,

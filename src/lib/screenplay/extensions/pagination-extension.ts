@@ -10,7 +10,7 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 // ---------------------------------------------------------------------------
 
 /** Matches --line-height in scriptio.css. Used for split thresholds. */
-const LINE_HEIGHT = 17; // px
+const LINE_HEIGHT = 16; // px
 
 /** Minimum freespace (in px) on the current page to even attempt a sentence split.
  *  Below this, it is not worth splitting — just move the whole node to the next page. */
@@ -293,16 +293,17 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationPlus
     if (breakInfo.contdName) {
         // (MORE) — centred at the dialogue column, one line above the footer area.
         // CSS: bottom: calc(100% - 1lh) positions it just after the last content line on page N.
+        // Label text comes from the --more-label CSS variable via ::after.
         const moreEl = document.createElement("div");
         moreEl.className = "page-more-overlay";
-        moreEl.textContent = "(MORE)";
         overlay.appendChild(moreEl);
 
         // CHARACTER (CONT'D) — left-aligned at the character column, one line before the new content.
         // CSS: top: calc(100% - 1lh) positions it just before the first content line on page N+1.
+        // textContent holds the character name; the label comes from --contd-label via ::after.
         const contdEl = document.createElement("div");
         contdEl.className = "page-contd-overlay";
-        contdEl.textContent = `${breakInfo.contdName} (CONT'D)`;
+        contdEl.textContent = breakInfo.contdName;
         overlay.appendChild(contdEl);
     }
 
@@ -311,19 +312,20 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationPlus
     return container;
 }
 
-function createLastPageWidget(pagenum: number, options: PaginationPlusOptions): HTMLElement {
+function createLastPageWidget(pagenum: number, freespace: number, options: PaginationPlusOptions): HTMLElement {
     const container = document.createElement("div");
     container.className = "pagination-last-page";
     container.contentEditable = "false";
 
+    const spacerHeight = freespace + options.marginBottom;
     const spacer = document.createElement("div");
     spacer.className = "pagination-spacer";
-    spacer.style.height = `${options.marginBottom}px`;
+    spacer.style.height = `${spacerHeight}px`;
 
     const overlay = document.createElement("div");
     overlay.className = "pagination-overlay";
     overlay.style.top = "0";
-    overlay.style.height = `${options.marginBottom}px`;
+    overlay.style.height = `${spacerHeight}px`;
 
     const footerArea = document.createElement("div");
     footerArea.className = "pagination-footer-area";
@@ -336,7 +338,12 @@ function createLastPageWidget(pagenum: number, options: PaginationPlusOptions): 
     return container;
 }
 
-function buildDecorations(doc: any, breaks: PageBreakInfo[], options: PaginationPlusOptions): DecorationSet {
+function buildDecorations(
+    doc: any,
+    breaks: PageBreakInfo[],
+    lastPageFreespace: number,
+    options: PaginationPlusOptions,
+): DecorationSet {
     const decorations: Decoration[] = [];
 
     // First page top margin / header
@@ -360,7 +367,7 @@ function buildDecorations(doc: any, breaks: PageBreakInfo[], options: Pagination
     // Last page bottom margin / footer
     const lastPagenum = breaks.length > 0 ? breaks[breaks.length - 1].pagenum : 1;
     decorations.push(
-        Decoration.widget(doc.content.size, createLastPageWidget(lastPagenum, options), {
+        Decoration.widget(doc.content.size, createLastPageWidget(lastPagenum, lastPageFreespace, options), {
             side: 1,
             key: `page-${lastPagenum}-footer`,
         }),
@@ -500,6 +507,7 @@ interface PaginationState {
     decset: DecorationSet;
     heightUpdates: { pos: number; height: number }[];
     breaks: PageBreakInfo[];
+    lastPageFreespace: number;
 }
 
 const createPaginationPlugin = (extension: any) =>
@@ -510,6 +518,7 @@ const createPaginationPlugin = (extension: any) =>
                 decset: DecorationSet.empty,
                 heightUpdates: [],
                 breaks: [],
+                lastPageFreespace: 0,
             }),
             apply(tr, value: PaginationState, oldState, newState): PaginationState {
                 const options = extension.options as PaginationPlusOptions;
@@ -527,9 +536,10 @@ const createPaginationPlugin = (extension: any) =>
                 // at the replaced node's position
                 if (heightUpdate) {
                     return {
-                        decset: buildDecorations(newState.doc, value.breaks, options),
+                        decset: buildDecorations(newState.doc, value.breaks, value.lastPageFreespace, options),
                         heightUpdates: [],
                         breaks: value.breaks,
+                        lastPageFreespace: value.lastPageFreespace,
                     };
                 }
 
@@ -720,6 +730,11 @@ const createPaginationPlugin = (extension: any) =>
                     }
                 }
 
+                // Compute remaining space on the last page so the last-page widget
+                // can pad it to full page height (mirrors how page-break widgets
+                // account for freespace on every other page).
+                const lastPageFreespace = Math.max(0, contentHeight - pagePos);
+
                 // Heights need committing — appendTransaction will fire setNodeMarkup,
                 // then the heightUpdate apply will rebuild decorations from these breaks.
                 // Just remap old decorations for now (never rendered — view updates only
@@ -729,6 +744,7 @@ const createPaginationPlugin = (extension: any) =>
                         decset: value.decset.map(tr.mapping, tr.doc),
                         heightUpdates,
                         breaks,
+                        lastPageFreespace,
                     };
                 }
 
@@ -745,10 +761,10 @@ const createPaginationPlugin = (extension: any) =>
                     );
 
                 const decset = breaksChanged
-                    ? buildDecorations(newState.doc, breaks, options)
+                    ? buildDecorations(newState.doc, breaks, lastPageFreespace, options)
                     : value.decset.map(tr.mapping, tr.doc);
 
-                return { decset, heightUpdates: [], breaks };
+                return { decset, heightUpdates: [], breaks, lastPageFreespace };
             },
         },
         appendTransaction(transactions, oldState, newState) {
@@ -813,6 +829,10 @@ export const ScriptioPagination = Extension.create<PaginationPlusOptions>({
                     pointer-events: none;
                     padding-left: 0 !important;
                     padding-right: 0 !important;
+                    font-weight: normal !important;
+                    font-style: normal !important;
+                    text-decoration: none !important;
+                    text-transform: none !important;
                 }
 
                 .pagination-overlay {

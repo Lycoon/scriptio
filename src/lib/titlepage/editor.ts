@@ -16,7 +16,7 @@ import { TitlePageExtensions } from "./nodes";
 import { ScriptioBold, ScriptioItalic, ScriptioUnderline } from "../screenplay/nodes";
 import { Placeholder } from "../screenplay/extensions/placeholder-extension";
 import { getStylesFromMarks, SCREENPLAY_FORMATS } from "../screenplay/editor";
-import { PaginationPlus } from "tiptap-pagination-plus";
+import { ScriptioPagination } from "../screenplay/extensions/pagination-extension";
 
 import { titlePageMetadataRef } from "./metadata-ref";
 
@@ -269,11 +269,14 @@ export const useTitlePageEditor = () => {
                           }),
                       ]
                     : []),
-                PaginationPlus.configure({
+                ScriptioPagination.configure({
                     pageGap: 20,
-                    contentMarginTop: 96, // Full 1in top margin — no header on title page
+                    headerLeft: "",
                     headerRight: "",
+                    footerLeft: "",
                     footerRight: "",
+                    customHeader: {},
+                    customFooter: {},
                     ...SCREENPLAY_FORMATS[pageSize],
                 }),
             ],

@@ -1,5 +1,9 @@
 @import "./fonts.css";
 
+:root {
+    --font-screenplay: "CourierPrime", "FreeMono", "Cousine", "SarasaMonoSC", monospace;
+}
+
 .rm-page-header,
 .rm-page-footer,
 .rm-pagination-gap {
@@ -21,19 +25,22 @@
 }
 
 .ProseMirror {
-    --font-screenplay: "CourierPrime", "FreeMono", "Cousine", "SarasaMonoSC", monospace;
     --font-size: 12pt;
 
-    --character-l-margin: 4in; /* 1.5in page + 2.5in element */
-    --dialogue-l-margin: 2.8in; /* 1.5in page + 1.3in element */
-    --dialogue-r-margin: 2in; /* 1in page + 1in element */
-    --parenthetical-l-margin: 3.5in; /* 1.5in page + 2in element */
-    --parenthetical-r-margin: 3in; /* 1in page + 2in element */
+    --action-l-margin: 1.5in;
+    --action-r-margin: 1in;
+    --scene-l-margin: 1.5in;
+    --scene-r-margin: 1in;
+    --character-l-margin: 4in;
+    --character-r-margin: 1in;
+    --dialogue-l-margin: 2.8in;
+    --dialogue-r-margin: 2in;
+    --parenthetical-l-margin: 3.5in;
+    --parenthetical-r-margin: 3in;
+    --transition-l-margin: 1.5in;
+    --transition-r-margin: 1in;
     --line-height: 16px;
 
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 10%;
     border: none !important;
     background-color: var(--editor-script-bg) !important;
 
@@ -55,8 +62,8 @@
         margin-top: var(--line-height);
         margin-bottom: 0;
         min-height: 1lh;
-        padding-left: 1.5in;
-        padding-right: 1in;
+        padding-left: var(--action-l-margin);
+        padding-right: var(--action-r-margin);
         box-sizing: border-box;
     }
 
@@ -104,25 +111,56 @@
         height: var(--line-height);
     }
 
+    .action {
+        text-align: var(--action-align, left) !important;
+        font-weight: var(--action-weight, normal);
+        font-style: var(--action-style, normal);
+        text-decoration: var(--action-decoration, none);
+    }
+
     .scene {
         position: relative;
         overflow: visible;
         background-color: none;
         margin-top: 1lh;
         text-transform: uppercase;
-        font-weight: bold;
+        font-weight: var(--scene-weight, bold);
+        font-style: var(--scene-style, normal);
+        text-decoration: var(--scene-decoration, none);
+        text-align: var(--scene-align, left) !important;
         counter-increment: scenenumber;
+        padding-left: var(--scene-l-margin) !important;
+        padding-right: var(--scene-r-margin) !important;
     }
 
+    /* Left scene number (CSS counter via ::before) */
     .scene::before {
         position: absolute;
         content: counter(scenenumber);
         right: 100%;
-        margin-right: 50px;
+        margin-right: -120px;
     }
 
-    /* Hide scene numbers when disabled */
-    &.hide-scene-numbers .scene::before {
+    /* Right scene number (CSS counter via ::after, hidden by default) */
+    .scene::after {
+        position: absolute;
+        content: counter(scenenumber);
+        top: 0;
+        left: 100%;
+        margin-left: -85px;
+        user-select: none;
+        pointer-events: none;
+        display: none;
+    }
+
+    /* Show right scene number when enabled */
+    &.scene-number-right .scene::after {
+        display: block;
+    }
+
+    /* Hide all scene numbers when disabled */
+    &.hide-scene-numbers .scene::before,
+    &.hide-scene-numbers .scene::after {
         display: none;
     }
 
@@ -132,39 +170,27 @@
     }
 
     /* Double margin-top for scene headings */
-    &.scene-heading-double-space .scene {
-        margin-top: 2lh;
-    }
-
-    /* Right scene number widget (inserted by scene-number-right-extension) */
-    .scene-number-right {
-        position: absolute;
-        left: 100%;
-        margin-left: 20px;
-        font-weight: bold;
-        user-select: none;
-        pointer-events: none;
-    }
-
-    /* Match scene heading font weight when bold is disabled */
-    &.scene-heading-normal .scene-number-right {
-        font-weight: normal;
-    }
-
-    /* Hide right scene number widget when scene numbers are disabled */
-    &.hide-scene-numbers .scene-number-right {
-        display: none;
-    }
+    &.scene-heading-spacing-1\.5 .scene { margin-top: 1.5lh; }
+    &.scene-heading-spacing-2 .scene { margin-top: 2lh; }
 
     /* Dialogue */
     .dialogue {
         margin-top: 0;
+        font-weight: var(--dialogue-weight, normal);
+        font-style: var(--dialogue-style, normal);
+        text-decoration: var(--dialogue-decoration, none);
+        text-align: var(--dialogue-align, left) !important;
         padding-left: var(--dialogue-l-margin) !important;
         padding-right: var(--dialogue-r-margin) !important;
     }
 
     .character {
+        font-weight: var(--character-weight, normal);
+        font-style: var(--character-style, normal);
+        text-decoration: var(--character-decoration, none);
+        text-align: var(--character-align, left) !important;
         padding-left: var(--character-l-margin) !important;
+        padding-right: var(--character-r-margin) !important;
         text-transform: uppercase;
     }
 
@@ -180,6 +206,10 @@
     .parenthetical {
         position: relative;
         margin-top: 0;
+        font-weight: var(--parenthetical-weight, normal);
+        font-style: var(--parenthetical-style, normal);
+        text-decoration: var(--parenthetical-decoration, none);
+        text-align: var(--parenthetical-align, left) !important;
         padding-left: var(--parenthetical-l-margin) !important;
         padding-right: var(--parenthetical-r-margin) !important;
     }
@@ -218,7 +248,12 @@
     .transition {
         position: relative;
         text-transform: uppercase;
-        text-align: right !important;
+        font-weight: var(--transition-weight, normal);
+        font-style: var(--transition-style, normal);
+        text-decoration: var(--transition-decoration, none);
+        text-align: var(--transition-align, right) !important;
+        padding-left: var(--transition-l-margin) !important;
+        padding-right: var(--transition-r-margin) !important;
     }
 
     .transition::after {
@@ -227,9 +262,13 @@
 
     .section {
         text-transform: uppercase;
-        text-align: center !important;
-        text-decoration: underline;
         counter-increment: actnumber;
+        text-align: var(--section-align, center) !important;
+        font-weight: var(--section-weight, normal);
+        font-style: var(--section-style, normal);
+        text-decoration: var(--section-decoration, underline);
+        padding-left: var(--section-l-margin) !important;
+        padding-right: var(--section-r-margin) !important;
     }
 
     /* Note */
@@ -329,14 +368,8 @@
         border-bottom-color: rgba(255, 213, 0, 0.8);
     }
 
-    /* Scene bookmark decoration */
-    .scene-bookmark {
-        display: flow-root; /* Prevent bleeding between page breaks because of display: block */
-        position: relative;
-    }
-
-    .scene-bookmark::after {
-        content: "";
+    /* Scene bookmark marker (widget decoration inserted by scene-bookmark-extension) */
+    .scene-bookmark-marker {
         position: absolute;
         top: 0;
         left: -4px;
@@ -346,6 +379,7 @@
         clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
         border-radius: 0 0 2px 2px;
         pointer-events: none;
+        user-select: none;
     }
 
     /* Page position marker (applied by page-position-extension via DOM) */
@@ -376,12 +410,20 @@
         text-align: center;
     }
 
+    .page-more-overlay::after {
+        content: var(--more-label, "(MORE)");
+    }
+
     .page-contd-overlay {
         top: calc(100% - 1lh);
         left: 0;
         width: 100%;
         padding-left: var(--character-l-margin);
         text-transform: uppercase;
+    }
+
+    .page-contd-overlay::after {
+        content: " " var(--contd-label, "(CONT'D)");
     }
 }
 

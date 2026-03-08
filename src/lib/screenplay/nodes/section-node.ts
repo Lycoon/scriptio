@@ -38,6 +38,14 @@ export const SectionNode = Node.create<SectionNodeOptions>({
                     return cls ? { class: cls } : {};
                 },
             },
+            height: {
+                default: null,
+                renderHTML: (attributes) => attributes.height != null ? { "data-height": attributes.height } : {},
+                parseHTML: (element) => {
+                    const v = element.getAttribute("data-height");
+                    return v !== null ? parseInt(v, 10) : null;
+                },
+            },
         };
     },
 

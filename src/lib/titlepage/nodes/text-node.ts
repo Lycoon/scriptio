@@ -34,6 +34,15 @@ export const TitlePageTextNode = Node.create({
                     return { class: cls };
                 },
             },
+            height: {
+                default: null,
+                renderHTML: (attributes: Record<string, any>) =>
+                    attributes.height != null ? { "data-height": attributes.height } : {},
+                parseHTML: (element: HTMLElement) => {
+                    const v = element.getAttribute("data-height");
+                    return v !== null ? parseInt(v, 10) : null;
+                },
+            },
         };
     },
 
