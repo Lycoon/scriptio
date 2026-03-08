@@ -557,7 +557,7 @@ const createPaginationPlugin = (extension: any) =>
 
                 // --- Single pass: measure dirty heights + compute page breaks ---
                 let editor = extension.editor as Editor;
-                if (editor.isInitialized && !extension.editor.view?.dom) return value;
+                if (!editor.isInitialized || !extension.editor.view?.dom) return value;
 
                 const editorDOM = extension.editor.view.dom as HTMLElement;
                 const serializer = DOMSerializer.fromSchema(newState.schema);
