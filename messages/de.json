@@ -240,7 +240,7 @@
             "a4": "Internationales Standardformat. In Europa und den meisten anderen Ländern üblich."
         },
         "sceneHeadings": "Szenenüberschriften",
-        "bold": "Fett",
+        "bold": "Bold",
         "boldDesc": "Szenenüberschriften werden fett dargestellt",
         "extraSpace": "Zusätzlicher Abstand oben",
         "extraSpaceDesc": "Zusätzlichen Abstand vor Szenenüberschriften einfügen",
@@ -249,8 +249,30 @@
         "duplicateRight": "Im rechten Rand duplizieren",
         "duplicateRightDesc": "Nummer auf beiden Seiten anzeigen",
         "continuation": "Fortsetzung",
-        "moreTitle": "Dialogfortsetzungskürzel anwenden (unten auf der Seite)",
-        "contdTitle": "Figurfortsetzungskürzel anwenden (oben auf der Seite)"
+        "moreTitle": "(MORE) Label",
+        "contdTitle": "(CONT'D) Label",
+        "margins": "Ränder",
+        "marginLeft": "L",
+        "marginRight": "R",
+        "marginElements": {
+            "action": "Handlung",
+            "scene": "Szenenüberschrift",
+            "character": "Figur",
+            "dialogue": "Dialog",
+            "parenthetical": "Regieanweisung",
+            "transition": "Übergang",
+            "section": "Abschnitt"
+        },
+        "elements": "Element Configuration",
+        "style": "Style",
+        "alignment": "Alignment",
+        "italic": "Italic",
+        "underline": "Underline",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "sceneSpacing": "Spacing",
+        "sceneSpacingDesc": "Spacing above scene headings"
     },
     "projectSettings": {
         "titleLabel": "Titel",

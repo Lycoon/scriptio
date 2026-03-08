@@ -1,6 +1,5 @@
 import { jsPDF, GState } from "jspdf";
-import { PageFormat } from "@src/lib/utils/enums";
-import { getFontForCodePoint, ScriptFont } from "./pdf-utils";
+import { getFontForCodePoint, ScriptFont, splitByScript } from "./pdf-utils";
 
 /** A contiguous run of characters sharing the same font and style. */
 export interface TextRun {
@@ -16,8 +15,8 @@ export interface TextRun {
 /** A single visual line as laid out by the browser. */
 export interface VisualLine {
     runs: TextRun[];
-    y: number; // browser Y position in pixels (for page-break detection)
-    type?: string; // e.g. "dialogue", "character", "scene"
+    y: number; // browser Y position in pixels (for line-spacing within a page)
+    type?: string; // e.g. "dialogue", "character", "scene", "__page_break__"
 }
 
 /** Font file descriptor for registration in jsPDF. */
@@ -45,19 +44,6 @@ const PAGE_RIGHT = 72;
 const HEADER_Y = 36;
 
 /**
- * If two consecutive lines are separated by more than this many browser pixels,
- * a PDF page break is inserted. The pagination library inserts a visual gap of
- * roughly 20 px plus the page margins, so 50 px comfortably detects those gaps.
- */
-const PAGE_BREAK_THRESHOLD = 50;
-
-/** PDF page dimensions in points. */
-const PDF_PAGE_SIZES: Record<PageFormat, { width: number; height: number }> = {
-    LETTER: { width: 612, height: 792 },
-    A4: { width: 595.28, height: 841.89 },
-};
-
-/**
  * All font files to register with jsPDF.
  */
 const FONT_ENTRIES: FontEntry[] = [
@@ -83,6 +69,14 @@ const FONT_ENTRIES: FontEntry[] = [
     { filename: "SarasaMonoSC-BoldItalic.ttf", family: "SarasaMonoSC", style: "bolditalic" },
 ];
 
+/** Font entries grouped by family for lazy loading. */
+const FONT_FAMILIES = new Map<string, FontEntry[]>();
+for (const entry of FONT_ENTRIES) {
+    const list = FONT_FAMILIES.get(entry.family) ?? [];
+    list.push(entry);
+    FONT_FAMILIES.set(entry.family, list);
+}
+
 /** Derive the jsPDF font-style string from bold/italic flags. */
 const jsPDFStyle = (bold: boolean, italic: boolean): string => {
     if (bold && italic) return "bolditalic";
@@ -101,6 +95,48 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
     return btoa(binary);
 };
 
+/**
+ * Lazily loads font families into jsPDF on first use.
+ * When a family is requested, all 4 variants (normal, bold, italic, bolditalic)
+ * are fetched and registered in a single batch.
+ */
+class FontLoader {
+    private loaded = new Set<string>();
+    private pending = new Map<string, Promise<void>>();
+
+    async ensureFont(doc: jsPDF, family: string, baseUrl: string): Promise<void> {
+        if (this.loaded.has(family)) return;
+        if (this.pending.has(family)) return this.pending.get(family);
+
+        const entries = FONT_FAMILIES.get(family);
+        if (!entries) return;
+
+        const promise = this.loadFamily(doc, entries, baseUrl);
+        this.pending.set(family, promise);
+        await promise;
+        this.loaded.add(family);
+        this.pending.delete(family);
+    }
+
+    private async loadFamily(doc: jsPDF, entries: FontEntry[], baseUrl: string): Promise<void> {
+        const fetched = new Map<string, string>();
+        for (const entry of entries) {
+            let base64 = fetched.get(entry.filename);
+            if (!base64) {
+                const response = await fetch(`${baseUrl}/fonts/${entry.filename}`);
+                if (!response.ok) {
+                    console.warn(`Failed to load font: ${entry.filename}`);
+                    continue;
+                }
+                base64 = arrayBufferToBase64(await response.arrayBuffer());
+                fetched.set(entry.filename, base64);
+            }
+            doc.addFileToVFS(entry.filename, base64);
+            doc.addFont(entry.filename, entry.family, entry.style);
+        }
+    }
+}
+
 export type WorkerMessage =
     | { type: "START"; payload: WorkerPayload }
     | { type: "PROGRESS"; progress: number }
@@ -109,7 +145,8 @@ export type WorkerMessage =
 
 export interface WorkerPayload {
     baseUrl: string;
-    format: PageFormat;
+    pageWidth: number; // PDF page width in points
+    pageHeight: number; // PDF page height in points
     watermark: boolean;
     password?: string;
     author: string;
@@ -134,7 +171,7 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
 };
 
 async function generatePdf(payload: WorkerPayload): Promise<Blob> {
-    const pageSize = PDF_PAGE_SIZES[payload.format];
+    const pageSize = { width: payload.pageWidth, height: payload.pageHeight };
 
     // ── Create jsPDF document ────────────────────────────────────────────
     const doc = new jsPDF({
@@ -148,24 +185,24 @@ async function generatePdf(payload: WorkerPayload): Promise<Blob> {
 
     self.postMessage({ type: "PROGRESS", progress: 5 });
 
-    // ── Load & register every font variant ──────────────────────────────
-    await loadFonts(doc, payload.baseUrl, (p) => {
-        self.postMessage({ type: "PROGRESS", progress: p });
-    });
+    // Fonts are loaded lazily during rendering — only the families
+    // actually used by the screenplay text are fetched.
+    const fontLoader = new FontLoader();
 
-    self.postMessage({ type: "PROGRESS", progress: 20 });
-
+    // CourierPrime is always needed for page headers, (MORE)/(CONT'D), and watermarks
+    await fontLoader.ensureFont(doc, "CourierPrime", payload.baseUrl);
     doc.setFont("CourierPrime", "normal");
     doc.setFontSize(FONT_SIZE);
+
+    self.postMessage({ type: "PROGRESS", progress: 10 });
 
     const totalLines = payload.titlePageLines.length + payload.screenplayLines.length;
     let linesProcessed = 0;
 
     const reportProgress = () => {
         linesProcessed++;
-        // Scale remaining progress between 20% and 95%
         if (linesProcessed % 50 === 0) {
-            const pct = 20 + (linesProcessed / totalLines) * 75;
+            const pct = 10 + (linesProcessed / totalLines) * 85;
             self.postMessage({ type: "PROGRESS", progress: pct });
         }
     };
@@ -173,60 +210,48 @@ async function generatePdf(payload: WorkerPayload): Promise<Blob> {
     // ── Render title page (if any) ──────────────────────────────────────
     const hasTitlePage = payload.titlePageLines.length > 0;
     if (hasTitlePage) {
-        renderLines(doc, payload.titlePageLines, pageSize, payload, payload.titlePageLeftPx, false, reportProgress);
+        await renderLines(doc, fontLoader, payload.titlePageLines, pageSize, payload, payload.titlePageLeftPx, false, reportProgress);
         doc.addPage();
     }
 
     // ── Render screenplay lines ───────────────────────────────────────
-    renderLines(doc, payload.screenplayLines, pageSize, payload, payload.screenplayLeftPx, true, reportProgress);
+    await renderLines(doc, fontLoader, payload.screenplayLines, pageSize, payload, payload.screenplayLeftPx, true, reportProgress);
 
     self.postMessage({ type: "PROGRESS", progress: 100 });
 
     return doc.output("blob");
 }
 
-async function loadFonts(doc: jsPDF, baseUrl: string, progressCallback: (p: number) => void): Promise<void> {
-    const fetchedFiles = new Map<string, string>();
-    const totalFonts = FONT_ENTRIES.length;
-    let loadedFonts = 0;
-
-    for (const entry of FONT_ENTRIES) {
-        let base64 = fetchedFiles.get(entry.filename);
-        if (!base64) {
-            const url = `${baseUrl}/fonts/${entry.filename}`;
-            const response = await fetch(url);
-            if (!response.ok) {
-                console.warn(`Failed to load font: ${url}`);
-                loadedFonts++;
-                continue;
-            }
-            const buffer = await response.arrayBuffer();
-            base64 = arrayBufferToBase64(buffer);
-            fetchedFiles.set(entry.filename, base64);
-        }
-
-        doc.addFileToVFS(entry.filename, base64);
-        doc.addFont(entry.filename, entry.family, entry.style);
-
-        loadedFonts++;
-        // Scale loading fonts progress from 5% to 20%
-        progressCallback(5 + (loadedFonts / totalFonts) * 15);
+/** Find the nearest non-sentinel line before index `li`. */
+function findPrevContentLine(lines: VisualLine[], li: number): VisualLine | undefined {
+    for (let j = li - 1; j >= 0; j--) {
+        if (lines[j].type !== "__page_break__") return lines[j];
     }
+    return undefined;
 }
 
-function renderLines(
+/** Find the nearest non-sentinel line after index `li`. */
+function findNextContentLine(lines: VisualLine[], li: number): VisualLine | undefined {
+    for (let j = li + 1; j < lines.length; j++) {
+        if (lines[j].type !== "__page_break__") return lines[j];
+    }
+    return undefined;
+}
+
+async function renderLines(
     doc: jsPDF,
+    fontLoader: FontLoader,
     lines: VisualLine[],
     pageSize: { width: number; height: number },
     payload: WorkerPayload,
     pageLeftPx: number,
     showPageNumbers: boolean,
     onLineRendered: () => void,
-): void {
+): Promise<void> {
     if (lines.length === 0) return;
 
     let currentY = PAGE_TOP;
-    let previousBrowserY = lines[0].y;
+    let previousBrowserY = -1;
     let currentPage = 1;
 
     let lastCharacterName = "";
@@ -236,22 +261,16 @@ function renderLines(
         const line = lines[li];
         onLineRendered();
 
-        // ── Page break detection ─────────────────────────────────────
-        if (li > 0 && line.y - previousBrowserY > PAGE_BREAK_THRESHOLD) {
-            const isDialogueSplit = lines[li - 1].type === "dialogue" && line.type === "dialogue";
+        // ── Explicit page break sentinel ────────────────────────────
+        if (line.type === "__page_break__") {
+            const prevLine = findPrevContentLine(lines, li);
+            const nextLine = findNextContentLine(lines, li);
+            const isDialogueSplit = prevLine?.type === "dialogue" && nextLine?.type === "dialogue";
 
             // If a dialogue block spans across the page break, draw (MORE) on this page
             if (isDialogueSplit && lastCharacterName) {
-                doc.setFont("CourierPrime", "normal");
-                doc.setFontSize(FONT_SIZE);
-                doc.setTextColor(0, 0, 0);
-
-                // Center (MORE) horizontally on the page
-                const moreX = pageSize.width / 2;
-
-                // Draw (MORE) one line below the last line
-                const moreY = currentY + FONT_SIZE * (17 / 12); // Approximate line-height conversion
-                doc.text(payload.moreLabel, moreX, moreY, { align: "center", baseline: "top" });
+                const moreY = currentY + FONT_SIZE * (16 / 12);
+                await drawMultiFontText(doc, fontLoader, payload.baseUrl, payload.moreLabel, pageSize.width / 2, moreY, "center");
             }
 
             // Watermark on the page we are leaving
@@ -268,32 +287,21 @@ function renderLines(
 
             // Draw Character Name (CONT'D) at the top of the new page
             if (isDialogueSplit && lastCharacterName) {
-                // Find the indent of the character name
-                let charX = 0;
-                if (lastCharacterRuns.length > 0) {
-                    charX = (lastCharacterRuns[0].x - pageLeftPx) * PX_TO_PT;
-
-                    const style = jsPDFStyle(lastCharacterRuns[0].bold, lastCharacterRuns[0].italic);
-                    doc.setFont(lastCharacterRuns[0].fontFamily, style);
-                } else {
-                    doc.setFont("CourierPrime", "normal");
-                    charX = doc.getTextWidth("      "); // fallback
-                }
-
-                doc.setFontSize(FONT_SIZE);
-                doc.setTextColor(0, 0, 0);
-
-                // Center the contd text horizontally on the page
                 // Prevent double CONT'D if the DOM already injected it via `.contd::after`
                 const cleanedName = lastCharacterName.replace(payload.contdLabel, "").trim();
                 const contdText = `${cleanedName} ${payload.contdLabel}`;
-                const contdX = pageSize.width / 2;
-                doc.text(contdText, contdX, currentY, { align: "center", baseline: "top" });
+                await drawMultiFontText(doc, fontLoader, payload.baseUrl, contdText, pageSize.width / 2, currentY, "center");
 
-                currentY += FONT_SIZE * (17 / 12); // Advance Y to make room for dialogue
+                currentY += FONT_SIZE * (16 / 12); // Advance Y to make room for dialogue
             }
-        } else if (li > 0) {
-            // Advance Y by the scaled browser gap
+
+            // Reset browser Y tracking for the new page
+            previousBrowserY = -1;
+            continue;
+        }
+
+        // ── Line spacing within a page ──────────────────────────────
+        if (previousBrowserY !== -1) {
             currentY += (line.y - previousBrowserY) * PX_TO_PT;
         }
 
@@ -314,6 +322,7 @@ function renderLines(
             const run = line.runs[ri];
 
             const style = jsPDFStyle(run.bold, run.italic);
+            await fontLoader.ensureFont(doc, run.fontFamily, payload.baseUrl);
             doc.setFont(run.fontFamily, style);
             doc.setFontSize(FONT_SIZE);
 
@@ -324,7 +333,7 @@ function renderLines(
             // resetting the drawing cursor!
             let runX = (run.x - pageLeftPx) * PX_TO_PT;
 
-            // Pseudo-elements injected by pdf-adapter (like the closing parenthesis) 
+            // Pseudo-elements injected by pdf-adapter (like the closing parenthesis)
             // are given an x of 0. We must place them relative to the previous run.
             if (run.x === 0 && ri > 0 && lastRunX !== -1) {
                 runX = lastRunX + lastRunWidth;
@@ -355,6 +364,48 @@ function renderLines(
     }
 
     if (payload.watermark) drawWatermark(doc, pageSize, payload.author);
+}
+
+/**
+ * Draw a string that may contain characters from multiple scripts, loading
+ * the required fonts lazily. Supports "left" and "center" alignment.
+ */
+async function drawMultiFontText(
+    doc: jsPDF,
+    fontLoader: FontLoader,
+    baseUrl: string,
+    text: string,
+    x: number,
+    y: number,
+    align: "left" | "center",
+): Promise<void> {
+    const segments = splitByScript(text);
+
+    doc.setFontSize(FONT_SIZE);
+    doc.setTextColor(0, 0, 0);
+
+    // Pre-load all required fonts so we can measure total width for centering
+    for (const seg of segments) {
+        const family = seg.font ?? "CourierPrime";
+        await fontLoader.ensureFont(doc, family, baseUrl);
+    }
+
+    // Compute total width for center alignment
+    let totalWidth = 0;
+    if (align === "center") {
+        for (const seg of segments) {
+            doc.setFont(seg.font ?? "CourierPrime", "normal");
+            totalWidth += doc.getTextWidth(seg.text);
+        }
+    }
+
+    let cursorX = align === "center" ? x - totalWidth / 2 : x;
+    for (const seg of segments) {
+        const family = seg.font ?? "CourierPrime";
+        doc.setFont(family, "normal");
+        doc.text(seg.text, cursorX, y, { baseline: "top" });
+        cursorX += doc.getTextWidth(seg.text);
+    }
 }
 
 function drawPageHeader(doc: jsPDF, pageNumber: number, pageSize: { width: number; height: number }): void {

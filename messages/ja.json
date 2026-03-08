@@ -240,7 +240,7 @@
             "a4": "国際標準形式。ヨーロッパやほとんどの国で一般的。"
         },
         "sceneHeadings": "シーン見出し",
-        "bold": "太字",
+        "bold": "Bold",
         "boldDesc": "シーン見出しが太字で表示されます",
         "extraSpace": "上部に余白を追加",
         "extraSpaceDesc": "シーン見出しの前に追加のスペースを挿入します",
@@ -249,8 +249,30 @@
         "duplicateRight": "右余白にも複製",
         "duplicateRightDesc": "両側に番号を表示",
         "continuation": "継続",
-        "moreTitle": "台詞継続ラベルを適用（ページ下部）",
-        "contdTitle": "キャラクター継続ラベルを適用（ページ上部）"
+        "moreTitle": "(MORE) Label",
+        "contdTitle": "(CONT'D) Label",
+        "margins": "余白",
+        "marginLeft": "左",
+        "marginRight": "右",
+        "marginElements": {
+            "action": "アクション",
+            "scene": "シーン見出し",
+            "character": "キャラクター",
+            "dialogue": "台詞",
+            "parenthetical": "ト書き",
+            "transition": "トランジション",
+            "section": "セクション"
+        },
+        "elements": "Element Configuration",
+        "style": "Style",
+        "alignment": "Alignment",
+        "italic": "Italic",
+        "underline": "Underline",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "sceneSpacing": "Spacing",
+        "sceneSpacingDesc": "Spacing above scene headings"
     },
     "projectSettings": {
         "titleLabel": "タイトル",

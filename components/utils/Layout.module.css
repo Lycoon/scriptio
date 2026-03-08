@@ -1,6 +1,6 @@
 .main {
     flex: 1;
-    overflow: hidden;
+    overflow: clip;
     display: flex;
 
     background-color: var(--primary);

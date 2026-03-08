@@ -10,7 +10,9 @@ type SceneBookmarkConfig = {
 
 /**
  * Computes decorations for scene headings that have an assigned color.
- * Adds a bookmark decoration on the left edge of the scene heading.
+ * Adds a bookmark widget on the left edge of the scene heading.
+ * Uses a widget decoration (instead of a node ::after) so that the scene
+ * node's ::after pseudo-element remains free for right scene numbers.
  */
 function computeBookmarkDecorations(doc: any, getSceneColor: (sceneId: string) => string | undefined): DecorationSet {
     const decorations: Decoration[] = [];
@@ -25,10 +27,17 @@ function computeBookmarkDecorations(doc: any, getSceneColor: (sceneId: string) =
         if (!color) return;
 
         decorations.push(
-            Decoration.node(pos, pos + node.nodeSize, {
-                class: "scene-bookmark",
-                style: `--scene-color: ${color}`,
-            }),
+            Decoration.widget(
+                pos + 1,
+                () => {
+                    const marker = document.createElement("span");
+                    marker.className = "scene-bookmark-marker";
+                    marker.style.setProperty("--scene-color", color);
+                    marker.contentEditable = "false";
+                    return marker;
+                },
+                { side: -1, key: `bookmark-${sceneId}-${color}` },
+            ),
         );
     });
 

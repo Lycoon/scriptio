@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { Comment, CommentReply, Screenplay } from "../utils/types";
-import { LayoutData, ProjectState } from "./project-state";
+import { LayoutData, ProjectState, ElementStyle } from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
@@ -289,11 +289,8 @@ export class ProjectRepository {
     setDisplaySceneNumbers(display: boolean) {
         this.ydoc.layout().set("displaySceneNumbers", display);
     }
-    setSceneHeadingBold(bold: boolean) {
-        this.ydoc.layout().set("sceneHeadingBold", bold);
-    }
-    setSceneHeadingDoubleSpace(doubleSpace: boolean) {
-        this.ydoc.layout().set("sceneHeadingDoubleSpace", doubleSpace);
+    setSceneHeadingSpacing(spacing: number) {
+        this.ydoc.layout().set("sceneHeadingSpacing", spacing);
     }
     setSceneNumberOnRight(onRight: boolean) {
         this.ydoc.layout().set("sceneNumberOnRight", onRight);
@@ -303,6 +300,12 @@ export class ProjectRepository {
     }
     setMoreLabel(label: string) {
         this.ydoc.layout().set("moreLabel", label);
+    }
+    setElementMargins(margins: Record<string, { left: number; right: number }>) {
+        this.ydoc.layout().set("elementMargins", margins);
+    }
+    setElementStyles(styles: Record<string, ElementStyle>) {
+        this.ydoc.layout().set("elementStyles", styles);
     }
 
     // -------------------------------- //

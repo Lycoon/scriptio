@@ -5,19 +5,19 @@ html,
 body {
     height: 100%;
     width: 100%;
-    overflow: hidden;
+    overflow: clip;
 }
 
 .app-layout {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden;
+    overflow: clip;
 }
 
 .app-layout > main {
     flex: 1;
-    overflow: hidden;
+    overflow: clip;
     display: flex;
     flex-direction: column;
 }

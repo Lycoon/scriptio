@@ -240,7 +240,7 @@
             "a4": "Format international standard. Courant en Europe et dans la plupart des pays."
         },
         "sceneHeadings": "En-têtes de scène",
-        "bold": "Gras",
+        "bold": "Bold",
         "boldDesc": "Les en-têtes de scène apparaîtront en gras",
         "extraSpace": "Espace supplémentaire au-dessus",
         "extraSpaceDesc": "Ajouter un espacement supplémentaire avant les en-têtes de scène",
@@ -249,8 +249,30 @@
         "duplicateRight": "Dupliquer dans la marge droite",
         "duplicateRightDesc": "Afficher le numéro des deux côtés",
         "continuation": "Continuation",
-        "moreTitle": "Appliquer l'étiquette de continuation de dialogue (bas de page)",
-        "contdTitle": "Appliquer l'étiquette de continuation de personnage (haut de page)"
+        "moreTitle": "(MORE) Label",
+        "contdTitle": "(CONT'D) Label",
+        "margins": "Marges",
+        "marginLeft": "G",
+        "marginRight": "D",
+        "marginElements": {
+            "action": "Action",
+            "scene": "En-tête de scène",
+            "character": "Personnage",
+            "dialogue": "Dialogue",
+            "parenthetical": "Parenthétique",
+            "transition": "Transition",
+            "section": "Section"
+        },
+        "elements": "Element Configuration",
+        "style": "Style",
+        "alignment": "Alignment",
+        "italic": "Italic",
+        "underline": "Underline",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "sceneSpacing": "Spacing",
+        "sceneSpacingDesc": "Spacing above scene headings"
     },
     "projectSettings": {
         "titleLabel": "Titre",

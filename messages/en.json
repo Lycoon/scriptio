@@ -249,8 +249,30 @@
         "duplicateRight": "Duplicate in right margin",
         "duplicateRightDesc": "Show number on both sides",
         "continuation": "Continuation",
-        "moreTitle": "Apply dialogue continuation label (bottom of page)",
-        "contdTitle": "Apply character continuation label (top of page)"
+        "moreTitle": "(MORE) Label",
+        "contdTitle": "(CONT'D) Label",
+        "margins": "Margins",
+        "marginLeft": "L",
+        "marginRight": "R",
+        "marginElements": {
+            "action": "Action",
+            "scene": "Scene Heading",
+            "character": "Character",
+            "dialogue": "Dialogue",
+            "parenthetical": "Parenthetical",
+            "transition": "Transition",
+            "section": "Section"
+        },
+        "elements": "Element Configuration",
+        "style": "Style",
+        "alignment": "Alignment",
+        "italic": "Italic",
+        "underline": "Underline",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "sceneSpacing": "Spacing",
+        "sceneSpacingDesc": "Spacing above scene headings"
     },
     "projectSettings": {
         "titleLabel": "Title",

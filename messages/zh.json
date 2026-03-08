@@ -240,7 +240,7 @@
             "a4": "国际标准格式，欧洲及大多数国家通用。"
         },
         "sceneHeadings": "场景标题",
-        "bold": "加粗",
+        "bold": "Bold",
         "boldDesc": "场景标题将以粗体显示",
         "extraSpace": "上方额外空间",
         "extraSpaceDesc": "在场景标题前添加额外间距",
@@ -249,8 +249,30 @@
         "duplicateRight": "在右边距重复",
         "duplicateRightDesc": "两侧均显示编号",
         "continuation": "续接",
-        "moreTitle": "应用对话续接标签（页面底部）",
-        "contdTitle": "应用角色续接标签（页面顶部）"
+        "moreTitle": "(MORE) Label",
+        "contdTitle": "(CONT'D) Label",
+        "margins": "边距",
+        "marginLeft": "左",
+        "marginRight": "右",
+        "marginElements": {
+            "action": "动作",
+            "scene": "场景标题",
+            "character": "角色",
+            "dialogue": "对话",
+            "parenthetical": "括号注释",
+            "transition": "转场",
+            "section": "章节"
+        },
+        "elements": "Element Configuration",
+        "style": "Style",
+        "alignment": "Alignment",
+        "italic": "Italic",
+        "underline": "Underline",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "sceneSpacing": "Spacing",
+        "sceneSpacingDesc": "Spacing above scene headings"
     },
     "projectSettings": {
         "titleLabel": "标题",

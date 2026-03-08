@@ -4,7 +4,7 @@ import { ProjectData, ProjectState } from "@src/lib/project/project-state";
 import { PageFormat } from "@src/lib/utils/enums";
 import { getFontForCodePoint, ScriptFont } from "./pdf-utils";
 import { BASE_URL } from "@src/lib/utils/constants";
-import { SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
+import { PAGE_SIZES } from "@src/lib/screenplay/extensions/pagination-extension";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -14,7 +14,7 @@ export type PDFExportOptions = BaseExportOptions & {
     password?: string;
     displaySceneNumbers?: boolean;
     sceneHeadingBold?: boolean;
-    sceneHeadingDoubleSpace?: boolean;
+    sceneHeadingSpacing?: number;
     sceneNumberOnRight?: boolean;
     contdLabel?: string;
     moreLabel?: string;
@@ -29,35 +29,10 @@ import type { WorkerMessage, WorkerPayload, VisualLine } from "./pdf.worker";
 /** Scale factor from browser pixels (96 DPI) to PDF points (72 DPI). */
 const PX_TO_PT = 72 / 96;
 
-/** Font size in PDF points. */
-const FONT_SIZE = 12;
-
-/** Top page margin in PDF points (1 inch). */
-const PAGE_TOP = 72;
-
-/** Right page margin in PDF points (1 inch). */
-const PAGE_RIGHT = 72;
-
-/** Y position of the page number header (0.5 inch from top). */
-const HEADER_Y = 36;
-
-/**
- * If two consecutive lines are separated by more than this many browser pixels,
- * a PDF page break is inserted. The pagination library inserts a visual gap of
- * roughly 20 px plus the page margins, so 50 px comfortably detects those gaps.
- */
-const PAGE_BREAK_THRESHOLD = 50;
-
-/** PDF page dimensions in points. */
+/** PDF page dimensions in points, derived from pagination-extension pixel sizes. */
 const PDF_PAGE_SIZES: Record<PageFormat, { width: number; height: number }> = {
-    LETTER: { width: 612, height: 792 },
-    A4: { width: 595.28, height: 841.89 },
-};
-
-/** Browser left-margin values per format (from SCREENPLAY_FORMATS). */
-const BROWSER_MARGIN_LEFT: Record<PageFormat, number> = {
-    LETTER: SCREENPLAY_FORMATS.LETTER.marginLeft,
-    A4: SCREENPLAY_FORMATS.A4.marginLeft,
+    LETTER: { width: PAGE_SIZES.LETTER.pageWidth * PX_TO_PT, height: PAGE_SIZES.LETTER.pageHeight * PX_TO_PT },
+    A4: { width: PAGE_SIZES.A4.pageWidth * PX_TO_PT, height: PAGE_SIZES.A4.pageHeight * PX_TO_PT },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -94,15 +69,16 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         if (!editorEl) throw new Error("Editor element is required for DOM-based PDF export");
 
         const format = options.format;
+        const pdfPageSize = PDF_PAGE_SIZES[format];
 
         // ── Collect all visual lines from the browser DOM ───────────────────
         const titlePageEl = options.titlePageElement;
-        
-        const titlePageLines = titlePageEl ? this.collectLines(titlePageEl, format, options) : [];
-        const titlePageLeftPx = titlePageEl ? this.getPageLeftPx(titlePageEl, format) : 0;
-        
-        const screenplayLines = this.collectLines(editorEl, format, options);
-        const screenplayLeftPx = this.getPageLeftPx(editorEl, format);
+
+        const titlePageLines = titlePageEl ? this.collectLines(titlePageEl, options) : [];
+        const titlePageLeftPx = titlePageEl ? this.getPageLeftPx(titlePageEl) : 0;
+
+        const screenplayLines = this.collectLines(editorEl, options);
+        const screenplayLeftPx = this.getPageLeftPx(editorEl);
 
         return new Promise((resolve, reject) => {
             const worker = new Worker(new URL("./pdf.worker.ts", import.meta.url));
@@ -127,7 +103,8 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
             const payload: WorkerPayload = {
                 baseUrl: BASE_URL,
-                format,
+                pageWidth: pdfPageSize.width,
+                pageHeight: pdfPageSize.height,
                 watermark: options.watermark,
                 password: options.password,
                 author: options.author,
@@ -153,23 +130,31 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
      * Walk the editor DOM and build a flat list of `VisualLine`s — one per
      * visual text line as laid out by the browser.
      *
-     * The first two children of `editorEl` are pagination chrome and are
-     * skipped. Non-`<p>` children (breakers, gaps, headers, footers) are
-     * also skipped.
+     * Page breaks are detected by looking for `.pagination-page-break` widget
+     * elements — both as direct children of the editor and nested inside `<p>`
+     * elements (for mid-node sentence splits). Each detected break emits a
+     * `__page_break__` sentinel line that the worker handles explicitly.
      */
-    private collectLines(editorEl: HTMLElement, format: PageFormat, options: PDFExportOptions): VisualLine[] {
+    private collectLines(editorEl: HTMLElement, options: PDFExportOptions): VisualLine[] {
         const allLines: VisualLine[] = [];
         let sceneCount = 0;
         let yOffset = 0;
 
-        for (let i = 2; i < editorEl.children.length; i++) {
+        for (let i = 0; i < editorEl.children.length; i++) {
             const el = editorEl.children[i] as HTMLElement;
-            if (!el || el.tagName !== "P") continue;
+            if (!el) continue;
+
+            // ── Direct-child pagination widget → explicit page break ──
+            if (el.classList.contains("pagination-page-break")) {
+                allLines.push({ runs: [], y: 0, type: "__page_break__" });
+                continue;
+            }
+
+            // Skip all non-<p> elements (pagination-first-page, pagination-last-page, etc.)
+            if (el.tagName !== "P") continue;
 
             const isScene = el.classList.contains("scene");
-            if (isScene) {
-                sceneCount++;
-            }
+            if (isScene) sceneCount++;
 
             // Extract the paragraph type from classList
             let nodeType: string | undefined;
@@ -192,27 +177,52 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 continue;
             }
 
-            const paragraphLines = this.collectParagraphLines(el, nodeType);
+            // ── Check for mid-node split (pagination widget inside <p>) ──
+            const splitWidget = el.querySelector(":scope > .pagination-page-break") as HTMLElement | null;
 
-            if (paragraphLines.length > 0) {
-                // Apply yOffset to close physical gaps from entirely skipped text nodes
-                if (yOffset > 0) {
-                    for (const line of paragraphLines) {
-                        line.y -= yOffset;
+            if (splitWidget) {
+                // Collect lines BEFORE the split widget
+                const beforeLines = this.collectParagraphLines(el, nodeType, splitWidget, "before");
+                if (beforeLines.length > 0) {
+                    if (yOffset > 0) {
+                        for (const line of beforeLines) line.y -= yOffset;
                     }
+                    this.injectPseudoContent(el, beforeLines, options, isScene ? sceneCount : undefined);
+                    allLines.push(...beforeLines);
                 }
-                // ── Pseudo-element content (not captured by TreeWalker) ──
-                this.injectPseudoContent(el, paragraphLines, options, isScene ? sceneCount : undefined);
-                allLines.push(...paragraphLines);
+
+                // Emit page break sentinel
+                allLines.push({ runs: [], y: 0, type: "__page_break__" });
+
+                // Collect lines AFTER the split widget
+                const afterLines = this.collectParagraphLines(el, nodeType, splitWidget, "after");
+                if (afterLines.length > 0) {
+                    if (yOffset > 0) {
+                        for (const line of afterLines) line.y -= yOffset;
+                    }
+                    allLines.push(...afterLines);
+                }
             } else {
-                // Empty paragraph — no text nodes, so collectParagraphLines
-                // Returns nothing. We still emit a zero-run VisualLine at
-                // the paragraph's browser Y position so that renderLines
-                // advances Y by exactly one line height and does NOT
-                // misinterpret the accumulated gap as a page break.
-                const rect = el.getBoundingClientRect();
-                if (rect.height > 0) {
-                    allLines.push({ runs: [], y: rect.top - yOffset, type: nodeType });
+                const paragraphLines = this.collectParagraphLines(el, nodeType);
+
+                if (paragraphLines.length > 0) {
+                    // Apply yOffset to close physical gaps from entirely skipped text nodes
+                    if (yOffset > 0) {
+                        for (const line of paragraphLines) line.y -= yOffset;
+                    }
+                    // ── Pseudo-element content (not captured by TreeWalker) ──
+                    this.injectPseudoContent(el, paragraphLines, options, isScene ? sceneCount : undefined);
+                    allLines.push(...paragraphLines);
+                } else {
+                    // Empty paragraph — no text nodes, so collectParagraphLines
+                    // returns nothing. We still emit a zero-run VisualLine at
+                    // the paragraph's browser Y position so that renderLines
+                    // advances Y by exactly one line height and does NOT
+                    // misinterpret the accumulated gap as a page break.
+                    const rect = el.getBoundingClientRect();
+                    if (rect.height > 0) {
+                        allLines.push({ runs: [], y: rect.top - yOffset, type: nodeType });
+                    }
                 }
             }
         }
@@ -224,11 +234,36 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
      * For a single `<p>` element, iterate character-by-character using the
      * Range API to detect the exact browser line breaks and build
      * `VisualLine` objects.
+     *
+     * When `splitAt` / `splitSide` are provided, only text nodes on the
+     * specified side of the split widget are collected (used for mid-node
+     * sentence splits where a pagination widget sits inside the `<p>`).
      */
-    private collectParagraphLines(el: HTMLElement, type?: string): VisualLine[] {
+    private collectParagraphLines(
+        el: HTMLElement,
+        type?: string,
+        splitAt?: HTMLElement,
+        splitSide?: "before" | "after",
+    ): VisualLine[] {
         const lines: VisualLine[] = [];
         const range = document.createRange();
-        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+
+        // TreeWalker with filter to skip text nodes inside decoration widgets
+        // (pagination widgets, collab carets, bookmark markers) but allow text
+        // inside title page format atom nodes (contentEditable="false" spans
+        // with data-tp-type) through.
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+            acceptNode(node: Node) {
+                let parent = (node as Text).parentElement;
+                while (parent && parent !== el) {
+                    if (parent.contentEditable === "false" && !parent.hasAttribute("data-tp-type")) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    parent = parent.parentElement;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            },
+        });
 
         // Whether the paragraph applies text-transform: uppercase
         const uppercase = getComputedStyle(el).textTransform === "uppercase";
@@ -239,12 +274,18 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
         let textNode: Text | null;
         while ((textNode = walker.nextNode() as Text | null)) {
+            // Filter by split side using document position relative to the widget
+            if (splitAt && splitSide) {
+                const pos = splitAt.compareDocumentPosition(textNode);
+                if (splitSide === "before" && !(pos & Node.DOCUMENT_POSITION_PRECEDING)) continue;
+                if (splitSide === "after" && !(pos & Node.DOCUMENT_POSITION_FOLLOWING)) continue;
+            }
+
             const text = textNode.nodeValue!;
             if (!text) continue;
 
             // Resolve marks once per text node (they don't change mid-node)
             const marks = getMarksFromComputedStyle(textNode);
-            const isRightNumber = textNode.parentElement?.classList.contains("scene-number-right") ?? false;
 
             for (let ci = 0; ci < text.length; ci++) {
                 const rawChar = text[ci];
@@ -257,8 +298,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     currentRun.fontFamily === font &&
                     currentRun.bold === marks.bold &&
                     currentRun.italic === marks.italic &&
-                    currentRun.underline === marks.underline &&
-                    currentRun.absolutePosition === isRightNumber;
+                    currentRun.underline === marks.underline;
 
                 // ── Measure position ─────────────────────────────────────
                 range.setStart(textNode, ci);
@@ -282,7 +322,6 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                                 bold: marks.bold,
                                 italic: marks.italic,
                                 underline: marks.underline,
-                                absolutePosition: isRightNumber,
                             };
                         }
                     }
@@ -317,7 +356,6 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                         bold: marks.bold,
                         italic: marks.italic,
                         underline: marks.underline,
-                        absolutePosition: isRightNumber,
                     };
                 }
 
@@ -354,7 +392,8 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         const firstLine = paragraphLines[0];
         const lastLine = paragraphLines[paragraphLines.length - 1];
 
-        if (sceneNumber !== undefined && options.displaySceneNumbers && !options.sceneNumberOnRight) {
+        if (sceneNumber !== undefined && options.displaySceneNumbers) {
+            // Left scene number (always shown when scene numbers are enabled)
             if (firstLine.runs.length > 0) {
                 const leadRun = firstLine.runs[0];
                 firstLine.runs.unshift({
@@ -364,6 +403,24 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     bold: leadRun.bold,
                     italic: leadRun.italic,
                     underline: leadRun.underline,
+                    absolutePosition: true,
+                });
+            }
+
+            // Right scene number (CSS ::after pseudo-element, not captured by TreeWalker).
+            // CSS uses left:100% + margin-left:20px which overflows past the page edge;
+            // PDFs clip at the page boundary, so we position it inside the right margin
+            // area: just past the text content (padding-right) + a small offset.
+            if (options.sceneNumberOnRight && firstLine.runs.length > 0) {
+                const tailRun = firstLine.runs[firstLine.runs.length - 1];
+                const paddingRight = parseFloat(getComputedStyle(el).paddingRight) || 0;
+                firstLine.runs.push({
+                    text: String(sceneNumber) + ".",
+                    x: el.getBoundingClientRect().right - paddingRight + 20,
+                    fontFamily: tailRun.fontFamily,
+                    bold: tailRun.bold,
+                    italic: tailRun.italic,
+                    underline: tailRun.underline,
                     absolutePosition: true,
                 });
             }
@@ -415,20 +472,18 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
     // ── VisualLine[] → PDF ───────────────────────────────────────────────────
 
     /**
-     * Compute the page-left reference in browser pixels
-     * using the first encountered `<p>` element and the known CSS margin format.
+     * Compute the page-left reference in browser pixels.
+     * The `<p>` elements are `width: 100%` of the pagination container with
+     * `box-sizing: border-box`, so their border-box left edge IS the page edge.
+     * Text is offset from there by each element's own `padding-left`.
      */
-    private getPageLeftPx(referenceEl: HTMLElement, format: PageFormat): number {
-        const marginLeftPx = BROWSER_MARGIN_LEFT[format];
-
-        let referenceLeft = 0;
-        for (let i = 2; i < referenceEl.children.length; i++) {
+    private getPageLeftPx(referenceEl: HTMLElement): number {
+        for (let i = 0; i < referenceEl.children.length; i++) {
             const child = referenceEl.children[i] as HTMLElement;
             if (child?.tagName === "P") {
-                referenceLeft = child.getBoundingClientRect().left;
-                break;
+                return child.getBoundingClientRect().left;
             }
         }
-        return referenceLeft - marginLeftPx;
+        return 0;
     }
 }

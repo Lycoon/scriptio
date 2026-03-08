@@ -16,8 +16,7 @@ import { ProjectMembershipPayload } from "@src/server/repository/project-reposit
 
 import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline } from "@src/lib/screenplay/nodes";
 import { Placeholder } from "./extensions/placeholder-extension";
-import { PAGE_SIZES } from "tiptap-pagination-plus";
-import { PaginationPlus } from "tiptap-pagination-plus";
+import { ScriptioPagination, PAGE_SIZES } from "./extensions/pagination-extension";
 import { KeybindsExtension } from "./extensions/keybinds-extension";
 import { executeKeybindAction } from "../utils/keybinds";
 import { ContdExtension } from "./extensions/contd-extension";
@@ -31,7 +30,6 @@ import {
     SearchMatch,
 } from "./extensions/search-highlight-extension";
 import { createSceneBookmarkExtension, refreshSceneBookmarks } from "./extensions/scene-bookmark-extension";
-import { createSceneNumberRightExtension, refreshSceneNumberRight } from "./extensions/scene-number-right-extension";
 import { createSceneIdDedupExtension } from "./extensions/scene-id-dedup-extension";
 import { CommentMark } from "./extensions/comment-highlight-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
@@ -154,33 +152,9 @@ export const getStylesFromMarks = (marks: any[]): Style => {
     return style;
 };
 
-//
-// Elements have default bottom margins which force early unnecessary page breaks
-// though there is still room for text. We extend the writable area
-// by two lines (1 element + 1 bottom-margin) to have consistent layout
-//
-// Page-position detection is handled by PagePositionExtension (page-position-extension.ts)
-// which tracks first/last nodes per page via DOM measurement after pagination layout
-//
-
-const TWO_LINE_HEIGHTS = 17 * 2;
 export const SCREENPLAY_FORMATS = {
-    LETTER: {
-        marginTop: 0,
-        marginBottom: 96 - TWO_LINE_HEIGHTS,
-        marginLeft: 144,
-        marginRight: 96,
-        pageHeight: PAGE_SIZES.LETTER.pageHeight,
-        pageWidth: PAGE_SIZES.LETTER.pageWidth,
-    },
-    A4: {
-        marginTop: 0,
-        marginBottom: 144 - TWO_LINE_HEIGHTS,
-        marginLeft: 125,
-        marginRight: 86,
-        pageHeight: PAGE_SIZES.A4.pageHeight,
-        pageWidth: PAGE_SIZES.A4.pageWidth,
-    },
+    LETTER: PAGE_SIZES.LETTER,
+    A4: PAGE_SIZES.A4,
 };
 
 export const BASE_EXTENSIONS = [
@@ -235,8 +209,6 @@ export const useScriptioEditor = (
         currentSearchIndex,
         setSearchMatches,
         setActiveCommentId,
-        sceneNumberOnRight,
-        displaySceneNumbers,
         contdLabel,
         moreLabel,
     } = projectCtx;
@@ -308,10 +280,6 @@ export const useScriptioEditor = (
     const currentSearchIndexRef = useRef<number>(currentSearchIndex);
     const setSearchMatchesRef = useRef(setSearchMatches);
 
-    // Refs for right scene numbers
-    const sceneNumberOnRightRef = useRef<boolean>(sceneNumberOnRight);
-    const displaySceneNumbersRef = useRef<boolean>(displaySceneNumbers);
-
     // Ref for contd label
     const contdLabelRef = useRef<string>(contdLabel);
     const moreLabelRef = useRef<string>(moreLabel);
@@ -356,14 +324,6 @@ export const useScriptioEditor = (
     useEffect(() => {
         setSearchMatchesRef.current = setSearchMatches;
     }, [setSearchMatches]);
-
-    useEffect(() => {
-        sceneNumberOnRightRef.current = sceneNumberOnRight;
-    }, [sceneNumberOnRight]);
-
-    useEffect(() => {
-        displaySceneNumbersRef.current = displaySceneNumbers;
-    }, [displaySceneNumbers]);
 
     useEffect(() => {
         contdLabelRef.current = contdLabel;
@@ -429,11 +389,6 @@ export const useScriptioEditor = (
         },
     });
 
-    // Create the scene number right extension with callback that checks both settings
-    const sceneNumberRightExtension = createSceneNumberRightExtension({
-        isEnabled: () => sceneNumberOnRightRef.current && displaySceneNumbersRef.current,
-    });
-
     const scriptioEditor = useEditor(
         {
             immediatelyRender: false,
@@ -467,9 +422,8 @@ export const useScriptioEditor = (
                           }),
                       ]
                     : []),
-                PaginationPlus.configure({
+                ScriptioPagination.configure({
                     pageGap: 20,
-                    contentMarginTop: 31, // Header is 68px height (1in = 96px = 31px + 68px)
                     headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
                     customHeader: {
                         1: {
@@ -498,7 +452,6 @@ export const useScriptioEditor = (
                 characterHighlightExtension,
                 searchHighlightExtension,
                 sceneBookmarkExtension,
-                sceneNumberRightExtension,
                 sceneIdDedupExtension,
                 commentMarkExtension,
             ],
@@ -668,13 +621,6 @@ export const useScriptioEditor = (
         }
     }, [scriptioEditor, scenes]);
 
-    // Refresh right scene numbers when settings change
-    useEffect(() => {
-        if (scriptioEditor) {
-            refreshSceneNumberRight(scriptioEditor);
-        }
-    }, [scriptioEditor, sceneNumberOnRight, displaySceneNumbers]);
-
     // Refresh search highlights when search state changes
     useEffect(() => {
         if (scriptioEditor) {
@@ -687,33 +633,7 @@ export const useScriptioEditor = (
         if (!scriptioEditor || scriptioEditor.isDestroyed || !scriptioEditor.view) return;
         try {
             const format = SCREENPLAY_FORMATS[pageSize];
-            // 1. Bypass PaginationPlus Reference Bug
-            // `tiptap-pagination-plus` loses the reference to its TipTap bound `storage` internally.
-            // When `updatePageSize` is called, it mutates the wrong object. We must mutate the bound object directly.
-            const storage = scriptioEditor.storage.PaginationPlus;
-            if (storage) {
-                storage.pageHeight = format.pageHeight;
-                storage.pageWidth = format.pageWidth;
-                storage.marginTop = format.marginTop;
-                storage.marginBottom = format.marginBottom;
-                storage.marginLeft = format.marginLeft;
-                storage.marginRight = format.marginRight;
-            }
-
-            // 2. Set the custom layout variable used by our frontend (e.g., for bookmarks)
-            const dom = scriptioEditor.view.dom as HTMLElement;
-            if (dom) {
-                dom.style.setProperty("--page-margin-left", `${format.marginLeft}px`);
-
-                // 3. Force ProseMirror to flush/repaint its view to catch dynamic dimensions
-                scriptioEditor.commands.command(({ tr, dispatch }) => {
-                    if (dispatch) {
-                        tr.setMeta("pageFormatUpdate", true);
-                        dispatch(tr);
-                    }
-                    return true;
-                });
-            }
+            scriptioEditor.commands.updatePageSize(format);
         } catch {
             // Editor view not mounted yet — will apply on next render
         }

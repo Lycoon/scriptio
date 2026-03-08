@@ -7,6 +7,7 @@ import { join } from "@src/lib/utils/misc";
 import { useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { UserContext } from "@src/context/UserContext";
+import { DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 
 import styles from "./EditorPanel.module.css";
@@ -35,10 +36,12 @@ const EditorPanel = ({ isVisible, suggestions, updateSuggestions, suggestionData
         selectedStyles,
         setSelectedStyles,
         displaySceneNumbers,
-        sceneHeadingBold,
-        sceneHeadingDoubleSpace,
+        sceneHeadingSpacing,
         sceneNumberOnRight,
         contdLabel,
+        moreLabel,
+        elementMargins,
+        elementStyles,
         setActiveCommentId,
         setFocusedEditorType,
     } = useContext(ProjectContext);
@@ -101,18 +104,12 @@ const EditorPanel = ({ isVisible, suggestions, updateSuggestions, suggestionData
             editorElement.classList.add("hide-scene-numbers");
         }
 
-        // Scene heading bold
-        if (sceneHeadingBold) {
-            editorElement.classList.remove("scene-heading-normal");
-        } else {
-            editorElement.classList.add("scene-heading-normal");
-        }
-
-        // Scene heading double space
-        if (sceneHeadingDoubleSpace) {
-            editorElement.classList.add("scene-heading-double-space");
-        } else {
-            editorElement.classList.remove("scene-heading-double-space");
+        // Scene heading spacing
+        editorElement.classList.remove("scene-heading-spacing-1.5", "scene-heading-spacing-2");
+        if (sceneHeadingSpacing === 1.5) {
+            editorElement.classList.add("scene-heading-spacing-1.5");
+        } else if (sceneHeadingSpacing === 2) {
+            editorElement.classList.add("scene-heading-spacing-2");
         }
 
         // Scene number on right (class kept for potential future CSS use)
@@ -122,14 +119,36 @@ const EditorPanel = ({ isVisible, suggestions, updateSuggestions, suggestionData
             editorElement.classList.remove("scene-number-right");
         }
 
-        // CONT'D label
+        // CONT'D and MORE labels
         editorElement.style.setProperty("--contd-label", `"${contdLabel}"`);
+        editorElement.style.setProperty("--more-label", `"${moreLabel}"`);
+
+        // Element margins and styles
+        const elementKeys = ["action", "scene", "character", "dialogue", "parenthetical", "transition", "section"] as const;
+        for (const key of elementKeys) {
+            // Margins
+            const m = elementMargins[key];
+            if (m) {
+                editorElement.style.setProperty(`--${key}-l-margin`, `${m.left}in`);
+                editorElement.style.setProperty(`--${key}-r-margin`, `${m.right}in`);
+            } else {
+                editorElement.style.removeProperty(`--${key}-l-margin`);
+                editorElement.style.removeProperty(`--${key}-r-margin`);
+            }
+
+            // Styles
+            const s = { ...(DEFAULT_ELEMENT_STYLES[key] || {}), ...(elementStyles[key] || {}) };
+            editorElement.style.setProperty(`--${key}-align`, s.align ?? "left");
+            editorElement.style.setProperty(`--${key}-weight`, s.bold ? "bold" : "normal");
+            editorElement.style.setProperty(`--${key}-style`, s.italic ? "italic" : "normal");
+            editorElement.style.setProperty(`--${key}-decoration`, s.underline ? "underline" : "none");
+        }
 
         // Focus editor to trigger pagination recompute (only when visible to avoid stealing focus)
         if (isVisible) {
             editor.commands.focus();
         }
-    }, [editor, isVisible, displaySceneNumbers, sceneHeadingBold, sceneHeadingDoubleSpace, sceneNumberOnRight, contdLabel]);
+    }, [editor, isVisible, displaySceneNumbers, sceneHeadingSpacing, sceneNumberOnRight, contdLabel, moreLabel, elementMargins, elementStyles]);
 
     useEffect(() => {
         if (!editor) return;
