@@ -32,6 +32,7 @@ import {
 import AnalyticsModal from "@components/analytics/AnalyticsModal";
 
 import navbar from "./ProjectNavbar.module.css";
+import navBtn from "@components/utils/NavbarIconButton.module.css";
 import ScreenplayFormatDropdown from "./ScreenplayFormatDropdown";
 import ScreenplaySearch from "./ScreenplaySearch";
 
@@ -126,8 +127,12 @@ const ProjectNavbar = () => {
     const toggleZenMode = () => updateIsZenMode((prev) => !prev);
 
     const handlePanelClick = (panel: PanelType) => {
-        if (viewContext.primaryPanel === panel && !viewContext.isSplit) return;
-        viewContext.setPrimaryPanel(panel);
+        if (viewContext.isSplit) {
+            viewContext.setFocusedPanel(panel);
+        } else {
+            if (viewContext.primaryPanel === panel) return;
+            viewContext.setPrimaryPanel(panel);
+        }
     };
 
     const handleSplitToggle = () => {
@@ -145,7 +150,9 @@ const ProjectNavbar = () => {
     };
 
     const getPanelBtnStyle = (panel: PanelType) => {
-        const isActive = viewContext.primaryPanel === panel && !viewContext.isSplit;
+        const isActive = viewContext.isSplit
+            ? viewContext.focusedPanel === panel
+            : viewContext.primaryPanel === panel;
         return `${navbar.panel_btn} ${isActive ? navbar.panel_btn_active : ""}`;
     };
 
@@ -207,16 +214,11 @@ const ProjectNavbar = () => {
                             </div>
                         </div>
                         <div
-                            className={`${navbar.export_project_btn} ${viewContext.isSplit ? navbar.panel_btn_active : ""}`}
+                            className={`${navBtn.button} ${viewContext.isSplit ? navBtn.active : ""}`}
                             onClick={handleSplitToggle}
+                            style={{ height: "100%", paddingInline: "10px", gap: "12px" }}
                         >
                             {viewContext.isSplit ? <PanelRightClose size={18} /> : <PanelRight size={18} />}
-                        </div>
-                        <div
-                            className={`${navbar.export_project_btn} ${isAnalyticsOpen ? navbar.panel_btn_active : ""}`}
-                            onClick={() => setIsAnalyticsOpen(true)}
-                        >
-                            <BarChart2 size={18} />
                         </div>
                     </div>
                 )}
@@ -253,16 +255,18 @@ const ProjectNavbar = () => {
             )}
             <AnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setIsAnalyticsOpen(false)} />
 
-            {/* Right side - Collaborators + Search + Zen mode toggle + Settings */}
+            {/* Right side - Collaborators + Search + Settings */}
             <div className={navbar.right_btns}>
                 {isInProject && <CollaboratorsDisplay />}
                 {hasScreenplay && <ScreenplaySearch />}
-                {hasScreenplay && (
-                    <div className={navbar.export_project_btn} onClick={toggleZenMode}>
-                        {isZenMode ? <EyeClosed size={18} /> : <Eye size={18} />}
-                    </div>
-                )}
-                <div className={navbar.export_project_btn} onClick={() => openDashboard("General")}>
+                <div
+                    className={`${navBtn.button} ${isAnalyticsOpen ? navBtn.active : ""}`}
+                    onClick={() => setIsAnalyticsOpen(true)}
+                    style={{ height: "100%", paddingInline: "10px", gap: "12px" }}
+                >
+                    <BarChart2 size={18} />
+                </div>
+                <div className={navBtn.button} onClick={() => openDashboard("General")} style={{ height: "100%", paddingInline: "10px", gap: "12px" }}>
                     <Settings size={18} />
                 </div>
             </div>

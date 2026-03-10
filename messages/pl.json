@@ -5,7 +5,9 @@
         "titlePage": "Strona tytułowa",
         "synced": "Zsynchronizowano z chmurą",
         "noConnection": "Brak połączenia",
-        "reconnecting": "Łączenie..."
+        "reconnecting": "Łączenie...",
+        "endlessScroll": "Endless Scroll",
+        "toggleComments": "Toggle Comments"
     },
     "common": {
         "save": "Zapisz zmiany",

@@ -55,3 +55,8 @@
     opacity: 0;
     pointer-events: none;
 }
+
+/* Endless Scroll Mode Overrides */
+.endless_scroll :global(.pagination-page-break) {
+    display: none !important;
+}

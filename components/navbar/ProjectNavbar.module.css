@@ -53,25 +53,6 @@
     width: var(--navbar-sidebar-width);
 }
 
-.export_project_btn {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding-inline: 10px;
-    gap: 12px;
-    height: 100%;
-
-    border-radius: 64px;
-    border: 2px solid var(--tertiary);
-    user-select: none;
-    cursor: pointer;
-}
-
-.export_project_btn:hover {
-    background-color: var(--secondary-hover);
-}
-
 .navBtns {
     display: flex;
     flex-direction: row;
@@ -101,6 +82,7 @@
     padding: 0 14px;
     height: 100%;
     border-radius: 64px;
+    white-space: nowrap;
 
     font-size: 0.75rem;
     font-weight: 500;
