@@ -10,6 +10,7 @@ import { join } from "@src/lib/utils/misc";
 import Logo from "@public/images/scriptio.svg"
 
 import navbar from "./ProjectNavbar.module.css";
+import navBtn from "@components/utils/NavbarIconButton.module.css";
 
 const HomeNavbar = () => {
     const { openDashboard } = useContext(DashboardContext);
@@ -30,7 +31,7 @@ const HomeNavbar = () => {
 
             {/* Right side - settings */}
             <div className={navbar.right_btns}>
-                <div className={navbar.export_project_btn} onClick={() => openDashboard("Profile")}>
+                <div className={navBtn.button} onClick={() => openDashboard("Profile")} style={{ height: "100%", paddingInline: "10px", gap: "12px" }}>
                     <Settings size={18} />
                 </div>
             </div>

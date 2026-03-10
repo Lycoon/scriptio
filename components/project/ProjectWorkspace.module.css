@@ -22,3 +22,22 @@
     opacity: 0;
     pointer-events: none;
 }
+
+.floating_actions {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.5s ease;
+    will-change: transform;
+}
+
+.floating_actions_shifted {
+    transform: translateX(calc(-1 * var(--format-sidebar-width) - 20px));
+}
+
+
+

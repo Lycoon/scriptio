@@ -6,6 +6,7 @@ import { Comment, CommentReply } from "@src/lib/utils/types";
 import { Send, Trash2, X } from "lucide-react";
 import { useUser } from "@src/lib/utils/hooks";
 import { getCommentPositions } from "@src/lib/screenplay/extensions/comment-highlight-extension";
+import { useViewContext } from "@src/context/ViewContext";
 import styles from "./CommentCard.module.css";
 
 function formatTimestamp(ts: number): string {
@@ -226,6 +227,7 @@ type ActiveLine = {
 const CommentCards = () => {
     const { editor, comments, activeCommentId, setActiveCommentId, repository } = useContext(ProjectContext);
     const { user } = useUser();
+    const { showComments } = useViewContext();
     const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     const [activeLine, setActiveLine] = useState<ActiveLine | null>(null);
 
@@ -241,7 +243,7 @@ const CommentCards = () => {
     // Centralized positioning: iterate sorted cards, push down to avoid overlap.
     // Reads positions from comment marks in the document.
     const positionCards = useCallback(() => {
-        if (!editor || editor.isDestroyed || !editor.view?.dom) return;
+        if (!editor || editor.isDestroyed || !editor.view?.dom || !showComments) return;
 
         const editorDom = editor.view.dom;
         const scrollContainer = editorDom.closest("[class*='container']") as HTMLElement | null;
@@ -282,7 +284,7 @@ const CommentCards = () => {
             }
         }
 
-    }, [editor, unresolvedComments]);
+    }, [editor, unresolvedComments, showComments]);
 
     // Position on mount and when comments change
     useEffect(() => {
@@ -291,7 +293,7 @@ const CommentCards = () => {
 
     // Reposition on document changes, window resize, and container resize (zen mode, split view, etc.)
     useEffect(() => {
-        if (!editor || editor.isDestroyed) return;
+        if (!editor || editor.isDestroyed || !showComments) return;
 
         // Performance: Debounce transaction handler to prevent layout thrashing during typing
         const handleTransaction = ({ transaction }: any) => {
@@ -334,11 +336,16 @@ const CommentCards = () => {
                 cancelAnimationFrame(resizeThrottleRef.current);
             }
         };
-    }, [editor, positionCards]);
+    }, [editor, positionCards, showComments]);
 
     // Reposition after active card changes (expanded height differs from compact)
     // Also compute the connecting line for the active comment
     useEffect(() => {
+        if (!showComments) {
+            setActiveLine(null);
+            return;
+        }
+
         requestAnimationFrame(() => {
             positionCards();
 
@@ -376,14 +383,14 @@ const CommentCards = () => {
                 setActiveLine(null);
             }
         });
-    }, [activeCommentId, positionCards, editor]);
+    }, [activeCommentId, positionCards, editor, showComments]);
 
     const setCardRef = useCallback((id: string, el: HTMLDivElement | null) => {
         if (el) cardRefs.current.set(id, el);
         else cardRefs.current.delete(id);
     }, []);
 
-    if (unresolvedComments.length === 0) return null;
+    if (!showComments || unresolvedComments.length === 0) return null;
 
     return (
         <>

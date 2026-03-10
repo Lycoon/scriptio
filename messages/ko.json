@@ -5,7 +5,9 @@
         "titlePage": "타이틀 페이지",
         "synced": "클라우드에 동기화됨",
         "noConnection": "연결 없음",
-        "reconnecting": "재연결 중..."
+        "reconnecting": "재연결 중...",
+        "endlessScroll": "Endless Scroll",
+        "toggleComments": "Toggle Comments"
     },
     "common": {
         "save": "변경사항 저장",

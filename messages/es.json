@@ -5,7 +5,9 @@
         "titlePage": "Portada",
         "synced": "Sincronizado en la nube",
         "noConnection": "Sin conexión",
-        "reconnecting": "Reconectando..."
+        "reconnecting": "Reconectando...",
+        "endlessScroll": "Endless Scroll",
+        "toggleComments": "Toggle Comments"
     },
     "common": {
         "save": "Guardar cambios",

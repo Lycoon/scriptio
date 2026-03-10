@@ -5,7 +5,9 @@
         "titlePage": "タイトルページ",
         "synced": "クラウドに同期済み",
         "noConnection": "接続なし",
-        "reconnecting": "再接続中..."
+        "reconnecting": "再接続中...",
+        "endlessScroll": "Endless Scroll",
+        "toggleComments": "Toggle Comments"
     },
     "common": {
         "save": "変更を保存",

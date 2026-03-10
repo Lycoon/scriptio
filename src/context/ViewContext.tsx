@@ -14,11 +14,15 @@ interface ViewContextType {
     mountedPanels: Set<PanelType>;
     focusedSide: SplitSide;
     focusedPanel: PanelType;
+    isEndlessScroll: boolean;
+    showComments: boolean;
     setPrimaryPanel: (panel: PanelType) => void;
     setSecondaryPanel: (panel: PanelType | null) => void;
     setSplitRatio: (ratio: number) => void;
     setFocusedSide: (side: SplitSide) => void;
     setFocusedPanel: (panel: PanelType) => void;
+    setIsEndlessScroll: (value: boolean | ((prev: boolean) => boolean)) => void;
+    setShowComments: (value: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 const ViewContext = createContext<ViewContextType>(null!);
@@ -31,6 +35,8 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [splitRatio, setSplitRatio] = useState(0.5);
     const [mountedPanels, setMountedPanels] = useState<Set<PanelType>>(() => new Set(["screenplay", "title"]));
     const [focusedSide, setFocusedSideState] = useState<SplitSide>("primary");
+    const [isEndlessScroll, setIsEndlessScroll] = useState<boolean>(false);
+    const [showComments, setShowComments] = useState<boolean>(true);
 
     const isSplit = secondaryPanel !== null;
 
@@ -130,13 +136,17 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             mountedPanels,
             focusedSide,
             focusedPanel,
+            isEndlessScroll,
+            showComments,
             setPrimaryPanel,
             setSecondaryPanel,
             setSplitRatio,
             setFocusedSide,
             setFocusedPanel,
+            setIsEndlessScroll,
+            setShowComments,
         }),
-        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel],
+        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setIsEndlessScroll, setShowComments],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

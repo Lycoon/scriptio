@@ -5,7 +5,9 @@
         "titlePage": "标题页",
         "synced": "已同步至云端",
         "noConnection": "无连接",
-        "reconnecting": "正在重新连接..."
+        "reconnecting": "正在重新连接...",
+        "endlessScroll": "Endless Scroll",
+        "toggleComments": "Toggle Comments"
     },
     "common": {
         "save": "保存更改",

@@ -5,7 +5,9 @@
         "titlePage": "Title Page",
         "synced": "Synced to cloud",
         "noConnection": "No connection",
-        "reconnecting": "Reconnecting..."
+        "reconnecting": "Reconnecting...",
+        "endlessScroll": "Endless Scroll",
+        "toggleComments": "Toggle Comments"
     },
     "common": {
         "save": "Save Changes",

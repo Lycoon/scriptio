@@ -5,7 +5,9 @@
         "titlePage": "Titelseite",
         "synced": "Mit der Cloud synchronisiert",
         "noConnection": "Keine Verbindung",
-        "reconnecting": "Verbindung wird hergestellt..."
+        "reconnecting": "Verbindung wird hergestellt...",
+        "endlessScroll": "Endless Scroll",
+        "toggleComments": "Toggle Comments"
     },
     "common": {
         "save": "Änderungen speichern",

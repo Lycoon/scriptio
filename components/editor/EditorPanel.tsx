@@ -7,6 +7,7 @@ import { join } from "@src/lib/utils/misc";
 import { useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { UserContext } from "@src/context/UserContext";
+import { useViewContext } from "@src/context/ViewContext";
 import { DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 
@@ -298,13 +299,15 @@ const EditorPanel = ({ isVisible, suggestions, updateSuggestions, suggestionData
         setActiveCommentId(null);
     }, [setActiveCommentId]);
 
+    const { isEndlessScroll, showComments } = useViewContext();
+
     const isDesktop = isTauri();
     if (!isDesktop && (!membership || isLoading)) return <Loading />;
 
     return (
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
-            <div className={styles.container} onScroll={onScroll} onMouseDown={handleContainerMouseDown} onFocus={() => setFocusedEditorType("screenplay")}>
-                <div className={styles.editor_wrapper}>
+            <div className={`${styles.container} ${!showComments ? "hide-comments" : ""}`} onScroll={onScroll} onMouseDown={handleContainerMouseDown} onFocus={() => setFocusedEditorType("screenplay")}>
+                <div className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}>
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
                     <div onContextMenu={onEditorContextMenu}>
                         <EditorContent editor={editor} spellCheck={false} />
