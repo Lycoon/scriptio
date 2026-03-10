@@ -355,11 +355,15 @@ function buildDecorations(
     );
 
     // Page breaks
+    // The key MUST include every value that affects the widget DOM (freespace,
+    // contdName, splitNodeType) — not just pagenum.  ProseMirror's WidgetType.eq
+    // short-circuits on matching keys and reuses the old DOM element, so a key
+    // that omits e.g. freespace causes stale spacer heights after content edits.
     for (const b of breaks) {
         decorations.push(
             Decoration.widget(b.pos, createPageBreakWidget(b, options), {
                 side: -1,
-                key: `page-${b.pagenum}`,
+                key: `pb-${b.pagenum}-${b.freespace}-${b.contdName}-${b.splitNodeType}`,
             }),
         );
     }
@@ -369,7 +373,7 @@ function buildDecorations(
     decorations.push(
         Decoration.widget(doc.content.size, createLastPageWidget(lastPagenum, lastPageFreespace, options), {
             side: 1,
-            key: `page-${lastPagenum}-footer`,
+            key: `lp-${lastPagenum}-${lastPageFreespace}`,
         }),
     );
 
@@ -405,9 +409,11 @@ const setupTestDiv = (editorDom: HTMLElement, options: PaginationPlusOptions): H
         testDiv.style.whiteSpace = "break-spaces";
         testDiv.style.visibility = "hidden";
 
-        // Prevent margin collapsing which would introduce inconsistencies in height
-        testDiv.style.borderTop = "1px solid transparent";
-        testDiv.style.borderBottom = "1px solid transparent";
+        // position:fixed already establishes a block formatting context which
+        // prevents margin collapsing.  Using overflow:hidden as a belt-and-
+        // suspenders safeguard avoids the 2 px measurement error that the old
+        // 1 px transparent borders used to introduce on every height reading.
+        testDiv.style.overflow = "hidden";
         // The .pagination class sets min-height: var(--page-height) for the editor,
         // but the test div must shrink to fit each node's content.
         testDiv.style.minHeight = "0";

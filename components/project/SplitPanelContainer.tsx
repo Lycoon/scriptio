@@ -51,7 +51,7 @@ const SplitPanelContainer = ({
     suggestionData,
     updateSuggestionData,
 }: SplitPanelContainerProps) => {
-    const { primaryPanel, secondaryPanel, splitRatio, isSplit, mountedPanels } = useViewContext();
+    const { primaryPanel, secondaryPanel, splitRatio, isSplit, mountedPanels, focusedSide, setFocusedSide } = useViewContext();
 
     const gridStyle = useMemo(() => {
         if (!isSplit) {
@@ -79,11 +79,19 @@ const SplitPanelContainer = ({
                 // Lazy mount: only render panels that have been visited at least once
                 if (!mountedPanels.has(panel)) return null;
 
+                const isFocused = isSplit && isVisible && (isPrimary ? focusedSide === "primary" : focusedSide === "secondary");
+                const panelClass = !isVisible
+                    ? styles.panel_hidden
+                    : isFocused
+                      ? `${styles.panel} ${styles.panel_focused}`
+                      : styles.panel;
+
                 return (
                     <div
                         key={panel}
-                        className={isVisible ? styles.panel : styles.panel_hidden}
+                        className={panelClass}
                         style={isVisible ? { order: isPrimary ? 0 : 2 } : undefined}
+                        onPointerDown={isVisible && isSplit ? () => setFocusedSide(isPrimary ? "primary" : "secondary") : undefined}
                     >
                         <PanelRenderer
                             panel={panel}

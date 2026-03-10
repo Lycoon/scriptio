@@ -101,6 +101,7 @@
     padding: 0 14px;
     height: 100%;
     border-radius: 64px;
+    white-space: nowrap;
 
     font-size: 0.75rem;
     font-weight: 500;

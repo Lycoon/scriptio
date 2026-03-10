@@ -126,8 +126,12 @@ const ProjectNavbar = () => {
     const toggleZenMode = () => updateIsZenMode((prev) => !prev);
 
     const handlePanelClick = (panel: PanelType) => {
-        if (viewContext.primaryPanel === panel && !viewContext.isSplit) return;
-        viewContext.setPrimaryPanel(panel);
+        if (viewContext.isSplit) {
+            viewContext.setFocusedPanel(panel);
+        } else {
+            if (viewContext.primaryPanel === panel) return;
+            viewContext.setPrimaryPanel(panel);
+        }
     };
 
     const handleSplitToggle = () => {
@@ -145,7 +149,9 @@ const ProjectNavbar = () => {
     };
 
     const getPanelBtnStyle = (panel: PanelType) => {
-        const isActive = viewContext.primaryPanel === panel && !viewContext.isSplit;
+        const isActive = viewContext.isSplit
+            ? viewContext.focusedPanel === panel
+            : viewContext.primaryPanel === panel;
         return `${navbar.panel_btn} ${isActive ? navbar.panel_btn_active : ""}`;
     };
 
