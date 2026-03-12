@@ -33,7 +33,6 @@ import { createSceneBookmarkExtension, refreshSceneBookmarks } from "./extension
 import { createSceneIdDedupExtension } from "./extensions/scene-id-dedup-extension";
 import { CommentMark } from "./extensions/comment-highlight-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
-import { OrphanPreventionExtension } from "./extensions/orphan-prevention-extension";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
     if (style & Style.Bold) editor.chain().toggleBold().focus().run();
@@ -434,10 +433,6 @@ export const useScriptioEditor = (
                     },
                     footerRight: "",
                     ...SCREENPLAY_FORMATS[pageSize],
-                }),
-                OrphanPreventionExtension.configure({
-                    getContdLabel: () => contdLabelRef.current,
-                    getMoreLabel: () => moreLabelRef.current,
                 }),
                 KeybindsExtension.configure({
                     userKeybinds: userKeybinds || {},

@@ -86,7 +86,7 @@ export interface FooterOptions {
     footerRight: string;
 }
 
-export interface PaginationPlusOptions {
+export interface PaginationOptions {
     pageHeight: number; // full physical page height in px
     pageWidth: number; // full physical page width in px
     pageGap: number; // visual gap between pages in px
@@ -115,7 +115,7 @@ export interface PageBreakInfo {
 
 declare module "@tiptap/core" {
     interface Commands<ReturnType> {
-        PaginationPlus: {
+        Pagination: {
             updatePageSize: (size: Partial<PageSize>) => ReturnType;
             updatePageHeight: (height: number) => ReturnType;
             updatePageWidth: (width: number) => ReturnType;
@@ -132,7 +132,7 @@ declare module "@tiptap/core" {
 // Default options
 // ---------------------------------------------------------------------------
 
-const defaultOptions: PaginationPlusOptions = {
+const defaultOptions: PaginationOptions = {
     pageHeight: 1060,
     pageWidth: 818,
     pageGap: 40,
@@ -155,7 +155,7 @@ const defaultOptions: PaginationPlusOptions = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function syncVars(dom: HTMLElement, o: PaginationPlusOptions) {
+function syncVars(dom: HTMLElement, o: PaginationOptions) {
     const vars: Record<string, string> = {
         "page-height": `${o.pageHeight}px`,
         "page-width": `${o.pageWidth}px`,
@@ -175,7 +175,7 @@ function syncVars(dom: HTMLElement, o: PaginationPlusOptions) {
 // Decoration builders
 // ---------------------------------------------------------------------------
 
-function renderHeader(pagenum: number, options: PaginationPlusOptions): string {
+function renderHeader(pagenum: number, options: PaginationOptions): string {
     const custom = options.customHeader[pagenum];
     const left = custom?.headerLeft ?? options.headerLeft;
     const right = (custom?.headerRight ?? options.headerRight).replace("{page}", `${pagenum}`);
@@ -185,7 +185,7 @@ function renderHeader(pagenum: number, options: PaginationPlusOptions): string {
     );
 }
 
-function renderFooter(pagenum: number, options: PaginationPlusOptions): string {
+function renderFooter(pagenum: number, options: PaginationOptions): string {
     const custom = options.customFooter[pagenum];
     const left = custom?.footerLeft ?? options.footerLeft;
     const right = (custom?.footerRight ?? options.footerRight).replace("{page}", `${pagenum}`);
@@ -195,7 +195,7 @@ function renderFooter(pagenum: number, options: PaginationPlusOptions): string {
     );
 }
 
-function createFirstPageWidget(options: PaginationPlusOptions): HTMLElement {
+function createFirstPageWidget(options: PaginationOptions): HTMLElement {
     const container = document.createElement("div");
     container.className = "pagination-first-page";
     container.contentEditable = "false";
@@ -234,7 +234,7 @@ function getSplitPaddingVars(nodeType: ScreenplayElement): [string, string] {
     }
 }
 
-function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationPlusOptions): HTMLElement {
+function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOptions): HTMLElement {
     const container = document.createElement("div");
     container.className = "pagination-page-break";
     container.contentEditable = "false";
@@ -312,7 +312,7 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationPlus
     return container;
 }
 
-function createLastPageWidget(pagenum: number, freespace: number, options: PaginationPlusOptions): HTMLElement {
+function createLastPageWidget(pagenum: number, freespace: number, options: PaginationOptions): HTMLElement {
     const container = document.createElement("div");
     container.className = "pagination-last-page";
     container.contentEditable = "false";
@@ -342,7 +342,7 @@ function buildDecorations(
     doc: any,
     breaks: PageBreakInfo[],
     lastPageFreespace: number,
-    options: PaginationPlusOptions,
+    options: PaginationOptions,
 ): DecorationSet {
     const decorations: Decoration[] = [];
 
@@ -384,19 +384,33 @@ function buildDecorations(
 // Height measurement
 // ---------------------------------------------------------------------------
 
+const heightCache = new Map<string, number>();
+
 const getHTMLHeight = (
     domNode: HTMLElement,
     editorDom: HTMLElement,
     nodeType: string,
-    options: PaginationPlusOptions,
+    options: PaginationOptions,
 ): number => {
+    const textContent = domNode.textContent || "";
+    const cacheKey = `${nodeType}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${textContent}`;
+
+    if (heightCache.has(cacheKey)) {
+        return heightCache.get(cacheKey)!;
+    }
+
     let testDiv = setupTestDiv(editorDom, options);
     testDiv.innerHTML = domNode.outerHTML;
     const rect = testDiv.getBoundingClientRect();
-    return Math.round(rect.height);
+    const height = Math.round(rect.height);
+
+    if (heightCache.size > 10000) heightCache.clear();
+    heightCache.set(cacheKey, height);
+
+    return height;
 };
 
-const setupTestDiv = (editorDom: HTMLElement, options: PaginationPlusOptions): HTMLElement => {
+const setupTestDiv = (editorDom: HTMLElement, options: PaginationOptions): HTMLElement => {
     let testDiv = document.getElementById("pagination-test-div");
     if (!testDiv) {
         testDiv = document.createElement("div");
@@ -460,7 +474,7 @@ function trySplitNode(
     freespace: number,
     nodeElement: HTMLElement,
     editorDOM: HTMLElement,
-    options: PaginationPlusOptions,
+    options: PaginationOptions,
 ): SplitResult | null {
     if (!sentenceSegmenter) return null;
 
@@ -527,10 +541,14 @@ const createPaginationPlugin = (extension: any) =>
                 lastPageFreespace: 0,
             }),
             apply(tr, value: PaginationState, oldState, newState): PaginationState {
-                const options = extension.options as PaginationPlusOptions;
+                const options = extension.options as PaginationOptions;
                 const heightUpdate = tr.getMeta("heightUpdate");
                 const formatUpdate = tr.getMeta("pageFormatUpdate");
                 const forceUpdate = tr.getMeta("forcePaginationUpdate");
+
+                if (forceUpdate || formatUpdate) {
+                    heightCache.clear();
+                }
 
                 // Nothing pagination-related changed
                 if (!tr.docChanged && !forceUpdate && !formatUpdate) return value;
@@ -777,18 +795,34 @@ const createPaginationPlugin = (extension: any) =>
             const state = paginationKey.getState(newState) as PaginationState | undefined;
             if (!state?.heightUpdates.length) return;
 
+            // Skip processing for remote Yjs transactions
+            const isRemoteChange = transactions.some((tr) => tr.getMeta("y-sync$"));
+            if (isRemoteChange) {
+                return null;
+            }
+
             const tr = newState.tr;
             tr.setMeta("heightUpdate", true);
-            tr.setMeta("addToHistory", false);
+
+            // If the original transactions were meant to be excluded from history (e.g. undo/redo),
+            // ensure the height updates are also excluded so they don't pollute the history stack.
+            if (transactions.some((t) => t.getMeta("addToHistory") === false)) {
+                tr.setMeta("addToHistory", false);
+            }
 
             state.heightUpdates.forEach(({ pos, height }) => {
-                const node = newState.doc.nodeAt(pos);
+                const mappedPos = tr.mapping.map(pos);
+                const node = tr.doc.nodeAt(mappedPos);
                 if (node && node.attrs.height !== height) {
-                    tr.setNodeMarkup(pos, undefined, { ...node.attrs, height });
+                    tr.setNodeMarkup(mappedPos, undefined, { ...node.attrs, height });
                 }
             });
 
-            return tr.steps.length ? tr : null;
+            if (tr.steps.length) {
+                return tr;
+            }
+
+            return null;
         },
         props: {
             decorations(state) {
@@ -801,8 +835,8 @@ const createPaginationPlugin = (extension: any) =>
 // Extension
 // ---------------------------------------------------------------------------
 
-export const ScriptioPagination = Extension.create<PaginationPlusOptions>({
-    name: "PaginationPlus",
+export const ScriptioPagination = Extension.create<PaginationOptions>({
+    name: "Pagination",
 
     addOptions() {
         return defaultOptions;
