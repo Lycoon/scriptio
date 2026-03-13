@@ -10,7 +10,6 @@ import { LocationData, deleteLocation } from "@src/lib/screenplay/locations";
 import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/screenplay/editor";
 import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/screenplay/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { useUser } from "@src/lib/utils/hooks";
 import { useTranslations } from "next-intl";
 import {
     ArrowDownRight,
@@ -179,30 +178,14 @@ const LocationItemMenu = (props: any) => {
 export type EditorSelectionContextProps = {
     from: number;
     to: number;
+    onAddComment: () => void;
 };
 
 const EditorSelectionMenu = (props: any) => {
     const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
-    const { repository, editor, setActiveCommentId } = projectCtx;
-    const { from, to } = props.props as EditorSelectionContextProps;
-    const { user } = useUser();
-
-    const handleAddComment = () => {
-        if (!repository || !editor) return;
-
-        const commentId = repository.addComment({
-            text: "",
-            author: user?.username || "Anonymous",
-            createdAt: Date.now(),
-            resolved: false,
-            replies: [],
-        });
-
-        // Restore the original selection (lost when clicking the context menu) and apply the mark
-        editor.chain().setTextSelection({ from, to }).setComment(commentId).run();
-        setActiveCommentId(commentId);
-    };
+    const { editor } = projectCtx;
+    const { from, to, onAddComment } = props.props as EditorSelectionContextProps;
 
     const handleSearchOnWeb = () => {
         if (!editor) return;
@@ -213,7 +196,7 @@ const EditorSelectionMenu = (props: any) => {
 
     return (
         <>
-            <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={handleAddComment} />
+            <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
             <ContextMenuItem text={t("searchOnWeb")} icon={Search} action={handleSearchOnWeb} />
         </>
     );

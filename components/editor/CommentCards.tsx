@@ -1,12 +1,12 @@
 "use client";
 
-import { useContext, useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { ProjectContext } from "@src/context/ProjectContext";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Comment, CommentReply } from "@src/lib/utils/types";
 import { Send, Trash2, X } from "lucide-react";
 import { useUser } from "@src/lib/utils/hooks";
 import { getCommentPositions } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { useViewContext } from "@src/context/ViewContext";
+import { Editor } from "@tiptap/react";
 import styles from "./CommentCard.module.css";
 
 function formatTimestamp(ts: number): string {
@@ -224,8 +224,25 @@ type ActiveLine = {
     svgHeight: number;
 };
 
-const CommentCards = () => {
-    const { editor, comments, activeCommentId, setActiveCommentId, repository } = useContext(ProjectContext);
+export interface CommentCardsProps {
+    editor: Editor | null;
+    comments: Comment[];
+    activeCommentId: string | null;
+    setActiveCommentId: (id: string | null) => void;
+    onUpdateComment: (id: string, data: Partial<Comment>) => void;
+    onDeleteComment: (id: string) => void;
+    onAddReply: (commentId: string, text: string, author: string) => void;
+}
+
+const CommentCards = ({
+    editor,
+    comments,
+    activeCommentId,
+    setActiveCommentId,
+    onUpdateComment,
+    onDeleteComment,
+    onAddReply,
+}: CommentCardsProps) => {
     const { user } = useUser();
     const { showComments } = useViewContext();
     const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -428,19 +445,15 @@ const CommentCards = () => {
                             onActivate={() => setActiveCommentId(comment.id)}
                             onDeactivate={() => setActiveCommentId(null)}
                             onSave={(text: string) => {
-                                repository?.updateComment(comment.id, { text });
+                                onUpdateComment(comment.id, { text });
                             }}
                             onDelete={() => {
                                 editor?.commands.unsetComment(comment.id);
-                                repository?.deleteComment(comment.id);
+                                onDeleteComment(comment.id);
                                 setActiveCommentId(null);
                             }}
                             onReply={(text: string) => {
-                                repository?.addReply(comment.id, {
-                                    text,
-                                    author: user?.username || "Anonymous",
-                                    createdAt: Date.now(),
-                                });
+                                onAddReply(comment.id, text, user?.username || "Anonymous");
                             }}
                         />
                     </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
     createContext,
@@ -22,7 +22,7 @@ import {
     useProjectYjs,
     ElementStyle,
 } from "@src/lib/project/project-state";
-import { Comment, Screenplay } from "@src/lib/utils/types";
+import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 
@@ -98,11 +98,6 @@ export interface ProjectContextType {
     setCurrentSearchIndex: (index: number) => void;
     searchMatches: SearchMatch[];
     setSearchMatches: (matches: SearchMatch[]) => void;
-
-    // Comments state
-    comments: Comment[];
-    activeCommentId: string | null;
-    setActiveCommentId: (id: string | null) => void;
 
     // Project metadata (for title page placeholders)
     projectTitle: string;
@@ -183,10 +178,6 @@ const defaultContextValue: ProjectContextType = {
     setCurrentSearchIndex: () => {},
     searchMatches: [],
     setSearchMatches: () => {},
-    // Comments state defaults
-    comments: [],
-    activeCommentId: null,
-    setActiveCommentId: () => {},
     // Project metadata defaults
     projectTitle: "",
     setProjectTitle: () => {},
@@ -290,10 +281,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     );
     const [currentSearchIndex, setCurrentSearchIndexState] = useState<number>(0);
     const [searchMatches, setSearchMatchesState] = useState<SearchMatch[]>([]);
-
-    // Comments state
-    const [comments, setComments] = useState<Comment[]>([]);
-    const [activeCommentId, setActiveCommentIdState] = useState<string | null>(null);
 
     // Project metadata state (for title page placeholders)
     const [projectTitle, setProjectTitleState] = useState<string>("");
@@ -415,13 +402,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             updateScenes(allScenes);
         });
 
-        // Observe comments changes
-        const initialComments = Object.values(repository.comments);
-        setComments(initialComments);
-        const unsubscribeComments = repository.observeComments((commentsMap) => {
-            setComments(Object.values(commentsMap));
-        });
-
         // Observe metadata changes (for title page placeholders)
         const initialTitle = repository.getTitle();
         const initialAuthor = repository.getAuthor();
@@ -439,7 +419,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             unsubscribeCharacters();
             unsubscribeLocations();
             unsubscribeScenes();
-            unsubscribeComments();
             unsubscribeMetadata();
         };
     }, [repository]);
@@ -598,10 +577,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setSearchMatchesState(matches);
     }, []);
 
-    const setActiveCommentId = useCallback((id: string | null) => {
-        setActiveCommentIdState(id);
-    }, []);
-
     const setProjectTitle = useCallback(
         (title: string) => {
             setProjectTitleState(title);
@@ -679,10 +654,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             currentSearchIndex,
             setCurrentSearchIndex,
             searchMatches,
-            setSearchMatches,
-            comments,
-            activeCommentId,
-            setActiveCommentId,
             projectTitle,
             setProjectTitle,
             projectAuthor,
@@ -742,10 +713,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             currentSearchIndex,
             setCurrentSearchIndex,
             searchMatches,
-            setSearchMatches,
-            comments,
-            activeCommentId,
-            setActiveCommentId,
             projectTitle,
             setProjectTitle,
             projectAuthor,
