@@ -124,6 +124,7 @@ declare module "@tiptap/core" {
             updateHeaderContent: (left: string, right: string, pageNumber?: PageNumber) => ReturnType;
             updateFooterContent: (left: string, right: string, pageNumber?: PageNumber) => ReturnType;
             updatePageBreakBackground: (color: string) => ReturnType;
+            refreshPagination: () => ReturnType;
         };
     }
 }
@@ -226,12 +227,9 @@ function createFirstPageWidget(options: PaginationOptions): HTMLElement {
  * <p> element's content area and span the full page width.
  */
 function getSplitPaddingVars(nodeType: ScreenplayElement): [string, string] {
-    switch (nodeType) {
-        case ScreenplayElement.Dialogue:
-            return ["var(--dialogue-l-margin)", "var(--dialogue-r-margin)"];
-        default: // Action uses the base page margins
-            return ["var(--page-margin-left)", "var(--page-margin-right)"];
-    }
+    // Screenplay elements now use element-specific margin variables (e.g., --action-l-margin)
+    // rather than a global page margin.
+    return [`var(--${nodeType}-l-margin)`, `var(--${nodeType}-r-margin)`];
 }
 
 function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOptions): HTMLElement {
@@ -435,8 +433,19 @@ const setupTestDiv = (editorDom: HTMLElement, options: PaginationOptions): HTMLE
         document.body.appendChild(testDiv);
     }
 
-    // Set CSS variables so the .pagination !important rules (width, padding) resolve correctly.
+    // Sync classes and CSS variables that affect layout from editor to test div.
     // testDiv lives in <body>, not inside the editor, so it doesn't inherit the editor's CSS vars.
+    testDiv.className = editorDom.className;
+    testDiv.classList.add("pagination");
+    
+    // Copy all CSS variables from editor to test div (margins, styles, labels)
+    for (let i = 0; i < editorDom.style.length; i++) {
+        const prop = editorDom.style[i];
+        if (prop.startsWith("--")) {
+            testDiv.style.setProperty(prop, editorDom.style.getPropertyValue(prop));
+        }
+    }
+
     syncVars(testDiv, options);
 
     return testDiv;
@@ -930,18 +939,13 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
     },
 
     addCommands() {
-        const trigger = (tr: any, meta: string) => {
-            tr.setMeta(meta, true);
-            this.editor.view.dispatch(tr);
-        };
-
         return {
             updatePageSize:
                 (size) =>
                 ({ tr }) => {
                     Object.assign(this.options, size);
                     syncVars(this.editor.view.dom, this.options);
-                    trigger(tr, "pageFormatUpdate");
+                    tr.setMeta("pageFormatUpdate", true);
                     return true;
                 },
             updatePageHeight:
@@ -949,7 +953,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 ({ tr }) => {
                     this.options.pageHeight = h;
                     syncVars(this.editor.view.dom, this.options);
-                    trigger(tr, "pageFormatUpdate");
+                    tr.setMeta("pageFormatUpdate", true);
                     return true;
                 },
             updatePageWidth:
@@ -957,14 +961,14 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 ({ tr }) => {
                     this.options.pageWidth = w;
                     syncVars(this.editor.view.dom, this.options);
-                    trigger(tr, "pageFormatUpdate");
+                    tr.setMeta("pageFormatUpdate", true);
                     return true;
                 },
             updatePageGap:
                 (g) =>
                 ({ tr }) => {
                     this.options.pageGap = g;
-                    trigger(tr, "forcePaginationUpdate");
+                    tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
             updateMargins:
@@ -977,7 +981,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                         marginRight: m.right,
                     });
                     syncVars(this.editor.view.dom, this.options);
-                    trigger(tr, "pageFormatUpdate");
+                    tr.setMeta("pageFormatUpdate", true);
                     return true;
                 },
             updateHeaderContent:
@@ -988,7 +992,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                         this.options.headerLeft = l;
                         this.options.headerRight = r;
                     }
-                    trigger(tr, "forcePaginationUpdate");
+                    tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
             updateFooterContent:
@@ -999,14 +1003,20 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                         this.options.footerLeft = l;
                         this.options.footerRight = r;
                     }
-                    trigger(tr, "forcePaginationUpdate");
+                    tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
             updatePageBreakBackground:
                 (c) =>
                 ({ tr }) => {
                     this.options.pageBreakBackground = c;
-                    trigger(tr, "forcePaginationUpdate");
+                    tr.setMeta("forcePaginationUpdate", true);
+                    return true;
+                },
+            refreshPagination:
+                () =>
+                ({ tr }) => {
+                    tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
         };

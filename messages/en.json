@@ -10,7 +10,7 @@
         "toggleComments": "Toggle Comments"
     },
     "common": {
-        "save": "Save Changes",
+        "save": "Save",
         "cancel": "Cancel",
         "loading": "Loading..."
     },
@@ -42,7 +42,7 @@
         "reset": "Reset",
         "resetTitle": "Clear user binding",
         "resetDefaults": "Reset to defaults",
-        "save": "Save changes"
+        "save": "Save"
     },
     "language": {
         "label": "Display Language",
@@ -286,7 +286,7 @@
         "posterLabel": "Poster",
         "noPoster": "No Poster",
         "posterHelp": "Recommended: 600x900 pixels (2:3 ratio). Supports PNG, JPG.",
-        "saveChanges": "Save changes",
+        "saveChanges": "Save",
         "dangerZoneTitle": "Danger zone"
     },
     "contextMenu": {

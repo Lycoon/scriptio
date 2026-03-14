@@ -28,6 +28,10 @@ import type { ThrottledWebsocketProvider } from "../collaboration/utils";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { TitlePageSchema } from "../titlepage/editor";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
+import type { CharacterItem, CharacterMap } from "../screenplay/characters";
+import type { LocationItem, LocationMap } from "../screenplay/locations";
+import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
+import type { Comment } from "../utils/types";
 
 export interface ProjectYjsState {
     ydoc: ProjectState | null;
@@ -97,16 +101,38 @@ export type LayoutData = {
     elementStyles: Record<string, ElementStyle>;
 };
 
+export interface BoardCardData {
+    id: string;
+    title: string;
+    description: string;
+    color: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+export interface BoardArrowData {
+    id: string;
+    fromCardId: string;
+    toCardId: string;
+}
+
+export type BoardData = {
+    cards: string; // JSON string of BoardCardData[]
+    arrows: string; // JSON string of BoardArrowData[]
+};
+
 export type ProjectData = {
     screenplay: JSONContent[];
     titlepage?: JSONContent[];
-    characters: any;
-    scenes: any;
-    locations: any;
+    characters: CharacterMap;
+    scenes: PersistentSceneMap;
+    locations: LocationMap;
     metadata: ProjectMetadata;
-    board: any;
+    board: BoardData;
     layout: LayoutData;
-    comments?: any;
+    comments?: Record<string, Comment>;
 };
 
 // -------------------------------- //
@@ -189,19 +215,19 @@ export class ProjectState extends Y.Doc {
         return this.getXmlFragment(this.KEYS.TITLEPAGE);
     }
 
-    characters(): Y.Map<any> {
+    characters(): Y.Map<CharacterItem> {
         return this.getMap(this.KEYS.CHARACTERS);
     }
 
-    locations(): Y.Map<any> {
+    locations(): Y.Map<LocationItem> {
         return this.getMap(this.KEYS.LOCATIONS);
     }
 
-    scenes(): Y.Map<any> {
+    scenes(): Y.Map<PersistentScene> {
         return this.getMap(this.KEYS.SCENES);
     }
 
-    board(): Y.Map<any> {
+    board(): Y.Map<string> {
         return this.getMap(this.KEYS.BOARD);
     }
 
@@ -209,7 +235,7 @@ export class ProjectState extends Y.Doc {
         return this.getMap(this.KEYS.LAYOUT);
     }
 
-    comments(): Y.Map<any> {
+    comments(): Y.Map<Comment> {
         return this.getMap(this.KEYS.COMMENTS);
     }
 }
@@ -222,7 +248,7 @@ export class ProjectState extends Y.Doc {
  * Get the characters Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getCharactersMap = (ydoc: ProjectState): Y.Map<any> => {
+export const getCharactersMap = (ydoc: ProjectState): Y.Map<CharacterItem> => {
     return ydoc.characters();
 };
 
@@ -230,7 +256,7 @@ export const getCharactersMap = (ydoc: ProjectState): Y.Map<any> => {
  * Get the locations Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getLocationsMap = (ydoc: ProjectState): Y.Map<any> => {
+export const getLocationsMap = (ydoc: ProjectState): Y.Map<LocationItem> => {
     return ydoc.locations();
 };
 
@@ -238,7 +264,7 @@ export const getLocationsMap = (ydoc: ProjectState): Y.Map<any> => {
  * Get the scenes Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getScenesMap = (ydoc: ProjectState): Y.Map<any> => {
+export const getScenesMap = (ydoc: ProjectState): Y.Map<PersistentScene> => {
     return ydoc.scenes();
 };
 
@@ -246,7 +272,7 @@ export const getScenesMap = (ydoc: ProjectState): Y.Map<any> => {
  * Get the board Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getBoardMap = (ydoc: ProjectState): Y.Map<any> => {
+export const getBoardMap = (ydoc: ProjectState): Y.Map<string> => {
     return ydoc.board();
 };
 

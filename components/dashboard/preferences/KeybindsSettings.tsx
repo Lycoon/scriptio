@@ -11,6 +11,7 @@ import { tinykeys } from "@node_modules/tinykeys/dist/tinykeys";
 import { editUserSettings } from "@src/lib/utils/requests";
 import { DEFAULT_KEYBINDS, DefaultKeyBind, prettyPrintKeybind, UserKeybindsMap } from "@src/lib/utils/keybinds";
 import { useTranslations } from "next-intl";
+import { Save } from "lucide-react";
 
 export type KeybindElementProps = {
     id: string;
@@ -261,6 +262,7 @@ const KeybindsSettings = () => {
                     disabled={!hasUpdatedKeybinds}
                     className={`${sharedStyles.formBtn}`}
                 >
+                    <Save size={18} />
                     {t("save")}
                 </button>
             </div>

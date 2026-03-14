@@ -3,17 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import styles from "./BoardCanvas.module.css";
 import { useTranslations } from "next-intl";
-
-export interface BoardCardData {
-    id: string;
-    title: string;
-    description: string;
-    color: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
+import { BoardCardData } from "@src/lib/project/project-state";
 
 interface BoardCardProps {
     card: BoardCardData;

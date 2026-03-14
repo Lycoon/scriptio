@@ -75,6 +75,15 @@
     gap: 8px;
 }
 
+.labelRow {
+    display: flex;
+    gap: 16px;
+}
+
+.labelRow > div {
+    flex: 1;
+}
+
 .marginRow {
     display: flex;
     align-items: center;
@@ -98,12 +107,14 @@
 .marginInputWrapper {
     display: flex;
     align-items: center;
-    gap: 8px;
     background: var(--main-bg);
     border: 1px solid var(--separator);
     border-radius: 8px;
-    padding: 2px 10px;
+    padding: 0 2px;
     transition: border-color 0.2s ease;
+    gap: 0;
+    height: 40px;
+    box-sizing: border-box;
 }
 
 .marginInputWrapper:focus-within {
@@ -113,35 +124,67 @@
 .marginIcon {
     color: var(--secondary-text);
     flex-shrink: 0;
+    margin: 0 4px;
 }
 
 .marginInput {
-    width: 45px !important;
+    width: 36px !important;
     text-align: center;
-    padding: 6px 4px !important;
+    padding: 0 !important;
     font-size: 0.95rem;
     border: none !important;
     background: transparent !important;
     outline: none !important;
     box-shadow: none !important;
     color: var(--primary-text);
+    height: 100%;
 }
 
-/* Hide number input spinners */
+/* Hide native number spinners */
 .marginInput::-webkit-outer-spin-button,
 .marginInput::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
+
 .marginInput[type="number"] {
     -moz-appearance: textfield;
 }
 
+.marginStepGroup {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+}
+
+.marginStepBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 10px;
+    border-radius: 2px;
+    border: none;
+    background: transparent;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.marginStepBtn:hover {
+    background: var(--secondary);
+    color: var(--primary-text);
+}
+
 .marginUnit {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--secondary-text);
     user-select: none;
     font-weight: 500;
+    margin-left: 2px;
+    margin-right: 4px;
 }
 
 .styleGroup {
@@ -150,7 +193,10 @@
     background: var(--main-bg);
     border: 1px solid var(--separator);
     border-radius: 8px;
-    padding: 4px;
+    padding: 0 4px;
+    height: 40px;
+    align-items: center;
+    box-sizing: border-box;
 }
 
 .styleBtn {

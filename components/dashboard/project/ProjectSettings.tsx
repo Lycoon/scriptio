@@ -9,7 +9,7 @@ import { useProjectMembership, useLocalProjectInfo, useProjectIdFromUrl } from "
 import { ProjectContext } from "@src/context/ProjectContext";
 import UploadButton from "@components/projects/UploadButton";
 import DangerZone from "./DangerZone";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Save } from "lucide-react";
 import form from "./../../utils/Form.module.css";
 import styles from "./ProjectSettings.module.css";
 import dangerStyles from "./DangerZone.module.css";
@@ -162,6 +162,7 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
 
             <div className={styles.formActions}>
                 <button type="submit" className={`${styles.formBtn}`} disabled={loading || !isDirty}>
+                    <Save size={18} />
                     {t("saveChanges")}
                 </button>
                 <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title={t("dangerZoneTitle")}>

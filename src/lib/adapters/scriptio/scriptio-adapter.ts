@@ -1,4 +1,4 @@
-import { LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
+import { BoardData, LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { replaceScreenplay } from "../../screenplay/editor";
 import { Editor } from "@tiptap/react";
@@ -77,7 +77,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
                 characters: project.characters().toJSON(),
                 scenes: project.scenes().toJSON(),
                 locations: project.locations().toJSON(),
-                board: project.board().toJSON(),
+                board: project.board().toJSON() as BoardData,
                 layout: project.layout().toJSON() as LayoutData,
                 comments: project.comments().toJSON(),
             };
@@ -127,7 +127,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
                 characters: tmpDoc.characters().toJSON(),
                 scenes: tmpDoc.scenes().toJSON(),
                 locations: tmpDoc.locations().toJSON(),
-                board: tmpDoc.board().toJSON(),
+                board: tmpDoc.board().toJSON() as BoardData,
                 layout: tmpDoc.layout().toJSON() as LayoutData,
                 comments: tmpDoc.comments().toJSON(),
             };
@@ -169,7 +169,6 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
                     ydoc.characters().clear();
                     ydoc.scenes().clear();
                     ydoc.locations().clear();
-                    ydoc.cards().clear();
                     ydoc.board().clear();
                     ydoc.layout().clear();
                     ydoc.comments().clear();

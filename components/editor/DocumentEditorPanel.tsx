@@ -168,6 +168,24 @@ const DocumentEditorPanel = ({
             editorElement.style.setProperty(`--${key}-decoration`, s.underline ? "underline" : "none");
         }
 
+        // Trigger re-pagination to account for height changes (spacing, margins, etc.)
+        if (editor.commands.refreshPagination) {
+            editor.commands.refreshPagination();
+        }
+
+        // Sync Action margins to pagination options for header/footer alignment
+        if (editor.commands.updateMargins) {
+            const actionM = elementMargins["action"];
+            if (actionM) {
+                editor.commands.updateMargins({
+                    top: 96, // 1in
+                    bottom: 96, // 1in
+                    left: actionM.left * 96,
+                    right: actionM.right * 96,
+                });
+            }
+        }
+
         if (isVisible) {
             editor.commands.focus();
         }

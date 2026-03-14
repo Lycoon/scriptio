@@ -10,6 +10,7 @@ import { useTheme } from "next-themes";
 import { useSettings } from "@src/lib/utils/hooks";
 import { useTranslations } from "next-intl";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
+import { Save } from "lucide-react";
 
 const THEME_COLORS: Record<
     string,
@@ -144,6 +145,7 @@ const AppearanceSettings = () => {
 
             <div className={sharedStyles.formActions}>
                 <button onClick={onSave} className={`${sharedStyles.formBtn} `}>
+                    <Save size={18} />
                     {tCommon("save")}
                 </button>
             </div>

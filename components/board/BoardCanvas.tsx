@@ -2,8 +2,8 @@
 
 import { useContext, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { getBoardMap } from "@src/lib/project/project-state";
-import BoardCard, { BoardCardData } from "./BoardCard";
+import { getBoardMap, BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
+import BoardCard from "./BoardCard";
 import styles from "./BoardCanvas.module.css";
 import { v4 as uuidv4 } from "uuid";
 import { Trash2, Plus, Minus, Copy } from "lucide-react";
@@ -24,12 +24,6 @@ const DEFAULT_CARD_COLORS = [
     "#ec4899",
     "#6b7280",
 ];
-
-export interface BoardArrowData {
-    id: string;
-    fromCardId: string;
-    toCardId: string;
-}
 
 interface CardContextMenuState {
     position: { x: number; y: number };
