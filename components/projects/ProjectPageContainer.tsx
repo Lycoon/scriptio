@@ -57,6 +57,7 @@ const ProjectPageContainer = () => {
         setIsImporting(true);
 
         try {
+            // This now correctly preserves all project data (title page, board, etc.)
             const result = await importFileAsProject(file, user);
 
             if (result.success && result.projectId) {

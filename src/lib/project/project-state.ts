@@ -102,11 +102,11 @@ export type ProjectData = {
     titlepage?: JSONContent[];
     characters: any;
     scenes: any;
-    cards: any;
     locations: any;
     metadata: ProjectMetadata;
     board: any;
     layout: LayoutData;
+    comments?: any;
 };
 
 // -------------------------------- //
@@ -158,7 +158,6 @@ export class ProjectState extends Y.Doc {
         TITLEPAGE: "titlepage",
         CHARACTERS: "characters",
         SCENES: "scenes",
-        CARDS: "cards",
         LOCATIONS: "locations",
         METADATA: "metadata",
         BOARD: "board",
@@ -200,10 +199,6 @@ export class ProjectState extends Y.Doc {
 
     scenes(): Y.Map<any> {
         return this.getMap(this.KEYS.SCENES);
-    }
-
-    cards(): Y.Map<any> {
-        return this.getMap(this.KEYS.CARDS);
     }
 
     board(): Y.Map<any> {

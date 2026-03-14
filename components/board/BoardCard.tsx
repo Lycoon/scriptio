@@ -129,6 +129,7 @@ const BoardCard = ({
     const handleResizeStart = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation();
+            e.preventDefault();
             resizeStart.current = {
                 x: e.clientX,
                 y: e.clientY,

@@ -460,6 +460,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     // Create new card on double-click
     const handleDoubleClick = useCallback(
         (e: React.MouseEvent) => {
+            e.preventDefault();
             if ((e.target as HTMLElement).closest(`.${styles.card}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.hints}`)) return;
