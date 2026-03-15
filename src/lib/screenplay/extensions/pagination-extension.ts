@@ -93,16 +93,18 @@ export interface PaginationOptions {
     pageGapBorderSize: number;
     pageGapBorderColor: string;
     pageBreakBackground: string;
-    marginTop: number; // space reserved at top for header + padding
-    marginBottom: number; // space reserved at bottom for footer + padding
-    marginLeft: number;
-    marginRight: number;
+    marginTop: number; // page margin top in px (space reserved for header + padding)
+    marginBottom: number; // page margin bottom in px (space reserved for footer + padding)
+    marginLeft: number; // page margin left in px (used for header/footer alignment)
+    marginRight: number; // page margin right in px (used for header/footer alignment)
     headerLeft: string;
     headerRight: string;
     footerLeft: string;
     footerRight: string;
     customHeader: Record<PageNumber, HeaderOptions>;
     customFooter: Record<PageNumber, FooterOptions>;
+    /** Element types that force a page break before them. */
+    startNewPageTypes: Set<string>;
 }
 
 export interface PageBreakInfo {
@@ -124,6 +126,7 @@ declare module "@tiptap/core" {
             updateHeaderContent: (left: string, right: string, pageNumber?: PageNumber) => ReturnType;
             updateFooterContent: (left: string, right: string, pageNumber?: PageNumber) => ReturnType;
             updatePageBreakBackground: (color: string) => ReturnType;
+            updateStartNewPageTypes: (types: Set<string>) => ReturnType;
             refreshPagination: () => ReturnType;
         };
     }
@@ -150,6 +153,7 @@ const defaultOptions: PaginationOptions = {
     footerRight: "{page}",
     customHeader: {},
     customFooter: {},
+    startNewPageTypes: new Set<string>(),
 };
 
 // ---------------------------------------------------------------------------
@@ -399,6 +403,7 @@ const getHTMLHeight = (
 
     let testDiv = setupTestDiv(editorDom, options);
     testDiv.innerHTML = domNode.outerHTML;
+
     const rect = testDiv.getBoundingClientRect();
     const height = Math.round(rect.height);
 
@@ -436,9 +441,12 @@ const setupTestDiv = (editorDom: HTMLElement, options: PaginationOptions): HTMLE
     // Sync classes and CSS variables that affect layout from editor to test div.
     // testDiv lives in <body>, not inside the editor, so it doesn't inherit the editor's CSS vars.
     testDiv.className = editorDom.className;
-    testDiv.classList.add("pagination");
-    
-    // Copy all CSS variables from editor to test div (margins, styles, labels)
+
+    // Copy all CSS variables from the live editor DOM to the test div. This includes
+    // both element margin/style vars (set by DocumentEditorPanel) and page dimension
+    // vars (set by syncVars inside each command before the transaction is dispatched).
+    // Reading from editorDom rather than from options avoids the stale-options problem:
+    // extension.options in apply() may lag behind the mutation done by the command.
     for (let i = 0; i < editorDom.style.length; i++) {
         const prop = editorDom.style[i];
         if (prop.startsWith("--")) {
@@ -446,7 +454,11 @@ const setupTestDiv = (editorDom: HTMLElement, options: PaginationOptions): HTMLE
         }
     }
 
-    syncVars(testDiv, options);
+    // Remove the pagination class whose `width: var(--page-width) !important` rule
+    // would fight our explicit width, then set the width directly from the value that
+    // syncVars already wrote to editorDom (guaranteed current for this transaction).
+    testDiv.classList.remove("pagination");
+    testDiv.style.width = editorDom.style.getPropertyValue("--page-width");
 
     return testDiv;
 };
@@ -605,6 +617,24 @@ const createPaginationPlugin = (extension: any) =>
                 if (!editor.isInitialized || !extension.editor.view?.dom) return value;
 
                 const editorDOM = extension.editor.view.dom as HTMLElement;
+
+                // extension.options may lag behind the synchronous mutations done by the
+                // commands (Tiptap options-object identity issue). editorDOM's inline style
+                // is always current because syncVars writes to it inside every command,
+                // before the transaction is dispatched. Override the stale option fields.
+                const _ph = editorDOM.style.getPropertyValue("--page-height");
+                const _pw = editorDOM.style.getPropertyValue("--page-width");
+                const _mt = editorDOM.style.getPropertyValue("--page-margin-top");
+                const _mb = editorDOM.style.getPropertyValue("--page-margin-bottom");
+                const _ml = editorDOM.style.getPropertyValue("--page-margin-left");
+                const _mr = editorDOM.style.getPropertyValue("--page-margin-right");
+                if (_ph) options.pageHeight = parseFloat(_ph);
+                if (_pw) options.pageWidth = parseFloat(_pw);
+                if (_mt) options.marginTop = parseFloat(_mt);
+                if (_mb) options.marginBottom = parseFloat(_mb);
+                if (_ml) options.marginLeft = parseFloat(_ml);
+                if (_mr) options.marginRight = parseFloat(_mr);
+
                 const serializer = DOMSerializer.fromSchema(newState.schema);
                 const heightUpdates: { pos: number; height: number }[] = [];
 
@@ -650,6 +680,22 @@ const createPaginationPlugin = (extension: any) =>
                     // Track the most recent Character name for CONT'D labels.
                     if (nodeType === ScreenplayElement.Character) {
                         lastCharName = node.textContent.trim();
+                    }
+
+                    // --- Force page break for "start new page" elements ---
+                    // If this node type is configured to start a new page and we're
+                    // not already at the top of a page, insert a break before it.
+                    if (options.startNewPageTypes.has(nodeType) && pagePos > 0) {
+                        const freespace = contentHeight - pagePos;
+                        breaks.push({
+                            pos,
+                            pagenum: ++pagenum,
+                            freespace: Math.max(0, freespace),
+                            contdName: "",
+                            splitNodeType: null,
+                        });
+                        pagePos = 0;
+                        lastNodes = new CircularBuffer(3);
                     }
 
                     // Accumulate height on current page
@@ -892,7 +938,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                     display: flex;
                     flex-direction: column;
                     justify-content: flex-end;
-                    background: var(--page-break-background, #fff);
+                    background: var(--editor-script-bg);
                 }
 
                 .pagination-footer-area,
@@ -903,7 +949,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                     justify-content: space-between;
                     padding: 0 var(--page-margin-right) 0 var(--page-margin-left);
                     box-sizing: border-box;
-                    background: var(--page-break-background, #fff);
+                    background: var(--editor-script-bg);
                 }
 
                 .pagination-divider {
@@ -1010,6 +1056,13 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 (c) =>
                 ({ tr }) => {
                     this.options.pageBreakBackground = c;
+                    tr.setMeta("forcePaginationUpdate", true);
+                    return true;
+                },
+            updateStartNewPageTypes:
+                (types) =>
+                ({ tr }) => {
+                    this.options.startNewPageTypes = types;
                     tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },

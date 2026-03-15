@@ -253,6 +253,11 @@
         "continuation": "継続",
         "moreTitle": "(MORE) Label",
         "contdTitle": "(CONT'D) Label",
+        "pageMargins": "ページ余白",
+        "vertical": "垂直",
+        "horizontal": "水平",
+        "marginTop": "上",
+        "marginBottom": "下",
         "margins": "余白",
         "marginLeft": "左",
         "marginRight": "右",
@@ -274,7 +279,8 @@
         "alignCenter": "Center",
         "alignRight": "Right",
         "sceneSpacing": "Spacing",
-        "sceneSpacingDesc": "Spacing above scene headings"
+        "sceneSpacingDesc": "Spacing above scene headings",
+        "startNewPage": "新しいページで開始"
     },
     "projectSettings": {
         "titleLabel": "タイトル",

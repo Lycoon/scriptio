@@ -64,20 +64,30 @@ export type ProjectMetadata = {
     author: string;
 };
 
-export type ElementMargin = { left: number; right: number }; // values in inches
+export type ElementMargin = { left: number; right: number }; // values in inches (offset from page margin)
 
-/** Default margins per screenplay element (total from page edge, in inches). */
-export const DEFAULT_ELEMENT_MARGINS: Record<string, ElementMargin> = {
-    action: { left: 1.5, right: 1.0 },
-    scene: { left: 1.5, right: 1.0 },
-    character: { left: 4.0, right: 1.0 },
-    dialogue: { left: 2.8, right: 2.0 },
-    parenthetical: { left: 3.5, right: 3.0 },
-    transition: { left: 1.5, right: 1.0 },
-    section: { left: 1.5, right: 1.0 },
+export type PageMargin = { top: number; bottom: number; left: number; right: number }; // values in inches
+
+/** Default page margins (in inches). */
+export const DEFAULT_PAGE_MARGINS: PageMargin = {
+    top: 1.0,
+    bottom: 1.0,
+    left: 1.5,
+    right: 1.0,
 };
 
-export type ElementStyle = { bold?: boolean; italic?: boolean; underline?: boolean; align?: "left" | "center" | "right" };
+/** Default margins per screenplay element (offset from page margin, in inches). */
+export const DEFAULT_ELEMENT_MARGINS: Record<string, ElementMargin> = {
+    action: { left: 0, right: 0 },
+    scene: { left: 0, right: 0 },
+    character: { left: 2.5, right: 0 },
+    dialogue: { left: 1.3, right: 1.0 },
+    parenthetical: { left: 2.0, right: 2.0 },
+    transition: { left: 0, right: 0 },
+    section: { left: 0, right: 0 },
+};
+
+export type ElementStyle = { bold?: boolean; italic?: boolean; underline?: boolean; align?: "left" | "center" | "right"; startNewPage?: boolean };
 
 /** Default styling per screenplay element */
 export const DEFAULT_ELEMENT_STYLES: Record<string, ElementStyle> = {
@@ -87,11 +97,12 @@ export const DEFAULT_ELEMENT_STYLES: Record<string, ElementStyle> = {
     dialogue: { align: "left" },
     parenthetical: { align: "left" },
     transition: { align: "right" },
-    section: { align: "center", underline: true },
+    section: { align: "center", underline: true, startNewPage: true },
 };
 
 export type LayoutData = {
     pageSize: PageFormat;
+    pageMargins: PageMargin;
     displaySceneNumbers: boolean;
     sceneHeadingSpacing: number;
     sceneNumberOnRight: boolean;

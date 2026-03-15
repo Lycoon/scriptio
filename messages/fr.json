@@ -253,6 +253,11 @@
         "continuation": "Continuation",
         "moreTitle": "(MORE) Label",
         "contdTitle": "(CONT'D) Label",
+        "pageMargins": "Marges de page",
+        "vertical": "Vertical",
+        "horizontal": "Horizontal",
+        "marginTop": "H",
+        "marginBottom": "B",
         "margins": "Marges",
         "marginLeft": "G",
         "marginRight": "D",
@@ -274,7 +279,8 @@
         "alignCenter": "Center",
         "alignRight": "Right",
         "sceneSpacing": "Spacing",
-        "sceneSpacingDesc": "Spacing above scene headings"
+        "sceneSpacingDesc": "Spacing above scene headings",
+        "startNewPage": "Commencer une nouvelle page"
     },
     "projectSettings": {
         "titleLabel": "Titre",

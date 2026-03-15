@@ -461,15 +461,5 @@ export const useDocumentEditor = (
         }
     }, [editor, searchTerm, searchFilters, currentSearchIndex, features.searchHighlights]);
 
-    // Sync page size when pageFormat changes
-    useEffect(() => {
-        if (!editor || editor.isDestroyed || !editor.view) return;
-        try {
-            editor.commands.updatePageSize(SCREENPLAY_FORMATS[pageSize]);
-        } catch {
-            // Editor view not mounted yet
-        }
-    }, [editor, pageSize]);
-
     return editor;
 };

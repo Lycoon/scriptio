@@ -253,6 +253,11 @@
         "continuation": "이어지기",
         "moreTitle": "(MORE) Label",
         "contdTitle": "(CONT'D) Label",
+        "pageMargins": "페이지 여백",
+        "vertical": "세로",
+        "horizontal": "가로",
+        "marginTop": "상",
+        "marginBottom": "하",
         "margins": "여백",
         "marginLeft": "좌",
         "marginRight": "우",
@@ -274,7 +279,8 @@
         "alignCenter": "Center",
         "alignRight": "Right",
         "sceneSpacing": "Spacing",
-        "sceneSpacingDesc": "Spacing above scene headings"
+        "sceneSpacingDesc": "Spacing above scene headings",
+        "startNewPage": "새 페이지에서 시작"
     },
     "projectSettings": {
         "titleLabel": "제목",

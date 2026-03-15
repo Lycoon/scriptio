@@ -253,6 +253,11 @@
         "continuation": "续接",
         "moreTitle": "(MORE) Label",
         "contdTitle": "(CONT'D) Label",
+        "pageMargins": "页面边距",
+        "vertical": "垂直",
+        "horizontal": "水平",
+        "marginTop": "上",
+        "marginBottom": "下",
         "margins": "边距",
         "marginLeft": "左",
         "marginRight": "右",
@@ -274,7 +279,8 @@
         "alignCenter": "Center",
         "alignRight": "Right",
         "sceneSpacing": "Spacing",
-        "sceneSpacingDesc": "Spacing above scene headings"
+        "sceneSpacingDesc": "Spacing above scene headings",
+        "startNewPage": "从新页面开始"
     },
     "projectSettings": {
         "titleLabel": "标题",

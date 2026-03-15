@@ -5,8 +5,10 @@ import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import {
     DEFAULT_ELEMENT_MARGINS,
+    DEFAULT_PAGE_MARGINS,
     ElementMargin,
     ElementStyle,
+    PageMargin,
     DEFAULT_ELEMENT_STYLES,
 } from "@src/lib/project/project-state";
 import { PageFormat } from "@src/lib/utils/enums";
@@ -19,9 +21,12 @@ import {
     AlignCenter,
     ArrowLeftToLine,
     ArrowRightToLine,
+    ArrowUpToLine,
+    ArrowDownToLine,
     ChevronUp,
     ChevronDown,
     Save,
+    SeparatorHorizontal,
 } from "lucide-react";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 
@@ -37,6 +42,8 @@ const LayoutSettings = () => {
     const {
         pageFormat,
         setPageFormat,
+        pageMargins,
+        setPageMargins,
         displaySceneNumbers,
         setDisplaySceneNumbers,
         sceneHeadingSpacing,
@@ -68,6 +75,8 @@ const LayoutSettings = () => {
 
     // --- LOCAL STATE ---
     const [localFormat, setLocalFormat] = useState(pageFormat);
+    const initialPageMargins = useMemo<PageMargin>(() => ({ ...DEFAULT_PAGE_MARGINS, ...pageMargins }), [pageMargins]);
+    const [localPageMargins, setLocalPageMargins] = useState<PageMargin>(initialPageMargins);
     const [localDisplaySceneNumbers, setLocalDisplaySceneNumbers] = useState(displaySceneNumbers);
     const [localSceneNumberOnRight, setLocalSceneNumberOnRight] = useState(sceneNumberOnRight);
     const [localHeadingSpacing, setLocalHeadingSpacing] = useState(sceneHeadingSpacing);
@@ -100,6 +109,7 @@ const LayoutSettings = () => {
     // Sync when context changes externally
     useEffect(() => {
         setLocalFormat(pageFormat);
+        setLocalPageMargins(initialPageMargins);
         setLocalDisplaySceneNumbers(displaySceneNumbers);
         setLocalSceneNumberOnRight(sceneNumberOnRight);
         setLocalHeadingSpacing(sceneHeadingSpacing);
@@ -107,11 +117,22 @@ const LayoutSettings = () => {
         setLocalMoreLabel(stripParens(moreLabel));
         setLocalMargins(initialMargins);
         setLocalStyles(initialStyles);
-    }, [pageFormat, displaySceneNumbers, sceneNumberOnRight, sceneHeadingSpacing, contdLabel, moreLabel, initialMargins, initialStyles]);
+    }, [
+        pageFormat,
+        initialPageMargins,
+        displaySceneNumbers,
+        sceneNumberOnRight,
+        sceneHeadingSpacing,
+        contdLabel,
+        moreLabel,
+        initialMargins,
+        initialStyles,
+    ]);
 
     const hasChanges = useMemo(() => {
         return (
             localFormat !== pageFormat ||
+            JSON.stringify(localPageMargins) !== JSON.stringify(initialPageMargins) ||
             localDisplaySceneNumbers !== displaySceneNumbers ||
             localSceneNumberOnRight !== sceneNumberOnRight ||
             localHeadingSpacing !== sceneHeadingSpacing ||
@@ -121,18 +142,29 @@ const LayoutSettings = () => {
             JSON.stringify(localStyles) !== JSON.stringify(initialStyles)
         );
     }, [
-        localFormat, pageFormat,
-        localDisplaySceneNumbers, displaySceneNumbers,
-        localSceneNumberOnRight, sceneNumberOnRight,
-        localHeadingSpacing, sceneHeadingSpacing,
-        localContdLabel, contdLabel,
-        localMoreLabel, moreLabel,
-        localMargins, initialMargins,
-        localStyles, initialStyles
+        localFormat,
+        pageFormat,
+        localPageMargins,
+        initialPageMargins,
+        localDisplaySceneNumbers,
+        displaySceneNumbers,
+        localSceneNumberOnRight,
+        sceneNumberOnRight,
+        localHeadingSpacing,
+        sceneHeadingSpacing,
+        localContdLabel,
+        contdLabel,
+        localMoreLabel,
+        moreLabel,
+        localMargins,
+        initialMargins,
+        localStyles,
+        initialStyles,
     ]);
 
     const handleSave = () => {
         setPageFormat(localFormat);
+        setPageMargins(localPageMargins);
         setDisplaySceneNumbers(localDisplaySceneNumbers);
         setSceneNumberOnRight(localSceneNumberOnRight);
         setSceneHeadingSpacing(localHeadingSpacing);
@@ -171,6 +203,18 @@ const LayoutSettings = () => {
         }));
     };
 
+    const updatePageMargin = (side: keyof PageMargin, value: string) => {
+        const num = parseFloat(value);
+        if (isNaN(num) || num < 0) return;
+        setLocalPageMargins((prev) => ({ ...prev, [side]: num }));
+    };
+
+    const stepPageMargin = (side: keyof PageMargin, step: number) => {
+        const currentValue = localPageMargins[side];
+        const newValue = Math.max(0, parseFloat((currentValue + step).toFixed(2)));
+        setLocalPageMargins((prev) => ({ ...prev, [side]: newValue }));
+    };
+
     const updateLocalStyle = (e: React.MouseEvent, element: string, styleKey: keyof ElementStyle, value: any) => {
         e.preventDefault();
         e.stopPropagation();
@@ -199,7 +243,7 @@ const LayoutSettings = () => {
                     <span className={styles.marginLabel}>{t("margins")}</span>
                     <div className={styles.marginInputs}>
                         <div className={styles.marginInputWrapper} title={t("marginLeft")}>
-                            <AlignLeft size={16} className={styles.marginIcon} />
+                            <ArrowLeftToLine size={16} className={styles.marginIcon} />
                             <input
                                 type="number"
                                 step="0.05"
@@ -227,7 +271,7 @@ const LayoutSettings = () => {
                             <span className={styles.marginUnit}>in</span>
                         </div>
                         <div className={styles.marginInputWrapper} title={t("marginRight")}>
-                            <AlignRight size={16} className={styles.marginIcon} />
+                            <ArrowRightToLine size={16} className={styles.marginIcon} />
                             <input
                                 type="number"
                                 step="0.05"
@@ -316,6 +360,20 @@ const LayoutSettings = () => {
                         </button>
                     </div>
                 </div>
+
+                <div className={styles.marginRow}>
+                    <span className={styles.marginLabel}>{t("startNewPage")}</span>
+                    <div className={styles.styleGroup}>
+                        <button
+                            type="button"
+                            className={`${styles.styleBtn} ${currentStyle.startNewPage ? styles.styleBtnActive : ""}`}
+                            onClick={(e) => updateLocalStyle(e, element, "startNewPage", !currentStyle.startNewPage)}
+                            title={t("startNewPage")}
+                        >
+                            <SeparatorHorizontal size={16} />
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     };
@@ -339,6 +397,134 @@ const LayoutSettings = () => {
                     {localFormat === "LETTER" && t("pageFormatHelp.letter")}
                     {localFormat === "A4" && t("pageFormatHelp.a4")}
                 </p>
+            </div>
+
+            <div className={sharedStyles.formGroup}>
+                <label className={form.label}>{t("pageMargins")}</label>
+                <div className={styles.marginsSection}>
+                    <div className={styles.marginRow}>
+                        <span className={styles.marginLabel}>{t("vertical")}</span>
+                        <div className={styles.marginInputs}>
+                            <div className={styles.marginInputWrapper} title={t("marginTop")}>
+                                <ArrowUpToLine size={16} className={styles.marginIcon} />
+                                <input
+                                    type="number"
+                                    step="0.05"
+                                    min="0"
+                                    value={localPageMargins.top}
+                                    onChange={(e) => updatePageMargin("top", e.target.value)}
+                                    className={`${sharedStyles.input} ${styles.marginInput}`}
+                                />
+                                <div className={styles.marginStepGroup}>
+                                    <button
+                                        type="button"
+                                        className={styles.marginStepBtn}
+                                        onClick={() => stepPageMargin("top", 0.05)}
+                                    >
+                                        <ChevronUp size={10} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={styles.marginStepBtn}
+                                        onClick={() => stepPageMargin("top", -0.05)}
+                                    >
+                                        <ChevronDown size={10} />
+                                    </button>
+                                </div>
+                                <span className={styles.marginUnit}>in</span>
+                            </div>
+                            <div className={styles.marginInputWrapper} title={t("marginBottom")}>
+                                <ArrowDownToLine size={16} className={styles.marginIcon} />
+                                <input
+                                    type="number"
+                                    step="0.05"
+                                    min="0"
+                                    value={localPageMargins.bottom}
+                                    onChange={(e) => updatePageMargin("bottom", e.target.value)}
+                                    className={`${sharedStyles.input} ${styles.marginInput}`}
+                                />
+                                <div className={styles.marginStepGroup}>
+                                    <button
+                                        type="button"
+                                        className={styles.marginStepBtn}
+                                        onClick={() => stepPageMargin("bottom", 0.05)}
+                                    >
+                                        <ChevronUp size={10} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={styles.marginStepBtn}
+                                        onClick={() => stepPageMargin("bottom", -0.05)}
+                                    >
+                                        <ChevronDown size={10} />
+                                    </button>
+                                </div>
+                                <span className={styles.marginUnit}>in</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={styles.marginRow}>
+                        <span className={styles.marginLabel}>{t("horizontal")}</span>
+                        <div className={styles.marginInputs}>
+                            <div className={styles.marginInputWrapper} title={t("marginLeft")}>
+                                <ArrowLeftToLine size={16} className={styles.marginIcon} />
+                                <input
+                                    type="number"
+                                    step="0.05"
+                                    min="0"
+                                    value={localPageMargins.left}
+                                    onChange={(e) => updatePageMargin("left", e.target.value)}
+                                    className={`${sharedStyles.input} ${styles.marginInput}`}
+                                />
+                                <div className={styles.marginStepGroup}>
+                                    <button
+                                        type="button"
+                                        className={styles.marginStepBtn}
+                                        onClick={() => stepPageMargin("left", 0.05)}
+                                    >
+                                        <ChevronUp size={10} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={styles.marginStepBtn}
+                                        onClick={() => stepPageMargin("left", -0.05)}
+                                    >
+                                        <ChevronDown size={10} />
+                                    </button>
+                                </div>
+                                <span className={styles.marginUnit}>in</span>
+                            </div>
+                            <div className={styles.marginInputWrapper} title={t("marginRight")}>
+                                <ArrowRightToLine size={16} className={styles.marginIcon} />
+                                <input
+                                    type="number"
+                                    step="0.05"
+                                    min="0"
+                                    value={localPageMargins.right}
+                                    onChange={(e) => updatePageMargin("right", e.target.value)}
+                                    className={`${sharedStyles.input} ${styles.marginInput}`}
+                                />
+                                <div className={styles.marginStepGroup}>
+                                    <button
+                                        type="button"
+                                        className={styles.marginStepBtn}
+                                        onClick={() => stepPageMargin("right", 0.05)}
+                                    >
+                                        <ChevronUp size={10} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={styles.marginStepBtn}
+                                        onClick={() => stepPageMargin("right", -0.05)}
+                                    >
+                                        <ChevronDown size={10} />
+                                    </button>
+                                </div>
+                                <span className={styles.marginUnit}>in</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className={sharedStyles.formGroup}>
@@ -446,11 +632,7 @@ const LayoutSettings = () => {
             </div>
 
             <div className={sharedStyles.formActions}>
-                <button
-                    className={sharedStyles.formBtn}
-                    disabled={!hasChanges}
-                    onClick={handleSave}
-                >
+                <button className={sharedStyles.formBtn} disabled={!hasChanges} onClick={handleSave}>
                     <Save size={18} />
                     {tCommon("save")}
                 </button>

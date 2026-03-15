@@ -4,9 +4,9 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { isTauri } from "@tauri-apps/api/core";
 import { EditorContent } from "@tiptap/react";
 
-import { applyElement, insertElement } from "@src/lib/screenplay/editor";
+import { applyElement, insertElement, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
 import { ScreenplayElement } from "@src/lib/utils/enums";
-import { DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
+import { DEFAULT_ELEMENT_MARGINS, DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
 import { join } from "@src/lib/utils/misc";
 import { useGlobalKeybinds, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -57,6 +57,8 @@ const DocumentEditorPanel = ({
         selectedElement,
         setSelectedElement,
         setSelectedStyles,
+        pageFormat,
+        pageMargins,
         displaySceneNumbers,
         sceneHeadingSpacing,
         sceneNumberOnRight,
@@ -153,14 +155,12 @@ const DocumentEditorPanel = ({
 
         const elementKeys = ["action", "scene", "character", "dialogue", "parenthetical", "transition", "section"] as const;
         for (const key of elementKeys) {
-            const m = elementMargins[key];
-            if (m) {
-                editorElement.style.setProperty(`--${key}-l-margin`, `${m.left}in`);
-                editorElement.style.setProperty(`--${key}-r-margin`, `${m.right}in`);
-            } else {
-                editorElement.style.removeProperty(`--${key}-l-margin`);
-                editorElement.style.removeProperty(`--${key}-r-margin`);
-            }
+            const m = elementMargins[key] ?? DEFAULT_ELEMENT_MARGINS[key];
+            // Element CSS vars = page margin + element offset (total from page edge)
+            const totalLeft = pageMargins.left + (m?.left ?? 0);
+            const totalRight = pageMargins.right + (m?.right ?? 0);
+            editorElement.style.setProperty(`--${key}-l-margin`, `${totalLeft}in`);
+            editorElement.style.setProperty(`--${key}-r-margin`, `${totalRight}in`);
             const s = { ...(DEFAULT_ELEMENT_STYLES[key] || {}), ...(elementStyles[key] || {}) };
             editorElement.style.setProperty(`--${key}-align`, s.align ?? "left");
             editorElement.style.setProperty(`--${key}-weight`, s.bold ? "bold" : "normal");
@@ -168,28 +168,54 @@ const DocumentEditorPanel = ({
             editorElement.style.setProperty(`--${key}-decoration`, s.underline ? "underline" : "none");
         }
 
-        // Trigger re-pagination to account for height changes (spacing, margins, etc.)
-        if (editor.commands.refreshPagination) {
-            editor.commands.refreshPagination();
+        // Compute startNewPage types from element styles
+        const startNewPageTypes = new Set<string>();
+        for (const key of elementKeys) {
+            const s = { ...(DEFAULT_ELEMENT_STYLES[key] || {}), ...(elementStyles[key] || {}) };
+            if (s.startNewPage) startNewPageTypes.add(key);
         }
 
-        // Sync Action margins to pagination options for header/footer alignment
-        if (editor.commands.updateMargins) {
-            const actionM = elementMargins["action"];
-            if (actionM) {
-                editor.commands.updateMargins({
-                    top: 96, // 1in
-                    bottom: 96, // 1in
-                    left: actionM.left * 96,
-                    right: actionM.right * 96,
-                });
-            }
+        // Chain all pagination updates into a single transaction so options are
+        // set atomically before one recomputation (avoids intermediate states
+        // where some options are stale).
+        const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
+        if (pageSize) {
+            editor
+                .chain()
+                .updateStartNewPageTypes(startNewPageTypes)
+                .updatePageSize(pageSize)
+                .updateMargins({
+                    top: pageMargins.top * 96,
+                    bottom: pageMargins.bottom * 96,
+                    left: pageMargins.left * 96,
+                    right: pageMargins.right * 96,
+                })
+                .run();
+
         }
 
         if (isVisible) {
             editor.commands.focus();
         }
-    }, [editor, isVisible, config.type, displaySceneNumbers, sceneHeadingSpacing, sceneNumberOnRight, contdLabel, moreLabel, elementMargins, elementStyles]);
+    }, [editor, isVisible, config.type, pageFormat, pageMargins, displaySceneNumbers, sceneHeadingSpacing, sceneNumberOnRight, contdLabel, moreLabel, elementMargins, elementStyles]);
+
+    // ---- Pagination update (title page only) ----
+    useEffect(() => {
+        if (!editor || editor.isDestroyed || config.type !== "title") return;
+        const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
+        if (pageSize) {
+            editor
+                .chain()
+                .updatePageSize(pageSize)
+                .updateMargins({
+                    top: pageMargins.top * 96,
+                    bottom: pageMargins.bottom * 96,
+                    left: pageMargins.left * 96,
+                    right: pageMargins.right * 96,
+                })
+                .run();
+        }
+    }, [editor, config.type, pageFormat, pageMargins]);
 
     // ---- handleKeyDown (screenplay only) ----
     const selectedElementRef = useRef(selectedElement);

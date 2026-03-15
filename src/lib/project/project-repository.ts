@@ -3,7 +3,7 @@ import * as Y from "yjs";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { Comment, CommentReply, Screenplay } from "../utils/types";
-import { LayoutData, ProjectState, ElementStyle } from "./project-state";
+import { LayoutData, ProjectState, ElementStyle, PageMargin } from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
@@ -275,6 +275,13 @@ export class ProjectRepository {
     // -------------------------------- //
 
     /**
+     * Read the current layout data snapshot.
+     */
+    getLayout(): Partial<LayoutData> {
+        return this.ydoc.layout().toJSON() as Partial<LayoutData>;
+    }
+
+    /**
      * Observe changes to the project layout
      */
     observeLayout(callback: (layout: Partial<LayoutData>) => void): () => void {
@@ -286,6 +293,9 @@ export class ProjectRepository {
 
     setPageSize(pageSize: PageFormat) {
         this.ydoc.layout().set("pageSize", pageSize);
+    }
+    setPageMargins(margins: PageMargin) {
+        this.ydoc.layout().set("pageMargins", margins);
     }
     setDisplaySceneNumbers(display: boolean) {
         this.ydoc.layout().set("displaySceneNumbers", display);
