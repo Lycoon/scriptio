@@ -337,11 +337,17 @@
         width: max-content;
     }
 
-    /* Character dialogue highlighting - use box-shadow instead of background to avoid page break bleeding */
+    /* Character dialogue highlighting - gradient confined to page content area (between page margins) */
     .character-highlight {
-        box-shadow:
-            inset 3px 0 0 0 var(--highlight-color),
-            inset 0 0 0 1000px var(--highlight-bg);
+        background: linear-gradient(
+            to right,
+            transparent var(--page-margin-left),
+            var(--highlight-color) var(--page-margin-left),
+            var(--highlight-color) calc(var(--page-margin-left) + 3px),
+            var(--highlight-bg) calc(var(--page-margin-left) + 3px),
+            var(--highlight-bg) calc(100% - var(--page-margin-right)),
+            transparent calc(100% - var(--page-margin-right))
+        );
     }
 
     /* Search highlighting */

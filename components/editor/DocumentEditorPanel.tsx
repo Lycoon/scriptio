@@ -242,7 +242,6 @@ const DocumentEditorPanel = ({
 
         editor.setOptions({
             editorProps: {
-                handleScrollToSelection: () => true,
                 handleKeyDown(view: any, event: any) {
                     const selection = view.state.selection;
                     const node = selection.$anchor.parent;

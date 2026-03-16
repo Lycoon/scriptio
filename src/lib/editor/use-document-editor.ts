@@ -295,9 +295,7 @@ export const useDocumentEditor = (
                 ...(sceneIdDedupExtension ? [sceneIdDedupExtension] : []),
             ],
 
-            editorProps: {
-                handleScrollToSelection: () => true,
-            },
+            editorProps: {},
 
             onSelectionUpdate({ editor, transaction }) {
                 const cb = callbacksRef.current;
