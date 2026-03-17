@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { editUserInfo, logout } from "@src/lib/utils/requests";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Trash2 } from "lucide-react";
+import { ArrowRight, Trash2, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import form from "./../../utils/Form.module.css";
@@ -226,6 +226,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
 
             <div className={sharedStyles.formActions}>
                 <button onClick={handleSave} className={`${sharedStyles.formBtn}`} disabled={loading || !isDirty}>
+                    <Save size={18} />
                     {loading ? t("saving") : tCommon("save")}
                 </button>
                 <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title={t("dangerZoneTitle")}>

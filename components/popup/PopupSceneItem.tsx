@@ -10,6 +10,7 @@ import { generateSceneId } from "@src/lib/screenplay/scenes";
 import { ColorPicker } from "@components/utils/ColorPicker";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { useTranslations } from "next-intl";
+import { Save } from "lucide-react";
 
 import CloseSVG from "@public/images/close.svg";
 
@@ -121,6 +122,7 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
                         />
                     </div>
                     <button className={join(form.btn, popup.confirm)} type="submit">
+                        <Save size={18} />
                         {t("save")}
                     </button>
                 </form>

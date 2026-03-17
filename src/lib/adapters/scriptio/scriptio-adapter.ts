@@ -1,5 +1,8 @@
-import { LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
+import { BoardData, LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
+import { replaceScreenplay } from "../../screenplay/editor";
+import { Editor } from "@tiptap/react";
+import { ProjectRepository } from "../../project/project-repository";
 import * as fflate from "fflate";
 import * as Y from "yjs";
 
@@ -69,13 +72,14 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
             // with any text editor.
             const data: ProjectData = {
                 screenplay: project.screenplay(),
+                titlepage: project.titlepage(),
                 metadata: project.metadata().toJSON() as ProjectMetadata,
                 characters: project.characters().toJSON(),
                 scenes: project.scenes().toJSON(),
-                cards: project.cards().toJSON(),
                 locations: project.locations().toJSON(),
-                board: project.board().toJSON(),
+                board: project.board().toJSON() as BoardData,
                 layout: project.layout().toJSON() as LayoutData,
+                comments: project.comments().toJSON(),
             };
             payload = new TextEncoder().encode(JSON.stringify(data, null, 2));
         } else {
@@ -118,13 +122,14 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
 
             return {
                 screenplay: tmpDoc.screenplay(),
+                titlepage: tmpDoc.titlepage(),
                 metadata: tmpDoc.metadata().toJSON() as ProjectMetadata,
                 characters: tmpDoc.characters().toJSON(),
                 scenes: tmpDoc.scenes().toJSON(),
-                cards: tmpDoc.cards().toJSON(),
                 locations: tmpDoc.locations().toJSON(),
-                board: tmpDoc.board().toJSON(),
+                board: tmpDoc.board().toJSON() as BoardData,
                 layout: tmpDoc.layout().toJSON() as LayoutData,
+                comments: tmpDoc.comments().toJSON(),
             };
         } catch (error) {
             console.error("Failed to parse .scriptio file", error);
@@ -132,5 +137,62 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
         } finally {
             tmpDoc.destroy();
         }
+    }
+
+    public import(
+        rawContent: ArrayBuffer,
+        editor?: Editor | null,
+        titlePageEditor?: Editor | null,
+        repository?: ProjectRepository | null,
+    ): void {
+        const data = new Uint8Array(rawContent);
+        const { flags, payloadOffset } = parseHeader(data);
+        const payload = data.subarray(payloadOffset);
+        const isReadable = (flags & FLAG_READABLE_JSON) !== 0;
+
+        if (!isReadable && repository) {
+            const ydoc = repository.getState() as ProjectState;
+            try {
+                const decompressed = fflate.unzlibSync(payload);
+
+                // To truly "replace" the state, we clear existing content
+                // to avoid merging with the previous project data.
+                ydoc.transact(() => {
+                    // Fragments - delete all content
+                    const screenplay = ydoc.screenplayFragment();
+                    if (screenplay.length > 0) screenplay.delete(0, screenplay.length);
+                    const titlepage = ydoc.titlepageFragment();
+                    if (titlepage.length > 0) titlepage.delete(0, titlepage.length);
+
+                    // Maps - clear all entries
+                    ydoc.metadata().clear();
+                    ydoc.characters().clear();
+                    ydoc.scenes().clear();
+                    ydoc.locations().clear();
+                    ydoc.board().clear();
+                    ydoc.layout().clear();
+                    ydoc.comments().clear();
+                });
+
+                // Apply the new state
+                Y.applyUpdate(ydoc, decompressed);
+
+                // Refresh editors if provided
+                const projectData = this.convertFrom(rawContent);
+                if (editor && projectData.screenplay) {
+                    replaceScreenplay(editor, projectData.screenplay);
+                }
+                if (titlePageEditor && projectData.titlepage) {
+                    replaceScreenplay(titlePageEditor, projectData.titlepage);
+                }
+
+                return;
+            } catch (error) {
+                console.warn("Failed to apply binary Scriptio update directly, falling back to base import.", error);
+            }
+        }
+
+        // Fallback to the base implementation for readable JSON or if repository is missing
+        super.import(rawContent, editor, titlePageEditor, repository);
     }
 }

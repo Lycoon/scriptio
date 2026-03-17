@@ -28,6 +28,10 @@ import type { ThrottledWebsocketProvider } from "../collaboration/utils";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { TitlePageSchema } from "../titlepage/editor";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
+import type { CharacterItem, CharacterMap } from "../screenplay/characters";
+import type { LocationItem, LocationMap } from "../screenplay/locations";
+import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
+import type { Comment } from "../utils/types";
 
 export interface ProjectYjsState {
     ydoc: ProjectState | null;
@@ -60,34 +64,45 @@ export type ProjectMetadata = {
     author: string;
 };
 
-export type ElementMargin = { left: number; right: number }; // values in inches
+export type ElementMargin = { left: number; right: number }; // values in inches (offset from page margin)
 
-/** Default margins per screenplay element (total from page edge, in inches). */
-export const DEFAULT_ELEMENT_MARGINS: Record<string, ElementMargin> = {
-    action: { left: 1.5, right: 1.0 },
-    scene: { left: 1.5, right: 1.0 },
-    character: { left: 4.0, right: 1.0 },
-    dialogue: { left: 2.8, right: 2.0 },
-    parenthetical: { left: 3.5, right: 3.0 },
-    transition: { left: 1.5, right: 1.0 },
-    section: { left: 1.5, right: 1.0 },
+export type PageMargin = { top: number; bottom: number; left: number; right: number }; // values in inches
+
+/** Default page margins (in inches). */
+export const DEFAULT_PAGE_MARGINS: PageMargin = {
+    top: 1.0,
+    bottom: 1.0,
+    left: 1.5,
+    right: 1.0,
 };
 
-export type ElementStyle = { bold?: boolean; italic?: boolean; underline?: boolean; align?: "left" | "center" | "right" };
+/** Default margins per screenplay element (offset from page margin, in inches). */
+export const DEFAULT_ELEMENT_MARGINS: Record<string, ElementMargin> = {
+    action: { left: 0, right: 0 },
+    scene: { left: 0, right: 0 },
+    character: { left: 2.5, right: 0 },
+    dialogue: { left: 1.3, right: 1.0 },
+    parenthetical: { left: 2.0, right: 2.0 },
+    transition: { left: 0, right: 0 },
+    section: { left: 0, right: 0 },
+};
+
+export type ElementStyle = { bold?: boolean; italic?: boolean; underline?: boolean; uppercase?: boolean; align?: "left" | "center" | "right"; startNewPage?: boolean };
 
 /** Default styling per screenplay element */
 export const DEFAULT_ELEMENT_STYLES: Record<string, ElementStyle> = {
     action: { align: "left" },
-    scene: { bold: true, align: "left" },
-    character: { align: "left" },
+    scene: { bold: true, align: "left", uppercase: true },
+    character: { align: "left", uppercase: true },
     dialogue: { align: "left" },
     parenthetical: { align: "left" },
-    transition: { align: "right" },
-    section: { align: "center", underline: true },
+    transition: { align: "right", uppercase: true },
+    section: { align: "center", underline: true, startNewPage: true, uppercase: true },
 };
 
 export type LayoutData = {
     pageSize: PageFormat;
+    pageMargins: PageMargin;
     displaySceneNumbers: boolean;
     sceneHeadingSpacing: number;
     sceneNumberOnRight: boolean;
@@ -97,16 +112,38 @@ export type LayoutData = {
     elementStyles: Record<string, ElementStyle>;
 };
 
+export interface BoardCardData {
+    id: string;
+    title: string;
+    description: string;
+    color: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+export interface BoardArrowData {
+    id: string;
+    fromCardId: string;
+    toCardId: string;
+}
+
+export type BoardData = {
+    cards: string; // JSON string of BoardCardData[]
+    arrows: string; // JSON string of BoardArrowData[]
+};
+
 export type ProjectData = {
     screenplay: JSONContent[];
     titlepage?: JSONContent[];
-    characters: any;
-    scenes: any;
-    cards: any;
-    locations: any;
+    characters: CharacterMap;
+    scenes: PersistentSceneMap;
+    locations: LocationMap;
     metadata: ProjectMetadata;
-    board: any;
+    board: BoardData;
     layout: LayoutData;
+    comments?: Record<string, Comment>;
 };
 
 // -------------------------------- //
@@ -158,7 +195,6 @@ export class ProjectState extends Y.Doc {
         TITLEPAGE: "titlepage",
         CHARACTERS: "characters",
         SCENES: "scenes",
-        CARDS: "cards",
         LOCATIONS: "locations",
         METADATA: "metadata",
         BOARD: "board",
@@ -190,23 +226,19 @@ export class ProjectState extends Y.Doc {
         return this.getXmlFragment(this.KEYS.TITLEPAGE);
     }
 
-    characters(): Y.Map<any> {
+    characters(): Y.Map<CharacterItem> {
         return this.getMap(this.KEYS.CHARACTERS);
     }
 
-    locations(): Y.Map<any> {
+    locations(): Y.Map<LocationItem> {
         return this.getMap(this.KEYS.LOCATIONS);
     }
 
-    scenes(): Y.Map<any> {
+    scenes(): Y.Map<PersistentScene> {
         return this.getMap(this.KEYS.SCENES);
     }
 
-    cards(): Y.Map<any> {
-        return this.getMap(this.KEYS.CARDS);
-    }
-
-    board(): Y.Map<any> {
+    board(): Y.Map<string> {
         return this.getMap(this.KEYS.BOARD);
     }
 
@@ -214,7 +246,7 @@ export class ProjectState extends Y.Doc {
         return this.getMap(this.KEYS.LAYOUT);
     }
 
-    comments(): Y.Map<any> {
+    comments(): Y.Map<Comment> {
         return this.getMap(this.KEYS.COMMENTS);
     }
 }
@@ -227,7 +259,7 @@ export class ProjectState extends Y.Doc {
  * Get the characters Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getCharactersMap = (ydoc: ProjectState): Y.Map<any> => {
+export const getCharactersMap = (ydoc: ProjectState): Y.Map<CharacterItem> => {
     return ydoc.characters();
 };
 
@@ -235,7 +267,7 @@ export const getCharactersMap = (ydoc: ProjectState): Y.Map<any> => {
  * Get the locations Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getLocationsMap = (ydoc: ProjectState): Y.Map<any> => {
+export const getLocationsMap = (ydoc: ProjectState): Y.Map<LocationItem> => {
     return ydoc.locations();
 };
 
@@ -243,7 +275,7 @@ export const getLocationsMap = (ydoc: ProjectState): Y.Map<any> => {
  * Get the scenes Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getScenesMap = (ydoc: ProjectState): Y.Map<any> => {
+export const getScenesMap = (ydoc: ProjectState): Y.Map<PersistentScene> => {
     return ydoc.scenes();
 };
 
@@ -251,7 +283,7 @@ export const getScenesMap = (ydoc: ProjectState): Y.Map<any> => {
  * Get the board Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getBoardMap = (ydoc: ProjectState): Y.Map<any> => {
+export const getBoardMap = (ydoc: ProjectState): Y.Map<string> => {
     return ydoc.board();
 };
 

@@ -3,6 +3,7 @@ import { isTauri } from "@tauri-apps/api/core";
 import { replaceScreenplay } from "../screenplay/editor";
 import { Editor } from "@tiptap/react";
 import { ProjectData, ProjectState } from "../project/project-state";
+import { ProjectRepository } from "../project/project-repository";
 
 export type BaseExportOptions = {
     title: string;
@@ -53,11 +54,84 @@ export abstract class ProjectAdapter<TExportOptions extends BaseExportOptions = 
         await revealItemInDir(filePath);
     }
 
-    public import(rawContent: ArrayBuffer, editor: Editor): void {
+    public import(
+        rawContent: ArrayBuffer,
+        editor?: Editor | null,
+        titlePageEditor?: Editor | null,
+        repository?: ProjectRepository | null,
+    ): void {
         try {
             const project = this.convertFrom(rawContent);
             console.log("Converted project data:", project);
-            if (project.screenplay) replaceScreenplay(editor, project.screenplay);
+
+            if (project.screenplay && editor) {
+                replaceScreenplay(editor, project.screenplay);
+            }
+
+            if (project.titlepage && titlePageEditor) {
+                replaceScreenplay(titlePageEditor, project.titlepage);
+            }
+
+            // If we have a repository, we can import maps (scenes, characters, etc.)
+            if (repository) {
+                const ydoc = repository.getState();
+
+                ydoc.transact(() => {
+                    if (project.metadata) {
+                        const metadataMap = ydoc.metadata();
+                        Object.entries(project.metadata).forEach(([key, value]) => {
+                            metadataMap.set(key, value);
+                        });
+                    }
+
+                    if (project.characters) {
+                        const charactersMap = ydoc.characters();
+                        charactersMap.clear();
+                        Object.entries(project.characters).forEach(([key, value]) => {
+                            charactersMap.set(key, value);
+                        });
+                    }
+
+                    if (project.locations) {
+                        const locationsMap = ydoc.locations();
+                        locationsMap.clear();
+                        Object.entries(project.locations).forEach(([key, value]) => {
+                            locationsMap.set(key, value);
+                        });
+                    }
+
+                    if (project.scenes) {
+                        const scenesMap = ydoc.scenes();
+                        scenesMap.clear();
+                        Object.entries(project.scenes).forEach(([key, value]) => {
+                            scenesMap.set(key, value);
+                        });
+                    }
+
+                    if (project.board) {
+                        const boardMap = ydoc.board();
+                        boardMap.clear();
+                        Object.entries(project.board).forEach(([key, value]) => {
+                            boardMap.set(key, value);
+                        });
+                    }
+
+                    if (project.layout) {
+                        const layoutMap = ydoc.layout();
+                        Object.entries(project.layout).forEach(([key, value]) => {
+                            layoutMap.set(key, value);
+                        });
+                    }
+
+                    if (project.comments) {
+                        const commentsMap = ydoc.comments();
+                        commentsMap.clear();
+                        Object.entries(project.comments).forEach(([key, value]) => {
+                            commentsMap.set(key, value);
+                        });
+                    }
+                });
+            }
         } catch (error) {
             console.error(`Failed to import from ${this.label}`, error);
             throw new Error("Import failed or file is corrupt");

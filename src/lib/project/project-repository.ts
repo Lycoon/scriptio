@@ -1,8 +1,9 @@
 import { v4 as uuidv4 } from "uuid";
+import * as Y from "yjs";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { Comment, CommentReply, Screenplay } from "../utils/types";
-import { LayoutData, ProjectState, ElementStyle } from "./project-state";
+import { LayoutData, ProjectState, ElementStyle, PageMargin } from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
@@ -274,6 +275,13 @@ export class ProjectRepository {
     // -------------------------------- //
 
     /**
+     * Read the current layout data snapshot.
+     */
+    getLayout(): Partial<LayoutData> {
+        return this.ydoc.layout().toJSON() as Partial<LayoutData>;
+    }
+
+    /**
      * Observe changes to the project layout
      */
     observeLayout(callback: (layout: Partial<LayoutData>) => void): () => void {
@@ -285,6 +293,9 @@ export class ProjectRepository {
 
     setPageSize(pageSize: PageFormat) {
         this.ydoc.layout().set("pageSize", pageSize);
+    }
+    setPageMargins(margins: PageMargin) {
+        this.ydoc.layout().set("pageMargins", margins);
     }
     setDisplaySceneNumbers(display: boolean) {
         this.ydoc.layout().set("displaySceneNumbers", display);
@@ -312,34 +323,36 @@ export class ProjectRepository {
     //            COMMENTS              //
     // -------------------------------- //
 
-    get comments(): Record<string, Comment> {
-        return this.ydoc.comments().toJSON() as Record<string, Comment>;
+    /**
+     * Generic comment operations — work on any Y.Map<any> keyed by comment UUID.
+     * Use the convenience wrappers below for the main screenplay comments.
+     */
+
+    getCommentsFromMap(map: Y.Map<any>): Record<string, Comment> {
+        return map.toJSON() as Record<string, Comment>;
     }
 
-    getComment(commentId: string): Comment | undefined {
-        return this.ydoc.comments().get(commentId) as Comment | undefined;
+    getCommentFromMap(map: Y.Map<any>, commentId: string): Comment | undefined {
+        return map.get(commentId) as Comment | undefined;
     }
 
-    addComment(comment: Omit<Comment, "id">): string {
+    addCommentToMap(map: Y.Map<any>, comment: Omit<Comment, "id">): string {
         const id = uuidv4();
-        const map = this.ydoc.comments();
         map.set(id, { ...comment, id });
         return id;
     }
 
-    updateComment(commentId: string, data: Partial<Comment>): void {
-        const map = this.ydoc.comments();
+    updateCommentInMap(map: Y.Map<any>, commentId: string, data: Partial<Comment>): void {
         const existing = map.get(commentId) as Comment | undefined;
         if (!existing) return;
         map.set(commentId, { ...existing, ...data });
     }
 
-    resolveComment(commentId: string): void {
-        this.updateComment(commentId, { resolved: true });
+    resolveCommentInMap(map: Y.Map<any>, commentId: string): void {
+        this.updateCommentInMap(map, commentId, { resolved: true });
     }
 
-    addReply(commentId: string, reply: Omit<CommentReply, "id">): string | undefined {
-        const map = this.ydoc.comments();
+    addReplyToMap(map: Y.Map<any>, commentId: string, reply: Omit<CommentReply, "id">): string | undefined {
         const existing = map.get(commentId) as Comment | undefined;
         if (!existing) return undefined;
         const id = uuidv4();
@@ -348,18 +361,50 @@ export class ProjectRepository {
         return id;
     }
 
-    deleteComment(commentId: string): void {
-        const map = this.ydoc.comments();
+    deleteCommentFromMap(map: Y.Map<any>, commentId: string): void {
         if (map.has(commentId)) {
             map.delete(commentId);
         }
     }
 
-    observeComments(callback: (comments: Record<string, Comment>) => void): () => void {
-        const map = this.ydoc.comments();
+    observeCommentsMap(map: Y.Map<any>, callback: (comments: Record<string, Comment>) => void): () => void {
         const observer = () => callback(map.toJSON() as Record<string, Comment>);
         map.observe(observer);
         return () => map.unobserve(observer);
+    }
+
+    // ---- Screenplay comment convenience wrappers ----
+
+    get comments(): Record<string, Comment> {
+        return this.getCommentsFromMap(this.ydoc.comments());
+    }
+
+    getComment(commentId: string): Comment | undefined {
+        return this.getCommentFromMap(this.ydoc.comments(), commentId);
+    }
+
+    addComment(comment: Omit<Comment, "id">): string {
+        return this.addCommentToMap(this.ydoc.comments(), comment);
+    }
+
+    updateComment(commentId: string, data: Partial<Comment>): void {
+        this.updateCommentInMap(this.ydoc.comments(), commentId, data);
+    }
+
+    resolveComment(commentId: string): void {
+        this.resolveCommentInMap(this.ydoc.comments(), commentId);
+    }
+
+    addReply(commentId: string, reply: Omit<CommentReply, "id">): string | undefined {
+        return this.addReplyToMap(this.ydoc.comments(), commentId, reply);
+    }
+
+    deleteComment(commentId: string): void {
+        this.deleteCommentFromMap(this.ydoc.comments(), commentId);
+    }
+
+    observeComments(callback: (comments: Record<string, Comment>) => void): () => void {
+        return this.observeCommentsMap(this.ydoc.comments(), callback);
     }
 }
 

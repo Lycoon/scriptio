@@ -3,18 +3,20 @@
  * Creates remote projects for logged-in users, local projects for offline/desktop.
  */
 
-import { ProjectState } from "@src/lib/project/project-state";
+import { ProjectData, ProjectState } from "@src/lib/project/project-state";
 import { getAdapterByFilename } from "@src/lib/adapters/registry";
 import { createLocalProject, createLocalProjectWithId } from "@src/lib/persistence/local-projects";
 import { SqlitePersistence } from "@src/lib/persistence/sqlite-persistence";
 import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
 import { ScreenplaySchema } from "@src/lib/screenplay/editor";
-import { JSONContent } from "@tiptap/react";
+import { TitlePageSchema } from "@src/lib/titlepage/editor";
+import { Editor, JSONContent } from "@tiptap/react";
 import { createProject } from "@src/lib/utils/requests";
 import { CreateProjectBody } from "@src/lib/utils/api-bodies";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { CookieUser } from "@src/lib/utils/types";
 import { isTauri } from "@tauri-apps/api/core";
+import { ProjectRepository } from "../project/project-repository";
 
 export interface ImportResult {
     success: boolean;
@@ -23,45 +25,104 @@ export interface ImportResult {
 }
 
 /**
- * Parse a file and extract screenplay content.
- * Returns the screenplay content array (guaranteed non-empty).
+ * Parse a file and extract project content.
  */
-async function parseFile(file: File): Promise<JSONContent[]> {
+async function parseFile(file: File): Promise<ProjectData> {
     const adapter = getAdapterByFilename(file.name);
     if (!adapter) {
         throw new Error(`Unsupported file type: ${file.name.split(".").pop()}`);
     }
 
     const content = await file.arrayBuffer();
-    const projectData = adapter.convertFrom(content);
+    const projectData = adapter.convertFrom(content) as ProjectData;
 
     if (!projectData.screenplay || projectData.screenplay.length === 0) {
         throw new Error("File appears to be empty or could not be parsed");
     }
 
-    return projectData.screenplay;
+    return projectData;
 }
 
 /**
- * Create a Yjs document with screenplay content and save to local persistence.
+ * Import a file into an existing project.
  */
-async function createLocalYjsDocument(
-    projectId: string,
-    screenplay: JSONContent[]
+export async function importFileIntoProject(
+    file: File,
+    editor?: Editor | null,
+    titlePageEditor?: Editor | null,
+    repository?: ProjectRepository | null,
 ): Promise<void> {
+    const adapter = getAdapterByFilename(file.name);
+    if (!adapter) {
+        throw new Error(`Unsupported file type: ${file.name.split(".").pop()}`);
+    }
+
+    const content = await file.arrayBuffer();
+    adapter.import(content, editor, titlePageEditor, repository);
+    if (editor) editor.commands.focus();
+}
+
+/**
+ * Create a Yjs document with project content and save to local persistence.
+ */
+async function createLocalYjsDocument(projectId: string, projectData: ProjectData): Promise<void> {
     const ydoc = new ProjectState();
 
-    // Convert the screenplay JSON to Yjs XmlFragment
-    const docJson: JSONContent = {
-        type: "doc",
-        content: screenplay,
-    };
+    ydoc.transact(() => {
+        // Screenplay fragment
+        const screenplayFragment = ydoc.screenplayFragment();
+        prosemirrorJSONToYXmlFragment(
+            ScreenplaySchema,
+            { type: "doc", content: projectData.screenplay },
+            screenplayFragment,
+        );
 
-    // Get the screenplay fragment from the ydoc
-    const fragment = ydoc.screenplayFragment();
+        // Titlepage fragment
+        if (projectData.titlepage) {
+            const titlepageFragment = ydoc.titlepageFragment();
+            prosemirrorJSONToYXmlFragment(
+                TitlePageSchema,
+                { type: "doc", content: projectData.titlepage },
+                titlepageFragment,
+            );
+        }
 
-    // Use y-prosemirror to convert JSON to XmlFragment
-    prosemirrorJSONToYXmlFragment(ScreenplaySchema, docJson, fragment);
+        // Maps
+        if (projectData.metadata) {
+            const metadataMap = ydoc.metadata();
+            Object.entries(projectData.metadata).forEach(([key, value]) => metadataMap.set(key, value));
+        }
+
+        if (projectData.characters) {
+            const charactersMap = ydoc.characters();
+            Object.entries(projectData.characters).forEach(([key, value]) => charactersMap.set(key, value));
+        }
+
+        if (projectData.locations) {
+            const locationsMap = ydoc.locations();
+            Object.entries(projectData.locations).forEach(([key, value]) => locationsMap.set(key, value));
+        }
+
+        if (projectData.scenes) {
+            const scenesMap = ydoc.scenes();
+            Object.entries(projectData.scenes).forEach(([key, value]) => scenesMap.set(key, value));
+        }
+
+        if (projectData.board) {
+            const boardMap = ydoc.board();
+            Object.entries(projectData.board).forEach(([key, value]) => boardMap.set(key, value));
+        }
+
+        if (projectData.layout) {
+            const layoutMap = ydoc.layout();
+            Object.entries(projectData.layout).forEach(([key, value]) => layoutMap.set(key, value));
+        }
+
+        if (projectData.comments) {
+            const commentsMap = ydoc.comments();
+            Object.entries(projectData.comments).forEach(([key, value]) => commentsMap.set(key, value));
+        }
+    });
 
     // Save to appropriate persistence based on environment
     if (isTauri()) {
@@ -97,11 +158,7 @@ async function createLocalYjsDocument(
 /**
  * Create a remote project via API.
  */
-async function createRemoteProject(
-    userId: string,
-    title: string,
-    description?: string
-): Promise<string> {
+async function createRemoteProject(userId: string, title: string, description?: string): Promise<string> {
     const body: CreateProjectBody = {
         title,
         description,
@@ -129,11 +186,11 @@ async function createRemoteProject(
 export async function importFileAsProject(
     file: File,
     user: CookieUser | null | undefined,
-    title?: string
+    title?: string,
 ): Promise<ImportResult> {
     try {
         // Parse the file content
-        const screenplay = await parseFile(file);
+        const projectData = await parseFile(file);
 
         // Create project title from filename if not provided
         const projectTitle = title || file.name.replace(/\.[^/.]+$/, "");
@@ -164,8 +221,8 @@ export async function importFileAsProject(
             projectId = localProject.id;
         }
 
-        // Create Yjs document with the screenplay content
-        await createLocalYjsDocument(projectId, screenplay);
+        // Create Yjs document with the project content
+        await createLocalYjsDocument(projectId, projectData);
 
         return {
             success: true,

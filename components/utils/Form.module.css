@@ -69,6 +69,10 @@
 }
 
 .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     font-size: 1rem;
     color: var(--primary-text);
     background-color: var(--secondary);

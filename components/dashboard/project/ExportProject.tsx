@@ -12,11 +12,12 @@ import styles from "./ExportProject.module.css";
 import optionCard from "./OptionCard.module.css";
 import { importFilePopup } from "@src/lib/screenplay/popup";
 import { UserContext } from "@src/context/UserContext";
-import { getAdapterByExtension, getAdapterByFilename } from "@src/lib/adapters/registry";
+import { getAdapterByExtension } from "@src/lib/adapters/registry";
 import { BaseExportOptions } from "@src/lib/adapters/screenplay-adapter";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import { PDFExportOptions } from "@src/lib/adapters/pdf/pdf-adapter";
 import { ScriptioExportOptions } from "@src/lib/adapters/scriptio/scriptio-adapter";
+import { importFileIntoProject } from "@src/lib/import/import-project";
 
 export enum ExportFormat {
     PDF = "pdf",
@@ -68,26 +69,15 @@ const ExportProject = () => {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        const adapter = getAdapterByFilename(file.name);
-        if (!adapter) {
-            console.error("Unsupported file type");
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const content = e.target?.result as ArrayBuffer;
-            if (!content || !editor) return;
-
-            const confirmImport = () => {
-                adapter.import(content, editor);
-                editor.commands.focus(); // Required to trigger pagination recompute
-            };
-
-            importFilePopup(userContext, confirmImport);
+        const confirmImport = async () => {
+            try {
+                await importFileIntoProject(file, editor, titlePageEditor, repository);
+            } catch (error) {
+                console.error("Import failed:", error);
+            }
         };
 
-        reader.readAsArrayBuffer(file);
+        importFilePopup(userContext, confirmImport);
         event.target.value = ""; // Reset input so the same file can be selected again if needed
     };
 

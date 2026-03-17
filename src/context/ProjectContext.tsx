@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
     createContext,
@@ -21,8 +21,10 @@ import {
     LayoutData,
     useProjectYjs,
     ElementStyle,
+    PageMargin,
+    DEFAULT_PAGE_MARGINS,
 } from "@src/lib/project/project-state";
-import { Comment, Screenplay } from "@src/lib/utils/types";
+import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 
@@ -74,6 +76,8 @@ export interface ProjectContextType {
     // Page format
     pageFormat: PageFormat;
     setPageFormat: (format: PageFormat) => void;
+    pageMargins: PageMargin;
+    setPageMargins: (margins: PageMargin) => void;
     displaySceneNumbers: boolean;
     setDisplaySceneNumbers: (display: boolean) => void;
         sceneHeadingSpacing: number;
@@ -98,11 +102,6 @@ export interface ProjectContextType {
     setCurrentSearchIndex: (index: number) => void;
     searchMatches: SearchMatch[];
     setSearchMatches: (matches: SearchMatch[]) => void;
-
-    // Comments state
-    comments: Comment[];
-    activeCommentId: string | null;
-    setActiveCommentId: (id: string | null) => void;
 
     // Project metadata (for title page placeholders)
     projectTitle: string;
@@ -147,6 +146,8 @@ const defaultContextValue: ProjectContextType = {
     toggleCharacterHighlight: () => {},
     pageFormat: "LETTER",
     setPageFormat: () => {},
+    pageMargins: DEFAULT_PAGE_MARGINS,
+    setPageMargins: () => {},
     displaySceneNumbers: false,
     setDisplaySceneNumbers: () => {},
             sceneHeadingSpacing: 1,
@@ -183,10 +184,6 @@ const defaultContextValue: ProjectContextType = {
     setCurrentSearchIndex: () => {},
     searchMatches: [],
     setSearchMatches: () => {},
-    // Comments state defaults
-    comments: [],
-    activeCommentId: null,
-    setActiveCommentId: () => {},
     // Project metadata defaults
     projectTitle: "",
     setProjectTitle: () => {},
@@ -265,6 +262,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [selectedStyles, setSelectedStylesState] = useState<Style>(Style.None);
     const [highlightedCharacters, setHighlightedCharacters] = useState<Set<string>>(new Set());
     const [pageFormat, setPageFormatState] = useState<PageFormat>("LETTER");
+    const [pageMargins, setPageMarginsState] = useState<PageMargin>(DEFAULT_PAGE_MARGINS);
     const [displaySceneNumbers, setDisplaySceneNumbersState] = useState<boolean>(false);
     const [sceneHeadingSpacing, setSceneHeadingSpacingState] = useState<number>(1);
     const [sceneNumberOnRight, setSceneNumberOnRightState] = useState<boolean>(false);
@@ -290,10 +288,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     );
     const [currentSearchIndex, setCurrentSearchIndexState] = useState<number>(0);
     const [searchMatches, setSearchMatchesState] = useState<SearchMatch[]>([]);
-
-    // Comments state
-    const [comments, setComments] = useState<Comment[]>([]);
-    const [activeCommentId, setActiveCommentIdState] = useState<string | null>(null);
 
     // Project metadata state (for title page placeholders)
     const [projectTitle, setProjectTitleState] = useState<string>("");
@@ -357,11 +351,45 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             recomputeFromScreenplay(newScreenplay);
         });
 
+        // Read initial layout data (observer only fires on CHANGES, not on
+        // the current state — without this, layout-dependent state like
+        // elementStyles starts as {} and defaults always win).
+        const initialLayout = repository.getLayout();
+        if (initialLayout) {
+            if (initialLayout.pageSize && (initialLayout.pageSize === "A4" || initialLayout.pageSize === "LETTER")) {
+                setPageFormatState(initialLayout.pageSize);
+            }
+            if (initialLayout.pageMargins !== undefined) {
+                setPageMarginsState(initialLayout.pageMargins);
+            }
+            if (initialLayout.displaySceneNumbers !== undefined) {
+                setDisplaySceneNumbersState(initialLayout.displaySceneNumbers);
+            }
+            if (initialLayout.sceneHeadingSpacing !== undefined) {
+                setSceneHeadingSpacingState(initialLayout.sceneHeadingSpacing);
+            }
+            if (initialLayout.sceneNumberOnRight !== undefined) {
+                setSceneNumberOnRightState(initialLayout.sceneNumberOnRight);
+            }
+            if (initialLayout.contdLabel !== undefined) {
+                setContdLabelState(initialLayout.contdLabel);
+            }
+            if (initialLayout.moreLabel !== undefined) {
+                setMoreLabelState(initialLayout.moreLabel);
+            }
+            if (initialLayout.elementMargins !== undefined) {
+                setElementMarginsState(initialLayout.elementMargins);
+            }
+            if (initialLayout.elementStyles !== undefined) {
+                setElementStylesState(initialLayout.elementStyles);
+            }
+        }
+
         // Observe layout changes
         const unsubscribeLayout = repository.observeLayout((layout: Partial<LayoutData>) => {
             const _pageSize = layout.pageSize;
             const _displaySceneNumbers = layout.displaySceneNumbers;
-            
+
             const _sceneHeadingSpacing = layout.sceneHeadingSpacing;
             const _sceneNumberOnRight = layout.sceneNumberOnRight;
             const _contdLabel = layout.contdLabel;
@@ -370,10 +398,13 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (_pageSize && (_pageSize === "A4" || _pageSize === "LETTER")) {
                 setPageFormatState(_pageSize);
             }
+            if (layout.pageMargins !== undefined) {
+                setPageMarginsState(layout.pageMargins);
+            }
             if (_displaySceneNumbers !== undefined) {
                 setDisplaySceneNumbersState(_displaySceneNumbers);
             }
-            
+
             if (_sceneHeadingSpacing !== undefined) {
                 setSceneHeadingSpacingState(_sceneHeadingSpacing);
             }
@@ -415,13 +446,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             updateScenes(allScenes);
         });
 
-        // Observe comments changes
-        const initialComments = Object.values(repository.comments);
-        setComments(initialComments);
-        const unsubscribeComments = repository.observeComments((commentsMap) => {
-            setComments(Object.values(commentsMap));
-        });
-
         // Observe metadata changes (for title page placeholders)
         const initialTitle = repository.getTitle();
         const initialAuthor = repository.getAuthor();
@@ -439,7 +463,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             unsubscribeCharacters();
             unsubscribeLocations();
             unsubscribeScenes();
-            unsubscribeComments();
             unsubscribeMetadata();
         };
     }, [repository]);
@@ -522,6 +545,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    const setPageMargins = useCallback(
+        (margins: PageMargin) => {
+            setPageMarginsState(margins);
+            repository?.setPageMargins(margins);
+        },
+        [repository],
+    );
+
     const setDisplaySceneNumbers = useCallback(
         (display: boolean) => {
             setDisplaySceneNumbersState(display);
@@ -598,10 +629,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setSearchMatchesState(matches);
     }, []);
 
-    const setActiveCommentId = useCallback((id: string | null) => {
-        setActiveCommentIdState(id);
-    }, []);
-
     const setProjectTitle = useCallback(
         (title: string) => {
             setProjectTitleState(title);
@@ -653,6 +680,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             toggleCharacterHighlight,
             pageFormat,
             setPageFormat,
+            pageMargins,
+            setPageMargins,
             displaySceneNumbers,
             setDisplaySceneNumbers,
             sceneHeadingSpacing,
@@ -680,9 +709,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setCurrentSearchIndex,
             searchMatches,
             setSearchMatches,
-            comments,
-            activeCommentId,
-            setActiveCommentId,
             projectTitle,
             setProjectTitle,
             projectAuthor,
@@ -716,6 +742,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             toggleCharacterHighlight,
             pageFormat,
             setPageFormat,
+            pageMargins,
+            setPageMargins,
             displaySceneNumbers,
             setDisplaySceneNumbers,
             sceneHeadingSpacing,
@@ -743,9 +771,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setCurrentSearchIndex,
             searchMatches,
             setSearchMatches,
-            comments,
-            activeCommentId,
-            setActiveCommentId,
             projectTitle,
             setProjectTitle,
             projectAuthor,

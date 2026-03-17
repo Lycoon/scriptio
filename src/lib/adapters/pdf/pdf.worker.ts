@@ -10,6 +10,8 @@ export interface TextRun {
     italic: boolean;
     underline: boolean;
     absolutePosition?: boolean;
+    /** When true, x is the right edge — text expands leftward (right-aligned at x). */
+    rightAlign?: boolean;
 }
 
 /** A single visual line as laid out by the browser. */
@@ -337,6 +339,11 @@ async function renderLines(
             // are given an x of 0. We must place them relative to the previous run.
             if (run.x === 0 && ri > 0 && lastRunX !== -1) {
                 runX = lastRunX + lastRunWidth;
+            }
+
+            // Right-aligned runs: x is the right edge, so shift left by text width.
+            if (run.rightAlign) {
+                runX -= doc.getTextWidth(run.text);
             }
 
             if (run.text === "(" && ri === 0 && !run.absolutePosition) {

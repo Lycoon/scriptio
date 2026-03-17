@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCookieUser } from "@src/lib/utils/hooks";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
-import { redirectScreenplay } from "@src/lib/utils/redirects";
 import styles from "./EmptyProjectPage.module.css";
 import { useTranslations } from "next-intl";
 
@@ -13,6 +13,7 @@ type Props = {
 
 const EmptyProjectPage = ({ setIsCreating }: Props) => {
     const { user } = useCookieUser();
+    const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isImporting, setIsImporting] = useState(false);
     const t = useTranslations("projects");
@@ -32,7 +33,7 @@ const EmptyProjectPage = ({ setIsCreating }: Props) => {
             const result = await importFileAsProject(file, user);
 
             if (result.success && result.projectId) {
-                redirectScreenplay(result.projectId);
+                router.push(`/projects?projectId=${result.projectId}`);
             } else {
                 console.error("Import failed:", result.error);
             }

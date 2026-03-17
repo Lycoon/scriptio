@@ -6,8 +6,8 @@
         "synced": "Synchronisé dans le cloud",
         "noConnection": "Pas de connexion",
         "reconnecting": "Reconnexion...",
-        "endlessScroll": "Endless Scroll",
-        "toggleComments": "Toggle Comments"
+        "endlessScroll": "Défilement infini",
+        "toggleComments": "Afficher/masquer les commentaires"
     },
     "common": {
         "save": "Enregistrer",
@@ -242,7 +242,7 @@
             "a4": "Format international standard. Courant en Europe et dans la plupart des pays."
         },
         "sceneHeadings": "En-têtes de scène",
-        "bold": "Bold",
+        "bold": "Gras",
         "boldDesc": "Les en-têtes de scène apparaîtront en gras",
         "extraSpace": "Espace supplémentaire au-dessus",
         "extraSpaceDesc": "Ajouter un espacement supplémentaire avant les en-têtes de scène",
@@ -251,11 +251,16 @@
         "duplicateRight": "Dupliquer dans la marge droite",
         "duplicateRightDesc": "Afficher le numéro des deux côtés",
         "continuation": "Continuation",
-        "moreTitle": "(MORE) Label",
-        "contdTitle": "(CONT'D) Label",
+        "moreTitle": "(MORE) Étiquette",
+        "contdTitle": "(CONT'D) Étiquette",
+        "pageMargins": "Marges de page",
+        "vertical": "Vertical",
+        "horizontal": "Horizontal",
+        "marginTop": "Haut",
+        "marginBottom": "Bas",
         "margins": "Marges",
-        "marginLeft": "G",
-        "marginRight": "D",
+        "marginLeft": "Gauche",
+        "marginRight": "Droite",
         "marginElements": {
             "action": "Action",
             "scene": "En-tête de scène",
@@ -265,16 +270,18 @@
             "transition": "Transition",
             "section": "Section"
         },
-        "elements": "Element Configuration",
+        "elements": "Configuration des éléments",
         "style": "Style",
-        "alignment": "Alignment",
-        "italic": "Italic",
-        "underline": "Underline",
-        "alignLeft": "Left",
-        "alignCenter": "Center",
-        "alignRight": "Right",
-        "sceneSpacing": "Spacing",
-        "sceneSpacingDesc": "Spacing above scene headings"
+        "alignment": "Alignement",
+        "italic": "Italique",
+        "underline": "Souligné",
+        "uppercase": "Majuscules",
+        "alignLeft": "Gauche",
+        "alignCenter": "Centré",
+        "alignRight": "Droite",
+        "sceneSpacing": "Espacement",
+        "sceneSpacingDesc": "Espacement au-dessus des en-têtes de scène",
+        "startNewPage": "Commencer une nouvelle page"
     },
     "projectSettings": {
         "titleLabel": "Titre",
