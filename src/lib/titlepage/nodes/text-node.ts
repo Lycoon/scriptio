@@ -49,21 +49,12 @@ export const TitlePageTextNode = Node.create({
     parseHTML() {
         return [
             {
-                tag: "p",
-                getAttrs: (element) => {
-                    const el = element as HTMLElement;
-                    const hasAlign =
-                        el.classList.contains("align-left") ||
-                        el.classList.contains("align-center") ||
-                        el.classList.contains("align-right");
-                    if (hasAlign) return {};
-                    return false;
-                },
+                tag: "p.tp-text",
             },
         ];
     },
 
     renderHTML({ HTMLAttributes }) {
-        return ["p", mergeAttributes(HTMLAttributes), 0];
+        return ["p", mergeAttributes(HTMLAttributes, { class: "tp-text" }), 0];
     },
 });

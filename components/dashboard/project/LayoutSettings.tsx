@@ -19,6 +19,7 @@ import {
     Italic,
     Underline,
     AlignCenter,
+    CaseSensitive,
     ArrowLeftToLine,
     ArrowRightToLine,
     ArrowUpToLine,
@@ -327,6 +328,14 @@ const LayoutSettings = () => {
                             title={t("underline")}
                         >
                             <Underline size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            className={`${styles.styleBtn} ${currentStyle.uppercase ? styles.styleBtnActive : ""}`}
+                            onClick={(e) => updateLocalStyle(e, element, "uppercase", !currentStyle.uppercase)}
+                            title={t("uppercase")}
+                        >
+                            <CaseSensitive size={16} />
                         </button>
                     </div>
                 </div>

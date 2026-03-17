@@ -393,30 +393,31 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         const lastLine = paragraphLines[paragraphLines.length - 1];
 
         if (sceneNumber !== undefined && options.displaySceneNumbers) {
-            // Left scene number (always shown when scene numbers are enabled)
+            const elStyle = getComputedStyle(el);
+            // Left scene number — mirrors CSS `right: 100%; margin-right: -120px` on .scene::before:
+            // right edge lands at scene_element_left + 120px.
             if (firstLine.runs.length > 0) {
                 const leadRun = firstLine.runs[0];
+                const paddingLeft = parseFloat(elStyle.paddingLeft) || 0;
                 firstLine.runs.unshift({
-                    text: String(sceneNumber) + ".",
-                    x: leadRun.x - 72,
+                    text: String(sceneNumber),
+                    x: leadRun.x - paddingLeft + 120,
                     fontFamily: leadRun.fontFamily,
                     bold: leadRun.bold,
                     italic: leadRun.italic,
                     underline: leadRun.underline,
                     absolutePosition: true,
+                    rightAlign: true,
                 });
             }
 
-            // Right scene number (CSS ::after pseudo-element, not captured by TreeWalker).
-            // CSS uses left:100% + margin-left:20px which overflows past the page edge;
-            // PDFs clip at the page boundary, so we position it inside the right margin
-            // area: just past the text content (padding-right) + a small offset.
+            // Right scene number — mirrors CSS `left: 100%; margin-left: -85px` on .scene::after:
+            // left edge lands at scene_element_right - 85px.
             if (options.sceneNumberOnRight && firstLine.runs.length > 0) {
                 const tailRun = firstLine.runs[firstLine.runs.length - 1];
-                const paddingRight = parseFloat(getComputedStyle(el).paddingRight) || 0;
                 firstLine.runs.push({
-                    text: String(sceneNumber) + ".",
-                    x: el.getBoundingClientRect().right - paddingRight + 20,
+                    text: String(sceneNumber),
+                    x: el.getBoundingClientRect().right - 85,
                     fontFamily: tailRun.fontFamily,
                     bold: tailRun.bold,
                     italic: tailRun.italic,

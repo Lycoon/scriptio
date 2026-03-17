@@ -116,6 +116,7 @@
         font-weight: var(--action-weight, normal);
         font-style: var(--action-style, normal);
         text-decoration: var(--action-decoration, none);
+        text-transform: var(--action-transform, none);
     }
 
     .scene {
@@ -123,7 +124,7 @@
         overflow: visible;
         background-color: none;
         margin-top: 1lh;
-        text-transform: uppercase;
+        text-transform: var(--scene-transform, uppercase);
         font-weight: var(--scene-weight, bold);
         font-style: var(--scene-style, normal);
         text-decoration: var(--scene-decoration, none);
@@ -179,6 +180,7 @@
         font-weight: var(--dialogue-weight, normal);
         font-style: var(--dialogue-style, normal);
         text-decoration: var(--dialogue-decoration, none);
+        text-transform: var(--dialogue-transform, none);
         text-align: var(--dialogue-align, left) !important;
         padding-left: var(--dialogue-l-margin) !important;
         padding-right: var(--dialogue-r-margin) !important;
@@ -188,10 +190,10 @@
         font-weight: var(--character-weight, normal);
         font-style: var(--character-style, normal);
         text-decoration: var(--character-decoration, none);
+        text-transform: var(--character-transform, uppercase);
         text-align: var(--character-align, left) !important;
         padding-left: var(--character-l-margin) !important;
         padding-right: var(--character-r-margin) !important;
-        text-transform: uppercase;
     }
 
     .character::after {
@@ -209,6 +211,7 @@
         font-weight: var(--parenthetical-weight, normal);
         font-style: var(--parenthetical-style, normal);
         text-decoration: var(--parenthetical-decoration, none);
+        text-transform: var(--parenthetical-transform, none);
         text-align: var(--parenthetical-align, left) !important;
         padding-left: var(--parenthetical-l-margin) !important;
         padding-right: var(--parenthetical-r-margin) !important;
@@ -247,7 +250,7 @@
     /* Transition */
     .transition {
         position: relative;
-        text-transform: uppercase;
+        text-transform: var(--transition-transform, uppercase);
         font-weight: var(--transition-weight, normal);
         font-style: var(--transition-style, normal);
         text-decoration: var(--transition-decoration, none);
@@ -261,7 +264,7 @@
     }
 
     .section {
-        text-transform: uppercase;
+        text-transform: var(--section-transform, uppercase);
         counter-increment: actnumber;
         text-align: var(--section-align, center) !important;
         font-weight: var(--section-weight, normal);
@@ -445,23 +448,24 @@
 /* ============================================ */
 
 /* Base styling for all title-page text lines */
-.ProseMirror > p.align-left,
-.ProseMirror > p.align-center,
-.ProseMirror > p.align-right {
+.ProseMirror > p.tp-text {
     font-size: var(--font-size);
     line-height: var(--line-height) !important;
+    margin-top: 0;
 }
 
-/* Text alignment classes (shared by title page and screenplay nodes) */
-.align-left {
+/* Text alignment classes (shared by title page and screenplay nodes).
+   Specificity must beat .ProseMirror .element (0,2,0), so we use
+   .ProseMirror p.align-* (0,2,1) — the extra type selector wins on equal !important. */
+.ProseMirror p.align-left {
     text-align: left !important;
 }
 
-.align-center {
+.ProseMirror p.align-center {
     text-align: center !important;
 }
 
-.align-right {
+.ProseMirror p.align-right {
     text-align: right !important;
 }
 

@@ -166,6 +166,7 @@ const DocumentEditorPanel = ({
             editorElement.style.setProperty(`--${key}-weight`, s.bold ? "bold" : "normal");
             editorElement.style.setProperty(`--${key}-style`, s.italic ? "italic" : "normal");
             editorElement.style.setProperty(`--${key}-decoration`, s.underline ? "underline" : "none");
+            editorElement.style.setProperty(`--${key}-transform`, s.uppercase ? "uppercase" : "none");
         }
 
         // Compute startNewPage types from element styles

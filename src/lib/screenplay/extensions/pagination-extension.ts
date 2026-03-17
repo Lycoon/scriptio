@@ -634,6 +634,8 @@ const createPaginationPlugin = (extension: any) =>
                 if (_mb) options.marginBottom = parseFloat(_mb);
                 if (_ml) options.marginLeft = parseFloat(_ml);
                 if (_mr) options.marginRight = parseFloat(_mr);
+                const _snp = editorDOM.dataset.startNewPageTypes;
+                if (_snp) options.startNewPageTypes = new Set(JSON.parse(_snp));
 
                 const serializer = DOMSerializer.fromSchema(newState.schema);
                 const heightUpdates: { pos: number; height: number }[] = [];
@@ -1063,6 +1065,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 (types) =>
                 ({ tr }) => {
                     this.options.startNewPageTypes = types;
+                    this.editor.view.dom.dataset.startNewPageTypes = JSON.stringify([...types]);
                     tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },

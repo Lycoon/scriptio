@@ -87,17 +87,17 @@ export const DEFAULT_ELEMENT_MARGINS: Record<string, ElementMargin> = {
     section: { left: 0, right: 0 },
 };
 
-export type ElementStyle = { bold?: boolean; italic?: boolean; underline?: boolean; align?: "left" | "center" | "right"; startNewPage?: boolean };
+export type ElementStyle = { bold?: boolean; italic?: boolean; underline?: boolean; uppercase?: boolean; align?: "left" | "center" | "right"; startNewPage?: boolean };
 
 /** Default styling per screenplay element */
 export const DEFAULT_ELEMENT_STYLES: Record<string, ElementStyle> = {
     action: { align: "left" },
-    scene: { bold: true, align: "left" },
-    character: { align: "left" },
+    scene: { bold: true, align: "left", uppercase: true },
+    character: { align: "left", uppercase: true },
     dialogue: { align: "left" },
     parenthetical: { align: "left" },
-    transition: { align: "right" },
-    section: { align: "center", underline: true, startNewPage: true },
+    transition: { align: "right", uppercase: true },
+    section: { align: "center", underline: true, startNewPage: true, uppercase: true },
 };
 
 export type LayoutData = {
