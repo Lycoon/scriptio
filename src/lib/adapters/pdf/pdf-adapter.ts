@@ -10,7 +10,7 @@ import { PAGE_SIZES } from "@src/lib/screenplay/extensions/pagination-extension"
 
 export type PDFExportOptions = BaseExportOptions & {
     format: PageFormat;
-    watermark: boolean;
+    watermarkText?: string;
     password?: string;
     displaySceneNumbers?: boolean;
     sceneHeadingBold?: boolean;
@@ -105,7 +105,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 baseUrl: BASE_URL,
                 pageWidth: pdfPageSize.width,
                 pageHeight: pdfPageSize.height,
-                watermark: options.watermark,
+                watermarkText: options.watermarkText,
                 password: options.password,
                 author: options.author,
                 titlePageLines,

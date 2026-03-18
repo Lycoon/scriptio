@@ -35,7 +35,7 @@ const ProjectWorkspace = () => {
         <div className={`${styles.workspace} ${!isZenMode ? styles.sidebars_visible : ""}`}>
             {/* Overlays */}
             <ContextMenu />
-            {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} />}
+            {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} onSelect={() => updateSuggestions([])} />}
             <Popup />
 
             {/* Left sidebar - only show when screenplay is visible */}

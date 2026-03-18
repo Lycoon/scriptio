@@ -4,6 +4,7 @@ import { useCallback, useContext, useEffect, useRef } from "react";
 import { Editor, useEditor } from "@tiptap/react";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
+import { ySyncPluginKey, yUndoPluginKey } from "@tiptap/y-tiptap";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { ScreenplayElement, Style, TitlePageElement } from "@src/lib/utils/enums";
@@ -437,6 +438,44 @@ export const useDocumentEditor = (
             provider.awareness.setLocalStateField("user", userInfoRef.current);
         }
     }, [user?.username, user?.color, provider]);
+
+    // Fix Yjs undo cursor restoration: y-tiptap's stack-item-popped fires AFTER
+    // the undo transaction commits, so beforeTransactionSelection is captured wrong
+    // by beforeAllTransactions. Patch undo/redo to pre-set it from the stack item.
+    useEffect(() => {
+        if (!editor || !isYjsReady) return;
+
+        const state = editor.state;
+        const yUndoState = yUndoPluginKey.getState(state);
+        const ySyncState = ySyncPluginKey.getState(state);
+        if (!yUndoState?.undoManager || !ySyncState?.binding) return;
+
+        const um = yUndoState.undoManager;
+        const binding = ySyncState.binding;
+        const originalUndo = um.undo.bind(um);
+        const originalRedo = um.redo.bind(um);
+
+        um.undo = () => {
+            if (um.undoStack.length > 0) {
+                const prevSel = um.undoStack[um.undoStack.length - 1].meta.get(binding);
+                if (prevSel) binding.beforeTransactionSelection = prevSel;
+            }
+            return originalUndo();
+        };
+
+        um.redo = () => {
+            if (um.redoStack.length > 0) {
+                const prevSel = um.redoStack[um.redoStack.length - 1].meta.get(binding);
+                if (prevSel) binding.beforeTransactionSelection = prevSel;
+            }
+            return originalRedo();
+        };
+
+        return () => {
+            um.undo = originalUndo;
+            um.redo = originalRedo;
+        };
+    }, [editor, isYjsReady]);
 
     // Refresh character highlights
     useEffect(() => {

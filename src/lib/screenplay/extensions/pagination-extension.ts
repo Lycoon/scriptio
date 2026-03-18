@@ -546,7 +546,6 @@ const paginationKey = new PluginKey("pagination");
 
 interface PaginationState {
     decset: DecorationSet;
-    heightUpdates: { pos: number; height: number }[];
     breaks: PageBreakInfo[];
     lastPageFreespace: number;
 }
@@ -557,13 +556,11 @@ const createPaginationPlugin = (extension: any) =>
         state: {
             init: (): PaginationState => ({
                 decset: DecorationSet.empty,
-                heightUpdates: [],
                 breaks: [],
                 lastPageFreespace: 0,
             }),
             apply(tr, value: PaginationState, oldState, newState): PaginationState {
                 const options = extension.options as PaginationOptions;
-                const heightUpdate = tr.getMeta("heightUpdate");
                 const formatUpdate = tr.getMeta("pageFormatUpdate");
                 const forceUpdate = tr.getMeta("forcePaginationUpdate");
 
@@ -574,33 +571,15 @@ const createPaginationPlugin = (extension: any) =>
                 // Nothing pagination-related changed
                 if (!tr.docChanged && !forceUpdate && !formatUpdate) return value;
 
-                // Heights were just committed by appendTransaction via setNodeMarkup.
-                // Breaks were already computed (with fresh heights) in the previous apply.
-                // Rebuild decorations from those pre-computed breaks — can't use map()
-                // because setNodeMarkup's ReplaceAroundStep destroys widget decorations
-                // at the replaced node's position
-                if (heightUpdate) {
-                    return {
-                        decset: buildDecorations(newState.doc, value.breaks, value.lastPageFreespace, options),
-                        heightUpdates: [],
-                        breaks: value.breaks,
-                        lastPageFreespace: value.lastPageFreespace,
-                    };
-                }
-
                 const fullRemeasure = forceUpdate || formatUpdate;
 
-                // Determine changed node positions from step maps
-                const changedPositions = new Set<number>();
+                // Track the furthest changed position for the short-circuit break optimization
                 let maxChangedPos = -1;
                 if (tr.docChanged && !fullRemeasure) {
                     tr.steps.forEach((step) => {
                         const map = step.getMap();
-                        map.forEach((_oS: number, _oE: number, newStart: number, newEnd: number) => {
+                        map.forEach((_oS: number, _oE: number, _newStart: number, newEnd: number) => {
                             if (newEnd > maxChangedPos) maxChangedPos = newEnd;
-                            newState.doc.nodesBetween(newStart, newEnd, (_node, pos) => {
-                                changedPositions.add(pos);
-                            });
                         });
                     });
                 }
@@ -612,7 +591,7 @@ const createPaginationPlugin = (extension: any) =>
                 const oldBreakByPos = new Map<number, { info: PageBreakInfo; index: number }>();
                 mappedOldBreaks.forEach((b, i) => oldBreakByPos.set(b.pos, { info: b, index: i }));
 
-                // --- Single pass: measure dirty heights + compute page breaks ---
+                // --- Single pass: measure heights + compute page breaks ---
                 let editor = extension.editor as Editor;
                 if (!editor.isInitialized || !extension.editor.view?.dom) return value;
 
@@ -638,7 +617,6 @@ const createPaginationPlugin = (extension: any) =>
                 if (_snp) options.startNewPageTypes = new Set(JSON.parse(_snp));
 
                 const serializer = DOMSerializer.fromSchema(newState.schema);
-                const heightUpdates: { pos: number; height: number }[] = [];
 
                 const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
                 const breaks: PageBreakInfo[] = [];
@@ -662,19 +640,17 @@ const createPaginationPlugin = (extension: any) =>
                     const nodeType = node.type.name as ScreenplayElement;
                     const logic = BREAK_LOGIC[nodeType];
 
-                    // Use cached height or measure if dirty.
-                    // element is hoisted so the overflow block can reuse it for split measurement
-                    // without serialising the node a second time.
-                    let height = node.attrs.height as number | null;
-                    const isDirty = fullRemeasure || height === null || changedPositions.has(pos);
+                    // Use the module-level heightCache (keyed by content) to avoid re-serializing
+                    // unchanged nodes. Cache misses (new/edited content) trigger serialization.
+                    // element is hoisted so the split block can reuse it without a second serialize.
+                    const textContent = node.textContent || "";
+                    const cacheKey = `${node.type.name}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${textContent}`;
+                    let height = heightCache.get(cacheKey) ?? null;
                     let element: HTMLElement | null = null;
 
-                    if (isDirty) {
+                    if (height === null) {
                         element = serializer.serializeNode(node) as HTMLElement;
                         height = getHTMLHeight(element, editorDOM, node.type.name, options);
-                        if (height !== node.attrs.height) {
-                            heightUpdates.push({ pos, height });
-                        }
                     }
 
                     if (height == null) continue;
@@ -719,7 +695,7 @@ const createPaginationPlugin = (extension: any) =>
                             freespaceBeforeNode > MIN_SPLIT_FREESPACE &&
                             height > logic.minSplitHeight
                         ) {
-                            // Serialize lazily — only needed here when the node was not already dirty.
+                            // Serialize lazily — only needed here when not already serialized above.
                             if (!element) element = serializer.serializeNode(node) as HTMLElement;
 
                             const split = trySplitNode(node, pos, freespaceBeforeNode, element, editorDOM, options);
@@ -812,24 +788,9 @@ const createPaginationPlugin = (extension: any) =>
                 }
 
                 // Compute remaining space on the last page so the last-page widget
-                // can pad it to full page height (mirrors how page-break widgets
-                // account for freespace on every other page).
+                // can pad it to full page height.
                 const lastPageFreespace = Math.max(0, contentHeight - pagePos);
 
-                // Heights need committing — appendTransaction will fire setNodeMarkup,
-                // then the heightUpdate apply will rebuild decorations from these breaks.
-                // Just remap old decorations for now (never rendered — view updates only
-                // after all transactions complete).
-                if (heightUpdates.length > 0) {
-                    return {
-                        decset: value.decset.map(tr.mapping, tr.doc),
-                        heightUpdates,
-                        breaks,
-                        lastPageFreespace,
-                    };
-                }
-
-                // No pending height commits — this is the final state the view will render.
                 // Check if breaks actually changed compared to mapped old breaks.
                 const breaksChanged =
                     fullRemeasure ||
@@ -845,40 +806,10 @@ const createPaginationPlugin = (extension: any) =>
                     ? buildDecorations(newState.doc, breaks, lastPageFreespace, options)
                     : value.decset.map(tr.mapping, tr.doc);
 
-                return { decset, heightUpdates: [], breaks, lastPageFreespace };
+                return { decset, breaks, lastPageFreespace };
             },
         },
-        appendTransaction(transactions, oldState, newState) {
-            const state = paginationKey.getState(newState) as PaginationState | undefined;
-            if (!state?.heightUpdates.length) return;
-
-            // Skip processing for remote Yjs transactions
-            const isRemoteChange = transactions.some((tr) => tr.getMeta("y-sync$"));
-            if (isRemoteChange) {
-                return null;
-            }
-
-            const tr = newState.tr;
-            tr.setMeta("heightUpdate", true);
-
-            // If the original transactions were meant to be excluded from history (e.g. undo/redo),
-            // ensure the height updates are also excluded so they don't pollute the history stack.
-            if (transactions.some((t) => t.getMeta("addToHistory") === false)) {
-                tr.setMeta("addToHistory", false);
-            }
-
-            state.heightUpdates.forEach(({ pos, height }) => {
-                const mappedPos = tr.mapping.map(pos);
-                const node = tr.doc.nodeAt(mappedPos);
-                if (node && node.attrs.height !== height) {
-                    tr.setNodeMarkup(mappedPos, undefined, { ...node.attrs, height });
-                }
-            });
-
-            if (tr.steps.length) {
-                return tr;
-            }
-
+        appendTransaction() {
             return null;
         },
         props: {

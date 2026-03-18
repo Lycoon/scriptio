@@ -149,7 +149,7 @@ export interface WorkerPayload {
     baseUrl: string;
     pageWidth: number; // PDF page width in points
     pageHeight: number; // PDF page height in points
-    watermark: boolean;
+    watermarkText?: string;
     password?: string;
     author: string;
     titlePageLines: VisualLine[];
@@ -276,7 +276,7 @@ async function renderLines(
             }
 
             // Watermark on the page we are leaving
-            if (payload.watermark) drawWatermark(doc, pageSize, payload.author);
+            if (payload.watermarkText) drawWatermark(doc, pageSize, payload.watermarkText);
 
             doc.addPage();
             currentPage++;
@@ -370,7 +370,7 @@ async function renderLines(
         }
     }
 
-    if (payload.watermark) drawWatermark(doc, pageSize, payload.author);
+    if (payload.watermarkText) drawWatermark(doc, pageSize, payload.watermarkText);
 }
 
 /**
@@ -433,10 +433,22 @@ function drawWatermark(doc: jsPDF, pageSize: { width: number; height: number }, 
     doc.setFont("CourierPrime", "bold");
     doc.setFontSize(54);
     doc.setTextColor(128, 128, 128);
-    doc.text(text, pageSize.width / 2, pageSize.height / 2, {
-        align: "center",
-        baseline: "middle",
-        angle: 45,
-    });
+
+    // jsPDF shifts x by -textWidth/2 for align:"center" *before* applying the rotation,
+    // so the rotation pivot ends up at the text's left edge rather than the page centre.
+    // Instead, compute the start position manually so the visual midpoint of the
+    // rotated text lands at (cx, cy).
+    // For angle:45 (CCW = upper-right in screen space), text advances in direction
+    // (cos 45°, −sin 45°) in Y-down page coordinates:
+    //   cx = x0 + (textWidth/2) × cos45   →   x0 = cx − (textWidth/2) × cos45
+    //   cy = y0 − (textWidth/2) × sin45   →   y0 = cy + (textWidth/2) × sin45
+    const textWidth = doc.getTextWidth(text);
+    const cx = pageSize.width / 2;
+    const cy = pageSize.height / 2;
+    const rad = Math.PI / 4;
+    const x0 = cx - (textWidth / 2) * Math.cos(rad);
+    const y0 = cy + (textWidth / 2) * Math.sin(rad);
+
+    doc.text(text, x0, y0, { angle: 45 });
     doc.restoreGraphicsState();
 }

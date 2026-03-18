@@ -3,7 +3,8 @@
 import { useContext, useEffect, useState, useCallback, useRef } from "react";
 
 import styles from "./SuggestionMenu.module.css";
-import { pasteTextAt } from "@src/lib/screenplay/editor";
+import { pasteTextAt, insertElement } from "@src/lib/screenplay/editor";
+import { ScreenplayElement } from "@src/lib/utils/enums";
 import { ProjectContext } from "@src/context/ProjectContext";
 
 type Props = {
@@ -79,6 +80,14 @@ const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
                 pasteTextAt(editor, suggestion, data.cursor);
                 onSelect?.();
             }
+
+            if (data.nodeType === "character") {
+                const afterPos = editor.state.selection.$anchor.after();
+                const nextNode = editor.state.doc.nodeAt(afterPos);
+                if (!nextNode || nextNode.attrs.class !== ScreenplayElement.Dialogue) {
+                    insertElement(editor, ScreenplayElement.Dialogue, afterPos);
+                }
+            }
         },
         [editor, onSelect],
     );
@@ -97,10 +106,8 @@ const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
                 e.stopImmediatePropagation();
                 setSelectedIdx((prev) => (prev + 1) % len);
             } else if (e.key === "Enter") {
-                if (suggestionDataRef.current.nodeType !== "character") {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-                }
+                e.preventDefault();
+                e.stopImmediatePropagation();
                 selectSuggestion(selectedIdxRef.current);
             }
         };

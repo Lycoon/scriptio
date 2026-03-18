@@ -50,6 +50,9 @@ const ExportProject = () => {
 
     const [format, setFormat] = useState<ExportFormat>(ExportFormat.PDF);
     const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
+    const [watermarkText, setWatermarkText] = useState<string>(
+        membership?.project.author || localAuthor || ""
+    );
     const [includeNotes, setIncludeNotes] = useState<boolean>(false);
     const [enablePassword, setEnablePassword] = useState<boolean>(false);
     const [password, setPassword] = useState<string>("");
@@ -112,7 +115,7 @@ const ExportProject = () => {
             const pdfOptions: PDFExportOptions = {
                 ...baseOptions,
                 format: pageFormat === "A4" ? "A4" : "LETTER",
-                watermark: includeWatermark,
+                watermarkText: includeWatermark ? (watermarkText || undefined) : undefined,
                 password: enablePassword && password ? password : undefined,
                 displaySceneNumbers,
                                 sceneHeadingSpacing,
@@ -238,16 +241,29 @@ const ExportProject = () => {
                 {/* Watermark Toggle (PDF Only) */}
                 {format === ExportFormat.PDF && (
                     <div
-                        className={`${optionCard.optionCard} ${includeWatermark ? optionCard.active : ""}`}
+                        className={`${optionCard.optionCard} ${optionCard.optionCardExpandable} ${
+                            includeWatermark ? optionCard.active : ""
+                        }`}
                         onClick={() => setIncludeWatermark(!includeWatermark)}
                     >
-                        <div className={optionCard.checkbox}>
-                            {includeWatermark && <div className={optionCard.checkInner} />}
+                        <div className={optionCard.optionRow}>
+                            <div className={optionCard.checkbox}>
+                                {includeWatermark && <div className={optionCard.checkInner} />}
+                            </div>
+                            <div className={optionCard.optionInfo}>
+                                <span className={optionCard.optionTitle}>{t("watermark")}</span>
+                                <span className={optionCard.optionDesc}>{t("watermarkDesc")}</span>
+                            </div>
                         </div>
-                        <div className={optionCard.optionInfo}>
-                            <span className={optionCard.optionTitle}>{t("watermark")}</span>
-                            <span className={optionCard.optionDesc}>{t("watermarkDesc")}</span>
-                        </div>
+                        {includeWatermark && (
+                            <input
+                                value={watermarkText}
+                                onChange={(e) => setWatermarkText(e.target.value)}
+                                placeholder={t("watermarkPlaceholder")}
+                                className={`${sharedStyles.input} ${styles.passwordInput}`}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        )}
                     </div>
                 )}
 
