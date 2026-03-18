@@ -17,6 +17,7 @@ import { useUser } from "@src/lib/utils/hooks";
 import CommentCards from "@components/editor/CommentCards";
 import Loading from "@components/utils/Loading";
 
+import { TextSelection } from "@tiptap/pm/state";
 import { DocumentEditorConfig } from "@src/lib/editor/document-editor-config";
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
@@ -271,6 +272,43 @@ const DocumentEditorPanel = ({
                         // suggestions.length check: read from ref to avoid stale closure
                         if (suggestions.length > 0) {
                             event.preventDefault();
+                            return true;
+                        }
+
+                        if (currNode === ScreenplayElement.Dialogue && nodePos > 0 && nodePos < nodeSize) {
+                            const doc = view.state.doc;
+                            const $anchor = selection.$anchor;
+
+                            // Find the nearest preceding Character node
+                            let charName = "";
+                            for (let i = $anchor.index(0) - 1; i >= 0; i--) {
+                                const child = doc.child(i);
+                                if (child.attrs.class === ScreenplayElement.Character) {
+                                    charName = child.textContent;
+                                    break;
+                                }
+                                if (child.attrs.class !== ScreenplayElement.Parenthetical && child.attrs.class !== ScreenplayElement.Dialogue) break;
+                            }
+
+                            const schema = view.state.schema;
+                            const secondHalf = node.content.cut(nodePos);
+
+                            const charNode = schema.nodes[ScreenplayElement.Character].create(
+                                { class: ScreenplayElement.Character, height: null },
+                                charName ? schema.text(charName) : undefined,
+                            );
+                            const newDialogue = schema.nodes[ScreenplayElement.Dialogue].create(
+                                { class: ScreenplayElement.Dialogue, height: null },
+                                secondHalf.size > 0 ? secondHalf : undefined,
+                            );
+
+                            const tr = view.state.tr;
+                            tr.delete($anchor.pos, $anchor.end(1));
+                            const insertPos = tr.mapping.map($anchor.after(1));
+                            tr.insert(insertPos, [charNode, newDialogue]);
+                            tr.setSelection(TextSelection.create(tr.doc, insertPos + charNode.nodeSize + 1));
+                            tr.scrollIntoView();
+                            view.dispatch(tr);
                             return true;
                         }
 
