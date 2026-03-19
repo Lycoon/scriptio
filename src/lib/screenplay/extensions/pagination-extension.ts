@@ -794,6 +794,7 @@ const createPaginationPlugin = (extension: any) =>
                 // Check if breaks actually changed compared to mapped old breaks.
                 const breaksChanged =
                     fullRemeasure ||
+                    lastPageFreespace !== value.lastPageFreespace ||
                     breaks.length !== mappedOldBreaks.length ||
                     breaks.some(
                         (b, i) =>

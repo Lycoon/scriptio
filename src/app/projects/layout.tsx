@@ -44,8 +44,10 @@ const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
 
     return (
         <ViewProvider>
-            <ProjectNavbar />
-            {children}
+            <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+                <ProjectNavbar />
+                {children}
+            </div>
             <DashboardModal />
         </ViewProvider>
     );

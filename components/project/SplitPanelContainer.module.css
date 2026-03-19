@@ -1,9 +1,11 @@
 .split_panel_container {
     position: absolute;
-    inset: 0; /* Fill entire workspace */
+    inset: 0;
     display: grid;
+    grid-template-rows: minmax(0, 1fr);
     min-height: 0;
     min-width: 0;
+    overflow: hidden;
 }
 
 .panel {

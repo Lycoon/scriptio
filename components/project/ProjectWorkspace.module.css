@@ -1,26 +1,19 @@
 .workspace {
     position: relative;
-    display: block; /* Remove flex to prevent layout cascades from sidebars */
+    display: flex;
+    flex-direction: row;
     flex: 1;
     min-height: 0;
-    width: 100%;
-    height: 100%;
+    min-width: 0;
     background-color: var(--main-bg);
     overflow: hidden;
 }
 
-.sidebars_visible {
-    /* Intentionally empty - sidebars handle their own visibility via transforms */
-}
-
-.visible {
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-.hidden {
-    opacity: 0;
-    pointer-events: none;
+.panel_area {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+    min-height: 0;
 }
 
 .floating_actions {
@@ -31,13 +24,8 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    transition: transform 0.5s ease;
-    will-change: transform;
 }
 
 .floating_actions_shifted {
-    transform: translateX(calc(-1 * var(--format-sidebar-width) - 20px));
+    right: calc(var(--format-sidebar-width) + 80px);
 }
-
-
-

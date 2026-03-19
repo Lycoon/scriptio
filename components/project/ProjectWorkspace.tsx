@@ -1,7 +1,6 @@
 "use client";
 
-import { useContext, useState } from "react";
-import { UserContext } from "@src/context/UserContext";
+import { useState } from "react";
 import { useViewContext } from "@src/context/ViewContext";
 import EditorSidebarNavigation from "@components/editor/sidebar/EditorSidebarNavigation";
 import EditorSidebarFormat from "@components/editor/sidebar/EditorSidebarFormat";
@@ -11,13 +10,11 @@ import { Popup } from "@components/popup/Popup";
 import SplitPanelContainer from "./SplitPanelContainer";
 import styles from "./ProjectWorkspace.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
-
-import { Eye, EyeClosed, MessageSquare, MessageSquareOff, Scroll } from "lucide-react";
+import { MessageSquare, MessageSquareOff, Scroll } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 const ProjectWorkspace = () => {
-    const { isZenMode, updateIsZenMode } = useContext(UserContext);
-    const { visiblePanels, isEndlessScroll, setIsEndlessScroll, showComments, setShowComments } = useViewContext();
+    const { visiblePanels, rightSidebarOpen, isEndlessScroll, setIsEndlessScroll, showComments, setShowComments } = useViewContext();
     const t = useTranslations("navbar");
 
     const hasScreenplay = visiblePanels.includes("screenplay");
@@ -29,10 +26,8 @@ const ProjectWorkspace = () => {
         cursorInNode: 0,
     });
 
-    const toggleZenMode = () => updateIsZenMode((prev) => !prev);
-
     return (
-        <div className={`${styles.workspace} ${!isZenMode ? styles.sidebars_visible : ""}`}>
+        <div className={styles.workspace}>
             {/* Overlays */}
             <ContextMenu />
             {suggestions.length > 0 && <SuggestionMenu suggestions={suggestions} suggestionData={suggestionData} onSelect={() => updateSuggestions([])} />}
@@ -42,23 +37,18 @@ const ProjectWorkspace = () => {
             {hasScreenplay && <EditorSidebarNavigation />}
 
             {/* Panel container */}
-            <SplitPanelContainer
-                suggestions={suggestions}
-                updateSuggestions={updateSuggestions}
-                suggestionData={suggestionData}
-                updateSuggestionData={updateSuggestionData}
-            />
+            <div className={styles.panel_area}>
+                <SplitPanelContainer
+                    suggestions={suggestions}
+                    updateSuggestions={updateSuggestions}
+                    suggestionData={suggestionData}
+                    updateSuggestionData={updateSuggestionData}
+                />
+            </div>
 
-            {/* Floating actions - visible when screenplay is active, shifts with right sidebar */}
+            {/* Floating actions - visible when screenplay is active */}
             {hasScreenplay && (
-                <div className={`${styles.floating_actions} ${!isZenMode ? styles.floating_actions_shifted : ""}`}>
-                    <div
-                        className={navBtn.button}
-                        onClick={toggleZenMode}
-                        style={{ width: "40px", height: "40px" }}
-                    >
-                        {isZenMode ? <EyeClosed size={18} /> : <Eye size={18} />}
-                    </div>
+                <div className={`${styles.floating_actions} ${rightSidebarOpen ? styles.floating_actions_shifted : ""}`}>
                     <div
                         className={`${navBtn.button} ${isEndlessScroll ? navBtn.active : ""}`}
                         onClick={() => setIsEndlessScroll(!isEndlessScroll)}

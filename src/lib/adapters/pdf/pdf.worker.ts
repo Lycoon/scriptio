@@ -431,24 +431,30 @@ function drawWatermark(doc: jsPDF, pageSize: { width: number; height: number }, 
     doc.saveGraphicsState();
     doc.setGState(new GState({ opacity: 0.15 }));
     doc.setFont("CourierPrime", "bold");
-    doc.setFontSize(54);
     doc.setTextColor(128, 128, 128);
 
-    // jsPDF shifts x by -textWidth/2 for align:"center" *before* applying the rotation,
-    // so the rotation pivot ends up at the text's left edge rather than the page centre.
-    // Instead, compute the start position manually so the visual midpoint of the
-    // rotated text lands at (cx, cy).
-    // For angle:45 (CCW = upper-right in screen space), text advances in direction
-    // (cos 45°, −sin 45°) in Y-down page coordinates:
-    //   cx = x0 + (textWidth/2) × cos45   →   x0 = cx − (textWidth/2) × cos45
-    //   cy = y0 − (textWidth/2) × sin45   →   y0 = cy + (textWidth/2) × sin45
+    // Scale font size so the text spans the page diagonal (with margin).
+    const diagonal = Math.sqrt(pageSize.width ** 2 + pageSize.height ** 2);
+    const maxTextWidth = diagonal - 2 * PAGE_RIGHT;
+    // Measure at a reference size, then scale proportionally.
+    const refSize = 54;
+    doc.setFontSize(refSize);
+    const refWidth = doc.getTextWidth(text);
+    const fontSize = Math.min((maxTextWidth / refWidth) * refSize, 120);
+    doc.setFontSize(fontSize);
+
     const textWidth = doc.getTextWidth(text);
     const cx = pageSize.width / 2;
     const cy = pageSize.height / 2;
-    const rad = Math.PI / 4;
-    const x0 = cx - (textWidth / 2) * Math.cos(rad);
-    const y0 = cy + (textWidth / 2) * Math.sin(rad);
+    // Rotation angle matches the page diagonal so the text runs corner-to-corner.
+    const angle = Math.atan2(pageSize.height, pageSize.width) * (180 / Math.PI);
+    const rad = angle * (Math.PI / 180);
+    // Offset by half the text height along the perpendicular to compensate
+    // for the baseline sitting at the top of the glyphs.
+    const textHeight = fontSize * 0.75; // approximate ascent in points
+    const x0 = cx - (textWidth / 2) * Math.cos(rad) + (textHeight / 2) * Math.sin(rad);
+    const y0 = cy + (textWidth / 2) * Math.sin(rad) + (textHeight / 2) * Math.cos(rad);
 
-    doc.text(text, x0, y0, { angle: 45 });
+    doc.text(text, x0, y0, { angle });
     doc.restoreGraphicsState();
 }
