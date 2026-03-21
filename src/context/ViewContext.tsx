@@ -16,6 +16,8 @@ interface ViewContextType {
     focusedPanel: PanelType;
     isEndlessScroll: boolean;
     showComments: boolean;
+    leftSidebarOpen: boolean;
+    rightSidebarOpen: boolean;
     setPrimaryPanel: (panel: PanelType) => void;
     setSecondaryPanel: (panel: PanelType | null) => void;
     setSplitRatio: (ratio: number) => void;
@@ -23,6 +25,8 @@ interface ViewContextType {
     setFocusedPanel: (panel: PanelType) => void;
     setIsEndlessScroll: (value: boolean | ((prev: boolean) => boolean)) => void;
     setShowComments: (value: boolean | ((prev: boolean) => boolean)) => void;
+    setLeftSidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
+    setRightSidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 const ViewContext = createContext<ViewContextType>(null!);
@@ -37,6 +41,8 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [focusedSide, setFocusedSideState] = useState<SplitSide>("primary");
     const [isEndlessScroll, setIsEndlessScroll] = useState<boolean>(false);
     const [showComments, setShowComments] = useState<boolean>(true);
+    const [leftSidebarOpen, setLeftSidebarOpen] = useState<boolean>(true);
+    const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(true);
 
     const isSplit = secondaryPanel !== null;
 
@@ -138,6 +144,8 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             focusedPanel,
             isEndlessScroll,
             showComments,
+            leftSidebarOpen,
+            rightSidebarOpen,
             setPrimaryPanel,
             setSecondaryPanel,
             setSplitRatio,
@@ -145,8 +153,10 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setFocusedPanel,
             setIsEndlessScroll,
             setShowComments,
+            setLeftSidebarOpen,
+            setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setIsEndlessScroll, setShowComments],
+        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setIsEndlessScroll, setShowComments],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

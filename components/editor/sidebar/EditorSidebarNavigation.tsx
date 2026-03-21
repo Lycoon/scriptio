@@ -4,7 +4,7 @@ import { join } from "@src/lib/utils/misc";
 import { useContext, useState, useCallback, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { UserContext } from "@src/context/UserContext";
+import { useViewContext } from "@src/context/ViewContext";
 import { Scene } from "@src/lib/screenplay/scenes";
 import { Clapperboard } from "lucide-react";
 import SidebarSceneItem from "./SidebarSceneItem";
@@ -15,8 +15,7 @@ import sidebar_nav from "./EditorSidebarNavigation.module.css";
 const EditorSidebarNavigation = () => {
     const t = useTranslations("editorSidebar");
     const { scenes, updateScenes, editor } = useContext(ProjectContext);
-    const { isZenMode } = useContext(UserContext);
-    const isActive = isZenMode ? "" : sidebar_nav.active;
+    const { leftSidebarOpen } = useViewContext();
 
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     // indicatorIndex represents the gap where the item will be inserted.
@@ -170,36 +169,38 @@ const EditorSidebarNavigation = () => {
     }, [dragIndex, handleDrop]);
 
     return (
-        <div className={join(sidebar_nav.container, isActive)}>
-            <div className={sidebar_nav.element}>
-                <div className={sidebar_nav.list_header}>
-                    <Clapperboard size={18} />
-                    <p className={form.label}>{t("scenes")}</p>
-                </div>
-                <div
-                    ref={listRef}
-                    className={join(sidebar_nav.list, sidebar_nav.scene_list)}
-                    onPointerMove={handlePointerMove}
-                >
-                    {scenes.length != 0 &&
-                        scenes.map((scene: Scene, index: number) => {
-                            const isNoOp =
-                                dragIndex === null || indicatorIndex === dragIndex || indicatorIndex === dragIndex + 1;
-                            const showIndicator = !isNoOp && indicatorIndex === index;
-                            const isCurrent = index === currentSceneIndex;
-                            return (
-                                <SidebarSceneItem
-                                    key={scene.position}
-                                    scrollRef={isCurrent ? currentSceneRef : undefined}
-                                    scene={scene}
-                                    index={index}
-                                    showDropIndicator={showIndicator}
-                                    isDragging={dragIndex === index}
-                                    isCurrent={isCurrent}
-                                    onPointerDown={handlePointerDown}
-                                />
-                            );
-                        })}
+        <div className={sidebar_nav.container}>
+            <div className={join(sidebar_nav.sidebar_content, !leftSidebarOpen ? sidebar_nav.collapsed : "")}>
+                <div className={sidebar_nav.element}>
+                    <div className={sidebar_nav.list_header}>
+                        <Clapperboard size={18} />
+                        <p className={form.label}>{t("scenes")}</p>
+                    </div>
+                    <div
+                        ref={listRef}
+                        className={join(sidebar_nav.list, sidebar_nav.scene_list)}
+                        onPointerMove={handlePointerMove}
+                    >
+                        {scenes.length != 0 &&
+                            scenes.map((scene: Scene, index: number) => {
+                                const isNoOp =
+                                    dragIndex === null || indicatorIndex === dragIndex || indicatorIndex === dragIndex + 1;
+                                const showIndicator = !isNoOp && indicatorIndex === index;
+                                const isCurrent = index === currentSceneIndex;
+                                return (
+                                    <SidebarSceneItem
+                                        key={scene.position}
+                                        scrollRef={isCurrent ? currentSceneRef : undefined}
+                                        scene={scene}
+                                        index={index}
+                                        showDropIndicator={showIndicator}
+                                        isDragging={dragIndex === index}
+                                        isCurrent={isCurrent}
+                                        onPointerDown={handlePointerDown}
+                                    />
+                                );
+                            })}
+                    </div>
                 </div>
             </div>
         </div>

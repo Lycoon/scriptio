@@ -7,7 +7,8 @@
         "noConnection": "Keine Verbindung",
         "reconnecting": "Verbindung wird hergestellt...",
         "endlessScroll": "Endlos-Scroll",
-        "toggleComments": "Kommentare ein-/ausblenden"
+        "toggleComments": "Kommentare ein-/ausblenden",
+        "focusMode": "Fokusmodus"
     },
     "common": {
         "save": "Änderungen speichern",

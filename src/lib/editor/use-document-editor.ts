@@ -29,9 +29,7 @@ import {
 } from "@src/lib/screenplay/extensions/scene-bookmark-extension";
 import { createSceneIdDedupExtension } from "@src/lib/screenplay/extensions/scene-id-dedup-extension";
 import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
-import {
-    getActiveTitlePageElement,
-} from "@src/lib/titlepage/editor";
+import { getActiveTitlePageElement } from "@src/lib/titlepage/editor";
 import { DocumentEditorConfig } from "./document-editor-config";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
 
@@ -99,18 +97,42 @@ export const useDocumentEditor = (
     });
 
     // Keep all refs in sync
-    useEffect(() => { charactersRef.current = characters; }, [characters]);
-    useEffect(() => { locationsRef.current = locations; }, [locations]);
-    useEffect(() => { highlightedCharactersRef.current = highlightedCharacters; }, [highlightedCharacters]);
-    useEffect(() => { scenesRef.current = scenes; }, [scenes]);
-    useEffect(() => { repositoryRef.current = repository; }, [repository]);
-    useEffect(() => { searchTermRef.current = searchTerm; }, [searchTerm]);
-    useEffect(() => { searchFiltersRef.current = searchFilters; }, [searchFilters]);
-    useEffect(() => { currentSearchIndexRef.current = currentSearchIndex; }, [currentSearchIndex]);
-    useEffect(() => { setSearchMatchesRef.current = setSearchMatches; }, [setSearchMatches]);
-    useEffect(() => { contdLabelRef.current = contdLabel; }, [contdLabel]);
-    useEffect(() => { moreLabelRef.current = moreLabel; }, [moreLabel]);
-    useEffect(() => { callbacksRef.current = callbacks; }, [callbacks]);
+    useEffect(() => {
+        charactersRef.current = characters;
+    }, [characters]);
+    useEffect(() => {
+        locationsRef.current = locations;
+    }, [locations]);
+    useEffect(() => {
+        highlightedCharactersRef.current = highlightedCharacters;
+    }, [highlightedCharacters]);
+    useEffect(() => {
+        scenesRef.current = scenes;
+    }, [scenes]);
+    useEffect(() => {
+        repositoryRef.current = repository;
+    }, [repository]);
+    useEffect(() => {
+        searchTermRef.current = searchTerm;
+    }, [searchTerm]);
+    useEffect(() => {
+        searchFiltersRef.current = searchFilters;
+    }, [searchFilters]);
+    useEffect(() => {
+        currentSearchIndexRef.current = currentSearchIndex;
+    }, [currentSearchIndex]);
+    useEffect(() => {
+        setSearchMatchesRef.current = setSearchMatches;
+    }, [setSearchMatches]);
+    useEffect(() => {
+        contdLabelRef.current = contdLabel;
+    }, [contdLabel]);
+    useEffect(() => {
+        moreLabelRef.current = moreLabel;
+    }, [moreLabel]);
+    useEffect(() => {
+        callbacksRef.current = callbacks;
+    }, [callbacks]);
 
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
 
@@ -118,38 +140,31 @@ export const useDocumentEditor = (
     const currentSuggestionDataRef = useRef<SuggestionData | null>(null);
 
     // Debounced suggestion setters
-    const setSuggestions = useCallback(
-        (suggestions: string[]) => {
-            const cb = callbacksRef.current.updateSuggestions;
-            if (!cb) return;
-            const current = currentSuggestionsRef.current;
-            if (suggestions.length === 0 && current.length === 0) return;
-            if (
-                suggestions.length === current.length &&
-                suggestions.every((s, i) => s === current[i])
-            ) return;
-            currentSuggestionsRef.current = suggestions;
-            cb(suggestions);
-        },
-        [],
-    );
+    const setSuggestions = useCallback((suggestions: string[]) => {
+        const cb = callbacksRef.current.updateSuggestions;
+        if (!cb) return;
+        const current = currentSuggestionsRef.current;
+        if (suggestions.length === 0 && current.length === 0) return;
+        if (suggestions.length === current.length && suggestions.every((s, i) => s === current[i]))
+            return;
+        currentSuggestionsRef.current = suggestions;
+        cb(suggestions);
+    }, []);
 
-    const setSuggestionData = useCallback(
-        (data: SuggestionData) => {
-            const cb = callbacksRef.current.updateSuggestionsData;
-            if (!cb) return;
-            const current = currentSuggestionDataRef.current;
-            if (
-                current &&
-                current.cursor === data.cursor &&
-                current.cursorInNode === data.cursorInNode &&
-                current.textOffset === data.textOffset
-            ) return;
-            currentSuggestionDataRef.current = data;
-            cb(data);
-        },
-        [],
-    );
+    const setSuggestionData = useCallback((data: SuggestionData) => {
+        const cb = callbacksRef.current.updateSuggestionsData;
+        if (!cb) return;
+        const current = currentSuggestionDataRef.current;
+        if (
+            current &&
+            current.cursor === data.cursor &&
+            current.cursorInNode === data.cursorInNode &&
+            current.textOffset === data.textOffset
+        )
+            return;
+        currentSuggestionDataRef.current = data;
+        cb(data);
+    }, []);
 
     // ---- Dynamic extensions (created once, read from refs) ----
     const characterHighlightExtension = features.characterHighlights
@@ -344,8 +359,14 @@ export const useDocumentEditor = (
 
                 if (elementAnchor === ScreenplayElement.Character) {
                     const currentCharacters = charactersRef.current;
-                    if (!currentCharacters || nodeSize === 0) { setSuggestions([]); return; }
-                    if (cursorInNode !== nodeSize) { setSuggestions([]); return; }
+                    if (!currentCharacters || nodeSize === 0) {
+                        setSuggestions([]);
+                        return;
+                    }
+                    if (cursorInNode !== nodeSize) {
+                        setSuggestions([]);
+                        return;
+                    }
 
                     const text = node.textContent;
                     const trimmed = text.slice(0, cursorInNode).toUpperCase().trim();
@@ -373,12 +394,21 @@ export const useDocumentEditor = (
                     setSuggestions(suggestions);
                 } else if (elementAnchor === ScreenplayElement.Scene) {
                     const currentLocations = locationsRef.current;
-                    if (!currentLocations) { setSuggestions([]); return; }
-                    if (cursorInNode !== nodeSize) { setSuggestions([]); return; }
+                    if (!currentLocations) {
+                        setSuggestions([]);
+                        return;
+                    }
+                    if (cursorInNode !== nodeSize) {
+                        setSuggestions([]);
+                        return;
+                    }
 
                     const text = node.textContent.toUpperCase();
                     const prefixMatch = text.match(/^(INT\. |EXT\. |INT\/EXT\. |I\/E\. )\s*/i);
-                    if (!prefixMatch) { setSuggestions([]); return; }
+                    if (!prefixMatch) {
+                        setSuggestions([]);
+                        return;
+                    }
 
                     const prefixLength = prefixMatch[0].length;
                     const afterPrefix = text.slice(prefixLength);
@@ -388,7 +418,10 @@ export const useDocumentEditor = (
                         suggestions = suggestions
                             .filter((location) => {
                                 const upperLocation = location.toUpperCase();
-                                return upperLocation.startsWith(afterPrefix) && upperLocation !== cleanAfterPrefix;
+                                return (
+                                    upperLocation.startsWith(afterPrefix) &&
+                                    upperLocation !== cleanAfterPrefix
+                                );
                             })
                             .slice(0, 10);
                     } else {

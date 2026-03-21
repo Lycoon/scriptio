@@ -564,7 +564,11 @@ const createPaginationPlugin = (extension: any) =>
                 const formatUpdate = tr.getMeta("pageFormatUpdate");
                 const forceUpdate = tr.getMeta("forcePaginationUpdate");
 
-                if (forceUpdate || formatUpdate) {
+                // Only clear height cache on format changes (page size / margins) which
+                // affect text-wrapping widths and thus measured heights.
+                // forcePaginationUpdate (gaps, headers, startNewPage, refresh) changes
+                // layout but not node heights — the cached measurements stay valid.
+                if (formatUpdate) {
                     heightCache.clear();
                 }
 
@@ -742,11 +746,22 @@ const createPaginationPlugin = (extension: any) =>
                         // page height just before it was added — i.e. the used space above it.
                         const firstMovingNode = lastNodes.at(backCount);
                         const freespace = contentHeight - (firstMovingNode?.positionTop ?? pagePos - height);
+
+                        // If the first node moving to the next page is Dialogue or Parenthetical,
+                        // the Character cue remains on the previous page and we need (MORE)/(CONT'D).
+                        // If the Character itself is being carried (e.g. Character → Parenthetical
+                        // double-orphan), the whole block starts fresh — no labels needed.
+                        const firstMovingType = firstMovingNode?.type;
+                        const isDialogueSplit =
+                            lastCharName !== "" &&
+                            (firstMovingType === ScreenplayElement.Dialogue ||
+                                firstMovingType === ScreenplayElement.Parenthetical);
+
                         const breakInfo: PageBreakInfo = {
                             pos: breakPos,
                             pagenum: pagenum + 1,
                             freespace: Math.max(0, freespace),
-                            contdName: "", // orphan-resolution breaks are always whole-node
+                            contdName: isDialogueSplit ? lastCharName : "",
                             splitNodeType: null,
                         };
                         breaks.push(breakInfo);
@@ -794,6 +809,7 @@ const createPaginationPlugin = (extension: any) =>
                 // Check if breaks actually changed compared to mapped old breaks.
                 const breaksChanged =
                     fullRemeasure ||
+                    lastPageFreespace !== value.lastPageFreespace ||
                     breaks.length !== mappedOldBreaks.length ||
                     breaks.some(
                         (b, i) =>
@@ -828,6 +844,10 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
 
     addOptions() {
         return defaultOptions;
+    },
+
+    addStorage() {
+        return { initTimer: null as ReturnType<typeof setTimeout> | null };
     },
 
     onCreate() {
@@ -905,12 +925,20 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
         setupTestDiv(editorDOM, this.options);
 
         // Trigger initial pagination after editor is ready
-        setTimeout(() => {
+        this.storage.initTimer = setTimeout(() => {
+            this.storage.initTimer = null;
             const tr = this.editor.state.tr;
             tr.setMeta("forcePaginationUpdate", true);
             tr.setMeta("addToHistory", false);
             this.editor.view.dispatch(tr);
         }, 0);
+    },
+
+    onDestroy() {
+        if (this.storage.initTimer != null) {
+            clearTimeout(this.storage.initTimer);
+            this.storage.initTimer = null;
+        }
     },
 
     addProseMirrorPlugins() {

@@ -21,7 +21,7 @@ export type UserContextType = {
 const contextDefaults: UserContextType = {
     theme: "dark",
     updateTheme: () => {},
-    isZenMode: true,
+    isZenMode: false,
     updateIsZenMode: () => {},
     contextMenu: undefined,
     updateContextMenu: () => {},
@@ -39,7 +39,7 @@ export const UserContext = createContext<UserContextType>(contextDefaults);
 
 export function UserContextProvider({ children }: UserContextProps) {
     const [theme, updateTheme] = useState<UserTheme>("dark");
-    const [isZenMode, updateIsZenMode] = useState<boolean>(true);
+    const [isZenMode, updateIsZenMode] = useState<boolean>(false);
     const [contextMenu, updateContextMenu] = useState<ContextMenuProps | undefined>(undefined);
     const [popup, updatePopup] = useState<PopupData<PopupUnionData> | undefined>(undefined);
     const [isDesktop, updateIsDesktop] = useState<boolean>(false);

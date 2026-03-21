@@ -7,7 +7,8 @@
         "noConnection": "接続なし",
         "reconnecting": "再接続中...",
         "endlessScroll": "エンドレススクロール",
-        "toggleComments": "コメントの表示切替"
+        "toggleComments": "コメントの表示切替",
+        "focusMode": "集中モード"
     },
     "common": {
         "save": "変更を保存",

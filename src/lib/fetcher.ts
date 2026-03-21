@@ -14,7 +14,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
  * Note: Login/recovery requests don't use this fetcher - they make direct fetch calls.
  * This fetcher is used by SWR for authenticated data fetching.
  */
-async function fetchFromDesktop<JSON = unknown>(input: RequestInfo, init?: RequestInit): Promise<JSON> {
+async function fetchFromDesktop<JSON = unknown>(
+    input: RequestInfo,
+    init?: RequestInit,
+): Promise<JSON> {
     const token = await getDesktopToken();
 
     // No token = not logged in. Skip the remote request entirely.
@@ -60,7 +63,10 @@ async function fetchFromDesktop<JSON = unknown>(input: RequestInfo, init?: Reque
 /**
  * Fetcher for web environment - calls Next.js API routes with cookies
  */
-async function fetchFromBrowser<JSON = unknown>(input: RequestInfo, init?: RequestInit): Promise<JSON> {
+async function fetchFromBrowser<JSON = unknown>(
+    input: RequestInfo,
+    init?: RequestInit,
+): Promise<JSON> {
     const response = await fetch(input, init);
     const data: any = await response.json();
 
@@ -78,7 +84,10 @@ async function fetchFromBrowser<JSON = unknown>(input: RequestInfo, init?: Reque
  * - Desktop (Tauri): Calls remote API with JWT in Authorization header
  * - Web: Calls local Next.js API routes with cookies
  */
-export default async function fetcher<JSON = unknown>(input: RequestInfo, init?: RequestInit): Promise<JSON> {
+export default async function fetcher<JSON = unknown>(
+    input: RequestInfo,
+    init?: RequestInit,
+): Promise<JSON> {
     if (isTauri()) {
         return fetchFromDesktop<JSON>(input, init);
     }

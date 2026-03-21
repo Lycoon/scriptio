@@ -17,6 +17,7 @@ body {
 
 .app-layout > main {
     flex: 1;
+    min-height: 0;
     overflow: clip;
     display: flex;
     flex-direction: column;

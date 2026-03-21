@@ -7,7 +7,8 @@
         "noConnection": "Sin conexión",
         "reconnecting": "Reconectando...",
         "endlessScroll": "Desplazamiento infinito",
-        "toggleComments": "Mostrar/ocultar comentarios"
+        "toggleComments": "Mostrar/ocultar comentarios",
+        "focusMode": "Modo concentración"
     },
     "common": {
         "save": "Guardar cambios",

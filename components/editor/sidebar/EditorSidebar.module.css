@@ -1,21 +1,28 @@
 .container {
-    position: absolute; /* Remove from document flow */
-    right: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 2;
+    display: flex;
+    flex-direction: row;
+    flex-shrink: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.sidebar_content {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    height: 100%;
-    margin-inline: 30px;
-    padding-bottom: 30px;
+    padding: 0 30px 20px 15px;
     width: var(--format-sidebar-width);
+    min-height: 0;
+    overflow: hidden;
+}
 
-    /* Use transform instead of margin for hiding (GPU accelerated, no layout) */
-    transform: translateX(calc(var(--format-sidebar-width) + 60px));
-    transition: transform 0.5s ease;
-    will-change: transform;
+.collapsed .element {
+    visibility: hidden;
+}
+
+.collapsed {
+    width: 0;
+    padding: 0;
 }
 
 .element {
@@ -23,10 +30,6 @@
     padding-top: 10px;
     padding-bottom: 38px;
     border-radius: 35px;
-}
-
-.active {
-    transform: translateX(0);
 }
 
 .tabs {

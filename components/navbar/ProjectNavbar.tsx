@@ -12,15 +12,12 @@ import { PanelType, useViewContext } from "@src/context/ViewContext";
 import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
-import { UserContext } from "@src/context/UserContext";
 import { DashboardContext } from "@src/context/DashboardContext";
 import {
     BarChart2,
     CircleArrowLeft,
     CircleCheckBig,
     Clapperboard,
-    Eye,
-    EyeClosed,
     FileText,
     LayoutDashboard,
     PanelRight,
@@ -35,6 +32,7 @@ import navbar from "./ProjectNavbar.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
 import ScreenplayFormatDropdown from "./ScreenplayFormatDropdown";
 import ScreenplaySearch from "./ScreenplaySearch";
+import ViewOptionsDropdown from "./ViewOptionsDropdown";
 
 const StatusIndicator = () => {
     const { connectionStatus } = useContext(ProjectContext);
@@ -48,7 +46,10 @@ const StatusIndicator = () => {
         <>
             <div className={navbar.tooltip} data-hint={STATUS[connectionStatus]}>
                 {connectionStatus === "connected" && (
-                    <CircleCheckBig style={{ color: "var(--success)" }} className={navbar.status_icon} />
+                    <CircleCheckBig
+                        style={{ color: "var(--success)" }}
+                        className={navbar.status_icon}
+                    />
                 )}
                 {connectionStatus === "disconnected" && (
                     <WifiOff style={{ color: "var(--error)" }} className={navbar.status_icon} />
@@ -93,7 +94,6 @@ const CollaboratorsDisplay = () => {
 };
 
 const ProjectNavbar = () => {
-    const { isZenMode, updateIsZenMode } = useContext(UserContext);
     const { openDashboard } = useContext(DashboardContext);
     const { project: membership, setProjectTitle: setContextTitle } = useContext(ProjectContext);
 
@@ -114,7 +114,8 @@ const ProjectNavbar = () => {
     const deferredTitleUpdate = useMemo(
         () =>
             debounce(async (projectId: string, newTitle: string) => {
-                const { isLocalOnlyProject, updateLocalProject } = await import("@src/lib/persistence/local-projects");
+                const { isLocalOnlyProject, updateLocalProject } =
+                    await import("@src/lib/persistence/local-projects");
                 if (await isLocalOnlyProject(projectId)) {
                     await updateLocalProject(projectId, { title: newTitle });
                 } else {
@@ -123,8 +124,6 @@ const ProjectNavbar = () => {
             }, 1000),
         [],
     );
-
-    const toggleZenMode = () => updateIsZenMode((prev) => !prev);
 
     const handlePanelClick = (panel: PanelType) => {
         if (viewContext.isSplit) {
@@ -166,7 +165,8 @@ const ProjectNavbar = () => {
         // For local projects, load title from SQLite
         if (projectId && !membership && isTauri()) {
             const loadLocalTitle = async () => {
-                const { isLocalProject, getLocalProject } = await import("@src/lib/persistence/local-projects");
+                const { isLocalProject, getLocalProject } =
+                    await import("@src/lib/persistence/local-projects");
                 if (await isLocalProject(projectId)) {
                     const localProject = await getLocalProject(projectId);
                     if (localProject && !isLocalEdit.current) {
@@ -200,15 +200,24 @@ const ProjectNavbar = () => {
                 {isInProject && projectId && (
                     <div className={navbar.navBtns}>
                         <div className={navbar.panel_switcher}>
-                            <div className={getPanelBtnStyle("screenplay")} onClick={() => handlePanelClick("screenplay")}>
+                            <div
+                                className={getPanelBtnStyle("screenplay")}
+                                onClick={() => handlePanelClick("screenplay")}
+                            >
                                 <Clapperboard size={14} />
                                 {t("screenplay")}
                             </div>
-                            <div className={getPanelBtnStyle("board")} onClick={() => handlePanelClick("board")}>
+                            <div
+                                className={getPanelBtnStyle("board")}
+                                onClick={() => handlePanelClick("board")}
+                            >
                                 <LayoutDashboard size={14} />
                                 {t("board")}
                             </div>
-                            <div className={getPanelBtnStyle("title")} onClick={() => handlePanelClick("title")}>
+                            <div
+                                className={getPanelBtnStyle("title")}
+                                onClick={() => handlePanelClick("title")}
+                            >
                                 <FileText size={14} />
                                 {t("titlePage")}
                             </div>
@@ -218,15 +227,19 @@ const ProjectNavbar = () => {
                             onClick={handleSplitToggle}
                             style={{ height: "100%", paddingInline: "10px", gap: "12px" }}
                         >
-                            {viewContext.isSplit ? <PanelRightClose size={18} /> : <PanelRight size={18} />}
+                            {viewContext.isSplit ? (
+                                <PanelRightClose size={18} />
+                            ) : (
+                                <PanelRight size={18} />
+                            )}
                         </div>
                     </div>
                 )}
             </nav>
-            {/* Center - Project title, format dropdown, and connection status */}
+            {/* Center - Project title, format dropdown, view options, and connection status */}
             {isInProject && projectId && (
                 <div className={navbar.center}>
-                    <div className={navbar.projectTitle}>
+                    <div className={navbar.navbar_island}>
                         <StatusIndicator />
                         <div className={navbar.title_wrapper} data-value={projectTitle}>
                             <input
@@ -247,10 +260,13 @@ const ProjectNavbar = () => {
                         </div>
                     </div>
                     {(hasScreenplay || hasTitlePage) && (
-                        <div className={navbar.projectTitle}>
+                        <div className={navbar.navbar_island}>
                             <ScreenplayFormatDropdown />
                         </div>
                     )}
+                    <div className={navbar.navbar_island}>
+                        <ViewOptionsDropdown />
+                    </div>
                 </div>
             )}
             <AnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setIsAnalyticsOpen(false)} />
@@ -266,7 +282,11 @@ const ProjectNavbar = () => {
                 >
                     <BarChart2 size={18} />
                 </div>
-                <div className={navBtn.button} onClick={() => openDashboard("General")} style={{ height: "100%", paddingInline: "10px", gap: "12px" }}>
+                <div
+                    className={navBtn.button}
+                    onClick={() => openDashboard("General")}
+                    style={{ height: "100%", paddingInline: "10px", gap: "12px" }}
+                >
                     <Settings size={18} />
                 </div>
             </div>

@@ -7,7 +7,8 @@
         "noConnection": "Pas de connexion",
         "reconnecting": "Reconnexion...",
         "endlessScroll": "Défilement infini",
-        "toggleComments": "Afficher/masquer les commentaires"
+        "toggleComments": "Afficher/masquer les commentaires",
+        "focusMode": "Mode concentration"
     },
     "common": {
         "save": "Enregistrer",
