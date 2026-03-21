@@ -5,7 +5,7 @@
     border-radius: 64px;
     border: 2px solid var(--tertiary);
     color: var(--secondary-text);
-    background-color: transparent;
+    background-color: var(--main-bg);
     user-select: none;
     cursor: pointer;
     transition: all 0.2s ease;

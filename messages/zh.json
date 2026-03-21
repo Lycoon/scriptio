@@ -7,7 +7,8 @@
         "noConnection": "无连接",
         "reconnecting": "正在重新连接...",
         "endlessScroll": "无限滚动",
-        "toggleComments": "切换评论显示"
+        "toggleComments": "切换评论显示",
+        "focusMode": "专注模式"
     },
     "common": {
         "save": "保存更改",

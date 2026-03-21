@@ -7,7 +7,8 @@
         "noConnection": "연결 없음",
         "reconnecting": "재연결 중...",
         "endlessScroll": "무한 스크롤",
-        "toggleComments": "댓글 표시/숨기기"
+        "toggleComments": "댓글 표시/숨기기",
+        "focusMode": "집중 모드"
     },
     "common": {
         "save": "변경사항 저장",

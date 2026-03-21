@@ -8,7 +8,7 @@ import { useViewContext } from "@src/context/ViewContext";
 import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
 import sidebar from "./EditorSidebar.module.css";
-import { MapPinned, UserRound, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPinned, UserRound } from "lucide-react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import SidebarCharacterItem from "./SidebarCharacterItem";
 import SidebarLocationItem from "./SidebarLocationItem";
@@ -18,15 +18,12 @@ import { LocationItem } from "@src/lib/screenplay/locations";
 const EditorSidebarFormat = () => {
     const t = useTranslations("editorSidebar");
     const { characters: charactersData, locations: locationsData, highlightedCharacters } = useContext(ProjectContext);
-    const { rightSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const { rightSidebarOpen } = useViewContext();
     const characters = Object.keys(charactersData || {}).length;
     const locations = Object.keys(locationsData || {}).length;
 
     return (
         <div className={sidebar.container}>
-            <div className={sidebar.toggle_btn} onClick={() => setRightSidebarOpen((prev) => !prev)}>
-                {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-            </div>
             <div className={join(sidebar.sidebar_content, !rightSidebarOpen ? sidebar.collapsed : "")}>
                 <div className={sidebar_nav.element}>
                     <div className={sidebar_nav.list_header}>

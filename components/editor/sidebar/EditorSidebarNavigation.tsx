@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { Scene } from "@src/lib/screenplay/scenes";
-import { Clapperboard, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clapperboard } from "lucide-react";
 import SidebarSceneItem from "./SidebarSceneItem";
 
 import form from "./../../utils/Form.module.css";
@@ -15,7 +15,7 @@ import sidebar_nav from "./EditorSidebarNavigation.module.css";
 const EditorSidebarNavigation = () => {
     const t = useTranslations("editorSidebar");
     const { scenes, updateScenes, editor } = useContext(ProjectContext);
-    const { leftSidebarOpen, setLeftSidebarOpen } = useViewContext();
+    const { leftSidebarOpen } = useViewContext();
 
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     // indicatorIndex represents the gap where the item will be inserted.
@@ -202,9 +202,6 @@ const EditorSidebarNavigation = () => {
                             })}
                     </div>
                 </div>
-            </div>
-            <div className={sidebar_nav.toggle_btn} onClick={() => setLeftSidebarOpen((prev) => !prev)}>
-                {leftSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
             </div>
         </div>
     );
