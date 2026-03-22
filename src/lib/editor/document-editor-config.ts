@@ -29,6 +29,8 @@ export interface DocumentEditorFeatures {
     fountain: boolean;
     /** CONT'D extension. */
     contd: boolean;
+    /** Inline spellcheck decorations. */
+    spellcheck: boolean;
     /** Which pagination header/footer style to apply. */
     paginationMode: PaginationMode;
 }
@@ -70,6 +72,7 @@ export const SCREENPLAY_EDITOR_CONFIG: DocumentEditorConfig = {
         keybinds: true,
         fountain: true,
         contd: true,
+        spellcheck: true,
         paginationMode: "screenplay",
     },
 };
@@ -91,6 +94,7 @@ export const TITLEPAGE_EDITOR_CONFIG: DocumentEditorConfig = {
         keybinds: false,
         fountain: false,
         contd: false,
+        spellcheck: false,
         paginationMode: "titlepage",
     },
 };

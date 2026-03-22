@@ -1,0 +1,33 @@
+.dictOption {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+.dictMeta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.checkmark {
+    color: var(--success);
+}
+
+.size {
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

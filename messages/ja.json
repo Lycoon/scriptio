@@ -47,7 +47,10 @@
     },
     "language": {
         "label": "表示言語",
-        "helpText": "アプリ全体で使用する言語を選択してください。"
+        "helpText": "アプリ全体で使用する言語を選択してください。",
+        "spellcheckLabel": "スペルチェック",
+        "spellcheckHelpText": "エディターでのスペルチェック用の辞書をダウンロードしてください。",
+        "spellcheckNone": "無効"
     },
     "modal": {
         "groups": {

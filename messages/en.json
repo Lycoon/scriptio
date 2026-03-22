@@ -47,7 +47,10 @@
     },
     "language": {
         "label": "Display Language",
-        "helpText": "Choose the language used throughout the app."
+        "helpText": "Choose the language used throughout the app.",
+        "spellcheckLabel": "Spell Check",
+        "spellcheckHelpText": "Download a dictionary for in-editor spell checking.",
+        "spellcheckNone": "Disabled"
     },
     "modal": {
         "groups": {

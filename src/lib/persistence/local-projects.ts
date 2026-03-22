@@ -27,11 +27,11 @@ let dbInstance: Database | null = null;
 let initPromise: Promise<Database> | null = null;
 
 /**
- * Initialize the database connection and create table if needed.
+ * Initialize the database connection and create tables if needed.
  * Uses singleton pattern to avoid multiple connections.
- * Only call this from within guarded functions.
+ * Exported so other modules (e.g. dictionary store) can reuse the same connection.
  */
-async function getDb(): Promise<Database> {
+export async function getDb(): Promise<Database> {
     if (!isTauri()) {
         throw new Error("SQLite is only available in Tauri environment");
     }
@@ -60,6 +60,17 @@ async function getDb(): Promise<Database> {
 
         // Add author column to existing tables (no-op if already exists)
         await db.execute(`ALTER TABLE local_projects ADD COLUMN author TEXT`).catch(() => {});
+
+        // Create dictionaries table for spellcheck dictionary storage
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS dictionaries (
+                code TEXT PRIMARY KEY,
+                aff_data TEXT NOT NULL,
+                dic_data TEXT NOT NULL,
+                size INTEGER NOT NULL,
+                installed_at INTEGER NOT NULL
+            )
+        `);
 
         dbInstance = db;
         return db;

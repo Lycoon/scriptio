@@ -47,7 +47,10 @@
     },
     "language": {
         "label": "Anzeigesprache",
-        "helpText": "Wähle die Sprache, die in der gesamten App verwendet wird."
+        "helpText": "Wähle die Sprache, die in der gesamten App verwendet wird.",
+        "spellcheckLabel": "Rechtschreibprüfung",
+        "spellcheckHelpText": "Laden Sie ein Wörterbuch für die Rechtschreibprüfung im Editor herunter.",
+        "spellcheckNone": "Deaktiviert"
     },
     "modal": {
         "groups": {

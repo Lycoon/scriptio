@@ -47,7 +47,10 @@
     },
     "language": {
         "label": "표시 언어",
-        "helpText": "앱 전체에서 사용할 언어를 선택하세요."
+        "helpText": "앱 전체에서 사용할 언어를 선택하세요.",
+        "spellcheckLabel": "맞춤법 검사",
+        "spellcheckHelpText": "편집기에서 맞춤법 검사를 위한 사전을 다운로드하세요.",
+        "spellcheckNone": "비활성화"
     },
     "modal": {
         "groups": {

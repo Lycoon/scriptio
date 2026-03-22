@@ -29,6 +29,8 @@ import {
 } from "@src/lib/screenplay/extensions/scene-bookmark-extension";
 import { createSceneIdDedupExtension } from "@src/lib/screenplay/extensions/scene-id-dedup-extension";
 import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
+import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
+import { useSpellcheck } from "@src/context/SpellcheckContext";
 import { getActiveTitlePageElement } from "@src/lib/titlepage/editor";
 import { DocumentEditorConfig } from "./document-editor-config";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
@@ -134,6 +136,17 @@ export const useDocumentEditor = (
         callbacksRef.current = callbacks;
     }, [callbacks]);
 
+    // Spellcheck
+    const { worker: spellWorker, isWorkerReady: isSpellWorkerReady, spellcheckLang } = useSpellcheck();
+    const spellWorkerRef = useRef(spellWorker);
+    const isSpellWorkerReadyRef = useRef(isSpellWorkerReady);
+    useEffect(() => {
+        spellWorkerRef.current = spellWorker;
+    }, [spellWorker]);
+    useEffect(() => {
+        isSpellWorkerReadyRef.current = isSpellWorkerReady;
+    }, [isSpellWorkerReady]);
+
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
 
     const currentSuggestionsRef = useRef<string[]>([]);
@@ -204,6 +217,13 @@ export const useDocumentEditor = (
               onCommentActivated: (commentId: string | null) => {
                   callbacksRef.current.setActiveCommentId?.(commentId);
               },
+          })
+        : null;
+
+    const spellcheckExtension = features.spellcheck
+        ? createSpellcheckExtension({
+              getWorker: () => spellWorkerRef.current,
+              getEnabled: () => isSpellWorkerReadyRef.current,
           })
         : null;
 
@@ -309,6 +329,7 @@ export const useDocumentEditor = (
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
                 ...(sceneIdDedupExtension ? [sceneIdDedupExtension] : []),
+                ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
 
             editorProps: {},
@@ -530,6 +551,13 @@ export const useDocumentEditor = (
             refreshSearchHighlights(editor);
         }
     }, [editor, searchTerm, searchFilters, currentSearchIndex, features.searchHighlights]);
+
+    // Refresh spellcheck when worker becomes ready or language changes
+    useEffect(() => {
+        if (editor && features.spellcheck && isSpellWorkerReady) {
+            refreshSpellcheck(editor);
+        }
+    }, [editor, isSpellWorkerReady, spellcheckLang, features.spellcheck]);
 
     return editor;
 };
