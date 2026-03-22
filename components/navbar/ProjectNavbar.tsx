@@ -17,9 +17,6 @@ import {
     BarChart2,
     CircleArrowLeft,
     CircleCheckBig,
-    Clapperboard,
-    FileText,
-    LayoutDashboard,
     PanelRight,
     PanelRightClose,
     Settings,
@@ -32,7 +29,6 @@ import navbar from "./ProjectNavbar.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
 import ScreenplayFormatDropdown from "./ScreenplayFormatDropdown";
 import ScreenplaySearch from "./ScreenplaySearch";
-import ViewOptionsDropdown from "./ViewOptionsDropdown";
 
 const StatusIndicator = () => {
     const { connectionStatus } = useContext(ProjectContext);
@@ -125,15 +121,6 @@ const ProjectNavbar = () => {
         [],
     );
 
-    const handlePanelClick = (panel: PanelType) => {
-        if (viewContext.isSplit) {
-            viewContext.setFocusedPanel(panel);
-        } else {
-            if (viewContext.primaryPanel === panel) return;
-            viewContext.setPrimaryPanel(panel);
-        }
-    };
-
     const handleSplitToggle = () => {
         if (viewContext.isSplit) {
             viewContext.setSecondaryPanel(null);
@@ -146,13 +133,6 @@ const ProjectNavbar = () => {
                       : "screenplay";
             viewContext.setSecondaryPanel(other);
         }
-    };
-
-    const getPanelBtnStyle = (panel: PanelType) => {
-        const isActive = viewContext.isSplit
-            ? viewContext.focusedPanel === panel
-            : viewContext.primaryPanel === panel;
-        return `${navbar.panel_btn} ${isActive ? navbar.panel_btn_active : ""}`;
     };
 
     // Load project title - from membership or local storage
@@ -190,7 +170,7 @@ const ProjectNavbar = () => {
 
     return (
         <nav className={join(navbar.container)}>
-            {/* Left side - Back button + Panel switcher */}
+            {/* Left side - Back button, title, split toggle */}
             <nav className={navbar.left_btns}>
                 {isInProject && (
                     <div className={navbar.back_btn} onClick={() => redirectHome()}>
@@ -199,27 +179,24 @@ const ProjectNavbar = () => {
                 )}
                 {isInProject && projectId && (
                     <div className={navbar.navBtns}>
-                        <div className={navbar.panel_switcher}>
-                            <div
-                                className={getPanelBtnStyle("screenplay")}
-                                onClick={() => handlePanelClick("screenplay")}
-                            >
-                                <Clapperboard size={14} />
-                                {t("screenplay")}
-                            </div>
-                            <div
-                                className={getPanelBtnStyle("board")}
-                                onClick={() => handlePanelClick("board")}
-                            >
-                                <LayoutDashboard size={14} />
-                                {t("board")}
-                            </div>
-                            <div
-                                className={getPanelBtnStyle("title")}
-                                onClick={() => handlePanelClick("title")}
-                            >
-                                <FileText size={14} />
-                                {t("titlePage")}
+                        <div className={navbar.navbar_island}>
+                            <StatusIndicator />
+                            <div className={navbar.title_wrapper} data-value={projectTitle}>
+                                <input
+                                    type="text"
+                                    className={navbar.title_box}
+                                    size={1}
+                                    onChange={(e) => {
+                                        isLocalEdit.current = true;
+                                        setProjectTitle(e.target.value);
+                                        setContextTitle(e.target.value);
+                                        deferredTitleUpdate(projectId, e.target.value);
+                                    }}
+                                    onBlur={() => {
+                                        isLocalEdit.current = false;
+                                    }}
+                                    value={projectTitle}
+                                />
                             </div>
                         </div>
                         <div
@@ -236,36 +213,11 @@ const ProjectNavbar = () => {
                     </div>
                 )}
             </nav>
-            {/* Center - Project title, format dropdown, view options, and connection status */}
-            {isInProject && projectId && (
+            {/* Center - Format dropdown */}
+            {isInProject && projectId && (hasScreenplay || hasTitlePage) && (
                 <div className={navbar.center}>
                     <div className={navbar.navbar_island}>
-                        <StatusIndicator />
-                        <div className={navbar.title_wrapper} data-value={projectTitle}>
-                            <input
-                                type="text"
-                                className={navbar.title_box}
-                                size={1}
-                                onChange={(e) => {
-                                    isLocalEdit.current = true;
-                                    setProjectTitle(e.target.value);
-                                    setContextTitle(e.target.value);
-                                    deferredTitleUpdate(projectId, e.target.value);
-                                }}
-                                onBlur={() => {
-                                    isLocalEdit.current = false;
-                                }}
-                                value={projectTitle}
-                            />
-                        </div>
-                    </div>
-                    {(hasScreenplay || hasTitlePage) && (
-                        <div className={navbar.navbar_island}>
-                            <ScreenplayFormatDropdown />
-                        </div>
-                    )}
-                    <div className={navbar.navbar_island}>
-                        <ViewOptionsDropdown />
+                        <ScreenplayFormatDropdown />
                     </div>
                 </div>
             )}

@@ -14,11 +14,16 @@
 }
 
 .center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 8px;
-    height: 100%;
+    height: calc(100% - 50px);
+    pointer-events: auto;
 }
 
 .navbar_island {
@@ -50,7 +55,6 @@
     gap: 24px;
 
     height: 100%;
-    width: var(--navbar-sidebar-width);
 }
 
 .navBtns {
@@ -59,52 +63,6 @@
     align-items: center;
     gap: 6px;
     height: 100%;
-}
-
-/* Segmented panel switcher */
-.panel_switcher {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 2px;
-    padding: 3px;
-    border-radius: 64px;
-    background-color: var(--secondary);
-    height: 100%;
-}
-
-.panel_btn {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 0 14px;
-    height: 100%;
-    border-radius: 64px;
-    white-space: nowrap;
-
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-
-    color: var(--secondary-text);
-    cursor: pointer;
-    user-select: none;
-    transition:
-        color 0.2s ease,
-        background-color 0.2s ease;
-}
-
-.panel_btn:hover {
-    color: var(--primary-text);
-    background-color: var(--primary);
-}
-
-.panel_btn_active {
-    color: var(--primary-text);
-    background-color: var(--primary);
 }
 
 .back_btn {

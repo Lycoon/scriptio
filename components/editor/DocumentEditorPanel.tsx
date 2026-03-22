@@ -431,7 +431,7 @@ const DocumentEditorPanel = ({
                 onMouseDown={handleContainerMouseDown}
                 onFocus={() => setFocusedEditorType(focusType)}
             >
-                <div className={`${styles.editor_wrapper} ${isEndlessScroll && config.type === "screenplay" ? styles.endless_scroll : ""}`}>
+                <div className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}>
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
                     <div onContextMenu={config.features.comments ? onEditorContextMenu : undefined}>
                         <EditorContent editor={editor} spellCheck={false} />

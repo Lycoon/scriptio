@@ -23,6 +23,7 @@ interface ViewContextType {
     setSplitRatio: (ratio: number) => void;
     setFocusedSide: (side: SplitSide) => void;
     setFocusedPanel: (panel: PanelType) => void;
+    setSidePanel: (side: SplitSide, panel: PanelType) => void;
     setIsEndlessScroll: (value: boolean | ((prev: boolean) => boolean)) => void;
     setShowComments: (value: boolean | ((prev: boolean) => boolean)) => void;
     setLeftSidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
@@ -132,6 +133,36 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
         [focusedSide, primaryPanel, secondaryPanel],
     );
 
+    const setSidePanel = useCallback(
+        (side: SplitSide, panel: PanelType) => {
+            setMountedPanels((prev) => {
+                if (prev.has(panel)) return prev;
+                const next = new Set(prev);
+                next.add(panel);
+                return next;
+            });
+
+            if (!secondaryPanel) {
+                setPrimaryPanelState(panel);
+                return;
+            }
+
+            const currentOnSide = side === "primary" ? primaryPanel : secondaryPanel;
+            if (panel === currentOnSide) return;
+
+            const currentOnOther = side === "primary" ? secondaryPanel : primaryPanel;
+            if (panel === currentOnOther) {
+                setPrimaryPanelState(secondaryPanel);
+                setSecondaryPanelState(primaryPanel);
+            } else if (side === "primary") {
+                setPrimaryPanelState(panel);
+            } else {
+                setSecondaryPanelState(panel);
+            }
+        },
+        [primaryPanel, secondaryPanel],
+    );
+
     const value = useMemo(
         () => ({
             primaryPanel,
@@ -151,12 +182,13 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setSplitRatio,
             setFocusedSide,
             setFocusedPanel,
+            setSidePanel,
             setIsEndlessScroll,
             setShowComments,
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setIsEndlessScroll, setShowComments],
+        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setIsEndlessScroll, setShowComments],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;
