@@ -2,7 +2,6 @@ import { Editor, Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ScreenplayElement } from "../../utils/enums";
-import { getNodeFlattenContent } from "../screenplay";
 
 const characterHighlightPluginKey = new PluginKey("characterHighlight");
 
@@ -11,24 +10,16 @@ type CharacterHighlightConfig = {
     getCharacterColor: (name: string) => string | undefined;
 };
 
-/**
- * Extracts the clean character name from a node (removes extensions like V.O., O.S., etc.)
- */
 function extractCharacterName(node: any): string {
-    if (!node.content) return "";
-    const text = getNodeFlattenContent(node.content);
+    const text: string = node.textContent || "";
     return text
         .toUpperCase()
         .replace(/\s*\(.*?\)\s*$/g, "")
         .trim();
 }
 
-// Default highlight color when character has no assigned color
-const DEFAULT_HIGHLIGHT_COLOR = "#6366f1"; // Indigo
+const DEFAULT_HIGHLIGHT_COLOR = "#6366f1";
 
-/**
- * Converts a hex color to rgba with alpha for background highlighting
- */
 function hexToRgba(hex: string, alpha: number): string {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (!result) return hex;
@@ -38,52 +29,43 @@ function hexToRgba(hex: string, alpha: number): string {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+function makeDecoration(pos: number, nodeSize: number, color: string): Decoration {
+    return Decoration.node(pos, pos + nodeSize, {
+        class: "character-highlight",
+        style: `--highlight-color: ${color}; --highlight-bg: ${hexToRgba(color, 0.15)};`,
+    });
+}
+
 /**
- * Computes decorations for character dialogues and parentheticals.
- * Highlights dialogue/parenthetical nodes that follow a highlighted character.
+ * Walk the full document and build highlight decorations.
+ * Used on init and explicit refresh (toggle / color change).
  */
 function computeHighlightDecorations(
     doc: any,
-    highlightedCharacters: Set<string>,
-    getCharacterColor: (name: string) => string | undefined,
+    highlighted: Set<string>,
+    getColor: (name: string) => string | undefined,
 ): DecorationSet {
-    if (highlightedCharacters.size === 0) {
-        return DecorationSet.empty;
-    }
+    if (highlighted.size === 0) return DecorationSet.empty;
 
     const decorations: Decoration[] = [];
     let currentColor: string | null = null;
 
     doc.forEach((node: any, pos: number) => {
-        const nodeClass: string = node.attrs?.class;
-
-        if (nodeClass === ScreenplayElement.Character) {
-            const name = extractCharacterName(node.content);
-            if (highlightedCharacters.has(name)) {
-                currentColor = getCharacterColor(name) || DEFAULT_HIGHLIGHT_COLOR;
-                // Also highlight the character name node
-                decorations.push(
-                    Decoration.node(pos, pos + node.nodeSize, {
-                        class: "character-highlight",
-                        style: `--highlight-color: ${currentColor}; --highlight-bg: ${hexToRgba(currentColor, 0.15)};`,
-                    }),
-                );
+        const cls: string = node.attrs?.class;
+        if (cls === ScreenplayElement.Character) {
+            const name = extractCharacterName(node);
+            if (highlighted.has(name)) {
+                currentColor = getColor(name) || DEFAULT_HIGHLIGHT_COLOR;
+                decorations.push(makeDecoration(pos, node.nodeSize, currentColor));
             } else {
                 currentColor = null;
             }
         } else if (
-            (nodeClass === ScreenplayElement.Dialogue || nodeClass === ScreenplayElement.Parenthetical) &&
+            (cls === ScreenplayElement.Dialogue || cls === ScreenplayElement.Parenthetical) &&
             currentColor
         ) {
-            // Apply decoration to dialogue/parenthetical following a highlighted character
-            decorations.push(
-                Decoration.node(pos, pos + node.nodeSize, {
-                    class: "character-highlight",
-                    style: `--highlight-color: ${currentColor}; --highlight-bg: ${hexToRgba(currentColor, 0.15)};`,
-                }),
-            );
+            decorations.push(makeDecoration(pos, node.nodeSize, currentColor));
         } else {
-            // Reset when hitting non-dialogue elements (action, scene heading, transition, etc.)
             currentColor = null;
         }
     });
@@ -92,41 +74,120 @@ function computeHighlightDecorations(
 }
 
 /**
- * Check if the transaction affects any Character nodes (which would require recomputation)
+ * Walk a position range and build highlight decorations for it.
+ * `from` must be the start position of a Character node (so context is unambiguous).
  */
-function didCharacterNodesChange(tr: any): boolean {
-    if (!tr.docChanged) return false;
+function computeDecorationsInRange(
+    doc: any,
+    from: number,
+    to: number,
+    highlighted: Set<string>,
+    getColor: (name: string) => string | undefined,
+): Decoration[] {
+    const decorations: Decoration[] = [];
+    let currentColor: string | null = null;
+    let pos = from;
 
-    // Check if any step affects a Character node
-    for (const step of tr.steps) {
-        const stepMap = step.getMap();
-        let affectsCharacter = false;
-        stepMap.forEach((oldStart: number, oldEnd: number) => {
-            try {
-                const $pos = tr.docs[0]?.resolve(oldStart);
-                if ($pos) {
-                    const node = $pos.nodeAfter || $pos.parent;
-                    if (node?.attrs?.class === ScreenplayElement.Character) {
-                        affectsCharacter = true;
-                    }
-                }
-            } catch {
-                // Position out of bounds, skip
+    while (pos < to) {
+        const node = doc.nodeAt(pos);
+        if (!node) break;
+
+        const cls: string = node.attrs?.class;
+        if (cls === ScreenplayElement.Character) {
+            const name = extractCharacterName(node);
+            if (highlighted.has(name)) {
+                currentColor = getColor(name) || DEFAULT_HIGHLIGHT_COLOR;
+                decorations.push(makeDecoration(pos, node.nodeSize, currentColor));
+            } else {
+                currentColor = null;
             }
-        });
-        if (affectsCharacter) return true;
+        } else if (
+            (cls === ScreenplayElement.Dialogue || cls === ScreenplayElement.Parenthetical) &&
+            currentColor
+        ) {
+            decorations.push(makeDecoration(pos, node.nodeSize, currentColor));
+        } else {
+            currentColor = null;
+        }
+
+        pos += node.nodeSize;
     }
 
-    return false;
+    return decorations;
+}
+
+/**
+ * If the transaction affected a Character node, return the range [from, to] in the
+ * new document that needs its decorations recomputed. `from` is the position of the
+ * first affected Character; `to` extends to the end of its following dialogue block.
+ * Returns null if no Character nodes were involved.
+ */
+function computeChangedRange(tr: any): [number, number] | null {
+    if (!tr.docChanged) return null;
+
+    // Collect the overall changed range in the new document
+    let changedFrom = Infinity;
+    let changedTo = -1;
+
+    for (let i = 0; i < tr.steps.length; i++) {
+        tr.steps[i].getMap().forEach(
+            (_os: number, _oe: number, newStart: number, newEnd: number) => {
+                const m = tr.mapping.slice(i + 1);
+                changedFrom = Math.min(changedFrom, m.map(newStart, -1));
+                changedTo = Math.max(changedTo, m.map(newEnd, 1));
+            },
+        );
+    }
+
+    if (changedTo === -1) return null;
+
+    const doc = tr.doc;
+    const safeFrom = Math.max(0, changedFrom);
+    const safeTo = Math.min(changedTo, doc.content.size);
+
+    // Look for a Character node in the changed range
+    let characterFound = false;
+    let rangeStart = Infinity;
+
+    doc.nodesBetween(safeFrom, safeTo, (node: any, pos: number) => {
+        if (node.attrs?.class === ScreenplayElement.Character) {
+            characterFound = true;
+            rangeStart = Math.min(rangeStart, pos);
+        }
+    });
+
+    if (!characterFound) return null;
+
+    // Extend `to` forward past the dialogue/parenthetical block following the change
+    let walkPos: number;
+    try {
+        const $to = doc.resolve(safeTo);
+        walkPos = $to.depth > 0 ? $to.after(1) : safeTo;
+    } catch {
+        walkPos = safeTo;
+    }
+
+    while (walkPos < doc.content.size) {
+        const node = doc.nodeAt(walkPos);
+        if (!node) break;
+        const cls: string = node.attrs?.class;
+        if (cls === ScreenplayElement.Dialogue || cls === ScreenplayElement.Parenthetical) {
+            walkPos += node.nodeSize;
+        } else {
+            break;
+        }
+    }
+
+    return [rangeStart, walkPos];
 }
 
 export const createCharacterHighlightExtension = (config: CharacterHighlightConfig) => {
+    const { getHighlightedCharacters, getCharacterColor } = config;
+
     return Extension.create({
         name: "characterHighlight",
 
         addProseMirrorPlugins() {
-            const { getHighlightedCharacters, getCharacterColor } = config;
-
             return [
                 new Plugin({
                     key: characterHighlightPluginKey,
@@ -135,27 +196,49 @@ export const createCharacterHighlightExtension = (config: CharacterHighlightConf
                             return computeHighlightDecorations(doc, getHighlightedCharacters(), getCharacterColor);
                         },
                         apply(tr, oldDecorations, _oldState, newState) {
-                            // Always recompute when explicitly refreshed (highlight toggled from UI)
+                            // Explicit refresh (highlight toggled, color changed)
                             if (tr.getMeta("characterHighlightRefresh")) {
-                                return computeHighlightDecorations(tr.doc, getHighlightedCharacters(), getCharacterColor);
+                                return computeHighlightDecorations(
+                                    tr.doc,
+                                    getHighlightedCharacters(),
+                                    getCharacterColor,
+                                );
                             }
 
-                            // If no highlighted characters, return empty
                             if (getHighlightedCharacters().size === 0) {
                                 return DecorationSet.empty;
                             }
 
-                            // If document changed, check if Character nodes were affected
-                            if (tr.docChanged) {
-                                // For efficiency, check if the change might affect character highlighting
-                                if (didCharacterNodesChange(tr)) {
-                                    return computeHighlightDecorations(tr.doc, getHighlightedCharacters(), getCharacterColor);
-                                }
-                                // Simple text edit - just map existing decorations to new positions
-                                return oldDecorations.map(tr.mapping, newState.doc);
+                            if (!tr.docChanged) {
+                                return oldDecorations;
                             }
 
-                            return oldDecorations;
+                            // Map existing decorations to new positions (cheap, O(decorations))
+                            const mapped = oldDecorations.map(tr.mapping, newState.doc);
+
+                            // Compute the range affected by Character node changes
+                            const range = computeChangedRange(tr);
+                            if (!range) {
+                                // No Character nodes changed — mapped positions are correct
+                                return mapped;
+                            }
+
+                            const [from, to] = range;
+
+                            // Replace decorations in the affected range only
+                            const outside = [
+                                ...mapped.find(0, from),
+                                ...mapped.find(to, newState.doc.content.size),
+                            ];
+                            const inside = computeDecorationsInRange(
+                                newState.doc,
+                                from,
+                                to,
+                                getHighlightedCharacters(),
+                                getCharacterColor,
+                            );
+
+                            return DecorationSet.create(newState.doc, [...outside, ...inside]);
                         },
                     },
                     props: {
@@ -174,7 +257,6 @@ export const createCharacterHighlightExtension = (config: CharacterHighlightConf
  * Call this when the highlighted characters set or character colors change.
  */
 export const refreshCharacterHighlights = (editor: Editor) => {
-    if (!editor || !editor.view) return;
-    // Dispatch an empty transaction to trigger decoration recomputation
+    if (!editor?.view) return;
     editor.view.dispatch(editor.state.tr.setMeta("characterHighlightRefresh", true));
 };
