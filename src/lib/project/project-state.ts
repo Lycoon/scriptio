@@ -200,6 +200,7 @@ export class ProjectState extends Y.Doc {
         BOARD: "board",
         LAYOUT: "layout",
         COMMENTS: "comments",
+        DICTIONARY: "dictionary",
     } as const;
 
     metadata(): Y.Map<any> {
@@ -248,6 +249,11 @@ export class ProjectState extends Y.Doc {
 
     comments(): Y.Map<Comment> {
         return this.getMap(this.KEYS.COMMENTS);
+    }
+
+    /** Per-project custom dictionary words (keys are words, values are true). */
+    dictionary(): Y.Map<boolean> {
+        return this.getMap(this.KEYS.DICTIONARY);
     }
 }
 

@@ -559,5 +559,48 @@ export const useDocumentEditor = (
         }
     }, [editor, isSpellWorkerReady, spellcheckLang, features.spellcheck]);
 
+    // Sync project-level custom dictionary words to the spellcheck worker.
+    // Observes the Yjs map so collaborator additions/removals are picked up too.
+    useEffect(() => {
+        if (!editor || !projectState || !features.spellcheck || !isSpellWorkerReady) return;
+
+        const worker = spellWorkerRef.current;
+        if (!worker) return;
+
+        const dictMap = projectState.dictionary();
+
+        // Send all existing custom words to the worker
+        dictMap.forEach((_, word) => {
+            worker.postMessage({ type: "ADD_WORD", word });
+        });
+
+        // Observe for changes (local or from collaborators)
+        const observer = (event: import("yjs").YMapEvent<boolean>) => {
+            const currentWorker = spellWorkerRef.current;
+            if (!currentWorker) return;
+
+            let changed = false;
+            event.changes.keys.forEach((change, key) => {
+                if (change.action === "add" || change.action === "update") {
+                    currentWorker.postMessage({ type: "ADD_WORD", word: key });
+                    changed = true;
+                } else if (change.action === "delete") {
+                    currentWorker.postMessage({ type: "REMOVE_WORD", word: key });
+                    changed = true;
+                }
+            });
+
+            if (changed && editor && !editor.isDestroyed) {
+                refreshSpellcheck(editor);
+            }
+        };
+
+        dictMap.observe(observer);
+
+        return () => {
+            dictMap.unobserve(observer);
+        };
+    }, [editor, projectState, isSpellWorkerReady, features.spellcheck]);
+
     return editor;
 };

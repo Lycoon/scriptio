@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Download, Loader2 } from "lucide-react";
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./SpellcheckSettings.module.css";
@@ -50,15 +50,20 @@ const LanguageSettings = () => {
                     <div className={styles.dictOption}>
                         <span>{dict.name}</span>
                         <span className={styles.dictMeta}>
-                            {installed && <Check size={14} className={styles.checkmark} />}
-                            {installed && (
-                                <span className={styles.size}>{formatDictionarySize(installed.size)}</span>
+                            {isDownloading ? (
+                                <Loader2 size={14} className={styles.spinner} />
+                            ) : installed ? (
+                                <>
+                                    <span className={styles.size}>{formatDictionarySize(installed.size)}</span>
+                                    <Check size={14} className={styles.checkmark} />
+                                </>
+                            ) : (
+                                <Download size={14} className={styles.download} />
                             )}
-                            {isDownloading && <Loader2 size={14} className={styles.spinner} />}
                         </span>
                     </div>
                 ),
-                triggerLabel: installed ? dict.name : dict.name,
+                triggerLabel: dict.name,
             };
         });
 

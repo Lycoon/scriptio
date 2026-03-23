@@ -311,7 +311,9 @@
         "highlight": "강조",
         "addCharacter": "캐릭터 추가",
         "addComment": "댓글 추가",
-        "searchOnWeb": "웹에서 검색"
+        "searchOnWeb": "웹에서 검색",
+        "noSuggestions": "제안 없음",
+        "addToDictionary": "사전에 추가"
     },
     "popup": {
         "character": {

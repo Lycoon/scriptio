@@ -311,7 +311,9 @@
         "highlight": "Hervorheben",
         "addCharacter": "Charakter hinzufügen",
         "addComment": "Kommentar hinzufügen",
-        "searchOnWeb": "Im Web suchen"
+        "searchOnWeb": "Im Web suchen",
+        "noSuggestions": "Keine Vorschläge",
+        "addToDictionary": "Zum Wörterbuch hinzufügen"
     },
     "popup": {
         "character": {

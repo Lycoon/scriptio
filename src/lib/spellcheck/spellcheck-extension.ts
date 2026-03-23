@@ -5,8 +5,10 @@ import type { SpellWorkerRequest, SpellWorkerResponse } from "./spellcheck-types
 
 const spellcheckPluginKey = new PluginKey("spellcheck");
 
-/** Unicode-aware word tokenizer — matches words with letters, combining marks, and apostrophes */
+/** Unicode-aware word tokenizer — matches words with letters, combining marks, hyphens, and apostrophes */
 const WORD_RE = /[\p{L}\p{M}''\u2019-]+/gu;
+/** Filters out pure-punctuation matches like "-" or "--" that have no letter content */
+const HAS_LETTER_RE = /\p{L}/u;
 
 /** Debounce delay before sending words to the worker */
 const CHECK_DEBOUNCE_MS = 300;
@@ -68,23 +70,61 @@ function getChangedRanges(tr: any): Array<{ from: number; to: number }> {
 function extractWords(doc: any, from: number, to: number): WordPosition[] {
     const words: WordPosition[] = [];
     doc.nodesBetween(from, to, (node: any, pos: number) => {
-        if (!node.isText) return;
-        const text = node.text || "";
-        let match;
+        // Only process textblock nodes (paragraphs, headings, etc.)
+        // Recurse into structural nodes (doc, sections, lists, etc.)
+        if (!node.isTextblock) return true;
+        if (node.type.name === "character") return false;
+
+        // Concatenate all inline text within this block into a single string,
+        // tracking the absolute doc position of each character.
+        // This ensures words split across text nodes by marks (bold, italic, etc.)
+        // are still matched as whole words.
+        const absPositions: number[] = [];
+        let combined = "";
+
+        node.forEach((child: any, offset: number) => {
+            if (child.isText) {
+                const childPos = pos + 1 + offset;
+                const text = child.text || "";
+                for (let i = 0; i < text.length; i++) {
+                    absPositions.push(childPos + i);
+                    combined += text[i];
+                }
+            } else {
+                // Non-text inline node (hard break, etc.) — acts as word separator
+                combined += "\n";
+                absPositions.push(-1);
+            }
+        });
+
         WORD_RE.lastIndex = 0;
-        while ((match = WORD_RE.exec(text)) !== null) {
-            const wordFrom = pos + match.index;
-            const wordTo = wordFrom + match[0].length;
-            // Only include words that overlap with the requested range
+        let match;
+        while ((match = WORD_RE.exec(combined)) !== null) {
+            // Skip pure-punctuation matches (e.g. lone "-" in scene headings)
+            if (!HAS_LETTER_RE.test(match[0])) continue;
+
+            const si = match.index;
+            const ei = si + match[0].length - 1;
+            if (absPositions[si] < 0 || absPositions[ei] < 0) continue;
+
+            const wordFrom = absPositions[si];
+            const wordTo = absPositions[ei] + 1;
+
             if (wordTo > from && wordFrom < to) {
                 words.push({ word: match[0], from: wordFrom, to: wordTo });
             }
         }
+
+        return false; // don't recurse into textblock children
     });
     return words;
 }
 
 // ---- Extension ----
+
+/** Shared attrs object — ProseMirror uses reference equality first in attrsEq,
+ *  so reusing the same object avoids unnecessary DOM reconciliation. */
+const SPELL_ATTRS = { class: "spellcheck-error", nodeName: "span" };
 
 export const createSpellcheckExtension = (config: SpellcheckConfig) => {
     const { getWorker, getEnabled } = config;
@@ -94,7 +134,6 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
 
     // Monotonically increasing request ID to handle out-of-order responses
     let nextRequestId = 0;
-    let latestRequestId = -1;
 
     // Debounce timer
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -106,7 +145,6 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
     let pendingWords: WordPosition[] = [];
 
     function scheduleCheck(words: WordPosition[]) {
-        // Merge with existing pending words
         pendingWords = pendingWords.concat(words);
 
         if (debounceTimer) clearTimeout(debounceTimer);
@@ -122,28 +160,34 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
             return;
         }
 
-        // Deduplicate words and filter out already-cached ones
-        const uniqueWords = new Map<string, boolean>();
+        // Deduplicate words and separate cached from uncached
+        const seen = new Set<string>();
         const wordsToCheck: string[] = [];
+        const cachedMisspelled: string[] = [];
         for (const wp of pendingWords) {
-            if (!uniqueWords.has(wp.word) && !wordCache.has(wp.word)) {
-                uniqueWords.set(wp.word, true);
+            if (seen.has(wp.word)) continue;
+            seen.add(wp.word);
+            const cached = wordCache.get(wp.word);
+            if (cached === undefined) {
                 wordsToCheck.push(wp.word);
+            } else if (cached === false) {
+                cachedMisspelled.push(wp.word);
             }
         }
 
         pendingWords = [];
 
         if (wordsToCheck.length === 0) {
-            // All words are cached — dispatch a results transaction to apply decorations from cache
-            if (editorView) {
-                editorView.dispatch(editorView.state.tr.setMeta("spellcheckResults", { id: -1, misspelled: [] }));
+            // All words are cached — add positions for any cached misspelled words
+            if (cachedMisspelled.length > 0 && editorView) {
+                editorView.dispatch(
+                    editorView.state.tr.setMeta("spellcheckResults", { id: -1, misspelled: cachedMisspelled }),
+                );
             }
             return;
         }
 
         const id = nextRequestId++;
-        latestRequestId = id;
 
         const handler = (e: MessageEvent<SpellWorkerResponse>) => {
             const msg = e.data;
@@ -156,7 +200,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                     wordCache.set(w, !misspelledSet.has(w));
                 }
 
-                // Dispatch transaction to apply decorations
+                // Dispatch transaction to apply positions
                 if (editorView) {
                     editorView.dispatch(
                         editorView.state.tr.setMeta("spellcheckResults", {
@@ -170,58 +214,6 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
 
         worker.addEventListener("message", handler);
         worker.postMessage({ type: "CHECK", id, words: wordsToCheck } satisfies SpellWorkerRequest);
-    }
-
-    /**
-     * Build decorations for all misspelled words in the document using the cache.
-     */
-    function buildDecorations(doc: any): DecorationSet {
-        if (!getEnabled()) return DecorationSet.empty;
-
-        const allWords = extractWords(doc, 0, doc.content.size);
-        const decorations: Decoration[] = [];
-
-        for (const wp of allWords) {
-            const cached = wordCache.get(wp.word);
-            if (cached === false) {
-                // Word is known to be misspelled
-                decorations.push(
-                    Decoration.inline(wp.from, wp.to, {
-                        class: "spellcheck-error",
-                        nodeName: "span",
-                    }),
-                );
-            }
-        }
-
-        return DecorationSet.create(doc, decorations);
-    }
-
-    /**
-     * Build decorations only within specific ranges using the cache.
-     */
-    function buildDecorationsInRanges(
-        doc: any,
-        ranges: Array<{ from: number; to: number }>,
-    ): Decoration[] {
-        if (!getEnabled()) return [];
-
-        const decorations: Decoration[] = [];
-        for (const range of ranges) {
-            const words = extractWords(doc, range.from, range.to);
-            for (const wp of words) {
-                const cached = wordCache.get(wp.word);
-                if (cached === false) {
-                    decorations.push(
-                        Decoration.inline(wp.from, wp.to, {
-                            class: "spellcheck-error",
-                            nodeName: "span",
-                        }),
-                    );
-                }
-            }
-        }
-        return decorations;
     }
 
     return Extension.create({
@@ -243,17 +235,16 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                     },
 
                     state: {
-                        init(_, { doc }) {
+                        init(_, { doc }): DecorationSet {
                             if (!getEnabled()) return DecorationSet.empty;
 
                             // Schedule initial full-document check
-                            const allWords = extractWords(doc, 0, doc.content.size);
-                            scheduleCheck(allWords);
+                            scheduleCheck(extractWords(doc, 0, doc.content.size));
 
                             return DecorationSet.empty;
                         },
 
-                        apply(tr, oldDecorations, _oldState, newState) {
+                        apply(tr, decorSet: DecorationSet, _oldState, newState): DecorationSet {
                             if (!getEnabled()) {
                                 return DecorationSet.empty;
                             }
@@ -261,62 +252,76 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                             // Full refresh requested (language changed, etc.)
                             if (tr.getMeta("spellcheckRefresh")) {
                                 wordCache.clear();
-                                const allWords = extractWords(newState.doc, 0, newState.doc.content.size);
-                                scheduleCheck(allWords);
+                                scheduleCheck(extractWords(newState.doc, 0, newState.doc.content.size));
                                 return DecorationSet.empty;
                             }
 
-                            // Worker returned results — rebuild decorations from cache
+                            // Worker returned results — add decorations for newly-misspelled words
                             if (tr.getMeta("spellcheckResults")) {
-                                return buildDecorations(newState.doc);
-                            }
+                                const { misspelled } = tr.getMeta("spellcheckResults") as { misspelled: string[] };
+                                if (!misspelled?.length) return decorSet;
 
-                            // Document changed — incremental update
-                            if (tr.docChanged) {
-                                // Map existing decorations to new positions
-                                let mapped = oldDecorations.map(tr.mapping, newState.doc);
+                                const misspelledSet = new Set(misspelled);
 
-                                const changedRanges = getChangedRanges(tr);
-                                if (changedRanges.length > 0) {
-                                    // Remove stale decorations in changed ranges
-                                    for (const range of changedRanges) {
-                                        const stale = mapped.find(range.from, range.to);
-                                        if (stale.length > 0) {
-                                            mapped = mapped.remove(stale);
+                                // Build set of existing decoration positions for dedup
+                                const existing = decorSet.find(0, newState.doc.content.size);
+                                const existingKeys = new Set<string>(existing.map((d) => `${d.from}:${d.to}`));
+
+                                const newDecorations: Decoration[] = [];
+                                for (const wp of extractWords(newState.doc, 0, newState.doc.content.size)) {
+                                    if (misspelledSet.has(wp.word)) {
+                                        const key = `${wp.from}:${wp.to}`;
+                                        if (!existingKeys.has(key)) {
+                                            newDecorations.push(Decoration.inline(wp.from, wp.to, SPELL_ATTRS));
+                                            existingKeys.add(key);
                                         }
-                                    }
-
-                                    // Add cached decorations for changed ranges immediately
-                                    const newDecos = buildDecorationsInRanges(newState.doc, changedRanges);
-                                    if (newDecos.length > 0) {
-                                        mapped = mapped.add(newState.doc, newDecos);
-                                    }
-
-                                    // Extract new/changed words and schedule worker check
-                                    const wordsToCheck: WordPosition[] = [];
-                                    for (const range of changedRanges) {
-                                        const words = extractWords(newState.doc, range.from, range.to);
-                                        for (const wp of words) {
-                                            if (!wordCache.has(wp.word)) {
-                                                wordsToCheck.push(wp);
-                                            }
-                                        }
-                                    }
-                                    if (wordsToCheck.length > 0) {
-                                        scheduleCheck(wordsToCheck);
                                     }
                                 }
 
-                                return mapped;
+                                return newDecorations.length ? decorSet.add(newState.doc, newDecorations) : decorSet;
                             }
 
-                            return oldDecorations;
+                            // Document changed — map decorations through the transaction, then patch changed ranges
+                            if (tr.docChanged) {
+                                // DecorationSet.map() efficiently updates all positions in one pass,
+                                // sharing unchanged subtrees (persistent data structure).
+                                let mapped = decorSet.map(tr.mapping, tr.doc);
+
+                                const changedRanges = getChangedRanges(tr);
+                                if (changedRanges.length === 0) return mapped;
+
+                                // Remove decorations whose words may have changed
+                                for (const range of changedRanges) {
+                                    const stale = mapped.find(range.from, range.to);
+                                    if (stale.length) mapped = mapped.remove(stale);
+                                }
+
+                                // Re-add from cache or schedule uncached words for checking
+                                const additions: Decoration[] = [];
+                                const toSchedule: WordPosition[] = [];
+                                for (const range of changedRanges) {
+                                    for (const wp of extractWords(newState.doc, range.from, range.to)) {
+                                        const cached = wordCache.get(wp.word);
+                                        if (cached === false) {
+                                            additions.push(Decoration.inline(wp.from, wp.to, SPELL_ATTRS));
+                                        } else if (cached === undefined) {
+                                            toSchedule.push(wp);
+                                        }
+                                    }
+                                }
+
+                                if (toSchedule.length) scheduleCheck(toSchedule);
+                                return additions.length ? mapped.add(tr.doc, additions) : mapped;
+                            }
+
+                            return decorSet;
                         },
                     },
 
                     props: {
+                        // DecorationSet is stored directly in plugin state — no rebuild on every call.
                         decorations(state) {
-                            return this.getState(state);
+                            return spellcheckPluginKey.getState(state);
                         },
                     },
                 }),

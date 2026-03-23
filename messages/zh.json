@@ -311,7 +311,9 @@
         "highlight": "高亮",
         "addCharacter": "添加角色",
         "addComment": "添加评论",
-        "searchOnWeb": "在网上搜索"
+        "searchOnWeb": "在网上搜索",
+        "noSuggestions": "无建议",
+        "addToDictionary": "添加到词典"
     },
     "popup": {
         "character": {

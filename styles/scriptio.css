@@ -364,7 +364,7 @@
         box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.8);
     }
 
-    /* Spellcheck error */
+    /* Spellcheck error highlighting */
     .spellcheck-error {
         text-decoration: underline wavy;
         text-decoration-color: #ef4444;

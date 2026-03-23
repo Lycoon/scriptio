@@ -311,7 +311,9 @@
         "highlight": "Surligner",
         "addCharacter": "Ajouter un personnage",
         "addComment": "Ajouter un commentaire",
-        "searchOnWeb": "Rechercher sur le web"
+        "searchOnWeb": "Rechercher sur le web",
+        "noSuggestions": "Aucune suggestion",
+        "addToDictionary": "Ajouter au dictionnaire"
     },
     "popup": {
         "character": {

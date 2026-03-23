@@ -31,3 +31,48 @@
 .menu_item:hover {
     background-color: var(--editor-sidebar-hover);
 }
+
+.suggestion_item {
+    display: flex;
+    gap: 10px;
+
+    padding-block: 8px;
+    padding-left: 12px;
+    padding-right: 35px;
+
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 1px solid;
+    border-color: var(--separator);
+    cursor: pointer;
+}
+
+.suggestion_item:hover {
+    background-color: var(--editor-sidebar-hover);
+}
+
+.menu_label {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+
+    padding-block: 8px;
+    padding-left: 12px;
+    padding-right: 35px;
+
+    font-size: 13px;
+    color: var(--secondary-text);
+    font-style: italic;
+    border-bottom: 1px solid;
+    border-color: var(--separator);
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
