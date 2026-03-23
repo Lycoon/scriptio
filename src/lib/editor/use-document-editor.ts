@@ -224,6 +224,7 @@ export const useDocumentEditor = (
         ? createSpellcheckExtension({
               getWorker: () => spellWorkerRef.current,
               getEnabled: () => isSpellWorkerReadyRef.current,
+              getCharacters: () => charactersRef.current,
           })
         : null;
 

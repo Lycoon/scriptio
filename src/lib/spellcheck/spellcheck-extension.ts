@@ -18,6 +18,8 @@ type SpellcheckConfig = {
     getWorker: () => Worker | null;
     /** Whether spellchecking is currently enabled */
     getEnabled: () => boolean;
+    /** Return the current character map (keys are uppercase character names) */
+    getCharacters: () => Record<string, unknown> | undefined;
 };
 
 interface WordPosition {
@@ -126,8 +128,23 @@ function extractWords(doc: any, from: number, to: number): WordPosition[] {
  *  so reusing the same object avoids unnecessary DOM reconciliation. */
 const SPELL_ATTRS = { class: "spellcheck-error", nodeName: "span" };
 
+/**
+ * Build a set of uppercase token words from character names.
+ * Character map keys are already uppercase (e.g. "JOHN SMITH" → {"JOHN", "SMITH"}).
+ */
+function buildCharacterWordSet(characters: Record<string, unknown> | undefined): Set<string> {
+    if (!characters) return new Set();
+    const words = new Set<string>();
+    for (const name of Object.keys(characters)) {
+        for (const token of name.split(/\s+/)) {
+            if (token) words.add(token);
+        }
+    }
+    return words;
+}
+
 export const createSpellcheckExtension = (config: SpellcheckConfig) => {
-    const { getWorker, getEnabled } = config;
+    const { getWorker, getEnabled, getCharacters } = config;
 
     // Word correctness cache: word → true (correct) or false (misspelled)
     const wordCache = new Map<string, boolean>();
@@ -160,13 +177,15 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
             return;
         }
 
-        // Deduplicate words and separate cached from uncached
+        // Deduplicate words and separate cached from uncached, skipping character names
+        const characterWords = buildCharacterWordSet(getCharacters());
         const seen = new Set<string>();
         const wordsToCheck: string[] = [];
         const cachedMisspelled: string[] = [];
         for (const wp of pendingWords) {
             if (seen.has(wp.word)) continue;
             seen.add(wp.word);
+            if (characterWords.has(wp.word.toUpperCase())) continue;
             const cached = wordCache.get(wp.word);
             if (cached === undefined) {
                 wordsToCheck.push(wp.word);
@@ -261,7 +280,10 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                 const { misspelled } = tr.getMeta("spellcheckResults") as { misspelled: string[] };
                                 if (!misspelled?.length) return decorSet;
 
-                                const misspelledSet = new Set(misspelled);
+                                const characterWords = buildCharacterWordSet(getCharacters());
+                                const misspelledSet = new Set(
+                                    misspelled.filter((w) => !characterWords.has(w.toUpperCase())),
+                                );
 
                                 // Build set of existing decoration positions for dedup
                                 const existing = decorSet.find(0, newState.doc.content.size);
@@ -297,10 +319,12 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                 }
 
                                 // Re-add from cache or schedule uncached words for checking
+                                const characterWords = buildCharacterWordSet(getCharacters());
                                 const additions: Decoration[] = [];
                                 const toSchedule: WordPosition[] = [];
                                 for (const range of changedRanges) {
                                     for (const wp of extractWords(newState.doc, range.from, range.to)) {
+                                        if (characterWords.has(wp.word.toUpperCase())) continue;
                                         const cached = wordCache.get(wp.word);
                                         if (cached === false) {
                                             additions.push(Decoration.inline(wp.from, wp.to, SPELL_ATTRS));

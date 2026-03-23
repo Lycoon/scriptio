@@ -18,8 +18,7 @@
         "build:macos": "npm run tauri build -- --bundles app --target universal-apple-darwin",
         "export": "next export",
         "start": "next start",
-        "lint": "next lint",
-        "postinstall": "patch-package"
+        "lint": "next lint"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.113.0",
