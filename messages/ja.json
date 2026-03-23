@@ -47,7 +47,10 @@
     },
     "language": {
         "label": "表示言語",
-        "helpText": "アプリ全体で使用する言語を選択してください。"
+        "helpText": "アプリ全体で使用する言語を選択してください。",
+        "spellcheckLabel": "スペルチェック",
+        "spellcheckHelpText": "エディターでのスペルチェック用の辞書をダウンロードしてください。",
+        "spellcheckNone": "無効"
     },
     "modal": {
         "groups": {
@@ -308,7 +311,9 @@
         "highlight": "ハイライト",
         "addCharacter": "キャラクターを追加",
         "addComment": "コメントを追加",
-        "searchOnWeb": "ウェブで検索"
+        "searchOnWeb": "ウェブで検索",
+        "noSuggestions": "候補なし",
+        "addToDictionary": "辞書に追加"
     },
     "popup": {
         "character": {

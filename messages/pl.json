@@ -47,7 +47,10 @@
     },
     "language": {
         "label": "Język wyświetlania",
-        "helpText": "Wybierz język używany w całej aplikacji."
+        "helpText": "Wybierz język używany w całej aplikacji.",
+        "spellcheckLabel": "Sprawdzanie pisowni",
+        "spellcheckHelpText": "Pobierz słownik do sprawdzania pisowni w edytorze.",
+        "spellcheckNone": "Wyłączone"
     },
     "modal": {
         "groups": {
@@ -308,7 +311,9 @@
         "highlight": "Podświetl",
         "addCharacter": "Dodaj postać",
         "addComment": "Dodaj komentarz",
-        "searchOnWeb": "Szukaj w sieci"
+        "searchOnWeb": "Szukaj w sieci",
+        "noSuggestions": "Brak sugestii",
+        "addToDictionary": "Dodaj do słownika"
     },
     "popup": {
         "character": {

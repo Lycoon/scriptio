@@ -47,7 +47,10 @@
     },
     "language": {
         "label": "Langue d'affichage",
-        "helpText": "Choisissez la langue utilisée dans toute l'application."
+        "helpText": "Choisissez la langue utilisée dans toute l'application.",
+        "spellcheckLabel": "Correcteur orthographique",
+        "spellcheckHelpText": "Téléchargez un dictionnaire pour la vérification orthographique dans l'éditeur.",
+        "spellcheckNone": "Désactivé"
     },
     "modal": {
         "groups": {
@@ -308,7 +311,9 @@
         "highlight": "Surligner",
         "addCharacter": "Ajouter un personnage",
         "addComment": "Ajouter un commentaire",
-        "searchOnWeb": "Rechercher sur le web"
+        "searchOnWeb": "Rechercher sur le web",
+        "noSuggestions": "Aucune suggestion",
+        "addToDictionary": "Ajouter au dictionnaire"
     },
     "popup": {
         "character": {

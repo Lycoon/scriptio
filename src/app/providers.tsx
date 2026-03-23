@@ -7,6 +7,7 @@ import { SWRConfig } from "swr";
 import { UserContextProvider } from "@src/context/UserContext";
 import { DashboardContextProvider } from "@src/context/DashboardContext";
 import { LocaleContextProvider, useLocale } from "@src/context/LocaleContext";
+import { SpellcheckProvider } from "@src/context/SpellcheckContext";
 import { useSettings } from "@src/lib/utils/hooks";
 import fetcher from "@src/lib/fetcher";
 
@@ -82,9 +83,11 @@ export function Providers({ children }: { children: ReactNode }) {
                                 themes={["dark", "light", "latte", "wonka", "mint", "blossom"]}
                                 enableColorScheme={false}
                             >
-                                <EditorThemeSync />
-                                <LocaleSync />
-                                {children}
+                                <SpellcheckProvider>
+                                    <EditorThemeSync />
+                                    <LocaleSync />
+                                    {children}
+                                </SpellcheckProvider>
                             </ThemeProvider>
                         </IntlBridge>
                     </LocaleContextProvider>

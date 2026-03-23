@@ -47,7 +47,10 @@
     },
     "language": {
         "label": "显示语言",
-        "helpText": "选择整个应用程序使用的语言。"
+        "helpText": "选择整个应用程序使用的语言。",
+        "spellcheckLabel": "拼写检查",
+        "spellcheckHelpText": "下载字典以在编辑器中进行拼写检查。",
+        "spellcheckNone": "已禁用"
     },
     "modal": {
         "groups": {
@@ -308,7 +311,9 @@
         "highlight": "高亮",
         "addCharacter": "添加角色",
         "addComment": "添加评论",
-        "searchOnWeb": "在网上搜索"
+        "searchOnWeb": "在网上搜索",
+        "noSuggestions": "无建议",
+        "addToDictionary": "添加到词典"
     },
     "popup": {
         "character": {

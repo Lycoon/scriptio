@@ -364,6 +364,16 @@
         box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.8);
     }
 
+    /* Spellcheck error highlighting */
+    .spellcheck-error {
+        position: relative;
+        z-index: 11; /* paint above pagination-overlay (z-index: 10) so the wavy underline isn't clipped */
+        text-decoration: underline wavy;
+        text-decoration-color: #ef4444;
+        text-decoration-skip-ink: none;
+        text-underline-offset: 2px;
+    }
+
     /* Comment highlighting */
     .hide-comments .comment-highlight,
     .hide-comments .comment-highlight-active {

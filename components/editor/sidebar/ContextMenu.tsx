@@ -1,7 +1,9 @@
 "use client";
 
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { UserContext } from "@src/context/UserContext";
+import { useSpellcheck } from "@src/context/SpellcheckContext";
+import { refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
 import { Scene } from "@src/lib/screenplay/scenes";
 
 import context from "./ContextMenu.module.css";
@@ -13,8 +15,10 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { useTranslations } from "next-intl";
 import {
     ArrowDownRight,
+    BookPlus,
     ClipboardPaste,
     Highlighter,
+    Loader2,
     LucideIcon,
     MessageSquarePlus,
     Pencil,
@@ -43,6 +47,7 @@ export const enum ContextMenuType {
     LocationItem,
     Suggestion,
     EditorSelection,
+    Spellcheck,
 }
 
 type ContextMenuItemProps = {
@@ -202,6 +207,87 @@ const EditorSelectionMenu = (props: any) => {
     );
 };
 
+/* ============================== */
+/*  Spellcheck context menu        */
+/* ============================== */
+
+export type SpellcheckContextProps = {
+    word: string;
+    from: number;
+    to: number;
+};
+
+const SpellcheckMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
+    const { editor, repository } = useContext(ProjectContext);
+    const { worker } = useSpellcheck();
+    const { updateContextMenu } = useContext(UserContext);
+    const { word, from, to } = props.props as SpellcheckContextProps;
+    const [suggestions, setSuggestions] = useState<string[] | null>(null);
+
+    useEffect(() => {
+        if (!worker) {
+            setSuggestions([]);
+            return;
+        }
+
+        const handler = (e: MessageEvent) => {
+            if (e.data.type === "SUGGEST_RESULT" && e.data.word === word) {
+                worker.removeEventListener("message", handler);
+                setSuggestions(e.data.suggestions);
+            }
+        };
+
+        worker.addEventListener("message", handler);
+        worker.postMessage({ type: "SUGGEST", word });
+
+        return () => worker.removeEventListener("message", handler);
+    }, [worker, word]);
+
+    const handleReplace = (suggestion: string) => {
+        if (!editor) return;
+        const tr = editor.state.tr.replaceWith(from, to, editor.state.schema.text(suggestion));
+        editor.view.dispatch(tr);
+        updateContextMenu(undefined);
+    };
+
+    const handleAddToDictionary = () => {
+        if (!editor) return;
+        // Save to project-level Yjs dictionary (synced to collaborators).
+        // The observer in use-document-editor will pick this up and send ADD_WORD to the worker.
+        const projectState = repository?.getState();
+        if (projectState) {
+            projectState.dictionary().set(word, true);
+        } else if (worker) {
+            // Fallback: send directly to worker if no project state
+            worker.postMessage({ type: "ADD_WORD", word });
+            refreshSpellcheck(editor);
+        }
+        updateContextMenu(undefined);
+    };
+
+    return (
+        <>
+            {suggestions === null && (
+                <div className={context.menu_label}>
+                    <Loader2 size={14} className={context.spinner} />
+                </div>
+            )}
+            {suggestions !== null && suggestions.length === 0 && (
+                <div className={context.menu_label}>
+                    <span>{t("noSuggestions")}</span>
+                </div>
+            )}
+            {suggestions?.map((s) => (
+                <div key={s} className={context.suggestion_item} onClick={() => handleReplace(s)}>
+                    <p className="unselectable">{s}</p>
+                </div>
+            ))}
+            <ContextMenuItem text={t("addToDictionary")} icon={BookPlus} action={handleAddToDictionary} />
+        </>
+    );
+};
+
 const renderContextMenu = (contextMenu: ContextMenuProps) => {
     switch (contextMenu.type) {
         case ContextMenuType.SceneList:
@@ -216,6 +302,8 @@ const renderContextMenu = (contextMenu: ContextMenuProps) => {
             return <LocationItemMenu props={contextMenu.typeSpecificProps} />;
         case ContextMenuType.EditorSelection:
             return <EditorSelectionMenu props={contextMenu.typeSpecificProps} />;
+        case ContextMenuType.Spellcheck:
+            return <SpellcheckMenu props={contextMenu.typeSpecificProps} />;
     }
 };
 

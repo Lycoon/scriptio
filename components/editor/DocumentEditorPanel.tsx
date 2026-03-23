@@ -380,6 +380,23 @@ const DocumentEditorPanel = ({
     const onEditorContextMenu = useCallback(
         (e: React.MouseEvent) => {
             if (!editor) return;
+
+            // Check if right-clicking on a spellcheck error
+            const target = e.target as HTMLElement;
+            const spellErrorEl = target.closest(".spellcheck-error") as HTMLElement | null;
+            if (spellErrorEl) {
+                e.preventDefault();
+                const word = spellErrorEl.textContent || "";
+                const from = editor.view.posAtDOM(spellErrorEl, 0);
+                const to = from + word.length;
+                updateContextMenu({
+                    type: ContextMenuType.Spellcheck,
+                    position: { x: e.clientX, y: e.clientY },
+                    typeSpecificProps: { word, from, to },
+                });
+                return;
+            }
+
             const { from, to } = editor.state.selection;
             if (from === to) return;
 
@@ -431,9 +448,9 @@ const DocumentEditorPanel = ({
                 onMouseDown={handleContainerMouseDown}
                 onFocus={() => setFocusedEditorType(focusType)}
             >
-                <div className={`${styles.editor_wrapper} ${isEndlessScroll && config.type === "screenplay" ? styles.endless_scroll : ""}`}>
+                <div className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}>
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
-                    <div onContextMenu={config.features.comments ? onEditorContextMenu : undefined}>
+                    <div onContextMenu={config.features.comments || config.features.spellcheck ? onEditorContextMenu : undefined}>
                         <EditorContent editor={editor} spellCheck={false} />
                     </div>
                 </div>

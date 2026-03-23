@@ -79,6 +79,39 @@
     opacity: 0.7;
 }
 
+/* Panel switcher anchor */
+.panel_switcher_anchor {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 4;
+}
+
+.panel_switcher_btn {
+    width: 20px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--secondary-text);
+    background-color: var(--tertiary);
+    border-radius: 6px;
+    opacity: 0.6;
+    border: none;
+}
+
+.panel_switcher_btn:hover {
+    opacity: 1;
+    background-color: var(--tertiary-hover);
+}
+
+.panel_switcher_separator {
+    height: 1px;
+    margin: 4px 8px;
+    background-color: var(--separator);
+}
+
 /* Transparent overlay during drag to capture all mouse events */
 .drag_overlay {
     position: fixed;

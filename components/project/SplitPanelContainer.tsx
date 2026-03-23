@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { UserContext } from "@src/context/UserContext";
 import { PanelType, useViewContext } from "@src/context/ViewContext";
 import EditorPanel from "@components/editor/EditorPanel";
 import TitlePagePanel from "@components/editor/TitlePagePanel";
@@ -8,7 +10,9 @@ import BoardCanvas from "@components/board/BoardCanvas";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
+import { Clapperboard, FileText, LayoutDashboard, Maximize, Menu, MessageSquare, MessageSquareOff, Minimize, Scroll } from "lucide-react";
 import styles from "./SplitPanelContainer.module.css";
+import dropdown from "@components/navbar/ViewOptionsDropdown.module.css";
 
 interface SplitPanelContainerProps {
     suggestions: string[];
@@ -43,6 +47,116 @@ const PanelRenderer = ({
         case "title":
             return <TitlePagePanel isVisible={isVisible} />;
     }
+};
+
+const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey: string }[] = [
+    { type: "screenplay", icon: Clapperboard, labelKey: "screenplay" },
+    { type: "board", icon: LayoutDashboard, labelKey: "board" },
+    { type: "title", icon: FileText, labelKey: "titlePage" },
+];
+
+const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; side: "primary" | "secondary" }) => {
+    const t = useTranslations("navbar");
+    const { isZenMode, updateIsZenMode } = useContext(UserContext);
+    const { setSidePanel, isEndlessScroll, setIsEndlessScroll, showComments, setShowComments, leftSidebarOpen, setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    const sidebarsBeforeFocus = useRef<{ left: boolean; right: boolean } | null>(null);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
+        };
+        window.addEventListener("mousedown", handleClickOutside);
+        return () => window.removeEventListener("mousedown", handleClickOutside);
+    }, [isOpen]);
+
+    const handleSelect = useCallback(
+        (panel: PanelType) => {
+            if (panel !== currentPanel) setSidePanel(side, panel);
+            setIsOpen(false);
+        },
+        [currentPanel, side, setSidePanel],
+    );
+
+    const enterFocusMode = useCallback(() => {
+        setLeftSidebarOpen((prev) => {
+            setRightSidebarOpen((prevRight) => {
+                sidebarsBeforeFocus.current = { left: prev, right: prevRight };
+                return false;
+            });
+            return false;
+        });
+        updateIsZenMode(true);
+        document.documentElement.requestFullscreen?.();
+    }, [updateIsZenMode, setLeftSidebarOpen, setRightSidebarOpen]);
+
+    const exitFocusMode = useCallback(() => {
+        updateIsZenMode(false);
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        }
+        if (sidebarsBeforeFocus.current) {
+            setLeftSidebarOpen(sidebarsBeforeFocus.current.left);
+            setRightSidebarOpen(sidebarsBeforeFocus.current.right);
+            sidebarsBeforeFocus.current = null;
+        }
+    }, [updateIsZenMode, setLeftSidebarOpen, setRightSidebarOpen]);
+
+    useEffect(() => {
+        const onFullscreenChange = () => {
+            if (!document.fullscreenElement && isZenMode) {
+                exitFocusMode();
+            }
+        };
+        document.addEventListener("fullscreenchange", onFullscreenChange);
+        return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+    }, [isZenMode, exitFocusMode]);
+
+    return (
+        <div ref={ref} className={styles.panel_switcher_anchor} style={side === "primary" && !leftSidebarOpen ? { left: "28px" } : undefined}>
+            <button className={styles.panel_switcher_btn} onClick={() => setIsOpen(!isOpen)}>
+                <Menu size={14} />
+            </button>
+            {isOpen && (
+                <div className={dropdown.dropdown_menu} style={{ left: 0, transform: "none" }}>
+                    {SWITCHABLE_PANELS.map(({ type, icon: Icon, labelKey }) => (
+                        <button
+                            key={type}
+                            className={`${dropdown.dropdown_item} ${type === currentPanel ? dropdown.dropdown_item_active : ""}`}
+                            onClick={() => handleSelect(type)}
+                        >
+                            <Icon size={14} />
+                            <span className={dropdown.item_label}>{t(labelKey as Parameters<typeof t>[0])}</span>
+                        </button>
+                    ))}
+                    <div className={styles.panel_switcher_separator} />
+                    <button
+                        className={`${dropdown.dropdown_item} ${isEndlessScroll ? dropdown.dropdown_item_active : ""}`}
+                        onClick={() => setIsEndlessScroll(!isEndlessScroll)}
+                    >
+                        <Scroll size={14} />
+                        <span className={dropdown.item_label}>{t("endlessScroll")}</span>
+                    </button>
+                    <button
+                        className={`${dropdown.dropdown_item} ${!showComments ? dropdown.dropdown_item_active : ""}`}
+                        onClick={() => setShowComments(!showComments)}
+                    >
+                        {showComments ? <MessageSquare size={14} /> : <MessageSquareOff size={14} />}
+                        <span className={dropdown.item_label}>{t("toggleComments")}</span>
+                    </button>
+                    <button
+                        className={`${dropdown.dropdown_item} ${isZenMode ? dropdown.dropdown_item_active : ""}`}
+                        onClick={isZenMode ? exitFocusMode : enterFocusMode}
+                    >
+                        {isZenMode ? <Minimize size={14} /> : <Maximize size={14} />}
+                        <span className={dropdown.item_label}>{t("focusMode")}</span>
+                    </button>
+                </div>
+            )}
+        </div>
+    );
 };
 
 const SplitPanelContainer = ({
@@ -90,9 +204,15 @@ const SplitPanelContainer = ({
                     <div
                         key={panel}
                         className={panelClass}
-                        style={isVisible ? { order: isPrimary ? 0 : 2 } : undefined}
+                        style={isVisible ? { order: isPrimary ? 0 : 2, position: "relative" } : undefined}
                         onPointerDown={isVisible && isSplit ? () => setFocusedSide(isPrimary ? "primary" : "secondary") : undefined}
                     >
+                        {isVisible && (
+                            <PanelSwitcherMenu
+                                currentPanel={panel}
+                                side={isPrimary ? "primary" : "secondary"}
+                            />
+                        )}
                         <PanelRenderer
                             panel={panel}
                             isVisible={isVisible}
