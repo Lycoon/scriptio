@@ -8,7 +8,7 @@
  * Architecture:
  * - SceneItem: Transient data computed from parsing the screenplay.
  *   These hold position info, title, preview, and optionally an id if the scene
- *   has been persisted (scene heading has a data-scene-id attribute).
+ *   has been persisted (scene heading has a data-id attribute).
  *
  * - PersistentScene: User-editable metadata stored in Yjs.
  *   Only scenes that have been explicitly edited (synopsis, color) or created
@@ -18,7 +18,6 @@
  *   This is what gets exposed to the UI.
  */
 
-import { v4 as uuidv4 } from "uuid";
 import { getNodeData } from "./screenplay";
 import { ScreenplayElement } from "../utils/enums";
 import { Screenplay } from "../utils/types";
@@ -31,7 +30,7 @@ import { JSONContent } from "@tiptap/react";
 /**
  * Computed scene data from screenplay parsing.
  * These are transient and recalculated on every screenplay change.
- * The id is optional - only present if the scene heading has a data-scene-id attribute.
+ * The id is optional - only present if the scene heading has a data-id attribute.
  */
 export type TransientScene = {
     id?: string;
@@ -89,7 +88,7 @@ const getScenePreview = (nodes: JSONContent[], cursor: number): string => {
 /**
  * Parse the screenplay and compute scene items.
  * Scenes are identified by scene headings (ScreenplayElement.Scene).
- * If a scene heading has a data-scene-id attribute, the id is extracted.
+ * If a scene heading has a data-id attribute, the id is extracted.
  */
 export const computeSceneItems = (screenplay: Screenplay): TransientScene[] => {
     if (!screenplay) {
@@ -115,7 +114,7 @@ export const computeSceneItems = (screenplay: Screenplay): TransientScene[] => {
             }
 
             // Extract scene id from data attribute if present
-            const sceneId: string | undefined = screenplay[i].attrs?.["scene-id"];
+            const sceneId: string | undefined = screenplay[i].attrs?.["data-id"];
 
             scenes.push({
                 id: sceneId,
@@ -166,13 +165,6 @@ export const mergeScenesData = (persistentScenes: PersistentSceneMap, screenplay
 // -------------------------------- //
 //       UTILITY FUNCTIONS          //
 // -------------------------------- //
-
-/**
- * Generate a new scene id.
- */
-export const generateSceneId = (): string => {
-    return uuidv4();
-};
 
 /**
  * Create default persistent scene data.

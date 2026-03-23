@@ -27,7 +27,7 @@ import {
     createSceneBookmarkExtension,
     refreshSceneBookmarks,
 } from "@src/lib/screenplay/extensions/scene-bookmark-extension";
-import { createSceneIdDedupExtension } from "@src/lib/screenplay/extensions/scene-id-dedup-extension";
+import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
@@ -204,8 +204,8 @@ export const useDocumentEditor = (
           })
         : null;
 
-    const sceneIdDedupExtension = features.sceneIdDedup
-        ? createSceneIdDedupExtension({
+    const nodeIdDedupExtension = features.nodeIdDedup
+        ? createNodeIdDedupExtension({
               duplicatePersistentScene: (originalId: string, newId: string) => {
                   repositoryRef.current?.duplicateScene(originalId, newId);
               },
@@ -329,7 +329,7 @@ export const useDocumentEditor = (
                 ...(characterHighlightExtension ? [characterHighlightExtension] : []),
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
-                ...(sceneIdDedupExtension ? [sceneIdDedupExtension] : []),
+                ...(nodeIdDedupExtension ? [nodeIdDedupExtension] : []),
                 ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
 
