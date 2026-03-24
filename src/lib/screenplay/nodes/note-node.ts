@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ScreenplayElement } from "../../utils/enums";
-import { ALIGN_CLASSES } from "./index";
+import { ALIGN_CLASSES, generateNodeId } from "./index";
 
 export interface NoteNodeOptions {
     HTMLAttributes: Record<string, any>;
@@ -21,6 +21,11 @@ export const NoteNode = Node.create<NoteNodeOptions>({
 
     addAttributes() {
         return {
+            "data-id": {
+                default: () => generateNodeId(),
+                parseHTML: (element) => element.getAttribute("data-id") || null,
+                renderHTML: (attributes) => attributes["data-id"] ? { "data-id": attributes["data-id"] } : {},
+            },
             class: {
                 default: ScreenplayElement.Note,
                 parseHTML: (element) => element.getAttribute("class")?.split(" ")[0] || ScreenplayElement.Note,

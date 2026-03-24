@@ -431,9 +431,7 @@
         bottom: calc(100% - 1lh);
         left: 0;
         width: 100%;
-        padding-left: var(--dialogue-l-margin);
-        padding-right: var(--dialogue-r-margin);
-        text-align: center;
+        padding-left: var(--character-l-margin);
     }
 
     .page-more-overlay::after {

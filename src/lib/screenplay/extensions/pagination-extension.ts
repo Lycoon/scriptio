@@ -347,6 +347,7 @@ function buildDecorations(
     options: PaginationOptions,
 ): DecorationSet {
     const decorations: Decoration[] = [];
+    console.log(breaks);
 
     // First page top margin / header
     decorations.push(
@@ -378,6 +379,8 @@ function buildDecorations(
             key: `lp-${lastPagenum}-${lastPageFreespace}`,
         }),
     );
+
+    console.log(decorations);
 
     return DecorationSet.create(doc, decorations);
 }
@@ -574,6 +577,9 @@ const createPaginationPlugin = (extension: any) =>
 
                 // Nothing pagination-related changed
                 if (!tr.docChanged && !forceUpdate && !formatUpdate) return value;
+
+                // UUID assignment by nodeIdDedup only changes data-id attrs — no layout impact
+                if (tr.getMeta("nodeDedupId")) return value;
 
                 const fullRemeasure = forceUpdate || formatUpdate;
 

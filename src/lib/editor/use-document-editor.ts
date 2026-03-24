@@ -53,10 +53,7 @@ export interface DocumentEditorCallbacks {
  * Unified editor hook that replaces both useScriptioEditor and useTitlePageEditor.
  * Builds a Tiptap editor instance bound to the Y.XmlFragment specified in config.
  */
-export const useDocumentEditor = (
-    config: DocumentEditorConfig,
-    callbacks: DocumentEditorCallbacks,
-): Editor | null => {
+export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: DocumentEditorCallbacks): Editor | null => {
     const projectCtx = useContext(ProjectContext);
     const { user } = useUser();
     const {
@@ -158,8 +155,7 @@ export const useDocumentEditor = (
         if (!cb) return;
         const current = currentSuggestionsRef.current;
         if (suggestions.length === 0 && current.length === 0) return;
-        if (suggestions.length === current.length && suggestions.every((s, i) => s === current[i]))
-            return;
+        if (suggestions.length === current.length && suggestions.every((s, i) => s === current[i])) return;
         currentSuggestionsRef.current = suggestions;
         cb(suggestions);
     }, []);
@@ -356,9 +352,7 @@ export const useDocumentEditor = (
                     cb.setSelectedTitlePageElement?.(activeElement);
                     const anchor = editor.state.selection.$anchor;
                     if (anchor.nodeBefore) {
-                        cb.setSelectedStyles?.(
-                            getStylesFromMarks(anchor.nodeBefore.marks as any[]),
-                        );
+                        cb.setSelectedStyles?.(getStylesFromMarks(anchor.nodeBefore.marks as any[]));
                     } else {
                         cb.setSelectedStyles?.(Style.None);
                     }
@@ -440,10 +434,7 @@ export const useDocumentEditor = (
                         suggestions = suggestions
                             .filter((location) => {
                                 const upperLocation = location.toUpperCase();
-                                return (
-                                    upperLocation.startsWith(afterPrefix) &&
-                                    upperLocation !== cleanAfterPrefix
-                                );
+                                return upperLocation.startsWith(afterPrefix) && upperLocation !== cleanAfterPrefix;
                             })
                             .slice(0, 10);
                     } else {

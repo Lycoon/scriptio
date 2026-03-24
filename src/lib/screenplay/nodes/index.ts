@@ -1,3 +1,6 @@
+import { customAlphabet } from "nanoid";
+export const generateNodeId = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", 10);
+
 export { SceneNode } from "./scene-node";
 export { ActionNode } from "./action-node";
 export { CharacterNode } from "./character-node";

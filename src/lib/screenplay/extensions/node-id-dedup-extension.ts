@@ -1,6 +1,6 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { v4 as uuidv4 } from "uuid";
+import { generateNodeId } from "@src/lib/screenplay/nodes";
 import { ScreenplayElement } from "../../utils/enums";
 
 const nodeIdDedupPluginKey = new PluginKey("nodeIdDedup");
@@ -12,36 +12,14 @@ type NodeIdDedupConfig = {
 /**
  * Ensures data-id uniqueness across the document.
  *
- * Data ID: Every node receives a unique data-id. If a node lacks one, or shares
- * it with another node (due to paste or split), a new UUID is generated.
- *
- * Persistent Scene Data (Paste): When a persistent scene heading is copy-pasted, the pasted node
- * gets a new data-id. This plugin detects the duplicate and assigns a
- * fresh ID to the copy, also duplicating the persistent scene data.
+ * IDs are assigned at node creation time via each node's addAttributes default factory.
+ * This plugin only handles the duplicate case: when a node is copy-pasted, both the
+ * original and copy share the same data-id. A new ID is generated for the copy, and
+ * for persistent scene headings, the persistent scene data is duplicated as well.
  */
 export const createNodeIdDedupExtension = (config: NodeIdDedupConfig) => {
     return Extension.create({
         name: "nodeIdDedup",
-
-        addGlobalAttributes() {
-            return [
-                {
-                    types: Object.values(ScreenplayElement),
-                    attributes: {
-                        "data-id": {
-                            default: null,
-                            parseHTML: (element) => element.getAttribute("data-id") || element.getAttribute("scene-id") || element.getAttribute("data-scene-id") || null,
-                            renderHTML: (attributes) => {
-                                if (!attributes["data-id"]) {
-                                    return {};
-                                }
-                                return { "data-id": attributes["data-id"] };
-                            },
-                        },
-                    },
-                },
-            ];
-        },
 
         addProseMirrorPlugins() {
             return [
@@ -60,32 +38,23 @@ export const createNodeIdDedupExtension = (config: NodeIdDedupConfig) => {
                         const seenDataIds = new Set<string>();
 
                         newState.doc.forEach((node, pos) => {
-                            if (node.attrs["data-id"] === undefined) {
-                                return;
-                            }
+                            const dataId: string | null = node.attrs["data-id"] ?? null;
+                            if (dataId === null) return;
 
-                            let newAttrs = { ...node.attrs };
-                            let nodeModified = false;
+                            if (seenDataIds.has(dataId)) {
+                                const newId = generateNodeId();
+                                tr.setNodeMarkup(pos, undefined, { ...node.attrs, "data-id": newId });
+                                modified = true;
 
-                            const dataId = newAttrs["data-id"];
-                            if (!dataId || seenDataIds.has(dataId)) {
-                                const newId = uuidv4();
-                                newAttrs["data-id"] = newId;
-                                nodeModified = true;
-
-                                if (hasPaste && node.type.name === ScreenplayElement.Scene && dataId) {
+                                if (hasPaste && node.type.name === ScreenplayElement.Scene) {
                                     config.duplicatePersistentScene(dataId, newId);
                                 }
-                            }
-                            seenDataIds.add(newAttrs["data-id"]);
-
-                            if (nodeModified) {
-                                tr.setNodeMarkup(pos, undefined, newAttrs);
-                                modified = true;
+                            } else {
+                                seenDataIds.add(dataId);
                             }
                         });
 
-                        return modified ? tr : null;
+                        return modified ? tr.setMeta("nodeDedupId", true) : null;
                     },
                 }),
             ];

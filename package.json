@@ -57,6 +57,7 @@
         "jsonwebtoken": "^9.0.3",
         "jspdf": "^4.2.0",
         "lucide-react": "^0.562.0",
+        "nanoid": "^5.1.7",
         "next": "^16.1.6",
         "next-intl": "^4.8.3",
         "next-themes": "^0.2.0",
