@@ -17,6 +17,7 @@ import {
     ArrowDownRight,
     BookPlus,
     ClipboardPaste,
+    Columns2,
     Highlighter,
     Loader2,
     LucideIcon,
@@ -28,6 +29,7 @@ import {
     Trash2,
     UserRound,
 } from "lucide-react";
+import { makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
 
 /* ==================== */
 /*     Context menu     */
@@ -48,6 +50,7 @@ export const enum ContextMenuType {
     Suggestion,
     EditorSelection,
     Spellcheck,
+    DualDialogue,
 }
 
 type ContextMenuItemProps = {
@@ -288,6 +291,28 @@ const SpellcheckMenu = (props: any) => {
     );
 };
 
+/* ============================ */
+/*  Dual Dialogue context menu  */
+/* ============================ */
+
+const DualDialogueMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
+    const { editor } = useContext(ProjectContext);
+    const { updateContextMenu } = useContext(UserContext);
+    const { pos } = props.props as { pos: number };
+
+    return (
+        <ContextMenuItem
+            text={t("makeDualDialogue")}
+            icon={Columns2}
+            action={() => {
+                if (editor) makeDualDialogue(editor, pos);
+                updateContextMenu(undefined);
+            }}
+        />
+    );
+};
+
 const renderContextMenu = (contextMenu: ContextMenuProps) => {
     switch (contextMenu.type) {
         case ContextMenuType.SceneList:
@@ -304,6 +329,8 @@ const renderContextMenu = (contextMenu: ContextMenuProps) => {
             return <EditorSelectionMenu props={contextMenu.typeSpecificProps} />;
         case ContextMenuType.Spellcheck:
             return <SpellcheckMenu props={contextMenu.typeSpecificProps} />;
+        case ContextMenuType.DualDialogue:
+            return <DualDialogueMenu props={contextMenu.typeSpecificProps} />;
     }
 };
 

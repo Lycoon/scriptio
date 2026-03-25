@@ -313,7 +313,8 @@
         "addComment": "添加评论",
         "searchOnWeb": "在网上搜索",
         "noSuggestions": "无建议",
-        "addToDictionary": "添加到词典"
+        "addToDictionary": "添加到词典",
+        "makeDualDialogue": "Make dual dialogue"
     },
     "popup": {
         "character": {

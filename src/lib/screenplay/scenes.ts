@@ -23,6 +23,17 @@ import { ScreenplayElement } from "../utils/enums";
 import { Screenplay } from "../utils/types";
 import { JSONContent } from "@tiptap/react";
 
+/**
+ * Recursively compute the ProseMirror nodeSize of a JSONContent node.
+ * For leaf nodes (text): text.length + 2 (opening + closing token).
+ * For branch nodes: 2 + sum of children sizes.
+ */
+const getJSONNodeSize = (node: JSONContent): number => {
+    if (node.text !== undefined) return (node.text?.length ?? 0) + 2;
+    const childrenSize = (node.content ?? []).reduce((acc, child) => acc + getJSONNodeSize(child), 0);
+    return 2 + childrenSize;
+};
+
 // -------------------------------- //
 //          TYPE DEFINITIONS        //
 // -------------------------------- //
@@ -104,6 +115,12 @@ export const computeSceneItems = (screenplay: Screenplay): TransientScene[] => {
 
         if (node.type === ScreenplayElement.None) {
             cursor += 2; // empty screenplay element count for new line
+            continue;
+        }
+
+        // Container node: use recursive size calculation to keep cursor accurate.
+        if (screenplay[i].type === ScreenplayElement.DualDialogue) {
+            cursor += getJSONNodeSize(screenplay[i]);
             continue;
         }
 

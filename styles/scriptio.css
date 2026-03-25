@@ -51,7 +51,8 @@
        Critical: block + width:100% ensures consistent sizing between empty 
        and non-empty nodes, preventing pagination flickering and infinite loops.
        Scoped with > to avoid affecting pagination header/footer elements */
-    > p {
+    > p,
+    .dual_dialogue_column p {
         display: block;
         width: 100%;
         color: var(--editor-text);
@@ -67,9 +68,10 @@
         box-sizing: border-box;
     }
 
-    /* Spans inside paragraphs - NO display/width overrides 
+    /* Spans inside paragraphs - NO display/width overrides
        These must remain inline (default) to not break text flow */
-    > p span {
+    > p span,
+    .dual_dialogue_column p span {
         color: var(--editor-text);
         font-family: var(--font-screenplay);
         font-size: var(--font-size);
@@ -171,8 +173,12 @@
     }
 
     /* Double margin-top for scene headings */
-    &.scene-heading-spacing-1\.5 .scene { margin-top: 1.5lh; }
-    &.scene-heading-spacing-2 .scene { margin-top: 2lh; }
+    &.scene-heading-spacing-1\.5 .scene {
+        margin-top: 1.5lh;
+    }
+    &.scene-heading-spacing-2 .scene {
+        margin-top: 2lh;
+    }
 
     /* Dialogue */
     .dialogue {
@@ -371,7 +377,6 @@
         text-decoration: underline wavy;
         text-decoration-color: #ef4444;
         text-decoration-skip-ink: none;
-        text-underline-offset: 2px;
     }
 
     /* Comment highlighting */
@@ -448,6 +453,52 @@
 
     .page-contd-overlay::after {
         content: " " var(--contd-label, "(CONT'D)");
+    }
+
+    /* ============================== */
+    /*        DUAL DIALOGUE           */
+    /* ============================== */
+
+    .dual_dialogue {
+        display: flex;
+        flex-direction: row;
+        padding: 0 var(--page-margin-right) 0 var(--page-margin-left);
+        gap: 8px;
+    }
+
+    .dual_dialogue_column {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* Each column occupies ~half the content area.
+       --dd-*-l-margin values are relative to the column's left edge (after page padding is applied on the container). */
+    .dual_dialogue_column p {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .dual_dialogue_column .character {
+        padding-left: var(--dd-character-l-margin, 1.2in) !important;
+        padding-right: 0 !important;
+    }
+
+    .dual_dialogue_column .dialogue {
+        padding-left: var(--dd-dialogue-l-margin, 0in) !important;
+        padding-right: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    .dual_dialogue_column .parenthetical {
+        padding-left: var(--dd-parenthetical-l-margin, 0.8in) !important;
+        padding-right: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    /* The ::before "(" is absolutely positioned using the global --parenthetical-l-margin.
+       Inside a column, override it with the column-local variable so it aligns with the text. */
+    .dual_dialogue_column .parenthetical::before {
+        left: var(--dd-parenthetical-l-margin, 0.8in);
     }
 }
 

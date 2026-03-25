@@ -313,7 +313,8 @@
         "addComment": "コメントを追加",
         "searchOnWeb": "ウェブで検索",
         "noSuggestions": "候補なし",
-        "addToDictionary": "辞書に追加"
+        "addToDictionary": "辞書に追加",
+        "makeDualDialogue": "Make dual dialogue"
     },
     "popup": {
         "character": {

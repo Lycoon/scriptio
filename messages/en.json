@@ -313,7 +313,8 @@
         "addComment": "Add Comment",
         "searchOnWeb": "Search on web",
         "noSuggestions": "No suggestions",
-        "addToDictionary": "Add to Dictionary"
+        "addToDictionary": "Add to Dictionary",
+        "makeDualDialogue": "Make dual dialogue"
     },
     "popup": {
         "character": {

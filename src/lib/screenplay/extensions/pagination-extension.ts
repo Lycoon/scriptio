@@ -63,6 +63,8 @@ const BREAK_LOGIC: Partial<Record<ScreenplayElement, BreakLogic>> = {
     [ScreenplayElement.Section]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
     [ScreenplayElement.Note]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
     [ScreenplayElement.None]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
+    // Dual dialogue is an indivisible block — always moves whole to the next page.
+    [ScreenplayElement.DualDialogue]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
 };
 
 export interface PageSize {

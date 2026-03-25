@@ -313,7 +313,8 @@
         "addComment": "댓글 추가",
         "searchOnWeb": "웹에서 검색",
         "noSuggestions": "제안 없음",
-        "addToDictionary": "사전에 추가"
+        "addToDictionary": "사전에 추가",
+        "makeDualDialogue": "Make dual dialogue"
     },
     "popup": {
         "character": {
