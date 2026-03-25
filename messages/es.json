@@ -8,7 +8,9 @@
         "reconnecting": "Reconectando...",
         "endlessScroll": "Desplazamiento infinito",
         "toggleComments": "Mostrar/ocultar comentarios",
-        "focusMode": "Modo concentración"
+        "focusMode": "Modo concentración",
+        "splitPanel": "Dividir panel",
+        "unsplitPanel": "Unir panel"
     },
     "common": {
         "save": "Guardar cambios",
@@ -304,6 +306,7 @@
     "contextMenu": {
         "goToScene": "Ir a la escena",
         "edit": "Editar",
+        "copy": "Copiar",
         "cut": "Cortar",
         "selectInEditor": "Seleccionar en el editor",
         "remove": "Eliminar",

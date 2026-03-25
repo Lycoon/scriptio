@@ -150,6 +150,13 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 continue;
             }
 
+            // ── Dual dialogue container ──
+            if (el.classList.contains("dual_dialogue")) {
+                const ddLines = this.collectDualDialogueLines(el, options, yOffset);
+                allLines.push(...ddLines);
+                continue;
+            }
+
             // Skip all non-<p> elements (pagination-first-page, pagination-last-page, etc.)
             if (el.tagName !== "P") continue;
 
@@ -228,6 +235,60 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         }
 
         return allLines;
+    }
+
+    /**
+     * Collect `VisualLine`s from a `dual_dialogue` container.
+     *
+     * Each column is a flex child rendered side by side. The browser Range API
+     * already returns absolute X positions for characters in both columns, so
+     * after subtracting `pageLeftPx` in the worker they land at the correct
+     * PDF X positions without any special logic.
+     *
+     * Lines from both columns are merged and sorted by Y so that lines at the
+     * same vertical position (same row across both columns) are contiguous.
+     */
+    private collectDualDialogueLines(
+        dualDialogueEl: HTMLElement,
+        options: PDFExportOptions,
+        yOffset: number,
+    ): VisualLine[] {
+        const columnLines: VisualLine[] = [];
+        const elementClasses = ["character", "dialogue", "parenthetical"];
+
+        const columns = dualDialogueEl.querySelectorAll(":scope > .dual_dialogue_column");
+        for (let ci = 0; ci < columns.length; ci++) {
+            const column = columns[ci] as HTMLElement;
+
+            for (let pi = 0; pi < column.children.length; pi++) {
+                const p = column.children[pi] as HTMLElement;
+                if (p.tagName !== "P") continue;
+
+                let nodeType: string | undefined;
+                for (const cls of elementClasses) {
+                    if (p.classList.contains(cls)) { nodeType = cls; break; }
+                }
+
+                const paragraphLines = this.collectParagraphLines(p, nodeType);
+                if (paragraphLines.length > 0) {
+                    if (yOffset > 0) {
+                        for (const line of paragraphLines) line.y -= yOffset;
+                    }
+                    this.injectPseudoContent(p, paragraphLines, options);
+                    columnLines.push(...paragraphLines);
+                } else {
+                    // Empty paragraph — emit a spacer line so Y advances correctly.
+                    const rect = p.getBoundingClientRect();
+                    if (rect.height > 0) {
+                        columnLines.push({ runs: [], y: rect.top - yOffset, type: nodeType });
+                    }
+                }
+            }
+        }
+
+        // Interleave left and right column lines by their visual Y position.
+        columnLines.sort((a, b) => a.y - b.y);
+        return columnLines;
     }
 
     /**
@@ -483,6 +544,13 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
             const child = referenceEl.children[i] as HTMLElement;
             if (child?.tagName === "P") {
                 return child.getBoundingClientRect().left;
+            }
+            // The first block may be a dual_dialogue; use its left column's first <p>
+            // which starts at the same left edge as a regular full-width <p>.
+            if (child?.classList.contains("dual_dialogue")) {
+                const firstCol = child.querySelector(":scope > .dual_dialogue_column") as HTMLElement | null;
+                const firstP = firstCol?.querySelector("p") as HTMLElement | null;
+                if (firstP) return firstP.getBoundingClientRect().left;
             }
         }
         return 0;

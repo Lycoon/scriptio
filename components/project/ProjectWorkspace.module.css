@@ -16,9 +16,10 @@
     min-height: 0;
 }
 
-.sidebar_toggle {
-    position: absolute;
-    top: 8px;
+.right_sidebar_toggle {
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 8px;
     z-index: 5;
     width: 20px;
     height: 36px;
@@ -32,17 +33,7 @@
     opacity: 0.6;
 }
 
-.sidebar_toggle:hover {
+.right_sidebar_toggle:hover {
     opacity: 1;
     background-color: var(--tertiary-hover);
-}
-
-.left_sidebar_toggle {
-    composes: sidebar_toggle;
-    left: 0;
-}
-
-.right_sidebar_toggle {
-    composes: sidebar_toggle;
-    right: 0;
 }

@@ -8,7 +8,9 @@
         "reconnecting": "正在重新连接...",
         "endlessScroll": "无限滚动",
         "toggleComments": "切换评论显示",
-        "focusMode": "专注模式"
+        "focusMode": "专注模式",
+        "splitPanel": "分割面板",
+        "unsplitPanel": "关闭分割面板"
     },
     "common": {
         "save": "保存更改",
@@ -304,6 +306,7 @@
     "contextMenu": {
         "goToScene": "转到场景",
         "edit": "编辑",
+        "copy": "复制",
         "cut": "剪切",
         "selectInEditor": "在编辑器中选择",
         "remove": "移除",

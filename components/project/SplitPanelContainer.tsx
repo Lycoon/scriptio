@@ -10,7 +10,7 @@ import BoardCanvas from "@components/board/BoardCanvas";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
-import { Clapperboard, FileText, LayoutDashboard, Maximize, Menu, MessageSquare, MessageSquareOff, Minimize, Scroll } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clapperboard, FileText, LayoutDashboard, Maximize, Menu, MessageSquare, MessageSquareOff, Minimize, PanelRight, PanelRightClose, Scroll } from "lucide-react";
 import styles from "./SplitPanelContainer.module.css";
 import dropdown from "@components/navbar/ViewOptionsDropdown.module.css";
 
@@ -58,7 +58,19 @@ const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey:
 const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; side: "primary" | "secondary" }) => {
     const t = useTranslations("navbar");
     const { isZenMode, updateIsZenMode } = useContext(UserContext);
-    const { setSidePanel, isEndlessScroll, setIsEndlessScroll, showComments, setShowComments, leftSidebarOpen, setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const { setSidePanel, isSplit, primaryPanel, setSecondaryPanel, isEndlessScroll, setIsEndlessScroll, showComments, setShowComments, leftSidebarOpen, setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
+
+    const handleSplitToggle = useCallback(() => {
+        if (isSplit) {
+            setSecondaryPanel(null);
+        } else {
+            const other: PanelType =
+                primaryPanel === "screenplay" ? "board"
+                : primaryPanel === "title" ? "screenplay"
+                : "screenplay";
+            setSecondaryPanel(other);
+        }
+    }, [isSplit, primaryPanel, setSecondaryPanel]);
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const sidebarsBeforeFocus = useRef<{ left: boolean; right: boolean } | null>(null);
@@ -115,12 +127,25 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
     }, [isZenMode, exitFocusMode]);
 
     return (
-        <div ref={ref} className={styles.panel_switcher_anchor} style={side === "primary" && !leftSidebarOpen ? { left: "28px" } : undefined}>
+        <div ref={ref} className={styles.panel_switcher_anchor}>
+            {side === "primary" && (
+                <button className={styles.panel_switcher_btn} onClick={() => setLeftSidebarOpen((prev) => !prev)}>
+                    {leftSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+                </button>
+            )}
             <button className={styles.panel_switcher_btn} onClick={() => setIsOpen(!isOpen)}>
                 <Menu size={14} />
             </button>
             {isOpen && (
                 <div className={dropdown.dropdown_menu} style={{ left: 0, transform: "none" }}>
+                    <button
+                        className={`${dropdown.dropdown_item} ${isSplit ? dropdown.dropdown_item_active : ""}`}
+                        onClick={() => { handleSplitToggle(); setIsOpen(false); }}
+                    >
+                        {isSplit ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
+                        <span className={dropdown.item_label}>{isSplit ? t("unsplitPanel") : t("splitPanel")}</span>
+                    </button>
+                    <div className={styles.panel_switcher_separator} />
                     {SWITCHABLE_PANELS.map(({ type, icon: Icon, labelKey }) => (
                         <button
                             key={type}

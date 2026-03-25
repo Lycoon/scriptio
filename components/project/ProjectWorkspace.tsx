@@ -12,7 +12,7 @@ import styles from "./ProjectWorkspace.module.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const ProjectWorkspace = () => {
-    const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const { rightSidebarOpen, setRightSidebarOpen } = useViewContext();
 
     const [suggestions, updateSuggestions] = useState<string[]>([]);
     const [suggestionData, updateSuggestionData] = useState<SuggestionData>({
@@ -31,14 +31,6 @@ const ProjectWorkspace = () => {
             {/* Left sidebar */}
             <EditorSidebarNavigation />
 
-            {/* Sidebar toggles - fixed at workspace edges */}
-            <div className={styles.left_sidebar_toggle} onClick={() => setLeftSidebarOpen((prev) => !prev)}>
-                {leftSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-            </div>
-            <div className={styles.right_sidebar_toggle} onClick={() => setRightSidebarOpen((prev) => !prev)}>
-                {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-            </div>
-
             {/* Panel container */}
             <div className={styles.panel_area}>
                 <SplitPanelContainer
@@ -47,6 +39,11 @@ const ProjectWorkspace = () => {
                     suggestionData={suggestionData}
                     updateSuggestionData={updateSuggestionData}
                 />
+            </div>
+
+            {/* Right sidebar toggle */}
+            <div className={styles.right_sidebar_toggle} onClick={() => setRightSidebarOpen((prev) => !prev)}>
+                {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </div>
 
             {/* Right sidebar */}

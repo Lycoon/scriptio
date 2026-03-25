@@ -398,9 +398,11 @@ const getHTMLHeight = (
     editorDom: HTMLElement,
     nodeType: string,
     options: PaginationOptions,
+    contentSize?: number,
 ): number => {
     const textContent = domNode.textContent || "";
-    const cacheKey = `${nodeType}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${textContent}`;
+    const sizePart = contentSize != null ? `${contentSize}:` : "";
+    const cacheKey = `${nodeType}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${sizePart}${textContent}`;
 
     if (heightCache.has(cacheKey)) {
         return heightCache.get(cacheKey)!;
@@ -656,13 +658,13 @@ const createPaginationPlugin = (extension: any) =>
                     // unchanged nodes. Cache misses (new/edited content) trigger serialization.
                     // element is hoisted so the split block can reuse it without a second serialize.
                     const textContent = node.textContent || "";
-                    const cacheKey = `${node.type.name}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${textContent}`;
+                    const cacheKey = `${node.type.name}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${node.content.size}:${textContent}`;
                     let height = heightCache.get(cacheKey) ?? null;
                     let element: HTMLElement | null = null;
 
                     if (height === null) {
                         element = serializer.serializeNode(node) as HTMLElement;
-                        height = getHTMLHeight(element, editorDOM, node.type.name, options);
+                        height = getHTMLHeight(element, editorDOM, node.type.name, options, node.content.size);
                     }
 
                     if (height == null) continue;

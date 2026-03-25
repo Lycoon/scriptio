@@ -3,7 +3,7 @@
 import { useContext, useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { UserContext } from "@src/context/UserContext";
-import { useViewContext } from "@src/context/ViewContext";
+import { PanelType, useViewContext } from "@src/context/ViewContext";
 import {
     ChevronDown,
     Scroll,
@@ -11,7 +11,8 @@ import {
     MessageSquareOff,
     Maximize,
     Minimize,
-    SlidersHorizontal,
+    PanelRight,
+    PanelRightClose,
     Eye,
 } from "lucide-react";
 
@@ -27,7 +28,22 @@ const ViewOptionsDropdown = () => {
         setShowComments,
         setLeftSidebarOpen,
         setRightSidebarOpen,
+        isSplit,
+        primaryPanel,
+        setSecondaryPanel,
     } = useViewContext();
+
+    const handleSplitToggle = useCallback(() => {
+        if (isSplit) {
+            setSecondaryPanel(null);
+        } else {
+            const other: PanelType =
+                primaryPanel === "screenplay" ? "board"
+                : primaryPanel === "title" ? "screenplay"
+                : "screenplay";
+            setSecondaryPanel(other);
+        }
+    }, [isSplit, primaryPanel, setSecondaryPanel]);
 
     const [isOpen, setIsOpen] = useState(false);
     const sidebarsBeforeFocus = useRef<{ left: boolean; right: boolean } | null>(null);
@@ -118,6 +134,13 @@ const ViewOptionsDropdown = () => {
                     >
                         {isZenMode ? <Minimize size={16} /> : <Maximize size={16} />}
                         <span className={styles.item_label}>{t("focusMode")}</span>
+                    </button>
+                    <button
+                        className={`${styles.dropdown_item} ${isSplit ? styles.dropdown_item_active : ""}`}
+                        onClick={handleSplitToggle}
+                    >
+                        {isSplit ? <PanelRightClose size={16} /> : <PanelRight size={16} />}
+                        <span className={styles.item_label}>{isSplit ? t("unsplitPanel") : t("splitPanel")}</span>
                     </button>
                 </div>
             )}

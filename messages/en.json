@@ -8,7 +8,9 @@
         "reconnecting": "Reconnecting...",
         "endlessScroll": "Endless Scroll",
         "toggleComments": "Toggle Comments",
-        "focusMode": "Focus Mode"
+        "focusMode": "Focus Mode",
+        "splitPanel": "Split Panel",
+        "unsplitPanel": "Unsplit Panel"
     },
     "common": {
         "save": "Save",
@@ -304,6 +306,7 @@
     "contextMenu": {
         "goToScene": "Go to scene",
         "edit": "Edit",
+        "copy": "Copy",
         "cut": "Cut",
         "selectInEditor": "Select in editor",
         "remove": "Remove",

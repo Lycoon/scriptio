@@ -8,7 +8,9 @@
         "reconnecting": "再接続中...",
         "endlessScroll": "エンドレススクロール",
         "toggleComments": "コメントの表示切替",
-        "focusMode": "集中モード"
+        "focusMode": "集中モード",
+        "splitPanel": "パネルを分割",
+        "unsplitPanel": "分割を解除"
     },
     "common": {
         "save": "変更を保存",
@@ -304,6 +306,7 @@
     "contextMenu": {
         "goToScene": "シーンへ移動",
         "edit": "編集",
+        "copy": "コピー",
         "cut": "切り取り",
         "selectInEditor": "エディタで選択",
         "remove": "削除",

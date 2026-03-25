@@ -8,7 +8,9 @@
         "reconnecting": "Reconnexion...",
         "endlessScroll": "Défilement infini",
         "toggleComments": "Afficher/masquer les commentaires",
-        "focusMode": "Mode concentration"
+        "focusMode": "Mode concentration",
+        "splitPanel": "Diviser le panneau",
+        "unsplitPanel": "Fermer le panneau divisé"
     },
     "common": {
         "save": "Enregistrer",
@@ -304,6 +306,7 @@
     "contextMenu": {
         "goToScene": "Aller à la scène",
         "edit": "Modifier",
+        "copy": "Copier",
         "cut": "Couper",
         "selectInEditor": "Sélectionner dans l'éditeur",
         "remove": "Supprimer",

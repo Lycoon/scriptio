@@ -8,7 +8,7 @@ import { useCookieUser, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import { redirectHome } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
-import { PanelType, useViewContext } from "@src/context/ViewContext";
+import { useViewContext } from "@src/context/ViewContext";
 import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
@@ -17,8 +17,6 @@ import {
     BarChart2,
     CircleArrowLeft,
     CircleCheckBig,
-    PanelRight,
-    PanelRightClose,
     Settings,
     WifiOff,
     WifiSync,
@@ -121,20 +119,6 @@ const ProjectNavbar = () => {
         [],
     );
 
-    const handleSplitToggle = () => {
-        if (viewContext.isSplit) {
-            viewContext.setSecondaryPanel(null);
-        } else {
-            const other: PanelType =
-                viewContext.primaryPanel === "screenplay"
-                    ? "board"
-                    : viewContext.primaryPanel === "title"
-                      ? "screenplay"
-                      : "screenplay";
-            viewContext.setSecondaryPanel(other);
-        }
-    };
-
     // Load project title - from membership or local storage
     useEffect(() => {
         if (membership && !isLocalEdit.current) {
@@ -198,17 +182,6 @@ const ProjectNavbar = () => {
                                     value={projectTitle}
                                 />
                             </div>
-                        </div>
-                        <div
-                            className={`${navBtn.button} ${viewContext.isSplit ? navBtn.active : ""}`}
-                            onClick={handleSplitToggle}
-                            style={{ height: "100%", paddingInline: "10px", gap: "12px" }}
-                        >
-                            {viewContext.isSplit ? (
-                                <PanelRightClose size={18} />
-                            ) : (
-                                <PanelRight size={18} />
-                            )}
                         </div>
                     </div>
                 )}

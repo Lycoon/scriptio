@@ -417,7 +417,6 @@ const DocumentEditorPanel = ({
             }
 
             const { from, to } = editor.state.selection;
-            if (from === to) return;
 
             e.preventDefault();
 
@@ -469,7 +468,7 @@ const DocumentEditorPanel = ({
             >
                 <div className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}>
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
-                    <div onContextMenu={config.features.comments || config.features.spellcheck ? onEditorContextMenu : undefined}>
+                    <div onContextMenu={onEditorContextMenu}>
                         <EditorContent editor={editor} spellCheck={false} />
                     </div>
                 </div>

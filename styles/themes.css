@@ -35,6 +35,8 @@ html.light {
     --editor-sidebar: #ffffff;
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #ffffff;
+    --context-menu-item-hover: #f0f4ff;
     --editor-style-bg: #ffffff;
     --editor-style-bg-hover: #f1f5f9;
     --editor-style-bg-active: #f1f5f9;
@@ -78,6 +80,8 @@ html.dark {
     --editor-sidebar: #272727;
     --editor-sidebar-list: #3c3c3c;
     --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #272727;
+    --context-menu-item-hover: #363636;
     --editor-style-bg: #1d1d1d;
     --editor-style-bg-hover: #3c3c3c;
     --editor-style-bg-active: #5d5d5d;
@@ -125,6 +129,8 @@ html.latte {
     --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #fff8e9;
+    --context-menu-item-hover: #fffef8;
     --editor-style-bg: var(--primary);
     --editor-style-bg-hover: var(--primary-hover);
     --editor-style-bg-active: var(--primary-hover);
@@ -168,6 +174,8 @@ html.wonka {
     --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #2c1e1a;
+    --context-menu-item-hover: #3d2b24;
     --editor-style-bg: var(--primary);
     --editor-style-bg-hover: var(--primary-hover);
     --editor-style-bg-active: var(--primary-hover);
@@ -211,6 +219,8 @@ html.mint {
     --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #ecfdec;
+    --context-menu-item-hover: #f5fff8;
     --editor-style-bg: var(--primary);
     --editor-style-bg-hover: var(--primary-hover);
     --editor-style-bg-active: var(--primary-hover);
@@ -254,6 +264,8 @@ html.blossom {
     --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #fff6fb;
+    --context-menu-item-hover: #fffcff;
     --editor-style-bg: var(--primary);
     --editor-style-bg-hover: var(--primary-hover);
     --editor-style-bg-active: var(--primary-hover);

@@ -23,16 +23,27 @@ const collectBlock = (
     const nodes: ProseMirrorNode[] = [first];
     i++;
 
-    // Consume optional parentheticals
+    // Consume optional leading parentheticals
     while (i < count && doc.child(i).attrs.class === ScreenplayElement.Parenthetical) {
         nodes.push(doc.child(i));
         i++;
     }
 
-    // Require a dialogue
+    // Require at least one dialogue
     if (i >= count || doc.child(i).attrs.class !== ScreenplayElement.Dialogue) return null;
     nodes.push(doc.child(i));
     i++;
+
+    // Consume any additional parenthetical/dialogue pairs
+    while (i < count) {
+        const cls = doc.child(i).attrs.class;
+        if (cls === ScreenplayElement.Parenthetical || cls === ScreenplayElement.Dialogue) {
+            nodes.push(doc.child(i));
+            i++;
+        } else {
+            break;
+        }
+    }
 
     return { nodes, nextIndex: i };
 };

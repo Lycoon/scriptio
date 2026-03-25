@@ -8,7 +8,9 @@
         "reconnecting": "재연결 중...",
         "endlessScroll": "무한 스크롤",
         "toggleComments": "댓글 표시/숨기기",
-        "focusMode": "집중 모드"
+        "focusMode": "집중 모드",
+        "splitPanel": "패널 분할",
+        "unsplitPanel": "분할 해제"
     },
     "common": {
         "save": "변경사항 저장",
@@ -304,6 +306,7 @@
     "contextMenu": {
         "goToScene": "장면으로 이동",
         "edit": "편집",
+        "copy": "복사",
         "cut": "잘라내기",
         "selectInEditor": "에디터에서 선택",
         "remove": "삭제",
