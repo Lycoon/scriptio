@@ -17,9 +17,9 @@
 }
 
 .right_sidebar_toggle {
-    flex-shrink: 0;
-    align-self: flex-start;
-    margin-top: 8px;
+    position: absolute;
+    top: 8px;
+    right: 30px;
     z-index: 5;
     width: 20px;
     height: 36px;

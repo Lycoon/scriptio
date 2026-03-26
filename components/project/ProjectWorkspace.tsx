@@ -39,11 +39,11 @@ const ProjectWorkspace = () => {
                     suggestionData={suggestionData}
                     updateSuggestionData={updateSuggestionData}
                 />
-            </div>
 
-            {/* Right sidebar toggle */}
-            <div className={styles.right_sidebar_toggle} onClick={() => setRightSidebarOpen((prev) => !prev)}>
-                {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                {/* Right sidebar toggle */}
+                <div className={styles.right_sidebar_toggle} onClick={() => setRightSidebarOpen((prev) => !prev)}>
+                    {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                </div>
             </div>
 
             {/* Right sidebar */}
