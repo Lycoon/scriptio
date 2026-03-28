@@ -31,7 +31,7 @@ const HomeNavbar = () => {
 
             {/* Right side - settings */}
             <div className={navbar.right_btns}>
-                <div className={navBtn.button} onClick={() => openDashboard("Profile")} style={{ height: "100%", paddingInline: "10px", gap: "12px" }}>
+                <div className={navBtn.button} onClick={() => openDashboard("Profile")}>
                     <Settings size={18} />
                 </div>
             </div>

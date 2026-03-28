@@ -7,10 +7,10 @@
         "noConnection": "Brak połączenia",
         "reconnecting": "Łączenie...",
         "endlessScroll": "Nieskończone przewijanie",
-        "toggleComments": "Przełącz komentarze",
+        "toggleComments": "Pokaż/ukryj komentarze",
         "focusMode": "Tryb skupienia",
         "splitPanel": "Podziel panel",
-        "unsplitPanel": "Połącz panel"
+        "unsplitPanel": "Zamknij panel"
     },
     "common": {
         "save": "Zapisz zmiany",
@@ -25,32 +25,32 @@
     "appearance": {
         "theme": "Motyw",
         "themeHelp": {
-            "dark": "Ciemny motyw o niskim olśnieniu, stworzony dla nocnych marków i późnonocnej koncentracji.",
-            "light": "Jasny, przewiewny motyw, naturalny i komfortowy w ciągu dnia.",
-            "latte": "Miękki, kremowy motyw łączący ciepło z czytelnością.",
-            "wonka": "Aksamitny, kakaowy motyw łączący głęboki luksus z komfortem dla oczu.",
-            "mint": "Orzeźwiający, miętowy motyw łączący botaniczny spokój z wizualną równowagą.",
-            "blossom": "Delikatny, kwiatowy motyw łączący ciepło płatków z miękkością dla oczu."
+            "dark": "Przytulny, ciemny motyw, idealny dla nocnych marków.",
+            "light": "Jasny i przejrzysty motyw, naturalny i wygodny w ciągu dnia.",
+            "latte": "Delikatny kremowy motyw, łączący ciepło z czytelnością.",
+            "wonka": "Aksamitny czekoladowy motyw, łączący luksus z komfortem wizualnym.",
+            "mint": "Świeży miętowy motyw, łączący spokój z równowagą wizualną.",
+            "blossom": "Delikatny kwiatowy motyw, łączący miękkość płatków z komfortem wizualnym."
         },
         "editor": "Edytor",
         "themedEditor": "Edytor z motywem",
-        "themedEditorDesc": "Użyj kolorów motywu dla tła i tekstu edytora"
+        "themedEditorDesc": "Używaj kolorów motywu dla tła i tekstu w edytorze"
     },
     "keybinds": {
         "screenplayElements": "Elementy scenariusza",
-        "typing": "Wpisz… (Esc aby anulować)",
-        "notSet": "Nieustawiony",
-        "modifiersOnly": "Tylko modyfikatory — naciśnij też zwykły klawisz",
-        "defaultPrefix": "Domyślny: {combo}",
+        "typing": "Wpisz… (Esc, aby anulować)",
+        "notSet": "Nie ustawiono",
+        "modifiersOnly": "Tylko modyfikatory — naciśnij zwykły klawisz",
+        "defaultPrefix": "Domyślnie: {combo}",
         "reset": "Resetuj",
-        "resetTitle": "Wyczyść skrót użytkownika",
+        "resetTitle": "Wyczyść niestandardowe przypisanie",
         "resetDefaults": "Przywróć domyślne",
         "save": "Zapisz zmiany"
     },
     "language": {
         "label": "Język wyświetlania",
         "helpText": "Wybierz język używany w całej aplikacji.",
-        "spellcheckLabel": "Sprawdzanie pisowni",
+        "spellcheckLabel": "Korekta pisowni",
         "spellcheckHelpText": "Pobierz słownik do sprawdzania pisowni w edytorze.",
         "spellcheckNone": "Wyłączone"
     },
@@ -77,35 +77,35 @@
     },
     "dangerZone": {
         "transferOwnership": "Przekaż własność",
-        "transferDesc": "Przekaż rolę właściciela innemu użytkownikowi. Otrzymasz rolę edytora.",
+        "transferDesc": "Przekaż rolę właściciela innemu użytkownikowi. Twoja rola zmieni się na edytora.",
         "transferBtn": "Przekaż",
         "transferPrompt": "Wprowadź adres e-mail nowego właściciela:",
         "deleteProject": "Usuń projekt",
-        "deleteProjectDesc": "Po usunięciu projektu nie ma możliwości jego przywrócenia. Upewnij się przed kontynuacją.",
+        "deleteProjectDesc": "Po usunięciu projektu nie ma odwrotu. Upewnij się, że tego chcesz.",
         "deleteBtn": "Usuń",
         "modalTitle": "Usuń projekt",
-        "modalDesc": "Ta operacja jest trwała i nieodwracalna. Wszystkie dane powiązane z tym projektem zostaną utracone.",
+        "modalDesc": "Ta akcja jest trwała i nie można jej cofnąć. Wszystkie dane powiązane z tym projektem zostaną utracone.",
         "deleting": "Usuwanie...",
         "confirmDeleteBtn": "Usuń projekt"
     },
     "profile": {
         "email": "E-mail",
         "username": "Nazwa użytkownika",
-        "usernamePlaceholder": "Wprowadź swoją nazwę wyświetlaną...",
-        "usernameHelp": "Ta nazwa będzie widoczna dla współpracowników podczas pracy nad wspólnymi projektami.",
+        "usernamePlaceholder": "Wprowadź nazwę...",
+        "usernameHelp": "Ta nazwa będzie widoczna dla współpracowników w projektach udostępnionych.",
         "color": "Kolor",
-        "customColor": "Kolor niestandardowy",
+        "customColor": "Własny kolor",
         "selectColor": "Wybierz kolor {color}",
         "successMessage": "Profil zaktualizowany pomyślnie",
         "failedUpdate": "Nie udało się zaktualizować profilu",
         "errorSaving": "Wystąpił błąd podczas zapisywania",
         "saving": "Zapisywanie...",
-        "dangerZoneTitle": "Strefa niebezpieczna",
+        "dangerZoneTitle": "Strefa niebezpieczeństwa",
         "deleteAccount": "Usuń konto",
-        "deleteAccountDesc": "Trwale usuń swoje konto i wszystkie powiązane dane. Tej operacji nie można cofnąć.",
+        "deleteAccountDesc": "Trwale usuń swoje konto i wszystkie powiązane dane. Tej akcji nie można cofnąć.",
         "deleteBtn": "Usuń",
         "deleteModalTitle": "Usuń konto",
-        "deleteModalDesc": "Twoje konto i wszystkie powiązane dane zostaną trwale usunięte. Tej operacji nie można cofnąć.",
+        "deleteModalDesc": "To trwale usunie Twoje konto i wszystkie powiązane dane. Tej akcji nie można cofnąć.",
         "deleteConfirmPhrase": "Potwierdzam usunięcie mojego konta",
         "deleteConfirmLabel": "Wpisz <ph/>, aby potwierdzić.",
         "deleting": "Usuwanie...",
@@ -119,9 +119,9 @@
         "importing": "Importowanie...",
         "createBtn": "Utwórz",
         "empty": {
-            "createFirst": "Kliknij, aby utworzyć pierwszy projekt",
+            "createFirst": "Kliknij, aby utworzyć swój pierwszy projekt",
             "or": "lub",
-            "importExisting": "Importuj istniejący skrypt"
+            "importExisting": "Importuj istniejący scenariusz"
         },
         "item": {
             "posterAlt": "Plakat filmowy",
@@ -129,8 +129,8 @@
             "syncedToCloud": "Zsynchronizowano z chmurą",
             "today": "Dzisiaj",
             "yesterday": "Wczoraj",
-            "daysAgo": "{days, plural, one {# dzień temu} few {# dni temu} many {# dni temu} other {# dni temu}}",
-            "monthsAgo": "{months, plural, one {# miesiąc temu} few {# miesiące temu} many {# miesięcy temu} other {# miesięcy temu}}",
+            "daysAgo": "{days, plural, one {# dzień} few {# dni} many {# dni} other {# dni}} temu",
+            "monthsAgo": "{months, plural, one {# miesiąc} few {# miesiące} many {# miesięcy} other {# miesięcy}} temu",
             "moreThanYearAgo": "Ponad rok temu"
         },
         "form": {
@@ -147,7 +147,7 @@
     "editorSidebar": {
         "scenes": "Sceny",
         "characters": "Postacie",
-        "locations": "Lokacje"
+        "locations": "Lokalizacje"
     },
     "formatDropdown": {
         "elements": {
@@ -155,10 +155,11 @@
             "action": "Akcja",
             "character": "POSTAĆ",
             "dialogue": "Dialog",
-            "parenthetical": "(Nawias)",
+            "parenthetical": "(Wtrącenie)",
             "transition": "PRZEJŚCIE:",
             "section": "Sekcja",
-            "note": "[[Uwaga]]",
+            "note": "[[Notatka]]",
+            "dual_dialogue": "Podwójny dialog",
             "none": "Brak"
         },
         "titlePageElements": {
@@ -181,34 +182,35 @@
             "action": "Akcja",
             "character": "Postać",
             "dialogue": "Dialog",
-            "parenthetical": "Nawias",
+            "parenthetical": "Wtrącenie",
             "transition": "Przejście",
             "section": "Sekcja",
-            "note": "Uwaga",
+            "note": "Notatka",
+            "dual_dialogue": "Podwójny dialog",
             "none": "Brak"
         }
     },
     "collaborators": {
         "projectTeam": "Zespół projektu ({count}/{max})",
-        "teamHelp": "Zarządzaj członkami zespołu i oczekującymi zaproszeniami. Możesz zaprosić dowolnego użytkownika bez planu Pro do udziału w projekcie. Projekt pozostaje współdzielony, dopóki właściciel ma plan Pro.",
+        "teamHelp": "Zarządzaj członkami zespołu i oczekującymi zaproszeniami. Możesz zaprosić dowolnego użytkownika niebędącego użytkownikiem Pro. Projekt pozostaje współdzielony tak długo, jak właściciel posiada plan Pro.",
         "roles": {
             "owner": "Właściciel",
             "admin": "Admin",
             "editor": "Edytor",
-            "viewer": "Obserwator"
+            "viewer": "Widz"
         },
         "roleDesc": {
             "owner": "Może usunąć projekt i przekazać własność",
             "admin": "Może zapraszać, awansować, degradować i usuwać współpracowników",
-            "editor": "Może modyfikować scenariusz i inne treści projektu",
-            "viewer": "Dostęp tylko do odczytu. Nie może wprowadzać żadnych zmian"
+            "editor": "Może edytować scenariusz i zawartość projektu",
+            "viewer": "Dostęp tylko do odczytu. Nie może wprowadzać zmian"
         },
         "you": "(ty)",
         "leave": "Opuść",
-        "kick": "Wyrzuć",
-        "pending": "Oczekuje",
+        "kick": "Usuń",
+        "pending": "Oczekujące",
         "cancel": "Anuluj",
-        "emailPlaceholder": "Wpisz adres e-mail...",
+        "emailPlaceholder": "Wprowadź e-mail...",
         "invite": "Zaproś"
     },
     "export": {
@@ -223,17 +225,17 @@
             "scriptio": "Scriptio (.scriptio)"
         },
         "formatHelp": {
-            "pdf": "Standardowy format branżowy. Najlepszy do udostępniania i drukowania.",
-            "fountain": "Format zwykłego tekstu oparty na Markdown, doskonały dla zgodności.",
-            "fdx": "Kompatybilny z oprogramowaniem branżowym Final Draft.",
-            "scriptio": "Własny format Scriptio, aby zachować projekt lokalnie"
+            "pdf": "Standardowy format. Idealny do udostępniania i drukowania.",
+            "fountain": "Prosty format tekstowy oparty na Markdown, idealny dla kompatybilności.",
+            "fdx": "Zgodny z oprogramowaniem branżowym Final Draft.",
+            "scriptio": "Natywny format Scriptio, do przechowywania projektu lokalnie"
         },
         "includeNotes": "Uwzględnij notatki",
-        "includeNotesDesc": "Eksportuj wbudowane notatki.",
+        "includeNotesDesc": "Eksportuj notatki wewnątrz tekstu.",
         "readable": "Czytelny JSON",
-        "readableDesc": "Eksportuj jako zwykły JSON zamiast skompresowanego formatu binarnego. Większy plik, możliwy do podglądu w dowolnym edytorze tekstu.",
+        "readableDesc": "Eksportuj jako zwykły JSON zamiast skompresowanego pliku binarnego. Większy plik, możliwy do sprawdzenia w dowolnym edytorze tekstu.",
         "watermark": "Znak wodny",
-        "watermarkDesc": "Nakładanie tekstu na strony.",
+        "watermarkDesc": "Nałóż tekst na strony.",
         "watermarkPlaceholder": "Tekst znaku wodnego",
         "passwordProtection": "Ochrona hasłem",
         "passwordProtectionDesc": "Wymagaj hasła do otwarcia pliku PDF.",
@@ -245,35 +247,35 @@
     "layout": {
         "pageFormat": "Format strony",
         "pageFormatHelp": {
-            "letter": "Format standardowy w USA. Branżowy standard dla scenariuszy hollywoodzkich.",
+            "letter": "Standard amerykański. Standard branżowy dla scenariuszy z Hollywood.",
             "a4": "Międzynarodowy format standardowy. Powszechny w Europie i większości krajów."
         },
         "sceneHeadings": "Nagłówki scen",
         "bold": "Pogrubienie",
-        "boldDesc": "Nagłówki scen będą wyświetlane pogrubione",
-        "extraSpace": "Dodatkowe miejsce powyżej",
-        "extraSpaceDesc": "Dodaj dodatkowe odstępy przed nagłówkami scen",
-        "sceneNumbering": "Numerowanie scen",
-        "sceneNumberingDesc": "Wyświetlaj numery scen na lewym marginesie",
-        "duplicateRight": "Powiel na prawym marginesie",
-        "duplicateRightDesc": "Wyświetlaj numer po obu stronach",
+        "boldDesc": "Nagłówki scen będą pogrubione",
+        "extraSpace": "Dodatkowy odstęp powyżej",
+        "extraSpaceDesc": "Dodaj dodatkowy odstęp przed nagłówkami scen",
+        "sceneNumbering": "Numeracja scen",
+        "sceneNumberingDesc": "Pokaż numery scen na lewym marginesie",
+        "duplicateRight": "Powtórz na prawym marginesie",
+        "duplicateRightDesc": "Pokaż numer po obu stronach",
         "continuation": "Kontynuacja",
         "moreTitle": "(MORE) Etykieta",
         "contdTitle": "(CONT'D) Etykieta",
         "pageMargins": "Marginesy strony",
-        "vertical": "Pionowo",
-        "horizontal": "Poziomo",
+        "vertical": "Pionowe",
+        "horizontal": "Poziome",
         "marginTop": "Góra",
         "marginBottom": "Dół",
         "margins": "Marginesy",
-        "marginLeft": "Lewo",
-        "marginRight": "Prawo",
+        "marginLeft": "Lewy",
+        "marginRight": "Prawy",
         "marginElements": {
             "action": "Akcja",
             "scene": "Nagłówek sceny",
             "character": "Postać",
             "dialogue": "Dialog",
-            "parenthetical": "Didaskalia",
+            "parenthetical": "Wtrącenie",
             "transition": "Przejście",
             "section": "Sekcja"
         },
@@ -284,7 +286,7 @@
         "underline": "Podkreślenie",
         "uppercase": "Wielkie litery",
         "alignLeft": "Do lewej",
-        "alignCenter": "Wyśrodkuj",
+        "alignCenter": "Do środka",
         "alignRight": "Do prawej",
         "sceneSpacing": "Odstęp",
         "sceneSpacingDesc": "Odstęp nad nagłówkami scen",
@@ -294,30 +296,30 @@
         "titleLabel": "Tytuł",
         "titlePlaceholder": "Wprowadź nazwę projektu...",
         "authorLabel": "Autor",
-        "authorPlaceholder": "Imię i nazwisko autora...",
+        "authorPlaceholder": "Nazwisko autora...",
         "descriptionLabel": "Opis",
         "descriptionPlaceholder": "O czym jest ten scenariusz?",
         "posterLabel": "Plakat",
         "noPoster": "Brak plakatu",
-        "posterHelp": "Zalecane: 600x900 pikseli (proporcje 2:3). Obsługuje PNG i JPG.",
+        "posterHelp": "Zalecane: 600x900 pikseli (proporcja 2:3). Obsługuje PNG i JPG.",
         "saveChanges": "Zapisz zmiany",
-        "dangerZoneTitle": "Strefa niebezpieczna"
+        "dangerZoneTitle": "Strefa niebezpieczeństwa"
     },
     "contextMenu": {
-        "goToScene": "Przejdź do sceny",
+        "goToScene": "Idź do sceny",
         "edit": "Edytuj",
         "copy": "Kopiuj",
         "cut": "Wytnij",
-        "selectInEditor": "Wybierz w edytorze",
+        "selectInEditor": "Zaznacz w edytorze",
         "remove": "Usuń",
         "paste": "Wklej",
-        "highlight": "Podświetl",
+        "highlight": "Wyróżnij",
         "addCharacter": "Dodaj postać",
         "addComment": "Dodaj komentarz",
         "searchOnWeb": "Szukaj w sieci",
         "noSuggestions": "Brak sugestii",
         "addToDictionary": "Dodaj do słownika",
-        "makeDualDialogue": "Make dual dialogue"
+        "makeDualDialogue": "Utwórz podwójny dialog"
     },
     "popup": {
         "character": {
@@ -329,16 +331,16 @@
             "genderMale": "Mężczyzna",
             "genderOther": "Inna",
             "color": "Kolor",
-            "synopsis": "Streszczenie",
+            "synopsis": "Opis postaci",
             "confirm": "Potwierdź",
             "takenNameError": "Postać o imieniu {newName} już istnieje. Wybierz inne imię lub edytuj istniejącą postać.",
-            "updateOccurrences": "Czy na pewno chcesz zaktualizować {count} wystąpień słowa {oldName} na {newName}? Zwróć szczególną uwagę na popularne słowa, których aktualizacja może być niepożądana.",
+            "updateOccurrences": "Czy na pewno chcesz zaktualizować {count} wystąpień słowa {oldName} na {newName}? Zachowaj szczególną ostrożność przy popularnych słowach.",
             "yes": "Tak",
             "noDoNotChange": "Nie, nie zmieniaj"
         },
         "import": {
             "title": "Potwierdź import",
-            "warning": "Czy na pewno chcesz <b>nadpisać</b> swój obecny projekt?",
+            "warning": "Czy na pewno chcesz <b>nadpisać</b> aktualny projekt?",
             "info": "Możesz wyeksportować swój projekt przed zaimportowaniem nowego.",
             "yesImport": "Tak, importuj",
             "no": "Nie"
@@ -347,22 +349,37 @@
             "edit": "Edytuj scenę",
             "sceneTitle": "Scena",
             "color": "Kolor",
-            "synopsis": "Streszczenie",
-            "synopsisPlaceholder": "Napisz krótki opis tej sceny...",
+            "synopsis": "Opis sceny",
+            "synopsisPlaceholder": "Wpisz krótki opis tej sceny...",
             "save": "Zapisz"
         }
     },
     "board": {
-        "duplicate": "Duplikuj",
+        "duplicate": "Powiel",
         "delete": "Usuń",
         "hints": {
-            "pan": "Środkowy przycisk myszy, aby przesunąć",
-            "select": "Przeciągnij, aby wybrać karty",
+            "pan": "Środkowy przycisk, aby przesuwać",
+            "select": "Przeciągnij, aby zaznaczyć karty",
             "create": "Kliknij dwukrotnie, aby utworzyć kartę",
-            "move": "Przytrzymaj Shift, aby swobodnie przenosić"
+            "move": "Przytrzymaj Shift, aby swobodnie przesuwać"
         },
         "untitled": "Bez tytułu",
         "titlePlaceholder": "Tytuł",
         "descriptionPlaceholder": "Opis"
+    },
+    "saves": {
+        "title": "Historia wersji",
+        "saveCurrentVersion": "Zapisz aktualną wersję",
+        "namePlaceholder": "Nazwa wersji...",
+        "manualSaves": "Zapisy ręczne",
+        "autoSaves": "Autozapisy",
+        "restore": "Przywróć",
+        "rename": "Zmień nazwę",
+        "delete": "Usuń",
+        "cancel": "Anuluj",
+        "confirmRestore": "To zastąpi aktualny dokument u wszystkich współpracowników. Czy na pewno?",
+        "confirmDelete": "Czy na pewno chcesz usunąć ten zapis?",
+        "noSaves": "Brak zapisów",
+        "justNow": "Przed chwilą"
     }
 }

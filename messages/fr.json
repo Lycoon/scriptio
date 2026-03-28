@@ -159,6 +159,7 @@
             "transition": "TRANSITION :",
             "section": "Section",
             "note": "[[Note]]",
+            "dual_dialogue": "Double dialogue",
             "none": "Aucun"
         },
         "titlePageElements": {
@@ -185,6 +186,7 @@
             "transition": "Transition",
             "section": "Section",
             "note": "Note",
+            "dual_dialogue": "Double dialogue",
             "none": "Aucun"
         }
     },
@@ -317,7 +319,7 @@
         "searchOnWeb": "Rechercher sur le web",
         "noSuggestions": "Aucune suggestion",
         "addToDictionary": "Ajouter au dictionnaire",
-        "makeDualDialogue": "Make dual dialogue"
+        "makeDualDialogue": "Créer un double dialogue"
     },
     "popup": {
         "character": {
@@ -364,5 +366,20 @@
         "untitled": "Sans titre",
         "titlePlaceholder": "Titre",
         "descriptionPlaceholder": "Description"
+    },
+    "saves": {
+        "title": "Historique des versions",
+        "saveCurrentVersion": "Enregistrer la version actuelle",
+        "namePlaceholder": "Nom de la version...",
+        "manualSaves": "Enregistrements manuels",
+        "autoSaves": "Sauvegardes automatiques",
+        "restore": "Restaurer",
+        "rename": "Renommer",
+        "delete": "Supprimer",
+        "cancel": "Annuler",
+        "confirmRestore": "Cela remplacera le document actuel pour tous les collaborateurs. Êtes-vous sûr ?",
+        "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet enregistrement ?",
+        "noSaves": "Aucun enregistrement pour le moment",
+        "justNow": "À l'instant"
     }
 }

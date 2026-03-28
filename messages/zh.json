@@ -1,55 +1,55 @@
 {
     "navbar": {
         "screenplay": "剧本",
-        "board": "版块",
-        "titlePage": "标题页",
-        "synced": "已同步至云端",
+        "board": "剧本板",
+        "titlePage": "扉页",
+        "synced": "已同步到云端",
         "noConnection": "无连接",
         "reconnecting": "正在重新连接...",
         "endlessScroll": "无限滚动",
-        "toggleComments": "切换评论显示",
-        "focusMode": "专注模式",
+        "toggleComments": "切换显示评论",
+        "focusMode": "聚焦模式",
         "splitPanel": "分割面板",
-        "unsplitPanel": "关闭分割面板"
+        "unsplitPanel": "合并面板"
     },
     "common": {
-        "save": "保存更改",
+        "save": "保存",
         "cancel": "取消",
         "loading": "加载中..."
     },
     "sidebar": {
-        "title": "控制台",
+        "title": "控制面板",
         "logOut": "退出登录",
         "logIn": "登录"
     },
     "appearance": {
         "theme": "主题",
         "themeHelp": {
-            "dark": "低眩光深色主题，专为夜猫子和深夜专注而设计。",
-            "light": "清爽明亮的主题，白天使用自然舒适。",
-            "latte": "柔和奶油色调主题，兼顾温暖感与可读性。",
-            "wonka": "丝绒可可色调主题，深邃奢华与护眼舒适并重。",
-            "mint": "清新薄荷主题，融合自然宁静与视觉平衡。",
-            "blossom": "淡雅花瓣主题，花卉温柔与视觉柔和相得益彰。"
+            "dark": "低光舒适，适合熬夜党。",
+            "light": "清晰明亮，适合日间。",
+            "latte": "温暖乳白，阅读舒适。",
+            "wonka": "丝滑可可，深沉奢华。",
+            "mint": "清新薄荷，视觉平衡。",
+            "blossom": "娇柔花卉，视觉温和。"
         },
         "editor": "编辑器",
-        "themedEditor": "主题化编辑器",
-        "themedEditorDesc": "将主题颜色应用于编辑器背景和文字"
+        "themedEditor": "主题编辑器",
+        "themedEditorDesc": "编辑器使用主题颜色"
     },
     "keybinds": {
         "screenplayElements": "剧本元素",
-        "typing": "按键中…（Esc 取消）",
+        "typing": "正在输入… (Esc 取消)",
         "notSet": "未设置",
-        "modifiersOnly": "仅修饰键 — 请同时按一个普通按键",
-        "defaultPrefix": "默认：{combo}",
+        "modifiersOnly": "仅修饰键 — 请按普通键",
+        "defaultPrefix": "默认: {combo}",
         "reset": "重置",
-        "resetTitle": "清除自定义绑定",
-        "resetDefaults": "恢复默认值",
+        "resetTitle": "清除自定义键位",
+        "resetDefaults": "重置为默认",
         "save": "保存更改"
     },
     "language": {
-        "label": "显示语言",
-        "helpText": "选择整个应用程序使用的语言。",
+        "label": "界面语言",
+        "helpText": "选择应用界面显示的语言。",
         "spellcheckLabel": "拼写检查",
         "spellcheckHelpText": "下载字典以在编辑器中进行拼写检查。",
         "spellcheckNone": "已禁用"
@@ -64,8 +64,8 @@
             "General": "常规",
             "Layout": "布局",
             "Export": "导入/导出",
-            "Collaborators": "协作者",
-            "Keybinds": "快捷键",
+            "Collaborators": "协作",
+            "Keybinds": "键位",
             "Appearance": "外观",
             "Language": "语言",
             "Profile": "个人资料",
@@ -76,62 +76,62 @@
         }
     },
     "dangerZone": {
-        "transferOwnership": "转让所有权",
-        "transferDesc": "将您的所有者角色转让给其他用户，您将获得编辑者角色。",
-        "transferBtn": "转让",
-        "transferPrompt": "请输入新所有者的邮箱地址：",
+        "transferOwnership": "转移所有权",
+        "transferDesc": "将所有者权限转移给其他用户。您将降级为编辑者。",
+        "transferBtn": "转移",
+        "transferPrompt": "输入新所有者的邮箱：",
         "deleteProject": "删除项目",
-        "deleteProjectDesc": "项目一旦删除，无法恢复，请确认后再操作。",
+        "deleteProjectDesc": "删除后无法恢复，请谨慎操作。",
         "deleteBtn": "删除",
         "modalTitle": "删除项目",
-        "modalDesc": "此操作不可逆，项目的所有相关数据将永久丢失。",
-        "deleting": "删除中...",
-        "confirmDeleteBtn": "删除项目"
+        "modalDesc": "该操作无法撤销。项目相关的所有数据都将丢失。",
+        "deleting": "正在删除...",
+        "confirmDeleteBtn": "确认删除项目"
     },
     "profile": {
-        "email": "邮箱",
+        "email": "电子邮箱",
         "username": "用户名",
         "usernamePlaceholder": "输入您的显示名称...",
-        "usernameHelp": "在共享项目中协作时，此名称对其他协作者可见。",
+        "usernameHelp": "协作时其他用户将看到此名称。",
         "color": "颜色",
         "customColor": "自定义颜色",
         "selectColor": "选择颜色 {color}",
-        "successMessage": "个人资料更新成功",
-        "failedUpdate": "个人资料更新失败",
-        "errorSaving": "保存时发生错误",
-        "saving": "保存中...",
+        "successMessage": "资料更新成功",
+        "failedUpdate": "更新失败",
+        "errorSaving": "保存时出错",
+        "saving": "正在保存...",
         "dangerZoneTitle": "危险区域",
-        "deleteAccount": "删除账户",
-        "deleteAccountDesc": "永久删除您的账户及所有关联数据，此操作不可撤销。",
+        "deleteAccount": "注销账户",
+        "deleteAccountDesc": "永久删除账户及数据。不可恢复。",
         "deleteBtn": "删除",
         "deleteModalTitle": "删除账户",
-        "deleteModalDesc": "此操作将永久删除您的账户及所有关联数据，且无法撤销。",
+        "deleteModalDesc": "该操作不可撤销。",
         "deleteConfirmPhrase": "我确认删除我的账户",
         "deleteConfirmLabel": "输入 <ph/> 以确认。",
-        "deleting": "删除中...",
-        "deleteAccountBtn": "删除我的账户"
+        "deleting": "正在注销...",
+        "deleteAccountBtn": "确认注销账户"
     },
     "projects": {
-        "untitled": "无标题",
-        "newProject": "新建项目",
+        "untitled": "未命名",
+        "newProject": "新项目",
         "pageTitle": "项目",
         "importBtn": "导入...",
-        "importing": "导入中...",
+        "importing": "正在导入...",
         "createBtn": "创建",
         "empty": {
-            "createFirst": "点击以创建您的第一个项目",
+            "createFirst": "创建您的第一个项目",
             "or": "或",
             "importExisting": "导入现有剧本"
         },
         "item": {
             "posterAlt": "电影海报",
             "localOnly": "仅本地",
-            "syncedToCloud": "已同步至云端",
+            "syncedToCloud": "已同步到云端",
             "today": "今天",
             "yesterday": "昨天",
             "daysAgo": "{days} 天前",
             "monthsAgo": "{months} 个月前",
-            "moreThanYearAgo": "一年多前"
+            "moreThanYearAgo": "1 年前"
         },
         "form": {
             "formTitle": "创建项目",
@@ -141,24 +141,25 @@
             "posterField": "海报",
             "optional": "可选",
             "submitBtn": "创建",
-            "failedToCreate": "项目创建失败"
+            "failedToCreate": "创建失败"
         }
     },
     "editorSidebar": {
         "scenes": "场景",
         "characters": "角色",
-        "locations": "地点"
+        "locations": "位置"
     },
     "formatDropdown": {
         "elements": {
             "scene": "场景标题",
             "action": "动作",
             "character": "角色",
-            "dialogue": "对白",
-            "parenthetical": "（旁注）",
-            "transition": "转场：",
+            "dialogue": "对话",
+            "parenthetical": "插入语",
+            "transition": "转场",
             "section": "章节",
-            "note": "【注释】",
+            "note": "[[备注]]",
+            "dual_dialogue": "双重对话",
             "none": "无"
         },
         "titlePageElements": {
@@ -170,42 +171,43 @@
     },
     "search": {
         "placeholder": "搜索...",
-        "noMatches": "无结果",
-        "matchCount": "{total} 条中第 {current} 条",
+        "noMatches": "无匹配结果",
+        "matchCount": "{current} / {total}",
         "replacePlaceholder": "替换为...",
         "replace": "替换",
         "replaceAll": "全部替换",
-        "filterByElement": "按元素筛选：",
+        "filterByElement": "按元素筛选:",
         "elements": {
             "scene": "场景标题",
             "action": "动作",
             "character": "角色",
-            "dialogue": "对白",
-            "parenthetical": "旁注",
+            "dialogue": "对话",
+            "parenthetical": "插入语",
             "transition": "转场",
             "section": "章节",
-            "note": "注释",
+            "note": "备注",
+            "dual_dialogue": "双重对话",
             "none": "无"
         }
     },
     "collaborators": {
         "projectTeam": "项目团队 ({count}/{max})",
-        "teamHelp": "管理您的团队成员和待处理的邀请。您可以邀请任何非 Pro 用户加入您的项目。只要项目所有者拥有 Pro 计划，项目就可以协作。",
+        "teamHelp": "管理成员。可以邀请非专业版用户。所有者为专业版即可持续协作。",
         "roles": {
             "owner": "所有者",
             "admin": "管理员",
-            "editor": "编辑",
+            "editor": "编辑者",
             "viewer": "查看者"
         },
         "roleDesc": {
-            "owner": "可以删除项目并转让所有权",
-            "admin": "可以邀请、晋升、降级和踢出协作者",
-            "editor": "可以修改剧本和其他项目内容",
-            "viewer": "只读权限，无法进行任何更改"
+            "owner": "可删除项目、转移所有权",
+            "admin": "可邀请、管理成员权限",
+            "editor": "可编辑内容",
+            "viewer": "仅限查看"
         },
-        "you": "（你）",
-        "leave": "离开",
-        "kick": "踢出",
+        "you": "(您)",
+        "leave": "退出",
+        "kick": "移除",
         "pending": "待处理",
         "cancel": "取消",
         "emailPlaceholder": "输入邮箱...",
@@ -214,7 +216,7 @@
     "export": {
         "importLabel": "导入",
         "selectFile": "选择文件",
-        "selectFileDesc": "上传 .fountain、.fdx、.scriptio 或 .txt",
+        "selectFileDesc": "导入 .fountain, .fdx, .scriptio 或 .txt",
         "exportLabel": "导出",
         "formatOptions": {
             "pdf": "PDF 文档 (.pdf)",
@@ -223,48 +225,48 @@
             "scriptio": "Scriptio (.scriptio)"
         },
         "formatHelp": {
-            "pdf": "行业标准格式，最适合分享和打印。",
-            "fountain": "基于 Markdown 的纯文本格式，兼容性佳。",
-            "fdx": "兼容 Final Draft 行业软件。",
-            "scriptio": "Scriptio 专属格式，用于本地保存项目"
+            "pdf": "行业标准格式。",
+            "fountain": "基于 Markdown 的文本格式。",
+            "fdx": "兼容 Final Draft。",
+            "scriptio": "Scriptio 原生格式。"
         },
-        "includeNotes": "包含注释",
-        "includeNotesDesc": "导出内联注释。",
-        "readable": "人类可读的 JSON",
-        "readableDesc": "以纯 JSON 格式导出，而非压缩二进制格式。文件较大，可用任何文本编辑器查看。",
+        "includeNotes": "包含备注",
+        "includeNotesDesc": "导出内联备注。",
+        "readable": "可读 JSON",
+        "readableDesc": "以明文 JSON 导出。",
         "watermark": "水印",
-        "watermarkDesc": "在页面上叠加文本。",
+        "watermarkDesc": "在页面上添加水印文字。",
         "watermarkPlaceholder": "水印文字",
         "passwordProtection": "密码保护",
-        "passwordProtectionDesc": "需要密码才能打开 PDF。",
+        "passwordProtectionDesc": "设置 PDF 打开密码。",
         "passwordPlaceholder": "输入密码",
         "exportBtn": "导出",
-        "exporting": "导出中...",
-        "exportingProgress": "导出中 ({progress}%)"
+        "exporting": "正在导出...",
+        "exportingProgress": "正在导出 ({progress}%)"
     },
     "layout": {
         "pageFormat": "页面格式",
         "pageFormatHelp": {
-            "letter": "美国标准格式，好莱坞剧本的行业标准。",
-            "a4": "国际标准格式，欧洲及大多数国家通用。"
+            "letter": "美国标准格式。",
+            "a4": "国际标准格式。"
         },
         "sceneHeadings": "场景标题",
-        "bold": "粗体",
-        "boldDesc": "场景标题将以粗体显示",
-        "extraSpace": "上方额外空间",
-        "extraSpaceDesc": "在场景标题前添加额外间距",
+        "bold": "加粗",
+        "boldDesc": "场景标题显示为加粗",
+        "extraSpace": "上方额外间距",
+        "extraSpaceDesc": "场景标题前添加额外间距",
         "sceneNumbering": "场景编号",
-        "sceneNumberingDesc": "在左边距显示场景编号",
-        "duplicateRight": "在右边距重复",
+        "sceneNumberingDesc": "在左侧显示场景编号",
+        "duplicateRight": "右侧重复编号",
         "duplicateRightDesc": "两侧均显示编号",
         "continuation": "续接",
         "moreTitle": "(MORE) 标签",
         "contdTitle": "(CONT'D) 标签",
-        "pageMargins": "页面边距",
+        "pageMargins": "页边距",
         "vertical": "垂直",
         "horizontal": "水平",
-        "marginTop": "上边距",
-        "marginBottom": "下边距",
+        "marginTop": "页顶距",
+        "marginBottom": "页底距",
         "margins": "边距",
         "marginLeft": "左边距",
         "marginRight": "右边距",
@@ -273,13 +275,13 @@
             "scene": "场景标题",
             "character": "角色",
             "dialogue": "对话",
-            "parenthetical": "括号注释",
+            "parenthetical": "插入语",
             "transition": "转场",
             "section": "章节"
         },
         "elements": "元素配置",
         "style": "样式",
-        "alignment": "对齐方式",
+        "alignment": "对齐",
         "italic": "斜体",
         "underline": "下划线",
         "uppercase": "大写",
@@ -288,7 +290,7 @@
         "alignRight": "右对齐",
         "sceneSpacing": "间距",
         "sceneSpacingDesc": "场景标题上方的间距",
-        "startNewPage": "从新页面开始"
+        "startNewPage": "另起一页"
     },
     "projectSettings": {
         "titleLabel": "标题",
@@ -296,15 +298,15 @@
         "authorLabel": "作者",
         "authorPlaceholder": "作者姓名...",
         "descriptionLabel": "描述",
-        "descriptionPlaceholder": "这个剧本讲的是什么？",
+        "descriptionPlaceholder": "剧本简介...",
         "posterLabel": "海报",
         "noPoster": "无海报",
-        "posterHelp": "推荐尺寸：600x900 像素（2:3 比例），支持 PNG、JPG。",
+        "posterHelp": "建议: 600x900 (2:3)。支持 PNG, JPG。",
         "saveChanges": "保存更改",
         "dangerZoneTitle": "危险区域"
     },
     "contextMenu": {
-        "goToScene": "转到场景",
+        "goToScene": "跳转到场景",
         "edit": "编辑",
         "copy": "复制",
         "cut": "剪切",
@@ -314,16 +316,16 @@
         "highlight": "高亮",
         "addCharacter": "添加角色",
         "addComment": "添加评论",
-        "searchOnWeb": "在网上搜索",
+        "searchOnWeb": "网页搜索",
         "noSuggestions": "无建议",
-        "addToDictionary": "添加到词典",
-        "makeDualDialogue": "Make dual dialogue"
+        "addToDictionary": "添加到字典",
+        "makeDualDialogue": "创建双重对话"
     },
     "popup": {
         "character": {
             "create": "创建角色",
             "edit": "编辑角色",
-            "name": "名字",
+            "name": "姓名",
             "gender": "性别",
             "genderFemale": "女",
             "genderMale": "男",
@@ -331,24 +333,24 @@
             "color": "颜色",
             "synopsis": "简介",
             "confirm": "确认",
-            "takenNameError": "名为 {newName} 的角色已存在。请选择一个不同的名字或编辑现有角色。",
-            "updateOccurrences": "您确定要将单词 {oldName} 的 {count} 个出现更新为 {newName} 吗？请特别注意更新后可能不受欢迎的常用词。",
+            "takenNameError": "角色名 {newName} 已存在。",
+            "updateOccurrences": "确认将 {count} 处 {oldName} 更新为 {newName}？",
             "yes": "是",
-            "noDoNotChange": "否，不更改"
+            "noDoNotChange": "否"
         },
         "import": {
             "title": "确认导入",
-            "warning": "您确定要<b>覆盖</b>当前项目吗？",
-            "info": "您可以在导入新项目之前导出当前项目。",
-            "yesImport": "是的，导入",
-            "no": "否"
+            "warning": "确认 <b>覆盖</b> 当前项目？",
+            "info": "您可以先导出当前项目备份。",
+            "yesImport": "确认导入",
+            "no": "取消"
         },
         "scene": {
             "edit": "编辑场景",
             "sceneTitle": "场景",
             "color": "颜色",
             "synopsis": "简介",
-            "synopsisPlaceholder": "写一段关于这个场景的简短描述...",
+            "synopsisPlaceholder": "场景简述...",
             "save": "保存"
         }
     },
@@ -356,13 +358,28 @@
         "duplicate": "复制",
         "delete": "删除",
         "hints": {
-            "pan": "中键点击以平移",
-            "select": "拖动以选择卡片",
-            "create": "双击以创建卡片",
-            "move": "按住 Shift 自由移动"
+            "pan": "中键平移",
+            "select": "拖动选择卡片",
+            "create": "双击创建卡片",
+            "move": "Shift 自由移动"
         },
-        "untitled": "无标题",
+        "untitled": "未命名",
         "titlePlaceholder": "标题",
         "descriptionPlaceholder": "描述"
+    },
+    "saves": {
+        "title": "版本历史",
+        "saveCurrentVersion": "保存当前版本",
+        "namePlaceholder": "版本名称...",
+        "manualSaves": "手动保存",
+        "autoSaves": "自动保存",
+        "restore": "恢复",
+        "rename": "重命名",
+        "delete": "删除",
+        "cancel": "取消",
+        "confirmRestore": "这将为所有协作成员覆盖当前文档。确认吗？",
+        "confirmDelete": "确认删除此备份？",
+        "noSaves": "暂无备份",
+        "justNow": "刚刚"
     }
 }

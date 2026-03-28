@@ -7,6 +7,8 @@ import * as encoding from "lib0/encoding";
 import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
 
+import { getCollabHttpUrl } from "../utils/requests";
+
 declare const window: any;
 
 /**
@@ -48,6 +50,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
     // Close codes from server
     private readonly CLOSE_CODE_SESSION_REPLACED = 4001;
+    private readonly CLOSE_CODE_DOCUMENT_RESTORED = 4005;
 
     // Bound event handlers for proper cleanup
     private boundResetIdleTimer: () => void;
@@ -161,13 +164,14 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                 currentWs = ws;
                 const originalClose = ws.onclose;
                 ws.onclose = (event: CloseEvent) => {
-                    // Check if this is a session replacement close
                     if (event.code === provider.CLOSE_CODE_SESSION_REPLACED) {
                         provider.handleSessionReplaced();
-                        // Don't call original handler - we don't want y-websocket to reconnect
                         return;
                     }
-                    // For other close codes, call the original handler
+                    if (event.code === provider.CLOSE_CODE_DOCUMENT_RESTORED) {
+                        provider.handleDocumentRestored();
+                        return;
+                    }
                     if (originalClose) {
                         originalClose.call(ws, event);
                     }
@@ -208,6 +212,23 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         // Emit custom event for UI to handle
         //this.emit("session-replaced", []);
+    }
+
+    /**
+     * Handle document restore — the server replaced its doc with a snapshot.
+     * Stop reconnecting and notify the consumer to clear local state and reload.
+     */
+    private handleDocumentRestored(): void {
+        console.log("[WS] Document was restored. Notifying consumer to reload.");
+
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
+        this.shouldConnect = false;
+        this.disconnect();
+        this.emit("document-restored", []);
     }
 
     /**
@@ -685,8 +706,6 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      */
     destroy(): void {
         if (this.isDestroyed) return;
-
-        console.log("[WS] Destroying provider...");
         this.isDestroyed = true;
 
         // Stop the flush loop
@@ -717,8 +736,6 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         // Call parent destroy
         super.destroy();
-
-        console.log("[WS] Provider destroyed");
     }
 }
 

@@ -3,19 +3,19 @@
         "screenplay": "Drehbuch",
         "board": "Board",
         "titlePage": "Titelseite",
-        "synced": "Mit der Cloud synchronisiert",
+        "synced": "Mit Cloud synchronisiert",
         "noConnection": "Keine Verbindung",
-        "reconnecting": "Verbindung wird hergestellt...",
-        "endlessScroll": "Endlos-Scroll",
-        "toggleComments": "Kommentare ein-/ausblenden",
-        "focusMode": "Fokusmodus",
+        "reconnecting": "Verbindung wird wiederhergestellt...",
+        "endlessScroll": "Endloses Scrollen",
+        "toggleComments": "Kommentare ein/aus",
+        "focusMode": "Fokus-Modus",
         "splitPanel": "Panel teilen",
-        "unsplitPanel": "Panel zusammenführen"
+        "unsplitPanel": "Panel schließen"
     },
     "common": {
         "save": "Änderungen speichern",
         "cancel": "Abbrechen",
-        "loading": "Lädt..."
+        "loading": "Laden..."
     },
     "sidebar": {
         "title": "Dashboard",
@@ -23,33 +23,33 @@
         "logIn": "Anmelden"
     },
     "appearance": {
-        "theme": "Theme",
+        "theme": "Design",
         "themeHelp": {
-            "dark": "Augenschonendes Dunkeltheme für Nachtschwärmer und späte Arbeitsstunden.",
-            "light": "Klares, luftiges Theme – tagsüber natürlich und angenehm.",
-            "latte": "Weiches, cremefarbenes Theme, das Wärme und Lesbarkeit verbindet.",
-            "wonka": "Samtiges, kakaobasiertes Theme mit tiefem Luxusgefühl und augenschonender Wirkung.",
-            "mint": "Erfrischendes Minztheme, das botanische Ruhe mit visueller Balance verbindet.",
-            "blossom": "Zartes Blütentheme, das florale Wärme mit sanfter Optik vereint."
+            "dark": "Ein gemütliches, blendfreies Design, perfekt für Nachteulen und konzentrierte Nächte.",
+            "light": "Ein klares, luftiges Design, das sich tagsüber natürlich und angenehm anfühlt.",
+            "latte": "Ein sanftes Design mit Cremetönen, das Wärme mit Lesbarkeit verbindet.",
+            "wonka": "Ein samtiges Design mit Kakaotönen, das tiefen Luxus mit visueller Erholung verbindet.",
+            "mint": "Ein frisches Design mit Minzakzenten, das botanische Ruhe mit visueller Balance verbindet.",
+            "blossom": "Ein zartes Design mit floralen Tönen, das blütenhafte Sanftheit mit visuellem Komfort verbindet."
         },
         "editor": "Editor",
-        "themedEditor": "Thematisierter Editor",
-        "themedEditorDesc": "Theme-Farben für Editorhintergrund und Text verwenden"
+        "themedEditor": "Themenbasierter Editor",
+        "themedEditorDesc": "Farben des Designs für Editor-Hintergrund und Text verwenden"
     },
     "keybinds": {
         "screenplayElements": "Drehbuchelemente",
-        "typing": "Eingabe… (Esc zum Abbrechen)",
-        "notSet": "Nicht belegt",
-        "modifiersOnly": "Nur Modifikatoren — bitte auch eine normale Taste drücken",
+        "typing": "Tippen… (Esc zum Abbrechen)",
+        "notSet": "Nicht festgelegt",
+        "modifiersOnly": "Nur Modifikatoren — drücke eine normale Taste",
         "defaultPrefix": "Standard: {combo}",
         "reset": "Zurücksetzen",
-        "resetTitle": "Benutzerbelegung löschen",
-        "resetDefaults": "Standardwerte wiederherstellen",
+        "resetTitle": "Benutzerdefinierte Tastenbelegung löschen",
+        "resetDefaults": "Auf Standard zurücksetzen",
         "save": "Änderungen speichern"
     },
     "language": {
         "label": "Anzeigesprache",
-        "helpText": "Wähle die Sprache, die in der gesamten App verwendet wird.",
+        "helpText": "Wählen Sie die Sprache für die gesamte Anwendung.",
         "spellcheckLabel": "Rechtschreibprüfung",
         "spellcheckHelpText": "Laden Sie ein Wörterbuch für die Rechtschreibprüfung im Editor herunter.",
         "spellcheckNone": "Deaktiviert"
@@ -64,7 +64,7 @@
             "General": "Allgemein",
             "Layout": "Layout",
             "Export": "Import/Export",
-            "Collaborators": "Mitarbeiter",
+            "Collaborators": "Mitwirkende",
             "Keybinds": "Tastenkürzel",
             "Appearance": "Erscheinungsbild",
             "Language": "Sprache",
@@ -76,52 +76,52 @@
         }
     },
     "dangerZone": {
-        "transferOwnership": "Eigentümerschaft übertragen",
-        "transferDesc": "Übertrage deine Eigentümerrolle an einen anderen Nutzer. Du erhältst anschließend die Editorrolle.",
+        "transferOwnership": "Besitz übertragen",
+        "transferDesc": "Übertragen Sie Ihren Besitzerstatus auf einen anderen Benutzer. Sie werden zum Editor.",
         "transferBtn": "Übertragen",
-        "transferPrompt": "Gib die E-Mail-Adresse des neuen Eigentümers ein:",
+        "transferPrompt": "Geben Sie die E-Mail-Adresse des neuen Besitzers ein:",
         "deleteProject": "Projekt löschen",
-        "deleteProjectDesc": "Ein gelöschtes Projekt kann nicht wiederhergestellt werden. Bitte sei dir sicher.",
+        "deleteProjectDesc": "Sobald ein Projekt gelöscht wurde, gibt es kein Zurück mehr. Bitte seien Sie sicher.",
         "deleteBtn": "Löschen",
         "modalTitle": "Projekt löschen",
-        "modalDesc": "Diese Aktion ist dauerhaft und kann nicht rückgängig gemacht werden. Alle mit diesem Projekt verbundenen Daten gehen verloren.",
-        "deleting": "Wird gelöscht...",
+        "modalDesc": "Diese Aktion ist dauerhaft und kann nicht rückgängig gemacht werden. Alle mit diesem Projekt verknüpften Daten gehen verloren.",
+        "deleting": "Löschen...",
         "confirmDeleteBtn": "Projekt löschen"
     },
     "profile": {
-        "email": "E-Mail",
+        "email": "E-Mail-Adresse",
         "username": "Benutzername",
         "usernamePlaceholder": "Anzeigenamen eingeben...",
-        "usernameHelp": "Dieser Name ist für Mitarbeiter sichtbar, wenn du an gemeinsamen Projekten arbeitest.",
+        "usernameHelp": "Dieser Name ist für Mitwirkende sichtbar, wenn Sie an gemeinsamen Projekten arbeiten.",
         "color": "Farbe",
         "customColor": "Benutzerdefinierte Farbe",
-        "selectColor": "Farbe auswählen {color}",
+        "selectColor": "Farbe {color} wählen",
         "successMessage": "Profil erfolgreich aktualisiert",
-        "failedUpdate": "Profil konnte nicht aktualisiert werden",
-        "errorSaving": "Beim Speichern ist ein Fehler aufgetreten",
-        "saving": "Wird gespeichert...",
-        "dangerZoneTitle": "Gefahrenbereich",
+        "failedUpdate": "Profilaktualisierung fehlgeschlagen",
+        "errorSaving": "Fehler beim Speichern",
+        "saving": "Speichern...",
+        "dangerZoneTitle": "Gefahrenzone",
         "deleteAccount": "Konto löschen",
-        "deleteAccountDesc": "Lösche dauerhaft dein Konto und alle zugehörigen Daten. Diese Aktion ist unwiderruflich.",
+        "deleteAccountDesc": "Löschen Sie dauerhaft Ihr Konto und alle verknüpften Daten. Dies kann nicht rückgängig gemacht werden.",
         "deleteBtn": "Löschen",
         "deleteModalTitle": "Konto löschen",
-        "deleteModalDesc": "Dein Konto und alle zugehörigen Daten werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "deleteModalDesc": "Dies wird dauerhaft Ihr Konto und alle verknüpften Daten löschen. Diese Aktion kann nicht rückgängig gemacht werden.",
         "deleteConfirmPhrase": "Ich bestätige die Löschung meines Kontos",
-        "deleteConfirmLabel": "Gib <ph/> ein, um zu bestätigen.",
-        "deleting": "Wird gelöscht...",
+        "deleteConfirmLabel": "Tippe <ph/> zur Bestätigung.",
+        "deleting": "Löschen...",
         "deleteAccountBtn": "Mein Konto löschen"
     },
     "projects": {
-        "untitled": "Ohne Titel",
+        "untitled": "Unbenannt",
         "newProject": "Neues Projekt",
         "pageTitle": "Projekte",
         "importBtn": "Importieren...",
-        "importing": "Wird importiert...",
+        "importing": "Importieren...",
         "createBtn": "Erstellen",
         "empty": {
-            "createFirst": "Klicke, um dein erstes Projekt zu erstellen",
+            "createFirst": "Klicken Sie hier, um Ihr erstes Projekt zu erstellen",
             "or": "oder",
-            "importExisting": "Vorhandenes Skript importieren"
+            "importExisting": "Ein vorhandenes Drehbuch importieren"
         },
         "item": {
             "posterAlt": "Filmplakat",
@@ -131,7 +131,7 @@
             "yesterday": "Gestern",
             "daysAgo": "Vor {days, plural, one {# Tag} other {# Tagen}}",
             "monthsAgo": "Vor {months, plural, one {# Monat} other {# Monaten}}",
-            "moreThanYearAgo": "Vor mehr als einem Jahr"
+            "moreThanYearAgo": "Vor über einem Jahr"
         },
         "form": {
             "formTitle": "Projekt erstellen",
@@ -141,24 +141,25 @@
             "posterField": "Plakat",
             "optional": "optional",
             "submitBtn": "Erstellen",
-            "failedToCreate": "Projekt konnte nicht erstellt werden"
+            "failedToCreate": "Projekterstellung fehlgeschlagen"
         }
     },
     "editorSidebar": {
         "scenes": "Szenen",
         "characters": "Charaktere",
-        "locations": "Schauplätze"
+        "locations": "Orte"
     },
     "formatDropdown": {
         "elements": {
             "scene": "SZENENÜBERSCHRIFT",
             "action": "Handlung",
-            "character": "FIGUR",
+            "character": "CHARAKTER",
             "dialogue": "Dialog",
-            "parenthetical": "(Klammertext)",
+            "parenthetical": "(Einschub)",
             "transition": "ÜBERGANG:",
             "section": "Abschnitt",
             "note": "[[Notiz]]",
+            "dual_dialogue": "Doppel-Dialog",
             "none": "Keiner"
         },
         "titlePageElements": {
@@ -179,29 +180,30 @@
         "elements": {
             "scene": "Szenenüberschrift",
             "action": "Handlung",
-            "character": "Figur",
+            "character": "Charakter",
             "dialogue": "Dialog",
-            "parenthetical": "Klammertext",
+            "parenthetical": "Einschub",
             "transition": "Übergang",
             "section": "Abschnitt",
             "note": "Notiz",
+            "dual_dialogue": "Doppel-Dialog",
             "none": "Keiner"
         }
     },
     "collaborators": {
         "projectTeam": "Projektteam ({count}/{max})",
-        "teamHelp": "Verwalte Teammitglieder und ausstehende Einladungen. Du kannst jeden Nicht-Pro-Nutzer einladen, an deinem Projekt teilzunehmen. Das Projekt bleibt kollaborativ, solange der Eigentümer einen Pro-Plan hat.",
+        "teamHelp": "Verwalten Sie Ihre Teammitglieder und ausstehende Einladungen. Sie können jeden Nicht-Pro-Benutzer einladen, Ihrem Projekt beizutreten. Das Projekt bleibt kollaborativ, solange der Besitzer einen Pro-Plan hat.",
         "roles": {
-            "owner": "Eigentümer",
+            "owner": "Besitzer",
             "admin": "Admin",
             "editor": "Editor",
             "viewer": "Betrachter"
         },
         "roleDesc": {
-            "owner": "Kann das Projekt löschen und die Eigentümerschaft übertragen",
-            "admin": "Kann Mitarbeiter einladen, befördern, herabstufen und entfernen",
-            "editor": "Kann das Drehbuch und andere Projektinhalte bearbeiten",
-            "viewer": "Nur-Lese-Zugriff. Kann keine Änderungen vornehmen"
+            "owner": "Kann das Projekt löschen und den Besitz übertragen",
+            "admin": "Kann Mitwirkende einladen, befördern, herabstufen und entfernen",
+            "editor": "Kann das Drehbuch und den Projektinhalt bearbeiten",
+            "viewer": "Nur Lesezugriff. Kann keine Änderungen vornehmen"
         },
         "you": "(du)",
         "leave": "Verlassen",
@@ -223,36 +225,36 @@
             "scriptio": "Scriptio (.scriptio)"
         },
         "formatHelp": {
-            "pdf": "Standard-Industrieformat. Ideal zum Teilen und Drucken.",
-            "fountain": "Klartextformat auf Markdown-Basis, ideal für Kompatibilität.",
+            "pdf": "Branchenstandard-Format. Ideal zum Teilen und Drucken.",
+            "fountain": "Einfaches Textformat basierend auf Markdown, ideal für Kompatibilität.",
             "fdx": "Kompatibel mit der Branchensoftware Final Draft.",
-            "scriptio": "Eigenes Scriptio-Format, um das Projekt lokal zu speichern"
+            "scriptio": "Scriptios eigenes Format, um Ihr Projekt lokal zu speichern"
         },
         "includeNotes": "Notizen einschließen",
-        "includeNotesDesc": "Inline-Notizen exportieren.",
-        "readable": "Menschenlesbares JSON",
-        "readableDesc": "Als einfaches JSON statt komprimiertem Binärformat exportieren. Größere Datei, mit jedem Texteditor inspizierbar.",
+        "includeNotesDesc": "Integrierte Notizen exportieren.",
+        "readable": "Lesbares JSON",
+        "readableDesc": "Als einfaches JSON anstatt als komprimierte Binärdatei exportieren. Größere Datei, mit jedem Texteditor prüfbar.",
         "watermark": "Wasserzeichen",
-        "watermarkDesc": "Text auf den Seiten einblenden.",
+        "watermarkDesc": "Text über die Seiten legen.",
         "watermarkPlaceholder": "Wasserzeichen-Text",
-        "passwordProtection": "Kennwortschutz",
-        "passwordProtectionDesc": "Ein Kennwort zum Öffnen der PDF-Datei erforderlich.",
-        "passwordPlaceholder": "Kennwort eingeben",
+        "passwordProtection": "Passwortschutz",
+        "passwordProtectionDesc": "Passwort zum Öffnen der PDF-Datei anfordern.",
+        "passwordPlaceholder": "Passwort eingeben",
         "exportBtn": "Exportieren",
-        "exporting": "Wird exportiert...",
-        "exportingProgress": "Wird exportiert ({progress}%)"
+        "exporting": "Exportieren...",
+        "exportingProgress": "Exportieren ({progress}%)"
     },
     "layout": {
         "pageFormat": "Seitenformat",
         "pageFormatHelp": {
-            "letter": "Standardformat in den USA. Branchenstandard für Hollywood-Drehbücher.",
-            "a4": "Internationales Standardformat. In Europa und den meisten anderen Ländern üblich."
+            "letter": "US-Standardformat. Branchenstandard für Hollywood-Drehbücher.",
+            "a4": "Internationales Standardformat. Gebräuchlich in Europa und den meisten Ländern."
         },
         "sceneHeadings": "Szenenüberschriften",
         "bold": "Fett",
-        "boldDesc": "Szenenüberschriften werden fett dargestellt",
-        "extraSpace": "Zusätzlicher Abstand oben",
-        "extraSpaceDesc": "Zusätzlichen Abstand vor Szenenüberschriften einfügen",
+        "boldDesc": "Szenenüberschriften erscheinen fett",
+        "extraSpace": "Zusätzlicher Platz oben",
+        "extraSpaceDesc": "Zusätzlichen Abstand vor Szenenüberschriften hinzufügen",
         "sceneNumbering": "Szenennummerierung",
         "sceneNumberingDesc": "Szenennummern im linken Rand anzeigen",
         "duplicateRight": "Im rechten Rand duplizieren",
@@ -271,20 +273,20 @@
         "marginElements": {
             "action": "Handlung",
             "scene": "Szenenüberschrift",
-            "character": "Figur",
+            "character": "Charakter",
             "dialogue": "Dialog",
-            "parenthetical": "Regieanweisung",
+            "parenthetical": "Einschub",
             "transition": "Übergang",
             "section": "Abschnitt"
         },
-        "elements": "Elementkonfiguration",
+        "elements": "Element-Konfiguration",
         "style": "Stil",
         "alignment": "Ausrichtung",
         "italic": "Kursiv",
         "underline": "Unterstrichen",
         "uppercase": "Großbuchstaben",
         "alignLeft": "Links",
-        "alignCenter": "Mitte",
+        "alignCenter": "Zentriert",
         "alignRight": "Rechts",
         "sceneSpacing": "Abstand",
         "sceneSpacingDesc": "Abstand über Szenenüberschriften",
@@ -292,19 +294,19 @@
     },
     "projectSettings": {
         "titleLabel": "Titel",
-        "titlePlaceholder": "Projektname eingeben...",
+        "titlePlaceholder": "Projektnamen eingeben...",
         "authorLabel": "Autor",
-        "authorPlaceholder": "Autorenname...",
+        "authorPlaceholder": "Name des Autors...",
         "descriptionLabel": "Beschreibung",
-        "descriptionPlaceholder": "Wovon handelt dieses Drehbuch?",
+        "descriptionPlaceholder": "Worum geht es in diesem Drehbuch?",
         "posterLabel": "Plakat",
         "noPoster": "Kein Plakat",
         "posterHelp": "Empfohlen: 600x900 Pixel (Verhältnis 2:3). Unterstützt PNG und JPG.",
         "saveChanges": "Änderungen speichern",
-        "dangerZoneTitle": "Gefahrenbereich"
+        "dangerZoneTitle": "Gefahrenzone"
     },
     "contextMenu": {
-        "goToScene": "Gehe zu Szene",
+        "goToScene": "Zur Szene gehen",
         "edit": "Bearbeiten",
         "copy": "Kopieren",
         "cut": "Ausschneiden",
@@ -317,7 +319,7 @@
         "searchOnWeb": "Im Web suchen",
         "noSuggestions": "Keine Vorschläge",
         "addToDictionary": "Zum Wörterbuch hinzufügen",
-        "makeDualDialogue": "Make dual dialogue"
+        "makeDualDialogue": "Doppel-Dialog erstellen"
     },
     "popup": {
         "character": {
@@ -327,19 +329,19 @@
             "gender": "Geschlecht",
             "genderFemale": "Weiblich",
             "genderMale": "Männlich",
-            "genderOther": "Divers",
+            "genderOther": "Andere",
             "color": "Farbe",
-            "synopsis": "Zusammenfassung",
+            "synopsis": "Kurzbeschreibung",
             "confirm": "Bestätigen",
-            "takenNameError": "Ein Charakter mit dem Namen {newName} existiert bereits. Bitte wähle einen anderen Namen oder bearbeite den bestehenden Charakter.",
-            "updateOccurrences": "Bist du sicher, dass du {count} Vorkommen des Wortes {oldName} zu {newName} aktualisieren möchtest? Sei besonders vorsichtig bei häufigen Wörtern, deren Änderung unerwünscht sein könnte.",
+            "takenNameError": "Ein Charakter mit dem Namen {newName} existiert bereits. Bitte wählen Sie einen anderen Namen oder bearbeiten Sie den vorhandenen Charakter.",
+            "updateOccurrences": "Sind Sie sicher, dass Sie {count} Vorkommen des Wortes {oldName} durch {newName} ersetzen möchten? Achten Sie besonders auf häufige Wörter, deren Änderung unerwünscht sein könnte.",
             "yes": "Ja",
             "noDoNotChange": "Nein, nicht ändern"
         },
         "import": {
             "title": "Import bestätigen",
-            "warning": "Bist du sicher, dass du dein aktuelles Projekt <b>überschreiben</b> möchtest?",
-            "info": "Du kannst dein Projekt exportieren, bevor du ein neues importierst.",
+            "warning": "Sind Sie sicher, dass Sie Ihr aktuelles Projekt <b>überschreiben</b> möchten?",
+            "info": "Sie können Ihr Projekt exportieren, bevor Sie ein neues importieren.",
             "yesImport": "Ja, importieren",
             "no": "Nein"
         },
@@ -347,8 +349,8 @@
             "edit": "Szene bearbeiten",
             "sceneTitle": "Szene",
             "color": "Farbe",
-            "synopsis": "Zusammenfassung",
-            "synopsisPlaceholder": "Schreibe eine kurze Beschreibung dieser Szene...",
+            "synopsis": "Kurzbeschreibung",
+            "synopsisPlaceholder": "Schreiben Sie eine kurze Beschreibung dieser Szene...",
             "save": "Speichern"
         }
     },
@@ -356,13 +358,28 @@
         "duplicate": "Duplizieren",
         "delete": "Löschen",
         "hints": {
-            "pan": "Mittelklick zum Verschieben",
-            "select": "Ziehen zum Auswählen von Karten",
+            "pan": "Mittelklick zum Schwenken",
+            "select": "Ziehen, um Karten auszuwählen",
             "create": "Doppelklick zum Erstellen einer Karte",
-            "move": "Umschalttaste halten für freies Bewegen"
+            "move": "Umschalt zum freien Bewegen halten"
         },
         "untitled": "Unbenannt",
         "titlePlaceholder": "Titel",
         "descriptionPlaceholder": "Beschreibung"
+    },
+    "saves": {
+        "title": "Versionsverlauf",
+        "saveCurrentVersion": "Aktuelle Version speichern",
+        "namePlaceholder": "Versionsname...",
+        "manualSaves": "Manuelle Speicherungen",
+        "autoSaves": "Automatische Speicherungen",
+        "restore": "Wiederherstellen",
+        "rename": "Umbenennen",
+        "delete": "Löschen",
+        "cancel": "Abbrechen",
+        "confirmRestore": "Dies wird das aktuelle Dokument für alle Mitwirkenden ersetzen. Sind Sie sicher?",
+        "confirmDelete": "Sind Sie sicher, dass Sie diese Speicherung löschen möchten?",
+        "noSaves": "Noch keine Speicherungen vorhanden",
+        "justNow": "Gerade eben"
     }
 }

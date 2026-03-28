@@ -159,6 +159,7 @@
             "transition": "TRANSITION:",
             "section": "Section",
             "note": "[[Note]]",
+            "dual_dialogue": "Dual Dialogue",
             "none": "None"
         },
         "titlePageElements": {
@@ -364,5 +365,20 @@
         "untitled": "Untitled",
         "titlePlaceholder": "Title",
         "descriptionPlaceholder": "Description"
+    },
+    "saves": {
+        "title": "Version History",
+        "saveCurrentVersion": "Save Current Version",
+        "namePlaceholder": "Version name...",
+        "manualSaves": "Manual Saves",
+        "autoSaves": "Auto-Saves",
+        "restore": "Restore",
+        "rename": "Rename",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "confirmRestore": "This will replace the current document for all collaborators. Are you sure?",
+        "confirmDelete": "Are you sure you want to delete this save?",
+        "noSaves": "No saves yet",
+        "justNow": "Just now"
     }
 }

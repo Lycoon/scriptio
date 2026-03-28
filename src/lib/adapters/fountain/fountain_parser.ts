@@ -254,7 +254,7 @@ inline.lexer = function (s: string) {
 
     while (i--) {
         style = styles[i];
-        match = regex[style];
+        match = (regex as any)[style];
 
         if (match.test(s)) {
             s = s.replace(match, inline[style]);

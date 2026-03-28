@@ -108,7 +108,7 @@ export default function AnalyticsModal({ isOpen, onClose }: AnalyticsModalProps)
                                         className={`${styles.navItem} ${activeTab === item.id ? styles.active : ""}`}
                                         onClick={() => setActiveTab(item.id)}
                                     >
-                                        <span>{item.icon}</span>
+                                        <span className={styles.iconWrapper}>{item.icon}</span>
                                         {item.label}
                                     </button>
                                 ))}
@@ -121,7 +121,7 @@ export default function AnalyticsModal({ isOpen, onClose }: AnalyticsModalProps)
                 <div className={styles.content}>
                     <header className={styles.contentHeader}>
                         <h3>{TAB_TITLES[activeTab]}</h3>
-                        <X className={styles.closeBtn} onClick={onClose} />
+                        <X className={styles.close_btn} onClick={onClose} />
                     </header>
 
                     <div className={styles.scrollArea}>

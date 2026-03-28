@@ -88,17 +88,14 @@
 }
 
 .dropdown_menu {
+    composes: panel from './navbar-shared.module.css';
     position: absolute;
     top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
     min-width: 180px;
     padding: 6px;
-    background-color: color-mix(in srgb, var(--primary) 60%, transparent);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--separator);
     border-radius: 10px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     z-index: 1;
 }
 

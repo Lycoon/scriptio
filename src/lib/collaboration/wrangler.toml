@@ -7,6 +7,10 @@ compatibility_flags = ["nodejs_compat"]
 name = "SCREENPLAY_ROOM"
 class_name = "ScreenplayRoom"
 
+[[r2_buckets]]
+binding = "SNAPSHOTS"
+bucket_name = "scriptio-snapshots"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["ScreenplayRoom"]

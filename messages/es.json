@@ -50,7 +50,7 @@
     "language": {
         "label": "Idioma de la interfaz",
         "helpText": "Elige el idioma que se usa en toda la aplicación.",
-        "spellcheckLabel": "Corrector ortográfico",
+        "spellcheckLabel": "Corrector orthográfico",
         "spellcheckHelpText": "Descarga un diccionario para la corrección ortográfica en el editor.",
         "spellcheckNone": "Desactivado"
     },
@@ -81,7 +81,7 @@
         "transferBtn": "Transferir",
         "transferPrompt": "Introduce el correo del nuevo propietario:",
         "deleteProject": "Eliminar proyecto",
-        "deleteProjectDesc": "Una vez eliminado el proyecto, no hay vuelta atrás. Por favor, asegúrate.",
+        "deleteProjectDesc": "Once un proyecto es eliminado, no hay vuelta atrás. Por favor, asegúrate.",
         "deleteBtn": "Eliminar",
         "modalTitle": "Eliminar proyecto",
         "modalDesc": "Esta acción es permanente y no se puede deshacer. Se perderán todos los datos asociados a este proyecto.",
@@ -151,7 +151,7 @@
     },
     "formatDropdown": {
         "elements": {
-            "scene": "ENCABEZADO DE ESCENA",
+            "scene": "ENCABEZADO DE SCÈNE",
             "action": "Acción",
             "character": "PERSONAJE",
             "dialogue": "Diálogo",
@@ -159,6 +159,7 @@
             "transition": "TRANSICIÓN:",
             "section": "Sección",
             "note": "[[Nota]]",
+            "dual_dialogue": "Doble diálogo",
             "none": "Ninguno"
         },
         "titlePageElements": {
@@ -172,9 +173,9 @@
         "placeholder": "Buscar...",
         "noMatches": "Sin resultados",
         "matchCount": "{current} de {total}",
-        "replacePlaceholder": "Reemplazar con...",
-        "replace": "Reemplazar",
-        "replaceAll": "Reemplazar todo",
+        "replacePlaceholder": "Remplazar con...",
+        "replace": "Remplazar",
+        "replaceAll": "Remplazar todo",
         "filterByElement": "Filtrar por elemento:",
         "elements": {
             "scene": "Encabezado de escena",
@@ -185,6 +186,7 @@
             "transition": "Transición",
             "section": "Sección",
             "note": "Nota",
+            "dual_dialogue": "Doble diálogo",
             "none": "Ninguno"
         }
     },
@@ -317,7 +319,7 @@
         "searchOnWeb": "Buscar en la web",
         "noSuggestions": "Sin sugerencias",
         "addToDictionary": "Añadir al diccionario",
-        "makeDualDialogue": "Make dual dialogue"
+        "makeDualDialogue": "Crear doble diálogo"
     },
     "popup": {
         "character": {
@@ -364,5 +366,20 @@
         "untitled": "Sin título",
         "titlePlaceholder": "Título",
         "descriptionPlaceholder": "Descripción"
+    },
+    "saves": {
+        "title": "Historial de versiones",
+        "saveCurrentVersion": "Guardar versión actual",
+        "namePlaceholder": "Nombre de la versión...",
+        "manualSaves": "Guardados manuales",
+        "autoSaves": "Guardados automáticos",
+        "restore": "Restaurar",
+        "rename": "Renombrar",
+        "delete": "Eliminar",
+        "cancel": "Cancelar",
+        "confirmRestore": "Esto reemplazará el documento actual para todos los colaboradores. ¿Estás seguro?",
+        "confirmDelete": "¿Estás seguro de que quieres eliminar este guardado?",
+        "noSaves": "Aún no hay guardados",
+        "justNow": "Recién"
     }
 }

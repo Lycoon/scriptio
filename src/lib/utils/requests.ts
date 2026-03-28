@@ -42,6 +42,16 @@ const request = async (url: string, method: RESTMethod, body?: Object) => {
     });
 };
 
+/**
+ * Converts a WebSocket URL (ws:// or wss://) to an HTTP URL (http:// or https://).
+ * Useful for calling REST endpoints on the collaboration Worker.
+ */
+export function getCollabHttpUrl(path: string): string {
+    const baseUrl = process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL || "";
+    const httpUrl = baseUrl.replace(/^ws/, "http");
+    return `${httpUrl}${path}`;
+}
+
 /* Projects */
 
 export const getCloudToken = async (projectId: string): Promise<{ token: string | null; status: number }> => {
@@ -63,6 +73,46 @@ export const deleteProject = (projectId: string) => {
 
 export const editProject = (projectId: string, body: UpdateProjectBody) => {
     return request(`/api/projects/${projectId}`, "PATCH", body);
+};
+
+/* Saves / Version History */
+
+export interface SaveEntry {
+    key: string;
+    type: "auto" | "manual";
+    name?: string;
+    date: string;
+    size: number;
+}
+
+export const listSaves = async (projectId: string): Promise<SaveEntry[]> => {
+    const res = await request(`/api/projects/${projectId}/saves`, "GET");
+    if (res.ok) {
+        const { data } = (await res.json()) as ApiResponse<SaveEntry[]>;
+        return data ?? [];
+    }
+    return [];
+};
+
+export const createManualSave = async (projectId: string, name: string): Promise<SaveEntry | null> => {
+    const res = await request(`/api/projects/${projectId}/saves/manual`, "POST", { name });
+    if (res.ok) {
+        const { data } = (await res.json()) as ApiResponse<SaveEntry>;
+        return data ?? null;
+    }
+    return null;
+};
+
+export const restoreSave = async (projectId: string, key: string) => {
+    return request(`/api/projects/${projectId}/saves/restore`, "POST", { key });
+};
+
+export const renameManualSave = async (projectId: string, key: string, name: string) => {
+    return request(`/api/projects/${projectId}/saves/manual`, "PATCH", { key, name });
+};
+
+export const deleteSave = async (projectId: string, key: string) => {
+    return request(`/api/projects/${projectId}/saves`, "DELETE", { key });
 };
 
 /* Collaborators */

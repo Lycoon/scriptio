@@ -17,11 +17,13 @@ import {
     BarChart2,
     CircleArrowLeft,
     CircleCheckBig,
+    History,
     Settings,
     WifiOff,
     WifiSync,
 } from "lucide-react";
 import AnalyticsModal from "@components/analytics/AnalyticsModal";
+import SavesPanel from "./SavesPanel";
 
 import navbar from "./ProjectNavbar.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
@@ -93,6 +95,7 @@ const ProjectNavbar = () => {
 
     const [projectTitle, setProjectTitle] = useState<string>("");
     const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+    const [isSavesOpen, setIsSavesOpen] = useState(false);
     const isLocalEdit = useRef(false);
 
     const { user } = useCookieUser();
@@ -183,6 +186,19 @@ const ProjectNavbar = () => {
                                 />
                             </div>
                         </div>
+                        <div style={{ position: "relative", height: "100%", width: "fit-content", display: "flex", alignItems: "center" }}>
+                            <div
+                                className={`${navBtn.button} ${isSavesOpen ? navBtn.active : ""}`}
+                                onClick={() => setIsSavesOpen(!isSavesOpen)}
+                            >
+                                <History size={18} />
+                            </div>
+                            <SavesPanel
+                                projectId={projectId}
+                                isOpen={isSavesOpen}
+                                onClose={() => setIsSavesOpen(false)}
+                            />
+                        </div>
                     </div>
                 )}
             </nav>
@@ -203,14 +219,12 @@ const ProjectNavbar = () => {
                 <div
                     className={`${navBtn.button} ${isAnalyticsOpen ? navBtn.active : ""}`}
                     onClick={() => setIsAnalyticsOpen(true)}
-                    style={{ height: "100%", paddingInline: "10px", gap: "12px" }}
                 >
                     <BarChart2 size={18} />
                 </div>
                 <div
                     className={navBtn.button}
                     onClick={() => openDashboard("General")}
-                    style={{ height: "100%", paddingInline: "10px", gap: "12px" }}
                 >
                     <Settings size={18} />
                 </div>

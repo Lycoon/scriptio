@@ -1,0 +1,28 @@
+/* ── Shared glassmorphism dropdown panel ─────────────────── */
+.panel {
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Shared inline text input (inside dropdown panels) ───── */
+.text_input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--separator);
+    background: transparent;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    color: var(--primary-text);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.text_input:focus {
+    border-color: var(--accent);
+}
+
+.text_input::placeholder {
+    color: var(--secondary-text);
+}

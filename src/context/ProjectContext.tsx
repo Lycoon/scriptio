@@ -1,14 +1,6 @@
 ﻿"use client";
 
-import {
-    createContext,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Editor } from "@tiptap/react";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
@@ -80,7 +72,7 @@ export interface ProjectContextType {
     setPageMargins: (margins: PageMargin) => void;
     displaySceneNumbers: boolean;
     setDisplaySceneNumbers: (display: boolean) => void;
-        sceneHeadingSpacing: number;
+    sceneHeadingSpacing: number;
     setSceneHeadingSpacing: (spacing: number) => void;
     sceneNumberOnRight: boolean;
     setSceneNumberOnRight: (onRight: boolean) => void;
@@ -150,9 +142,9 @@ const defaultContextValue: ProjectContextType = {
     setPageMargins: () => {},
     displaySceneNumbers: false,
     setDisplaySceneNumbers: () => {},
-            sceneHeadingSpacing: 1,
+    sceneHeadingSpacing: 1,
     setSceneHeadingSpacing: () => {},
-            sceneNumberOnRight: false,
+    sceneNumberOnRight: false,
     setSceneNumberOnRight: () => {},
     contdLabel: "(CONT'D)",
     setContdLabel: () => {},
@@ -301,9 +293,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     );
 
     // Focus tracking state
-    const [focusedEditorType, setFocusedEditorTypeState] = useState<"screenplay" | "title" | null>(
-        null,
-    );
+    const [focusedEditorType, setFocusedEditorTypeState] = useState<"screenplay" | "title" | null>(null);
 
     // Create repository instance when ydoc is available (dynamically imported)
     useEffect(() => {
@@ -453,7 +443,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setProjectTitleState(initialTitle);
         setProjectAuthorState(initialAuthor);
         const unsubscribeMetadata = repository.observeMetadata((metadata) => {
-            console.log("metadata updated: ", metadata.title);
             if (metadata.title !== undefined) setProjectTitleState(metadata.title);
             if (metadata.author !== undefined) setProjectAuthorState(metadata.author);
         });
@@ -471,7 +460,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     // Seed Yjs metadata from the database project record if not yet set
     useEffect(() => {
         if (!repository || !project) return;
-        
+
         const initialTitle = repository.getTitle();
         if (!initialTitle && project.project.title) {
             repository.setTitle(project.project.title);
@@ -785,10 +774,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         ],
     );
 
-    const readyValue = useMemo(
-        () => ({ isYjsReady, isProjectUnavailable }),
-        [isYjsReady, isProjectUnavailable],
-    );
+    const readyValue = useMemo(() => ({ isYjsReady, isProjectUnavailable }), [isYjsReady, isProjectUnavailable]);
 
     return (
         <ProjectReadyContext.Provider value={readyValue}>
