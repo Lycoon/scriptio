@@ -33,6 +33,7 @@ const ScreenplaySearch = () => {
         [ScreenplayElement.Transition]: t("elements.transition"),
         [ScreenplayElement.Section]: t("elements.section"),
         [ScreenplayElement.Note]: t("elements.note"),
+        [ScreenplayElement.DualDialogue]: t("elements.dual_dialogue"),
         [ScreenplayElement.None]: t("elements.none"),
     };
 
