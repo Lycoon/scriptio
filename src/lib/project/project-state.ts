@@ -49,12 +49,14 @@ export interface ProjectYjsState {
 export interface CollaboratorInfo {
     name: string;
     color: string;
+    userId?: string;
     clientId?: number;
 }
 
 export interface UserInfo {
     name: string;
     color: string;
+    userId?: string;
 }
 
 export type ProjectMetadata = {
@@ -498,9 +500,22 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 cloudProvider.awareness.on("update", () => {
                     if (!isMountedRef.current) return;
 
-                    const connectedUsers = Array.from(cloudProvider.awareness.getStates().values())
-                        .filter((state: any) => state.user)
-                        .map((state: any) => state.user as CollaboratorInfo);
+                    const states = Array.from(cloudProvider.awareness.getStates().values());
+                    const uniqueUsersMap = new Map<string, CollaboratorInfo>();
+
+                    for (const state of states) {
+                        if (state.user) {
+                            const user = state.user as CollaboratorInfo;
+                            // Use userId as the primary unique key for deduplication, 
+                            // fallback to name for anonymous/legacy sessions.
+                            const key = user.userId || user.name;
+                            if (!uniqueUsersMap.has(key)) {
+                                uniqueUsersMap.set(key, user);
+                            }
+                        }
+                    }
+
+                    const connectedUsers = Array.from(uniqueUsersMap.values());
 
                     // Only update if users changed to avoid unnecessary re-renders
                     const usersJson = JSON.stringify(connectedUsers);
@@ -656,12 +671,14 @@ export interface UseProjectYjsOptions {
     projectId: string | null;
     userName?: string;
     userColor?: string;
+    userId?: string;
 }
 
 export const useProjectYjs = ({
     projectId,
     userName,
     userColor,
+    userId,
 }: UseProjectYjsOptions): ProjectYjsState & {
     isReady: boolean;
     refreshAndReconnect: () => Promise<void>;
@@ -670,8 +687,9 @@ export const useProjectYjs = ({
         () => ({
             name: userName || `User_${Math.floor(Math.random() * 1000)}`,
             color: userColor || getRandomColor(),
+            userId,
         }),
-        [userName, userColor],
+        [userName, userColor, userId],
     );
 
     const { ydoc, isLocalReady } = useLocalPersistence(projectId);

@@ -154,7 +154,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
 
         for (const [nodeId, { words: nodeWords, text }] of pendingNodes) {
             const filtered = nodeWords.filter((w) => !characterWords.has(w.word.toUpperCase()));
-            
+
             // We always push the node so we can update its cache, even if it has no misspelled words
             requestNodes.push({ nodeId, words: filtered, text });
 
@@ -205,9 +205,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
             const misspelled = [...allWords].filter((w) => wordCache.get(w) === false);
 
             if (editorView) {
-                editorView.dispatch(
-                    editorView.state.tr.setMeta("spellcheckResults", { nodes, misspelled }),
-                );
+                editorView.dispatch(editorView.state.tr.setMeta("spellcheckResults", { nodes, misspelled }));
             }
         };
 
@@ -244,10 +242,16 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                 let from = 0;
                                 let to = editorView.state.doc.content.size;
 
-                                const startCoord = editorView.posAtCoords({ left: rect.left + rect.width / 2, top: visibleTop });
+                                const startCoord = editorView.posAtCoords({
+                                    left: rect.left + rect.width / 2,
+                                    top: visibleTop,
+                                });
                                 if (startCoord) from = startCoord.pos;
 
-                                const endCoord = editorView.posAtCoords({ left: rect.left + rect.width / 2, top: visibleBottom });
+                                const endCoord = editorView.posAtCoords({
+                                    left: rect.left + rect.width / 2,
+                                    top: visibleBottom,
+                                });
                                 if (endCoord) to = endCoord.pos;
 
                                 if (from > to) {
@@ -264,7 +268,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                 editorView.dispatch(
                                     editorView.state.tr
                                         .setMeta("spellcheckViewport", { from, to })
-                                        .setMeta("addToHistory", false)
+                                        .setMeta("addToHistory", false),
                                 );
                             } catch (err) {
                                 // posAtCoords might fail if outside coordinates
@@ -316,7 +320,11 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
 
                         apply(tr, prev: SpellPluginState, _oldState, newState): SpellPluginState {
                             if (!getEnabled()) {
-                                return { checkedNodes: new Map(), nodeErrors: new Map(), decorations: DecorationSet.empty };
+                                return {
+                                    checkedNodes: new Map(),
+                                    nodeErrors: new Map(),
+                                    decorations: DecorationSet.empty,
+                                };
                             }
 
                             // 1. Full refresh (language changed, spellcheck toggled)
@@ -336,7 +344,11 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                     return true; // continue descending into structural nodes
                                 });
                                 scheduleCheck(nodesToCheck);
-                                return { checkedNodes: new Map(), nodeErrors: new Map(), decorations: DecorationSet.empty };
+                                return {
+                                    checkedNodes: new Map(),
+                                    nodeErrors: new Map(),
+                                    decorations: DecorationSet.empty,
+                                };
                             }
 
                             // 2. Viewport Change (Scroll / Resize)
@@ -344,7 +356,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                             if (tr.getMeta("spellcheckViewport")) {
                                 const { from, to } = tr.getMeta("spellcheckViewport");
                                 const decos: Decoration[] = [];
-                                
+
                                 newState.doc.nodesBetween(from, to, (node: any, pos: number) => {
                                     if (node.isTextblock) {
                                         const nodeId = node.attrs?.["data-id"];
@@ -353,12 +365,14 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                             if (errors && errors.length > 0) {
                                                 const contentStart = pos + 1;
                                                 for (const err of errors) {
-                                                    decos.push(Decoration.inline(
-                                                        contentStart + err.relFrom, 
-                                                        contentStart + err.relTo, 
-                                                        SPELL_ATTRS, 
-                                                        { nodeId }
-                                                    ));
+                                                    decos.push(
+                                                        Decoration.inline(
+                                                            contentStart + err.relFrom,
+                                                            contentStart + err.relTo,
+                                                            SPELL_ATTRS,
+                                                            { nodeId },
+                                                        ),
+                                                    );
                                                 }
                                             }
                                         }
@@ -367,10 +381,10 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                     return true;
                                 });
 
-                                return { 
-                                    checkedNodes: prev.checkedNodes, 
-                                    nodeErrors: prev.nodeErrors, 
-                                    decorations: DecorationSet.create(newState.doc, decos) 
+                                return {
+                                    checkedNodes: prev.checkedNodes,
+                                    nodeErrors: prev.nodeErrors,
+                                    decorations: DecorationSet.create(newState.doc, decos),
                                 };
                             }
 
@@ -392,9 +406,9 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                 let decorations = prev.decorations;
                                 const newDecos: Decoration[] = [];
                                 const nodesToUpdate = new Set<string>();
-                                
+
                                 // Map nodeIds to absolute positions to add new decorations
-                                const nodePositions = new Map<string, { pos: number, node: any }>();
+                                const nodePositions = new Map<string, { pos: number; node: any }>();
                                 newState.doc.descendants((node: any, pos: number) => {
                                     if (node.isTextblock) {
                                         const nodeId = node.attrs?.["data-id"];
@@ -414,7 +428,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                         // Stale data. Node text changed. We discard this result.
                                         continue;
                                     }
-                                    
+
                                     // Update our cache markers
                                     checkedNodes.set(nodeId, text);
                                     nodesToUpdate.add(nodeId);
@@ -422,17 +436,23 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                     // Filter for misspelled words
                                     const errors = words.filter((w) => misspelledSet.has(w.word));
                                     if (errors.length) {
-                                        const relErrors = errors.map(err => ({ relFrom: err.relFrom, relTo: err.relTo, word: err.word }));
+                                        const relErrors = errors.map((err) => ({
+                                            relFrom: err.relFrom,
+                                            relTo: err.relTo,
+                                            word: err.word,
+                                        }));
                                         nodeErrors.set(nodeId, relErrors);
 
                                         const contentStart = currentInfo.pos + 1;
                                         for (const err of relErrors) {
-                                            newDecos.push(Decoration.inline(
-                                                contentStart + err.relFrom, 
-                                                contentStart + err.relTo, 
-                                                SPELL_ATTRS, 
-                                                { nodeId }
-                                            ));
+                                            newDecos.push(
+                                                Decoration.inline(
+                                                    contentStart + err.relFrom,
+                                                    contentStart + err.relTo,
+                                                    SPELL_ATTRS,
+                                                    { nodeId },
+                                                ),
+                                            );
                                         }
                                     } else {
                                         nodeErrors.delete(nodeId);
@@ -446,13 +466,13 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                         const info = nodePositions.get(nodeId);
                                         if (info) {
                                             const nodeDecos = decorations.find(info.pos, info.pos + info.node.nodeSize);
-                                            toRemove.push(...nodeDecos.filter(d => d.spec.nodeId === nodeId));
+                                            toRemove.push(...nodeDecos.filter((d) => d.spec.nodeId === nodeId));
                                         }
                                     }
                                     if (toRemove.length > 0) {
                                         decorations = decorations.remove(toRemove);
                                     }
-                                    
+
                                     // Add the fresh decorations
                                     if (newDecos.length > 0) {
                                         decorations = decorations.add(newState.doc, newDecos);
@@ -465,13 +485,18 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                             // 4. Document changed — blazingly fast remapping
                             if (tr.docChanged) {
                                 // Map all existing decorations to their new positions
+                                let start = performance.now();
                                 let decorations = prev.decorations.map(tr.mapping, newState.doc);
+                                let end = performance.now();
+                                let duration = end - start;
+                                console.log(`Spellcheck remapping: ${duration.toFixed(4)} ms.`);
+
                                 const checkedNodes = prev.checkedNodes;
                                 const nodeErrors = new Map(prev.nodeErrors);
-                                
+
                                 // Find which nodes were actually affected by the transaction
                                 const affectedMap = new Map<string, { nodeId: string; node: any; pos: number }>();
-                                
+
                                 tr.mapping.maps.forEach((stepMap, i) => {
                                     stepMap.forEach((_os: number, _oe: number, ns: number, ne: number) => {
                                         const m = tr.mapping.slice(i + 1);
@@ -479,7 +504,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                         const mTo = m.map(ne, 1);
                                         const from = Math.min(mFrom, mTo);
                                         const to = Math.max(mFrom, mTo);
-                                        
+
                                         newState.doc.nodesBetween(from, to, (node: any, pos: number) => {
                                             if (!node.isTextblock) return true;
                                             const nodeId = node.attrs?.["data-id"];
@@ -493,7 +518,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
 
                                 if (affectedMap.size > 0) {
                                     const nodesToCheck = [];
-                                    
+
                                     for (const { node, nodeId } of affectedMap.values()) {
                                         const { words, text } = extractNodeWords(node);
                                         // Only queue nodes whose text content actually changed.
@@ -503,7 +528,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                             nodeErrors.delete(nodeId);
                                         }
                                     }
-                                    
+
                                     if (nodesToCheck.length > 0) {
                                         scheduleCheck(nodesToCheck);
                                     }

@@ -349,7 +349,6 @@ function buildDecorations(
     options: PaginationOptions,
 ): DecorationSet {
     const decorations: Decoration[] = [];
-    console.log(breaks);
 
     // First page top margin / header
     decorations.push(
@@ -381,8 +380,6 @@ function buildDecorations(
             key: `lp-${lastPagenum}-${lastPageFreespace}`,
         }),
     );
-
-    console.log(decorations);
 
     return DecorationSet.create(doc, decorations);
 }

@@ -247,6 +247,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         projectId,
         userName,
         userColor,
+        userId: user?.id,
     });
 
     // Repository state - loaded dynamically
