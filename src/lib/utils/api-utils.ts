@@ -43,6 +43,11 @@ export class UnauthorizedError extends AppError {
         super(401, message);
     }
 }
+export class PaymentRequiredError extends AppError {
+    constructor(message = "Pro subscription required") {
+        super(402, message);
+    }
+}
 export class MissingBodyError extends AppError {
     constructor(message = "Missing body") {
         super(400, message);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState, Suspense } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useCookieUser } from "@src/lib/utils/hooks";
@@ -13,15 +13,17 @@ import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { FileDown, Folder, Globe, Keyboard, KeyRound, Palette, PanelsTopLeft, User, Users } from "lucide-react";
+import { CreditCard, FileDown, Folder, Globe, Keyboard, KeyRound, Palette, PanelsTopLeft, User, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
 import LanguageSettings from "./preferences/LanguageSettings";
 import SecuritySettings from "./account/SecuritySettings";
 import ProfileSettings from "./account/ProfileSettings";
+import SubscriptionSettings from "./account/SubscriptionSettings";
 import LayoutSettings from "./project/LayoutSettings";
 import DashboardLogin from "./account/DashboardLogin";
+import DashboardSignup from "./account/DashboardSignup";
 import AboutSettings from "./AboutSettings";
 
 const DashboardModal = () => {
@@ -52,8 +54,9 @@ const DashboardModal = () => {
     const ACCOUNT_MENU = useMemo<MenuSection>(() => ({
         group: t("groups.account"),
         items: [
-            { id: "Profile",   label: t("tabs.Profile"),   icon: <User size={18} /> },
-            { id: "Security",  label: t("tabs.Security"),  icon: <KeyRound size={18} /> },
+            { id: "Profile",      label: t("tabs.Profile"),      icon: <User size={18} /> },
+            { id: "Security",     label: t("tabs.Security"),     icon: <KeyRound size={18} /> },
+            { id: "Subscription", label: t("tabs.Subscription"), icon: <CreditCard size={18} /> },
         ],
     }), [t]);
 
@@ -80,8 +83,8 @@ const DashboardModal = () => {
         if ((!isInProject && projectTabIds.includes(activeTab)) || (!isSignedIn && accountTabIds.includes(activeTab))) {
             setActiveTab(PREFERENCES_MENU.items[0].id);
         }
-        // If user just signed in while on Login tab, switch to Profile
-        if (isSignedIn && activeTab === "Login") {
+        // If user just signed in while on Login or Signup tab, switch to Profile
+        if (isSignedIn && (activeTab === "Login" || activeTab === "Signup")) {
             setActiveTab("Profile");
         }
     }, [isInProject, isSignedIn, activeTab, setActiveTab]);
@@ -124,8 +127,10 @@ const DashboardModal = () => {
                         {/* Account tabs - only when signed in */}
                         {isSignedIn && activeTab === "Profile" && <ProfileSettings dangerOpen={dangerOpen} onDangerToggle={() => setDangerOpen((v) => !v)} />}
                         {isSignedIn && activeTab === "Security" && <SecuritySettings />}
-                        {/* Login tab - only when signed out */}
-                        {!isSignedIn && activeTab === "Login" && <DashboardLogin />}
+                        {isSignedIn && activeTab === "Subscription" && <SubscriptionSettings />}
+                        {/* Login / Signup tabs - only when signed out */}
+                        {!isSignedIn && activeTab === "Login" && <Suspense><DashboardLogin /></Suspense>}
+                        {!isSignedIn && activeTab === "Signup" && <DashboardSignup />}
                         {/* About tab */}
                         {activeTab === "About" && <AboutSettings />}
                     </div>

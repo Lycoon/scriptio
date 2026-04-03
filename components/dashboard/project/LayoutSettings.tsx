@@ -28,6 +28,7 @@ import {
     ChevronDown,
     Save,
     SeparatorHorizontal,
+    RotateCcw,
 } from "lucide-react";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 
@@ -162,6 +163,26 @@ const LayoutSettings = () => {
         localStyles,
         initialStyles,
     ]);
+
+    const handleReset = () => {
+        setLocalFormat("LETTER");
+        setLocalPageMargins({ ...DEFAULT_PAGE_MARGINS });
+        setLocalDisplaySceneNumbers(false);
+        setLocalSceneNumberOnRight(false);
+        setLocalHeadingSpacing(1);
+        setLocalContdLabel("CONT'D");
+        setLocalMoreLabel("MORE");
+        const defaultMargins: Record<string, ElementMargin> = {};
+        for (const key of MARGIN_ELEMENTS) {
+            defaultMargins[key] = { ...DEFAULT_ELEMENT_MARGINS[key] };
+        }
+        setLocalMargins(defaultMargins);
+        const defaultStyles: Record<string, ElementStyle> = {};
+        for (const key of MARGIN_ELEMENTS) {
+            defaultStyles[key] = { ...(DEFAULT_ELEMENT_STYLES[key] || {}) };
+        }
+        setLocalStyles(defaultStyles);
+    };
 
     const handleSave = () => {
         setPageFormat(localFormat);
@@ -641,6 +662,10 @@ const LayoutSettings = () => {
             </div>
 
             <div className={sharedStyles.formActions}>
+                <button className={sharedStyles.formBtn} onClick={handleReset}>
+                    <RotateCcw size={18} />
+                    {tCommon("resetDefaults")}
+                </button>
                 <button className={sharedStyles.formBtn} disabled={!hasChanges} onClick={handleSave}>
                     <Save size={18} />
                     {tCommon("save")}

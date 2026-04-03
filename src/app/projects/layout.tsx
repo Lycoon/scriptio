@@ -17,24 +17,25 @@ interface ProjectLayoutInnerProps {
 
 const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
     const { isYjsReady, isProjectUnavailable } = useProjectReady();
-    const { membership, isLoading: isMembershipLoading } = useProjectMembership();
+    const { membership, isLoading: isMembershipLoading, isLocalOnly: isBrowserLocalOnly } = useProjectMembership();
 
-    // On desktop (Tauri), we support offline-first - don't require API membership
+    // Desktop (Tauri) and browser local-only projects skip the cloud membership requirement
     const isDesktop = isTauri();
+    const isLocalAccess = isDesktop || isBrowserLocalOnly;
 
-    // On web, wait for membership to load
-    if (!isDesktop && isMembershipLoading) {
+    // Wait for membership to resolve for potential cloud projects
+    if (!isLocalAccess && isMembershipLoading) {
         return <Loading />;
     }
 
-    // Always wait for Yjs to be ready (local or cloud data)
+    // Always wait for local data to be ready
     if (!isYjsReady) {
         return <Loading />;
     }
 
-    // On web, redirect if no membership (unauthorized access)
-    if (!isDesktop && !membership) {
-        redirect("/");
+    // On web, redirect if no cloud membership and not a local project
+    if (!isLocalAccess && !membership) {
+        redirect("/projects");
     }
 
     // On desktop, show dialog when cloud project is unavailable
@@ -57,8 +58,9 @@ function ProjectLayoutContent({ children }: { children: ReactNode }) {
     const params = useSearchParams();
     const projectId = params.get("projectId");
 
+    // No projectId: render children directly (projects listing page handles its own UI)
     if (!projectId) {
-        redirect("/");
+        return <>{children}</>;
     }
 
     return (

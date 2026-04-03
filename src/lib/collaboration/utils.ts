@@ -17,6 +17,18 @@ declare const window: any;
  * frequent during multi-user editing.
  */
 export class ThrottledWebsocketProvider extends WebsocketProvider {
+    on(event: "document-restored", listener: () => void): this;
+    on(event: Parameters<WebsocketProvider["on"]>[0], listener: Parameters<WebsocketProvider["on"]>[1]): this;
+    on(event: string, listener: (...args: any[]) => void): this {
+        return super.on(event as any, listener as any);
+    }
+
+    emit(event: "document-restored", args: []): this;
+    emit(event: Parameters<WebsocketProvider["emit"]>[0], args: Parameters<WebsocketProvider["emit"]>[1]): this;
+    emit(event: string, args: any[]): this {
+        super.emit(event as any, args as any);
+        return this;
+    }
     private updateQueue: Uint8Array[] = [];
     private awarenessQueue: Set<number> = new Set();
     private flushInterval: ReturnType<typeof setInterval> | null = null;
@@ -54,6 +66,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
     // Bound event handlers for proper cleanup
     private boundResetIdleTimer: () => void;
+    private boundHandleVisibility: () => void;
+    private boundHandleOnline: () => void;
 
     constructor(
         serverUrl: string,
@@ -67,6 +81,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         this.localClientId = doc.clientID;
         this.boundResetIdleTimer = this.resetUserIdleTimer.bind(this);
+        this.boundHandleVisibility = this.handleVisibilityChange.bind(this);
+        this.boundHandleOnline = this.handleWakeUp.bind(this, "online");
         this.lastFlushTime = Date.now();
         this.lastMessageTime = Date.now();
 
@@ -422,6 +438,9 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             window.addEventListener(event, this.boundResetIdleTimer, { passive: true });
         });
 
+        document.addEventListener("visibilitychange", this.boundHandleVisibility);
+        window.addEventListener("online", this.boundHandleOnline);
+
         // Start the idle timer
         this.resetUserIdleTimer();
     }
@@ -494,6 +513,28 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     /**
+     * Force a reconnect when the page becomes visible again after being hidden.
+     */
+    private handleVisibilityChange(): void {
+        if (document.visibilityState !== "visible") return;
+        this.handleWakeUp("visibility");
+    }
+
+    /**
+     * Reconnect after wake (visibility restored or network online).
+     * Only acts if not connected, not idle-disconnected (that case is handled
+     * by resetUserIdleTimer on next user activity), and not session-replaced.
+     */
+    private handleWakeUp(source: string): void {
+        if (this.isDestroyed || this.isSessionReplaced || this.isIdleDisconnected) return;
+        if (!this.wsconnected) {
+            console.log(`[WS] Reconnecting after wake (${source})...`);
+            this.reconnectAttempts = 0;
+            this.reconnect().catch(() => this.scheduleReconnect());
+        }
+    }
+
+    /**
      * Remove activity listeners
      */
     private cleanupIdleListeners(): void {
@@ -502,6 +543,9 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.ACTIVITY_EVENTS.forEach((event) => {
             window.removeEventListener(event, this.boundResetIdleTimer);
         });
+
+        document.removeEventListener("visibilitychange", this.boundHandleVisibility);
+        window.removeEventListener("online", this.boundHandleOnline);
 
         if (this.userIdleTimer) {
             clearTimeout(this.userIdleTimer);

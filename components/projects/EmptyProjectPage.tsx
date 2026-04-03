@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCookieUser } from "@src/lib/utils/hooks";
+import { useCookieUser, useIsPro } from "@src/lib/utils/hooks";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
 import styles from "./EmptyProjectPage.module.css";
 import { useTranslations } from "next-intl";
@@ -13,6 +13,7 @@ type Props = {
 
 const EmptyProjectPage = ({ setIsCreating }: Props) => {
     const { user } = useCookieUser();
+    const { isPro } = useIsPro();
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isImporting, setIsImporting] = useState(false);
@@ -30,7 +31,7 @@ const EmptyProjectPage = ({ setIsCreating }: Props) => {
         setIsImporting(true);
 
         try {
-            const result = await importFileAsProject(file, user);
+            const result = await importFileAsProject(file, user, undefined, isPro);
 
             if (result.success && result.projectId) {
                 router.push(`/projects?projectId=${result.projectId}`);

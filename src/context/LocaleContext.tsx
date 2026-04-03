@@ -3,7 +3,6 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { UserLanguage } from "@src/lib/utils/types";
 import { useSettings } from "@src/lib/utils/hooks";
-import { editUserSettings } from "@src/lib/utils/requests";
 
 import enMessages from "../../messages/en.json";
 import esMessages from "../../messages/es.json";
@@ -37,7 +36,7 @@ export function LocaleContextProvider({ children }: { children: ReactNode }) {
         return stored && stored in MESSAGES ? stored : DEFAULT_LOCALE;
     });
 
-    const { settings, mutate } = useSettings();
+    const { settings, mutate, saveSettings } = useSettings();
 
     // Server-wins sync: if settings differ from local state (e.g. changed on another device)
     useEffect(() => {
@@ -54,9 +53,9 @@ export function LocaleContextProvider({ children }: { children: ReactNode }) {
             setLocale(lang);
             window.localStorage.setItem(LOCALE_KEY, lang);
             if (settings) mutate({ ...settings, language: lang }, false);
-            editUserSettings({ language: lang });
+            saveSettings({ language: lang });
         },
-        [locale, settings, mutate],
+        [locale, settings, mutate, saveSettings],
     );
 
     const value = useMemo(

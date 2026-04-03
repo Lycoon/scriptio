@@ -57,4 +57,13 @@ export const getUserFromEmail = async (email: string, includeSecrets = false) =>
 
 export const getUserSettings = async (userId: string) => {
     return repository.fetchUserSettings(userId);
-}
+};
+
+export const getUserBySubscriptionId = async (subscriptionId: string) => {
+    return repository.fetchUserBySubscriptionId(subscriptionId);
+};
+
+export const getSubscriptionId = async (userId: string) => {
+    const result = await repository.fetchSubscriptionId(userId);
+    return result?.stripeSubscriptionId ?? null;
+};

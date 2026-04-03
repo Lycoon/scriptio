@@ -306,12 +306,6 @@ export const getBoardMap = (ydoc: ProjectState): Y.Map<string> => {
 //          LOCAL PERSISTENCE       //
 // -------------------------------- //
 
-// Type for persistence providers (both IndexedDB and SQLite implement this interface)
-interface PersistenceProvider {
-    on(event: "synced", callback: (provider: any) => void): void;
-    destroy(): void;
-}
-
 /**
  * Hook to initialize local persistence for the Yjs document.
  * Uses SQLite on desktop (Tauri) and IndexedDB on browser.
@@ -319,7 +313,7 @@ interface PersistenceProvider {
 export const useLocalPersistence = (projectId: string | null) => {
     const [ydoc, setYdoc] = useState<ProjectState | null>(null);
     const [isLocalReady, setIsLocalReady] = useState(false);
-    const persistenceRef = useRef<PersistenceProvider | null>(null);
+    const persistenceRef = useRef<{ on: any; destroy(): void } | null>(null);
 
     useEffect(() => {
         if (!projectId || typeof window === "undefined") {
@@ -329,28 +323,10 @@ export const useLocalPersistence = (projectId: string | null) => {
         }
 
         let isDestroyed = false;
-
         const initPersistence = async () => {
-            // Dynamically import Yjs modules
-            const Y = await getYjs();
-
-            // Create new Yjs document
             const state = new ProjectState();
-
-            let localProvider: PersistenceProvider;
-
-            // Dynamically import isTauri to check environment
-            const { isTauri } = await import("@tauri-apps/api/core");
-
-            if (isTauri()) {
-                // Desktop: Use SQLite persistence
-                const { SqlitePersistence } = await import("../persistence/sqlite-persistence");
-                localProvider = new SqlitePersistence(projectId, state);
-            } else {
-                // Browser: Use IndexedDB persistence
-                const { IndexeddbPersistence } = await import("y-indexeddb");
-                localProvider = new IndexeddbPersistence(`scriptio-${projectId}`, state);
-            }
+            const { createLocalYjsProvider } = await import("../persistence/y-local-provider");
+            const localProvider = await createLocalYjsProvider(projectId, state);
 
             localProvider.on("synced", () => {
                 if (isDestroyed) return;
@@ -455,13 +431,11 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 const isDesktop = isTauri();
 
                 // Local-only projects (not cloud-synced) don't need cloud sync
-                if (isDesktop) {
-                    const { isLocalOnlyProject } = await import("../persistence/local-projects");
-                    if (await isLocalOnlyProject(projectId)) {
-                        setConnectionStatus("disconnected");
-                        setIsCloudSynced(true);
-                        return;
-                    }
+                const { isLocalOnlyProject } = await import("../persistence/storage-provider/local-persistence");
+                if (await isLocalOnlyProject(projectId)) {
+                    setConnectionStatus("disconnected");
+                    setIsCloudSynced(true);
+                    return;
                 }
 
                 const { token, status } = await getCloudToken(projectId);

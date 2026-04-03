@@ -207,7 +207,7 @@ export class ProjectRepository {
 
         const sceneData: PersistentScene = {
             synopsis: data.synopsis ?? existing?.synopsis ?? "",
-            color: data.color ?? existing?.color,
+            color: "color" in data ? data.color : existing?.color,
         };
 
         map.set(sceneId, sceneData);
@@ -244,20 +244,6 @@ export class ProjectRepository {
             map.delete(sceneId);
             console.log(`[Scenes] Deleted scene: ${sceneId}`);
         }
-    }
-
-    /**
-     * Update a scene's synopsis.
-     */
-    setSceneSynopsis(sceneId: string, synopsis: string): void {
-        this.upsertScene(sceneId, { synopsis });
-    }
-
-    /**
-     * Update a scene's color.
-     */
-    setSceneColor(sceneId: string, color: string | undefined): void {
-        this.upsertScene(sceneId, { color });
     }
 
     /**

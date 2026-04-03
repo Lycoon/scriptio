@@ -285,3 +285,42 @@
         transform: rotate(360deg);
     }
 }
+
+.pro_gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 28px 20px;
+    color: var(--secondary-text);
+    text-align: center;
+}
+
+.pro_gate_title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-text);
+    margin: 0;
+}
+
+.pro_gate_desc {
+    font-size: 0.78rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.pro_gate_btn {
+    margin-top: 8px;
+    padding: 6px 18px;
+    border-radius: 20px;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s;
+}
+
+.pro_gate_btn:hover {
+    opacity: 0.85;
+}

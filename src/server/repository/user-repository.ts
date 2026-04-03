@@ -24,6 +24,9 @@ export interface UserUpdate {
     verified?: boolean;
     username?: string;
     color?: string;
+    isProUntil?: Date | null;
+    stripeSubscriptionId?: string | null;
+    isSubscriptionCancelled?: boolean;
     secrets?: UpdateSecrets;
     settings?: Partial<UserSettings>;
 }
@@ -50,6 +53,9 @@ export class UserRepository {
                 settings: userUpdate.settings as Prisma.InputJsonValue,
                 username: userUpdate.username,
                 color: userUpdate.color,
+                isProUntil: userUpdate.isProUntil,
+                stripeSubscriptionId: userUpdate.stripeSubscriptionId,
+                isSubscriptionCancelled: userUpdate.isSubscriptionCancelled,
                 secrets: {
                     update: userUpdate.secrets,
                 },
@@ -86,12 +92,28 @@ export class UserRepository {
             settings: true,
             username: true,
             color: true,
+            isProUntil: true,
+            isSubscriptionCancelled: true,
             secrets: includeSecrets,
         };
 
         return prisma.user.findUnique({
             where: idOrEmail,
             select: userQuerySelect,
+        });
+    }
+
+    fetchUserBySubscriptionId(subscriptionId: string) {
+        return prisma.user.findFirst({
+            where: { stripeSubscriptionId: subscriptionId },
+            select: { id: true },
+        });
+    }
+
+    fetchSubscriptionId(userId: string) {
+        return prisma.user.findUnique({
+            where: { id: userId },
+            select: { stripeSubscriptionId: true },
         });
     }
 

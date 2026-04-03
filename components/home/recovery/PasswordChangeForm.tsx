@@ -46,7 +46,7 @@ const PasswordChangeForm = ({ userId, code }: Props) => {
         if (res.ok) {
             setFormInfo({ content: json.message! });
             setTimeout(() => {
-                redirect("/login");
+                redirect("/");
             }, 3000);
         } else {
             setFormInfo({ content: json.message!, isError: true });
@@ -61,7 +61,6 @@ const PasswordChangeForm = ({ userId, code }: Props) => {
                 <p className={recovery.info}>
                     This is a secure space to change your password. Do not share the link of this page with anyone else.
                 </p>
-                {formInfo && <FormInfo info={formInfo} />}
             </div>
             <label className={form.element}>
                 <span>New password</span>
@@ -69,6 +68,7 @@ const PasswordChangeForm = ({ userId, code }: Props) => {
                 <span>Repeat password</span>
                 <input className={form.input} name="pwd2" type="password" required />
             </label>
+            {formInfo && <FormInfo info={formInfo} />}
             <div className={form.btn_flex}>
                 <button className={form.btn} type="submit">
                     Confirm

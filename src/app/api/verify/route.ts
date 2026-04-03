@@ -21,16 +21,16 @@ const QuerySchema = z.object({
  * scriptio.app/api/verify?id=userId&token=emailHash
  */
 async function verifyUser(req: NextRequest, { searchParams }: ApiContext) {
-    let target = "/login?status=failed";
+    let target = "/?verifyStatus=failed";
 
     try {
         const { id, token } = validate(QuerySchema, searchParams);
 
         const user = await UserService.getUserFromId(id, true);
         if (!user || token !== user.secrets?.emailHash) {
-            // target stays "/login?status=failed"
+            // target stays "/?verifyStatus=failed"
         } else if (user.verified) {
-            target = "/login?status=used";
+            target = "/?verifyStatus=used";
         } else {
             const updated = await UserService.updateUserFromId(id, {
                 secrets: { emailHash: null },
@@ -40,11 +40,11 @@ async function verifyUser(req: NextRequest, { searchParams }: ApiContext) {
             if (updated) {
                 // Automatically authenticate a user that just clicked on his verification email
                 await authenticate(updated as CookieUser);
-                target = "/";
+                target = "/projects";
             }
         }
     } catch {
-        target = "/login?status=failed";
+        target = "/?verifyStatus=failed";
     }
 
     redirect(target);

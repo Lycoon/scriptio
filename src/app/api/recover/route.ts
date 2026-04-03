@@ -32,7 +32,7 @@ async function requestRecovery(req: NextRequest) {
     }
 
     const recoverHash = await UserService.updateRecoveryHash(user.id);
-    sendRecoveryEmail(user.id, user.email, recoverHash);
+    await sendRecoveryEmail(user.id, user.email, recoverHash);
 
     return Success(null, RECOVERY_REQUEST_FULFILLED);
 }

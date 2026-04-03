@@ -5,12 +5,10 @@ import sharedStyles from "../project/ProjectSettings.module.css";
 import optionCard from "../project/OptionCard.module.css";
 import styles from "./AppearanceSettings.module.css";
 import { UserTheme } from "@src/lib/utils/types";
-import { editUserSettings } from "@src/lib/utils/requests";
 import { useTheme } from "next-themes";
 import { useSettings } from "@src/lib/utils/hooks";
 import { useTranslations } from "next-intl";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
-import { Save } from "lucide-react";
 
 const THEME_COLORS: Record<
     string,
@@ -71,23 +69,22 @@ const THEME_LABELS: Record<string, string> = {
 
 const AppearanceSettings = () => {
     const { theme, setTheme } = useTheme();
-    const { settings, mutate } = useSettings();
+    const { settings, mutate, saveSettings } = useSettings();
     const t = useTranslations("appearance");
-    const tCommon = useTranslations("common");
 
     const themedEditor = settings?.themedEditor ?? false;
+    const highlightOnHover = settings?.highlightOnHover ?? false;
 
     const toggleThemedEditor = () => {
         const newValue = !themedEditor;
-        // Optimistically update the SWR cache so the toggle reflects immediately,
-        // then persist to the backend. EditorThemeSync picks up the cache change
-        // and syncs the CSS class on <html>.
         mutate({ ...settings!, themedEditor: newValue }, false);
-        editUserSettings({ themedEditor: newValue });
+        saveSettings({ themedEditor: newValue });
     };
 
-    const onSave = () => {
-        editUserSettings({ theme: theme as UserTheme });
+    const toggleHighlightOnHover = () => {
+        const newValue = !highlightOnHover;
+        mutate({ ...settings!, highlightOnHover: newValue }, false);
+        saveSettings({ highlightOnHover: newValue });
     };
 
     const themeOptions: DropdownOption[] = Object.entries(THEME_COLORS).map(([key, colors]) => ({
@@ -117,13 +114,11 @@ const AppearanceSettings = () => {
                 <label className={form.label}>{t("theme")}</label>
                 <Dropdown
                     value={theme || "dark"}
-                    onChange={(value) => setTheme(value)}
+                    onChange={(value) => { setTheme(value); saveSettings({ theme: value as UserTheme }); }}
                     options={themeOptions}
                     className={`${sharedStyles.input} ${styles.input}`}
                 />
-                <p className={sharedStyles.helpText}>
-                    {theme && t(`themeHelp.${theme}` as Parameters<typeof t>[0])}
-                </p>
+                <p className={sharedStyles.helpText}>{theme && t(`themeHelp.${theme}` as Parameters<typeof t>[0])}</p>
             </div>
 
             {/* Editor Appearance */}
@@ -141,14 +136,20 @@ const AppearanceSettings = () => {
                         <span className={optionCard.optionDesc}>{t("themedEditorDesc")}</span>
                     </div>
                 </div>
+                <div
+                    className={`${optionCard.optionCard} ${highlightOnHover ? optionCard.active : ""}`}
+                    onClick={toggleHighlightOnHover}
+                >
+                    <div className={optionCard.checkbox}>
+                        {highlightOnHover && <div className={optionCard.checkInner} />}
+                    </div>
+                    <div className={optionCard.optionInfo}>
+                        <span className={optionCard.optionTitle}>{t("highlightOnHover")}</span>
+                        <span className={optionCard.optionDesc}>{t("highlightOnHoverDesc")}</span>
+                    </div>
+                </div>
             </div>
 
-            <div className={sharedStyles.formActions}>
-                <button onClick={onSave} className={`${sharedStyles.formBtn} `}>
-                    <Save size={18} />
-                    {tCommon("save")}
-                </button>
-            </div>
         </div>
     );
 };

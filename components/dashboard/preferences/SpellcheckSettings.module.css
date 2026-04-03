@@ -38,3 +38,171 @@
         transform: rotate(360deg);
     }
 }
+
+/* ── Custom dictionary accordion card ── */
+
+.dictCard {
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.dictCard:hover {
+    border-color: var(--secondary-text);
+}
+
+.dictCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.dictCardHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dictCardTitle {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--primary-text);
+}
+
+.dictCardBadge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--secondary-text);
+    background: var(--tertiary);
+    border-radius: 20px;
+    padding: 2px 8px;
+}
+
+.dictCardChevron {
+    color: var(--secondary-text);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.dictCardChevron.open {
+    transform: rotate(180deg);
+}
+
+.dictCardBody {
+    border-top: 1px solid var(--separator);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Input row */
+.wordInputRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.wordInputRow input {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    background: var(--primary);
+    border: 1px solid var(--separator);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--primary-text);
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: var(--font-inter);
+}
+
+.wordInputRow input:focus {
+    border-color: var(--secondary-text);
+}
+
+.addBtn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    background: var(--secondary);
+    border: 1px solid var(--tertiary);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--primary-text);
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.addBtn:hover:not(:disabled) {
+    background: var(--secondary-hover);
+    border-color: var(--secondary-text);
+}
+
+.addBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Word list */
+.wordList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    height: 150px;
+    overflow-y: auto;
+}
+
+.emptyState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 0.8rem;
+    color: var(--secondary-text);
+    text-align: center;
+}
+
+.wordItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 0.875rem;
+    color: var(--primary-text);
+    flex-shrink: 0;
+}
+
+.wordItem:hover {
+    background: var(--tertiary);
+}
+
+.removeWordBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--secondary-text);
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    opacity: 0.5;
+    transition: color 0.15s, opacity 0.15s;
+}
+
+.removeWordBtn:hover {
+    color: var(--error);
+    opacity: 1;
+}

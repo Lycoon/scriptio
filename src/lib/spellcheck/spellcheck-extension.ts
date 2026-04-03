@@ -485,11 +485,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                             // 4. Document changed — blazingly fast remapping
                             if (tr.docChanged) {
                                 // Map all existing decorations to their new positions
-                                let start = performance.now();
                                 let decorations = prev.decorations.map(tr.mapping, newState.doc);
-                                let end = performance.now();
-                                let duration = end - start;
-                                console.log(`Spellcheck remapping: ${duration.toFixed(4)} ms.`);
 
                                 const checkedNodes = prev.checkedNodes;
                                 const nodeErrors = new Map(prev.nodeErrors);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useCookieUser, useProjectMemberships, ExtendedProjectMembershipPayload } from "@src/lib/utils/hooks";
+import { useCookieUser, useIsPro, useProjectMemberships, ExtendedProjectMembershipPayload } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
@@ -19,6 +19,7 @@ import form from "../utils/Form.module.css";
 
 const ProjectPageContainer = () => {
     const { user } = useCookieUser();
+    const { isPro } = useIsPro();
     const { projects, isLoading, mutate } = useProjectMemberships();
     const t = useTranslations("projects");
     const [isCreating, setIsCreating] = useState(false);
@@ -58,7 +59,7 @@ const ProjectPageContainer = () => {
 
         try {
             // This now correctly preserves all project data (title page, board, etc.)
-            const result = await importFileAsProject(file, user);
+            const result = await importFileAsProject(file, user, undefined, isPro);
 
             if (result.success && result.projectId) {
                 // Refresh the project list

@@ -12,6 +12,7 @@ import {
     UserNotFoundError,
     validate,
 } from "@src/lib/utils/api-utils";
+import { requirePro } from "@src/lib/utils/pro-utils";
 
 import { CreateProjectBodySchema } from "@src/lib/utils/api-bodies";
 export type { CreateProjectBody } from "@src/lib/utils/api-bodies";
@@ -45,6 +46,8 @@ async function createProject(req: NextRequest) {
     if (!cookie || !cookie.id) {
         throw new UnauthorizedError();
     }
+
+    await requirePro(cookie.id);
 
     const body = await req.json();
     const { title, description, author, poster } = validate(CreateProjectBodySchema, body);

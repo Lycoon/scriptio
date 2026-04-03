@@ -1,0 +1,182 @@
+.card {
+    border: 1px solid var(--separator);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.card[data-pro="true"] {
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.planName {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-text);
+}
+
+.proBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.renewDate {
+    font-size: 0.82rem;
+    color: var(--secondary-text);
+    margin: -4px 0 0 0;
+}
+
+.perksSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.perksTitle {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 8px 0;
+}
+
+.perkItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    font-size: 0.88rem;
+    color: var(--primary-text);
+    border-bottom: 1px solid var(--separator);
+}
+
+.perkItem:last-child {
+    border-bottom: none;
+}
+
+.perkIconPro {
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.perkIconFree {
+    color: var(--secondary-text);
+    flex-shrink: 0;
+    opacity: 0.5;
+}
+
+.cancelBtn {
+    align-self: flex-start;
+    background: none;
+    border: 1px solid var(--separator);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.cancelBtn:hover {
+    color: var(--error);
+    border-color: color-mix(in srgb, var(--error) 60%, transparent);
+}
+
+.confirmBox {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--error) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--error) 20%, transparent);
+}
+
+.confirmText {
+    font-size: 0.82rem;
+    color: var(--primary-text);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.confirmBtns {
+    display: flex;
+    gap: 8px;
+}
+
+.confirmYes {
+    padding: 5px 14px;
+    border-radius: 6px;
+    background: var(--error);
+    color: #fff;
+    border: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.confirmYes:hover { opacity: 0.85; }
+.confirmYes:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.confirmNo {
+    padding: 5px 14px;
+    border-radius: 6px;
+    background: none;
+    border: 1px solid var(--separator);
+    color: var(--primary-text);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.confirmNo:hover { background: var(--secondary); }
+
+.cancelSuccess {
+    font-size: 0.82rem;
+    color: var(--success);
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--success) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--success) 20%, transparent);
+    margin: 0;
+}
+
+.upgradeBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    width: 100%;
+}
+
+.upgradeBtn:hover { opacity: 0.9; }
+.upgradeBtn:disabled { opacity: 0.5; cursor: not-allowed; }

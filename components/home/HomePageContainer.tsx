@@ -77,7 +77,7 @@ export default function HomePageContainer() {
                                 </div>
                             </a>
 
-                            <a href="/signup" className={styles.ctaPlatform}>
+                            <a href="/projects" className={styles.ctaPlatform}>
                                 <Globe size={22} />
                                 <div className={styles.ctaPlatformText}>
                                     <span className={styles.ctaPlatformLabel}>Open in</span>

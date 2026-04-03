@@ -2,6 +2,7 @@ import { ProjectRole } from "@prisma/client";
 import { getCookieUser } from "@src/lib/session";
 import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
 import { ForbiddenError, getCollabHttpUrl, Success, SuccessCreated, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
+import { requirePro } from "@src/lib/utils/pro-utils";
 
 import * as Roles from "@src/lib/utils/roles";
 import * as ProjectService from "@src/server/service/project-service";
@@ -60,6 +61,8 @@ async function createManualSave(req: NextRequest, { routeParams }: ApiContext) {
     if (!Roles.hasRoleOrGreater(member.role, ProjectRole.EDITOR)) {
         throw new ForbiddenError("Insufficient permissions to create saves");
     }
+
+    await requirePro(user.id);
 
     const body = await req.json();
     const res = await forwardToWorker(projectId, "POST", "/saves/manual", body);

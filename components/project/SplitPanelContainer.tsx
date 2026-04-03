@@ -10,7 +10,21 @@ import BoardCanvas from "@components/board/BoardCanvas";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
-import { ChevronLeft, ChevronRight, Clapperboard, FileText, LayoutDashboard, Maximize, Menu, MessageSquare, MessageSquareOff, Minimize, PanelRight, PanelRightClose, Scroll } from "lucide-react";
+import {
+    ChevronLeft,
+    ChevronRight,
+    Clapperboard,
+    FileText,
+    LayoutDashboard,
+    Maximize,
+    Menu,
+    MessageSquare,
+    MessageSquareOff,
+    Minimize,
+    PanelRight,
+    PanelRightClose,
+    Scroll,
+} from "lucide-react";
 import styles from "./SplitPanelContainer.module.css";
 import dropdown from "@components/navbar/ViewOptionsDropdown.module.css";
 
@@ -58,16 +72,26 @@ const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey:
 const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; side: "primary" | "secondary" }) => {
     const t = useTranslations("navbar");
     const { isZenMode, updateIsZenMode } = useContext(UserContext);
-    const { setSidePanel, isSplit, primaryPanel, setSecondaryPanel, isEndlessScroll, setIsEndlessScroll, showComments, setShowComments, leftSidebarOpen, setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const {
+        setSidePanel,
+        isSplit,
+        primaryPanel,
+        setSecondaryPanel,
+        isEndlessScroll,
+        setIsEndlessScroll,
+        showComments,
+        setShowComments,
+        leftSidebarOpen,
+        setLeftSidebarOpen,
+        setRightSidebarOpen,
+    } = useViewContext();
 
     const handleSplitToggle = useCallback(() => {
         if (isSplit) {
             setSecondaryPanel(null);
         } else {
             const other: PanelType =
-                primaryPanel === "screenplay" ? "board"
-                : primaryPanel === "title" ? "screenplay"
-                : "screenplay";
+                primaryPanel === "screenplay" ? "board" : primaryPanel === "title" ? "screenplay" : "screenplay";
             setSecondaryPanel(other);
         }
     }, [isSplit, primaryPanel, setSecondaryPanel]);
@@ -140,7 +164,10 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
                 <div className={dropdown.dropdown_menu} style={{ left: 0, transform: "none" }}>
                     <button
                         className={`${dropdown.dropdown_item} ${isSplit ? dropdown.dropdown_item_active : ""}`}
-                        onClick={() => { handleSplitToggle(); setIsOpen(false); }}
+                        onClick={() => {
+                            handleSplitToggle();
+                            setIsOpen(false);
+                        }}
                     >
                         {isSplit ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
                         <span className={dropdown.item_label}>{isSplit ? t("unsplitPanel") : t("splitPanel")}</span>
@@ -190,7 +217,8 @@ const SplitPanelContainer = ({
     suggestionData,
     updateSuggestionData,
 }: SplitPanelContainerProps) => {
-    const { primaryPanel, secondaryPanel, splitRatio, isSplit, mountedPanels, focusedSide, setFocusedSide } = useViewContext();
+    const { primaryPanel, secondaryPanel, splitRatio, isSplit, mountedPanels, focusedSide, setFocusedSide } =
+        useViewContext();
 
     const gridStyle = useMemo(() => {
         if (!isSplit) {
@@ -218,7 +246,8 @@ const SplitPanelContainer = ({
                 // Lazy mount: only render panels that have been visited at least once
                 if (!mountedPanels.has(panel)) return null;
 
-                const isFocused = isSplit && isVisible && (isPrimary ? focusedSide === "primary" : focusedSide === "secondary");
+                const isFocused =
+                    isSplit && isVisible && (isPrimary ? focusedSide === "primary" : focusedSide === "secondary");
                 const panelClass = !isVisible
                     ? styles.panel_hidden
                     : isFocused
@@ -230,13 +259,12 @@ const SplitPanelContainer = ({
                         key={panel}
                         className={panelClass}
                         style={isVisible ? { order: isPrimary ? 0 : 2, position: "relative" } : undefined}
-                        onPointerDown={isVisible && isSplit ? () => setFocusedSide(isPrimary ? "primary" : "secondary") : undefined}
+                        onPointerDown={
+                            isVisible && isSplit ? () => setFocusedSide(isPrimary ? "primary" : "secondary") : undefined
+                        }
                     >
                         {isVisible && (
-                            <PanelSwitcherMenu
-                                currentPanel={panel}
-                                side={isPrimary ? "primary" : "secondary"}
-                            />
+                            <PanelSwitcherMenu currentPanel={panel} side={isPrimary ? "primary" : "secondary"} />
                         )}
                         <PanelRenderer
                             panel={panel}

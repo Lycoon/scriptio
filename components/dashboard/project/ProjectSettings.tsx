@@ -4,8 +4,7 @@ import { cropImageBase64 } from "@src/lib/utils/misc";
 import { useTranslations } from "next-intl";
 import { editProject } from "@src/lib/utils/requests";
 import { useContext, useEffect, useState } from "react";
-import { isTauri } from "@tauri-apps/api/core";
-import { useProjectMembership, useLocalProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
+import { useProjectMembership, useCachedProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
 import UploadButton from "@components/projects/UploadButton";
 import DangerZone from "./DangerZone";
@@ -16,24 +15,20 @@ import dangerStyles from "./DangerZone.module.css";
 
 const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; onDangerToggle: () => void }) => {
     const t = useTranslations("projectSettings");
-    const { membership, mutate } = useProjectMembership();
-    const { setProjectTitle: setContextTitle } = useContext(ProjectContext);
+    const { membership, mutate, isLocalOnly } = useProjectMembership();
+    const { setProjectTitle: setContextTitle, setProjectAuthor: setContextAuthor } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
     const {
         title: localTitle,
         description: localDescription,
         author: localAuthor,
         isLoading: localLoading,
-    } = useLocalProjectInfo(projectId);
+    } = useCachedProjectInfo(projectId);
 
     const [isDirty, setDirty] = useState<boolean>(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(membership?.project.poster || null);
     const [loading, setLoading] = useState(false);
-
-    // Determine if this is a local-only project (desktop without membership)
-    const isDesktop = isTauri();
-    const isLocalOnly = isDesktop && !membership;
 
     // Get project data from membership or local info
     const projectTitle = membership?.project.title || localTitle;
@@ -60,16 +55,16 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         const newDescription = target.description.value;
         const newAuthor = target.author.value;
 
-        if (isLocalOnly) {
-            // Save to local SQLite
-            try {
-                const { updateLocalProject } = await import("@src/lib/persistence/local-projects");
-                await updateLocalProject(projectId, { title: newTitle, description: newDescription, author: newAuthor });
-            } catch (error) {
-                console.error("[ProjectSettings] Failed to save local project:", error);
-            }
-        } else if (membership) {
-            // Save to remote API
+        // Always persist locally
+        try {
+            const { updateCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
+            await updateCachedProject(projectId, { title: newTitle, description: newDescription, author: newAuthor });
+        } catch (error) {
+            console.error("[ProjectSettings] Failed to save local project:", error);
+        }
+
+        if (!isLocalOnly && membership) {
+            // Also save to remote API
             const body: any = {
                 title: newTitle,
                 description: newDescription,
@@ -83,16 +78,16 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
             await editProject(membership.project.id, body);
         }
 
-        // Sync title to Yjs metadata (updates title page editor)
+        // Sync title/author to Yjs metadata (updates title page editor)
         setContextTitle(newTitle);
+        setContextAuthor(newAuthor);
         // Revalidate SWR so navbar and browser tab update via updateProject()
         mutate();
 
         setLoading(false);
     };
 
-    // On web, require membership. On desktop, allow local projects.
-    if (!isDesktop && !membership) return null;
+    if (!isLocalOnly && !membership) return null;
     // Wait for local project info to load before rendering the form
     if (isLocalOnly && localLoading) return null;
 
@@ -165,7 +160,12 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                     <Save size={18} />
                     {t("saveChanges")}
                 </button>
-                <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title={t("dangerZoneTitle")}>
+                <button
+                    type="button"
+                    className={dangerStyles.arrowBtn}
+                    onClick={onDangerToggle}
+                    title={t("dangerZoneTitle")}
+                >
                     <ArrowRight size={16} />
                 </button>
             </div>

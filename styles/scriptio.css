@@ -95,16 +95,6 @@
         text-decoration: underline;
     }
 
-    /* User settings */
-    .highlight-on-hover .ProseMirror > p:hover {
-        background-color: var(--editor-element-hover);
-        border-radius: 8px;
-    }
-
-    .scene-background .scene {
-        background-color: var(--editor-scene);
-    }
-
     /* Screenplay elements */
     .is-empty {
         cursor: text;
@@ -500,6 +490,16 @@
     .dual_dialogue_column .parenthetical::before {
         left: var(--dd-parenthetical-l-margin, 0.8in);
     }
+}
+
+/* User settings */
+.highlight-on-hover .ProseMirror > p:hover {
+    background-color: color-mix(in srgb, var(--editor-script-bg) 95%, var(--editor-text) 5%);
+    background-clip: content-box;
+}
+
+.scene-background .scene {
+    background-color: var(--editor-scene);
 }
 
 /* ============================================ */

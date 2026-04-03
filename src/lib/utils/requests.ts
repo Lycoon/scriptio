@@ -168,3 +168,19 @@ export const recoverPassword = (body: RecoverPasswordBody) => {
 export const requestRecovery = (body: RequestRecoveryBody) => {
     return request(`/api/recover`, "POST", body);
 };
+
+export const cancelStripeSubscription = async (): Promise<boolean> => {
+    const res = await request("/api/stripe/cancel", "POST");
+    return res.ok;
+};
+
+export const createStripeCheckout = async (): Promise<{ url: string } | null> => {
+    const redirectBase = typeof window !== "undefined" ? window.location.origin : undefined;
+    const res = await request("/api/stripe/checkout", "POST", { redirectBase });
+    if (res.ok) {
+        const { data } = (await res.json()) as ApiResponse<{ url: string }>;
+        return data ?? null;
+    }
+    return null;
+};
+

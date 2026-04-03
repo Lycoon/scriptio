@@ -51,7 +51,7 @@ const DocumentEditorPanel = ({
     userKeybinds,
     globalContext,
 }: DocumentEditorPanelProps) => {
-    const { membership, isLoading } = useProjectMembership();
+    const { membership, isLoading, isLocalOnly } = useProjectMembership();
     const { updateContextMenu } = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
     const {
@@ -455,8 +455,8 @@ const DocumentEditorPanel = ({
 
     const focusType = config.type === "screenplay" ? "screenplay" : "title";
 
-    const isDesktop = isTauri();
-    if (!isDesktop && (!membership || isLoading)) return <Loading />;
+    const isLocalAccess = isTauri() || isLocalOnly;
+    if (!isLocalAccess && (!membership || isLoading)) return <Loading />;
 
     return (
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>

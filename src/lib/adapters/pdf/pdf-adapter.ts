@@ -185,7 +185,11 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
             }
 
             // ── Check for mid-node split (pagination widget inside <p>) ──
-            const splitWidget = el.querySelector(":scope > .pagination-page-break") as HTMLElement | null;
+            // Note: do NOT use ":scope >" here — when a mark (bold/italic/underline) wraps
+            // across the page break, the widget is nested inside the mark's element, not a
+            // direct child of <p>. The positional split in collectParagraphLines uses
+            // compareDocumentPosition which works correctly at any nesting depth.
+            const splitWidget = el.querySelector(".pagination-page-break") as HTMLElement | null;
 
             if (splitWidget) {
                 // Collect lines BEFORE the split widget

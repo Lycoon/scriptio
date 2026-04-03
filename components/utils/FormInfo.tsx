@@ -9,10 +9,13 @@ type Props = {
 export interface FormInfoType {
     content: string;
     isError?: boolean;
+    isInfo?: boolean;
 }
 
 const FormInfo = ({ info }: Props) => {
-    const style = info.isError ? form.error : form.text;
+    let style = form.text;
+    if (info.isError) style = form.error;
+    else if (info.isInfo) style = form.infoBox;
 
     return (
         <div className={form.info}>

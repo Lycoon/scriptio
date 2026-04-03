@@ -2,7 +2,7 @@
 
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { InstalledDictionary, SpellWorkerResponse } from "@src/lib/spellcheck/spellcheck-types";
-import type { DictionaryStore } from "@src/lib/spellcheck/spellcheck-dictionary-store";
+import type { StorageProvider } from "@src/lib/persistence/storage-provider/storage-provider";
 
 const LANG_KEY = "scriptio-spellcheck-lang";
 
@@ -43,7 +43,7 @@ export function SpellcheckProvider({ children }: { children: ReactNode }) {
     const [worker, setWorker] = useState<Worker | null>(null);
     const [isWorkerReady, setIsWorkerReady] = useState(false);
 
-    const storeRef = useRef<DictionaryStore | null>(null);
+    const storeRef = useRef<StorageProvider | null>(null);
     const workerRef = useRef<Worker | null>(null);
 
     // Load the dictionary store and installed list on mount
@@ -53,13 +53,13 @@ export function SpellcheckProvider({ children }: { children: ReactNode }) {
         let cancelled = false;
 
         const init = async () => {
-            const { getDictionaryStore } = await import("@src/lib/spellcheck/spellcheck-dictionary-store");
-            const store = await getDictionaryStore();
+            const { getStorageProvider } = await import("@src/lib/persistence/storage-provider/storage-provider");
+            const store = await getStorageProvider();
             storeRef.current = store;
 
             if (cancelled) return;
 
-            const installed = await store.listInstalled();
+            const installed = await store.listInstalledDictionaries();
             if (!cancelled) {
                 setInstalledDictionaries(installed);
             }
@@ -171,7 +171,7 @@ export function SpellcheckProvider({ children }: { children: ReactNode }) {
                 await storeRef.current.saveDictionary(code, aff, dic);
 
                 // Refresh installed list
-                const installed = await storeRef.current.listInstalled();
+                const installed = await storeRef.current.listInstalledDictionaries();
                 setInstalledDictionaries(installed);
 
                 // Auto-select the newly installed dictionary
@@ -191,7 +191,7 @@ export function SpellcheckProvider({ children }: { children: ReactNode }) {
 
             await storeRef.current.deleteDictionary(code);
 
-            const installed = await storeRef.current.listInstalled();
+            const installed = await storeRef.current.listInstalledDictionaries();
             setInstalledDictionaries(installed);
 
             // If the removed dictionary was active, disable spellcheck

@@ -11,6 +11,7 @@ import {
     Clock,
     Bookmark,
     Loader2,
+    Lock,
 } from "lucide-react";
 import {
     listSaves,
@@ -27,9 +28,10 @@ interface SavesPanelProps {
     projectId: string;
     isOpen: boolean;
     onClose: () => void;
+    isPro: boolean;
 }
 
-const SavesPanel = ({ projectId, isOpen, onClose }: SavesPanelProps) => {
+const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
     const t = useTranslations("saves");
 
     const [saves, setSaves] = useState<SaveEntry[]>([]);
@@ -166,6 +168,27 @@ const SavesPanel = ({ projectId, isOpen, onClose }: SavesPanelProps) => {
     };
 
     if (!isOpen) return null;
+
+    if (!isPro) {
+        return (
+            <div className={styles.container} ref={panelRef}>
+                <div className={styles.header}>
+                    <span className={styles.title}>{t("title")}</span>
+                    <button className={styles.close_btn} onClick={onClose}>
+                        <X size={16} />
+                    </button>
+                </div>
+                <div className={styles.pro_gate}>
+                    <Lock size={20} />
+                    <p className={styles.pro_gate_title}>{t("proRequired")}</p>
+                    <p className={styles.pro_gate_desc}>{t("proRequiredDesc")}</p>
+                    <a href="/?settings=Profile" className={styles.pro_gate_btn}>
+                        {t("upgradeBtn")}
+                    </a>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container} ref={panelRef}>

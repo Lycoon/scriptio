@@ -2,9 +2,8 @@
 
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { isTauri } from "@tauri-apps/api/core";
 import { ConnectionStatus } from "@src/lib/utils/enums";
-import { useCookieUser, useProjectIdFromUrl } from "@src/lib/utils/hooks";
+import { useCookieUser, useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import { redirectHome } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -18,6 +17,7 @@ import {
     CircleArrowLeft,
     CircleCheckBig,
     History,
+    Monitor,
     Settings,
     WifiOff,
     WifiSync,
@@ -42,10 +42,7 @@ const StatusIndicator = () => {
         <>
             <div className={navbar.tooltip} data-hint={STATUS[connectionStatus]}>
                 {connectionStatus === "connected" && (
-                    <CircleCheckBig
-                        style={{ color: "var(--success)" }}
-                        className={navbar.status_icon}
-                    />
+                    <CircleCheckBig style={{ color: "var(--success)" }} className={navbar.status_icon} />
                 )}
                 {connectionStatus === "disconnected" && (
                     <WifiOff style={{ color: "var(--error)" }} className={navbar.status_icon} />
@@ -99,6 +96,7 @@ const ProjectNavbar = () => {
     const isLocalEdit = useRef(false);
 
     const { user } = useCookieUser();
+    const { isPro } = useIsPro();
     const projectId = useProjectIdFromUrl();
 
     const t = useTranslations("navbar");
@@ -111,12 +109,13 @@ const ProjectNavbar = () => {
     const deferredTitleUpdate = useMemo(
         () =>
             debounce(async (projectId: string, newTitle: string) => {
-                const { isLocalOnlyProject, updateLocalProject } =
-                    await import("@src/lib/persistence/local-projects");
+                const { isLocalOnlyProject, updateCachedProject } =
+                    await import("@src/lib/persistence/storage-provider/local-persistence");
                 if (await isLocalOnlyProject(projectId)) {
-                    await updateLocalProject(projectId, { title: newTitle });
+                    await updateCachedProject(projectId, { title: newTitle });
                 } else {
                     await editProject(projectId, { title: newTitle });
+                    await updateCachedProject(projectId, { title: newTitle });
                 }
             }, 1000),
         [],
@@ -129,15 +128,15 @@ const ProjectNavbar = () => {
             return;
         }
 
-        // For local projects, load title from SQLite
-        if (projectId && !membership && isTauri()) {
+        // For local projects, load title from local storage (SQLite on desktop, IndexedDB on browser)
+        if (projectId && !membership) {
             const loadLocalTitle = async () => {
-                const { isLocalProject, getLocalProject } =
-                    await import("@src/lib/persistence/local-projects");
-                if (await isLocalProject(projectId)) {
-                    const localProject = await getLocalProject(projectId);
-                    if (localProject && !isLocalEdit.current) {
-                        setProjectTitle(localProject.title);
+                const { isCachedProject, getCachedProject } =
+                    await import("@src/lib/persistence/storage-provider/local-persistence");
+                if (await isCachedProject(projectId)) {
+                    const cachedProject = await getCachedProject(projectId);
+                    if (cachedProject && !isLocalEdit.current) {
+                        setProjectTitle(cachedProject.title);
                     }
                 }
             };
@@ -152,9 +151,6 @@ const ProjectNavbar = () => {
         }
     }, [projectTitle, isInProject]);
 
-    // On desktop (Tauri), allow navbar without user for local projects
-    if (!user && !isTauri()) return null;
-
     return (
         <nav className={join(navbar.container)}>
             {/* Left side - Back button, title, split toggle */}
@@ -167,7 +163,16 @@ const ProjectNavbar = () => {
                 {isInProject && projectId && (
                     <div className={navbar.navBtns}>
                         <div className={navbar.navbar_island}>
-                            <StatusIndicator />
+                            {membership ? (
+                                <StatusIndicator />
+                            ) : (
+                                <div className={navbar.tooltip} data-hint={t("localProject")}>
+                                    <Monitor
+                                        style={{ color: "var(--secondary-text)" }}
+                                        className={navbar.status_icon}
+                                    />
+                                </div>
+                            )}
                             <div className={navbar.title_wrapper} data-value={projectTitle}>
                                 <input
                                     type="text"
@@ -186,7 +191,15 @@ const ProjectNavbar = () => {
                                 />
                             </div>
                         </div>
-                        <div style={{ position: "relative", height: "100%", width: "fit-content", display: "flex", alignItems: "center" }}>
+                        <div
+                            style={{
+                                position: "relative",
+                                height: "100%",
+                                width: "fit-content",
+                                display: "flex",
+                                alignItems: "center",
+                            }}
+                        >
                             <div
                                 className={`${navBtn.button} ${isSavesOpen ? navBtn.active : ""}`}
                                 onClick={() => setIsSavesOpen(!isSavesOpen)}
@@ -197,6 +210,7 @@ const ProjectNavbar = () => {
                                 projectId={projectId}
                                 isOpen={isSavesOpen}
                                 onClose={() => setIsSavesOpen(false)}
+                                isPro={isPro}
                             />
                         </div>
                     </div>
@@ -222,10 +236,7 @@ const ProjectNavbar = () => {
                 >
                     <BarChart2 size={18} />
                 </div>
-                <div
-                    className={navBtn.button}
-                    onClick={() => openDashboard("General")}
-                >
+                <div className={navBtn.button} onClick={() => openDashboard("General")}>
                     <Settings size={18} />
                 </div>
             </div>

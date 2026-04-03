@@ -21,7 +21,7 @@ async function fetchFromDesktop<JSON = unknown>(
     const token = await getDesktopToken();
 
     // No token = not logged in. Skip the remote request entirely.
-    // The app will fall back to local SQLite storage via useLocalProjects().
+    // The app will fall back to local SQLite storage via useCachedProjects().
     if (!token) {
         throw { message: "Not authenticated", status: 401 };
     }

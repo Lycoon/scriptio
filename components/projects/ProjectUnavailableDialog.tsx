@@ -19,21 +19,14 @@ const ProjectUnavailableDialog = () => {
         if (!projectId) return;
         setLoading(true);
         try {
-            const { migrateToLocalProject, getLocalProject } = await import(
-                "@src/lib/persistence/local-projects"
-            );
-            const localProject = await getLocalProject(projectId);
+            const { getCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
+            const { migrateToCachedProject } =
+                await import("@src/lib/persistence/storage-provider/sqlite-storage-provider");
+            const cachedProject = await getCachedProject(projectId);
             const metadataTitle = repository?.getState().metadata().get("title");
-            const title =
-                localProject?.title || project?.project?.title || metadataTitle || "Untitled Project";
-            const newProject = await migrateToLocalProject(
-                projectId,
-                title,
-                localProject?.description ?? undefined
-            );
-            router.replace(
-                `/projects/screenplay?projectId=${newProject.id}`
-            );
+            const title = cachedProject?.title || project?.project?.title || metadataTitle || "Untitled Project";
+            const newProject = await migrateToCachedProject(projectId, title, cachedProject?.description ?? undefined);
+            router.replace(`/projects/screenplay?projectId=${newProject.id}`);
         } catch (e) {
             console.error("[ProjectUnavailableDialog] Migration failed:", e);
             setLoading(false);
@@ -44,11 +37,10 @@ const ProjectUnavailableDialog = () => {
         if (!projectId) return;
         setLoading(true);
         try {
-            const { discardCloudProjectData } = await import(
-                "@src/lib/persistence/local-projects"
-            );
+            const { discardCloudProjectData } =
+                await import("@src/lib/persistence/storage-provider/sqlite-storage-provider");
             await discardCloudProjectData(projectId);
-            router.replace("/");
+            router.replace("/projects");
         } catch (e) {
             console.error("[ProjectUnavailableDialog] Discard failed:", e);
             setLoading(false);
@@ -60,24 +52,15 @@ const ProjectUnavailableDialog = () => {
             <div className={styles.modal}>
                 <h2 className={styles.title}>Project unavailable</h2>
                 <p className={styles.description}>
-                    This cloud project has been deleted or you no longer have
-                    access. You can keep a local copy of the content you have, or
-                    discard it.
+                    This cloud project has been deleted or you no longer have access. You can keep a local copy of the
+                    content you have, or discard it.
                 </p>
                 <div className={styles.actions}>
-                    <button
-                        className={`${styles.btn} ${styles.keepBtn}`}
-                        onClick={handleKeep}
-                        disabled={loading}
-                    >
+                    <button className={`${styles.btn} ${styles.keepBtn}`} onClick={handleKeep} disabled={loading}>
                         <Save size={16} />
                         Keep as local project
                     </button>
-                    <button
-                        className={`${styles.btn} ${styles.discardBtn}`}
-                        onClick={handleDiscard}
-                        disabled={loading}
-                    >
+                    <button className={`${styles.btn} ${styles.discardBtn}`} onClick={handleDiscard} disabled={loading}>
                         <Trash2 size={16} />
                         Discard
                     </button>

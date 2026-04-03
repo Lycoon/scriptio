@@ -1,18 +1,4 @@
-/** Dictionary catalog entry */
-export interface DictionaryInfo {
-    /** Language code, e.g. "en", "en-GB" */
-    code: string;
-    /** Human-readable name, e.g. "English" */
-    name: string;
-}
-
-/** Metadata for a locally installed dictionary */
-export interface InstalledDictionary {
-    code: string;
-    /** Combined size of .aff + .dic in bytes */
-    size: number;
-    installedAt: number;
-}
+export type { DictionaryInfo, InstalledDictionary } from "@src/lib/utils/types";
 
 // ---- Worker messages (main thread → worker) ----
 
