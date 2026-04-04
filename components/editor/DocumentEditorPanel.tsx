@@ -6,6 +6,7 @@ import { EditorContent } from "@tiptap/react";
 
 import { applyElement, insertElement, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
 import { ScreenplayElement } from "@src/lib/utils/enums";
+import { DUAL_DIALOGUE_COLUMN } from "@src/lib/screenplay/nodes/dual-dialogue-column-node";
 import { DEFAULT_ELEMENT_MARGINS, DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
 import { join } from "@src/lib/utils/misc";
 import { useGlobalKeybinds, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
@@ -50,7 +51,7 @@ const DocumentEditorPanel = ({
     userKeybinds,
     globalContext,
 }: DocumentEditorPanelProps) => {
-    const { membership, isLoading } = useProjectMembership();
+    const { membership, isLoading, isLocalOnly } = useProjectMembership();
     const { updateContextMenu } = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
     const {
@@ -109,6 +110,13 @@ const DocumentEditorPanel = ({
         userKeybinds: keybinds,
         globalContext,
         setSelectedTitlePageElement,
+        onNodeContextMenu: (pos, _nodeClass, event) => {
+            updateContextMenu({
+                type: ContextMenuType.DualDialogue,
+                position: { x: event.clientX, y: event.clientY },
+                typeSpecificProps: { pos },
+            });
+        },
     });
 
     // Register the editor instance with the parent wrapper
@@ -252,6 +260,10 @@ const DocumentEditorPanel = ({
                     const currNode = node.attrs.class as ScreenplayElement;
 
                     if (event.key === "Backspace") {
+                        // Inside a dual_dialogue_column: let the column node handle it.
+                        for (let d = selection.$anchor.depth; d >= 1; d--) {
+                            if (selection.$anchor.node(d).type.name === DUAL_DIALOGUE_COLUMN) return false;
+                        }
                         if (nodeSize === 1 && nodePos === 1) {
                             const tr = view.state.tr.delete(selection.from - 1, selection.from);
                             view.dispatch(tr);
@@ -273,6 +285,13 @@ const DocumentEditorPanel = ({
                         if (suggestions.length > 0) {
                             event.preventDefault();
                             return true;
+                        }
+
+                        // Inside a dual_dialogue_column: let the column node's
+                        // addKeyboardShortcuts handle Enter instead of this handler.
+                        const $anchor = selection.$anchor;
+                        for (let d = $anchor.depth; d >= 1; d--) {
+                            if ($anchor.node(d).type.name === DUAL_DIALOGUE_COLUMN) return false;
                         }
 
                         if (currNode === ScreenplayElement.Dialogue && nodePos > 0 && nodePos < nodeSize) {
@@ -398,7 +417,6 @@ const DocumentEditorPanel = ({
             }
 
             const { from, to } = editor.state.selection;
-            if (from === to) return;
 
             e.preventDefault();
 
@@ -437,8 +455,8 @@ const DocumentEditorPanel = ({
 
     const focusType = config.type === "screenplay" ? "screenplay" : "title";
 
-    const isDesktop = isTauri();
-    if (!isDesktop && (!membership || isLoading)) return <Loading />;
+    const isLocalAccess = isTauri() || isLocalOnly;
+    if (!isLocalAccess && (!membership || isLoading)) return <Loading />;
 
     return (
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
@@ -450,7 +468,7 @@ const DocumentEditorPanel = ({
             >
                 <div className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}>
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
-                    <div onContextMenu={config.features.comments || config.features.spellcheck ? onEditorContextMenu : undefined}>
+                    <div onContextMenu={onEditorContextMenu}>
                         <EditorContent editor={editor} spellCheck={false} />
                     </div>
                 </div>

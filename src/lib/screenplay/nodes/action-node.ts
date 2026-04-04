@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ScreenplayElement } from "../../utils/enums";
-import { ALIGN_CLASSES } from "./index";
+import { ALIGN_CLASSES, generateNodeId } from "./index";
 
 export interface ActionNodeOptions {
     HTMLAttributes: Record<string, any>;
@@ -21,6 +21,11 @@ export const ActionNode = Node.create<ActionNodeOptions>({
 
     addAttributes() {
         return {
+            "data-id": {
+                default: () => generateNodeId(),
+                parseHTML: (element) => element.getAttribute("data-id") || null,
+                renderHTML: (attributes) => attributes["data-id"] ? { "data-id": attributes["data-id"] } : {},
+            },
             class: {
                 default: ScreenplayElement.Action,
                 parseHTML: (element) => element.getAttribute("class")?.split(" ")[0] || ScreenplayElement.Action,

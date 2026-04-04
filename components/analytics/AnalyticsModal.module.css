@@ -24,8 +24,7 @@
 
 /* ── Sidebar ─────────────────────────────────────────────── */
 .sidebar {
-    width: 220px;
-    flex-shrink: 0;
+    flex: 1;
     background: var(--editor-sidebar);
     padding: 32px 0;
     border-right: 1px solid var(--separator);
@@ -40,10 +39,6 @@
     color: var(--primary-text);
 }
 
-.navMenu {
-    padding: 0 12px;
-}
-
 .groupLabel {
     font-family: var(--font-inter);
     font-size: 0.7rem;
@@ -55,12 +50,17 @@
     opacity: 0.6;
 }
 
+.navMenu {
+    padding: 0 12px;
+}
+
 .navItem {
     display: flex;
     align-items: center;
     width: 100%;
     padding: 8px 12px;
     gap: 12px;
+
     background: transparent;
     border: none;
     border-radius: 8px;
@@ -68,12 +68,6 @@
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    text-align: left;
-}
-
-.navItem:hover {
-    background: var(--secondary-hover);
-    color: var(--primary-text);
 }
 
 .navItem.active {
@@ -82,12 +76,26 @@
     font-weight: 600;
 }
 
-/* ── Content area ────────────────────────────────────────── */
+.iconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.iconWrapper.active svg {
+    color: var(--primary-text);
+}
+
+.iconWrapper svg {
+    color: var(--secondary-text);
+}
+
+/* Content Area (2/3 Width) */
 .content {
-    flex: 1;
+    flex: 2;
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    padding: 30px;
     background: var(--main-bg);
 }
 
@@ -95,32 +103,25 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 30px 30px 0;
-    flex-shrink: 0;
+    margin-bottom: 20px;
 }
 
-.contentHeader h3 {
-    font-size: 1.1rem;
-    color: var(--primary-text);
+.scrollArea {
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-gutter: stable;
+    padding-right: 20px;
 }
 
-.closeBtn {
+.close_btn {
     height: 22px;
     width: 22px;
     color: var(--secondary-text);
     cursor: pointer;
-    transition: color 0.15s;
 }
 
-.closeBtn:hover {
+.close_btn:hover {
     color: var(--primary-text);
-}
-
-.scrollArea {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px 30px 30px;
-    scrollbar-gutter: stable;
 }
 
 /* ── Stats page layout ───────────────────────────────────── */

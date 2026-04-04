@@ -2,6 +2,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 100%;
+    padding-inline: 10px;
+    gap: 12px;
     border-radius: 64px;
     border: 2px solid var(--tertiary);
     color: var(--secondary-text);

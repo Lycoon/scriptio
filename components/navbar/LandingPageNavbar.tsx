@@ -17,6 +17,9 @@ export default function LandingPageNavbar() {
                         <Link className={styles.navLink} href="#features">
                             Features
                         </Link>
+                        <Link className={styles.navLink} href="#faq">
+                            FAQ
+                        </Link>
                         <Link className={styles.navLink} href="#pricing">
                             Pricing
                         </Link>
@@ -28,11 +31,11 @@ export default function LandingPageNavbar() {
                 )}
             </div>
             <div className={styles.navLinks}>
-                <Link className={styles.navLink} href="/login">
-                    Log in
+                <Link className={styles.navLink} href="/contact">
+                    Contact
                 </Link>
-                <Link className={styles.navLink} href="/signup">
-                    Sign up
+                <Link className={styles.navLink} href="/privacy">
+                    Privacy
                 </Link>
             </div>
         </div>

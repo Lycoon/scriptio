@@ -8,7 +8,6 @@ import styles from "./KeybindsSettings.module.css";
 
 import { useSettings } from "@src/lib/utils/hooks";
 import { tinykeys } from "@node_modules/tinykeys/dist/tinykeys";
-import { editUserSettings } from "@src/lib/utils/requests";
 import { DEFAULT_KEYBINDS, DefaultKeyBind, prettyPrintKeybind, UserKeybindsMap } from "@src/lib/utils/keybinds";
 import { useTranslations } from "next-intl";
 import { Save } from "lucide-react";
@@ -82,10 +81,7 @@ const KeybindElement = ({
 };
 
 const KeybindsSettings = () => {
-    const { settings, updateSetting } = useSettings() as {
-        settings?: { keybinds?: UserKeybindsMap };
-        updateSetting?: (key: string, value: any) => Promise<void>;
-    };
+    const { settings, saveSettings } = useSettings();
 
     const t = useTranslations("keybinds");
     const [userKeybinds, setUserKeybinds] = useState<UserKeybindsMap>({});
@@ -168,11 +164,7 @@ const KeybindsSettings = () => {
 
             setUserKeybinds((prev) => {
                 const next = { ...prev, [listeningFor]: combo };
-                if (updateSetting) {
-                    updateSetting("keybinds", next).catch((err) => {
-                        console.error("Failed to save keybinds", err);
-                    });
-                }
+                saveSettings({ keybinds: next });
                 return next;
             });
 
@@ -193,7 +185,7 @@ const KeybindsSettings = () => {
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keydown", onCancel);
         };
-    }, [listeningFor, updateSetting]);
+    }, [listeningFor]);
 
     const startListening = (id: string) => {
         setListeningFor(id);
@@ -206,7 +198,7 @@ const KeybindsSettings = () => {
             if (next[id]) setHasUpdatedKeybinds(true);
 
             delete next[id];
-            if (updateSetting) updateSetting("keybinds", next).catch((err) => console.error(err));
+            saveSettings({ keybinds: next });
             return next;
         });
     };
@@ -214,12 +206,12 @@ const KeybindsSettings = () => {
     const resetDefaults = () => {
         setUserKeybinds({});
         setHasUpdatedKeybinds(true);
-        if (updateSetting) updateSetting("keybinds", {}).catch((err) => console.error(err));
+        saveSettings({ keybinds: {} });
     };
 
     const saveChanges = () => {
         setHasUpdatedKeybinds(false);
-        editUserSettings({ keybinds: userKeybinds });
+        saveSettings({ keybinds: userKeybinds });
     };
 
     return (

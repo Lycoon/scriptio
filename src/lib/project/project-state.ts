@@ -49,12 +49,14 @@ export interface ProjectYjsState {
 export interface CollaboratorInfo {
     name: string;
     color: string;
+    userId?: string;
     clientId?: number;
 }
 
 export interface UserInfo {
     name: string;
     color: string;
+    userId?: string;
 }
 
 export type ProjectMetadata = {
@@ -87,7 +89,14 @@ export const DEFAULT_ELEMENT_MARGINS: Record<string, ElementMargin> = {
     section: { left: 0, right: 0 },
 };
 
-export type ElementStyle = { bold?: boolean; italic?: boolean; underline?: boolean; uppercase?: boolean; align?: "left" | "center" | "right"; startNewPage?: boolean };
+export type ElementStyle = {
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    uppercase?: boolean;
+    align?: "left" | "center" | "right";
+    startNewPage?: boolean;
+};
 
 /** Default styling per screenplay element */
 export const DEFAULT_ELEMENT_STYLES: Record<string, ElementStyle> = {
@@ -297,12 +306,6 @@ export const getBoardMap = (ydoc: ProjectState): Y.Map<string> => {
 //          LOCAL PERSISTENCE       //
 // -------------------------------- //
 
-// Type for persistence providers (both IndexedDB and SQLite implement this interface)
-interface PersistenceProvider {
-    on(event: "synced", callback: (provider: any) => void): void;
-    destroy(): void;
-}
-
 /**
  * Hook to initialize local persistence for the Yjs document.
  * Uses SQLite on desktop (Tauri) and IndexedDB on browser.
@@ -310,7 +313,7 @@ interface PersistenceProvider {
 export const useLocalPersistence = (projectId: string | null) => {
     const [ydoc, setYdoc] = useState<ProjectState | null>(null);
     const [isLocalReady, setIsLocalReady] = useState(false);
-    const persistenceRef = useRef<PersistenceProvider | null>(null);
+    const persistenceRef = useRef<{ on: any; destroy(): void } | null>(null);
 
     useEffect(() => {
         if (!projectId || typeof window === "undefined") {
@@ -320,34 +323,13 @@ export const useLocalPersistence = (projectId: string | null) => {
         }
 
         let isDestroyed = false;
-
         const initPersistence = async () => {
-            // Dynamically import Yjs modules
-            const Y = await getYjs();
-
-            // Create new Yjs document
             const state = new ProjectState();
-
-            let localProvider: PersistenceProvider;
-
-            // Dynamically import isTauri to check environment
-            const { isTauri } = await import("@tauri-apps/api/core");
-
-            if (isTauri()) {
-                // Desktop: Use SQLite persistence
-                console.log("[ProjectYjs] Using SQLite persistence (desktop)");
-                const { SqlitePersistence } = await import("../persistence/sqlite-persistence");
-                localProvider = new SqlitePersistence(projectId, state);
-            } else {
-                // Browser: Use IndexedDB persistence
-                console.log("[ProjectYjs] Using IndexedDB persistence (browser)");
-                const { IndexeddbPersistence } = await import("y-indexeddb");
-                localProvider = new IndexeddbPersistence(`scriptio-${projectId}`, state);
-            }
+            const { createLocalYjsProvider } = await import("../persistence/y-local-provider");
+            const localProvider = await createLocalYjsProvider(projectId, state);
 
             localProvider.on("synced", () => {
                 if (isDestroyed) return;
-                console.log("[ProjectYjs] Local storage synced");
                 setIsLocalReady(true);
             });
 
@@ -362,7 +344,6 @@ export const useLocalPersistence = (projectId: string | null) => {
 
         return () => {
             isDestroyed = true;
-            console.log("[ProjectYjs] Cleaning up local persistence");
             if (persistenceRef.current) {
                 persistenceRef.current.destroy();
                 persistenceRef.current = null;
@@ -409,7 +390,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
 
     // Refresh token and reconnect
     const refreshAndReconnect = useCallback(async () => {
-        console.log("[ProjectYjs] refreshAndReconnect called");
         if (!providerRef.current || !projectId) return;
 
         try {
@@ -443,7 +423,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
         }
 
         const initializeProvider = async () => {
-            console.log("[ProjectYjs] Initializing cloud provider...");
             setConnectionStatus("connecting");
 
             try {
@@ -452,19 +431,15 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 const isDesktop = isTauri();
 
                 // Local-only projects (not cloud-synced) don't need cloud sync
-                if (isDesktop) {
-                    const { isLocalOnlyProject } = await import("../persistence/local-projects");
-                    if (await isLocalOnlyProject(projectId)) {
-                        console.log("[ProjectYjs] Local-only project - skipping cloud sync");
-                        setConnectionStatus("disconnected");
-                        setIsCloudSynced(true);
-                        return;
-                    }
+                const { isLocalOnlyProject } = await import("../persistence/storage-provider/local-persistence");
+                if (await isLocalOnlyProject(projectId)) {
+                    setConnectionStatus("disconnected");
+                    setIsCloudSynced(true);
+                    return;
                 }
 
                 const { token, status } = await getCloudToken(projectId);
                 if (!token || !isMountedRef.current) {
-                    console.log("[ProjectYjs] No auth token - skipping cloud sync (status:", status, ")");
                     setConnectionStatus("disconnected");
                     setIsCloudSynced(true); // Mark as "synced" so isReady becomes true
 
@@ -498,9 +473,22 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 cloudProvider.awareness.on("update", () => {
                     if (!isMountedRef.current) return;
 
-                    const connectedUsers = Array.from(cloudProvider.awareness.getStates().values())
-                        .filter((state: any) => state.user)
-                        .map((state: any) => state.user as CollaboratorInfo);
+                    const states = Array.from(cloudProvider.awareness.getStates().values());
+                    const uniqueUsersMap = new Map<string, CollaboratorInfo>();
+
+                    for (const state of states) {
+                        if (state.user) {
+                            const user = state.user as CollaboratorInfo;
+                            // Use userId as the primary unique key for deduplication,
+                            // fallback to name for anonymous/legacy sessions.
+                            const key = user.userId || user.name;
+                            if (!uniqueUsersMap.has(key)) {
+                                uniqueUsersMap.set(key, user);
+                            }
+                        }
+                    }
+
+                    const connectedUsers = Array.from(uniqueUsersMap.values());
 
                     // Only update if users changed to avoid unnecessary re-renders
                     const usersJson = JSON.stringify(connectedUsers);
@@ -514,7 +502,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 cloudProvider.on("connection-error", async () => {
                     // Don't try to reconnect if session was replaced
                     if (cloudProvider.wasSessionReplaced) {
-                        console.log("[ProjectYjs] Connection error ignored - session was replaced");
                         return;
                     }
 
@@ -532,13 +519,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
 
                 // Status updates
                 cloudProvider.on("status", (e: { status: string }) => {
-                    console.log("[ProjectYjs] Connection status:", e.status);
-                    console.log(
-                        "isMountedRef.current: ",
-                        isMountedRef.current,
-                        " cloudProvider.synced: ",
-                        cloudProvider.synced,
-                    );
                     if (isMountedRef.current) {
                         // Use setTimeout to avoid state update during render
                         setTimeout(() => {
@@ -558,10 +538,36 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 // This is crucial for desktop clients where local IndexedDB may be empty
                 // y-websocket sets .synced property when sync step 2 is complete
                 cloudProvider.on("sync", (isSynced: boolean) => {
-                    console.log("[ProjectYjs] Cloud sync event:", isSynced);
                     if (isMountedRef.current && isSynced) {
                         setIsCloudSynced(true);
                     }
+                });
+
+                // Handle document restore — server replaced the doc with a snapshot.
+                // We must clear the local IndexedDB/SQLite so the old state doesn't
+                // merge back when we reconnect, then reload to get a clean slate.
+                cloudProvider.on("document-restored", async () => {
+                    if (!isMountedRef.current) return;
+                    console.log("[ProjectYjs] Document restored — clearing local cache and reloading");
+
+                    try {
+                        const { isTauri } = await import("@tauri-apps/api/core");
+                        if (!isTauri()) {
+                            const { IndexeddbPersistence } = await import("y-indexeddb");
+                            const Y = await getYjs();
+                            const tmpDoc = new Y.Doc();
+                            const tmpPersistence = new IndexeddbPersistence(`scriptio-${projectId}`, tmpDoc);
+                            await (tmpPersistence as any).clearData();
+                            tmpPersistence.destroy();
+                            tmpDoc.destroy();
+                        }
+                        // Desktop (SQLite): the SqlitePersistence will be overwritten on
+                        // reconnect since the server state wins the CRDT merge from a clean doc.
+                    } catch (e) {
+                        console.warn("[ProjectYjs] Failed to clear local cache:", e);
+                    }
+
+                    window.location.reload();
                 });
 
                 // Poll for synced status since the event might fire before listener is attached
@@ -569,7 +575,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 const checkSynced = () => {
                     if (!isMountedRef.current) return;
                     if (cloudProvider.synced) {
-                        console.log("[ProjectYjs] Provider synced (poll check)");
                         setIsCloudSynced(true);
                     } else {
                         // Check again after a short delay
@@ -617,7 +622,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
     useEffect(() => {
         return () => {
             if (providerRef.current) {
-                console.log("[ProjectYjs] Destroying cloud provider...");
                 if (ydoc) {
                     getYProtocols().then(({ removeAwarenessStates }) => {
                         if (providerRef.current) {
@@ -656,12 +660,14 @@ export interface UseProjectYjsOptions {
     projectId: string | null;
     userName?: string;
     userColor?: string;
+    userId?: string;
 }
 
 export const useProjectYjs = ({
     projectId,
     userName,
     userColor,
+    userId,
 }: UseProjectYjsOptions): ProjectYjsState & {
     isReady: boolean;
     refreshAndReconnect: () => Promise<void>;
@@ -670,8 +676,9 @@ export const useProjectYjs = ({
         () => ({
             name: userName || `User_${Math.floor(Math.random() * 1000)}`,
             color: userColor || getRandomColor(),
+            userId,
         }),
-        [userName, userColor],
+        [userName, userColor, userId],
     );
 
     const { ydoc, isLocalReady } = useLocalPersistence(projectId);

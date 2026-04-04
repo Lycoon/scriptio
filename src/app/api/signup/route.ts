@@ -80,11 +80,11 @@ async function signupRoute(req: NextRequest) {
             // It prevents double email address verification as he already clicked from his mail
             await authenticate(created as CookieUser);
 
-            return Success({ redirectUrl: "/" });
+            return Success({ redirectUrl: "/projects" });
         } catch (err) {}
     }
 
-    Mail.sendVerificationEmail(created.id, email, secrets.emailHash);
+    await Mail.sendVerificationEmail(created.id, email, secrets.emailHash);
     return Success(null, VERIFICATION_SENT);
 }
 

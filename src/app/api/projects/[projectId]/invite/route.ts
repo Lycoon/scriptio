@@ -11,6 +11,7 @@ import {
     UnauthorizedError,
     validate,
 } from "@src/lib/utils/api-utils";
+import { requirePro } from "@src/lib/utils/pro-utils";
 
 import * as Mail from "@src/lib/mail/mail";
 import * as ProjectService from "@src/server/service/project-service";
@@ -67,6 +68,8 @@ async function inviteMember(req: NextRequest, { routeParams }: ApiContext) {
         throw new ForbiddenError("Only admin members can issue invites");
     }
 
+    await requirePro(cookie.id);
+
     const invites = await ProjectService.getInvites(projectId);
     const isAlreadyInvited = invites.some((i) => i.email === emailToInvite);
     if (isAlreadyInvited) {
@@ -85,7 +88,7 @@ async function inviteMember(req: NextRequest, { routeParams }: ApiContext) {
 
     const token = Secrets.generateToken();
     const invite = await ProjectService.createInvite(projectId, emailToInvite, token);
-    Mail.sendProjectInviteEmail(emailToInvite, member.project.title, token);
+    await Mail.sendProjectInviteEmail(emailToInvite, member.project.title, token);
 
     return SuccessCreated(invite);
 }

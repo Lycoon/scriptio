@@ -33,6 +33,7 @@ const ScreenplaySearch = () => {
         [ScreenplayElement.Transition]: t("elements.transition"),
         [ScreenplayElement.Section]: t("elements.section"),
         [ScreenplayElement.Note]: t("elements.note"),
+        [ScreenplayElement.DualDialogue]: t("elements.dual_dialogue"),
         [ScreenplayElement.None]: t("elements.none"),
     };
 
@@ -63,19 +64,6 @@ const ScreenplaySearch = () => {
         };
     }, []);
 
-    // Close search when clicking outside
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-
-        window.addEventListener("mousedown", handleClickOutside);
-        return () => window.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen]);
 
     // Focus input when opening
     useEffect(() => {
@@ -196,6 +184,8 @@ const ScreenplaySearch = () => {
                 handleClose();
             }
             if (e.key === "Enter" && isOpen && searchMatches.length > 0) {
+                const active = document.activeElement;
+                if (active !== inputRef.current && active !== replaceInputRef.current) return;
                 e.preventDefault();
                 if (e.shiftKey) {
                     goToPreviousMatch();

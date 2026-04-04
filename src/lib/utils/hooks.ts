@@ -3,6 +3,8 @@
 import useSWR from "swr";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CookieUser, UserSettings } from "./types";
+import { editUserSettings } from "./requests";
+import { readLocalSettings, writeLocalSettings, DEFAULT_LOCAL_SETTINGS } from "./local-settings";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { isPage, Page } from "./enums";
 import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
@@ -130,14 +132,55 @@ const useCookieUser = (redirect: boolean = false) => {
 
 const useSettings = () => {
     const { user, isLoading: isUserLoading } = useCookieUser();
-    const { data: settings, isLoading, mutate } = useSWR<UserSettings>(
-        !isUserLoading && user ? "/api/users/settings" : null,
+    const isAuthenticated = !isUserLoading && !!user;
+
+    // Remote settings for authenticated users
+    const {
+        data: remoteSettings,
+        isLoading: isRemoteLoading,
+        mutate: swrMutate,
+    } = useSWR<UserSettings>(isAuthenticated ? "/api/users/settings" : null);
+
+    // Local settings for unauthenticated users.
+    // Using SWR with a fixed key so the cache is shared across all useSettings() callers —
+    // a plain useState would be per-instance, meaning mutations in one component
+    // would not propagate to others (e.g. AppearanceSettings → EditorThemeSync).
+    const { data: localData, mutate: mutateLocal } = useSWR<UserSettings>(
+        !isAuthenticated ? "local-settings" : null,
+        readLocalSettings,
+        { revalidateOnFocus: false },
+    );
+
+    const settings = isAuthenticated ? remoteSettings : (localData ?? DEFAULT_LOCAL_SETTINGS);
+
+    const mutate = useCallback(
+        (data?: UserSettings, revalidate?: boolean) => {
+            if (!isAuthenticated) return mutateLocal(data, revalidate as any);
+            return swrMutate(data, revalidate as any);
+        },
+        [isAuthenticated, mutateLocal, swrMutate],
+    );
+
+    const saveSettings = useCallback(
+        async (updates: Partial<UserSettings>) => {
+            // Always persist locally (cache/fallback)
+            const optimistic = { ...(localData ?? DEFAULT_LOCAL_SETTINGS), ...updates };
+            mutateLocal(optimistic, false);
+            await writeLocalSettings(updates);
+
+            if (isAuthenticated) {
+                // Also save to server
+                await editUserSettings(updates);
+            }
+        },
+        [isAuthenticated, localData, mutateLocal],
     );
 
     return {
         settings,
-        isLoading: isUserLoading || isLoading,
+        isLoading: isUserLoading || (isAuthenticated ? isRemoteLoading : false),
         mutate,
+        saveSettings,
     };
 };
 
@@ -149,24 +192,16 @@ export interface ExtendedProjectMembershipPayload extends ProjectMembershipPaylo
 }
 
 /**
- * Hook to fetch local projects from SQLite (desktop only).
- * Returns empty array on web.
+ * Hook to fetch cached projects from persistence (SQLite on desktop, IndexedDB on browser).
  */
-const useLocalProjects = () => {
-    const [localProjects, setLocalProjects] = useState<ExtendedProjectMembershipPayload[]>([]);
+const useCachedProjects = () => {
+    const [cachedProjects, setCachedProjects] = useState<ExtendedProjectMembershipPayload[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const refresh = useCallback(async () => {
-        // Use isTauri() directly for synchronous check (avoids timing issues with useDesktop hook)
-        if (!isTauri()) {
-            setLocalProjects([]);
-            setIsLoading(false);
-            return;
-        }
-
         try {
-            const { getLocalProjects } = await import("@src/lib/persistence/local-projects");
-            const projects = await getLocalProjects();
+            const { getCachedProjects } = await import("@src/lib/persistence/storage-provider/local-persistence");
+            const projects = await getCachedProjects();
 
             const memberships: ExtendedProjectMembershipPayload[] = projects.map((p) => ({
                 role: ProjectRole.OWNER,
@@ -183,10 +218,10 @@ const useLocalProjects = () => {
                 },
             }));
 
-            setLocalProjects(memberships);
+            setCachedProjects(memberships);
         } catch (error) {
-            console.error("[useLocalProjects] Failed to load local projects:", error);
-            setLocalProjects([]);
+            console.error("[useCachedProjects] Failed to load cached projects:", error);
+            setCachedProjects([]);
         } finally {
             setIsLoading(false);
         }
@@ -196,7 +231,7 @@ const useLocalProjects = () => {
         refresh();
     }, [refresh]);
 
-    return { localProjects, isLoading, refresh };
+    return { cachedProjects, isLoading, refresh };
 };
 
 /**
@@ -204,24 +239,21 @@ const useLocalProjects = () => {
  * Remote projects are fetched via API, local projects from SQLite on desktop.
  */
 const useProjectMemberships = () => {
+    const { user, isLoading: isAuthLoading } = useCookieUser();
     const {
         data: remoteProjects,
         isLoading: isRemoteLoading,
         mutate,
-    } = useSWR<ProjectMembershipPayload[]>(
-        // On desktop without auth, don't fetch remote - it will fail
-        // The fetcher will handle auth errors gracefully
-        "/api/projects",
-    );
-    const { localProjects, isLoading: isLocalLoading, refresh: refreshLocal } = useLocalProjects();
+    } = useSWR<ProjectMembershipPayload[]>(!isAuthLoading && user ? "/api/projects" : null);
+    const { cachedProjects, isLoading: isLocalLoading, refresh: refreshLocal } = useCachedProjects();
 
-    // On desktop, ensure remote projects have local entries for offline persistence
+    // Ensure remote projects have local entries for offline persistence
     useEffect(() => {
-        if (!isTauri() || !remoteProjects || remoteProjects.length === 0) return;
+        if (!remoteProjects || remoteProjects.length === 0) return;
 
         const sync = async () => {
-            const { ensureLocalEntries } = await import("@src/lib/persistence/local-projects");
-            await ensureLocalEntries(
+            const { ensureCachedEntries } = await import("@src/lib/persistence/storage-provider/local-persistence");
+            await ensureCachedEntries(
                 remoteProjects.map((p) => ({
                     id: p.project.id,
                     title: p.project.title,
@@ -242,9 +274,9 @@ const useProjectMemberships = () => {
             isLocalOnly: false,
         }));
 
-        // Filter out local projects that might have been synced (same ID in remote)
+        // Filter out cached projects that might have been synced (same ID in remote)
         const remoteIds = new Set(remote.map((p) => p.project.id));
-        const localOnly = localProjects.filter((p) => !remoteIds.has(p.project.id));
+        const localOnly = cachedProjects.filter((p) => !remoteIds.has(p.project.id));
 
         // Combine and sort by updatedAt descending
         const combined = [...remote, ...localOnly];
@@ -255,11 +287,14 @@ const useProjectMemberships = () => {
         });
 
         return combined;
-    }, [remoteProjects, localProjects]);
+    }, [remoteProjects, cachedProjects]);
 
-    // Combined loading state - on desktop, wait for local to be ready
-    // On web, only wait for remote
-    const isLoading = isTauri() ? isLocalLoading || (isRemoteLoading && localProjects.length === 0) : isRemoteLoading;
+    // Combined loading state
+    // Desktop: wait for cache to be ready, show cached projects while remote loads
+    // Web: wait for auth check + cache load, only wait for remote if authenticated
+    const isLoading = isTauri()
+        ? isLocalLoading || (isRemoteLoading && cachedProjects.length === 0)
+        : isAuthLoading || isLocalLoading || (!!user && isRemoteLoading);
 
     // Combined mutate function
     const refreshAll = useCallback(async () => {
@@ -277,9 +312,37 @@ const useProjectMemberships = () => {
 const useProjectMembership = () => {
     const { updateProject } = useContext(ProjectContext);
     const projectId = useProjectIdFromUrl();
+    const { user, isLoading: isUserLoading } = useCookieUser();
+    const isAuthenticated = !isUserLoading && !!user;
+
+    // Check local storage before fetching — local-only projects must never hit the cloud API.
+    // Also track whether the project exists in cache at all, so unauthenticated users can open
+    // cached cloud projects in offline mode without being redirected.
+    const [isLocalOnly, setIsLocalOnly] = useState<boolean | null>(null);
+    const [isCachedLocally, setIsCachedLocally] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        if (!projectId) return;
+        let cancelled = false;
+        const check = async () => {
+            const { getCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
+            const local = await getCachedProject(projectId);
+            if (!cancelled) {
+                setIsLocalOnly(local?.isLocalOnly ?? false);
+                setIsCachedLocally(local !== null);
+            }
+        };
+        check();
+        return () => {
+            cancelled = true;
+        };
+    }, [projectId]);
+
+    // Fetch cloud membership only for authenticated users with non-local projects
+    const shouldFetch = isAuthenticated && isLocalOnly === false && !!projectId;
 
     const { data, isLoading, mutate } = useSWR<ProjectMembershipPayload>(
-        projectId ? `/api/projects/${projectId}` : null,
+        shouldFetch ? `/api/projects/${projectId}` : null,
     );
 
     useEffect(() => {
@@ -288,7 +351,15 @@ const useProjectMembership = () => {
         }
     }, [data]);
 
-    return { membership: data, isLoading, mutate };
+    // Treat as locally accessible: explicitly local-only, or any cached project when offline
+    const isLocalAccessible = isLocalOnly === true || (!isAuthenticated && !isUserLoading && isCachedLocally === true);
+
+    return {
+        membership: data,
+        isLocalOnly: isLocalAccessible,
+        isLoading: isUserLoading || isLocalOnly === null || isCachedLocally === null || (shouldFetch && isLoading),
+        mutate,
+    };
 };
 
 const useProjectInvites = (projectId: string | undefined) => {
@@ -364,41 +435,46 @@ export const useGlobalKeybinds = (
 };
 
 /**
- * Hook to get local project info from SQLite (desktop only).
- * Used when on desktop without auth to get project metadata.
+ * Hook to read project metadata from the cache (IndexedDB on browser, SQLite on desktop).
  */
-const useLocalProjectInfo = (projectId: string | null) => {
+const useCachedProjectInfo = (projectId: string | null) => {
     const [title, setTitle] = useState<string>("Untitled");
     const [description, setDescription] = useState<string | null>(null);
     const [author, setAuthor] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!projectId || !isTauri()) {
+        if (!projectId) {
             setIsLoading(false);
             return;
         }
 
-        const loadLocalProject = async () => {
+        const loadCachedProject = async () => {
             try {
-                const { getLocalProject } = await import("@src/lib/persistence/local-projects");
-                const localProject = await getLocalProject(projectId);
-                if (localProject) {
-                    setTitle(localProject.title);
-                    setDescription(localProject.description);
-                    setAuthor(localProject.author);
+                const { getCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
+                const cachedProject = await getCachedProject(projectId);
+                if (cachedProject) {
+                    setTitle(cachedProject.title);
+                    setDescription(cachedProject.description);
+                    setAuthor(cachedProject.author);
                 }
             } catch (error) {
-                console.error("[useLocalProjectInfo] Failed to load local project:", error);
+                console.error("[useCachedProjectInfo] Failed to load cached project:", error);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        loadLocalProject();
+        loadCachedProject();
     }, [projectId]);
 
     return { title, description, author, isLoading };
+};
+
+const useIsPro = () => {
+    const { user, isLoading } = useUser();
+    const isPro = !!user?.isProUntil && new Date(user.isProUntil) > new Date();
+    return { isPro, isLoading };
 };
 
 export {
@@ -406,13 +482,14 @@ export {
     useUser,
     useCookieUser,
     useSettings,
+    useIsPro,
     useProjectMemberships,
     useProjectMembership,
     useProjectInvites,
     useProjectCollaborators,
     usePage,
     useDesktop,
-    useLocalProjects,
-    useLocalProjectInfo,
+    useCachedProjects,
+    useCachedProjectInfo,
     useProjectIdFromUrl,
 };

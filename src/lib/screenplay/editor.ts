@@ -154,7 +154,7 @@ export const BASE_EXTENSIONS = [
     Document.configure({
         // Allow any of the screenplay element types as document content
         // Action is listed first to make it the default node type for empty documents
-        content: "(action|scene|character|dialogue|parenthetical|transition|section|note)+",
+        content: "(action|scene|character|dialogue|parenthetical|transition|section|note|dual_dialogue)+",
     }),
 ];
 

@@ -6,7 +6,6 @@ import { useDraggable } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { PopupData, PopupSceneData, closePopup } from "@src/lib/screenplay/popup";
-import { generateSceneId } from "@src/lib/screenplay/scenes";
 import { ColorPicker } from "@components/utils/ColorPicker";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { useTranslations } from "next-intl";
@@ -19,7 +18,7 @@ import styles from "@components/popup/PopupCharacterItem.module.css";
 import popup from "@components/popup/Popup.module.css";
 
 export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) => {
-    const { repository, editor } = useContext(ProjectContext);
+    const { repository } = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
     const { position, handleMouseDown, isDragging } = useDraggable();
     const t = useTranslations("popup.scene");
@@ -35,29 +34,12 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
             return;
         }
 
-        // If scene already has an id, update it; otherwise create a new persistent scene
-        const isNewPersistentScene = !scene.id;
-        const sceneId = scene.id || generateSceneId();
-        repository.upsertScene(sceneId, { synopsis, color });
-
-        // If this is a new persistent scene, update the scene heading node with the scene-id
-        if (isNewPersistentScene && editor) {
-            // Find and update the scene node at the given position
-            const { doc, tr } = editor.state;
-            const resolvedPos = doc.resolve(scene.position);
-            const nodeAtPos = resolvedPos.parent;
-
-            // Verify we're at a scene node
-            if (nodeAtPos.type.name === ScreenplayElement.Scene) {
-                const nodeStart = resolvedPos.before();
-                tr.setNodeMarkup(nodeStart, undefined, {
-                    ...nodeAtPos.attrs,
-                    "scene-id": sceneId,
-                });
-                editor.view.dispatch(tr);
-            }
+        if (!scene.id) {
+            console.warn("[PopupSceneItem] Scene id is not available on this node.");
+            return;
         }
 
+        repository.upsertScene(scene.id, { synopsis, color });
         closePopup(userCtx);
     };
 
@@ -67,25 +49,9 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
             return;
         }
 
-        // Remove the scene-id attribute from the editor node
-        if (editor) {
-            const { doc, tr } = editor.state;
-            const resolvedPos = doc.resolve(scene.position);
-            const nodeAtPos = resolvedPos.parent;
-
-            if (nodeAtPos.type.name === ScreenplayElement.Scene) {
-                const nodeStart = resolvedPos.before();
-                const { "scene-id": _, ...attrsWithoutSceneId } = nodeAtPos.attrs;
-                tr.setNodeMarkup(nodeStart, undefined, attrsWithoutSceneId);
-                editor.view.dispatch(tr);
-            }
-        }
-
         repository.deleteScene(scene.id);
         closePopup(userCtx);
     };
-
-    const isPersistent = !!scene.id;
 
     return (
         <div className={popup.window}>

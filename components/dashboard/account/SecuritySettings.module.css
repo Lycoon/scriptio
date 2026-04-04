@@ -16,7 +16,9 @@
 .strengthFill {
     height: 100%;
     border-radius: 2px;
-    transition: width 0.3s, background-color 0.3s;
+    transition:
+        width 0.3s,
+        background-color 0.3s;
 }
 
 .strengthLabel {
@@ -76,4 +78,58 @@
     background: rgba(239, 68, 68, 0.1);
     color: var(--error);
     border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.message.info {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.fieldHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.switchModeBtn {
+    background: none;
+    border: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: var(--font-inter);
+    padding: 0;
+    margin-right: 12px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.switchModeBtn:hover {
+    color: var(--primary-text);
+}
+
+.forgotPasswordBtn {
+    background: none;
+    border: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: var(--font-inter);
+    padding: 0;
+    margin-right: 8px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.forgotPasswordBtn:hover {
+    color: var(--primary-text);
+}
+
+.authForm {
+    gap: 8px;
+}
+
+.authFormActions {
+    margin-top: 20px;
 }

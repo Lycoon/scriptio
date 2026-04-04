@@ -20,7 +20,7 @@ function computeBookmarkDecorations(doc: any, getSceneColor: (sceneId: string) =
     doc.forEach((node: any, pos: number) => {
         if (node.attrs?.class !== "scene") return;
 
-        const sceneId: string | undefined = node.attrs?.["scene-id"];
+        const sceneId: string | undefined = node.attrs?.["data-id"];
         if (!sceneId) return;
 
         const color = getSceneColor(sceneId);

@@ -242,3 +242,36 @@
     background-color: rgba(251, 191, 36, 0.02);
     border-color: rgba(251, 191, 36, 0.2);
 }
+
+.proGateBanner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    font-size: 0.8rem;
+    color: var(--secondary-text);
+    margin-bottom: 8px;
+}
+
+.proGateLink {
+    margin-left: auto;
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.proGateLink:hover {
+    text-decoration: underline;
+}
+
+.proHint {
+    font-size: 0.78rem;
+    color: var(--secondary-text);
+    padding: 8px 0;
+    display: block;
+    text-align: center;
+    width: 100%;
+}

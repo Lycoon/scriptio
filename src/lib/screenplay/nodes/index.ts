@@ -1,3 +1,6 @@
+import { customAlphabet } from "nanoid";
+export const generateNodeId = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", 10);
+
 export { SceneNode } from "./scene-node";
 export { ActionNode } from "./action-node";
 export { CharacterNode } from "./character-node";
@@ -6,6 +9,8 @@ export { ParentheticalNode } from "./parenthetical-node";
 export { TransitionNode } from "./transition-node";
 export { SectionNode } from "./section-node";
 export { NoteNode } from "./note-node";
+export { DualDialogueNode } from "./dual-dialogue-node";
+export { DualDialogueColumnNode, DUAL_DIALOGUE_COLUMN } from "./dual-dialogue-column-node";
 
 export { ScriptioBold, ScriptioItalic, ScriptioUnderline } from "./marks-node";
 
@@ -17,6 +22,7 @@ export type { ParentheticalNodeOptions } from "./parenthetical-node";
 export type { TransitionNodeOptions } from "./transition-node";
 export type { SectionNodeOptions } from "./section-node";
 export type { NoteNodeOptions } from "./note-node";
+export type { DualDialogueNodeOptions } from "./dual-dialogue-node";
 
 import { SceneNode } from "./scene-node";
 import { ActionNode } from "./action-node";
@@ -26,6 +32,8 @@ import { ParentheticalNode } from "./parenthetical-node";
 import { TransitionNode } from "./transition-node";
 import { SectionNode } from "./section-node";
 import { NoteNode } from "./note-node";
+import { DualDialogueNode } from "./dual-dialogue-node";
+import { DualDialogueColumnNode } from "./dual-dialogue-column-node";
 
 export const ScreenplayNodes = [
     ActionNode,
@@ -36,6 +44,8 @@ export const ScreenplayNodes = [
     TransitionNode,
     SectionNode,
     NoteNode,
+    DualDialogueNode,
+    DualDialogueColumnNode,
 ];
 
 export const ALIGN_CLASSES: Record<string, string> = {

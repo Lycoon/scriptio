@@ -27,7 +27,7 @@ import {
     createSceneBookmarkExtension,
     refreshSceneBookmarks,
 } from "@src/lib/screenplay/extensions/scene-bookmark-extension";
-import { createSceneIdDedupExtension } from "@src/lib/screenplay/extensions/scene-id-dedup-extension";
+import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
@@ -45,6 +45,7 @@ export interface DocumentEditorCallbacks {
     setActiveCommentId?: (id: string | null) => void;
     userKeybinds?: Record<string, string>;
     globalContext?: { toggleFocusMode: () => void; saveProject: () => void };
+    onNodeContextMenu?: (pos: number, nodeClass: string, event: MouseEvent) => void;
     // Title-type callbacks
     setSelectedTitlePageElement?: (element: TitlePageElement) => void;
 }
@@ -53,10 +54,7 @@ export interface DocumentEditorCallbacks {
  * Unified editor hook that replaces both useScriptioEditor and useTitlePageEditor.
  * Builds a Tiptap editor instance bound to the Y.XmlFragment specified in config.
  */
-export const useDocumentEditor = (
-    config: DocumentEditorConfig,
-    callbacks: DocumentEditorCallbacks,
-): Editor | null => {
+export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: DocumentEditorCallbacks): Editor | null => {
     const projectCtx = useContext(ProjectContext);
     const { user } = useUser();
     const {
@@ -158,8 +156,7 @@ export const useDocumentEditor = (
         if (!cb) return;
         const current = currentSuggestionsRef.current;
         if (suggestions.length === 0 && current.length === 0) return;
-        if (suggestions.length === current.length && suggestions.every((s, i) => s === current[i]))
-            return;
+        if (suggestions.length === current.length && suggestions.every((s, i) => s === current[i])) return;
         currentSuggestionsRef.current = suggestions;
         cb(suggestions);
     }, []);
@@ -204,8 +201,8 @@ export const useDocumentEditor = (
           })
         : null;
 
-    const sceneIdDedupExtension = features.sceneIdDedup
-        ? createSceneIdDedupExtension({
+    const nodeIdDedupExtension = features.nodeIdDedup
+        ? createNodeIdDedupExtension({
               duplicatePersistentScene: (originalId: string, newId: string) => {
                   repositoryRef.current?.duplicateScene(originalId, newId);
               },
@@ -329,11 +326,52 @@ export const useDocumentEditor = (
                 ...(characterHighlightExtension ? [characterHighlightExtension] : []),
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
-                ...(sceneIdDedupExtension ? [sceneIdDedupExtension] : []),
+                ...(nodeIdDedupExtension ? [nodeIdDedupExtension] : []),
                 ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
 
-            editorProps: {},
+            editorProps: {
+                handleDOMEvents: {
+                    contextmenu: (view, event) => {
+                        if (config.type !== "screenplay") return false;
+                        const coords = view.posAtCoords({ left: (event as MouseEvent).clientX, top: (event as MouseEvent).clientY });
+                        if (!coords) return false;
+                        const $pos = view.state.doc.resolve(coords.pos);
+                        // depth 1 = direct child of doc. Anything deeper is inside a dual-dialogue column.
+                        if ($pos.depth !== 1) return false;
+                        const doc = view.state.doc;
+                        const node = $pos.parent;
+                        const nodeClass: string = node.attrs.class;
+
+                        // Only offer "Make dual dialogue" on a Character node that is
+                        // followed by its dialogue block AND then another character node.
+                        if (nodeClass === ScreenplayElement.Character) {
+                            const idx = $pos.index(0);
+                            let i = idx + 1;
+                            const count = doc.childCount;
+                            // Consume optional leading parentheticals
+                            while (i < count && doc.child(i).attrs.class === ScreenplayElement.Parenthetical) i++;
+                            // Must have at least one dialogue
+                            if (i >= count || doc.child(i).attrs.class !== ScreenplayElement.Dialogue) return false;
+                            i++;
+                            // Consume any additional parenthetical/dialogue pairs
+                            while (i < count) {
+                                const cls = doc.child(i).attrs.class;
+                                if (cls === ScreenplayElement.Parenthetical || cls === ScreenplayElement.Dialogue) i++;
+                                else break;
+                            }
+                            // Must be followed by another character node (start of second block)
+                            if (i >= count || doc.child(i).attrs.class !== ScreenplayElement.Character) return false;
+
+                            callbacksRef.current.onNodeContextMenu?.(coords.pos, nodeClass, event as MouseEvent);
+                            event.preventDefault();
+                            event.stopPropagation();
+                            return true;
+                        }
+                        return false;
+                    },
+                },
+            },
 
             onSelectionUpdate({ editor, transaction }) {
                 const cb = callbacksRef.current;
@@ -356,9 +394,7 @@ export const useDocumentEditor = (
                     cb.setSelectedTitlePageElement?.(activeElement);
                     const anchor = editor.state.selection.$anchor;
                     if (anchor.nodeBefore) {
-                        cb.setSelectedStyles?.(
-                            getStylesFromMarks(anchor.nodeBefore.marks as any[]),
-                        );
+                        cb.setSelectedStyles?.(getStylesFromMarks(anchor.nodeBefore.marks as any[]));
                     } else {
                         cb.setSelectedStyles?.(Style.None);
                     }
@@ -440,10 +476,7 @@ export const useDocumentEditor = (
                         suggestions = suggestions
                             .filter((location) => {
                                 const upperLocation = location.toUpperCase();
-                                return (
-                                    upperLocation.startsWith(afterPrefix) &&
-                                    upperLocation !== cleanAfterPrefix
-                                );
+                                return upperLocation.startsWith(afterPrefix) && upperLocation !== cleanAfterPrefix;
                             })
                             .slice(0, 10);
                     } else {

@@ -31,13 +31,17 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
         setLoading(true);
         try {
             if (isLocalOnly) {
-                const { deleteLocalProject } = await import("@src/lib/persistence/local-projects");
-                await deleteLocalProject(projectId);
+                const { deleteCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
+                await deleteCachedProject(projectId);
                 closeDashboard();
                 redirectHome();
             } else if (membership) {
                 const res = await deleteProject(membership.project.id);
                 if (res.ok) {
+                    // Also clean up local copy
+                    const { deleteCachedProject } =
+                        await import("@src/lib/persistence/storage-provider/local-persistence");
+                    await deleteCachedProject(projectId);
                     closeDashboard();
                     redirectHome();
                 }

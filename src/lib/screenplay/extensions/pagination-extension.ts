@@ -63,6 +63,8 @@ const BREAK_LOGIC: Partial<Record<ScreenplayElement, BreakLogic>> = {
     [ScreenplayElement.Section]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
     [ScreenplayElement.Note]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
     [ScreenplayElement.None]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
+    // Dual dialogue is an indivisible block — always moves whole to the next page.
+    [ScreenplayElement.DualDialogue]: { keepWithNext: false, canSplit: false, minSplitHeight: 0, showMoreContd: false },
 };
 
 export interface PageSize {
@@ -393,9 +395,11 @@ const getHTMLHeight = (
     editorDom: HTMLElement,
     nodeType: string,
     options: PaginationOptions,
+    contentSize?: number,
 ): number => {
     const textContent = domNode.textContent || "";
-    const cacheKey = `${nodeType}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${textContent}`;
+    const sizePart = contentSize != null ? `${contentSize}:` : "";
+    const cacheKey = `${nodeType}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${sizePart}${textContent}`;
 
     if (heightCache.has(cacheKey)) {
         return heightCache.get(cacheKey)!;
@@ -575,6 +579,9 @@ const createPaginationPlugin = (extension: any) =>
                 // Nothing pagination-related changed
                 if (!tr.docChanged && !forceUpdate && !formatUpdate) return value;
 
+                // UUID assignment by nodeIdDedup only changes data-id attrs — no layout impact
+                if (tr.getMeta("nodeDedupId")) return value;
+
                 const fullRemeasure = forceUpdate || formatUpdate;
 
                 // Track the furthest changed position for the short-circuit break optimization
@@ -648,13 +655,13 @@ const createPaginationPlugin = (extension: any) =>
                     // unchanged nodes. Cache misses (new/edited content) trigger serialization.
                     // element is hoisted so the split block can reuse it without a second serialize.
                     const textContent = node.textContent || "";
-                    const cacheKey = `${node.type.name}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${textContent}`;
+                    const cacheKey = `${node.type.name}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${node.content.size}:${textContent}`;
                     let height = heightCache.get(cacheKey) ?? null;
                     let element: HTMLElement | null = null;
 
                     if (height === null) {
                         element = serializer.serializeNode(node) as HTMLElement;
-                        height = getHTMLHeight(element, editorDOM, node.type.name, options);
+                        height = getHTMLHeight(element, editorDOM, node.type.name, options, node.content.size);
                     }
 
                     if (height == null) continue;

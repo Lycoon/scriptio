@@ -42,6 +42,7 @@ const ScreenplayFormatDropdown = () => {
         [ScreenplayElement.Section]: t("elements.section"),
         [ScreenplayElement.Note]: t("elements.note"),
         [ScreenplayElement.None]: t("elements.none"),
+        [ScreenplayElement.DualDialogue]: t("elements.dialogue"),
     };
 
     const TITLEPAGE_ELEMENT_LABELS: Record<TitlePageElement, string> = {

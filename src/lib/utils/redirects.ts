@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 export const redirectHome = () => {
-    redirect("/");
+    redirect("/projects");
 };
 
 export const redirectProject = (projectId: string) => {

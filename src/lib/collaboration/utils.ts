@@ -1,10 +1,13 @@
 import jwt from "jsonwebtoken";
 
+import * as bc from "lib0/broadcastchannel";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 import * as encoding from "lib0/encoding";
 import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
+
+import { getCollabHttpUrl } from "../utils/requests";
 
 declare const window: any;
 
@@ -14,6 +17,18 @@ declare const window: any;
  * frequent during multi-user editing.
  */
 export class ThrottledWebsocketProvider extends WebsocketProvider {
+    on(event: "document-restored", listener: () => void): this;
+    on(event: Parameters<WebsocketProvider["on"]>[0], listener: Parameters<WebsocketProvider["on"]>[1]): this;
+    on(event: string, listener: (...args: any[]) => void): this {
+        return super.on(event as any, listener as any);
+    }
+
+    emit(event: "document-restored", args: []): this;
+    emit(event: Parameters<WebsocketProvider["emit"]>[0], args: Parameters<WebsocketProvider["emit"]>[1]): this;
+    emit(event: string, args: any[]): this {
+        super.emit(event as any, args as any);
+        return this;
+    }
     private updateQueue: Uint8Array[] = [];
     private awarenessQueue: Set<number> = new Set();
     private flushInterval: ReturnType<typeof setInterval> | null = null;
@@ -22,8 +37,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private userIdleTimer: ReturnType<typeof setTimeout> | null = null;
 
     // Throttling configuration (all in milliseconds)
-    private readonly SOLO_USER_UPDATE_MS = 15000; // 15s when alone
-    private readonly MULTI_USER_UPDATE_MS = 250; // 250ms with others
+    private readonly SOLO_USER_UPDATE_MS = 1000; // 1s when alone
+    private readonly MULTI_USER_UPDATE_MS = 200; // 200ms with others
     private readonly MAX_SILENCE_DURATION_MS = 20000; // 20s max silence before ping
     private readonly MAX_IDLE_DURATION_MS = 10 * 60 * 1000; // 10 minutes idle timeout
     private readonly FLUSH_CHECK_INTERVAL_MS = 100; // Check flush every 100ms
@@ -43,19 +58,22 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private lastKnownUserCount: number = 1;
 
     // Store userInfo so we can restore it on reconnection
-    private userInfo: { name: string; color: string } | null = null;
+    private userInfo: { name: string; color: string; userId?: string } | null = null;
 
     // Close codes from server
     private readonly CLOSE_CODE_SESSION_REPLACED = 4001;
+    private readonly CLOSE_CODE_DOCUMENT_RESTORED = 4005;
 
     // Bound event handlers for proper cleanup
     private boundResetIdleTimer: () => void;
+    private boundHandleVisibility: () => void;
+    private boundHandleOnline: () => void;
 
     constructor(
         serverUrl: string,
         room: string,
         doc: Y.Doc,
-        options: any & { userInfo?: { name: string; color: string } }
+        options: any & { userInfo?: { name: string; color: string; userId?: string } },
     ) {
         // Pass connect: false to prevent immediate connection
         // We'll connect after setting up user info
@@ -63,6 +81,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         this.localClientId = doc.clientID;
         this.boundResetIdleTimer = this.resetUserIdleTimer.bind(this);
+        this.boundHandleVisibility = this.handleVisibilityChange.bind(this);
+        this.boundHandleOnline = this.handleWakeUp.bind(this, "online");
         this.lastFlushTime = Date.now();
         this.lastMessageTime = Date.now();
 
@@ -85,14 +105,14 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             _decoder: any,
             _provider: any,
             _emitSynced: any,
-            _messageType: any
+            _messageType: any,
         ) => {
             this.lastMessageTime = Date.now();
             // Write awareness update to the encoder (y-websocket will send it)
             encoding.writeVarUint(encoder, 1); // messageAwareness
             encoding.writeVarUint8Array(
                 encoder,
-                awarenessProtocol.encodeAwarenessUpdate(this.awareness, [this.localClientId])
+                awarenessProtocol.encodeAwarenessUpdate(this.awareness, [this.localClientId]),
             );
         };
 
@@ -160,13 +180,14 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                 currentWs = ws;
                 const originalClose = ws.onclose;
                 ws.onclose = (event: CloseEvent) => {
-                    // Check if this is a session replacement close
                     if (event.code === provider.CLOSE_CODE_SESSION_REPLACED) {
                         provider.handleSessionReplaced();
-                        // Don't call original handler - we don't want y-websocket to reconnect
                         return;
                     }
-                    // For other close codes, call the original handler
+                    if (event.code === provider.CLOSE_CODE_DOCUMENT_RESTORED) {
+                        provider.handleDocumentRestored();
+                        return;
+                    }
                     if (originalClose) {
                         originalClose.call(ws, event);
                     }
@@ -210,6 +231,23 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     /**
+     * Handle document restore — the server replaced its doc with a snapshot.
+     * Stop reconnecting and notify the consumer to clear local state and reload.
+     */
+    private handleDocumentRestored(): void {
+        console.log("[WS] Document was restored. Notifying consumer to reload.");
+
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
+        this.shouldConnect = false;
+        this.disconnect();
+        this.emit("document-restored", []);
+    }
+
+    /**
      * Count active collaborators (excluding ourselves and stale states)
      * Only counts users who have set a 'user' field in their awareness state
      */
@@ -242,7 +280,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      * Update the user info for awareness.
      * This stores the info and sets it on the awareness state.
      */
-    public setUserInfo(userInfo: { name: string; color: string }): void {
+    public setUserInfo(userInfo: { name: string; color: string; userId?: string }): void {
         this.userInfo = userInfo;
         this.awareness.setLocalStateField("user", userInfo);
     }
@@ -400,6 +438,9 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             window.addEventListener(event, this.boundResetIdleTimer, { passive: true });
         });
 
+        document.addEventListener("visibilitychange", this.boundHandleVisibility);
+        window.addEventListener("online", this.boundHandleOnline);
+
         // Start the idle timer
         this.resetUserIdleTimer();
     }
@@ -412,11 +453,19 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         if (this.isDestroyed || this.isSessionReplaced) return;
 
         // If we were idle-disconnected and user is now active, reconnect
-        if (this.isIdleDisconnected && !this.wsconnected) {
-            console.log("[WS] User active again after idle disconnect. Reconnecting...");
+        if (this.isIdleDisconnected) {
             this.isIdleDisconnected = false;
-            this.reconnectAttempts = 0;
-            this.connect();
+            if (!this.wsconnected) {
+                console.log("[WS] User active again after idle disconnect. Reconnecting...");
+                this.reconnectAttempts = 0;
+                // Use reconnect() which properly tears down any lingering WebSocket
+                // before creating a new one. Plain connect() is a no-op when
+                // the old ws is still in CLOSING state.
+                this.reconnect().catch((err) => {
+                    console.warn("[WS] Failed to reconnect after idle:", err);
+                    this.scheduleReconnect();
+                });
+            }
         }
 
         // Clear existing timer
@@ -432,30 +481,57 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     /**
-     * Handle idle timeout - disconnect to save resources
+     * Handle idle timeout - disconnect to save resources.
+     * Must also handle the case where the connection was already lost
+     * (e.g. server stale-cleanup closed it) — otherwise isIdleDisconnected
+     * is never set and y-websocket keeps retrying in the background.
      */
     private handleIdleTimeout(): void {
-        if (this.isDestroyed || !this.wsconnected) return;
+        if (this.isDestroyed) return;
 
         console.log("[WS] User inactive for 10 minutes. Closing connection to save resources.");
 
         // Mark as idle-disconnected so we don't auto-reconnect
         this.isIdleDisconnected = true;
 
-        // Clean up awareness state before disconnecting
-        this.cleanupLocalAwareness();
-
-        // Flush any pending updates
-        this.flush();
-
-        // Cancel any pending reconnects
+        // Cancel any pending reconnects first
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
 
-        // Disconnect
+        if (this.wsconnected) {
+            // Clean up awareness state before disconnecting
+            this.cleanupLocalAwareness();
+            // Flush any pending updates
+            this.flush();
+        }
+
+        // disconnect() sets shouldConnect = false, which stops y-websocket's
+        // built-in reconnect loop even if we're already disconnected.
         this.disconnect();
+    }
+
+    /**
+     * Force a reconnect when the page becomes visible again after being hidden.
+     */
+    private handleVisibilityChange(): void {
+        if (document.visibilityState !== "visible") return;
+        this.handleWakeUp("visibility");
+    }
+
+    /**
+     * Reconnect after wake (visibility restored or network online).
+     * Only acts if not connected, not idle-disconnected (that case is handled
+     * by resetUserIdleTimer on next user activity), and not session-replaced.
+     */
+    private handleWakeUp(source: string): void {
+        if (this.isDestroyed || this.isSessionReplaced || this.isIdleDisconnected) return;
+        if (!this.wsconnected) {
+            console.log(`[WS] Reconnecting after wake (${source})...`);
+            this.reconnectAttempts = 0;
+            this.reconnect().catch(() => this.scheduleReconnect());
+        }
     }
 
     /**
@@ -467,6 +543,9 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.ACTIVITY_EVENTS.forEach((event) => {
             window.removeEventListener(event, this.boundResetIdleTimer);
         });
+
+        document.removeEventListener("visibilitychange", this.boundHandleVisibility);
+        window.removeEventListener("online", this.boundHandleOnline);
 
         if (this.userIdleTimer) {
             clearTimeout(this.userIdleTimer);
@@ -489,7 +568,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                 encoding.writeVarUint(encoder, 1); // awareness message type
                 encoding.writeVarUint8Array(
                     encoder,
-                    awarenessProtocol.encodeAwarenessUpdate(this.awareness, [this.localClientId])
+                    awarenessProtocol.encodeAwarenessUpdate(this.awareness, [this.localClientId]),
                 );
                 this.ws.send(encoding.toUint8Array(encoder));
             }
@@ -514,7 +593,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      */
     private onThrottledAwareness = (
         { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
-        origin: any
+        origin: any,
     ): void => {
         if (origin !== this) {
             const changedClients = [...added, ...updated, ...removed];
@@ -525,7 +604,6 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
             // If user joins or leaves (not just cursor move), send immediately
             if (added.length > 0 || removed.length > 0) {
-                console.log(`[WS] User join/leave detected. Added: ${added.length}, Removed: ${removed.length}`);
                 this.flush();
             }
         }
@@ -556,9 +634,6 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             const timeSinceLastFlush = now - this.lastFlushTime;
 
             if (timeSinceLastFlush >= requiredDelay) {
-                console.log(
-                    `[WS] Flushing after ${timeSinceLastFlush}ms (threshold: ${requiredDelay}ms, users: ${userCount})`
-                );
                 this.flush();
             }
         }
@@ -574,26 +649,32 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     /**
-     * Flush all pending updates to the server
+     * Flush all pending updates to the server and BroadcastChannel
      */
     public flush(): void {
         const ws = this.ws;
-        if (!this.wsconnected || !ws || ws.readyState !== 1) {
-            return;
-        }
+        const isWsConnected = this.wsconnected && ws && ws.readyState === 1;
 
         // Send document updates
         if (this.updateQueue.length > 0) {
             try {
-                const mergedUpdate = Y.mergeUpdates(this.updateQueue);
+                const updates = this.updateQueue;
                 this.updateQueue = [];
 
                 const encoder = encoding.createEncoder();
                 encoding.writeVarUint(encoder, 0); // sync message type
-                syncProtocol.writeUpdate(encoder, mergedUpdate);
-                ws.send(encoding.toUint8Array(encoder));
+                for (const update of updates) {
+                    syncProtocol.writeUpdate(encoder, update);
+                }
+                const message = encoding.toUint8Array(encoder);
 
-                console.log("[WS] Sent document update");
+                if (isWsConnected) {
+                    ws.send(message);
+                }
+
+                if ((this as any).bcconnected) {
+                    bc.publish((this as any).bcChannel, message, this);
+                }
             } catch (e) {
                 console.error("[WS] Failed to send document updates:", e);
             }
@@ -609,9 +690,17 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                 encoding.writeVarUint(encoder, 1); // awareness message type
                 encoding.writeVarUint8Array(
                     encoder,
-                    awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
+                    awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients),
                 );
-                ws.send(encoding.toUint8Array(encoder));
+                const message = encoding.toUint8Array(encoder);
+
+                if (isWsConnected) {
+                    ws.send(message);
+                }
+
+                if ((this as any).bcconnected) {
+                    bc.publish((this as any).bcChannel, message, this);
+                }
             } catch (e) {
                 console.error("[WS] Failed to send awareness updates:", e);
             }
@@ -661,8 +750,6 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      */
     destroy(): void {
         if (this.isDestroyed) return;
-
-        console.log("[WS] Destroying provider...");
         this.isDestroyed = true;
 
         // Stop the flush loop
@@ -693,8 +780,6 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         // Call parent destroy
         super.destroy();
-
-        console.log("[WS] Provider destroyed");
     }
 }
 

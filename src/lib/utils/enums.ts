@@ -58,6 +58,7 @@ export enum ScreenplayElement {
     Section = "section",
     Note = "note",
     None = "none",
+    DualDialogue = "dual_dialogue",
 }
 
 // Title page format marks - applied as indivisible inline marks on text

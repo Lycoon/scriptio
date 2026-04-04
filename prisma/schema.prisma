@@ -25,6 +25,10 @@ model User {
   username            String?
   color               String?
 
+  isProUntil                  DateTime?
+  stripeSubscriptionId        String?
+  isSubscriptionCancelled     Boolean   @default(false)
+
   settings            Json?
   secrets             Secret?
 

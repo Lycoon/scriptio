@@ -22,7 +22,10 @@ function EditorThemeSync() {
         if (settings?.themedEditor !== undefined) {
             document.documentElement.classList.toggle("themed-editor", settings.themedEditor);
         }
-    }, [settings?.themedEditor]);
+        if (settings?.highlightOnHover !== undefined) {
+            document.documentElement.classList.toggle("highlight-on-hover", settings.highlightOnHover);
+        }
+    }, [settings?.themedEditor, settings?.highlightOnHover]);
 
     return null;
 }
@@ -34,7 +37,7 @@ function EditorThemeSync() {
 function IntlBridge({ children }: { children: ReactNode }) {
     const { locale, messages } = useLocale();
     return (
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC">
             {children}
         </NextIntlClientProvider>
     );
@@ -60,7 +63,9 @@ export function Providers({ children }: { children: ReactNode }) {
                 fetcher,
                 onSuccess: () => { },
                 onError: (err) => {
-                    console.error("[Fetcher] An unexpected error occurred: ", err);
+                    if (err?.status !== 401 && err?.status !== 403) {
+                        console.error("[Fetcher] An unexpected error occurred: ", err);
+                    }
                 },
                 shouldRetryOnError: (err) => {
                     // Don't retry on auth errors (401, 403) or network errors (server unreachable)

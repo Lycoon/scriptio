@@ -1,4 +1,4 @@
-import { DocumentType, JSONContent, NodeType, TextType } from "@tiptap/core";
+import { JSONContent } from "@tiptap/core";
 import { UpdateSecrets, UpdateSettings } from "../../server/repository/user-repository";
 
 export type Screenplay = JSONContent[];
@@ -36,10 +36,35 @@ export interface UserSettings {
     theme: UserTheme;
     language: UserLanguage;
     themedEditor: boolean;
+    highlightOnHover: boolean;
 }
 
 export type UserLanguage = "en" | "es" | "fr" | "zh" | "ko" | "ja" | "de" | "pl";
 export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint" | "blossom";
+
+/* Dictionaries */
+
+/**
+ * Language codes supported for spellcheck dictionaries.
+ * A superset of UserLanguage — spellcheck can support more languages than the UI.
+ */
+export type DictionaryLanguage =
+    | UserLanguage
+    | "en-GB" | "it" | "pt" | "pt-PT" | "nl" | "ru" | "uk" | "sv" | "da";
+
+/** A dictionary available for download. */
+export interface DictionaryInfo {
+    code: DictionaryLanguage;
+    name: string;
+}
+
+/** Metadata for a locally installed dictionary. */
+export interface InstalledDictionary {
+    code: DictionaryLanguage;
+    /** Combined size of .aff + .dic in bytes */
+    size: number;
+    installedAt: number;
+}
 
 export interface UserOnlineSettings {
     color: string;

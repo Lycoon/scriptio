@@ -1,9 +1,7 @@
 "use client";
 
 import { useContext } from "react";
-import { isTauri } from "@tauri-apps/api/core";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { useCookieUser } from "@src/lib/utils/hooks";
 import { Settings } from "lucide-react";
 import { join } from "@src/lib/utils/misc";
 
@@ -14,10 +12,6 @@ import navBtn from "@components/utils/NavbarIconButton.module.css";
 
 const HomeNavbar = () => {
     const { openDashboard } = useContext(DashboardContext);
-    const { user } = useCookieUser();
-
-    // On desktop (Tauri), allow navbar without user for offline mode
-    if (!user && !isTauri()) return null;
 
     return (
         <nav className={join(navbar.container)}>
@@ -31,7 +25,7 @@ const HomeNavbar = () => {
 
             {/* Right side - settings */}
             <div className={navbar.right_btns}>
-                <div className={navBtn.button} onClick={() => openDashboard("Profile")} style={{ height: "100%", paddingInline: "10px", gap: "12px" }}>
+                <div className={navBtn.button} onClick={() => openDashboard("Profile")}>
                     <Settings size={18} />
                 </div>
             </div>

@@ -1,14 +1,6 @@
 ﻿"use client";
 
-import {
-    createContext,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Editor } from "@tiptap/react";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
@@ -45,12 +37,8 @@ export interface ProjectContextType {
     repository: ProjectRepository | null;
     provider: ThrottledWebsocketProvider | null;
     isYjsReady: boolean;
-    isLockedByServer: boolean;
-    isSessionReplaced: boolean;
-    isProjectUnavailable: boolean;
 
     // Connection state
-    updateConnectionStatus: (status: ConnectionStatus) => void;
     connectionStatus: ConnectionStatus;
     users: CollaboratorInfo[];
 
@@ -80,7 +68,7 @@ export interface ProjectContextType {
     setPageMargins: (margins: PageMargin) => void;
     displaySceneNumbers: boolean;
     setDisplaySceneNumbers: (display: boolean) => void;
-        sceneHeadingSpacing: number;
+    sceneHeadingSpacing: number;
     setSceneHeadingSpacing: (spacing: number) => void;
     sceneNumberOnRight: boolean;
     setSceneNumberOnRight: (onRight: boolean) => void;
@@ -130,11 +118,8 @@ const defaultContextValue: ProjectContextType = {
     repository: null,
     provider: null,
     isYjsReady: false,
-    isLockedByServer: false,
-    isSessionReplaced: false,
-    isProjectUnavailable: false,
+
     connectionStatus: "disconnected",
-    updateConnectionStatus: () => {},
     users: [],
     editor: null,
     updateEditor: () => {},
@@ -150,9 +135,9 @@ const defaultContextValue: ProjectContextType = {
     setPageMargins: () => {},
     displaySceneNumbers: false,
     setDisplaySceneNumbers: () => {},
-            sceneHeadingSpacing: 1,
+    sceneHeadingSpacing: 1,
     setSceneHeadingSpacing: () => {},
-            sceneNumberOnRight: false,
+    sceneNumberOnRight: false,
     setSceneNumberOnRight: () => {},
     contdLabel: "(CONT'D)",
     setContdLabel: () => {},
@@ -239,14 +224,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         isReady: isYjsReady,
         connectionStatus: yjsConnectionStatus,
         users: yjsUsers,
-        refreshAndReconnect,
-        isLockedByServer,
-        isSessionReplaced,
         isProjectUnavailable,
     } = useProjectYjs({
         projectId,
         userName,
         userColor,
+        userId: user?.id,
     });
 
     // Repository state - loaded dynamically
@@ -300,9 +283,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     );
 
     // Focus tracking state
-    const [focusedEditorType, setFocusedEditorTypeState] = useState<"screenplay" | "title" | null>(
-        null,
-    );
+    const [focusedEditorType, setFocusedEditorTypeState] = useState<"screenplay" | "title" | null>(null);
 
     // Create repository instance when ydoc is available (dynamically imported)
     useEffect(() => {
@@ -452,7 +433,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setProjectTitleState(initialTitle);
         setProjectAuthorState(initialAuthor);
         const unsubscribeMetadata = repository.observeMetadata((metadata) => {
-            console.log("metadata updated: ", metadata.title);
             if (metadata.title !== undefined) setProjectTitleState(metadata.title);
             if (metadata.author !== undefined) setProjectAuthorState(metadata.author);
         });
@@ -470,13 +450,38 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     // Seed Yjs metadata from the database project record if not yet set
     useEffect(() => {
         if (!repository || !project) return;
-        
+
         const initialTitle = repository.getTitle();
         if (!initialTitle && project.project.title) {
             repository.setTitle(project.project.title);
             setProjectTitleState(project.project.title);
         }
+
+        const initialAuthor = repository.getAuthor();
+        if (!initialAuthor && project.project.author) {
+            repository.setAuthor(project.project.author);
+            setProjectAuthorState(project.project.author);
+        }
     }, [repository, project]);
+
+    // Seed Yjs metadata from local storage as a fallback (covers local-only projects
+    // and cloud projects where the Yjs doc has never had title/author written to it).
+    // Calling setTitle/setAuthor writes to the Yjs metadata map, which fires
+    // observeMetadata → setProjectTitleState/setProjectAuthorState automatically.
+    useEffect(() => {
+        if (!repository) return;
+        const seed = async () => {
+            const hasTitle = !!repository.getTitle();
+            const hasAuthor = !!repository.getAuthor();
+            if (hasTitle && hasAuthor) return;
+            const { getCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
+            const local = await getCachedProject(projectId);
+            if (!local) return;
+            if (!hasTitle && local.title) repository.setTitle(local.title);
+            if (!hasAuthor && local.author) repository.setAuthor(local.author);
+        };
+        seed();
+    }, [repository, projectId]);
 
     useEffect(() => {
         setConnectionStatus(yjsConnectionStatus);
@@ -510,10 +515,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     const updateLocations = useCallback((newLocations: LocationMap) => {
         setLocations(newLocations);
-    }, []);
-
-    const updateConnectionStatus = useCallback((status: ConnectionStatus) => {
-        setConnectionStatus(status);
     }, []);
 
     const setSelectedElement = useCallback((element: ScreenplayElement) => {
@@ -665,13 +666,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             provider,
             isYjsReady,
             connectionStatus,
-            updateConnectionStatus,
             users,
             editor,
             updateEditor,
-            isLockedByServer,
-            isSessionReplaced,
-            isProjectUnavailable,
             selectedElement,
             setSelectedElement,
             selectedStyles,
@@ -727,13 +724,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             provider,
             isYjsReady,
             connectionStatus,
-            updateConnectionStatus,
             users,
             editor,
             updateEditor,
-            isLockedByServer,
-            isSessionReplaced,
-            isProjectUnavailable,
             selectedElement,
             setSelectedElement,
             selectedStyles,
@@ -784,10 +777,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         ],
     );
 
-    const readyValue = useMemo(
-        () => ({ isYjsReady, isProjectUnavailable }),
-        [isYjsReady, isProjectUnavailable],
-    );
+    const readyValue = useMemo(() => ({ isYjsReady, isProjectUnavailable }), [isYjsReady, isProjectUnavailable]);
 
     return (
         <ProjectReadyContext.Provider value={readyValue}>

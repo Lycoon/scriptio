@@ -5,8 +5,8 @@
 
 import { ProjectData, ProjectState } from "@src/lib/project/project-state";
 import { getAdapterByFilename } from "@src/lib/adapters/registry";
-import { createLocalProject, createLocalProjectWithId } from "@src/lib/persistence/local-projects";
-import { SqlitePersistence } from "@src/lib/persistence/sqlite-persistence";
+import { createCachedProject, createCachedProjectWithId } from "@src/lib/persistence/storage-provider/local-persistence";
+import { writeYjsDocumentLocally } from "@src/lib/persistence/y-local-provider";
 import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
 import { ScreenplaySchema } from "@src/lib/screenplay/editor";
 import { TitlePageSchema } from "@src/lib/titlepage/editor";
@@ -124,34 +124,7 @@ async function createLocalYjsDocument(projectId: string, projectData: ProjectDat
         }
     });
 
-    // Save to appropriate persistence based on environment
-    if (isTauri()) {
-        // Desktop: Use SQLite
-        const persistence = new SqlitePersistence(projectId, ydoc);
-
-        // Wait for initialization
-        await new Promise<void>((resolve) => {
-            persistence.on("synced", () => resolve());
-        });
-
-        // Force save
-        await persistence.flush();
-        persistence.destroy();
-    } else {
-        // Browser: Use IndexedDB
-        const { IndexeddbPersistence } = await import("y-indexeddb");
-        const persistence = new IndexeddbPersistence(`scriptio-${projectId}`, ydoc);
-
-        // Wait for initialization
-        await new Promise<void>((resolve) => {
-            persistence.on("synced", () => resolve());
-        });
-
-        // IndexedDB persists automatically, just need to wait
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        persistence.destroy();
-    }
-
+    await writeYjsDocumentLocally(projectId, ydoc);
     ydoc.destroy();
 }
 
@@ -187,6 +160,7 @@ export async function importFileAsProject(
     file: File,
     user: CookieUser | null | undefined,
     title?: string,
+    isPro?: boolean,
 ): Promise<ImportResult> {
     try {
         // Parse the file content
@@ -198,8 +172,8 @@ export async function importFileAsProject(
         let projectId: string | null = null;
 
         if (isTauri()) {
-            // Desktop: offline-first - try cloud to get ID, always create locally
-            if (user && user.id) {
+            // Desktop: offline-first - try cloud to get ID if Pro, always create locally
+            if (user && user.id && isPro) {
                 try {
                     projectId = await createRemoteProject(user.id, projectTitle);
                 } catch {
@@ -207,18 +181,18 @@ export async function importFileAsProject(
                 }
             }
             if (projectId) {
-                await createLocalProjectWithId(projectId, projectTitle, undefined, true);
+                await createCachedProjectWithId(projectId, projectTitle, undefined, true);
             } else {
-                const localProject = await createLocalProject(projectTitle);
-                projectId = localProject.id;
+                const cachedProject = await createCachedProject(projectTitle);
+                projectId = cachedProject.id;
             }
-        } else if (user && user.id) {
-            // Web: create remote project
+        } else if (user && user.id && isPro) {
+            // Web: create remote project (Pro users only)
             projectId = await createRemoteProject(user.id, projectTitle);
         } else {
-            // Web without auth: create local-only project (IndexedDB)
-            const localProject = await createLocalProject(projectTitle);
-            projectId = localProject.id;
+            // Web without auth or not Pro: create local-only project (IndexedDB)
+            const cachedProject = await createCachedProject(projectTitle);
+            projectId = cachedProject.id;
         }
 
         // Create Yjs document with the project content

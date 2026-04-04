@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { requestRecovery } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
+import FormInfo from "../../utils/FormInfo";
 
 import form from "../../utils/Form.module.css";
 import recovery from "./RecoveryForm.module.css";
@@ -31,10 +32,12 @@ const RecoveryForm = () => {
                     your password.
                 </p>
                 {sentEmail && (
-                    <p className={join(recovery.info, "segoe")}>
-                        The email can take few minutes to arrive. Please check your junk folder if you do not receive
-                        it.
-                    </p>
+                    <FormInfo
+                        info={{
+                            content: "The email can take few minutes to arrive. Please check your junk folder if you do not receive it.",
+                            isInfo: true
+                        }}
+                    />
                 )}
             </div>
 
@@ -51,7 +54,7 @@ const RecoveryForm = () => {
                         Send
                     </button>
                 ) : (
-                    <Link href={"/login"} className={form.btn}>
+                    <Link href={"/"} className={form.btn}>
                         Back
                     </Link>
                 )}

@@ -44,7 +44,7 @@ type Database = any;
  * SQLite persistence provider for Yjs documents.
  * Compatible with the same interface as IndexeddbPersistence from y-indexeddb.
  */
-export class SqlitePersistence extends Observable<string> {
+export class SQLitePersistence extends Observable<string> {
     private doc: Y.Doc;
     private projectId: string;
     private db: Database | null = null;
@@ -69,11 +69,10 @@ export class SqlitePersistence extends Observable<string> {
             const Database = (await import("@tauri-apps/plugin-sql")).default;
             this.db = await Database.load(DB_NAME);
 
-            // Load existing document state from local_projects table
-            const result = await this.db.select(
-                "SELECT data FROM local_projects WHERE id = ?",
-                [this.projectId],
-            ) as { data: string | null }[];
+            // Load existing document state from cached_projects table
+            const result = (await this.db.select("SELECT data FROM cached_projects WHERE id = ?", [this.projectId])) as {
+                data: string | null;
+            }[];
 
             if (result.length > 0 && result[0].data) {
                 try {
@@ -85,7 +84,7 @@ export class SqlitePersistence extends Observable<string> {
                         `[SqlitePersistence] Corrupted data for project ${this.projectId}, clearing local cache:`,
                         updateError,
                     );
-                    await this.db.execute("UPDATE local_projects SET data = NULL WHERE id = ?", [this.projectId]);
+                    await this.db.execute("UPDATE cached_projects SET data = NULL WHERE id = ?", [this.projectId]);
                     console.log(`[SqlitePersistence] Cleared corrupted data, will sync from cloud`);
                 }
             } else {
@@ -129,10 +128,11 @@ export class SqlitePersistence extends Observable<string> {
             const state = Y.encodeStateAsUpdate(this.doc);
             const base64Data = uint8ArrayToBase64(state);
 
-            await this.db.execute(
-                `UPDATE local_projects SET data = ?, updated_at = ? WHERE id = ?`,
-                [base64Data, Date.now(), this.projectId],
-            );
+            await this.db.execute(`UPDATE cached_projects SET data = ?, updated_at = ? WHERE id = ?`, [
+                base64Data,
+                Date.now(),
+                this.projectId,
+            ]);
 
             console.log(`[SqlitePersistence] Saved ${state.length} bytes for project ${this.projectId}`);
         } catch (error) {
@@ -165,7 +165,7 @@ export class SqlitePersistence extends Observable<string> {
         if (!this.db) return;
 
         try {
-            await this.db.execute("UPDATE local_projects SET data = NULL WHERE id = ?", [this.projectId]);
+            await this.db.execute("UPDATE cached_projects SET data = NULL WHERE id = ?", [this.projectId]);
             console.log(`[SqlitePersistence] Cleared data for project ${this.projectId}`);
         } catch (error) {
             console.error("[SqlitePersistence] Clear failed:", error);

@@ -6,7 +6,7 @@ import { cropImageBase64, join } from "@src/lib/utils/misc";
 import { FormInfoType } from "../utils/FormInfo";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
 import { createProject } from "@src/lib/utils/requests";
-import { useCookieUser } from "@src/lib/utils/hooks";
+import { useCookieUser, useIsPro } from "@src/lib/utils/hooks";
 import UploadButton from "./UploadButton";
 import FormHeader from "./FormHeader";
 import FormEnd from "./FormEnd";
@@ -23,6 +23,7 @@ type Props = {
 
 const CreateProjectPage = ({ setIsCreating }: Props) => {
     const { user } = useCookieUser();
+    const { isPro } = useIsPro();
     const t = useTranslations("projects");
 
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
@@ -46,12 +47,12 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         const author = e.target.author.value;
 
         // Desktop: offline-first project creation
-        // Always create locally. If signed in, try cloud first to use its ID.
+        // Always create locally. If Pro and signed in, try cloud first to use its ID.
         if (isTauri()) {
             let projectId: string | null = null;
             try {
-                // If signed in, try creating on server to get the cloud project ID
-                if (user) {
+                // If Pro and signed in, try creating on server to get the cloud project ID
+                if (user && isPro) {
                     try {
                         const body: CreateProjectBody = { title, description, author };
                         if (selectedFile) {
@@ -68,14 +69,13 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                 }
 
                 // Always create local SQLite entry, using the cloud ID if available
-                const { createLocalProject, createLocalProjectWithId } = await import(
-                    "@src/lib/persistence/local-projects"
-                );
+                const { createCachedProject, createCachedProjectWithId } =
+                    await import("@src/lib/persistence/storage-provider/local-persistence");
                 if (projectId) {
-                    await createLocalProjectWithId(projectId, title, description, true, author);
+                    await createCachedProjectWithId(projectId, title, description, true, author);
                 } else {
-                    const localProject = await createLocalProject(title, description, author);
-                    projectId = localProject.id;
+                    const cachedProject = await createCachedProject(title, description, author);
+                    projectId = cachedProject.id;
                 }
             } catch (error) {
                 console.log("Failed to create project:", error);
@@ -88,28 +88,36 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
             return;
         }
 
-        // Web: create via API
-        if (!user) return;
+        // Web: create via API if authenticated Pro, otherwise create locally (IndexedDB)
+        if (user && isPro) {
+            const body: CreateProjectBody = {
+                title,
+                description,
+                author,
+            };
 
-        const body: CreateProjectBody = {
-            title,
-            description,
-            author,
-        };
+            if (selectedFile) {
+                body.poster = await cropImageBase64(selectedFile, 686, 1016);
+            }
 
-        if (selectedFile) {
-            body.poster = await cropImageBase64(selectedFile, 686, 1016);
+            const res = await createProject(user.id, body);
+            const json = (await res.json()) as ApiResponse;
+            if (!res.ok) {
+                setFormInfo({ content: json.message!, isError: true });
+                return;
+            }
+
+            // Also create local entry for offline cache
+            const { createCachedProjectWithId } =
+                await import("@src/lib/persistence/storage-provider/local-persistence");
+            await createCachedProjectWithId(json.data.id, title, description, true, author);
+            redirectScreenplay(json.data.id);
+        } else {
+            // Unauthenticated or non-Pro: create local-only project (IndexedDB)
+            const { createCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
+            const cachedProject = await createCachedProject(title, description, author);
+            redirectScreenplay(cachedProject.id);
         }
-
-        const res = await createProject(user.id, body);
-        const json = (await res.json()) as ApiResponse;
-        if (!res.ok) {
-            setFormInfo({ content: json.message!, isError: true });
-            return;
-        }
-
-        const projectId = json.data.id;
-        redirectScreenplay(projectId);
     };
 
     return (

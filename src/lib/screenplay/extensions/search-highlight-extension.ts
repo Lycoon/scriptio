@@ -59,9 +59,13 @@ function getChangedRanges(tr: any): Array<{ from: number; to: number }> {
             try {
                 const $from = tr.doc.resolve(mappedFrom);
                 const $to = tr.doc.resolve(mappedTo);
+                // Only expand to parent block boundaries when inside a block
+                // node (depth > 0). At depth 0 (between top-level blocks, e.g.
+                // after pagination inserts a page break), expanding would cover
+                // the entire document — use raw positions instead.
                 ranges.push({
-                    from: $from.start($from.depth),
-                    to: $to.end($to.depth),
+                    from: $from.depth > 0 ? $from.start($from.depth) : mappedFrom,
+                    to: $to.depth > 0 ? $to.end($to.depth) : mappedTo,
                 });
             } catch {
                 ranges.push({ from: mappedFrom, to: mappedTo });
@@ -140,22 +144,6 @@ function computeSearchDecorations(
     });
 
     return { decorations: DecorationSet.create(doc, decorations), matches };
-}
-
-/**
- * Rebuild the matches array from a DecorationSet by extracting positions
- * and resolving node types from the document.
- */
-function matchesFromDecorations(doc: any, decoSet: DecorationSet): SearchMatch[] {
-    const decos = decoSet.find(0, doc.content.size);
-    return decos.map((d) => {
-        let nodeType = ScreenplayElement.None;
-        try {
-            const nodeClass = doc.resolve(d.from).parent?.attrs?.class;
-            if (nodeClass) nodeType = nodeClass as ScreenplayElement;
-        } catch { /* position out of bounds */ }
-        return { from: d.from, to: d.to, nodeType };
-    });
 }
 
 /**
@@ -291,6 +279,7 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
 
                             // Scan only the changed ranges for new matches
                             const newDecorations: Decoration[] = [];
+                            const freshMatches: SearchMatch[] = [];
                             for (const range of changedRanges) {
                                 const rangeMatches = scanRangeForMatches(
                                     newState.doc,
@@ -300,6 +289,7 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
                                     enabledFilters,
                                 );
                                 for (const m of rangeMatches) {
+                                    freshMatches.push(m);
                                     newDecorations.push(
                                         Decoration.inline(m.from, m.to, {
                                             class: "search-highlight",
@@ -311,8 +301,27 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
                                 result = result.add(newState.doc, newDecorations);
                             }
 
-                            // Rebuild matches array from the decoration set
-                            const newMatches = matchesFromDecorations(newState.doc, result);
+                            // Incrementally update cachedMatches: map surviving
+                            // positions, drop matches in changed ranges, merge
+                            // with freshly scanned matches. Avoids the expensive
+                            // matchesFromDecorations() full-document scan.
+                            const mappedCached: SearchMatch[] = [];
+                            for (const m of cachedMatches) {
+                                const from = tr.mapping.map(m.from, 1);
+                                const to = tr.mapping.map(m.to, -1);
+                                if (from >= to) continue;
+                                let overlaps = false;
+                                for (const range of changedRanges) {
+                                    if (from < range.to && to > range.from) {
+                                        overlaps = true;
+                                        break;
+                                    }
+                                }
+                                if (!overlaps) {
+                                    mappedCached.push({ from, to, nodeType: m.nodeType });
+                                }
+                            }
+                            const newMatches = mappedCached.concat(freshMatches).sort((a, b) => a.from - b.from);
                             cachedMatches = newMatches;
 
                             // Apply current match highlight

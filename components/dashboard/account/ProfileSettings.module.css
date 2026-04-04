@@ -117,3 +117,31 @@
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+.proStatus {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.proBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    width: fit-content;
+}
+
+.proExpiry {
+    font-size: 0.8rem;
+    color: var(--secondary-text);
+    margin: 0;
+}
+

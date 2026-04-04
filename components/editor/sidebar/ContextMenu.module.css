@@ -7,7 +7,7 @@
     position: fixed;
     overflow-y: auto;
     border-radius: 12px;
-    background-color: var(--editor-sidebar);
+    background-color: var(--context-menu-bg);
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
 }
 
@@ -20,16 +20,17 @@
     padding-right: 35px;
 
     font-size: 14px;
-    border-bottom: 1px solid;
-    border-color: var(--separator);
-}
-
-.menu_item:last-child {
-    border-bottom: none;
+    cursor: pointer;
 }
 
 .menu_item:hover {
-    background-color: var(--editor-sidebar-hover);
+    background-color: var(--context-menu-item-hover);
+}
+
+.menu_separator {
+    height: 1px;
+    background-color: var(--separator);
+    margin: 2px 0;
 }
 
 .suggestion_item {
@@ -42,13 +43,11 @@
 
     font-size: 14px;
     font-weight: 600;
-    border-bottom: 1px solid;
-    border-color: var(--separator);
     cursor: pointer;
 }
 
 .suggestion_item:hover {
-    background-color: var(--editor-sidebar-hover);
+    background-color: var(--context-menu-item-hover);
 }
 
 .menu_label {
@@ -63,8 +62,6 @@
     font-size: 13px;
     color: var(--secondary-text);
     font-style: italic;
-    border-bottom: 1px solid;
-    border-color: var(--separator);
 }
 
 .spinner {

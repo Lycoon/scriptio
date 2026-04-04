@@ -17,6 +17,8 @@ import {
     ArrowDownRight,
     BookPlus,
     ClipboardPaste,
+    Columns2,
+    Copy,
     Highlighter,
     Loader2,
     LucideIcon,
@@ -28,6 +30,7 @@ import {
     Trash2,
     UserRound,
 } from "lucide-react";
+import { makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
 
 /* ==================== */
 /*     Context menu     */
@@ -48,6 +51,7 @@ export const enum ContextMenuType {
     Suggestion,
     EditorSelection,
     Spellcheck,
+    DualDialogue,
 }
 
 type ContextMenuItemProps = {
@@ -190,7 +194,31 @@ const EditorSelectionMenu = (props: any) => {
     const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
     const { editor } = projectCtx;
+    const { updateContextMenu } = useContext(UserContext);
     const { from, to, onAddComment } = props.props as EditorSelectionContextProps;
+    const hasSelection = from !== to;
+
+    const handleCopy = async () => {
+        if (!editor) return;
+        const text = editor.state.doc.textBetween(from, to, "\n");
+        await navigator.clipboard.writeText(text);
+        updateContextMenu(undefined);
+    };
+
+    const handleCut = async () => {
+        if (!editor) return;
+        const text = editor.state.doc.textBetween(from, to, "\n");
+        await navigator.clipboard.writeText(text);
+        editor.commands.deleteRange({ from, to });
+        updateContextMenu(undefined);
+    };
+
+    const handlePaste = async () => {
+        if (!editor) return;
+        const text = await navigator.clipboard.readText();
+        editor.commands.insertContent(text);
+        updateContextMenu(undefined);
+    };
 
     const handleSearchOnWeb = () => {
         if (!editor) return;
@@ -201,8 +229,16 @@ const EditorSelectionMenu = (props: any) => {
 
     return (
         <>
-            <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
-            <ContextMenuItem text={t("searchOnWeb")} icon={Search} action={handleSearchOnWeb} />
+            {hasSelection && <ContextMenuItem text={t("copy")} icon={Copy} action={handleCopy} />}
+            {hasSelection && <ContextMenuItem text={t("cut")} icon={Scissors} action={handleCut} />}
+            <ContextMenuItem text={t("paste")} icon={ClipboardPaste} action={handlePaste} />
+            {hasSelection && (
+                <>
+                    <div className={context.menu_separator} />
+                    <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
+                    <ContextMenuItem text={t("searchOnWeb")} icon={Search} action={handleSearchOnWeb} />
+                </>
+            )}
         </>
     );
 };
@@ -283,8 +319,31 @@ const SpellcheckMenu = (props: any) => {
                     <p className="unselectable">{s}</p>
                 </div>
             ))}
+            {suggestions !== null && suggestions.length > 0 && <div className={context.menu_separator} />}
             <ContextMenuItem text={t("addToDictionary")} icon={BookPlus} action={handleAddToDictionary} />
         </>
+    );
+};
+
+/* ============================ */
+/*  Dual Dialogue context menu  */
+/* ============================ */
+
+const DualDialogueMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
+    const { editor } = useContext(ProjectContext);
+    const { updateContextMenu } = useContext(UserContext);
+    const { pos } = props.props as { pos: number };
+
+    return (
+        <ContextMenuItem
+            text={t("makeDualDialogue")}
+            icon={Columns2}
+            action={() => {
+                if (editor) makeDualDialogue(editor, pos);
+                updateContextMenu(undefined);
+            }}
+        />
     );
 };
 
@@ -304,6 +363,8 @@ const renderContextMenu = (contextMenu: ContextMenuProps) => {
             return <EditorSelectionMenu props={contextMenu.typeSpecificProps} />;
         case ContextMenuType.Spellcheck:
             return <SpellcheckMenu props={contextMenu.typeSpecificProps} />;
+        case ContextMenuType.DualDialogue:
+            return <DualDialogueMenu props={contextMenu.typeSpecificProps} />;
     }
 };
 

@@ -2,9 +2,8 @@
 
 import { useContext, useState, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { isTauri } from "@tauri-apps/api/core";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { useCookieUser, useLocalProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
+import { useCookieUser, useCachedProjectInfo, useProjectIdFromUrl, useProjectMembership } from "@src/lib/utils/hooks";
 
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "./ProjectSettings.module.css";
@@ -44,9 +43,9 @@ const ExportProject = () => {
     const ydoc = repository?.getState();
     const userContext = useContext(UserContext);
 
-    // For local projects on desktop without auth
     const projectId = useProjectIdFromUrl();
-    const { title: localTitle, author: localAuthor } = useLocalProjectInfo(projectId);
+    const { title: localTitle, author: localAuthor } = useCachedProjectInfo(projectId);
+    const { isLocalOnly } = useProjectMembership();
 
     const [format, setFormat] = useState<ExportFormat>(ExportFormat.PDF);
     const [includeWatermark, setIncludeWatermark] = useState<boolean>(false);
@@ -63,9 +62,7 @@ const ExportProject = () => {
     // Reference for the hidden file input
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // On desktop, allow export without user/membership (local projects)
-    const isDesktop = isTauri();
-    if (!isDesktop && (!membership || !user)) return null;
+    if (!isLocalOnly && (!membership || !user)) return null;
 
     // --- Import Logic ---
     const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
