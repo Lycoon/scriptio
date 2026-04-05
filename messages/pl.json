@@ -11,7 +11,8 @@
     "toggleComments": "Pokaż/ukryj komentarze",
     "focusMode": "Tryb skupienia",
     "splitPanel": "Podziel panel",
-    "unsplitPanel": "Zamknij panel"
+    "unsplitPanel": "Zamknij panel",
+    "draftEditor": "Edytor szkiców"
   },
   "common": {
     "save": "Zapisz zmiany",
@@ -163,12 +164,7 @@
     "item": {
       "posterAlt": "Plakat filmowy",
       "localOnly": "Tylko lokalnie",
-      "syncedToCloud": "Zsynchronizowano z chmurą",
-      "today": "Dzisiaj",
-      "yesterday": "Wczoraj",
-      "daysAgo": "{days, plural, one {# dzień} few {# dni} many {# dni} other {# dni}} temu",
-      "monthsAgo": "{months, plural, one {# miesiąc} few {# miesiące} many {# miesięcy} other {# miesięcy}} temu",
-      "moreThanYearAgo": "Ponad rok temu"
+      "syncedToCloud": "Zsynchronizowano z chmurą"
     },
     "form": {
       "formTitle": "Utwórz projekt",
@@ -184,7 +180,12 @@
   "editorSidebar": {
     "scenes": "Sceny",
     "characters": "Postacie",
-    "locations": "Lokalizacje"
+    "locations": "Lokalizacje",
+    "shelf": "Półka",
+    "shelfEmpty": "Wybierz wersję do edycji",
+    "confirmRestore": "Spowoduje to zastąpienie pasującej treści w scenariuszu.",
+    "restore": "Przywróć",
+    "cancel": "Anuluj"
   },
   "formatDropdown": {
     "elements": {
@@ -360,7 +361,8 @@
     "searchOnWeb": "Szukaj w sieci",
     "noSuggestions": "Brak sugestii",
     "addToDictionary": "Dodaj do słownika",
-    "makeDualDialogue": "Utwórz podwójny dialog"
+    "makeDualDialogue": "Utwórz podwójny dialog",
+    "shelve": "Odłóż"
   },
   "popup": {
     "character": {
@@ -421,7 +423,6 @@
     "confirmRestore": "To zastąpi aktualny dokument u wszystkich współpracowników. Czy na pewno?",
     "confirmDelete": "Czy na pewno chcesz usunąć ten zapis?",
     "noSaves": "Brak zapisów",
-    "justNow": "Przed chwilą",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
     "upgradeBtn": "Upgrade to Pro"
@@ -481,5 +482,15 @@
     "signUpFailed": "Rejestracja nie powiodła się",
     "unexpectedError": "Wystąpił nieoczekiwany błąd",
     "verificationEmail": "E-mail weryfikacyjny został wysłany na Twój adres"
+  },
+  "dates": {
+    "justNow": "Przed chwilą",
+    "minutesAgo": "{mins, plural, one {# minutę temu} few {# minuty temu} other {# minut temu}}",
+    "hoursAgo": "{hours, plural, one {# godzinę temu} few {# godziny temu} other {# godzin temu}}",
+    "today": "Dzisiaj",
+    "yesterday": "Wczoraj",
+    "daysAgo": "{days, plural, one {# dzień temu} few {# dni temu} other {# dni temu}}",
+    "monthsAgo": "{months, plural, one {# miesiąc} few {# miesiące} many {# miesięcy} other {# miesięcy}} temu",
+    "moreThanYearAgo": "Ponad rok temu"
   }
 }

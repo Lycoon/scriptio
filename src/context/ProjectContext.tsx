@@ -15,6 +15,7 @@ import {
     ElementStyle,
     PageMargin,
     DEFAULT_PAGE_MARGINS,
+    ShelfEntry,
 } from "@src/lib/project/project-state";
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
@@ -104,8 +105,17 @@ export interface ProjectContextType {
     setSelectedTitlePageElement: (element: TitlePageElement) => void;
 
     // Focus tracking for format dropdown context switching
-    focusedEditorType: "screenplay" | "title" | null;
-    setFocusedEditorType: (type: "screenplay" | "title" | null) => void;
+    focusedEditorType: "screenplay" | "title" | "draft" | null;
+    setFocusedEditorType: (type: "screenplay" | "title" | "draft" | null) => void;
+
+    // Draft (shelf) editor instance
+    draftEditor: Editor | null;
+    updateDraftEditor: (editor: Editor | null) => void;
+
+    // Shelf
+    shelfEntries: Record<string, ShelfEntry>;
+    activeShelfVersion: { nodeId: string; versionId: string } | null;
+    setActiveShelfVersion: (v: { nodeId: string; versionId: string } | null) => void;
 }
 
 // -------------------------------- //
@@ -182,6 +192,13 @@ const defaultContextValue: ProjectContextType = {
     // Focus tracking defaults
     focusedEditorType: null,
     setFocusedEditorType: () => {},
+    // Draft editor defaults
+    draftEditor: null,
+    updateDraftEditor: () => {},
+    // Shelf defaults
+    shelfEntries: {},
+    activeShelfVersion: null,
+    setActiveShelfVersion: () => {},
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -283,7 +300,15 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     );
 
     // Focus tracking state
-    const [focusedEditorType, setFocusedEditorTypeState] = useState<"screenplay" | "title" | null>(null);
+    const [focusedEditorType, setFocusedEditorTypeState] = useState<"screenplay" | "title" | "draft" | null>(null);
+
+    // Draft editor state
+    const [draftEditor, setDraftEditor] = useState<Editor | null>(null);
+    const updateDraftEditor = useCallback((editor: Editor | null) => setDraftEditor(editor), []);
+
+    // Shelf state
+    const [shelfEntries, setShelfEntries] = useState<Record<string, ShelfEntry>>({});
+    const [activeShelfVersion, setActiveShelfVersion] = useState<{ nodeId: string; versionId: string } | null>(null);
 
     // Create repository instance when ydoc is available (dynamically imported)
     useEffect(() => {
@@ -328,7 +353,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         recomputeFromScreenplay(initialScreenplay);
 
         // Observe screenplay changes
-        const unsubscribeScreenplay = repository.observeScreenplay((newScreenplay: Screenplay) => {
+        repository.registerScreenplayCallback((newScreenplay: Screenplay) => {
             recomputeFromScreenplay(newScreenplay);
         });
 
@@ -437,13 +462,20 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (metadata.author !== undefined) setProjectAuthorState(metadata.author);
         });
 
+        // Observe shelf changes
+        setShelfEntries(repository.shelfEntries);
+        const unsubscribeShelf = repository.observeShelf((entries) => {
+            setShelfEntries(entries);
+        });
+
         return () => {
-            unsubscribeScreenplay();
+            repository.unregisterScreenplayCallback(recomputeFromScreenplay);
             unsubscribeLayout();
             unsubscribeCharacters();
             unsubscribeLocations();
             unsubscribeScenes();
             unsubscribeMetadata();
+            unsubscribeShelf();
         };
     }, [repository]);
 
@@ -654,7 +686,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setSelectedTitlePageElementState(element);
     }, []);
 
-    const setFocusedEditorType = useCallback((type: "screenplay" | "title" | null) => {
+    const setFocusedEditorType = useCallback((type: "screenplay" | "title" | "draft" | null) => {
         setFocusedEditorTypeState(type);
     }, []);
 
@@ -716,6 +748,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setSelectedTitlePageElement,
             focusedEditorType,
             setFocusedEditorType,
+            draftEditor,
+            updateDraftEditor,
+            shelfEntries,
+            activeShelfVersion,
+            setActiveShelfVersion,
         }),
         [
             project,
@@ -774,6 +811,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setSelectedTitlePageElement,
             focusedEditorType,
             setFocusedEditorType,
+            draftEditor,
+            updateDraftEditor,
+            shelfEntries,
+            activeShelfVersion,
+            setActiveShelfVersion,
         ],
     );
 

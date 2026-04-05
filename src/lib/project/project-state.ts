@@ -33,6 +33,21 @@ import type { LocationItem, LocationMap } from "../screenplay/locations";
 import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
 import type { Comment } from "../utils/types";
 
+// ---- Shelf types ----
+
+export type ShelfEntryType = "scene" | "character" | "action";
+
+export type ShelfVersionMeta = {
+    id: string; // unique version ID (nanoid)
+    title: string; // default: today's date on creation
+};
+
+export type ShelfEntry = {
+    title: string; // text content of the shelved node
+    type: ShelfEntryType;
+    versions: ShelfVersionMeta[];
+};
+
 export interface ProjectYjsState {
     ydoc: ProjectState | null;
     provider: ThrottledWebsocketProvider | null;
@@ -153,6 +168,7 @@ export type ProjectData = {
     board: BoardData;
     layout: LayoutData;
     comments?: Record<string, Comment>;
+    shelf?: Record<string, ShelfEntry>;
 };
 
 // -------------------------------- //
@@ -210,6 +226,7 @@ export class ProjectState extends Y.Doc {
         LAYOUT: "layout",
         COMMENTS: "comments",
         DICTIONARY: "dictionary",
+        SHELF: "shelf",
     } as const;
 
     metadata(): Y.Map<any> {
@@ -263,6 +280,16 @@ export class ProjectState extends Y.Doc {
     /** Per-project custom dictionary words (keys are words, values are true). */
     dictionary(): Y.Map<boolean> {
         return this.getMap(this.KEYS.DICTIONARY);
+    }
+
+    /** Shelf entries keyed by node UUID. */
+    shelf(): Y.Map<ShelfEntry> {
+        return this.getMap(this.KEYS.SHELF);
+    }
+
+    /** Get the Y.XmlFragment for a specific shelf version's content. */
+    shelfFragment(nodeId: string, versionId: string): Y.XmlFragment {
+        return this.getXmlFragment(`shelf_${nodeId}_${versionId}`);
     }
 }
 

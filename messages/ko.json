@@ -11,7 +11,8 @@
     "toggleComments": "댓글 표시 전환",
     "focusMode": "집중 모드",
     "splitPanel": "패널 분할",
-    "unsplitPanel": "패널 통합"
+    "unsplitPanel": "패널 통합",
+    "draftEditor": "초안 편집기"
   },
   "common": {
     "save": "변경사항 저장",
@@ -163,12 +164,7 @@
     "item": {
       "posterAlt": "영화 포스터",
       "localOnly": "로컬 전용",
-      "syncedToCloud": "클라우드에 동기화됨",
-      "today": "오늘",
-      "yesterday": "어제",
-      "daysAgo": "{days}일 전",
-      "monthsAgo": "{months}달 전",
-      "moreThanYearAgo": "1년 이상 전"
+      "syncedToCloud": "클라우드에 동기화됨"
     },
     "form": {
       "formTitle": "프로젝트 생성",
@@ -184,7 +180,12 @@
   "editorSidebar": {
     "scenes": "장면",
     "characters": "인물",
-    "locations": "장소"
+    "locations": "장소",
+    "shelf": "보관함",
+    "shelfEmpty": "편집할 버전을 선택하세요",
+    "confirmRestore": "이것은 각본의 해당 내용을 대체합니다.",
+    "restore": "복원",
+    "cancel": "취소"
   },
   "formatDropdown": {
     "elements": {
@@ -360,7 +361,8 @@
     "searchOnWeb": "웹 검색",
     "noSuggestions": "제안 없음",
     "addToDictionary": "사전에 추가",
-    "makeDualDialogue": "이중 대화 만들기"
+    "makeDualDialogue": "이중 대화 만들기",
+    "shelve": "보관하기"
   },
   "popup": {
     "character": {
@@ -421,7 +423,6 @@
     "confirmRestore": "모든 공동 작업자의 현재 문서가 이 버전으로 대체됩니다. 계속하시겠습니까?",
     "confirmDelete": "이 저장본을 삭제하시겠습니까?",
     "noSaves": "저장된 버전이 없습니다",
-    "justNow": "방금 전",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
     "upgradeBtn": "Upgrade to Pro"
@@ -481,5 +482,15 @@
     "signUpFailed": "회원가입 실패",
     "unexpectedError": "예상치 못한 오류가 발생했습니다",
     "verificationEmail": "인증 이메일이 주소로 전송되었습니다"
+  },
+  "dates": {
+    "justNow": "방금 전",
+    "minutesAgo": "{mins}분 전",
+    "hoursAgo": "{hours}시간 전",
+    "today": "오늘",
+    "yesterday": "어제",
+    "daysAgo": "{days}일 전",
+    "monthsAgo": "{months}달 전",
+    "moreThanYearAgo": "1년 이상 전"
   }
 }

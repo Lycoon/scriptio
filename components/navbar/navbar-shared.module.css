@@ -20,7 +20,7 @@
 }
 
 .text_input:focus {
-    border-color: var(--accent);
+    border-color: var(--primary-text);
 }
 
 .text_input::placeholder {

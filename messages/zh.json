@@ -11,7 +11,8 @@
     "toggleComments": "切换显示评论",
     "focusMode": "聚焦模式",
     "splitPanel": "分割面板",
-    "unsplitPanel": "合并面板"
+    "unsplitPanel": "合并面板",
+    "draftEditor": "草稿编辑器"
   },
   "common": {
     "save": "保存",
@@ -163,12 +164,7 @@
     "item": {
       "posterAlt": "电影海报",
       "localOnly": "仅本地",
-      "syncedToCloud": "已同步到云端",
-      "today": "今天",
-      "yesterday": "昨天",
-      "daysAgo": "{days} 天前",
-      "monthsAgo": "{months} 个月前",
-      "moreThanYearAgo": "1 年前"
+      "syncedToCloud": "已同步到云端"
     },
     "form": {
       "formTitle": "创建项目",
@@ -184,7 +180,12 @@
   "editorSidebar": {
     "scenes": "场景",
     "characters": "角色",
-    "locations": "位置"
+    "locations": "位置",
+    "shelf": "搁置",
+    "shelfEmpty": "选择一个版本进行编辑",
+    "confirmRestore": "这将替换剧本中匹配的内容。",
+    "restore": "恢复",
+    "cancel": "取消"
   },
   "formatDropdown": {
     "elements": {
@@ -360,7 +361,8 @@
     "searchOnWeb": "网页搜索",
     "noSuggestions": "无建议",
     "addToDictionary": "添加到字典",
-    "makeDualDialogue": "创建双重对话"
+    "makeDualDialogue": "创建双重对话",
+    "shelve": "搁置"
   },
   "popup": {
     "character": {
@@ -421,7 +423,6 @@
     "confirmRestore": "这将为所有协作成员覆盖当前文档。确认吗？",
     "confirmDelete": "确认删除此备份？",
     "noSaves": "暂无备份",
-    "justNow": "刚刚",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
     "upgradeBtn": "Upgrade to Pro"
@@ -481,5 +482,15 @@
     "signUpFailed": "注册失败",
     "unexpectedError": "发生意外错误",
     "verificationEmail": "验证邮件已发送至您的邮箱"
+  },
+  "dates": {
+    "justNow": "刚刚",
+    "minutesAgo": "{mins}分钟前",
+    "hoursAgo": "{hours}小时前",
+    "today": "今天",
+    "yesterday": "昨天",
+    "daysAgo": "{days}天前",
+    "monthsAgo": "{months} 个月前",
+    "moreThanYearAgo": "1 年前"
   }
 }

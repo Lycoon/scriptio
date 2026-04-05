@@ -88,7 +88,7 @@
 }
 
 .dropdown_menu {
-    composes: panel from './navbar-shared.module.css';
+    composes: panel from "./navbar-shared.module.css";
     position: absolute;
     top: calc(100% + 8px);
     left: 50%;
@@ -115,10 +115,10 @@
 }
 
 .dropdown_item:hover {
-    background-color: color-mix(in srgb, var(--primary-text) 10%, transparent);
+    background-color: var(--secondary-hover);
 }
 
 .dropdown_item_active {
-    background-color: color-mix(in srgb, var(--primary-text) 15%, transparent);
+    background-color: var(--secondary-hover);
     font-weight: 600;
 }

@@ -14,6 +14,7 @@ import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useTranslations } from "next-intl";
 import {
+    Archive,
     ArrowDownRight,
     BookPlus,
     ClipboardPaste,
@@ -31,6 +32,8 @@ import {
     UserRound,
 } from "lucide-react";
 import { makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
+import { extractShelveCandidate } from "@src/lib/shelf/shelf-utils";
+import { ScreenplayElement } from "@src/lib/utils/enums";
 
 /* ==================== */
 /*     Context menu     */
@@ -52,17 +55,20 @@ export const enum ContextMenuType {
     EditorSelection,
     Spellcheck,
     DualDialogue,
+    ShelveNode,
+    EditorContextMenu,
 }
 
 type ContextMenuItemProps = {
     text: string;
     action: () => void;
     icon: LucideIcon;
+    disabled?: boolean;
 };
 
-export const ContextMenuItem = ({ text, action, icon: Icon }: ContextMenuItemProps) => {
+export const ContextMenuItem = ({ text, action, icon: Icon, disabled }: ContextMenuItemProps) => {
     return (
-        <div onClick={action} className={context.menu_item}>
+        <div onClick={disabled ? undefined : action} className={disabled ? context.menu_item_disabled : context.menu_item}>
             <Icon size={16} />
             <p className="unselectable">{text}</p>
         </div>
@@ -347,6 +353,238 @@ const DualDialogueMenu = (props: any) => {
     );
 };
 
+/* ============================ */
+/*  Shelve Node context menu    */
+/* ============================ */
+
+const ShelveNodeMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
+    const { editor, repository } = useContext(ProjectContext);
+    const { updateContextMenu } = useContext(UserContext);
+    const { pos, nodeClass } = props.props as { pos: number; nodeClass: string };
+
+    const handleShelve = () => {
+        if (!editor || !repository) return;
+        const candidate = extractShelveCandidate(editor, pos);
+        if (candidate) {
+            repository.shelveNode(candidate.nodeId, candidate.title, candidate.type, candidate.content);
+        }
+        updateContextMenu(undefined);
+    };
+
+    // Check if dual dialogue is available (Character node followed by valid dialogue pattern)
+    const canDualDialogue = (() => {
+        if (nodeClass !== ScreenplayElement.Character || !editor) return false;
+        const doc = editor.state.doc;
+        const $pos = doc.resolve(pos);
+        const idx = $pos.index(0);
+        const count = doc.childCount;
+        let i = idx + 1;
+        while (i < count && doc.child(i).attrs.class === ScreenplayElement.Parenthetical) i++;
+        if (i >= count || doc.child(i).attrs.class !== ScreenplayElement.Dialogue) return false;
+        i++;
+        while (i < count) {
+            const cls = doc.child(i).attrs.class;
+            if (cls === ScreenplayElement.Parenthetical || cls === ScreenplayElement.Dialogue) i++;
+            else break;
+        }
+        return i < count && doc.child(i).attrs.class === ScreenplayElement.Character;
+    })();
+
+    return (
+        <>
+            <ContextMenuItem text={t("shelve")} icon={Archive} action={handleShelve} />
+            {canDualDialogue && (
+                <ContextMenuItem
+                    text={t("makeDualDialogue")}
+                    icon={Columns2}
+                    action={() => {
+                        if (editor) makeDualDialogue(editor, pos);
+                        updateContextMenu(undefined);
+                    }}
+                />
+            )}
+        </>
+    );
+};
+
+/* ============================== */
+/*  Unified Editor context menu   */
+/* ============================== */
+
+export type EditorContextMenuProps = {
+    from: number;
+    to: number;
+    onAddComment: () => void;
+    spellError?: { word: string; from: number; to: number };
+    nodePos?: number;
+    nodeClass?: string;
+};
+
+const EditorContextMenu = (props: any) => {
+    const t = useTranslations("contextMenu");
+    const { editor, repository } = useContext(ProjectContext);
+    const { worker } = useSpellcheck();
+    const { updateContextMenu } = useContext(UserContext);
+    const { from, to, onAddComment, spellError, nodePos, nodeClass } = props.props as EditorContextMenuProps;
+    const hasSelection = from !== to;
+
+    const [suggestions, setSuggestions] = useState<string[] | null>(null);
+
+    useEffect(() => {
+        if (!spellError || !worker) {
+            if (spellError) setSuggestions([]);
+            return;
+        }
+        const handler = (e: MessageEvent) => {
+            if (e.data.type === "SUGGEST_RESULT" && e.data.word === spellError.word) {
+                worker.removeEventListener("message", handler);
+                setSuggestions(e.data.suggestions);
+            }
+        };
+        worker.addEventListener("message", handler);
+        worker.postMessage({ type: "SUGGEST", word: spellError.word });
+        return () => worker.removeEventListener("message", handler);
+    }, [worker, spellError]);
+
+    const handleCopy = async () => {
+        if (!editor) return;
+        await navigator.clipboard.writeText(editor.state.doc.textBetween(from, to, "\n"));
+        updateContextMenu(undefined);
+    };
+
+    const handleCut = async () => {
+        if (!editor) return;
+        await navigator.clipboard.writeText(editor.state.doc.textBetween(from, to, "\n"));
+        editor.commands.deleteRange({ from, to });
+        updateContextMenu(undefined);
+    };
+
+    const handlePaste = async () => {
+        if (!editor) return;
+        const text = await navigator.clipboard.readText();
+        editor.commands.insertContent(text);
+        updateContextMenu(undefined);
+    };
+
+    const handleSpellReplace = (suggestion: string) => {
+        if (!editor || !spellError) return;
+        const tr = editor.state.tr.replaceWith(spellError.from, spellError.to, editor.state.schema.text(suggestion));
+        editor.view.dispatch(tr);
+        updateContextMenu(undefined);
+    };
+
+    const handleAddToDictionary = () => {
+        if (!editor || !spellError) return;
+        const projectState = repository?.getState();
+        if (projectState) {
+            projectState.dictionary().set(spellError.word, true);
+        } else if (worker) {
+            worker.postMessage({ type: "ADD_WORD", word: spellError.word });
+            refreshSpellcheck(editor);
+        }
+        updateContextMenu(undefined);
+    };
+
+    const handleSearchOnWeb = () => {
+        if (!editor) return;
+        const selectedText = editor.state.doc.textBetween(from, to, " ");
+        if (!selectedText.trim()) return;
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedText)}`, "_blank");
+    };
+
+    const handleShelve = () => {
+        if (!editor || !repository || nodePos === undefined) return;
+        const candidate = extractShelveCandidate(editor, nodePos);
+        if (candidate) {
+            repository.shelveNode(candidate.nodeId, candidate.title, candidate.type, candidate.content);
+        }
+        updateContextMenu(undefined);
+    };
+
+    const canDualDialogue = (() => {
+        if (nodeClass !== ScreenplayElement.Character || !editor || nodePos === undefined) return false;
+        const doc = editor.state.doc;
+        const $pos = doc.resolve(nodePos);
+        const idx = $pos.index(0);
+        const count = doc.childCount;
+        let i = idx + 1;
+        while (i < count && doc.child(i).attrs.class === ScreenplayElement.Parenthetical) i++;
+        if (i >= count || doc.child(i).attrs.class !== ScreenplayElement.Dialogue) return false;
+        i++;
+        while (i < count) {
+            const cls = doc.child(i).attrs.class;
+            if (cls === ScreenplayElement.Parenthetical || cls === ScreenplayElement.Dialogue) i++;
+            else break;
+        }
+        return i < count && doc.child(i).attrs.class === ScreenplayElement.Character;
+    })();
+
+    const isShelvable =
+        nodeClass === ScreenplayElement.Scene ||
+        nodeClass === ScreenplayElement.Character ||
+        nodeClass === ScreenplayElement.Action;
+
+    return (
+        <>
+            {/* Spellcheck section — shown first when on a spellcheck error */}
+            {spellError && (
+                <>
+                    {suggestions === null && (
+                        <div className={context.menu_label}>
+                            <Loader2 size={14} className={context.spinner} />
+                        </div>
+                    )}
+                    {suggestions !== null && suggestions.length === 0 && (
+                        <div className={context.menu_label}>
+                            <span>{t("noSuggestions")}</span>
+                        </div>
+                    )}
+                    {suggestions?.map((s) => (
+                        <div key={s} className={context.suggestion_item} onClick={() => handleSpellReplace(s)}>
+                            <p className="unselectable">{s}</p>
+                        </div>
+                    ))}
+                    <ContextMenuItem text={t("addToDictionary")} icon={BookPlus} action={handleAddToDictionary} />
+                    <div className={context.menu_separator} />
+                </>
+            )}
+
+            {/* Clipboard — always visible */}
+            <ContextMenuItem text={t("cut")} icon={Scissors} action={handleCut} disabled={!hasSelection} />
+            <ContextMenuItem text={t("copy")} icon={Copy} action={handleCopy} disabled={!hasSelection} />
+            <ContextMenuItem text={t("paste")} icon={ClipboardPaste} action={handlePaste} />
+
+            {/* Selection actions — only when there's a selection and no spellcheck error */}
+            {hasSelection && !spellError && (
+                <>
+                    <div className={context.menu_separator} />
+                    <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
+                    <ContextMenuItem text={t("searchOnWeb")} icon={Search} action={handleSearchOnWeb} />
+                </>
+            )}
+
+            {/* Node actions — shelve and optional dual dialogue */}
+            {isShelvable && (
+                <>
+                    <div className={context.menu_separator} />
+                    <ContextMenuItem text={t("shelve")} icon={Archive} action={handleShelve} />
+                    {canDualDialogue && (
+                        <ContextMenuItem
+                            text={t("makeDualDialogue")}
+                            icon={Columns2}
+                            action={() => {
+                                if (editor && nodePos !== undefined) makeDualDialogue(editor, nodePos);
+                                updateContextMenu(undefined);
+                            }}
+                        />
+                    )}
+                </>
+            )}
+        </>
+    );
+};
+
 const renderContextMenu = (contextMenu: ContextMenuProps) => {
     switch (contextMenu.type) {
         case ContextMenuType.SceneList:
@@ -365,6 +603,10 @@ const renderContextMenu = (contextMenu: ContextMenuProps) => {
             return <SpellcheckMenu props={contextMenu.typeSpecificProps} />;
         case ContextMenuType.DualDialogue:
             return <DualDialogueMenu props={contextMenu.typeSpecificProps} />;
+        case ContextMenuType.ShelveNode:
+            return <ShelveNodeMenu props={contextMenu.typeSpecificProps} />;
+        case ContextMenuType.EditorContextMenu:
+            return <EditorContextMenu props={contextMenu.typeSpecificProps} />;
     }
 };
 
@@ -381,6 +623,13 @@ const ContextMenu = () => {
             removeEventListener("click", handleClick, false);
         };
     });
+
+    useEffect(() => {
+        if (!contextMenu) return;
+        const prevent = (e: WheelEvent) => e.preventDefault();
+        document.addEventListener("wheel", prevent, { passive: false });
+        return () => document.removeEventListener("wheel", prevent);
+    }, [contextMenu]);
 
     useEffect(() => {
         updateContextMenu(undefined);

@@ -27,7 +27,8 @@ const LANGUAGE_OPTIONS: DropdownOption[] = [
 const LanguageSettings = () => {
     const { locale, setLanguage } = useLocale();
     const t = useTranslations("language");
-    const { spellcheckLang, setSpellcheckLang, installedDictionaries, downloadProgress, installDictionary } = useSpellcheck();
+    const { spellcheckLang, setSpellcheckLang, installedDictionaries, downloadProgress, installDictionary } =
+        useSpellcheck();
     const { repository } = useContext(ProjectContext);
 
     const [wordInput, setWordInput] = useState("");
@@ -61,9 +62,12 @@ const LanguageSettings = () => {
         setWordInput("");
     }, [wordInput, dictMap]);
 
-    const handleRemoveWord = useCallback((word: string) => {
-        dictMap?.delete(word);
-    }, [dictMap]);
+    const handleRemoveWord = useCallback(
+        (word: string) => {
+            dictMap?.delete(word);
+        },
+        [dictMap],
+    );
 
     const spellcheckOptions: DropdownOption[] = useMemo(() => {
         const noneOption: DropdownOption = {
@@ -121,24 +125,24 @@ const LanguageSettings = () => {
         <div className={sharedStyles.settingsForm}>
             <div className={sharedStyles.formGroup}>
                 <label className={form.label}>{t("label")}</label>
+                <p className={sharedStyles.helpText}>{t("helpText")}</p>
                 <Dropdown
                     value={locale}
                     onChange={(value) => setLanguage(value as UserLanguage)}
                     options={LANGUAGE_OPTIONS}
                     className={sharedStyles.input}
                 />
-                <p className={sharedStyles.helpText}>{t("helpText")}</p>
             </div>
 
             <div className={sharedStyles.formGroup}>
                 <label className={form.label}>{t("spellcheckLabel")}</label>
+                <p className={sharedStyles.helpText}>{t("spellcheckHelpText")}</p>
                 <Dropdown
                     value={spellcheckLang ?? "none"}
                     onChange={handleSpellcheckChange}
                     options={spellcheckOptions}
                     className={sharedStyles.input}
                 />
-                <p className={sharedStyles.helpText}>{t("spellcheckHelpText")}</p>
             </div>
 
             {spellcheckLang && dictMap && (
@@ -163,7 +167,9 @@ const LanguageSettings = () => {
                                     <input
                                         value={wordInput}
                                         onChange={(e) => setWordInput(e.target.value)}
-                                        onKeyDown={(e) => { if (e.key === "Enter") handleAddWord(); }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") handleAddWord();
+                                        }}
                                     />
                                     <button
                                         className={styles.addBtn}
@@ -175,17 +181,19 @@ const LanguageSettings = () => {
                                     </button>
                                 </div>
                                 <div className={styles.wordList}>
-                                    {customWords.length > 0 ? customWords.map((word) => (
-                                        <div key={word} className={styles.wordItem}>
-                                            <span>{word}</span>
-                                            <button
-                                                className={styles.removeWordBtn}
-                                                onClick={() => handleRemoveWord(word)}
-                                            >
-                                                <X size={13} />
-                                            </button>
-                                        </div>
-                                    )) : (
+                                    {customWords.length > 0 ? (
+                                        customWords.map((word) => (
+                                            <div key={word} className={styles.wordItem}>
+                                                <span>{word}</span>
+                                                <button
+                                                    className={styles.removeWordBtn}
+                                                    onClick={() => handleRemoveWord(word)}
+                                                >
+                                                    <X size={13} />
+                                                </button>
+                                            </div>
+                                        ))
+                                    ) : (
                                         <div className={styles.emptyState}>{t("customDictEmpty")}</div>
                                     )}
                                 </div>

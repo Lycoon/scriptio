@@ -12,7 +12,8 @@
     "toggleComments": "Kommentare ein/aus",
     "focusMode": "Fokus-Modus",
     "splitPanel": "Panel teilen",
-    "unsplitPanel": "Panel schließen"
+    "unsplitPanel": "Panel schließen",
+    "draftEditor": "Entwurfseditor"
   },
   "common": {
     "save": "Änderungen speichern",
@@ -164,12 +165,7 @@
     "item": {
       "posterAlt": "Filmplakat",
       "localOnly": "Nur lokal",
-      "syncedToCloud": "Mit Cloud synchronisiert",
-      "today": "Heute",
-      "yesterday": "Gestern",
-      "daysAgo": "Vor {days, plural, one {# Tag} other {# Tagen}}",
-      "monthsAgo": "Vor {months, plural, one {# Monat} other {# Monaten}}",
-      "moreThanYearAgo": "Vor über einem Jahr"
+      "syncedToCloud": "Mit Cloud synchronisiert"
     },
     "form": {
       "formTitle": "Projekt erstellen",
@@ -185,7 +181,12 @@
   "editorSidebar": {
     "scenes": "Szenen",
     "characters": "Charaktere",
-    "locations": "Orte"
+    "locations": "Orte",
+    "shelf": "Ablage",
+    "shelfEmpty": "Wählen Sie eine Version zum Bearbeiten",
+    "confirmRestore": "Dies ersetzt den passenden Inhalt in Ihrem Drehbuch.",
+    "restore": "Wiederherstellen",
+    "cancel": "Abbrechen"
   },
   "formatDropdown": {
     "elements": {
@@ -361,7 +362,8 @@
     "searchOnWeb": "Im Web suchen",
     "noSuggestions": "Keine Vorschläge",
     "addToDictionary": "Zum Wörterbuch hinzufügen",
-    "makeDualDialogue": "Doppel-Dialog erstellen"
+    "makeDualDialogue": "Doppel-Dialog erstellen",
+    "shelve": "Ablegen"
   },
   "popup": {
     "character": {
@@ -422,7 +424,6 @@
     "confirmRestore": "Dies wird das aktuelle Dokument für alle Mitwirkenden ersetzen. Sind Sie sicher?",
     "confirmDelete": "Sind Sie sicher, dass Sie diese Speicherung löschen möchten?",
     "noSaves": "Noch keine Speicherungen vorhanden",
-    "justNow": "Gerade eben",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
     "upgradeBtn": "Upgrade to Pro"
@@ -482,5 +483,15 @@
     "signUpFailed": "Registrierung fehlgeschlagen",
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
     "verificationEmail": "Eine Bestätigungs-E-Mail wurde an Ihre Adresse gesendet"
+  },
+  "dates": {
+    "justNow": "Gerade eben",
+    "minutesAgo": "{mins, plural, one {vor # Minute} other {vor # Minuten}}",
+    "hoursAgo": "{hours, plural, one {vor # Stunde} other {vor # Stunden}}",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "daysAgo": "{days, plural, one {vor # Tag} other {vor # Tagen}}",
+    "monthsAgo": "Vor {months, plural, one {# Monat} other {# Monaten}}",
+    "moreThanYearAgo": "Vor über einem Jahr"
   }
 }

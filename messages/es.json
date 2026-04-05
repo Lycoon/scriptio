@@ -11,7 +11,8 @@
     "toggleComments": "Mostrar/ocultar comentarios",
     "focusMode": "Modo concentración",
     "splitPanel": "Dividir panel",
-    "unsplitPanel": "Unir panel"
+    "unsplitPanel": "Unir panel",
+    "draftEditor": "Editor de borrador"
   },
   "common": {
     "save": "Guardar cambios",
@@ -163,12 +164,7 @@
     "item": {
       "posterAlt": "Póster de la película",
       "localOnly": "Solo local",
-      "syncedToCloud": "Sincronizado en la nube",
-      "today": "Hoy",
-      "yesterday": "Ayer",
-      "daysAgo": "Hace {days, plural, one {# día} other {# días}}",
-      "monthsAgo": "Hace {months, plural, one {# mes} other {# meses}}",
-      "moreThanYearAgo": "Hace más de 1 año"
+      "syncedToCloud": "Sincronizado en la nube"
     },
     "form": {
       "formTitle": "Crear proyecto",
@@ -184,7 +180,12 @@
   "editorSidebar": {
     "scenes": "Escenas",
     "characters": "Personajes",
-    "locations": "Localizaciones"
+    "locations": "Localizaciones",
+    "shelf": "Estante",
+    "shelfEmpty": "Seleccione una versión para editar",
+    "confirmRestore": "Esto reemplazará el contenido correspondiente en su guión.",
+    "restore": "Restaurar",
+    "cancel": "Cancelar"
   },
   "formatDropdown": {
     "elements": {
@@ -360,7 +361,8 @@
     "searchOnWeb": "Buscar en la web",
     "noSuggestions": "Sin sugerencias",
     "addToDictionary": "Añadir al diccionario",
-    "makeDualDialogue": "Crear doble diálogo"
+    "makeDualDialogue": "Crear doble diálogo",
+    "shelve": "Archivar"
   },
   "popup": {
     "character": {
@@ -421,7 +423,6 @@
     "confirmRestore": "Esto reemplazará el documento actual para todos los colaboradores. ¿Estás seguro?",
     "confirmDelete": "¿Estás seguro de que quieres eliminar este guardado?",
     "noSaves": "Aún no hay guardados",
-    "justNow": "Recién",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
     "upgradeBtn": "Upgrade to Pro"
@@ -481,5 +482,15 @@
     "signUpFailed": "Error al registrarse",
     "unexpectedError": "Ocurrió un error inesperado",
     "verificationEmail": "Se ha enviado un correo de verificación a tu dirección"
+  },
+  "dates": {
+    "justNow": "Recién",
+    "minutesAgo": "{mins, plural, one {hace # minuto} other {hace # minutos}}",
+    "hoursAgo": "{hours, plural, one {hace # hora} other {hace # horas}}",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "daysAgo": "{days, plural, one {hace # día} other {hace # días}}",
+    "monthsAgo": "Hace {months, plural, one {# mes} other {# meses}}",
+    "moreThanYearAgo": "Hace más de 1 año"
   }
 }

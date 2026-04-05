@@ -28,9 +28,8 @@
     justify-content: center;
     cursor: pointer;
     color: var(--secondary-text);
-    background-color: var(--tertiary);
+    background-color: var(--secondary);
     border-radius: 6px;
-    opacity: 0.6;
 }
 
 .right_sidebar_toggle:hover {

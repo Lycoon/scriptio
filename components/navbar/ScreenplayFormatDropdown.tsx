@@ -62,6 +62,7 @@ const ScreenplayFormatDropdown = () => {
         selectedTitlePageElement,
         setSelectedTitlePageElement,
         focusedEditorType,
+        draftEditor,
     } = useContext(ProjectContext);
 
     const [isOpen, setIsOpen] = useState(false);
@@ -69,6 +70,8 @@ const ScreenplayFormatDropdown = () => {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const isTitleContext = focusedEditorType === "title";
+    const isDraftContext = focusedEditorType === "draft";
+    const activeScreenplayEditor = isDraftContext ? draftEditor : editor;
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -91,11 +94,11 @@ const ScreenplayFormatDropdown = () => {
                 if (titlePageEditor) applyTitlePageElement(titlePageEditor, element as TitlePageElement);
             } else {
                 setSelectedElement(element as ScreenplayElement);
-                if (editor) applyElement(editor, element as ScreenplayElement);
+                if (activeScreenplayEditor) applyElement(activeScreenplayEditor, element as ScreenplayElement);
             }
             setIsOpen(false);
         },
-        [isTitleContext, editor, titlePageEditor, setSelectedElement, setSelectedTitlePageElement],
+        [isTitleContext, activeScreenplayEditor, titlePageEditor, setSelectedElement, setSelectedTitlePageElement],
     );
 
     const toggleStyle = useCallback(
@@ -103,18 +106,18 @@ const ScreenplayFormatDropdown = () => {
             setSelectedStyles((prev) => (prev ^ style) as Style);
             if (isTitleContext && titlePageEditor) {
                 applyTitlePageMarkToggle(titlePageEditor, style);
-            } else if (editor) {
-                applyMarkToggle(editor, style);
+            } else if (activeScreenplayEditor) {
+                applyMarkToggle(activeScreenplayEditor, style);
             }
         },
-        [isTitleContext, editor, titlePageEditor, setSelectedStyles],
+        [isTitleContext, activeScreenplayEditor, titlePageEditor, setSelectedStyles],
     );
 
     const getActiveStyleClass = (style: Style) => (selectedStyles & style ? styles.active_style : "");
 
     // Sync alignment state from active editor on selection/content changes
     useEffect(() => {
-        const activeEditor = isTitleContext ? titlePageEditor : editor;
+        const activeEditor = isTitleContext ? titlePageEditor : activeScreenplayEditor;
         if (!activeEditor) return;
 
         const updateAlign = () => {
@@ -130,7 +133,7 @@ const ScreenplayFormatDropdown = () => {
             activeEditor.off("selectionUpdate", updateAlign);
             activeEditor.off("transaction", updateAlign);
         };
-    }, [isTitleContext, titlePageEditor, editor]);
+    }, [isTitleContext, titlePageEditor, activeScreenplayEditor]);
 
     const setAlignment = useCallback(
         (align: string) => {
@@ -139,12 +142,12 @@ const ScreenplayFormatDropdown = () => {
                 if (!titlePageEditor) return;
                 titlePageEditor.chain().focus().updateAttributes("tp-text", { textAlign: align }).run();
             } else {
-                if (!editor) return;
-                const nodeType = editor.state.selection.$anchor.parent.type.name;
-                editor.chain().focus().updateAttributes(nodeType, { textAlign: align === "left" ? null : align }).run();
+                if (!activeScreenplayEditor) return;
+                const nodeType = activeScreenplayEditor.state.selection.$anchor.parent.type.name;
+                activeScreenplayEditor.chain().focus().updateAttributes(nodeType, { textAlign: align === "left" ? null : align }).run();
             }
         },
-        [isTitleContext, titlePageEditor, editor],
+        [isTitleContext, titlePageEditor, activeScreenplayEditor],
     );
 
     // Resolve which labels, order, and selected element to display

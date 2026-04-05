@@ -73,3 +73,37 @@
     min-height: 30px;
     height: 100%;
 }
+
+/* Tab bar at bottom of sidebar */
+.tab_bar {
+    display: flex;
+    flex-direction: row;
+    border-top: 1px solid var(--separator);
+    margin-top: auto;
+    padding-top: 4px;
+    padding-inline: 12px;
+    gap: 4px;
+}
+
+.tab_btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--secondary-text);
+    background: none;
+    border: none;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.tab_btn:hover {
+    background-color: var(--editor-sidebar-hover);
+    color: var(--primary-text);
+}
+
+.tab_btn_active {
+    color: var(--primary-text);
+}

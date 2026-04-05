@@ -163,17 +163,16 @@ const useSettings = () => {
 
     const saveSettings = useCallback(
         async (updates: Partial<UserSettings>) => {
-            // Always persist locally (cache/fallback)
-            const optimistic = { ...(localData ?? DEFAULT_LOCAL_SETTINGS), ...updates };
-            mutateLocal(optimistic, false);
+            // Use a functional update so we always merge with the *current* cache value,
+            // not a stale closure copy — prevents rapid toggles from overwriting each other.
+            mutateLocal((current) => ({ ...(current ?? DEFAULT_LOCAL_SETTINGS), ...updates }), false);
             await writeLocalSettings(updates);
 
             if (isAuthenticated) {
-                // Also save to server
                 await editUserSettings(updates);
             }
         },
-        [isAuthenticated, localData, mutateLocal],
+        [isAuthenticated, mutateLocal],
     );
 
     return {
