@@ -26,7 +26,9 @@
     border-radius: 50%;
     border: 2px solid transparent;
     cursor: pointer;
-    transition: transform 0.15s, border-color 0.15s;
+    transition:
+        transform 0.15s,
+        border-color 0.15s;
 }
 
 .colorPreset:hover {
@@ -129,9 +131,9 @@
     gap: 6px;
     padding: 4px 10px;
     border-radius: 20px;
-    background: color-mix(in srgb, var(--accent) 15%, transparent);
-    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-    color: var(--accent);
+    background: color-mix(in srgb, var(--primary-text) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary-text) 30%, transparent);
+    color: var(--primary-text);
     font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -144,4 +146,3 @@
     color: var(--secondary-text);
     margin: 0;
 }
-

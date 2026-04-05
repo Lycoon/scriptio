@@ -11,7 +11,8 @@
     "toggleComments": "Toggle Comments",
     "focusMode": "Focus Mode",
     "splitPanel": "Split Panel",
-    "unsplitPanel": "Unsplit Panel"
+    "unsplitPanel": "Unsplit Panel",
+    "draftEditor": "Draft Editor"
   },
   "common": {
     "save": "Save",
@@ -163,12 +164,7 @@
     "item": {
       "posterAlt": "Movie poster",
       "localOnly": "Local only",
-      "syncedToCloud": "Synced to cloud",
-      "today": "Today",
-      "yesterday": "Yesterday",
-      "daysAgo": "{days, plural, one {# day ago} other {# days ago}}",
-      "monthsAgo": "{months, plural, one {# month ago} other {# months ago}}",
-      "moreThanYearAgo": "More than 1 year ago"
+      "syncedToCloud": "Synced to cloud"
     },
     "form": {
       "formTitle": "Create project",
@@ -184,7 +180,12 @@
   "editorSidebar": {
     "scenes": "Scenes",
     "characters": "Characters",
-    "locations": "Locations"
+    "locations": "Locations",
+    "shelf": "Shelf",
+    "shelfEmpty": "Select a shelved version to edit",
+    "confirmRestore": "This will replace the matching content in your screenplay.",
+    "restore": "Restore",
+    "cancel": "Cancel"
   },
   "formatDropdown": {
     "elements": {
@@ -360,7 +361,8 @@
     "searchOnWeb": "Search on web",
     "noSuggestions": "No suggestions",
     "addToDictionary": "Add to Dictionary",
-    "makeDualDialogue": "Make dual dialogue"
+    "makeDualDialogue": "Make dual dialogue",
+    "shelve": "Shelve"
   },
   "popup": {
     "character": {
@@ -421,7 +423,6 @@
     "confirmRestore": "This will replace the current document for all collaborators. Are you sure?",
     "confirmDelete": "Are you sure you want to delete this save?",
     "noSaves": "No saves yet",
-    "justNow": "Just now",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
     "upgradeBtn": "Upgrade to Pro"
@@ -481,5 +482,15 @@
     "signUpFailed": "Sign up failed",
     "unexpectedError": "An unexpected error occurred",
     "verificationEmail": "A verification email has been sent to your address"
+  },
+  "dates": {
+    "justNow": "Just now",
+    "minutesAgo": "{mins, plural, one {# minute ago} other {# minutes ago}}",
+    "hoursAgo": "{hours, plural, one {# hour ago} other {# hours ago}}",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{days, plural, one {# day ago} other {# days ago}}",
+    "monthsAgo": "{months, plural, one {# month ago} other {# months ago}}",
+    "moreThanYearAgo": "More than 1 year ago"
   }
 }

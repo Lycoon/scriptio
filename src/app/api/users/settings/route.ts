@@ -56,8 +56,13 @@ async function updateSettings(req: NextRequest) {
 
     const body = await req.json();
     const newSettings = validate(UpdateSettingsBodySchema, body);
+
+    const existing = await UserService.getUserSettings(cookie.id);
+    const existingSettings = existing ? (existing.settings as Record<string, unknown>) : {};
+    const mergedSettings = { ...existingSettings, ...newSettings };
+
     const updated = await UserService.updateUserFromId(cookie.id, {
-        settings: newSettings,
+        settings: mergedSettings,
     });
 
     if (!updated) {

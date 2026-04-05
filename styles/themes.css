@@ -106,7 +106,7 @@ html.latte {
     --tertiary: #ecdab4;
 
     --primary-hover: #ece0c7;
-    --secondary-hover: #f8f1e3;
+    --secondary-hover: #f5e7cc;
     --tertiary-hover: #dbccaa;
 
     --primary-text: #7a6129;
@@ -147,11 +147,11 @@ html.wonka {
 
     --main-bg: var(--primary);
     --primary: #1e1410;
-    --secondary: #2c1e1a;
+    --secondary: #332420;
     --tertiary: #4d3b36;
 
     --primary-hover: #422f28;
-    --secondary-hover: #3a2b27;
+    --secondary-hover: #422f2a;
     --tertiary-hover: #66514b;
 
     --primary-text: #e6dcca;

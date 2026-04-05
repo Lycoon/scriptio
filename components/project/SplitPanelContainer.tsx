@@ -6,11 +6,13 @@ import { UserContext } from "@src/context/UserContext";
 import { PanelType, useViewContext } from "@src/context/ViewContext";
 import EditorPanel from "@components/editor/EditorPanel";
 import TitlePagePanel from "@components/editor/TitlePagePanel";
+import DraftEditorPanel from "@components/editor/DraftEditorPanel";
 import BoardCanvas from "@components/board/BoardCanvas";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import {
+    Archive,
     ChevronLeft,
     ChevronRight,
     Clapperboard,
@@ -60,6 +62,8 @@ const PanelRenderer = ({
             return <StatisticsClientPage />;
         case "title":
             return <TitlePagePanel isVisible={isVisible} />;
+        case "draft":
+            return <DraftEditorPanel isVisible={isVisible} />;
     }
 };
 
@@ -67,6 +71,7 @@ const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey:
     { type: "screenplay", icon: Clapperboard, labelKey: "screenplay" },
     { type: "board", icon: LayoutDashboard, labelKey: "board" },
     { type: "title", icon: FileText, labelKey: "titlePage" },
+    { type: "draft", icon: Archive, labelKey: "draftEditor" },
 ];
 
 const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; side: "primary" | "secondary" }) => {
@@ -234,7 +239,7 @@ const SplitPanelContainer = ({
         };
     }, [isSplit, splitRatio]);
 
-    const allPanels: PanelType[] = ["screenplay", "board", "statistics", "title"];
+    const allPanels: PanelType[] = ["screenplay", "board", "statistics", "title", "draft"];
 
     return (
         <div className={styles.split_panel_container} style={gridStyle}>

@@ -11,7 +11,8 @@
     "toggleComments": "コメントの表示/非表示",
     "focusMode": "集中モード",
     "splitPanel": "パネルを分割",
-    "unsplitPanel": "パネルを閉じる"
+    "unsplitPanel": "パネルを閉じる",
+    "draftEditor": "下書きエディター"
   },
   "common": {
     "save": "変更を保存",
@@ -163,12 +164,7 @@
     "item": {
       "posterAlt": "映画ポスター",
       "localOnly": "ローカル専用",
-      "syncedToCloud": "クラウドに同期済み",
-      "today": "今日",
-      "yesterday": "昨日",
-      "daysAgo": "{days}日前",
-      "monthsAgo": "{months}ヶ月前",
-      "moreThanYearAgo": "1年以上前"
+      "syncedToCloud": "クラウドに同期済み"
     },
     "form": {
       "formTitle": "プロジェクトを作成",
@@ -184,7 +180,12 @@
   "editorSidebar": {
     "scenes": "シーン",
     "characters": "登場人物",
-    "locations": "場所"
+    "locations": "場所",
+    "shelf": "シェルフ",
+    "shelfEmpty": "編集するバージョンを選択してください",
+    "confirmRestore": "脚本内の一致するコンテンツが置き換えられます。",
+    "restore": "復元",
+    "cancel": "キャンセル"
   },
   "formatDropdown": {
     "elements": {
@@ -360,7 +361,8 @@
     "searchOnWeb": "ウェブ検索",
     "noSuggestions": "候補なし",
     "addToDictionary": "辞書に追加",
-    "makeDualDialogue": "二重対話を作成"
+    "makeDualDialogue": "二重対話を作成",
+    "shelve": "保管する"
   },
   "popup": {
     "character": {
@@ -421,7 +423,6 @@
     "confirmRestore": "全共同作業者の現在のドキュメントがこのバージョンで上書きされます。よろしいですか？",
     "confirmDelete": "この保存データを削除しますか？",
     "noSaves": "保存データはありません",
-    "justNow": "たった今",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
     "upgradeBtn": "Upgrade to Pro"
@@ -481,5 +482,15 @@
     "signUpFailed": "登録に失敗しました",
     "unexpectedError": "予期しないエラーが発生しました",
     "verificationEmail": "確認メールをアドレスに送信しました"
+  },
+  "dates": {
+    "justNow": "たった今",
+    "minutesAgo": "{mins}分前",
+    "hoursAgo": "{hours}時間前",
+    "today": "今日",
+    "yesterday": "昨日",
+    "daysAgo": "{days}日前",
+    "monthsAgo": "{months}ヶ月前",
+    "moreThanYearAgo": "1年以上前"
   }
 }

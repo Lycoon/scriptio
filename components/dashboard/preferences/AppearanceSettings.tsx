@@ -114,11 +114,14 @@ const AppearanceSettings = () => {
                 <label className={form.label}>{t("theme")}</label>
                 <Dropdown
                     value={theme || "dark"}
-                    onChange={(value) => { setTheme(value); saveSettings({ theme: value as UserTheme }); }}
+                    onChange={(value) => {
+                        setTheme(value);
+                        saveSettings({ theme: value as UserTheme });
+                    }}
                     options={themeOptions}
                     className={`${sharedStyles.input} ${styles.input}`}
                 />
-                <p className={sharedStyles.helpText}>{theme && t(`themeHelp.${theme}` as Parameters<typeof t>[0])}</p>
+                <p className={sharedStyles.helpText}>{theme && t(`themeHelp.${theme}`)}</p>
             </div>
 
             {/* Editor Appearance */}
@@ -149,7 +152,6 @@ const AppearanceSettings = () => {
                     </div>
                 </div>
             </div>
-
         </div>
     );
 };

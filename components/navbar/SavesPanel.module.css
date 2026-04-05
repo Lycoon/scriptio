@@ -1,5 +1,5 @@
 .container {
-    composes: panel from './navbar-shared.module.css';
+    composes: panel from "./navbar-shared.module.css";
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
@@ -80,7 +80,7 @@
 }
 
 .name_input {
-    composes: text_input from './navbar-shared.module.css';
+    composes: text_input from "./navbar-shared.module.css";
 }
 
 .save_btn {
@@ -88,10 +88,10 @@
     align-items: center;
     justify-content: center;
     padding: 6px 10px;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 6px;
-    background-color: var(--accent);
-    color: white;
+    background-color: var(--tertiary);
+    color: var(--primary);
     cursor: pointer;
     flex-shrink: 0;
 }
@@ -154,7 +154,7 @@
 }
 
 .item:hover {
-    background-color: var(--tertiary);
+    background-color: var(--primary);
 }
 
 .item_info {
@@ -252,13 +252,13 @@
 }
 
 .confirm_yes {
-    background-color: var(--accent);
-    color: white;
+    background-color: var(--tertiary);
+    color: var(--primary-text);
 }
 
 .confirm_yes_danger {
     background-color: var(--error);
-    color: white;
+    color: var(--primary-text);
 }
 
 .confirm_no {
@@ -269,7 +269,7 @@
 .confirm_yes:hover,
 .confirm_no:hover,
 .confirm_yes_danger:hover {
-    opacity: 0.85;
+    opacity: 0.7;
 }
 
 /* Spinner animation */
@@ -313,7 +313,7 @@
     margin-top: 8px;
     padding: 6px 18px;
     border-radius: 20px;
-    background-color: var(--accent);
+    background-color: var(--primary-text);
     color: #fff;
     font-size: 0.82rem;
     font-weight: 600;

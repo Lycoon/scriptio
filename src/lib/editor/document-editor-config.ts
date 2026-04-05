@@ -62,7 +62,7 @@ export const SCREENPLAY_EDITOR_CONFIG: DocumentEditorConfig = {
     getCommentsMap: (s) => s.comments(),
     features: {
         comments: true,
-        shelving: false,
+        shelving: true,
         characterHighlights: true,
         searchHighlights: true,
         sceneBookmarks: true,

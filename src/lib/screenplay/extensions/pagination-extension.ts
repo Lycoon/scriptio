@@ -546,7 +546,7 @@ function trySplitNode(
 // Plugin
 // ---------------------------------------------------------------------------
 
-const paginationKey = new PluginKey("pagination");
+export const paginationKey = new PluginKey("pagination");
 
 interface PaginationState {
     decset: DecorationSet;
@@ -1044,3 +1044,19 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
         };
     },
 });
+
+/**
+ * Returns the 1-based page number for a given document position,
+ * using the pagination plugin state stored in the editor.
+ * Returns 1 if pagination state is unavailable.
+ */
+export function getPageForPos(editor: Editor, pos: number): number {
+    const state = paginationKey.getState(editor.state) as PaginationState | undefined;
+    if (!state || state.breaks.length === 0) return 1;
+    let page = 1;
+    for (const b of state.breaks) {
+        if (b.pos > pos) break;
+        page = b.pagenum;
+    }
+    return page;
+}

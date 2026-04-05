@@ -1,13 +1,23 @@
 import { v4 as uuidv4 } from "uuid";
 import * as Y from "yjs";
-import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
+import { prosemirrorJSONToYXmlFragment, yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { Comment, CommentReply, Screenplay } from "../utils/types";
-import { LayoutData, ProjectState, ElementStyle, PageMargin } from "./project-state";
+import {
+    LayoutData,
+    ProjectState,
+    ElementStyle,
+    PageMargin,
+    ShelfEntry,
+    ShelfEntryType,
+    ShelfVersionMeta,
+} from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
 import { PageFormat } from "../utils/enums";
+import { generateNodeId } from "../screenplay/nodes";
+import { JSONContent } from "@tiptap/react";
 
 /**
  * ProjectRepository provides a clean interface for interacting with the Y.js document (ProjectState).
@@ -19,6 +29,11 @@ import { PageFormat } from "../utils/enums";
  */
 export class ProjectRepository {
     private ydoc: ProjectState;
+
+    private _screenplay: Screenplay | null = null;
+    private _screenplayCallbacks = new Set<(s: Screenplay) => void>();
+    private _screenplayTimer: ReturnType<typeof setTimeout> | null = null;
+    private _screenplayUnobserve: (() => void) | null = null;
 
     constructor(ydoc: ProjectState) {
         this.ydoc = ydoc;
@@ -59,23 +74,33 @@ export class ProjectRepository {
      * @param callback - Function to call when screenplay changes
      * @returns Cleanup function to unsubscribe from changes
      */
-    observeScreenplay(callback: (screenplay: Screenplay) => void, delay: number = 300): () => void {
-        const fragment = this.ydoc.screenplayFragment();
-        let timeout: NodeJS.Timeout;
+    registerScreenplayCallback(callback: (screenplay: Screenplay) => void): void {
+        if (this._screenplayCallbacks.size === 0) {
+            const fragment = this.ydoc.screenplayFragment();
+            const observer = () => {
+                if (this._screenplayTimer) clearTimeout(this._screenplayTimer);
+                this._screenplayTimer = setTimeout(() => {
+                    this._screenplay = this.screenplay;
+                    this._screenplayCallbacks.forEach((cb) => cb(this._screenplay!));
+                }, 500);
+            };
+            fragment.observeDeep(observer);
+            this._screenplayUnobserve = () => fragment.unobserveDeep(observer);
+        }
+        this._screenplayCallbacks.add(callback);
+        if (this._screenplay !== null) callback(this._screenplay);
+    }
 
-        const observer = () => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                const screenplay = this.screenplay;
-                callback(screenplay);
-            }, delay);
-        };
-
-        fragment.observeDeep(observer);
-        return () => {
-            clearTimeout(timeout);
-            fragment.unobserveDeep(observer);
-        };
+    unregisterScreenplayCallback(callback: (screenplay: Screenplay) => void): void {
+        this._screenplayCallbacks.delete(callback);
+        if (this._screenplayCallbacks.size === 0) {
+            if (this._screenplayTimer) {
+                clearTimeout(this._screenplayTimer);
+                this._screenplayTimer = null;
+            }
+            this._screenplayUnobserve?.();
+            this._screenplayUnobserve = null;
+        }
     }
 
     // -------------------------------- //
@@ -391,6 +416,97 @@ export class ProjectRepository {
 
     observeComments(callback: (comments: Record<string, Comment>) => void): () => void {
         return this.observeCommentsMap(this.ydoc.comments(), callback);
+    }
+
+    // -------------------------------- //
+    //              SHELF               //
+    // -------------------------------- //
+
+    get shelfEntries(): Record<string, ShelfEntry> {
+        return this.ydoc.shelf().toJSON() as Record<string, ShelfEntry>;
+    }
+
+    getShelfEntry(nodeId: string): ShelfEntry | undefined {
+        return this.ydoc.shelf().get(nodeId) as ShelfEntry | undefined;
+    }
+
+    /** Create a new shelf entry or add a version to an existing one. Returns the version ID. */
+    shelveNode(nodeId: string, title: string, type: ShelfEntryType, content: JSONContent[]): string {
+        const map = this.ydoc.shelf();
+        const existing = map.get(nodeId) as ShelfEntry | undefined;
+        const versionId = generateNodeId();
+        const versionMeta: ShelfVersionMeta = {
+            id: versionId,
+            title: new Date().toLocaleDateString(),
+        };
+
+        const entry: ShelfEntry = {
+            title,
+            type,
+            versions: [...(existing?.versions ?? []), versionMeta],
+        };
+
+        this.ydoc.transact(() => {
+            map.set(nodeId, entry);
+            const fragment = this.ydoc.shelfFragment(nodeId, versionId);
+            prosemirrorJSONToYXmlFragment(ScreenplaySchema, { type: "doc", content }, fragment);
+        });
+
+        return versionId;
+    }
+
+    renameShelfVersion(nodeId: string, versionId: string, newTitle: string): void {
+        const map = this.ydoc.shelf();
+        const entry = map.get(nodeId) as ShelfEntry | undefined;
+        if (!entry) return;
+        const versions = entry.versions.map((v) => (v.id === versionId ? { ...v, title: newTitle } : v));
+        map.set(nodeId, { ...entry, versions });
+    }
+
+    deleteShelfEntry(nodeId: string): void {
+        const map = this.ydoc.shelf();
+        const entry = map.get(nodeId) as ShelfEntry | undefined;
+        if (!entry) return;
+
+        this.ydoc.transact(() => {
+            for (const v of entry.versions) {
+                const frag = this.ydoc.shelfFragment(nodeId, v.id);
+                if (frag.length > 0) frag.delete(0, frag.length);
+            }
+            map.delete(nodeId);
+        });
+    }
+
+    deleteShelfVersion(nodeId: string, versionId: string): void {
+        const map = this.ydoc.shelf();
+        const entry = map.get(nodeId) as ShelfEntry | undefined;
+        if (!entry) return;
+
+        this.ydoc.transact(() => {
+            const frag = this.ydoc.shelfFragment(nodeId, versionId);
+            if (frag.length > 0) frag.delete(0, frag.length);
+
+            const versions = entry.versions.filter((v) => v.id !== versionId);
+            if (versions.length === 0) {
+                map.delete(nodeId);
+            } else {
+                map.set(nodeId, { ...entry, versions });
+            }
+        });
+    }
+
+    /** Get the content of a shelf version as ProseMirror JSONContent nodes. */
+    getShelfVersionContent(nodeId: string, versionId: string): JSONContent[] {
+        const fragment = this.ydoc.shelfFragment(nodeId, versionId);
+        const root = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
+        return root.content.toJSON() as JSONContent[];
+    }
+
+    observeShelf(callback: (entries: Record<string, ShelfEntry>) => void): () => void {
+        const map = this.ydoc.shelf();
+        const observer = () => callback(map.toJSON() as Record<string, ShelfEntry>);
+        map.observe(observer);
+        return () => map.unobserve(observer);
     }
 }
 

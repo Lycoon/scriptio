@@ -38,6 +38,8 @@ export interface DocumentEditorPanelProps {
     updateSuggestionData?: (data: SuggestionData) => void;
     userKeybinds?: Record<string, string>;
     globalContext?: { toggleFocusMode: () => void; saveProject: () => void };
+    /** Override the focus type reported to ProjectContext on focus. */
+    focusedTypeOverride?: "screenplay" | "title" | "draft";
 }
 
 const DocumentEditorPanel = ({
@@ -50,6 +52,7 @@ const DocumentEditorPanel = ({
     updateSuggestionData,
     userKeybinds,
     globalContext,
+    focusedTypeOverride,
 }: DocumentEditorPanelProps) => {
     const { membership, isLoading, isLocalOnly } = useProjectMembership();
     const { updateContextMenu } = useContext(UserContext);
@@ -110,13 +113,6 @@ const DocumentEditorPanel = ({
         userKeybinds: keybinds,
         globalContext,
         setSelectedTitlePageElement,
-        onNodeContextMenu: (pos, _nodeClass, event) => {
-            updateContextMenu({
-                type: ContextMenuType.DualDialogue,
-                position: { x: event.clientX, y: event.clientY },
-                typeSpecificProps: { pos },
-            });
-        },
     });
 
     // Register the editor instance with the parent wrapper
@@ -363,6 +359,7 @@ const DocumentEditorPanel = ({
         if (!isVisible || config.type !== "screenplay") return;
 
         const pressedKeyEvent = (e: KeyboardEvent) => {
+            if (!editor?.isFocused) return;
             if (e.key === "Tab") {
                 e.preventDefault();
                 switch (selectedElementRef.current) {
@@ -399,26 +396,40 @@ const DocumentEditorPanel = ({
     const onEditorContextMenu = useCallback(
         (e: React.MouseEvent) => {
             if (!editor) return;
-
-            // Check if right-clicking on a spellcheck error
-            const target = e.target as HTMLElement;
-            const spellErrorEl = target.closest(".spellcheck-error") as HTMLElement | null;
-            if (spellErrorEl) {
-                e.preventDefault();
-                const word = spellErrorEl.textContent || "";
-                const from = editor.view.posAtDOM(spellErrorEl, 0);
-                const to = from + word.length;
-                updateContextMenu({
-                    type: ContextMenuType.Spellcheck,
-                    position: { x: e.clientX, y: e.clientY },
-                    typeSpecificProps: { word, from, to },
-                });
-                return;
-            }
+            e.preventDefault();
 
             const { from, to } = editor.state.selection;
 
-            e.preventDefault();
+            // Check for spellcheck error under cursor
+            const target = e.target as HTMLElement;
+            const spellErrorEl = target.closest(".spellcheck-error") as HTMLElement | null;
+            let spellError: { word: string; from: number; to: number } | undefined;
+            if (spellErrorEl) {
+                const word = spellErrorEl.textContent || "";
+                const spellFrom = editor.view.posAtDOM(spellErrorEl, 0);
+                spellError = { word, from: spellFrom, to: spellFrom + word.length };
+            }
+
+            // Detect shelvable node at click position
+            let nodePos: number | undefined;
+            let nodeClass: string | undefined;
+            if (config.features.shelving) {
+                const coords = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+                if (coords) {
+                    const $pos = editor.state.doc.resolve(coords.pos);
+                    if ($pos.depth === 1) {
+                        const cls = $pos.parent.attrs.class as ScreenplayElement;
+                        if (
+                            cls === ScreenplayElement.Scene ||
+                            cls === ScreenplayElement.Character ||
+                            cls === ScreenplayElement.Action
+                        ) {
+                            nodePos = coords.pos;
+                            nodeClass = cls;
+                        }
+                    }
+                }
+            }
 
             const onAddComment = () => {
                 if (!editor) return;
@@ -434,12 +445,12 @@ const DocumentEditorPanel = ({
             };
 
             updateContextMenu({
-                type: ContextMenuType.EditorSelection,
+                type: ContextMenuType.EditorContextMenu,
                 position: { x: e.clientX, y: e.clientY },
-                typeSpecificProps: { from, to, onAddComment },
+                typeSpecificProps: { from, to, onAddComment, spellError, nodePos, nodeClass },
             });
         },
-        [editor, updateContextMenu, commentOps, user],
+        [editor, updateContextMenu, commentOps, user, config.features.shelving],
     );
 
     // Clear active comment on mousedown
@@ -453,7 +464,7 @@ const DocumentEditorPanel = ({
         setIsScrolled(scrollTop > 0);
     };
 
-    const focusType = config.type === "screenplay" ? "screenplay" : "title";
+    const focusType = focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
 
     const isLocalAccess = isTauri() || isLocalOnly;
     if (!isLocalAccess && (!membership || isLoading)) return <Loading />;

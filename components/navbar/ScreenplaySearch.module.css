@@ -61,7 +61,7 @@
 }
 
 .dropdown {
-    composes: panel from './navbar-shared.module.css';
+    composes: panel from "./navbar-shared.module.css";
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
@@ -144,7 +144,7 @@
 }
 
 .replace_input {
-    composes: text_input from './navbar-shared.module.css';
+    composes: text_input from "./navbar-shared.module.css";
 }
 
 .replace_actions {
@@ -215,7 +215,7 @@
 .filter_checkbox {
     width: 16px;
     height: 16px;
-    accent-color: var(--accent);
+    accent-color: var(--primary-text);
     cursor: pointer;
 }
 

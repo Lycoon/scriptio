@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
 
-export type PanelType = "screenplay" | "board" | "statistics" | "title";
+export type PanelType = "screenplay" | "board" | "statistics" | "title" | "draft";
 export type SplitSide = "primary" | "secondary";
 
 interface ViewContextType {

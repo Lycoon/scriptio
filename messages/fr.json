@@ -12,7 +12,8 @@
     "toggleComments": "Afficher/masquer les commentaires",
     "focusMode": "Mode concentration",
     "splitPanel": "Diviser le panneau",
-    "unsplitPanel": "Fermer le panneau divisé"
+    "unsplitPanel": "Fermer le panneau divisé",
+    "draftEditor": "Éditeur de brouillon"
   },
   "common": {
     "save": "Enregistrer",
@@ -164,12 +165,7 @@
     "item": {
       "posterAlt": "Affiche du film",
       "localOnly": "Local uniquement",
-      "syncedToCloud": "Synchronisé dans le cloud",
-      "today": "Aujourd'hui",
-      "yesterday": "Hier",
-      "daysAgo": "Il y a {days, plural, one {# jour} other {# jours}}",
-      "monthsAgo": "Il y a {months, plural, one {# mois} other {# mois}}",
-      "moreThanYearAgo": "Il y a plus d'un an"
+      "syncedToCloud": "Synchronisé dans le cloud"
     },
     "form": {
       "formTitle": "Créer un projet",
@@ -185,7 +181,12 @@
   "editorSidebar": {
     "scenes": "Scènes",
     "characters": "Personnages",
-    "locations": "Lieux"
+    "locations": "Lieux",
+    "shelf": "Étagère",
+    "shelfEmpty": "Sélectionnez une version à éditer",
+    "confirmRestore": "Cela remplacera le contenu correspondant dans votre scénario.",
+    "restore": "Restaurer",
+    "cancel": "Annuler"
   },
   "formatDropdown": {
     "elements": {
@@ -361,7 +362,8 @@
     "searchOnWeb": "Rechercher sur le web",
     "noSuggestions": "Aucune suggestion",
     "addToDictionary": "Ajouter au dictionnaire",
-    "makeDualDialogue": "Créer un double dialogue"
+    "makeDualDialogue": "Créer un double dialogue",
+    "shelve": "Mettre de côté"
   },
   "popup": {
     "character": {
@@ -422,7 +424,6 @@
     "confirmRestore": "Cela remplacera le document actuel pour tous les collaborateurs. Êtes-vous sûr ?",
     "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet enregistrement ?",
     "noSaves": "Aucun enregistrement pour le moment",
-    "justNow": "À l'instant",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
     "upgradeBtn": "Upgrade to Pro"
@@ -482,5 +483,15 @@
     "signUpFailed": "Échec de l'inscription",
     "unexpectedError": "Une erreur inattendue s'est produite",
     "verificationEmail": "Un e-mail de vérification a été envoyé à votre adresse"
+  },
+  "dates": {
+    "justNow": "À l'instant",
+    "minutesAgo": "{mins, plural, one {il y a # minute} other {il y a # minutes}}",
+    "hoursAgo": "{hours, plural, one {il y a # heure} other {il y a # heures}}",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "daysAgo": "{days, plural, one {il y a # jour} other {il y a # jours}}",
+    "monthsAgo": "Il y a {months, plural, one {# mois} other {# mois}}",
+    "moreThanYearAgo": "Il y a plus d'un an"
   }
 }

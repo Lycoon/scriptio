@@ -249,8 +249,8 @@
     gap: 8px;
     padding: 8px 12px;
     border-radius: 8px;
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
-    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    background: color-mix(in srgb, var(--primary-text) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary-text) 25%, transparent);
     font-size: 0.8rem;
     color: var(--secondary-text);
     margin-bottom: 8px;
@@ -258,7 +258,7 @@
 
 .proGateLink {
     margin-left: auto;
-    color: var(--accent);
+    color: var(--primary-text);
     font-weight: 600;
     text-decoration: none;
 }

@@ -16,7 +16,7 @@
 }
 
 .trigger:hover {
-    border-color: var(--accent);
+    border-color: var(--primary-text);
 }
 
 .trigger_empty {
@@ -52,7 +52,9 @@
     border: 2px solid transparent;
     border-radius: 50%;
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .color_option:hover {
@@ -77,7 +79,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
 }
 
 .clear_option:hover {

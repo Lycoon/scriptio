@@ -17,7 +17,7 @@
 }
 
 .panel_focused {
-    outline: 2px solid var(--accent, rgba(100, 150, 255, 0.35));
+    outline: 2px solid var(--primary-text, rgba(100, 150, 255, 0.35));
     outline-offset: -2px;
     border-radius: 4px;
 }
@@ -98,15 +98,14 @@
     justify-content: center;
     cursor: pointer;
     color: var(--secondary-text);
-    background-color: var(--tertiary);
+    background-color: var(--secondary);
     border-radius: 6px;
-    opacity: 0.6;
     border: none;
 }
 
 .panel_switcher_btn:hover {
     opacity: 1;
-    background-color: var(--tertiary-hover);
+    background-color: var(--secondary-hover);
 }
 
 .panel_switcher_separator {

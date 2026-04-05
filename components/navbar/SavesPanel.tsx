@@ -33,6 +33,7 @@ interface SavesPanelProps {
 
 const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
     const t = useTranslations("saves");
+    const tDates = useTranslations("dates");
 
     const [saves, setSaves] = useState<SaveEntry[]>([]);
     const [loading, setLoading] = useState(false);
@@ -145,10 +146,10 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
         const diffHours = Math.floor(diffMs / 3600000);
         const diffDays = Math.floor(diffMs / 86400000);
 
-        if (diffMins < 1) return t("justNow");
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays < 7) return `${diffDays}d ago`;
+        if (diffMins < 1) return tDates("justNow");
+        if (diffMins < 60) return tDates("minutesAgo", { mins: diffMins });
+        if (diffHours < 24) return tDates("hoursAgo", { hours: diffHours });
+        if (diffDays < 7) return tDates("daysAgo", { days: diffDays });
 
         return date.toLocaleDateString(undefined, {
             month: "short",

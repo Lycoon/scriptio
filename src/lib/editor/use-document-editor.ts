@@ -45,7 +45,6 @@ export interface DocumentEditorCallbacks {
     setActiveCommentId?: (id: string | null) => void;
     userKeybinds?: Record<string, string>;
     globalContext?: { toggleFocusMode: () => void; saveProject: () => void };
-    onNodeContextMenu?: (pos: number, nodeClass: string, event: MouseEvent) => void;
     // Title-type callbacks
     setSelectedTitlePageElement?: (element: TitlePageElement) => void;
 }
@@ -330,48 +329,6 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
 
-            editorProps: {
-                handleDOMEvents: {
-                    contextmenu: (view, event) => {
-                        if (config.type !== "screenplay") return false;
-                        const coords = view.posAtCoords({ left: (event as MouseEvent).clientX, top: (event as MouseEvent).clientY });
-                        if (!coords) return false;
-                        const $pos = view.state.doc.resolve(coords.pos);
-                        // depth 1 = direct child of doc. Anything deeper is inside a dual-dialogue column.
-                        if ($pos.depth !== 1) return false;
-                        const doc = view.state.doc;
-                        const node = $pos.parent;
-                        const nodeClass: string = node.attrs.class;
-
-                        // Only offer "Make dual dialogue" on a Character node that is
-                        // followed by its dialogue block AND then another character node.
-                        if (nodeClass === ScreenplayElement.Character) {
-                            const idx = $pos.index(0);
-                            let i = idx + 1;
-                            const count = doc.childCount;
-                            // Consume optional leading parentheticals
-                            while (i < count && doc.child(i).attrs.class === ScreenplayElement.Parenthetical) i++;
-                            // Must have at least one dialogue
-                            if (i >= count || doc.child(i).attrs.class !== ScreenplayElement.Dialogue) return false;
-                            i++;
-                            // Consume any additional parenthetical/dialogue pairs
-                            while (i < count) {
-                                const cls = doc.child(i).attrs.class;
-                                if (cls === ScreenplayElement.Parenthetical || cls === ScreenplayElement.Dialogue) i++;
-                                else break;
-                            }
-                            // Must be followed by another character node (start of second block)
-                            if (i >= count || doc.child(i).attrs.class !== ScreenplayElement.Character) return false;
-
-                            callbacksRef.current.onNodeContextMenu?.(coords.pos, nodeClass, event as MouseEvent);
-                            event.preventDefault();
-                            event.stopPropagation();
-                            return true;
-                        }
-                        return false;
-                    },
-                },
-            },
 
             onSelectionUpdate({ editor, transaction }) {
                 const cb = callbacksRef.current;
