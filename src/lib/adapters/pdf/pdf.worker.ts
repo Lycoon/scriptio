@@ -257,7 +257,7 @@ async function renderLines(
     let currentPage = 1;
 
     let lastCharacterName = "";
-    let lastCharacterRuns: TextRun[] = [];
+    let lastCharacterX = -1;
 
     for (let li = 0; li < lines.length; li++) {
         const line = lines[li];
@@ -272,7 +272,7 @@ async function renderLines(
             // If a dialogue block spans across the page break, draw (MORE) on this page
             if (isDialogueSplit && lastCharacterName) {
                 const moreY = currentY + FONT_SIZE * (16 / 12);
-                await drawMultiFontText(doc, fontLoader, payload.baseUrl, payload.moreLabel, pageSize.width / 2, moreY, "center");
+                await drawMultiFontText(doc, fontLoader, payload.baseUrl, payload.moreLabel, lastCharacterX, moreY, "left");
             }
 
             // Watermark on the page we are leaving
@@ -292,7 +292,7 @@ async function renderLines(
                 // Prevent double CONT'D if the DOM already injected it via `.contd::after`
                 const cleanedName = lastCharacterName.replace(payload.contdLabel, "").trim();
                 const contdText = `${cleanedName} ${payload.contdLabel}`;
-                await drawMultiFontText(doc, fontLoader, payload.baseUrl, contdText, pageSize.width / 2, currentY, "center");
+                await drawMultiFontText(doc, fontLoader, payload.baseUrl, contdText, lastCharacterX, currentY, "left");
 
                 currentY += FONT_SIZE * (16 / 12); // Advance Y to make room for dialogue
             }
@@ -312,7 +312,7 @@ async function renderLines(
         // ── Track Character Name ─────────────────────────────────────
         if (line.type === "character" && line.runs.length > 0) {
             lastCharacterName = line.runs.reduce((acc, run) => acc + run.text, "");
-            lastCharacterRuns = line.runs; // Save for font/pos recreation
+            lastCharacterX = (line.runs[0].x - pageLeftPx) * PX_TO_PT;
         }
 
         // ── Render every run in this line ────────────────────────────

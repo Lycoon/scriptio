@@ -459,6 +459,19 @@
     line-height: 1.6;
 }
 
+.proBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--primary-text) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary-text) 30%, transparent);
+    color: var(--primary-text);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
 .bentoGrid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

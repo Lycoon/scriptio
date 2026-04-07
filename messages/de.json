@@ -363,7 +363,10 @@
     "noSuggestions": "Keine Vorschläge",
     "addToDictionary": "Zum Wörterbuch hinzufügen",
     "makeDualDialogue": "Doppel-Dialog erstellen",
-    "shelve": "Ablegen"
+    "shelve": "Ablegen",
+    "shelveScene": "Szene ablegen",
+    "shelveDialogue": "Dialog ablegen",
+    "shelveAction": "Aktion ablegen"
   },
   "popup": {
     "character": {

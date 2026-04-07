@@ -23,9 +23,8 @@ export const applyElement = (editor: Editor, element: ScreenplayElement) => {
 };
 
 export const focusOnPosition = (editor: Editor, position: number) => {
-    editor.commands.focus(position);
+    editor.commands.focus(position, { scrollIntoView: false });
 
-    // Scroll the view to center on the focused position
     const { node } = editor.view.domAtPos(position);
     const element = node instanceof HTMLElement ? node : node.parentElement;
     if (element) {

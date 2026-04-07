@@ -4,8 +4,7 @@ import { useContext, memo, useCallback, Ref } from "react";
 import { ContextMenuType, SceneContextProps } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { join } from "@src/lib/utils/misc";
-import { ProjectContext } from "@src/context/ProjectContext";
-import { focusOnPosition } from "@src/lib/screenplay/editor";
+import { Scene } from "@src/lib/screenplay/scenes";
 import SceneLengthItem from "../sidebar/SceneLengthItem";
 
 import nav_item from "./SidebarItem.module.css";
@@ -17,11 +16,11 @@ type SidebarSceneItemProps = SceneContextProps & {
     isCurrent: boolean;
     scrollRef?: Ref<HTMLDivElement>;
     onPointerDown: (index: number, e: React.PointerEvent) => void;
+    onDoubleClick: (scene: Scene) => void;
 };
 
-const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, scrollRef, onPointerDown }: SidebarSceneItemProps) => {
+const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, scrollRef, onPointerDown, onDoubleClick }: SidebarSceneItemProps) => {
     const { updateContextMenu } = useContext(UserContext);
-    const { editor } = useContext(ProjectContext);
 
     const handleDropdown = (e: any) => {
         e.preventDefault();
@@ -35,9 +34,8 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
     };
 
     const handleDoubleClick = useCallback(() => {
-        // focus on double click in scene list
-        if (editor) focusOnPosition(editor, scene.position);
-    }, [editor, scene.position]);
+        onDoubleClick(scene);
+    }, [onDoubleClick, scene]);
 
     const handlePointerDown = useCallback((e: React.PointerEvent) => {
         onPointerDown(index, e);

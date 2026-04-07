@@ -362,7 +362,10 @@
     "noSuggestions": "Brak sugestii",
     "addToDictionary": "Dodaj do słownika",
     "makeDualDialogue": "Utwórz podwójny dialog",
-    "shelve": "Odłóż"
+    "shelve": "Odłóż",
+    "shelveScene": "Odłóż scenę",
+    "shelveDialogue": "Odłóż dialog",
+    "shelveAction": "Odłóż akcję"
   },
   "popup": {
     "character": {

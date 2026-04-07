@@ -363,7 +363,10 @@
     "noSuggestions": "Aucune suggestion",
     "addToDictionary": "Ajouter au dictionnaire",
     "makeDualDialogue": "Créer un double dialogue",
-    "shelve": "Mettre de côté"
+    "shelve": "Mettre de côté",
+    "shelveScene": "Mettre la scène de côté",
+    "shelveDialogue": "Mettre le dialogue de côté",
+    "shelveAction": "Mettre l'action de côté"
   },
   "popup": {
     "character": {

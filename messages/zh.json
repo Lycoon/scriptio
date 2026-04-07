@@ -362,7 +362,10 @@
     "noSuggestions": "无建议",
     "addToDictionary": "添加到字典",
     "makeDualDialogue": "创建双重对话",
-    "shelve": "搁置"
+    "shelve": "搁置",
+    "shelveScene": "搁置场景",
+    "shelveDialogue": "搁置对白",
+    "shelveAction": "搁置动作"
   },
   "popup": {
     "character": {

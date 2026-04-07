@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { Scene } from "@src/lib/screenplay/scenes";
+import { focusOnPosition } from "@src/lib/screenplay/editor";
 import { Archive, Clapperboard } from "lucide-react";
 import SidebarSceneItem from "./SidebarSceneItem";
 import ShelfSidebarView from "./ShelfSidebarView";
@@ -32,6 +33,7 @@ const EditorSidebarNavigation = () => {
     const listRef = useRef<HTMLDivElement>(null);
     const currentSceneRef = useRef<HTMLDivElement>(null);
     const scenesRef = useRef(scenes);
+    const suppressSceneScrollRef = useRef(false);
 
     // Keep scenesRef in sync so the editor callback can read the latest scenes
     useEffect(() => {
@@ -70,8 +72,12 @@ const EditorSidebarNavigation = () => {
         };
     }, [editor]);
 
-    // Auto-scroll the current scene item into view
+    // Auto-scroll the current scene item into view (suppressed when user initiated navigation)
     useEffect(() => {
+        if (suppressSceneScrollRef.current) {
+            suppressSceneScrollRef.current = false;
+            return;
+        }
         if (currentSceneRef.current) {
             currentSceneRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
         }
@@ -81,6 +87,12 @@ const EditorSidebarNavigation = () => {
         if (e.button !== 0) return;
         setDragIndex(index);
     }, []);
+
+    const handleDoubleClick = useCallback((scene: Scene) => {
+        if (!editor) return;
+        suppressSceneScrollRef.current = true;
+        focusOnPosition(editor, scene.position);
+    }, [editor]);
 
     const handlePointerMove = useCallback(
         (e: React.PointerEvent) => {
@@ -204,6 +216,7 @@ const EditorSidebarNavigation = () => {
                                                 isDragging={dragIndex === index}
                                                 isCurrent={isCurrent}
                                                 onPointerDown={handlePointerDown}
+                                                onDoubleClick={handleDoubleClick}
                                             />
                                         );
                                     })}

@@ -391,9 +391,16 @@ const ShelveNodeMenu = (props: any) => {
         return i < count && doc.child(i).attrs.class === ScreenplayElement.Character;
     })();
 
+    const shelveLabel =
+        nodeClass === ScreenplayElement.Scene
+            ? t("shelveScene")
+            : nodeClass === ScreenplayElement.Character
+              ? t("shelveDialogue")
+              : t("shelveAction");
+
     return (
         <>
-            <ContextMenuItem text={t("shelve")} icon={Archive} action={handleShelve} />
+            <ContextMenuItem text={shelveLabel} icon={Archive} action={handleShelve} />
             {canDualDialogue && (
                 <ContextMenuItem
                     text={t("makeDualDialogue")}
@@ -568,7 +575,17 @@ const EditorContextMenu = (props: any) => {
             {isShelvable && (
                 <>
                     <div className={context.menu_separator} />
-                    <ContextMenuItem text={t("shelve")} icon={Archive} action={handleShelve} />
+                    <ContextMenuItem
+                        text={
+                            nodeClass === ScreenplayElement.Scene
+                                ? t("shelveScene")
+                                : nodeClass === ScreenplayElement.Character
+                                  ? t("shelveDialogue")
+                                  : t("shelveAction")
+                        }
+                        icon={Archive}
+                        action={handleShelve}
+                    />
                     {canDualDialogue && (
                         <ContextMenuItem
                             text={t("makeDualDialogue")}

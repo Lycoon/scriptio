@@ -1,7 +1,20 @@
 "use client";
 
 import styles from "./Landing.module.css";
-import { WifiOff, MessagesSquare, Eye, Clapperboard, ChartPie, Cloud, Globe, Search } from "lucide-react";
+import {
+    WifiOff,
+    MessagesSquare,
+    Clapperboard,
+    ChartPie,
+    Cloud,
+    Globe,
+    Search,
+    PenLine,
+    Ruler,
+    FileOutput,
+    Palette,
+    Users,
+} from "lucide-react";
 import Footer from "./Footer";
 
 export default function HomePageContainer() {
@@ -100,12 +113,13 @@ export default function HomePageContainer() {
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
                             <div className={styles.bentoContent}>
                                 <div className={styles.bentoHeader}>
-                                    <Eye size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <PenLine size={24} style={{ color: "var(--secondary-text)" }} />
                                     <h3 className={styles.pillarTitle}>First-class Editor</h3>
                                 </div>
                                 <p className={styles.pillarText}>
-                                    Type without interface clutter. Focus mode emphasizes the current line while fading
-                                    out the noise.
+                                    Smart auto-complete, built-in spellchecker, and keyboard shortcuts keep you in flow.
+                                    Fountain syntax rules automatically format your script as you type. Focus mode fades
+                                    out the noise so only your words remain.
                                 </p>
                             </div>
                             <div className={styles.bentoImageWrapper}>
@@ -117,22 +131,65 @@ export default function HomePageContainer() {
                             </div>
                         </div>
 
-                        {/* Cloud Sync */}
+                        {/* Professional Formatting */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
                             <div className={styles.bentoContent}>
                                 <div className={styles.bentoHeader}>
-                                    <Cloud size={24} style={{ color: "var(--secondary-text)" }} />
-                                    <h3 className={styles.pillarTitle}>Cloud Sync</h3>
+                                    <Ruler size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Professional Formatting</h3>
                                 </div>
                                 <p className={styles.pillarText}>
-                                    Never hit Save again. Your words are synced to the cloud regularly. Switch devices,
-                                    close tabs, or lose power—your story is always safe.
+                                    Dual dialogue, customizable margins, font styling, and spacing — every layout detail
+                                    is yours to control. Page breaks follow industry standards out of the box. Your
+                                    script looks camera-ready from page one.
                                 </p>
                             </div>
                             <div className={styles.bentoImageWrapper}>
                                 <img
                                     src="/images/previews/auto-complete.png"
-                                    alt="Editor Preview"
+                                    alt="Auto-complete Preview"
+                                    className={styles.bentoImage}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Industry Formats */}
+                        <div className={`${styles.glassCard} ${styles.bentoCell}`}>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <FileOutput size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Industry Formats</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Import existing scripts or export in PDF, FDX, and Fountain with full fidelity.
+                                    Switch tools without losing a single line of formatting. Your screenplay is never
+                                    locked into one ecosystem.
+                                </p>
+                            </div>
+                            <img
+                                src="/images/previews/formats.png"
+                                alt="Formats Preview"
+                                className={styles.bentoImage}
+                            />
+                        </div>
+
+                        {/* Advanced Search */}
+                        <div className={`${styles.glassCard} ${styles.bentoCell}`}>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <Search size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Advanced Search</h3>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Search your script with precision using filters for scene, character, and dialogue.
+                                    Replace with confidence using live preview before committing any change. Find
+                                    patterns across hundreds of pages in an instant.
+                                </p>
+                            </div>
+                            <div className={styles.bentoImageWrapper}>
+                                <img
+                                    src="/images/previews/search.png"
+                                    alt="Search Preview"
                                     className={styles.bentoImage}
                                 />
                             </div>
@@ -147,7 +204,8 @@ export default function HomePageContainer() {
                                 </div>
                                 <p className={styles.pillarText}>
                                     Search your script with precision using filters for scene, character, and dialogue.
-                                    Replace with confidence using live preview.
+                                    Replace with confidence using live preview before committing any change. Find
+                                    patterns across hundreds of pages in an instant.
                                 </p>
                             </div>
                             <div className={styles.bentoImageWrapper}>
@@ -163,32 +221,16 @@ export default function HomePageContainer() {
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
                             <div className={styles.bentoContent}>
                                 <div className={styles.bentoHeader}>
+                                    <Palette size={24} style={{ color: "var(--secondary-text)" }} />
                                     <h3 className={styles.pillarTitle}>Custom Themes</h3>
                                 </div>
                                 <p className={styles.pillarText}>
                                     Whether you write at the crack of dawn or burn the midnight oil, find the perfect
-                                    contrast for your eyes.
+                                    contrast for your eyes. Choose from light & dark themes designed for long writing
+                                    sessions. Your environment should inspire, not distract.
                                 </p>
                             </div>
                             <img src="/images/previews/themes.png" alt="Themes Preview" className={styles.bentoImage} />
-                        </div>
-
-                        {/* Industry Formats */}
-                        <div className={`${styles.glassCard} ${styles.bentoCell}`}>
-                            <div className={styles.bentoContent}>
-                                <div className={styles.bentoHeader}>
-                                    <h3 className={styles.pillarTitle}>Industry Formats</h3>
-                                </div>
-                                <p className={styles.pillarText}>
-                                    Complete interoperability, allowing you to effortlessly import existing scripts or
-                                    export in universally accepted formats like PDF, FDX, and Fountain
-                                </p>
-                            </div>
-                            <img
-                                src="/images/previews/formats.png"
-                                alt="Formats Preview"
-                                className={styles.bentoImage}
-                            />
                         </div>
 
                         {/* Scene Navigation */}
@@ -200,7 +242,8 @@ export default function HomePageContainer() {
                                 </div>
                                 <p className={styles.pillarText}>
                                     Navigate your screenplay at the speed of thought with a dynamic scene outline. Track
-                                    pacing with automatic length estimates and move fluidly through your story.
+                                    pacing with length estimates and jump anywhere in your script instantly. Reorder
+                                    scenes, add synopses, and color-code your story structure.
                                 </p>
                             </div>
                             <img
@@ -214,11 +257,13 @@ export default function HomePageContainer() {
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
                             <div className={styles.bentoContent}>
                                 <div className={styles.bentoHeader}>
+                                    <Users size={24} style={{ color: "var(--secondary-text)" }} />
                                     <h3 className={styles.pillarTitle}>Character Management</h3>
                                 </div>
                                 <p className={styles.pillarText}>
-                                    Rename your characters in a snap, describe and assign them traits to generate
-                                    statistics
+                                    Rename a character across your entire script in one click. Assign traits and
+                                    descriptions to build rich character profiles. Highlight any character's lines to
+                                    stay locked in their voice.
                                 </p>
                             </div>
                             <img
@@ -236,8 +281,9 @@ export default function HomePageContainer() {
                                     <h3 className={styles.pillarTitle}>Offline First</h3>
                                 </div>
                                 <p className={styles.pillarText}>
-                                    No internet? No problem. Your project is in safe hands, keep working with no
-                                    friction. Once connection is back, your project will be synced back seamlessly.
+                                    No internet? No problem. Keep writing without any friction or interruption. Your
+                                    work is saved locally and synced back to the cloud the moment you reconnect.
+                                    Scriptio works fully offline, no account required.
                                 </p>
                             </div>
                             <img
@@ -255,8 +301,9 @@ export default function HomePageContainer() {
                                     <h3 className={styles.pillarTitle}>Statistics</h3>
                                 </div>
                                 <p className={styles.pillarText}>
-                                    Rename your characters in a snap, describe and assign them traits to generate
-                                    statistics
+                                    Get a clear picture of your screenplay with word count, page count, and scene
+                                    breakdowns. See how much screen time each character gets and spot pacing gaps at a
+                                    glance. Data-driven insights to sharpen your story before it hits the screen.
                                 </p>
                             </div>
                             <img
@@ -266,16 +313,41 @@ export default function HomePageContainer() {
                             />
                         </div>
 
+                        {/* Cloud Sync */}
+                        <div className={`${styles.glassCard} ${styles.bentoCell}`}>
+                            <div className={styles.bentoContent}>
+                                <div className={styles.bentoHeader}>
+                                    <Cloud size={24} style={{ color: "var(--secondary-text)" }} />
+                                    <h3 className={styles.pillarTitle}>Cloud Sync</h3>
+                                    <span className={styles.proBadge}>Pro</span>
+                                </div>
+                                <p className={styles.pillarText}>
+                                    Never hit Save again — your words are synced to the cloud continuously. Switch
+                                    devices, close tabs, or lose power and pick up exactly where you left off. Manual
+                                    snapshots let you restore any previous version on demand.
+                                </p>
+                            </div>
+                            <div className={styles.bentoImageWrapper}>
+                                <img
+                                    src="/images/previews/auto-complete.png"
+                                    alt="Editor Preview"
+                                    className={styles.bentoImage}
+                                />
+                            </div>
+                        </div>
+
                         {/* Real-time Collaboration */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
                             <div className={styles.bentoContent}>
                                 <div className={styles.bentoHeader}>
                                     <MessagesSquare size={24} style={{ color: "var(--secondary-text)" }} />
                                     <h3 className={styles.pillarTitle}>Real-time Collaboration</h3>
+                                    <span className={styles.proBadge}>Pro</span>
                                 </div>
                                 <p className={styles.pillarText}>
-                                    Manage a project with up to 5 collaborators. Write and brainstorm together in
-                                    realtime.
+                                    Invite up to 5 collaborators and write the same screenplay simultaneously in real
+                                    time. See each other's cursors, edits, and comments as they happen. No merging, no
+                                    conflicts — just seamless creative flow.
                                 </p>
                             </div>
                             <img
