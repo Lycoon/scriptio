@@ -6,7 +6,6 @@ import {
     UpdateRoleBody,
     UpdatePasswordBody,
     SignupBody,
-    LoginBody,
     RecoverPasswordBody,
     RequestRecoveryBody,
     UpdateUserBody,
@@ -149,24 +148,16 @@ export const editUserInfo = (body: UpdateUserBody) => {
 
 /* Auth */
 
-export const logout = () => {
-    return request(`/api/logout`, "POST");
-};
-
 export const signup = (body: SignupBody) => {
     return request(`/api/signup`, "POST", body);
 };
 
-export const login = (body: LoginBody) => {
-    return request(`/api/login`, "POST", body);
-};
-
 export const recoverPassword = (body: RecoverPasswordBody) => {
-    return request(`/api/recover`, "PATCH", body);
+    return request(`/api/recover/confirm`, "POST", body);
 };
 
 export const requestRecovery = (body: RequestRecoveryBody) => {
-    return request(`/api/recover`, "POST", body);
+    return request(`/api/recover/request`, "POST", body);
 };
 
 export const cancelStripeSubscription = async (): Promise<boolean> => {

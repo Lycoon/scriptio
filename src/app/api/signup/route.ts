@@ -7,23 +7,29 @@ import {
 } from "@src/lib/messages";
 import { apiHandler } from "@src/lib/utils/api-handler";
 import { BodyFieldError, ForbiddenError, InternalServerError, Success, validate } from "@src/lib/utils/api-utils";
-import { authenticate, getSession } from "@src/lib/session";
 
 import * as SecretService from "@src/lib/utils/secrets";
 import * as ProjectService from "@src/server/service/project-service";
 import * as UserService from "@src/server/service/user-service";
 import * as Misc from "@src/lib/utils/misc";
 import * as Mail from "@src/lib/mail/mail";
+import prisma from "@src/server/db";
 
 import { NextRequest } from "next/server";
-import { CookieUser } from "@src/lib/utils/types";
 import { SignupBodySchema } from "@src/lib/utils/api-bodies";
 export type { SignupBody } from "@src/lib/utils/api-bodies";
+
+const VERIFY_PREFIX = "verify:";
+const VERIFICATION_TTL_MINUTES = 60 * 24; // 24 hours
+const VERIFICATION_THROTTLE_MINUTES = 5;
 
 /**
  * POST `/signup`
  *
- * Verifies a user that just registered and clicked the link in validation mail
+ * Creates a credentials user and either:
+ * - sends a verification email containing a single-use VerificationToken, or
+ * - if an `inviteToken` is provided, marks the user verified, joins the project,
+ *   and returns a `redirectUrl` so the client can immediately call NextAuth `signIn`.
  */
 async function signupRoute(req: NextRequest) {
     const body = await req.json();
@@ -35,20 +41,25 @@ async function signupRoute(req: NextRequest) {
 
     const existing = await UserService.getUserFromEmail(email, true);
     if (existing) {
-        if (existing.verified) {
+        if (existing.emailVerified) {
             throw new InternalServerError(EMAIL_ALREADY_REGISTERED);
         }
 
-        if (!existing.secrets) {
-            throw new InternalServerError(ERROR_SIGN_UP);
+        // Throttle re-sends: only one verification email per address per VERIFICATION_THROTTLE_MINUTES window.
+        const recentToken = await prisma.verificationToken.findFirst({
+            where: { identifier: VERIFY_PREFIX + email },
+            orderBy: { expires: "desc" },
+        });
+        if (recentToken) {
+            const issuedAt = new Date(recentToken.expires.getTime() - VERIFICATION_TTL_MINUTES * 60 * 1000);
+            if (!Misc.hasExpired(issuedAt, VERIFICATION_THROTTLE_MINUTES, "minutes")) {
+                throw new BodyFieldError(ERROR_VERIFICATION_THROTTLE);
+            }
+            await prisma.verificationToken.deleteMany({ where: { identifier: VERIFY_PREFIX + email } });
         }
 
-        if (!Misc.hasExpired(existing.secrets.lastEmailHash, 5, "minutes")) {
-            throw new BodyFieldError(ERROR_VERIFICATION_THROTTLE);
-        }
-
-        const emailHash = await UserService.updateEmailHash(existing.id);
-        Mail.sendVerificationEmail(existing.id, email, emailHash);
+        const rawToken = await issueVerificationToken(email);
+        Mail.sendVerificationEmail(email, rawToken);
 
         return Success(null, VERIFICATION_SENT);
     }
@@ -71,21 +82,29 @@ async function signupRoute(req: NextRequest) {
 
             await ProjectService.upsertMember(invite.projectId, created.id);
             await ProjectService.deleteInviteFromToken(inviteToken);
-            await UserService.updateUserFromId(created.id, {
-                secrets: { emailHash: null },
-                verified: true,
-            });
+            await UserService.setVerified(created.id);
 
-            // Automatically authenticate a user that signed up from a project invitation
-            // It prevents double email address verification as he already clicked from his mail
-            await authenticate(created as CookieUser);
-
+            // Client will signIn() with the same credentials it just submitted, then route there.
             return Success({ redirectUrl: "/projects" });
         } catch (err) {}
     }
 
-    await Mail.sendVerificationEmail(created.id, email, secrets.emailHash);
+    const rawToken = await issueVerificationToken(email);
+    await Mail.sendVerificationEmail(email, rawToken);
     return Success(null, VERIFICATION_SENT);
+}
+
+async function issueVerificationToken(email: string): Promise<string> {
+    const rawToken = SecretService.generateToken();
+    const hashed = SecretService.hashToken(rawToken);
+    await prisma.verificationToken.create({
+        data: {
+            identifier: VERIFY_PREFIX + email,
+            token: hashed,
+            expires: new Date(Date.now() + VERIFICATION_TTL_MINUTES * 60 * 1000),
+        },
+    });
+    return rawToken;
 }
 
 export const POST = apiHandler(signupRoute);

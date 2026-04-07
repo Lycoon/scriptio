@@ -21,15 +21,15 @@ export const sendProjectInviteEmail = async (email: string, projectTitle: string
     sendFormattedEmail(email, "Project Invitation", "Project Invitation", content, "Join project", link);
 };
 
-export const sendRecoveryEmail = async (userId: string, email: string, recoverHash: string) => {
-    const link = `${BASE_URL}/recovery?id=${userId}&code=${recoverHash}`;
+export const sendRecoveryEmail = async (email: string, token: string) => {
+    const link = `${BASE_URL}/recovery?token=${token}`;
     const content = `A request has been issued to update ${email} account password. Click the button below to change your password.`;
 
     sendFormattedEmail(email, "Change password", "Password change request", content, "Change password", link);
 };
 
-export const sendVerificationEmail = async (userId: string, email: string, emailHash: string) => {
-    const link = `${BASE_URL}/api/verify?id=${userId}&token=${emailHash}`;
+export const sendVerificationEmail = async (email: string, token: string) => {
+    const link = `${BASE_URL}/api/verify?token=${token}`;
     const content = `Welcome ${email}! Click the button below to verify your email address after which you will be able to log in using your credentials.`;
 
     sendFormattedEmail(

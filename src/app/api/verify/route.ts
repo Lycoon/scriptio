@@ -3,45 +3,49 @@ import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
 import { validate } from "@src/lib/utils/api-utils";
 
 import * as UserService from "@src/server/service/user-service";
+import * as SecretService from "@src/lib/utils/secrets";
+import prisma from "@src/server/db";
 import z from "zod";
-import { authenticate } from "@src/lib/session";
 import { NextRequest } from "next/server";
 import { redirect } from "next/navigation";
-import { CookieUser } from "@src/lib/utils/types";
+
+const VERIFY_PREFIX = "verify:";
 
 const QuerySchema = z.object({
-    id: z.string(),
     token: z.string(),
 });
 
 /**
  * GET `/verify`
  *
- * Verifies a user that just registered and clicked the link in validation mail
- * scriptio.app/api/verify?id=userId&token=emailHash
+ * Validates a single-use VerificationToken (`identifier = "verify:<email>"`),
+ * marks the matching user as verified, then deletes the token.
  */
 async function verifyUser(req: NextRequest, { searchParams }: ApiContext) {
     let target = "/?verifyStatus=failed";
 
     try {
-        const { id, token } = validate(QuerySchema, searchParams);
+        const { token } = validate(QuerySchema, searchParams);
+        const hashed = SecretService.hashToken(token);
 
-        const user = await UserService.getUserFromId(id, true);
-        if (!user || token !== user.secrets?.emailHash) {
+        const record = await prisma.verificationToken.findUnique({
+            where: { token: hashed },
+        });
+
+        if (!record || !record.identifier.startsWith(VERIFY_PREFIX) || record.expires < new Date()) {
             // target stays "/?verifyStatus=failed"
-        } else if (user.verified) {
-            target = "/?verifyStatus=used";
         } else {
-            const updated = await UserService.updateUserFromId(id, {
-                secrets: { emailHash: null },
-                verified: true,
-            });
+            const email = record.identifier.slice(VERIFY_PREFIX.length);
+            const user = await UserService.getUserFromEmail(email);
 
-            if (updated) {
-                // Automatically authenticate a user that just clicked on his verification email
-                await authenticate(updated as CookieUser);
-                target = "/projects";
+            if (user && user.emailVerified) {
+                target = "/?verifyStatus=used";
+            } else if (user) {
+                await UserService.setVerified(user.id);
+                target = "/?verified=1";
             }
+
+            await prisma.verificationToken.delete({ where: { token: hashed } });
         }
     } catch {
         target = "/?verifyStatus=failed";

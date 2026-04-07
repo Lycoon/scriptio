@@ -12,11 +12,10 @@ import { RecoverPasswordBody } from "@src/lib/utils/api-bodies";
 import { redirect } from "next/navigation";
 
 type Props = {
-    userId: string;
-    code: string;
+    token: string;
 };
 
-const PasswordChangeForm = ({ userId, code }: Props) => {
+const PasswordChangeForm = ({ token }: Props) => {
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const resetFromInfo = () => {
         setFormInfo(null);
@@ -35,8 +34,7 @@ const PasswordChangeForm = ({ userId, code }: Props) => {
         }
 
         const body: RecoverPasswordBody = {
-            userId,
-            recoverHash: code,
+            token,
             password: pwd1,
         };
 

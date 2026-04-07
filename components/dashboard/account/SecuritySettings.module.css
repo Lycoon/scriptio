@@ -133,3 +133,34 @@
 .authFormActions {
     margin-top: 20px;
 }
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0 4px;
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--separator);
+}
+
+.oauthGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.oauthBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}

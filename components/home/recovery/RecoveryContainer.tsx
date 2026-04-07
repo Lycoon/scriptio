@@ -10,8 +10,7 @@ import { useSearchParams } from "next/navigation";
 
 export default function RecoveryContainer() {
     const searchParams = useSearchParams();
-    const id = searchParams.get("id");
-    const code = searchParams.get("code");
+    const token = searchParams.get("token");
 
     return (
         <div className={layout.center_middle}>
@@ -20,7 +19,7 @@ export default function RecoveryContainer() {
                     <ScriptioLogo className={styles.logo} />
                 </div>
                 <div className={styles.formSide}>
-                    {id && code ? <PasswordChangeForm userId={id} code={code} /> : <RecoveryForm />}
+                    {token ? <PasswordChangeForm token={token} /> : <RecoveryForm />}
                 </div>
             </div>
         </div>

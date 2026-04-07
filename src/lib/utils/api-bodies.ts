@@ -1,11 +1,5 @@
 import z from "zod";
 
-export const LoginBodySchema = z.object({
-    email: z.email(),
-    password: z.string(),
-});
-export type LoginBody = z.infer<typeof LoginBodySchema>;
-
 export const SignupBodySchema = z.object({
     email: z.email(),
     password: z.string(),
@@ -19,9 +13,8 @@ export const RequestRecoveryBodySchema = z.object({
 export type RequestRecoveryBody = z.infer<typeof RequestRecoveryBodySchema>;
 
 export const RecoverPasswordBodySchema = z.object({
-    userId: z.string(),
+    token: z.string(),
     password: z.string(),
-    recoverHash: z.string(),
 });
 export type RecoverPasswordBody = z.infer<typeof RecoverPasswordBodySchema>;
 

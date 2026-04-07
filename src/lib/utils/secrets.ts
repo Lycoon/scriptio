@@ -1,9 +1,14 @@
 import { SecretCreation } from "@src/server/repository/user-repository";
 import crypto from "crypto";
 import argon2 from "argon2";
+import prisma from "@src/server/db";
 
 export const generateToken = (length: number = 32) => {
     return crypto.randomBytes(length).toString("hex");
+};
+
+export const hashToken = (token: string) => {
+    return crypto.createHash("sha256").update(token).digest("hex");
 };
 
 export const hashPassword = async (password: string): Promise<string> => {
@@ -26,28 +31,18 @@ export const checkPassword = async (passwordA: string, passwordB: string): Promi
     }
 };
 
-export const isHashValid = (hashA: string | null | undefined, hashB: string | null | undefined): boolean => {
-    if (!hashA || !hashB || typeof hashA !== "string" || typeof hashB !== "string") {
-        return false;
-    }
-
-    const bufHashA = Buffer.from(hashA);
-    const bufHashB = Buffer.from(hashB);
-
-    if (bufHashA.length !== bufHashB.length) {
-        return false;
-    }
-
-    const isValid = crypto.timingSafeEqual(new Uint8Array(bufHashA), new Uint8Array(bufHashB));
-    return isValid;
-};
-
 export const createSecrets = async (password: string): Promise<SecretCreation> => {
-    const emailHash = generateToken();
     const hashedPassword = await hashPassword(password);
 
     return {
         password: hashedPassword,
-        emailHash,
     };
+};
+
+export const updatePassword = async (userId: string, newPassword: string) => {
+    const hashed = await hashPassword(newPassword);
+    return prisma.secret.update({
+        where: { userId },
+        data: { password: hashed },
+    });
 };

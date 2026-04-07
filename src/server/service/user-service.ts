@@ -1,34 +1,6 @@
-import { SecretCreation, UpdateSecrets, UserRepository, UserUpdate } from "../repository/user-repository";
-
-import * as SecretService from "../../lib/utils/secrets";
+import { SecretCreation, UserRepository, UserUpdate } from "../repository/user-repository";
 
 const repository = new UserRepository();
-
-export const updateRecoveryHash = async (userId: string) => {
-    const recoverHash = SecretService.generateToken();
-
-    updateUserFromId(userId, {
-        secrets: {
-            recoverHash,
-            lastRecoverHash: new Date(),
-        },
-    });
-
-    return recoverHash;
-};
-
-export const updateEmailHash = async (userId: string) => {
-    const emailHash = SecretService.generateToken();
-
-    updateUserFromId(userId, {
-        secrets: {
-            emailHash,
-            lastEmailHash: new Date(),
-        },
-    });
-
-    return emailHash;
-};
 
 export const createUser = async (email: string, secrets: SecretCreation) => {
     const created = await repository.createUser({
@@ -37,6 +9,10 @@ export const createUser = async (email: string, secrets: SecretCreation) => {
     });
 
     return created;
+};
+
+export const setVerified = async (userId: string) => {
+    return repository.updateUserFromId(userId, { emailVerified: new Date() });
 };
 
 export const updateUserFromId = async (userId: string, userUpdate: UserUpdate) => {

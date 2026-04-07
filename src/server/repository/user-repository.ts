@@ -4,10 +4,6 @@ import prisma from "../db";
 
 export type UpdateSecrets = {
     password?: string;
-    emailHash?: string | null;
-    recoverHash?: string | null;
-    lastEmailHash?: Date;
-    lastRecoverHash?: Date;
 };
 
 export type UpdateSettings = {
@@ -21,7 +17,7 @@ export type UpdateSettings = {
 
 export interface UserUpdate {
     email?: string;
-    verified?: boolean;
+    emailVerified?: Date | null;
     username?: string;
     color?: string;
     isProUntil?: Date | null;
@@ -38,7 +34,6 @@ export interface UserCreation {
 
 export interface SecretCreation {
     password: string;
-    emailHash: string;
 }
 
 type idOrEmailType = { id: string } | { email: string };
@@ -49,16 +44,18 @@ export class UserRepository {
             where: { id: userId },
             data: {
                 email: userUpdate.email,
-                verified: userUpdate.verified,
+                emailVerified: userUpdate.emailVerified,
                 settings: userUpdate.settings as Prisma.InputJsonValue,
                 username: userUpdate.username,
                 color: userUpdate.color,
                 isProUntil: userUpdate.isProUntil,
                 stripeSubscriptionId: userUpdate.stripeSubscriptionId,
                 isSubscriptionCancelled: userUpdate.isSubscriptionCancelled,
-                secrets: {
-                    update: userUpdate.secrets,
-                },
+                secrets: userUpdate.secrets
+                    ? {
+                          update: userUpdate.secrets,
+                      }
+                    : undefined,
             },
         });
     }
@@ -70,7 +67,6 @@ export class UserRepository {
                 secrets: {
                     create: {
                         password: user.secrets.password,
-                        emailHash: user.secrets.emailHash,
                     },
                 },
             },
@@ -87,7 +83,7 @@ export class UserRepository {
         const userQuerySelect = {
             id: true,
             email: true,
-            verified: true,
+            emailVerified: true,
             createdAt: true,
             settings: true,
             username: true,
