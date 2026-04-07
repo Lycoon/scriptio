@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import { v7 as uuidv7 } from "uuid";
 import * as Y from "yjs";
 import { prosemirrorJSONToYXmlFragment, yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { ScreenplaySchema } from "../screenplay/editor";
@@ -245,7 +245,7 @@ export class ProjectRepository {
      * Returns the new scene id (UUID).
      */
     persistScene(data?: Partial<PersistentScene>): string {
-        const sceneId = uuidv4();
+        const sceneId = uuidv7();
         return this.upsertScene(sceneId, data ?? {});
     }
 
@@ -348,7 +348,7 @@ export class ProjectRepository {
     }
 
     addCommentToMap(map: Y.Map<any>, comment: Omit<Comment, "id">): string {
-        const id = uuidv4();
+        const id = uuidv7();
         map.set(id, { ...comment, id });
         return id;
     }
@@ -366,7 +366,7 @@ export class ProjectRepository {
     addReplyToMap(map: Y.Map<any>, commentId: string, reply: Omit<CommentReply, "id">): string | undefined {
         const existing = map.get(commentId) as Comment | undefined;
         if (!existing) return undefined;
-        const id = uuidv4();
+        const id = uuidv7();
         const replies = [...(existing.replies ?? []), { ...reply, id }];
         map.set(commentId, { ...existing, replies });
         return id;
@@ -437,7 +437,14 @@ export class ProjectRepository {
         const versionId = generateNodeId();
         const versionMeta: ShelfVersionMeta = {
             id: versionId,
-            title: new Date().toLocaleDateString(),
+            title: new Date().toLocaleString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+            }),
         };
 
         const entry: ShelfEntry = {

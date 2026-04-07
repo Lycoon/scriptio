@@ -362,7 +362,10 @@
     "noSuggestions": "제안 없음",
     "addToDictionary": "사전에 추가",
     "makeDualDialogue": "이중 대화 만들기",
-    "shelve": "보관하기"
+    "shelve": "보관하기",
+    "shelveScene": "장면 보관하기",
+    "shelveDialogue": "대사 보관하기",
+    "shelveAction": "행동 보관하기"
   },
   "popup": {
     "character": {

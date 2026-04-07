@@ -292,7 +292,7 @@
     align-items: center;
     gap: 8px;
     padding: 28px 20px;
-    color: var(--secondary-text);
+    color: var(--secondary);
     text-align: center;
 }
 
@@ -313,14 +313,15 @@
     margin-top: 8px;
     padding: 6px 18px;
     border-radius: 20px;
-    background-color: var(--primary-text);
-    color: #fff;
+    background-color: var(--tertiary);
+    color: var(--primary-text);
     font-size: 0.82rem;
     font-weight: 600;
     text-decoration: none;
-    transition: opacity 0.15s;
+    transition: background-color 0.15s;
 }
 
 .pro_gate_btn:hover {
-    opacity: 0.85;
+    background-color: var(--tertiary-hover);
+    color: var(--primary-text);
 }

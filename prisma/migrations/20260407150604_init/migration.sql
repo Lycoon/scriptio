@@ -9,6 +9,9 @@ CREATE TABLE "User" (
     "verified" BOOLEAN NOT NULL DEFAULT false,
     "username" TEXT,
     "color" TEXT,
+    "isProUntil" TIMESTAMP(3),
+    "stripeSubscriptionId" TEXT,
+    "isSubscriptionCancelled" BOOLEAN NOT NULL DEFAULT false,
     "settings" JSONB,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")

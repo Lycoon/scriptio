@@ -5,7 +5,7 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { getBoardMap, BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
 import BoardCard from "./BoardCard";
 import styles from "./BoardCanvas.module.css";
-import { v4 as uuidv4 } from "uuid";
+import { v7 as uuidv7 } from "uuid";
 import { Trash2, Plus, Minus, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -322,9 +322,15 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     const offsetRef = useRef(offset);
     const scaleRef = useRef(scale);
     const cardsRef = useRef(cards);
-    useEffect(() => { offsetRef.current = offset; }, [offset]);
-    useEffect(() => { scaleRef.current = scale; }, [scale]);
-    useEffect(() => { cardsRef.current = cards; }, [cards]);
+    useEffect(() => {
+        offsetRef.current = offset;
+    }, [offset]);
+    useEffect(() => {
+        scaleRef.current = scale;
+    }, [scale]);
+    useEffect(() => {
+        cardsRef.current = cards;
+    }, [cards]);
 
     // Selection rectangle global listeners
     useEffect(() => {
@@ -342,9 +348,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             const canvasX = (e.clientX - rect.left - currentOffset.x) / currentScale;
             const canvasY = (e.clientY - rect.top - currentOffset.y) / currentScale;
 
-            setSelectionRect((prev) =>
-                prev ? { ...prev, endX: canvasX, endY: canvasY } : null,
-            );
+            setSelectionRect((prev) => (prev ? { ...prev, endX: canvasX, endY: canvasY } : null));
         };
 
         const onMouseUp = () => {
@@ -472,7 +476,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             const randomColor = DEFAULT_CARD_COLORS[Math.floor(Math.random() * DEFAULT_CARD_COLORS.length)];
 
             const newCard: BoardCardData = {
-                id: uuidv4(),
+                id: uuidv7(),
                 title: "",
                 description: "",
                 color: randomColor,
@@ -553,7 +557,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         (card: BoardCardData) => {
             const newCard: BoardCardData = {
                 ...card,
-                id: uuidv4(),
+                id: uuidv7(),
                 x: card.x + 20,
                 y: card.y + 20,
             };
@@ -695,7 +699,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
 
             if (!exists) {
                 const newArrow: BoardArrowData = {
-                    id: uuidv4(),
+                    id: uuidv7(),
                     fromCardId: connectingFrom.cardId,
                     toCardId,
                 };

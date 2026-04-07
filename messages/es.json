@@ -362,7 +362,10 @@
     "noSuggestions": "Sin sugerencias",
     "addToDictionary": "Añadir al diccionario",
     "makeDualDialogue": "Crear doble diálogo",
-    "shelve": "Archivar"
+    "shelve": "Archivar",
+    "shelveScene": "Archivar escena",
+    "shelveDialogue": "Archivar diálogo",
+    "shelveAction": "Archivar acción"
   },
   "popup": {
     "character": {

@@ -362,7 +362,10 @@
     "noSuggestions": "No suggestions",
     "addToDictionary": "Add to Dictionary",
     "makeDualDialogue": "Make dual dialogue",
-    "shelve": "Shelve"
+    "shelve": "Shelve",
+    "shelveScene": "Shelve scene",
+    "shelveDialogue": "Shelve dialogue",
+    "shelveAction": "Shelve action"
   },
   "popup": {
     "character": {

@@ -362,7 +362,10 @@
     "noSuggestions": "候補なし",
     "addToDictionary": "辞書に追加",
     "makeDualDialogue": "二重対話を作成",
-    "shelve": "保管する"
+    "shelve": "保管する",
+    "shelveScene": "シーンを保管する",
+    "shelveDialogue": "セリフを保管する",
+    "shelveAction": "アクションを保管する"
   },
   "popup": {
     "character": {
