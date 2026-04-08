@@ -444,7 +444,8 @@
     "updatePassword": "Mettre à jour le mot de passe",
     "passwordChanged": "Mot de passe modifié avec succès",
     "failedToChange": "Échec de la modification du mot de passe",
-    "errorChanging": "Une erreur est survenue lors de la modification du mot de passe"
+    "errorChanging": "Une erreur est survenue lors de la modification du mot de passe",
+    "oauthAccount": "Votre compte est connecté via un fournisseur tiers, la gestion du mot de passe se fait directement chez lui. Il n'y a pas de mot de passe à modifier ici."
   },
   "login": {
     "emailLabel": "E-mail",
@@ -470,7 +471,8 @@
     "recoveryError": "Une erreur est survenue",
     "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
     "passwordChanged": "Mot de passe modifié avec succès. Vous pouvez maintenant vous connecter.",
-    "failedToChange": "Échec de la modification du mot de passe"
+    "failedToChange": "Échec de la modification du mot de passe",
+    "emailNotVerified": "Veuillez vérifier votre adresse e-mail avant de vous connecter"
   },
   "signup": {
     "emailLabel": "E-mail",
@@ -485,7 +487,17 @@
     "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
     "signUpFailed": "Échec de l'inscription",
     "unexpectedError": "Une erreur inattendue s'est produite",
-    "verificationEmail": "Un e-mail de vérification a été envoyé à votre adresse"
+    "verificationEmail": "Un e-mail de vérification a été envoyé à votre adresse",
+    "checkInbox": "Nous avons envoyé un lien de vérification à {email}. Veuillez consulter votre boîte de réception pour terminer la création de votre compte.",
+    "backToLogin": "Retour à la connexion"
+  },
+  "oauth": {
+    "orContinueWith": "ou continuer avec",
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithApple": "Continuer avec Apple",
+    "waiting": "En attente du navigateur…",
+    "timeout": "Le délai de connexion a expiré. Veuillez réessayer.",
+    "error": "Échec de la connexion. Veuillez réessayer."
   },
   "dates": {
     "justNow": "À l'instant",

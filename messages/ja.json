@@ -443,7 +443,8 @@
     "updatePassword": "パスワードを更新",
     "passwordChanged": "パスワードが変更されました",
     "failedToChange": "パスワードの変更に失敗しました",
-    "errorChanging": "パスワード変更中にエラーが発生しました"
+    "errorChanging": "パスワード変更中にエラーが発生しました",
+    "oauthAccount": "お客様のアカウントは外部プロバイダーでサインインしているため、パスワード管理はそちらで行われます。ここで変更するパスワードはありません。"
   },
   "login": {
     "emailLabel": "メールアドレス",
@@ -469,7 +470,8 @@
     "recoveryError": "エラーが発生しました",
     "passwordsDoNotMatch": "パスワードが一致しません",
     "passwordChanged": "パスワードが変更されました。ログインできます。",
-    "failedToChange": "パスワードの変更に失敗しました"
+    "failedToChange": "パスワードの変更に失敗しました",
+    "emailNotVerified": "ログインする前にメールアドレスを確認してください"
   },
   "signup": {
     "emailLabel": "メールアドレス",
@@ -484,7 +486,17 @@
     "passwordsDoNotMatch": "パスワードが一致しません",
     "signUpFailed": "登録に失敗しました",
     "unexpectedError": "予期しないエラーが発生しました",
-    "verificationEmail": "確認メールをアドレスに送信しました"
+    "verificationEmail": "確認メールをアドレスに送信しました",
+    "checkInbox": "{email} に確認リンクを送信しました。アカウント作成を完了するために受信トレイをご確認ください。",
+    "backToLogin": "ログインに戻る"
+  },
+  "oauth": {
+    "orContinueWith": "または次で続行",
+    "continueWithGoogle": "Google で続行",
+    "continueWithApple": "Apple で続行",
+    "waiting": "ブラウザを待機中…",
+    "timeout": "サインインがタイムアウトしました。もう一度お試しください。",
+    "error": "サインインに失敗しました。もう一度お試しください。"
   },
   "dates": {
     "justNow": "たった今",

@@ -443,7 +443,8 @@
     "updatePassword": "Actualizar contraseña",
     "passwordChanged": "Contraseña cambiada correctamente",
     "failedToChange": "Error al cambiar la contraseña",
-    "errorChanging": "Ocurrió un error al cambiar la contraseña"
+    "errorChanging": "Ocurrió un error al cambiar la contraseña",
+    "oauthAccount": "Tu cuenta inició sesión con un proveedor externo, así que la gestión de la contraseña se realiza allí. No hay ninguna contraseña que cambiar aquí."
   },
   "login": {
     "emailLabel": "Correo electrónico",
@@ -469,7 +470,8 @@
     "recoveryError": "Ocurrió un error",
     "passwordsDoNotMatch": "Las contraseñas no coinciden",
     "passwordChanged": "Contraseña cambiada con éxito. Ya puedes iniciar sesión.",
-    "failedToChange": "Error al cambiar la contraseña"
+    "failedToChange": "Error al cambiar la contraseña",
+    "emailNotVerified": "Por favor, verifica tu dirección de correo antes de iniciar sesión"
   },
   "signup": {
     "emailLabel": "Correo electrónico",
@@ -484,7 +486,17 @@
     "passwordsDoNotMatch": "Las contraseñas no coinciden",
     "signUpFailed": "Error al registrarse",
     "unexpectedError": "Ocurrió un error inesperado",
-    "verificationEmail": "Se ha enviado un correo de verificación a tu dirección"
+    "verificationEmail": "Se ha enviado un correo de verificación a tu dirección",
+    "checkInbox": "Hemos enviado un enlace de verificación a {email}. Por favor, revisa tu bandeja de entrada para terminar de crear tu cuenta.",
+    "backToLogin": "Volver al inicio de sesión"
+  },
+  "oauth": {
+    "orContinueWith": "o continuar con",
+    "continueWithGoogle": "Continuar con Google",
+    "continueWithApple": "Continuar con Apple",
+    "waiting": "Esperando al navegador…",
+    "timeout": "Tiempo de espera agotado. Por favor, inténtalo de nuevo.",
+    "error": "Error al iniciar sesión. Por favor, inténtalo de nuevo."
   },
   "dates": {
     "justNow": "Recién",

@@ -8,11 +8,13 @@ import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./SecuritySettings.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
+import { useUser } from "@src/lib/utils/hooks";
 
 const MIN_PASSWORD_LENGTH = 8;
 
 const SecuritySettings = () => {
     const t = useTranslations("security");
+    const { user } = useUser();
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -71,6 +73,14 @@ const SecuritySettings = () => {
         if (strength === 3) return { label: t("good"), level: 3 };
         return { label: t("strong"), level: 4 };
     };
+
+    if (user && user.hasPassword === false) {
+        return (
+            <div className={`${sharedStyles.settingsForm} ${styles.authForm}`}>
+                <div className={`${styles.message} ${styles.info}`}>{t("oauthAccount")}</div>
+            </div>
+        );
+    }
 
     return (
         <form onSubmit={handleSubmit} className={`${sharedStyles.settingsForm} ${styles.authForm}`}>

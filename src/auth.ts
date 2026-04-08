@@ -13,8 +13,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
     pages: { signIn: "/" },
     providers: [
-        Google({ allowDangerousEmailAccountLinking: true }),
-        Apple({ allowDangerousEmailAccountLinking: true }),
+        Google({
+            allowDangerousEmailAccountLinking: true,
+            // Our User model only stores email — drop name/picture before they reach the adapter.
+            profile: (profile) => ({ id: profile.sub, email: profile.email }),
+        }),
+        Apple({
+            allowDangerousEmailAccountLinking: true,
+            profile: (profile) => ({ id: profile.sub, email: profile.email }),
+        }),
         Credentials({
             credentials: {
                 email: {},
@@ -63,9 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     ...session.user,
                     id: token.id as string,
                     email: token.email as string,
-                    createdAt: token.createdAt
-                        ? new Date(token.createdAt as string)
-                        : session.user?.createdAt,
+                    createdAt: token.createdAt ? new Date(token.createdAt as string) : new Date(),
                 } as any;
             }
             return session;

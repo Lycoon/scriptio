@@ -443,7 +443,8 @@
     "updatePassword": "更新密码",
     "passwordChanged": "密码修改成功",
     "failedToChange": "密码修改失败",
-    "errorChanging": "修改密码时出错"
+    "errorChanging": "修改密码时出错",
+    "oauthAccount": "您的账号是通过第三方提供商登录的，密码管理由该提供商处理。此处没有可更改的密码。"
   },
   "login": {
     "emailLabel": "电子邮箱",
@@ -469,7 +470,8 @@
     "recoveryError": "发生错误",
     "passwordsDoNotMatch": "两次密码不一致",
     "passwordChanged": "密码修改成功，您现在可以登录了。",
-    "failedToChange": "密码修改失败"
+    "failedToChange": "密码修改失败",
+    "emailNotVerified": "请在登录前验证您的电子邮箱地址"
   },
   "signup": {
     "emailLabel": "电子邮箱",
@@ -484,7 +486,17 @@
     "passwordsDoNotMatch": "两次密码不一致",
     "signUpFailed": "注册失败",
     "unexpectedError": "发生意外错误",
-    "verificationEmail": "验证邮件已发送至您的邮箱"
+    "verificationEmail": "验证邮件已发送至您的邮箱",
+    "checkInbox": "我们已向 {email} 发送了验证链接。请检查您的收件箱以完成账户创建。",
+    "backToLogin": "返回登录"
+  },
+  "oauth": {
+    "orContinueWith": "或继续使用",
+    "continueWithGoogle": "使用 Google 继续",
+    "continueWithApple": "使用 Apple 继续",
+    "waiting": "等待浏览器…",
+    "timeout": "登录超时，请重试。",
+    "error": "登录失败，请重试。"
   },
   "dates": {
     "justNow": "刚刚",

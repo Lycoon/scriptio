@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { useTranslations } from "next-intl";
 
+import OAuthButtons from "./OAuthButtons";
+
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./SecuritySettings.module.css";
@@ -23,6 +25,7 @@ const DashboardSignup = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState<{ type: MessageType; text: string } | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -46,10 +49,7 @@ const DashboardSignup = () => {
                     router.push(json.data.redirectUrl);
                     return;
                 }
-                setMessage({
-                    type: "info",
-                    text: json.message || t("verificationEmail"),
-                });
+                setSubmitted(true);
             } else {
                 setMessage({ type: "error", text: json.message || t("signUpFailed") });
             }
@@ -59,6 +59,19 @@ const DashboardSignup = () => {
             setLoading(false);
         }
     };
+
+    if (submitted) {
+        return (
+            <div className={`${sharedStyles.settingsForm} ${styles.authForm}`}>
+                <div className={`${styles.message} ${styles.info}`}>{t("checkInbox", { email })}</div>
+                <div className={`${sharedStyles.formActions} ${styles.authFormActions}`}>
+                    <button type="button" className={styles.switchModeBtn} onClick={() => setActiveTab("Login")}>
+                        {t("backToLogin")}
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <form className={`${sharedStyles.settingsForm} ${styles.authForm}`} onSubmit={handleSubmit}>
@@ -75,7 +88,6 @@ const DashboardSignup = () => {
                         setMessage(null);
                     }}
                     className={sharedStyles.input}
-
                     required
                 />
             </div>
@@ -93,7 +105,6 @@ const DashboardSignup = () => {
                         setMessage(null);
                     }}
                     className={sharedStyles.input}
-
                     required
                 />
             </div>
@@ -111,7 +122,6 @@ const DashboardSignup = () => {
                         setMessage(null);
                     }}
                     className={sharedStyles.input}
-
                     required
                 />
             </div>
@@ -126,6 +136,8 @@ const DashboardSignup = () => {
                     {loading ? t("signingUp") : t("signUp")}
                 </button>
             </div>
+
+            <OAuthButtons />
         </form>
     );
 };

@@ -9,7 +9,6 @@ CREATE TABLE "User" (
     "emailVerified" TIMESTAMP(3),
     "username" TEXT,
     "color" TEXT,
-    "image" TEXT,
     "isProUntil" TIMESTAMP(3),
     "stripeSubscriptionId" TEXT,
     "isSubscriptionCancelled" BOOLEAN NOT NULL DEFAULT false,

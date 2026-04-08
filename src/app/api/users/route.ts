@@ -21,11 +21,13 @@ async function getUser(req: NextRequest) {
         throw new UnauthorizedError();
     }
 
-    const fetchedUser = await getUserFromId(cookie.id);
+    const fetchedUser = await getUserFromId(cookie.id, true);
     if (!fetchedUser) {
         throw new InternalServerError("An error occurred while fetching user from database");
     }
-    return Success(fetchedUser);
+    // Strip the actual hash; expose only whether a credentials password exists.
+    const { secrets, ...rest } = fetchedUser as typeof fetchedUser & { secrets?: { password: string } | null };
+    return Success({ ...rest, hasPassword: !!secrets });
 }
 
 /**

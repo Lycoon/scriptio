@@ -443,7 +443,8 @@
     "updatePassword": "Update Password",
     "passwordChanged": "Password changed successfully",
     "failedToChange": "Failed to change password",
-    "errorChanging": "An error occurred while changing password"
+    "errorChanging": "An error occurred while changing password",
+    "oauthAccount": "Your account is signed in with a third-party provider, so password management is handled there. There is no password to change here."
   },
   "login": {
     "emailLabel": "Email",
@@ -469,7 +470,8 @@
     "recoveryError": "An error occurred",
     "passwordsDoNotMatch": "Passwords do not match",
     "passwordChanged": "Password changed successfully. You can now log in.",
-    "failedToChange": "Failed to change password"
+    "failedToChange": "Failed to change password",
+    "emailNotVerified": "Please verify your email address before logging in"
   },
   "signup": {
     "emailLabel": "Email",
@@ -484,7 +486,17 @@
     "passwordsDoNotMatch": "Passwords do not match",
     "signUpFailed": "Sign up failed",
     "unexpectedError": "An unexpected error occurred",
-    "verificationEmail": "A verification email has been sent to your address"
+    "verificationEmail": "A verification email has been sent to your address",
+    "checkInbox": "We sent a verification link to {email}. Please check your inbox to finish creating your account.",
+    "backToLogin": "Back to login"
+  },
+  "oauth": {
+    "orContinueWith": "or continue with",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "waiting": "Waiting for browser…",
+    "timeout": "Sign-in timed out. Please try again.",
+    "error": "Sign-in failed. Please try again."
   },
   "dates": {
     "justNow": "Just now",

@@ -443,7 +443,8 @@
     "updatePassword": "비밀번호 업데이트",
     "passwordChanged": "비밀번호가 변경되었습니다",
     "failedToChange": "비밀번호 변경 실패",
-    "errorChanging": "비밀번호 변경 중 오류가 발생했습니다"
+    "errorChanging": "비밀번호 변경 중 오류가 발생했습니다",
+    "oauthAccount": "외부 제공업체로 로그인된 계정이므로 비밀번호 관리는 해당 제공업체에서 이루어집니다. 여기에서 변경할 비밀번호가 없습니다."
   },
   "login": {
     "emailLabel": "이메일",
@@ -469,7 +470,8 @@
     "recoveryError": "오류가 발생했습니다",
     "passwordsDoNotMatch": "비밀번호가 일치하지 않습니다",
     "passwordChanged": "비밀번호가 성공적으로 변경되었습니다. 이제 로그인할 수 있습니다.",
-    "failedToChange": "비밀번호 변경 실패"
+    "failedToChange": "비밀번호 변경 실패",
+    "emailNotVerified": "로그인하기 전에 이메일 주소를 확인해 주세요"
   },
   "signup": {
     "emailLabel": "이메일",
@@ -484,7 +486,17 @@
     "passwordsDoNotMatch": "비밀번호가 일치하지 않습니다",
     "signUpFailed": "회원가입 실패",
     "unexpectedError": "예상치 못한 오류가 발생했습니다",
-    "verificationEmail": "인증 이메일이 주소로 전송되었습니다"
+    "verificationEmail": "인증 이메일이 주소로 전송되었습니다",
+    "checkInbox": "{email}로 인증 링크를 보냈습니다. 계정 생성을 완료하려면 받은편지함을 확인하세요.",
+    "backToLogin": "로그인으로 돌아가기"
+  },
+  "oauth": {
+    "orContinueWith": "또는 다음으로 계속",
+    "continueWithGoogle": "Google로 계속",
+    "continueWithApple": "Apple로 계속",
+    "waiting": "브라우저를 기다리는 중…",
+    "timeout": "로그인 시간이 초과되었습니다. 다시 시도해 주세요.",
+    "error": "로그인에 실패했습니다. 다시 시도해 주세요."
   },
   "dates": {
     "justNow": "방금 전",

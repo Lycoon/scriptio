@@ -177,8 +177,8 @@
     gap: 8px;
     padding: 10px 20px;
     border-radius: 8px;
-    background: var(--primary-text);
-    color: #fff;
+    background: var(--secondary);
+    color: var(--primary-text);
     border: none;
     font-size: 0.9rem;
     font-weight: 600;
@@ -188,7 +188,7 @@
 }
 
 .upgradeBtn:hover {
-    opacity: 0.9;
+    opacity: 0.8;
 }
 .upgradeBtn:disabled {
     opacity: 0.5;

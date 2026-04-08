@@ -24,7 +24,6 @@ model User {
   emailVerified       DateTime?
   username            String?
   color               String?
-  image               String?
 
   isProUntil                  DateTime?
   stripeSubscriptionId        String?

@@ -27,6 +27,13 @@ async function updatePassword(req: NextRequest) {
         throw new BodyFieldError(PASSWORD_REQUIREMENTS);
     }
 
+    // OAuth-only accounts have no Secret row — refuse with a clear message rather than
+    // letting Prisma throw a "required record not found" error from the nested update.
+    const fullUser = await UserService.getUserFromId(user.id, true);
+    if (!fullUser?.secrets) {
+        throw new ForbiddenError("Password change is unavailable for OAuth accounts");
+    }
+
     const hashPassword = await SecretService.hashPassword(password);
     if (!hashPassword) {
         throw new InternalServerError(FAILED_PASSWORD_CHANGED);

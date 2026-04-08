@@ -443,7 +443,8 @@
     "updatePassword": "Zaktualizuj hasło",
     "passwordChanged": "Hasło zostało zmienione",
     "failedToChange": "Nie udało się zmienić hasła",
-    "errorChanging": "Wystąpił błąd podczas zmiany hasła"
+    "errorChanging": "Wystąpił błąd podczas zmiany hasła",
+    "oauthAccount": "Twoje konto jest zalogowane przez zewnętrznego dostawcę, więc zarządzanie hasłem odbywa się po jego stronie. Tutaj nie ma hasła do zmiany."
   },
   "login": {
     "emailLabel": "E-mail",
@@ -469,7 +470,8 @@
     "recoveryError": "Wystąpił błąd",
     "passwordsDoNotMatch": "Hasła nie są zgodne",
     "passwordChanged": "Hasło zostało zmienione. Możesz się teraz zalogować.",
-    "failedToChange": "Nie udało się zmienić hasła"
+    "failedToChange": "Nie udało się zmienić hasła",
+    "emailNotVerified": "Zweryfikuj swój adres e-mail przed zalogowaniem"
   },
   "signup": {
     "emailLabel": "E-mail",
@@ -484,7 +486,17 @@
     "passwordsDoNotMatch": "Hasła nie są zgodne",
     "signUpFailed": "Rejestracja nie powiodła się",
     "unexpectedError": "Wystąpił nieoczekiwany błąd",
-    "verificationEmail": "E-mail weryfikacyjny został wysłany na Twój adres"
+    "verificationEmail": "E-mail weryfikacyjny został wysłany na Twój adres",
+    "checkInbox": "Wysłaliśmy link weryfikacyjny na adres {email}. Sprawdź swoją skrzynkę odbiorczą, aby dokończyć tworzenie konta.",
+    "backToLogin": "Powrót do logowania"
+  },
+  "oauth": {
+    "orContinueWith": "lub kontynuuj z",
+    "continueWithGoogle": "Kontynuuj z Google",
+    "continueWithApple": "Kontynuuj z Apple",
+    "waiting": "Oczekiwanie na przeglądarkę…",
+    "timeout": "Czas logowania upłynął. Spróbuj ponownie.",
+    "error": "Logowanie nie powiodło się. Spróbuj ponownie."
   },
   "dates": {
     "justNow": "Przed chwilą",

@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 import styles from "./DashboardModal.module.css";
 import dangerStyles from "./project/DangerZone.module.css";
 import { redirect } from "next/navigation";
-import { logout } from "@src/lib/utils/requests";
+import { signOut } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useCookieUser } from "@src/lib/utils/hooks";
 
@@ -54,12 +54,12 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
     const [showLogOutConfirm, setShowLogOutConfirm] = useState(false);
 
     const onLogOut = async () => {
-        await logout();
-
-        // On desktop, clear the stored JWT token
         if (isTauri()) {
+            // Desktop holds the bearer token locally; the server has no cookie to clear.
             const { clearDesktopToken } = await import("@src/lib/desktop-auth");
             await clearDesktopToken();
+        } else {
+            await signOut({ redirect: false });
         }
 
         await mutate("/api/users/cookie", undefined);
