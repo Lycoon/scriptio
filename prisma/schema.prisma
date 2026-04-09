@@ -30,20 +30,10 @@ model User {
   isSubscriptionCancelled     Boolean   @default(false)
 
   settings            Json?
-  secrets             Secret?
 
   accounts            Account[]
   sessions            Session[]
   projects            ProjectMember[]
-}
-
-model Secret {
-  id                  Int         @id @default(autoincrement())
-
-  userId              String      @unique
-  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  password            String
 }
 
 model Account {
@@ -79,6 +69,19 @@ model VerificationToken {
   expires             DateTime
 
   @@unique([identifier, token])
+}
+
+model MagicLinkToken {
+  id                  Int         @id @default(autoincrement())
+  email               String
+  tokenHash           String      @unique
+  expiresAt           DateTime
+  createdAt           DateTime    @default(now())
+
+  desktopNonce        String?
+  inviteToken         String?
+
+  @@index([email, createdAt])
 }
 
 model Project {

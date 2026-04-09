@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import { SignJWT } from "jose";
 
 import * as bc from "lib0/broadcastchannel";
 import { WebsocketProvider } from "y-websocket";
@@ -789,7 +789,11 @@ export const allowOnWebsocket = async (userId: string, projectId: string) => {
         projectId,
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1m" });
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    const token = await new SignJWT(payload)
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime("1m")
+        .sign(secret);
     await fetch(`${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}/${projectId}/allow`, {
         method: "POST",
         headers: {
@@ -806,7 +810,11 @@ export const blacklistFromWebsocket = async (userId: string, projectId: string) 
         projectId,
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "1m" });
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    const token = await new SignJWT(payload)
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime("1m")
+        .sign(secret);
     await fetch(`${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}/${projectId}/blacklist`, {
         method: "POST",
         headers: {

@@ -20,11 +20,3 @@ export const redirectBoard = (projectId: string) => {
 export const redirectStatistics = (projectId: string) => {
     redirectProject(projectId);
 };
-
-export const redirectLogin = () => {
-    redirect("/login");
-};
-
-export const redirectSettings = () => {
-    redirect("/settings");
-};

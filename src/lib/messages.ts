@@ -1,23 +1,12 @@
 // Auth
-export const PASSWORD_CHANGED = "Password changed successfully";
-export const FAILED_PASSWORD_CHANGED = "Failed password change";
-export const WRONG_CREDENTIALS = "Wrong credentials";
-export const PASSWORD_REQUIREMENTS = "Password needs to be at least 8 characters long";
-export const ERROR_PASSWORD_MATCH = "Passwords do not match";
-export const ERROR_SIGN_UP = "An error occurred while signing up";
+export const ERROR_SIGN_IN = "An error occurred while signing in";
 
-// Recovery
-export const ERROR_RECOVERY_LINK_EXPIRED = "This recovery link has expired. Please request a new one.";
-export const RECOVERY_REQUEST_FULFILLED =
-    "An email for password recovery has been sent if an account is linked to it. The link is valid for the next 15 minutes.";
-export const RECOVERY_SUCCESS = "Password changed successfully. You can now log in.";
-
-// Email
-export const ERROR_VERIFYING = "There was an error verifying this email address";
-export const EMAIL_ALREADY_REGISTERED = "A user is already registered with that email";
-export const VERIFICATION_SENT = "An email has been sent to that address to verify your account";
-export const NOT_VERIFIED = "This email address is not verified yet. Please check your email inbox";
-export const ERROR_VERIFICATION_THROTTLE = "A verification email has already been sent in the last 5 minutes";
+// Magic link
+export const MAGIC_LINK_SENT =
+    "If an account is associated with that address, a sign-in link has been sent. The link is valid for the next 10 minutes.";
+export const MAGIC_LINK_THROTTLED =
+    "Too many sign-in requests for this address. Please wait a few minutes before trying again.";
+export const ERROR_MAGIC_LINK_EXPIRED = "This sign-in link is invalid or has expired. Please request a new one.";
 
 // User
 export const USER_DELETED = "User deleted successfully";

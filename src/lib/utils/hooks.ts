@@ -145,7 +145,7 @@ const useCookieUser = (redirect: boolean = false) => {
     const effectiveUser = user || localUser;
 
     if (redirect && !isLoading && !effectiveUser) {
-        router.push("/login");
+        router.push("/");
     }
 
     return { user: effectiveUser, isLoading };

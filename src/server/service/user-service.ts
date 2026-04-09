@@ -1,14 +1,9 @@
-import { SecretCreation, UserRepository, UserUpdate } from "../repository/user-repository";
+import { UserRepository, UserUpdate } from "../repository/user-repository";
 
 const repository = new UserRepository();
 
-export const createUser = async (email: string, secrets: SecretCreation) => {
-    const created = await repository.createUser({
-        email,
-        secrets,
-    });
-
-    return created;
+export const createUser = async (email: string) => {
+    return repository.createUser({ email });
 };
 
 export const setVerified = async (userId: string) => {
@@ -23,12 +18,12 @@ export const deleteUserFromId = async (userId: string) => {
     return repository.deleteUser({ id: userId });
 };
 
-export const getUserFromId = async (userId: string, includeSecrets = false) => {
-    return repository.fetchUser({ id: userId }, includeSecrets);
+export const getUserFromId = async (userId: string) => {
+    return repository.fetchUser({ id: userId });
 };
 
-export const getUserFromEmail = async (email: string, includeSecrets = false) => {
-    return repository.fetchUser({ email }, includeSecrets);
+export const getUserFromEmail = async (email: string) => {
+    return repository.fetchUser({ email });
 };
 
 export const getUserSettings = async (userId: string) => {

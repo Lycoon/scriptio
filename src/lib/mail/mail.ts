@@ -21,25 +21,11 @@ export const sendProjectInviteEmail = async (email: string, projectTitle: string
     sendFormattedEmail(email, "Project Invitation", "Project Invitation", content, "Join project", link);
 };
 
-export const sendRecoveryEmail = async (email: string, token: string) => {
-    const link = `${BASE_URL}/recovery?token=${token}`;
-    const content = `A request has been issued to update ${email} account password. Click the button below to change your password.`;
+export const sendMagicLinkEmail = async (email: string, token: string) => {
+    const link = `${BASE_URL}/auth/magic-link?token=${token}`;
+    const content = `Click the button below to sign in to your Scriptio account. This link will expire in 10 minutes and can only be used once. If you didn't request this, you can safely ignore this email.`;
 
-    sendFormattedEmail(email, "Change password", "Password change request", content, "Change password", link);
-};
-
-export const sendVerificationEmail = async (email: string, token: string) => {
-    const link = `${BASE_URL}/api/verify?token=${token}`;
-    const content = `Welcome ${email}! Click the button below to verify your email address after which you will be able to log in using your credentials.`;
-
-    sendFormattedEmail(
-        email,
-        "Thank you for joining Scriptio",
-        "Verify your account",
-        content,
-        "Verify your account",
-        link,
-    );
+    sendFormattedEmail(email, "Sign in to Scriptio", "Your sign-in link", content, "Sign in", link);
 };
 
 const sendFormattedEmail = async (

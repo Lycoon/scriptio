@@ -1,12 +1,14 @@
 /// <reference types="@cloudflare/workers-types" />
-import { verify } from "jsonwebtoken";
+import { jwtVerify } from "jose";
 import { Env } from "./types";
 import { ScreenplayRoom } from "./room";
 
 async function getVerifiedPayload(token: string | null, secret: string): Promise<any | null> {
     if (!token) return null;
     try {
-        return verify(token, secret) as any;
+        const secretKey = new TextEncoder().encode(secret);
+        const { payload } = await jwtVerify(token, secretKey);
+        return payload;
     } catch (e) {
         return null;
     }

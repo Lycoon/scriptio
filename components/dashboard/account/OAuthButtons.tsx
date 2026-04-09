@@ -10,7 +10,7 @@ import GoogleIcon from "@components/icons/GoogleIcon";
 import AppleIcon from "@components/icons/AppleIcon";
 
 import sharedStyles from "../project/ProjectSettings.module.css";
-import styles from "./SecuritySettings.module.css";
+import styles from "./AuthForm.module.css";
 
 type Provider = "google" | "apple";
 

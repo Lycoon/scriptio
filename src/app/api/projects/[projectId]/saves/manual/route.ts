@@ -7,7 +7,7 @@ import { requirePro } from "@src/lib/utils/pro-utils";
 import * as Roles from "@src/lib/utils/roles";
 import * as ProjectService from "@src/server/service/project-service";
 
-import jwt from "jsonwebtoken";
+import { SignJWT } from "jose";
 import z from "zod";
 import { NextRequest } from "next/server";
 
@@ -21,11 +21,11 @@ async function forwardToWorker(
     path: string,
     body?: any
 ): Promise<Response> {
-    const token = jwt.sign(
-        { type: "admin-action", projectId },
-        process.env.JWT_SECRET!,
-        { expiresIn: "1m" }
-    );
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    const token = await new SignJWT({ type: "admin-action", projectId })
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime("1m")
+        .sign(secret);
 
     const url = getCollabHttpUrl(`/${projectId}${path}`);
     const res = await fetch(url, {

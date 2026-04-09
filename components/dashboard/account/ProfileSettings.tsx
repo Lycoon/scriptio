@@ -75,7 +75,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                 } else {
                     await signOut({ redirect: false });
                 }
-                router.replace("/login");
+                router.replace("/");
             }
         } finally {
             setDeleteLoading(false);

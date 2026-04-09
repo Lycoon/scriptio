@@ -92,46 +92,74 @@
     align-items: center;
 }
 
-.switchModeBtn {
-    background: none;
-    border: none;
-    color: var(--secondary-text);
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-family: var(--font-inter);
-    padding: 0;
-    margin-right: 12px;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-.switchModeBtn:hover {
-    color: var(--primary-text);
-}
-
-.forgotPasswordBtn {
-    background: none;
-    border: none;
-    color: var(--secondary-text);
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-family: var(--font-inter);
-    padding: 0;
-    margin-right: 8px;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-.forgotPasswordBtn:hover {
-    color: var(--primary-text);
-}
-
 .authForm {
     gap: 8px;
+    height: 100%;
 }
 
-.authFormActions {
-    margin-top: 20px;
+.authInfoText {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--secondary-text);
+}
+
+.authActions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.authSubmitBtn {
+    width: 100%;
+    justify-content: center;
+}
+
+.authSubAction {
+    background: none;
+    border: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: var(--font-inter);
+    padding: 0;
+    text-align: right;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.authSubAction:hover {
+    color: var(--primary-text);
+}
+
+.authLinks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+}
+
+.authSwitchRow {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--secondary-text);
+    text-align: right;
+}
+
+.authSwitchLink {
+    background: none;
+    border: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: var(--font-inter);
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.authSwitchLink:hover {
+    color: var(--primary-text);
 }
 
 .divider {
@@ -164,3 +192,4 @@
     justify-content: center;
     gap: 10px;
 }
+

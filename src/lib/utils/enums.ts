@@ -2,13 +2,7 @@
 //             WEBSITE            //
 // ------------------------------ //
 
-export enum PasswordRecoverStatus {
-    Success,
-    Failed,
-    Expired,
-}
-
-export const ALL_PAGES = ["index", "login", "signup", "recovery", "screenplay", "board", "statistics", "privacy", "contact"] as const;
+export const ALL_PAGES = ["index", "screenplay", "board", "statistics", "privacy", "contact"] as const;
 export type Page = (typeof ALL_PAGES)[number];
 
 export const isPage = (value: string): value is Page => {

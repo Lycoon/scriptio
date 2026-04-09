@@ -18,15 +18,6 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
-CREATE TABLE "Secret" (
-    "id" SERIAL NOT NULL,
-    "userId" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
-
-    CONSTRAINT "Secret_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Account" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -59,6 +50,19 @@ CREATE TABLE "VerificationToken" (
     "identifier" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "expires" TIMESTAMP(3) NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "MagicLinkToken" (
+    "id" SERIAL NOT NULL,
+    "email" TEXT NOT NULL,
+    "tokenHash" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "desktopNonce" TEXT,
+    "inviteToken" TEXT,
+
+    CONSTRAINT "MagicLinkToken_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -99,9 +103,6 @@ CREATE TABLE "ProjectInvitation" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Secret_userId_key" ON "Secret"("userId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
 
 -- CreateIndex
@@ -114,6 +115,12 @@ CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token"
 CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "MagicLinkToken_tokenHash_key" ON "MagicLinkToken"("tokenHash");
+
+-- CreateIndex
+CREATE INDEX "MagicLinkToken_email_createdAt_idx" ON "MagicLinkToken"("email", "createdAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "ProjectMember_userId_projectId_key" ON "ProjectMember"("userId", "projectId");
 
 -- CreateIndex
@@ -121,9 +128,6 @@ CREATE UNIQUE INDEX "ProjectInvitation_token_key" ON "ProjectInvitation"("token"
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ProjectInvitation_email_projectId_key" ON "ProjectInvitation"("email", "projectId");
-
--- AddForeignKey
-ALTER TABLE "Secret" ADD CONSTRAINT "Secret_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
