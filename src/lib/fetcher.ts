@@ -11,7 +11,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
  * Fetcher for desktop environment - calls remote API with JWT auth.
  * Desktop app connects to your hosted API server with JWT in Authorization header.
  *
- * Note: Login/recovery requests don't use this fetcher - they make direct fetch calls.
+ * Note: Magic-link auth requests don't use this fetcher - they make direct fetch calls.
  * This fetcher is used by SWR for authenticated data fetching.
  */
 async function fetchFromDesktop<JSON = unknown>(

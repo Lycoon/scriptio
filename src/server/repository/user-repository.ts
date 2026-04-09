@@ -2,14 +2,6 @@ import { UserSettings } from "@src/lib/utils/types";
 import { Prisma } from "@prisma/client";
 import prisma from "../db";
 
-export type UpdateSecrets = {
-    password?: string;
-    emailHash?: string | null;
-    recoverHash?: string | null;
-    lastEmailHash?: Date;
-    lastRecoverHash?: Date;
-};
-
 export type UpdateSettings = {
     highlightOnHover?: boolean;
     sceneBackground?: boolean;
@@ -21,24 +13,17 @@ export type UpdateSettings = {
 
 export interface UserUpdate {
     email?: string;
-    verified?: boolean;
+    emailVerified?: Date | null;
     username?: string;
     color?: string;
     isProUntil?: Date | null;
     stripeSubscriptionId?: string | null;
     isSubscriptionCancelled?: boolean;
-    secrets?: UpdateSecrets;
     settings?: Partial<UserSettings>;
 }
 
 export interface UserCreation {
     email: string;
-    secrets: SecretCreation;
-}
-
-export interface SecretCreation {
-    password: string;
-    emailHash: string;
 }
 
 type idOrEmailType = { id: string } | { email: string };
@@ -49,16 +34,13 @@ export class UserRepository {
             where: { id: userId },
             data: {
                 email: userUpdate.email,
-                verified: userUpdate.verified,
+                emailVerified: userUpdate.emailVerified,
                 settings: userUpdate.settings as Prisma.InputJsonValue,
                 username: userUpdate.username,
                 color: userUpdate.color,
                 isProUntil: userUpdate.isProUntil,
                 stripeSubscriptionId: userUpdate.stripeSubscriptionId,
                 isSubscriptionCancelled: userUpdate.isSubscriptionCancelled,
-                secrets: {
-                    update: userUpdate.secrets,
-                },
             },
         });
     }
@@ -67,12 +49,7 @@ export class UserRepository {
         return prisma.user.create({
             data: {
                 email: user.email,
-                secrets: {
-                    create: {
-                        password: user.secrets.password,
-                        emailHash: user.secrets.emailHash,
-                    },
-                },
+                emailVerified: new Date(),
             },
         });
     }
@@ -83,23 +60,20 @@ export class UserRepository {
         });
     }
 
-    fetchUser(idOrEmail: idOrEmailType, includeSecrets = false) {
-        const userQuerySelect = {
-            id: true,
-            email: true,
-            verified: true,
-            createdAt: true,
-            settings: true,
-            username: true,
-            color: true,
-            isProUntil: true,
-            isSubscriptionCancelled: true,
-            secrets: includeSecrets,
-        };
-
+    fetchUser(idOrEmail: idOrEmailType) {
         return prisma.user.findUnique({
             where: idOrEmail,
-            select: userQuerySelect,
+            select: {
+                id: true,
+                email: true,
+                emailVerified: true,
+                createdAt: true,
+                settings: true,
+                username: true,
+                color: true,
+                isProUntil: true,
+                isSubscriptionCancelled: true,
+            },
         });
     }
 

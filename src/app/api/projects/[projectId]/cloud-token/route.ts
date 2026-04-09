@@ -4,7 +4,7 @@ import { ForbiddenError, Success, UnauthorizedError, validate } from "@src/lib/u
 
 import * as ProjectService from "@src/server/service/project-service";
 
-import jwt from "jsonwebtoken";
+import { SignJWT } from "jose";
 import z from "zod";
 import { NextRequest } from "next/server";
 
@@ -30,7 +30,11 @@ async function projectCloudTokenRoute(req: NextRequest, { routeParams }: ApiCont
         role: member.role,
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1m" });
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    const token = await new SignJWT(payload)
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime("1m")
+        .sign(secret);
 
     return Success(token);
 }

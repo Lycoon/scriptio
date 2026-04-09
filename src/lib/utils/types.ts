@@ -1,5 +1,5 @@
 import { JSONContent } from "@tiptap/core";
-import { UpdateSecrets, UpdateSettings } from "../../server/repository/user-repository";
+import { UpdateSettings } from "../../server/repository/user-repository";
 
 export type Screenplay = JSONContent[];
 
@@ -11,7 +11,6 @@ export type CookieUser = {
 
 export type User = CookieUser & {
     settings: UpdateSettings;
-    secrets?: UpdateSecrets;
 };
 
 export type ProjectCreation = {

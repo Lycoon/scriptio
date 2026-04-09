@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { editUserInfo, logout } from "@src/lib/utils/requests";
+import { editUserInfo } from "@src/lib/utils/requests";
+import { signOut } from "next-auth/react";
+import { isTauri } from "@tauri-apps/api/core";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Trash2, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -67,8 +69,13 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         try {
             const res = await fetch("/api/users", { method: "DELETE" });
             if (res.ok) {
-                await logout();
-                router.replace("/login");
+                if (isTauri()) {
+                    const { clearDesktopToken } = await import("@src/lib/desktop-auth");
+                    await clearDesktopToken();
+                } else {
+                    await signOut({ redirect: false });
+                }
+                router.replace("/");
             }
         } finally {
             setDeleteLoading(false);

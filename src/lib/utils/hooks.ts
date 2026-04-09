@@ -108,23 +108,44 @@ const useCookieUser = (redirect: boolean = false) => {
     const [localUser, setLocalUser] = useState<CookieUser | undefined>(undefined);
     const router = useRouter();
 
-    // On desktop, if the server is unreachable but we have a stored token,
-    // decode the JWT locally to get user info for the UI.
+    // On desktop, persist the user record alongside the token so the shell can
+    // render while offline. NextAuth tokens are JWE-encrypted and cannot be
+    // decoded client-side, so we cache the resolved user instead.
+    useEffect(() => {
+        if (!isTauri() || !user) return;
+        (async () => {
+            const { setCachedDesktopUser } = await import("@src/lib/desktop-auth");
+            await setCachedDesktopUser({
+                id: user.id,
+                email: user.email,
+                createdAt:
+                    user.createdAt instanceof Date
+                        ? user.createdAt.toISOString()
+                        : (user.createdAt as unknown as string),
+            });
+        })();
+    }, [user]);
+
+    // Server unreachable on desktop — fall back to whatever we cached.
     useEffect(() => {
         if (!isTauri() || user || isLoading || !error) return;
-
-        const loadLocalUser = async () => {
-            const { getDesktopUserFromToken } = await import("@src/lib/desktop-auth");
-            const decoded = await getDesktopUserFromToken();
-            if (decoded) setLocalUser(decoded);
-        };
-        loadLocalUser();
+        (async () => {
+            const { getCachedDesktopUser } = await import("@src/lib/desktop-auth");
+            const cached = await getCachedDesktopUser();
+            if (cached) {
+                setLocalUser({
+                    id: cached.id,
+                    email: cached.email,
+                    createdAt: new Date(cached.createdAt),
+                } as CookieUser);
+            }
+        })();
     }, [error, user, isLoading]);
 
     const effectiveUser = user || localUser;
 
     if (redirect && !isLoading && !effectiveUser) {
-        router.push("/login");
+        router.push("/");
     }
 
     return { user: effectiveUser, isLoading };

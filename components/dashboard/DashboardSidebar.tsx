@@ -3,13 +3,13 @@
 import { ReactNode, useContext, useState } from "react";
 import { mutate } from "swr";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { Info, LogIn, LogOut, UserPlus } from "lucide-react";
+import { Info, LogIn, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import styles from "./DashboardModal.module.css";
 import dangerStyles from "./project/DangerZone.module.css";
 import { redirect } from "next/navigation";
-import { logout } from "@src/lib/utils/requests";
+import { signOut } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useCookieUser } from "@src/lib/utils/hooks";
 
@@ -19,14 +19,12 @@ export type Category =
     | "Export"
     | "Collaborators"
     | "Profile"
-    | "Security"
     | "Subscription"
     | "Settings"
     | "Keybinds"
     | "Appearance"
     | "Language"
-    | "Login"
-    | "Signup"
+    | "Auth"
     | "About";
 
 export interface MenuItem {
@@ -54,12 +52,12 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
     const [showLogOutConfirm, setShowLogOutConfirm] = useState(false);
 
     const onLogOut = async () => {
-        await logout();
-
-        // On desktop, clear the stored JWT token
         if (isTauri()) {
+            // Desktop holds the bearer token locally; the server has no cookie to clear.
             const { clearDesktopToken } = await import("@src/lib/desktop-auth");
             await clearDesktopToken();
+        } else {
+            await signOut({ redirect: false });
         }
 
         await mutate("/api/users/cookie", undefined);
@@ -117,22 +115,13 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
                             {t("logOut")}
                         </button>
                     ) : (
-                        <>
-                            <button
-                                className={`${styles.navItem} ${activeTab === "Login" ? styles.active : ""}`}
-                                onClick={() => onTabChange("Login")}
-                            >
-                                <LogIn size={18} />
-                                {t("logIn")}
-                            </button>
-                            <button
-                                className={`${styles.navItem} ${activeTab === "Signup" ? styles.active : ""}`}
-                                onClick={() => onTabChange("Signup")}
-                            >
-                                <UserPlus size={18} />
-                                {t("signUp")}
-                            </button>
-                        </>
+                        <button
+                            className={`${styles.navItem} ${activeTab === "Auth" ? styles.active : ""}`}
+                            onClick={() => onTabChange("Auth")}
+                        >
+                            <LogIn size={18} />
+                            {t("auth")}
+                        </button>
                     )}
                     <button
                         className={`${styles.navItem} ${activeTab === "About" ? styles.active : ""}`}

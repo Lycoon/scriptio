@@ -4,11 +4,7 @@ import {
     CreateProjectBody,
     UpdateProjectBody,
     UpdateRoleBody,
-    UpdatePasswordBody,
-    SignupBody,
-    LoginBody,
-    RecoverPasswordBody,
-    RequestRecoveryBody,
+    RequestMagicLinkBody,
     UpdateUserBody,
 } from "./api-bodies";
 import { isTauri } from "@tauri-apps/api/core";
@@ -135,10 +131,6 @@ export const updateMemberRole = async (projectId: string, userId: string, body: 
 
 /* Users */
 
-export const changePassword = (body: UpdatePasswordBody) => {
-    return request(`/api/users/password`, "PATCH", body);
-};
-
 export const editUserSettings = (body: Partial<UserSettings>) => {
     return request(`/api/users/settings`, "PATCH", body);
 };
@@ -149,24 +141,8 @@ export const editUserInfo = (body: UpdateUserBody) => {
 
 /* Auth */
 
-export const logout = () => {
-    return request(`/api/logout`, "POST");
-};
-
-export const signup = (body: SignupBody) => {
-    return request(`/api/signup`, "POST", body);
-};
-
-export const login = (body: LoginBody) => {
-    return request(`/api/login`, "POST", body);
-};
-
-export const recoverPassword = (body: RecoverPasswordBody) => {
-    return request(`/api/recover`, "PATCH", body);
-};
-
-export const requestRecovery = (body: RequestRecoveryBody) => {
-    return request(`/api/recover`, "POST", body);
+export const requestMagicLink = (body: RequestMagicLinkBody) => {
+    return request(`/api/auth/magic-link`, "POST", body);
 };
 
 export const cancelStripeSubscription = async (): Promise<boolean> => {

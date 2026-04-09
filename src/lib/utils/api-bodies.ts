@@ -1,29 +1,16 @@
 import z from "zod";
 
-export const LoginBodySchema = z.object({
+export const RequestMagicLinkBodySchema = z.object({
     email: z.email(),
-    password: z.string(),
-});
-export type LoginBody = z.infer<typeof LoginBodySchema>;
-
-export const SignupBodySchema = z.object({
-    email: z.email(),
-    password: z.string(),
+    desktopNonce: z.string().min(16).optional(),
     inviteToken: z.string().optional(),
 });
-export type SignupBody = z.infer<typeof SignupBodySchema>;
+export type RequestMagicLinkBody = z.infer<typeof RequestMagicLinkBodySchema>;
 
-export const RequestRecoveryBodySchema = z.object({
-    email: z.email(),
+export const VerifyMagicLinkBodySchema = z.object({
+    token: z.string().min(1),
 });
-export type RequestRecoveryBody = z.infer<typeof RequestRecoveryBodySchema>;
-
-export const RecoverPasswordBodySchema = z.object({
-    userId: z.string(),
-    password: z.string(),
-    recoverHash: z.string(),
-});
-export type RecoverPasswordBody = z.infer<typeof RecoverPasswordBodySchema>;
+export type VerifyMagicLinkBody = z.infer<typeof VerifyMagicLinkBodySchema>;
 
 export const CreateProjectBodySchema = z.object({
     title: z.string(),
@@ -46,11 +33,6 @@ export const UpdateRoleSchema = z.object({
     role: z.string(),
 });
 export type UpdateRoleBody = z.infer<typeof UpdateRoleSchema>;
-
-export const UpdatePasswordBodySchema = z.object({
-    password: z.string(),
-});
-export type UpdatePasswordBody = z.infer<typeof UpdatePasswordBodySchema>;
 
 const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 export const UpdateUserBodySchema = z.object({

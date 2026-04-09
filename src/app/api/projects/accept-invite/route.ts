@@ -38,13 +38,15 @@ async function acceptProjectInvite(req: NextRequest, { searchParams }: ApiContex
         await ProjectService.upsertMember(invite.projectId, user.id);
         await ProjectService.deleteInviteFromToken(token);
 
-        // If user is not logged in, redirect to login with invitation email as placeholder
+        // If user is not logged in, send them to the home page with the email pre-filled
+        // so they can request a magic link.
         const cookieUser = await getCookieUser();
         if (cookieUser) redirectScreenplay(invite.projectId);
-        else redirect(`/login?email=${invite.email}`);
+        else redirect(`/?email=${encodeURIComponent(invite.email)}`);
     } else {
-        // If email is not registered on Scriptio we redirect to signup with the same token
-        redirect(`/signup?email=${invite.email}&inviteToken=${token}`);
+        // Unknown email — pre-fill the home page with email + invite token; the magic link
+        // route will pick the invite token up from the request body and accept it on sign-in.
+        redirect(`/?email=${encodeURIComponent(invite.email)}&inviteToken=${encodeURIComponent(token)}`);
     }
 }
 
