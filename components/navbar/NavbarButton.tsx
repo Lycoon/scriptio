@@ -1,3 +1,5 @@
+"use client";
+
 import btn from "./NavbarButton.module.css";
 
 type Props = {

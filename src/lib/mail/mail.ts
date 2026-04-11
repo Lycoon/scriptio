@@ -5,61 +5,76 @@ var hogan = require("hogan.js");
 
 const transporter = nodemailer.createTransport({
     pool: true,
-    host: "email-smtp.eu-west-3.amazonaws.com",
-    port: 465,
-    secure: true, // use TLS
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: true,
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_SECRET,
     },
 });
 
-export const sendRecoveryEmail = async (userId: number, email: string, recoverHash: string) => {
-    const link = `${BASE_URL}/recovery?id=${userId}&code=${recoverHash}`;
-    const content = `A request has been issued to update ${email} account password. Click the button below to change your password.`;
+export const sendProjectInviteEmail = async (email: string, projectTitle: string, token: string) => {
+    const link = `${BASE_URL}/api/projects/accept-invite?token=${token}`;
+    const content = `You have been invited to join project '${projectTitle}' as a collaborator. Click the button below to accept the invite.`;
 
-    sendFormattedEmail(email, "Change password", "Password change request", content, "Change password", link);
+    sendFormattedEmail(email, "Project Invitation", "Project Invitation", content, "Join project", link);
 };
 
-export const sendVerificationEmail = async (userId: number, email: string, emailHash: string) => {
-    const link = `${BASE_URL}/api/verify?id=${userId}&code=${emailHash}`;
-    const content = `Welcome ${email}! Click the button below to verify your email address after which you will be able to log in using your credentials.`;
+export const sendMagicLinkEmail = async (email: string, token: string) => {
+    const link = `${BASE_URL}/auth/magic-link?token=${token}`;
+    const content = `Click the button below to sign in to your Scriptio account. This link will expire in 10 minutes and can only be used once. If you didn't request this, you can safely ignore this email.`;
 
-    sendFormattedEmail(
-        email,
-        "Thank you for joining Scriptio",
-        "Verify your account",
-        content,
-        "Verify your account",
-        link
-    );
+    sendFormattedEmail(email, "Sign in to Scriptio", "Your sign-in link", content, "Sign in", link);
 };
 
 const sendFormattedEmail = async (
     email: string,
     welcomeMessage: string,
     subject: string,
-    content: string,
-    buttonContent: string,
-    link: string
+    bodyText: string,
+    buttonText: string,
+    link: string,
 ) => {
     const template = fs.readFileSync("./src/lib/mail/template.html").toString();
+    const signature = fs.readFileSync("./src/lib/mail/signature.html").toString();
     const compiled = hogan.compile(template);
     const rendered = compiled.render({
-        content,
-        buttonContent,
+        bodyText,
+        buttonText,
         welcomeMessage,
         link,
+        signature,
     });
 
-    sendEmail(email, subject, rendered);
+    sendEmail(email, subject, rendered, bodyText);
 };
 
-const sendEmail = async (to: string, subject: string, content: string) => {
+export const sendContactEmail = async (email: string, reason: string, message: string) => {
+    const html = `
+        <h2>New Contact Form Submission</h2>
+        <p><strong>From:</strong> ${email}</p>
+        <p><strong>Reason:</strong> ${reason}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message.replace(/\n/g, "<br>")}</p>
+    `;
+    const text = `From: ${email}\nReason: ${reason}\nMessage:\n${message}`;
+    transporter.sendMail({
+        from: "Scriptio Form <no-reply@scriptio.app>",
+        replyTo: email,
+        to: "contact@scriptio.app",
+        subject: `[Contact] ${reason}`,
+        html,
+        text,
+    });
+};
+
+const sendEmail = async (to: string, subject: string, html: string, text: string) => {
     transporter.sendMail({
         from: "Scriptio <no-reply@scriptio.app>",
         to,
         subject,
-        html: content,
+        html: html,
+        text: text,
     });
 };

@@ -1,49 +1,45 @@
-import { Project } from "@src/lib/utils/types";
-import { _MS_PER_DAY, getElapsedDaysFrom, getLastUpdate, join } from "@src/lib/utils/misc";
+"use client";
 
-import CalendarSVG from "@public/images/calendar.svg";
+import { getElapsedDaysFrom, join } from "@src/lib/utils/misc";
+import { useTranslations } from "next-intl";
 
 import item from "./ProjectItem.module.css";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
+import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { CloudCheck, HardDrive } from "lucide-react";
 
 type Props = {
-    project: Project;
-    deleteMode: boolean;
-    deleteProject: (userId: number, projectId: string) => void;
+    project: ProjectMembershipPayload["project"];
+    isLocalOnly?: boolean;
 };
 
-const ProjectItem = ({ project, deleteMode, deleteProject }: Props) => {
+const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
+    const t = useTranslations("projects");
+    const tDates = useTranslations("dates");
     const elapsedDays = getElapsedDaysFrom(project.updatedAt);
-    const lastUpdated = getLastUpdate(elapsedDays);
+    const lastUpdated =
+        elapsedDays === 0 ? tDates("today") :
+        elapsedDays === 1 ? tDates("yesterday") :
+        elapsedDays <= 30 ? tDates("daysAgo", { days: elapsedDays }) :
+        elapsedDays <= 365 ? tDates("monthsAgo", { months: Math.round(elapsedDays / 30) }) :
+        tDates("moreThanYearAgo");
 
     let posterPath;
-    if (project.poster) posterPath = "/api/s3/" + project.poster;
+    if (project.poster) posterPath = project.poster;
     else posterPath = "/images/default-poster.png";
 
     return (
-        <button
-            className={join(item.container, deleteMode ? item.delete : "")}
-            onClick={() => {
-                deleteMode ? deleteProject(project.userId, project.id) : redirectScreenplay(project.id);
-            }}
-        >
-            {deleteMode ? (
-                <div>
-                    <h2 className={item.text_delete}>Delete</h2>
-                    <p className={item.text_delete}>{project.title}</p>
+        <button className={join(item.container)} onClick={() => redirectScreenplay(project.id)}>
+            <img className={item.poster} src={posterPath} alt={t("item.posterAlt")} />
+            <div className={item.info}>
+                <h2 className={item.title}>{project.title}</h2>
+                <div className={item.date}>
+                    <span className={item.sync_icon} title={isLocalOnly ? t("item.localOnly") : t("item.syncedToCloud")}>
+                        {isLocalOnly ? <HardDrive className={item.icon} size={16} /> : <CloudCheck className={item.icon} size={16} />}
+                    </span>
+                    <p className={item.date_text}>{lastUpdated}</p>
                 </div>
-            ) : (
-                <div className={item.title_flex}>
-                    <div>
-                        <h2 className={item.title}>{project.title}</h2>
-                        <div className={item.date}>
-                            <CalendarSVG className={item.calendar} alt="Calendar icon" />
-                            <p className={item.date_text}>{lastUpdated}</p>
-                        </div>
-                    </div>
-                    <img className={item.poster} src={posterPath} alt="Movie poster" />
-                </div>
-            )}
+            </div>
         </button>
     );
 };

@@ -1,0 +1,461 @@
+{
+  "navbar": {
+    "screenplay": "脚本",
+    "board": "ボード",
+    "titlePage": "タイトルページ",
+    "synced": "クラウドに同期済み",
+    "noConnection": "接続なし",
+    "reconnecting": "再接続中...",
+    "localProject": "ローカルプロジェクト",
+    "endlessScroll": "無限スクロール",
+    "toggleComments": "コメントの表示/非表示",
+    "focusMode": "集中モード",
+    "splitPanel": "パネルを分割",
+    "unsplitPanel": "パネルを閉じる",
+    "draftEditor": "下書きエディター"
+  },
+  "common": {
+    "save": "変更を保存",
+    "cancel": "キャンセル",
+    "loading": "読み込み中...",
+    "resetDefaults": "デフォルトに戻す"
+  },
+  "sidebar": {
+    "title": "ダッシュボード",
+    "logOut": "ログアウト",
+    "auth": "ログイン",
+    "logOutConfirmTitle": "ログアウト",
+    "logOutConfirmDesc": "ログアウトしてもよろしいですか？",
+    "logOutConfirmBtn": "ログアウト",
+    "logOutCancelBtn": "キャンセル"
+  },
+  "appearance": {
+    "theme": "テーマ",
+    "themeHelp": {
+      "dark": "目に優しい低輝度テーマ。夜間の作業に最適です。",
+      "light": "明るく清潔感のあるテーマ。日中の作業に最適です。",
+      "latte": "温かみのあるクリームトーン。読みやすさと心地よさを両立します。",
+      "wonka": "深みのあるカカオトーン。高級感と視覚的な快適さを提供します。",
+      "mint": "爽やかなミントカラー。植物のような安らぎとバランスをもたらします。",
+      "blossom": "繊細なフローラルトーン。花びらのような柔らかさと快適さを提供します。"
+    },
+    "editor": "エディタ",
+    "themedEditor": "テーマエディタ",
+    "themedEditorDesc": "エディタの背景とテキストにテーマカラーを適用する",
+    "highlightOnHover": "ホバーハイライト",
+    "highlightOnHoverDesc": "エディタでカーソルを合わせた行を軽くハイライトする"
+  },
+  "keybinds": {
+    "screenplayElements": "脚本要素",
+    "typing": "入力中… (Escでキャンセル)",
+    "notSet": "未設定",
+    "modifiersOnly": "修飾キーのみ — 通常のキーを押してください",
+    "defaultPrefix": "デフォルト: {combo}",
+    "reset": "リセット",
+    "resetTitle": "カスタム設定を削除",
+    "resetDefaults": "デフォルトに戻す",
+    "save": "変更を保存"
+  },
+  "language": {
+    "label": "表示言語",
+    "helpText": "アプリケーション全体で使用する言語を選択してください。",
+    "spellcheckLabel": "スペルチェック",
+    "spellcheckHelpText": "エディタでスペルチェックを行うための辞書をダウンロードしてください。",
+    "spellcheckNone": "無効",
+    "customDictLabel": "プロジェクト辞書",
+    "customDictAdd": "追加",
+    "customDictEmpty": "カスタム単語はまだありません。",
+    "customDictHelpText": "ここに追加された単語はプロジェクトの全共同編集者と共有されます。"
+  },
+  "modal": {
+    "groups": {
+      "project": "プロジェクト",
+      "preferences": "設定",
+      "account": "アカウント"
+    },
+    "tabs": {
+      "General": "全般",
+      "Layout": "レイアウト",
+      "Export": "インポート/エクスポート",
+      "Collaborators": "共同作業者",
+      "Keybinds": "ショートカットキー",
+      "Appearance": "外観",
+      "Language": "言語",
+      "Profile": "プロフィール",
+      "Settings": "設定",
+      "Auth": "ログイン",
+      "About": "アプリについて",
+      "Subscription": "サブスクリプション"
+    }
+  },
+  "dangerZone": {
+    "transferOwnership": "所有権を譲渡",
+    "transferDesc": "所有者権限を他のユーザーに譲渡します。あなたは編集者権限に変更されます。",
+    "transferBtn": "譲渡",
+    "transferPrompt": "新しい所有者のメールアドレスを入力してください：",
+    "deleteProject": "プロジェクトを削除",
+    "deleteProjectDesc": "一度プロジェクトを削除すると、元に戻すことはできません。慎重に決定してください。",
+    "deleteBtn": "削除",
+    "modalTitle": "プロジェクトを削除",
+    "modalDesc": "この操作は永続的であり、取り消すことはできません。プロジェクトに関連するすべてのデータが失われます。",
+    "deleting": "削除中...",
+    "confirmDeleteBtn": "プロジェクトを削除"
+  },
+  "profile": {
+    "email": "メールアドレス",
+    "username": "ユーザー名",
+    "usernamePlaceholder": "表示名を入力してください...",
+    "usernameHelp": "この名前は共同作業中に他のユーザーに表示されます。",
+    "color": "カラー",
+    "customColor": "カスタムカラー",
+    "selectColor": "{color} を選択",
+    "successMessage": "プロフィールを更新しました",
+    "failedUpdate": "プロフィールの更新に失敗しました",
+    "errorSaving": "保存中にエラーが発生しました",
+    "saving": "保存中...",
+    "dangerZoneTitle": "危険ゾーン",
+    "deleteAccount": "アカウントを削除",
+    "deleteAccountDesc": "アカウントとすべての関連データを完全に削除します。この操作は取り消せません。",
+    "deleteBtn": "削除",
+    "deleteModalTitle": "アカウントを削除",
+    "deleteModalDesc": "アカウントとすべての関連データを完全に削除します。この操作は取り消せません。",
+    "deleteConfirmPhrase": "アカウントの削除を承認します",
+    "deleteConfirmLabel": "確認のために <ph/> と入力してください。",
+    "deleting": "削除中...",
+    "deleteAccountBtn": "自分のアカウントを削除",
+    "subscription": {
+      "title": "サブスクリプション",
+      "proBadge": "Pro",
+      "proTitle": "Proプラン",
+      "freeTitle": "無料プラン",
+      "renewsOn": "{date}に更新",
+      "perksTitle": "含まれる機能：",
+      "upgradeTitle": "アップグレードして解放：",
+      "perkProjects": "クラウドプロジェクトの作成",
+      "perkSaves": "手動保存とバージョン履歴",
+      "perkCollaborators": "コラボレーターを招待",
+      "perkAutoSave": "クラウド自動保存",
+      "upgradeBtn": "Proにアップグレード",
+      "redirecting": "リダイレクト中...",
+      "cancel": "サブスクリプションをキャンセル",
+      "cancelConfirm": "Proアクセスは{date}まで有効です。それでもキャンセルしますか？",
+      "cancelYes": "はい、キャンセル",
+      "cancelNo": "Proを維持",
+      "cancelling": "キャンセル中...",
+      "cancelSuccess": "サブスクリプションをキャンセルしました。{date}までProアクセス有効。",
+      "endsOn": "サブスクリプションは{date}に終了します"
+    }
+  },
+  "projects": {
+    "untitled": "無題",
+    "newProject": "新規プロジェクト",
+    "pageTitle": "プロジェクト",
+    "importBtn": "インポート...",
+    "importing": "インポート中...",
+    "createBtn": "作成",
+    "empty": {
+      "createFirst": "新規プロジェクト",
+      "createDesc": "白紙から始める",
+      "importExisting": "インポート",
+      "importDesc": "既存のスクリプトファイルを開く"
+    },
+    "item": {
+      "posterAlt": "映画ポスター",
+      "localOnly": "ローカル専用",
+      "syncedToCloud": "クラウドに同期済み"
+    },
+    "form": {
+      "formTitle": "プロジェクトを作成",
+      "titleField": "タイトル",
+      "descriptionField": "説明",
+      "authorField": "作者",
+      "posterField": "ポスター",
+      "optional": "任意",
+      "submitBtn": "作成",
+      "failedToCreate": "プロジェクトの作成に失敗しました"
+    }
+  },
+  "editorSidebar": {
+    "scenes": "シーン",
+    "characters": "登場人物",
+    "locations": "場所",
+    "shelf": "シェルフ",
+    "shelfEmpty": "編集するバージョンを選択してください",
+    "goTo": "脚本内で移動",
+    "confirmRestore": "脚本内の一致するコンテンツが置き換えられます。",
+    "restore": "復元",
+    "cancel": "キャンセル"
+  },
+  "formatDropdown": {
+    "elements": {
+      "scene": "シーン見出し",
+      "action": "ト書き",
+      "character": "登場人物",
+      "dialogue": "セリフ",
+      "parenthetical": "(カッコ)",
+      "transition": "柱書き:",
+      "section": "セクション",
+      "note": "[[メモ]]",
+      "dual_dialogue": "二重対話",
+      "none": "なし"
+    },
+    "titlePageElements": {
+      "title": "タイトル",
+      "author": "作者",
+      "date": "日付",
+      "none": "なし"
+    }
+  },
+  "search": {
+    "placeholder": "検索...",
+    "noMatches": "一致なし",
+    "matchCount": "{total} 件中 {current} 件目",
+    "replacePlaceholder": "置換後の文字列...",
+    "replace": "置換",
+    "replaceAll": "すべて置換",
+    "filterByElement": "要素でフィルタ:",
+    "elements": {
+      "scene": "シーン見出し",
+      "action": "ト書き",
+      "character": "登場人物",
+      "dialogue": "セリフ",
+      "parenthetical": "カッコ",
+      "transition": "柱書き",
+      "section": "セクション",
+      "note": "メモ",
+      "dual_dialogue": "二重対話",
+      "none": "なし"
+    }
+  },
+  "collaborators": {
+    "projectTeam": "プロジェクトチーム ({count}/{max})",
+    "teamHelp": "メンバー管理。Pro以外のユーザーも招待可能です。所有者がProプランであれば共同作業を継続できます。",
+    "roles": {
+      "owner": "所有者",
+      "admin": "管理者",
+      "editor": "編集者",
+      "viewer": "閲覧者"
+    },
+    "roleDesc": {
+      "owner": "プロジェクトの削除、所有権の譲渡が可能",
+      "admin": "メンバーの招待、権限管理、削除が可能",
+      "editor": "脚本やコンテンツの編集が可能",
+      "viewer": "閲覧のみ。編集不可"
+    },
+    "you": "(あなた)",
+    "leave": "退出",
+    "kick": "削除",
+    "pending": "保留中",
+    "cancel": "キャンセル",
+    "emailPlaceholder": "メールアドレスを入力...",
+    "invite": "招待",
+    "proRequired": "A Pro subscription is required to invite collaborators.",
+    "proRequiredInvite": "Upgrade to Pro to invite collaborators",
+    "upgrade": "Upgrade",
+    "localProjectOnly": "Collaboration is not available for local projects. Upload your project to the cloud to invite collaborators."
+  },
+  "export": {
+    "importLabel": "インポート",
+    "selectFile": "ファイルを選択",
+    "selectFileDesc": ".fountain, .fdx, .scriptio, .txt ファイル",
+    "exportLabel": "エクスポート",
+    "formatOptions": {
+      "pdf": "PDF ドキュメント (.pdf)",
+      "fountain": "Fountain (.fountain)",
+      "fdx": "Final Draft (.fdx)",
+      "scriptio": "Scriptio (.scriptio)"
+    },
+    "formatHelp": {
+      "pdf": "業界標準フォーマット。共有や印刷に最適です。",
+      "fountain": "Markdownベースのテキスト形式。互換性に優れています。",
+      "fdx": "プロ向けソフト Final Draft と互換性があります。",
+      "scriptio": "Scriptio 独自形式。ローカル保存に最適です。"
+    },
+    "includeNotes": "メモを含める",
+    "includeNotesDesc": "挿入されたメモをエクスポートします。",
+    "readable": "読みやすい JSON",
+    "readableDesc": "圧縮なしの JSON で出力します。ファイルサイズは大きくなりますが、テキストエディタで確認可能です。",
+    "watermark": "透かし",
+    "watermarkDesc": "ページに透かしテキストを追加します。",
+    "watermarkPlaceholder": "透かしテキスト",
+    "passwordProtection": "パスワード保護",
+    "passwordProtectionDesc": "PDFを開くためのパスワードを設定します。",
+    "passwordPlaceholder": "パスワードを入力",
+    "exportBtn": "エクスポート",
+    "exporting": "エクスポート中...",
+    "exportingProgress": "エクスポート中 ({progress}%)"
+  },
+  "layout": {
+    "pageFormat": "ページ設定",
+    "pageFormatHelp": {
+      "letter": "米国標準。ハリウッド脚本の標準です。",
+      "a4": "国際標準。日本やその他の国で一般的です。"
+    },
+    "sceneHeadings": "シーン見出し",
+    "bold": "太字",
+    "boldDesc": "シーン見出しを太字にします。",
+    "extraSpace": "上部に余白を追加",
+    "extraSpaceDesc": "シーン見出しの前にスペースを追加します。",
+    "sceneNumbering": "シーン番号",
+    "sceneNumberingDesc": "左余白にシーン番号を表示します。",
+    "duplicateRight": "右側にも表示",
+    "duplicateRightDesc": "両側の余白に番号を表示します。",
+    "continuation": "継続表示",
+    "moreTitle": "(MORE) ラベル",
+    "contdTitle": "(CONT'D) ラベル",
+    "pageMargins": "ページ余白",
+    "vertical": "垂直",
+    "horizontal": "水平",
+    "marginTop": "上端",
+    "marginBottom": "下端",
+    "margins": "余白",
+    "marginLeft": "左側",
+    "marginRight": "右側",
+    "marginElements": {
+      "action": "ト書き",
+      "scene": "シーン見出し",
+      "character": "登場人物",
+      "dialogue": "セリフ",
+      "parenthetical": "カッコ",
+      "transition": "柱書き",
+      "section": "セクション"
+    },
+    "elements": "要素設定",
+    "style": "スタイル",
+    "alignment": "配置",
+    "italic": "斜体",
+    "underline": "下線",
+    "uppercase": "大文字",
+    "alignLeft": "左寄せ",
+    "alignCenter": "中央揃え",
+    "alignRight": "右寄せ",
+    "sceneSpacing": "間隔",
+    "sceneSpacingDesc": "シーン見出しの上のスペース",
+    "startNewPage": "新しいページから開始"
+  },
+  "projectSettings": {
+    "titleLabel": "タイトル",
+    "titlePlaceholder": "プロジェクト名を入力...",
+    "authorLabel": "作者",
+    "authorPlaceholder": "作者名を入力...",
+    "descriptionLabel": "説明",
+    "descriptionPlaceholder": "脚本のあらすじなど...",
+    "posterLabel": "ポスター",
+    "noPoster": "画像なし",
+    "posterHelp": "推奨: 600x900 (2:3比率)。PNG, JPG 対応。",
+    "saveChanges": "変更を保存",
+    "dangerZoneTitle": "危険ゾーン"
+  },
+  "contextMenu": {
+    "goToScene": "シーンへ移動",
+    "edit": "編集",
+    "copy": "コピー",
+    "cut": "切り取り",
+    "selectInEditor": "エディタで選択",
+    "remove": "削除",
+    "paste": "貼り付け",
+    "highlight": "ハイライト",
+    "addCharacter": "登場人物を追加",
+    "addComment": "コメントを追加",
+    "searchOnWeb": "ウェブ検索",
+    "noSuggestions": "候補なし",
+    "addToDictionary": "辞書に追加",
+    "makeDualDialogue": "二重対話を作成",
+    "shelve": "保管する",
+    "shelveScene": "シーンを保管する",
+    "shelveDialogue": "セリフを保管する",
+    "shelveAction": "アクションを保管する"
+  },
+  "popup": {
+    "character": {
+      "create": "登場人物を作成",
+      "edit": "登場人物を編集",
+      "name": "名前",
+      "gender": "性別",
+      "genderFemale": "女性",
+      "genderMale": "男性",
+      "genderOther": "その他",
+      "color": "カラー",
+      "synopsis": "設定/あらすじ",
+      "confirm": "確定",
+      "takenNameError": "{newName} という名前は既に存在します。別の名前か、既存の要素を編集してください。",
+      "updateOccurrences": "{oldName} を {newName} に置換しますか？（計 {count} 箇所）意図しない置換にご注意ください。",
+      "yes": "はい",
+      "noDoNotChange": "いいえ"
+    },
+    "import": {
+      "title": "インポートの確認",
+      "warning": "現在のプロジェクトを <b>上書き</b> しますか？",
+      "info": "必要に応じて事前にエクスポートを行ってください。",
+      "yesImport": "はい、インポートする",
+      "no": "いいえ"
+    },
+    "scene": {
+      "edit": "シーンを編集",
+      "sceneTitle": "シーン",
+      "color": "カラー",
+      "synopsis": "あらすじ",
+      "synopsisPlaceholder": "シーンの簡単な説明を入力...",
+      "save": "保存"
+    }
+  },
+  "board": {
+    "duplicate": "複製",
+    "delete": "削除",
+    "hints": {
+      "pan": "ホイールクリックでドラッグ",
+      "select": "ドラッグでカードを選択",
+      "create": "ダブルクリックでカードを作成",
+      "move": "Shiftキーで自由移動"
+    },
+    "untitled": "無題",
+    "titlePlaceholder": "タイトル",
+    "descriptionPlaceholder": "説明"
+  },
+  "saves": {
+    "title": "バージョン履歴",
+    "saveCurrentVersion": "現在のバージョンを保存",
+    "namePlaceholder": "バージョン名...",
+    "manualSaves": "手動保存",
+    "autoSaves": "自動保存",
+    "restore": "復元",
+    "rename": "名前変更",
+    "delete": "削除",
+    "cancel": "キャンセル",
+    "confirmRestore": "全共同作業者の現在のドキュメントがこのバージョンで上書きされます。よろしいですか？",
+    "confirmDelete": "この保存データを削除しますか？",
+    "noSaves": "保存データはありません",
+    "proRequired": "Pro Required",
+    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
+    "upgradeBtn": "Upgrade to Pro"
+  },
+  "auth": {
+    "intro": "メールアドレスを入力してください。一度きりのサインインリンクをお送りします。パスワードは必要ありません。",
+    "emailLabel": "メールアドレス",
+    "sendLink": "サインインリンクを送信",
+    "sending": "送信中...",
+    "checkInbox": "{email} に関連付けられたアカウントがある場合、サインインリンクを送信しました。リンクは10分間有効です。",
+    "useDifferentEmail": "別のメールアドレスを使用",
+    "waitingForClick": "受信トレイのリンクをクリックするのをお待ちしています...",
+    "requestFailed": "サインインリンクを送信できませんでした。少し経ってからもう一度お試しください。",
+    "desktopTimeout": "サインインがタイムアウトしました。新しいリンクをリクエストしてください。"
+  },
+  "oauth": {
+    "orContinueWith": "または次で続行",
+    "continueWithGoogle": "Google で続行",
+    "continueWithApple": "Apple で続行",
+    "waiting": "ブラウザを待機中…",
+    "timeout": "サインインがタイムアウトしました。もう一度お試しください。",
+    "error": "サインインに失敗しました。もう一度お試しください。"
+  },
+  "dates": {
+    "justNow": "たった今",
+    "minutesAgo": "{mins}分前",
+    "hoursAgo": "{hours}時間前",
+    "today": "今日",
+    "yesterday": "昨日",
+    "daysAgo": "{days}日前",
+    "monthsAgo": "{months}ヶ月前",
+    "moreThanYearAgo": "1年以上前"
+  }
+}

@@ -1,68 +1,235 @@
-import { ProjectCreationDTO, ProjectUpdateDTO } from "../../lib/utils/types";
+import { ProjectCreation, ProjectUpdate } from "../../lib/utils/types";
+import { Prisma, ProjectRole } from "@prisma/client";
 import prisma from "../db";
 
+import * as S3 from "@src/lib/s3";
+
+const projectMembershipSelect = {
+    project: {
+        select: {
+            id: true,
+            title: true,
+            hasPoster: true,
+            description: true,
+            author: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    },
+    role: true,
+};
+
+const collaboratorSelect = Prisma.validator<Prisma.ProjectMemberSelect>()({
+    user: {
+        select: {
+            id: true,
+            email: true,
+        },
+    },
+    role: true,
+});
+
+export type Collaborator = Prisma.ProjectMemberGetPayload<{
+    select: typeof collaboratorSelect;
+}>;
+
+export type ProjectInvite = Prisma.ProjectInvitationGetPayload<{
+    select: {
+        email: true;
+    };
+}>;
+
+const projectSelect = projectMembershipSelect.project.select;
+type RawProject = Prisma.ProjectGetPayload<{
+    select: typeof projectSelect;
+}>;
+
+type RawMembership = {
+    role: ProjectRole;
+    project: RawProject;
+};
+
+export type Project = Omit<RawProject, "poster"> & {
+    poster: string | null;
+};
+export interface ProjectMembershipPayload {
+    role: ProjectRole;
+    project: Project;
+}
+
 export class ProjectRepository {
-    updateProject(project: ProjectUpdateDTO) {
-        return prisma.project.update({
-            data: {
-                title: project.title,
-                description: project.description,
-                screenplay: project.screenplay,
-                poster: project.poster,
-                characters: project.characters,
+    private async hydrateMembership(membership: RawMembership): Promise<ProjectMembershipPayload> {
+        let posterUrl: string | null = null;
+
+        if (membership.project.hasPoster) {
+            const key = `poster-${membership.project.id}`;
+            posterUrl = await S3.getSignedDownloadUrl(key);
+        }
+
+        return {
+            ...membership,
+            project: {
+                ...membership.project,
+                poster: posterUrl,
             },
+        };
+    }
+
+    async fetchProjectMemberships(userId: string) {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                projects: {
+                    select: projectMembershipSelect,
+                    orderBy: {
+                        project: {
+                            updatedAt: "desc",
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!user) return [];
+
+        return Promise.all(user.projects.map((m) => this.hydrateMembership(m)));
+    }
+
+    async fetchProjectMembership(projectId: string, userId: string) {
+        const membership = await prisma.projectMember.findUnique({
             where: {
-                id: project.projectId,
+                userId_projectId: {
+                    userId,
+                    projectId,
+                },
+            },
+            select: projectMembershipSelect,
+        });
+
+        if (!membership) return null;
+
+        return this.hydrateMembership(membership);
+    }
+
+    fetchProjectTitle(projectId: string) {
+        return prisma.project.findUnique({
+            where: { id: projectId },
+            select: {
+                title: true,
             },
         });
     }
 
-    deleteProject(project: ProjectUpdateDTO) {
-        return prisma.project.delete({
-            where: {
-                id: project.projectId,
-            },
+    fetchCollaborators(projectId: string): Promise<Collaborator[]> {
+        return prisma.projectMember.findMany({
+            where: { projectId },
+            select: collaboratorSelect,
         });
     }
 
-    createProject(project: ProjectCreationDTO) {
+    createProject(project: ProjectCreation) {
         return prisma.project.create({
             data: {
                 title: project.title,
                 description: project.description,
-                poster: project.poster,
-                screenplay: {},
-                user: {
-                    connect: { id: project.userId },
-                },
-            },
-        });
-    }
-
-    fetchProjects(userId: number) {
-        return prisma.user.findUnique({
-            where: {
-                id: userId,
-            },
-            select: {
-                projects: {
-                    select: {
-                        // fetch everything but the screenplay
-                        id: true,
-                        title: true,
-                        updatedAt: true,
-                        createdAt: true,
-                        poster: true,
+                author: project.author,
+                hasPoster: project.hasPoster,
+                members: {
+                    create: {
+                        userId: project.userId,
+                        role: ProjectRole.OWNER,
                     },
                 },
             },
         });
     }
 
-    fetchProjectFromId(projectId: string) {
-        return prisma.project.findUnique({
+    updateProject(project: ProjectUpdate) {
+        return prisma.project.update({
+            where: { id: project.projectId },
+            data: {
+                title: project.title,
+                description: project.description,
+                author: project.author,
+                hasPoster: project.hasPoster,
+            },
+        });
+    }
+
+    deleteProject(projectId: string) {
+        return prisma.project.delete({
+            where: { id: projectId },
+        });
+    }
+
+    setProjectMember(projectId: string, userId: string, role: ProjectRole) {
+        return prisma.projectMember.upsert({
             where: {
-                id: projectId,
+                userId_projectId: {
+                    projectId,
+                    userId,
+                },
+            },
+            update: {
+                role,
+            },
+            create: {
+                projectId,
+                userId,
+                role,
+            },
+        });
+    }
+
+    fetchInvites(projectId: string) {
+        return prisma.projectInvitation.findMany({
+            where: { projectId },
+            select: {
+                email: true,
+            },
+        });
+    }
+
+    fetchInvite(token: string) {
+        return prisma.projectInvitation.findUnique({
+            where: { token },
+        });
+    }
+
+    createInvite(projectId: string, email: string, token: string) {
+        return prisma.projectInvitation.create({
+            data: {
+                projectId,
+                email,
+                token,
+            },
+        });
+    }
+
+    deleteInviteFromToken(token: string) {
+        return prisma.projectInvitation.delete({
+            where: { token },
+        });
+    }
+
+    deleteInviteFromEmail(email: string, projectId: string) {
+        return prisma.projectInvitation.delete({
+            where: {
+                email_projectId: {
+                    email,
+                    projectId,
+                },
+            },
+        });
+    }
+
+    deleteProjectMember(projectId: string, userId: string) {
+        return prisma.projectMember.delete({
+            where: {
+                userId_projectId: {
+                    projectId,
+                    userId,
+                },
             },
         });
     }

@@ -1,0 +1,225 @@
+.container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.search_wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-radius: 64px;
+    border: 2px solid var(--tertiary);
+    overflow: hidden;
+    transition: width 0.25s ease;
+    width: 44px;
+}
+
+.search_wrapper_open {
+    width: 220px;
+    background-color: var(--secondary);
+}
+
+.search_input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    color: var(--primary-text);
+    outline: none;
+    min-width: 0;
+}
+
+.search_input::placeholder {
+    color: var(--secondary-text);
+}
+
+.search_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    cursor: pointer;
+    color: var(--primary-text);
+    transition: background-color 0.15s ease;
+}
+
+.search_btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.search_btn_active {
+    cursor: default;
+}
+
+.search_btn_active:hover {
+    background-color: transparent;
+}
+
+.dropdown {
+    composes: panel from "./navbar-shared.module.css";
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 220px;
+    padding: 8px;
+    border-radius: 16px;
+    z-index: 1;
+}
+
+.navigation {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--separator);
+    margin-bottom: 8px;
+}
+
+.nav_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--primary-text);
+    transition: background-color 0.15s ease;
+}
+
+.nav_btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
+.nav_btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.match_count {
+    flex: 1;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--secondary-text);
+    white-space: nowrap;
+}
+
+.close_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--secondary-text);
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.close_btn:hover {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+.replace_section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--separator);
+    margin-bottom: 8px;
+}
+
+.replace_input {
+    composes: text_input from "./navbar-shared.module.css";
+}
+
+.replace_actions {
+    display: flex;
+    flex-direction: row;
+    flex-shrink: 0;
+    gap: 4px;
+}
+
+.replace_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--primary-text);
+    transition: background-color 0.15s ease;
+}
+
+.replace_btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
+.replace_btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.filters_section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filters_label {
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.filters_list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.filter_item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.filter_item:hover {
+    background-color: var(--secondary-hover);
+}
+
+.filter_checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-text);
+    cursor: pointer;
+}
+
+.filter_label {
+    font-size: 0.85rem;
+    color: var(--primary-text);
+}

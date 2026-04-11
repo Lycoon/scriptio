@@ -1,0 +1,124 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: 100%;
+}
+
+.style_btns {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+
+.style_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--secondary-text);
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.style_btn:hover {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+.style_btn.active_style {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+.separator {
+    width: 1px;
+    height: 20px;
+    background-color: var(--separator);
+    margin-inline: 4px;
+}
+
+.dropdown_wrapper {
+    position: relative;
+}
+
+.dropdown_trigger {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 10px;
+    width: 140px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    white-space: nowrap;
+    color: var(--primary-text);
+    background-color: var(--secondary);
+}
+
+.dropdown_trigger:hover {
+    background-color: var(--secondary-hover);
+}
+
+.selected_label {
+    font-family: var(--font-courier);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chevron {
+    transition: transform 0.2s ease;
+    color: var(--secondary-text);
+}
+
+.chevron_open {
+    transform: rotate(180deg);
+}
+
+.dropdown_menu {
+    composes: panel from "./navbar-shared.module.css";
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 180px;
+    padding: 6px;
+    border-radius: 10px;
+    z-index: 1;
+}
+
+.dropdown_item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-align: left;
+    cursor: pointer;
+    font-family: var(--font-courier);
+    color: var(--primary-text);
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.dropdown_item:hover {
+    background-color: var(--secondary-hover);
+}
+
+.dropdown_item_active {
+    background-color: var(--secondary-hover);
+    font-weight: 600;
+}

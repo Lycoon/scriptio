@@ -2,43 +2,25 @@
 //             WEBSITE            //
 // ------------------------------ //
 
-export enum VerificationStatus {
-    Success,
-    Failed,
-    Used,
-}
+export const ALL_PAGES = ["index", "screenplay", "board", "statistics", "privacy", "contact"] as const;
+export type Page = (typeof ALL_PAGES)[number];
 
-export enum PasswordRecoverStatus {
-    Success,
-    Failed,
-    Expired,
-}
+export const isPage = (value: string): value is Page => {
+    return ALL_PAGES.includes(value as Page);
+};
 
-export enum Page {
-    // /{page}
-    Index = "index",
-    Settings = "settings",
-    About = "about",
-    Login = "login",
-    Signup = "signup",
-    Recover = "recover",
+// ------------------------------ //
+//            PANELS              //
+// ------------------------------ //
 
-    // /projects/{id}/{page}
-    Screenplay = "screenplay",
-    Statistics = "statistics",
-    Edit = "edit",
-    Export = "export",
-}
+export const PANEL_TYPES = ["screenplay", "board", "statistics", "title"] as const;
+export type PanelType = (typeof PANEL_TYPES)[number];
 
 // ------------------------------ //
 //            PROJECT             //
 // ------------------------------ //
 
-export enum SaveStatus {
-    Saving,
-    Saved,
-    Error,
-}
+export type ConnectionStatus = "connected" | "disconnected" | "connecting";
 
 export enum SaveMode {
     Local = 1,
@@ -49,6 +31,8 @@ export enum SaveMode {
 // ------------------------------ //
 //            EDITOR              //
 // ------------------------------ //
+
+export type PageFormat = "A4" | "LETTER";
 
 export enum Style {
     None = 0,
@@ -67,5 +51,14 @@ export enum ScreenplayElement {
     Transition = "transition",
     Section = "section",
     Note = "note",
+    None = "none",
+    DualDialogue = "dual_dialogue",
+}
+
+// Title page format marks - applied as indivisible inline marks on text
+export enum TitlePageElement {
+    Title = "tp-title",
+    Author = "tp-author",
+    Date = "tp-date",
     None = "none",
 }

@@ -1,0 +1,8 @@
+{
+    "bundle": {
+        "category": "Productivity",
+        "macOS": {
+            "entitlements": "./Entitlements.plist"
+        }
+    }
+}

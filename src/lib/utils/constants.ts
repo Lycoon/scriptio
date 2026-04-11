@@ -1,1 +1,4 @@
-export const BASE_URL = process.env.NODE_ENV === "production" ? "https://scriptio.app" : "http://localhost:3000";
+export const BASE_URL =
+    typeof window !== "undefined" && window.__TAURI_INTERNALS__
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";

@@ -1,20 +1,18 @@
-import { useEffect, useState } from "react";
-import { getScreenplayData } from "@src/lib/editor/statistics";
+"use client";
+
+import { useContext, useEffect, useState } from "react";
+import { getScreenplayData } from "@src/lib/screenplay/statistics";
 import CharacterDistribution from "./CharacterDistribution";
 import CharacterFrequency from "./CharacterFrequency";
 import CharacterQuantity from "./CharacterQuantity";
 import BarRatio from "./BarRatio";
-import { Project } from "@src/lib/utils/types";
 
 import stats from "./ProjectStatsContainer.module.css";
-import layout from "../../utils/Layout.module.css";
+import { ProjectContext } from "@src/context/ProjectContext";
 
-type Props = {
-    project: Project;
-};
-
-const ProjectStatsContainer = ({ project }: Props) => {
-    const data = getScreenplayData(project.screenplay);
+const ProjectStatsContainer = () => {
+    const { screenplay } = useContext(ProjectContext);
+    const data = getScreenplayData(screenplay);
     const pages = data.pageLimits.length + 1;
     const screenTime = pages * 1.15;
 
@@ -56,7 +54,6 @@ const ProjectStatsContainer = ({ project }: Props) => {
                             <p>Dialogue length distribution over time</p>
                             <CharacterDistribution
                                 color={color}
-                                project={project}
                                 distribution={data.distribution}
                                 frequency={data.frequency}
                             />
@@ -64,11 +61,11 @@ const ProjectStatsContainer = ({ project }: Props) => {
                         <div className={stats.charts_row}>
                             <div>
                                 <p>Distribution of dialogue (per character)</p>
-                                <CharacterFrequency color={color} project={project} frequency={data.frequency} />
+                                <CharacterFrequency color={color} frequency={data.frequency} />
                             </div>
                             <div>
                                 <p>Average dialogue length (per character)</p>
-                                <CharacterQuantity color={color} project={project} quantity={data.quantity} />
+                                <CharacterQuantity color={color} quantity={data.quantity} />
                             </div>
                         </div>
                     </div>
@@ -78,11 +75,11 @@ const ProjectStatsContainer = ({ project }: Props) => {
                     <div className={stats.charts_row}>
                         <div>
                             <p>Proportion of interior and exterior scenes</p>
-                            <BarRatio color={color} project={project} ratio={data.sceneRatio} />
+                            <BarRatio color={color} ratio={data.sceneRatio} />
                         </div>
                         <div>
                             <p>Proportion of action and dialogue</p>
-                            <BarRatio color={color} project={project} ratio={data.actionRatio} />
+                            <BarRatio color={color} ratio={data.actionRatio} />
                         </div>
                     </div>
                 </div>

@@ -6,7 +6,7 @@
 
     border: none;
     width: 100%;
-    padding: 10px;
+    padding: 8px;
     padding-left: 25px;
     background-color: transparent;
 }
@@ -18,14 +18,19 @@
 .container:hover:not(.active) {
     transition: padding-left 0.15s;
     padding-left: 48px;
-    background-color: var(--editor-tab-active);
+    background-color: var(--editor-sidebar-hover);
+}
+
+.container.active {
+    background-color: var(--editor-sidebar-hover);
 }
 
 .text {
-    font-size: 100%;
-    font-family: "Courier";
-    text-align: left;
+    color: var(--primary-text);
+    font-size: 0.9rem;
+    font-family: var(--font-courier), monospace;
     font-weight: bold;
+    text-align: left;
 }
 
 .active {

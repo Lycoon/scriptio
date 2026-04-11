@@ -1,43 +1,44 @@
-// this file is a wrapper with defaults to be used in both API routes and `getServerSideProps` functions
-import { getIronSession, IronSession, type SessionOptions } from "iron-session";
 import { CookieUser } from "@src/lib/utils/types";
-import { NextApiRequest, NextApiResponse } from "next";
+import { headers } from "next/headers";
+import { decode } from "next-auth/jwt";
+import { auth } from "@src/auth";
 
-const sessionOptions: SessionOptions = {
-    password: process.env.SECRET_COOKIE as string,
-    cookieName: "auth-cookie",
-    cookieOptions: {
-        secure: process.env.NODE_ENV === "production",
-    },
-};
+const SESSION_COOKIE_SALT = "authjs.session-token";
 
-/*
- * getSession is a wrapper around getIronSession with the correct types
+/**
+ * Resolve the current user from either:
+ * 1. A NextAuth-encoded JWT in the `Authorization: Bearer <token>` header (desktop clients)
+ * 2. The NextAuth web session cookie
  *
- * It should only be used to operate a destroy or a save on the session (during login or logout)
- * Prefer using getCookieUser to get the user from the session
+ * Both paths verify against the same `AUTH_SECRET`, so the desktop bearer flow and the
+ * cookie flow share a single signing/encryption scheme.
  */
-export const getSession = async (req: NextApiRequest, res: NextApiResponse): Promise<IronSession<CookieUser>> => {
-    return getIronSession<CookieUser>(req, res, sessionOptions);
-};
+export const getCookieUser = async (): Promise<CookieUser | undefined> => {
+    const headersList = await headers();
+    const authHeader = headersList.get("authorization");
 
-/*
- * Used to get the user from the session (in /api/users/cookie)
- */
-export const getCookieUser = async (req: NextApiRequest, res: NextApiResponse): Promise<CookieUser | undefined> => {
-    const session = await getSession(req, res);
-    return extractUserFromSession(session);
-};
+    if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.slice(7);
+        try {
+            const decoded = await decode({
+                token,
+                secret: process.env.AUTH_SECRET!,
+                salt: SESSION_COOKIE_SALT,
+            });
+            if (decoded?.id) {
+                return {
+                    id: decoded.id as string,
+                    email: decoded.email as string,
+                    createdAt: new Date(decoded.createdAt as string),
+                };
+            }
+        } catch {
+            return undefined;
+        }
+        return undefined;
+    }
 
-/*
- * Used to extract the user from the session, returning undefined if the session is empty
- */
-export const extractUserFromSession = (session: IronSession<CookieUser>): CookieUser | undefined => {
-    if (Object.keys(session).length === 0) return undefined;
-    else
-        return {
-            id: session.id,
-            email: session.email,
-            createdAt: session.createdAt,
-        };
+    const session = await auth();
+    if (!session?.user) return undefined;
+    return session.user as unknown as CookieUser;
 };

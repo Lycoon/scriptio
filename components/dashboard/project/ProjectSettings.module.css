@@ -1,0 +1,118 @@
+.settingsForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input,
+.textarea {
+    font-size: 1rem;
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--primary-text);
+    font-family: var(--font-inter);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.input:disabled {
+    color: var(--secondary-text);
+    cursor: default;
+    opacity: 0.7;
+}
+
+.posterUploadArea {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: var(--secondary);
+    padding: 20px;
+    border-radius: 12px;
+    height: 200px;
+}
+
+.posterPreview {
+    width: 100px;
+    height: 148px; /* 2:3 Aspect Ratio */
+    background: var(--primary);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--separator);
+    flex-shrink: 0;
+}
+
+.posterPreview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.posterPlaceholder {
+    font-size: 0.7rem;
+    color: var(--secondary-text);
+}
+
+.uploadControls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.helpText {
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    line-height: 1.4;
+}
+
+.formActions {
+    border-top: 1px solid var(--separator);
+    padding-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.formBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    background-color: var(--secondary);
+    border: 2px solid var(--tertiary);
+    padding: 0 36px;
+    border-radius: 40px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.formBtn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.formBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.formBtn.danger {
+    background: var(--error);
+}

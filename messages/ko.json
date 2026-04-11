@@ -1,0 +1,461 @@
+{
+  "navbar": {
+    "screenplay": "시나리오",
+    "board": "보드",
+    "titlePage": "타이틀 페이지",
+    "synced": "클라우드에 동기화됨",
+    "noConnection": "연결 없음",
+    "reconnecting": "재연결 중...",
+    "localProject": "로컬 프로젝트",
+    "endlessScroll": "무한 스크롤",
+    "toggleComments": "댓글 표시 전환",
+    "focusMode": "집중 모드",
+    "splitPanel": "패널 분할",
+    "unsplitPanel": "패널 통합",
+    "draftEditor": "초안 편집기"
+  },
+  "common": {
+    "save": "변경사항 저장",
+    "cancel": "취소",
+    "loading": "로딩 중...",
+    "resetDefaults": "기본값으로 복원"
+  },
+  "sidebar": {
+    "title": "대시보드",
+    "logOut": "로그아웃",
+    "auth": "로그인",
+    "logOutConfirmTitle": "로그아웃",
+    "logOutConfirmDesc": "정말 로그아웃하시겠습니까?",
+    "logOutConfirmBtn": "로그아웃",
+    "logOutCancelBtn": "취소"
+  },
+  "appearance": {
+    "theme": "테마",
+    "themeHelp": {
+      "dark": "눈이 편안한 저조도 테마로, 야간 작업에 적합합니다.",
+      "light": "깨끗하고 밝은 테마로, 낮 시간대에 적합합니다.",
+      "latte": "따뜻하고 가독성이 좋은 크림색 테마입니다.",
+      "wonka": "깊고 고급스러운 초콜릿 톤의 테마입니다.",
+      "mint": "신선하고 균형 잡힌 민트색 테마입니다.",
+      "blossom": "부드럽고 화사한 꽃잎 톤의 테마입니다."
+    },
+    "editor": "에디터",
+    "themedEditor": "테마 에디터",
+    "themedEditorDesc": "에디터 배경과 텍스트에 테마 색상 적용",
+    "highlightOnHover": "호버 강조",
+    "highlightOnHoverDesc": "에디터에서 커서가 위치한 줄을 살짝 강조합니다"
+  },
+  "keybinds": {
+    "screenplayElements": "시나리오 요소",
+    "typing": "입력 중… (Esc로 취소)",
+    "notSet": "설정되지 않음",
+    "modifiersOnly": "조합 키만 입력됨 — 일반 키를 눌러주세요",
+    "defaultPrefix": "기본값: {combo}",
+    "reset": "초기화",
+    "resetTitle": "사용자 설정 삭제",
+    "resetDefaults": "기본값으로 복원",
+    "save": "변경사항 저장"
+  },
+  "language": {
+    "label": "표시 언어",
+    "helpText": "애플리케이션 전체에서 사용할 언어를 선택하세요.",
+    "spellcheckLabel": "맞춤법 검사",
+    "spellcheckHelpText": "에디터에서 맞춤법 검사를 위해 사전을 다운로드하세요.",
+    "spellcheckNone": "비활성화됨",
+    "customDictLabel": "프로젝트 사전",
+    "customDictAdd": "추가",
+    "customDictEmpty": "아직 사용자 정의 단어가 없습니다.",
+    "customDictHelpText": "여기에 추가된 단어는 프로젝트의 모든 공동 작업자와 공유됩니다."
+  },
+  "modal": {
+    "groups": {
+      "project": "프로젝트",
+      "preferences": "환경 설정",
+      "account": "계정"
+    },
+    "tabs": {
+      "General": "일반",
+      "Layout": "레이아웃",
+      "Export": "가져오기/내보내기",
+      "Collaborators": "공동 작업자",
+      "Keybinds": "단축키",
+      "Appearance": "테마",
+      "Language": "언어",
+      "Profile": "프로필",
+      "Settings": "설정",
+      "Auth": "로그인",
+      "About": "정보",
+      "Subscription": "구독"
+    }
+  },
+  "dangerZone": {
+    "transferOwnership": "소유권 이전",
+    "transferDesc": "소유자 권한을 다른 사용자에게 이전합니다. 당신은 편집자 권한으로 변경됩니다.",
+    "transferBtn": "이전",
+    "transferPrompt": "새 소유자의 이메일을 입력하세요:",
+    "deleteProject": "프로젝트 삭제",
+    "deleteProjectDesc": "프로젝트를 삭제하면 복구할 수 없습니다. 신중히 결정하세요.",
+    "deleteBtn": "삭제",
+    "modalTitle": "프로젝트 삭제",
+    "modalDesc": "이 작업은 영구적이며 취소할 수 없습니다. 프로젝트와 관련된 모든 데이터가 삭제됩니다.",
+    "deleting": "삭제 중...",
+    "confirmDeleteBtn": "프로젝트 삭제"
+  },
+  "profile": {
+    "email": "이메일",
+    "username": "사용자 이름",
+    "usernamePlaceholder": "표시될 이름을 입력하세요...",
+    "usernameHelp": "공동 작업 시 다른 사용자에게 표시될 이름입니다.",
+    "color": "색상",
+    "customColor": "사용자 지정 색상",
+    "selectColor": "{color} 색상 선택",
+    "successMessage": "프로필이 성공적으로 업데이트되었습니다",
+    "failedUpdate": "프로필 업데이트 실패",
+    "errorSaving": "저장 중 오류 발생",
+    "saving": "저장 중...",
+    "dangerZoneTitle": "위험 구역",
+    "deleteAccount": "계정 삭제",
+    "deleteAccountDesc": "계정과 모든 데이터를 영구적으로 삭제합니다. 이 작업은 취소할 수 없습니다.",
+    "deleteBtn": "삭제",
+    "deleteModalTitle": "계정 삭제",
+    "deleteModalDesc": "계정과 모든 데이터를 영구적으로 삭제합니다. 이 작업은 취소할 수 없습니다.",
+    "deleteConfirmPhrase": "계정 삭제를 확인합니다",
+    "deleteConfirmLabel": "확인을 위해 <ph/>를 입력하세요.",
+    "deleting": "삭제 중...",
+    "deleteAccountBtn": "내 계정 삭제",
+    "subscription": {
+      "title": "구독",
+      "proBadge": "Pro",
+      "proTitle": "Pro 플랜",
+      "freeTitle": "무료 플랜",
+      "renewsOn": "{date}에 갱신",
+      "perksTitle": "포함된 기능:",
+      "upgradeTitle": "업그레이드로 잠금 해제:",
+      "perkProjects": "클라우드 프로젝트 생성",
+      "perkSaves": "수동 저장 및 버전 기록",
+      "perkCollaborators": "협업자 초대",
+      "perkAutoSave": "클라우드 자동 저장",
+      "upgradeBtn": "Pro로 업그레이드",
+      "redirecting": "리디렉션 중...",
+      "cancel": "구독 취소",
+      "cancelConfirm": "Pro 이용은 {date}까지 유지됩니다. 그래도 취소하시겠습니까?",
+      "cancelYes": "네, 취소",
+      "cancelNo": "Pro 유지",
+      "cancelling": "취소 중...",
+      "cancelSuccess": "구독이 취소되었습니다. {date}까지 Pro 이용 가능.",
+      "endsOn": "구독이 {date}에 종료됩니다"
+    }
+  },
+  "projects": {
+    "untitled": "제목 없음",
+    "newProject": "새 프로젝트",
+    "pageTitle": "프로젝트",
+    "importBtn": "가져오기...",
+    "importing": "가져오는 중...",
+    "createBtn": "생성",
+    "empty": {
+      "createFirst": "새 프로젝트",
+      "createDesc": "빈 페이지에서 시작하기",
+      "importExisting": "가져오기",
+      "importDesc": "기존 스크립트 파일 열기"
+    },
+    "item": {
+      "posterAlt": "영화 포스터",
+      "localOnly": "로컬 전용",
+      "syncedToCloud": "클라우드에 동기화됨"
+    },
+    "form": {
+      "formTitle": "프로젝트 생성",
+      "titleField": "제목",
+      "descriptionField": "설명",
+      "authorField": "작가",
+      "posterField": "포스터",
+      "optional": "선택 사항",
+      "submitBtn": "생성",
+      "failedToCreate": "프로젝트 생성 실패"
+    }
+  },
+  "editorSidebar": {
+    "scenes": "장면",
+    "characters": "인물",
+    "locations": "장소",
+    "shelf": "보관함",
+    "shelfEmpty": "편집할 버전을 선택하세요",
+    "goTo": "각본에서 이동",
+    "confirmRestore": "이것은 각본의 해당 내용을 대체합니다.",
+    "restore": "복원",
+    "cancel": "취소"
+  },
+  "formatDropdown": {
+    "elements": {
+      "scene": "장면 헤딩",
+      "action": "지문",
+      "character": "인물",
+      "dialogue": "대사",
+      "parenthetical": "(괄호)",
+      "transition": "트랜지션:",
+      "section": "섹션",
+      "note": "[[노트]]",
+      "dual_dialogue": "이중 대화",
+      "none": "없음"
+    },
+    "titlePageElements": {
+      "title": "제목",
+      "author": "작가",
+      "date": "날짜",
+      "none": "없음"
+    }
+  },
+  "search": {
+    "placeholder": "검색...",
+    "noMatches": "검색 결과 없음",
+    "matchCount": "{total} 중 {current}",
+    "replacePlaceholder": "교체할 내용...",
+    "replace": "교체",
+    "replaceAll": "모두 교체",
+    "filterByElement": "요소별 필터:",
+    "elements": {
+      "scene": "장면 헤딩",
+      "action": "지문",
+      "character": "인물",
+      "dialogue": "대사",
+      "parenthetical": "괄호",
+      "transition": "트랜지션",
+      "section": "섹션",
+      "note": "노트",
+      "dual_dialogue": "이중 대화",
+      "none": "없음"
+    }
+  },
+  "collaborators": {
+    "projectTeam": "프로젝트 팀 ({count}/{max})",
+    "teamHelp": "팀 멤버와 대기 중인 초대를 관리하세요. Pro가 아닌 사용자도 초대할 수 있습니다. 소유자가 Pro 플랜을 유지하는 동안 공동 작업이 가능합니다.",
+    "roles": {
+      "owner": "소유자",
+      "admin": "관리자",
+      "editor": "편집자",
+      "viewer": "뷰어"
+    },
+    "roleDesc": {
+      "owner": "프로젝트 삭제 및 소유권 이전 가능",
+      "admin": "멤버 초대, 권한 변경 및 추방 가능",
+      "editor": "시나리오 및 프로젝트 내용 편집 가능",
+      "viewer": "읽기 전용 액세스. 수정 불가"
+    },
+    "you": "(나)",
+    "leave": "나가기",
+    "kick": "추방",
+    "pending": "대기 중",
+    "cancel": "취소",
+    "emailPlaceholder": "이메일 입력...",
+    "invite": "초대",
+    "proRequired": "A Pro subscription is required to invite collaborators.",
+    "proRequiredInvite": "Upgrade to Pro to invite collaborators",
+    "upgrade": "Upgrade",
+    "localProjectOnly": "Collaboration is not available for local projects. Upload your project to the cloud to invite collaborators."
+  },
+  "export": {
+    "importLabel": "가져오기",
+    "selectFile": "파일 선택",
+    "selectFileDesc": ".fountain, .fdx, .scriptio, .txt 파일",
+    "exportLabel": "내보내기",
+    "formatOptions": {
+      "pdf": "PDF 문서 (.pdf)",
+      "fountain": "Fountain (.fountain)",
+      "fdx": "Final Draft (.fdx)",
+      "scriptio": "Scriptio (.scriptio)"
+    },
+    "formatHelp": {
+      "pdf": "표준 형식. 공유 및 인쇄에 적합합니다.",
+      "fountain": "Markdown 기반 텍스트 형식. 호환성이 좋습니다.",
+      "fdx": "전문 소프트웨어인 Final Draft와 호환됩니다.",
+      "scriptio": "Scriptio 기본 형식. 로컬 보관용으로 적합합니다."
+    },
+    "includeNotes": "노트 포함",
+    "includeNotesDesc": "포함된 노트를 내보냅니다.",
+    "readable": "읽기 가능한 JSON",
+    "readableDesc": "압축되지 않은 JSON으로 내보냅니다. 파일 크기는 커지지만 텍스트 에디터로 확인 가능합니다.",
+    "watermark": "워터마크",
+    "watermarkDesc": "페이지에 워터마크 텍스트를 추가합니다.",
+    "watermarkPlaceholder": "워터마크 텍스트",
+    "passwordProtection": "비밀번호 보호",
+    "passwordProtectionDesc": "PDF를 열 때 비밀번호를 요구합니다.",
+    "passwordPlaceholder": "비밀번호 입력",
+    "exportBtn": "내보내기",
+    "exporting": "내보내는 중...",
+    "exportingProgress": "내보내는 중 ({progress}%)"
+  },
+  "layout": {
+    "pageFormat": "페이지 형식",
+    "pageFormatHelp": {
+      "letter": "미국 표준 형식. 할리우드 시나리오 표준입니다.",
+      "a4": "국제 표준 형식. 한국 및 대부분의 국가에서 사용합니다."
+    },
+    "sceneHeadings": "장면 헤딩",
+    "bold": "굵게",
+    "boldDesc": "장면 헤딩을 굵게 표시합니다.",
+    "extraSpace": "위쪽 여백 추가",
+    "extraSpaceDesc": "장면 헤딩 전에 추가 간격을 둡니다.",
+    "sceneNumbering": "장면 번호",
+    "sceneNumberingDesc": "왼쪽 여백에 장면 번호를 표시합니다.",
+    "duplicateRight": "오른쪽에도 표시",
+    "duplicateRightDesc": "양쪽 여백에 장면 번호를 표시합니다.",
+    "continuation": "연속 표시",
+    "moreTitle": "(MORE) 라벨",
+    "contdTitle": "(CONT'D) 라벨",
+    "pageMargins": "페이지 여백",
+    "vertical": "수직",
+    "horizontal": "수평",
+    "marginTop": "상단",
+    "marginBottom": "하단",
+    "margins": "여백",
+    "marginLeft": "왼쪽",
+    "marginRight": "오른쪽",
+    "marginElements": {
+      "action": "지문",
+      "scene": "장면 헤딩",
+      "character": "인물",
+      "dialogue": "대사",
+      "parenthetical": "괄호",
+      "transition": "트랜지션",
+      "section": "섹션"
+    },
+    "elements": "요소 설정",
+    "style": "스타일",
+    "alignment": "정렬",
+    "italic": "기울임꼴",
+    "underline": "밑줄",
+    "uppercase": "대문자",
+    "alignLeft": "왼쪽",
+    "alignCenter": "가운데",
+    "alignRight": "오른쪽",
+    "sceneSpacing": "간격",
+    "sceneSpacingDesc": "장면 헤딩 상단 간격",
+    "startNewPage": "새 페이지에서 시작"
+  },
+  "projectSettings": {
+    "titleLabel": "제목",
+    "titlePlaceholder": "프로젝트 제목 입력...",
+    "authorLabel": "작가",
+    "authorPlaceholder": "작가 이름 입력...",
+    "descriptionLabel": "설명",
+    "descriptionPlaceholder": "시나리오에 대한 간단한 설명...",
+    "posterLabel": "포스터",
+    "noPoster": "포스터 없음",
+    "posterHelp": "권장: 600x900 픽셀 (2:3 비율). PNG, JPG 지원.",
+    "saveChanges": "변경사항 저장",
+    "dangerZoneTitle": "위험 구역"
+  },
+  "contextMenu": {
+    "goToScene": "장면으로 이동",
+    "edit": "편집",
+    "copy": "복사",
+    "cut": "잘라내기",
+    "selectInEditor": "에디터에서 선택",
+    "remove": "삭제",
+    "paste": "붙여넣기",
+    "highlight": "하이라이트",
+    "addCharacter": "인물 추가",
+    "addComment": "댓글 추가",
+    "searchOnWeb": "웹 검색",
+    "noSuggestions": "제안 없음",
+    "addToDictionary": "사전에 추가",
+    "makeDualDialogue": "이중 대화 만들기",
+    "shelve": "보관하기",
+    "shelveScene": "장면 보관하기",
+    "shelveDialogue": "대사 보관하기",
+    "shelveAction": "행동 보관하기"
+  },
+  "popup": {
+    "character": {
+      "create": "인물 생성",
+      "edit": "인물 편집",
+      "name": "이름",
+      "gender": "성별",
+      "genderFemale": "여성",
+      "genderMale": "남성",
+      "genderOther": "기타",
+      "color": "색상",
+      "synopsis": "시놉시스",
+      "confirm": "확인",
+      "takenNameError": "{newName}이라는 이름의 인물이 이미 존재합니다. 다른 이름을 선택하거나 기존 인물을 편집하세요.",
+      "updateOccurrences": "{oldName}을(를) {newName}으로 {count}군데 모두 업데이트하시겠습니까? 의도하지 않은 단어가 변경되지 않도록 주의하세요.",
+      "yes": "예",
+      "noDoNotChange": "아니요"
+    },
+    "import": {
+      "title": "가져오기 확인",
+      "warning": "현재 프로젝트를 <b>덮어쓰시겠습니까</b>?",
+      "info": "새 프로젝트를 가져오기 전에 현재 프로젝트를 내보낼 수 있습니다.",
+      "yesImport": "예, 가져오기",
+      "no": "아니요"
+    },
+    "scene": {
+      "edit": "장면 편집",
+      "sceneTitle": "장면",
+      "color": "색상",
+      "synopsis": "시놉시스",
+      "synopsisPlaceholder": "장면에 대한 간단한 설명을 입력하세요...",
+      "save": "저장"
+    }
+  },
+  "board": {
+    "duplicate": "복제",
+    "delete": "삭제",
+    "hints": {
+      "pan": "휠 클릭으로 드래그",
+      "select": "드래그하여 카드 선택",
+      "create": "더블 클릭하여 카드 생성",
+      "move": "Shift를 누르고 자유 이동"
+    },
+    "untitled": "제목 없음",
+    "titlePlaceholder": "제목",
+    "descriptionPlaceholder": "설명"
+  },
+  "saves": {
+    "title": "버전 히스토리",
+    "saveCurrentVersion": "현재 버전 저장",
+    "namePlaceholder": "버전 이름...",
+    "manualSaves": "수동 저장",
+    "autoSaves": "자동 저장",
+    "restore": "복원",
+    "rename": "이름 변경",
+    "delete": "삭제",
+    "cancel": "취소",
+    "confirmRestore": "모든 공동 작업자의 현재 문서가 이 버전으로 대체됩니다. 계속하시겠습니까?",
+    "confirmDelete": "이 저장본을 삭제하시겠습니까?",
+    "noSaves": "저장된 버전이 없습니다",
+    "proRequired": "Pro Required",
+    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
+    "upgradeBtn": "Upgrade to Pro"
+  },
+  "auth": {
+    "intro": "이메일을 입력하시면 일회용 로그인 링크를 보내드립니다. 비밀번호가 필요 없습니다.",
+    "emailLabel": "이메일",
+    "sendLink": "로그인 링크 보내기",
+    "sending": "전송 중...",
+    "checkInbox": "{email}에 연결된 계정이 있는 경우, 로그인 링크가 전송되었습니다. 링크는 10분 동안 유효합니다.",
+    "useDifferentEmail": "다른 이메일 사용",
+    "waitingForClick": "받은 편지함의 링크를 클릭할 때까지 대기 중...",
+    "requestFailed": "로그인 링크를 보낼 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    "desktopTimeout": "로그인 시간이 초과되었습니다. 새 링크를 요청해 주세요."
+  },
+  "oauth": {
+    "orContinueWith": "또는 다음으로 계속",
+    "continueWithGoogle": "Google로 계속",
+    "continueWithApple": "Apple로 계속",
+    "waiting": "브라우저를 기다리는 중…",
+    "timeout": "로그인 시간이 초과되었습니다. 다시 시도해 주세요.",
+    "error": "로그인에 실패했습니다. 다시 시도해 주세요."
+  },
+  "dates": {
+    "justNow": "방금 전",
+    "minutesAgo": "{mins}분 전",
+    "hoursAgo": "{hours}시간 전",
+    "today": "오늘",
+    "yesterday": "어제",
+    "daysAgo": "{days}일 전",
+    "monthsAgo": "{months}달 전",
+    "moreThanYearAgo": "1년 이상 전"
+  }
+}

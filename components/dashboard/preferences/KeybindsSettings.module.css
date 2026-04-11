@@ -1,0 +1,115 @@
+.settingsForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    padding-block: 10px;
+    padding-inline: 18px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.optionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  margin-right: 12px;
+}
+
+.optionTitle {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--primary-text);
+}
+
+.optionDesc {
+  font-size: 12px;
+  color: var(--muted, #666);
+}
+
+/* Right column: key area + actions */
+.keyAreaWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* clickable area where user clicks to record combination */
+.keyArea {
+  min-width: 140px;
+  max-width: 280px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px dashed var(--primary-text);
+  background: var(--tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.keyArea:hover, .keyArea:focus {
+  background: var(--tertiary-hover);
+}
+
+.keyText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+  font-size: 13px;
+  color: var(--primary-text);
+}
+
+.keyAreaActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clearBtn {
+  padding: 6px 9px;
+  border-radius: 6px;
+  color: var(--secondary-text);
+  border: 1px solid var(--secondary-text);
+  background: var(--tertiary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.clearBtn:hover {
+  background: var(--tertiary-hover);
+}
+
+.optionCard {
+    display: flex;
+    justify-content: space-between;
+}
+
+@media (max-width: 640px) {
+  .optionCard {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .keyAreaWrap {
+    justify-content: flex-start;
+  }
+}

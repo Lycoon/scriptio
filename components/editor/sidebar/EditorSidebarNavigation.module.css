@@ -1,24 +1,41 @@
 .container {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-
-    padding-top: 25px;
-    padding-inline: 30px;
-    width: var(--nav-sidebar-width);
-    background-color: var(--editor-sidebar);
-
-    /*resize: horizontal;
-    overflow: auto;*/
-
-    /* hiding it by default */
-    margin-left: calc(var(--nav-sidebar-width) * -1);
-    transition: margin-left 0.5s ease;
+    flex-direction: row;
+    flex-shrink: 0;
+    min-height: 0;
+    overflow: hidden;
 }
 
-.active {
-    margin-left: 0;
-    transition: margin-left 0.5s ease;
+.sidebar_content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 15px 30px 30px;
+    width: var(--navigation-sidebar-width);
+    min-height: 0;
+    overflow: hidden;
+}
+
+.collapsed .element {
+    visibility: hidden;
+}
+
+.collapsed {
+    width: 0;
+    padding: 0;
+}
+
+.element {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+
+    background-color: var(--editor-sidebar);
+    padding-bottom: 30px;
+    padding-top: 20px;
+    border-radius: 35px;
 }
 
 .selection {
@@ -27,50 +44,25 @@
     gap: 10px;
 }
 
-/* Navigation menu tabs */
-.tab {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-
-    padding: 4px 10px;
-    border-radius: 8px;
-    background-color: var(--editor-style-bg-hover);
-    cursor: pointer;
-}
-
-.tab:hover {
-    background-color: var(--editor-style-bg-active);
-}
-
-.tab.active_tab {
-    background-color: var(--editor-style-bg-active);
-}
-
-.tab_img {
-    width: 16px;
-    height: 16px;
-    color: var(--primary-text);
-}
-
 /* Scenes list */
 .list {
     display: flex;
     flex-direction: column;
-
-    height: 225px;
     margin-top: 12px;
-    border-radius: 10px;
     overflow-y: auto;
     overflow-x: hidden;
-
-    background-color: var(--editor-style-bg-hover);
 }
 
 .scene_list {
-    height: 430px;
+    flex: 1;
+}
+
+.list_header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding-left: 20px;
 }
 
 .list_title {
@@ -80,4 +72,38 @@
 .list_fill {
     min-height: 30px;
     height: 100%;
+}
+
+/* Tab bar at bottom of sidebar */
+.tab_bar {
+    display: flex;
+    flex-direction: row;
+    border-top: 1px solid var(--separator);
+    margin-top: auto;
+    padding-top: 4px;
+    padding-inline: 12px;
+    gap: 4px;
+}
+
+.tab_btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--secondary-text);
+    background: none;
+    border: none;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.tab_btn:hover {
+    background-color: var(--editor-sidebar-hover);
+    color: var(--primary-text);
+}
+
+.tab_btn_active {
+    color: var(--primary-text);
 }

@@ -1,0 +1,79 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    width: 460px;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    background: var(--main-bg);
+    padding: 32px;
+}
+
+.title {
+    font-size: 1.2rem;
+    color: var(--primary-text);
+    margin: 0 0 8px 0;
+}
+
+.description {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.keepBtn {
+    background: var(--editor-tab-active);
+    color: var(--primary-text);
+}
+
+.keepBtn:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.discardBtn {
+    background: transparent;
+    color: var(--secondary-text);
+    border: 1px solid var(--separator);
+}
+
+.discardBtn:hover:not(:disabled) {
+    color: var(--primary-text);
+    border-color: var(--primary-text);
+}

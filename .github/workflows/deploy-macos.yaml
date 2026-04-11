@@ -1,0 +1,63 @@
+name: Build & Deploy MacOS
+
+on:
+    push:
+        branches: [release]
+
+jobs:
+    build:
+        runs-on: macos-latest
+        env:
+            APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio.app
+            PKG_PATH: Scriptio.pkg
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Import Apple certificates
+              uses: apple-actions/import-codesign-certs@v3
+              with:
+                  p12-file-base64: ${{ secrets.APPLE_CERT_P12_COMBINED_BASE64 }}
+                  p12-password: ${{ secrets.APPLE_CERT_PASSWORD }}
+
+            - name: Download provisioning profile
+              uses: apple-actions/download-provisioning-profiles@v3
+              with:
+                  bundle-id: "ArkoLogic.Scriptio"
+                  profile-type: "MAC_APP_STORE"
+                  issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+                  api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+                  api-key-content: ${{ secrets.APPSTORE_API_KEY_P8 }}
+
+            - uses: actions/setup-node@v4
+              with: { node-version: "22" }
+            - uses: dtolnay/rust-toolchain@stable
+              with: { targets: "aarch64-apple-darwin, x86_64-apple-darwin" }
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Build and sign .app with Tauri
+              run: npm run tauri build -- --bundles app --target universal-apple-darwin
+              env:
+                  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+
+            - name: Embed provisioning profile
+              run: |
+                  PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.provisionprofile | head -n 1)
+                  cp "$PROFILE" "$APP_PATH/Contents/embedded.provisionprofile"
+
+            - name: Build signed .pkg installer
+              run: |
+                  xcrun productbuild \
+                    --component "$APP_PATH" /Applications \
+                    --sign "${{ secrets.APPLE_INSTALLER_IDENTITY }}" \
+                    "$PKG_PATH"
+
+            - name: Upload to App Store Connect
+              uses: apple-actions/upload-testflight-build@v1
+              with:
+                  app-path: ${{ env.PKG_PATH }}
+                  issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+                  api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+                  api-key-content: ${{ secrets.APPSTORE_API_KEY_P8 }}
+                  app-id: ${{ secrets.APPLE_APP_ID }}

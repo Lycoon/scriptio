@@ -1,70 +1,93 @@
-import { Secrets, Settings } from "../../server/repository/user-repository";
-import { CharacterMap } from "../editor/characters";
-import { JSONContent } from "@tiptap/react";
-import { SaveMode } from "./enums";
+import { JSONContent } from "@tiptap/core";
+import { UpdateSettings } from "../../server/repository/user-repository";
 
-// User
+export type Screenplay = JSONContent[];
+
 export type CookieUser = {
-    id: number;
+    id: string;
     email: string;
     createdAt: Date;
 };
 
 export type User = CookieUser & {
-    settings: Settings;
-    secrets?: Secrets;
+    settings: UpdateSettings;
 };
 
-// Project
-export type Project = {
-    id: string;
-    userId: number;
-    createdAt: Date;
-    updatedAt: Date;
+export type ProjectCreation = {
+    userId: string;
     title: string;
-    poster: string;
-    description: string | null;
-    screenplay: JSONContent;
-    characters: CharacterMap;
-};
-
-export type ProjectCreation = ProjectCreationDTO & {
-    saveMode: SaveMode;
-    filePath?: string;
-};
-
-// Used to return freshly created project id whether it's on the cloud or locally
-// Callee should know whether it's on the cloud or locally
-export type ProjectCreated = {
-    id: string;
-};
-
-// Generic types
-export type DesktopResponse<T> = {
-    data: T | undefined;
-    isLoading: boolean;
-    error: any;
-};
-
-export type DataResult<T> = {
-    data?: T;
-    isError?: boolean;
-    message?: string;
-};
-
-// Data Transfer Objects
-export type ProjectCreationDTO = {
-    title: string;
-    userId?: number;
     description?: string;
-    poster?: string;
+    author?: string;
+    hasPoster?: boolean;
 };
 
-export type ProjectUpdateDTO = {
+export type ProjectUpdate = {
     projectId: string;
     title?: string;
     description?: string;
-    screenplay?: JSONContent;
-    poster?: string;
-    characters?: CharacterMap;
+    author?: string;
+    hasPoster?: boolean;
+};
+
+/* User Settings */
+export interface UserSettings {
+    keybinds: Record<string, string>;
+    theme: UserTheme;
+    language: UserLanguage;
+    themedEditor: boolean;
+    highlightOnHover: boolean;
+}
+
+export type UserLanguage = "en" | "es" | "fr" | "zh" | "ko" | "ja" | "de" | "pl";
+export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint" | "blossom";
+
+/* Dictionaries */
+
+/**
+ * Language codes supported for spellcheck dictionaries.
+ * A superset of UserLanguage — spellcheck can support more languages than the UI.
+ */
+export type DictionaryLanguage =
+    | UserLanguage
+    | "en-GB" | "it" | "pt" | "pt-PT" | "nl" | "ru" | "uk" | "sv" | "da";
+
+/** A dictionary available for download. */
+export interface DictionaryInfo {
+    code: DictionaryLanguage;
+    name: string;
+}
+
+/** Metadata for a locally installed dictionary. */
+export interface InstalledDictionary {
+    code: DictionaryLanguage;
+    /** Combined size of .aff + .dic in bytes */
+    size: number;
+    installedAt: number;
+}
+
+export interface UserOnlineSettings {
+    color: string;
+    username: string;
+}
+
+export interface UserThemeDefinition {
+    name: UserTheme;
+    style: string; // CSS class
+}
+
+/* Comments */
+export type CommentReply = {
+    id: string;
+    text: string;
+    author: string;
+    createdAt: number;
+};
+
+export type Comment = {
+    id: string;
+    text: string;
+    author: string;
+    createdAt: number;
+    resolved: boolean;
+    replies: CommentReply[];
 };

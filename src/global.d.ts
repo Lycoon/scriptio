@@ -1,7 +1,42 @@
+export {};
+
 declare global {
     interface Window {
         __TAURI__: unknown;
+        __TAURI_INTERNALS__: unknown;
+    }
+
+    namespace NodeJS {
+        interface ProcessEnv {
+            NODE_ENV: "development" | "production";
+            NEXT_PUBLIC_COLLAB_WEBSOCKET_URL: string;
+
+            // Token Secrets
+            JWT_SECRET: string;
+            COOKIE_SECRET: string;
+
+            // Database
+            DATABASE_URL: string;
+            DB_USER: string;
+            DB_PASSWORD: string;
+            DB_HOST: string;
+
+            // S3
+            S3_BUCKET: string;
+            S3_ACCOUNT_ID: string;
+            S3_KEY: string;
+            S3_SECRET_KEY: string;
+
+            // SMTP
+            SMTP_HOST: string;
+            SMTP_PORT: number;
+            SMTP_USER: string;
+            SMTP_SECRET: string;
+
+            // Stripe
+            STRIPE_SECRET_KEY: string;
+            STRIPE_WEBHOOK_SECRET: string;
+            STRIPE_PRO_PRICE_ID: string;
+        }
     }
 }
-
-export {};

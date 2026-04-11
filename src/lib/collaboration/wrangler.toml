@@ -1,0 +1,16 @@
+name = "screenplay-collaboration"
+main = "index.ts"
+compatibility_date = "2025-12-08"
+compatibility_flags = ["nodejs_compat"]
+
+[[durable_objects.bindings]]
+name = "SCREENPLAY_ROOM"
+class_name = "ScreenplayRoom"
+
+[[r2_buckets]]
+binding = "SNAPSHOTS"
+bucket_name = "scriptio-snapshots"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ScreenplayRoom"]

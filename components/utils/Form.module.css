@@ -50,6 +50,14 @@
     min-height: 25vh;
 }
 
+.label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
+}
+
 /* ==================== */
 /*        Buttons       */
 /* ==================== */
@@ -61,9 +69,12 @@
 }
 
 .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     font-size: 1rem;
-    font-family: segoe-bold;
-    color: #ffffff;
+    color: var(--primary-text);
     background-color: var(--secondary);
     cursor: pointer;
     width: 100%;
@@ -73,14 +84,14 @@
     padding: 10px;
 
     /* Border */
-    border: none;
-    border-radius: 10px;
-    border-width: 2px;
+    border-radius: 40px !important;
+    border-style: solid !important;
+    border-color: var(--tertiary) !important;
 }
 
 .btn:hover {
-    transition: background-color 0.2s;
-    background-color: var(--secondary-hover);
+    transition: border-color 0.2s;
+    border-color: var(--tertiary-hover) !important;
 }
 
 .btn:active {
@@ -99,7 +110,6 @@
 
 .input {
     font-size: 1.15rem;
-    border: none;
     border-radius: 7px;
     padding: 8px;
 }

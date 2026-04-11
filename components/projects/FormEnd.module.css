@@ -1,11 +1,37 @@
 .container {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
     align-items: center;
-    gap: 40px;
+    gap: 25px;
 }
 
 .submit {
-    height: 50px;
+    border: none;
+}
+
+.back,
+.submit {
+    padding-inline: 40px !important;
+}
+
+.back {
+    width: auto !important;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+
+    border-width: 3px !important;
+    background-color: var(--primary) !important;
+}
+
+.back:hover {
+    transition: border-color 0.2s;
+    border-color: var(--tertiary-hover) !important;
+}
+
+.back:active {
+    transition: transform 0.25s;
+    transform: scale(0.98);
 }

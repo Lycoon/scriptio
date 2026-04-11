@@ -1,0 +1,461 @@
+{
+  "navbar": {
+    "screenplay": "Scenariusz",
+    "board": "Tablica",
+    "titlePage": "Strona tytułowa",
+    "synced": "Zsynchronizowano z chmurą",
+    "noConnection": "Brak połączenia",
+    "reconnecting": "Łączenie...",
+    "localProject": "Projekt lokalny",
+    "endlessScroll": "Nieskończone przewijanie",
+    "toggleComments": "Pokaż/ukryj komentarze",
+    "focusMode": "Tryb skupienia",
+    "splitPanel": "Podziel panel",
+    "unsplitPanel": "Zamknij panel",
+    "draftEditor": "Edytor szkiców"
+  },
+  "common": {
+    "save": "Zapisz zmiany",
+    "cancel": "Anuluj",
+    "loading": "Ładowanie...",
+    "resetDefaults": "Przywróć domyślne"
+  },
+  "sidebar": {
+    "title": "Panel",
+    "logOut": "Wyloguj się",
+    "auth": "Zaloguj się",
+    "logOutConfirmTitle": "Wyloguj się",
+    "logOutConfirmDesc": "Czy na pewno chcesz się wylogować?",
+    "logOutConfirmBtn": "Wyloguj się",
+    "logOutCancelBtn": "Anuluj"
+  },
+  "appearance": {
+    "theme": "Motyw",
+    "themeHelp": {
+      "dark": "Przytulny, ciemny motyw, idealny dla nocnych marków.",
+      "light": "Jasny i przejrzysty motyw, naturalny i wygodny w ciągu dnia.",
+      "latte": "Delikatny kremowy motyw, łączący ciepło z czytelnością.",
+      "wonka": "Aksamitny czekoladowy motyw, łączący luksus z komfortem wizualnym.",
+      "mint": "Świeży miętowy motyw, łączący spokój z równowagą wizualną.",
+      "blossom": "Delikatny kwiatowy motyw, łączący miękkość płatków z komfortem wizualnym."
+    },
+    "editor": "Edytor",
+    "themedEditor": "Edytor z motywem",
+    "themedEditorDesc": "Używaj kolorów motywu dla tła i tekstu w edytorze",
+    "highlightOnHover": "Podświetlenie po najechaniu",
+    "highlightOnHoverDesc": "Lekko podświetla wiersz pod kursorem w edytorze"
+  },
+  "keybinds": {
+    "screenplayElements": "Elementy scenariusza",
+    "typing": "Wpisz… (Esc, aby anulować)",
+    "notSet": "Nie ustawiono",
+    "modifiersOnly": "Tylko modyfikatory — naciśnij zwykły klawisz",
+    "defaultPrefix": "Domyślnie: {combo}",
+    "reset": "Resetuj",
+    "resetTitle": "Wyczyść niestandardowe przypisanie",
+    "resetDefaults": "Przywróć domyślne",
+    "save": "Zapisz zmiany"
+  },
+  "language": {
+    "label": "Język wyświetlania",
+    "helpText": "Wybierz język używany w całej aplikacji.",
+    "spellcheckLabel": "Korekta pisowni",
+    "spellcheckHelpText": "Pobierz słownik do sprawdzania pisowni w edytorze.",
+    "spellcheckNone": "Wyłączone",
+    "customDictLabel": "Słownik projektu",
+    "customDictAdd": "Dodaj",
+    "customDictEmpty": "Brak niestandardowych słów.",
+    "customDictHelpText": "Słowa dodane tutaj są udostępniane wszystkim współpracownikom projektu."
+  },
+  "modal": {
+    "groups": {
+      "project": "Projekt",
+      "preferences": "Preferencje",
+      "account": "Konto"
+    },
+    "tabs": {
+      "General": "Ogólne",
+      "Layout": "Układ",
+      "Export": "Import/Eksport",
+      "Collaborators": "Współpracownicy",
+      "Keybinds": "Skróty klawiszowe",
+      "Appearance": "Wygląd",
+      "Language": "Język",
+      "Profile": "Profil",
+      "Settings": "Ustawienia",
+      "Auth": "Zaloguj się",
+      "About": "O aplikacji",
+      "Subscription": "Subskrypcja"
+    }
+  },
+  "dangerZone": {
+    "transferOwnership": "Przekaż własność",
+    "transferDesc": "Przekaż rolę właściciela innemu użytkownikowi. Twoja rola zmieni się na edytora.",
+    "transferBtn": "Przekaż",
+    "transferPrompt": "Wprowadź adres e-mail nowego właściciela:",
+    "deleteProject": "Usuń projekt",
+    "deleteProjectDesc": "Po usunięciu projektu nie ma odwrotu. Upewnij się, że tego chcesz.",
+    "deleteBtn": "Usuń",
+    "modalTitle": "Usuń projekt",
+    "modalDesc": "Ta akcja jest trwała i nie można jej cofnąć. Wszystkie dane powiązane z tym projektem zostaną utracone.",
+    "deleting": "Usuwanie...",
+    "confirmDeleteBtn": "Usuń projekt"
+  },
+  "profile": {
+    "email": "E-mail",
+    "username": "Nazwa użytkownika",
+    "usernamePlaceholder": "Wprowadź nazwę...",
+    "usernameHelp": "Ta nazwa będzie widoczna dla współpracowników w projektach udostępnionych.",
+    "color": "Kolor",
+    "customColor": "Własny kolor",
+    "selectColor": "Wybierz kolor {color}",
+    "successMessage": "Profil zaktualizowany pomyślnie",
+    "failedUpdate": "Nie udało się zaktualizować profilu",
+    "errorSaving": "Wystąpił błąd podczas zapisywania",
+    "saving": "Zapisywanie...",
+    "dangerZoneTitle": "Strefa niebezpieczeństwa",
+    "deleteAccount": "Usuń konto",
+    "deleteAccountDesc": "Trwale usuń swoje konto i wszystkie powiązane dane. Tej akcji nie można cofnąć.",
+    "deleteBtn": "Usuń",
+    "deleteModalTitle": "Usuń konto",
+    "deleteModalDesc": "To trwale usunie Twoje konto i wszystkie powiązane dane. Tej akcji nie można cofnąć.",
+    "deleteConfirmPhrase": "Potwierdzam usunięcie mojego konta",
+    "deleteConfirmLabel": "Wpisz <ph/>, aby potwierdzić.",
+    "deleting": "Usuwanie...",
+    "deleteAccountBtn": "Usuń moje konto",
+    "subscription": {
+      "title": "Subskrypcja",
+      "proBadge": "Pro",
+      "proTitle": "Plan Pro",
+      "freeTitle": "Plan Darmowy",
+      "renewsOn": "Odnawia się {date}",
+      "perksTitle": "Co jest zawarte:",
+      "upgradeTitle": "Uaktualnij, aby odblokować:",
+      "perkProjects": "Tworzenie projektów w chmurze",
+      "perkSaves": "Ręczne zapisywanie i historia wersji",
+      "perkCollaborators": "Zapraszanie współpracowników",
+      "perkAutoSave": "Automatyczny zapis w chmurze",
+      "upgradeBtn": "Przejdź na Pro",
+      "redirecting": "Przekierowanie...",
+      "cancel": "Anuluj subskrypcję",
+      "cancelConfirm": "Dostęp Pro pozostaje aktywny do {date}. Anulować mimo to?",
+      "cancelYes": "Tak, anuluj",
+      "cancelNo": "Zachowaj Pro",
+      "cancelling": "Anulowanie...",
+      "cancelSuccess": "Subskrypcja anulowana. Dostęp Pro do {date}.",
+      "endsOn": "Twoja subskrypcja kończy się {date}"
+    }
+  },
+  "projects": {
+    "untitled": "Bez tytułu",
+    "newProject": "Nowy projekt",
+    "pageTitle": "Projekty",
+    "importBtn": "Importuj...",
+    "importing": "Importowanie...",
+    "createBtn": "Utwórz",
+    "empty": {
+      "createFirst": "Nowy projekt",
+      "createDesc": "Zacznij od pustej strony",
+      "importExisting": "Importuj",
+      "importDesc": "Otwórz istniejący plik scenariusza"
+    },
+    "item": {
+      "posterAlt": "Plakat filmowy",
+      "localOnly": "Tylko lokalnie",
+      "syncedToCloud": "Zsynchronizowano z chmurą"
+    },
+    "form": {
+      "formTitle": "Utwórz projekt",
+      "titleField": "Tytuł",
+      "descriptionField": "Opis",
+      "authorField": "Autor",
+      "posterField": "Plakat",
+      "optional": "opcjonalnie",
+      "submitBtn": "Utwórz",
+      "failedToCreate": "Nie udało się utworzyć projektu"
+    }
+  },
+  "editorSidebar": {
+    "scenes": "Sceny",
+    "characters": "Postacie",
+    "locations": "Lokalizacje",
+    "shelf": "Półka",
+    "shelfEmpty": "Wybierz wersję do edycji",
+    "goTo": "Przejdź do scenariusza",
+    "confirmRestore": "Spowoduje to zastąpienie pasującej treści w scenariuszu.",
+    "restore": "Przywróć",
+    "cancel": "Anuluj"
+  },
+  "formatDropdown": {
+    "elements": {
+      "scene": "NAGŁÓWEK SCENY",
+      "action": "Akcja",
+      "character": "POSTAĆ",
+      "dialogue": "Dialog",
+      "parenthetical": "(Wtrącenie)",
+      "transition": "PRZEJŚCIE:",
+      "section": "Sekcja",
+      "note": "[[Notatka]]",
+      "dual_dialogue": "Podwójny dialog",
+      "none": "Brak"
+    },
+    "titlePageElements": {
+      "title": "Tytuł",
+      "author": "Autor",
+      "date": "Data",
+      "none": "Brak"
+    }
+  },
+  "search": {
+    "placeholder": "Szukaj...",
+    "noMatches": "Brak wyników",
+    "matchCount": "{current} z {total}",
+    "replacePlaceholder": "Zastąp przez...",
+    "replace": "Zastąp",
+    "replaceAll": "Zastąp wszystko",
+    "filterByElement": "Filtruj według elementu:",
+    "elements": {
+      "scene": "Nagłówek sceny",
+      "action": "Akcja",
+      "character": "Postać",
+      "dialogue": "Dialog",
+      "parenthetical": "Wtrącenie",
+      "transition": "Przejście",
+      "section": "Sekcja",
+      "note": "Notatka",
+      "dual_dialogue": "Podwójny dialog",
+      "none": "Brak"
+    }
+  },
+  "collaborators": {
+    "projectTeam": "Zespół projektu ({count}/{max})",
+    "teamHelp": "Zarządzaj członkami zespołu i oczekującymi zaproszeniami. Możesz zaprosić dowolnego użytkownika niebędącego użytkownikiem Pro. Projekt pozostaje współdzielony tak długo, jak właściciel posiada plan Pro.",
+    "roles": {
+      "owner": "Właściciel",
+      "admin": "Admin",
+      "editor": "Edytor",
+      "viewer": "Widz"
+    },
+    "roleDesc": {
+      "owner": "Może usunąć projekt i przekazać własność",
+      "admin": "Może zapraszać, awansować, degradować i usuwać współpracowników",
+      "editor": "Może edytować scenariusz i zawartość projektu",
+      "viewer": "Dostęp tylko do odczytu. Nie może wprowadzać zmian"
+    },
+    "you": "(ty)",
+    "leave": "Opuść",
+    "kick": "Usuń",
+    "pending": "Oczekujące",
+    "cancel": "Anuluj",
+    "emailPlaceholder": "Wprowadź e-mail...",
+    "invite": "Zaproś",
+    "proRequired": "A Pro subscription is required to invite collaborators.",
+    "proRequiredInvite": "Upgrade to Pro to invite collaborators",
+    "upgrade": "Upgrade",
+    "localProjectOnly": "Collaboration is not available for local projects. Upload your project to the cloud to invite collaborators."
+  },
+  "export": {
+    "importLabel": "Importuj",
+    "selectFile": "Wybierz plik",
+    "selectFileDesc": "Prześlij .fountain, .fdx, .scriptio lub .txt",
+    "exportLabel": "Eksportuj",
+    "formatOptions": {
+      "pdf": "Dokument PDF (.pdf)",
+      "fountain": "Fountain (.fountain)",
+      "fdx": "Final Draft (.fdx)",
+      "scriptio": "Scriptio (.scriptio)"
+    },
+    "formatHelp": {
+      "pdf": "Standardowy format. Idealny do udostępniania i drukowania.",
+      "fountain": "Prosty format tekstowy oparty na Markdown, idealny dla kompatybilności.",
+      "fdx": "Zgodny z oprogramowaniem branżowym Final Draft.",
+      "scriptio": "Natywny format Scriptio, do przechowywania projektu lokalnie"
+    },
+    "includeNotes": "Uwzględnij notatki",
+    "includeNotesDesc": "Eksportuj notatki wewnątrz tekstu.",
+    "readable": "Czytelny JSON",
+    "readableDesc": "Eksportuj jako zwykły JSON zamiast skompresowanego pliku binarnego. Większy plik, możliwy do sprawdzenia w dowolnym edytorze tekstu.",
+    "watermark": "Znak wodny",
+    "watermarkDesc": "Nałóż tekst na strony.",
+    "watermarkPlaceholder": "Tekst znaku wodnego",
+    "passwordProtection": "Ochrona hasłem",
+    "passwordProtectionDesc": "Wymagaj hasła do otwarcia pliku PDF.",
+    "passwordPlaceholder": "Wprowadź hasło",
+    "exportBtn": "Eksportuj",
+    "exporting": "Eksportowanie...",
+    "exportingProgress": "Eksportowanie ({progress}%)"
+  },
+  "layout": {
+    "pageFormat": "Format strony",
+    "pageFormatHelp": {
+      "letter": "Standard amerykański. Standard branżowy dla scenariuszy z Hollywood.",
+      "a4": "Międzynarodowy format standardowy. Powszechny w Europie i większości krajów."
+    },
+    "sceneHeadings": "Nagłówki scen",
+    "bold": "Pogrubienie",
+    "boldDesc": "Nagłówki scen będą pogrubione",
+    "extraSpace": "Dodatkowy odstęp powyżej",
+    "extraSpaceDesc": "Dodaj dodatkowy odstęp przed nagłówkami scen",
+    "sceneNumbering": "Numeracja scen",
+    "sceneNumberingDesc": "Pokaż numery scen na lewym marginesie",
+    "duplicateRight": "Powtórz na prawym marginesie",
+    "duplicateRightDesc": "Pokaż numer po obu stronach",
+    "continuation": "Kontynuacja",
+    "moreTitle": "(MORE) Etykieta",
+    "contdTitle": "(CONT'D) Etykieta",
+    "pageMargins": "Marginesy strony",
+    "vertical": "Pionowe",
+    "horizontal": "Poziome",
+    "marginTop": "Góra",
+    "marginBottom": "Dół",
+    "margins": "Marginesy",
+    "marginLeft": "Lewy",
+    "marginRight": "Prawy",
+    "marginElements": {
+      "action": "Akcja",
+      "scene": "Nagłówek sceny",
+      "character": "Postać",
+      "dialogue": "Dialog",
+      "parenthetical": "Wtrącenie",
+      "transition": "Przejście",
+      "section": "Sekcja"
+    },
+    "elements": "Konfiguracja elementów",
+    "style": "Styl",
+    "alignment": "Wyrównanie",
+    "italic": "Kursywa",
+    "underline": "Podkreślenie",
+    "uppercase": "Wielkie litery",
+    "alignLeft": "Do lewej",
+    "alignCenter": "Do środka",
+    "alignRight": "Do prawej",
+    "sceneSpacing": "Odstęp",
+    "sceneSpacingDesc": "Odstęp nad nagłówkami scen",
+    "startNewPage": "Zacznij nową stronę"
+  },
+  "projectSettings": {
+    "titleLabel": "Tytuł",
+    "titlePlaceholder": "Wprowadź nazwę projektu...",
+    "authorLabel": "Autor",
+    "authorPlaceholder": "Nazwisko autora...",
+    "descriptionLabel": "Opis",
+    "descriptionPlaceholder": "O czym jest ten scenariusz?",
+    "posterLabel": "Plakat",
+    "noPoster": "Brak plakatu",
+    "posterHelp": "Zalecane: 600x900 pikseli (proporcja 2:3). Obsługuje PNG i JPG.",
+    "saveChanges": "Zapisz zmiany",
+    "dangerZoneTitle": "Strefa niebezpieczeństwa"
+  },
+  "contextMenu": {
+    "goToScene": "Idź do sceny",
+    "edit": "Edytuj",
+    "copy": "Kopiuj",
+    "cut": "Wytnij",
+    "selectInEditor": "Zaznacz w edytorze",
+    "remove": "Usuń",
+    "paste": "Wklej",
+    "highlight": "Wyróżnij",
+    "addCharacter": "Dodaj postać",
+    "addComment": "Dodaj komentarz",
+    "searchOnWeb": "Szukaj w sieci",
+    "noSuggestions": "Brak sugestii",
+    "addToDictionary": "Dodaj do słownika",
+    "makeDualDialogue": "Utwórz podwójny dialog",
+    "shelve": "Odłóż",
+    "shelveScene": "Odłóż scenę",
+    "shelveDialogue": "Odłóż dialog",
+    "shelveAction": "Odłóż akcję"
+  },
+  "popup": {
+    "character": {
+      "create": "Utwórz postać",
+      "edit": "Edytuj postać",
+      "name": "Imię",
+      "gender": "Płeć",
+      "genderFemale": "Kobieta",
+      "genderMale": "Mężczyzna",
+      "genderOther": "Inna",
+      "color": "Kolor",
+      "synopsis": "Opis postaci",
+      "confirm": "Potwierdź",
+      "takenNameError": "Postać o imieniu {newName} już istnieje. Wybierz inne imię lub edytuj istniejącą postać.",
+      "updateOccurrences": "Czy na pewno chcesz zaktualizować {count} wystąpień słowa {oldName} na {newName}? Zachowaj szczególną ostrożność przy popularnych słowach.",
+      "yes": "Tak",
+      "noDoNotChange": "Nie, nie zmieniaj"
+    },
+    "import": {
+      "title": "Potwierdź import",
+      "warning": "Czy na pewno chcesz <b>nadpisać</b> aktualny projekt?",
+      "info": "Możesz wyeksportować swój projekt przed zaimportowaniem nowego.",
+      "yesImport": "Tak, importuj",
+      "no": "Nie"
+    },
+    "scene": {
+      "edit": "Edytuj scenę",
+      "sceneTitle": "Scena",
+      "color": "Kolor",
+      "synopsis": "Opis sceny",
+      "synopsisPlaceholder": "Wpisz krótki opis tej sceny...",
+      "save": "Zapisz"
+    }
+  },
+  "board": {
+    "duplicate": "Powiel",
+    "delete": "Usuń",
+    "hints": {
+      "pan": "Środkowy przycisk, aby przesuwać",
+      "select": "Przeciągnij, aby zaznaczyć karty",
+      "create": "Kliknij dwukrotnie, aby utworzyć kartę",
+      "move": "Przytrzymaj Shift, aby swobodnie przesuwać"
+    },
+    "untitled": "Bez tytułu",
+    "titlePlaceholder": "Tytuł",
+    "descriptionPlaceholder": "Opis"
+  },
+  "saves": {
+    "title": "Historia wersji",
+    "saveCurrentVersion": "Zapisz aktualną wersję",
+    "namePlaceholder": "Nazwa wersji...",
+    "manualSaves": "Zapisy ręczne",
+    "autoSaves": "Autozapisy",
+    "restore": "Przywróć",
+    "rename": "Zmień nazwę",
+    "delete": "Usuń",
+    "cancel": "Anuluj",
+    "confirmRestore": "To zastąpi aktualny dokument u wszystkich współpracowników. Czy na pewno?",
+    "confirmDelete": "Czy na pewno chcesz usunąć ten zapis?",
+    "noSaves": "Brak zapisów",
+    "proRequired": "Pro Required",
+    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
+    "upgradeBtn": "Upgrade to Pro"
+  },
+  "auth": {
+    "intro": "Wprowadź swój e-mail, a wyślemy Ci jednorazowy link do logowania. Hasło nie jest potrzebne.",
+    "emailLabel": "E-mail",
+    "sendLink": "Wyślij link logowania",
+    "sending": "Wysyłanie...",
+    "checkInbox": "Jeśli konto jest powiązane z {email}, link do logowania został wysłany. Link jest ważny przez następne 10 minut.",
+    "useDifferentEmail": "Użyj innego adresu e-mail",
+    "waitingForClick": "Oczekiwanie na kliknięcie linku w skrzynce odbiorczej...",
+    "requestFailed": "Nie udało się wysłać linku logowania. Spróbuj ponownie za chwilę.",
+    "desktopTimeout": "Czas logowania upłynął. Poproś o nowy link."
+  },
+  "oauth": {
+    "orContinueWith": "lub kontynuuj z",
+    "continueWithGoogle": "Kontynuuj z Google",
+    "continueWithApple": "Kontynuuj z Apple",
+    "waiting": "Oczekiwanie na przeglądarkę…",
+    "timeout": "Czas logowania upłynął. Spróbuj ponownie.",
+    "error": "Logowanie nie powiodło się. Spróbuj ponownie."
+  },
+  "dates": {
+    "justNow": "Przed chwilą",
+    "minutesAgo": "{mins, plural, one {# minutę temu} few {# minuty temu} other {# minut temu}}",
+    "hoursAgo": "{hours, plural, one {# godzinę temu} few {# godziny temu} other {# godzin temu}}",
+    "today": "Dzisiaj",
+    "yesterday": "Wczoraj",
+    "daysAgo": "{days, plural, one {# dzień temu} few {# dni temu} other {# dni temu}}",
+    "monthsAgo": "{months, plural, one {# miesiąc} few {# miesiące} many {# miesięcy} other {# miesięcy}} temu",
+    "moreThanYearAgo": "Ponad rok temu"
+  }
+}

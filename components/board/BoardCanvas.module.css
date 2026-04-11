@@ -1,0 +1,461 @@
+/* Board wrapper with shadow */
+.board_wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+}
+
+.board_shadow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    z-index: 10;
+    pointer-events: none;
+    background: linear-gradient(to bottom, var(--editor-shadow) 0%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+}
+
+.container {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    background-color: var(--main-bg);
+    cursor: default;
+}
+
+.container.panning {
+    cursor: grabbing;
+}
+
+.grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, var(--secondary-text) 1px, transparent 1px);
+    opacity: 0.5;
+}
+
+.canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    opacity: 1;
+    transition: opacity 0.15s ease;
+}
+
+.canvas_hidden {
+    opacity: 0;
+}
+
+/* Card styles */
+.card {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    border: 8px solid;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: move;
+    user-select: none;
+    transition: box-shadow 0.15s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.card.card_dragging {
+    opacity: 0.9;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+}
+
+.card_header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    height: 40px;
+    flex-shrink: 0;
+    overflow: visible;
+}
+
+.card_color_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition:
+        opacity 0.15s ease,
+        background-color 0.15s ease;
+    color: white;
+    flex-shrink: 0;
+}
+
+.card_color_btn:hover {
+    opacity: 1;
+}
+
+.card_header_title {
+    flex: 1;
+    font-weight: bold;
+    font-size: 1.2rem;
+    font-family: var(--font-courier);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: inherit;
+    line-height: 24px;
+}
+
+.card_header_title_input {
+    flex: 1;
+    font-weight: bold;
+    font-size: 1.2rem;
+    font-family: var(--font-courier);
+    background: rgba(0, 0, 0, 0.15);
+    border: none;
+    border-radius: 4px;
+    padding: 0 6px;
+    height: 24px;
+    color: white;
+    outline: none;
+    margin: 0;
+}
+
+.card_header_title_input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.card_content {
+    flex: 1;
+    padding: 10px 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+}
+
+.card_description {
+    font-size: 1.2rem;
+    font-family: var(--font-courier);
+    color: black;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: pre-wrap;
+}
+
+.card_description_input {
+    width: 100%;
+    flex: 1;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 1.2rem;
+    font-family: var(--font-courier);
+    color: black;
+    background: transparent;
+    resize: none;
+    outline: none;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.card_resize_handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    cursor: se-resize;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.card_resize_handle::after {
+    content: "";
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--secondary-text);
+    border-bottom: 2px solid var(--secondary-text);
+}
+
+.card:hover .card_resize_handle {
+    opacity: 1;
+}
+
+/* Color picker - horizontal bar below header */
+.color_picker {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+}
+
+.color_option {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.color_option:hover {
+    transform: scale(1.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Context menu - matching ContextMenu.module.css */
+.context_menu {
+    display: flex;
+    flex-direction: column;
+    width: 150px;
+    z-index: 1000;
+    position: fixed;
+    overflow-y: auto;
+    border-radius: 12px;
+    background-color: var(--editor-sidebar);
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
+}
+
+.context_menu_item {
+    display: flex; /* Enables flexbox layout */
+    align-items: center; /* Vertically centers the icon and text */
+    gap: 10px; /* Adds space between the icon and the text */
+
+    /* Your existing styles */
+    padding-block: 8px;
+    padding-left: 12px;
+    padding-right: 35px;
+    font-size: 14px;
+    border-bottom: 1px solid;
+    border-color: var(--separator);
+    cursor: pointer;
+}
+
+.context_menu_item:last-child {
+    border-bottom: none;
+}
+
+.context_menu_item:hover {
+    background-color: var(--editor-sidebar-hover);
+}
+
+.context_menu_colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--separator);
+}
+
+.context_menu_color_swatch {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.context_menu_color_swatch:hover {
+    transform: scale(1.15);
+}
+
+.context_menu_color_swatch_active {
+    border-color: white;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Zoom controls - matching navbar button style */
+.zoom_controls {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 64px;
+    border: 2px solid var(--tertiary);
+    background-color: var(--secondary);
+    user-select: none;
+}
+
+.zoom_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--primary-text);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.zoom_btn:hover {
+    background-color: var(--tertiary);
+}
+
+.zoom_level {
+    min-width: 50px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--primary-text);
+    font-weight: 500;
+}
+
+/* Hints in corner with low opacity */
+.hints {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--secondary-text);
+    opacity: 0.5;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Arrows SVG layer */
+.arrows_svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.arrow_line {
+    pointer-events: none;
+    transition: stroke 0.15s ease;
+}
+
+.arrow_head {
+    pointer-events: none;
+    transition: fill 0.15s ease;
+}
+
+.arrow_hitbox {
+    pointer-events: stroke;
+    cursor: pointer;
+    stroke: transparent;
+    stroke-width: 20;
+}
+
+.arrow_group:hover .arrow_line {
+    stroke: var(--tertiary-hover);
+}
+
+.arrow_group:hover .arrow_head {
+    fill: var(--tertiary-hover);
+}
+
+.arrow_line_connecting {
+    pointer-events: none;
+}
+
+/* Single connection handle on cards */
+.connection_handle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: crosshair;
+    opacity: 0;
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease,
+        background-color 0.15s ease;
+    z-index: 10;
+    background: radial-gradient(circle, var(--secondary) 30%, transparent 30%);
+}
+
+.connection_handle::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    transform: translate(-50%, -50%);
+    border: 2px solid var(--secondary);
+    border-radius: 50%;
+    opacity: 0.6;
+}
+
+.card:hover .connection_handle {
+    opacity: 1;
+}
+
+.connection_handle:hover {
+    transform: scale(1.2);
+    background: radial-gradient(circle, var(--secondary) 40%, transparent 40%);
+}
+
+.connection_handle:hover::before {
+    opacity: 1;
+}
+
+/* Selected card highlight */
+.card_selected {
+    box-shadow:
+        0 0 0 3px var(--primary-text),
+        0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Selection rectangle */
+.selection_rect {
+    position: absolute;
+    border: 1px solid var(--primary-hover);
+    background-color: rgba(59, 130, 246, 0.1);
+    pointer-events: none;
+    z-index: 999;
+}
+
+/* Card highlight when connecting */
+.card_connecting {
+    cursor: crosshair;
+}
+
+.card_connecting:hover {
+    box-shadow:
+        0 0 0 3px var(--secondary),
+        0 4px 16px rgba(0, 0, 0, 0.2);
+}

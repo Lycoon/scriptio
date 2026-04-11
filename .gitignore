@@ -5,9 +5,13 @@
 /.pnp
 .pnp.js
 
+# collaboration
+/src/lib/collaboration/node_modules
+.wrangler/
+
 # testing
 /coverage
-/test_database
+/db_dev
 
 # next.js
 /.next/
@@ -21,7 +25,6 @@ next-env.d.ts
 # misc
 .DS_Store
 *.pem
-package-lock.json
 
 # debug
 npm-debug.log*
@@ -40,3 +43,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# claude
+.claude

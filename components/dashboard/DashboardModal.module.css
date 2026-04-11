@@ -1,0 +1,134 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    width: 900px;
+    max-width: 90vw;
+    height: 800px;
+    max-height: 80vh;
+    display: flex;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar {
+    flex: 1;
+    background: var(--editor-sidebar);
+    padding: 32px 0;
+    border-right: 1px solid var(--separator);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebarTitle {
+    font-size: 1.2rem;
+    padding: 0 24;
+    margin-bottom: 18px;
+    color: var(--primary-text);
+}
+
+.groupLabel {
+    font-family: var(--font-inter);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--secondary-text);
+    margin-bottom: 5px;
+    margin-top: 14px;
+    padding: 0 12;
+    opacity: 0.6;
+}
+
+.navMenu {
+    padding: 0 12px;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 8px 12px;
+    gap: 12px;
+
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--secondary-text);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.navItem.active {
+    background: var(--editor-tab-active);
+    color: var(--primary-text);
+    font-weight: 600;
+}
+
+.iconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.iconWrapper.active svg {
+    color: var(--primary-text);
+}
+
+.iconWrapper svg {
+    color: var(--secondary-text);
+}
+
+/* Content Area (2/3 Width) */
+.content {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    background: var(--main-bg);
+}
+
+.contentHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.scrollArea {
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-gutter: stable;
+    padding-right: 20px;
+}
+
+.input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 20px;
+    background: var(--tertiary);
+    border: 1px solid var(--input-outline);
+    border-radius: 6px;
+    color: var(--primary-text);
+    font-family: inherit;
+}
+
+.close_btn {
+    height: 22px;
+    width: 22px;
+    color: var(--secondary-text);
+    cursor: pointer;
+}
+
+.close_btn:hover {
+    color: var(--primary-text);
+}

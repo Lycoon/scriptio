@@ -1,0 +1,123 @@
+.split_panel_container {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.panel {
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel_focused {
+    outline: 2px solid var(--primary-text, rgba(100, 150, 255, 0.35));
+    outline-offset: -2px;
+    border-radius: 4px;
+}
+
+/* Mounted-but-hidden panels: kept alive in the DOM so editors
+   don't reinitialise; pulled out of grid flow via absolute positioning.
+   visibility:hidden (not display:none) preserves layout for ProseMirror. */
+.panel_hidden {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: -1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Drag handle */
+.drag_handle {
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    background: var(--tertiary);
+    box-shadow:
+        inset 1px 0 0 rgba(0, 0, 0, 0.12),
+        inset -1px 0 0 rgba(0, 0, 0, 0.12),
+        2px 0 6px rgba(0, 0, 0, 0.08),
+        -2px 0 6px rgba(0, 0, 0, 0.08);
+    transition: background-color 0.15s ease;
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* Center grip dots */
+.drag_handle::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 24px;
+    border-radius: 1px;
+    background: var(--secondary-text);
+    opacity: 0.4;
+    transition: opacity 0.15s ease;
+}
+
+.drag_handle:hover,
+.drag_handle_active {
+    background: var(--tertiary-hover);
+}
+
+.drag_handle:hover::after,
+.drag_handle_active::after {
+    opacity: 0.7;
+}
+
+/* Panel switcher anchor */
+.panel_switcher_anchor {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 4;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+}
+
+.panel_switcher_btn {
+    width: 20px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--secondary-text);
+    background-color: var(--secondary);
+    border-radius: 6px;
+    border: none;
+}
+
+.panel_switcher_btn:hover {
+    opacity: 1;
+    background-color: var(--secondary-hover);
+}
+
+.panel_switcher_separator {
+    height: 1px;
+    margin: 4px 8px;
+    background-color: var(--separator);
+}
+
+/* Transparent overlay during drag to capture all mouse events */
+.drag_overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    cursor: col-resize;
+}

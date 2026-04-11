@@ -1,49 +1,46 @@
+import { UserSettings } from "@src/lib/utils/types";
+import { Prisma } from "@prisma/client";
 import prisma from "../db";
 
-export type Secrets = {
-    hash?: string;
-    salt?: string;
-    emailHash?: string;
-    lastEmailHash?: Date;
-    recoverHash?: string;
-    lastRecoverHash?: Date;
-};
-
-export type Settings = {
+export type UpdateSettings = {
     highlightOnHover?: boolean;
     sceneBackground?: boolean;
     notesColor?: string;
     exportedNotesColor?: string;
+    onlineUsername?: string;
+    onlineColor?: string;
 };
 
 export interface UserUpdate {
-    id: idOrEmailType;
     email?: string;
-    verified?: boolean;
-    secrets?: Secrets;
-    settings?: Settings;
+    emailVerified?: Date | null;
+    username?: string;
+    color?: string;
+    isProUntil?: Date | null;
+    stripeSubscriptionId?: string | null;
+    isSubscriptionCancelled?: boolean;
+    settings?: Partial<UserSettings>;
 }
 
 export interface UserCreation {
     email: string;
-    secrets: Secrets;
 }
 
-type idOrEmailType = { id: number } | { email: string };
+type idOrEmailType = { id: string } | { email: string };
 
 export class UserRepository {
-    updateUser(user: UserUpdate) {
+    updateUserFromId(userId: string, userUpdate: UserUpdate) {
         return prisma.user.update({
-            where: user.id,
+            where: { id: userId },
             data: {
-                email: user.email,
-                verified: user.verified,
-                secrets: {
-                    update: user.secrets,
-                },
-                settings: {
-                    update: user.settings,
-                },
+                email: userUpdate.email,
+                emailVerified: userUpdate.emailVerified,
+                settings: userUpdate.settings as Prisma.InputJsonValue,
+                username: userUpdate.username,
+                color: userUpdate.color,
+                isProUntil: userUpdate.isProUntil,
+                stripeSubscriptionId: userUpdate.stripeSubscriptionId,
+                isSubscriptionCancelled: userUpdate.isSubscriptionCancelled,
             },
         });
     }
@@ -52,16 +49,7 @@ export class UserRepository {
         return prisma.user.create({
             data: {
                 email: user.email,
-                secrets: {
-                    create: {
-                        hash: user.secrets.hash!,
-                        salt: user.secrets.salt!,
-                        emailHash: user.secrets.emailHash!,
-                    },
-                },
-                settings: {
-                    create: {},
-                },
+                emailVerified: new Date(),
             },
         });
     }
@@ -72,19 +60,43 @@ export class UserRepository {
         });
     }
 
-    fetchUser(idOrEmail: idOrEmailType, includeSecrets = false) {
-        const userQuerySelect = {
-            id: true,
-            email: true,
-            verified: true,
-            createdAt: true,
-            settings: true,
-            secrets: includeSecrets,
-        };
-
+    fetchUser(idOrEmail: idOrEmailType) {
         return prisma.user.findUnique({
             where: idOrEmail,
-            select: userQuerySelect,
+            select: {
+                id: true,
+                email: true,
+                emailVerified: true,
+                createdAt: true,
+                settings: true,
+                username: true,
+                color: true,
+                isProUntil: true,
+                isSubscriptionCancelled: true,
+            },
+        });
+    }
+
+    fetchUserBySubscriptionId(subscriptionId: string) {
+        return prisma.user.findFirst({
+            where: { stripeSubscriptionId: subscriptionId },
+            select: { id: true },
+        });
+    }
+
+    fetchSubscriptionId(userId: string) {
+        return prisma.user.findUnique({
+            where: { id: userId },
+            select: { stripeSubscriptionId: true },
+        });
+    }
+
+    fetchUserSettings(userId: string) {
+        return prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                settings: true,
+            },
         });
     }
 }

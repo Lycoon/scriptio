@@ -1,3 +1,12 @@
+.main {
+    flex: 1;
+    overflow: clip;
+    display: flex;
+
+    background-color: var(--primary);
+    transition: background-color 0.15s;
+}
+
 .center_col {
     display: flex;
     flex: 1;
@@ -33,12 +42,4 @@
     max-width: 750px;
     min-width: 250px;
     margin-top: 70px;
-}
-
-.main {
-    flex: 1;
-    overflow-y: scroll;
-
-    background-color: var(--primary);
-    transition: background-color 0.15s;
 }

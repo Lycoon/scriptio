@@ -1,34 +1,85 @@
-import { useEffect, useRef, useState } from "react";
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useCookieUser, useIsPro, useProjectMemberships, ExtendedProjectMembershipPayload } from "@src/lib/utils/hooks";
+import { join } from "@src/lib/utils/misc";
+import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
+import { redirectScreenplay } from "@src/lib/utils/redirects";
+import { FileDown } from "lucide-react";
+import { useTranslations } from "next-intl";
+
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./CreateProjectPage";
 import ProjectItem from "./ProjectItem";
 import autoAnimate from "@formkit/auto-animate";
-import { useProjects } from "@src/lib/utils/hooks";
 import Loading from "../utils/Loading";
-import { Project } from "@src/lib/utils/types";
-import { deleteProject } from "@src/lib/utils/requests";
-import { join } from "@src/lib/utils/misc";
-
-import TrashSVG from "@public/images/trash.svg";
 
 import page from "./ProjectPageContainer.module.css";
 import form from "../utils/Form.module.css";
 
 const ProjectPageContainer = () => {
-    const { data: projects, isLoading, mutate } = useProjects();
+    const { user } = useCookieUser();
+    const { isPro } = useIsPro();
+    const { projects, isLoading, mutate } = useProjectMemberships();
+    const t = useTranslations("projects");
     const [isCreating, setIsCreating] = useState(false);
-    const [deleteMode, setDeleteMode] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const [showShadow, setShowShadow] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
     const parent = useRef(null);
 
     useEffect(() => {
         parent.current && autoAnimate(parent.current);
     }, [parent]);
 
-    if (isLoading || !projects) return <Loading />;
+    const checkOverflow = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const canScroll = el.scrollHeight > el.clientHeight;
+        const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 10;
+        setShowShadow(canScroll && !isAtBottom);
+    }, []);
 
-    projects.sort((a: Project, b: Project) => {
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
+    useEffect(() => {
+        checkOverflow();
+        window.addEventListener("resize", checkOverflow);
+        return () => window.removeEventListener("resize", checkOverflow);
+    }, [checkOverflow, projects]);
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsImporting(true);
+
+        try {
+            // This now correctly preserves all project data (title page, board, etc.)
+            const result = await importFileAsProject(file, user, undefined, isPro);
+
+            if (result.success && result.projectId) {
+                // Refresh the project list
+                await mutate();
+                // Redirect to the new project
+                redirectScreenplay(result.projectId);
+            } else {
+                console.error("Import failed:", result.error);
+                // Could show a toast/notification here
+            }
+        } catch (error) {
+            console.error("Import error:", error);
+        } finally {
+            setIsImporting(false);
+            // Reset input so the same file can be selected again
+            event.target.value = "";
+        }
+    };
+
+    if (isLoading || !projects) return <Loading />;
 
     if (isCreating) {
         return <NewProjectPage setIsCreating={setIsCreating} />;
@@ -37,35 +88,52 @@ const ProjectPageContainer = () => {
     } else {
         return (
             <div className={page.container}>
+                {/* Hidden file input for import */}
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileImport}
+                    accept={getSupportedImportExtensions()}
+                    style={{ display: "none" }}
+                />
                 <div className={page.center}>
                     <div className={page.header}>
                         <div className={page.header_info}>
-                            <h1>Projects</h1>
+                            <h1>{t("pageTitle")}</h1>
                             <div className={page.header_btns}>
-                                <div onClick={() => setDeleteMode(!deleteMode)} className={page.delete_btn}>
-                                    <TrashSVG className={page.delete_img} alt="Trash icon" />
-                                </div>
-                                <button className={join(page.create_btn, form.btn)} onClick={() => setIsCreating(true)}>
-                                    Create
+                                <button
+                                    className={`${page.import_btn} ${form.btn}`}
+                                    onClick={handleImportClick}
+                                    disabled={isImporting}
+                                >
+                                    <FileDown size={18} />
+                                    {isImporting ? t("importing") : t("importBtn")}
+                                </button>
+                                <button
+                                    className={`${page.create_btn} ${form.btn}`}
+                                    onClick={() => setIsCreating(true)}
+                                >
+                                    {t("createBtn")}
                                 </button>
                             </div>
                         </div>
                         <hr />
                     </div>
-                    <div ref={parent} className={page.grid}>
-                        {projects.map((project: Project) => {
-                            return (
-                                <ProjectItem
-                                    key={project.id}
-                                    project={project}
-                                    deleteMode={deleteMode}
-                                    deleteProject={() => {
-                                        deleteProject(project.id);
-                                        mutate!();
-                                    }}
-                                />
-                            );
-                        })}
+                    <div className={page.gridWrapper}>
+                        <div ref={scrollRef} className={page.gridScroll} onScroll={checkOverflow}>
+                            <div ref={parent} className={page.grid}>
+                                {projects.map((membership: ExtendedProjectMembershipPayload) => {
+                                    return (
+                                        <ProjectItem
+                                            key={membership.project.id}
+                                            project={membership.project}
+                                            isLocalOnly={membership.isLocalOnly}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div className={join(page.bottomShadow, showShadow ? page.showShadow : "")} />
                     </div>
                 </div>
             </div>

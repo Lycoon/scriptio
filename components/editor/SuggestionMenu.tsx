@@ -1,13 +1,16 @@
-import { useContext, useEffect, useState } from "react";
+"use client";
+
+import { useContext, useEffect, useState, useCallback, useRef } from "react";
 
 import styles from "./SuggestionMenu.module.css";
-import context from "./sidebar/ContextMenu.module.css";
-import { pasteTextAt } from "@src/lib/editor/editor";
+import { pasteTextAt, insertElement } from "@src/lib/screenplay/editor";
+import { ScreenplayElement } from "@src/lib/utils/enums";
 import { ProjectContext } from "@src/context/ProjectContext";
 
 type Props = {
     suggestions: string[];
     suggestionData: SuggestionData;
+    onSelect?: () => void;
 };
 
 type Position = {
@@ -19,52 +22,102 @@ export type SuggestionData = {
     position: Position;
     cursor: number;
     cursorInNode: number;
+    /** Offset within the node where the replaceable text starts (e.g., after "INT. " prefix) */
+    textOffset?: number;
+    nodeType?: "character" | "scene";
 };
 
-const SuggestionMenu = ({ suggestionData, suggestions }: Props) => {
+const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
     const [selectedIdx, setSelectedIdx] = useState(0);
     const { editor } = useContext(ProjectContext);
+    const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-    const selectSuggestion = (idx: number) => {
-        const suggestion = suggestions[idx].slice(suggestionData.cursorInNode);
-        if (suggestion) {
-            pasteTextAt(editor!, suggestion, suggestionData.cursor);
-        }
-    };
+    // Use refs to avoid stale closure issues
+    const selectedIdxRef = useRef(selectedIdx);
+    const suggestionDataRef = useRef(suggestionData);
+    const suggestionsRef = useRef(suggestions);
 
-    /* Suggestions menu keyboard events */
-    const upHandler = () => {
-        setSelectedIdx((selectedIdx + suggestions.length - 1) % suggestions.length);
-    };
-    const downHandler = () => {
-        setSelectedIdx((selectedIdx + 1) % suggestions.length);
-    };
-    const enterHandler = () => {
-        selectSuggestion(selectedIdx);
-    };
-
-    const pressedKeyEvent = (e: KeyboardEvent) => {
-        if (e.key === "ArrowUp") {
-            e.preventDefault();
-            upHandler();
-            return true;
-        } else if (e.key === "ArrowDown") {
-            e.preventDefault();
-            downHandler();
-            return true;
-        } else if (e.key === "Enter") {
-            enterHandler();
-            return true;
-        }
-        return false;
-    };
+    // Keep refs in sync
+    useEffect(() => {
+        selectedIdxRef.current = selectedIdx;
+    }, [selectedIdx]);
 
     useEffect(() => {
-        addEventListener("keydown", pressedKeyEvent);
-        return () => {
-            removeEventListener("keydown", pressedKeyEvent);
+        suggestionDataRef.current = suggestionData;
+    }, [suggestionData]);
+
+    useEffect(() => {
+        suggestionsRef.current = suggestions;
+    }, [suggestions]);
+
+    // Reset selection when suggestions change
+    useEffect(() => {
+        setSelectedIdx(0);
+        itemRefs.current = [];
+    }, [suggestions]);
+
+    // Scroll selected item into view
+    useEffect(() => {
+        const selectedItem = itemRefs.current[selectedIdx];
+        if (selectedItem) {
+            selectedItem.scrollIntoView({ block: "nearest" });
+        }
+    }, [selectedIdx]);
+
+    const selectSuggestion = useCallback(
+        (idx: number) => {
+            if (!editor) return;
+
+            const data = suggestionDataRef.current;
+            const currentSuggestions = suggestionsRef.current;
+
+            // Calculate how much of the suggestion to insert
+            // textOffset indicates where the replaceable portion starts (e.g., after "INT. ")
+            const offset = data.textOffset ?? 0;
+            const typedLength = data.cursorInNode - offset;
+            const suggestion = currentSuggestions[idx]?.slice(typedLength);
+            if (suggestion) {
+                pasteTextAt(editor, suggestion, data.cursor);
+                onSelect?.();
+            }
+
+            if (data.nodeType === "character") {
+                const afterPos = editor.state.selection.$anchor.after();
+                const nextNode = editor.state.doc.nodeAt(afterPos);
+                if (!nextNode || nextNode.attrs.class !== ScreenplayElement.Dialogue) {
+                    insertElement(editor, ScreenplayElement.Dialogue, afterPos);
+                }
+            }
+        },
+        [editor, onSelect],
+    );
+
+    useEffect(() => {
+        const len = suggestions.length;
+        if (len === 0) return;
+
+        const pressedKeyEvent = (e: KeyboardEvent) => {
+            if (e.key === "ArrowUp") {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                setSelectedIdx((prev) => (prev + len - 1) % len);
+            } else if (e.key === "ArrowDown") {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                setSelectedIdx((prev) => (prev + 1) % len);
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                selectSuggestion(selectedIdxRef.current);
+            }
         };
-    });
+
+        // Use capture phase to intercept before editor
+        document.addEventListener("keydown", pressedKeyEvent, true);
+        return () => {
+            document.removeEventListener("keydown", pressedKeyEvent, true);
+        };
+    }, [suggestions.length, selectSuggestion]);
 
     return (
         <div
@@ -76,7 +129,10 @@ const SuggestionMenu = ({ suggestionData, suggestions }: Props) => {
         >
             {suggestions.map((suggestion: string, index: number) => (
                 <div
-                    className={context.menu_item + " " + (index === selectedIdx ? "selected" : "")}
+                    ref={(el) => {
+                        itemRefs.current[index] = el;
+                    }}
+                    className={`${styles.menu_item} ${index === selectedIdx ? styles.selected : ""}`}
                     onClick={() => selectSuggestion(index)}
                     key={index}
                 >

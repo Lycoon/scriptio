@@ -1,0 +1,553 @@
+@import "./fonts.css";
+
+:root {
+    --font-screenplay: "CourierPrime", "FreeMono", "Cousine", "SarasaMonoSC", monospace;
+}
+
+.rm-page-header,
+.rm-page-footer,
+.rm-pagination-gap {
+    user-select: none;
+    cursor: default !important;
+}
+
+.rm-pagination-gap {
+    border: none !important;
+    background-color: var(--main-bg) !important;
+    position: relative;
+    z-index: 1; /* Ensure gap covers any bleeding backgrounds from content */
+}
+
+.breaker {
+    pointer-events: none;
+    position: relative;
+    z-index: 1;
+}
+
+.ProseMirror {
+    --font-size: 12pt;
+
+    --action-l-margin: 1.5in;
+    --action-r-margin: 1in;
+    --scene-l-margin: 1.5in;
+    --scene-r-margin: 1in;
+    --character-l-margin: 4in;
+    --character-r-margin: 1in;
+    --dialogue-l-margin: 2.8in;
+    --dialogue-r-margin: 2in;
+    --parenthetical-l-margin: 3.5in;
+    --parenthetical-r-margin: 3in;
+    --transition-l-margin: 1.5in;
+    --transition-r-margin: 1in;
+    --line-height: 16px;
+
+    border: none !important;
+    background-color: var(--editor-script-bg) !important;
+
+    /* Prevent outline from appearing when focused on screenplay */
+    outline: none;
+
+    /* Default screenplay paragraph attributes - direct children only
+       Critical: block + width:100% ensures consistent sizing between empty 
+       and non-empty nodes, preventing pagination flickering and infinite loops.
+       Scoped with > to avoid affecting pagination header/footer elements */
+    > p,
+    .dual_dialogue_column p {
+        display: block;
+        width: 100%;
+        color: var(--editor-text);
+        font-family: var(--font-screenplay);
+        font-size: var(--font-size);
+        text-align: left;
+        line-height: var(--line-height) !important;
+        margin-top: var(--line-height);
+        margin-bottom: 0;
+        min-height: 1lh;
+        padding-left: var(--action-l-margin);
+        padding-right: var(--action-r-margin);
+        box-sizing: border-box;
+    }
+
+    /* Spans inside paragraphs - NO display/width overrides
+       These must remain inline (default) to not break text flow */
+    > p span,
+    .dual_dialogue_column p span {
+        color: var(--editor-text);
+        font-family: var(--font-screenplay);
+        font-size: var(--font-size);
+        line-height: var(--line-height) !important;
+    }
+
+    .page-number,
+    .page-number > * {
+        color: var(--editor-text);
+        font-family: var(--font-screenplay);
+    }
+
+    /* Editor styles */
+    span.bold {
+        font-weight: bold;
+    }
+    span.italic {
+        font-style: italic;
+    }
+    span.underline {
+        text-decoration: underline;
+    }
+
+    /* Screenplay elements */
+    .is-empty {
+        cursor: text;
+        background-color: transparent; /* Catches the click */
+        overflow: hidden;
+        height: var(--line-height);
+    }
+
+    .action {
+        text-align: var(--action-align, left) !important;
+        font-weight: var(--action-weight, normal);
+        font-style: var(--action-style, normal);
+        text-decoration: var(--action-decoration, none);
+        text-transform: var(--action-transform, none);
+    }
+
+    .scene {
+        position: relative;
+        overflow: visible;
+        background-color: none;
+        margin-top: 1lh;
+        text-transform: var(--scene-transform, uppercase);
+        font-weight: var(--scene-weight, bold);
+        font-style: var(--scene-style, normal);
+        text-decoration: var(--scene-decoration, none);
+        text-align: var(--scene-align, left) !important;
+        counter-increment: scenenumber;
+        padding-left: var(--scene-l-margin) !important;
+        padding-right: var(--scene-r-margin) !important;
+    }
+
+    /* Left scene number (CSS counter via ::before) */
+    .scene::before {
+        position: absolute;
+        content: counter(scenenumber);
+        right: 100%;
+        margin-right: -120px;
+    }
+
+    /* Right scene number (CSS counter via ::after, hidden by default) */
+    .scene::after {
+        position: absolute;
+        content: counter(scenenumber);
+        top: 0;
+        left: 100%;
+        margin-left: -85px;
+        user-select: none;
+        pointer-events: none;
+        display: none;
+    }
+
+    /* Show right scene number when enabled */
+    &.scene-number-right .scene::after {
+        display: block;
+    }
+
+    /* Hide all scene numbers when disabled */
+    &.hide-scene-numbers .scene::before,
+    &.hide-scene-numbers .scene::after {
+        display: none;
+    }
+
+    /* Normal weight scene headings (when bold disabled) */
+    &.scene-heading-normal .scene {
+        font-weight: normal;
+    }
+
+    /* Double margin-top for scene headings */
+    &.scene-heading-spacing-1\.5 .scene {
+        margin-top: 1.5lh;
+    }
+    &.scene-heading-spacing-2 .scene {
+        margin-top: 2lh;
+    }
+
+    /* Dialogue */
+    .dialogue {
+        margin-top: 0;
+        font-weight: var(--dialogue-weight, normal);
+        font-style: var(--dialogue-style, normal);
+        text-decoration: var(--dialogue-decoration, none);
+        text-transform: var(--dialogue-transform, none);
+        text-align: var(--dialogue-align, left) !important;
+        padding-left: var(--dialogue-l-margin) !important;
+        padding-right: var(--dialogue-r-margin) !important;
+    }
+
+    .character {
+        font-weight: var(--character-weight, normal);
+        font-style: var(--character-style, normal);
+        text-decoration: var(--character-decoration, none);
+        text-transform: var(--character-transform, uppercase);
+        text-align: var(--character-align, left) !important;
+        padding-left: var(--character-l-margin) !important;
+        padding-right: var(--character-r-margin) !important;
+    }
+
+    .character::after {
+        text-transform: none;
+    }
+
+    .character.contd::after {
+        content: " " var(--contd-label, "(CONT'D)");
+    }
+
+    /* Parenthetical */
+    .parenthetical {
+        position: relative;
+        margin-top: 0;
+        font-weight: var(--parenthetical-weight, normal);
+        font-style: var(--parenthetical-style, normal);
+        text-decoration: var(--parenthetical-decoration, none);
+        text-transform: var(--parenthetical-transform, none);
+        text-align: var(--parenthetical-align, left) !important;
+        padding-left: var(--parenthetical-l-margin) !important;
+        padding-right: var(--parenthetical-r-margin) !important;
+    }
+
+    .parenthetical::before {
+        content: "(" !important;
+
+        /* Shenanigans to have cursor between both parenthesis otherwise it appears before first */
+        position: absolute;
+        /*top: 0;*/
+        left: var(--parenthetical-l-margin);
+        margin-left: calc(-1ch);
+        pointer-events: none;
+    }
+
+    .parenthetical::after {
+        content: ")" !important;
+    }
+
+    /* When empty, <br> creates a second line box that pushes ) to the next line.
+       Clip it with max-height (overflow: hidden already set on .is-empty),
+       and merge both parens into ::before so () appears together on the first line. */
+    .parenthetical.is-empty {
+        max-height: 1lh;
+    }
+
+    .parenthetical.is-empty::before {
+        content: "()" !important;
+    }
+
+    .parenthetical.is-empty::after {
+        content: "" !important;
+    }
+
+    /* Transition */
+    .transition {
+        position: relative;
+        text-transform: var(--transition-transform, uppercase);
+        font-weight: var(--transition-weight, normal);
+        font-style: var(--transition-style, normal);
+        text-decoration: var(--transition-decoration, none);
+        text-align: var(--transition-align, right) !important;
+        padding-left: var(--transition-l-margin) !important;
+        padding-right: var(--transition-r-margin) !important;
+    }
+
+    .transition::after {
+        content: ":" !important;
+    }
+
+    .section {
+        text-transform: var(--section-transform, uppercase);
+        counter-increment: actnumber;
+        text-align: var(--section-align, center) !important;
+        font-weight: var(--section-weight, normal);
+        font-style: var(--section-style, normal);
+        text-decoration: var(--section-decoration, underline);
+        padding-left: var(--section-l-margin) !important;
+        padding-right: var(--section-r-margin) !important;
+    }
+
+    /* Note */
+    .note {
+        box-sizing: content-box;
+        width: auto;
+        width: 100%;
+        overflow-wrap: break-word;
+        word-break: break-word;
+
+        background-color: var(--editor-notes-color); /* a: 0.226 */
+        padding-inline: 8px;
+        padding-block: 4px;
+
+        border-color: var(--editor-notes-color); /* a: 0.226 */
+        border-style: dashed;
+        border-width: 1px;
+        border-radius: 10px;
+    }
+
+    /* Collaboration */
+
+    /* The presence of collab-caret at the end of a node forces a trailing break behind */
+    /* We disable its rendering to prevent text line stutters or ::after layout breaks */
+    .collab-caret ~ br.ProseMirror-trailingBreak {
+        display: none;
+    }
+
+    .collab-caret {
+        position: absolute;
+        z-index: 100;
+        height: 1em;
+        width: 0 !important;
+        margin-left: -1px;
+
+        vertical-align: top;
+
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-select: none !important;
+        transition: transform 0.1s ease-out;
+    }
+
+    .collab-caret-label {
+        position: absolute;
+        top: -1.8em;
+        left: -0.5em;
+        padding: 3px 12px;
+        color: white;
+        font-size: 0.75em;
+        white-space: nowrap;
+        border-radius: 1em;
+        line-height: normal;
+
+        /* Prevent the collaboration caret from inheriting parent styles, such as with scene headings (uppercase & bold) */
+        text-transform: none !important;
+        font-weight: 400 !important;
+        font-style: normal !important;
+
+        pointer-events: none !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+
+        /* Fix for Firefox selection glitch */
+        display: block;
+        width: max-content;
+    }
+
+    /* Character dialogue highlighting - gradient confined to page content area (between page margins) */
+    .character-highlight {
+        background: linear-gradient(
+            to right,
+            transparent var(--page-margin-left),
+            var(--highlight-color) var(--page-margin-left),
+            var(--highlight-color) calc(var(--page-margin-left) + 3px),
+            var(--highlight-bg) calc(var(--page-margin-left) + 3px),
+            var(--highlight-bg) calc(100% - var(--page-margin-right)),
+            transparent calc(100% - var(--page-margin-right))
+        );
+    }
+
+    /* Search highlighting */
+    .search-highlight {
+        background-color: rgba(255, 213, 0, 0.3);
+        border-radius: 2px;
+    }
+
+    .search-highlight-current {
+        background-color: rgba(255, 213, 0, 0.6);
+        box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.8);
+    }
+
+    /* Spellcheck error highlighting */
+    .spellcheck-error {
+        position: relative;
+        z-index: 11; /* paint above pagination-overlay (z-index: 10) so the wavy underline isn't clipped */
+        text-decoration: underline wavy;
+        text-decoration-color: #ef4444;
+        text-decoration-skip-ink: none;
+    }
+
+    /* Comment highlighting */
+    .hide-comments .comment-highlight,
+    .hide-comments .comment-highlight-active {
+        background-color: transparent !important;
+        border-bottom: none !important;
+        cursor: text !important;
+    }
+
+    .comment-highlight {
+        background-color: rgba(255, 213, 0, 0.2);
+        border-bottom: 2px solid rgba(255, 213, 0, 0.5);
+        cursor: pointer;
+        border-radius: 2px;
+    }
+
+    .comment-highlight-active {
+        background-color: rgba(255, 213, 0, 0.4);
+        border-bottom-color: rgba(255, 213, 0, 0.8);
+    }
+
+    /* Scene bookmark marker (widget decoration inserted by scene-bookmark-extension) */
+    .scene-bookmark-marker {
+        position: absolute;
+        top: 0;
+        left: -4px;
+        width: 8px;
+        height: var(--line-height); /* fixed to one line — never stretches over wrapped headings */
+        background-color: var(--scene-color);
+        clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
+        border-radius: 0 0 2px 2px;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    /* Page position marker (applied by page-position-extension via DOM) */
+    /* page-last is deduced as the previous sibling of a page-first node */
+    .page-first {
+    }
+
+    /* (MORE) and (CONT'D) overlays for spanning dialogue */
+    .page-more-overlay,
+    .page-contd-overlay {
+        position: absolute;
+        z-index: 3;
+        font-family: var(--font-courier), monospace;
+        font-size: var(--font-size);
+        line-height: var(--line-height);
+        color: var(--editor-text);
+        pointer-events: none;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .page-more-overlay {
+        bottom: calc(100% - 1lh);
+        left: 0;
+        width: 100%;
+        padding-left: var(--character-l-margin);
+    }
+
+    .page-more-overlay::after {
+        content: var(--more-label, "(MORE)");
+    }
+
+    .page-contd-overlay {
+        top: calc(100% - 1lh);
+        left: 0;
+        width: 100%;
+        padding-left: var(--character-l-margin);
+        text-transform: uppercase;
+    }
+
+    .page-contd-overlay::after {
+        content: " " var(--contd-label, "(CONT'D)");
+    }
+
+    /* ============================== */
+    /*        DUAL DIALOGUE           */
+    /* ============================== */
+
+    .dual_dialogue {
+        display: flex;
+        flex-direction: row;
+        padding: 0 var(--page-margin-right) 0 var(--page-margin-left);
+        gap: 8px;
+    }
+
+    .dual_dialogue_column {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    /* Each column occupies ~half the content area.
+       --dd-*-l-margin values are relative to the column's left edge (after page padding is applied on the container). */
+    .dual_dialogue_column p {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .dual_dialogue_column .character {
+        padding-left: var(--dd-character-l-margin, 1.2in) !important;
+        padding-right: 0 !important;
+    }
+
+    .dual_dialogue_column .dialogue {
+        padding-left: var(--dd-dialogue-l-margin, 0in) !important;
+        padding-right: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    .dual_dialogue_column .parenthetical {
+        padding-left: var(--dd-parenthetical-l-margin, 0.8in) !important;
+        padding-right: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    /* The ::before "(" is absolutely positioned using the global --parenthetical-l-margin.
+       Inside a column, override it with the column-local variable so it aligns with the text. */
+    .dual_dialogue_column .parenthetical::before {
+        left: var(--dd-parenthetical-l-margin, 0.8in);
+    }
+}
+
+/* User settings */
+.highlight-on-hover .ProseMirror > p:hover {
+    background-color: color-mix(in srgb, var(--editor-script-bg) 95%, var(--editor-text) 5%);
+    background-clip: content-box;
+}
+
+.scene-background .scene {
+    background-color: var(--editor-scene);
+}
+
+/* ============================================ */
+/*           TITLE PAGE ELEMENTS                */
+/* ============================================ */
+
+/* Base styling for all title-page text lines */
+.ProseMirror > p.tp-text {
+    font-size: var(--font-size);
+    line-height: var(--line-height) !important;
+    margin-top: 0;
+}
+
+/* Text alignment classes (shared by title page and screenplay nodes).
+   Specificity must beat .ProseMirror .element (0,2,0), so we use
+   .ProseMirror p.align-* (0,2,1) — the extra type selector wins on equal !important. */
+.ProseMirror p.align-left {
+    text-align: left !important;
+}
+
+.ProseMirror p.align-center {
+    text-align: center !important;
+}
+
+.ProseMirror p.align-right {
+    text-align: right !important;
+}
+
+/* Format atom nodes — indivisible placeholders */
+.ProseMirror .tp-format-node {
+    display: inline;
+    cursor: default;
+    user-select: all;
+}
+
+.ProseMirror .tp-format-node:not(.tp-format-placeholder) {
+    background: var(--format-node-bg, rgba(100, 150, 255, 0.08));
+    border-bottom: 1px dotted var(--format-node-border, rgba(100, 150, 255, 0.3));
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+.ProseMirror .tp-format-node.tp-format-placeholder {
+    color: var(--secondary-text);
+    font-style: italic;
+}
+
+.ProseMirror .tp-format-node.ProseMirror-selectednode {
+    background: var(--selection-bg, rgba(100, 150, 255, 0.3));
+    border-radius: 2px;
+}

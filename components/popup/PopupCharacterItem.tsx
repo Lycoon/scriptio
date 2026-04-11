@@ -1,20 +1,29 @@
+"use client";
+
 import assert from "assert";
 import { useContext, useState } from "react";
-import { CharacterGender, doesCharacterExist, upsertCharacterData, deleteCharacter } from "@src/lib/editor/characters";
+import {
+    CharacterGender,
+    doesCharacterExist,
+    upsertCharacterData,
+    renameCharacter,
+} from "@src/lib/screenplay/characters";
+import { join } from "@src/lib/utils/misc";
+import { useDraggable } from "@src/lib/utils/hooks";
+import { ProjectContext } from "@src/context/ProjectContext";
+import { replaceOccurrences } from "@src/lib/screenplay/editor";
+import { UserContext } from "@src/context/UserContext";
+import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/screenplay/popup";
+import { countOccurrences } from "@src/lib/screenplay/screenplay";
+import { ColorPicker } from "@components/utils/ColorPicker";
+import { useTranslations } from "next-intl";
 
 import CloseSVG from "@public/images/close.svg";
 
-import form from "../utils/Form.module.css";
-import form_info from "../utils/FormInfo.module.css";
-import settings from "../settings/SettingsPageContainer.module.css";
-import popup from "./Popup.module.css";
-import { join } from "@src/lib/utils/misc";
-import { ProjectContext } from "@src/context/ProjectContext";
-import { SaveStatus } from "@src/lib/utils/enums";
-import { replaceOccurrences } from "@src/lib/editor/editor";
-import { UserContext } from "@src/context/UserContext";
-import { PopupCharacterData, PopupData, PopupType, closePopup } from "@src/lib/editor/popup";
-import { countOccurrences } from "@src/lib/editor/screenplay";
+import form from "@components/utils/Form.module.css";
+import form_info from "@components/utils/FormInfo.module.css";
+import styles from "@components/popup/PopupCharacterItem.module.css";
+import popup from "@components/popup/Popup.module.css";
 
 type NewNameWarningProps = {
     setNewNameWarning: (value: boolean) => void;
@@ -22,33 +31,32 @@ type NewNameWarningProps = {
     nameOccurrences: number;
     oldName: string;
     newName: string;
+    t: any;
 };
 
 const NewNameWarning = (props: NewNameWarningProps) => {
     return (
         <div className={join(popup.info, form_info.warn)}>
             <p>
-                Are you sure you want to update {props.nameOccurrences} occurrences of word {props.oldName} to{" "}
-                {props.newName}? Take extra care of common words whose update might be unwated.
+                {props.t("updateOccurrences", { count: props.nameOccurrences, oldName: props.oldName, newName: props.newName })}
             </p>
             <div className={popup.info_btns}>
                 <button className={join(form.btn, popup.info_btn)} type="button" onClick={props.onNewNameConfirm}>
-                    Yes
+                    {props.t("yes")}
                 </button>
                 <button className={join(form.btn, popup.info_btn)} onClick={() => props.setNewNameWarning(false)}>
-                    No, do not change
+                    {props.t("noDoNotChange")}
                 </button>
             </div>
         </div>
     );
 };
 
-const TakenNameError = (newName: string) => {
+const TakenNameError = (newName: string, t: any) => {
     return (
         <div className={join(popup.info, form_info.error)}>
             <p>
-                A character with the name {newName} already exists. Please choose a different name or edit the existing
-                character instead.
+                {t("takenNameError", { newName })}
             </p>
         </div>
     );
@@ -57,14 +65,17 @@ const TakenNameError = (newName: string) => {
 export const PopupCharacterItem = ({ type, data: { character } }: PopupData<PopupCharacterData>) => {
     const projectCtx = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
+    const { position, handleMouseDown, isDragging } = useDraggable();
+    const t = useTranslations("popup.character");
 
     const [newNameWarning, setNewNameWarning] = useState<boolean>(false);
     const [takenNameError, setTakenNameError] = useState<boolean>(false);
     const [nameOccurrences, setNameOccurrences] = useState<number>(0);
 
     const [newName, setNewName] = useState<string>("");
-    const [newGender, setNewGender] = useState<CharacterGender>(CharacterGender.Female);
+    const [newGender, setNewGender] = useState<CharacterGender>(CharacterGender.FEMALE);
     const [newSynopsis, setNewSynopsis] = useState<string>("");
+    const [newColor, setNewColor] = useState<string | undefined>(character?.color);
 
     const onCreate = (e: any) => {
         e.preventDefault();
@@ -78,12 +89,12 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
             return setTakenNameError(true);
         }
 
-        projectCtx.updateSaveStatus(SaveStatus.Saving);
         upsertCharacterData(
             {
                 name: _name.toUpperCase(),
                 gender: _gender,
                 synopsis: _synopsis,
+                color: newColor,
                 persistent: true,
             },
             projectCtx
@@ -119,12 +130,12 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
         }
 
         // if name is the same, just update the character
-        projectCtx.updateSaveStatus(SaveStatus.Saving);
         upsertCharacterData(
             {
                 name: character.name,
                 gender: _newGender,
                 synopsis: _newSynopsis,
+                color: newColor,
                 persistent: true,
             },
             projectCtx
@@ -136,16 +147,19 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     const onNewNameConfirm = () => {
         assert(character, "A character must be defined on edit mode");
 
-        // delete old character and insert with new name
+        // Replace occurrences in the editor text
         replaceOccurrences(projectCtx.editor!, character.name, newName);
-        deleteCharacter(character.name, projectCtx);
 
-        projectCtx.updateSaveStatus(SaveStatus.Saving);
+        // Rename the character in the Yjs document (atomic delete + create)
+        renameCharacter(character.name, newName, projectCtx);
+
+        // Update the character data with new values
         upsertCharacterData(
             {
                 name: newName,
                 gender: newGender,
                 synopsis: newSynopsis,
+                color: newColor,
                 persistent: true,
             },
             projectCtx
@@ -155,30 +169,36 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     };
 
     let def: any = {
-        title: "Create Character",
+        title: t("create"),
         onSubmit: onCreate,
         name: "",
         synopsis: "",
         gender: "",
+        color: undefined,
     };
 
     if (type === PopupType.EditCharacter) {
-        def.title = "Edit Character - " + character?.name;
+        def.title = t("edit");
         def.onSubmit = onEdit;
         def.name = character?.name;
         def.synopsis = character?.synopsis;
         def.gender = character?.gender;
+        def.color = character?.color;
     }
 
     return (
         <div className={popup.window}>
-            <div className={popup.container}>
-                <div className={popup.header}>
+            <div className={popup.container} style={{ transform: `translate(${position.x}px, ${position.y}px)` }}>
+                <div
+                    className={popup.header}
+                    onMouseDown={handleMouseDown}
+                    style={{ cursor: isDragging ? "grabbing" : "grab" }}
+                >
                     <h2 className={popup.title}>{def.title}</h2>
                     <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
                 </div>
                 <form className={popup.form} onSubmit={def.onSubmit}>
-                    {takenNameError && TakenNameError(newName)}
+                    {takenNameError && TakenNameError(newName, t)}
                     {newNameWarning &&
                         NewNameWarning({
                             setNewNameWarning,
@@ -186,10 +206,11 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                             nameOccurrences,
                             oldName: character?.name!,
                             newName,
+                            t
                         })}
-                    <div className={settings.element}>
-                        <div className={settings.element_header}>
-                            <p>Name</p>
+                    <div className={styles.element}>
+                        <div className={styles.element_header}>
+                            <p>{t("name")}</p>
                             <input
                                 className={join(form.input, popup.input)}
                                 name="name"
@@ -200,24 +221,31 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                             />
                         </div>
                     </div>
-                    <div className={settings.element}>
-                        <div className={settings.element_header}>
-                            <p>Gender</p>
+                    <div className={styles.element}>
+                        <div className={styles.element_header}>
+                            <p>{t("gender")}</p>
                             <select
-                                className={join(settings.select_form, popup.select)}
+                                className={popup.select}
                                 name="gender"
                                 defaultValue={def.gender}
                                 disabled={newNameWarning || takenNameError}
                             >
-                                <option value="0">Female</option>
-                                <option value="1">Male</option>
-                                <option value="2">Other</option>
+                                <option value="0">{t("genderFemale")}</option>
+                                <option value="1">{t("genderMale")}</option>
+                                <option value="2">{t("genderOther")}</option>
                             </select>
                         </div>
                         <hr />
                     </div>
-                    <div className={settings.element}>
-                        <p>Synopsis</p>
+                    <div className={styles.element}>
+                        <div className={styles.element_header}>
+                            <p>{t("color")}</p>
+                            <ColorPicker value={newColor} onChange={setNewColor} />
+                        </div>
+                        <hr />
+                    </div>
+                    <div className={styles.element}>
+                        <p>{t("synopsis")}</p>
                         <textarea
                             className={join(form.input, popup.textarea)}
                             name="synopsis"
@@ -230,7 +258,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                         className={join(form.btn, popup.confirm)}
                         type="submit"
                     >
-                        Confirm
+                        {t("confirm")}
                     </button>
                 </form>
             </div>

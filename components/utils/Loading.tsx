@@ -1,3 +1,5 @@
+"use client";
+
 import load from "./Loading.module.css";
 
 import LoadingSVG from "@public/images/loading.svg";

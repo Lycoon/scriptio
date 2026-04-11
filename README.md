@@ -1,81 +1,68 @@
 <p align="center">
-  Minimalist tool for perfectionist screenwriters
+  <a href="https://scriptio.app" target="_blank" rel="noopener noreferrer">
+    <img src="https://pub-17d379be4340438abc6e67ea9e797303.r2.dev/mail_banner.png" alt="Scriptio Banner" width="100%">
+  </a>
 </p>
+
+<h3 align="center">
+<b>Modern</b>, <b>elegant</b> and <b>cross-platform</b> screenwriting software
+</h3>
 
 <p align="center">
-    <img alt="Discord" src="https://img.shields.io/discord/985259837602553876">
-    <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/Lycoon/scriptio">
+  <img alt="Web Build Status" src="https://img.shields.io/github/actions/workflow/status/Lycoon/scriptio/.github%2Fworkflows%2Fci-web.yaml?style=for-the-badge&logo=docker&logoColor=white&label=Web">
+  <img alt="Windows Build Status" src="https://img.shields.io/github/actions/workflow/status/Lycoon/scriptio/ci-windows.yaml?style=for-the-badge&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0ODc1IDQ4NzUiPjxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMCAwaDIzMTF2MjMxMEgwem0yNTY0IDBoMjMxMXYyMzEwSDI1NjR6TTAgMjU2NGgyMzExdjIzMTFIMHptMjU2NCAwaDIzMTF2MjMxMUgyNTY0Ii8%2BPC9zdmc%2B&label=Windows">
+  <img alt="MacOS Build Status" src="https://img.shields.io/github/actions/workflow/status/Lycoon/scriptio/.github%2Fworkflows%2Fci-macos.yaml?style=for-the-badge&logo=apple&label=MacOS">
 </p>
-
-# Purpose
-
-I like writing and creating stories in my spare time. For the last few years I have been using plenty of online screenplay editors such as _Celtx_, _WriterDuet_ or _KitScenarist_, each of these being more or less enjoyable. However, none of them met my criteria. I wanted a **free**, **dead simple**, but **pretty** screenplay editor.
-
-My biggest inspiration is by far _Amazon Story Writer_, a very handy writing tool released by Amazon in 2015, which has unfortunately been shut down on June 30, 2019.
 
 # Features
 
--   Online and offline mode (yet to come)
--   Export to PDF or .fountain format (more to come)
--   Dark theme
--   Screenplay statistics
--   Scene navigation
--   Character management
+- **Cloud Synchronization**
+- **Real-time Collaboration**
+- **Cross-platform** (Windows, MacOS, browser)
+- **Industry-standard Formats** (PDF, Fountain, Final Draft)
+- **Scene Management** (easy navigation, reordering)
+- **Character Management** (color highlighting, synopsis)
+- **Beat Board** (story cards, outlining)
+- **Smart formatting** (context aware auto-completion)
+- **Customization** (themes & custom keybinds)
+- **Statistics** (distribution, frequency)
+- **Search & Replace** (advanced filtering)
+- **Script Comments** (inline annotations)
+- **Focus mode** (distraction-free writing)
 
-# Launch
+# Core Values
 
-## Production
-The workflow for deployment is entirely automated once a feature reaches the `release` branch.
-The DATABASE_URL environment variable is automatically built depending on .env database variables.
+Scriptio is built on three core values that set it apart. With careful analysis of strengths and weaknesses from current market solutions, we crafted a platform that combines the best of all worlds—delivering a complete and seamless writing experience.
 
-1. Trigger `.github\workflows\deploy.yml`
-    - `docker compose build app`
-      - Installing dependencies `npm install`
-      - Generating Prisma files `npx prisma generate`
-      - Building app `npm run build`
-    - Image is pushed to registry `docker push ghcr.io/lycoon/scriptio-app:latest`
-2. Copy `docker-compose.yml` to the server
-3. Go in app path on the server
-    - Pull latest app image `docker compose pull app`
-    - Run the image `docker compose --profile prod up -d`
-      - Run `launch.sh` script 
-      - Deploy up-to-date database migrations `npx prisma migrate deploy`
-      - Launch the app `npm start`
+While its only 'flaw' is being the new kid on the block, its ambition is clear: to become the **essential**, yet **affordable** alternative for **amateur & professional** screenwriters **who refuse to compromise**.
 
-## Test
-1. `npm install`
-2. `npm run dev`
-3. `http://localhost:3000`
+We are also deeply committed to keeping Scriptio accessible. While infrastructure has a cost, we believe creators shouldn't have to bear that burden alone. We are currently exploring sustainable business models to ensure you never have to pay just to access essential features.
 
-# Dependencies
+### Transparency
 
-### _Editor_
+Nothing to hide. In an effort of building trust, Scriptio is source-available as opposed to most well-established screenwriting software
 
-The choice of following dependencies were the result of a long research and software design process as I wanted to use the best tools available for each task. I knew changing one of them afterwards would be a pain, so I had to be sure of the intended usage. I'm always open for better alternatives if you have any, feel free to open an issue in that case so we can discuss about it.
+### Modernity
 
-| Name         | Usage                                              | Package                                                                                      |
-| ------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| tiptap       | Text editor framework, used here for screenwriting | [![](https://img.shields.io/npm/v/@tiptap/core)](https://www.npmjs.com/package/@tiptap/core) |
-| prisma       | Database ORM                                       | [![](https://img.shields.io/npm/v/prisma)](https://www.npmjs.com/package/prisma)             |
-| chart.js     | Displaying charts for statistics                   | [![](https://img.shields.io/npm/v/chart.js)](https://www.npmjs.com/package/chart.js)         |
-| iron-session | Signed and encrypted cookies for authentication    | [![](https://img.shields.io/npm/v/iron-session)](https://www.npmjs.com/package/iron-session) |
-| tauri        | Allow converting frontend app to desktop           | [![](https://img.shields.io/crates/v/tauri.svg)](https://crates.io/crates/tauri)             |
+Cloud or offline. Browser or Desktop. Experience a fluid interface, customizable themes, and also real-time collaboration without friction
 
-### _File export_
+### Simplicity
 
-I spent quite some time figuring out the best library to generate PDF files that are not just huge rendered pictures. It was an absolutely necessary feature for me for the text to be selectable, as with any other text document. I finally found _pdfmake_, which allows to custom the document quite well but still needs some tricks to add text background color (as with scene headings).
+Designed from the ground up to free your mind with intuitive workflow. We focus on getting the best out of existing screenwriting tools
 
-| Name       | Usage                                             | Package                                                                                  |
-| ---------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| file-saver | Creating files when exporting non-PDF screenplays | [![](https://img.shields.io/npm/v/file-saver)](https://www.npmjs.com/package/file-saver) |
-| pdfmake    | Generating PDF files when exporting screenplays   | [![](https://img.shields.io/npm/v/pdfmake)](https://www.npmjs.com/package/pdfmake)       |
+# Roadmap
 
-### _Email_
+Your feedback is very welcome and ensures Scriptio remains driven by screenwriters—in all their diversity. These ideas are either considered for integration or already in progress. The order does not reflect priority. It is a high priority to make Scriptio feature-rich, without sacrificing its simplicity or stability.
 
-Sending emails programmatically is a pain. I had to use a lot of different tools to get the job done. I chose AWS (SES) "Simple Email Service" as third-party service to send account validation and password recovery emails.
+- **Support more formats** (Celtx, FadeIn, docx...)
+- **Production reports** (character outline exports, casting...)
+- **Mobile app**
+- **More statistics**
 
-| Name       | Usage                                              | Package                                                                                  |
-| ---------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| hogan.js   | Templating language for email generation           | [![](https://img.shields.io/npm/v/hogan.js)](https://www.npmjs.com/package/hogan.js)     |
-| inline-css | Used along with hogan.js for inlining CSS in email | [![](https://img.shields.io/npm/v/inline-css)](https://www.npmjs.com/package/inline-css) |
-| nodemailer | Sending emails from NodeJS                         | [![](https://img.shields.io/npm/v/nodemailer)](https://www.npmjs.com/package/nodemailer) |
+# Disclaimer
+
+_Scriptio is an independent project and is not affiliated with, sponsored by, or endorsed by Final Draft, Fade In, Arc Studio, WriterSolo, or Celtx. All product names, logos, and brands are property of their respective owners._
+
+<p align="center">
+  Copyright © 2026 Scriptio. All Rights Reserved.
+</p>

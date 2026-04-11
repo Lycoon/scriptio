@@ -1,0 +1,34 @@
+.title_page_panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background-color: var(--main-bg);
+}
+
+.container {
+    position: relative;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: clip;
+    scrollbar-gutter: stable;
+    z-index: 0;
+}
+
+.editor_wrapper {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    contain: layout;
+}
+
+.visible {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+}

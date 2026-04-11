@@ -1,5 +1,4 @@
 import FormInfo, { FormInfoType } from "@components/utils/FormInfo";
-
 import form_header from "./FormHeader.module.css";
 
 type Props = {

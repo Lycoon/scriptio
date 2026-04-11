@@ -1,22 +1,35 @@
 .container {
+    display: flex;
+    flex-direction: row;
+    flex-shrink: 0;
+    min-height: 0;
     overflow: hidden;
-    height: 100vh;
+}
 
-    padding-top: 8px;
+.sidebar_content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 30px 20px 15px;
+    width: var(--format-sidebar-width);
+    min-height: 0;
+    overflow: hidden;
+}
+
+.collapsed .element {
+    visibility: hidden;
+}
+
+.collapsed {
+    width: 0;
+    padding: 0;
+}
+
+.element {
     background-color: var(--editor-sidebar);
-    min-width: var(--format-sidebar-width);
-
-    margin-right: calc(var(--format-sidebar-width) * -1);
-    transition: margin-right 0.5s ease;
-}
-
-.active {
-    margin-right: 0;
-    transition: margin-right 0.5s ease;
-}
-
-.shadow {
-    box-shadow: 0px 0px 20px 1px rgba(0, 0, 0, 0.15);
+    padding-top: 10px;
+    padding-bottom: 38px;
+    border-radius: 35px;
 }
 
 .tabs {
@@ -36,14 +49,14 @@
 .style_btn {
     width: 32px;
     height: 32px;
-    padding: 9px;
+    padding: 8px;
 
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
 
-    border-radius: 4px;
+    border-radius: 8px;
     background-color: var(--editor-style-bg);
 
     cursor: pointer;
@@ -55,8 +68,4 @@
 
 .active_style {
     background-color: var(--editor-style-bg-hover);
-}
-
-.style_btn_img {
-    color: var(--primary-text);
 }

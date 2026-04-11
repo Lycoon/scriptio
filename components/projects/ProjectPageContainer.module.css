@@ -3,6 +3,8 @@
     flex: 1;
     flex-direction: row;
     justify-content: center;
+    background-color: var(--main-bg);
+    overflow-y: hidden;
 }
 
 .header {
@@ -10,7 +12,8 @@
     flex-direction: column;
     justify-content: space-between;
 
-    margin-top: 70px;
+    margin-top: 50px;
+    padding-inline: 20px;
     width: 100%;
 }
 
@@ -19,6 +22,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 8px;
 }
 
 .header_btns {
@@ -29,59 +33,79 @@
     gap: 12px;
 }
 
-.delete_btn {
-    height: 35px;
-    width: 35px;
-    padding: 6px;
-
-    cursor: pointer;
-
-    text-align: center;
-    border-color: var(--secondary);
-    border-width: 3px;
-    border-radius: 18px;
-    border-style: solid;
-}
-
-.delete_btn:hover {
-    border-color: var(--secondary-hover);
-}
-
-.delete_img {
-    height: 100%;
-    width: 100%;
-    color: var(--secondary);
-}
-
 .create_btn {
-    width: fit-content;
-    padding-inline: 40px;
-    border-radius: 20px;
+    font-weight: 500;
+    padding-inline: 40px !important;
+    border-width: 3px;
+}
+
+.import_btn {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    white-space: nowrap;
+
+    font-weight: 500;
+    padding-inline: 40px !important;
+    border-width: 3px;
+    background: none !important;
+}
+
+.import_btn:hover {
+    transition: border-color 0.2s;
+    border-color: var(--tertiary-hover) !important;
 }
 
 .center {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    align-items: center;
-    gap: 50px;
+    height: 100%;
+    overflow: hidden;
+    width: clamp(320px, 80%, 780px);
+}
+
+@media (max-width: 600px) {
+    .center {
+        width: 100%;
+    }
+}
+
+.gridWrapper {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+}
+
+.gridScroll {
+    overflow-y: auto;
+    height: 100%;
+    padding: 50px 20px 40px;
+    scrollbar-width: none;
+}
+
+.gridScroll::-webkit-scrollbar {
+    display: none;
 }
 
 .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
-    row-gap: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-@media (max-width: 1300px) {
-    .project-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.bottomShadow {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 40px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.7s ease;
+    background: linear-gradient(to top, var(--editor-shadow) 0%, transparent 100%);
 }
 
-@media (max-width: 800px) {
-    .project-grid {
-        grid-template-columns: repeat(1, 1fr);
-    }
+.showShadow {
+    opacity: 1;
 }

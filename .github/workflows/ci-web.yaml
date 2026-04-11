@@ -1,0 +1,15 @@
+name: Build Web
+
+on:
+    push:
+        branches: [dev]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout the repo
+              uses: actions/checkout@v6
+
+            - name: Build image
+              run: docker compose build app-prod

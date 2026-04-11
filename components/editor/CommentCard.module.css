@@ -1,0 +1,216 @@
+.comment_card {
+    width: 250px;
+    background-color: var(--editor-sidebar);
+    border-radius: 12px;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
+    padding: 10px 12px;
+    cursor: default;
+    border: 1px solid var(--separator);
+    z-index: 50;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.comment_card_active {
+    border-color: rgba(255, 213, 0, 0.5);
+}
+
+.comment_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.comment_author {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.comment_time {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.comment_text {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+}
+
+.comment_actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    border-top: 1px solid var(--separator);
+    padding-top: 8px;
+}
+
+.comment_btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    background-color: var(--editor-style-bg);
+    color: var(--text-secondary);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.comment_btn:hover {
+    background-color: var(--editor-style-bg-hover);
+    color: var(--text);
+}
+
+.comment_btn_danger:hover {
+    color: #ef4444;
+}
+
+.comment_btn_resolve:hover {
+    color: #22c55e;
+}
+
+.comment_reply_count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding-top: 4px;
+    border-top: 1px solid var(--separator);
+}
+
+.comment_input {
+    width: 100%;
+    min-height: 60px;
+    padding: 6px 8px;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    background-color: var(--editor-style-bg);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    margin-bottom: 8px;
+}
+
+.comment_input:focus {
+    border-color: var(--tertiary-hover);
+}
+
+.comment_submit_row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.comment_submit_btn {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    background-color: var(--editor-style-bg-hover);
+    color: var(--text);
+    transition: background-color 0.15s ease;
+}
+
+.comment_submit_btn:hover {
+    background-color: var(--editor-style-bg-active);
+}
+
+.comment_cancel_btn {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    background-color: transparent;
+    color: var(--text-secondary);
+    transition: background-color 0.15s ease;
+}
+
+.comment_cancel_btn:hover {
+    background-color: var(--editor-sidebar-hover);
+}
+
+/* ---- Replies ---- */
+
+.replies {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+    border-top: 1px solid var(--separator);
+    padding-top: 8px;
+}
+
+.reply {
+    padding: 6px 8px;
+    border-radius: 8px;
+    background-color: var(--editor-style-bg);
+}
+
+.reply_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.reply_text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.reply_input_row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.reply_input {
+    flex: 1;
+    padding: 5px 8px;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    background-color: var(--editor-style-bg);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+}
+
+.reply_input:focus {
+    border-color: var(--tertiary-hover);
+}
+
+.reply_send_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--editor-style-bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.reply_send_btn:hover:not(:disabled) {
+    background-color: var(--editor-style-bg-hover);
+    color: var(--text);
+}
+
+.reply_send_btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}

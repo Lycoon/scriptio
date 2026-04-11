@@ -1,0 +1,284 @@
+html {
+    --editor-script-bg: white;
+    --editor-text: black;
+}
+
+html.light {
+    color-scheme: light;
+
+    --main-bg: var(--primary);
+    --primary: #f3f3f3;
+    --secondary: #ffffff;
+    --tertiary: #e2e2e2;
+
+    --primary-hover: #f0f0f3;
+    --secondary-hover: #e7e7e7;
+    --tertiary-hover: rgb(211, 211, 211);
+
+    --primary-text: #1a1a1c;
+    --secondary-text: #64748b;
+
+    --separator: #d6d6d6;
+    --input-outline: #cbd5e1;
+    --navbar-outline: #e2e8f0;
+    --header-background: #ffffff;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #cbd5e1;
+
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
+    --editor-scene: #f1f5f9;
+    --editor-sidebar: #ffffff;
+    --editor-sidebar-list: #ededf3;
+    --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #ffffff;
+    --context-menu-item-hover: #f0f4ff;
+    --editor-style-bg: #ffffff;
+    --editor-style-bg-hover: #f1f5f9;
+    --editor-style-bg-active: #f1f5f9;
+    --editor-element-hover: #f8fafc;
+    --editor-shadow: rgba(0, 0, 0, 0.15);
+
+    --editor-scroll-bg: var(--secondary);
+    --editor-scroll-btn: var(--tertiary);
+    --editor-scroll-btn-hover: var(--tertiary-hover);
+}
+
+html.dark {
+    color-scheme: dark;
+
+    --main-bg: var(--primary);
+    --primary: #1d1d1d;
+    --secondary: #2e2e2e;
+    --tertiary: #3a3a3a;
+
+    --primary-hover: #2e2e2e;
+    --secondary-hover: #3a3a3a;
+    --tertiary-hover: #464646;
+
+    --primary-text: #ffffff;
+    --secondary-text: #9b9b9b;
+
+    --separator: #414141;
+    --input-outline: #3d3d3d;
+    --navbar-outline: #414141;
+    --header-background: #2e2e2e;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #505050;
+
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
+    --editor-scene: #dadada;
+    --editor-sidebar: #272727;
+    --editor-sidebar-list: #3c3c3c;
+    --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #272727;
+    --context-menu-item-hover: #363636;
+    --editor-style-bg: #1d1d1d;
+    --editor-style-bg-hover: #3c3c3c;
+    --editor-style-bg-active: #5d5d5d;
+    --editor-element-hover: #eeeeee;
+    --editor-shadow: rgba(0, 0, 0, 0.4);
+
+    --editor-scroll-bg: var(--secondary);
+    --editor-scroll-btn: var(--tertiary);
+    --editor-scroll-btn-hover: var(--tertiary-hover);
+
+    --shadow-s: inset 0 1px 2px #ffffff30, 0 1px 2px #00000030, 0 2px 4px #00000015;
+    --shadow-m: inset 0 1px 2px #ffffff50, 0 2px 4px #00000030, 0 4px 8px #00000015;
+    --shadow-l: inset 0 1px 2px #ffffff70, 0 4px 6px #00000030, 0 6px 10px #00000015;
+}
+
+html.latte {
+    color-scheme: light;
+
+    --main-bg: var(--primary);
+    --primary: #f7edd9;
+    --secondary: #fff8e9;
+    --tertiary: #ecdab4;
+
+    --primary-hover: #ece0c7;
+    --secondary-hover: #f5e7cc;
+    --tertiary-hover: #dbccaa;
+
+    --primary-text: #7a6129;
+    --secondary-text: #c09c50;
+
+    --separator: #e7d3a8;
+    --input-outline: #cbd5e1;
+    --navbar-outline: #e2e8f0;
+    --header-background: #ffffff;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #cbd5e1;
+
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
+    --editor-scene: #f1f5f9;
+    --editor-sidebar: var(--secondary);
+    --editor-sidebar-list: #ededf3;
+    --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #fff8e9;
+    --context-menu-item-hover: #fffef8;
+    --editor-style-bg: var(--primary);
+    --editor-style-bg-hover: var(--primary-hover);
+    --editor-style-bg-active: var(--primary-hover);
+    --editor-element-hover: #f8fafc;
+    --editor-shadow: #c7b28563;
+
+    --editor-scroll-bg: var(--secondary);
+    --editor-scroll-btn: var(--tertiary);
+    --editor-scroll-btn-hover: var(--tertiary-hover);
+}
+
+html.wonka {
+    color-scheme: dark;
+
+    --main-bg: var(--primary);
+    --primary: #1e1410;
+    --secondary: #332420;
+    --tertiary: #4d3b36;
+
+    --primary-hover: #422f28;
+    --secondary-hover: #422f2a;
+    --tertiary-hover: #66514b;
+
+    --primary-text: #e6dcca;
+    --secondary-text: #a89b91;
+
+    --separator: var(--tertiary);
+    --input-outline: #cbd5e1;
+    --navbar-outline: #e2e8f0;
+    --header-background: #ffffff;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #cbd5e1;
+
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
+    --editor-scene: #f1f5f9;
+    --editor-sidebar: var(--secondary);
+    --editor-sidebar-list: #ededf3;
+    --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #2c1e1a;
+    --context-menu-item-hover: #3d2b24;
+    --editor-style-bg: var(--primary);
+    --editor-style-bg-hover: var(--primary-hover);
+    --editor-style-bg-active: var(--primary-hover);
+    --editor-element-hover: #f8fafc;
+    --editor-shadow: rgba(0, 0, 0, 0.4);
+
+    --editor-scroll-bg: var(--secondary);
+    --editor-scroll-btn: var(--tertiary);
+    --editor-scroll-btn-hover: var(--tertiary-hover);
+}
+
+html.mint {
+    color-scheme: light;
+
+    --main-bg: var(--primary);
+    --primary: #dcf5de;
+    --secondary: #ecfdec;
+    --tertiary: #bce0bc;
+
+    --primary-hover: #c6e7c8;
+    --secondary-hover: #e2ffe4;
+    --tertiary-hover: #c7e4c7;
+
+    --primary-text: #354937;
+    --secondary-text: #7d977f;
+
+    --separator: #a1c2a3;
+    --input-outline: #cbd5e1;
+    --navbar-outline: #e2e8f0;
+    --header-background: #ffffff;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #cbd5e1;
+
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
+    --editor-scene: #f1f5f9;
+    --editor-sidebar: var(--secondary);
+    --editor-sidebar-list: #ededf3;
+    --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #ecfdec;
+    --context-menu-item-hover: #f5fff8;
+    --editor-style-bg: var(--primary);
+    --editor-style-bg-hover: var(--primary-hover);
+    --editor-style-bg-active: var(--primary-hover);
+    --editor-element-hover: #f8fafc;
+    --editor-shadow: #9bc29e81;
+
+    --editor-scroll-bg: var(--secondary);
+    --editor-scroll-btn: var(--tertiary);
+    --editor-scroll-btn-hover: var(--tertiary-hover);
+}
+
+html.blossom {
+    color-scheme: light;
+
+    --main-bg: var(--primary);
+    --primary: #ffe7f3;
+    --secondary: #fff6fb;
+    --tertiary: #ffbbdd;
+
+    --primary-hover: #ffe7f3;
+    --secondary-hover: #fff1f9;
+    --tertiary-hover: #ffa0d0;
+
+    --primary-text: #bb4bbb;
+    --secondary-text: #a579a5;
+
+    --separator: #dd8add;
+    --input-outline: #cbd5e1;
+    --navbar-outline: #e2e8f0;
+    --header-background: #ffffff;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #cbd5e1;
+
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
+    --editor-scene: #f1f5f9;
+    --editor-sidebar: var(--secondary);
+    --editor-sidebar-list: #ededf3;
+    --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: #fff6fb;
+    --context-menu-item-hover: #fffcff;
+    --editor-style-bg: var(--primary);
+    --editor-style-bg-hover: var(--primary-hover);
+    --editor-style-bg-active: var(--primary-hover);
+    --editor-element-hover: #f8fafc;
+    --editor-shadow: #ffbaffa6;
+
+    --editor-scroll-bg: var(--secondary);
+    --editor-scroll-btn: var(--tertiary);
+    --editor-scroll-btn-hover: var(--tertiary-hover);
+}
+
+/* Themed editor: use the theme's own background and text colors instead of black & white */
+html.themed-editor {
+    --editor-script-bg: var(--themed-editor-script-bg);
+    --editor-text: var(--themed-editor-text);
+}

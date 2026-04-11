@@ -1,19 +1,29 @@
-import { useContext } from "react";
+"use client";
+
+import { useContext, memo, useCallback } from "react";
 import { CharacterContextProps, ContextMenuType } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
-import { pasteText } from "@src/lib/editor/editor";
+import { pasteText } from "@src/lib/screenplay/editor";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { join } from "@src/lib/utils/misc";
 
-import LinkSVG from "@public/images/link.svg";
+import { Highlighter, Link } from "lucide-react";
 import item from "./SidebarItem.module.css";
 
-const SidebarCharacterItem = ({ character }: CharacterContextProps) => {
+const DEFAULT_HIGHLIGHT_COLOR = "#6366f1"; // Indigo - matches extension default
+
+type SidebarCharacterItemProps = CharacterContextProps & {
+    isHighlighted: boolean;
+};
+
+const SidebarCharacterItem = memo(({ character, isHighlighted }: SidebarCharacterItemProps) => {
     const { updateContextMenu } = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
 
-    const handleDropdown = (e: any) => {
+    const highlightColor = character.color || DEFAULT_HIGHLIGHT_COLOR;
+
+    const handleDropdown = useCallback((e: any) => {
         e.preventDefault();
         updateContextMenu({
             type: ContextMenuType.CharacterItem,
@@ -22,21 +32,33 @@ const SidebarCharacterItem = ({ character }: CharacterContextProps) => {
                 character,
             },
         });
-    };
+    }, [updateContextMenu, character]);
 
-    const handleDoubleClick = () => {
+    const handleDoubleClick = useCallback(() => {
         // paste character name on double click
-        pasteText(editor!, character.name);
-    };
+        if (editor) pasteText(editor, character.name);
+    }, [editor, character.name]);
 
     return (
         <div onContextMenu={handleDropdown} onDoubleClick={handleDoubleClick} className={item.container}>
             <div className={item.data}>
-                <p className={join(item.title, "unselectable")}>{character.name}</p>
-                {character.persistent && <LinkSVG className={item.icon} />}
+                <div className={item.title_row}>
+                    {character.color && (
+                        <span className={item.color_indicator} style={{ backgroundColor: character.color }} />
+                    )}
+                    <p className={join(item.title, "unselectable")}>{character.name}</p>
+                </div>
+                <div className={item.icons_row}>
+                    {isHighlighted && (
+                        <Highlighter size={13} className={item.highlight_icon} style={{ color: highlightColor }} />
+                    )}
+                    {character.persistent && <Link size={13} className={item.icon} />}
+                </div>
             </div>
         </div>
     );
-};
+});
+
+SidebarCharacterItem.displayName = "SidebarCharacterItem";
 
 export default SidebarCharacterItem;
