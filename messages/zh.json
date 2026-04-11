@@ -181,6 +181,7 @@
     "locations": "位置",
     "shelf": "搁置",
     "shelfEmpty": "选择一个版本进行编辑",
+    "goTo": "在剧本中定位",
     "confirmRestore": "这将替换剧本中匹配的内容。",
     "restore": "恢复",
     "cancel": "取消"

@@ -181,6 +181,7 @@
     "locations": "장소",
     "shelf": "보관함",
     "shelfEmpty": "편집할 버전을 선택하세요",
+    "goTo": "각본에서 이동",
     "confirmRestore": "이것은 각본의 해당 내용을 대체합니다.",
     "restore": "복원",
     "cancel": "취소"

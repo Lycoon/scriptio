@@ -182,6 +182,7 @@
     "locations": "Lieux",
     "shelf": "Étagère",
     "shelfEmpty": "Sélectionnez une version à éditer",
+    "goTo": "Aller au scénario",
     "confirmRestore": "Cela remplacera le contenu correspondant dans votre scénario.",
     "restore": "Restaurer",
     "cancel": "Annuler"

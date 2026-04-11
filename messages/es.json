@@ -181,6 +181,7 @@
     "locations": "Localizaciones",
     "shelf": "Estante",
     "shelfEmpty": "Seleccione una versión para editar",
+    "goTo": "Ir al guión",
     "confirmRestore": "Esto reemplazará el contenido correspondiente en su guión.",
     "restore": "Restaurar",
     "cancel": "Cancelar"

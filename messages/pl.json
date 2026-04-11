@@ -181,6 +181,7 @@
     "locations": "Lokalizacje",
     "shelf": "Półka",
     "shelfEmpty": "Wybierz wersję do edycji",
+    "goTo": "Przejdź do scenariusza",
     "confirmRestore": "Spowoduje to zastąpienie pasującej treści w scenariuszu.",
     "restore": "Przywróć",
     "cancel": "Anuluj"
