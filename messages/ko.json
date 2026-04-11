@@ -154,9 +154,10 @@
     "importing": "가져오는 중...",
     "createBtn": "생성",
     "empty": {
-      "createFirst": "첫 번째 프로젝트를 생성하세요",
-      "or": "또는",
-      "importExisting": "기존 시나리오 가져오기"
+      "createFirst": "새 프로젝트",
+      "createDesc": "빈 페이지에서 시작하기",
+      "importExisting": "가져오기",
+      "importDesc": "기존 스크립트 파일 열기"
     },
     "item": {
       "posterAlt": "영화 포스터",
@@ -180,6 +181,7 @@
     "locations": "장소",
     "shelf": "보관함",
     "shelfEmpty": "편집할 버전을 선택하세요",
+    "goTo": "각본에서 이동",
     "confirmRestore": "이것은 각본의 해당 내용을 대체합니다.",
     "restore": "복원",
     "cancel": "취소"

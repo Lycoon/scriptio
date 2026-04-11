@@ -92,30 +92,27 @@ const DashboardAuth = () => {
                 <div className={`${styles.message} ${styles.info}`}>
                     {tAuth("checkInbox", { email })}
                 </div>
+                <button
+                    type="button"
+                    className={styles.authSwitchLink}
+                    style={{ alignSelf: "flex-end" }}
+                    onClick={() => {
+                        setSubmitted(false);
+                        setPollingDesktop(false);
+                        setMessage(null);
+                    }}
+                >
+                    {tAuth("useDifferentEmail")}
+                </button>
                 {pollingDesktop && (
                     <p className={styles.authInfoText}>{tAuth("waitingForClick")}</p>
                 )}
-                <div className={styles.authLinks}>
-                    <button
-                        type="button"
-                        className={styles.authSwitchLink}
-                        onClick={() => {
-                            setSubmitted(false);
-                            setPollingDesktop(false);
-                            setMessage(null);
-                        }}
-                    >
-                        {tAuth("useDifferentEmail")}
-                    </button>
-                </div>
             </div>
         );
     }
 
     return (
         <form className={`${sharedStyles.settingsForm} ${styles.authForm}`} onSubmit={handleSubmit}>
-            <p className={styles.authInfoText}>{tAuth("intro")}</p>
-
             <div className={sharedStyles.formGroup}>
                 <label htmlFor="auth-email" className={form.label}>
                     {tAuth("emailLabel")}

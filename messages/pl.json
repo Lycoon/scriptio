@@ -154,9 +154,10 @@
     "importing": "Importowanie...",
     "createBtn": "Utwórz",
     "empty": {
-      "createFirst": "Kliknij, aby utworzyć swój pierwszy projekt",
-      "or": "lub",
-      "importExisting": "Importuj istniejący scenariusz"
+      "createFirst": "Nowy projekt",
+      "createDesc": "Zacznij od pustej strony",
+      "importExisting": "Importuj",
+      "importDesc": "Otwórz istniejący plik scenariusza"
     },
     "item": {
       "posterAlt": "Plakat filmowy",
@@ -180,6 +181,7 @@
     "locations": "Lokalizacje",
     "shelf": "Półka",
     "shelfEmpty": "Wybierz wersję do edycji",
+    "goTo": "Przejdź do scenariusza",
     "confirmRestore": "Spowoduje to zastąpienie pasującej treści w scenariuszu.",
     "restore": "Przywróć",
     "cancel": "Anuluj"

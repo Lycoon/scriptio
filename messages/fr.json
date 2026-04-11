@@ -155,9 +155,10 @@
     "importing": "Importation...",
     "createBtn": "Créer",
     "empty": {
-      "createFirst": "Cliquez pour créer votre premier projet",
-      "or": "ou",
-      "importExisting": "Importer un scénario existant"
+      "createFirst": "Nouveau projet",
+      "createDesc": "Partir d'une page blanche",
+      "importExisting": "Importer",
+      "importDesc": "Ouvrir un fichier de scénario existant"
     },
     "item": {
       "posterAlt": "Affiche du film",
@@ -181,6 +182,7 @@
     "locations": "Lieux",
     "shelf": "Étagère",
     "shelfEmpty": "Sélectionnez une version à éditer",
+    "goTo": "Aller au scénario",
     "confirmRestore": "Cela remplacera le contenu correspondant dans votre scénario.",
     "restore": "Restaurer",
     "cancel": "Annuler"

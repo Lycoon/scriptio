@@ -17,7 +17,7 @@ const BodySchema = z.object({
 /**
  * POST `/api/desktop/token`
  *
- * Called from the in-browser /desktop-auth/complete page after the user signs in
+ * Called from the in-browser /desktop-oauth/complete page after the user signs in
  * with NextAuth. Reads the active web session, mints an equivalent NextAuth JWE,
  * stows it in the bridge under the supplied nonce, and returns 200. The desktop
  * client (which never sees this token in the URL) then polls for it.

@@ -62,7 +62,7 @@
     justify-content: flex-start;
     height: 100%;
     overflow: hidden;
-    width: clamp(320px, 80%, 860px);
+    width: clamp(320px, 80%, 780px);
 }
 
 @media (max-width: 600px) {

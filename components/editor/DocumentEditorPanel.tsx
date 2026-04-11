@@ -85,7 +85,8 @@ const DocumentEditorPanel = ({
     // Resolve the comments Y.Map for this document
     const projectState = repository?.getState();
     const commentsMap = useMemo(
-        () => (projectState && config.features.comments ? config.getCommentsMap(projectState) : null),
+        () =>
+            projectState && config.features.comments ? config.getCommentsMap(projectState) : null,
         // Re-derive only when projectState identity changes (Yjs doc swap on project change)
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [projectState],
@@ -118,7 +119,9 @@ const DocumentEditorPanel = ({
     // Register the editor instance with the parent wrapper
     useEffect(() => {
         onEditorCreated?.(editor);
-        return () => { onEditorCreated?.(null); };
+        return () => {
+            onEditorCreated?.(null);
+        };
     }, [editor, onEditorCreated]);
 
     // Ready state
@@ -158,7 +161,15 @@ const DocumentEditorPanel = ({
         editorElement.style.setProperty("--contd-label", `"${contdLabel}"`);
         editorElement.style.setProperty("--more-label", `"${moreLabel}"`);
 
-        const elementKeys = ["action", "scene", "character", "dialogue", "parenthetical", "transition", "section"] as const;
+        const elementKeys = [
+            "action",
+            "scene",
+            "character",
+            "dialogue",
+            "parenthetical",
+            "transition",
+            "section",
+        ] as const;
         for (const key of elementKeys) {
             const m = elementMargins[key] ?? DEFAULT_ELEMENT_MARGINS[key];
             // Element CSS vars = page margin + element offset (total from page edge)
@@ -170,8 +181,14 @@ const DocumentEditorPanel = ({
             editorElement.style.setProperty(`--${key}-align`, s.align ?? "left");
             editorElement.style.setProperty(`--${key}-weight`, s.bold ? "bold" : "normal");
             editorElement.style.setProperty(`--${key}-style`, s.italic ? "italic" : "normal");
-            editorElement.style.setProperty(`--${key}-decoration`, s.underline ? "underline" : "none");
-            editorElement.style.setProperty(`--${key}-transform`, s.uppercase ? "uppercase" : "none");
+            editorElement.style.setProperty(
+                `--${key}-decoration`,
+                s.underline ? "underline" : "none",
+            );
+            editorElement.style.setProperty(
+                `--${key}-transform`,
+                s.uppercase ? "uppercase" : "none",
+            );
         }
 
         // Compute startNewPage types from element styles
@@ -197,13 +214,25 @@ const DocumentEditorPanel = ({
                     right: pageMargins.right * 96,
                 })
                 .run();
-
         }
 
         if (isVisible) {
             editor.commands.focus();
         }
-    }, [editor, isVisible, config.type, pageFormat, pageMargins, displaySceneNumbers, sceneHeadingSpacing, sceneNumberOnRight, contdLabel, moreLabel, elementMargins, elementStyles]);
+    }, [
+        editor,
+        isVisible,
+        config.type,
+        pageFormat,
+        pageMargins,
+        displaySceneNumbers,
+        sceneHeadingSpacing,
+        sceneNumberOnRight,
+        contdLabel,
+        moreLabel,
+        elementMargins,
+        elementStyles,
+    ]);
 
     // ---- Pagination update (title page only) ----
     useEffect(() => {
@@ -228,9 +257,15 @@ const DocumentEditorPanel = ({
     const updateContextMenuRef = useRef(updateContextMenu);
     const updateSuggestionsRef = useRef(updateSuggestions);
 
-    useEffect(() => { selectedElementRef.current = selectedElement; }, [selectedElement]);
-    useEffect(() => { updateContextMenuRef.current = updateContextMenu; }, [updateContextMenu]);
-    useEffect(() => { updateSuggestionsRef.current = updateSuggestions; }, [updateSuggestions]);
+    useEffect(() => {
+        selectedElementRef.current = selectedElement;
+    }, [selectedElement]);
+    useEffect(() => {
+        updateContextMenuRef.current = updateContextMenu;
+    }, [updateContextMenu]);
+    useEffect(() => {
+        updateSuggestionsRef.current = updateSuggestions;
+    }, [updateSuggestions]);
 
     const setActiveElement = useCallback(
         (element: ScreenplayElement, applyStyle = true) => {
@@ -241,7 +276,9 @@ const DocumentEditorPanel = ({
     );
 
     const setActiveElementRef = useRef(setActiveElement);
-    useEffect(() => { setActiveElementRef.current = setActiveElement; }, [setActiveElement]);
+    useEffect(() => {
+        setActiveElementRef.current = setActiveElement;
+    }, [setActiveElement]);
 
     useEffect(() => {
         if (!editor || config.type !== "screenplay") return;
@@ -258,7 +295,8 @@ const DocumentEditorPanel = ({
                     if (event.key === "Backspace") {
                         // Inside a dual_dialogue_column: let the column node handle it.
                         for (let d = selection.$anchor.depth; d >= 1; d--) {
-                            if (selection.$anchor.node(d).type.name === DUAL_DIALOGUE_COLUMN) return false;
+                            if (selection.$anchor.node(d).type.name === DUAL_DIALOGUE_COLUMN)
+                                return false;
                         }
                         if (nodeSize === 1 && nodePos === 1) {
                             const tr = view.state.tr.delete(selection.from - 1, selection.from);
@@ -269,7 +307,10 @@ const DocumentEditorPanel = ({
                     }
 
                     if (event.code === "Space") {
-                        if (currNode === ScreenplayElement.Action && node.textContent.match(/^\b(int|ext)\./gi)) {
+                        if (
+                            currNode === ScreenplayElement.Action &&
+                            node.textContent.match(/^\b(int|ext)\./gi)
+                        ) {
                             setActiveElementRef.current(ScreenplayElement.Scene);
                         }
                         return false;
@@ -290,7 +331,11 @@ const DocumentEditorPanel = ({
                             if ($anchor.node(d).type.name === DUAL_DIALOGUE_COLUMN) return false;
                         }
 
-                        if (currNode === ScreenplayElement.Dialogue && nodePos > 0 && nodePos < nodeSize) {
+                        if (
+                            currNode === ScreenplayElement.Dialogue &&
+                            nodePos > 0 &&
+                            nodePos < nodeSize
+                        ) {
                             const doc = view.state.doc;
                             const $anchor = selection.$anchor;
 
@@ -302,7 +347,11 @@ const DocumentEditorPanel = ({
                                     charName = child.textContent;
                                     break;
                                 }
-                                if (child.attrs.class !== ScreenplayElement.Parenthetical && child.attrs.class !== ScreenplayElement.Dialogue) break;
+                                if (
+                                    child.attrs.class !== ScreenplayElement.Parenthetical &&
+                                    child.attrs.class !== ScreenplayElement.Dialogue
+                                )
+                                    break;
                             }
 
                             const schema = view.state.schema;
@@ -321,7 +370,9 @@ const DocumentEditorPanel = ({
                             tr.delete($anchor.pos, $anchor.end(1));
                             const insertPos = tr.mapping.map($anchor.after(1));
                             tr.insert(insertPos, [charNode, newDialogue]);
-                            tr.setSelection(TextSelection.create(tr.doc, insertPos + charNode.nodeSize + 1));
+                            tr.setSelection(
+                                TextSelection.create(tr.doc, insertPos + charNode.nodeSize + 1),
+                            );
                             tr.scrollIntoView();
                             view.dispatch(tr);
                             return true;
@@ -390,7 +441,7 @@ const DocumentEditorPanel = ({
 
         addEventListener("keydown", pressedKeyEvent);
         return () => removeEventListener("keydown", pressedKeyEvent);
-    }, [isVisible, config.type]);
+    }, [isVisible, config.type, editor]);
 
     // ---- Context menu ----
     const onEditorContextMenu = useCallback(
@@ -464,7 +515,8 @@ const DocumentEditorPanel = ({
         setIsScrolled(scrollTop > 0);
     };
 
-    const focusType = focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
+    const focusType =
+        focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
 
     const isLocalAccess = isTauri() || isLocalOnly;
     if (!isLocalAccess && (!membership || isLoading)) return <Loading />;
@@ -477,8 +529,12 @@ const DocumentEditorPanel = ({
                 onMouseDown={handleContainerMouseDown}
                 onFocus={() => setFocusedEditorType(focusType)}
             >
-                <div className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}>
-                    <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
+                <div
+                    className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}
+                >
+                    <div
+                        className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")}
+                    />
                     <div onContextMenu={onEditorContextMenu}>
                         <EditorContent editor={editor} spellCheck={false} />
                     </div>

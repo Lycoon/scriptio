@@ -39,7 +39,7 @@ const OAuthButtons = ({ callbackUrl = "/" }: Props) => {
 
             const nonce = generateBridgeNonce();
             const apiBase = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
-            const bridgeUrl = `${apiBase}/desktop-auth/start?provider=${provider}&nonce=${encodeURIComponent(nonce)}`;
+            const bridgeUrl = `${apiBase}/desktop-oauth/start?provider=${provider}&nonce=${encodeURIComponent(nonce)}`;
             await openUrl(bridgeUrl);
 
             const token = await pollBridgeToken(nonce);

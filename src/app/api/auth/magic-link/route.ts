@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import * as SecretService from "@src/lib/utils/secrets";
 import * as Mail from "@src/lib/mail/mail";
-import prisma from "@src/server/db";
+import * as MagicLinkService from "@src/server/service/magic-link-service";
 
 import { RequestMagicLinkBodySchema } from "@src/lib/utils/api-bodies";
 export type { RequestMagicLinkBody } from "@src/lib/utils/api-bodies";
@@ -34,17 +34,10 @@ async function issueMagicLinkRoute(req: NextRequest) {
     const normalizedEmail = email.toLowerCase().trim();
 
     // Sweep expired records first so the rate-limit window only counts live ones.
-    await prisma.magicLinkToken.deleteMany({
-        where: { expiresAt: { lt: new Date() } },
-    });
+    await MagicLinkService.sweepExpired();
 
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000);
-    const recentCount = await prisma.magicLinkToken.count({
-        where: {
-            email: normalizedEmail,
-            createdAt: { gte: windowStart },
-        },
-    });
+    const recentCount = await MagicLinkService.countRecent(normalizedEmail, windowStart);
 
     if (recentCount >= RATE_LIMIT_MAX_TOKENS) {
         return NextResponse.json(
@@ -56,14 +49,12 @@ async function issueMagicLinkRoute(req: NextRequest) {
     const rawToken = SecretService.generateToken();
     const tokenHash = SecretService.hashToken(rawToken);
 
-    await prisma.magicLinkToken.create({
-        data: {
-            email: normalizedEmail,
-            tokenHash,
-            expiresAt: new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000),
-            desktopNonce: desktopNonce ?? null,
-            inviteToken: inviteToken ?? null,
-        },
+    await MagicLinkService.issue({
+        email: normalizedEmail,
+        tokenHash,
+        expiresAt: new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000),
+        desktopNonce: desktopNonce ?? null,
+        inviteToken: inviteToken ?? null,
     });
 
     // Fire-and-forget: never block the response on the SMTP round-trip, and never

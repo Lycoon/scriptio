@@ -154,9 +154,10 @@
     "importing": "正在导入...",
     "createBtn": "创建",
     "empty": {
-      "createFirst": "创建您的第一个项目",
-      "or": "或",
-      "importExisting": "导入现有剧本"
+      "createFirst": "新建项目",
+      "createDesc": "从空白页面开始",
+      "importExisting": "导入",
+      "importDesc": "打开现有脚本文件"
     },
     "item": {
       "posterAlt": "电影海报",
@@ -180,6 +181,7 @@
     "locations": "位置",
     "shelf": "搁置",
     "shelfEmpty": "选择一个版本进行编辑",
+    "goTo": "在剧本中定位",
     "confirmRestore": "这将替换剧本中匹配的内容。",
     "restore": "恢复",
     "cancel": "取消"

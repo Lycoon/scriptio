@@ -17,10 +17,19 @@ services:
         labels:
             - traefik.enable=true
             - traefik.docker.network=webproxy
+            # Public router: landing, /privacy, /contact and static assets
             - traefik.http.routers.scriptio-app.rule=Host(`scriptio.app`)
             - traefik.http.routers.scriptio-app.entrypoints=secure
             - traefik.http.routers.scriptio-app.tls=true
             - traefik.http.routers.scriptio-app.tls.certresolver=letsencrypt
+            # Restricted router: /projects and /api require basic auth
+            - traefik.http.routers.scriptio-app-auth.rule=Host(`scriptio.app`) && (PathPrefix(`/projects`) || PathPrefix(`/api`))
+            - traefik.http.routers.scriptio-app-auth.entrypoints=secure
+            - traefik.http.routers.scriptio-app-auth.tls=true
+            - traefik.http.routers.scriptio-app-auth.tls.certresolver=letsencrypt
+            - traefik.http.routers.scriptio-app-auth.priority=100
+            - traefik.http.routers.scriptio-app-auth.middlewares=prod-auth
+            - traefik.http.middlewares.prod-auth.basicauth.users=${PROD_AUTH_USERS}
 
     app-staging:
         image: ghcr.io/lycoon/scriptio-app:staging

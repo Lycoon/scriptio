@@ -75,8 +75,7 @@ function extractDialogueBlockContent(
         const cls = doc.child(i).attrs.class;
         if (
             cls === ScreenplayElement.Dialogue ||
-            cls === ScreenplayElement.Parenthetical ||
-            cls === ScreenplayElement.Character
+            cls === ScreenplayElement.Parenthetical
         ) {
             content.push(doc.child(i).toJSON());
         } else {
