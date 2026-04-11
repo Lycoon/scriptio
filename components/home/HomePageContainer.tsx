@@ -195,12 +195,12 @@ export default function HomePageContainer() {
                             </div>
                         </div>
 
-                        {/* Advanced Search */}
+                        {/* Alternates */}
                         <div className={`${styles.glassCard} ${styles.bentoCell}`}>
                             <div className={styles.bentoContent}>
                                 <div className={styles.bentoHeader}>
                                     <Search size={24} style={{ color: "var(--secondary-text)" }} />
-                                    <h3 className={styles.pillarTitle}>Advanced Search</h3>
+                                    <h3 className={styles.pillarTitle}>Alternates</h3>
                                 </div>
                                 <p className={styles.pillarText}>
                                     Search your script with precision using filters for scene, character, and dialogue.

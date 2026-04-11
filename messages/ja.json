@@ -154,9 +154,10 @@
     "importing": "インポート中...",
     "createBtn": "作成",
     "empty": {
-      "createFirst": "最初のプロジェクトを作成しましょう",
-      "or": "または",
-      "importExisting": "既存の脚本をインポート"
+      "createFirst": "新規プロジェクト",
+      "createDesc": "白紙から始める",
+      "importExisting": "インポート",
+      "importDesc": "既存のスクリプトファイルを開く"
     },
     "item": {
       "posterAlt": "映画ポスター",

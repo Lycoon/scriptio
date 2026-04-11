@@ -7,9 +7,9 @@ import { encode } from "next-auth/jwt";
 import * as SecretService from "@src/lib/utils/secrets";
 import * as UserService from "@src/server/service/user-service";
 import * as ProjectService from "@src/server/service/project-service";
+import * as MagicLinkService from "@src/server/service/magic-link-service";
 import * as Misc from "@src/lib/utils/misc";
 import { putBridgeToken } from "@src/lib/desktop-bridge";
-import prisma from "@src/server/db";
 
 import { VerifyMagicLinkBodySchema } from "@src/lib/utils/api-bodies";
 export type { VerifyMagicLinkBody } from "@src/lib/utils/api-bodies";
@@ -56,10 +56,10 @@ async function verifyMagicLinkRoute(req: NextRequest) {
 
     // Atomically claim the token: deleteMany on the unique hash either deletes one row
     // or zero, so two concurrent verifications can never both succeed.
-    const record = await prisma.magicLinkToken.findUnique({ where: { tokenHash } });
+    const record = await MagicLinkService.findByHash(tokenHash);
     if (!record) throw new BodyFieldError(ERROR_MAGIC_LINK_EXPIRED);
 
-    const claim = await prisma.magicLinkToken.deleteMany({ where: { tokenHash } });
+    const claim = await MagicLinkService.consumeByHash(tokenHash);
     if (claim.count === 0 || record.expiresAt < new Date()) {
         throw new BodyFieldError(ERROR_MAGIC_LINK_EXPIRED);
     }

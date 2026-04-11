@@ -155,9 +155,10 @@
     "importing": "Importieren...",
     "createBtn": "Erstellen",
     "empty": {
-      "createFirst": "Klicken Sie hier, um Ihr erstes Projekt zu erstellen",
-      "or": "oder",
-      "importExisting": "Ein vorhandenes Drehbuch importieren"
+      "createFirst": "Neues Projekt",
+      "createDesc": "Mit einer leeren Seite beginnen",
+      "importExisting": "Importieren",
+      "importDesc": "Eine vorhandene Skriptdatei öffnen"
     },
     "item": {
       "posterAlt": "Filmplakat",

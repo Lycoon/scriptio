@@ -1,15 +1,15 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import DesktopAuthStart from "@components/home/desktop-auth/DesktopAuthStart";
+import DesktopOAuthStart from "@components/home/desktop-oauth/DesktopOAuthStart";
 
 export const metadata: Metadata = {
     title: "Sign in | Scriptio®",
 };
 
-export default function DesktopAuthStartPage() {
+export default function DesktopOAuthStartPage() {
     return (
         <Suspense>
-            <DesktopAuthStart />
+            <DesktopOAuthStart />
         </Suspense>
     );
 }

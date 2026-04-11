@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { ShelfEntry, ShelfEntryType } from "@src/lib/project/project-state";
-import { Clapperboard, CornerUpLeft, Pencil, Trash2, UserRound, Zap } from "lucide-react";
+import { Clapperboard, ChevronRight, CornerDownLeft, CornerUpLeft, Pencil, Trash2, UserRound, Zap } from "lucide-react";
 import { join } from "@src/lib/utils/misc";
 
 import styles from "./ShelfSidebarItem.module.css";
@@ -21,10 +21,9 @@ interface ShelfSidebarItemProps {
     entry: ShelfEntry;
     isExpanded: boolean;
     onToggle: () => void;
-    page?: number;
 }
 
-const ShelfSidebarItem = memo(({ nodeId, entry, isExpanded, onToggle, page }: ShelfSidebarItemProps) => {
+const ShelfSidebarItem = memo(({ nodeId, entry, isExpanded, onToggle }: ShelfSidebarItemProps) => {
     const t = useTranslations("editorSidebar");
     const { activeShelfVersion, setActiveShelfVersion, repository, editor } = useContext(ProjectContext);
     const { setSecondaryPanel } = useViewContext();
@@ -34,6 +33,22 @@ const ShelfSidebarItem = memo(({ nodeId, entry, isExpanded, onToggle, page }: Sh
     const renameInputRef = useRef<HTMLInputElement>(null);
 
     const Icon = TYPE_ICONS[entry.type];
+
+    const handleGoTo = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (!editor) return;
+            let targetPos: number | null = null;
+            editor.state.doc.forEach((node, pos) => {
+                if (targetPos === null && node.attrs?.["data-id"] === nodeId) {
+                    targetPos = pos + 1;
+                }
+            });
+            if (targetPos === null) return;
+            editor.chain().focus().setTextSelection(targetPos).scrollIntoView().run();
+        },
+        [nodeId, editor],
+    );
 
     const handleVersionClick = useCallback(
         (versionId: string) => {
@@ -130,12 +145,20 @@ const ShelfSidebarItem = memo(({ nodeId, entry, isExpanded, onToggle, page }: Sh
     return (
         <div className={styles.container}>
             <div className={join(styles.header, isExpanded ? styles.header_active : "")} onClick={onToggle}>
+                <ChevronRight
+                    size={13}
+                    className={join(styles.chevron, isExpanded ? styles.chevron_expanded : "")}
+                />
                 <Icon size={14} className={styles.type_icon} />
                 <span className={join(styles.title, "unselectable")}>{entry.title}</span>
-                {page !== undefined && (
-                    <span className={join(styles.version_count, "unselectable")}>p.{page}</span>
-                )}
                 <span className={join(styles.version_count, "unselectable")}>{entry.versions.length}</span>
+                <button
+                    className={styles.goto_btn}
+                    title={t("goTo")}
+                    onClick={handleGoTo}
+                >
+                    <CornerDownLeft size={12} />
+                </button>
             </div>
             {isExpanded && (
                 <div className={styles.versions_list}>

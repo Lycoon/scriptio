@@ -3,8 +3,8 @@ import crypto from "crypto";
 /**
  * In-memory bridge for desktop OAuth flows.
  *
- * The desktop client opens an external browser to /desktop-auth/start with a nonce.
- * After OAuth completes, /desktop-auth/complete posts the nonce + the freshly signed
+ * The desktop client opens an external browser to /desktop-oauth/start with a nonce.
+ * After OAuth completes, /desktop-oauth/complete posts the nonce + the freshly signed
  * NextAuth JWE to /api/desktop/token, which stores it here under the hashed nonce.
  * The desktop client polls /api/desktop/token/poll until the token is available.
  *

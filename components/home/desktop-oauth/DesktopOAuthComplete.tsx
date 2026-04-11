@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import ScriptioLogo from "@public/images/scriptio.svg";
 import layout from "../../utils/Layout.module.css";
-import recovery from "../recovery/RecoveryForm.module.css";
+import auth from "../auth/AuthPage.module.css";
 import form from "../../utils/Form.module.css";
 
 type Status = "working" | "done" | "error";
@@ -17,7 +17,7 @@ type Status = "working" | "done" | "error";
  * nonce to /api/desktop/token. The server reads the session, mints a NextAuth JWE,
  * and stows it under the nonce so the desktop poller can pick it up.
  */
-const DesktopAuthComplete = () => {
+const DesktopOAuthComplete = () => {
     const searchParams = useSearchParams();
     const nonce = searchParams.get("nonce");
     const [status, setStatus] = useState<Status>("working");
@@ -50,17 +50,13 @@ const DesktopAuthComplete = () => {
 
     return (
         <div className={layout.center_middle}>
-            <div className={recovery.recoveryPage}>
-                <div className={recovery.logoSide}>
-                    <ScriptioLogo className={recovery.logo} />
-                </div>
-                <div className={recovery.formSide}>
-                    <div className={form.home}>
-                        <div className={form.header}>
-                            <h1>Sign in</h1>
-                            <hr />
-                            <p className={`${recovery.info} segoe`}>{message}</p>
-                        </div>
+            <div className={auth.authPage}>
+                <ScriptioLogo className={auth.authLogo} />
+                <div className={form.home}>
+                    <div className={form.header}>
+                        <h1>Sign in</h1>
+                        <hr />
+                        <p className={`${auth.info} segoe`}>{message}</p>
                     </div>
                 </div>
             </div>
@@ -68,4 +64,4 @@ const DesktopAuthComplete = () => {
     );
 };
 
-export default DesktopAuthComplete;
+export default DesktopOAuthComplete;

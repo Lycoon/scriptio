@@ -154,9 +154,10 @@
     "importing": "正在导入...",
     "createBtn": "创建",
     "empty": {
-      "createFirst": "创建您的第一个项目",
-      "or": "或",
-      "importExisting": "导入现有剧本"
+      "createFirst": "新建项目",
+      "createDesc": "从空白页面开始",
+      "importExisting": "导入",
+      "importDesc": "打开现有脚本文件"
     },
     "item": {
       "posterAlt": "电影海报",

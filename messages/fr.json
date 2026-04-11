@@ -155,9 +155,10 @@
     "importing": "Importation...",
     "createBtn": "Créer",
     "empty": {
-      "createFirst": "Cliquez pour créer votre premier projet",
-      "or": "ou",
-      "importExisting": "Importer un scénario existant"
+      "createFirst": "Nouveau projet",
+      "createDesc": "Partir d'une page blanche",
+      "importExisting": "Importer",
+      "importDesc": "Ouvrir un fichier de scénario existant"
     },
     "item": {
       "posterAlt": "Affiche du film",

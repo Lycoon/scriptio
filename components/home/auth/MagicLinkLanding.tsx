@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import ScriptioLogo from "@public/images/scriptio.svg";
 import layout from "../../utils/Layout.module.css";
-import recovery from "../recovery/RecoveryForm.module.css";
+import auth from "./AuthPage.module.css";
 import form from "../../utils/Form.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 
@@ -71,17 +71,13 @@ const MagicLinkLanding = () => {
 
     return (
         <div className={layout.center_middle}>
-            <div className={recovery.recoveryPage}>
-                <div className={recovery.logoSide}>
-                    <ScriptioLogo className={recovery.logo} />
-                </div>
-                <div className={recovery.formSide}>
-                    <div className={form.home}>
-                        <div className={form.header}>
-                            <h1>Sign in</h1>
-                            <hr />
-                            <p className={`${recovery.info} segoe`}>{message}</p>
-                        </div>
+            <div className={auth.authPage}>
+                <ScriptioLogo className={auth.authLogo} />
+                <div className={form.home}>
+                    <div className={form.header}>
+                        <h1>Sign in</h1>
+                        <hr />
+                        <p className={`${auth.info} segoe`}>{message}</p>
                     </div>
                 </div>
             </div>

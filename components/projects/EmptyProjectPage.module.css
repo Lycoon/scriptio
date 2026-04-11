@@ -4,64 +4,74 @@
     justify-content: center;
     align-items: center;
     flex: 1;
-
-    border: none;
-
     background: none;
+    border: none;
 }
 
-.content {
+.cards {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
+    flex-direction: row;
+    gap: 20px;
     padding-bottom: 70px;
 }
 
-.main_btn {
-    background: none;
-    border: none;
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    width: 220px;
+    padding: 28px 24px;
+
+    border-radius: 18px;
+    border: 3px solid var(--tertiary);
+    background-color: var(--project-item-bg);
+
     cursor: pointer;
-    padding: 0;
+    text-align: left;
+
+    transition: border-color 0.2s, transform 0.2s;
 }
 
-.main_btn:hover .title {
-    transition: transform 0.5s;
-    transform: scale(1.03);
+.card:hover {
+    border-color: var(--tertiary-hover);
 }
 
-.title {
-    font-style: italic;
-    font-size: 2.8rem;
-    color: var(--primary-text);
-
-    transition: transform 0.5s;
-    transform: scale(1);
+.card:active {
+    transform: scale(0.98);
+    transition: transform 0.07s;
 }
 
-.or_text {
-    font-size: 1rem;
-    color: var(--secondary-text);
-    margin: 8px 0;
-}
-
-.import_btn {
-    background: none;
-    border: 1px solid var(--secondary-text);
-    border-radius: 20px;
-    padding: 10px 24px;
-    cursor: pointer;
-    color: var(--primary-text);
-    font-size: 1rem;
-    transition: all 0.2s ease;
-}
-
-.import_btn:hover {
-    background: var(--hover-bg);
-    border-color: var(--primary-text);
-}
-
-.import_btn:disabled {
+.card:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.cardIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+    flex-shrink: 0;
+}
+
+.cardTitle {
+    font-family: var(--font-inter), sans-serif;
+    font-style: italic;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--primary-text);
+    margin: 0;
+}
+
+.cardDesc {
+    font-size: 0.8rem;
+    color: var(--secondary-text);
+    margin: 0;
+    line-height: 1.4;
 }

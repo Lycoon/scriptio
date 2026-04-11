@@ -154,9 +154,10 @@
     "importing": "Importando...",
     "createBtn": "Crear",
     "empty": {
-      "createFirst": "Haz clic para crear tu primer proyecto",
-      "or": "o",
-      "importExisting": "Importar un guión existente"
+      "createFirst": "Nuevo proyecto",
+      "createDesc": "Empezar desde una página en blanco",
+      "importExisting": "Importar",
+      "importDesc": "Abrir un archivo de guión existente"
     },
     "item": {
       "posterAlt": "Póster de la película",
