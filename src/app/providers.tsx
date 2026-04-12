@@ -8,27 +8,7 @@ import { UserContextProvider } from "@src/context/UserContext";
 import { DashboardContextProvider } from "@src/context/DashboardContext";
 import { LocaleContextProvider, useLocale } from "@src/context/LocaleContext";
 import { SpellcheckProvider } from "@src/context/SpellcheckContext";
-import { useSettings } from "@src/lib/utils/hooks";
 import fetcher from "@src/lib/fetcher";
-
-/**
- * Syncs the "themed-editor" CSS class on <html> with the user's persisted setting.
- * Runs at the root so it applies before any editor is rendered.
- */
-function EditorThemeSync() {
-    const { settings } = useSettings();
-
-    useEffect(() => {
-        if (settings?.themedEditor !== undefined) {
-            document.documentElement.classList.toggle("themed-editor", settings.themedEditor);
-        }
-        if (settings?.highlightOnHover !== undefined) {
-            document.documentElement.classList.toggle("highlight-on-hover", settings.highlightOnHover);
-        }
-    }, [settings?.themedEditor, settings?.highlightOnHover]);
-
-    return null;
-}
 
 /**
  * Reads locale/messages from LocaleContext and feeds NextIntlClientProvider.
@@ -89,7 +69,6 @@ export function Providers({ children }: { children: ReactNode }) {
                                 enableColorScheme={false}
                             >
                                 <SpellcheckProvider>
-                                    <EditorThemeSync />
                                     <LocaleSync />
                                     {children}
                                 </SpellcheckProvider>

@@ -1,8 +1,7 @@
 "use client";
 
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { UserLanguage } from "@src/lib/utils/types";
-import { useSettings } from "@src/lib/utils/hooks";
 
 import enMessages from "../../messages/en.json";
 import esMessages from "../../messages/es.json";
@@ -36,26 +35,13 @@ export function LocaleContextProvider({ children }: { children: ReactNode }) {
         return stored && stored in MESSAGES ? stored : DEFAULT_LOCALE;
     });
 
-    const { settings, mutate, saveSettings } = useSettings();
-
-    // Server-wins sync: if settings differ from local state (e.g. changed on another device)
-    useEffect(() => {
-        if (settings?.language && settings.language !== locale) {
-            setLocale(settings.language);
-            window.localStorage.setItem(LOCALE_KEY, settings.language);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [settings?.language]);
-
     const setLanguage = useCallback(
         (lang: UserLanguage) => {
             if (lang === locale) return;
             setLocale(lang);
             window.localStorage.setItem(LOCALE_KEY, lang);
-            if (settings) mutate({ ...settings, language: lang }, false);
-            saveSettings({ language: lang });
         },
-        [locale, settings, mutate, saveSettings],
+        [locale],
     );
 
     const value = useMemo(

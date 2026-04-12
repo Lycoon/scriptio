@@ -7,6 +7,7 @@ import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./SpellcheckSettings.module.css";
 import { UserLanguage } from "@src/lib/utils/types";
 import { useLocale } from "@src/context/LocaleContext";
+import { useSettings } from "@src/lib/utils/hooks";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { DICTIONARY_CATALOG, formatDictionarySize } from "@src/lib/spellcheck/spellcheck-dictionaries";
@@ -26,6 +27,7 @@ const LANGUAGE_OPTIONS: DropdownOption[] = [
 
 const LanguageSettings = () => {
     const { locale, setLanguage } = useLocale();
+    const { saveSettings } = useSettings();
     const t = useTranslations("language");
     const { spellcheckLang, setSpellcheckLang, installedDictionaries, downloadProgress, installDictionary } =
         useSpellcheck();
@@ -128,7 +130,7 @@ const LanguageSettings = () => {
                 <p className={sharedStyles.helpText}>{t("helpText")}</p>
                 <Dropdown
                     value={locale}
-                    onChange={(value) => setLanguage(value as UserLanguage)}
+                    onChange={(value) => { setLanguage(value as UserLanguage); saveSettings({ language: value as UserLanguage }); }}
                     options={LANGUAGE_OPTIONS}
                     className={sharedStyles.input}
                 />
