@@ -6,10 +6,43 @@ import ProjectUnavailableDialog from "@components/projects/ProjectUnavailableDia
 import { redirect, useSearchParams } from "next/navigation";
 import { ProjectProvider, useProjectReady } from "@src/context/ProjectContext";
 import { ViewProvider } from "@src/context/ViewContext";
-import { useProjectMembership } from "@src/lib/utils/hooks";
-import { ReactNode, Suspense } from "react";
+import { useProjectMembership, useSettings } from "@src/lib/utils/hooks";
+import { useLocale } from "@src/context/LocaleContext";
+import { useTheme } from "next-themes";
+import { ReactNode, Suspense, useEffect } from "react";
 import ProjectNavbar from "@components/navbar/ProjectNavbar";
 import { isTauri } from "@tauri-apps/api/core";
+
+/**
+ * Syncs settings → DOM and settings → locale. Lives here (not root providers)
+ * so that /api/users/cookie is never called on the homepage.
+ */
+function SettingsSync() {
+    const { settings } = useSettings();
+    const { locale, setLanguage } = useLocale();
+    const { theme, setTheme } = useTheme();
+
+    useEffect(() => {
+        if (settings?.themedEditor !== undefined)
+            document.documentElement.classList.toggle("themed-editor", settings.themedEditor);
+        if (settings?.highlightOnHover !== undefined)
+            document.documentElement.classList.toggle("highlight-on-hover", settings.highlightOnHover);
+    }, [settings?.themedEditor, settings?.highlightOnHover]);
+
+    useEffect(() => {
+        if (settings?.language && settings.language !== locale)
+            setLanguage(settings.language);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [settings?.language]);
+
+    useEffect(() => {
+        if (settings?.theme && settings.theme !== theme)
+            setTheme(settings.theme);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [settings?.theme]);
+
+    return null;
+}
 
 interface ProjectLayoutInnerProps {
     children: ReactNode;
@@ -73,6 +106,7 @@ function ProjectLayoutContent({ children }: { children: ReactNode }) {
 export default function ProjectLayout({ children }: { children: ReactNode }) {
     return (
         <Suspense fallback={<Loading />}>
+            <SettingsSync />
             <ProjectLayoutContent>{children}</ProjectLayoutContent>
         </Suspense>
     );
