@@ -4,7 +4,9 @@
         "category": "Productivity",
         "macOS": {
             "entitlements": "./Entitlements.plist",
-            "provisioningProfile": "./embedded.provisionprofile"
+            "files": {
+                "embedded.provisionprofile": "./embedded.provisionprofile"
+            }
         }
     }
 }
