@@ -1,5 +1,4 @@
-import { getCookieUser } from "@src/lib/session";
-import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
+import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 import { ProjectRole } from "@prisma/client";
 import {
     ForbiddenError,
@@ -8,7 +7,6 @@ import {
     Success,
     SuccessCreated,
     SuccessNoContent,
-    UnauthorizedError,
     validate,
 } from "@src/lib/utils/api-utils";
 import { requirePro } from "@src/lib/utils/pro-utils";
@@ -34,12 +32,7 @@ const QuerySchema = z.object({
  *
  * Returns the list of pending invites for this project
  */
-async function getInvites(req: NextRequest, { routeParams }: ApiContext) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
+async function getInvites(req: NextRequest, { routeParams }: AuthApiContext) {
     const { projectId } = validate(QuerySchema, routeParams);
     const invites = await ProjectService.getInvites(projectId);
     return Success(invites);
@@ -50,17 +43,12 @@ async function getInvites(req: NextRequest, { routeParams }: ApiContext) {
  *
  * Invites a given user to a project, creating a pending `ProjectInvitation`
  */
-async function inviteMember(req: NextRequest, { routeParams }: ApiContext) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
+async function inviteMember(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const body = await req.json();
     const { email: emailToInvite } = validate(ProjectMemberEmailBodySchema, body);
     const { projectId } = validate(QuerySchema, routeParams);
 
-    const member = await ProjectService.getMembership(projectId, cookie.id);
+    const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {
         throw new NotFoundError();
     }
@@ -68,7 +56,7 @@ async function inviteMember(req: NextRequest, { routeParams }: ApiContext) {
         throw new ForbiddenError("Only admin members can issue invites");
     }
 
-    await requirePro(cookie.id);
+    await requirePro(user.id);
 
     const invites = await ProjectService.getInvites(projectId);
     const isAlreadyInvited = invites.some((i) => i.email === emailToInvite);
@@ -98,17 +86,12 @@ async function inviteMember(req: NextRequest, { routeParams }: ApiContext) {
  *
  * Deletes the invite associated to a given email address, removing its pending `ProjectInvitation`
  */
-async function deleteInvite(req: NextRequest, { routeParams }: ApiContext) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
+async function deleteInvite(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const body = await req.json();
     const { email: emailToDelete } = validate(ProjectMemberEmailBodySchema, body);
     const { projectId } = validate(QuerySchema, routeParams);
 
-    const member = await ProjectService.getMembership(projectId, cookie.id);
+    const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {
         throw new NotFoundError();
     }

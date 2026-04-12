@@ -1,16 +1,14 @@
-import { getCookieUser } from "@src/lib/session";
 import { ProjectRole } from "@prisma/client";
 
 import * as S3 from "@src/lib/s3";
 import * as ProjectService from "@src/server/service/project-service";
 import * as Roles from "@src/lib/utils/roles";
-import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
+import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 import {
     ForbiddenError,
     InternalServerError,
     ProjectNotFoundError,
     Success,
-    UnauthorizedError,
     BodyFieldError,
     validate,
     SuccessNoContent,
@@ -30,13 +28,9 @@ const QuerySchema = z.object({
  *
  * Gets project information from authenticated user
  */
-async function getProject(req: NextRequest, { routeParams }: ApiContext) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
+async function getProject(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const { projectId } = validate(QuerySchema, routeParams);
-    const membership = await ProjectService.getMembership(projectId, cookie.id);
+    const membership = await ProjectService.getMembership(projectId, user.id);
 
     if (!membership) {
         throw new ProjectNotFoundError();
@@ -50,14 +44,9 @@ async function getProject(req: NextRequest, { routeParams }: ApiContext) {
  *
  * Updates project information from authenticated user
  */
-async function updateProject(req: NextRequest, { routeParams }: ApiContext) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
+async function updateProject(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const { projectId } = validate(QuerySchema, routeParams);
-    const member = await ProjectService.getMembership(projectId, cookie.id);
+    const member = await ProjectService.getMembership(projectId, user.id);
 
     if (!member) {
         throw new ProjectNotFoundError();
@@ -103,16 +92,11 @@ async function updateProject(req: NextRequest, { routeParams }: ApiContext) {
 /**
  * DELETE `/projects/[projectId]`
  *
- * Deletes project from unautheticated user
+ * Deletes project from authenticated user
  */
-async function deleteProject(req: NextRequest, { routeParams }: ApiContext) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
+async function deleteProject(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const { projectId } = validate(QuerySchema, routeParams);
-    const member = await ProjectService.getMembership(projectId, cookie.id);
+    const member = await ProjectService.getMembership(projectId, user.id);
 
     if (!member) {
         throw new ForbiddenError();
