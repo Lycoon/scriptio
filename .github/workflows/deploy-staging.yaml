@@ -70,4 +70,4 @@ jobs:
                   script: |
                       cd ${{ secrets.APP_PATH }}
                       docker compose pull app-staging
-                      docker compose --env-file .env.staging --profile staging up -d
+                      docker compose --env-file .env.staging --profile staging up -d --force-recreate
