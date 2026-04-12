@@ -66,6 +66,8 @@ jobs:
                   key: ${{ secrets.SSH_SECRET }}
                   port: ${{ secrets.SSH_PORT }}
                   script: |
+                      set -e
+                      docker image prune -af
                       cd ${{ secrets.APP_PATH }}
                       docker compose pull app-prod
                       docker compose --env-file .env.prod --profile prod up -d --force-recreate
