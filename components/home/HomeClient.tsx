@@ -2,22 +2,25 @@
 
 import { useEffect } from "react";
 import HomePageContainer from "@components/home/HomePageContainer";
-import Loading from "@components/utils/Loading";
 import LandingPageNavbar from "@components/navbar/LandingPageNavbar";
 import { isTauri } from "@tauri-apps/api/core";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 
 export default function HomeClient() {
     const { setTheme } = useTheme();
+    const router = useRouter();
 
     useEffect(() => {
-        if (!isTauri()) {
+        if (isTauri()) {
+            router.replace("/projects");
+        } else {
             setTheme("dark");
         }
-    }, [setTheme]);
+    }, [setTheme, router]);
 
     if (isTauri()) {
-        return <Loading />;
+        return null;
     }
 
     // Guest - show landing page with LandingPageNavbar
