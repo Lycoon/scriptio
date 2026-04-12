@@ -1,13 +1,10 @@
 import { NextRequest } from "next/server";
-import { getCookieUser } from "@src/lib/session";
 import * as S3 from "@src/lib/s3";
 import * as ProjectService from "@src/server/service/project-service";
-import { apiHandler } from "@src/lib/utils/api-handler";
 import {
     InternalServerError,
     Success,
     SuccessCreated,
-    UnauthorizedError,
     BodyFieldError,
     UserNotFoundError,
     validate,
@@ -15,6 +12,7 @@ import {
 import { requirePro } from "@src/lib/utils/pro-utils";
 
 import { CreateProjectBodySchema } from "@src/lib/utils/api-bodies";
+import { ApiContext, apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 export type { CreateProjectBody } from "@src/lib/utils/api-bodies";
 
 /**
@@ -22,13 +20,8 @@ export type { CreateProjectBody } from "@src/lib/utils/api-bodies";
  *
  * Gets all projects from authenticated user
  */
-async function getProjects(req: NextRequest) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
-    const projects = await ProjectService.getMemberships(cookie.id);
+async function getProjects(req: NextRequest, { user }: AuthApiContext) {
+    const projects = await ProjectService.getMemberships(user.id);
     if (!projects) {
         throw new UserNotFoundError();
     }
@@ -41,13 +34,8 @@ async function getProjects(req: NextRequest) {
  *
  * Creates a new project
  */
-async function createProject(req: NextRequest) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
-    await requirePro(cookie.id);
+async function createProject(req: NextRequest, { user }: AuthApiContext) {
+    await requirePro(user.id);
 
     const body = await req.json();
     const { title, description, author, poster } = validate(CreateProjectBodySchema, body);
@@ -66,7 +54,7 @@ async function createProject(req: NextRequest) {
         title,
         description,
         author,
-        userId: cookie.id,
+        userId: user.id,
         hasPoster: poster !== undefined,
     });
 

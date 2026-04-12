@@ -1,7 +1,12 @@
 import { ProjectRole } from "@prisma/client";
-import { getCookieUser } from "@src/lib/session";
-import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
-import { ForbiddenError, getCollabHttpUrl, Success, SuccessCreated, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
+import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
+import {
+    ForbiddenError,
+    getCollabHttpUrl,
+    Success,
+    SuccessCreated,
+    validate,
+} from "@src/lib/utils/api-utils";
 import { requirePro } from "@src/lib/utils/pro-utils";
 
 import * as Roles from "@src/lib/utils/roles";
@@ -19,7 +24,7 @@ async function forwardToWorker(
     projectId: string,
     method: string,
     path: string,
-    body?: any
+    body?: any,
 ): Promise<Response> {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
     const token = await new SignJWT({ type: "admin-action", projectId })
@@ -46,12 +51,7 @@ async function forwardToWorker(
  * Creates a manual save with a user-provided name.
  * Requires EDITOR+ role.
  */
-async function createManualSave(req: NextRequest, { routeParams }: ApiContext) {
-    const user = await getCookieUser();
-    if (!user || !user.id) {
-        throw new UnauthorizedError();
-    }
-
+async function createManualSave(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const { projectId } = validate(QuerySchema, routeParams);
     const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {
@@ -81,12 +81,7 @@ async function createManualSave(req: NextRequest, { routeParams }: ApiContext) {
  *
  * Renames a manual save. Requires ADMIN+ role.
  */
-async function renameManualSave(req: NextRequest, { routeParams }: ApiContext) {
-    const user = await getCookieUser();
-    if (!user || !user.id) {
-        throw new UnauthorizedError();
-    }
-
+async function renameManualSave(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const { projectId } = validate(QuerySchema, routeParams);
     const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {
