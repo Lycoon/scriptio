@@ -1,7 +1,7 @@
 {
     "name": "scriptio",
     "private": true,
-    "version": "2.0.1",
+    "version": "2.0.2",
     "scripts": {
         "dev": "docker compose --profile dev up -d --wait && npx prisma db push && next dev",
         "build": "npx prisma generate && next build",
