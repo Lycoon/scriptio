@@ -3,7 +3,8 @@
     "bundle": {
         "category": "Productivity",
         "macOS": {
-            "entitlements": "./Entitlements.plist"
+            "entitlements": "./Entitlements.plist",
+            "provisioningProfile": "./embedded.provisionprofile"
         }
     }
 }
