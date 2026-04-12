@@ -36,10 +36,8 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            - name: Build and sign .app with Tauri
+            - name: Build .app with Tauri
               run: npm run tauri build -- --bundles app --target universal-apple-darwin
-              env:
-                  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
 
             - name: Embed provisioning profile
               run: |
@@ -47,6 +45,13 @@ jobs:
                                "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision \
                              2>/dev/null | head -n 1)
                   cp "$PROFILE" "$APP_PATH/Contents/embedded.provisionprofile"
+
+            - name: Sign app
+              run: |
+                  codesign --force --deep \
+                    --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" \
+                    --entitlements src-tauri/Entitlements.plist \
+                    "$APP_PATH"
 
             - name: Build signed .pkg installer
               run: |

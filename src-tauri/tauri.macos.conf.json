@@ -3,10 +3,7 @@
     "bundle": {
         "category": "Productivity",
         "macOS": {
-            "entitlements": "./Entitlements.plist",
-            "signing": {
-                "entitlements": "./Entitlements.plist"
-            }
+            "entitlements": "./Entitlements.plist"
         }
     }
 }
