@@ -46,3 +46,6 @@ yarn-error.log*
 
 # claude
 .claude
+# Apple provisioning profiles
+*.provisionprofile
+*.mobileprovision

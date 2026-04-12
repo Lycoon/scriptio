@@ -28,6 +28,13 @@ jobs:
                   api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
                   api-private-key: ${{ secrets.APPSTORE_API_KEY_P8 }}
 
+            - name: Copy provisioning profile to known path
+              run: |
+                  PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.provisionprofile \
+                               "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision \
+                             2>/dev/null | head -n 1)
+                  cp "$PROFILE" src-tauri/embedded.provisionprofile
+
             - uses: actions/setup-node@v4
               with: { node-version: "22" }
             - uses: dtolnay/rust-toolchain@stable
@@ -36,22 +43,10 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            - name: Build .app with Tauri
+            - name: Build and sign .app with Tauri
               run: npm run tauri build -- --bundles app --target universal-apple-darwin
-
-            - name: Embed provisioning profile
-              run: |
-                  PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.provisionprofile \
-                               "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision \
-                             2>/dev/null | head -n 1)
-                  cp "$PROFILE" "$APP_PATH/Contents/embedded.provisionprofile"
-
-            - name: Sign app
-              run: |
-                  codesign --force --deep \
-                    --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" \
-                    --entitlements src-tauri/Entitlements.plist \
-                    "$APP_PATH"
+              env:
+                  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
 
             - name: Build signed .pkg installer
               run: |

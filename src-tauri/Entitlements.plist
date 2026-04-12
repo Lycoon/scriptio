@@ -2,15 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Required by Mac App Store — without this the upload is rejected -->
+    <key>com.apple.application-identifier</key>
+    <string>G93CJ6PWZH.app.scriptio</string>
+
+    <key>com.apple.developer.team-identifier</key>
+    <string>G93CJ6PWZH</string>
+
     <key>com.apple.security.app-sandbox</key>
     <true/>
 
-    <!-- Outbound HTTP/S to scriptio.app backend and APIs -->
     <key>com.apple.security.network.client</key>
     <true/>
 
-    <!-- File open/save dialogs via Tauri's dialog plugin -->
     <key>com.apple.security.files.user-selected.read-write</key>
     <true/>
 </dict>
