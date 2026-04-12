@@ -1,4 +1,5 @@
 {
+    "identifier": "app.scriptio",
     "bundle": {
         "category": "Productivity",
         "macOS": {
