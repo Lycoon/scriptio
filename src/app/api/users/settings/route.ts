@@ -1,12 +1,10 @@
 import { FAILED_USER_SETTINGS_UPDATE } from "@src/lib/messages";
-import { getCookieUser } from "@src/lib/session";
-import { apiHandler } from "@src/lib/utils/api-handler";
+import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 import {
     InternalServerError,
     NotFoundError,
     Success,
     SuccessNoContent,
-    UnauthorizedError,
     validate,
 } from "@src/lib/utils/api-utils";
 
@@ -29,18 +27,13 @@ export type UpdateSettingsBody = z.infer<typeof UpdateSettingsBodySchema>;
  *
  * Gets settings from authenticated user
  */
-async function getSettings(req: NextRequest) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
-    const user = await UserService.getUserSettings(cookie.id);
-    if (!user) {
+async function getSettings(req: NextRequest, { user }: AuthApiContext) {
+    const settings = await UserService.getUserSettings(user.id);
+    if (!settings) {
         throw new NotFoundError();
     }
 
-    return Success(user.settings);
+    return Success(settings.settings);
 }
 
 /**
@@ -48,20 +41,15 @@ async function getSettings(req: NextRequest) {
  *
  * Updates settings from authenticated user
  */
-async function updateSettings(req: NextRequest) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
+async function updateSettings(req: NextRequest, { user }: AuthApiContext) {
     const body = await req.json();
     const newSettings = validate(UpdateSettingsBodySchema, body);
 
-    const existing = await UserService.getUserSettings(cookie.id);
+    const existing = await UserService.getUserSettings(user.id);
     const existingSettings = existing ? (existing.settings as Record<string, unknown>) : {};
     const mergedSettings = { ...existingSettings, ...newSettings };
 
-    const updated = await UserService.updateUserFromId(cookie.id, {
+    const updated = await UserService.updateUserFromId(user.id, {
         settings: mergedSettings,
     });
 

@@ -1,7 +1,6 @@
 import { ProjectRole } from "@prisma/client";
-import { getCookieUser } from "@src/lib/session";
-import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
-import { ForbiddenError, getCollabHttpUrl, Success, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
+import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
+import { ForbiddenError, getCollabHttpUrl, Success, validate } from "@src/lib/utils/api-utils";
 
 import * as Roles from "@src/lib/utils/roles";
 import * as ProjectService from "@src/server/service/project-service";
@@ -18,7 +17,7 @@ async function forwardToWorker(
     projectId: string,
     method: string,
     path: string,
-    body?: any
+    body?: any,
 ): Promise<Response> {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
     const token = await new SignJWT({ type: "admin-action", projectId })
@@ -45,12 +44,7 @@ async function forwardToWorker(
  * Restores a save by key. Requires ADMIN+ role.
  * This replaces the live document for all connected collaborators.
  */
-async function restoreSave(req: NextRequest, { routeParams }: ApiContext) {
-    const user = await getCookieUser();
-    if (!user || !user.id) {
-        throw new UnauthorizedError();
-    }
-
+async function restoreSave(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const { projectId } = validate(QuerySchema, routeParams);
     const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {

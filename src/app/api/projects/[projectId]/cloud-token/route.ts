@@ -1,6 +1,5 @@
-import { getCookieUser } from "@src/lib/session";
-import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
-import { ForbiddenError, Success, UnauthorizedError, validate } from "@src/lib/utils/api-utils";
+import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
+import { ForbiddenError, Success, validate } from "@src/lib/utils/api-utils";
 
 import * as ProjectService from "@src/server/service/project-service";
 
@@ -12,12 +11,7 @@ const QuerySchema = z.object({
     projectId: z.string(),
 });
 
-async function projectCloudTokenRoute(req: NextRequest, { routeParams }: ApiContext) {
-    const user = await getCookieUser();
-    if (!user || !user.id) {
-        throw new UnauthorizedError();
-    }
-
+async function projectCloudTokenRoute(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const { projectId } = validate(QuerySchema, routeParams);
     const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {

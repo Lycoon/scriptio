@@ -1,12 +1,10 @@
 import { ProjectRole } from "@prisma/client";
-import { getCookieUser } from "@src/lib/session";
-import { ApiContext, apiHandler } from "@src/lib/utils/api-handler";
+import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 import {
     ForbiddenError,
     BodyFieldError,
     ProjectNotFoundError,
     Success,
-    UnauthorizedError,
     SuccessNoContent,
     NotFoundError,
     validate,
@@ -32,15 +30,9 @@ const QuerySchema = z.object({
  *
  * Returns a project member given its userId and associated projectId
  */
-async function getProjectMember(req: NextRequest, { routeParams }: ApiContext) {
-    // We query the user role for this poject, throw 404 in case it doesn't belong to it
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
+async function getProjectMember(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const { projectId } = validate(QuerySchema, routeParams);
-    const member = await ProjectService.getMembership(projectId, cookie.id);
+    const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {
         throw new ProjectNotFoundError();
     }
@@ -53,23 +45,18 @@ async function getProjectMember(req: NextRequest, { routeParams }: ApiContext) {
  *
  * Updates a project member role
  */
-async function updateProjectMemberRole(req: NextRequest, { routeParams }: ApiContext) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
+async function updateProjectMemberRole(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const body = await req.json();
     const { role } = validate(UpdateRoleSchema, body);
     const { userId: userToUpdateId, projectId } = validate(QuerySchema, routeParams);
 
-    const isSelf = cookie.id === userToUpdateId;
+    const isSelf = user.id === userToUpdateId;
     if (isSelf) throw new ForbiddenError("You cannot update your own role");
 
     if (!Roles.isValid(role)) throw new BodyFieldError("Unknown role");
     const newRole = role as ProjectRole;
 
-    const member = await ProjectService.getMembership(projectId, cookie.id);
+    const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {
         throw new ProjectNotFoundError();
     }
@@ -86,7 +73,10 @@ async function updateProjectMemberRole(req: NextRequest, { routeParams }: ApiCon
         throw new ForbiddenError("You cannot assign the same role to another user");
     }
 
-    if (!Roles.hasRoleOrGreater(member.role, newRole) || !Roles.hasRoleOrGreater(member.role, memberToUpdate.role)) {
+    if (
+        !Roles.hasRoleOrGreater(member.role, newRole) ||
+        !Roles.hasRoleOrGreater(member.role, memberToUpdate.role)
+    ) {
         throw new ForbiddenError("User does not have sufficient permissions");
     }
 
@@ -99,27 +89,19 @@ async function updateProjectMemberRole(req: NextRequest, { routeParams }: ApiCon
  *
  * Removes a member from a project. A user can leave the project itself.
  */
-async function deleteProjectMember(req: NextRequest, { routeParams }: ApiContext) {
-    const cookie = await getCookieUser();
-    if (!cookie || !cookie.id) {
-        throw new UnauthorizedError();
-    }
-
+async function deleteProjectMember(req: NextRequest, { routeParams, user }: AuthApiContext) {
     const { userId: userToDelete, projectId } = validate(QuerySchema, routeParams);
-    const member = await ProjectService.getMembership(projectId, cookie.id);
+    const member = await ProjectService.getMembership(projectId, user.id);
     if (!member) {
         throw new NotFoundError();
     }
 
-    const isSelf = cookie.id === userToDelete;
+    const isSelf = user.id === userToDelete;
     if (isSelf) {
         if (member.role !== ProjectRole.OWNER) {
-            // No need to check roles, any non-owner member can leave the project on its own
             await ProjectService.deleteProjectMember(projectId, userToDelete);
             return Success({ redirectUrl: "/projects" });
         } else {
-            // An owner cannot leave its project as a collaborator
-            // He either needs to transfer ownership or delete project
             throw new ForbiddenError("Owner cannot leave project");
         }
     }
