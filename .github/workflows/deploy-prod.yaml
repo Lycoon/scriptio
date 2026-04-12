@@ -40,8 +40,8 @@ jobs:
                       NEXT_PUBLIC_API_URL=https://scriptio.app
                       NEXT_PUBLIC_COMMIT_SHA=${{ env.COMMIT_SHA }}
                       NEXT_PUBLIC_APP_VERSION=${{ env.APP_VERSION }}
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
+                  cache-from: type=gha,scope=prod
+                  cache-to: type=gha,mode=max,scope=prod
 
     deploy:
         runs-on: ubuntu-latest
