@@ -44,7 +44,7 @@ jobs:
               run: npm install
 
             - name: Build and sign .app with Tauri
-              run: npm run tauri build -- --bundles app --target universal-apple-darwin
+              run: npm run tauri build -- --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json
               env:
                   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
 
