@@ -11,16 +11,16 @@ jobs:
             APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio.app
             PKG_PATH: Scriptio.pkg
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Import Apple certificates
-              uses: apple-actions/import-codesign-certs@v3
+              uses: apple-actions/import-codesign-certs@v6
               with:
                   p12-file-base64: ${{ secrets.APPLE_CERT_P12_COMBINED_BASE64 }}
                   p12-password: ${{ secrets.APPLE_CERT_PASSWORD }}
 
             - name: Download provisioning profile
-              uses: apple-actions/download-provisioning-profiles@v3
+              uses: apple-actions/download-provisioning-profiles@v5
               with:
                   bundle-id: "app.scriptio"
                   profile-type: "MAC_APP_STORE"
@@ -43,7 +43,9 @@ jobs:
 
             - name: Embed provisioning profile
               run: |
-                  PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.provisionprofile | head -n 1)
+                  PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.provisionprofile \
+                               "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision \
+                             2>/dev/null | head -n 1)
                   cp "$PROFILE" "$APP_PATH/Contents/embedded.provisionprofile"
 
             - name: Build signed .pkg installer
@@ -54,7 +56,7 @@ jobs:
                     "$PKG_PATH"
 
             - name: Upload to App Store Connect
-              uses: apple-actions/upload-testflight-build@v1
+              uses: apple-actions/upload-testflight-build@v4
               with:
                   app-path: ${{ env.PKG_PATH }}
                   issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
