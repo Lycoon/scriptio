@@ -56,7 +56,7 @@ jobs:
                     "$PKG_PATH"
 
             - name: Upload to App Store Connect
-              uses: apple-actions/upload-testflight-build@v4
+              uses: apple-actions/upload-testflight-build@v3
               with:
                   app-path: ${{ env.PKG_PATH }}
                   issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
