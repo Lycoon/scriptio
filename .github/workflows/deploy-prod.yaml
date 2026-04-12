@@ -70,4 +70,4 @@ jobs:
                   script: |
                       cd ${{ secrets.APP_PATH }}
                       docker compose pull app-prod
-                      docker compose --env-file .env.prod --profile prod up -d
+                      docker compose --env-file .env.prod --profile prod up -d --force-recreate
