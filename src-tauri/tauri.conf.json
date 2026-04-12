@@ -15,6 +15,11 @@
         },
         "windows": [
             {
+                "title": "Scriptio",
+                "width": 1350,
+                "height": 900,
+                "resizable": true,
+                "maximized": true,
                 "incognito": true,
                 "dragDropEnabled": false
             }
