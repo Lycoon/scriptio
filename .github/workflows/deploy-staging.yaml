@@ -67,7 +67,7 @@ jobs:
                   staging: "true"
 
             - name: Build and sign .app with Tauri
-              run: npm run build:macos:appstore
+              run: npm run tauri build -- --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json --bundle-number ${{ needs.prepare.outputs.revision }}
               env:
                   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
                   NEXT_PUBLIC_API_URL: https://staging.scriptio.app

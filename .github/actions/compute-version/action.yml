@@ -63,7 +63,6 @@ runs:
 
               VERSION="$MAJOR.$MINOR.$PATCH.$REVISION"
               SHORT_VERSION="$MAJOR.$MINOR.$PATCH"
-
               echo "Computed version: $VERSION (tag: ${GIT_TAG:-<none>})"
 
               echo "version=$VERSION" >> $GITHUB_OUTPUT
