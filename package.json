@@ -1,7 +1,7 @@
 {
     "name": "scriptio",
     "private": true,
-    "version": "2.0.0",
+    "version": "2.1.0",
     "scripts": {
         "dev": "docker compose --profile dev up -d --wait && npx prisma db push && next dev",
         "build": "npx prisma generate && next build",
@@ -20,7 +20,7 @@
         "build:macos:appstore": "npm run tauri build -- --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json",
         "export": "next export",
         "start": "next start",
-        "lint": "next lint",
+        "lint": "eslint .",
         "bench": "vitest bench",
         "bench:watch": "vitest bench --watch",
         "gen:apple:jwt": "node --env-file=.env --import tsx scripts/generate-apple-jwt.ts"
