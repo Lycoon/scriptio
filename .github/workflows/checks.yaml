@@ -1,0 +1,59 @@
+name: Checks
+
+on:
+    push:
+        branches: [dev]
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "25.2.1"
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Lint
+              run: npm run lint
+
+            - name: Typecheck
+              run: npx tsc --noEmit
+
+    build-macos:
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup desktop build toolchain
+              uses: ./.github/actions/setup-desktop-build
+              with:
+                  platform: macos
+
+            - name: Build macOS bundle
+              run: npm run build:macos
+
+    build-windows:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup desktop build toolchain
+              uses: ./.github/actions/setup-desktop-build
+              with:
+                  platform: windows
+
+            - name: Build MSIX bundle
+              run: npm run build:windows
+
+    build-docker:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Build Docker image
+              run: docker compose build app-prod

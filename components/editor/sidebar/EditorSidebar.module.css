@@ -30,6 +30,7 @@
     padding-top: 10px;
     padding-bottom: 38px;
     border-radius: 35px;
+    box-shadow: var(--panel-shadow);
 }
 
 .tabs {

@@ -1,0 +1,36 @@
+name: Setup Desktop Build Toolchain
+description: Installs Node.js, Rust with platform-appropriate targets, MSIX bundler on Windows, and runs npm install.
+
+inputs:
+    platform:
+        description: Target platform ("macos" or "windows").
+        required: true
+
+runs:
+    using: composite
+    steps:
+        - name: Setup Node.js
+          uses: actions/setup-node@v6
+          with:
+              node-version: "25.2.1"
+
+        - name: Setup Rust (macOS)
+          if: inputs.platform == 'macos'
+          uses: dtolnay/rust-toolchain@stable
+          with:
+              targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+        - name: Setup Rust (Windows)
+          if: inputs.platform == 'windows'
+          uses: dtolnay/rust-toolchain@stable
+          with:
+              targets: x86_64-pc-windows-msvc, aarch64-pc-windows-msvc
+
+        - name: Install msixbundle-cli
+          if: inputs.platform == 'windows'
+          shell: bash
+          run: cargo install msixbundle-cli
+
+        - name: Install dependencies
+          shell: bash
+          run: npm install
