@@ -1,0 +1,72 @@
+name: Compute App Version
+description: Calculates the app version from package.json + git tags based on the current branch.
+
+outputs:
+    version:
+        description: Full MAJOR.MINOR.PATCH.REVISION version string.
+        value: ${{ steps.compute.outputs.version }}
+    short_version:
+        description: MAJOR.MINOR.PATCH (used for tags and App Store fallback).
+        value: ${{ steps.compute.outputs.short_version }}
+    revision:
+        description: Just the REVISION segment.
+        value: ${{ steps.compute.outputs.revision }}
+    git_tag:
+        description: Tag to create on release (e.g. 2.0.1). Empty on other branches.
+        value: ${{ steps.compute.outputs.git_tag }}
+
+runs:
+    using: composite
+    steps:
+        - name: Compute version
+          id: compute
+          shell: bash
+          run: |
+              set -e
+
+              BASE_VERSION=$(jq -r '.version' package.json)
+              MAJOR=$(echo $BASE_VERSION | cut -d. -f1)
+              MINOR=$(echo $BASE_VERSION | cut -d. -f2)
+
+              git fetch --prune --unshallow || true
+              git fetch --tags
+
+              LATEST_TAG=$(git tag -l "$MAJOR.$MINOR.*" --sort=-v:refname | head -n 1)
+
+              if [ -z "$LATEST_TAG" ]; then
+                  CURRENT_PATCH=0
+                  FALLBACK_TAG=$(git tag -l "*.*.*" --sort=-v:refname | head -n 1)
+                  if [ -z "$FALLBACK_TAG" ]; then
+                      COMMITS_SINCE_TAG=$(git rev-list --count HEAD)
+                  else
+                      COMMITS_SINCE_TAG=$(git rev-list --count $FALLBACK_TAG..HEAD)
+                  fi
+              else
+                  CURRENT_PATCH=$(echo $LATEST_TAG | cut -d. -f3)
+                  COMMITS_SINCE_TAG=$(git rev-list --count $LATEST_TAG..HEAD)
+              fi
+
+              GIT_TAG=""
+
+              if [[ "${{ github.ref }}" == "refs/heads/release" ]]; then
+                  if [ -z "$LATEST_TAG" ]; then PATCH=0; else PATCH=$((CURRENT_PATCH + 1)); fi
+                  REVISION=0
+                  GIT_TAG="$MAJOR.$MINOR.$PATCH"
+              elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+                  PATCH=$CURRENT_PATCH
+                  REVISION=$COMMITS_SINCE_TAG
+                  if [ "$REVISION" -eq 0 ]; then REVISION=1; fi
+              else
+                  PATCH=$CURRENT_PATCH
+                  REVISION=$COMMITS_SINCE_TAG
+              fi
+
+              VERSION="$MAJOR.$MINOR.$PATCH.$REVISION"
+              SHORT_VERSION="$MAJOR.$MINOR.$PATCH"
+
+              echo "Computed version: $VERSION (tag: ${GIT_TAG:-<none>})"
+
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+              echo "short_version=$SHORT_VERSION" >> $GITHUB_OUTPUT
+              echo "revision=$REVISION" >> $GITHUB_OUTPUT
+              echo "git_tag=$GIT_TAG" >> $GITHUB_OUTPUT

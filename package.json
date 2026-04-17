@@ -1,7 +1,7 @@
 {
     "name": "scriptio",
     "private": true,
-    "version": "2.0.3",
+    "version": "2.0.0",
     "scripts": {
         "dev": "docker compose --profile dev up -d --wait && npx prisma db push && next dev",
         "build": "npx prisma generate && next build",
@@ -17,6 +17,7 @@
         "build:windows:x64": "tauri-windows-bundle build --arch x64 --verbose --runner npm",
         "build:windows:arm64": "tauri-windows-bundle build --arch arm64 --verbose --runner npm",
         "build:macos": "npm run tauri build -- --bundles app --target universal-apple-darwin",
+        "build:macos:appstore": "npm run tauri build -- --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json",
         "export": "next export",
         "start": "next start",
         "lint": "next lint",

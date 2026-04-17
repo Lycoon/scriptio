@@ -1,0 +1,50 @@
+name: Apply App Version
+description: Writes version into src-tauri/tauri.conf.json + Cargo.toml. Optionally renames productName/title for staging.
+
+inputs:
+    version:
+        description: Version string (e.g. 2.0.1.5) to write into Tauri + Cargo configs.
+        required: true
+    staging:
+        description: When "true", rename productName and window title to "Scriptio (Staging)".
+        required: false
+        default: "false"
+
+runs:
+    using: composite
+    steps:
+        - name: Apply version to Tauri and Cargo configs
+          shell: bash
+          env:
+              INPUT_VERSION: ${{ inputs.version }}
+              INPUT_STAGING: ${{ inputs.staging }}
+          run: |
+              set -e
+
+              if [[ "$INPUT_STAGING" == "true" ]]; then
+                  PRODUCT_NAME="Scriptio (Staging)"
+                  APPSTORE_IDENTIFIER="app.scriptio.staging"
+                  WINDOWS_IDENTIFIER="ArkoLogic.ScriptioStaging"
+              else
+                  PRODUCT_NAME="Scriptio"
+                  APPSTORE_IDENTIFIER="app.scriptio"
+                  WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
+              fi
+
+              jq --arg v "$INPUT_VERSION" --arg n "$PRODUCT_NAME" \
+                  '.version = $v | .productName = $n | .app.windows[0].title = $n' \
+                  src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
+              mv src-tauri/tauri.conf.json.tmp src-tauri/tauri.conf.json
+
+              jq --arg id "$APPSTORE_IDENTIFIER" '.identifier = $id' \
+                  src-tauri/tauri.appstore.conf.json > src-tauri/tauri.appstore.conf.json.tmp
+              mv src-tauri/tauri.appstore.conf.json.tmp src-tauri/tauri.appstore.conf.json
+
+              jq --arg id "$WINDOWS_IDENTIFIER" '.identifier = $id' \
+                  src-tauri/tauri.windows.conf.json > src-tauri/tauri.windows.conf.json.tmp
+              mv src-tauri/tauri.windows.conf.json.tmp src-tauri/tauri.windows.conf.json
+
+              sed -i.bak "s/^version = \".*\"/version = \"$INPUT_VERSION\"/" src-tauri/Cargo.toml
+              rm -f src-tauri/Cargo.toml.bak
+
+              echo "Applied version $INPUT_VERSION with productName '$PRODUCT_NAME' (appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"

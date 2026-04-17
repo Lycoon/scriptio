@@ -36,6 +36,7 @@
     border-radius: 64px;
     background-color: var(--secondary);
     height: 100%;
+    box-shadow: var(--panel-shadow);
 }
 
 .right_btns {

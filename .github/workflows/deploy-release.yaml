@@ -1,11 +1,11 @@
-name: Deploy Staging
+name: Deploy Release
 
 on:
     push:
-        branches: [staging]
+        branches: [release]
 
 permissions:
-    contents: read
+    contents: write
     packages: write
 
 jobs:
@@ -15,6 +15,7 @@ jobs:
             version: ${{ steps.version.outputs.version }}
             short_version: ${{ steps.version.outputs.short_version }}
             revision: ${{ steps.version.outputs.revision }}
+            git_tag: ${{ steps.version.outputs.git_tag }}
         steps:
             - uses: actions/checkout@v6
               with:
@@ -42,7 +43,7 @@ jobs:
             - name: Download provisioning profile
               uses: apple-actions/download-provisioning-profiles@v5
               with:
-                  bundle-id: "app.scriptio.staging"
+                  bundle-id: "app.scriptio"
                   profile-type: "MAC_APP_STORE"
                   issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
                   api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
@@ -64,14 +65,12 @@ jobs:
               uses: ./.github/actions/apply-version
               with:
                   version: ${{ needs.prepare.outputs.version }}
-                  staging: "true"
 
             - name: Build and sign .app with Tauri
               run: npm run build:macos:appstore
               env:
                   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-                  NEXT_PUBLIC_API_URL: https://staging.scriptio.app
-                  NEXT_PUBLIC_STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
+                  NEXT_PUBLIC_API_URL: https://scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
 
             - name: Build signed .pkg installer
@@ -107,13 +106,11 @@ jobs:
               uses: ./.github/actions/apply-version
               with:
                   version: ${{ needs.prepare.outputs.version }}
-                  staging: "true"
 
             - name: Build MSIX bundle
               run: npm run build:windows
               env:
-                  NEXT_PUBLIC_API_URL: https://staging.scriptio.app
-                  NEXT_PUBLIC_STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
+                  NEXT_PUBLIC_API_URL: https://scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
 
             - name: Rename output to fixed name
@@ -130,8 +127,8 @@ jobs:
                   --clientId ${{ secrets.MS_APP_ID }} `
                   --clientSecret ${{ secrets.MS_APP_SECRET }}
 
-            - name: Publish to Microsoft Store (staging)
-              run: msstore publish "$env:APP_PATH" -id "9P1N2HMSH40L"
+            - name: Publish to Microsoft Store
+              run: msstore publish "$env:APP_PATH" -id "9P4M1XPHJKS1"
 
     deploy-web:
         runs-on: ubuntu-latest
@@ -154,17 +151,16 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Build and push staging image
+            - name: Build and push production image
               uses: docker/build-push-action@v6
               with:
                   context: .
                   push: true
                   tags: |
-                      ${{ env.IMAGE_NAME }}:staging
-                      ${{ env.IMAGE_NAME }}:staging-${{ needs.prepare.outputs.version }}
+                      ${{ env.IMAGE_NAME }}:latest
+                      ${{ env.IMAGE_NAME }}:${{ needs.prepare.outputs.version }}
                   build-args: |
-                      NEXT_PUBLIC_API_URL=https://staging.scriptio.app
-                      NEXT_PUBLIC_STAGING_BASIC_AUTH=${{ secrets.STAGING_BASIC_AUTH }}
+                      NEXT_PUBLIC_API_URL=https://scriptio.app
                       NEXT_PUBLIC_COMMIT_SHA=${{ env.COMMIT_SHA }}
                       NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}
 
@@ -189,5 +185,24 @@ jobs:
                       set -e
                       docker image prune -af
                       cd ${{ secrets.APP_PATH }}
-                      docker compose pull app-staging
-                      docker compose --env-file .env.staging --profile staging up -d --force-recreate
+                      docker compose pull app-prod
+                      docker compose --env-file .env.prod --profile prod up -d --force-recreate
+
+    tag-release:
+        runs-on: ubuntu-latest
+        needs: [prepare, publish-macos, publish-windows, deploy-web]
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Create and push tag
+              env:
+                  GIT_TAG: ${{ needs.prepare.outputs.git_tag }}
+              run: |
+                  set -e
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git tag -a "$GIT_TAG" -m "Release $GIT_TAG"
+                  git push origin "$GIT_TAG"
