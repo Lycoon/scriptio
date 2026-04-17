@@ -38,6 +38,9 @@ runs:
                   src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
               mv src-tauri/tauri.conf.json.tmp src-tauri/tauri.conf.json
 
+              TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :com.apple.developer.team-identifier" src-tauri/Entitlements.plist)
+              /usr/libexec/PlistBuddy -c "Set :com.apple.application-identifier ${TEAM_ID}.${APPSTORE_IDENTIFIER}" src-tauri/Entitlements.plist
+
               jq --arg id "$APPSTORE_IDENTIFIER" '.identifier = $id' \
                   src-tauri/tauri.appstore.conf.json > src-tauri/tauri.appstore.conf.json.tmp
               mv src-tauri/tauri.appstore.conf.json.tmp src-tauri/tauri.appstore.conf.json
