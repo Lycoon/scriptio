@@ -1,12 +1,12 @@
 name: Apply App Version
-description: Writes version into src-tauri/tauri.conf.json + Cargo.toml. Optionally renames productName/title for staging.
+description: Writes version into src-tauri/tauri.conf.json + Cargo.toml. Optionally sets window title to "Scriptio (Staging)".
 
 inputs:
     version:
         description: Version string (e.g. 2.0.1.5) to write into Tauri + Cargo configs.
         required: true
     staging:
-        description: When "true", rename productName and window title to "Scriptio (Staging)".
+        description: When "true", sets window title to "Scriptio (Staging)".
         required: false
         default: "false"
 
@@ -24,17 +24,17 @@ runs:
               SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
 
               if [[ "$INPUT_STAGING" == "true" ]]; then
-                  PRODUCT_NAME="Scriptio (Staging)"
+                  WINDOW_TITLE="Scriptio (Staging)"
                   APPSTORE_IDENTIFIER="app.scriptio.staging"
                   WINDOWS_IDENTIFIER="ArkoLogic.ScriptioStaging"
               else
-                  PRODUCT_NAME="Scriptio"
+                  WINDOW_TITLE="Scriptio"
                   APPSTORE_IDENTIFIER="app.scriptio"
                   WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
               fi
 
-              jq --arg v "$SEMVER" --arg n "$PRODUCT_NAME" \
-                  '.version = $v | .productName = $n | .app.windows[0].title = $n' \
+              jq --arg v "$SEMVER" --arg t "$WINDOW_TITLE" \
+                  '.version = $v | .app.windows[0].title = $t' \
                   src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
               mv src-tauri/tauri.conf.json.tmp src-tauri/tauri.conf.json
 
@@ -49,4 +49,4 @@ runs:
               sed -i.bak "s/^version = \".*\"/version = \"$SEMVER\"/" src-tauri/Cargo.toml
               rm -f src-tauri/Cargo.toml.bak
 
-              echo "Applied version $INPUT_VERSION with productName '$PRODUCT_NAME' (appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
+              echo "Applied version $INPUT_VERSION (title: '$WINDOW_TITLE', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
