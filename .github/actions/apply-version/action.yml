@@ -21,6 +21,8 @@ runs:
           run: |
               set -e
 
+              SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
+
               if [[ "$INPUT_STAGING" == "true" ]]; then
                   PRODUCT_NAME="Scriptio (Staging)"
                   APPSTORE_IDENTIFIER="app.scriptio.staging"
@@ -31,7 +33,7 @@ runs:
                   WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
               fi
 
-              jq --arg v "$INPUT_VERSION" --arg n "$PRODUCT_NAME" \
+              jq --arg v "$SEMVER" --arg n "$PRODUCT_NAME" \
                   '.version = $v | .productName = $n | .app.windows[0].title = $n' \
                   src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
               mv src-tauri/tauri.conf.json.tmp src-tauri/tauri.conf.json
@@ -44,7 +46,7 @@ runs:
                   src-tauri/tauri.windows.conf.json > src-tauri/tauri.windows.conf.json.tmp
               mv src-tauri/tauri.windows.conf.json.tmp src-tauri/tauri.windows.conf.json
 
-              sed -i.bak "s/^version = \".*\"/version = \"$INPUT_VERSION\"/" src-tauri/Cargo.toml
+              sed -i.bak "s/^version = \".*\"/version = \"$SEMVER\"/" src-tauri/Cargo.toml
               rm -f src-tauri/Cargo.toml.bak
 
               echo "Applied version $INPUT_VERSION with productName '$PRODUCT_NAME' (appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
