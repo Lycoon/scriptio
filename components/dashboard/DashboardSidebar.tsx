@@ -8,7 +8,6 @@ import { useTranslations } from "next-intl";
 
 import styles from "./DashboardModal.module.css";
 import dangerStyles from "./project/DangerZone.module.css";
-import { redirect } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useCookieUser } from "@src/lib/utils/hooks";
@@ -62,7 +61,6 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
 
         await mutate("/api/users/cookie", undefined);
         closeDashboard();
-        redirect("/");
     };
 
     return (
