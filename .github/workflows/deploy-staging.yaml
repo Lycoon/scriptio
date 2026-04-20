@@ -28,7 +28,7 @@ jobs:
         runs-on: macos-latest
         needs: prepare
         env:
-            APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio.app
+            APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio (Staging).app
             PKG_PATH: Scriptio.pkg
         steps:
             - uses: actions/checkout@v6
