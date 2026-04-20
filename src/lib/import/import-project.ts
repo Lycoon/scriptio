@@ -3,7 +3,7 @@
  * Creates remote projects for logged-in users, local projects for offline/desktop.
  */
 
-import { ProjectData, ProjectState } from "@src/lib/project/project-state";
+import { BoardData, LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
 import { getAdapterByFilename } from "@src/lib/adapters/registry";
 import { createCachedProject, createCachedProjectWithId } from "@src/lib/persistence/storage-provider/local-persistence";
 import { writeYjsDocumentLocally } from "@src/lib/persistence/y-local-provider";
@@ -90,7 +90,7 @@ async function createLocalYjsDocument(projectId: string, projectData: ProjectDat
         // Maps
         if (projectData.metadata) {
             const metadataMap = ydoc.metadata();
-            Object.entries(projectData.metadata).forEach(([key, value]) => metadataMap.set(key, value));
+            Object.entries(projectData.metadata).forEach(([key, value]) => metadataMap.set(key as keyof ProjectMetadata, value));
         }
 
         if (projectData.characters) {
@@ -110,12 +110,12 @@ async function createLocalYjsDocument(projectId: string, projectData: ProjectDat
 
         if (projectData.board) {
             const boardMap = ydoc.board();
-            Object.entries(projectData.board).forEach(([key, value]) => boardMap.set(key, value));
+            Object.entries(projectData.board).forEach(([key, value]) => boardMap.set(key as keyof BoardData, value));
         }
 
         if (projectData.layout) {
             const layoutMap = ydoc.layout();
-            Object.entries(projectData.layout).forEach(([key, value]) => layoutMap.set(key, value));
+            Object.entries(projectData.layout).forEach(([key, value]) => layoutMap.set(key as keyof LayoutData, value));
         }
 
         if (projectData.comments) {

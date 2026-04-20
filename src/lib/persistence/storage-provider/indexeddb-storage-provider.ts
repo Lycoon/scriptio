@@ -248,7 +248,7 @@ export class IndexedDBStorageProvider implements StorageProvider {
             const req = db.transaction(DICTIONARIES_STORE, "readonly").objectStore(DICTIONARIES_STORE).getAll();
             req.onsuccess = () =>
                 resolve(
-                    (req.result as any[]).map((row) => ({
+                    (req.result as InstalledDictionary[]).map((row) => ({
                         code: row.code,
                         size: row.size,
                         installedAt: row.installedAt,

@@ -22,7 +22,7 @@ const ProjectUnavailableDialog = () => {
             const { getCachedProject, migrateToCachedProject } =
                 await import("@src/lib/persistence/storage-provider/local-persistence");
             const cachedProject = await getCachedProject(projectId);
-            const metadataTitle = repository?.getState().metadata().get("title");
+            const metadataTitle = repository?.getTitle();
             const title = cachedProject?.title || project?.project?.title || metadataTitle || "Untitled Project";
             const newProject = await migrateToCachedProject(projectId, title, cachedProject?.description ?? undefined);
             router.replace(`/projects/screenplay?projectId=${newProject.id}`);

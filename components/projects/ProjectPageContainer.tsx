@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useCookieUser, useIsPro, useProjectMemberships, ExtendedProjectMembershipPayload } from "@src/lib/utils/hooks";
+import {
+    useCookieUser,
+    useIsPro,
+    useProjectMemberships,
+    ExtendedProjectMembershipPayload,
+} from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
@@ -99,7 +104,7 @@ const ProjectPageContainer = () => {
                 <div className={page.center}>
                     <div className={page.header}>
                         <div className={page.header_info}>
-                            <h1>{t("pageTitle")}</h1>
+                            <h1 className={page.header_title}>{t("pageTitle")}</h1>
                             <div className={page.header_btns}>
                                 <button
                                     className={`${page.import_btn} ${form.btn}`}
@@ -133,7 +138,9 @@ const ProjectPageContainer = () => {
                                 })}
                             </div>
                         </div>
-                        <div className={join(page.bottomShadow, showShadow ? page.showShadow : "")} />
+                        <div
+                            className={join(page.bottomShadow, showShadow ? page.showShadow : "")}
+                        />
                     </div>
                 </div>
             </div>

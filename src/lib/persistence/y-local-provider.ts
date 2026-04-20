@@ -9,7 +9,7 @@ import type * as Y from "yjs";
 export const yjsDbKey = (projectId: string) => `scriptio-${projectId}`;
 
 export interface YjsLocalProvider {
-    on(event: "synced", callback: (provider: any) => void): void;
+    on(event: "synced", callback: (provider: YjsLocalProvider) => void): void;
     destroy(): void;
     /** Clear all stored data for this project (used when server restores a snapshot). */
     clearData?(): Promise<void>;

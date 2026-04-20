@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import * as fs from "fs";
 import { BASE_URL } from "../utils/constants";
-var hogan = require("hogan.js");
+import hogan from "hogan.js";
 
 const transporter = nodemailer.createTransport({
     pool: true,
