@@ -143,7 +143,11 @@
       "cancelNo": "Keep Pro",
       "cancelling": "Cancelling...",
       "cancelSuccess": "Subscription cancelled. Pro access until {date}.",
-      "endsOn": "Your subscription ends on {date}"
+      "endsOn": "Your subscription ends on {date}",
+      "purchasing": "Purchasing...",
+      "purchaseError": "Purchase failed. Please try again.",
+      "cancelApple": "Apple subscriptions are managed through the App Store.",
+      "manageApple": "Open App Store"
     }
   },
   "projects": {

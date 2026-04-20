@@ -3,6 +3,7 @@
     "private": true,
     "version": "2.1.0",
     "scripts": {
+        "postinstall": "patch-package",
         "dev": "docker compose --profile dev up -d --wait && npx prisma db push && next dev",
         "build": "npx prisma generate && next build",
         "build:tauri": "npx prisma generate && npx tsx src/build-tauri.ts",
@@ -29,6 +30,7 @@
         "@auth/prisma-adapter": "^2.11.1",
         "@aws-sdk/client-s3": "^3.113.0",
         "@aws-sdk/s3-request-presigner": "^3.952.0",
+        "@choochmeque/tauri-plugin-iap-api": "^0.8.2",
         "@formkit/auto-animate": "^0.7.0",
         "@prisma/client": "^6.19.0",
         "@svgr/core": "^8.1.0",
@@ -105,6 +107,7 @@
         "eslint-config-prettier": "^8.8.0",
         "eslint-plugin-react": "^7.32.2",
         "eslint-plugin-react-hooks": "^7.0.1",
+        "patch-package": "^8.0.1",
         "playwright": "^1.58.2",
         "prisma": "^6.19.0",
         "tsx": "^4.21.0",

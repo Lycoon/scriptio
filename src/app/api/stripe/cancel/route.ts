@@ -5,7 +5,7 @@ import { ForbiddenError, Success } from "@src/lib/utils/api-utils";
 import * as UserService from "@src/server/service/user-service";
 
 async function cancelSubscription(req: NextRequest, { user }: AuthApiContext) {
-    const subscriptionId = await UserService.getSubscriptionId(user.id);
+    const subscriptionId = await UserService.getStripeSubscriptionId(user.id);
     if (!subscriptionId) throw new ForbiddenError("No active subscription found");
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);

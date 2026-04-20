@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import prisma from "@src/server/db";
 import * as UserService from "@src/server/service/user-service";
 
 export async function POST(req: NextRequest) {
@@ -27,17 +28,24 @@ export async function POST(req: NextRequest) {
             const periodEnd = subscription.items.data[0]?.current_period_end;
             await UserService.updateUserFromId(userId, {
                 isProUntil: periodEnd ? new Date(periodEnd * 1000) : null,
-                stripeSubscriptionId: subscriptionId,
+                subscriptionProvider: "STRIPE",
+            });
+            await prisma.transaction.create({
+                data: {
+                    userId,
+                    provider: "STRIPE",
+                    transactionId: subscriptionId,
+                },
             });
         }
     }
 
     if (event.type === "customer.subscription.updated") {
         const subscription = event.data.object as Stripe.Subscription;
-        const user = await UserService.getUserBySubscriptionId(subscription.id);
-        if (user) {
+        const row = await UserService.getUserByStripeSubscriptionId(subscription.id);
+        if (row) {
             const periodEnd = subscription.items.data[0]?.current_period_end;
-            await UserService.updateUserFromId(user.id, {
+            await UserService.updateUserFromId(row.userId, {
                 isProUntil: periodEnd ? new Date(periodEnd * 1000) : null,
                 isSubscriptionCancelled: subscription.cancel_at_period_end,
             });
@@ -46,12 +54,12 @@ export async function POST(req: NextRequest) {
 
     if (event.type === "customer.subscription.deleted") {
         const subscription = event.data.object as Stripe.Subscription;
-        const user = await UserService.getUserBySubscriptionId(subscription.id);
-        if (user) {
-            await UserService.updateUserFromId(user.id, {
+        const row = await UserService.getUserByStripeSubscriptionId(subscription.id);
+        if (row) {
+            await UserService.updateUserFromId(row.userId, {
                 isProUntil: null,
-                stripeSubscriptionId: null,
                 isSubscriptionCancelled: false,
+                subscriptionProvider: null,
             });
         }
     }

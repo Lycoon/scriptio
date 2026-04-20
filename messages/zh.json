@@ -143,7 +143,11 @@
       "cancelNo": "保留 Pro",
       "cancelling": "取消中...",
       "cancelSuccess": "订阅已取消。Pro 权益保留至 {date}。",
-      "endsOn": "订阅将于 {date} 结束"
+      "endsOn": "订阅将于 {date} 结束",
+      "purchasing": "购买中...",
+      "purchaseError": "购买失败，请重试。",
+      "cancelApple": "Apple 订阅通过 App Store 管理。",
+      "manageApple": "打开 App Store"
     }
   },
   "projects": {
