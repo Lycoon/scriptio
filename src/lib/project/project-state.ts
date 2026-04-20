@@ -571,25 +571,20 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 });
 
                 // Handle document restore — server replaced the doc with a snapshot.
-                // We must clear the local IndexedDB/SQLite so the old state doesn't
+                // We must clear the local IndexedDB so the old state doesn't
                 // merge back when we reconnect, then reload to get a clean slate.
                 cloudProvider.on("document-restored", async () => {
                     if (!isMountedRef.current) return;
                     console.log("[ProjectYjs] Document restored — clearing local cache and reloading");
 
                     try {
-                        const { isTauri } = await import("@tauri-apps/api/core");
-                        if (!isTauri()) {
-                            const { IndexeddbPersistence } = await import("y-indexeddb");
-                            const Y = await getYjs();
-                            const tmpDoc = new Y.Doc();
-                            const tmpPersistence = new IndexeddbPersistence(`scriptio-${projectId}`, tmpDoc);
-                            await (tmpPersistence as any).clearData();
-                            tmpPersistence.destroy();
-                            tmpDoc.destroy();
-                        }
-                        // Desktop (SQLite): the SqlitePersistence will be overwritten on
-                        // reconnect since the server state wins the CRDT merge from a clean doc.
+                        const { IndexeddbPersistence } = await import("y-indexeddb");
+                        const Y = await getYjs();
+                        const tmpDoc = new Y.Doc();
+                        const tmpPersistence = new IndexeddbPersistence(`scriptio-${projectId}`, tmpDoc);
+                        await (tmpPersistence as any).clearData();
+                        tmpPersistence.destroy();
+                        tmpDoc.destroy();
                     } catch (e) {
                         console.warn("[ProjectYjs] Failed to clear local cache:", e);
                     }

@@ -1,6 +1,6 @@
 /**
  * Storage provider abstraction for local persistence.
- * Implementations: IndexedDB (browser) and SQLite (Tauri desktop).
+ * Uses IndexedDB on both browser and Tauri desktop.
  */
 
 import type { InstalledDictionary, UserSettings } from "@src/lib/utils/types";
@@ -53,20 +53,13 @@ export interface StorageProvider {
 let cachedProvider: StorageProvider | null = null;
 
 /**
- * Returns the appropriate StorageProvider for the current environment.
- * Tauri desktop → SQLite, Browser → IndexedDB.
+ * Returns the IndexedDB StorageProvider (used on both browser and desktop).
  */
 export async function getStorageProvider(): Promise<StorageProvider> {
     if (cachedProvider) return cachedProvider;
 
-    const { isTauri } = await import("@tauri-apps/api/core");
-    if (isTauri()) {
-        const { SqliteStorageProvider } = await import("./sqlite-storage-provider");
-        cachedProvider = new SqliteStorageProvider();
-    } else {
-        const { IndexedDBStorageProvider } = await import("./indexeddb-storage-provider");
-        cachedProvider = new IndexedDBStorageProvider();
-    }
+    const { IndexedDBStorageProvider } = await import("./indexeddb-storage-provider");
+    cachedProvider = new IndexedDBStorageProvider();
 
     return cachedProvider;
 }

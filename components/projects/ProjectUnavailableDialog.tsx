@@ -19,9 +19,8 @@ const ProjectUnavailableDialog = () => {
         if (!projectId) return;
         setLoading(true);
         try {
-            const { getCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
-            const { migrateToCachedProject } =
-                await import("@src/lib/persistence/storage-provider/sqlite-storage-provider");
+            const { getCachedProject, migrateToCachedProject } =
+                await import("@src/lib/persistence/storage-provider/local-persistence");
             const cachedProject = await getCachedProject(projectId);
             const metadataTitle = repository?.getState().metadata().get("title");
             const title = cachedProject?.title || project?.project?.title || metadataTitle || "Untitled Project";
@@ -38,7 +37,7 @@ const ProjectUnavailableDialog = () => {
         setLoading(true);
         try {
             const { discardCloudProjectData } =
-                await import("@src/lib/persistence/storage-provider/sqlite-storage-provider");
+                await import("@src/lib/persistence/storage-provider/local-persistence");
             await discardCloudProjectData(projectId);
             router.replace("/projects");
         } catch (e) {

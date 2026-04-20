@@ -1,6 +1,7 @@
 import { Editor, Extension } from "@tiptap/core";
+import { Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 import type { SpellWorkerRequest, SpellWorkerResponse } from "./spellcheck-types";
 import { ScreenplayElement } from "../utils/enums";
 
@@ -61,11 +62,11 @@ const SPELL_ATTRS = { class: "spellcheck-error", nodeName: "span" };
  * content start (i.e. relative to `nodePos + 1` in the document).
  * Also returns the combined text of the node to act as a cache key.
  */
-function extractNodeWords(node: any): { words: RelativeWord[]; text: string } {
+function extractNodeWords(node: Node): { words: RelativeWord[]; text: string } {
     const words: RelativeWord[] = [];
     let combined = "";
 
-    node.forEach((child: any) => {
+    node.forEach((child: Node) => {
         if (child.isText) {
             combined += child.text;
         } else {
@@ -118,7 +119,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
 
     let nextRequestId = 0;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    let editorView: any = null;
+    let editorView: EditorView | null = null;
 
     /**
      * Pending spellcheck requests: id → nodes included in that request.
@@ -270,7 +271,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                         .setMeta("spellcheckViewport", { from, to })
                                         .setMeta("addToHistory", false),
                                 );
-                            } catch (err) {
+                            } catch {
                                 // posAtCoords might fail if outside coordinates
                             }
                         };
@@ -302,7 +303,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                         init(_, { doc }): SpellPluginState {
                             if (getEnabled()) {
                                 const nodesToCheck: Array<{ nodeId: string; words: RelativeWord[]; text: string }> = [];
-                                doc.descendants((node: any) => {
+                                doc.descendants((node: Node) => {
                                     if (node.isTextblock) {
                                         const nodeId = node.attrs?.["data-id"];
                                         if (nodeId && SPELLCHECKED_TYPES.has(node.type.name)) {
@@ -332,7 +333,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                 wordCache.clear();
                                 pendingRequests.clear();
                                 const nodesToCheck: Array<{ nodeId: string; words: RelativeWord[]; text: string }> = [];
-                                newState.doc.descendants((node: any) => {
+                                newState.doc.descendants((node: Node) => {
                                     if (node.isTextblock) {
                                         const nodeId = node.attrs?.["data-id"];
                                         if (nodeId && SPELLCHECKED_TYPES.has(node.type.name)) {
@@ -357,7 +358,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                 const { from, to } = tr.getMeta("spellcheckViewport");
                                 const decos: Decoration[] = [];
 
-                                newState.doc.nodesBetween(from, to, (node: any, pos: number) => {
+                                newState.doc.nodesBetween(from, to, (node: Node, pos: number) => {
                                     if (node.isTextblock) {
                                         const nodeId = node.attrs?.["data-id"];
                                         if (nodeId) {
@@ -408,8 +409,8 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                 const nodesToUpdate = new Set<string>();
 
                                 // Map nodeIds to absolute positions to add new decorations
-                                const nodePositions = new Map<string, { pos: number; node: any }>();
-                                newState.doc.descendants((node: any, pos: number) => {
+                                const nodePositions = new Map<string, { pos: number; node: Node }>();
+                                newState.doc.descendants((node: Node, pos: number) => {
                                     if (node.isTextblock) {
                                         const nodeId = node.attrs?.["data-id"];
                                         if (nodeId) nodePositions.set(nodeId, { pos, node });
@@ -485,13 +486,13 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                             // 4. Document changed — blazingly fast remapping
                             if (tr.docChanged) {
                                 // Map all existing decorations to their new positions
-                                let decorations = prev.decorations.map(tr.mapping, newState.doc);
+                                const decorations = prev.decorations.map(tr.mapping, newState.doc);
 
                                 const checkedNodes = prev.checkedNodes;
                                 const nodeErrors = new Map(prev.nodeErrors);
 
                                 // Find which nodes were actually affected by the transaction
-                                const affectedMap = new Map<string, { nodeId: string; node: any; pos: number }>();
+                                const affectedMap = new Map<string, { nodeId: string; node: Node; pos: number }>();
 
                                 tr.mapping.maps.forEach((stepMap, i) => {
                                     stepMap.forEach((_os: number, _oe: number, ns: number, ne: number) => {
@@ -501,7 +502,7 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
                                         const from = Math.min(mFrom, mTo);
                                         const to = Math.max(mFrom, mTo);
 
-                                        newState.doc.nodesBetween(from, to, (node: any, pos: number) => {
+                                        newState.doc.nodesBetween(from, to, (node: Node, pos: number) => {
                                             if (!node.isTextblock) return true;
                                             const nodeId = node.attrs?.["data-id"];
                                             if (nodeId && SPELLCHECKED_TYPES.has(node.type.name)) {

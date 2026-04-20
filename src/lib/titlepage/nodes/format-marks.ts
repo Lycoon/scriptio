@@ -1,4 +1,5 @@
 import { Node } from "@tiptap/core";
+import { Mark, Node as PMNode } from "@tiptap/pm/model";
 import { TitlePageElement } from "../../utils/enums";
 import { titlePageMetadataRef } from "../metadata-ref";
 
@@ -55,14 +56,14 @@ function createFormatNode(name: TitlePageElement) {
             return [
                 {
                     tag: "span",
-                    getAttrs: (el: any) => {
+                    getAttrs: (el: HTMLElement) => {
                         return el.getAttribute("data-tp-type") === name ? {} : false;
                     },
                 },
                 // Backward compat: parse old mark-based spans
                 {
                     tag: "span",
-                    getAttrs: (el: any) => {
+                    getAttrs: (el: HTMLElement) => {
                         return el.getAttribute("class") === name ? {} : false;
                     },
                 },
@@ -84,9 +85,9 @@ function createFormatNode(name: TitlePageElement) {
                 dom.setAttribute("data-tp-type", name);
 
                 // Apply base classes plus any mark-driven classes (e.g. underline)
-                const applyMarkClasses = (marks: readonly any[]) => {
+                const applyMarkClasses = (marks: readonly Mark[]) => {
                     const markClasses = marks
-                        .map((m: any) => m.attrs?.class || m.type.name)
+                        .map((m: Mark) => m.attrs?.class || m.type.name)
                         .filter(Boolean);
                     // Preserve tp-format-placeholder before rebuilding className
                     const isPlaceholder = dom.classList.contains("tp-format-placeholder");
@@ -108,14 +109,15 @@ function createFormatNode(name: TitlePageElement) {
                 refresh();
 
                 // Register for metadata-driven updates
-                const updaters: Set<() => void> | undefined = (editor.storage as any)
-                    .titlePageMetadata?.nodeViewUpdaters;
+                const updaters: Set<() => void> | undefined = (
+                    editor.storage as unknown as Record<string, { nodeViewUpdaters?: Set<() => void> }>
+                ).titlePageMetadata?.nodeViewUpdaters;
                 updaters?.add(refresh);
 
                 return {
                     dom,
                     // Called by ProseMirror when this node's attrs or marks change
-                    update(updatedNode: any) {
+                    update(updatedNode: PMNode) {
                         applyMarkClasses(updatedNode.marks);
                         return true;
                     },

@@ -1,5 +1,6 @@
 import { Editor, Extension } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Node } from "@tiptap/pm/model";
+import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ScreenplayElement } from "../../utils/enums";
 
@@ -48,7 +49,7 @@ function mergeOverlappingRanges(ranges: Array<{ from: number; to: number }>): Ar
  * Ranges are expanded to parent node boundaries so regex matches at edit
  * boundaries are correctly found.
  */
-function getChangedRanges(tr: any): Array<{ from: number; to: number }> {
+function getChangedRanges(tr: Transaction): Array<{ from: number; to: number }> {
     const ranges: Array<{ from: number; to: number }> = [];
     for (let i = 0; i < tr.mapping.maps.length; i++) {
         const stepMap = tr.mapping.maps[i];
@@ -79,7 +80,7 @@ function getChangedRanges(tr: any): Array<{ from: number; to: number }> {
  * Scan text nodes within a specific range for search matches.
  */
 function scanRangeForMatches(
-    doc: any,
+    doc: Node,
     from: number,
     to: number,
     searchTerm: string,
@@ -88,7 +89,7 @@ function scanRangeForMatches(
     const matches: SearchMatch[] = [];
     const regex = new RegExp(escapeRegex(searchTerm), "gi");
 
-    doc.nodesBetween(from, to, (node: any, pos: number) => {
+    doc.nodesBetween(from, to, (node: Node, pos: number) => {
         if (!node.isText) return;
 
         const resolvedPos = doc.resolve(pos);
@@ -122,7 +123,7 @@ function scanRangeForMatches(
  * Returns both the DecorationSet and the list of matches for navigation.
  */
 function computeSearchDecorations(
-    doc: any,
+    doc: Node,
     searchTerm: string,
     enabledFilters: Set<ScreenplayElement>,
     currentMatchIndex: number,
@@ -151,7 +152,7 @@ function computeSearchDecorations(
  * Returns a new DecorationSet with the correct "current" highlight applied.
  */
 function applyCurrentMatchClass(
-    doc: any,
+    doc: Node,
     decoSet: DecorationSet,
     matches: SearchMatch[],
     currentMatchIndex: number,
@@ -165,14 +166,14 @@ function applyCurrentMatchClass(
     const atCurrent = decoSet.find(currentMatch.from, currentMatch.to);
     // Check if the current decoration already has the correct class
     const existing = atCurrent.find((d) => {
-        const spec = (d as any).type?.attrs?.class;
+        const spec = (d as { type?: { attrs?: { class?: string } } }).type?.attrs?.class;
         return spec && spec.includes("search-highlight-current");
     });
     if (existing) return decoSet;
 
     // Remove the old decoration at this position and add one with the current class
     const toRemove = atCurrent.filter((d) => {
-        const spec = (d as any).type?.attrs?.class;
+        const spec = (d as { type?: { attrs?: { class?: string } } }).type?.attrs?.class;
         return spec && spec.includes("search-highlight");
     });
     let result = decoSet;

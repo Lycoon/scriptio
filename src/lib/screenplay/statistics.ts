@@ -34,17 +34,15 @@ const ScreenplayElements: { [type: string]: IElementData } = {
 
 const average = (list: number[]) => list.reduce((prev, curr) => prev + curr, 0) / list.length;
 
-const cleanFrequency = (frequency: any) => {
-    let items = Object.keys(frequency).map((key) => {
-        return [key, frequency[key]];
-    });
+const cleanFrequency = (frequency: Frequency) => {
+    const items: [string, number][] = Object.entries(frequency);
 
     items.sort((first, second) => {
         return second[1] - first[1];
     });
 
     // Computing other characters
-    let others = items.splice(8);
+    const others = items.splice(8);
     let freqOthers = 0;
     for (const e in others) {
         freqOthers += others[e][1];
@@ -58,10 +56,10 @@ const cleanFrequency = (frequency: any) => {
     });
 
     // Converting array to dictionary
-    let sorted: any = {};
-    items.forEach((e: any) => {
-        let key = e[0];
-        let value = e[1];
+    const sorted: Frequency = {};
+    items.forEach((e: [string, number]) => {
+        const key = e[0];
+        const value = e[1];
         sorted[key] = value;
     });
 
@@ -69,26 +67,24 @@ const cleanFrequency = (frequency: any) => {
 };
 
 const getQuantity = (dialLengths: DialogueLengths) => {
-    let quantity: Quantity = {};
+    const quantity: Quantity = {};
     for (const actor in dialLengths) {
         quantity[actor] = average(dialLengths[actor]);
     }
 
-    let items = Object.keys(quantity).map((key: string) => {
-        return [key, quantity[key]];
-    });
+    const items: [string, number][] = Object.entries(quantity);
 
-    items.sort((first: any, second: any) => {
+    items.sort((first: [string, number], second: [string, number]) => {
         return second[1] - first[1];
     });
 
     items.splice(8);
 
     // Converting array to dictionary
-    let sorted: any = {};
-    items.forEach((e: any) => {
-        let key = e[0];
-        let value = e[1];
+    const sorted: Quantity = {};
+    items.forEach((e: [string, number]) => {
+        const key = e[0];
+        const value = e[1];
         sorted[key] = value;
     });
 
@@ -96,7 +92,7 @@ const getQuantity = (dialLengths: DialogueLengths) => {
 };
 
 const getFrequency = (distribution: Distribution) => {
-    let frequency: Frequency = {};
+    const frequency: Frequency = {};
 
     for (const page in distribution) {
         const actors = distribution[page];
@@ -108,8 +104,9 @@ const getFrequency = (distribution: Distribution) => {
     return frequency;
 };
 
-export const getScreenplayData = (json: any): ScreenplayData => {
-    const nodes = json.content!;
+import { JSONContent } from "@tiptap/core";
+
+export const getScreenplayData = (nodes: JSONContent[]): ScreenplayData => {
     const maxPageY: number = 990;
     const pageLimits: number[] = []; // contains at which character page stops
     const distribution: Distribution = {};
@@ -127,8 +124,8 @@ export const getScreenplayData = (json: any): ScreenplayData => {
             continue;
         }
 
-        const type: string = currNode["attrs"]["class"];
-        const content: string = currNode["content"][0]["text"];
+        const type = (currNode.attrs?.["class"] as string) ?? "";
+        const content = currNode.content![0].text ?? "";
         const length = content.length;
         characters += length;
         words += content.split(" ").length;
@@ -151,8 +148,8 @@ export const getScreenplayData = (json: any): ScreenplayData => {
                 const nodeJ = nodes[j];
                 if (!nodeJ["content"]) continue;
 
-                const typeJ = nodeJ["attrs"]["class"];
-                const contentJ = nodeJ["content"][0]["text"];
+                const typeJ = nodeJ.attrs?.["class"];
+                const contentJ = nodeJ.content![0].text ?? "";
 
                 if (typeJ === "parenthetical") continue;
                 if (typeJ === "dialogue") {

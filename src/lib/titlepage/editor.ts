@@ -1,4 +1,5 @@
 import { Editor, Extension, getSchema } from "@tiptap/react";
+import { NodeSelection } from "@tiptap/pm/state";
 import { TitlePageElement, Style } from "../utils/enums";
 
 import Document from "@tiptap/extension-document";
@@ -116,7 +117,7 @@ export const getActiveTitlePageElement = (editor: Editor): TitlePageElement => {
     // Also check if the selection itself is a node selection
     const sel = editor.state.selection;
     if ("node" in sel) {
-        const node = (sel as any).node;
+        const node = (sel as NodeSelection).node;
         if (node && isFormatNode(node.type.name)) {
             return node.type.name as TitlePageElement;
         }
@@ -148,14 +149,17 @@ export const TITLEPAGE_BASE_EXTENSIONS = [
 
 export const TitlePageSchema = getSchema(TITLEPAGE_BASE_EXTENSIONS);
 
-const LINE = (align: string = "left", content?: any[]) => ({
+type JSONMark = { type: string; attrs?: Record<string, unknown> };
+type JSONInlineNode = { type: string; text?: string; marks?: JSONMark[] };
+
+const LINE = (align: string = "left", content?: JSONInlineNode[]) => ({
     type: "tp-text",
     attrs: { textAlign: align },
     content,
 });
 
 const TEXT = (text: string) => ({ type: "text", text });
-const FORMAT_NODE = (type: TitlePageElement, marks?: any[]) => (marks ? { type, marks } : { type });
+const FORMAT_NODE = (type: TitlePageElement, marks?: JSONMark[]) => (marks ? { type, marks } : { type });
 const EMPTY = (align: string = "left") => LINE(align);
 
 export const DEFAULT_TITLEPAGE_CONTENT = [
