@@ -1,5 +1,6 @@
 import { Editor, Extension } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Node } from "@tiptap/pm/model";
+import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
 const sceneBookmarkPluginKey = new PluginKey("sceneBookmark");
@@ -14,10 +15,10 @@ type SceneBookmarkConfig = {
  * Uses a widget decoration (instead of a node ::after) so that the scene
  * node's ::after pseudo-element remains free for right scene numbers.
  */
-function computeBookmarkDecorations(doc: any, getSceneColor: (sceneId: string) => string | undefined): DecorationSet {
+function computeBookmarkDecorations(doc: Node, getSceneColor: (sceneId: string) => string | undefined): DecorationSet {
     const decorations: Decoration[] = [];
 
-    doc.forEach((node: any, pos: number) => {
+    doc.forEach((node: Node, pos: number) => {
         if (node.attrs?.class !== "scene") return;
 
         const sceneId: string | undefined = node.attrs?.["data-id"];
@@ -49,7 +50,7 @@ function computeBookmarkDecorations(doc: any, getSceneColor: (sceneId: string) =
  * Uses nodesBetween on both old and new docs to accurately check if the affected
  * range overlaps with a scene node, avoiding false positives from adjacent nodes.
  */
-function didSceneNodesChange(tr: any): boolean {
+function didSceneNodesChange(tr: Transaction): boolean {
     if (!tr.docChanged) return false;
 
     for (const step of tr.steps) {
@@ -60,7 +61,7 @@ function didSceneNodesChange(tr: any): boolean {
             try {
                 const oldDoc = tr.docs[0];
                 if (oldDoc) {
-                    oldDoc.nodesBetween(oldStart, oldEnd, (node: any) => {
+                    oldDoc.nodesBetween(oldStart, oldEnd, (node: Node) => {
                         if (node.attrs?.class === "scene") affectsScene = true;
                     });
                 }
@@ -68,7 +69,7 @@ function didSceneNodesChange(tr: any): boolean {
 
             // Check new doc: did the change produce a scene node?
             try {
-                tr.doc.nodesBetween(newStart, newEnd, (node: any) => {
+                tr.doc.nodesBetween(newStart, newEnd, (node: Node) => {
                     if (node.attrs?.class === "scene") affectsScene = true;
                 });
             } catch { /* position out of bounds */ }
