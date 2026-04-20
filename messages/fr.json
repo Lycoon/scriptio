@@ -144,7 +144,11 @@
       "cancelNo": "Garder Pro",
       "cancelling": "Annulation...",
       "cancelSuccess": "Abonnement annulé. Accès Pro jusqu'au {date}.",
-      "endsOn": "Votre abonnement se termine le {date}"
+      "endsOn": "Votre abonnement se termine le {date}",
+      "purchasing": "Achat en cours...",
+      "purchaseError": "L'achat a échoué. Veuillez réessayer.",
+      "cancelApple": "Les abonnements Apple sont gérés via l'App Store.",
+      "manageApple": "Ouvrir l'App Store"
     }
   },
   "projects": {

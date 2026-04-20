@@ -24,17 +24,19 @@ runs:
               SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
 
               if [[ "$INPUT_STAGING" == "true" ]]; then
+                  PRODUCT_NAME="Scriptio (Staging)"
                   WINDOW_TITLE="Scriptio (Staging)"
                   APPSTORE_IDENTIFIER="app.scriptio.staging"
                   WINDOWS_IDENTIFIER="ArkoLogic.ScriptioStaging"
               else
+                  PRODUCT_NAME="Scriptio"
                   WINDOW_TITLE="Scriptio"
                   APPSTORE_IDENTIFIER="app.scriptio"
                   WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
               fi
 
-              jq --arg v "$SEMVER" --arg t "$WINDOW_TITLE" \
-                  '.version = $v | .app.windows[0].title = $t' \
+              jq --arg v "$SEMVER" --arg t "$WINDOW_TITLE" --arg n "$PRODUCT_NAME" \
+                  '.version = $v | .app.windows[0].title = $t | .productName = $n' \
                   src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
               mv src-tauri/tauri.conf.json.tmp src-tauri/tauri.conf.json
 
@@ -49,7 +51,7 @@ runs:
               sed -i.bak "s/^version = \".*\"/version = \"$SEMVER\"/" src-tauri/Cargo.toml
               rm -f src-tauri/Cargo.toml.bak
 
-              echo "Applied version $INPUT_VERSION (title: '$WINDOW_TITLE', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
+              echo "Applied version $INPUT_VERSION (productName: '$PRODUCT_NAME', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
 
         - name: Apply macOS-specific settings
           if: ${{ runner.os == 'macOS' }}

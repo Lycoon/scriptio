@@ -30,11 +30,12 @@ export const getUserSettings = async (userId: string) => {
     return repository.fetchUserSettings(userId);
 };
 
-export const getUserBySubscriptionId = async (subscriptionId: string) => {
-    return repository.fetchUserBySubscriptionId(subscriptionId);
+export const getUserByStripeSubscriptionId = async (subscriptionId: string) => {
+    return repository.fetchUserByStripeSubscriptionId(subscriptionId);
 };
 
-export const getSubscriptionId = async (userId: string) => {
-    const result = await repository.fetchSubscriptionId(userId);
-    return result?.stripeSubscriptionId ?? null;
+export const getStripeSubscriptionId = async (userId: string) => {
+    const result = await repository.fetchStripeSubscriptionId(userId);
+    return result?.transactionId ?? null;
 };
+

@@ -17,6 +17,11 @@ enum ProjectRole {
   VIEWER
 }
 
+enum SubscriptionProvider {
+  STRIPE
+  APPLE
+}
+
 model User {
   id                  String      @id @default(uuid(7))
   createdAt           DateTime    @default(now())
@@ -26,14 +31,15 @@ model User {
   color               String?
 
   isProUntil                  DateTime?
-  stripeSubscriptionId        String?
   isSubscriptionCancelled     Boolean   @default(false)
+  subscriptionProvider        SubscriptionProvider?
 
   settings            Json?
 
   accounts            Account[]
   sessions            Session[]
   projects            ProjectMember[]
+  transactions        Transaction[]
 }
 
 model Account {
@@ -82,6 +88,19 @@ model MagicLinkToken {
   inviteToken         String?
 
   @@index([email, createdAt])
+}
+
+model Transaction {
+  id            Int                  @id @default(autoincrement())
+  userId        String
+  provider      SubscriptionProvider
+  transactionId String
+  createdAt     DateTime             @default(now())
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([transactionId])
 }
 
 model Project {

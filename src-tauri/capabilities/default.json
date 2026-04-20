@@ -16,6 +16,7 @@
         "sql:allow-close",
         "dialog:allow-save",
         "fs:allow-write-file",
-        "opener:default"
+        "opener:default",
+        "iap:default"
     ]
 }

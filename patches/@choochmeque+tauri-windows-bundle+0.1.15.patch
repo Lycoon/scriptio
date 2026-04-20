@@ -1,0 +1,31 @@
+diff --git a/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js b/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js
+index 42b3955..42e5ff1 100644
+--- a/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js
++++ b/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js
+@@ -426,7 +426,7 @@ function generateManifest(config, arch, minVersion, windowsDir) {
+         DISPLAY_NAME: config.displayName,
+         PUBLISHER_DISPLAY_NAME: config.publisherDisplayName,
+         MIN_VERSION: minVersion,
+-        EXECUTABLE: `${config.displayName.replace(/\s+/g, '')}.exe`,
++        EXECUTABLE: `${config.displayName.split(/\s/)[0]}.exe`,
+         DESCRIPTION: config.description || config.displayName,
+         EXTENSIONS: generateExtensions(config),
+         CAPABILITIES: generateCapabilities(config.capabilities || DEFAULT_CAPABILITIES),
+@@ -501,7 +501,7 @@ function generateExtensions(config) {
+     }
+     if (config.extensions?.appExecutionAliases) {
+         const template = getExtensionTemplate('app-execution-alias');
+-        const executable = `${config.displayName.replace(/\s+/g, '')}.exe`;
++        const executable = `${config.displayName.split(/\s/)[0]}.exe`;
+         for (const alias of config.extensions.appExecutionAliases) {
+             const result = replaceTemplateVariables(template, {
+                 ALIAS: alias.alias.endsWith('.exe') ? alias.alias : `${alias.alias}.exe`,
+@@ -717,7 +717,7 @@ function prepareAppxContent(projectRoot, arch, config, tauriConfig, minVersion,
+     // Create directories
+     fs.mkdirSync(path.join(appxDir, 'Assets'), { recursive: true });
+     // Copy exe
+-    const exeName = `${config.displayName.replace(/\s+/g, '')}.exe`;
++    const exeName = `${config.displayName.split(/\s/)[0]}.exe`;
+     const srcExe = path.join(buildDir, exeName);
+     if (!fs.existsSync(srcExe)) {
+         throw new Error(`Executable not found: ${srcExe}`);

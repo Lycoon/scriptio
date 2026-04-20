@@ -143,7 +143,11 @@
       "cancelNo": "Zachowaj Pro",
       "cancelling": "Anulowanie...",
       "cancelSuccess": "Subskrypcja anulowana. Dostęp Pro do {date}.",
-      "endsOn": "Twoja subskrypcja kończy się {date}"
+      "endsOn": "Twoja subskrypcja kończy się {date}",
+      "purchasing": "Zakup w toku...",
+      "purchaseError": "Zakup nie powiódł się. Spróbuj ponownie.",
+      "cancelApple": "Subskrypcje Apple są zarządzane przez App Store.",
+      "manageApple": "Otwórz App Store"
     }
   },
   "projects": {

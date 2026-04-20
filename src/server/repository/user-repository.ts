@@ -1,5 +1,5 @@
 import { UserSettings } from "@src/lib/utils/types";
-import { Prisma } from "@prisma/client";
+import { Prisma, SubscriptionProvider } from "@prisma/client";
 import prisma from "../db";
 
 export type UpdateSettings = {
@@ -17,8 +17,8 @@ export interface UserUpdate {
     username?: string;
     color?: string;
     isProUntil?: Date | null;
-    stripeSubscriptionId?: string | null;
     isSubscriptionCancelled?: boolean;
+    subscriptionProvider?: SubscriptionProvider | null;
     settings?: Partial<UserSettings>;
 }
 
@@ -39,8 +39,8 @@ export class UserRepository {
                 username: userUpdate.username,
                 color: userUpdate.color,
                 isProUntil: userUpdate.isProUntil,
-                stripeSubscriptionId: userUpdate.stripeSubscriptionId,
                 isSubscriptionCancelled: userUpdate.isSubscriptionCancelled,
+                subscriptionProvider: userUpdate.subscriptionProvider,
             },
         });
     }
@@ -73,21 +73,25 @@ export class UserRepository {
                 color: true,
                 isProUntil: true,
                 isSubscriptionCancelled: true,
+                subscriptionProvider: true,
             },
         });
     }
 
-    fetchUserBySubscriptionId(subscriptionId: string) {
-        return prisma.user.findFirst({
-            where: { stripeSubscriptionId: subscriptionId },
-            select: { id: true },
+    /** Find the user who owns a given Stripe subscription ID. */
+    fetchUserByStripeSubscriptionId(subscriptionId: string) {
+        return prisma.transaction.findFirst({
+            where: { transactionId: subscriptionId, provider: "STRIPE" },
+            select: { userId: true },
         });
     }
 
-    fetchSubscriptionId(userId: string) {
-        return prisma.user.findUnique({
-            where: { id: userId },
-            select: { stripeSubscriptionId: true },
+    /** Get the most recent Stripe subscription ID for a user (for cancellation). */
+    fetchStripeSubscriptionId(userId: string) {
+        return prisma.transaction.findFirst({
+            where: { userId, provider: "STRIPE" },
+            orderBy: { createdAt: "desc" },
+            select: { transactionId: true },
         });
     }
 

@@ -143,7 +143,11 @@
       "cancelNo": "Pro 유지",
       "cancelling": "취소 중...",
       "cancelSuccess": "구독이 취소되었습니다. {date}까지 Pro 이용 가능.",
-      "endsOn": "구독이 {date}에 종료됩니다"
+      "endsOn": "구독이 {date}에 종료됩니다",
+      "purchasing": "구매 중...",
+      "purchaseError": "구매에 실패했습니다. 다시 시도해 주세요.",
+      "cancelApple": "Apple 구독은 App Store에서 관리됩니다.",
+      "manageApple": "App Store 열기"
     }
   },
   "projects": {
