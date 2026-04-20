@@ -6,6 +6,16 @@ import { getCloudToken } from "../utils/requests";
 import { JSONContent } from "@tiptap/react";
 import { Screenplay } from "../utils/types";
 import { PageFormat } from "../utils/enums";
+import * as Y from "yjs";
+import type { ThrottledWebsocketProvider } from "../collaboration/utils";
+import { ScreenplaySchema } from "../screenplay/editor";
+import { TitlePageSchema } from "../titlepage/editor";
+import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
+import type { CharacterItem, CharacterMap } from "../screenplay/characters";
+import type { LocationItem, LocationMap } from "../screenplay/locations";
+import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
+import type { Comment } from "../utils/types";
+import type { YjsLocalProvider } from "../persistence/y-local-provider";
 
 // Lazy re-export repository for convenient access (avoid loading yjs at module level)
 export const getProjectRepository = async () => {
@@ -21,17 +31,6 @@ export const getProjectRepository = async () => {
 // -------------------------------- //
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
-
-// Import types only (these don't cause SSR issues)
-import * as Y from "yjs";
-import type { ThrottledWebsocketProvider } from "../collaboration/utils";
-import { ScreenplaySchema } from "../screenplay/editor";
-import { TitlePageSchema } from "../titlepage/editor";
-import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
-import type { CharacterItem, CharacterMap } from "../screenplay/characters";
-import type { LocationItem, LocationMap } from "../screenplay/locations";
-import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
-import type { Comment } from "../utils/types";
 
 // ---- Shelf types ----
 
@@ -79,6 +78,7 @@ export type ProjectMetadata = {
     id: string;
     title: string;
     author: string;
+    titlepageInitialized?: boolean;
 };
 
 export type ElementMargin = { left: number; right: number }; // values in inches (offset from page margin)
@@ -171,6 +171,16 @@ export type ProjectData = {
     shelf?: Record<string, ShelfEntry>;
 };
 
+/**
+ * Helper to provide stronger typing for Y.Map where different keys have different types.
+ * This avoids manual casts when accessing known keys.
+ */
+export interface TypedMap<T extends Record<string, unknown>> extends Omit<Y.Map<T[keyof T]>, "get" | "set" | "toJSON"> {
+    get<K extends keyof T>(key: K): T[K] | undefined;
+    set<K extends keyof T>(key: K, value: T[K]): T[K];
+    toJSON(): T;
+}
+
 // -------------------------------- //
 //       LAZY-LOADED MODULES        //
 // -------------------------------- //
@@ -209,6 +219,29 @@ async function getScreenplayEditor() {
     return screenplayEditorModule;
 }
 
+/**
+ * Utility to clear the local IndexedDB cache for a specific project.
+ * Used when the server restores a document from a snapshot to avoid merge conflicts.
+ */
+export async function clearLocalProjectCache(projectId: string): Promise<void> {
+    try {
+        const { IndexeddbPersistence } = await import("y-indexeddb");
+        const tmpDoc = new Y.Doc();
+        const tmpPersistence = new IndexeddbPersistence(`scriptio-${projectId}`, tmpDoc);
+
+        // Check if clearData is available on the persistence instance
+        const provider = tmpPersistence as unknown as { clearData?: () => Promise<void> };
+        if (typeof provider.clearData === "function") {
+            await provider.clearData();
+        }
+
+        tmpPersistence.destroy();
+        tmpDoc.destroy();
+    } catch (e) {
+        console.warn(`[ProjectState] Failed to clear local cache for ${projectId}:`, e);
+    }
+}
+
 // -------------------------------- //
 //          PROJECT STATE           //
 // -------------------------------- //
@@ -229,8 +262,8 @@ export class ProjectState extends Y.Doc {
         SHELF: "shelf",
     } as const;
 
-    metadata(): Y.Map<any> {
-        return this.getMap(this.KEYS.METADATA);
+    metadata(): TypedMap<ProjectMetadata> {
+        return this.getMap(this.KEYS.METADATA) as unknown as TypedMap<ProjectMetadata>;
     }
 
     screenplay(): Screenplay {
@@ -265,12 +298,12 @@ export class ProjectState extends Y.Doc {
         return this.getMap(this.KEYS.SCENES);
     }
 
-    board(): Y.Map<string> {
-        return this.getMap(this.KEYS.BOARD);
+    board(): TypedMap<BoardData> {
+        return this.getMap(this.KEYS.BOARD) as unknown as TypedMap<BoardData>;
     }
 
-    layout(): Y.Map<any> {
-        return this.getMap(this.KEYS.LAYOUT);
+    layout(): TypedMap<LayoutData> {
+        return this.getMap(this.KEYS.LAYOUT) as unknown as TypedMap<LayoutData>;
     }
 
     comments(): Y.Map<Comment> {
@@ -325,7 +358,7 @@ export const getScenesMap = (ydoc: ProjectState): Y.Map<PersistentScene> => {
  * Get the board Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getBoardMap = (ydoc: ProjectState): Y.Map<string> => {
+export const getBoardMap = (ydoc: ProjectState): TypedMap<BoardData> => {
     return ydoc.board();
 };
 
@@ -340,7 +373,7 @@ export const getBoardMap = (ydoc: ProjectState): Y.Map<string> => {
 export const useLocalPersistence = (projectId: string | null) => {
     const [ydoc, setYdoc] = useState<ProjectState | null>(null);
     const [isLocalReady, setIsLocalReady] = useState(false);
-    const persistenceRef = useRef<{ on: any; destroy(): void } | null>(null);
+    const persistenceRef = useRef<YjsLocalProvider | null>(null);
 
     useEffect(() => {
         if (!projectId || typeof window === "undefined") {
@@ -449,7 +482,7 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
             return;
         }
 
-        const initializeProvider = async () => {
+        const setupProvider = async () => {
             setConnectionStatus("connecting");
 
             try {
@@ -490,8 +523,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                             clientId: ydoc.clientID.toString(),
                         },
                         userInfo: userInfoRef.current,
-                        // Disable BroadcastChannel in Tauri - it can interfere with sync
-                        // See: https://github.com/tauri-apps/tauri/issues/10226
                         disableBc: isDesktop,
                     },
                 );
@@ -506,8 +537,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                     for (const state of states) {
                         if (state.user) {
                             const user = state.user as CollaboratorInfo;
-                            // Use userId as the primary unique key for deduplication,
-                            // fallback to name for anonymous/legacy sessions.
                             const key = user.userId || user.name;
                             if (!uniqueUsersMap.has(key)) {
                                 uniqueUsersMap.set(key, user);
@@ -516,8 +545,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                     }
 
                     const connectedUsers = Array.from(uniqueUsersMap.values());
-
-                    // Only update if users changed to avoid unnecessary re-renders
                     const usersJson = JSON.stringify(connectedUsers);
                     if (usersJson !== lastUsersJsonRef.current) {
                         lastUsersJsonRef.current = usersJson;
@@ -527,15 +554,10 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
 
                 // Handle connection errors
                 cloudProvider.on("connection-error", async () => {
-                    // Don't try to reconnect if session was replaced
-                    if (cloudProvider.wasSessionReplaced) {
-                        return;
-                    }
-
+                    if (cloudProvider.wasSessionReplaced) return;
                     console.warn("[ProjectYjs] Connection error, attempting to refresh token...");
                     if (isMountedRef.current) {
                         setConnectionStatus("connecting");
-                        // Refresh the token before reconnecting
                         if (refreshAndReconnectRef.current) {
                             await refreshAndReconnectRef.current();
                         } else {
@@ -547,13 +569,10 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 // Status updates
                 cloudProvider.on("status", (e: { status: string }) => {
                     if (isMountedRef.current) {
-                        // Use setTimeout to avoid state update during render
                         setTimeout(() => {
                             if (isMountedRef.current) {
                                 setConnectionStatus(e.status as ConnectionStatus);
-                                // Check synced status when connected (might have synced already)
                                 if (e.status === "connected" && cloudProvider.synced) {
-                                    console.log("[ProjectYjs] Already synced on connect");
                                     setIsCloudSynced(true);
                                 }
                             }
@@ -562,48 +581,29 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 });
 
                 // Track when initial cloud sync completes
-                // This is crucial for desktop clients where local IndexedDB may be empty
-                // y-websocket sets .synced property when sync step 2 is complete
                 cloudProvider.on("sync", (isSynced: boolean) => {
                     if (isMountedRef.current && isSynced) {
                         setIsCloudSynced(true);
                     }
                 });
 
-                // Handle document restore — server replaced the doc with a snapshot.
-                // We must clear the local IndexedDB so the old state doesn't
-                // merge back when we reconnect, then reload to get a clean slate.
+                // Handle document restore
                 cloudProvider.on("document-restored", async () => {
                     if (!isMountedRef.current) return;
                     console.log("[ProjectYjs] Document restored — clearing local cache and reloading");
-
-                    try {
-                        const { IndexeddbPersistence } = await import("y-indexeddb");
-                        const Y = await getYjs();
-                        const tmpDoc = new Y.Doc();
-                        const tmpPersistence = new IndexeddbPersistence(`scriptio-${projectId}`, tmpDoc);
-                        await (tmpPersistence as any).clearData();
-                        tmpPersistence.destroy();
-                        tmpDoc.destroy();
-                    } catch (e) {
-                        console.warn("[ProjectYjs] Failed to clear local cache:", e);
-                    }
-
+                    await clearLocalProjectCache(projectId);
                     window.location.reload();
                 });
 
-                // Poll for synced status since the event might fire before listener is attached
-                // This is a safety net for race conditions
+                // Poll for synced status
                 const checkSynced = () => {
                     if (!isMountedRef.current) return;
                     if (cloudProvider.synced) {
                         setIsCloudSynced(true);
                     } else {
-                        // Check again after a short delay
                         setTimeout(checkSynced, 100);
                     }
                 };
-                // Start checking after connection is established
                 setTimeout(checkSynced, 50);
 
                 providerRef.current = cloudProvider;
@@ -612,13 +612,12 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 console.error("[ProjectYjs] Failed to initialize provider:", e);
                 if (isMountedRef.current) {
                     setConnectionStatus("disconnected");
-                    // Allow proceeding with local data when cloud sync fails
                     setIsCloudSynced(true);
                 }
             }
         };
 
-        initializeProvider();
+        setupProvider();
 
         const handleUnload = async () => {
             if (providerRef.current && ydoc) {

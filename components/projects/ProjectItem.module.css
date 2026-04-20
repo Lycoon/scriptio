@@ -5,7 +5,7 @@
 .container {
     cursor: pointer;
     width: 100%;
-    padding: 16px 16px;
+    padding: 24px;
 
     display: flex;
     flex-direction: row;
@@ -13,10 +13,9 @@
     gap: 16px;
 
     border-radius: 18px;
-    border-style: solid;
-    border-width: 3px;
-    border-color: var(--tertiary);
+    border: none;
     background-color: var(--project-item-bg);
+    box-shadow: var(--panel-shadow);
 
     transition: border-color 0.2s;
 }
