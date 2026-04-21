@@ -94,7 +94,7 @@ jobs:
         runs-on: windows-latest
         needs: prepare
         env:
-            APP_PATH: src-tauri/target/msix/Scriptio.msixbundle
+            APP_PATH: src-tauri/target/msix/Scriptio_${{ needs.prepare.outputs.version }}.msixbundle
         steps:
             - uses: actions/checkout@v6
 
@@ -118,7 +118,7 @@ jobs:
 
             - name: Rename output to fixed name
               run: |
-                  Get-Item "src-tauri/target/msix/*.msixbundle" | Rename-Item -NewName "Scriptio.msixbundle"
+                  Get-Item "src-tauri/target/msix/*.msixbundle" | Rename-Item -NewName "Scriptio_${{ needs.prepare.outputs.version }}.msixbundle"
 
             - name: Configure Microsoft Store CLI
               uses: microsoft/microsoft-store-apppublisher@v1.1

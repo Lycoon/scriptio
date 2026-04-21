@@ -27,6 +27,11 @@ runs:
           with:
               targets: x86_64-pc-windows-msvc, aarch64-pc-windows-msvc
 
+        - name: Setup Rust cache
+          uses: swatinem/rust-cache@v2
+          with:
+              workspaces: "src-tauri -> target"
+
         - name: Install msixbundle-cli
           if: inputs.platform == 'windows'
           shell: bash
