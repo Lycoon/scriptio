@@ -58,8 +58,8 @@ export function getCollabHttpUrl(path: string): string {
 export const getCloudToken = async (projectId: string): Promise<{ token: string | null; status: number }> => {
     const res = await request(`/api/projects/${projectId}/cloud-token`, "GET");
     if (res.ok) {
-        const { data: token } = (await res.json()) as ApiResponse;
-        return { token, status: res.status };
+        const { data: token } = (await res.json()) as ApiResponse<string>;
+        return { token: token ?? null, status: res.status };
     }
     return { token: null, status: res.status };
 };

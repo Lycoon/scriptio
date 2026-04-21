@@ -30,7 +30,8 @@ export const TitlePageTextNode = Node.create({
                     return "left";
                 },
                 renderHTML: (attributes: Record<string, unknown>) => {
-                    const cls = ALIGN_CLASSES[attributes.textAlign] || ALIGN_CLASSES.left;
+                    const alignment = (attributes.textAlign as string) || "left";
+                    const cls = ALIGN_CLASSES[alignment] || ALIGN_CLASSES.left;
                     return { class: cls };
                 },
             },

@@ -236,8 +236,16 @@ const tokenize = function (script: string) {
     return tokens;
 };
 
-const inline: Record<string, string | ((s: string) => string | undefined)> = {
-    //note: '<span class="note">$1</span>',
+interface InlineLexer {
+    (s: string): string | undefined;
+}
+
+interface Inline {
+    [key: string]: string | InlineLexer | undefined;
+    lexer: InlineLexer;
+}
+
+const inline: Inline = {
     line_break: "<br />",
 
     bold_italic_underline: '<span class="bold italic underline">$2</span>',
@@ -247,45 +255,45 @@ const inline: Record<string, string | ((s: string) => string | undefined)> = {
     bold: '<span class="bold">$2</span>',
     italic: '<span class="italic">$2</span>',
     underline: '<span class="underline">$2</span>',
-};
 
-inline.lexer = function (s: string) {
-    if (!s) {
-        return;
-    }
-
-    const styles = [
-        "underline",
-        "italic",
-        "bold",
-        "bold_italic",
-        "italic_underline",
-        "bold_underline",
-        "bold_italic_underline",
-    ];
-    let i = styles.length;
-    let style: string;
-    let match: RegExp;
-
-    s = s
-        .replace(regex.note_inline, inline.note as string)
-        .replace(/\\\*/g, "[star]")
-        .replace(/\\_/g, "[underline]")
-        .replace(/\n/g, inline.line_break as string);
-
-    while (i--) {
-        style = styles[i];
-        match = (regex as Record<string, RegExp>)[style];
-
-        if (match.test(s)) {
-            s = s.replace(match, inline[style] as string);
+    lexer: (s: string) => {
+        if (!s) {
+            return;
         }
-    }
 
-    return s
-        .replace(/\[star\]/g, "*")
-        .replace(/\[underline\]/g, "_")
-        .trim();
+        const styles = [
+            "underline",
+            "italic",
+            "bold",
+            "bold_italic",
+            "italic_underline",
+            "bold_underline",
+            "bold_italic_underline",
+        ];
+        let i = styles.length;
+        let style: string;
+        let match: RegExp;
+
+        s = s
+            .replace(regex.note_inline, (inline.note as string) || "")
+            .replace(/\\\*/g, "[star]")
+            .replace(/\\_/g, "[underline]")
+            .replace(/\n/g, (inline.line_break as string) || "");
+
+        while (i--) {
+            style = styles[i];
+            match = (regex as Record<string, RegExp>)[style];
+
+            if (match.test(s)) {
+                s = s.replace(match, (inline[style] as string) || "");
+            }
+        }
+
+        return s
+            .replace(/\[star\]/g, "*")
+            .replace(/\[underline\]/g, "_")
+            .trim();
+    },
 };
 
 const parse = function (script: string, toks?: boolean | FountainCallback, callback?: FountainCallback): FountainOutput {

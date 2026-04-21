@@ -150,7 +150,7 @@ const MemberSlot = ({ data, membership, mutateCollaborators, user }: MemberSlotP
         if (res.ok) {
             if (res.status !== 204) {
                 // If user left the project by himself, redirect him to home
-                const json = (await res.json()) as ApiResponse;
+                const json = (await res.json()) as ApiResponse<{ redirectUrl: string }>;
                 if (json.data && json.data.redirectUrl) {
                     closeDashboard();
                     redirect(json.data.redirectUrl);
