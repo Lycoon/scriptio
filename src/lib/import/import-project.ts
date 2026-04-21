@@ -138,9 +138,9 @@ async function createRemoteProject(userId: string, title: string, description?: 
     };
 
     const res = await createProject(userId, body);
-    const json = (await res.json()) as ApiResponse;
+    const json = (await res.json()) as ApiResponse<{ id: string }>;
 
-    if (!res.ok) {
+    if (!res.ok || !json.data) {
         throw new Error(json.message || "Failed to create project");
     }
 
