@@ -44,10 +44,16 @@ runs:
                   src-tauri/tauri.appstore.conf.json > src-tauri/tauri.appstore.conf.json.tmp
               mv src-tauri/tauri.appstore.conf.json.tmp src-tauri/tauri.appstore.conf.json
 
-              jq --arg id "$WINDOWS_IDENTIFIER" --arg v "$INPUT_VERSION" \
+              jq --arg id "$WINDOWS_IDENTIFIER" --arg v "$SEMVER" \
                   '.identifier = $id | .version = $v' \
                   src-tauri/tauri.windows.conf.json > src-tauri/tauri.windows.conf.json.tmp
               mv src-tauri/tauri.windows.conf.json.tmp src-tauri/tauri.windows.conf.json
+
+              if [[ -f "src-tauri/gen/windows/bundle.config.json" ]]; then
+                  jq --arg v "$INPUT_VERSION" '.version = $v' \
+                      src-tauri/gen/windows/bundle.config.json > src-tauri/gen/windows/bundle.config.json.tmp
+                  mv src-tauri/gen/windows/bundle.config.json.tmp src-tauri/gen/windows/bundle.config.json
+              fi
 
               sed -i.bak "s/^version = \".*\"/version = \"$SEMVER\"/" src-tauri/Cargo.toml
               rm -f src-tauri/Cargo.toml.bak
