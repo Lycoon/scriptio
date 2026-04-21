@@ -23,7 +23,7 @@ const SidebarCharacterItem = memo(({ character, isHighlighted }: SidebarCharacte
 
     const highlightColor = character.color || DEFAULT_HIGHLIGHT_COLOR;
 
-    const handleDropdown = useCallback((e: any) => {
+    const handleDropdown = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         updateContextMenu({
             type: ContextMenuType.CharacterItem,

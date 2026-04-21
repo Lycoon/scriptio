@@ -2,6 +2,7 @@
 
 import { usePage } from "@src/lib/utils/hooks";
 import Link from "next/link";
+import Image from "next/image";
 
 import styles from "./LandingPageNavbar.module.css";
 
@@ -26,7 +27,7 @@ export default function LandingPageNavbar() {
                     </>
                 ) : (
                     <Link className={styles.logoWrapper} href="/">
-                        <img src="/images/scriptio.png" alt="Scriptio Logo" className={styles.logo} />
+                        <Image src="/images/scriptio.png" alt="Scriptio Logo" width={90} height={27} className={styles.logo} />
                     </Link>
                 )}
             </div>

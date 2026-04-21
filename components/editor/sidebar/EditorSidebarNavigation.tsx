@@ -169,11 +169,6 @@ const EditorSidebarNavigation = () => {
         setIndicatorIndex(null);
     }, [dragIndex, indicatorIndex, scenes, editor, updateScenes]);
 
-    const handleDragEnd = useCallback(() => {
-        setDragIndex(null);
-        setIndicatorIndex(null);
-    }, []);
-
     // Window-level pointerup so the drop works even if cursor leaves the list
     useEffect(() => {
         if (dragIndex === null) return;

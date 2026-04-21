@@ -30,7 +30,7 @@ const ProjectUnavailableDialog = () => {
             console.error("[ProjectUnavailableDialog] Migration failed:", e);
             setLoading(false);
         }
-    }, [projectId, repository, router]);
+    }, [projectId, repository, router, project?.project?.title]);
 
     const handleDiscard = useCallback(async () => {
         if (!projectId) return;

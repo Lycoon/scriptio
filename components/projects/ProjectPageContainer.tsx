@@ -35,7 +35,7 @@ const ProjectPageContainer = () => {
     const parent = useRef(null);
 
     useEffect(() => {
-        parent.current && autoAnimate(parent.current);
+        if (parent.current) autoAnimate(parent.current);
     }, [parent]);
 
     const checkOverflow = useCallback(() => {

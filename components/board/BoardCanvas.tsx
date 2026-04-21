@@ -50,6 +50,15 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     const [isSnapping, setIsSnapping] = useState(true);
     const [cardContextMenu, setCardContextMenu] = useState<CardContextMenuState | null>(null);
     const [arrowContextMenu, setArrowContextMenu] = useState<ArrowContextMenuState | null>(null);
+    const [prevIsVisible, setPrevIsVisible] = useState(isVisible);
+    if (prevIsVisible !== isVisible) {
+        setPrevIsVisible(isVisible);
+        if (!isVisible) {
+            setIsSnapping(true);
+            if (cardContextMenu) setCardContextMenu(null);
+            if (arrowContextMenu) setArrowContextMenu(null);
+        }
+    }
     const [isCameraReady, setIsCameraReady] = useState(false);
     const [connectingFrom, setConnectingFrom] = useState<{ cardId: string; side: string } | null>(null);
     const [connectingLine, setConnectingLine] = useState<{ x: number; y: number } | null>(null);
@@ -191,10 +200,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
 
     // Handle keyboard events for snapping
     useEffect(() => {
-        if (!isVisible) {
-            setIsSnapping(true); // Reset snap state when hidden
-            return;
-        }
+        if (!isVisible) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Shift") {
@@ -222,11 +228,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
 
     // Close context menus on click anywhere
     useEffect(() => {
-        if (!isVisible) {
-            if (cardContextMenu) setCardContextMenu(null);
-            if (arrowContextMenu) setArrowContextMenu(null);
-            return;
-        }
+        if (!isVisible) return;
 
         const handleClick = () => {
             if (cardContextMenu) setCardContextMenu(null);

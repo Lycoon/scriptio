@@ -5,15 +5,13 @@ import { DashboardContext } from "@src/context/DashboardContext";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useCookieUser } from "@src/lib/utils/hooks";
 
-import CloseSVG from "@public/images/close.svg";
-
 import SidebarMenu, { MenuSection } from "./DashboardSidebar";
 import ProjectSettings from "./project/ProjectSettings";
 import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { CreditCard, FileDown, Folder, Globe, Keyboard, Palette, PanelsTopLeft, User, Users } from "lucide-react";
+import { CreditCard, FileDown, Folder, Globe, Keyboard, Palette, PanelsTopLeft, User, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
@@ -84,11 +82,13 @@ const DashboardModal = () => {
         if (isSignedIn && activeTab === "Auth") {
             setActiveTab("Profile");
         }
-    }, [isInProject, isSignedIn, activeTab, setActiveTab]);
+    }, [isInProject, isSignedIn, activeTab, setActiveTab, ACCOUNT_MENU, PREFERENCES_MENU, PROJECT_MENU]);
 
-    useEffect(() => {
+    const [prevActiveTab, setPrevActiveTab] = useState(activeTab);
+    if (prevActiveTab !== activeTab) {
+        setPrevActiveTab(activeTab);
         setDangerOpen(false);
-    }, [activeTab]);
+    }
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -108,7 +108,7 @@ const DashboardModal = () => {
                 <div className={styles.content}>
                     <header className={styles.contentHeader}>
                         <h3>{t(`tabs.${activeTab}` as Parameters<typeof t>[0])}</h3>
-                        <CloseSVG className={styles.close_btn} onClick={closeDashboard} />
+                        <X className={styles.close_btn} onClick={closeDashboard} />
                     </header>
 
                     <div className={styles.scrollArea}>

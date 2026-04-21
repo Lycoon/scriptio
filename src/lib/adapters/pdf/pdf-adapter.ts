@@ -121,6 +121,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     convertFrom(_: ArrayBuffer): Partial<ProjectData> {
         throw new Error("Method not implemented.");
     }

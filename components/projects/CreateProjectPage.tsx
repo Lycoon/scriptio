@@ -28,7 +28,6 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
 
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const exitCreating = () => {
         setIsCreating(false);
@@ -38,13 +37,18 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
         setFormInfo(null);
     };
 
-    const onSubmit = async (e: any) => {
+    const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         resetFormInfo();
 
-        const title = e.target.title.value;
-        const description = e.target.description.value;
-        const author = e.target.author.value;
+        const form = e.target as typeof e.target & {
+            title: { value: string };
+            description: { value: string };
+            author: { value: string };
+        };
+        const title = form.title.value;
+        const description = form.description.value;
+        const author = form.author.value;
 
         // Desktop: offline-first project creation
         // Always create locally. If Pro and signed in, try cloud first to use its ID.

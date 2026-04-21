@@ -20,13 +20,10 @@ type Status = "working" | "done" | "error";
 const DesktopOAuthComplete = () => {
     const searchParams = useSearchParams();
     const nonce = searchParams.get("nonce");
-    const [status, setStatus] = useState<Status>("working");
+    const [status, setStatus] = useState<Status>(nonce ? "working" : "error");
 
     useEffect(() => {
-        if (!nonce) {
-            setStatus("error");
-            return;
-        }
+        if (!nonce) return;
         (async () => {
             try {
                 const res = await fetch("/api/desktop/token", {

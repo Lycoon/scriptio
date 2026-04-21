@@ -123,14 +123,13 @@ export default function LocationsStats() {
             }
         }
 
-        const totalUnique = topLocations.length; // distinct named locations in top 10
         const totalAll = Object.keys(locationCount).filter((k) => k !== "UNKNOWN").length;
 
         return { topLocations, overallSettings, totalAll };
     }, [scenes]);
 
     if (stats.totalAll === 0) {
-        return <p className={styles.empty}>No locations found. Scene headings like "INT. OFFICE - DAY" will appear here.</p>;
+        return <p className={styles.empty}>{'No locations found. Scene headings like "INT. OFFICE - DAY" will appear here.'}</p>;
     }
 
     // ── Bar chart — top locations ───────────────────────────────────────────────

@@ -103,10 +103,21 @@ jobs:
               with:
                   platform: windows
 
+            - name: Compute Windows Store version
+              id: msix-version
+              shell: bash
+              run: |
+                  SHORT="${{ needs.prepare.outputs.short_version }}"
+                  MAJOR=$(echo "$SHORT" | cut -d. -f1)
+                  MINOR=$(echo "$SHORT" | cut -d. -f2)
+                  PATCH=$(echo "$SHORT" | cut -d. -f3)
+                  BUILD=$(( PATCH * 1000 + ${{ needs.prepare.outputs.revision }} ))
+                  echo "version=${MAJOR}.${MINOR}.${BUILD}.0" >> $GITHUB_OUTPUT
+
             - name: Apply app version
               uses: ./.github/actions/apply-version
               with:
-                  version: ${{ needs.prepare.outputs.version }}
+                  version: ${{ steps.msix-version.outputs.version }}
                   staging: "true"
 
             - name: Build MSIX bundle

@@ -1,12 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, ChangeEvent, DragEvent } from "react";
+import { useEffect, useMemo, ChangeEvent, DragEvent, useState } from "react";
 import upload from "./UploadButton.module.css";
 
 // Use a simple SVG for the "Upload" icon
 const UploadIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+    >
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
     </svg>
 );
@@ -18,17 +25,16 @@ type Props = {
 
 const UploadButton = ({ setSelectedFile, selectedFile }: Props) => {
     const [dragActive, setDragActive] = useState(false);
-    const [preview, setPreview] = useState<string | undefined>();
+
+    const preview = useMemo(
+        () => (selectedFile ? URL.createObjectURL(selectedFile) : undefined),
+        [selectedFile],
+    );
 
     useEffect(() => {
-        if (!selectedFile) {
-            setPreview(undefined);
-            return;
-        }
-        const objectUrl = URL.createObjectURL(selectedFile);
-        setPreview(objectUrl);
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [selectedFile]);
+        if (!preview) return;
+        return () => URL.revokeObjectURL(preview);
+    }, [preview]);
 
     const handleFile = (file: File) => {
         if (file.type.startsWith("image/")) {

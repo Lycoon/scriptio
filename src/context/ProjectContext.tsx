@@ -333,6 +333,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         };
     }, [ydoc]);
 
+    const updateScreenplay = useCallback((newScreenplay: Screenplay) => {
+        setScreenplay(newScreenplay);
+    }, []);
+
+    const updateScenes = useCallback((newScenes: Scene[]) => {
+        setScenes(newScenes);
+    }, []);
+
+    const updateCharacters = useCallback((newCharacters: CharacterMap) => {
+        setCharacters(newCharacters);
+    }, []);
+
+    const updateLocations = useCallback((newLocations: LocationMap) => {
+        setLocations(newLocations);
+    }, []);
+
     useEffect(() => {
         if (!repository) return;
 
@@ -477,7 +493,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             unsubscribeMetadata();
             unsubscribeShelf();
         };
-    }, [repository]);
+    }, [repository, updateCharacters, updateLocations, updateScenes, updateScreenplay]);
 
     // Seed Yjs metadata from the database project record if not yet set
     useEffect(() => {
@@ -531,22 +547,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     const updateEditor = useCallback((newEditor: Editor | null) => {
         setEditor(newEditor);
-    }, []);
-
-    const updateScreenplay = useCallback((newScreenplay: Screenplay) => {
-        setScreenplay(newScreenplay);
-    }, []);
-
-    const updateScenes = useCallback((newScenes: Scene[]) => {
-        setScenes(newScenes);
-    }, []);
-
-    const updateCharacters = useCallback((newCharacters: CharacterMap) => {
-        setCharacters(newCharacters);
-    }, []);
-
-    const updateLocations = useCallback((newLocations: LocationMap) => {
-        setLocations(newLocations);
     }, []);
 
     const setSelectedElement = useCallback((element: ScreenplayElement) => {

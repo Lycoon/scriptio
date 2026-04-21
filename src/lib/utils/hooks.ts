@@ -7,10 +7,10 @@ import { editUserSettings } from "./requests";
 import { readLocalSettings, writeLocalSettings, DEFAULT_LOCAL_SETTINGS } from "./local-settings";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { isPage, Page } from "./enums";
-import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { KeyBindingMap, tinykeys } from "tinykeys";
 import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProjectRole } from "@prisma/client";
 import { isTauri } from "@tauri-apps/api/core";
 
@@ -74,12 +74,6 @@ const useDesktop = (): boolean => {
     return isDesktop;
 };
 
-interface StateResult<T> {
-    data?: T;
-    isLoading: boolean;
-    error?: any;
-    mutate?: (data?: T, shouldRevalidate?: boolean) => Promise<T | undefined>;
-}
 
 const useProjectIdFromUrl = () => {
     const searchParams = useSearchParams();
@@ -164,8 +158,8 @@ const useSettings = () => {
 
     const mutate = useCallback(
         (data?: UserSettings, revalidate?: boolean) => {
-            if (!isAuthenticated) return mutateLocal(data, revalidate as any);
-            return swrMutate(data, revalidate as any);
+            if (!isAuthenticated) return mutateLocal(data, { revalidate });
+            return swrMutate(data, { revalidate });
         },
         [isAuthenticated, mutateLocal, swrMutate],
     );
@@ -357,7 +351,7 @@ const useProjectMembership = () => {
         if (data && !isLoading) {
             updateProject(data);
         }
-    }, [data]);
+    }, [data, isLoading, updateProject]);
 
     // Treat as locally accessible: explicitly local-only, or any cached project when offline
     const isLocalAccessible = isLocalOnly === true || (!isAuthenticated && !isUserLoading && isCachedLocally === true);
@@ -376,7 +370,7 @@ const useProjectInvites = (projectId: string | undefined) => {
 };
 
 const useProjectCollaborators = (projectId: string | undefined) => {
-    const { data, isLoading, mutate } = useSWR<any[]>(projectId ? `/api/projects/${projectId}/members` : null);
+    const { data, isLoading, mutate } = useSWR<Collaborator[]>(projectId ? `/api/projects/${projectId}/members` : null);
     return { collaborators: data || [], isLoading, mutate };
 };
 

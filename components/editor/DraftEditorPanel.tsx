@@ -26,7 +26,7 @@ const DraftEditorPanel = ({ isVisible }: { isVisible: boolean }) => {
     const config = useMemo(() => {
         if (!activeShelfVersion) return null;
         return createShelfEditorConfig(activeShelfVersion.nodeId, activeShelfVersion.versionId);
-    }, [activeShelfVersion?.nodeId, activeShelfVersion?.versionId]);
+    }, [activeShelfVersion]);
 
     const handleEditorCreated = useCallback(
         (editor: import("@tiptap/react").Editor | null) => {

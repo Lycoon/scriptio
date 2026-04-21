@@ -3,7 +3,7 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ConnectionStatus } from "@src/lib/utils/enums";
-import { useCookieUser, useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
+import { useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import { redirectHome } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -95,7 +95,6 @@ const ProjectNavbar = () => {
     const [isSavesOpen, setIsSavesOpen] = useState(false);
     const isLocalEdit = useRef(false);
 
-    const { user } = useCookieUser();
     const { isPro } = useIsPro();
     const projectId = useProjectIdFromUrl();
 

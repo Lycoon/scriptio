@@ -89,7 +89,7 @@ const ExportProject = () => {
         const authorEmail = user?.email || "Unknown";
         const projectAuthor = membership?.project.author || localAuthor || undefined;
 
-        let baseOptions: BaseExportOptions = {
+        const baseOptions: BaseExportOptions = {
             title: projectTitle,
             author: authorEmail,
             projectAuthor,
@@ -122,13 +122,13 @@ const ExportProject = () => {
                 editorElement: editor?.view?.dom,
                 titlePageElement: titlePageEditor?.view?.dom,
             };
-            await adapter.export(ydoc, pdfOptions as any);
+            await adapter.export(ydoc, pdfOptions as BaseExportOptions);
         } else if (format === ExportFormat.SCRIPTIO) {
             const scriptioOptions: ScriptioExportOptions = {
                 ...baseOptions,
                 readable: readableExport,
             };
-            await adapter.export(ydoc, scriptioOptions as any);
+            await adapter.export(ydoc, scriptioOptions as BaseExportOptions);
         } else {
             await adapter.export(ydoc, baseOptions);
         }

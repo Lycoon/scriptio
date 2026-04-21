@@ -38,13 +38,19 @@ const BoardCard = ({
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [localTitle, setLocalTitle] = useState(card.title);
     const [localDescription, setLocalDescription] = useState(card.description);
+    const [prevTitle, setPrevTitle] = useState(card.title);
+    const [prevDescription, setPrevDescription] = useState(card.description);
     const dragOffset = useRef({ x: 0, y: 0 });
     const resizeStart = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
-    useEffect(() => {
+    if (prevTitle !== card.title) {
+        setPrevTitle(card.title);
         setLocalTitle(card.title);
+    }
+    if (prevDescription !== card.description) {
+        setPrevDescription(card.description);
         setLocalDescription(card.description);
-    }, [card.title, card.description]);
+    }
 
     const snapToGrid = useCallback(
         (value: number) => {

@@ -17,7 +17,7 @@ async function forwardToWorker(
     projectId: string,
     method: string,
     path: string,
-    body?: any,
+    body?: unknown,
 ): Promise<Response> {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
     const token = await new SignJWT({ type: "admin-action", projectId })
