@@ -10,7 +10,7 @@ import { writeYjsDocumentLocally } from "@src/lib/persistence/y-local-provider";
 import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
 import { ScreenplaySchema } from "@src/lib/screenplay/editor";
 import { TitlePageSchema } from "@src/lib/titlepage/editor";
-import { Editor, JSONContent } from "@tiptap/react";
+import { Editor } from "@tiptap/react";
 import { createProject } from "@src/lib/utils/requests";
 import { CreateProjectBody } from "@src/lib/utils/api-bodies";
 import { ApiResponse } from "@src/lib/utils/api-utils";

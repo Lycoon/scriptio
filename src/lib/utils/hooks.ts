@@ -70,12 +70,7 @@ const useDraggable = (initialPosition?: Position): UseDraggableReturn => {
 };
 
 const useDesktop = (): boolean => {
-    const [isDesktop, setIsDesktop] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (window.__TAURI__) setIsDesktop(true);
-    }, []);
-
+    const [isDesktop] = useState<boolean>(() => typeof window !== "undefined" && !!window.__TAURI__);
     return isDesktop;
 };
 
@@ -88,14 +83,7 @@ interface StateResult<T> {
 
 const useProjectIdFromUrl = () => {
     const searchParams = useSearchParams();
-    const [projectId, setProjectId] = useState<string>("");
-
-    useEffect(() => {
-        const projectId = searchParams.get("projectId");
-        if (projectId) setProjectId(projectId as string);
-    }, [searchParams]);
-
-    return projectId;
+    return searchParams.get("projectId") ?? "";
 };
 
 const useUser = () => {
@@ -394,23 +382,11 @@ const useProjectCollaborators = (projectId: string | undefined) => {
 
 const usePage = (): Page | undefined => {
     const pathname = usePathname();
-    const [page, setPage] = useState<Page | undefined>(undefined);
-
-    useEffect(() => {
-        if (!pathname) return;
-
-        const segments = pathname.split("/").filter(Boolean);
-        if (segments.length === 0) {
-            setPage("index");
-            return;
-        }
-
-        const lastSegment = segments[segments.length - 1];
-        if (isPage(lastSegment)) setPage(lastSegment as Page);
-        else setPage("index");
-    }, [pathname]);
-
-    return page;
+    if (!pathname) return undefined;
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length === 0) return "index";
+    const lastSegment = segments[segments.length - 1];
+    return isPage(lastSegment) ? (lastSegment as Page) : "index";
 };
 
 export const useEffectiveKeybinds = (userShortcuts: Record<string, string> | undefined) => {

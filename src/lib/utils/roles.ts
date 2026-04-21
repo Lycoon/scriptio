@@ -17,7 +17,7 @@ export function hasRoleOrGreater(userRole: ProjectRole, requiredRole: ProjectRol
     return userLevel >= requiredLevel;
 }
 
-export function isValid(role: any): boolean {
+export function isValid(role: unknown): boolean {
     if (typeof role === "string") return Object.keys(ROLES).includes(role);
     return false;
 }

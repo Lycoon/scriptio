@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import * as Y from "yjs";
 import { Comment, CommentReply } from "@src/lib/utils/types";
 import type { ProjectRepository } from "@src/lib/project/project-repository";
@@ -21,10 +21,9 @@ export interface DocumentCommentOps {
  * When commentsMap is null all state is empty and all ops are no-ops.
  */
 export const useDocumentComments = (
-    commentsMap: Y.Map<any> | null | undefined,
+    commentsMap: Y.Map<Comment> | null | undefined,
     repository: ProjectRepository | null,
 ): DocumentCommentOps => {
-    const [comments, setComments] = useState<Comment[]>([]);
     const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
 
     // Refs so CRUD callbacks do not need to be recreated on every map/repo change
@@ -34,19 +33,24 @@ export const useDocumentComments = (
     const repoRef = useRef(repository);
     useEffect(() => { repoRef.current = repository; }, [repository]);
 
-    // Observe the Y.Map and drive local comment state
-    useEffect(() => {
-        if (!commentsMap) {
-            setComments([]);
-            return;
-        }
-        setComments(Object.values(commentsMap.toJSON() as Record<string, Comment>));
-        const observer = () => {
-            setComments(Object.values(commentsMap.toJSON() as Record<string, Comment>));
-        };
-        commentsMap.observe(observer);
-        return () => commentsMap.unobserve(observer);
-    }, [commentsMap]);
+    const commentsCache = useRef<Comment[]>([]);
+    const comments = useSyncExternalStore(
+        useCallback((callback: () => void) => {
+            if (!commentsMap) {
+                commentsCache.current = [];
+                return () => {};
+            }
+            commentsCache.current = Object.values(commentsMap.toJSON() as Record<string, Comment>);
+            const observer = () => {
+                commentsCache.current = Object.values(commentsMap.toJSON() as Record<string, Comment>);
+                callback();
+            };
+            commentsMap.observe(observer);
+            return () => commentsMap.unobserve(observer);
+        }, [commentsMap]),
+        () => commentsCache.current,
+        () => [],
+    );
 
     const addComment = useCallback((partial: Omit<Comment, "id">): string => {
         const repo = repoRef.current;

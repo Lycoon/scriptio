@@ -1,6 +1,13 @@
 import type { SpellWorkerRequest, SpellWorkerResponse } from "./spellcheck-types";
 
-let hunspell: any = null;
+interface HunspellInstance {
+    spell: (word: string) => boolean;
+    suggest: (word: string) => string[];
+    addWord: (word: string) => void;
+    removeWord: (word: string) => void;
+}
+
+let hunspell: HunspellInstance | null = null;
 
 function post(msg: SpellWorkerResponse) {
     self.postMessage(msg);

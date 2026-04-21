@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { getRandomColor } from "@src/lib/utils/misc";
 import { getCloudToken } from "../utils/requests";
 import { JSONContent } from "@tiptap/react";
@@ -19,10 +19,10 @@ import type { YjsLocalProvider } from "../persistence/y-local-provider";
 
 // Lazy re-export repository for convenient access (avoid loading yjs at module level)
 export const getProjectRepository = async () => {
-    const module = await import("./project-repository");
+    const mod = await import("./project-repository");
     return {
-        ProjectRepository: module.ProjectRepository,
-        createProjectRepository: module.createProjectRepository,
+        ProjectRepository: mod.ProjectRepository,
+        createProjectRepository: mod.createProjectRepository,
     };
 };
 
@@ -186,37 +186,13 @@ export interface TypedMap<T extends Record<string, unknown>> extends Omit<Y.Map<
 // -------------------------------- //
 
 // Cache for dynamically imported modules to avoid multiple imports
-let yjsModule: typeof import("yjs") | null = null;
 let yProtocolsModule: typeof import("y-protocols/awareness") | null = null;
-let yProsemirrorModule: typeof import("y-prosemirror") | null = null;
-let screenplayEditorModule: typeof import("../screenplay/editor") | null = null;
-
-async function getYjs() {
-    if (!yjsModule) {
-        yjsModule = await import("yjs");
-    }
-    return yjsModule;
-}
 
 async function getYProtocols() {
     if (!yProtocolsModule) {
         yProtocolsModule = await import("y-protocols/awareness");
     }
     return yProtocolsModule;
-}
-
-async function getYProsemirror() {
-    if (!yProsemirrorModule) {
-        yProsemirrorModule = await import("y-prosemirror");
-    }
-    return yProsemirrorModule;
-}
-
-async function getScreenplayEditor() {
-    if (!screenplayEditorModule) {
-        screenplayEditorModule = await import("../screenplay/editor");
-    }
-    return screenplayEditorModule;
 }
 
 /**
@@ -431,8 +407,8 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [isCloudSynced, setIsCloudSynced] = useState(false);
-    const [isLockedByServer, setIsLockedByServer] = useState(false);
-    const [isSessionReplaced, setIsSessionReplaced] = useState(false);
+    const [isLockedByServer] = useState(false);
+    const [isSessionReplaced] = useState(false);
     const [isProjectUnavailable, setIsProjectUnavailable] = useState(false);
 
     const isMountedRef = useRef(true);
@@ -693,13 +669,17 @@ export const useProjectYjs = ({
     isReady: boolean;
     refreshAndReconnect: () => Promise<void>;
 } => {
+    const [fallback] = useState(() => ({
+        name: `User_${Math.floor(Math.random() * 1000)}`,
+        color: getRandomColor(),
+    }));
     const userInfo = useMemo<UserInfo>(
         () => ({
-            name: userName || `User_${Math.floor(Math.random() * 1000)}`,
-            color: userColor || getRandomColor(),
+            name: userName || fallback.name,
+            color: userColor || fallback.color,
             userId,
         }),
-        [userName, userColor, userId],
+        [userName, userColor, userId, fallback.name, fallback.color],
     );
 
     const { ydoc, isLocalReady } = useLocalPersistence(projectId);
@@ -742,67 +722,53 @@ export const useProjectYjs = ({
 /**
  * Hook to observe a Y.Map and re-render on changes
  */
+const ymapToMap = <T>(ymap: Y.Map<T>): Map<string, T> => {
+    const result = new Map<string, T>();
+    ymap.forEach((value, key) => result.set(key, value));
+    return result;
+};
+
 export const useYMap = <T>(ymap: Y.Map<T> | null): Map<string, T> => {
-    const [state, setState] = useState<Map<string, T>>(new Map());
-
-    useEffect(() => {
-        if (!ymap) {
-            setState(new Map());
-            return;
-        }
-
-        // Initial state
-        const initialState = new Map<string, T>();
-        ymap.forEach((value, key) => {
-            initialState.set(key, value);
-        });
-        setState(initialState);
-
-        // Observe changes
-        const observer = () => {
-            const newState = new Map<string, T>();
-            ymap.forEach((value, key) => {
-                newState.set(key, value);
-            });
-            setState(newState);
-        };
-
-        ymap.observe(observer);
-
-        return () => {
-            ymap.unobserve(observer);
-        };
-    }, [ymap]);
-
-    return state;
+    const cache = useRef<Map<string, T>>(new Map());
+    return useSyncExternalStore(
+        useCallback((callback: () => void) => {
+            if (!ymap) {
+                cache.current = new Map();
+                return () => {};
+            }
+            cache.current = ymapToMap(ymap);
+            const observer = () => {
+                cache.current = ymapToMap(ymap);
+                callback();
+            };
+            ymap.observe(observer);
+            return () => ymap.unobserve(observer);
+        }, [ymap]),
+        () => cache.current,
+        () => new Map(),
+    );
 };
 
 /**
  * Hook to observe a Y.Array and re-render on changes
  */
 export const useYArray = <T>(yarray: Y.Array<T> | null): T[] => {
-    const [state, setState] = useState<T[]>([]);
-
-    useEffect(() => {
-        if (!yarray) {
-            setState([]);
-            return;
-        }
-
-        // Initial state
-        setState(yarray.toArray());
-
-        // Observe changes
-        const observer = () => {
-            setState(yarray.toArray());
-        };
-
-        yarray.observe(observer);
-
-        return () => {
-            yarray.unobserve(observer);
-        };
-    }, [yarray]);
-
-    return state;
+    const cache = useRef<T[]>([]);
+    return useSyncExternalStore(
+        useCallback((callback: () => void) => {
+            if (!yarray) {
+                cache.current = [];
+                return () => {};
+            }
+            cache.current = yarray.toArray();
+            const observer = () => {
+                cache.current = yarray.toArray();
+                callback();
+            };
+            yarray.observe(observer);
+            return () => yarray.unobserve(observer);
+        }, [yarray]),
+        () => cache.current,
+        () => [],
+    );
 };

@@ -3,6 +3,7 @@ import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { ProjectData, ProjectState } from "@src/lib/project/project-state";
 import { PageFormat } from "@src/lib/utils/enums";
 import { getFontForCodePoint, ScriptFont } from "./pdf-utils";
+import type { TextRun } from "./pdf.worker";
 import { BASE_URL } from "@src/lib/utils/constants";
 import { PAGE_SIZES } from "@src/lib/screenplay/extensions/pagination-extension";
 
@@ -120,7 +121,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         });
     }
 
-    convertFrom(_rawContent: ArrayBuffer): Partial<ProjectData> {
+    convertFrom(_: ArrayBuffer): Partial<ProjectData> {
         throw new Error("Method not implemented.");
     }
 
@@ -334,7 +335,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         const uppercase = getComputedStyle(el).textTransform === "uppercase";
 
         let currentLine: VisualLine | null = null;
-        let currentRun: any | null = null;
+        let currentRun: TextRun | null = null;
         let previousY = -1;
 
         let textNode: Text | null;

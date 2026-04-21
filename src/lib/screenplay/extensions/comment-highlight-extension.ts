@@ -1,4 +1,5 @@
 import { Editor, Mark, mergeAttributes } from "@tiptap/core";
+import { Mark as PMMark, Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
@@ -12,7 +13,7 @@ declare module "@tiptap/core" {
 }
 
 export type CommentOptions = {
-    HTMLAttributes: Record<string, any>;
+    HTMLAttributes: Record<string, unknown>;
     onCommentActivated: (commentId: string | null) => void;
 };
 
@@ -101,7 +102,7 @@ export const CommentMark = Mark.create<CommentOptions, CommentStorage>({
                 ({ tr, dispatch }) => {
                     if (!commentId) return false;
 
-                    const marksToRemove: { mark: any; from: number; to: number }[] = [];
+                    const marksToRemove: { mark: PMMark; from: number; to: number }[] = [];
 
                     tr.doc.descendants((node, pos) => {
                         const commentMark = node.marks.find(
@@ -133,14 +134,14 @@ export const CommentMark = Mark.create<CommentOptions, CommentStorage>({
          * Compute decorations for the active comment.
          * Only called when activeCommentId changes or document changes.
          */
-        function computeActiveCommentDecorations(doc: any, activeId: string | null): DecorationSet {
+        function computeActiveCommentDecorations(doc: Node, activeId: string | null): DecorationSet {
             if (!activeId) return DecorationSet.empty;
 
             const decorations: Decoration[] = [];
 
-            doc.descendants((node: any, pos: number) => {
+            doc.descendants((node: Node, pos: number) => {
                 const commentMark = node.marks.find(
-                    (mark: any) => mark.type.name === "comment" && mark.attrs.commentId === activeId,
+                    (mark: PMMark) => mark.type.name === "comment" && mark.attrs.commentId === activeId,
                 );
                 if (commentMark) {
                     decorations.push(

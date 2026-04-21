@@ -1,4 +1,5 @@
 import { Editor, getSchema, JSONContent } from "@tiptap/react";
+import { Mark } from "@tiptap/pm/model";
 import { ScreenplayElement, Style, TitlePageElement } from "../utils/enums";
 
 import Document from "@tiptap/extension-document";
@@ -116,9 +117,9 @@ export const replaceScreenplay = (editor: Editor, screenplay: JSONContent[]) => 
     });
 };
 
-export const getStylesFromMarks = (marks: any[]): Style => {
+export const getStylesFromMarks = (marks: Mark[]): Style => {
     let style = Style.None;
-    marks.forEach((mark: any) => {
+    marks.forEach((mark: Mark) => {
         const styleClass = mark.attrs.class;
         if (styleClass === "bold") style |= Style.Bold;
         if (styleClass === "italic") style |= Style.Italic;

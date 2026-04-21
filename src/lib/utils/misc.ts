@@ -48,7 +48,7 @@ export const cropImageBase64 = async (file: File, width: number, height: number)
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, width, height);
 
-    let ratio = Math.min(width / img.width, height / img.height);
+    const ratio = Math.min(width / img.width, height / img.height);
     ctx?.drawImage(img, 0, 0, img.width * ratio, img.height * ratio);
 
     return ctx.canvas.toDataURL("image/jpeg") || "data:,";
@@ -75,7 +75,7 @@ export const capitalizeFirstLetter = (str: string) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
-export const isEmptyObject = (obj: Object) => {
+export const isEmptyObject = (obj: object) => {
     return Object.keys(obj).length === 0;
 };
 

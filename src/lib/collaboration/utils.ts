@@ -7,26 +7,50 @@ import * as encoding from "lib0/encoding";
 import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
 
-import { getCollabHttpUrl } from "../utils/requests";
 
-declare const window: any;
+declare const window: Window & typeof globalThis;
 
 /**
  * This custom WebsocketProvider enables adaptive throttle depending on how many collaborators are currently
  * working on the project to save bandwidth. While updates are more sparse for a single-user, they are more
  * frequent during multi-user editing.
  */
+type WebsocketProviderOptions = {
+    connect?: boolean;
+    awareness?: awarenessProtocol.Awareness;
+    params?: Record<string, string>;
+    WebSocketPolyfill?: typeof WebSocket;
+    resyncInterval?: number;
+    maxBackoffTime?: number;
+    disableBc?: boolean;
+};
+
+type WSInternals = {
+    _updateHandler: (update: Uint8Array, origin: unknown) => void;
+    _awarenessUpdateHandler: (changes: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void;
+    messageHandlers: Array<(encoder: encoding.Encoder, ...rest: unknown[]) => void>;
+    ws: WebSocket | null;
+    bcconnected: boolean;
+    bcChannel: string;
+};
+
 export class ThrottledWebsocketProvider extends WebsocketProvider {
     on(event: "document-restored", listener: () => void): this;
     on(event: Parameters<WebsocketProvider["on"]>[0], listener: Parameters<WebsocketProvider["on"]>[1]): this;
-    on(event: string, listener: (...args: any[]) => void): this {
-        return super.on(event as any, listener as any);
+    on(event: string, listener: (...args: unknown[]) => void): this {
+        return super.on(
+            event as unknown as Parameters<WebsocketProvider["on"]>[0],
+            listener as unknown as Parameters<WebsocketProvider["on"]>[1],
+        ) as unknown as this;
     }
 
     emit(event: "document-restored", args: []): this;
     emit(event: Parameters<WebsocketProvider["emit"]>[0], args: Parameters<WebsocketProvider["emit"]>[1]): this;
-    emit(event: string, args: any[]): this {
-        super.emit(event as any, args as any);
+    emit(event: string, args: unknown[]): this {
+        super.emit(
+            event as unknown as Parameters<WebsocketProvider["emit"]>[0],
+            args as unknown as Parameters<WebsocketProvider["emit"]>[1],
+        );
         return this;
     }
     private updateQueue: Uint8Array[] = [];
@@ -73,7 +97,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         serverUrl: string,
         room: string,
         doc: Y.Doc,
-        options: any & { userInfo?: { name: string; color: string; userId?: string } },
+        options: WebsocketProviderOptions & { userInfo?: { name: string; color: string; userId?: string } },
     ) {
         // Pass connect: false to prevent immediate connection
         // We'll connect after setting up user info
@@ -93,19 +117,15 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         }
 
         // Replace default handlers with throttled versions
-        doc.off("update", (this as any)._updateHandler);
+        doc.off("update", (this as unknown as WSInternals)._updateHandler);
         doc.on("update", this.onThrottledUpdate);
-        this.awareness.off("update", (this as any)._awarenessUpdateHandler);
+        this.awareness.off("update", (this as unknown as WSInternals)._awarenessUpdateHandler);
         this.awareness.on("update", this.onThrottledAwareness);
 
         // Handle awareness query (message type 3 = messageQueryAwareness)
         // When the server requests awareness, immediately send our current state
-        (this as any).messageHandlers[3] = (
+        (this as unknown as WSInternals).messageHandlers[3] = (
             encoder: encoding.Encoder,
-            _decoder: any,
-            _provider: any,
-            _emitSynced: any,
-            _messageType: any,
         ) => {
             this.lastMessageTime = Date.now();
             // Write awareness update to the encoder (y-websocket will send it)
@@ -119,7 +139,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         // Handle ping responses (message type 9)
         // This prevents the default handler from treating it as unknown
         // and updates our message timestamp
-        (this as any).messageHandlers[9] = () => {
+        (this as unknown as WSInternals).messageHandlers[9] = () => {
             this.lastMessageTime = Date.now();
         };
 
@@ -168,24 +188,23 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      * y-websocket doesn't expose close codes, so we need to intercept
      */
     private setupCloseHandler(): void {
-        const provider = this;
         let currentWs: WebSocket | null = null;
 
         const checkAndHookWs = () => {
             // Don't hook if session was already replaced
-            if (provider.isSessionReplaced) return;
+            if (this.isSessionReplaced) return;
 
-            const ws = (provider as any).ws;
+            const ws = (this as unknown as WSInternals).ws;
             if (ws && ws !== currentWs) {
                 currentWs = ws;
                 const originalClose = ws.onclose;
                 ws.onclose = (event: CloseEvent) => {
-                    if (event.code === provider.CLOSE_CODE_SESSION_REPLACED) {
-                        provider.handleSessionReplaced();
+                    if (event.code === this.CLOSE_CODE_SESSION_REPLACED) {
+                        this.handleSessionReplaced();
                         return;
                     }
-                    if (event.code === provider.CLOSE_CODE_DOCUMENT_RESTORED) {
-                        provider.handleDocumentRestored();
+                    if (event.code === this.CLOSE_CODE_DOCUMENT_RESTORED) {
+                        this.handleDocumentRestored();
                         return;
                     }
                     if (originalClose) {
@@ -198,7 +217,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         // Hook into new WebSocket connections when status changes
         this.on("status", (event: { status: string }) => {
             // Only hook when connecting, not when already replaced
-            if (event.status === "connecting" && !provider.isSessionReplaced) {
+            if (event.status === "connecting" && !this.isSessionReplaced) {
                 setTimeout(checkAndHookWs, 0);
             }
         });
@@ -376,7 +395,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                     }
                 };
 
-                const onError = (err: any) => {
+                const onError = (err: unknown) => {
                     clearTimeout(timeoutId);
                     cleanup();
                     reject(err);
@@ -582,7 +601,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     /**
      * Handle document updates (throttled)
      */
-    private onThrottledUpdate = (update: Uint8Array, origin: any): void => {
+    private onThrottledUpdate = (update: Uint8Array, origin: unknown): void => {
         if (origin !== this) {
             this.updateQueue.push(update);
         }
@@ -593,7 +612,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      */
     private onThrottledAwareness = (
         { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
-        origin: any,
+        origin: unknown,
     ): void => {
         if (origin !== this) {
             const changedClients = [...added, ...updated, ...removed];
@@ -672,8 +691,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                     ws.send(message);
                 }
 
-                if ((this as any).bcconnected) {
-                    bc.publish((this as any).bcChannel, message, this);
+                if ((this as unknown as WSInternals).bcconnected) {
+                    bc.publish((this as unknown as WSInternals).bcChannel, message, this);
                 }
             } catch (e) {
                 console.error("[WS] Failed to send document updates:", e);
@@ -698,8 +717,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                     ws.send(message);
                 }
 
-                if ((this as any).bcconnected) {
-                    bc.publish((this as any).bcChannel, message, this);
+                if ((this as unknown as WSInternals).bcconnected) {
+                    bc.publish((this as unknown as WSInternals).bcChannel, message, this);
                 }
             } catch (e) {
                 console.error("[WS] Failed to send awareness updates:", e);

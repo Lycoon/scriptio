@@ -39,9 +39,8 @@ export type ProjectInvite = Prisma.ProjectInvitationGetPayload<{
     };
 }>;
 
-const projectSelect = projectMembershipSelect.project.select;
 type RawProject = Prisma.ProjectGetPayload<{
-    select: typeof projectSelect;
+    select: typeof projectMembershipSelect.project.select;
 }>;
 
 type RawMembership = {

@@ -1,22 +1,28 @@
 /// <reference types="@cloudflare/workers-types" />
-import { jwtVerify } from "jose";
+import { jwtVerify, JWTPayload } from "jose";
 import { Env } from "./types";
 import { ScreenplayRoom } from "./room";
 
-async function getVerifiedPayload(token: string | null, secret: string): Promise<any | null> {
+interface DecodedToken extends JWTPayload {
+    type?: string;
+    projectId?: string;
+    userId?: string;
+}
+
+async function getVerifiedPayload(token: string | null, secret: string): Promise<DecodedToken | null> {
     if (!token) return null;
     try {
         const secretKey = new TextEncoder().encode(secret);
         const { payload } = await jwtVerify(token, secretKey);
-        return payload;
-    } catch (e) {
+        return payload as DecodedToken;
+    } catch {
         return null;
     }
 }
 
 export { ScreenplayRoom };
 
-export default {
+const worker = {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
 
@@ -104,3 +110,5 @@ export default {
         return new Response("Not Found", { status: 404 });
     },
 };
+
+export default worker;

@@ -1,5 +1,7 @@
 import { Extension } from "@tiptap/core";
+import { Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { ReplaceStep, Step } from "@tiptap/pm/transform";
 import { ScreenplayElement } from "../../utils/enums";
 
 const fountainInputRulesPluginKey = new PluginKey("fountainInputRules");
@@ -36,7 +38,7 @@ function isScreenplayNode(nodeName: string): boolean {
  * Get the current element type from a node.
  * The type name IS the element type.
  */
-function getNodeElementType(node: any): string {
+function getNodeElementType(node: Node): string {
     return node.type.name;
 }
 
@@ -69,14 +71,14 @@ export const FountainExtension = Extension.create<FountainInputRulesOptions>({
     },
 
     addProseMirrorPlugins() {
-        const extension = this;
+        const extensionOptions = this.options;
 
         return [
             new Plugin({
                 key: fountainInputRulesPluginKey,
 
                 appendTransaction(transactions, _oldState, newState) {
-                    if (!extension.options.enabled) return null;
+                    if (!extensionOptions.enabled) return null;
 
                     // Only process if there was a document change
                     const docChanged = transactions.some((tr) => tr.docChanged);
@@ -148,9 +150,9 @@ export const FountainExtension = Extension.create<FountainInputRulesOptions>({
                     // Only trigger on Enter/newline or when the line is complete
                     // We detect this by checking if the last transaction was a text input
                     const lastTransaction = transactions[transactions.length - 1];
-                    const isTextInput = lastTransaction?.steps.some((step: any) => {
-                        return step.slice?.content?.firstChild?.text !== undefined;
-                    });
+                    const isTextInput = lastTransaction?.steps.some(
+                        (step: Step) => step instanceof ReplaceStep && step.slice.content.firstChild?.text !== undefined,
+                    );
 
                     // Only convert to character if:
                     // 1. Text is all uppercase

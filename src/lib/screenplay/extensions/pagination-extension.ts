@@ -2,6 +2,7 @@ import { DOMSerializer } from "@node_modules/prosemirror-model/dist";
 import { CircularBuffer } from "@src/lib/utils/circular-buffer";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { Editor, Extension } from "@tiptap/core";
+import { Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
@@ -343,7 +344,7 @@ function createLastPageWidget(pagenum: number, freespace: number, options: Pagin
 }
 
 function buildDecorations(
-    doc: any,
+    doc: Node,
     breaks: PageBreakInfo[],
     lastPageFreespace: number,
     options: PaginationOptions,
@@ -405,7 +406,7 @@ const getHTMLHeight = (
         return heightCache.get(cacheKey)!;
     }
 
-    let testDiv = setupTestDiv(editorDom, options);
+    const testDiv = setupTestDiv(editorDom, options);
     testDiv.innerHTML = domNode.outerHTML;
 
     const rect = testDiv.getBoundingClientRect();
@@ -417,7 +418,7 @@ const getHTMLHeight = (
     return height;
 };
 
-const setupTestDiv = (editorDom: HTMLElement, options: PaginationOptions): HTMLElement => {
+const setupTestDiv = (editorDom: HTMLElement, _options: PaginationOptions): HTMLElement => {
     let testDiv = document.getElementById("pagination-test-div");
     if (!testDiv) {
         testDiv = document.createElement("div");
@@ -494,7 +495,7 @@ interface SplitResult {
  * Returns null when no valid split exists.
  */
 function trySplitNode(
-    node: any, // ProseMirror Node
+    node: Node,
     nodeDocPos: number,
     freespace: number,
     nodeElement: HTMLElement,
@@ -504,7 +505,7 @@ function trySplitNode(
     if (!sentenceSegmenter) return null;
 
     const text = node.textContent as string;
-    const sentences = Array.from(sentenceSegmenter.segment(text), (s: any) => s.segment as string);
+    const sentences = Array.from(sentenceSegmenter.segment(text), (s: Intl.SegmentData) => s.segment);
 
     // A single sentence cannot be split at a boundary — move the whole node.
     if (sentences.length <= 1) return null;
@@ -554,7 +555,7 @@ interface PaginationState {
     lastPageFreespace: number;
 }
 
-const createPaginationPlugin = (extension: any) =>
+const createPaginationPlugin = (extension: { options: PaginationOptions; editor: Editor }) =>
     new Plugin({
         key: paginationKey,
         state: {
@@ -603,7 +604,7 @@ const createPaginationPlugin = (extension: any) =>
                 mappedOldBreaks.forEach((b, i) => oldBreakByPos.set(b.pos, { info: b, index: i }));
 
                 // --- Single pass: measure heights + compute page breaks ---
-                let editor = extension.editor as Editor;
+                const editor = extension.editor;
                 if (!editor.isInitialized || !extension.editor.view?.dom) return value;
 
                 const editorDOM = extension.editor.view.dom as HTMLElement;

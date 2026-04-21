@@ -4,6 +4,27 @@
 
 "use strict";
 
+interface FountainToken {
+    type: string;
+    text?: string;
+    scene_number?: string;
+    depth?: number;
+    dual?: "left" | "right";
+}
+
+interface FountainOutput {
+    title?: string;
+    html: { title_page: string; script: string };
+    tokens?: FountainToken[];
+}
+
+type FountainCallback = (output: FountainOutput) => unknown;
+
+interface FountainParser {
+    (script: string, callback?: FountainCallback): FountainOutput;
+    parse: (script: string, toks?: boolean | FountainCallback, callback?: FountainCallback) => FountainOutput;
+}
+
 const regex = {
     title_page: /^((?:title|credit|author[s]?|source|notes|draft date|date|contact|copyright)\:)/gim,
 
@@ -52,17 +73,17 @@ const lexer = function (script: string) {
 };
 
 const tokenize = function (script: string) {
-    var src = lexer(script).split(regex.splitter),
-        i = src.length,
-        line: string,
-        match: RegExpMatchArray | null,
-        parts: string[],
-        text: string,
-        meta: string | undefined,
-        x: number,
-        xlen: number,
-        dual: boolean | undefined,
-        tokens: any[] = [];
+    const src = lexer(script).split(regex.splitter);
+    let i = src.length;
+    let line: string;
+    let match: RegExpMatchArray | null;
+    let parts: string[];
+    let text: string;
+    let meta: string | undefined;
+    let x: number;
+    let xlen: number;
+    let dual: boolean | undefined;
+    const tokens: FountainToken[] = [];
 
     while (i--) {
         line = src[i];
@@ -85,9 +106,9 @@ const tokenize = function (script: string) {
 
         // title page
         if (regex.title_page.test(line)) {
-            match = line.replace(regex.title_page, "\n$1").split(regex.splitter).reverse() as any;
-            for (x = 0, xlen = (match as any[]).length; x < xlen; x++) {
-                parts = (match as any[])[x].replace(regex.cleaner, "").split(/\:\n*/);
+            const titleParts = line.replace(regex.title_page, "\n$1").split(regex.splitter).reverse();
+            for (x = 0, xlen = titleParts.length; x < xlen; x++) {
+                parts = titleParts[x].replace(regex.cleaner, "").split(/\:\n*/);
                 tokens.push({
                     type: parts[0].trim().toLowerCase().replace(" ", "_"),
                     text: parts[1].trim(),
@@ -152,7 +173,7 @@ const tokenize = function (script: string) {
                 }
 
                 // Strip @ prefix for forced character names
-                var characterName = match[1].trim();
+                let characterName = match[1].trim();
                 if (characterName.charAt(0) === "@") characterName = characterName.substring(1);
 
                 // If (CONT'D) is contained in character name, remove it
@@ -215,7 +236,7 @@ const tokenize = function (script: string) {
     return tokens;
 };
 
-const inline: Record<string, any> = {
+const inline: Record<string, string | ((s: string) => string | undefined)> = {
     //note: '<span class="note">$1</span>',
     line_break: "<br />",
 
@@ -233,31 +254,31 @@ inline.lexer = function (s: string) {
         return;
     }
 
-    var styles = [
-            "underline",
-            "italic",
-            "bold",
-            "bold_italic",
-            "italic_underline",
-            "bold_underline",
-            "bold_italic_underline",
-        ],
-        i = styles.length,
-        style: string,
-        match;
+    const styles = [
+        "underline",
+        "italic",
+        "bold",
+        "bold_italic",
+        "italic_underline",
+        "bold_underline",
+        "bold_italic_underline",
+    ];
+    let i = styles.length;
+    let style: string;
+    let match: RegExp;
 
     s = s
-        .replace(regex.note_inline, inline.note)
+        .replace(regex.note_inline, inline.note as string)
         .replace(/\\\*/g, "[star]")
         .replace(/\\_/g, "[underline]")
-        .replace(/\n/g, inline.line_break);
+        .replace(/\n/g, inline.line_break as string);
 
     while (i--) {
         style = styles[i];
-        match = (regex as any)[style];
+        match = (regex as Record<string, RegExp>)[style];
 
         if (match.test(s)) {
-            s = s.replace(match, inline[style]);
+            s = s.replace(match, inline[style] as string);
         }
     }
 
@@ -267,28 +288,28 @@ inline.lexer = function (s: string) {
         .trim();
 };
 
-const parse = function (script: string, toks?: any, callback?: Function) {
+const parse = function (script: string, toks?: boolean | FountainCallback, callback?: FountainCallback): FountainOutput {
     if (callback === undefined && typeof toks === "function") {
         callback = toks;
         toks = undefined;
     }
 
-    var tokens = tokenize(script),
-        i = tokens.length,
-        token,
-        title: string | undefined,
-        title_page: string[] = [],
-        html: string[] = [],
-        output;
+    const tokens = tokenize(script);
+    let i = tokens.length;
+    let token: FountainToken;
+    let title: string | undefined;
+    const title_page: string[] = [];
+    const html: string[] = [];
+    let output: FountainOutput;
 
     while (i--) {
         token = tokens[i];
-        token.text = inline.lexer(token.text);
+        token.text = inline.lexer(token.text ?? "") as string | undefined;
 
         switch (token.type) {
             case "title":
                 title_page.push("<h1>" + token.text + "</h1>");
-                title = token.text.replace("<br />", " ").replace(/<(?:.|\n)*?>/g, "");
+                title = token.text?.replace("<br />", " ").replace(/<(?:.|\n)*?>/g, "");
                 break;
             case "credit":
                 title_page.push('<p class="credit">' + token.text + "</p>");
@@ -324,7 +345,7 @@ const parse = function (script: string, toks?: any, callback?: Function) {
                 );
                 break;
             case "transition":
-                if (token.text.charAt(token.text.length - 1) === ":") {
+                if (token.text?.charAt(token.text.length - 1) === ":") {
                     token.text = token.text.slice(0, -1);
                 }
 
@@ -334,10 +355,10 @@ const parse = function (script: string, toks?: any, callback?: Function) {
                 html.push('<p class="character">' + token.text + "</p>");
                 break;
             case "parenthetical":
-                if (token.text.charAt(token.text.length - 1) === ")") {
+                if (token.text?.charAt(token.text.length - 1) === ")") {
                     token.text = token.text.slice(0, -1);
                 }
-                if (token.text.charAt(0) === "(") {
+                if (token.text?.charAt(0) === "(") {
                     token.text = token.text.slice(1);
                 }
                 html.push('<p class="parenthetical">' + token.text + "</p>");
@@ -384,17 +405,17 @@ const parse = function (script: string, toks?: any, callback?: Function) {
     };
 
     if (typeof callback === "function") {
-        return callback(output);
+        return callback(output) as FountainOutput;
     }
 
     return output;
 };
 
-const fountain: any = function (script: string, callback?: Function) {
+const fountain = function (script: string, callback?: FountainCallback): FountainOutput {
     return fountain.parse(script, callback);
-};
+} as FountainParser;
 
-fountain.parse = function (script: string, tokens?: any, callback?: Function) {
+fountain.parse = function (script: string, tokens?: boolean | FountainCallback, callback?: FountainCallback): FountainOutput {
     return parse(script, tokens, callback);
 };
 

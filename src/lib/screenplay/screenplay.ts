@@ -1,10 +1,10 @@
-import { JSONContent, NodeType } from "@tiptap/react";
+import { JSONContent } from "@tiptap/react";
 import { ScreenplayElement } from "../utils/enums";
 
 /* Nodes */
 export type NodeData = {
     type: ScreenplayElement;
-    content: any[]; // contains marks (bold, italic, etc.)
+    content: JSONContent[]; // contains marks (bold, italic, etc.)
     flattenText: string; // contains only text
 };
 

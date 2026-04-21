@@ -35,15 +35,15 @@ export class ScreenplayRoom extends DurableObject {
     // so they're guaranteed to exist before being passed to doc.on/doc.off.
     // (esbuild does not guarantee class-field arrow functions are initialized
     // before the constructor body runs.)
-    private handleDocUpdate!: (update: Uint8Array, origin: any) => void;
-    private handleAwarenessUpdate!: (changes: { added: number[]; updated: number[]; removed: number[] }, origin: any) => void;
+    private handleDocUpdate!: (update: Uint8Array, origin: unknown) => void;
+    private handleAwarenessUpdate!: (changes: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void;
 
     constructor(ctx: DurableObjectState, env: Env) {
         super(ctx, env);
 
         // Initialize handlers at the very top of the constructor so they are
         // definitely assigned before being passed to doc.on / awareness.on.
-        this.handleDocUpdate = (update: Uint8Array, origin: any): void => {
+        this.handleDocUpdate = (update: Uint8Array, origin: unknown): void => {
             const encoder = encoding.createEncoder();
             encoding.writeVarUint(encoder, 0); // messageSync
             syncProtocol.writeUpdate(encoder, update);
@@ -53,7 +53,7 @@ export class ScreenplayRoom extends DurableObject {
             this.markDirty();
         };
 
-        this.handleAwarenessUpdate = ({ added }: { added: number[]; updated: number[]; removed: number[] }, origin: any): void => {
+        this.handleAwarenessUpdate = ({ added }: { added: number[]; updated: number[]; removed: number[] }, origin: unknown): void => {
             if (origin instanceof WebSocket) {
                 const session = this.sessions.get(origin);
                 if (session) {
@@ -68,7 +68,7 @@ export class ScreenplayRoom extends DurableObject {
 
         // Disable the built-in 30s outdated-state cleanup — we manage session
         // lifecycle ourselves via cleanupStaleAwareness (60s timeout).
-        clearInterval((this.awareness as any)._checkInterval);
+        clearInterval((this.awareness as unknown as { _checkInterval: ReturnType<typeof setInterval> })._checkInterval);
         this.awareness.setLocalState(null);
 
         this.sessions = new Map();
@@ -322,7 +322,7 @@ export class ScreenplayRoom extends DurableObject {
                     if (socket.readyState === 1) {
                         socket.close(4000, "Connection stale");
                     }
-                } catch (e) {
+                } catch {
                     // Socket might already be closed
                 }
             }
@@ -470,7 +470,7 @@ export class ScreenplayRoom extends DurableObject {
                     if (existingSocket.readyState === 1) {
                         existingSocket.close(4001, "Session replaced by new connection");
                     }
-                } catch (e) {
+                } catch {
                     // Socket might already be closed
                 }
             }
@@ -624,7 +624,7 @@ export class ScreenplayRoom extends DurableObject {
 
         // 3. Rebuild awareness bound to the new doc.
         this.awareness = new awarenessProtocol.Awareness(this.doc);
-        clearInterval((this.awareness as any)._checkInterval);
+        clearInterval((this.awareness as unknown as { _checkInterval: ReturnType<typeof setInterval> })._checkInterval);
         this.awareness.setLocalState(null);
         this.awareness.on("update", this.handleAwarenessUpdate);
 
@@ -740,7 +740,7 @@ export class ScreenplayRoom extends DurableObject {
         console.log(`[Room] Remaining sessions: ${this.sessions.size}`);
     }
 
-    async webSocketError(ws: WebSocket, error: any): Promise<void> {
+    async webSocketError(ws: WebSocket, error: unknown): Promise<void> {
         console.error("[Room] WebSocket error:", error);
         // The close handler will clean up
     }
