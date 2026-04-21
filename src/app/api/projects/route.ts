@@ -12,7 +12,7 @@ import {
 import { requirePro } from "@src/lib/utils/pro-utils";
 
 import { CreateProjectBodySchema } from "@src/lib/utils/api-bodies";
-import { ApiContext, apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
+import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 export type { CreateProjectBody } from "@src/lib/utils/api-bodies";
 
 /**

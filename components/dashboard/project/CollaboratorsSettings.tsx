@@ -17,6 +17,7 @@ import * as Roles from "@src/lib/utils/roles";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 const MAX_COLLABORATORS = 5;
 
@@ -34,7 +35,11 @@ const CollaboratorsSettings = () => {
         const owner = collaborators.find((c) => c.role === ProjectRole.OWNER);
         const otherMembers = collaborators.filter((c) => c.role !== ProjectRole.OWNER);
 
-        const result: { type: "MEMBER" | "INVITE" | "EMPTY"; data: any; key: string }[] = [];
+        type Slot =
+            | { type: "MEMBER"; data: Collaborator; key: string }
+            | { type: "INVITE"; data: ProjectInvite; key: string }
+            | { type: "EMPTY"; data: null; key: string };
+        const result: Slot[] = [];
 
         if (owner) result.push({ type: "MEMBER", data: owner, key: `member-${owner.user.id}` });
         otherMembers.forEach((m) => result.push({ type: "MEMBER", data: m, key: `member-${m.user.id}` }));
@@ -87,7 +92,7 @@ const CollaboratorsSettings = () => {
                     <div className={styles.proGateBanner}>
                         <Lock size={14} />
                         <span>{t("proRequired")}</span>
-                        <a href="/?settings=Profile" className={styles.proGateLink}>{t("upgrade")}</a>
+                        <Link href="/?settings=Profile" className={styles.proGateLink}>{t("upgrade")}</Link>
                     </div>
                 )}
 

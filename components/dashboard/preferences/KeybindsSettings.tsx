@@ -84,19 +84,16 @@ const KeybindsSettings = () => {
     const { settings, saveSettings } = useSettings();
 
     const t = useTranslations("keybinds");
-    const [userKeybinds, setUserKeybinds] = useState<UserKeybindsMap>({});
+    const [userKeybinds, setUserKeybinds] = useState<UserKeybindsMap>(settings?.keybinds ?? {});
     const [listeningFor, setListeningFor] = useState<string | null>(null);
     const [tempCombo, setTempCombo] = useState<string | null>(null);
     const [hasUpdatedKeybinds, setHasUpdatedKeybinds] = useState(false);
     const tinykeysStopRef = useRef<(() => void) | null>(null);
-
-    useEffect(() => {
-        if (settings && settings.keybinds) {
-            setUserKeybinds(settings.keybinds);
-        } else {
-            setUserKeybinds({});
-        }
-    }, [settings]);
+    const [prevSettings, setPrevSettings] = useState(settings);
+    if (prevSettings !== settings) {
+        setPrevSettings(settings);
+        setUserKeybinds(settings?.keybinds ?? {});
+    }
 
     useEffect(() => {
         if (tinykeysStopRef.current) {
@@ -185,7 +182,7 @@ const KeybindsSettings = () => {
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keydown", onCancel);
         };
-    }, [listeningFor]);
+    }, [listeningFor, saveSettings, t]);
 
     const startListening = (id: string) => {
         setListeningFor(id);

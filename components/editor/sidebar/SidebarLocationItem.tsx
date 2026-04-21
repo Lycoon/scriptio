@@ -7,14 +7,14 @@ import { pasteText } from "@src/lib/screenplay/editor";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { join } from "@src/lib/utils/misc";
 
-import LinkSVG from "@public/images/link.svg";
+import { Link } from "lucide-react";
 import item from "./SidebarItem.module.css";
 
 const SidebarLocationItem = memo(({ location }: LocationContextProps) => {
     const { updateContextMenu } = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
 
-    const handleDropdown = useCallback((e: any) => {
+    const handleDropdown = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         updateContextMenu({
             type: ContextMenuType.LocationItem,
@@ -34,7 +34,7 @@ const SidebarLocationItem = memo(({ location }: LocationContextProps) => {
         <div onContextMenu={handleDropdown} onDoubleClick={handleDoubleClick} className={item.container}>
             <div className={item.data}>
                 <p className={join(item.title, "unselectable")}>{location.name}</p>
-                {location.persistent && <LinkSVG className={item.icon} />}
+                {location.persistent && <Link className={item.icon} size={14} />}
             </div>
         </div>
     );

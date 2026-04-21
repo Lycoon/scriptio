@@ -1,4 +1,4 @@
-import { SignJWT, JWTPayload } from "jose";
+import { SignJWT } from "jose";
 import { createPrivateKey, KeyObject } from "crypto";
 
 interface AppleAuthConfig {
@@ -44,7 +44,7 @@ if (require.main === module || process.argv[1]?.includes("generate-apple-jwt")) 
         privateKey: process.env.AUTH_APPLE_PRIVATE_KEY!,
     };
 
-    const missing = Object.entries(config).filter(([_, v]) => !v);
+    const missing = Object.entries(config).filter(([, v]) => !v);
 
     if (missing.length > 0) {
         console.error(`❌ Missing env vars: ${missing.map((m) => m[0]).join(", ")}`);

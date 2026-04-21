@@ -16,6 +16,7 @@ import {
     Users,
 } from "lucide-react";
 import Footer from "./Footer";
+import Image from "next/image";
 
 export default function HomePageContainer() {
     return (
@@ -34,7 +35,7 @@ export default function HomePageContainer() {
                     FADE IN: A world built for storytellers. CUT TO:
                 </ScriptStripe>
                 <ScriptStripe speed="fast" direction="right">
-                    (V.O.) "It starts with a single page..."
+                    (V.O.) &quot;It starts with a single page...&quot;
                 </ScriptStripe>
                 <ScriptStripe speed="slow" direction="left">
                     CLOSE UP on the keyboard. Fingers flying. DISSOLVE TO:
@@ -47,16 +48,18 @@ export default function HomePageContainer() {
                 <section id="about" className={styles.hero}>
                     {/* Layer 1.1: Preview Image (Behind Content, In Front of Stripes) */}
                     <div className={styles.heroBackgroundWrapper}>
-                        <img
+                        <Image
                             src="/images/preview.png"
                             alt="Scriptio Interface Preview"
+                            width={1920}
+                            height={1080}
                             className={styles.heroBackgroundImage}
                         />
                     </div>
 
                     {/* Layer 1.2: Branding (Logo) */}
                     <div className={styles.heroHeader}>
-                        <img src="/images/scriptio_full.png" alt="Scriptio Logo" className={styles.heroLogo} />
+                        <Image src="/images/scriptio_full.png" alt="Scriptio Logo" width={400} height={80} className={styles.heroLogo} />
                     </div>
 
                     {/* Layer 1.3: Platform CTAs */}
@@ -123,9 +126,11 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <div className={styles.bentoImageWrapper}>
-                                <img
+                                <Image
                                     src="/images/previews/auto-complete.png"
                                     alt="Auto-complete Preview"
+                                    width={1280}
+                                    height={720}
                                     className={styles.bentoImage}
                                 />
                             </div>
@@ -145,9 +150,11 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <div className={styles.bentoImageWrapper}>
-                                <img
+                                <Image
                                     src="/images/previews/auto-complete.png"
                                     alt="Auto-complete Preview"
+                                    width={1280}
+                                    height={720}
                                     className={styles.bentoImage}
                                 />
                             </div>
@@ -166,9 +173,11 @@ export default function HomePageContainer() {
                                     locked into one ecosystem.
                                 </p>
                             </div>
-                            <img
+                            <Image
                                 src="/images/previews/formats.png"
                                 alt="Formats Preview"
+                                width={1280}
+                                height={720}
                                 className={styles.bentoImage}
                             />
                         </div>
@@ -187,9 +196,11 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <div className={styles.bentoImageWrapper}>
-                                <img
+                                <Image
                                     src="/images/previews/search.png"
                                     alt="Search Preview"
+                                    width={1280}
+                                    height={720}
                                     className={styles.bentoImage}
                                 />
                             </div>
@@ -209,9 +220,11 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <div className={styles.bentoImageWrapper}>
-                                <img
+                                <Image
                                     src="/images/previews/search.png"
                                     alt="Search Preview"
+                                    width={1280}
+                                    height={720}
                                     className={styles.bentoImage}
                                 />
                             </div>
@@ -230,7 +243,7 @@ export default function HomePageContainer() {
                                     sessions. Your environment should inspire, not distract.
                                 </p>
                             </div>
-                            <img src="/images/previews/themes.png" alt="Themes Preview" className={styles.bentoImage} />
+                            <Image src="/images/previews/themes.png" alt="Themes Preview" width={1280} height={720} className={styles.bentoImage} />
                         </div>
 
                         {/* Scene Navigation */}
@@ -246,9 +259,11 @@ export default function HomePageContainer() {
                                     scenes, add synopses, and color-code your story structure.
                                 </p>
                             </div>
-                            <img
+                            <Image
                                 src="/images/previews/scene-navigation.png"
                                 alt="Scene Navigation Preview"
+                                width={1280}
+                                height={720}
                                 className={styles.bentoImage}
                             />
                         </div>
@@ -262,13 +277,15 @@ export default function HomePageContainer() {
                                 </div>
                                 <p className={styles.pillarText}>
                                     Rename a character across your entire script in one click. Assign traits and
-                                    descriptions to build rich character profiles. Highlight any character's lines to
+                                    descriptions to build rich character profiles. Highlight any character&apos;s lines to
                                     stay locked in their voice.
                                 </p>
                             </div>
-                            <img
+                            <Image
                                 src="/images/previews/character-highlight.png"
                                 alt="Character Highlight Preview"
+                                width={1280}
+                                height={720}
                                 className={styles.bentoImage}
                             />
                         </div>
@@ -286,9 +303,11 @@ export default function HomePageContainer() {
                                     Scriptio works fully offline, no account required.
                                 </p>
                             </div>
-                            <img
+                            <Image
                                 src="/images/previews/auto-complete.png"
                                 alt="Editor Preview"
+                                width={1280}
+                                height={720}
                                 className={styles.bentoImage}
                             />
                         </div>
@@ -306,9 +325,11 @@ export default function HomePageContainer() {
                                     glance. Data-driven insights to sharpen your story before it hits the screen.
                                 </p>
                             </div>
-                            <img
+                            <Image
                                 src="/images/previews/auto-complete.png"
                                 alt="Editor Preview"
+                                width={1280}
+                                height={720}
                                 className={styles.bentoImage}
                             />
                         </div>
@@ -328,9 +349,11 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <div className={styles.bentoImageWrapper}>
-                                <img
+                                <Image
                                     src="/images/previews/auto-complete.png"
                                     alt="Editor Preview"
+                                    width={1280}
+                                    height={720}
                                     className={styles.bentoImage}
                                 />
                             </div>
@@ -346,13 +369,15 @@ export default function HomePageContainer() {
                                 </div>
                                 <p className={styles.pillarText}>
                                     Invite up to 5 collaborators and write the same screenplay simultaneously in real
-                                    time. See each other's cursors, edits, and comments as they happen. No merging, no
+                                    time. See each other&apos;s cursors, edits, and comments as they happen. No merging, no
                                     conflicts — just seamless creative flow.
                                 </p>
                             </div>
-                            <img
+                            <Image
                                 src="/images/previews/collaboration.png"
                                 alt="Collaboration Preview"
+                                width={1280}
+                                height={720}
                                 className={styles.bentoImage}
                             />
                         </div>

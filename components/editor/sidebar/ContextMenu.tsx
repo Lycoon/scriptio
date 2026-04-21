@@ -9,7 +9,7 @@ import { Scene } from "@src/lib/screenplay/scenes";
 import context from "./ContextMenu.module.css";
 import { CharacterData, deleteCharacter } from "@src/lib/screenplay/characters";
 import { LocationData, deleteLocation } from "@src/lib/screenplay/locations";
-import { copyText, cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/screenplay/editor";
+import { cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/screenplay/editor";
 import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/screenplay/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useTranslations } from "next-intl";
@@ -42,7 +42,7 @@ import { ScreenplayElement } from "@src/lib/utils/enums";
 export type ContextMenuProps = {
     type: ContextMenuType;
     position: { x: number; y: number };
-    typeSpecificProps: any;
+    typeSpecificProps: unknown;
 };
 
 export const enum ContextMenuType {
@@ -66,6 +66,8 @@ type ContextMenuItemProps = {
     disabled?: boolean;
 };
 
+type SubMenuProps<T> = { props: T };
+
 export const ContextMenuItem = ({ text, action, icon: Icon, disabled }: ContextMenuItemProps) => {
     return (
         <div onClick={disabled ? undefined : action} className={disabled ? context.menu_item_disabled : context.menu_item}>
@@ -83,11 +85,11 @@ export type SceneContextProps = {
     scene: Scene;
 };
 
-const SceneItemMenu = (props: any) => {
+const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
     const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
     const { editor } = useContext(ProjectContext);
-    const scene: Scene = props.props.scene;
+    const scene: Scene = props.scene;
 
     return (
         <>
@@ -111,13 +113,7 @@ const SceneItemMenu = (props: any) => {
     );
 };
 
-const SceneListMenu = (props: any) => {
-    const title = props.props.title;
-
-    const addScene = () => {
-        console.log("add scene ", name);
-    };
-
+const SceneListMenu = () => {
     return <></>;
     //return <>{<ContextMenuItem text={"Add scene"} action={addScene} />}</>;
 };
@@ -130,12 +126,12 @@ export type CharacterContextProps = {
     character: CharacterData;
 };
 
-const CharacterItemMenu = (props: any) => {
+const CharacterItemMenu = ({ props }: SubMenuProps<CharacterContextProps>) => {
     const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
     const { toggleCharacterHighlight } = projectCtx;
-    const character: CharacterData = props.props.character;
+    const character: CharacterData = props.character;
 
     return (
         <>
@@ -155,7 +151,7 @@ const CharacterItemMenu = (props: any) => {
     );
 };
 
-const CharacterListMenu = (props: any) => {
+const CharacterListMenu = () => {
     const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
     return <ContextMenuItem icon={UserRound} text={t("addCharacter")} action={() => addCharacterPopup(userCtx)} />;
@@ -169,10 +165,10 @@ export type LocationContextProps = {
     location: LocationData;
 };
 
-const LocationItemMenu = (props: any) => {
+const LocationItemMenu = ({ props }: SubMenuProps<LocationContextProps>) => {
     const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
-    const location: LocationData = props.props.location;
+    const location: LocationData = props.location;
 
     return (
         <>
@@ -196,12 +192,12 @@ export type EditorSelectionContextProps = {
     onAddComment: () => void;
 };
 
-const EditorSelectionMenu = (props: any) => {
+const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps>) => {
     const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
     const { editor } = projectCtx;
     const { updateContextMenu } = useContext(UserContext);
-    const { from, to, onAddComment } = props.props as EditorSelectionContextProps;
+    const { from, to, onAddComment } = props;
     const hasSelection = from !== to;
 
     const handleCopy = async () => {
@@ -259,19 +255,17 @@ export type SpellcheckContextProps = {
     to: number;
 };
 
-const SpellcheckMenu = (props: any) => {
+const SpellcheckMenu = ({ props }: SubMenuProps<SpellcheckContextProps>) => {
     const t = useTranslations("contextMenu");
     const { editor, repository } = useContext(ProjectContext);
     const { worker } = useSpellcheck();
     const { updateContextMenu } = useContext(UserContext);
-    const { word, from, to } = props.props as SpellcheckContextProps;
+    const { word, from, to } = props;
     const [suggestions, setSuggestions] = useState<string[] | null>(null);
+    const displaySuggestions = worker ? suggestions : [];
 
     useEffect(() => {
-        if (!worker) {
-            setSuggestions([]);
-            return;
-        }
+        if (!worker) return;
 
         const handler = (e: MessageEvent) => {
             if (e.data.type === "SUGGEST_RESULT" && e.data.word === word) {
@@ -310,22 +304,22 @@ const SpellcheckMenu = (props: any) => {
 
     return (
         <>
-            {suggestions === null && (
+            {displaySuggestions === null && (
                 <div className={context.menu_label}>
                     <Loader2 size={14} className={context.spinner} />
                 </div>
             )}
-            {suggestions !== null && suggestions.length === 0 && (
+            {displaySuggestions !== null && displaySuggestions.length === 0 && (
                 <div className={context.menu_label}>
                     <span>{t("noSuggestions")}</span>
                 </div>
             )}
-            {suggestions?.map((s) => (
+            {displaySuggestions?.map((s) => (
                 <div key={s} className={context.suggestion_item} onClick={() => handleReplace(s)}>
                     <p className="unselectable">{s}</p>
                 </div>
             ))}
-            {suggestions !== null && suggestions.length > 0 && <div className={context.menu_separator} />}
+            {displaySuggestions !== null && displaySuggestions.length > 0 && <div className={context.menu_separator} />}
             <ContextMenuItem text={t("addToDictionary")} icon={BookPlus} action={handleAddToDictionary} />
         </>
     );
@@ -335,11 +329,11 @@ const SpellcheckMenu = (props: any) => {
 /*  Dual Dialogue context menu  */
 /* ============================ */
 
-const DualDialogueMenu = (props: any) => {
+const DualDialogueMenu = ({ props }: SubMenuProps<{ pos: number }>) => {
     const t = useTranslations("contextMenu");
     const { editor } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
-    const { pos } = props.props as { pos: number };
+    const { pos } = props;
 
     return (
         <ContextMenuItem
@@ -357,11 +351,11 @@ const DualDialogueMenu = (props: any) => {
 /*  Shelve Node context menu    */
 /* ============================ */
 
-const ShelveNodeMenu = (props: any) => {
+const ShelveNodeMenu = ({ props }: SubMenuProps<{ pos: number; nodeClass: string }>) => {
     const t = useTranslations("contextMenu");
     const { editor, repository } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
-    const { pos, nodeClass } = props.props as { pos: number; nodeClass: string };
+    const { pos, nodeClass } = props;
 
     const handleShelve = () => {
         if (!editor || !repository) return;
@@ -428,21 +422,19 @@ export type EditorContextMenuProps = {
     nodeClass?: string;
 };
 
-const EditorContextMenu = (props: any) => {
+const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     const t = useTranslations("contextMenu");
     const { editor, repository } = useContext(ProjectContext);
     const { worker } = useSpellcheck();
     const { updateContextMenu } = useContext(UserContext);
-    const { from, to, onAddComment, spellError, nodePos, nodeClass } = props.props as EditorContextMenuProps;
+    const { from, to, onAddComment, spellError, nodePos, nodeClass } = props;
     const hasSelection = from !== to;
 
     const [suggestions, setSuggestions] = useState<string[] | null>(null);
+    const displaySuggestions = spellError && !worker ? [] : suggestions;
 
     useEffect(() => {
-        if (!spellError || !worker) {
-            if (spellError) setSuggestions([]);
-            return;
-        }
+        if (!spellError || !worker) return;
         const handler = (e: MessageEvent) => {
             if (e.data.type === "SUGGEST_RESULT" && e.data.word === spellError.word) {
                 worker.removeEventListener("message", handler);
@@ -537,17 +529,17 @@ const EditorContextMenu = (props: any) => {
             {/* Spellcheck section — shown first when on a spellcheck error */}
             {spellError && (
                 <>
-                    {suggestions === null && (
+                    {displaySuggestions === null && (
                         <div className={context.menu_label}>
                             <Loader2 size={14} className={context.spinner} />
                         </div>
                     )}
-                    {suggestions !== null && suggestions.length === 0 && (
+                    {displaySuggestions !== null && displaySuggestions.length === 0 && (
                         <div className={context.menu_label}>
                             <span>{t("noSuggestions")}</span>
                         </div>
                     )}
-                    {suggestions?.map((s) => (
+                    {displaySuggestions?.map((s) => (
                         <div key={s} className={context.suggestion_item} onClick={() => handleSpellReplace(s)}>
                             <p className="unselectable">{s}</p>
                         </div>
@@ -605,25 +597,25 @@ const EditorContextMenu = (props: any) => {
 const renderContextMenu = (contextMenu: ContextMenuProps) => {
     switch (contextMenu.type) {
         case ContextMenuType.SceneList:
-            return <SceneListMenu props={contextMenu.typeSpecificProps} />;
+            return <SceneListMenu />;
         case ContextMenuType.SceneItem:
-            return <SceneItemMenu props={contextMenu.typeSpecificProps} />;
+            return <SceneItemMenu props={contextMenu.typeSpecificProps as SceneContextProps} />;
         case ContextMenuType.CharacterList:
-            return <CharacterListMenu props={contextMenu.typeSpecificProps} />;
+            return <CharacterListMenu />;
         case ContextMenuType.CharacterItem:
-            return <CharacterItemMenu props={contextMenu.typeSpecificProps} />;
+            return <CharacterItemMenu props={contextMenu.typeSpecificProps as CharacterContextProps} />;
         case ContextMenuType.LocationItem:
-            return <LocationItemMenu props={contextMenu.typeSpecificProps} />;
+            return <LocationItemMenu props={contextMenu.typeSpecificProps as LocationContextProps} />;
         case ContextMenuType.EditorSelection:
-            return <EditorSelectionMenu props={contextMenu.typeSpecificProps} />;
+            return <EditorSelectionMenu props={contextMenu.typeSpecificProps as EditorSelectionContextProps} />;
         case ContextMenuType.Spellcheck:
-            return <SpellcheckMenu props={contextMenu.typeSpecificProps} />;
+            return <SpellcheckMenu props={contextMenu.typeSpecificProps as SpellcheckContextProps} />;
         case ContextMenuType.DualDialogue:
-            return <DualDialogueMenu props={contextMenu.typeSpecificProps} />;
+            return <DualDialogueMenu props={contextMenu.typeSpecificProps as { pos: number }} />;
         case ContextMenuType.ShelveNode:
-            return <ShelveNodeMenu props={contextMenu.typeSpecificProps} />;
+            return <ShelveNodeMenu props={contextMenu.typeSpecificProps as { pos: number; nodeClass: string }} />;
         case ContextMenuType.EditorContextMenu:
-            return <EditorContextMenu props={contextMenu.typeSpecificProps} />;
+            return <EditorContextMenu props={contextMenu.typeSpecificProps as EditorContextMenuProps} />;
     }
 };
 
@@ -650,7 +642,7 @@ const ContextMenu = () => {
 
     useEffect(() => {
         updateContextMenu(undefined);
-    }, []);
+    }, [updateContextMenu]);
 
     return (
         <div

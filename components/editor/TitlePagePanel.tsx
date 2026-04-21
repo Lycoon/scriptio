@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import type { Editor } from "@tiptap/react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -11,24 +11,19 @@ import { TitlePageElement } from "@src/lib/utils/enums";
 import { TITLEPAGE_EDITOR_CONFIG } from "@src/lib/editor/document-editor-config";
 import DocumentEditorPanel from "./DocumentEditorPanel";
 
+interface TitlePageStorage {
+    projectTitle: string;
+    projectAuthor: string;
+    nodeViewUpdaters?: Array<() => void>;
+}
+
+type EditorStorage = { titlePageMetadata?: TitlePageStorage };
+
 const TitlePagePanel = ({ isVisible }: { isVisible?: boolean }) => {
     const projectCtx = useContext(ProjectContext);
     const { updateTitlePageEditor, isYjsReady, repository, projectTitle, projectAuthor } = projectCtx;
 
     const [titleEditor, setTitleEditor] = useState<Editor | null>(null);
-
-    // Keep the module-level ref in sync so format node views always get the latest values
-    titlePageMetadataRef.projectTitle = projectTitle || "";
-    titlePageMetadataRef.projectAuthor = projectAuthor || "";
-
-    // Synchronous storage update for nodes rendered before effects run
-    if (titleEditor && typeof titleEditor.storage === "object") {
-        const storage = (titleEditor.storage as any).titlePageMetadata;
-        if (storage) {
-            storage.projectTitle = projectTitle || "";
-            storage.projectAuthor = projectAuthor || "";
-        }
-    }
 
     const handleEditorCreated = useCallback(
         (editor: Editor | null) => {
@@ -71,14 +66,18 @@ const TitlePagePanel = ({ isVisible }: { isVisible?: boolean }) => {
         }
     }, [titleEditor, isYjsReady, repository]);
 
-    // Sync project metadata into editor storage for node view rendering
+    // Sync project metadata into the module-level ref and editor storage for node view rendering
     useEffect(() => {
+        titlePageMetadataRef.projectTitle = projectTitle || "";
+        titlePageMetadataRef.projectAuthor = projectAuthor || "";
+
         if (!titleEditor || titleEditor.isDestroyed) return;
-        const storage = (titleEditor.storage as any).titlePageMetadata;
+        const storage = (titleEditor.storage as EditorStorage).titlePageMetadata;
         if (storage) {
+            // eslint-disable-next-line react-hooks/immutability
             storage.projectTitle = projectTitle || "";
             storage.projectAuthor = projectAuthor || "";
-            storage.nodeViewUpdaters?.forEach((fn: () => void) => fn());
+            storage.nodeViewUpdaters?.forEach((fn) => fn());
             if (titleEditor.view && !titleEditor.view.isDestroyed) {
                 titleEditor.view.dispatch(titleEditor.state.tr.setMeta("titlePageMetadataUpdate", true));
             }
@@ -95,4 +94,3 @@ const TitlePagePanel = ({ isVisible }: { isVisible?: boolean }) => {
 };
 
 export default TitlePagePanel;
-

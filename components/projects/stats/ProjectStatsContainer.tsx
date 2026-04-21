@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { getScreenplayData } from "@src/lib/screenplay/statistics";
 import CharacterDistribution from "./CharacterDistribution";
 import CharacterFrequency from "./CharacterFrequency";
@@ -16,11 +16,7 @@ const ProjectStatsContainer = () => {
     const pages = data.pageLimits.length + 1;
     const screenTime = pages * 1.15;
 
-    const [color, setColor] = useState<string>("#ffffff");
-
-    useEffect(() => {
-        setColor(getComputedStyle(document.body).getPropertyValue("--primary"));
-    }, [color]);
+    const [color] = useState<string>(() => getComputedStyle(document.body).getPropertyValue("--primary"));
 
     return (
         <div className={stats.container}>

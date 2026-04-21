@@ -25,15 +25,12 @@ const MagicLinkLanding = () => {
     const router = useRouter();
     const token = searchParams.get("token");
 
-    const [status, setStatus] = useState<Status>("working");
+    const [status, setStatus] = useState<Status>(token ? "working" : "error");
     // Strict mode mounts effects twice in dev — guard against double-consuming the token.
     const consumedRef = useRef(false);
 
     useEffect(() => {
-        if (!token) {
-            setStatus("error");
-            return;
-        }
+        if (!token) return;
         if (consumedRef.current) return;
         consumedRef.current = true;
 

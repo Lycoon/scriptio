@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useState, useCallback, useMemo } from "react";
+import { useContext, useEffect, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import {
@@ -35,7 +35,15 @@ import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "./ProjectSettings.module.css";
 import styles from "./LayoutSettings.module.css";
-import optionCard from "./OptionCard.module.css";
+const MARGIN_ELEMENTS = [
+    "scene",
+    "action",
+    "character",
+    "dialogue",
+    "parenthetical",
+    "transition",
+    "section",
+] as const;
 
 const LayoutSettings = () => {
     const t = useTranslations("layout");
@@ -61,16 +69,6 @@ const LayoutSettings = () => {
         elementStyles,
         setElementStyles,
     } = context;
-
-    const MARGIN_ELEMENTS = [
-        "scene",
-        "action",
-        "character",
-        "dialogue",
-        "parenthetical",
-        "transition",
-        "section",
-    ] as const;
 
     // Strip wrapping parentheses for display
     const stripParens = (s: string) => (s.startsWith("(") && s.endsWith(")") ? s.slice(1, -1) : s);
@@ -110,15 +108,18 @@ const LayoutSettings = () => {
 
     // Sync when context changes externally
     useEffect(() => {
-        setLocalFormat(pageFormat);
-        setLocalPageMargins(initialPageMargins);
-        setLocalDisplaySceneNumbers(displaySceneNumbers);
-        setLocalSceneNumberOnRight(sceneNumberOnRight);
-        setLocalHeadingSpacing(sceneHeadingSpacing);
-        setLocalContdLabel(stripParens(contdLabel));
-        setLocalMoreLabel(stripParens(moreLabel));
-        setLocalMargins(initialMargins);
-        setLocalStyles(initialStyles);
+        const sync = () => {
+            setLocalFormat(pageFormat);
+            setLocalPageMargins(initialPageMargins);
+            setLocalDisplaySceneNumbers(displaySceneNumbers);
+            setLocalSceneNumberOnRight(sceneNumberOnRight);
+            setLocalHeadingSpacing(sceneHeadingSpacing);
+            setLocalContdLabel(stripParens(contdLabel));
+            setLocalMoreLabel(stripParens(moreLabel));
+            setLocalMargins(initialMargins);
+            setLocalStyles(initialStyles);
+        };
+        sync();
     }, [
         pageFormat,
         initialPageMargins,
@@ -237,7 +238,7 @@ const LayoutSettings = () => {
         setLocalPageMargins((prev) => ({ ...prev, [side]: newValue }));
     };
 
-    const updateLocalStyle = (e: React.MouseEvent, element: string, styleKey: keyof ElementStyle, value: any) => {
+    const updateLocalStyle = (e: React.MouseEvent, element: string, styleKey: keyof ElementStyle, value: ElementStyle[keyof ElementStyle]) => {
         e.preventDefault();
         e.stopPropagation();
 

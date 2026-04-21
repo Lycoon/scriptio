@@ -1,6 +1,7 @@
 "use client";
 
 import "chart.js/auto";
+import type { ChartOptions } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { getRandomColors, StatsRatio } from "@src/lib/screenplay/statistics";
 
@@ -37,7 +38,7 @@ const BarRatio = ({ color, ratio }: Props) => {
         },
     };
 
-    return <Bar data={data} options={options as any} />;
+    return <Bar data={data} options={options as ChartOptions<'bar'>} />;
 };
 
 export default BarRatio;

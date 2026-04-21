@@ -94,10 +94,10 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         name: "User_" + Math.floor(Math.random() * 1000),
         color: getRandomColor(),
     }));
-    const userInfo = {
+    const userInfo = useMemo(() => ({
         name: user?.username || fallbackUserInfo.name,
         color: user?.color || fallbackUserInfo.color,
-    };
+    }), [user?.username, user?.color, fallbackUserInfo]);
 
     // Keep all refs in sync
     useEffect(() => {
@@ -151,7 +151,6 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     // ---- Mutable container for extension getter functions ----
     // useMemo with [] creates a stable object reference; we mutate its properties each render
     // so that extension getter closures always return the latest values without .current accesses.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     const ext = useMemo(() => ({
         highlightedCharacters,
         characters,
@@ -164,6 +163,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         searchFilters,
         currentSearchIndex,
         setSearchMatches,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }), []);
     ext.highlightedCharacters = highlightedCharacters;
     ext.characters = characters;
@@ -304,7 +304,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                           CollaborationCaret.configure({
                               provider,
                               user: userInfo,
-                              render: (user: any) => {
+                              render: (user: { color: string; name: string }) => {
                                   const caret = document.createElement("span");
                                   caret.classList.add("collab-caret");
                                   caret.style.borderLeft = `2px solid ${user.color}`;
@@ -369,14 +369,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 const cb = callbacksRef.current;
 
                 if (config.type === "screenplay") {
-                    const anchor = (transaction as any).curSelection.$anchor;
+                    const anchor = transaction.selection.$anchor;
                     const node = anchor.parent;
                     const elementAnchor = node.attrs.class as ScreenplayElement;
 
                     lastReportedElementRef.current = elementAnchor;
                     cb.setActiveElement?.(elementAnchor, false);
                     if (anchor.nodeBefore) {
-                        cb.setSelectedStyles?.(getStylesFromMarks(anchor.nodeBefore.marks));
+                        cb.setSelectedStyles?.(getStylesFromMarks([...anchor.nodeBefore.marks]));
                     }
                     if (!transaction.docChanged) {
                         setSuggestions([]);
@@ -386,7 +386,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                     cb.setSelectedTitlePageElement?.(activeElement);
                     const anchor = editor.state.selection.$anchor;
                     if (anchor.nodeBefore) {
-                        cb.setSelectedStyles?.(getStylesFromMarks(anchor.nodeBefore.marks as any[]));
+                        cb.setSelectedStyles?.(getStylesFromMarks([...anchor.nodeBefore.marks]));
                     } else {
                         cb.setSelectedStyles?.(Style.None);
                     }
@@ -397,8 +397,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 if (!transaction.docChanged) return;
                 if (config.type !== "screenplay") return;
 
-                const cb = callbacksRef.current;
-                const anchor = (transaction as any).curSelection.$anchor;
+                const anchor = transaction.selection.$anchor;
                 const node = anchor.parent;
                 const elementAnchor = node.attrs.class as ScreenplayElement;
                 const nodeSize: number = node.content.size;
@@ -491,7 +490,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 }
             },
 
-            onTransaction({ editor, transaction }) {
+            onTransaction({ editor }) {
                 if (config.type !== "screenplay") return;
                 const cb = callbacksRef.current;
                 const { $from } = editor.state.selection;
@@ -513,7 +512,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         if (provider) {
             provider.awareness.setLocalStateField("user", userInfo);
         }
-    }, [user?.username, user?.color, provider]);
+    }, [userInfo, provider]);
 
     // Fix Yjs undo cursor restoration: y-tiptap's stack-item-popped fires AFTER
     // the undo transaction commits, so beforeTransactionSelection is captured wrong

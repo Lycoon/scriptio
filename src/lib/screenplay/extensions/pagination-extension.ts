@@ -418,7 +418,8 @@ const getHTMLHeight = (
     return height;
 };
 
-const setupTestDiv = (editorDom: HTMLElement, _options: PaginationOptions): HTMLElement => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const setupTestDiv = (editorDom: HTMLElement, _: PaginationOptions): HTMLElement => {
     let testDiv = document.getElementById("pagination-test-div");
     if (!testDiv) {
         testDiv = document.createElement("div");

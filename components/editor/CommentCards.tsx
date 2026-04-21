@@ -7,6 +7,7 @@ import { useUser } from "@src/lib/utils/hooks";
 import { getCommentPositions } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { useViewContext } from "@src/context/ViewContext";
 import { Editor } from "@tiptap/react";
+import { Transaction } from "@tiptap/pm/state";
 import styles from "./CommentCard.module.css";
 
 function formatTimestamp(ts: number): string {
@@ -313,7 +314,7 @@ const CommentCards = ({
         if (!editor || editor.isDestroyed || !showComments) return;
 
         // Performance: Debounce transaction handler to prevent layout thrashing during typing
-        const handleTransaction = ({ transaction }: any) => {
+        const handleTransaction = ({ transaction }: { transaction: Transaction }) => {
             if (!transaction.docChanged) return;
             if (transactionDebounceRef.current !== null) {
                 cancelAnimationFrame(transactionDebounceRef.current);
@@ -359,7 +360,7 @@ const CommentCards = ({
     // Also compute the connecting line for the active comment
     useEffect(() => {
         if (!showComments) {
-            setActiveLine(null);
+            requestAnimationFrame(() => setActiveLine(null));
             return;
         }
 

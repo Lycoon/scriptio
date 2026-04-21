@@ -11,11 +11,10 @@ const contdPluginKey = new PluginKey("contd");
 let contdNeedsRecompute = false;
 
 /**
- * Checks if a transaction structurally changes dialogue blocks
- * (adding/deleting nodes, or modifying character/scene nodes).
- * Simple text edits within an existing node don't affect CONT'D logic.
+ * Checks if a transaction structurally changes dialogue blocks or edits a
+ * character node's text content (which affects CONT'D name matching).
  */
-function didDialogueBlockChange(tr: Transaction): boolean {
+function didDialogueBlockChange(tr: Transaction, oldDoc: Node): boolean {
     // ReplaceAroundStep means nodes were wrapped/unwrapped (structural change)
     if (tr.steps.some((step: Step) => step instanceof ReplaceAroundStep)) {
         return true;
@@ -23,9 +22,13 @@ function didDialogueBlockChange(tr: Transaction): boolean {
 
     for (const step of tr.steps) {
         if (!(step instanceof ReplaceStep)) continue;
+        // Block-level content insertion (structural change)
         for (let i = 0; i < step.slice.content.childCount; i++) {
             if (step.slice.content.child(i).isBlock) return true;
         }
+        // Text edit within a character node — name changes affect CONT'D matching
+        const $from = oldDoc.resolve(step.from);
+        if ($from.parent.attrs?.class === "character") return true;
     }
 
     return false;
@@ -111,7 +114,7 @@ export const ContdExtension = Extension.create({
                         // On structural change: defer full recompute to next frame,
                         // return fast O(log n) position remap for now.
                         // Also detect node deletion via Backspace/Delete (childCount changes).
-                        if (_oldState.doc.childCount !== newState.doc.childCount || didDialogueBlockChange(tr)) {
+                        if (_oldState.doc.childCount !== newState.doc.childCount || didDialogueBlockChange(tr, _oldState.doc)) {
                             contdNeedsRecompute = true;
                             return oldDecorations.map(tr.mapping, newState.doc);
                         }

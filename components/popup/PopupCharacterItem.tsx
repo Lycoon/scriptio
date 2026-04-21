@@ -1,7 +1,7 @@
 "use client";
 
 import assert from "assert";
-import { useContext, useState } from "react";
+import { useContext, useState, type FormEvent } from "react";
 import {
     CharacterGender,
     doesCharacterExist,
@@ -18,12 +18,14 @@ import { countOccurrences } from "@src/lib/screenplay/screenplay";
 import { ColorPicker } from "@components/utils/ColorPicker";
 import { useTranslations } from "next-intl";
 
-import CloseSVG from "@public/images/close.svg";
+import { X } from "lucide-react";
 
 import form from "@components/utils/Form.module.css";
 import form_info from "@components/utils/FormInfo.module.css";
 import styles from "@components/popup/PopupCharacterItem.module.css";
 import popup from "@components/popup/Popup.module.css";
+
+type TFunction = ReturnType<typeof useTranslations>;
 
 type NewNameWarningProps = {
     setNewNameWarning: (value: boolean) => void;
@@ -31,7 +33,7 @@ type NewNameWarningProps = {
     nameOccurrences: number;
     oldName: string;
     newName: string;
-    t: any;
+    t: TFunction;
 };
 
 const NewNameWarning = (props: NewNameWarningProps) => {
@@ -52,7 +54,7 @@ const NewNameWarning = (props: NewNameWarningProps) => {
     );
 };
 
-const TakenNameError = (newName: string, t: any) => {
+const TakenNameError = (newName: string, t: TFunction) => {
     return (
         <div className={join(popup.info, form_info.error)}>
             <p>
@@ -77,12 +79,16 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
     const [newSynopsis, setNewSynopsis] = useState<string>("");
     const [newColor, setNewColor] = useState<string | undefined>(character?.color);
 
-    const onCreate = (e: any) => {
+    const onCreate = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
-        const _name = e.target.name.value;
-        const _gender = e.target.gender.value;
-        const _synopsis = e.target.synopsis.value;
+        const form = e.currentTarget as typeof e.currentTarget & {
+            name: HTMLInputElement;
+            gender: HTMLSelectElement;
+            synopsis: HTMLTextAreaElement;
+        };
+        const _name = form.name.value;
+        const _gender = +form.gender.value as CharacterGender;
+        const _synopsis = form.synopsis.value;
 
         const doesExist = doesCharacterExist(_name, projectCtx);
         if (doesExist) {
@@ -103,15 +109,19 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
         closePopup(userCtx);
     };
 
-    const onEdit = (e: any) => {
+    const onEdit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         assert(character, "A character must be defined on edit mode");
 
-        // need to store in local variables because stateful is async
-        const _newName = e.target.name.value;
-        const _newGender = +e.target.gender.value;
-        const _newSynopsis = e.target.synopsis.value;
+        const form = e.currentTarget as typeof e.currentTarget & {
+            name: HTMLInputElement;
+            gender: HTMLSelectElement;
+            synopsis: HTMLTextAreaElement;
+        };
+        const _newName = form.name.value;
+        const _newGender = +form.gender.value;
+        const _newSynopsis = form.synopsis.value;
 
         setNewName(_newName.toUpperCase()); // to display it in popup UI
         setNewGender(_newGender);
@@ -124,7 +134,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                 return setTakenNameError(true);
             }
 
-            setNameOccurrences(countOccurrences(projectCtx.editor?.getJSON()!, character.name));
+            setNameOccurrences(projectCtx.editor ? countOccurrences(projectCtx.editor.getJSON(), character.name) : 0);
             setNewNameWarning(true);
             return;
         }
@@ -168,7 +178,16 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
         closePopup(userCtx);
     };
 
-    let def: any = {
+    type FormDef = {
+        title: string;
+        onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+        name: string | undefined;
+        synopsis: string | undefined;
+        gender: CharacterGender | string | undefined;
+        color: string | undefined;
+    };
+
+    const def: FormDef = {
         title: t("create"),
         onSubmit: onCreate,
         name: "",
@@ -195,7 +214,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                     style={{ cursor: isDragging ? "grabbing" : "grab" }}
                 >
                     <h2 className={popup.title}>{def.title}</h2>
-                    <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
+                    <X className={popup.close_btn} onClick={() => closePopup(userCtx)} />
                 </div>
                 <form className={popup.form} onSubmit={def.onSubmit}>
                     {takenNameError && TakenNameError(newName, t)}
@@ -204,7 +223,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                             setNewNameWarning,
                             onNewNameConfirm,
                             nameOccurrences,
-                            oldName: character?.name!,
+                            oldName: character?.name ?? "",
                             newName,
                             t
                         })}

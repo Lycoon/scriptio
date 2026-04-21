@@ -27,8 +27,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 token.id = user.id;
                 token.email = user.email;
                 // `createdAt` is set on programmatic sign-in (string) and missing for OAuth — fill it in
-                if ((user as any).createdAt) {
-                    token.createdAt = (user as any).createdAt;
+                const extUser = user as typeof user & { createdAt?: string };
+                if (extUser.createdAt) {
+                    token.createdAt = extUser.createdAt;
                 } else if (token.id && !token.createdAt) {
                     const dbUser = await UserService.getUserFromId(token.id as string);
                     if (dbUser) token.createdAt = dbUser.createdAt.toISOString();
@@ -43,7 +44,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     id: token.id as string,
                     email: token.email as string,
                     createdAt: token.createdAt ? new Date(token.createdAt as string) : new Date(),
-                } as any;
+                } as typeof session.user & { id: string; email: string; createdAt: Date };
             }
             return session;
         },

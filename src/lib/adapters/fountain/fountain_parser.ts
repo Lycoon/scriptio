@@ -308,8 +308,6 @@ const parse = function (script: string, toks?: boolean | FountainCallback, callb
     let title: string | undefined;
     const title_page: string[] = [];
     const html: string[] = [];
-    let output: FountainOutput;
-
     while (i--) {
         token = tokens[i];
         token.text = inline.lexer(token.text ?? "") as string | undefined;
@@ -406,7 +404,7 @@ const parse = function (script: string, toks?: boolean | FountainCallback, callb
         }
     }
 
-    output = {
+    const output = {
         title: title,
         html: { title_page: title_page.join(""), script: html.join("") },
         tokens: toks ? tokens.reverse() : undefined,

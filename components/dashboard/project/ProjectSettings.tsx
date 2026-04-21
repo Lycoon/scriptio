@@ -1,6 +1,7 @@
 "use client";
 
 import { cropImageBase64 } from "@src/lib/utils/misc";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { editProject } from "@src/lib/utils/requests";
 import { useContext, useEffect, useState } from "react";
@@ -50,7 +51,11 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         setLoading(true);
         setDirty(false);
 
-        const target = e.target as any;
+        const target = e.target as typeof e.target & {
+            title: { value: string };
+            description: { value: string };
+            author: { value: string };
+        };
         const newTitle = target.title.value;
         const newDescription = target.description.value;
         const newAuthor = target.author.value;
@@ -65,7 +70,7 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
 
         if (!isLocalOnly && membership) {
             // Also save to remote API
-            const body: any = {
+            const body: { title: string; description: string; author: string; poster?: string } = {
                 title: newTitle,
                 description: newDescription,
                 author: newAuthor,
@@ -142,7 +147,7 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                     <div className={styles.posterUploadArea}>
                         <div className={styles.posterPreview}>
                             {previewUrl ? (
-                                <img src={previewUrl} alt="Preview" />
+                                <Image src={previewUrl} alt="Preview" width={120} height={180} />
                             ) : (
                                 <div className={styles.posterPlaceholder}>{t("noPoster")}</div>
                             )}

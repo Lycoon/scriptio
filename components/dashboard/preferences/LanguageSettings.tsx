@@ -41,10 +41,7 @@ const LanguageSettings = () => {
 
     // Sync word list from Yjs map and observe live changes
     useEffect(() => {
-        if (!dictMap) {
-            setCustomWords([]);
-            return;
-        }
+        if (!dictMap) return;
 
         const sync = () => {
             const words: string[] = [];
@@ -54,7 +51,10 @@ const LanguageSettings = () => {
 
         sync();
         dictMap.observe(sync);
-        return () => dictMap.unobserve(sync);
+        return () => {
+            dictMap.unobserve(sync);
+            setCustomWords([]);
+        };
     }, [dictMap]);
 
     const handleAddWord = useCallback(() => {
