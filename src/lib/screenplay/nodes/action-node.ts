@@ -3,7 +3,7 @@ import { ScreenplayElement } from "../../utils/enums";
 import { ALIGN_CLASSES, generateNodeId } from "./index";
 
 export interface ActionNodeOptions {
-    HTMLAttributes: Record<string, any>;
+    HTMLAttributes: Record<string, unknown>;
 }
 
 export const ActionNode = Node.create<ActionNodeOptions>({

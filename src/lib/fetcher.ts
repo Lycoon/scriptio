@@ -55,10 +55,10 @@ async function fetchFromDesktop<JSON = unknown>(
         throw { message: "Server unreachable", status: 0, isNetworkError: true };
     }
 
-    const data: any = await response.json();
+    const data = await response.json() as { data?: JSON; message?: string; status?: number };
 
     if (response.ok) {
-        return data.data;
+        return data.data as JSON;
     }
 
     const error = { ...data, status: response.status };
@@ -73,10 +73,10 @@ async function fetchFromBrowser<JSON = unknown>(
     init?: RequestInit,
 ): Promise<JSON> {
     const response = await fetch(input, init);
-    const data: any = await response.json();
+    const data = await response.json() as { data?: JSON; message?: string; status?: number };
 
     if (response.ok) {
-        return data.data;
+        return data.data as JSON;
     }
 
     // Include status code in the error for SWR's shouldRetryOnError

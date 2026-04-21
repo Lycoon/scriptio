@@ -44,7 +44,8 @@ runs:
                   src-tauri/tauri.appstore.conf.json > src-tauri/tauri.appstore.conf.json.tmp
               mv src-tauri/tauri.appstore.conf.json.tmp src-tauri/tauri.appstore.conf.json
 
-              jq --arg id "$WINDOWS_IDENTIFIER" '.identifier = $id' \
+              jq --arg id "$WINDOWS_IDENTIFIER" --arg v "$INPUT_VERSION" \
+                  '.identifier = $id | .version = $v' \
                   src-tauri/tauri.windows.conf.json > src-tauri/tauri.windows.conf.json.tmp
               mv src-tauri/tauri.windows.conf.json.tmp src-tauri/tauri.windows.conf.json
 

@@ -1,6 +1,7 @@
 import * as Y from "yjs";
 import type { AnyExtension } from "@tiptap/core";
 import { ProjectState } from "@src/lib/project/project-state";
+import type { Comment } from "@src/lib/utils/types";
 import { BASE_EXTENSIONS } from "@src/lib/screenplay/editor";
 import { TITLEPAGE_BASE_EXTENSIONS } from "@src/lib/titlepage/editor";
 
@@ -49,7 +50,7 @@ export interface DocumentEditorConfig {
      * Returns the Y.Map for per-document comments, or null if comments are disabled.
      * Evaluated lazily for the same reason as getFragment.
      */
-    getCommentsMap: (projectState: ProjectState) => Y.Map<any> | null;
+    getCommentsMap: (projectState: ProjectState) => Y.Map<Comment> | null;
     features: DocumentEditorFeatures;
 }
 

@@ -26,7 +26,7 @@ export function scheduleStructuralRefresh(view: EditorView) {
     if (pendingRefresh !== null) return;
     pendingRefresh = requestAnimationFrame(() => {
         pendingRefresh = null;
-        if (!(view as any).isDestroyed) {
+        if (!(view as EditorView & { isDestroyed?: boolean }).isDestroyed) {
             view.dispatch(view.state.tr.setMeta(STRUCTURAL_REFRESH_META, true));
         }
     });

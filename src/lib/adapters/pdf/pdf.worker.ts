@@ -1,5 +1,5 @@
 import { jsPDF, GState } from "jspdf";
-import { getFontForCodePoint, ScriptFont, splitByScript } from "./pdf-utils";
+import { splitByScript } from "./pdf-utils";
 
 /** A contiguous run of characters sharing the same font and style. */
 export interface TextRun {
@@ -167,8 +167,8 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
         const payload = e.data.payload;
         const blob = await generatePdf(payload);
         self.postMessage({ type: "DONE", blob });
-    } catch (error: any) {
-        self.postMessage({ type: "ERROR", error: error.message || String(error) });
+    } catch (error: unknown) {
+        self.postMessage({ type: "ERROR", error: error instanceof Error ? error.message : String(error) });
     }
 };
 

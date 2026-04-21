@@ -13,7 +13,7 @@ type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-const request = async (url: string, method: RESTMethod, body?: Object) => {
+const request = async (url: string, method: RESTMethod, body?: object) => {
     const json = JSON.stringify(body);
     const headers: Record<string, string> = { "Content-Type": "application/json" };
 

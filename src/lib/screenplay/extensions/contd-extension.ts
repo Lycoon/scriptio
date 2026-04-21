@@ -1,7 +1,8 @@
 import { Extension } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Node } from "@tiptap/pm/model";
+import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { ReplaceAroundStep } from "@tiptap/pm/transform";
+import { ReplaceAroundStep, ReplaceStep, Step } from "@tiptap/pm/transform";
 import { STRUCTURAL_REFRESH_META, scheduleStructuralRefresh, cancelStructuralRefresh } from "./structural-refresh";
 
 const contdPluginKey = new PluginKey("contd");
@@ -14,19 +15,16 @@ let contdNeedsRecompute = false;
  * (adding/deleting nodes, or modifying character/scene nodes).
  * Simple text edits within an existing node don't affect CONT'D logic.
  */
-function didDialogueBlockChange(tr: any): boolean {
+function didDialogueBlockChange(tr: Transaction): boolean {
     // ReplaceAroundStep means nodes were wrapped/unwrapped (structural change)
-    if (tr.steps.some((step: any) => step instanceof ReplaceAroundStep)) {
+    if (tr.steps.some((step: Step) => step instanceof ReplaceAroundStep)) {
         return true;
     }
 
     for (const step of tr.steps) {
-        // If the step's slice contains block nodes, it's a structural change
-        if (step.slice && step.slice.content && step.slice.content.childCount > 0) {
-            for (let i = 0; i < step.slice.content.childCount; i++) {
-                const child = step.slice.content.child(i);
-                if (child.isBlock) return true;
-            }
+        if (!(step instanceof ReplaceStep)) continue;
+        for (let i = 0; i < step.slice.content.childCount; i++) {
+            if (step.slice.content.child(i).isBlock) return true;
         }
     }
 
@@ -37,7 +35,7 @@ function didDialogueBlockChange(tr: any): boolean {
  * Computes decorations for character nodes that should display "(CONT'D)".
  * Works directly with ProseMirror doc tree (avoids expensive doc.toJSON() serialization).
  */
-function computeContdDecorations(doc: any): DecorationSet {
+function computeContdDecorations(doc: Node): DecorationSet {
     // Single pass: compute CONT'D indices and build decorations together
     const contdIndices = new Set<number>();
     let lastCharacterInScene: string | null = null;
@@ -45,7 +43,7 @@ function computeContdDecorations(doc: any): DecorationSet {
     let nodeIndex = 0;
 
     // First pass: determine which indices need CONT'D
-    doc.forEach((node: any) => {
+    doc.forEach((node: Node) => {
         const type: string = node.attrs?.class;
 
         if (type === "scene") {
@@ -76,7 +74,7 @@ function computeContdDecorations(doc: any): DecorationSet {
     const decorations: Decoration[] = [];
     nodeIndex = 0;
 
-    doc.forEach((node: any, pos: number) => {
+    doc.forEach((node: Node, pos: number) => {
         if (contdIndices.has(nodeIndex)) {
             decorations.push(
                 Decoration.node(pos, pos + node.nodeSize, {
