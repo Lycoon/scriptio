@@ -26,5 +26,5 @@ EXPOSE 3000
 USER node
 ENV NEXT_TELEMETRY_DISABLED 1
 
-ENTRYPOINT ["./launch.sh"]
+ENTRYPOINT ["./scripts/launch.sh"]
 CMD [ "npm", "start" ]

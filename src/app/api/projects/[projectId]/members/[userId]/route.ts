@@ -12,7 +12,7 @@ import {
 
 import * as Roles from "@src/lib/utils/roles";
 import * as ProjectService from "@src/server/service/project-service";
-import * as CollabUtils from "@src/lib/collaboration/utils";
+import * as CollabUtils from "@src/lib/cloud/utils";
 
 import z from "zod";
 import { NextRequest } from "next/server";

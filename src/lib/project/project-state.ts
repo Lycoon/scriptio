@@ -7,7 +7,7 @@ import { JSONContent } from "@tiptap/react";
 import { Screenplay } from "../utils/types";
 import { PageFormat } from "../utils/enums";
 import * as Y from "yjs";
-import type { ThrottledWebsocketProvider } from "../collaboration/utils";
+import type { ThrottledWebsocketProvider } from "../cloud/utils";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { TitlePageSchema } from "../titlepage/editor";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
@@ -175,7 +175,10 @@ export type ProjectData = {
  * Helper to provide stronger typing for Y.Map where different keys have different types.
  * This avoids manual casts when accessing known keys.
  */
-export interface TypedMap<T extends Record<string, unknown>> extends Omit<Y.Map<T[keyof T]>, "get" | "set" | "toJSON"> {
+export interface TypedMap<T extends Record<string, unknown>> extends Omit<
+    Y.Map<T[keyof T]>,
+    "get" | "set" | "toJSON"
+> {
     get<K extends keyof T>(key: K): T[K] | undefined;
     set<K extends keyof T>(key: K, value: T[K]): T[K];
     toJSON(): T;
@@ -402,7 +405,11 @@ export const useLocalPersistence = (projectId: string | null) => {
 /**
  * Hook to manage cloud WebSocket synchronization.
  */
-export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null, userInfo: UserInfo) => {
+export const useCloudSync = (
+    projectId: string | null,
+    ydoc: ProjectState | null,
+    userInfo: UserInfo,
+) => {
     const [provider, setProvider] = useState<ThrottledWebsocketProvider | null>(null);
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
@@ -467,7 +474,8 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 const isDesktop = isTauri();
 
                 // Local-only projects (not cloud-synced) don't need cloud sync
-                const { isLocalOnlyProject } = await import("../persistence/storage-provider/local-persistence");
+                const { isLocalOnlyProject } =
+                    await import("../persistence/storage-provider/local-persistence");
                 if (await isLocalOnlyProject(projectId)) {
                     setConnectionStatus("disconnected");
                     setIsCloudSynced(true);
@@ -487,7 +495,7 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 }
 
                 // Dynamically import collaboration utils
-                const { ThrottledWebsocketProvider } = await import("../collaboration/utils");
+                const { ThrottledWebsocketProvider } = await import("../cloud/utils");
 
                 const cloudProvider = new ThrottledWebsocketProvider(
                     `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
@@ -566,7 +574,9 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 // Handle document restore
                 cloudProvider.on("document-restored", async () => {
                     if (!isMountedRef.current) return;
-                    console.log("[ProjectYjs] Document restored — clearing local cache and reloading");
+                    console.log(
+                        "[ProjectYjs] Document restored — clearing local cache and reloading",
+                    );
                     await clearLocalProjectCache(projectId);
                     window.location.reload();
                 });
@@ -598,7 +608,11 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
         const handleUnload = async () => {
             if (providerRef.current && ydoc) {
                 const { removeAwarenessStates } = await getYProtocols();
-                removeAwarenessStates(providerRef.current.awareness, [ydoc.clientID], "window unload");
+                removeAwarenessStates(
+                    providerRef.current.awareness,
+                    [ydoc.clientID],
+                    "window unload",
+                );
             }
         };
 
@@ -622,7 +636,11 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 if (ydoc) {
                     getYProtocols().then(({ removeAwarenessStates }) => {
                         if (providerRef.current) {
-                            removeAwarenessStates(providerRef.current.awareness, [ydoc.clientID], "component unmount");
+                            removeAwarenessStates(
+                                providerRef.current.awareness,
+                                [ydoc.clientID],
+                                "component unmount",
+                            );
                             providerRef.current.destroy();
                             providerRef.current = null;
                             setProvider(null);
@@ -731,19 +749,22 @@ const ymapToMap = <T>(ymap: Y.Map<T>): Map<string, T> => {
 export const useYMap = <T>(ymap: Y.Map<T> | null): Map<string, T> => {
     const cache = useRef<Map<string, T>>(new Map());
     return useSyncExternalStore(
-        useCallback((callback: () => void) => {
-            if (!ymap) {
-                cache.current = new Map();
-                return () => {};
-            }
-            cache.current = ymapToMap(ymap);
-            const observer = () => {
+        useCallback(
+            (callback: () => void) => {
+                if (!ymap) {
+                    cache.current = new Map();
+                    return () => {};
+                }
                 cache.current = ymapToMap(ymap);
-                callback();
-            };
-            ymap.observe(observer);
-            return () => ymap.unobserve(observer);
-        }, [ymap]),
+                const observer = () => {
+                    cache.current = ymapToMap(ymap);
+                    callback();
+                };
+                ymap.observe(observer);
+                return () => ymap.unobserve(observer);
+            },
+            [ymap],
+        ),
         () => cache.current,
         () => new Map(),
     );
@@ -755,19 +776,22 @@ export const useYMap = <T>(ymap: Y.Map<T> | null): Map<string, T> => {
 export const useYArray = <T>(yarray: Y.Array<T> | null): T[] => {
     const cache = useRef<T[]>([]);
     return useSyncExternalStore(
-        useCallback((callback: () => void) => {
-            if (!yarray) {
-                cache.current = [];
-                return () => {};
-            }
-            cache.current = yarray.toArray();
-            const observer = () => {
+        useCallback(
+            (callback: () => void) => {
+                if (!yarray) {
+                    cache.current = [];
+                    return () => {};
+                }
                 cache.current = yarray.toArray();
-                callback();
-            };
-            yarray.observe(observer);
-            return () => yarray.unobserve(observer);
-        }, [yarray]),
+                const observer = () => {
+                    cache.current = yarray.toArray();
+                    callback();
+                };
+                yarray.observe(observer);
+                return () => yarray.unobserve(observer);
+            },
+            [yarray],
+        ),
         () => cache.current,
         () => [],
     );
