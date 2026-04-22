@@ -9,9 +9,9 @@
 </h3>
 
 <p align="center">
-  <img alt="Web Build Status" src="https://img.shields.io/github/actions/workflow/status/Lycoon/scriptio/.github%2Fworkflows%2Fci-web.yaml?style=for-the-badge&logo=docker&logoColor=white&label=Web">
-  <img alt="Windows Build Status" src="https://img.shields.io/github/actions/workflow/status/Lycoon/scriptio/ci-windows.yaml?style=for-the-badge&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0ODc1IDQ4NzUiPjxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMCAwaDIzMTF2MjMxMEgwem0yNTY0IDBoMjMxMXYyMzEwSDI1NjR6TTAgMjU2NGgyMzExdjIzMTFIMHptMjU2NCAwaDIzMTF2MjMxMUgyNTY0Ii8%2BPC9zdmc%2B&label=Windows">
-  <img alt="MacOS Build Status" src="https://img.shields.io/github/actions/workflow/status/Lycoon/scriptio/.github%2Fworkflows%2Fci-macos.yaml?style=for-the-badge&logo=apple&label=MacOS">
+  <img alt="Web Build Status" src="https://img.shields.io/github/actions/workflow/status/Lycoon/scriptio/.github%2Fworkflows%2Fchecks.yaml?branch=dev&job=build-docker&style=for-the-badge&logo=docker&logoColor=white&label=Web">
+  <img alt="Windows Build Status" src="https://img.shields.io/github/actions/workflow/status/Lycoon/scriptio/.github%2Fworkflows%2Fchecks.yaml?branch=dev&job=build-windows&style=for-the-badge&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0ODc1IDQ4NzUiPjxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMCAwaDIzMTF2MjMxMEgwem0yNTY0IDBoMjMxMXYyMzEwSDI1NjR6TTAgMjU2NGgyMzExdjIzMTFIMHptMjU2NCAwaDIzMTF2MjMxMUgyNTY0Ii8%2BPC9zdmc%2B&label=Windows">
+  <img alt="MacOS Build Status" src="https://img.shields.io/github/actions/workflow/status/Lycoon/scriptio/.github%2Fworkflows%2Fchecks.yaml?branch=dev&job=build-macos&style=for-the-badge&logo=apple&label=MacOS">
 </p>
 
 # Features
