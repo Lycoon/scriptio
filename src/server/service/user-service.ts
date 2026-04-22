@@ -39,3 +39,15 @@ export const getStripeSubscriptionId = async (userId: string) => {
     return result?.transactionId ?? null;
 };
 
+export const searchUsers = async (term: string, limit: number, cursor?: number) => {
+    return repository.searchUsers(term, limit, cursor);
+};
+
+export const countUsers = async () => {
+    return repository.countAll();
+};
+
+export const countActiveProUsers = async () => {
+    return repository.countActivePro();
+};
+

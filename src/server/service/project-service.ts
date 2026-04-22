@@ -59,3 +59,11 @@ export async function deleteInviteFromEmail(email: string, projectId: string) {
 export async function deleteProjectMember(projectId: string, userId: string) {
     return repository.deleteProjectMember(projectId, userId);
 }
+
+export async function countProjects() {
+    return repository.countAll();
+}
+
+export async function countMembershipsByUser(userId: string) {
+    return repository.countMembershipsByUser(userId);
+}

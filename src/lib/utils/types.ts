@@ -1,4 +1,5 @@
 import { JSONContent } from "@tiptap/core";
+import { UserRole } from "@prisma/client";
 import { UpdateSettings } from "../../server/repository/user-repository";
 
 export type Screenplay = JSONContent[];
@@ -7,6 +8,7 @@ export type CookieUser = {
     id: string;
     email: string;
     createdAt: Date;
+    role: UserRole;
 };
 
 export type User = CookieUser & {

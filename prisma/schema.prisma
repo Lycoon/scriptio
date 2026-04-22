@@ -17,6 +17,11 @@ enum ProjectRole {
   VIEWER
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 enum SubscriptionProvider {
   STRIPE
   APPLE
@@ -29,6 +34,7 @@ model User {
   emailVerified       DateTime?
   username            String?
   color               String?
+  role                UserRole    @default(USER)
 
   isProUntil                  DateTime?
   isSubscriptionCancelled     Boolean   @default(false)

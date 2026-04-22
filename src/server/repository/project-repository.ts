@@ -232,4 +232,12 @@ export class ProjectRepository {
             },
         });
     }
+
+    countAll() {
+        return prisma.project.count();
+    }
+
+    countMembershipsByUser(userId: string) {
+        return prisma.projectMember.count({ where: { userId } });
+    }
 }

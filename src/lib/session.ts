@@ -1,6 +1,7 @@
 import { CookieUser } from "@src/lib/utils/types";
 import { headers } from "next/headers";
 import { decode } from "next-auth/jwt";
+import { UserRole } from "@prisma/client";
 import { auth } from "@src/auth";
 
 const SESSION_COOKIE_SALT = "authjs.session-token";
@@ -30,6 +31,7 @@ export const getCookieUser = async (): Promise<CookieUser | undefined> => {
                     id: decoded.id as string,
                     email: decoded.email as string,
                     createdAt: new Date(decoded.createdAt as string),
+                    role: (decoded.role as UserRole) ?? UserRole.USER,
                 };
             }
         } catch {

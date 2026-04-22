@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AppError } from "./api-utils";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { UserRole } from "@prisma/client";
 import type { CookieUser } from "./types";
 
 export type ApiContext = {
@@ -44,6 +45,7 @@ export const apiHandler = <T extends ApiContext>(
                       id: userId,
                       email: req.headers.get("x-user-email") ?? "",
                       createdAt: new Date(req.headers.get("x-user-created-at") ?? 0),
+                      role: (req.headers.get("x-user-role") as UserRole) ?? UserRole.USER,
                   }
                 : undefined;
             const context = { routeParams, searchParams, user } as T;

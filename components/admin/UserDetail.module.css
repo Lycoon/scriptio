@@ -1,0 +1,167 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--secondary-text);
+    text-decoration: none;
+    font-family: var(--font-inter), sans-serif;
+    font-size: 13px;
+    margin-bottom: 8px;
+    width: fit-content;
+}
+
+.backLink:hover {
+    color: var(--primary-text);
+}
+
+.card {
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--panel-shadow);
+}
+
+.cardTitle {
+    color: var(--primary-text);
+    font-family: var(--font-josefin), sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px 24px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.fieldLabel {
+    color: var(--secondary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.fieldValue {
+    color: var(--primary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.idValue {
+    font-family: var(--font-courier), monospace;
+    font-size: 13px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    width: fit-content;
+}
+
+.badgePro {
+    background: color-mix(in srgb, var(--success) 22%, transparent);
+    color: var(--success);
+}
+
+.badgeAdmin {
+    background: color-mix(in srgb, var(--warning) 25%, transparent);
+    color: var(--warning);
+}
+
+.badgeMuted {
+    background: var(--tertiary);
+    color: var(--secondary-text);
+}
+
+.badgeDanger {
+    background: color-mix(in srgb, var(--error) 22%, transparent);
+    color: var(--error);
+}
+
+.table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tableRow {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 16px;
+    padding: 12px 16px;
+    font-family: var(--font-inter), sans-serif;
+    font-size: 13px;
+    color: var(--primary-text);
+    border-bottom: 1px solid var(--separator);
+    align-items: center;
+}
+
+.tableRow:last-child {
+    border-bottom: none;
+}
+
+.tableHeader {
+    background: var(--primary);
+    color: var(--secondary-text);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+
+.tableCellMuted {
+    color: var(--secondary-text);
+    font-size: 12px;
+}
+
+.tableCellMono {
+    font-family: var(--font-courier), monospace;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.emptyRow {
+    padding: 16px;
+    text-align: center;
+    color: var(--secondary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 13px;
+}
+
+.message {
+    color: var(--secondary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 14px;
+}
+
+.error {
+    color: var(--error);
+}
