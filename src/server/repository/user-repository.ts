@@ -1,5 +1,5 @@
 import { UserSettings } from "@src/lib/utils/types";
-import { Prisma, SubscriptionProvider } from "@prisma/client";
+import { Prisma, SubscriptionProvider } from "../../generated/client/client";
 import prisma from "../db";
 
 export type UpdateSettings = {

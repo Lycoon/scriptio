@@ -1,7 +1,7 @@
 import { CookieUser } from "@src/lib/utils/types";
 import { headers } from "next/headers";
 import { decode } from "next-auth/jwt";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "../generated/client/client";
 import { auth } from "@src/auth";
 
 const SESSION_COOKIE_SALT = "authjs.session-token";

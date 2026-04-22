@@ -1,4 +1,4 @@
-import { ProjectRole } from "@prisma/client";
+import { ProjectRole } from "../../generated/client/client";
 import { ProjectUpdate, ProjectCreation } from "../../lib/utils/types";
 import { ProjectRepository } from "../repository/project-repository";
 
@@ -66,4 +66,16 @@ export async function countProjects() {
 
 export async function countMembershipsByUser(userId: string) {
     return repository.countMembershipsByUser(userId);
+}
+
+export async function searchProjects(term: string, limit: number, cursor?: number) {
+    return repository.searchProjects(term, limit, cursor);
+}
+
+export async function getProjectById(projectId: string) {
+    return repository.fetchProjectById(projectId);
+}
+
+export async function getInvitesWithMeta(projectId: string) {
+    return repository.fetchInvitesWithMeta(projectId);
 }

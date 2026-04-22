@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Users, LogOut } from "lucide-react";
+import { BarChart3, Users, FolderOpen, LogOut } from "lucide-react";
 import styles from "./AdminShell.module.css";
 
 type NavLink = { href: string; label: string; icon: ReactNode };
@@ -11,6 +11,7 @@ type NavLink = { href: string; label: string; icon: ReactNode };
 const NAV_LINKS: NavLink[] = [
     { href: "/admin", label: "Overview", icon: <BarChart3 size={16} /> },
     { href: "/admin/users", label: "Users", icon: <Users size={16} /> },
+    { href: "/admin/projects", label: "Projects", icon: <FolderOpen size={16} /> },
 ];
 
 type Props = {

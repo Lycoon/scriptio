@@ -135,6 +135,16 @@
     font-weight: 600;
 }
 
+.tableRowLink {
+    text-decoration: none;
+    transition: background-color 120ms ease;
+    cursor: pointer;
+}
+
+.tableRowLink:hover {
+    background: var(--primary-hover);
+}
+
 .tableCellMuted {
     color: var(--secondary-text);
     font-size: 12px;

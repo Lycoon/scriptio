@@ -1,4 +1,4 @@
-import { ProjectRole } from "@prisma/client";
+import { ProjectRole } from "../../../../../generated/client/client";
 import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 import { ForbiddenError, getCollabHttpUrl, Success, validate } from "@src/lib/utils/api-utils";
 

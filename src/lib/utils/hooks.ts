@@ -11,7 +11,7 @@ import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/serv
 import { KeyBindingMap, tinykeys } from "tinykeys";
 import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ProjectRole } from "@prisma/client";
+import { ProjectRole } from "../../generated/client/browser";
 import { isTauri } from "@tauri-apps/api/core";
 
 interface Position {

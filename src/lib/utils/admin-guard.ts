@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { UserRole } from "../../generated/client/client";
 import { ForbiddenError, UserNotFoundError } from "./api-utils";
 import type { CookieUser } from "./types";
 import * as UserService from "@src/server/service/user-service";

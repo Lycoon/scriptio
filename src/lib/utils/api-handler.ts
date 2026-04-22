@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AppError } from "./api-utils";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "../../generated/client/client";
 import type { CookieUser } from "./types";
 
 export type ApiContext = {

@@ -1,6 +1,9 @@
 import { defineConfig } from "vitest/config";
 import path from "path";
+import { fileURLToPath } from "url";
 import BenchJsonReporter from "./src/tests/helpers/bench-json-reporter";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
     test: {

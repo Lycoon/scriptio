@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "../../generated/client/client";
 import { auth } from "@src/auth";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {

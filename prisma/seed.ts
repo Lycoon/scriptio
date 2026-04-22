@@ -1,6 +1,11 @@
-import { PrismaClient, UserRole } from "@prisma/client";
+import "dotenv/config";
+import { PrismaClient, UserRole } from "../src/generated/client/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 
-const prisma = new PrismaClient();
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
     const adminEmail = process.env.SEED_ADMIN_EMAIL;

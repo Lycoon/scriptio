@@ -3,7 +3,7 @@
 import Link from "next/link";
 import useSWR from "swr";
 import { ArrowLeft } from "lucide-react";
-import { UserRole, SubscriptionProvider, ProjectRole } from "@prisma/client";
+import { UserRole, SubscriptionProvider, ProjectRole } from "../../src/generated/client/browser";
 import styles from "./UserDetail.module.css";
 
 type UserDetailPayload = {
@@ -188,13 +188,17 @@ export default function UserDetail({ userId }: Props) {
                                 </div>
                             )}
                             {memberships?.map((m) => (
-                                <div key={m.project.id} className={styles.tableRow}>
+                                <Link
+                                    key={m.project.id}
+                                    href={`/admin/projects/${m.project.id}`}
+                                    className={`${styles.tableRow} ${styles.tableRowLink}`}
+                                >
                                     <span>{m.project.title}</span>
                                     <span className={styles.tableCellMuted}>{m.role}</span>
                                     <span className={styles.tableCellMuted}>
                                         {formatDateTime(m.project.updatedAt)}
                                     </span>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </section>

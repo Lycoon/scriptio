@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { UserRole, SubscriptionProvider } from "@prisma/client";
+import { UserRole, SubscriptionProvider } from "../../src/generated/client/browser";
 import styles from "./UserSearch.module.css";
 
 type SearchResult = {

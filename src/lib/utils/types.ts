@@ -1,5 +1,5 @@
 import { JSONContent } from "@tiptap/core";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "../../generated/client/browser";
 import { UpdateSettings } from "../../server/repository/user-repository";
 
 export type Screenplay = JSONContent[];

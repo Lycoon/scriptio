@@ -22,4 +22,4 @@ const config: NextConfig = {
     },
 };
 
-module.exports = config;
+export default config;
