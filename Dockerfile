@@ -8,6 +8,7 @@ WORKDIR /usr/app
 COPY ./package*.json ./
 RUN npm install
 COPY ./ ./
+RUN chmod +x ./scripts/launch.sh
 
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
@@ -26,5 +27,5 @@ EXPOSE 3000
 USER node
 ENV NEXT_TELEMETRY_DISABLED 1
 
-ENTRYPOINT ["./launch.sh"]
+ENTRYPOINT ["./scripts/launch.sh"]
 CMD [ "npm", "start" ]

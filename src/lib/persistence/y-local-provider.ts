@@ -1,11 +1,6 @@
 /**
  * Shared factory for local Yjs persistence providers.
- * Picks the right implementation based on environment:
- *   - Browser: y-indexeddb (one DB per project, keyed as "scriptio-<projectId>")
- *   - Desktop (Tauri): SQLitePersistence (data column in cached_projects table)
- *
- * Centralises the isTauri() branch so project-state.ts and import-project.ts
- * don't duplicate the same switching logic.
+ * Uses y-indexeddb on both browser and desktop (one DB per project, keyed as "scriptio-<projectId>").
  */
 
 import type * as Y from "yjs";
@@ -14,27 +9,19 @@ import type * as Y from "yjs";
 export const yjsDbKey = (projectId: string) => `scriptio-${projectId}`;
 
 export interface YjsLocalProvider {
-    on(event: "synced", callback: (provider: any) => void): void;
+    on(event: "synced", callback: (provider: YjsLocalProvider) => void): void;
     destroy(): void;
-    /** Force an immediate write (available on SQLitePersistence, no-op on IndexedDB). */
-    flush?(): Promise<void>;
     /** Clear all stored data for this project (used when server restores a snapshot). */
     clearData?(): Promise<void>;
 }
 
 /**
- * Create the appropriate local Yjs persistence provider for the current environment.
+ * Create a local Yjs persistence provider backed by IndexedDB.
  * The provider is returned before sync completes — attach to the "synced" event.
  */
 export async function createLocalYjsProvider(projectId: string, ydoc: Y.Doc): Promise<YjsLocalProvider> {
-    const { isTauri } = await import("@tauri-apps/api/core");
-    if (isTauri()) {
-        const { SQLitePersistence } = await import("./y-sqlite");
-        return new SQLitePersistence(projectId, ydoc);
-    } else {
-        const { IndexeddbPersistence } = await import("y-indexeddb");
-        return new IndexeddbPersistence(yjsDbKey(projectId), ydoc);
-    }
+    const { IndexeddbPersistence } = await import("y-indexeddb");
+    return new IndexeddbPersistence(yjsDbKey(projectId), ydoc);
 }
 
 /**
@@ -49,12 +36,8 @@ export async function writeYjsDocumentLocally(projectId: string, ydoc: Y.Doc): P
         provider.on("synced", () => resolve());
     });
 
-    if (provider.flush) {
-        await provider.flush();
-    } else {
-        // Give IndexedDB time to finish writing
-        await new Promise((resolve) => setTimeout(resolve, 100));
-    }
+    // Give IndexedDB time to finish writing
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     provider.destroy();
 }

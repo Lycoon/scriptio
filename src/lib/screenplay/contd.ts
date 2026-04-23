@@ -56,7 +56,7 @@ export function computeContdIndices(screenplay: JSONContent[]): Set<number> {
 /**
  * Extracts character name from a node, normalized for comparison.
  */
-function getCharacterName(node: any): string {
-    const text = getNodeFlattenContent(node.content);
+function getCharacterName(node: JSONContent): string {
+    const text = getNodeFlattenContent(node.content ?? []);
     return (text || "").trim().toUpperCase();
 }

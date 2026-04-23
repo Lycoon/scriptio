@@ -6,7 +6,7 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Node as PMNode } from "@tiptap/pm/model";
 
 export interface DualDialogueNodeOptions {
-    HTMLAttributes: Record<string, any>;
+    HTMLAttributes: Record<string, unknown>;
 }
 
 /**

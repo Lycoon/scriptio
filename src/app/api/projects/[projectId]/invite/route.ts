@@ -1,5 +1,5 @@
 import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
-import { ProjectRole } from "@prisma/client";
+import { ProjectRole } from "../../../../../generated/client/client";
 import {
     ForbiddenError,
     InternalServerError,

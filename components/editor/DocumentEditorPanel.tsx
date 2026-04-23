@@ -19,6 +19,7 @@ import CommentCards from "@components/editor/CommentCards";
 import Loading from "@components/utils/Loading";
 
 import { TextSelection } from "@tiptap/pm/state";
+import { EditorView } from "@tiptap/pm/view";
 import { DocumentEditorConfig } from "@src/lib/editor/document-editor-config";
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
@@ -48,7 +49,6 @@ const DocumentEditorPanel = ({
     onEditorCreated,
     suggestions = [],
     updateSuggestions,
-    suggestionData,
     updateSuggestionData,
     userKeybinds,
     globalContext,
@@ -285,7 +285,7 @@ const DocumentEditorPanel = ({
 
         editor.setOptions({
             editorProps: {
-                handleKeyDown(view: any, event: any) {
+                handleKeyDown(view: EditorView, event: KeyboardEvent) {
                     const selection = view.state.selection;
                     const node = selection.$anchor.parent;
                     const nodeSize = node.content.size;
@@ -317,7 +317,6 @@ const DocumentEditorPanel = ({
                     }
 
                     if (event.key === "Enter") {
-                        const currentSuggestions = updateSuggestionsRef.current;
                         // suggestions.length check: read from ref to avoid stale closure
                         if (suggestions.length > 0) {
                             event.preventDefault();
@@ -396,7 +395,7 @@ const DocumentEditorPanel = ({
                 },
             },
         });
-    }, [editor, config.type]);
+    }, [editor, config.type, suggestions.length]);
 
     // ---- Global keybinds (screenplay only) ----
     const globalActions = useMemo(

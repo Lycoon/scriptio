@@ -1,6 +1,7 @@
 "use client";
 
 import "chart.js/auto";
+import type { ChartOptions } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { Frequency, getRandomColors } from "@src/lib/screenplay/statistics";
 
@@ -38,7 +39,7 @@ const CharacterFrequency = ({ color, frequency }: Props) => {
         },
     };
 
-    return <Doughnut data={data} options={options as any} />;
+    return <Doughnut data={data} options={options as ChartOptions<'doughnut'>} />;
 };
 
 export default CharacterFrequency;

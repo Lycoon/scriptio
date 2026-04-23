@@ -7,11 +7,8 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { PopupData, PopupSceneData, closePopup } from "@src/lib/screenplay/popup";
 import { ColorPicker } from "@components/utils/ColorPicker";
-import { ScreenplayElement } from "@src/lib/utils/enums";
 import { useTranslations } from "next-intl";
-import { Save } from "lucide-react";
-
-import CloseSVG from "@public/images/close.svg";
+import { Save, X } from "lucide-react";
 
 import form from "@components/utils/Form.module.css";
 import styles from "@components/popup/PopupCharacterItem.module.css";
@@ -43,16 +40,6 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
         closePopup(userCtx);
     };
 
-    const onDelete = () => {
-        if (!repository || !scene.id) {
-            closePopup(userCtx);
-            return;
-        }
-
-        repository.deleteScene(scene.id);
-        closePopup(userCtx);
-    };
-
     return (
         <div className={popup.window}>
             <div className={popup.container} style={{ transform: `translate(${position.x}px, ${position.y}px)` }}>
@@ -62,7 +49,7 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
                     style={{ cursor: isDragging ? "grabbing" : "grab" }}
                 >
                     <h2 className={popup.title}>{t("edit")}</h2>
-                    <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
+                    <X className={popup.close_btn} onClick={() => closePopup(userCtx)} />
                 </div>
                 <form className={popup.form} onSubmit={onSubmit}>
                     <div className={styles.element}>

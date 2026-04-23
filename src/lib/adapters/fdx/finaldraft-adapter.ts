@@ -2,6 +2,18 @@ import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { XMLBuilder, XMLParser } from "@node_modules/fast-xml-parser/src/fxp";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { ProjectData, ProjectState } from "@src/lib/project/project-state";
+import type { JSONContent } from "@tiptap/core";
+
+interface FDXStyledText {
+    "#text": string;
+    "@_Style"?: string;
+}
+
+interface FDXParagraphNode {
+    Text: FDXStyledText[];
+    "@_Type"?: string;
+    SceneProperties?: { "@_Length": string; "@_Page": string; "@_Title": string };
+}
 
 const options = { attributeNamePrefix: "@_", textNodeName: "#text", ignoreAttributes: false, format: true };
 const builder = new XMLBuilder(options);
@@ -37,8 +49,8 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
     extension = "fdx";
 
     convertTo(project: ProjectState, options: BaseExportOptions): Promise<Blob> {
-        let paragraphNodes: any = [];
-        let nodes = project.screenplay();
+        const paragraphNodes: FDXParagraphNode[] = [];
+        const nodes = project.screenplay();
         const characters = options.characters;
 
         for (let i = 0; i < nodes.length; i++) {
@@ -47,7 +59,6 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
             const content = nodes[i].content!;
             const flatText: string = getNodeFlattenContent(content);
             const type: string = nodes[i].attrs?.class;
-            const nextType: string = i >= nodes.length - 1 ? "action" : nodes[i + 1].attrs?.class;
 
             // Don't export unselected characters
             if (type === "character" && characters && !characters.includes(flatText)) {
@@ -64,14 +75,14 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
                 continue;
             }
 
-            let textNodes: any[] = [];
+            const textNodes: FDXStyledText[] = [];
             for (let j = 0; j < content.length; j++) {
                 // <Text Style="style">
                 const childNode = content[j];
                 const textFragment: string = "text" in childNode ? childNode.text! : "";
-                const styledNode: any = { "#text": textFragment };
+                const styledNode: FDXStyledText = { "#text": textFragment };
 
-                const styles: string[] = (content[j].marks ?? []).map((mark: any) => FDX_STYLE_TABLE[mark.type]);
+                const styles: string[] = (content[j].marks ?? []).map((mark) => FDX_STYLE_TABLE[mark.type]);
                 const fdxStyle: string = styles.join("+");
                 if (fdxStyle) styledNode["@_Style"] = fdxStyle;
 
@@ -79,7 +90,7 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
             }
 
             // <Paragraph Type="type">
-            const paragraphNode: any = { Text: textNodes };
+            const paragraphNode: FDXParagraphNode = { Text: textNodes };
             paragraphNode["@_Type"] = FDX_ELEMENT_TABLE[type];
 
             if (type === "scene") {
@@ -123,7 +134,7 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
         // Ensure paragraphs is always an array
         const paragraphList = Array.isArray(paragraphs) ? paragraphs : [paragraphs];
 
-        const screenplay: any[] = [];
+        const screenplay: JSONContent[] = [];
 
         for (const paragraph of paragraphList) {
             const fdxType = paragraph["@_Type"] || "Action";
@@ -143,7 +154,7 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
             // Ensure textNodes is always an array
             const textList = Array.isArray(textNodes) ? textNodes : [textNodes];
 
-            const content: any[] = [];
+            const content: JSONContent[] = [];
 
             for (const textNode of textList) {
                 // Handle both string content and object with #text
@@ -151,7 +162,7 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
 
                 if (!text) continue;
 
-                const jsonNode: any = {
+                const jsonNode: JSONContent = {
                     type: "text",
                     text: text,
                 };
@@ -160,7 +171,7 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
                 const styleAttr = typeof textNode === "object" ? textNode["@_Style"] : undefined;
                 if (styleAttr) {
                     const styles = styleAttr.split("+");
-                    const marks: any[] = [];
+                    const marks: { type: string }[] = [];
 
                     for (const style of styles) {
                         const markType = FDX_STYLE_REVERSE[style];

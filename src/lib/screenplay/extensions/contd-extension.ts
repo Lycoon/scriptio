@@ -1,7 +1,8 @@
 import { Extension } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Node } from "@tiptap/pm/model";
+import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { ReplaceAroundStep } from "@tiptap/pm/transform";
+import { ReplaceAroundStep, ReplaceStep, Step } from "@tiptap/pm/transform";
 import { STRUCTURAL_REFRESH_META, scheduleStructuralRefresh, cancelStructuralRefresh } from "./structural-refresh";
 
 const contdPluginKey = new PluginKey("contd");
@@ -10,24 +11,24 @@ const contdPluginKey = new PluginKey("contd");
 let contdNeedsRecompute = false;
 
 /**
- * Checks if a transaction structurally changes dialogue blocks
- * (adding/deleting nodes, or modifying character/scene nodes).
- * Simple text edits within an existing node don't affect CONT'D logic.
+ * Checks if a transaction structurally changes dialogue blocks or edits a
+ * character node's text content (which affects CONT'D name matching).
  */
-function didDialogueBlockChange(tr: any): boolean {
+function didDialogueBlockChange(tr: Transaction, oldDoc: Node): boolean {
     // ReplaceAroundStep means nodes were wrapped/unwrapped (structural change)
-    if (tr.steps.some((step: any) => step instanceof ReplaceAroundStep)) {
+    if (tr.steps.some((step: Step) => step instanceof ReplaceAroundStep)) {
         return true;
     }
 
     for (const step of tr.steps) {
-        // If the step's slice contains block nodes, it's a structural change
-        if (step.slice && step.slice.content && step.slice.content.childCount > 0) {
-            for (let i = 0; i < step.slice.content.childCount; i++) {
-                const child = step.slice.content.child(i);
-                if (child.isBlock) return true;
-            }
+        if (!(step instanceof ReplaceStep)) continue;
+        // Block-level content insertion (structural change)
+        for (let i = 0; i < step.slice.content.childCount; i++) {
+            if (step.slice.content.child(i).isBlock) return true;
         }
+        // Text edit within a character node — name changes affect CONT'D matching
+        const $from = oldDoc.resolve(step.from);
+        if ($from.parent.attrs?.class === "character") return true;
     }
 
     return false;
@@ -37,7 +38,7 @@ function didDialogueBlockChange(tr: any): boolean {
  * Computes decorations for character nodes that should display "(CONT'D)".
  * Works directly with ProseMirror doc tree (avoids expensive doc.toJSON() serialization).
  */
-function computeContdDecorations(doc: any): DecorationSet {
+function computeContdDecorations(doc: Node): DecorationSet {
     // Single pass: compute CONT'D indices and build decorations together
     const contdIndices = new Set<number>();
     let lastCharacterInScene: string | null = null;
@@ -45,7 +46,7 @@ function computeContdDecorations(doc: any): DecorationSet {
     let nodeIndex = 0;
 
     // First pass: determine which indices need CONT'D
-    doc.forEach((node: any) => {
+    doc.forEach((node: Node) => {
         const type: string = node.attrs?.class;
 
         if (type === "scene") {
@@ -76,7 +77,7 @@ function computeContdDecorations(doc: any): DecorationSet {
     const decorations: Decoration[] = [];
     nodeIndex = 0;
 
-    doc.forEach((node: any, pos: number) => {
+    doc.forEach((node: Node, pos: number) => {
         if (contdIndices.has(nodeIndex)) {
             decorations.push(
                 Decoration.node(pos, pos + node.nodeSize, {
@@ -113,7 +114,7 @@ export const ContdExtension = Extension.create({
                         // On structural change: defer full recompute to next frame,
                         // return fast O(log n) position remap for now.
                         // Also detect node deletion via Backspace/Delete (childCount changes).
-                        if (_oldState.doc.childCount !== newState.doc.childCount || didDialogueBlockChange(tr)) {
+                        if (_oldState.doc.childCount !== newState.doc.childCount || didDialogueBlockChange(tr, _oldState.doc)) {
                             contdNeedsRecompute = true;
                             return oldDecorations.map(tr.mapping, newState.doc);
                         }

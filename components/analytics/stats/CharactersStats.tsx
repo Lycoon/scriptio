@@ -63,18 +63,25 @@ const barOpts = {
 
 // ── Dialogue counting ─────────────────────────────────────────────────────────
 
-function countDialoguePerCharacter(screenplay: any[]): Record<string, number> {
+type ScreenplayNode = {
+    type?: string;
+    attrs?: Record<string, unknown>;
+    content?: ScreenplayNode[];
+    text?: string;
+};
+
+function countDialoguePerCharacter(screenplay: ScreenplayNode[]): Record<string, number> {
     const counts: Record<string, number> = {};
     let currentChar: string | null = null;
 
     for (const node of screenplay) {
-        const nodeType: string = node.attrs?.["class"] ?? node.type ?? "";
+        const nodeType: string = (node.attrs?.["class"] as string) ?? node.type ?? "";
 
         if (nodeType === ScreenplayElement.Character) {
             // Extract plain text from the node's content array
             const text = (node.content ?? [])
-                .flatMap((c: any) => c.content ?? [c])
-                .map((c: any) => c.text ?? "")
+                .flatMap((c) => c.content ?? [c])
+                .map((c) => c.text ?? "")
                 .join("")
                 .toUpperCase()
                 .replace(/\(.*?\)/g, "") // strip parentheticals like (V.O.)

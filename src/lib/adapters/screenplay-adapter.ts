@@ -2,7 +2,7 @@ import FileSaver from "file-saver";
 import { isTauri } from "@tauri-apps/api/core";
 import { replaceScreenplay } from "../screenplay/editor";
 import { Editor } from "@tiptap/react";
-import { ProjectData, ProjectState } from "../project/project-state";
+import { BoardData, LayoutData, ProjectData, ProjectMetadata, ProjectState } from "../project/project-state";
 import { ProjectRepository } from "../project/project-repository";
 
 export type BaseExportOptions = {
@@ -80,7 +80,7 @@ export abstract class ProjectAdapter<TExportOptions extends BaseExportOptions = 
                     if (project.metadata) {
                         const metadataMap = ydoc.metadata();
                         Object.entries(project.metadata).forEach(([key, value]) => {
-                            metadataMap.set(key, value);
+                            metadataMap.set(key as keyof ProjectMetadata, value);
                         });
                     }
 
@@ -112,14 +112,14 @@ export abstract class ProjectAdapter<TExportOptions extends BaseExportOptions = 
                         const boardMap = ydoc.board();
                         boardMap.clear();
                         Object.entries(project.board).forEach(([key, value]) => {
-                            boardMap.set(key, value);
+                            boardMap.set(key as keyof BoardData, value);
                         });
                     }
 
                     if (project.layout) {
                         const layoutMap = ydoc.layout();
                         Object.entries(project.layout).forEach(([key, value]) => {
-                            layoutMap.set(key, value);
+                            layoutMap.set(key as keyof LayoutData, value);
                         });
                     }
 

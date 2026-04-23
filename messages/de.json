@@ -144,7 +144,11 @@
       "cancelNo": "Pro behalten",
       "cancelling": "Wird gekündigt...",
       "cancelSuccess": "Abonnement gekündigt. Pro-Zugang bis {date}.",
-      "endsOn": "Dein Abonnement endet am {date}"
+      "endsOn": "Dein Abonnement endet am {date}",
+      "purchasing": "Kauf wird durchgeführt...",
+      "purchaseError": "Kauf fehlgeschlagen. Bitte erneut versuchen.",
+      "cancelApple": "Apple-Abonnements werden über den App Store verwaltet.",
+      "manageApple": "App Store öffnen"
     }
   },
   "projects": {

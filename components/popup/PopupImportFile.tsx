@@ -3,7 +3,7 @@
 import popup from "./Popup.module.css";
 import form from "../utils/Form.module.css";
 
-import CloseSVG from "@public/images/close.svg";
+import { X } from "lucide-react";
 import { join } from "@src/lib/utils/misc";
 import { useDraggable } from "@src/lib/utils/hooks";
 import { PopupData, PopupImportFileData, closePopup } from "@src/lib/screenplay/popup";
@@ -30,7 +30,7 @@ const PopupImportFile = ({ data: { confirmImport } }: PopupData<PopupImportFileD
                     style={{ cursor: isDragging ? "grabbing" : "grab" }}
                 >
                     <h2 className={popup.title}>{t("title")}</h2>
-                    <CloseSVG className={popup.close_btn} onClick={() => closePopup(userCtx)} alt="Close icon" />
+                    <X className={popup.close_btn} onClick={() => closePopup(userCtx)} />
                 </div>
                 <div className={popup.info}>
                     <p>

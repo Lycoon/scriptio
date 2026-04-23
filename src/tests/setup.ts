@@ -5,7 +5,7 @@ class StubWorker {
     postMessage() {}
     terminate() {}
 }
-(globalThis as any).Worker = StubWorker;
+(globalThis as Record<string, unknown>).Worker = StubWorker;
 
 // Suppress per-transaction console output from extensions globally.
 // beforeEach does not cover bench() cases in vitest browser mode.

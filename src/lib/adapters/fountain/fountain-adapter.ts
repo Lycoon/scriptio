@@ -1,4 +1,3 @@
-import { Screenplay } from "../../utils/types";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 
 import fountain from "./fountain_parser";
@@ -58,7 +57,7 @@ export class FountainAdapter extends ProjectAdapter {
 
             // Check if this line contains a format node
             const formatChild = content.find(
-                (c: any) => c.type === "tp-title" || c.type === "tp-author" || c.type === "tp-date",
+                (c: JSONContent) => c.type === "tp-title" || c.type === "tp-author" || c.type === "tp-date",
             );
 
             if (formatChild) {
@@ -71,7 +70,7 @@ export class FountainAdapter extends ProjectAdapter {
 
             // Plain text line — flatten and use as Credit
             const text = content
-                .map((c: any) => c.text ?? "")
+                .map((c: JSONContent) => c.text ?? "")
                 .join("")
                 .trim();
             if (text) {
@@ -88,7 +87,7 @@ export class FountainAdapter extends ProjectAdapter {
         let fountain = this.buildFountainTitlePage(project, options);
 
         let sceneCount = 1;
-        let nodes = project.screenplay();
+        const nodes = project.screenplay();
         const characters = options.characters;
 
         for (let i = 0; i < nodes.length; i++) {

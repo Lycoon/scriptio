@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
     X,
@@ -51,26 +52,28 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
     const manualSaves = saves.filter((s) => s.type === "manual");
     const autoSaves = saves.filter((s) => s.type === "auto");
 
-    // Fetch saves when panel opens
-    const fetchSaves = useCallback(async () => {
-        setLoading(true);
-        const data = await listSaves(projectId);
-        setSaves(data);
-        setLoading(false);
-    }, [projectId]);
-
-    useEffect(() => {
-        if (isOpen) {
-            fetchSaves();
-        } else {
-            // Reset state when closing
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    if (prevIsOpen !== isOpen) {
+        setPrevIsOpen(isOpen);
+        if (!isOpen) {
             setShowNameInput(false);
             setSaveName("");
             setConfirmRestoreKey(null);
             setConfirmDeleteKey(null);
             setEditingKey(null);
         }
-    }, [isOpen, fetchSaves]);
+    }
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const fetchSaves = async () => {
+            setLoading(true);
+            const data = await listSaves(projectId);
+            setSaves(data);
+            setLoading(false);
+        };
+        fetchSaves();
+    }, [isOpen, projectId]);
 
     // Focus name input when shown
     useEffect(() => {
@@ -183,9 +186,9 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
                     <Lock size={20} />
                     <p className={styles.pro_gate_title}>{t("proRequired")}</p>
                     <p className={styles.pro_gate_desc}>{t("proRequiredDesc")}</p>
-                    <a href="/?settings=Profile" className={styles.pro_gate_btn}>
+                    <Link href="/?settings=Profile" className={styles.pro_gate_btn}>
                         {t("upgradeBtn")}
-                    </a>
+                    </Link>
                 </div>
             </div>
         );

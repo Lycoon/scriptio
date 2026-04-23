@@ -3,7 +3,7 @@
 import { join } from "@src/lib/utils/misc";
 import tab from "./EditorTab.module.css";
 
-import SelectorSVG from "@public/images/selector.svg";
+import { ChevronRight } from "lucide-react";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 
 type Props = {
@@ -20,7 +20,7 @@ const EditorTab = ({ setActiveElement, currentElement, element, content }: Props
 
     return (
         <button onClick={() => setActiveElement(element)} className={tabStyle}>
-            {isActive && <SelectorSVG className={tab.selector} alt="Selector icon" />}
+            {isActive && <ChevronRight className={tab.selector} size={10} />}
             {content}
         </button>
     );

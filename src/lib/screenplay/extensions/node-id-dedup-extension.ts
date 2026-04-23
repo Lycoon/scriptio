@@ -32,7 +32,7 @@ export const createNodeIdDedupExtension = (config: NodeIdDedupConfig) => {
 
                         const hasPaste = transactions.some((tr) => tr.getMeta("uiEvent") === "paste");
 
-                        let tr = newState.tr;
+                        const tr = newState.tr;
                         let modified = false;
 
                         const seenDataIds = new Set<string>();

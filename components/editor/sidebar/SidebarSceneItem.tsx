@@ -22,7 +22,7 @@ type SidebarSceneItemProps = SceneContextProps & {
 const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, scrollRef, onPointerDown, onDoubleClick }: SidebarSceneItemProps) => {
     const { updateContextMenu } = useContext(UserContext);
 
-    const handleDropdown = (e: any) => {
+    const handleDropdown = (e: React.MouseEvent) => {
         e.preventDefault();
         updateContextMenu({
             type: ContextMenuType.SceneItem,

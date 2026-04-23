@@ -1,0 +1,80 @@
+name: Apply App Version
+description: Writes version into src-tauri/tauri.conf.json + Cargo.toml. Optionally sets window title to "Scriptio (Staging)".
+
+inputs:
+    version:
+        description: Version string (e.g. 2.0.1.5) to write into Tauri + Cargo configs.
+        required: true
+    staging:
+        description: When "true", sets window title to "Scriptio (Staging)".
+        required: false
+        default: "false"
+
+runs:
+    using: composite
+    steps:
+        - name: Apply version to Tauri and Cargo configs
+          shell: bash
+          env:
+              INPUT_VERSION: ${{ inputs.version }}
+              INPUT_STAGING: ${{ inputs.staging }}
+          run: |
+              set -e
+
+              SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
+
+              if [[ "$INPUT_STAGING" == "true" ]]; then
+                  PRODUCT_NAME="Scriptio (Staging)"
+                  WINDOW_TITLE="Scriptio (Staging)"
+                  APPSTORE_IDENTIFIER="app.scriptio.staging"
+                  WINDOWS_IDENTIFIER="ArkoLogic.ScriptioStaging"
+              else
+                  PRODUCT_NAME="Scriptio"
+                  WINDOW_TITLE="Scriptio"
+                  APPSTORE_IDENTIFIER="app.scriptio"
+                  WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
+              fi
+
+              jq --arg v "$SEMVER" --arg t "$WINDOW_TITLE" --arg n "$PRODUCT_NAME" \
+                  '.version = $v | .app.windows[0].title = $t | .productName = $n' \
+                  src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
+              mv src-tauri/tauri.conf.json.tmp src-tauri/tauri.conf.json
+
+              jq --arg id "$APPSTORE_IDENTIFIER" '.identifier = $id' \
+                  src-tauri/tauri.appstore.conf.json > src-tauri/tauri.appstore.conf.json.tmp
+              mv src-tauri/tauri.appstore.conf.json.tmp src-tauri/tauri.appstore.conf.json
+
+              jq --arg id "$WINDOWS_IDENTIFIER" --arg v "$SEMVER" \
+                  '.identifier = $id | .version = $v' \
+                  src-tauri/tauri.windows.conf.json > src-tauri/tauri.windows.conf.json.tmp
+              mv src-tauri/tauri.windows.conf.json.tmp src-tauri/tauri.windows.conf.json
+
+              if [[ -f "src-tauri/gen/windows/bundle.config.json" ]]; then
+                  jq --arg v "$INPUT_VERSION" '.version = $v' \
+                      src-tauri/gen/windows/bundle.config.json > src-tauri/gen/windows/bundle.config.json.tmp
+                  mv src-tauri/gen/windows/bundle.config.json.tmp src-tauri/gen/windows/bundle.config.json
+              fi
+
+              sed -i.bak "s/^version = \".*\"/version = \"$SEMVER\"/" src-tauri/Cargo.toml
+              rm -f src-tauri/Cargo.toml.bak
+
+              echo "Applied version $INPUT_VERSION (productName: '$PRODUCT_NAME', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
+
+        - name: Apply macOS-specific settings
+          if: ${{ runner.os == 'macOS' }}
+          shell: bash
+          env:
+              INPUT_STAGING: ${{ inputs.staging }}
+          run: |
+              set -e
+
+              if [[ "$INPUT_STAGING" == "true" ]]; then
+                  APPSTORE_IDENTIFIER="app.scriptio.staging"
+              else
+                  APPSTORE_IDENTIFIER="app.scriptio"
+              fi
+
+              TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :com.apple.developer.team-identifier" src-tauri/Entitlements.plist)
+              /usr/libexec/PlistBuddy -c "Set :com.apple.application-identifier ${TEAM_ID}.${APPSTORE_IDENTIFIER}" src-tauri/Entitlements.plist
+
+              echo "Applied macOS settings (app-id: ${TEAM_ID}.${APPSTORE_IDENTIFIER})"

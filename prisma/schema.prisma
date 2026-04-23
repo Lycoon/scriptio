@@ -2,12 +2,12 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/client"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum ProjectRole {
@@ -17,6 +17,16 @@ enum ProjectRole {
   VIEWER
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum SubscriptionProvider {
+  STRIPE
+  APPLE
+}
+
 model User {
   id                  String      @id @default(uuid(7))
   createdAt           DateTime    @default(now())
@@ -24,16 +34,18 @@ model User {
   emailVerified       DateTime?
   username            String?
   color               String?
+  role                UserRole    @default(USER)
 
   isProUntil                  DateTime?
-  stripeSubscriptionId        String?
   isSubscriptionCancelled     Boolean   @default(false)
+  subscriptionProvider        SubscriptionProvider?
 
   settings            Json?
 
   accounts            Account[]
   sessions            Session[]
   projects            ProjectMember[]
+  transactions        Transaction[]
 }
 
 model Account {
@@ -82,6 +94,19 @@ model MagicLinkToken {
   inviteToken         String?
 
   @@index([email, createdAt])
+}
+
+model Transaction {
+  id            Int                  @id @default(autoincrement())
+  userId        String
+  provider      SubscriptionProvider
+  transactionId String
+  createdAt     DateTime             @default(now())
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([transactionId])
 }
 
 model Project {

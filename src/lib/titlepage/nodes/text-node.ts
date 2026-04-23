@@ -29,14 +29,15 @@ export const TitlePageTextNode = Node.create({
                     if (element.classList.contains("align-right")) return "right";
                     return "left";
                 },
-                renderHTML: (attributes: Record<string, any>) => {
-                    const cls = ALIGN_CLASSES[attributes.textAlign] || ALIGN_CLASSES.left;
+                renderHTML: (attributes: Record<string, unknown>) => {
+                    const alignment = (attributes.textAlign as string) || "left";
+                    const cls = ALIGN_CLASSES[alignment] || ALIGN_CLASSES.left;
                     return { class: cls };
                 },
             },
             height: {
                 default: null,
-                renderHTML: (attributes: Record<string, any>) =>
+                renderHTML: (attributes: Record<string, unknown>) =>
                     attributes.height != null ? { "data-height": attributes.height } : {},
                 parseHTML: (element: HTMLElement) => {
                     const v = element.getAttribute("data-height");

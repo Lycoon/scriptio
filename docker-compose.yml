@@ -55,6 +55,7 @@ services:
             - traefik.http.routers.scriptio-staging.tls.certresolver=letsencrypt
             - traefik.http.routers.scriptio-staging.middlewares=staging-auth
             - traefik.http.middlewares.staging-auth.basicauth.users=${STAGING_AUTH_USERS}
+            - traefik.http.middlewares.staging-auth.basicauth.headerField=X-Staging-Auth
 
     # Production Database
     db-prod:
@@ -112,6 +113,71 @@ services:
             interval: 5s
             timeout: 5s
             retries: 5
+
+    prometheus:
+        image: prom/prometheus:latest
+        container_name: scriptio-prometheus
+        profiles: ["prod"]
+        restart: unless-stopped
+        command:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.retention.time=30d
+        volumes:
+            - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+            - prometheus_data:/prometheus
+        configs:
+            - source: metrics_bearer_token
+              target: /etc/prometheus/bearer-token
+              mode: 0400
+        networks:
+            - internal
+        depends_on:
+            - app-prod
+
+    grafana:
+        image: grafana/grafana:latest
+        container_name: scriptio-grafana
+        profiles: ["prod"]
+        restart: unless-stopped
+        environment:
+            - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+            - GF_SERVER_ROOT_URL=https://monitoring.scriptio.app
+            - GF_USERS_ALLOW_SIGN_UP=false
+            - GF_SMTP_ENABLED=true
+            - GF_SMTP_HOST=${SMTP_HOST}:587
+            - GF_SMTP_USER=${SMTP_USER}
+            - GF_SMTP_PASSWORD=${SMTP_SECRET}
+            - GF_SMTP_FROM_ADDRESS=noreply@scriptio.app
+            - GF_SMTP_FROM_NAME=Scriptio Monitoring
+            - APP_MEMORY_LIMIT_BYTES=${APP_MEMORY_LIMIT_BYTES}
+            - DB_SIZE_LIMIT_BYTES=${DB_SIZE_LIMIT_BYTES}
+        volumes:
+            - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+            - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+            - grafana_data:/var/lib/grafana
+        networks:
+            - webproxy
+            - internal
+        depends_on:
+            - prometheus
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=webproxy
+            - traefik.http.routers.scriptio-monitoring.rule=Host(`monitoring.scriptio.app`)
+            - traefik.http.routers.scriptio-monitoring.entrypoints=secure
+            - traefik.http.routers.scriptio-monitoring.tls=true
+            - traefik.http.routers.scriptio-monitoring.tls.certresolver=letsencrypt
+            - traefik.http.routers.scriptio-monitoring.middlewares=monitoring-auth
+            - traefik.http.middlewares.monitoring-auth.basicauth.users=${MONITORING_AUTH_USERS}
+            - traefik.http.services.scriptio-monitoring.loadbalancer.server.port=3000
+
+configs:
+    metrics_bearer_token:
+        content: ${METRICS_BEARER_TOKEN}
+
+volumes:
+    prometheus_data:
+    grafana_data:
 
 networks:
     webproxy:

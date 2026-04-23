@@ -1,6 +1,7 @@
 "use client";
 
 import "chart.js/auto";
+import type { ChartOptions, ChartDataset } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Distribution, Frequency, getRandomColors, getScaledDistribution } from "@src/lib/screenplay/statistics";
 
@@ -11,9 +12,9 @@ type Props = {
 };
 
 const CharacterDistribution = ({ distribution }: Props) => {
-    let scaled = getScaledDistribution(distribution);
-    const labels: any[] = [];
-    const datasets: any[] = [];
+    const scaled = getScaledDistribution(distribution);
+    const labels: number[] = [];
+    const datasets: ChartDataset<'line', number[]>[] = [];
 
     for (const actor in scaled) {
         // optimization to get all labels?
@@ -25,8 +26,8 @@ const CharacterDistribution = ({ distribution }: Props) => {
     labels.sort((a, b) => a - b);
 
     for (const actor in scaled) {
-        const distr: any = scaled[actor];
-        const quantities: any[] = [];
+        const distr = scaled[actor];
+        const quantities: number[] = [];
 
         for (const label of labels) {
             quantities.push(distr[label]);
@@ -63,7 +64,7 @@ const CharacterDistribution = ({ distribution }: Props) => {
         },
     };
 
-    return <Line data={data} options={options as any} />;
+    return <Line data={data} options={options as ChartOptions<'line'>} />;
 };
 
 export default CharacterDistribution;

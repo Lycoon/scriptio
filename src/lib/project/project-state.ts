@@ -1,18 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { getRandomColor } from "@src/lib/utils/misc";
 import { getCloudToken } from "../utils/requests";
 import { JSONContent } from "@tiptap/react";
 import { Screenplay } from "../utils/types";
 import { PageFormat } from "../utils/enums";
+import * as Y from "yjs";
+import type { ThrottledWebsocketProvider } from "../cloud/utils";
+import { ScreenplaySchema } from "../screenplay/editor";
+import { TitlePageSchema } from "../titlepage/editor";
+import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
+import type { CharacterItem, CharacterMap } from "../screenplay/characters";
+import type { LocationItem, LocationMap } from "../screenplay/locations";
+import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
+import type { Comment } from "../utils/types";
+import type { YjsLocalProvider } from "../persistence/y-local-provider";
 
 // Lazy re-export repository for convenient access (avoid loading yjs at module level)
 export const getProjectRepository = async () => {
-    const module = await import("./project-repository");
+    const mod = await import("./project-repository");
     return {
-        ProjectRepository: module.ProjectRepository,
-        createProjectRepository: module.createProjectRepository,
+        ProjectRepository: mod.ProjectRepository,
+        createProjectRepository: mod.createProjectRepository,
     };
 };
 
@@ -21,17 +31,6 @@ export const getProjectRepository = async () => {
 // -------------------------------- //
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
-
-// Import types only (these don't cause SSR issues)
-import * as Y from "yjs";
-import type { ThrottledWebsocketProvider } from "../collaboration/utils";
-import { ScreenplaySchema } from "../screenplay/editor";
-import { TitlePageSchema } from "../titlepage/editor";
-import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
-import type { CharacterItem, CharacterMap } from "../screenplay/characters";
-import type { LocationItem, LocationMap } from "../screenplay/locations";
-import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
-import type { Comment } from "../utils/types";
 
 // ---- Shelf types ----
 
@@ -79,6 +78,7 @@ export type ProjectMetadata = {
     id: string;
     title: string;
     author: string;
+    titlepageInitialized?: boolean;
 };
 
 export type ElementMargin = { left: number; right: number }; // values in inches (offset from page margin)
@@ -171,22 +171,25 @@ export type ProjectData = {
     shelf?: Record<string, ShelfEntry>;
 };
 
+/**
+ * Helper to provide stronger typing for Y.Map where different keys have different types.
+ * This avoids manual casts when accessing known keys.
+ */
+export interface TypedMap<T extends Record<string, unknown>> extends Omit<
+    Y.Map<T[keyof T]>,
+    "get" | "set" | "toJSON"
+> {
+    get<K extends keyof T>(key: K): T[K] | undefined;
+    set<K extends keyof T>(key: K, value: T[K]): T[K];
+    toJSON(): T;
+}
+
 // -------------------------------- //
 //       LAZY-LOADED MODULES        //
 // -------------------------------- //
 
 // Cache for dynamically imported modules to avoid multiple imports
-let yjsModule: typeof import("yjs") | null = null;
 let yProtocolsModule: typeof import("y-protocols/awareness") | null = null;
-let yProsemirrorModule: typeof import("y-prosemirror") | null = null;
-let screenplayEditorModule: typeof import("../screenplay/editor") | null = null;
-
-async function getYjs() {
-    if (!yjsModule) {
-        yjsModule = await import("yjs");
-    }
-    return yjsModule;
-}
 
 async function getYProtocols() {
     if (!yProtocolsModule) {
@@ -195,18 +198,27 @@ async function getYProtocols() {
     return yProtocolsModule;
 }
 
-async function getYProsemirror() {
-    if (!yProsemirrorModule) {
-        yProsemirrorModule = await import("y-prosemirror");
-    }
-    return yProsemirrorModule;
-}
+/**
+ * Utility to clear the local IndexedDB cache for a specific project.
+ * Used when the server restores a document from a snapshot to avoid merge conflicts.
+ */
+export async function clearLocalProjectCache(projectId: string): Promise<void> {
+    try {
+        const { IndexeddbPersistence } = await import("y-indexeddb");
+        const tmpDoc = new Y.Doc();
+        const tmpPersistence = new IndexeddbPersistence(`scriptio-${projectId}`, tmpDoc);
 
-async function getScreenplayEditor() {
-    if (!screenplayEditorModule) {
-        screenplayEditorModule = await import("../screenplay/editor");
+        // Check if clearData is available on the persistence instance
+        const provider = tmpPersistence as unknown as { clearData?: () => Promise<void> };
+        if (typeof provider.clearData === "function") {
+            await provider.clearData();
+        }
+
+        tmpPersistence.destroy();
+        tmpDoc.destroy();
+    } catch (e) {
+        console.warn(`[ProjectState] Failed to clear local cache for ${projectId}:`, e);
     }
-    return screenplayEditorModule;
 }
 
 // -------------------------------- //
@@ -229,8 +241,8 @@ export class ProjectState extends Y.Doc {
         SHELF: "shelf",
     } as const;
 
-    metadata(): Y.Map<any> {
-        return this.getMap(this.KEYS.METADATA);
+    metadata(): TypedMap<ProjectMetadata> {
+        return this.getMap(this.KEYS.METADATA) as unknown as TypedMap<ProjectMetadata>;
     }
 
     screenplay(): Screenplay {
@@ -265,12 +277,12 @@ export class ProjectState extends Y.Doc {
         return this.getMap(this.KEYS.SCENES);
     }
 
-    board(): Y.Map<string> {
-        return this.getMap(this.KEYS.BOARD);
+    board(): TypedMap<BoardData> {
+        return this.getMap(this.KEYS.BOARD) as unknown as TypedMap<BoardData>;
     }
 
-    layout(): Y.Map<any> {
-        return this.getMap(this.KEYS.LAYOUT);
+    layout(): TypedMap<LayoutData> {
+        return this.getMap(this.KEYS.LAYOUT) as unknown as TypedMap<LayoutData>;
     }
 
     comments(): Y.Map<Comment> {
@@ -325,7 +337,7 @@ export const getScenesMap = (ydoc: ProjectState): Y.Map<PersistentScene> => {
  * Get the board Y.Map from a ProjectState.
  * Convenience function for direct access without repository.
  */
-export const getBoardMap = (ydoc: ProjectState): Y.Map<string> => {
+export const getBoardMap = (ydoc: ProjectState): TypedMap<BoardData> => {
     return ydoc.board();
 };
 
@@ -340,7 +352,7 @@ export const getBoardMap = (ydoc: ProjectState): Y.Map<string> => {
 export const useLocalPersistence = (projectId: string | null) => {
     const [ydoc, setYdoc] = useState<ProjectState | null>(null);
     const [isLocalReady, setIsLocalReady] = useState(false);
-    const persistenceRef = useRef<{ on: any; destroy(): void } | null>(null);
+    const persistenceRef = useRef<YjsLocalProvider | null>(null);
 
     useEffect(() => {
         if (!projectId || typeof window === "undefined") {
@@ -393,13 +405,17 @@ export const useLocalPersistence = (projectId: string | null) => {
 /**
  * Hook to manage cloud WebSocket synchronization.
  */
-export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null, userInfo: UserInfo) => {
+export const useCloudSync = (
+    projectId: string | null,
+    ydoc: ProjectState | null,
+    userInfo: UserInfo,
+) => {
     const [provider, setProvider] = useState<ThrottledWebsocketProvider | null>(null);
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [isCloudSynced, setIsCloudSynced] = useState(false);
-    const [isLockedByServer, setIsLockedByServer] = useState(false);
-    const [isSessionReplaced, setIsSessionReplaced] = useState(false);
+    const [isLockedByServer] = useState(false);
+    const [isSessionReplaced] = useState(false);
     const [isProjectUnavailable, setIsProjectUnavailable] = useState(false);
 
     const isMountedRef = useRef(true);
@@ -449,7 +465,7 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
             return;
         }
 
-        const initializeProvider = async () => {
+        const setupProvider = async () => {
             setConnectionStatus("connecting");
 
             try {
@@ -458,7 +474,8 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 const isDesktop = isTauri();
 
                 // Local-only projects (not cloud-synced) don't need cloud sync
-                const { isLocalOnlyProject } = await import("../persistence/storage-provider/local-persistence");
+                const { isLocalOnlyProject } =
+                    await import("../persistence/storage-provider/local-persistence");
                 if (await isLocalOnlyProject(projectId)) {
                     setConnectionStatus("disconnected");
                     setIsCloudSynced(true);
@@ -478,7 +495,7 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 }
 
                 // Dynamically import collaboration utils
-                const { ThrottledWebsocketProvider } = await import("../collaboration/utils");
+                const { ThrottledWebsocketProvider } = await import("../cloud/utils");
 
                 const cloudProvider = new ThrottledWebsocketProvider(
                     `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
@@ -490,8 +507,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                             clientId: ydoc.clientID.toString(),
                         },
                         userInfo: userInfoRef.current,
-                        // Disable BroadcastChannel in Tauri - it can interfere with sync
-                        // See: https://github.com/tauri-apps/tauri/issues/10226
                         disableBc: isDesktop,
                     },
                 );
@@ -506,8 +521,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                     for (const state of states) {
                         if (state.user) {
                             const user = state.user as CollaboratorInfo;
-                            // Use userId as the primary unique key for deduplication,
-                            // fallback to name for anonymous/legacy sessions.
                             const key = user.userId || user.name;
                             if (!uniqueUsersMap.has(key)) {
                                 uniqueUsersMap.set(key, user);
@@ -516,8 +529,6 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                     }
 
                     const connectedUsers = Array.from(uniqueUsersMap.values());
-
-                    // Only update if users changed to avoid unnecessary re-renders
                     const usersJson = JSON.stringify(connectedUsers);
                     if (usersJson !== lastUsersJsonRef.current) {
                         lastUsersJsonRef.current = usersJson;
@@ -527,15 +538,10 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
 
                 // Handle connection errors
                 cloudProvider.on("connection-error", async () => {
-                    // Don't try to reconnect if session was replaced
-                    if (cloudProvider.wasSessionReplaced) {
-                        return;
-                    }
-
+                    if (cloudProvider.wasSessionReplaced) return;
                     console.warn("[ProjectYjs] Connection error, attempting to refresh token...");
                     if (isMountedRef.current) {
                         setConnectionStatus("connecting");
-                        // Refresh the token before reconnecting
                         if (refreshAndReconnectRef.current) {
                             await refreshAndReconnectRef.current();
                         } else {
@@ -547,13 +553,10 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 // Status updates
                 cloudProvider.on("status", (e: { status: string }) => {
                     if (isMountedRef.current) {
-                        // Use setTimeout to avoid state update during render
                         setTimeout(() => {
                             if (isMountedRef.current) {
                                 setConnectionStatus(e.status as ConnectionStatus);
-                                // Check synced status when connected (might have synced already)
                                 if (e.status === "connected" && cloudProvider.synced) {
-                                    console.log("[ProjectYjs] Already synced on connect");
                                     setIsCloudSynced(true);
                                 }
                             }
@@ -562,53 +565,31 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 });
 
                 // Track when initial cloud sync completes
-                // This is crucial for desktop clients where local IndexedDB may be empty
-                // y-websocket sets .synced property when sync step 2 is complete
                 cloudProvider.on("sync", (isSynced: boolean) => {
                     if (isMountedRef.current && isSynced) {
                         setIsCloudSynced(true);
                     }
                 });
 
-                // Handle document restore — server replaced the doc with a snapshot.
-                // We must clear the local IndexedDB/SQLite so the old state doesn't
-                // merge back when we reconnect, then reload to get a clean slate.
+                // Handle document restore
                 cloudProvider.on("document-restored", async () => {
                     if (!isMountedRef.current) return;
-                    console.log("[ProjectYjs] Document restored — clearing local cache and reloading");
-
-                    try {
-                        const { isTauri } = await import("@tauri-apps/api/core");
-                        if (!isTauri()) {
-                            const { IndexeddbPersistence } = await import("y-indexeddb");
-                            const Y = await getYjs();
-                            const tmpDoc = new Y.Doc();
-                            const tmpPersistence = new IndexeddbPersistence(`scriptio-${projectId}`, tmpDoc);
-                            await (tmpPersistence as any).clearData();
-                            tmpPersistence.destroy();
-                            tmpDoc.destroy();
-                        }
-                        // Desktop (SQLite): the SqlitePersistence will be overwritten on
-                        // reconnect since the server state wins the CRDT merge from a clean doc.
-                    } catch (e) {
-                        console.warn("[ProjectYjs] Failed to clear local cache:", e);
-                    }
-
+                    console.log(
+                        "[ProjectYjs] Document restored — clearing local cache and reloading",
+                    );
+                    await clearLocalProjectCache(projectId);
                     window.location.reload();
                 });
 
-                // Poll for synced status since the event might fire before listener is attached
-                // This is a safety net for race conditions
+                // Poll for synced status
                 const checkSynced = () => {
                     if (!isMountedRef.current) return;
                     if (cloudProvider.synced) {
                         setIsCloudSynced(true);
                     } else {
-                        // Check again after a short delay
                         setTimeout(checkSynced, 100);
                     }
                 };
-                // Start checking after connection is established
                 setTimeout(checkSynced, 50);
 
                 providerRef.current = cloudProvider;
@@ -617,18 +598,21 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 console.error("[ProjectYjs] Failed to initialize provider:", e);
                 if (isMountedRef.current) {
                     setConnectionStatus("disconnected");
-                    // Allow proceeding with local data when cloud sync fails
                     setIsCloudSynced(true);
                 }
             }
         };
 
-        initializeProvider();
+        setupProvider();
 
         const handleUnload = async () => {
             if (providerRef.current && ydoc) {
                 const { removeAwarenessStates } = await getYProtocols();
-                removeAwarenessStates(providerRef.current.awareness, [ydoc.clientID], "window unload");
+                removeAwarenessStates(
+                    providerRef.current.awareness,
+                    [ydoc.clientID],
+                    "window unload",
+                );
             }
         };
 
@@ -652,7 +636,11 @@ export const useCloudSync = (projectId: string | null, ydoc: ProjectState | null
                 if (ydoc) {
                     getYProtocols().then(({ removeAwarenessStates }) => {
                         if (providerRef.current) {
-                            removeAwarenessStates(providerRef.current.awareness, [ydoc.clientID], "component unmount");
+                            removeAwarenessStates(
+                                providerRef.current.awareness,
+                                [ydoc.clientID],
+                                "component unmount",
+                            );
                             providerRef.current.destroy();
                             providerRef.current = null;
                             setProvider(null);
@@ -699,13 +687,17 @@ export const useProjectYjs = ({
     isReady: boolean;
     refreshAndReconnect: () => Promise<void>;
 } => {
+    const [fallback] = useState(() => ({
+        name: `User_${Math.floor(Math.random() * 1000)}`,
+        color: getRandomColor(),
+    }));
     const userInfo = useMemo<UserInfo>(
         () => ({
-            name: userName || `User_${Math.floor(Math.random() * 1000)}`,
-            color: userColor || getRandomColor(),
+            name: userName || fallback.name,
+            color: userColor || fallback.color,
             userId,
         }),
-        [userName, userColor, userId],
+        [userName, userColor, userId, fallback.name, fallback.color],
     );
 
     const { ydoc, isLocalReady } = useLocalPersistence(projectId);
@@ -748,67 +740,59 @@ export const useProjectYjs = ({
 /**
  * Hook to observe a Y.Map and re-render on changes
  */
+const ymapToMap = <T>(ymap: Y.Map<T>): Map<string, T> => {
+    const result = new Map<string, T>();
+    ymap.forEach((value, key) => result.set(key, value));
+    return result;
+};
+
 export const useYMap = <T>(ymap: Y.Map<T> | null): Map<string, T> => {
-    const [state, setState] = useState<Map<string, T>>(new Map());
-
-    useEffect(() => {
-        if (!ymap) {
-            setState(new Map());
-            return;
-        }
-
-        // Initial state
-        const initialState = new Map<string, T>();
-        ymap.forEach((value, key) => {
-            initialState.set(key, value);
-        });
-        setState(initialState);
-
-        // Observe changes
-        const observer = () => {
-            const newState = new Map<string, T>();
-            ymap.forEach((value, key) => {
-                newState.set(key, value);
-            });
-            setState(newState);
-        };
-
-        ymap.observe(observer);
-
-        return () => {
-            ymap.unobserve(observer);
-        };
-    }, [ymap]);
-
-    return state;
+    const cache = useRef<Map<string, T>>(new Map());
+    return useSyncExternalStore(
+        useCallback(
+            (callback: () => void) => {
+                if (!ymap) {
+                    cache.current = new Map();
+                    return () => {};
+                }
+                cache.current = ymapToMap(ymap);
+                const observer = () => {
+                    cache.current = ymapToMap(ymap);
+                    callback();
+                };
+                ymap.observe(observer);
+                return () => ymap.unobserve(observer);
+            },
+            [ymap],
+        ),
+        () => cache.current,
+        () => new Map(),
+    );
 };
 
 /**
  * Hook to observe a Y.Array and re-render on changes
  */
 export const useYArray = <T>(yarray: Y.Array<T> | null): T[] => {
-    const [state, setState] = useState<T[]>([]);
-
-    useEffect(() => {
-        if (!yarray) {
-            setState([]);
-            return;
-        }
-
-        // Initial state
-        setState(yarray.toArray());
-
-        // Observe changes
-        const observer = () => {
-            setState(yarray.toArray());
-        };
-
-        yarray.observe(observer);
-
-        return () => {
-            yarray.unobserve(observer);
-        };
-    }, [yarray]);
-
-    return state;
+    const cache = useRef<T[]>([]);
+    return useSyncExternalStore(
+        useCallback(
+            (callback: () => void) => {
+                if (!yarray) {
+                    cache.current = [];
+                    return () => {};
+                }
+                cache.current = yarray.toArray();
+                const observer = () => {
+                    cache.current = yarray.toArray();
+                    callback();
+                };
+                yarray.observe(observer);
+                return () => yarray.unobserve(observer);
+            },
+            [yarray],
+        ),
+        () => cache.current,
+        () => [],
+    );
 };

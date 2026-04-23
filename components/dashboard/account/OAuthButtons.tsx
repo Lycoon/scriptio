@@ -18,7 +18,7 @@ type Props = {
     callbackUrl?: string;
 };
 
-const OAuthButtons = ({ callbackUrl = "/" }: Props) => {
+const OAuthButtons = ({ callbackUrl = "/projects" }: Props) => {
     const { mutate } = useSWRConfig();
     const t = useTranslations("oauth");
     const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);

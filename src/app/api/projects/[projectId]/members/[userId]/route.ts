@@ -1,4 +1,4 @@
-import { ProjectRole } from "@prisma/client";
+import { ProjectRole } from "../../../../../../generated/client/client";
 import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 import {
     ForbiddenError,
@@ -12,11 +12,10 @@ import {
 
 import * as Roles from "@src/lib/utils/roles";
 import * as ProjectService from "@src/server/service/project-service";
-import * as CollabUtils from "@src/lib/collaboration/utils";
+import * as CollabUtils from "@src/lib/cloud/utils";
 
 import z from "zod";
 import { NextRequest } from "next/server";
-import { redirect } from "next/navigation";
 import { UpdateRoleSchema } from "@src/lib/utils/api-bodies";
 export type { UpdateRoleBody } from "@src/lib/utils/api-bodies";
 

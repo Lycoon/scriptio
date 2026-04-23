@@ -1,12 +1,11 @@
 /**
  * Cached projects persistence facade.
- * Delegates to the appropriate StorageProvider (IndexedDB on browser, SQLite on Tauri).
- *
- * This file preserves the public API consumed by all components and hooks.
+ * Delegates to the IndexedDB StorageProvider on all platforms.
  */
 
 import type { UserSettings } from "@src/lib/utils/types";
 import { getStorageProvider, type CachedProject, type ProjectEntryInput } from "./storage-provider";
+import { yjsDbKey } from "../y-local-provider";
 
 export type { CachedProject };
 
@@ -83,4 +82,63 @@ export async function getPersistedSettings(): Promise<Partial<UserSettings>> {
 
 export async function persistSettings(updates: Partial<UserSettings>): Promise<void> {
     return (await getStorageProvider()).saveSettings(updates);
+}
+
+// ── Project migration / discard ──────────────────────────────────────────────
+
+/**
+ * Migrate a cloud project to a new local-only project.
+ * Creates a new cached entry and copies the Yjs document from the old
+ * IndexedDB database (`scriptio-<oldId>`) to a new one (`scriptio-<newId>`).
+ */
+export async function migrateToCachedProject(
+    oldProjectId: string,
+    title: string,
+    description?: string,
+): Promise<CachedProject> {
+    const { Doc, applyUpdate, encodeStateAsUpdate } = await import("yjs");
+    const { IndexeddbPersistence } = await import("y-indexeddb");
+
+    // 1. Load the old project's Yjs document from IndexedDB
+    const oldDoc = new Doc();
+    const oldProvider = new IndexeddbPersistence(yjsDbKey(oldProjectId), oldDoc);
+    await new Promise<void>((resolve) => oldProvider.on("synced", () => resolve()));
+
+    const snapshot = encodeStateAsUpdate(oldDoc);
+    oldProvider.destroy();
+    oldDoc.destroy();
+
+    // 2. Create a new local-only cached project entry
+    const newProject = await createCachedProject(title, description);
+
+    // 3. Write the snapshot into the new project's IndexedDB
+    const newDoc = new Doc();
+    applyUpdate(newDoc, snapshot);
+    const newProvider = new IndexeddbPersistence(yjsDbKey(newProject.id), newDoc);
+    await new Promise<void>((resolve) => newProvider.on("synced", () => resolve()));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    newProvider.destroy();
+    newDoc.destroy();
+
+    // 4. Clean up old project data
+    await discardCloudProjectData(oldProjectId);
+
+    return newProject;
+}
+
+/**
+ * Discard a cloud project's local data (cached entry + Yjs IndexedDB database).
+ */
+export async function discardCloudProjectData(projectId: string): Promise<void> {
+    // Remove the cached project entry
+    await deleteCachedProject(projectId);
+
+    // Delete the Yjs IndexedDB database for this project
+    const dbName = yjsDbKey(projectId);
+    await new Promise<void>((resolve, reject) => {
+        const req = indexedDB.deleteDatabase(dbName);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+        req.onblocked = () => resolve();
+    });
 }

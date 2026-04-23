@@ -1,5 +1,5 @@
 import { UserSettings } from "@src/lib/utils/types";
-import { Prisma } from "@prisma/client";
+import { Prisma, SubscriptionProvider } from "../../generated/client/client";
 import prisma from "../db";
 
 export type UpdateSettings = {
@@ -17,8 +17,8 @@ export interface UserUpdate {
     username?: string;
     color?: string;
     isProUntil?: Date | null;
-    stripeSubscriptionId?: string | null;
     isSubscriptionCancelled?: boolean;
+    subscriptionProvider?: SubscriptionProvider | null;
     settings?: Partial<UserSettings>;
 }
 
@@ -39,8 +39,8 @@ export class UserRepository {
                 username: userUpdate.username,
                 color: userUpdate.color,
                 isProUntil: userUpdate.isProUntil,
-                stripeSubscriptionId: userUpdate.stripeSubscriptionId,
                 isSubscriptionCancelled: userUpdate.isSubscriptionCancelled,
+                subscriptionProvider: userUpdate.subscriptionProvider,
             },
         });
     }
@@ -71,23 +71,60 @@ export class UserRepository {
                 settings: true,
                 username: true,
                 color: true,
+                role: true,
                 isProUntil: true,
                 isSubscriptionCancelled: true,
+                subscriptionProvider: true,
             },
         });
     }
 
-    fetchUserBySubscriptionId(subscriptionId: string) {
-        return prisma.user.findFirst({
-            where: { stripeSubscriptionId: subscriptionId },
-            select: { id: true },
+    countAll() {
+        return prisma.user.count();
+    }
+
+    countActivePro(now: Date = new Date()) {
+        return prisma.user.count({
+            where: { isProUntil: { gt: now } },
         });
     }
 
-    fetchSubscriptionId(userId: string) {
-        return prisma.user.findUnique({
-            where: { id: userId },
-            select: { stripeSubscriptionId: true },
+    searchUsers(term: string, limit: number, cursor?: number) {
+        const isLikelyId = /^[0-9a-f-]{30,}$/i.test(term);
+        const where: Prisma.UserWhereInput = isLikelyId
+            ? { OR: [{ id: term }, { email: { contains: term, mode: "insensitive" } }] }
+            : { email: { contains: term, mode: "insensitive" } };
+
+        return prisma.user.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+            take: limit,
+            ...(cursor !== undefined && { skip: cursor }),
+            select: {
+                id: true,
+                email: true,
+                createdAt: true,
+                role: true,
+                isProUntil: true,
+                subscriptionProvider: true,
+            },
+        });
+    }
+
+    /** Find the user who owns a given Stripe subscription ID. */
+    fetchUserByStripeSubscriptionId(subscriptionId: string) {
+        return prisma.transaction.findFirst({
+            where: { transactionId: subscriptionId, provider: "STRIPE" },
+            select: { userId: true },
+        });
+    }
+
+    /** Get the most recent Stripe subscription ID for a user (for cancellation). */
+    fetchStripeSubscriptionId(userId: string) {
+        return prisma.transaction.findFirst({
+            where: { userId, provider: "STRIPE" },
+            orderBy: { createdAt: "desc" },
+            select: { transactionId: true },
         });
     }
 

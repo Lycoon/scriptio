@@ -2,6 +2,7 @@
 
 import { getElapsedDaysFrom, join } from "@src/lib/utils/misc";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 
 import item from "./ProjectItem.module.css";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
@@ -30,7 +31,7 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
 
     return (
         <button className={join(item.container)} onClick={() => redirectScreenplay(project.id)}>
-            <img className={item.poster} src={posterPath} alt={t("item.posterAlt")} />
+            <Image className={item.poster} src={posterPath} alt={t("item.posterAlt")} width={160} height={220} style={{ width: "52px", height: "auto", aspectRatio: "0.675" }} />
             <div className={item.info}>
                 <h2 className={item.title}>{project.title}</h2>
                 <div className={item.date}>

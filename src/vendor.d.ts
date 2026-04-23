@@ -3,6 +3,12 @@
 // top-level import/export so TypeScript treats it as a script file and these declarations
 // act as true ambient overrides rather than module augmentations.
 
+declare module "*.svg" {
+    import type { FC, SVGProps } from "react";
+    const ReactComponent: FC<SVGProps<SVGSVGElement>>;
+    export default ReactComponent;
+}
+
 declare module "@formkit/auto-animate" {
     interface Coordinates { top: number; left: number; width: number; height: number }
     export interface AnimationController<P = unknown> {

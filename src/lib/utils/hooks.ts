@@ -7,11 +7,11 @@ import { editUserSettings } from "./requests";
 import { readLocalSettings, writeLocalSettings, DEFAULT_LOCAL_SETTINGS } from "./local-settings";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { isPage, Page } from "./enums";
-import { ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { KeyBindingMap, tinykeys } from "tinykeys";
 import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ProjectRole } from "@prisma/client";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ProjectRole } from "../../generated/client/browser";
 import { isTauri } from "@tauri-apps/api/core";
 
 interface Position {
@@ -70,32 +70,14 @@ const useDraggable = (initialPosition?: Position): UseDraggableReturn => {
 };
 
 const useDesktop = (): boolean => {
-    const [isDesktop, setIsDesktop] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (window.__TAURI__) setIsDesktop(true);
-    }, []);
-
+    const [isDesktop] = useState<boolean>(() => typeof window !== "undefined" && !!window.__TAURI__);
     return isDesktop;
 };
 
-interface StateResult<T> {
-    data?: T;
-    isLoading: boolean;
-    error?: any;
-    mutate?: (data?: T, shouldRevalidate?: boolean) => Promise<T | undefined>;
-}
 
 const useProjectIdFromUrl = () => {
     const searchParams = useSearchParams();
-    const [projectId, setProjectId] = useState<string>("");
-
-    useEffect(() => {
-        const projectId = searchParams.get("projectId");
-        if (projectId) setProjectId(projectId as string);
-    }, [searchParams]);
-
-    return projectId;
+    return searchParams.get("projectId") ?? "";
 };
 
 const useUser = () => {
@@ -176,8 +158,8 @@ const useSettings = () => {
 
     const mutate = useCallback(
         (data?: UserSettings, revalidate?: boolean) => {
-            if (!isAuthenticated) return mutateLocal(data, revalidate as any);
-            return swrMutate(data, revalidate as any);
+            if (!isAuthenticated) return mutateLocal(data, { revalidate });
+            return swrMutate(data, { revalidate });
         },
         [isAuthenticated, mutateLocal, swrMutate],
     );
@@ -369,7 +351,7 @@ const useProjectMembership = () => {
         if (data && !isLoading) {
             updateProject(data);
         }
-    }, [data]);
+    }, [data, isLoading, updateProject]);
 
     // Treat as locally accessible: explicitly local-only, or any cached project when offline
     const isLocalAccessible = isLocalOnly === true || (!isAuthenticated && !isUserLoading && isCachedLocally === true);
@@ -388,29 +370,17 @@ const useProjectInvites = (projectId: string | undefined) => {
 };
 
 const useProjectCollaborators = (projectId: string | undefined) => {
-    const { data, isLoading, mutate } = useSWR<any[]>(projectId ? `/api/projects/${projectId}/members` : null);
+    const { data, isLoading, mutate } = useSWR<Collaborator[]>(projectId ? `/api/projects/${projectId}/members` : null);
     return { collaborators: data || [], isLoading, mutate };
 };
 
 const usePage = (): Page | undefined => {
     const pathname = usePathname();
-    const [page, setPage] = useState<Page | undefined>(undefined);
-
-    useEffect(() => {
-        if (!pathname) return;
-
-        const segments = pathname.split("/").filter(Boolean);
-        if (segments.length === 0) {
-            setPage("index");
-            return;
-        }
-
-        const lastSegment = segments[segments.length - 1];
-        if (isPage(lastSegment)) setPage(lastSegment as Page);
-        else setPage("index");
-    }, [pathname]);
-
-    return page;
+    if (!pathname) return undefined;
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length === 0) return "index";
+    const lastSegment = segments[segments.length - 1];
+    return isPage(lastSegment) ? (lastSegment as Page) : "index";
 };
 
 export const useEffectiveKeybinds = (userShortcuts: Record<string, string> | undefined) => {

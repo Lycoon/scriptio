@@ -29,6 +29,11 @@ export type SuggestionData = {
 
 const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
     const [selectedIdx, setSelectedIdx] = useState(0);
+    const [prevSuggestions, setPrevSuggestions] = useState(suggestions);
+    if (prevSuggestions !== suggestions) {
+        setPrevSuggestions(suggestions);
+        setSelectedIdx(0);
+    }
     const { editor } = useContext(ProjectContext);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -50,9 +55,7 @@ const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
         suggestionsRef.current = suggestions;
     }, [suggestions]);
 
-    // Reset selection when suggestions change
     useEffect(() => {
-        setSelectedIdx(0);
         itemRefs.current = [];
     }, [suggestions]);
 

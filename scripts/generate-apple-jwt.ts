@@ -1,4 +1,4 @@
-import { SignJWT, JWTPayload } from "jose";
+import { SignJWT } from "jose";
 import { createPrivateKey, KeyObject } from "crypto";
 
 interface AppleAuthConfig {
@@ -35,8 +35,7 @@ export async function generateAppleJWT({
 }
 
 // --- CLI Execution Logic ---
-// In TS, we check if this file is the entry point differently depending on your runner
-if (require.main === module || process.argv[1]?.includes("generate-apple-jwt")) {
+if (process.argv[1]?.includes("generate-apple-jwt")) {
     const config: AppleAuthConfig = {
         teamId: process.env.AUTH_APPLE_TEAM_ID!,
         clientId: process.env.AUTH_APPLE_CLIENT_ID!,
@@ -44,7 +43,7 @@ if (require.main === module || process.argv[1]?.includes("generate-apple-jwt")) 
         privateKey: process.env.AUTH_APPLE_PRIVATE_KEY!,
     };
 
-    const missing = Object.entries(config).filter(([_, v]) => !v);
+    const missing = Object.entries(config).filter(([, v]) => !v);
 
     if (missing.length > 0) {
         console.error(`❌ Missing env vars: ${missing.map((m) => m[0]).join(", ")}`);

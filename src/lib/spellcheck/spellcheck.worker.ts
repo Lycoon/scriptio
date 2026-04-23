@@ -1,6 +1,13 @@
 import type { SpellWorkerRequest, SpellWorkerResponse } from "./spellcheck-types";
 
-let hunspell: any = null;
+interface HunspellInstance {
+    spell: (word: string) => boolean;
+    suggest: (word: string) => string[];
+    addWord: (word: string) => void;
+    removeWord: (word: string) => void;
+}
+
+let hunspell: HunspellInstance | null = null;
 
 function post(msg: SpellWorkerResponse) {
     self.postMessage(msg);
@@ -26,7 +33,8 @@ self.onmessage = async (e: MessageEvent<SpellWorkerRequest>) => {
                     post({ type: "ERROR", error: "Hunspell not initialized" });
                     break;
                 }
-                const misspelled = msg.words.filter((w) => !hunspell.spell(w));
+                const h = hunspell;
+                const misspelled = msg.words.filter((w) => !h.spell(w));
                 post({ type: "CHECK_RESULT", id: msg.id, misspelled });
                 break;
             }

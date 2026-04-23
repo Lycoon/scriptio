@@ -13,7 +13,7 @@ type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
-const request = async (url: string, method: RESTMethod, body?: Object) => {
+const request = async (url: string, method: RESTMethod, body?: object) => {
     const json = JSON.stringify(body);
     const headers: Record<string, string> = { "Content-Type": "application/json" };
 
@@ -28,6 +28,11 @@ const request = async (url: string, method: RESTMethod, body?: Object) => {
         const token = await getDesktopToken();
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const stagingAuth = process.env.NEXT_PUBLIC_STAGING_BASIC_AUTH;
+        if (stagingAuth) {
+            headers["X-Staging-Auth"] = `Basic ${stagingAuth}`;
         }
     }
 
@@ -53,8 +58,8 @@ export function getCollabHttpUrl(path: string): string {
 export const getCloudToken = async (projectId: string): Promise<{ token: string | null; status: number }> => {
     const res = await request(`/api/projects/${projectId}/cloud-token`, "GET");
     if (res.ok) {
-        const { data: token } = (await res.json()) as ApiResponse;
-        return { token, status: res.status };
+        const { data: token } = (await res.json()) as ApiResponse<string>;
+        return { token: token ?? null, status: res.status };
     }
     return { token: null, status: res.status };
 };
@@ -158,5 +163,10 @@ export const createStripeCheckout = async (): Promise<{ url: string } | null> =>
         return data ?? null;
     }
     return null;
+};
+
+export const verifyApplePurchase = async (jwsTransaction: string): Promise<boolean> => {
+    const res = await request("/api/apple/verify", "POST", { jwsTransaction });
+    return res.ok;
 };
 

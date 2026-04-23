@@ -17,6 +17,11 @@
     width: 100%;
 }
 
+.header_title {
+    position: relative;
+    top: 0.8rem;
+}
+
 .header_info {
     display: flex;
     flex-direction: row;

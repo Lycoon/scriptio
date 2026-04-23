@@ -27,7 +27,7 @@ export const ScriptioBold = Bold.extend({
             {
                 tag: "span",
                 preserveWhitespace: "full",
-                getAttrs: (e: any) => {
+                getAttrs: (e: HTMLElement) => {
                     return e.getAttribute("class") === "bold" && null;
                 },
             },
@@ -36,7 +36,7 @@ export const ScriptioBold = Bold.extend({
         ];
     },
 
-    renderHTML({ HTMLAttributes }: any) {
+    renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
         return ["span", HTMLAttributes, 0];
     },
 });
@@ -58,7 +58,7 @@ export const ScriptioItalic = Italic.extend({
             {
                 tag: "span",
                 preserveWhitespace: "full",
-                getAttrs: (e: any) => {
+                getAttrs: (e: HTMLElement) => {
                     return e.getAttribute("class") === "italic" && null;
                 },
             },
@@ -67,7 +67,7 @@ export const ScriptioItalic = Italic.extend({
         ];
     },
 
-    renderHTML({ HTMLAttributes }: any) {
+    renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
         return ["span", HTMLAttributes, 0];
     },
 });
@@ -89,7 +89,7 @@ export const ScriptioUnderline = Underline.extend({
             {
                 tag: "span",
                 preserveWhitespace: "full",
-                getAttrs: (e: any) => {
+                getAttrs: (e: HTMLElement) => {
                     return e.getAttribute("class") === "underline" && null;
                 },
             },
@@ -98,7 +98,7 @@ export const ScriptioUnderline = Underline.extend({
         ];
     },
 
-    renderHTML({ HTMLAttributes }: any) {
+    renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, unknown> }) {
         return ["span", HTMLAttributes, 0];
     },
 });

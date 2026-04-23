@@ -101,7 +101,7 @@ export const renameCharacter = (oldName: string, newName: string, projectCtx: Pr
     // Find the character with case-insensitive matching
     const oldNameUpper = oldName.toUpperCase();
     let existingKey: string | undefined;
-    let character: any;
+    let character: CharacterItem | undefined;
 
     charactersMap.forEach((value, key) => {
         if (key.toUpperCase() === oldNameUpper) {
@@ -111,9 +111,10 @@ export const renameCharacter = (oldName: string, newName: string, projectCtx: Pr
     });
 
     if (existingKey && character) {
+        const characterToRename = character;
         ydoc.transact(() => {
             charactersMap.delete(existingKey!);
-            charactersMap.set(newName.toUpperCase(), character);
+            charactersMap.set(newName.toUpperCase(), characterToRename);
         });
         console.log(`[Characters] Renamed character: ${existingKey} -> ${newName.toUpperCase()}`);
     }

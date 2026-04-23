@@ -5,6 +5,7 @@ import { ScreenplaySchema } from "../screenplay/editor";
 import { Comment, CommentReply, Screenplay } from "../utils/types";
 import {
     LayoutData,
+    ProjectMetadata,
     ProjectState,
     ElementStyle,
     PageMargin,
@@ -123,9 +124,9 @@ export class ProjectRepository {
         this.ydoc.metadata().set("author", author);
     }
 
-    observeMetadata(callback: (metadata: Record<string, any>) => void): () => void {
+    observeMetadata(callback: (metadata: Partial<ProjectMetadata>) => void): () => void {
         const map = this.ydoc.metadata();
-        const observer = () => callback(map.toJSON());
+        const observer = () => callback(map.toJSON() as Partial<ProjectMetadata>);
         map.observe(observer);
         return () => map.unobserve(observer);
     }
@@ -335,36 +336,36 @@ export class ProjectRepository {
     // -------------------------------- //
 
     /**
-     * Generic comment operations — work on any Y.Map<any> keyed by comment UUID.
+     * Generic comment operations — work on any Y.Map<Comment> keyed by comment UUID.
      * Use the convenience wrappers below for the main screenplay comments.
      */
 
-    getCommentsFromMap(map: Y.Map<any>): Record<string, Comment> {
+    getCommentsFromMap(map: Y.Map<Comment>): Record<string, Comment> {
         return map.toJSON() as Record<string, Comment>;
     }
 
-    getCommentFromMap(map: Y.Map<any>, commentId: string): Comment | undefined {
-        return map.get(commentId) as Comment | undefined;
+    getCommentFromMap(map: Y.Map<Comment>, commentId: string): Comment | undefined {
+        return map.get(commentId);
     }
 
-    addCommentToMap(map: Y.Map<any>, comment: Omit<Comment, "id">): string {
+    addCommentToMap(map: Y.Map<Comment>, comment: Omit<Comment, "id">): string {
         const id = uuidv7();
         map.set(id, { ...comment, id });
         return id;
     }
 
-    updateCommentInMap(map: Y.Map<any>, commentId: string, data: Partial<Comment>): void {
-        const existing = map.get(commentId) as Comment | undefined;
+    updateCommentInMap(map: Y.Map<Comment>, commentId: string, data: Partial<Comment>): void {
+        const existing = map.get(commentId);
         if (!existing) return;
         map.set(commentId, { ...existing, ...data });
     }
 
-    resolveCommentInMap(map: Y.Map<any>, commentId: string): void {
+    resolveCommentInMap(map: Y.Map<Comment>, commentId: string): void {
         this.updateCommentInMap(map, commentId, { resolved: true });
     }
 
-    addReplyToMap(map: Y.Map<any>, commentId: string, reply: Omit<CommentReply, "id">): string | undefined {
-        const existing = map.get(commentId) as Comment | undefined;
+    addReplyToMap(map: Y.Map<Comment>, commentId: string, reply: Omit<CommentReply, "id">): string | undefined {
+        const existing = map.get(commentId);
         if (!existing) return undefined;
         const id = uuidv7();
         const replies = [...(existing.replies ?? []), { ...reply, id }];
@@ -372,13 +373,13 @@ export class ProjectRepository {
         return id;
     }
 
-    deleteCommentFromMap(map: Y.Map<any>, commentId: string): void {
+    deleteCommentFromMap(map: Y.Map<Comment>, commentId: string): void {
         if (map.has(commentId)) {
             map.delete(commentId);
         }
     }
 
-    observeCommentsMap(map: Y.Map<any>, callback: (comments: Record<string, Comment>) => void): () => void {
+    observeCommentsMap(map: Y.Map<Comment>, callback: (comments: Record<string, Comment>) => void): () => void {
         const observer = () => callback(map.toJSON() as Record<string, Comment>);
         map.observe(observer);
         return () => map.unobserve(observer);

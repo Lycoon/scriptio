@@ -1,6 +1,14 @@
 ﻿"use client";
 
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+    createContext,
+    ReactNode,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { Editor } from "@tiptap/react";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
@@ -22,7 +30,7 @@ import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 
 // Import types only - these don't cause module loading
-import type { ThrottledWebsocketProvider } from "@src/lib/collaboration/utils";
+import type { ThrottledWebsocketProvider } from "@src/lib/cloud/utils";
 import type { ProjectRepository } from "@src/lib/project/project-repository";
 
 // -------------------------------- //
@@ -258,7 +266,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [characters, setCharacters] = useState<CharacterMap | undefined>(undefined);
     const [locations, setLocations] = useState<LocationMap | undefined>(undefined);
     const [scenes, setScenes] = useState<Scene[]>([]);
-    const [selectedElement, setSelectedElementState] = useState<ScreenplayElement>(ScreenplayElement.Action);
+    const [selectedElement, setSelectedElementState] = useState<ScreenplayElement>(
+        ScreenplayElement.Action,
+    );
     const [selectedStyles, setSelectedStylesState] = useState<Style>(Style.None);
     const [highlightedCharacters, setHighlightedCharacters] = useState<Set<string>>(new Set());
     const [pageFormat, setPageFormatState] = useState<PageFormat>("LETTER");
@@ -268,7 +278,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [sceneNumberOnRight, setSceneNumberOnRightState] = useState<boolean>(false);
     const [contdLabel, setContdLabelState] = useState<string>("(CONT'D)");
     const [moreLabel, setMoreLabelState] = useState<string>("(MORE)");
-    const [elementMargins, setElementMarginsState] = useState<Record<string, { left: number; right: number }>>({});
+    const [elementMargins, setElementMarginsState] = useState<
+        Record<string, { left: number; right: number }>
+    >({});
     const [elementStyles, setElementStylesState] = useState<Record<string, ElementStyle>>({});
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
@@ -300,7 +312,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     );
 
     // Focus tracking state
-    const [focusedEditorType, setFocusedEditorTypeState] = useState<"screenplay" | "title" | "draft" | null>(null);
+    const [focusedEditorType, setFocusedEditorTypeState] = useState<
+        "screenplay" | "title" | "draft" | null
+    >(null);
 
     // Draft editor state
     const [draftEditor, setDraftEditor] = useState<Editor | null>(null);
@@ -308,7 +322,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     // Shelf state
     const [shelfEntries, setShelfEntries] = useState<Record<string, ShelfEntry>>({});
-    const [activeShelfVersion, setActiveShelfVersion] = useState<{ nodeId: string; versionId: string } | null>(null);
+    const [activeShelfVersion, setActiveShelfVersion] = useState<{
+        nodeId: string;
+        versionId: string;
+    } | null>(null);
 
     // Create repository instance when ydoc is available (dynamically imported)
     useEffect(() => {
@@ -332,6 +349,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             isMounted = false;
         };
     }, [ydoc]);
+
+    const updateScreenplay = useCallback((newScreenplay: Screenplay) => {
+        setScreenplay(newScreenplay);
+    }, []);
+
+    const updateScenes = useCallback((newScenes: Scene[]) => {
+        setScenes(newScenes);
+    }, []);
+
+    const updateCharacters = useCallback((newCharacters: CharacterMap) => {
+        setCharacters(newCharacters);
+    }, []);
+
+    const updateLocations = useCallback((newLocations: LocationMap) => {
+        setLocations(newLocations);
+    }, []);
 
     useEffect(() => {
         if (!repository) return;
@@ -362,7 +395,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         // elementStyles starts as {} and defaults always win).
         const initialLayout = repository.getLayout();
         if (initialLayout) {
-            if (initialLayout.pageSize && (initialLayout.pageSize === "A4" || initialLayout.pageSize === "LETTER")) {
+            if (
+                initialLayout.pageSize &&
+                (initialLayout.pageSize === "A4" || initialLayout.pageSize === "LETTER")
+            ) {
                 setPageFormatState(initialLayout.pageSize);
             }
             if (initialLayout.pageMargins !== undefined) {
@@ -477,7 +513,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             unsubscribeMetadata();
             unsubscribeShelf();
         };
-    }, [repository]);
+    }, [repository, updateCharacters, updateLocations, updateScenes, updateScreenplay]);
 
     // Seed Yjs metadata from the database project record if not yet set
     useEffect(() => {
@@ -506,7 +542,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             const hasTitle = !!repository.getTitle();
             const hasAuthor = !!repository.getAuthor();
             if (hasTitle && hasAuthor) return;
-            const { getCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
+            const { getCachedProject } =
+                await import("@src/lib/persistence/storage-provider/local-persistence");
             const local = await getCachedProject(projectId);
             if (!local) return;
             if (!hasTitle && local.title) repository.setTitle(local.title);
@@ -531,22 +568,6 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     const updateEditor = useCallback((newEditor: Editor | null) => {
         setEditor(newEditor);
-    }, []);
-
-    const updateScreenplay = useCallback((newScreenplay: Screenplay) => {
-        setScreenplay(newScreenplay);
-    }, []);
-
-    const updateScenes = useCallback((newScenes: Scene[]) => {
-        setScenes(newScenes);
-    }, []);
-
-    const updateCharacters = useCallback((newCharacters: CharacterMap) => {
-        setCharacters(newCharacters);
-    }, []);
-
-    const updateLocations = useCallback((newLocations: LocationMap) => {
-        setLocations(newLocations);
     }, []);
 
     const setSelectedElement = useCallback((element: ScreenplayElement) => {
@@ -819,7 +840,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         ],
     );
 
-    const readyValue = useMemo(() => ({ isYjsReady, isProjectUnavailable }), [isYjsReady, isProjectUnavailable]);
+    const readyValue = useMemo(
+        () => ({ isYjsReady, isProjectUnavailable }),
+        [isYjsReady, isProjectUnavailable],
+    );
 
     return (
         <ProjectReadyContext.Provider value={readyValue}>

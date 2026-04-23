@@ -35,6 +35,11 @@ async function fetchFromDesktop<JSON = unknown>(
         Authorization: `Bearer ${token}`,
     };
 
+    const stagingAuth = process.env.NEXT_PUBLIC_STAGING_BASIC_AUTH;
+    if (stagingAuth) {
+        headers["X-Staging-Auth"] = `Basic ${stagingAuth}`;
+    }
+
     if (init?.headers) {
         Object.assign(headers, init.headers as Record<string, string>);
     }
@@ -50,10 +55,10 @@ async function fetchFromDesktop<JSON = unknown>(
         throw { message: "Server unreachable", status: 0, isNetworkError: true };
     }
 
-    const data: any = await response.json();
+    const data = await response.json() as { data?: JSON; message?: string; status?: number };
 
     if (response.ok) {
-        return data.data;
+        return data.data as JSON;
     }
 
     const error = { ...data, status: response.status };
@@ -68,10 +73,10 @@ async function fetchFromBrowser<JSON = unknown>(
     init?: RequestInit,
 ): Promise<JSON> {
     const response = await fetch(input, init);
-    const data: any = await response.json();
+    const data = await response.json() as { data?: JSON; message?: string; status?: number };
 
     if (response.ok) {
-        return data.data;
+        return data.data as JSON;
     }
 
     // Include status code in the error for SWR's shouldRetryOnError

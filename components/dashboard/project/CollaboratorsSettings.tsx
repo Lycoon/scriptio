@@ -4,7 +4,7 @@ import { useContext, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useCookieUser, useIsPro, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
 import { CookieUser } from "@src/lib/utils/types";
-import { ProjectRole } from "@prisma/client";
+import { ProjectRole } from "../../../src/generated/client/browser";
 import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { Info, Lock } from "lucide-react";
 
@@ -17,6 +17,7 @@ import * as Roles from "@src/lib/utils/roles";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 const MAX_COLLABORATORS = 5;
 
@@ -34,7 +35,11 @@ const CollaboratorsSettings = () => {
         const owner = collaborators.find((c) => c.role === ProjectRole.OWNER);
         const otherMembers = collaborators.filter((c) => c.role !== ProjectRole.OWNER);
 
-        const result: { type: "MEMBER" | "INVITE" | "EMPTY"; data: any; key: string }[] = [];
+        type Slot =
+            | { type: "MEMBER"; data: Collaborator; key: string }
+            | { type: "INVITE"; data: ProjectInvite; key: string }
+            | { type: "EMPTY"; data: null; key: string };
+        const result: Slot[] = [];
 
         if (owner) result.push({ type: "MEMBER", data: owner, key: `member-${owner.user.id}` });
         otherMembers.forEach((m) => result.push({ type: "MEMBER", data: m, key: `member-${m.user.id}` }));
@@ -87,7 +92,7 @@ const CollaboratorsSettings = () => {
                     <div className={styles.proGateBanner}>
                         <Lock size={14} />
                         <span>{t("proRequired")}</span>
-                        <a href="/?settings=Profile" className={styles.proGateLink}>{t("upgrade")}</a>
+                        <Link href="/?settings=Profile" className={styles.proGateLink}>{t("upgrade")}</Link>
                     </div>
                 )}
 
@@ -150,7 +155,7 @@ const MemberSlot = ({ data, membership, mutateCollaborators, user }: MemberSlotP
         if (res.ok) {
             if (res.status !== 204) {
                 // If user left the project by himself, redirect him to home
-                const json = (await res.json()) as ApiResponse;
+                const json = (await res.json()) as ApiResponse<{ redirectUrl: string }>;
                 if (json.data && json.data.redirectUrl) {
                     closeDashboard();
                     redirect(json.data.redirectUrl);

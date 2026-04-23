@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { UserRole } from "./generated/client/client";
 
 import prisma from "@src/server/db";
 import * as UserService from "@src/server/service/user-service";
@@ -26,12 +27,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (user) {
                 token.id = user.id;
                 token.email = user.email;
-                // `createdAt` is set on programmatic sign-in (string) and missing for OAuth — fill it in
-                if ((user as any).createdAt) {
-                    token.createdAt = (user as any).createdAt;
-                } else if (token.id && !token.createdAt) {
-                    const dbUser = await UserService.getUserFromId(token.id as string);
-                    if (dbUser) token.createdAt = dbUser.createdAt.toISOString();
+                // `createdAt` may be available on programmatic sign-in but not OAuth.
+                const extUser = user as typeof user & { createdAt?: string };
+                if (extUser.createdAt) {
+                    token.createdAt = extUser.createdAt;
+                }
+            }
+            // Always sync from DB so role changes (e.g. granting admin) are reflected
+            // without requiring a sign-out. Called on every auth() invocation.
+            if (token.id) {
+                const dbUser = await UserService.getUserFromId(token.id as string);
+                if (dbUser) {
+                    if (!token.createdAt) token.createdAt = dbUser.createdAt.toISOString();
+                    token.role = dbUser.role;
                 }
             }
             return token;
@@ -43,7 +51,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     id: token.id as string,
                     email: token.email as string,
                     createdAt: token.createdAt ? new Date(token.createdAt as string) : new Date(),
-                } as any;
+                    role: (token.role as UserRole) ?? UserRole.USER,
+                } as typeof session.user & {
+                    id: string;
+                    email: string;
+                    createdAt: Date;
+                    role: UserRole;
+                };
             }
             return session;
         },

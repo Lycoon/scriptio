@@ -1,0 +1,51 @@
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.card {
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--panel-shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label {
+    color: var(--secondary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.value {
+    color: var(--primary-text);
+    font-family: var(--font-josefin), sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.hint {
+    color: var(--secondary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 12px;
+}
+
+.loading,
+.error {
+    color: var(--secondary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 14px;
+    padding: 12px 4px;
+}
+
+.error {
+    color: var(--error);
+}

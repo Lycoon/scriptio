@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useRef } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Editor, useEditor } from "@tiptap/react";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
@@ -13,7 +13,7 @@ import { useUser } from "@src/lib/utils/hooks";
 import { getStylesFromMarks, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
 import { ScriptioPagination } from "@src/lib/screenplay/extensions/pagination-extension";
 import { KeybindsExtension } from "@src/lib/screenplay/extensions/keybinds-extension";
-import { executeKeybindAction } from "@src/lib/utils/keybinds";
+import { executeKeybindAction, KeybindId } from "@src/lib/utils/keybinds";
 import {
     createCharacterHighlightExtension,
     refreshCharacterHighlights,
@@ -90,10 +90,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     const moreLabelRef = useRef<string>(moreLabel);
     const callbacksRef = useRef(callbacks);
 
-    const userInfoRef = useRef({
-        name: user?.username || "User_" + Math.floor(Math.random() * 1000),
-        color: user?.color || getRandomColor(),
-    });
+    const [fallbackUserInfo] = useState<{ name: string; color: string }>(() => ({
+        name: "User_" + Math.floor(Math.random() * 1000),
+        color: getRandomColor(),
+    }));
+    const userInfo = useMemo(() => ({
+        name: user?.username || fallbackUserInfo.name,
+        color: user?.color || fallbackUserInfo.color,
+    }), [user?.username, user?.color, fallbackUserInfo]);
 
     // Keep all refs in sync
     useEffect(() => {
@@ -144,6 +148,35 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         isSpellWorkerReadyRef.current = isSpellWorkerReady;
     }, [isSpellWorkerReady]);
 
+    // ---- Mutable container for extension getter functions ----
+    // useMemo with [] creates a stable object reference; we mutate its properties each render
+    // so that extension getter closures always return the latest values without .current accesses.
+    const ext = useMemo(() => ({
+        highlightedCharacters,
+        characters,
+        scenes,
+        repository,
+        callbacks,
+        spellWorker,
+        isSpellWorkerReady,
+        searchTerm,
+        searchFilters,
+        currentSearchIndex,
+        setSearchMatches,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }), []);
+    ext.highlightedCharacters = highlightedCharacters;
+    ext.characters = characters;
+    ext.scenes = scenes;
+    ext.repository = repository;
+    ext.callbacks = callbacks;
+    ext.spellWorker = spellWorker;
+    ext.isSpellWorkerReady = isSpellWorkerReady;
+    ext.searchTerm = searchTerm;
+    ext.searchFilters = searchFilters;
+    ext.currentSearchIndex = currentSearchIndex;
+    ext.setSearchMatches = setSearchMatches;
+
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
 
     const currentSuggestionsRef = useRef<string[]>([]);
@@ -175,12 +208,22 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         cb(data);
     }, []);
 
-    // ---- Dynamic extensions (created once, read from refs) ----
+    const onKeybindAction = useCallback((id: KeybindId, editorInstance: Editor) => {
+        const gc = callbacks.globalContext;
+        if (!gc) return;
+        executeKeybindAction(id, {
+            editor: editorInstance,
+            toggleFocusMode: gc.toggleFocusMode,
+            saveProject: gc.saveProject,
+        });
+    }, [callbacks.globalContext]);
+
+    // ---- Dynamic extensions (created once, read from ext container) ----
     const characterHighlightExtension = features.characterHighlights
         ? createCharacterHighlightExtension({
-              getHighlightedCharacters: () => highlightedCharactersRef.current,
+              getHighlightedCharacters: () => ext.highlightedCharacters,
               getCharacterColor: (name: string) => {
-                  const current = charactersRef.current;
+                  const current = ext.characters;
                   if (!current) return undefined;
                   const upperName = name.toUpperCase();
                   const key = Object.keys(current).find((k) => k.toUpperCase() === upperName);
@@ -192,7 +235,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     const sceneBookmarkExtension = features.sceneBookmarks
         ? createSceneBookmarkExtension({
               getSceneColor: (sceneId: string) => {
-                  const current = scenesRef.current;
+                  const current = ext.scenes;
                   if (!current) return undefined;
                   const scene = current.find((s) => s.id === sceneId);
                   return scene?.color;
@@ -203,7 +246,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     const nodeIdDedupExtension = features.nodeIdDedup
         ? createNodeIdDedupExtension({
               duplicatePersistentScene: (originalId: string, newId: string) => {
-                  repositoryRef.current?.duplicateScene(originalId, newId);
+                  ext.repository?.duplicateScene(originalId, newId);
               },
           })
         : null;
@@ -211,26 +254,26 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     const commentMarkExtension = features.comments
         ? CommentMark.configure({
               onCommentActivated: (commentId: string | null) => {
-                  callbacksRef.current.setActiveCommentId?.(commentId);
+                  ext.callbacks.setActiveCommentId?.(commentId);
               },
           })
         : null;
 
     const spellcheckExtension = features.spellcheck
         ? createSpellcheckExtension({
-              getWorker: () => spellWorkerRef.current,
-              getEnabled: () => isSpellWorkerReadyRef.current,
-              getCharacters: () => charactersRef.current,
+              getWorker: () => ext.spellWorker,
+              getEnabled: () => ext.isSpellWorkerReady,
+              getCharacters: () => ext.characters,
           })
         : null;
 
     const searchHighlightExtension = features.searchHighlights
         ? createSearchHighlightExtension({
-              getSearchTerm: () => searchTermRef.current,
-              getEnabledFilters: () => searchFiltersRef.current,
-              getCurrentMatchIndex: () => currentSearchIndexRef.current,
+              getSearchTerm: () => ext.searchTerm,
+              getEnabledFilters: () => ext.searchFilters,
+              getCurrentMatchIndex: () => ext.currentSearchIndex,
               onMatchesFound: (matches: SearchMatch[]) => {
-                  setSearchMatchesRef.current(matches);
+                  ext.setSearchMatches(matches);
               },
           })
         : null;
@@ -260,8 +303,8 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                     ? [
                           CollaborationCaret.configure({
                               provider,
-                              user: userInfoRef.current,
-                              render: (user: any) => {
+                              user: userInfo,
+                              render: (user: { color: string; name: string }) => {
                                   const caret = document.createElement("span");
                                   caret.classList.add("collab-caret");
                                   caret.style.borderLeft = `2px solid ${user.color}`;
@@ -309,15 +352,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                     ? [
                           KeybindsExtension.configure({
                               userKeybinds: callbacks.userKeybinds || {},
-                              onAction: (id, editorInstance) => {
-                                  const gc = callbacksRef.current.globalContext;
-                                  if (!gc) return;
-                                  executeKeybindAction(id, {
-                                      editor: editorInstance,
-                                      toggleFocusMode: gc.toggleFocusMode,
-                                      saveProject: gc.saveProject,
-                                  });
-                              },
+                              onAction: onKeybindAction,
                           }),
                       ]
                     : []),
@@ -334,14 +369,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 const cb = callbacksRef.current;
 
                 if (config.type === "screenplay") {
-                    const anchor = (transaction as any).curSelection.$anchor;
+                    const anchor = transaction.selection.$anchor;
                     const node = anchor.parent;
                     const elementAnchor = node.attrs.class as ScreenplayElement;
 
                     lastReportedElementRef.current = elementAnchor;
                     cb.setActiveElement?.(elementAnchor, false);
                     if (anchor.nodeBefore) {
-                        cb.setSelectedStyles?.(getStylesFromMarks(anchor.nodeBefore.marks));
+                        cb.setSelectedStyles?.(getStylesFromMarks([...anchor.nodeBefore.marks]));
                     }
                     if (!transaction.docChanged) {
                         setSuggestions([]);
@@ -351,7 +386,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                     cb.setSelectedTitlePageElement?.(activeElement);
                     const anchor = editor.state.selection.$anchor;
                     if (anchor.nodeBefore) {
-                        cb.setSelectedStyles?.(getStylesFromMarks(anchor.nodeBefore.marks as any[]));
+                        cb.setSelectedStyles?.(getStylesFromMarks([...anchor.nodeBefore.marks]));
                     } else {
                         cb.setSelectedStyles?.(Style.None);
                     }
@@ -362,8 +397,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 if (!transaction.docChanged) return;
                 if (config.type !== "screenplay") return;
 
-                const cb = callbacksRef.current;
-                const anchor = (transaction as any).curSelection.$anchor;
+                const anchor = transaction.selection.$anchor;
                 const node = anchor.parent;
                 const elementAnchor = node.attrs.class as ScreenplayElement;
                 const nodeSize: number = node.content.size;
@@ -456,7 +490,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 }
             },
 
-            onTransaction({ editor, transaction }) {
+            onTransaction({ editor }) {
                 if (config.type !== "screenplay") return;
                 const cb = callbacksRef.current;
                 const { $from } = editor.state.selection;
@@ -475,14 +509,10 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
 
     // Sync collaboration caret user info
     useEffect(() => {
-        userInfoRef.current = {
-            name: user?.username || userInfoRef.current.name,
-            color: user?.color || userInfoRef.current.color,
-        };
         if (provider) {
-            provider.awareness.setLocalStateField("user", userInfoRef.current);
+            provider.awareness.setLocalStateField("user", userInfo);
         }
-    }, [user?.username, user?.color, provider]);
+    }, [userInfo, provider]);
 
     // Fix Yjs undo cursor restoration: y-tiptap's stack-item-popped fires AFTER
     // the undo transaction commits, so beforeTransactionSelection is captured wrong

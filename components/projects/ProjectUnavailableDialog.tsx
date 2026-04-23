@@ -19,11 +19,10 @@ const ProjectUnavailableDialog = () => {
         if (!projectId) return;
         setLoading(true);
         try {
-            const { getCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
-            const { migrateToCachedProject } =
-                await import("@src/lib/persistence/storage-provider/sqlite-storage-provider");
+            const { getCachedProject, migrateToCachedProject } =
+                await import("@src/lib/persistence/storage-provider/local-persistence");
             const cachedProject = await getCachedProject(projectId);
-            const metadataTitle = repository?.getState().metadata().get("title");
+            const metadataTitle = repository?.getTitle();
             const title = cachedProject?.title || project?.project?.title || metadataTitle || "Untitled Project";
             const newProject = await migrateToCachedProject(projectId, title, cachedProject?.description ?? undefined);
             router.replace(`/projects/screenplay?projectId=${newProject.id}`);
@@ -31,14 +30,14 @@ const ProjectUnavailableDialog = () => {
             console.error("[ProjectUnavailableDialog] Migration failed:", e);
             setLoading(false);
         }
-    }, [projectId, repository, router]);
+    }, [projectId, repository, router, project?.project?.title]);
 
     const handleDiscard = useCallback(async () => {
         if (!projectId) return;
         setLoading(true);
         try {
             const { discardCloudProjectData } =
-                await import("@src/lib/persistence/storage-provider/sqlite-storage-provider");
+                await import("@src/lib/persistence/storage-provider/local-persistence");
             await discardCloudProjectData(projectId);
             router.replace("/projects");
         } catch (e) {

@@ -1,5 +1,6 @@
 import { Editor, Extension } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Node } from "@tiptap/pm/model";
+import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ScreenplayElement } from "../../utils/enums";
 
@@ -10,7 +11,7 @@ type CharacterHighlightConfig = {
     getCharacterColor: (name: string) => string | undefined;
 };
 
-function extractCharacterName(node: any): string {
+function extractCharacterName(node: Node): string {
     const text: string = node.textContent || "";
     return text
         .toUpperCase()
@@ -41,7 +42,7 @@ function makeDecoration(pos: number, nodeSize: number, color: string): Decoratio
  * Used on init and explicit refresh (toggle / color change).
  */
 function computeHighlightDecorations(
-    doc: any,
+    doc: Node,
     highlighted: Set<string>,
     getColor: (name: string) => string | undefined,
 ): DecorationSet {
@@ -50,7 +51,7 @@ function computeHighlightDecorations(
     const decorations: Decoration[] = [];
     let currentColor: string | null = null;
 
-    doc.forEach((node: any, pos: number) => {
+    doc.forEach((node: Node, pos: number) => {
         const cls: string = node.attrs?.class;
         if (cls === ScreenplayElement.Character) {
             const name = extractCharacterName(node);
@@ -78,7 +79,7 @@ function computeHighlightDecorations(
  * `from` must be the start position of a Character node (so context is unambiguous).
  */
 function computeDecorationsInRange(
-    doc: any,
+    doc: Node,
     from: number,
     to: number,
     highlighted: Set<string>,
@@ -122,7 +123,7 @@ function computeDecorationsInRange(
  * first affected Character; `to` extends to the end of its following dialogue block.
  * Returns null if no Character nodes were involved.
  */
-function computeChangedRange(tr: any): [number, number] | null {
+function computeChangedRange(tr: Transaction): [number, number] | null {
     if (!tr.docChanged) return null;
 
     // Collect the overall changed range in the new document
@@ -149,7 +150,7 @@ function computeChangedRange(tr: any): [number, number] | null {
     let characterFound = false;
     let rangeStart = Infinity;
 
-    doc.nodesBetween(safeFrom, safeTo, (node: any, pos: number) => {
+    doc.nodesBetween(safeFrom, safeTo, (node: Node, pos: number) => {
         if (node.attrs?.class === ScreenplayElement.Character) {
             characterFound = true;
             rangeStart = Math.min(rangeStart, pos);

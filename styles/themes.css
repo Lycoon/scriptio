@@ -6,6 +6,8 @@ html {
 html.light {
     color-scheme: light;
 
+    --panel-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
+
     --main-bg: var(--primary);
     --primary: #f3f3f3;
     --secondary: #ffffff;
@@ -50,6 +52,8 @@ html.light {
 
 html.dark {
     color-scheme: dark;
+
+    --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02), 0 0 8px rgba(0, 0, 0, 0.25);
 
     --main-bg: var(--primary);
     --primary: #1d1d1d;
@@ -100,6 +104,8 @@ html.dark {
 html.latte {
     color-scheme: light;
 
+    --panel-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
+
     --main-bg: var(--primary);
     --primary: #f7edd9;
     --secondary: #fff8e9;
@@ -144,6 +150,8 @@ html.latte {
 
 html.wonka {
     color-scheme: dark;
+
+    --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02), 0 0 8px rgba(0, 0, 0, 0.25);
 
     --main-bg: var(--primary);
     --primary: #1e1410;
@@ -190,6 +198,8 @@ html.wonka {
 html.mint {
     color-scheme: light;
 
+    --panel-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
+
     --main-bg: var(--primary);
     --primary: #dcf5de;
     --secondary: #ecfdec;
@@ -234,6 +244,8 @@ html.mint {
 
 html.blossom {
     color-scheme: light;
+
+    --panel-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
 
     --main-bg: var(--primary);
     --primary: #ffe7f3;

@@ -1,0 +1,208 @@
+name: Deploy Release
+
+on:
+    push:
+        branches: [release]
+
+permissions:
+    contents: write
+    packages: write
+
+jobs:
+    prepare:
+        runs-on: ubuntu-latest
+        outputs:
+            version: ${{ steps.version.outputs.version }}
+            short_version: ${{ steps.version.outputs.short_version }}
+            revision: ${{ steps.version.outputs.revision }}
+            git_tag: ${{ steps.version.outputs.git_tag }}
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+
+            - name: Compute version
+              id: version
+              uses: ./.github/actions/compute-version
+
+    publish-macos:
+        runs-on: macos-latest
+        needs: prepare
+        env:
+            APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio.app
+            PKG_PATH: Scriptio.pkg
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Import Apple certificates
+              uses: apple-actions/import-codesign-certs@v6
+              with:
+                  p12-file-base64: ${{ secrets.APPLE_CERT_P12_COMBINED_BASE64 }}
+                  p12-password: ${{ secrets.APPLE_CERT_PASSWORD }}
+
+            - name: Download provisioning profile
+              uses: apple-actions/download-provisioning-profiles@v5
+              with:
+                  bundle-id: "app.scriptio"
+                  profile-type: "MAC_APP_STORE"
+                  issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+                  api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+                  api-private-key: ${{ secrets.APPSTORE_API_KEY_P8 }}
+
+            - name: Copy provisioning profile to known path
+              run: |
+                  PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.provisionprofile \
+                               "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision \
+                             2>/dev/null | head -n 1)
+                  cp "$PROFILE" src-tauri/embedded.provisionprofile
+
+            - name: Setup desktop build toolchain
+              uses: ./.github/actions/setup-desktop-build
+              with:
+                  platform: macos
+
+            - name: Apply app version
+              uses: ./.github/actions/apply-version
+              with:
+                  version: ${{ needs.prepare.outputs.version }}
+
+            - name: Build and sign .app with Tauri
+              run: npm run tauri build -- --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json --config "{\"bundle\":{\"macOS\":{\"bundleVersion\":\"${{ needs.prepare.outputs.revision }}\"}}}"
+              env:
+                  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+                  NEXT_PUBLIC_API_URL: https://scriptio.app
+                  NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+
+            - name: Build signed .pkg installer
+              run: |
+                  xcrun productbuild \
+                    --component "$APP_PATH" /Applications \
+                    --sign "${{ secrets.APPLE_INSTALLER_IDENTITY }}" \
+                    "$PKG_PATH"
+
+            - name: Upload to App Store Connect
+              uses: apple-actions/upload-testflight-build@v3
+              with:
+                  app-path: ${{ env.PKG_PATH }}
+                  issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+                  api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+                  api-private-key: ${{ secrets.APPSTORE_API_KEY_P8 }}
+                  app-type: "macos"
+
+    publish-windows:
+        runs-on: windows-latest
+        needs: prepare
+        env:
+            APP_PATH: src-tauri/target/msix/Scriptio.msixbundle
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup desktop build toolchain
+              uses: ./.github/actions/setup-desktop-build
+              with:
+                  platform: windows
+
+            - name: Apply app version
+              uses: ./.github/actions/apply-version
+              with:
+                  version: ${{ needs.prepare.outputs.version }}
+
+            - name: Build MSIX bundle
+              run: npm run build:windows
+              env:
+                  NEXT_PUBLIC_API_URL: https://scriptio.app
+                  NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+
+            - name: Rename output to fixed name
+              run: |
+                  Get-Item "src-tauri/target/msix/*.msixbundle" | Rename-Item -NewName "Scriptio.msixbundle"
+
+            - name: Configure Microsoft Store CLI
+              uses: microsoft/microsoft-store-apppublisher@v1.1
+
+            - name: Reconfigure store credentials
+              run: msstore reconfigure `
+                  --tenantId ${{ secrets.MS_TENANT_ID }} `
+                  --sellerId ${{ secrets.MS_SELLER_ID }} `
+                  --clientId ${{ secrets.MS_APP_ID }} `
+                  --clientSecret ${{ secrets.MS_APP_SECRET }}
+
+            - name: Publish to Microsoft Store
+              run: msstore publish "$env:APP_PATH" -id "9P4M1XPHJKS1"
+
+    deploy-web:
+        runs-on: ubuntu-latest
+        needs: prepare
+        env:
+            IMAGE_NAME: ghcr.io/lycoon/scriptio-app
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Set commit SHA
+              run: echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+            - name: Login to GHCR
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build and push production image
+              uses: docker/build-push-action@v6
+              with:
+                  context: .
+                  push: true
+                  tags: |
+                      ${{ env.IMAGE_NAME }}:latest
+                      ${{ env.IMAGE_NAME }}:${{ needs.prepare.outputs.version }}
+                  build-args: |
+                      NEXT_PUBLIC_API_URL=https://scriptio.app
+                      NEXT_PUBLIC_COMMIT_SHA=${{ env.COMMIT_SHA }}
+                      NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}
+
+            - name: Copy docker-compose to VPS
+              uses: appleboy/scp-action@master
+              with:
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USERNAME }}
+                  key: ${{ secrets.SSH_SECRET }}
+                  port: ${{ secrets.SSH_PORT }}
+                  source: docker-compose.yml
+                  target: ${{ secrets.APP_PATH }}
+
+            - name: Deploy via SSH
+              uses: appleboy/ssh-action@master
+              with:
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USERNAME }}
+                  key: ${{ secrets.SSH_SECRET }}
+                  port: ${{ secrets.SSH_PORT }}
+                  script: |
+                      set -e
+                      docker image prune -af
+                      cd ${{ secrets.APP_PATH }}
+                      docker compose pull app-prod
+                      docker compose --env-file .env.prod --profile prod up -d --force-recreate
+
+    tag-release:
+        runs-on: ubuntu-latest
+        needs: [prepare, publish-macos, publish-windows, deploy-web]
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Create and push tag
+              env:
+                  GIT_TAG: ${{ needs.prepare.outputs.git_tag }}
+              run: |
+                  set -e
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git tag -a "$GIT_TAG" -m "Release $GIT_TAG"
+                  git push origin "$GIT_TAG"
