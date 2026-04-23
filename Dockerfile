@@ -8,6 +8,7 @@ WORKDIR /usr/app
 COPY ./package*.json ./
 RUN npm install
 COPY ./ ./
+RUN chmod +x ./scripts/launch.sh
 
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
