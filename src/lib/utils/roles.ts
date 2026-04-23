@@ -1,4 +1,4 @@
-import { ProjectRole } from "@prisma/client";
+import { ProjectRole } from "../../generated/client/browser";
 
 const ROLES: Record<ProjectRole, number> = {
     // Viewers can only view project

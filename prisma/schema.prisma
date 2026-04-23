@@ -2,12 +2,12 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/client"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum ProjectRole {
@@ -15,6 +15,11 @@ enum ProjectRole {
   ADMIN
   EDITOR
   VIEWER
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 enum SubscriptionProvider {
@@ -29,6 +34,7 @@ model User {
   emailVerified       DateTime?
   username            String?
   color               String?
+  role                UserRole    @default(USER)
 
   isProUntil                  DateTime?
   isSubscriptionCancelled     Boolean   @default(false)

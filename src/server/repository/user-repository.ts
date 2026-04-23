@@ -1,5 +1,5 @@
 import { UserSettings } from "@src/lib/utils/types";
-import { Prisma, SubscriptionProvider } from "@prisma/client";
+import { Prisma, SubscriptionProvider } from "../../generated/client/client";
 import prisma from "../db";
 
 export type UpdateSettings = {
@@ -71,8 +71,41 @@ export class UserRepository {
                 settings: true,
                 username: true,
                 color: true,
+                role: true,
                 isProUntil: true,
                 isSubscriptionCancelled: true,
+                subscriptionProvider: true,
+            },
+        });
+    }
+
+    countAll() {
+        return prisma.user.count();
+    }
+
+    countActivePro(now: Date = new Date()) {
+        return prisma.user.count({
+            where: { isProUntil: { gt: now } },
+        });
+    }
+
+    searchUsers(term: string, limit: number, cursor?: number) {
+        const isLikelyId = /^[0-9a-f-]{30,}$/i.test(term);
+        const where: Prisma.UserWhereInput = isLikelyId
+            ? { OR: [{ id: term }, { email: { contains: term, mode: "insensitive" } }] }
+            : { email: { contains: term, mode: "insensitive" } };
+
+        return prisma.user.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+            take: limit,
+            ...(cursor !== undefined && { skip: cursor }),
+            select: {
+                id: true,
+                email: true,
+                createdAt: true,
+                role: true,
+                isProUntil: true,
                 subscriptionProvider: true,
             },
         });

@@ -4,7 +4,7 @@ import { useContext, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useCookieUser, useIsPro, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
 import { CookieUser } from "@src/lib/utils/types";
-import { ProjectRole } from "@prisma/client";
+import { ProjectRole } from "../../../src/generated/client/browser";
 import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { Info, Lock } from "lucide-react";
 

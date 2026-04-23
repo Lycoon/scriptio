@@ -1,0 +1,104 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.searchBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--secondary);
+    border: 1px solid var(--input-outline);
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-shadow: var(--panel-shadow);
+}
+
+.searchBar:focus-within {
+    border-color: var(--primary-text);
+}
+
+.searchInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--primary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 14px;
+}
+
+.hint {
+    color: var(--secondary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 13px;
+    padding: 4px 2px;
+}
+
+.resultList {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--separator);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--secondary);
+}
+
+.resultRow {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--separator);
+    color: var(--primary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background-color 120ms ease;
+}
+
+.resultRow:last-child {
+    border-bottom: none;
+}
+
+.resultRow:hover {
+    background: var(--primary-hover);
+}
+
+.title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.id {
+    color: var(--secondary-text);
+    font-family: var(--font-courier), monospace;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.members {
+    color: var(--secondary-text);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.date {
+    color: var(--secondary-text);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.empty {
+    color: var(--secondary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 14px;
+    padding: 24px;
+    text-align: center;
+}

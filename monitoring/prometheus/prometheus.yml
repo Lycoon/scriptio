@@ -1,0 +1,13 @@
+global:
+    scrape_interval: 15s
+    evaluation_interval: 15s
+
+scrape_configs:
+    - job_name: app-prod
+      metrics_path: /api/metrics
+      scheme: http
+      authorization:
+          type: Bearer
+          credentials_file: /etc/prometheus/bearer-token
+      static_configs:
+          - targets: ["app-prod:3000"]

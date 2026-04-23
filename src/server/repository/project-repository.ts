@@ -1,5 +1,5 @@
 import { ProjectCreation, ProjectUpdate } from "../../lib/utils/types";
-import { Prisma, ProjectRole } from "@prisma/client";
+import { Prisma, ProjectRole } from "../../generated/client/client";
 import prisma from "../db";
 
 import * as S3 from "@src/lib/s3";
@@ -19,7 +19,7 @@ const projectMembershipSelect = {
     role: true,
 };
 
-const collaboratorSelect = Prisma.validator<Prisma.ProjectMemberSelect>()({
+const collaboratorSelect = {
     user: {
         select: {
             id: true,
@@ -27,7 +27,7 @@ const collaboratorSelect = Prisma.validator<Prisma.ProjectMemberSelect>()({
         },
     },
     role: true,
-});
+} satisfies Prisma.ProjectMemberSelect;
 
 export type Collaborator = Prisma.ProjectMemberGetPayload<{
     select: typeof collaboratorSelect;
@@ -230,6 +230,71 @@ export class ProjectRepository {
                     userId,
                 },
             },
+        });
+    }
+
+    countAll() {
+        return prisma.project.count();
+    }
+
+    countMembershipsByUser(userId: string) {
+        return prisma.projectMember.count({ where: { userId } });
+    }
+
+    fetchProjectById(projectId: string) {
+        return prisma.project.findUnique({
+            where: { id: projectId },
+            select: {
+                id: true,
+                title: true,
+                author: true,
+                description: true,
+                createdAt: true,
+                updatedAt: true,
+                _count: { select: { members: true, invitations: true } },
+            },
+        });
+    }
+
+    fetchInvitesWithMeta(projectId: string) {
+        return prisma.projectInvitation.findMany({
+            where: { projectId },
+            select: { email: true, createdAt: true },
+            orderBy: { createdAt: "asc" },
+        });
+    }
+
+    async searchProjects(term: string, limit: number, cursor?: number) {
+        const isUuid = /^[0-9a-f-]{36,}$/i.test(term);
+
+        if (isUuid) {
+            const project = await prisma.project.findUnique({
+                where: { id: term },
+                select: {
+                    id: true,
+                    title: true,
+                    author: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    _count: { select: { members: true } },
+                },
+            });
+            return project ? [project] : [];
+        }
+
+        return prisma.project.findMany({
+            where: { title: { contains: term, mode: "insensitive" } },
+            select: {
+                id: true,
+                title: true,
+                author: true,
+                createdAt: true,
+                updatedAt: true,
+                _count: { select: { members: true } },
+            },
+            orderBy: { updatedAt: "desc" },
+            take: limit,
+            skip: cursor ?? 0,
         });
     }
 }

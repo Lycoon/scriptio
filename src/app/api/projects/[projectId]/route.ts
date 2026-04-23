@@ -1,4 +1,4 @@
-import { ProjectRole } from "@prisma/client";
+import { ProjectRole } from "../../../../generated/client/client";
 
 import * as S3 from "@src/lib/s3";
 import * as ProjectService from "@src/server/service/project-service";

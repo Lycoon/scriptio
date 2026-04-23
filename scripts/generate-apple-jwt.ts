@@ -35,8 +35,7 @@ export async function generateAppleJWT({
 }
 
 // --- CLI Execution Logic ---
-// In TS, we check if this file is the entry point differently depending on your runner
-if (require.main === module || process.argv[1]?.includes("generate-apple-jwt")) {
+if (process.argv[1]?.includes("generate-apple-jwt")) {
     const config: AppleAuthConfig = {
         teamId: process.env.AUTH_APPLE_TEAM_ID!,
         clientId: process.env.AUTH_APPLE_CLIENT_ID!,

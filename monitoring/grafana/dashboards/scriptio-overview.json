@@ -1,0 +1,102 @@
+{
+    "uid": "scriptio-overview",
+    "title": "Scriptio Overview",
+    "timezone": "browser",
+    "schemaVersion": 39,
+    "refresh": "30s",
+    "time": { "from": "now-6h", "to": "now" },
+    "templating": {
+        "list": [
+            {
+                "name": "memory_limit_bytes",
+                "type": "constant",
+                "label": "Memory limit (bytes)",
+                "query": "${APP_MEMORY_LIMIT_BYTES}",
+                "current": { "value": "${APP_MEMORY_LIMIT_BYTES}", "text": "${APP_MEMORY_LIMIT_BYTES}" },
+                "hide": 2
+            },
+            {
+                "name": "db_size_limit_bytes",
+                "type": "constant",
+                "label": "DB size limit (bytes)",
+                "query": "${DB_SIZE_LIMIT_BYTES}",
+                "current": { "value": "${DB_SIZE_LIMIT_BYTES}", "text": "${DB_SIZE_LIMIT_BYTES}" },
+                "hide": 2
+            }
+        ]
+    },
+    "panels": [
+        {
+            "id": 1,
+            "type": "timeseries",
+            "title": "Database size",
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "fieldConfig": {
+                "defaults": { "unit": "bytes" },
+                "overrides": []
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "expr": "scriptio_db_size_bytes",
+                    "legendFormat": "DB size"
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "type": "timeseries",
+            "title": "HTTP error rate (4xx + 5xx)",
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "fieldConfig": {
+                "defaults": { "unit": "percentunit", "min": 0, "max": 1 },
+                "overrides": []
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "expr": "sum(rate(http_requests_total{status=~\"4..|5..\"}[5m])) / sum(rate(http_requests_total[5m]))",
+                    "legendFormat": "error rate"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "type": "timeseries",
+            "title": "CPU usage (% of one core)",
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "fieldConfig": {
+                "defaults": { "unit": "percent", "min": 0 },
+                "overrides": []
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "expr": "rate(process_cpu_seconds_total[2m]) * 100",
+                    "legendFormat": "cpu %"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "type": "timeseries",
+            "title": "Memory usage (% of APP_MEMORY_LIMIT_BYTES)",
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "fieldConfig": {
+                "defaults": { "unit": "percent", "min": 0, "max": 100 },
+                "overrides": []
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "expr": "process_resident_memory_bytes / $memory_limit_bytes * 100",
+                    "legendFormat": "memory %"
+                }
+            ]
+        }
+    ]
+}

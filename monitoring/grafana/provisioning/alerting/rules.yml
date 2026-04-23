@@ -1,0 +1,73 @@
+apiVersion: 1
+
+groups:
+    - orgId: 1
+      name: scriptio-app
+      folder: scriptio
+      interval: 1m
+      rules:
+          - uid: scriptio-http-error-rate
+            title: HighHttpErrorRate
+            condition: C
+            data:
+                - refId: A
+                  relativeTimeRange:
+                      from: 600
+                      to: 0
+                  datasourceUid: prometheus
+                  model:
+                      refId: A
+                      expr: sum(rate(http_requests_total{status=~"4..|5.."}[5m])) / sum(rate(http_requests_total[5m]))
+                      instant: true
+                - refId: C
+                  relativeTimeRange:
+                      from: 600
+                      to: 0
+                  datasourceUid: __expr__
+                  model:
+                      refId: C
+                      type: threshold
+                      expression: A
+                      conditions:
+                          - evaluator:
+                                type: gt
+                                params: [0.05]
+            for: 5m
+            noDataState: OK
+            execErrState: Error
+            annotations:
+                summary: HTTP error rate above 5%
+                description: "{{ $value | printf \"%.2f\" }} of requests in the last 5 minutes returned a 4xx/5xx status."
+
+          - uid: scriptio-db-almost-full
+            title: DbAlmostFull
+            condition: C
+            data:
+                - refId: A
+                  relativeTimeRange:
+                      from: 600
+                      to: 0
+                  datasourceUid: prometheus
+                  model:
+                      refId: A
+                      expr: scriptio_db_size_bytes / ${DB_SIZE_LIMIT_BYTES}
+                      instant: true
+                - refId: C
+                  relativeTimeRange:
+                      from: 600
+                      to: 0
+                  datasourceUid: __expr__
+                  model:
+                      refId: C
+                      type: threshold
+                      expression: A
+                      conditions:
+                          - evaluator:
+                                type: gt
+                                params: [0.85]
+            for: 10m
+            noDataState: OK
+            execErrState: Error
+            annotations:
+                summary: Database is approaching its capacity ceiling
+                description: "DB is at {{ $value | humanizePercentage }} of the configured DB_SIZE_LIMIT_BYTES."
