@@ -8,6 +8,7 @@ const PUBLIC_API_PREFIXES = [
     "/api/webhooks/", // External webhooks (Stripe, etc.)
     "/api/projects/accept-invite", // Accessible to unauthenticated users via invite link
     "/api/contact", // Public contact form
+    "/api/metrics", // Prometheus scrape (gated by bearer token in route handler)
 ];
 
 function isPublicApiRoute(pathname: string): boolean {

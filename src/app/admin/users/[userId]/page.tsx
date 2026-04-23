@@ -4,6 +4,10 @@ import UserDetail from "@components/admin/UserDetail";
 
 type Props = { params: Promise<{ userId: string }> };
 
+export const generateStaticParams = async () => {
+    return [];
+};
+
 export default async function AdminUserDetailPage({ params }: Props) {
     const session = await auth();
     const email = session?.user?.email ?? "";
