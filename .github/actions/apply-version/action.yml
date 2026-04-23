@@ -22,17 +22,21 @@ runs:
               set -e
 
               SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
+              MAJOR=$(echo "$INPUT_VERSION" | cut -d. -f1)
+              MINOR=$(echo "$INPUT_VERSION" | cut -d. -f2)
 
               if [[ "$INPUT_STAGING" == "true" ]]; then
                   PRODUCT_NAME="Scriptio (Staging)"
                   WINDOW_TITLE="Scriptio (Staging)"
                   APPSTORE_IDENTIFIER="app.scriptio.staging"
                   WINDOWS_IDENTIFIER="ArkoLogic.ScriptioStaging"
+                  MSIX_VERSION="${MAJOR}.${MINOR}.${GITHUB_RUN_NUMBER:-1}.0"
               else
                   PRODUCT_NAME="Scriptio"
                   WINDOW_TITLE="Scriptio"
                   APPSTORE_IDENTIFIER="app.scriptio"
                   WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
+                  MSIX_VERSION="$INPUT_VERSION"
               fi
 
               jq --arg v "$SEMVER" --arg t "$WINDOW_TITLE" --arg n "$PRODUCT_NAME" \
@@ -50,7 +54,7 @@ runs:
               mv src-tauri/tauri.windows.conf.json.tmp src-tauri/tauri.windows.conf.json
 
               if [[ -f "src-tauri/gen/windows/bundle.config.json" ]]; then
-                  jq --arg v "$INPUT_VERSION" '.version = $v' \
+                  jq --arg v "$MSIX_VERSION" '.version = $v' \
                       src-tauri/gen/windows/bundle.config.json > src-tauri/gen/windows/bundle.config.json.tmp
                   mv src-tauri/gen/windows/bundle.config.json.tmp src-tauri/gen/windows/bundle.config.json
               fi
@@ -58,7 +62,7 @@ runs:
               sed -i.bak "s/^version = \".*\"/version = \"$SEMVER\"/" src-tauri/Cargo.toml
               rm -f src-tauri/Cargo.toml.bak
 
-              echo "Applied version $INPUT_VERSION (productName: '$PRODUCT_NAME', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
+              echo "Applied version $INPUT_VERSION (MSIX: $MSIX_VERSION, productName: '$PRODUCT_NAME', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
 
         - name: Apply macOS-specific settings
           if: ${{ runner.os == 'macOS' }}
