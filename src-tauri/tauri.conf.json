@@ -5,7 +5,7 @@
     "version": "../package.json",
     "build": {
         "frontendDist": "../out",
-        "devUrl": "http://localhost:3000",
+        "devUrl": "http://localhost:3000/projects",
         "beforeDevCommand": "npm run dev",
         "beforeBuildCommand": "npm run build:tauri"
     },
@@ -15,6 +15,7 @@
         },
         "windows": [
             {
+                "url": "projects.html",
                 "title": "Scriptio",
                 "width": 1350,
                 "height": 900,

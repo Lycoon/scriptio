@@ -21,7 +21,9 @@ const request = async (url: string, method: RESTMethod, body?: object) => {
     let fullUrl = url;
     if (isTauri()) {
         headers["x-client-type"] = "desktop";
-        fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+        
+        const base = API_BASE_URL || "http://localhost:3000";
+        fullUrl = url.startsWith("http") ? url : `${base}${url}`;
 
         // Add auth token if available (dynamic import to avoid SSR issues)
         const { getDesktopToken } = await import("@src/lib/desktop-auth");

@@ -159,6 +159,8 @@
     "importing": "Importation...",
     "createBtn": "Créer",
     "empty": {
+      "title": "Votre Histoire Commence Ici",
+      "subtitle": "Créez un nouveau scénario ou importez un script existant",
       "createFirst": "Nouveau projet",
       "createDesc": "Partir d'une page blanche",
       "importExisting": "Importer",

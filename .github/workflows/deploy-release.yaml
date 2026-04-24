@@ -16,6 +16,7 @@ jobs:
             short_version: ${{ steps.version.outputs.short_version }}
             revision: ${{ steps.version.outputs.revision }}
             git_tag: ${{ steps.version.outputs.git_tag }}
+            commit_sha: ${{ steps.version.outputs.commit_sha }}
         steps:
             - uses: actions/checkout@v6
               with:
@@ -72,6 +73,7 @@ jobs:
                   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
                   NEXT_PUBLIC_API_URL: https://scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+                  NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
 
             - name: Build signed .pkg installer
               run: |
@@ -112,6 +114,7 @@ jobs:
               env:
                   NEXT_PUBLIC_API_URL: https://scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+                  NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
 
             - name: Rename output to fixed name
               run: |

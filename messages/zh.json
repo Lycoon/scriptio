@@ -158,6 +158,8 @@
     "importing": "正在导入...",
     "createBtn": "创建",
     "empty": {
+      "title": "你的故事从这里开始",
+      "subtitle": "创建新剧本或导入现有脚本",
       "createFirst": "新建项目",
       "createDesc": "从空白页面开始",
       "importExisting": "导入",

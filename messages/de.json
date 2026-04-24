@@ -159,6 +159,8 @@
     "importing": "Importieren...",
     "createBtn": "Erstellen",
     "empty": {
+      "title": "Deine Geschichte Beginnt Hier",
+      "subtitle": "Erstelle ein neues Drehbuch oder importiere ein vorhandenes Skript",
       "createFirst": "Neues Projekt",
       "createDesc": "Mit einer leeren Seite beginnen",
       "importExisting": "Importieren",

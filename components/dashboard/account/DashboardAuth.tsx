@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { isTauri } from "@tauri-apps/api/core";
 import { useSWRConfig } from "swr";
@@ -28,6 +28,11 @@ const DashboardAuth = () => {
     // Desktop-only: poll the bridge after the email is sent so the user is signed in
     // here as soon as they click the magic link in their browser.
     const [pollingDesktop, setPollingDesktop] = useState(false);
+    const pollAbortRef = useRef<AbortController | null>(null);
+
+    useEffect(() => {
+        return () => { pollAbortRef.current?.abort(); };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,11 +63,17 @@ const DashboardAuth = () => {
                 setSubmitted(true);
                 setPollingDesktop(true);
 
-                const token = await pollBridgeToken(nonce);
+                pollAbortRef.current?.abort();
+                const controller = new AbortController();
+                pollAbortRef.current = controller;
+
+                const token = await pollBridgeToken(nonce, { signal: controller.signal });
                 if (!token) {
-                    setMessage({ type: "error", text: tAuth("desktopTimeout") });
-                    setPollingDesktop(false);
-                    setSubmitted(false);
+                    if (!controller.signal.aborted) {
+                        setMessage({ type: "error", text: tAuth("desktopTimeout") });
+                        setPollingDesktop(false);
+                        setSubmitted(false);
+                    }
                     return;
                 }
                 await setDesktopToken(token);

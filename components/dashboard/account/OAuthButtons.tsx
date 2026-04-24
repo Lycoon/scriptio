@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSWRConfig } from "swr";
 import { signIn } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
@@ -23,6 +23,11 @@ const OAuthButtons = ({ callbackUrl = "/projects" }: Props) => {
     const t = useTranslations("oauth");
     const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const pollAbortRef = useRef<AbortController | null>(null);
+
+    useEffect(() => {
+        return () => { pollAbortRef.current?.abort(); };
+    }, []);
 
     const startOAuth = async (provider: Provider) => {
         setError(null);
@@ -32,19 +37,24 @@ const OAuthButtons = ({ callbackUrl = "/projects" }: Props) => {
             return;
         }
 
+        // Cancel any in-progress poll before starting a new one
+        pollAbortRef.current?.abort();
+        const controller = new AbortController();
+        pollAbortRef.current = controller;
+
         setPendingProvider(provider);
         try {
             const { generateBridgeNonce, pollBridgeToken, setDesktopToken } = await import("@src/lib/desktop-auth");
             const { openUrl } = await import("@tauri-apps/plugin-opener");
 
             const nonce = generateBridgeNonce();
-            const apiBase = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
             const bridgeUrl = `${apiBase}/desktop-oauth/start?provider=${provider}&nonce=${encodeURIComponent(nonce)}`;
             await openUrl(bridgeUrl);
 
-            const token = await pollBridgeToken(nonce);
+            const token = await pollBridgeToken(nonce, { signal: controller.signal });
             if (!token) {
-                setError(t("timeout"));
+                if (!controller.signal.aborted) setError(t("timeout"));
                 return;
             }
 
@@ -52,6 +62,7 @@ const OAuthButtons = ({ callbackUrl = "/projects" }: Props) => {
             await mutate("/api/users/cookie");
             await mutate("/api/users");
         } catch (err) {
+            if (controller.signal.aborted) return;
             console.error("[OAuthButtons] Desktop OAuth failed:", err);
             setError(t("error"));
         } finally {

@@ -158,6 +158,8 @@
     "importing": "Importowanie...",
     "createBtn": "Utwórz",
     "empty": {
+      "title": "Twoja Historia Zaczyna Się Tutaj",
+      "subtitle": "Stwórz nowy scenariusz lub zaimportuj istniejący skrypt",
       "createFirst": "Nowy projekt",
       "createDesc": "Zacznij od pustej strony",
       "importExisting": "Importuj",
