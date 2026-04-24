@@ -28,7 +28,7 @@ jobs:
 
     publish-macos:
         runs-on: macos-latest
-        needs: prepare
+        needs: [prepare, deploy-web]
         env:
             APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio.app
             PKG_PATH: Scriptio.pkg
@@ -93,7 +93,7 @@ jobs:
 
     publish-windows:
         runs-on: windows-latest
-        needs: prepare
+        needs: [prepare, deploy-web]
         env:
             APP_PATH: src-tauri/target/msix/Scriptio.msixbundle
         steps:
@@ -193,7 +193,7 @@ jobs:
 
     tag-release:
         runs-on: ubuntu-latest
-        needs: [prepare, publish-macos, publish-windows, deploy-web]
+        needs: [prepare, deploy-web]
         steps:
             - uses: actions/checkout@v6
               with:

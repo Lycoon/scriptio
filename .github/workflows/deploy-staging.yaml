@@ -27,7 +27,7 @@ jobs:
 
     publish-macos:
         runs-on: macos-latest
-        needs: prepare
+        needs: [prepare, deploy-web]
         env:
             APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio (Staging).app
             PKG_PATH: Scriptio.pkg
@@ -94,7 +94,7 @@ jobs:
 
     publish-windows:
         runs-on: windows-latest
-        needs: prepare
+        needs: [prepare, deploy-web]
         env:
             APP_PATH: src-tauri/target/msix/Scriptio_${{ needs.prepare.outputs.version }}.msixbundle
         steps:
