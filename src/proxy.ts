@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 // Routes that handle their own auth or are intentionally public
 const PUBLIC_API_PREFIXES = [
     "/api/auth/", // NextAuth internals
+    "/api/desktop/", // Desktop OAuth bridge endpoints
     "/api/users/cookie", // Session probe — returns null for unauthenticated callers
     "/api/webhooks/", // External webhooks (Stripe, etc.)
     "/api/projects/accept-invite", // Accessible to unauthenticated users via invite link
@@ -21,6 +22,15 @@ function isAdminPageRoute(pathname: string): boolean {
 
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
+
+    // CORS preflights must never be blocked — the actual request that follows will be
+    // auth-checked. Returning 401 here strips the CORS headers (middleware responses
+    // bypass next.config.ts headers()) and causes the preflight to fail, which in
+    // Tauri (origin: http://tauri.localhost) breaks every cross-origin API call.
+    if (request.method === "OPTIONS") {
+        return NextResponse.next();
+    }
+
     const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
 
     // Admin pages: proxy only checks authentication.

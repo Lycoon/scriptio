@@ -158,6 +158,8 @@
     "importing": "Importing...",
     "createBtn": "Create",
     "empty": {
+      "title": "Your Story Starts Here",
+      "subtitle": "Create a new screenplay or import an existing script",
       "createFirst": "New project",
       "createDesc": "Start from a blank page",
       "importExisting": "Import",

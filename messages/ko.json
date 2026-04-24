@@ -158,6 +158,8 @@
     "importing": "가져오는 중...",
     "createBtn": "생성",
     "empty": {
+      "title": "당신의 이야기가 여기서 시작됩니다",
+      "subtitle": "새 각본을 만들거나 기존 스크립트를 가져오세요",
       "createFirst": "새 프로젝트",
       "createDesc": "빈 페이지에서 시작하기",
       "importExisting": "가져오기",

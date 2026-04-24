@@ -19,7 +19,7 @@ export default function HomeClient() {
         }
     }, [setTheme, router]);
 
-    if (isTauri()) {
+    if (process.env.NEXT_PUBLIC_TAURI_BUILD === "true" || isTauri()) {
         return null;
     }
 

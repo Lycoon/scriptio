@@ -158,6 +158,8 @@
     "importing": "インポート中...",
     "createBtn": "作成",
     "empty": {
+      "title": "あなたの物語はここから始まる",
+      "subtitle": "新しい脚本を作成するか、既存のスクリプトをインポートしてください",
       "createFirst": "新規プロジェクト",
       "createDesc": "白紙から始める",
       "importExisting": "インポート",

@@ -1,7 +1,67 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 60px 0;
+    height: 100%;
+}
+
+.brandSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.logoWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 20px;
+    box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.2);
+}
+
+.logo {
+    width: 44px;
+    height: 44px;
+    color: var(--primary-text);
+}
+
+.title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-text);
+    margin: 0;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-family: var(--font-inter), sans-serif;
+}
+
+.copyright {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+    margin: 0;
+}
+
+.infoSection {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 420px;
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.1);
+    animation: fade-in-up 0.5s ease-out 0.1s forwards;
+    opacity: 0;
 }
 
 .row {
@@ -9,19 +69,48 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 14px;
-    border-radius: 8px;
-    background-color: var(--secondary);
+    padding: 16px 20px;
+    background-color: transparent;
+    transition: background-color 0.2s;
+}
+
+.row:hover {
+    background-color: var(--tertiary);
+}
+
+.row:not(:last-child) {
+    border-bottom: 1px solid var(--separator);
+}
+
+.labelGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon {
+    color: var(--secondary-text);
 }
 
 .label {
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 500;
     color: var(--secondary-text);
 }
 
 .value {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--primary-text);
-    font-family: monospace;
+    font-weight: 600;
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
