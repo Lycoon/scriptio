@@ -59,3 +59,53 @@ jobs:
 
             - name: Build Docker image
               run: docker compose build app-prod
+
+    benchmark:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "25.2.1"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Install Playwright browsers
+              run: npx playwright install --with-deps chromium webkit
+
+            - name: Download previous benchmark results
+              id: download-baseline
+              uses: dawidd6/action-download-artifact@v9
+              continue-on-error: true
+              with:
+                  name: bench-results
+                  path: bench-baseline
+                  workflow: checks.yaml
+                  branch: ${{ github.ref_name }}
+                  if_no_artifact_found: warn
+
+            - name: Run benchmarks
+              run: npm run bench
+
+            - name: Compare and report
+              run: |
+                  if [ -f bench-baseline/bench-results.json ]; then
+                    node scripts/compare-bench.mjs bench-baseline/bench-results.json bench-results.json >> $GITHUB_STEP_SUMMARY
+                  else
+                    echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "No baseline found — results uploaded as the new baseline." >> $GITHUB_STEP_SUMMARY
+                  fi
+              continue-on-error: true
+
+            - name: Upload benchmark results
+              uses: actions/upload-artifact@v4
+              with:
+                  name: bench-results
+                  path: bench-results.json
+                  retention-days: 90
+                  overwrite: true
