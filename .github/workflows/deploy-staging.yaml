@@ -103,21 +103,10 @@ jobs:
               with:
                   platform: windows
 
-            - name: Compute Windows Store version
-              id: msix-version
-              shell: bash
-              run: |
-                  SHORT="${{ needs.prepare.outputs.short_version }}"
-                  MAJOR=$(echo "$SHORT" | cut -d. -f1)
-                  MINOR=$(echo "$SHORT" | cut -d. -f2)
-                  PATCH=$(echo "$SHORT" | cut -d. -f3)
-                  BUILD=$(( PATCH * 1000 + ${{ needs.prepare.outputs.revision }} ))
-                  echo "version=${MAJOR}.${MINOR}.${BUILD}.0" >> $GITHUB_OUTPUT
-
             - name: Apply app version
               uses: ./.github/actions/apply-version
               with:
-                  version: ${{ steps.msix-version.outputs.version }}
+                  version: ${{ needs.prepare.outputs.version }}
                   staging: "true"
 
             - name: Build MSIX bundle
@@ -179,14 +168,14 @@ jobs:
                       NEXT_PUBLIC_COMMIT_SHA=${{ env.COMMIT_SHA }}
                       NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}
 
-            - name: Copy docker-compose to VPS
+            - name: Copy docker-compose and monitoring files to VPS
               uses: appleboy/scp-action@master
               with:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USERNAME }}
                   key: ${{ secrets.SSH_SECRET }}
                   port: ${{ secrets.SSH_PORT }}
-                  source: docker-compose.yml
+                  source: "docker-compose.yml,monitoring/"
                   target: ${{ secrets.APP_PATH }}
 
             - name: Deploy via SSH
