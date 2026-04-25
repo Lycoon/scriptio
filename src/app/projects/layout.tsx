@@ -3,6 +3,7 @@
 import Loading from "@components/utils/Loading";
 import DashboardModal from "@components/dashboard/DashboardModal";
 import ProjectUnavailableDialog from "@components/projects/ProjectUnavailableDialog";
+import ProjectMigrationErrorDialog from "@components/projects/ProjectMigrationErrorDialog";
 import { redirect, useSearchParams } from "next/navigation";
 import { ProjectProvider, useProjectReady } from "@src/context/ProjectContext";
 import { ViewProvider } from "@src/context/ViewContext";
@@ -49,12 +50,21 @@ interface ProjectLayoutInnerProps {
 }
 
 const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
-    const { isYjsReady, isProjectUnavailable } = useProjectReady();
+    const { isYjsReady, isProjectUnavailable, migrationOutcome } = useProjectReady();
     const { membership, isLoading: isMembershipLoading, isLocalOnly: isBrowserLocalOnly } = useProjectMembership();
 
     // Desktop (Tauri) and browser local-only projects skip the cloud membership requirement
     const isDesktop = isTauri();
     const isLocalAccess = isDesktop || isBrowserLocalOnly;
+
+    // Migration blocked the project from loading: show a dedicated error dialog
+    // before any other gating logic, so the user always gets a clear message.
+    if (
+        migrationOutcome &&
+        (migrationOutcome.kind === "future-version" || migrationOutcome.kind === "failed")
+    ) {
+        return <ProjectMigrationErrorDialog outcome={migrationOutcome} />;
+    }
 
     // Wait for membership to resolve for potential cloud projects
     if (!isLocalAccess && isMembershipLoading) {

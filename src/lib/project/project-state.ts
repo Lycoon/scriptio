@@ -16,6 +16,7 @@ import type { LocationItem, LocationMap } from "../screenplay/locations";
 import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
 import type { Comment } from "../utils/types";
 import type { YjsLocalProvider } from "../persistence/y-local-provider";
+import type { ProjectMigrationOutcome } from "./migrations/project-migration-runner";
 
 // Lazy re-export repository for convenient access (avoid loading yjs at module level)
 export const getProjectRepository = async () => {
@@ -58,6 +59,7 @@ export interface ProjectYjsState {
     isLockedByServer: boolean;
     isSessionReplaced: boolean;
     isProjectUnavailable: boolean;
+    migrationOutcome: ProjectMigrationOutcome | null;
 }
 
 export interface CollaboratorInfo {
@@ -352,12 +354,14 @@ export const getBoardMap = (ydoc: ProjectState): TypedMap<BoardData> => {
 export const useLocalPersistence = (projectId: string | null) => {
     const [ydoc, setYdoc] = useState<ProjectState | null>(null);
     const [isLocalReady, setIsLocalReady] = useState(false);
+    const [migrationOutcome, setMigrationOutcome] = useState<ProjectMigrationOutcome | null>(null);
     const persistenceRef = useRef<YjsLocalProvider | null>(null);
 
     useEffect(() => {
         if (!projectId || typeof window === "undefined") {
             setYdoc(null);
             setIsLocalReady(false);
+            setMigrationOutcome(null);
             return;
         }
 
@@ -367,8 +371,16 @@ export const useLocalPersistence = (projectId: string | null) => {
             const { createLocalYjsProvider } = await import("../persistence/y-local-provider");
             const localProvider = await createLocalYjsProvider(projectId, state);
 
-            localProvider.on("synced", () => {
+            localProvider.on("synced", async () => {
                 if (isDestroyed) return;
+                const { migrateProjectDoc } = await import("./migrations/project-migration-runner");
+                const outcome = await migrateProjectDoc({ ydoc: state, projectId });
+                if (isDestroyed) return;
+                setMigrationOutcome(outcome);
+                if (outcome.kind === "future-version" || outcome.kind === "failed") {
+                    // Block UI from rendering the project; layout shows error dialog instead.
+                    return;
+                }
                 setIsLocalReady(true);
             });
 
@@ -392,10 +404,11 @@ export const useLocalPersistence = (projectId: string | null) => {
                 return null;
             });
             setIsLocalReady(false);
+            setMigrationOutcome(null);
         };
     }, [projectId]);
 
-    return { ydoc, isLocalReady };
+    return { ydoc, isLocalReady, migrationOutcome };
 };
 
 // -------------------------------- //
@@ -700,7 +713,7 @@ export const useProjectYjs = ({
         [userName, userColor, userId, fallback.name, fallback.color],
     );
 
-    const { ydoc, isLocalReady } = useLocalPersistence(projectId);
+    const { ydoc, isLocalReady, migrationOutcome } = useLocalPersistence(projectId);
     const {
         provider,
         users,
@@ -710,7 +723,7 @@ export const useProjectYjs = ({
         isLockedByServer,
         isSessionReplaced,
         isProjectUnavailable,
-    } = useCloudSync(projectId, ydoc, userInfo);
+    } = useCloudSync(projectId, isLocalReady ? ydoc : null, userInfo);
 
     // isReady: project is ready when ydoc exists and local storage is synced
     // Cloud sync happens in the background and will merge data when it arrives
@@ -730,6 +743,7 @@ export const useProjectYjs = ({
         isLockedByServer,
         isSessionReplaced,
         isProjectUnavailable,
+        migrationOutcome,
     };
 };
 

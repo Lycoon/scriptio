@@ -25,6 +25,8 @@
         "lint": "eslint .",
         "bench": "vitest bench",
         "bench:watch": "vitest bench --watch",
+        "test": "vitest run",
+        "test:watch": "vitest",
         "gen:apple:jwt": "node --env-file=.env --import tsx scripts/generate-apple-jwt.ts"
     },
     "dependencies": {

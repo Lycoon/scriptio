@@ -4,6 +4,7 @@
  */
 
 import { BoardData, LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
+import { CURRENT_PROJECT_VERSION } from "@src/lib/project/migrations/project-migrations";
 import { getAdapterByFilename } from "@src/lib/adapters/registry";
 import { createCachedProject, createCachedProjectWithId } from "@src/lib/persistence/storage-provider/local-persistence";
 import { writeYjsDocumentLocally } from "@src/lib/persistence/y-local-provider";
@@ -88,9 +89,15 @@ async function createLocalYjsDocument(projectId: string, projectData: ProjectDat
         }
 
         // Maps
+        const metadataMap = ydoc.metadata();
         if (projectData.metadata) {
-            const metadataMap = ydoc.metadata();
             Object.entries(projectData.metadata).forEach(([key, value]) => metadataMap.set(key as keyof ProjectMetadata, value));
+        }
+        // Stamp the schema version: preserves the imported file's version if it
+        // had one (so future-version files surface a migration error on open),
+        // otherwise marks the doc as current so it skips migration on first load.
+        if (metadataMap.get("version") === undefined) {
+            metadataMap.set("version", CURRENT_PROJECT_VERSION);
         }
 
         if (projectData.characters) {
