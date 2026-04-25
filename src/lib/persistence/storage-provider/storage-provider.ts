@@ -47,6 +47,12 @@ export interface StorageProvider {
     loadDictionary(code: string): Promise<{ aff: Uint8Array; dic: Uint8Array } | null>;
     deleteDictionary(code: string): Promise<void>;
     listInstalledDictionaries(): Promise<InstalledDictionary[]>;
+
+    // Migration backups: pre-migration Yjs document snapshots (one per project).
+    // Used by the project-doc migration runner to roll back if a step throws.
+    saveMigrationBackup(projectId: string, snapshot: Uint8Array, fromVersion: number): Promise<void>;
+    loadMigrationBackup(projectId: string): Promise<{ snapshot: Uint8Array; fromVersion: number } | null>;
+    clearMigrationBackup(projectId: string): Promise<void>;
 }
 
 // Singleton cache

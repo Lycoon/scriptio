@@ -25,6 +25,7 @@ import {
     DEFAULT_PAGE_MARGINS,
     ShelfEntry,
 } from "@src/lib/project/project-state";
+import type { ProjectMigrationOutcome } from "@src/lib/project/migrations/project-migration-runner";
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
@@ -216,11 +217,13 @@ export const ProjectContext = createContext<ProjectContextType>(defaultContextVa
 interface ProjectReadyContextType {
     isYjsReady: boolean;
     isProjectUnavailable: boolean;
+    migrationOutcome: ProjectMigrationOutcome | null;
 }
 
 const ProjectReadyContext = createContext<ProjectReadyContextType>({
     isYjsReady: false,
     isProjectUnavailable: false,
+    migrationOutcome: null,
 });
 
 export const useProjectReady = () => useContext(ProjectReadyContext);
@@ -250,6 +253,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         connectionStatus: yjsConnectionStatus,
         users: yjsUsers,
         isProjectUnavailable,
+        migrationOutcome,
     } = useProjectYjs({
         projectId,
         userName,
@@ -841,8 +845,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     );
 
     const readyValue = useMemo(
-        () => ({ isYjsReady, isProjectUnavailable }),
-        [isYjsReady, isProjectUnavailable],
+        () => ({ isYjsReady, isProjectUnavailable, migrationOutcome }),
+        [isYjsReady, isProjectUnavailable, migrationOutcome],
     );
 
     return (
