@@ -97,10 +97,7 @@ export async function pollBridgeToken(
     while (Date.now() < deadline) {
         if (signal?.aborted) return null;
         try {
-            const reqHeaders: Record<string, string> = { "x-client-type": "desktop" };
-            const stagingAuth = process.env.NEXT_PUBLIC_STAGING_BASIC_AUTH;
-            if (stagingAuth) reqHeaders["X-Staging-Auth"] = `Basic ${stagingAuth}`;
-            const res = await fetch(url, { headers: reqHeaders, signal });
+            const res = await fetch(url, { headers: { "x-client-type": "desktop" }, signal });
             if (res.ok) {
                 const json = (await res.json()) as { data?: { token?: string | null } };
                 const token = json.data?.token;

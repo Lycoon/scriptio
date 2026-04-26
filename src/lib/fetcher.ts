@@ -35,11 +35,6 @@ async function fetchFromDesktop<JSON = unknown>(
         Authorization: `Bearer ${token}`,
     };
 
-    const stagingAuth = process.env.NEXT_PUBLIC_STAGING_BASIC_AUTH;
-    if (stagingAuth) {
-        headers["X-Staging-Auth"] = `Basic ${stagingAuth}`;
-    }
-
     if (init?.headers) {
         Object.assign(headers, init.headers as Record<string, string>);
     }

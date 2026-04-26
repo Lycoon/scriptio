@@ -59,17 +59,6 @@ services:
             - traefik.http.routers.scriptio-staging.entrypoints=secure
             - traefik.http.routers.scriptio-staging.tls=true
             - traefik.http.routers.scriptio-staging.tls.certresolver=letsencrypt
-            - traefik.http.routers.scriptio-staging.middlewares=staging-auth
-            - traefik.http.middlewares.staging-auth.basicauth.users=${STAGING_AUTH_USERS}
-            - traefik.http.middlewares.staging-auth.basicauth.headerField=X-Staging-Auth
-            # Allow CORS OPTIONS preflight to bypass basic auth (browsers never send
-            # custom headers like X-Staging-Auth in a preflight, so the auth check
-            # would 401 every cross-origin request from the Tauri app)
-            - traefik.http.routers.scriptio-staging-options.rule=Host(`staging.scriptio.app`) && Method(`OPTIONS`)
-            - traefik.http.routers.scriptio-staging-options.entrypoints=secure
-            - traefik.http.routers.scriptio-staging-options.tls=true
-            - traefik.http.routers.scriptio-staging-options.tls.certresolver=letsencrypt
-            - traefik.http.routers.scriptio-staging-options.priority=200
 
     # Production Database
     db-prod:
