@@ -1,5 +1,5 @@
 diff --git a/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js b/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js
-index 42b3955..42e5ff1 100644
+index 42b3955..439214b 100644
 --- a/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js
 +++ b/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js
 @@ -426,7 +426,7 @@ function generateManifest(config, arch, minVersion, windowsDir) {
@@ -20,7 +20,17 @@ index 42b3955..42e5ff1 100644
          for (const alias of config.extensions.appExecutionAliases) {
              const result = replaceTemplateVariables(template, {
                  ALIAS: alias.alias.endsWith('.exe') ? alias.alias : `${alias.alias}.exe`,
-@@ -717,7 +717,7 @@ function prepareAppxContent(projectRoot, arch, config, tauriConfig, minVersion,
+@@ -709,15 +709,15 @@ function jsonMergePatch(target, patch) {
+     return result;
+ }
+ 
+-function prepareAppxContent(projectRoot, arch, config, tauriConfig, minVersion, windowsDir) {
++function prepareAppxContent(projectRoot, arch, config, tauriConfig, minVersion, windowsDir, isDebug) {
+     const target = arch === 'x64' ? 'x86_64-pc-windows-msvc' : 'aarch64-pc-windows-msvc';
+     const srcTauriDir = path.join(projectRoot, 'src-tauri');
+-    const buildDir = path.join(srcTauriDir, 'target', target, 'release');
++    const buildDir = path.join(srcTauriDir, 'target', target, isDebug ? 'debug' : 'release');
+     const appxDir = path.join(srcTauriDir, 'target', 'appx', arch);
      // Create directories
      fs.mkdirSync(path.join(appxDir, 'Assets'), { recursive: true });
      // Copy exe
@@ -29,3 +39,12 @@ index 42b3955..42e5ff1 100644
      const srcExe = path.join(buildDir, exeName);
      if (!fs.existsSync(srcExe)) {
          throw new Error(`Executable not found: ${srcExe}`);
+@@ -1016,7 +1016,7 @@ async function build(options) {
+         }
+         // Prepare AppxContent directory
+         console.log(`  Preparing AppxContent for ${arch}...`);
+-        const appxDir = prepareAppxContent(projectRoot, arch, config, tauriConfig, minVersion, windowsDir);
++        const appxDir = prepareAppxContent(projectRoot, arch, config, tauriConfig, minVersion, windowsDir, options.debug);
+         appxDirs.push({ arch, dir: appxDir });
+         console.log(`  AppxContent ready: ${appxDir}`);
+     }
