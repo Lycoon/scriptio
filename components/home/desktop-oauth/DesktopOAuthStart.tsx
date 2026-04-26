@@ -31,6 +31,9 @@ const DesktopOAuthStart = () => {
         // sessionToken.user.id !== getUserByAccount().id. Starting clean avoids that.
         (async () => {
             const callbackUrl = `/desktop-oauth/complete?nonce=${encodeURIComponent(nonce)}`;
+            // Persist the nonce in sessionStorage so /desktop-oauth/complete can recover
+            // it even when Apple's response_mode=form_post drops the callbackUrl cookie.
+            sessionStorage.setItem("desktop-oauth-nonce", nonce);
             await signOut({ redirect: false });
             await signIn(provider, { callbackUrl });
         })();
