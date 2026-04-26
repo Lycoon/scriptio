@@ -151,6 +151,10 @@ export const requestMagicLink = (body: RequestMagicLinkBody) => {
     return request(`/api/auth/magic-link`, "POST", body);
 };
 
+export const submitDesktopToken = (nonce: string) => {
+    return request(`/api/desktop/token`, "POST", { nonce });
+};
+
 export const cancelStripeSubscription = async (): Promise<boolean> => {
     const res = await request("/api/stripe/cancel", "POST");
     return res.ok;
