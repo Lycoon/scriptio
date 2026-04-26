@@ -6,8 +6,8 @@ import { auth } from "@src/auth";
 import { apiHandler } from "@src/lib/utils/api-handler";
 import { ForbiddenError, BodyFieldError, Success, validate } from "@src/lib/utils/api-utils";
 import { putBridgeToken } from "@src/lib/desktop-bridge";
+import { DESKTOP_BEARER_SALT } from "@src/lib/auth-cookies";
 
-const SESSION_COOKIE_SALT = "authjs.session-token";
 const DESKTOP_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days, mirrors auth.ts maxAge.
 
 const BodySchema = z.object({
@@ -47,7 +47,7 @@ async function desktopTokenRoute(req: NextRequest) {
                     : (user.createdAt ?? new Date().toISOString()),
         },
         secret,
-        salt: SESSION_COOKIE_SALT,
+        salt: DESKTOP_BEARER_SALT,
         maxAge: DESKTOP_TOKEN_TTL_SECONDS,
     });
 

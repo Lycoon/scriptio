@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useMemo, useState, Suspense } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useCookieUser } from "@src/lib/utils/hooks";
@@ -71,17 +71,28 @@ const DashboardModal = () => {
         return sections;
     }, [isInProject, isSignedIn, PROJECT_MENU, PREFERENCES_MENU, ACCOUNT_MENU]);
 
-    // If active tab is a project tab but we're not in a project, or an account tab but not signed in, switch to first available tab
+    // Auto-switch active tab when the surrounding context changes:
+    //  - leave a project tab when there's no longer a project to talk about
+    //  - leave an account tab when the user signs out
+    //  - on a real signed-out → signed-in *transition* while on the Auth form,
+    //    jump to Profile so the user lands somewhere meaningful after sign-in.
+    //
+    // The transition guard (prevSignedInRef) is critical: without it, isSignedIn
+    // arriving as `true` for the first time after the SWR resolves looks identical
+    // to a real sign-in event, and clicking "Sign in" while user data is still
+    // loading would silently bounce the user to Profile.
+    const prevSignedInRef = useRef(isSignedIn);
     useEffect(() => {
         const projectTabIds = PROJECT_MENU.items.map((item) => item.id);
         const accountTabIds = ACCOUNT_MENU.items.map((item) => item.id);
         if ((!isInProject && projectTabIds.includes(activeTab)) || (!isSignedIn && accountTabIds.includes(activeTab))) {
             setActiveTab(PREFERENCES_MENU.items[0].id);
         }
-        // If user just signed in while on the Auth tab, switch to Profile
-        if (isSignedIn && activeTab === "Auth") {
+        const justSignedIn = isSignedIn && !prevSignedInRef.current;
+        if (justSignedIn && activeTab === "Auth") {
             setActiveTab("Profile");
         }
+        prevSignedInRef.current = isSignedIn;
     }, [isInProject, isSignedIn, activeTab, setActiveTab, ACCOUNT_MENU, PREFERENCES_MENU, PROJECT_MENU]);
 
     const [prevActiveTab, setPrevActiveTab] = useState(activeTab);

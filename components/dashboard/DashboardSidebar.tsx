@@ -45,7 +45,7 @@ interface SidebarMenuProps {
 
 const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) => {
     const { closeDashboard } = useContext(DashboardContext);
-    const { user } = useCookieUser();
+    const { user, isLoading: isUserLoading } = useCookieUser();
     const t = useTranslations("sidebar");
     const tModal = useTranslations("modal");
     const [showLogOutConfirm, setShowLogOutConfirm] = useState(false);
@@ -107,7 +107,10 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
                     ))}
                 </nav>
                 <div className={styles.navMenu} style={{ marginTop: "auto" }}>
-                    {user ? (
+                    {/* While the user query is in flight, leave the slot empty rather than
+                        rendering a "Sign in" button against an unknown auth state — clicking
+                        it during loading races the SWR resolution and ends up on Profile. */}
+                    {isUserLoading ? null : user ? (
                         <button className={styles.navItem} onClick={() => setShowLogOutConfirm(true)}>
                             <LogOut size={18} />
                             {t("logOut")}
