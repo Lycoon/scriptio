@@ -31,11 +31,6 @@ const request = async (url: string, method: RESTMethod, body?: object) => {
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
         }
-
-        const stagingAuth = process.env.NEXT_PUBLIC_STAGING_BASIC_AUTH;
-        if (stagingAuth) {
-            headers["X-Staging-Auth"] = `Basic ${stagingAuth}`;
-        }
     }
 
     return fetch(fullUrl, {
