@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { editUserInfo } from "@src/lib/utils/requests";
+import { editUserInfo, deleteUser } from "@src/lib/utils/requests";
 import { signOut } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useRouter } from "next/navigation";
@@ -67,7 +67,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
     const handleDeleteAccount = async () => {
         setDeleteLoading(true);
         try {
-            const res = await fetch("/api/users", { method: "DELETE" });
+            const res = await deleteUser();
             if (res.ok) {
                 if (isTauri()) {
                     const { clearDesktopToken } = await import("@src/lib/desktop-auth");

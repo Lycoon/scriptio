@@ -146,6 +146,10 @@ export const editUserInfo = (body: UpdateUserBody) => {
     return request(`/api/users`, "PATCH", body);
 };
 
+export const deleteUser = () => {
+    return request(`/api/users`, "DELETE");
+};
+
 /* Auth */
 
 export const requestMagicLink = (body: RequestMagicLinkBody) => {
