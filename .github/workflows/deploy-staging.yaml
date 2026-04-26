@@ -29,7 +29,7 @@ jobs:
         runs-on: macos-latest
         needs: [prepare, deploy-web]
         env:
-            APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio (Staging).app
+            APP_PATH: src-tauri/target/universal-apple-darwin/debug/bundle/macos/Scriptio (Staging).app
             PKG_PATH: Scriptio.pkg
         steps:
             - uses: actions/checkout@v6
@@ -68,7 +68,7 @@ jobs:
                   staging: "true"
 
             - name: Build and sign .app with Tauri
-              run: npm run tauri build -- --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json --config "{\"bundle\":{\"macOS\":{\"bundleVersion\":\"${{ needs.prepare.outputs.revision }}\"}}}"
+              run: npm run tauri build -- --debug --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json --config "{\"bundle\":{\"macOS\":{\"bundleVersion\":\"${{ needs.prepare.outputs.revision }}\"}}}"
               env:
                   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
                   NEXT_PUBLIC_API_URL: https://staging.scriptio.app
