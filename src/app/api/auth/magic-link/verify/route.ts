@@ -10,28 +10,12 @@ import * as ProjectService from "@src/server/service/project-service";
 import * as MagicLinkService from "@src/server/service/magic-link-service";
 import * as Misc from "@src/lib/utils/misc";
 import { putBridgeToken } from "@src/lib/desktop-bridge";
+import { DESKTOP_BEARER_SALT, getWebSessionCookie } from "@src/lib/auth-cookies";
 
 import { VerifyMagicLinkBodySchema } from "@src/lib/utils/api-bodies";
 export type { VerifyMagicLinkBody } from "@src/lib/utils/api-bodies";
 
-const SESSION_COOKIE_SALT = "authjs.session-token";
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // mirrors auth.ts maxAge
-
-/**
- * Cookie name NextAuth/Auth.js expects when verifying the JWT session.
- * Must stay in sync with Auth.js's internal default for the credentials/JWT cookie:
- *   https → "__Secure-authjs.session-token", http → "authjs.session-token".
- */
-function getSessionCookieName(): { name: string; secure: boolean } {
-    const useSecure =
-        process.env.NEXTAUTH_URL?.startsWith("https://") === true ||
-        process.env.AUTH_URL?.startsWith("https://") === true ||
-        process.env.NODE_ENV === "production";
-    return {
-        name: useSecure ? "__Secure-authjs.session-token" : "authjs.session-token",
-        secure: useSecure,
-    };
-}
 
 /**
  * POST `/api/auth/magic-link/verify`
@@ -88,34 +72,42 @@ async function verifyMagicLinkRoute(req: NextRequest) {
         }
     }
 
-    const jwe = await encode({
-        token: {
-            id: user.id,
-            email: user.email,
-            createdAt: user.createdAt.toISOString(),
-        },
-        secret,
-        salt: SESSION_COOKIE_SALT,
-        maxAge: SESSION_TTL_SECONDS,
-    });
+    const tokenPayload = {
+        id: user.id,
+        email: user.email,
+        createdAt: user.createdAt.toISOString(),
+    };
 
     if (record.desktopNonce) {
         // Desktop flow: hand the JWE to the bridge for the polling client to pick up.
         // Do NOT set a session cookie on whichever browser opened the magic link, since
         // it may not be the same machine running the desktop app.
-        putBridgeToken(record.desktopNonce, jwe);
+        const desktopJwe = await encode({
+            token: tokenPayload,
+            secret,
+            salt: DESKTOP_BEARER_SALT,
+            maxAge: SESSION_TTL_SECONDS,
+        });
+        putBridgeToken(record.desktopNonce, desktopJwe);
         return Success({ mode: "desktop" });
     }
 
     // Web flow: set the NextAuth session cookie directly so the browser is signed in.
-    const { name, secure } = getSessionCookieName();
+    // The salt MUST equal the cookie name — that's what Auth.js's internal decoder uses.
+    const { name, secure } = getWebSessionCookie();
+    const webJwe = await encode({
+        token: tokenPayload,
+        secret,
+        salt: name,
+        maxAge: SESSION_TTL_SECONDS,
+    });
     const response = NextResponse.json(
         { status: "success", data: { mode: "web" } },
         { status: 200 },
     );
     response.cookies.set({
         name,
-        value: jwe,
+        value: webJwe,
         httpOnly: true,
         sameSite: "lax",
         secure,
