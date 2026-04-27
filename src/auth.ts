@@ -35,19 +35,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }),
         Apple({
             allowDangerousEmailAccountLinking: true,
-            profile: (profile) => ({ id: profile.sub, email: profile.email }),
+            // Explicitly request email on first consent. Apple only returns it once —
+            // subsequent sign-ins omit it, so the adapter links via providerAccountId
+            // and we re-sync email from the DB in the jwt callback instead.
+            authorization: { params: { scope: "name email" } },
+            profile: (profile) => {
+                if (!profile.email) {
+                    // This only runs on first sign-in. If Apple didn't return an email
+                    // (e.g. user denied the scope), fail early rather than creating a
+                    // User row with a missing email field.
+                    throw new Error("Apple did not return an email address. Ensure the email scope is granted.");
+                }
+                return { id: profile.sub, email: profile.email };
+            },
         }),
     ],
     callbacks: {
         // Apple uses response_mode=form_post; the cross-site POST back from
         // appleid.apple.com drops the `callbackUrl` cookie (Auth.js promotes state/nonce
         // to SameSite=None for form_post but not callbackUrl), so NextAuth falls back to
-        // baseUrl. Send those cases to /desktop-oauth/complete, which recovers the nonce
-        // from sessionStorage (set by DesktopOAuthStart before the OAuth handoff) and
-        // finishes the desktop bridge. Web users who signed in with Apple and have no
-        // nonce are redirected to /projects from within that page.
+        // the homepage — passed to this callback as either the absolute baseUrl or the
+        // relative "/". Send those cases to /desktop-oauth/complete, which recovers the
+        // nonce from sessionStorage (set by DesktopOAuthStart before the OAuth handoff)
+        // and finishes the desktop bridge. Web users who signed in with Apple and have
+        // no nonce are redirected to /projects from within that page.
         redirect: async ({ url, baseUrl }) => {
-            if (url === baseUrl || url === `${baseUrl}/`) return `${baseUrl}/desktop-oauth/complete`;
+            const isHomepage =
+                url === baseUrl || url === `${baseUrl}/` || url === "/" || url === "";
+            if (isHomepage) return `${baseUrl}/desktop-oauth/complete`;
             if (url.startsWith("/")) return `${baseUrl}${url}`;
             try {
                 if (new URL(url).origin === baseUrl) return url;
