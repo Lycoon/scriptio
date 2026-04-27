@@ -21,11 +21,10 @@ ENV NEXT_PUBLIC_COMMIT_SHA=$NEXT_PUBLIC_COMMIT_SHA
 ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
 
 RUN chown -R node:node .
+USER node
 RUN npm run build
 
 EXPOSE 3000
-USER node
 ENV NEXT_TELEMETRY_DISABLED 1
 
-ENTRYPOINT ["./scripts/launch.sh"]
-CMD [ "npm", "start" ]
+CMD npx prisma migrate deploy && npm start
