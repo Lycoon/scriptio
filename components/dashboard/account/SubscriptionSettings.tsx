@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Check, Lock } from "lucide-react";
 import { isTauri } from "@tauri-apps/api/core";
-import { cancelStripeSubscription, createStripeCheckout, submitApplePurchase } from "@src/lib/utils/requests";
+import { cancelStripeSubscription, createStripeCheckout, getAppleSubscriptionOwner, submitApplePurchase } from "@src/lib/utils/requests";
 import { useUser } from "@src/lib/utils/hooks";
 
 import styles from "./SubscriptionSettings.module.css";
@@ -56,13 +56,22 @@ const SubscriptionSettings = () => {
         return () => { cancelled = true; };
     }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    const showOwnerError = async (jwsRepresentation: string) => {
+        const ownerEmail = await getAppleSubscriptionOwner(jwsRepresentation);
+        if (ownerEmail) {
+            setError(t("subscription.alreadyBoundTo", { email: ownerEmail }));
+        } else {
+            setError(t("subscription.alreadyBoundUnknown"));
+        }
+    };
+
     const handleUpgrade = async () => {
         setError(null);
         setUpgradeLoading(true);
 
         if (isTauri()) {
             try {
-                const { purchase, PurchaseState } = await import("@choochmeque/tauri-plugin-iap-api");
+                const { purchase, restorePurchases, PurchaseState } = await import("@choochmeque/tauri-plugin-iap-api");
                 const result = await purchase(APPLE_PRODUCT_ID, "subs", {
                     appAccountToken: user?.id,
                 });
@@ -76,9 +85,25 @@ const SubscriptionSettings = () => {
                 if (ok) {
                     await mutate();
                 } else {
-                    setError(t("subscription.purchaseError"));
+                    await showOwnerError(result.jwsRepresentation);
                 }
             } catch (err) {
+                // StoreKit may throw when the Apple ID already has an active subscription.
+                // Restore purchases to find the existing JWS and identify the linked account.
+                try {
+                    const { restorePurchases, PurchaseState } = await import("@choochmeque/tauri-plugin-iap-api");
+                    const { purchases } = await restorePurchases("subs");
+                    const existing = purchases.find(
+                        (p) => p.productId === APPLE_PRODUCT_ID
+                            && p.purchaseState === PurchaseState.PURCHASED
+                            && p.jwsRepresentation,
+                    );
+                    if (existing?.jwsRepresentation) {
+                        await showOwnerError(existing.jwsRepresentation);
+                        return;
+                    }
+                } catch { /* ignore */ }
+
                 console.error("[SubscriptionSettings] Apple IAP failed:", err);
                 setError(t("subscription.purchaseError"));
             } finally {
@@ -194,7 +219,7 @@ const SubscriptionSettings = () => {
                 </button>
             )}
 
-            {error && <p className={styles.cancelSuccess} style={{ color: "var(--error)" }}>{error}</p>}
+            {error && <p className={styles.errorMessage}>{error}</p>}
         </div>
     );
 };

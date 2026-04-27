@@ -147,7 +147,9 @@
       "purchasing": "购买中...",
       "purchaseError": "购买失败，请重试。",
       "cancelApple": "Apple 订阅通过 App Store 管理。",
-      "manageApple": "打开 App Store"
+      "manageApple": "打开 App Store",
+      "alreadyBoundTo": "此订阅已与 {email} 关联。",
+      "alreadyBoundUnknown": "此订阅已与其他账户关联。"
     }
   },
   "projects": {

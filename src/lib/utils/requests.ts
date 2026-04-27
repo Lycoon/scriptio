@@ -29,7 +29,7 @@ export const getCloudToken = async (projectId: string): Promise<{ token: string 
     return { token: null, status: res.status };
 };
 
-export const createProject = async (userId: string, body: CreateProjectBody) => {
+export const createProject = async (body: CreateProjectBody) => {
     return request(`/api/projects`, "POST", body);
 };
 
@@ -142,3 +142,11 @@ export const submitApplePurchase = async (jwsTransaction: string): Promise<boole
     const res = await request("/api/apple/purchase", "POST", { jwsTransaction });
     return res.ok;
 };
+
+export const getAppleSubscriptionOwner = async (jwsTransaction: string): Promise<string | null> => {
+    const res = await request("/api/apple/subscription-owner", "POST", { jwsTransaction });
+    if (!res.ok) return null;
+    const { email } = (await res.json()) as { email: string | null };
+    return email ?? null;
+};
+

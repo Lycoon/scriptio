@@ -147,7 +147,9 @@
       "purchasing": "Zakup w toku...",
       "purchaseError": "Zakup nie powiódł się. Spróbuj ponownie.",
       "cancelApple": "Subskrypcje Apple są zarządzane przez App Store.",
-      "manageApple": "Otwórz App Store"
+      "manageApple": "Otwórz App Store",
+      "alreadyBoundTo": "Ta subskrypcja jest już powiązana z {email}.",
+      "alreadyBoundUnknown": "Ta subskrypcja jest już powiązana z innym kontem."
     }
   },
   "projects": {

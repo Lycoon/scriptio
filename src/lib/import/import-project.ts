@@ -144,7 +144,7 @@ async function createRemoteProject(userId: string, title: string, description?: 
         description,
     };
 
-    const res = await createProject(userId, body);
+    const res = await createProject(body);
     const json = (await res.json()) as ApiResponse<{ id: string }>;
 
     if (!res.ok || !json.data) {

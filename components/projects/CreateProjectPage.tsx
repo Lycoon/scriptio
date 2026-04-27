@@ -62,7 +62,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                         if (selectedFile) {
                             body.poster = await cropImageBase64(selectedFile, 686, 1016);
                         }
-                        const res = await createProject(user.id, body);
+                        const res = await createProject(body);
                         const json = (await res.json()) as ApiResponse<{ id: string }>;
                         if (res.ok && json.data) {
                             projectId = json.data.id;
@@ -104,7 +104,7 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                 body.poster = await cropImageBase64(selectedFile, 686, 1016);
             }
 
-            const res = await createProject(user.id, body);
+            const res = await createProject(body);
             const json = (await res.json()) as ApiResponse<{ id: string }>;
             if (!res.ok || !json.data) {
                 setFormInfo({ content: json.message!, isError: true });

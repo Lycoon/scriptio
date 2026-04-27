@@ -148,7 +148,9 @@
       "purchasing": "Kauf wird durchgeführt...",
       "purchaseError": "Kauf fehlgeschlagen. Bitte erneut versuchen.",
       "cancelApple": "Apple-Abonnements werden über den App Store verwaltet.",
-      "manageApple": "App Store öffnen"
+      "manageApple": "App Store öffnen",
+      "alreadyBoundTo": "Dieses Abonnement ist bereits mit {email} verknüpft.",
+      "alreadyBoundUnknown": "Dieses Abonnement ist bereits mit einem anderen Konto verknüpft."
     }
   },
   "projects": {

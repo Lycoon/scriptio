@@ -147,7 +147,9 @@
       "purchasing": "Purchasing...",
       "purchaseError": "Purchase failed. Please try again.",
       "cancelApple": "Apple subscriptions are managed through the App Store.",
-      "manageApple": "Open App Store"
+      "manageApple": "Open App Store",
+      "alreadyBoundTo": "This subscription is already linked to {email}.",
+      "alreadyBoundUnknown": "This subscription is already linked to another account."
     }
   },
   "projects": {

@@ -148,7 +148,9 @@
       "purchasing": "Achat en cours...",
       "purchaseError": "L'achat a échoué. Veuillez réessayer.",
       "cancelApple": "Les abonnements Apple sont gérés via l'App Store.",
-      "manageApple": "Ouvrir l'App Store"
+      "manageApple": "Ouvrir l'App Store",
+      "alreadyBoundTo": "Cet abonnement est déjà associé à {email}.",
+      "alreadyBoundUnknown": "Cet abonnement est déjà associé à un autre compte."
     }
   },
   "projects": {
