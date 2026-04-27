@@ -147,7 +147,9 @@
       "purchasing": "구매 중...",
       "purchaseError": "구매에 실패했습니다. 다시 시도해 주세요.",
       "cancelApple": "Apple 구독은 App Store에서 관리됩니다.",
-      "manageApple": "App Store 열기"
+      "manageApple": "App Store 열기",
+      "alreadyBoundTo": "이 구독은 이미 {email}에 연결되어 있습니다.",
+      "alreadyBoundUnknown": "이 구독은 이미 다른 계정에 연결되어 있습니다."
     }
   },
   "projects": {

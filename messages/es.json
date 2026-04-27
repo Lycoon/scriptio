@@ -147,7 +147,9 @@
       "purchasing": "Comprando...",
       "purchaseError": "La compra falló. Inténtalo de nuevo.",
       "cancelApple": "Las suscripciones de Apple se gestionan a través del App Store.",
-      "manageApple": "Abrir App Store"
+      "manageApple": "Abrir App Store",
+      "alreadyBoundTo": "Esta suscripción ya está vinculada a {email}.",
+      "alreadyBoundUnknown": "Esta suscripción ya está vinculada a otra cuenta."
     }
   },
   "projects": {

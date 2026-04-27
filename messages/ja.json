@@ -147,7 +147,9 @@
       "purchasing": "購入中...",
       "purchaseError": "購入に失敗しました。もう一度お試しください。",
       "cancelApple": "Appleのサブスクリプションはアプリストアで管理されます。",
-      "manageApple": "App Storeを開く"
+      "manageApple": "App Storeを開く",
+      "alreadyBoundTo": "このサブスクリプションは既に {email} に関連付けられています。",
+      "alreadyBoundUnknown": "このサブスクリプションは既に別のアカウントに関連付けられています。"
     }
   },
   "projects": {

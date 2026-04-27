@@ -170,6 +170,16 @@
     margin: 0;
 }
 
+.errorMessage {
+    font-size: 0.82rem;
+    color: var(--error);
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--error) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--error) 20%, transparent);
+    margin: 0;
+}
+
 .upgradeBtn {
     display: flex;
     align-items: center;
