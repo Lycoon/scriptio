@@ -1,5 +1,5 @@
 import { handlers } from "@src/auth";
-import { type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
 export const GET = handlers.GET;
 
@@ -18,8 +18,8 @@ export const GET = handlers.GET;
  * nonce from sessionStorage (stored by DesktopOAuthStart) for the Tauri flow,
  * or redirects to /projects for plain web users.
  */
-export async function POST(req: NextRequest, context: unknown) {
-    const response = await handlers.POST(req, context as never);
+export async function POST(req: NextRequest) {
+    const response = await handlers.POST(req);
 
     if (new URL(req.url).pathname === "/api/auth/callback/apple") {
         const location = response.headers.get("Location");
