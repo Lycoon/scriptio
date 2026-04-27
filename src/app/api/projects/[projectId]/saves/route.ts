@@ -59,6 +59,10 @@ async function listSaves(req: NextRequest, { routeParams, user }: AuthApiContext
     }
 
     const res = await forwardToWorker(projectId, "GET", "/saves");
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Worker error listing saves: ${text}`);
+    }
     const data = await res.json();
     return Success(data);
 }

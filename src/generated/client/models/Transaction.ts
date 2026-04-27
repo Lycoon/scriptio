@@ -230,15 +230,15 @@ export type TransactionOrderByWithRelationInput = {
 
 export type TransactionWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  transactionId?: string
   AND?: Prisma.TransactionWhereInput | Prisma.TransactionWhereInput[]
   OR?: Prisma.TransactionWhereInput[]
   NOT?: Prisma.TransactionWhereInput | Prisma.TransactionWhereInput[]
   userId?: Prisma.StringFilter<"Transaction"> | string
   provider?: Prisma.EnumSubscriptionProviderFilter<"Transaction"> | $Enums.SubscriptionProvider
-  transactionId?: Prisma.StringFilter<"Transaction"> | string
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id">
+}, "id" | "transactionId">
 
 export type TransactionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

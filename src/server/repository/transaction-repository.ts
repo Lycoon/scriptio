@@ -1,3 +1,4 @@
+import { SubscriptionProvider } from "../../generated/client/client";
 import prisma from "../db";
 
 export class TransactionRepository {
@@ -21,6 +22,21 @@ export class TransactionRepository {
     countSince(since: Date) {
         return prisma.transaction.count({
             where: { createdAt: { gte: since } },
+        });
+    }
+
+    findByTransactionId(transactionId: string) {
+        return prisma.transaction.findFirst({
+            where: { transactionId },
+            select: { userId: true },
+        });
+    }
+
+    createIfNotExists(userId: string, provider: SubscriptionProvider, transactionId: string) {
+        return prisma.transaction.upsert({
+            where: { transactionId },
+            update: {},
+            create: { userId, provider, transactionId },
         });
     }
 }
