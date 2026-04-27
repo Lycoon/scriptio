@@ -8,7 +8,6 @@ WORKDIR /usr/app
 COPY ./package*.json ./
 RUN npm install
 COPY ./ ./
-RUN chmod +x ./scripts/launch.sh
 
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
@@ -25,6 +24,6 @@ USER node
 RUN npm run build
 
 EXPOSE 3000
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 CMD npx prisma migrate deploy && npm start
