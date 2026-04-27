@@ -24,7 +24,7 @@ jobs:
               continue-on-error: true
 
             - name: Typecheck
-              run: npx tsc --noEmit
+              run: npx prisma generate && npx tsc --noEmit
 
     build-macos:
         runs-on: macos-latest
