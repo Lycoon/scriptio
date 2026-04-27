@@ -2,7 +2,6 @@ import { ERROR_MAGIC_LINK_EXPIRED } from "@src/lib/messages";
 import { apiHandler } from "@src/lib/utils/api-handler";
 import { BodyFieldError, Success, validate } from "@src/lib/utils/api-utils";
 import { NextResponse, type NextRequest } from "next/server";
-import { encode } from "next-auth/jwt";
 
 import * as SecretService from "@src/lib/utils/secrets";
 import * as UserService from "@src/server/service/user-service";
@@ -10,12 +9,15 @@ import * as ProjectService from "@src/server/service/project-service";
 import * as MagicLinkService from "@src/server/service/magic-link-service";
 import * as Misc from "@src/lib/utils/misc";
 import { putBridgeToken } from "@src/lib/desktop-bridge";
-import { DESKTOP_BEARER_SALT, getWebSessionCookie } from "@src/lib/auth-cookies";
+import {
+    encodeDesktopBearer,
+    encodeWebSessionCookie,
+    SESSION_TTL_SECONDS,
+    type EncodedTokenPayload,
+} from "@src/lib/auth-tokens";
 
 import { VerifyMagicLinkBodySchema } from "@src/lib/utils/api-bodies";
 export type { VerifyMagicLinkBody } from "@src/lib/utils/api-bodies";
-
-const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // mirrors auth.ts maxAge
 
 /**
  * POST `/api/auth/magic-link/verify`
@@ -32,9 +34,6 @@ const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // mirrors auth.ts maxAge
 async function verifyMagicLinkRoute(req: NextRequest) {
     const body = await req.json();
     const { token } = validate(VerifyMagicLinkBodySchema, body);
-
-    const secret = process.env.AUTH_SECRET;
-    if (!secret) throw new BodyFieldError("Server is missing AUTH_SECRET");
 
     const tokenHash = SecretService.hashToken(token);
 
@@ -72,9 +71,10 @@ async function verifyMagicLinkRoute(req: NextRequest) {
         }
     }
 
-    const tokenPayload = {
+    const tokenPayload: EncodedTokenPayload = {
         id: user.id,
         email: user.email,
+        role: user.role,
         createdAt: user.createdAt.toISOString(),
     };
 
@@ -82,32 +82,20 @@ async function verifyMagicLinkRoute(req: NextRequest) {
         // Desktop flow: hand the JWE to the bridge for the polling client to pick up.
         // Do NOT set a session cookie on whichever browser opened the magic link, since
         // it may not be the same machine running the desktop app.
-        const desktopJwe = await encode({
-            token: tokenPayload,
-            secret,
-            salt: DESKTOP_BEARER_SALT,
-            maxAge: SESSION_TTL_SECONDS,
-        });
+        const desktopJwe = await encodeDesktopBearer(tokenPayload);
         putBridgeToken(record.desktopNonce, desktopJwe);
         return Success({ mode: "desktop" });
     }
 
     // Web flow: set the NextAuth session cookie directly so the browser is signed in.
-    // The salt MUST equal the cookie name — that's what Auth.js's internal decoder uses.
-    const { name, secure } = getWebSessionCookie();
-    const webJwe = await encode({
-        token: tokenPayload,
-        secret,
-        salt: name,
-        maxAge: SESSION_TTL_SECONDS,
-    });
+    const { jwe, name, secure } = await encodeWebSessionCookie(tokenPayload);
     const response = NextResponse.json(
         { status: "success", data: { mode: "web" } },
         { status: 200 },
     );
     response.cookies.set({
         name,
-        value: webJwe,
+        value: jwe,
         httpOnly: true,
         sameSite: "lax",
         secure,

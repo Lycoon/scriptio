@@ -8,7 +8,7 @@
  *   4. Desktop OAuth       — browser OAuth here, then /api/desktop/token mints
  *                            a fresh JWE for Tauri to pick up via the bridge.
  *
- * The desktop bearer JWEs all use `DESKTOP_BEARER_SALT` (lib/auth-cookies.ts)
+ * The desktop bearer JWEs all use `DESKTOP_BEARER_SALT` (lib/auth-tokens.ts)
  * so lib/session.ts can decrypt them in middleware. The web cookie uses Auth.js's
  * default salt (= cookie name) and is never encoded by us directly except in the
  * magic-link verify route, which uses `getWebSessionCookie()` to stay aligned.
@@ -22,10 +22,11 @@ import { UserRole } from "./generated/client/client";
 
 import prisma from "@src/server/db";
 import * as UserService from "@src/server/service/user-service";
+import { SESSION_TTL_SECONDS } from "@src/lib/auth-tokens";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: PrismaAdapter(prisma),
-    session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+    session: { strategy: "jwt", maxAge: SESSION_TTL_SECONDS },
     pages: { signIn: "/" },
     providers: [
         Google({

@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { decode } from "next-auth/jwt";
 import { UserRole } from "../generated/client/client";
 import { auth } from "@src/auth";
-import { DESKTOP_BEARER_SALT } from "@src/lib/auth-cookies";
+import { DESKTOP_BEARER_SALT } from "@src/lib/auth-tokens";
 
 /**
  * Resolve the current user from either:
