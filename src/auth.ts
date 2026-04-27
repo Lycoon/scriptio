@@ -52,17 +52,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ],
     callbacks: {
         // Apple uses response_mode=form_post; the cross-site POST back from
-        // appleid.apple.com drops the `callbackUrl` cookie (Auth.js promotes state/nonce
-        // to SameSite=None for form_post but not callbackUrl), so NextAuth falls back to
-        // the homepage — passed to this callback as either the absolute baseUrl or the
-        // relative "/". Send those cases to /desktop-oauth/complete, which recovers the
-        // nonce from sessionStorage (set by DesktopOAuthStart before the OAuth handoff)
-        // and finishes the desktop bridge. Web users who signed in with Apple and have
-        // no nonce are redirected to /projects from within that page.
+        // appleid.apple.com drops the `callbackUrl` cookie, so Auth.js falls back to
+        // url.origin and never calls this callback for that case. The actual Apple
+        // redirect fix lives in /api/auth/[...nextauth]/route.ts which intercepts
+        // the 302 response before it leaves the server.
+        //
+        // This callback still runs for explicit callbackUrl values (e.g. Google OAuth,
+        // magic-link flows). Apple form_post with no callbackUrl bypasses it entirely.
         redirect: async ({ url, baseUrl }) => {
-            const isHomepage =
-                url === baseUrl || url === `${baseUrl}/` || url === "/" || url === "";
-            if (isHomepage) return `${baseUrl}/desktop-oauth/complete`;
+            if (url === baseUrl || url === `${baseUrl}/`) return `${baseUrl}/projects`;
             if (url.startsWith("/")) return `${baseUrl}${url}`;
             try {
                 if (new URL(url).origin === baseUrl) return url;
