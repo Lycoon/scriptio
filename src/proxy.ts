@@ -1,5 +1,6 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import { getWebSessionCookie } from "@src/lib/auth-cookies";
 
 // Routes that handle their own auth or are intentionally public
 const PUBLIC_API_PREFIXES = [
@@ -31,7 +32,8 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
+    const { name: cookieName } = getWebSessionCookie();
+    const token = await getToken({ req: request, secret: process.env.AUTH_SECRET, cookieName });
 
     // Admin pages: proxy only checks authentication.
     // Role enforcement happens in src/app/admin/layout.tsx via auth(), which runs the
