@@ -139,10 +139,10 @@ CREATE UNIQUE INDEX "MagicLinkToken_tokenHash_key" ON "MagicLinkToken"("tokenHas
 CREATE INDEX "MagicLinkToken_email_createdAt_idx" ON "MagicLinkToken"("email", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "Transaction_userId_idx" ON "Transaction"("userId");
+CREATE UNIQUE INDEX "Transaction_transactionId_key" ON "Transaction"("transactionId");
 
 -- CreateIndex
-CREATE INDEX "Transaction_transactionId_idx" ON "Transaction"("transactionId");
+CREATE INDEX "Transaction_userId_idx" ON "Transaction"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ProjectMember_userId_projectId_key" ON "ProjectMember"("userId", "projectId");
