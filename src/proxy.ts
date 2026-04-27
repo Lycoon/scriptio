@@ -1,6 +1,7 @@
-import { getToken } from "next-auth/jwt";
+import { decode, getToken, type JWT } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
-import { getWebSessionCookie } from "@src/lib/auth-cookies";
+
+import { DESKTOP_BEARER_SALT, getWebSessionCookie } from "@src/lib/auth-tokens";
 
 // Routes that handle their own auth or are intentionally public
 const PUBLIC_API_PREFIXES = [
@@ -21,6 +22,38 @@ function isAdminPageRoute(pathname: string): boolean {
     return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
+/**
+ * Resolve the caller's identity from either:
+ *  - `Authorization: Bearer <jwe>` — desktop clients (Tauri). Encoded by
+ *    /api/desktop/token and /api/auth/magic-link/verify with `DESKTOP_BEARER_SALT`.
+ *  - The Auth.js session cookie — web clients. Cookie name and JWE salt vary by
+ *    environment and are centralized in `getWebSessionCookie()`.
+ *
+ * Returns null when no valid credential is present so the caller can decide
+ * whether to 401 (API) or redirect (admin page).
+ */
+async function resolveCaller(request: NextRequest): Promise<JWT | null> {
+    const secret = process.env.AUTH_SECRET;
+    if (!secret) return null;
+
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+        try {
+            const decoded = await decode({
+                token: authHeader.slice(7),
+                secret,
+                salt: DESKTOP_BEARER_SALT,
+            });
+            return decoded?.id ? decoded : null;
+        } catch {
+            return null;
+        }
+    }
+
+    const { name: cookieName } = getWebSessionCookie();
+    return getToken({ req: request, secret, cookieName });
+}
+
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
@@ -32,8 +65,7 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    const { name: cookieName } = getWebSessionCookie();
-    const token = await getToken({ req: request, secret: process.env.AUTH_SECRET, cookieName });
+    const token = await resolveCaller(request);
 
     // Admin pages: proxy only checks authentication.
     // Role enforcement happens in src/app/admin/layout.tsx via auth(), which runs the
@@ -61,7 +93,7 @@ export async function proxy(request: NextRequest) {
 
         const headers = new Headers(request.headers);
         headers.set("x-user-id", token.id as string);
-        headers.set("x-user-email", token.email as string);
+        headers.set("x-user-email", (token.email as string) ?? "");
         headers.set("x-user-created-at", (token.createdAt as string) ?? "0");
         headers.set("x-user-role", (token.role as string) ?? "USER");
         return NextResponse.next({ request: { headers } });

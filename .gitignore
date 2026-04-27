@@ -6,7 +6,7 @@
 .pnp.js
 
 # collaboration
-/src/lib/collaboration/node_modules
+/src/lib/cloud/node_modules
 .wrangler/
 
 # testing
@@ -21,6 +21,7 @@ next-env.d.ts
 # production
 /build
 /target
+/src/generated
 
 # misc
 .DS_Store

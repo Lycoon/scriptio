@@ -7,48 +7,16 @@ import {
     RequestMagicLinkBody,
     UpdateUserBody,
 } from "./api-bodies";
-import { isTauri } from "@tauri-apps/api/core";
+import { apiFetch } from "@src/lib/api-client";
 
 type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
-
-const request = async (url: string, method: RESTMethod, body?: object) => {
-    const json = JSON.stringify(body);
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-
-    // In desktop mode, add client type header and use full API URL
-    let fullUrl = url;
-    if (isTauri()) {
-        headers["x-client-type"] = "desktop";
-        
-        const base = API_BASE_URL || "http://localhost:3000";
-        fullUrl = url.startsWith("http") ? url : `${base}${url}`;
-
-        // Add auth token if available (dynamic import to avoid SSR issues)
-        const { getDesktopToken } = await import("@src/lib/desktop-auth");
-        const token = await getDesktopToken();
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
-    }
-
-    return fetch(fullUrl, {
-        headers,
+const request = (url: string, method: RESTMethod, body?: object): Promise<Response> => {
+    return apiFetch(url, {
         method,
-        body: json,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 };
-
-/**
- * Converts a WebSocket URL (ws:// or wss://) to an HTTP URL (http:// or https://).
- * Useful for calling REST endpoints on the collaboration Worker.
- */
-export function getCollabHttpUrl(path: string): string {
-    const baseUrl = process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL || "";
-    const httpUrl = baseUrl.replace(/^ws/, "http");
-    return `${httpUrl}${path}`;
-}
 
 /* Projects */
 
@@ -174,4 +142,3 @@ export const verifyApplePurchase = async (jwsTransaction: string): Promise<boole
     const res = await request("/api/apple/verify", "POST", { jwsTransaction });
     return res.ok;
 };
-
