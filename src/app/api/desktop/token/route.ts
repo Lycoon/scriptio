@@ -6,6 +6,7 @@ import { apiHandler } from "@src/lib/utils/api-handler";
 import { ForbiddenError, Success, validate } from "@src/lib/utils/api-utils";
 import { putBridgeToken } from "@src/lib/desktop-bridge";
 import { encodeDesktopBearer } from "@src/lib/auth-tokens";
+import { logger } from "@src/lib/utils/logger";
 
 const BodySchema = z.object({
     nonce: z.string().min(16),
@@ -23,11 +24,14 @@ async function desktopTokenRoute(req: NextRequest) {
     const body = await req.json();
     const { nonce } = validate(BodySchema, body);
 
+    logger.debug("[Desktop token] Minting token for nonce", { nonce: nonce.slice(0, 8) + "…" });
+
     const session = await auth();
     const user = session?.user as
         | { id?: string; email?: string; createdAt?: Date | string; role?: string }
         | undefined;
     if (!user?.id) {
+        logger.warn("[Desktop token] No active session for token request");
         throw new ForbiddenError("Not authenticated");
     }
 
@@ -42,6 +46,8 @@ async function desktopTokenRoute(req: NextRequest) {
     });
 
     putBridgeToken(nonce, token);
+    logger.debug("[Desktop token] Token stowed in bridge", { userId: user.id });
+
     return Success(null);
 }
 
