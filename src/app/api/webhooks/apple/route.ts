@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decodeJwt } from "jose";
-import prisma from "@src/server/db";
 import * as UserService from "@src/server/service/user-service";
+import * as TransactionService from "@src/server/service/transaction-service";
 
 interface AppleNotificationPayload {
     notificationType: string;
@@ -27,9 +27,13 @@ interface AppleRenewalInfo {
 }
 
 async function findUser(transaction: AppleTransactionInfo): Promise<{ id: string } | null> {
-    if (!transaction.appAccountToken) return null;
-    const user = await UserService.getUserFromId(transaction.appAccountToken);
-    return user ? { id: user.id } : null;
+    if (transaction.appAccountToken) {
+        const user = await UserService.getUserFromId(transaction.appAccountToken);
+        if (user) return { id: user.id };
+    }
+    // Fallback: look up via the transaction stored during initial purchase verification
+    const tx = await TransactionService.findUserByTransactionId(transaction.transactionId);
+    return tx ? { id: tx.userId } : null;
 }
 
 export async function POST(req: NextRequest) {
@@ -59,13 +63,7 @@ export async function POST(req: NextRequest) {
                 subscriptionProvider: "APPLE",
                 isSubscriptionCancelled: false,
             });
-            await prisma.transaction.create({
-                data: {
-                    userId: user.id,
-                    provider: "APPLE",
-                    transactionId: transaction.transactionId,
-                },
-            });
+            await TransactionService.createTransactionIfNotExists(user.id, "APPLE", transaction.transactionId);
             break;
         }
 

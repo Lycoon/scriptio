@@ -100,13 +100,12 @@ model Transaction {
   id            Int                  @id @default(autoincrement())
   userId        String
   provider      SubscriptionProvider
-  transactionId String
+  transactionId String               @unique
   createdAt     DateTime             @default(now())
 
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([transactionId])
 }
 
 model Project {

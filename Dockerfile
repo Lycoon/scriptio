@@ -26,4 +26,4 @@ RUN npm run build
 EXPOSE 3000
 ENV NEXT_TELEMETRY_DISABLED=1
 
-CMD npx prisma migrate deploy && npm start
+CMD npx prisma migrate deploy && npx prisma db seed && npm start
