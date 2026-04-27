@@ -138,7 +138,7 @@ export const createStripeCheckout = async (): Promise<{ url: string } | null> =>
     return null;
 };
 
-export const verifyApplePurchase = async (jwsTransaction: string): Promise<boolean> => {
-    const res = await request("/api/apple/verify", "POST", { jwsTransaction });
+export const submitApplePurchase = async (jwsTransaction: string): Promise<boolean> => {
+    const res = await request("/api/apple/purchase", "POST", { jwsTransaction });
     return res.ok;
 };

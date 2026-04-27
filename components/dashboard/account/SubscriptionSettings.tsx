@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Check, Lock } from "lucide-react";
 import { isTauri } from "@tauri-apps/api/core";
-import { cancelStripeSubscription, createStripeCheckout, verifyApplePurchase } from "@src/lib/utils/requests";
+import { cancelStripeSubscription, createStripeCheckout, submitApplePurchase } from "@src/lib/utils/requests";
 import { useUser } from "@src/lib/utils/hooks";
 
 import styles from "./SubscriptionSettings.module.css";
@@ -27,12 +27,13 @@ const SubscriptionSettings = () => {
     const isApple = user?.subscriptionProvider === "APPLE";
     const expiryDate = user?.isProUntil ? new Date(user.isProUntil).toLocaleDateString() : "";
 
-    // Restore Apple purchases on mount to sync subscription state with the server
+    // Restore Apple purchases on mount to sync subscription state with the server.
     useEffect(() => {
         if (!isTauri() || !user?.id) return;
 
         let cancelled = false;
-        (async () => {
+
+        async function syncAppleSubscription() {
             try {
                 const { restorePurchases, PurchaseState } = await import("@choochmeque/tauri-plugin-iap-api");
                 const { purchases } = await restorePurchases("subs");
@@ -41,18 +42,17 @@ const SubscriptionSettings = () => {
                         && p.purchaseState === PurchaseState.PURCHASED
                         && p.jwsRepresentation,
                 );
-
                 if (cancelled) return;
-
                 if (active?.jwsRepresentation) {
-                    await verifyApplePurchase(active.jwsRepresentation);
+                    await submitApplePurchase(active.jwsRepresentation);
                     await mutate();
                 }
             } catch {
-                // Restore can fail if not signed into App Store — silently ignore
+                // Restore can fail if the user is not signed into the App Store — silently ignore.
             }
-        })();
+        }
 
+        syncAppleSubscription();
         return () => { cancelled = true; };
     }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -72,7 +72,7 @@ const SubscriptionSettings = () => {
                     return;
                 }
 
-                const ok = await verifyApplePurchase(result.jwsRepresentation);
+                const ok = await submitApplePurchase(result.jwsRepresentation);
                 if (ok) {
                     await mutate();
                 } else {
