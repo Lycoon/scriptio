@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CookieUser, UserSettings } from "./types";
 import { editUserSettings } from "./requests";
@@ -467,6 +467,32 @@ const useIsPro = () => {
     return { isPro, isLoading };
 };
 
+const useDesktopBridgeAuth = () => {
+    const { mutate } = useSWRConfig();
+    const pollAbortRef = useRef<AbortController | null>(null);
+
+    useEffect(() => {
+        return () => { pollAbortRef.current?.abort(); };
+    }, []);
+
+    const completeBridgeAuth = useCallback(async (nonce: string): Promise<"success" | "timeout" | "aborted"> => {
+        pollAbortRef.current?.abort();
+        const controller = new AbortController();
+        pollAbortRef.current = controller;
+
+        const { pollBridgeToken, setDesktopToken } = await import("@src/lib/desktop-auth");
+        const token = await pollBridgeToken(nonce, { signal: controller.signal });
+        if (!token) return controller.signal.aborted ? "aborted" : "timeout";
+
+        await setDesktopToken(token);
+        await mutate("/api/users/cookie");
+        await mutate("/api/users");
+        return "success";
+    }, [mutate]);
+
+    return { completeBridgeAuth };
+};
+
 export {
     useDraggable,
     useUser,
@@ -482,4 +508,5 @@ export {
     useCachedProjects,
     useCachedProjectInfo,
     useProjectIdFromUrl,
+    useDesktopBridgeAuth,
 };

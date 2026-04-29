@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useSWRConfig } from "swr";
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useTranslations } from "next-intl";
+import { useDesktopBridgeAuth } from "@src/lib/utils/hooks";
 
 import GoogleIcon from "@components/icons/GoogleIcon";
 import AppleIcon from "@components/icons/AppleIcon";
@@ -19,15 +19,10 @@ type Props = {
 };
 
 const OAuthButtons = ({ callbackUrl = "/projects" }: Props) => {
-    const { mutate } = useSWRConfig();
+    const { completeBridgeAuth } = useDesktopBridgeAuth();
     const t = useTranslations("oauth");
     const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const pollAbortRef = useRef<AbortController | null>(null);
-
-    useEffect(() => {
-        return () => { pollAbortRef.current?.abort(); };
-    }, []);
 
     const startOAuth = async (provider: Provider) => {
         setError(null);
@@ -37,14 +32,9 @@ const OAuthButtons = ({ callbackUrl = "/projects" }: Props) => {
             return;
         }
 
-        // Cancel any in-progress poll before starting a new one
-        pollAbortRef.current?.abort();
-        const controller = new AbortController();
-        pollAbortRef.current = controller;
-
         setPendingProvider(provider);
         try {
-            const { generateBridgeNonce, pollBridgeToken, setDesktopToken } = await import("@src/lib/desktop-auth");
+            const { generateBridgeNonce } = await import("@src/lib/desktop-auth");
             const { openUrl } = await import("@tauri-apps/plugin-opener");
 
             const nonce = generateBridgeNonce();
@@ -52,17 +42,9 @@ const OAuthButtons = ({ callbackUrl = "/projects" }: Props) => {
             const bridgeUrl = `${apiBase}/desktop-oauth/start?provider=${provider}&nonce=${encodeURIComponent(nonce)}`;
             await openUrl(bridgeUrl);
 
-            const token = await pollBridgeToken(nonce, { signal: controller.signal });
-            if (!token) {
-                if (!controller.signal.aborted) setError(t("timeout"));
-                return;
-            }
-
-            await setDesktopToken(token);
-            await mutate("/api/users/cookie");
-            await mutate("/api/users");
+            const result = await completeBridgeAuth(nonce);
+            if (result === "timeout") setError(t("timeout"));
         } catch (err) {
-            if (controller.signal.aborted) return;
             console.error("[OAuthButtons] Desktop OAuth failed:", err);
             setError(t("error"));
         } finally {
