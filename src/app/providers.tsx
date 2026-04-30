@@ -43,13 +43,17 @@ export function Providers({ children }: { children: ReactNode }) {
                 fetcher,
                 onSuccess: () => { },
                 onError: (err) => {
-                    if (err?.status !== 401 && err?.status !== 403) {
+                    // 401/403 are handled by the auth flow. 404 is expected for offline-first
+                    // resources (e.g. a cached project whose cloud copy no longer exists) — the
+                    // calling hook decides what to do, no need to log it as unexpected.
+                    if (err?.status !== 401 && err?.status !== 403 && err?.status !== 404) {
                         console.error("[Fetcher] An unexpected error occurred: ", err);
                     }
                 },
                 shouldRetryOnError: (err) => {
-                    // Don't retry on auth errors (401, 403) or network errors (server unreachable)
-                    if (err?.status === 401 || err?.status === 403 || err?.isNetworkError) {
+                    // Don't retry on auth errors (401, 403), missing resources (404), or
+                    // network errors (server unreachable).
+                    if (err?.status === 401 || err?.status === 403 || err?.status === 404 || err?.isNetworkError) {
                         return false;
                     }
                     return true;

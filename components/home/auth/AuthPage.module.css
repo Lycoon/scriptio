@@ -2,13 +2,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 40px;
+    gap: 90px;
     padding: 40px;
 }
 
 .authLogo {
     width: auto;
-    height: 80px;
+    height: 50px;
 }
 
 .info {

@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 
 export interface Env {
-    SCREENPLAY_ROOM: DurableObjectNamespace;
+    PROJECT_ROOM: DurableObjectNamespace;
     JWT_SECRET: string;
     SNAPSHOTS: R2Bucket;
 }

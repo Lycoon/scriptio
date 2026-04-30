@@ -13,6 +13,11 @@ const APPLE_PRODUCT_ID = "app.scriptio.pro.monthly";
 const APPLE_SUBSCRIPTIONS_URL = "https://apps.apple.com/account/subscriptions";
 const PERKS = ["perkProjects", "perkSaves", "perkCollaborators", "perkAutoSave"] as const;
 
+// Apple IAP is only available on the macOS Tauri build. The Windows Tauri
+// build is distributed via the Microsoft Store but uses Stripe for billing.
+const isMacosTauri = () =>
+    isTauri() && typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent);
+
 const SubscriptionSettings = () => {
     const { user, mutate } = useUser();
     const t = useTranslations("profile");
@@ -29,7 +34,7 @@ const SubscriptionSettings = () => {
 
     // Restore Apple purchases on mount to sync subscription state with the server.
     useEffect(() => {
-        if (!isTauri() || !user?.id) return;
+        if (!isMacosTauri() || !user?.id) return;
 
         let cancelled = false;
 
@@ -69,7 +74,7 @@ const SubscriptionSettings = () => {
         setError(null);
         setUpgradeLoading(true);
 
-        if (isTauri()) {
+        if (isMacosTauri()) {
             try {
                 const { purchase, restorePurchases, PurchaseState } = await import("@choochmeque/tauri-plugin-iap-api");
                 const result = await purchase(APPLE_PRODUCT_ID, "subs", {
@@ -212,7 +217,7 @@ const SubscriptionSettings = () => {
             ) : (
                 <button className={styles.upgradeBtn} onClick={handleUpgrade} disabled={upgradeLoading}>
                     {upgradeLoading
-                        ? isTauri() ? t("subscription.purchasing") : t("subscription.redirecting")
+                        ? isMacosTauri() ? t("subscription.purchasing") : t("subscription.redirecting")
                         : t("subscription.upgradeBtn")
                     }
                     {!upgradeLoading && <ArrowRight size={16} />}

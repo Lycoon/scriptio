@@ -1,5 +1,5 @@
 name: Setup Desktop Build Toolchain
-description: Installs Node.js, Rust with platform-appropriate targets, MSIX bundler on Windows, and runs npm install.
+description: Installs Node.js, Rust with platform-appropriate targets, MSIX bundler on Windows, and runs npm ci.
 
 inputs:
     platform:
@@ -39,4 +39,4 @@ runs:
 
         - name: Install dependencies
           shell: bash
-          run: npm install
+          run: npm ci

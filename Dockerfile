@@ -6,7 +6,7 @@ RUN apk add --no-cache git
 
 WORKDIR /usr/app
 COPY ./package*.json ./
-RUN npm install
+RUN npm ci
 COPY ./ ./
 
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"

@@ -8,7 +8,6 @@ type MetricsBundle = {
 };
 
 declare global {
-    // eslint-disable-next-line no-var
     var __scriptio_metrics__: MetricsBundle | undefined;
 }
 

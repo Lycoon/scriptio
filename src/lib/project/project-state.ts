@@ -500,8 +500,10 @@ export const useCloudSync = (
                     setConnectionStatus("disconnected");
                     setIsCloudSynced(true); // Mark as "synced" so isReady becomes true
 
-                    // On desktop, 403 means the cloud project was deleted or user was removed
-                    if (status === 403 && isDesktop) {
+                    // 403 means the cloud project was deleted or the user was removed.
+                    // Surface the recovery dialog on both desktop and web — the local
+                    // cache is still valid and the user should choose what to do with it.
+                    if (status === 403) {
                         setIsProjectUnavailable(true);
                     }
                     return;
