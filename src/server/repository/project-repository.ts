@@ -265,25 +265,27 @@ export class ProjectRepository {
     }
 
     async searchProjects(term: string, limit: number, cursor?: number) {
-        const isUuid = /^[0-9a-f-]{36,}$/i.test(term);
+        if (term) {
+            const isUuid = /^[0-9a-f-]{36,}$/i.test(term);
 
-        if (isUuid) {
-            const project = await prisma.project.findUnique({
-                where: { id: term },
-                select: {
-                    id: true,
-                    title: true,
-                    author: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    _count: { select: { members: true } },
-                },
-            });
-            return project ? [project] : [];
+            if (isUuid) {
+                const project = await prisma.project.findUnique({
+                    where: { id: term },
+                    select: {
+                        id: true,
+                        title: true,
+                        author: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        _count: { select: { members: true } },
+                    },
+                });
+                return project ? [project] : [];
+            }
         }
 
         return prisma.project.findMany({
-            where: { title: { contains: term, mode: "insensitive" } },
+            ...(term && { where: { title: { contains: term, mode: "insensitive" } } }),
             select: {
                 id: true,
                 title: true,

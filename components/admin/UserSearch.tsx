@@ -39,7 +39,9 @@ export default function UserSearch() {
         return () => clearTimeout(t);
     }, [query]);
 
-    const key = debounced ? `/api/admin/users?q=${encodeURIComponent(debounced)}` : null;
+    const key = debounced
+        ? `/api/admin/users?q=${encodeURIComponent(debounced)}`
+        : `/api/admin/users?limit=10`;
     const { data, isLoading } = useSWR<SearchResponse>(key);
 
     return (
@@ -55,11 +57,7 @@ export default function UserSearch() {
                 />
             </div>
 
-            {!debounced && (
-                <p className={styles.hint}>
-                    Start typing an email (partial, case-insensitive) or paste a full user ID.
-                </p>
-            )}
+            {!debounced && isLoading && <p className={styles.hint}>Loading…</p>}
 
             {debounced && isLoading && <p className={styles.hint}>Searching…</p>}
 

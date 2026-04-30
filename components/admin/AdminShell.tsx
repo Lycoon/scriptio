@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Users, FolderOpen, LogOut } from "lucide-react";
@@ -28,9 +29,16 @@ export default function AdminShell({ email, title, subtitle, children }: Props) 
         <div className={styles.wrapper}>
             <aside className={styles.sidebar}>
                 <div className={styles.brand}>
-                    Scriptio
+                    <Image
+                        src="/images/scriptio.svg"
+                        alt="Scriptio"
+                        width={100}
+                        height={28}
+                        className={styles.brandLogo}
+                    />
                     <span className={styles.brandBadge}>Admin</span>
                 </div>
+                <span className={styles.brandEmail} title={email}>{email}</span>
                 <nav className={styles.nav}>
                     <div className={styles.navGroupLabel}>Monitoring</div>
                     {NAV_LINKS.map((link) => {
@@ -51,9 +59,6 @@ export default function AdminShell({ email, title, subtitle, children }: Props) 
                     })}
                 </nav>
                 <div className={styles.footer}>
-                    <span className={styles.footerEmail} title={email}>
-                        {email}
-                    </span>
                     <Link href="/" className={styles.navItem} style={{ padding: "8px 0" }}>
                         <LogOut size={14} />
                         Back to app

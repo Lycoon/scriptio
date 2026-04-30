@@ -1,86 +1,106 @@
 .container {
     display: flex;
-    flex-direction: row;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     flex: 1;
-    padding-bottom: 60px;
+    gap: 32px;
 }
 
-.cards {
-    display: flex;
-    flex-direction: row;
-    gap: 24px;
-}
-
-.card {
+.heading {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 18px;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+}
 
+.title {
+    font-family: var(--font-josefin), sans-serif;
+    font-size: 2.25rem;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--primary-text);
+    letter-spacing: 0.01em;
+    margin: 0;
+}
+
+.subtitle {
+    font-family: var(--font-inter), sans-serif;
+    font-size: 0.95rem;
+    color: var(--secondary-text);
+    margin: 0;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+}
+
+.btnWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.formats {
+    font-family: var(--font-inter), sans-serif;
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    letter-spacing: 0.02em;
+}
+
+.createBtn,
+.importBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     width: 280px;
-    padding: 36px 32px;
-
-    border-radius: 18px;
-    border: 3px solid var(--tertiary);
-    background-color: var(--project-item-bg);
-
+    padding: 16px 0;
+    border-radius: 40px;
+    font-family: var(--font-inter), sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
     cursor: pointer;
-    text-align: left;
-
-    box-shadow: var(--project-item-shadow);
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    transition: border-color 0.2s ease, color 0.2s ease;
 }
 
-.card:hover {
+.createBtn {
+    border: 3px solid var(--tertiary);
+    background-color: var(--secondary);
+    color: var(--primary-text);
+}
+
+.createBtn:hover {
     border-color: var(--tertiary-hover);
-    box-shadow: var(--project-item-shadow-hover);
-    transform: translate(-3px, -3px);
 }
 
-.card:active {
+.createBtn:active {
     transform: scale(0.98);
     transition: transform 0.07s;
 }
 
-.card:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: var(--project-item-shadow);
-}
-
-.cardIcon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    background-color: var(--tertiary);
-    color: var(--primary-text);
-    flex-shrink: 0;
-    transition: background-color 0.2s;
-}
-
-.card:hover .cardIcon {
-    background-color: var(--tertiary-hover);
-}
-
-.cardTitle {
-    font-family: var(--font-josefin), sans-serif;
-    font-style: italic;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--primary-text);
-    margin: 0;
-    letter-spacing: 0.01em;
-}
-
-.cardDesc {
-    font-size: 0.85rem;
+.importBtn {
+    border: 3px solid var(--tertiary);
+    background: transparent;
     color: var(--secondary-text);
-    margin: 0;
-    line-height: 1.5;
+}
+
+.importBtn:hover {
+    border-color: var(--tertiary-hover);
+    color: var(--primary-text);
+}
+
+.importBtn:active {
+    transform: scale(0.98);
+    transition: transform 0.07s;
+}
+
+.importBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }

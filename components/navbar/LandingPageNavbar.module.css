@@ -1,36 +1,121 @@
 .navbar {
-  position: fixed;
-  width: 100%;
-  z-index: 1000;
-  
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2.5rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2.5rem;
+
+    background-color: transparent;
+    border-bottom: 1px solid transparent;
+    transition: background-color 0.25s ease, backdrop-filter 0.25s ease,
+        box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.navbarScrolled {
+    background-color: color-mix(in srgb, var(--secondary) 75%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom-color: var(--separator);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
 }
 
 .navLinks {
-  display: flex;
-  gap: 1.7rem;
+    display: flex;
+    gap: 1.7rem;
 }
 
 .navLink {
-  color: var(--secondary-text);
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s ease;
+    color: var(--secondary-text);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
 }
 
 .navLink:hover {
-  color: var(--primary-text);
+    color: var(--primary-text);
 }
 
 .logoWrapper {
-  position: absolute;
-  margin-top: 22px;
-  top: 0;
+    position: absolute;
+    margin-top: 22px;
+    top: 0;
 }
 
 .logo {
-  width: 90px;
+    width: 90px;
+}
+
+.burgerBtn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--primary-text);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+}
+
+.burgerBtn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.mobileMenu {
+    position: absolute;
+    top: calc(100% - 0.5rem);
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    padding: 8px;
+    border-radius: 14px;
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    animation: fadeInDown 0.15s ease-out;
+}
+
+.mobileLink {
+    color: var(--primary-text);
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding: 10px 14px;
+    border-radius: 10px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mobileLink:hover {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 1rem 1.25rem;
+    }
+
+    .navLinks {
+        display: none;
+    }
+
+    .burgerBtn {
+        display: flex;
+        margin-left: auto;
+    }
 }

@@ -326,16 +326,110 @@
         font-size: 2.5rem;
     }
     .heroLogo {
-        height: 70px;
+        height: 140px;
     }
     .catchphrase {
         font-size: 1rem;
     }
     .contentContainer {
-        padding: 0 1.5rem;
+        padding: 0 1.25rem;
     }
     .carouselWrapper {
         height: 280px;
+    }
+
+    .hero {
+        gap: 2rem;
+    }
+    .heroContent {
+        gap: 1.5rem;
+    }
+    .heroBackgroundImage {
+        max-width: 140%;
+        max-height: 50vh;
+    }
+
+    .sectionTitle {
+        font-size: 1.75rem;
+    }
+    .subheadline {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .sectionHeader {
+        margin-bottom: 2rem;
+    }
+
+    .bentoSection {
+        padding: 2rem 0 3rem;
+    }
+    .bentoContent {
+        padding: 1.25rem;
+    }
+    .pillarTitle {
+        font-size: 1.25rem;
+    }
+    .pillarText {
+        font-size: 0.95rem;
+    }
+
+    .faqSection {
+        padding: 2rem 0 3rem;
+    }
+    .faqQuestion {
+        font-size: 1rem;
+        padding: 1rem 1.25rem;
+    }
+    .faqAnswer {
+        font-size: 0.95rem;
+        padding: 0.75rem 1.25rem 1rem;
+    }
+
+    .footer {
+        padding: 2rem 0;
+        margin-top: 2rem;
+    }
+    .footerContent {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    .footerLinks {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .pageContainer {
+        padding: 90px 1.25rem 3rem;
+    }
+    .pageTitle {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+    }
+    .pageSectionTitle {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .heroLogo {
+        height: 110px;
+    }
+    .ctaPlatform {
+        width: 100%;
+        max-width: 280px;
+    }
+    .sectionTitle {
+        font-size: 1.5rem;
+    }
+    .pillarTitle {
+        font-size: 1.1rem;
+    }
+    .stripeText {
+        font-size: 1.5rem;
+    }
+    .cursor {
+        height: 1.5rem;
     }
 }
 
