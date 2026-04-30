@@ -37,7 +37,9 @@ export default function ProjectSearch() {
         return () => clearTimeout(t);
     }, [query]);
 
-    const key = debounced ? `/api/admin/projects?q=${encodeURIComponent(debounced)}` : null;
+    const key = debounced
+        ? `/api/admin/projects?q=${encodeURIComponent(debounced)}`
+        : `/api/admin/projects?limit=10`;
     const { data, isLoading } = useSWR<SearchResponse>(key);
 
     return (
@@ -53,11 +55,7 @@ export default function ProjectSearch() {
                 />
             </div>
 
-            {!debounced && (
-                <p className={styles.hint}>
-                    Start typing a title (partial, case-insensitive) or paste a full project ID.
-                </p>
-            )}
+            {!debounced && isLoading && <p className={styles.hint}>Loading…</p>}
 
             {debounced && isLoading && <p className={styles.hint}>Searching…</p>}
 

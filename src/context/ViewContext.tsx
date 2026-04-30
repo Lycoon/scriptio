@@ -42,8 +42,8 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [focusedSide, setFocusedSideState] = useState<SplitSide>("primary");
     const [isEndlessScroll, setIsEndlessScroll] = useState<boolean>(false);
     const [showComments, setShowComments] = useState<boolean>(true);
-    const [leftSidebarOpen, setLeftSidebarOpen] = useState<boolean>(true);
-    const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(true);
+    const [leftSidebarOpen, setLeftSidebarOpen] = useState<boolean>(false);
+    const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(false);
 
     const isSplit = secondaryPanel !== null;
 

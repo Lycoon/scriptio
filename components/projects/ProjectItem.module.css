@@ -17,11 +17,12 @@
     background-color: var(--project-item-bg);
     box-shadow: var(--panel-shadow);
 
-    transition: border-color 0.2s;
+    transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
 .container:hover {
-    border-color: var(--tertiary-hover);
+    background-color: var(--secondary-hover);
+    transform: translateY(-1px);
 }
 
 .container:active {

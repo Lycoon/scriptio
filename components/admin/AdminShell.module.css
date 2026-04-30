@@ -21,11 +21,25 @@
     align-items: center;
     gap: 10px;
     padding: 0 8px;
-    color: var(--primary-text);
-    font-family: var(--font-josefin), sans-serif;
-    font-weight: 700;
-    font-size: 18px;
-    letter-spacing: 0.02em;
+}
+
+.brandLogo {
+    display: block;
+    height: 28px;
+    width: auto;
+    object-fit: contain;
+}
+
+.brandEmail {
+    display: block;
+    padding: 0 8px;
+    color: var(--secondary-text);
+    font-family: var(--font-inter), sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .brandBadge {
@@ -93,16 +107,6 @@
     color: var(--secondary-text);
     font-size: 12px;
     font-family: var(--font-inter), sans-serif;
-}
-
-.footerEmail {
-    color: var(--primary-text);
-    font-weight: 600;
-    display: block;
-    margin-bottom: 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .main {

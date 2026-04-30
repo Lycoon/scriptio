@@ -18,10 +18,6 @@ async function searchUsers(req: NextRequest, { searchParams, user }: AuthApiCont
     const { q, limit = 25, cursor } = validate(QuerySchema, searchParams);
     const term = (q ?? "").trim();
 
-    if (!term) {
-        return Success({ users: [], nextCursor: null });
-    }
-
     const users = await UserService.searchUsers(term, limit + 1, cursor);
     const hasMore = users.length > limit;
     const page = hasMore ? users.slice(0, limit) : users;
