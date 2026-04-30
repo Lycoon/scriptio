@@ -343,7 +343,7 @@ const useProjectMembership = () => {
     // Fetch cloud membership only for authenticated users with non-local projects
     const shouldFetch = isAuthenticated && isLocalOnly === false && !!projectId;
 
-    const { data, isLoading, mutate } = useSWR<ProjectMembershipPayload>(
+    const { data, error, isLoading, mutate } = useSWR<ProjectMembershipPayload, { status?: number }>(
         shouldFetch ? `/api/projects/${projectId}` : null,
     );
 
@@ -353,13 +353,22 @@ const useProjectMembership = () => {
         }
     }, [data, isLoading, updateProject]);
 
-    // Treat as locally accessible: explicitly local-only, or any cached project when offline
-    const isLocalAccessible = isLocalOnly === true || (!isAuthenticated && !isUserLoading && isCachedLocally === true);
+    // The cloud copy is gone (e.g. owner lost Pro and the project was demoted server-side,
+    // or it was deleted from another device). Offline-first: if we still have it cached
+    // locally, fall back to that copy instead of redirecting away.
+    const cloudMissing = error?.status === 404 && isCachedLocally === true;
+
+    // Treat as locally accessible: explicitly local-only, any cached project when offline,
+    // or a cached project whose cloud copy disappeared.
+    const isLocalAccessible =
+        isLocalOnly === true ||
+        (!isAuthenticated && !isUserLoading && isCachedLocally === true) ||
+        cloudMissing;
 
     return {
         membership: data,
         isLocalOnly: isLocalAccessible,
-        isLoading: isUserLoading || isLocalOnly === null || isCachedLocally === null || (shouldFetch && isLoading),
+        isLoading: isUserLoading || isLocalOnly === null || isCachedLocally === null || (shouldFetch && isLoading && !error),
         mutate,
     };
 };

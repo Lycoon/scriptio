@@ -20,14 +20,11 @@ import {
     ClipboardPaste,
     Columns2,
     Copy,
-    Highlighter,
     Loader2,
     LucideIcon,
     MessageSquarePlus,
     Pencil,
     Scissors,
-    Search,
-    SquareDashedMousePointer,
     Trash2,
     UserRound,
 } from "lucide-react";
@@ -62,7 +59,7 @@ export const enum ContextMenuType {
 type ContextMenuItemProps = {
     text: string;
     action: () => void;
-    icon: LucideIcon;
+    icon?: LucideIcon;
     disabled?: boolean;
 };
 
@@ -71,7 +68,7 @@ type SubMenuProps<T> = { props: T };
 export const ContextMenuItem = ({ text, action, icon: Icon, disabled }: ContextMenuItemProps) => {
     return (
         <div onClick={disabled ? undefined : action} className={disabled ? context.menu_item_disabled : context.menu_item}>
-            <Icon size={16} />
+            <span className={context.menu_item_icon}>{Icon && <Icon size={16} />}</span>
             <p className="unselectable">{text}</p>
         </div>
     );
@@ -98,15 +95,13 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
                 icon={ArrowDownRight}
                 action={() => focusOnPosition(editor!, scene.position)}
             />
-            <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
+            <ContextMenuItem text={t("edit")} action={() => editScenePopup(scene, userCtx)} />
             <ContextMenuItem
                 text={t("cut")}
-                icon={Scissors}
                 action={() => cutText(editor!, scene.position, scene.nextPosition)}
             />
             <ContextMenuItem
                 text={t("selectInEditor")}
-                icon={SquareDashedMousePointer}
                 action={() => selectTextInEditor(editor!, scene.position, scene.nextPosition)}
             />
         </>
@@ -136,15 +131,13 @@ const CharacterItemMenu = ({ props }: SubMenuProps<CharacterContextProps>) => {
     return (
         <>
             <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editCharacterPopup(character, userCtx)} />
-            <ContextMenuItem text={t("remove")} icon={Trash2} action={() => deleteCharacter(character.name, projectCtx)} />
+            <ContextMenuItem text={t("remove")} action={() => deleteCharacter(character.name, projectCtx)} />
             <ContextMenuItem
                 text={t("paste")}
-                icon={ClipboardPaste}
                 action={() => pasteText(projectCtx.editor!, character.name)}
             />
             <ContextMenuItem
                 text={t("highlight")}
-                icon={Highlighter}
                 action={() => toggleCharacterHighlight(character.name)}
             />
         </>
@@ -174,7 +167,6 @@ const LocationItemMenu = ({ props }: SubMenuProps<LocationContextProps>) => {
         <>
             <ContextMenuItem icon={Trash2} text={t("remove")} action={() => deleteLocation(location.name, projectCtx)} />
             <ContextMenuItem
-                icon={ClipboardPaste}
                 text={t("paste")}
                 action={() => pasteText(projectCtx.editor!, location.name)}
             />
@@ -232,13 +224,13 @@ const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps
     return (
         <>
             {hasSelection && <ContextMenuItem text={t("copy")} icon={Copy} action={handleCopy} />}
-            {hasSelection && <ContextMenuItem text={t("cut")} icon={Scissors} action={handleCut} />}
-            <ContextMenuItem text={t("paste")} icon={ClipboardPaste} action={handlePaste} />
+            {hasSelection && <ContextMenuItem text={t("cut")} action={handleCut} />}
+            <ContextMenuItem text={t("paste")} icon={hasSelection ? undefined : ClipboardPaste} action={handlePaste} />
             {hasSelection && (
                 <>
                     <div className={context.menu_separator} />
                     <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
-                    <ContextMenuItem text={t("searchOnWeb")} icon={Search} action={handleSearchOnWeb} />
+                    <ContextMenuItem text={t("searchOnWeb")} action={handleSearchOnWeb} />
                 </>
             )}
         </>
@@ -398,7 +390,6 @@ const ShelveNodeMenu = ({ props }: SubMenuProps<{ pos: number; nodeClass: string
             {canDualDialogue && (
                 <ContextMenuItem
                     text={t("makeDualDialogue")}
-                    icon={Columns2}
                     action={() => {
                         if (editor) makeDualDialogue(editor, pos);
                         updateContextMenu(undefined);
@@ -551,15 +542,15 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
 
             {/* Clipboard — always visible */}
             <ContextMenuItem text={t("cut")} icon={Scissors} action={handleCut} disabled={!hasSelection} />
-            <ContextMenuItem text={t("copy")} icon={Copy} action={handleCopy} disabled={!hasSelection} />
-            <ContextMenuItem text={t("paste")} icon={ClipboardPaste} action={handlePaste} />
+            <ContextMenuItem text={t("copy")} action={handleCopy} disabled={!hasSelection} />
+            <ContextMenuItem text={t("paste")} action={handlePaste} />
 
             {/* Selection actions — only when there's a selection and no spellcheck error */}
             {hasSelection && !spellError && (
                 <>
                     <div className={context.menu_separator} />
                     <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
-                    <ContextMenuItem text={t("searchOnWeb")} icon={Search} action={handleSearchOnWeb} />
+                    <ContextMenuItem text={t("searchOnWeb")} action={handleSearchOnWeb} />
                 </>
             )}
 
@@ -581,7 +572,6 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
                     {canDualDialogue && (
                         <ContextMenuItem
                             text={t("makeDualDialogue")}
-                            icon={Columns2}
                             action={() => {
                                 if (editor && nodePos !== undefined) makeDualDialogue(editor, nodePos);
                                 updateContextMenu(undefined);

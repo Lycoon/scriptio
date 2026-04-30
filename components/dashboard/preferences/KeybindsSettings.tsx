@@ -46,6 +46,7 @@ const KeybindElement = ({
                     role="button"
                     tabIndex={0}
                     className={styles.keyArea}
+                    data-listening={isListening}
                     onClick={() => startListening(id)}
                     onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -171,16 +172,19 @@ const KeybindsSettings = () => {
 
         const onCancel = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
+                // Stop the dashboard's window-level Escape handler from also firing
+                // and closing the modal — Escape during capture only cancels listening.
+                e.stopImmediatePropagation();
                 setListeningFor(null);
                 setTempCombo(null);
             }
         };
 
         window.addEventListener("keydown", onKeyDown);
-        window.addEventListener("keydown", onCancel);
+        window.addEventListener("keydown", onCancel, { capture: true });
         return () => {
             window.removeEventListener("keydown", onKeyDown);
-            window.removeEventListener("keydown", onCancel);
+            window.removeEventListener("keydown", onCancel, { capture: true });
         };
     }, [listeningFor, saveSettings, t]);
 

@@ -312,12 +312,14 @@
 .pro_gate_btn {
     margin-top: 8px;
     padding: 6px 18px;
+    border: none;
     border-radius: 20px;
     background-color: var(--tertiary);
     color: var(--primary-text);
     font-size: 0.82rem;
     font-weight: 600;
     text-decoration: none;
+    cursor: pointer;
     transition: background-color 0.15s;
 }
 

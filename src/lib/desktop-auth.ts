@@ -103,7 +103,7 @@ export async function pollBridgeToken(
                 const token = json.data?.token;
                 if (token) return token;
             }
-        } catch (err) {
+        } catch {
             if (signal?.aborted) return null;
             // network blip — keep polling
         }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { DashboardContext } from "@src/context/DashboardContext";
 import {
     X,
     Save,
@@ -35,6 +35,12 @@ interface SavesPanelProps {
 const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
     const t = useTranslations("saves");
     const tDates = useTranslations("dates");
+    const { openDashboard } = useContext(DashboardContext);
+
+    const handleUpgrade = () => {
+        onClose();
+        openDashboard("Subscription");
+    };
 
     const [saves, setSaves] = useState<SaveEntry[]>([]);
     const [loading, setLoading] = useState(false);
@@ -186,9 +192,9 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
                     <Lock size={20} />
                     <p className={styles.pro_gate_title}>{t("proRequired")}</p>
                     <p className={styles.pro_gate_desc}>{t("proRequiredDesc")}</p>
-                    <Link href="/?settings=Profile" className={styles.pro_gate_btn}>
+                    <button className={styles.pro_gate_btn} onClick={handleUpgrade}>
                         {t("upgradeBtn")}
-                    </Link>
+                    </button>
                 </div>
             </div>
         );

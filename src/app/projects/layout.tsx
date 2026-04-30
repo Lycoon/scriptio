@@ -81,8 +81,9 @@ const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
         redirect("/projects");
     }
 
-    // On desktop, show dialog when cloud project is unavailable
-    if (isDesktop && isProjectUnavailable) {
+    // The cloud copy is gone (project deleted, or the user was removed). Offer the
+    // user a choice between keeping a local copy or discarding it — same on web and desktop.
+    if (isProjectUnavailable) {
         return <ProjectUnavailableDialog />;
     }
 
