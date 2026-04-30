@@ -18,7 +18,7 @@ import {
 } from "./types";
 import { handleProtocolMessage } from "./protocol";
 
-export class ScreenplayRoom extends DurableObject {
+export class ProjectRoom extends DurableObject {
     doc: Y.Doc;
     saveTimeout: ReturnType<typeof setTimeout> | null = null;
     awareness: awarenessProtocol.Awareness;

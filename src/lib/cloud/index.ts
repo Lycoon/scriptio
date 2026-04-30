@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { jwtVerify, JWTPayload } from "jose";
 import { Env } from "./types";
-import { ScreenplayRoom } from "./room";
+import { ProjectRoom } from "./room";
 
 interface DecodedToken extends JWTPayload {
     type?: string;
@@ -20,7 +20,7 @@ async function getVerifiedPayload(token: string | null, secret: string): Promise
     }
 }
 
-export { ScreenplayRoom };
+export { ProjectRoom };
 
 const worker = {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -38,9 +38,7 @@ const worker = {
 
         // Authenticated API endpoints (saves, blacklist, allow)
         const isAuthEndpoint =
-            url.pathname.includes("/saves") ||
-            url.pathname.endsWith("/blacklist") ||
-            url.pathname.endsWith("/allow");
+            url.pathname.includes("/saves") || url.pathname.endsWith("/blacklist") || url.pathname.endsWith("/allow");
 
         if (isAuthEndpoint && request.method !== "GET") {
             const authHeader = request.headers.get("Authorization");
@@ -55,7 +53,7 @@ const worker = {
                 return new Response("Unauthorized: Project mismatch", { status: 401 });
             }
 
-            const stub = env.SCREENPLAY_ROOM.get(env.SCREENPLAY_ROOM.idFromName(projectId));
+            const stub = env.PROJECT_ROOM.get(env.PROJECT_ROOM.idFromName(projectId));
             const doUrl = new URL(request.url);
             doUrl.pathname = doPath;
             const doRequest = new Request(doUrl.toString(), request);
@@ -77,7 +75,7 @@ const worker = {
                 return new Response("Unauthorized: Project mismatch", { status: 401 });
             }
 
-            const stub = env.SCREENPLAY_ROOM.get(env.SCREENPLAY_ROOM.idFromName(projectId));
+            const stub = env.PROJECT_ROOM.get(env.PROJECT_ROOM.idFromName(projectId));
             const doUrl = new URL(request.url);
             doUrl.pathname = doPath;
             const doRequest = new Request(doUrl.toString(), request);
@@ -103,7 +101,7 @@ const worker = {
             newRequest.headers.set("X-User-Id", userId);
             newRequest.headers.set("X-Project-Id", projectId);
 
-            const stub = env.SCREENPLAY_ROOM.get(env.SCREENPLAY_ROOM.idFromName(projectId));
+            const stub = env.PROJECT_ROOM.get(env.PROJECT_ROOM.idFromName(projectId));
             return stub.fetch(newRequest);
         }
 
