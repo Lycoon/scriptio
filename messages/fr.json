@@ -434,9 +434,10 @@
     "confirmRestore": "Cela remplacera le document actuel pour tous les collaborateurs. Êtes-vous sûr ?",
     "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet enregistrement ?",
     "noSaves": "Aucun enregistrement pour le moment",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "Abonnement Pro requis",
+    "proRequiredDesc": "L'historique des versions est une fonctionnalité Pro. Passez à l'abonnement supérieur pour enregistrer et restaurer des versions nommées de votre scénario.",
+    "upgradeBtn": "Passer à Pro",
+    "signInAndUpgrade": "Se connecter et passer à Pro"
   },
   "auth": {
     "intro": "Saisissez votre e-mail et nous vous enverrons un lien de connexion à usage unique. Aucun mot de passe nécessaire.",

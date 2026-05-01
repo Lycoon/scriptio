@@ -3,6 +3,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DashboardContext } from "@src/context/DashboardContext";
+import { useCookieUser } from "@src/lib/utils/hooks";
 import {
     X,
     Save,
@@ -36,10 +37,12 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
     const t = useTranslations("saves");
     const tDates = useTranslations("dates");
     const { openDashboard } = useContext(DashboardContext);
+    const { user } = useCookieUser();
+    const isSignedIn = !!user;
 
     const handleUpgrade = () => {
         onClose();
-        openDashboard("Subscription");
+        openDashboard(isSignedIn ? "Subscription" : "Auth");
     };
 
     const [saves, setSaves] = useState<SaveEntry[]>([]);
@@ -193,7 +196,7 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
                     <p className={styles.pro_gate_title}>{t("proRequired")}</p>
                     <p className={styles.pro_gate_desc}>{t("proRequiredDesc")}</p>
                     <button className={styles.pro_gate_btn} onClick={handleUpgrade}>
-                        {t("upgradeBtn")}
+                        {isSignedIn ? t("upgradeBtn") : t("signInAndUpgrade")}
                     </button>
                 </div>
             </div>

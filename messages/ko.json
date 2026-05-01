@@ -433,9 +433,10 @@
     "confirmRestore": "모든 공동 작업자의 현재 문서가 이 버전으로 대체됩니다. 계속하시겠습니까?",
     "confirmDelete": "이 저장본을 삭제하시겠습니까?",
     "noSaves": "저장된 버전이 없습니다",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "Pro 필요",
+    "proRequiredDesc": "버전 기록은 Pro 기능입니다. 업그레이드하여 시나리오의 이름 있는 버전을 저장하고 복원하세요.",
+    "upgradeBtn": "Pro로 업그레이드",
+    "signInAndUpgrade": "로그인하고 업그레이드"
   },
   "auth": {
     "intro": "이메일을 입력하시면 일회용 로그인 링크를 보내드립니다. 비밀번호가 필요 없습니다.",

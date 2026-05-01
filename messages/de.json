@@ -434,9 +434,10 @@
     "confirmRestore": "Dies wird das aktuelle Dokument für alle Mitwirkenden ersetzen. Sind Sie sicher?",
     "confirmDelete": "Sind Sie sicher, dass Sie diese Speicherung löschen möchten?",
     "noSaves": "Noch keine Speicherungen vorhanden",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "Pro erforderlich",
+    "proRequiredDesc": "Der Versionsverlauf ist eine Pro-Funktion. Aktualisieren Sie Ihr Abonnement, um benannte Versionen Ihres Drehbuchs zu speichern und wiederherzustellen.",
+    "upgradeBtn": "Auf Pro upgraden",
+    "signInAndUpgrade": "Anmelden und upgraden"
   },
   "auth": {
     "intro": "Geben Sie Ihre E-Mail ein und wir senden Ihnen einen einmaligen Anmeldelink. Kein Passwort erforderlich.",

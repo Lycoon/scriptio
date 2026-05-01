@@ -5,6 +5,7 @@
 
     z-index: 100;
     position: fixed;
+    padding-block: 6px;
     overflow-y: auto;
     border-radius: 12px;
     background-color: var(--context-menu-bg);
@@ -16,7 +17,7 @@
     align-items: center;
     gap: 10px;
 
-    padding-block: 8px;
+    padding-block: 6px;
     padding-inline: 12px;
 
     font-size: 14px;
@@ -32,7 +33,7 @@
     align-items: center;
     gap: 10px;
 
-    padding-block: 8px;
+    padding-block: 6px;
     padding-inline: 12px;
 
     font-size: 14px;
@@ -59,7 +60,7 @@
     align-items: center;
     gap: 10px;
 
-    padding-block: 8px;
+    padding-block: 6px;
     padding-inline: 12px;
 
     font-size: 14px;
@@ -76,7 +77,7 @@
     gap: 10px;
     align-items: center;
 
-    padding-block: 8px;
+    padding-block: 6px;
     padding-inline: 12px;
 
     font-size: 13px;

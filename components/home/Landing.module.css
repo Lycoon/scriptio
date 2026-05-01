@@ -173,8 +173,10 @@
 }
 
 .heroBackgroundImage {
-    max-width: 110%;
+    width: 100%;
+    height: auto;
     max-height: 70vh;
+    object-fit: contain;
 }
 
 /* 1. Header & Branding */
@@ -274,6 +276,7 @@
 .ctaPlatformText {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     line-height: 1.2;
 }
 
@@ -322,6 +325,16 @@
 
 /* Responsive Logic */
 @media (max-width: 768px) {
+    .marqueeContainer {
+        gap: 5vh;
+    }
+    .stripeText {
+        font-size: 1.75rem;
+    }
+    .cursor {
+        height: 1.75rem;
+    }
+
     .heroHeadline {
         font-size: 2.5rem;
     }
@@ -345,8 +358,8 @@
         gap: 1.5rem;
     }
     .heroBackgroundImage {
-        max-width: 140%;
-        max-height: 50vh;
+        max-width: 90%;
+        max-height: 35vh;
     }
 
     .sectionTitle {
@@ -425,11 +438,14 @@
     .pillarTitle {
         font-size: 1.1rem;
     }
+    .marqueeContainer {
+        gap: 3vh;
+    }
     .stripeText {
-        font-size: 1.5rem;
+        font-size: 1.1rem;
     }
     .cursor {
-        height: 1.5rem;
+        height: 1.1rem;
     }
 }
 

@@ -433,9 +433,10 @@
     "confirmRestore": "Esto reemplazará el documento actual para todos los colaboradores. ¿Estás seguro?",
     "confirmDelete": "¿Estás seguro de que quieres eliminar este guardado?",
     "noSaves": "Aún no hay guardados",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "Se requiere Pro",
+    "proRequiredDesc": "El historial de versiones es una función Pro. Actualiza tu suscripción para guardar y restaurar versiones con nombre de tu guion.",
+    "upgradeBtn": "Actualizar a Pro",
+    "signInAndUpgrade": "Iniciar sesión y actualizar"
   },
   "auth": {
     "intro": "Introduce tu correo y te enviaremos un enlace de inicio de sesión de un solo uso. No necesitas contraseña.",

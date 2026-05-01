@@ -141,17 +141,8 @@ jobs:
         steps:
             - uses: actions/checkout@v6
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 20
-                  cache: npm
-
-            - name: Install dependencies
-              run: npm ci
-
             - name: Deploy Cloudflare Worker (production)
-              run: npm run cloud:deploy:prod
+              run: npx wrangler@4 deploy -c src/lib/cloud/wrangler.toml --env production
               env:
                   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
