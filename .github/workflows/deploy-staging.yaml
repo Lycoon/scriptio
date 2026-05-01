@@ -142,8 +142,15 @@ jobs:
         steps:
             - uses: actions/checkout@v6
 
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: "25.2.1"
+                  cache: "npm"
+
+            - run: npm ci
+
             - name: Deploy Cloudflare Worker (staging)
-              run: npx wrangler@4 deploy -c src/lib/cloud/wrangler.toml --env staging
+              run: npm run cloud:deploy:staging
               env:
                   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
