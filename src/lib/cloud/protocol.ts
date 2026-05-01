@@ -2,9 +2,9 @@ import * as encoding from "lib0/encoding";
 import * as decoding from "lib0/decoding";
 import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
-import type { ScreenplayRoom } from "./room";
+import type { ProjectRoom } from "./room";
 
-export function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Array, sender: WebSocket) {
+export function handleProtocolMessage(room: ProjectRoom, fullMessage: Uint8Array, sender: WebSocket) {
     const messageType = fullMessage[0];
     const messageContent = fullMessage.subarray(1);
     const decoder = decoding.createDecoder(messageContent);
@@ -19,7 +19,7 @@ export function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Ar
                 try {
                     while (decoding.hasContent(decoder)) {
                         // Passing 'sender' (WebSocket) as origin causes the doc.on('update')
-                        // listener (set up in constructor) to broadcast the change, 
+                        // listener (set up in constructor) to broadcast the change,
                         // schedule a hot save, and flag for cold snapshot.
                         syncProtocol.readSyncMessage(decoder, syncEncoder, room.doc, sender);
                     }
@@ -50,7 +50,7 @@ export function handleProtocolMessage(room: ScreenplayRoom, fullMessage: Uint8Ar
                     encoding.writeVarUint(respEncoder, 1); // awareness message type
                     encoding.writeVarUint8Array(
                         respEncoder,
-                        awarenessProtocol.encodeAwarenessUpdate(room.awareness, Array.from(currentStates.keys()))
+                        awarenessProtocol.encodeAwarenessUpdate(room.awareness, Array.from(currentStates.keys())),
                     );
                     sender.send(encoding.toUint8Array(respEncoder));
                 }
