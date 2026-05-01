@@ -38,7 +38,8 @@
       "latte": "Ein sanftes Design mit Cremetönen, das Wärme mit Lesbarkeit verbindet.",
       "wonka": "Ein samtiges Design mit Kakaotönen, das tiefen Luxus mit visueller Erholung verbindet.",
       "mint": "Ein frisches Design mit Minzakzenten, das botanische Ruhe mit visueller Balance verbindet.",
-      "blossom": "Ein zartes Design mit floralen Tönen, das blütenhafte Sanftheit mit visuellem Komfort verbindet."
+      "blossom": "Ein zartes Design mit floralen Tönen, das blütenhafte Sanftheit mit visuellem Komfort verbindet.",
+      "midnight": "Ein tiefes Mitternachtsblau-Design für konzentriertes Arbeiten unter dem Sternenhimmel."
     },
     "editor": "Editor",
     "themedEditor": "Themenbasierter Editor",
@@ -150,7 +151,9 @@
       "cancelApple": "Apple-Abonnements werden über den App Store verwaltet.",
       "manageApple": "App Store öffnen",
       "alreadyBoundTo": "Dieses Abonnement ist bereits mit {email} verknüpft.",
-      "alreadyBoundUnknown": "Dieses Abonnement ist bereits mit einem anderen Konto verknüpft."
+      "alreadyBoundUnknown": "Dieses Abonnement ist bereits mit einem anderen Konto verknüpft.",
+      "welcomePro": "Du hast jetzt Scriptio Pro abonniert. Willkommen!",
+      "resubscribe": "Abonnement reaktivieren"
     }
   },
   "projects": {

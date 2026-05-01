@@ -37,7 +37,8 @@
       "latte": "Tema suave con base crema que combina calidez y legibilidad.",
       "wonka": "Tema aterciopelado con base de cacao que combina lujo profundo y descanso visual.",
       "mint": "Tema refrescante con esencia de menta que combina serenidad botánica y equilibrio visual.",
-      "blossom": "Tema delicado con esencia floral que combina calidez de pétalos y suavidad visual."
+      "blossom": "Tema delicado con esencia floral que combina calidez de pétalos y suavidad visual.",
+      "midnight": "Tema azul medianoche profundo, diseñado para el trabajo concentrado bajo un cielo estrellado."
     },
     "editor": "Editor",
     "themedEditor": "Editor con tema",
@@ -149,7 +150,9 @@
       "cancelApple": "Las suscripciones de Apple se gestionan a través del App Store.",
       "manageApple": "Abrir App Store",
       "alreadyBoundTo": "Esta suscripción ya está vinculada a {email}.",
-      "alreadyBoundUnknown": "Esta suscripción ya está vinculada a otra cuenta."
+      "alreadyBoundUnknown": "Esta suscripción ya está vinculada a otra cuenta.",
+      "welcomePro": "Ya estás suscrito a Scriptio Pro. ¡Bienvenido!",
+      "resubscribe": "Reactivar suscripción"
     }
   },
   "projects": {

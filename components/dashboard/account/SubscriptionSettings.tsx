@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Check, Lock } from "lucide-react";
+import { ArrowRight, Check, Lock, Sparkles } from "lucide-react";
 import { isTauri } from "@tauri-apps/api/core";
 import { cancelStripeSubscription, createStripeCheckout, getAppleSubscriptionOwner, submitApplePurchase } from "@src/lib/utils/requests";
 import { useUser } from "@src/lib/utils/hooks";
+import { useLocale } from "@src/context/LocaleContext";
 
 import styles from "./SubscriptionSettings.module.css";
 
@@ -21,16 +22,23 @@ const isMacosTauri = () =>
 const SubscriptionSettings = () => {
     const { user, mutate } = useUser();
     const t = useTranslations("profile");
+    const { locale } = useLocale();
 
     const [upgradeLoading, setUpgradeLoading] = useState(false);
     const [cancelConfirm, setCancelConfirm] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showWelcome, setShowWelcome] = useState(
+        () => typeof window !== "undefined" && sessionStorage.getItem("proWelcome") === "1"
+    );
+    const [welcomeLeaving, setWelcomeLeaving] = useState(false);
 
     const isPro = !!user?.isProUntil && new Date(user.isProUntil) > new Date();
     const isCancelled = !!user?.isSubscriptionCancelled;
     const isApple = user?.subscriptionProvider === "APPLE";
-    const expiryDate = user?.isProUntil ? new Date(user.isProUntil).toLocaleDateString() : "";
+    const expiryDate = user?.isProUntil
+        ? new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(new Date(user.isProUntil))
+        : "";
 
     // Restore Apple purchases on mount to sync subscription state with the server.
     useEffect(() => {
@@ -60,6 +68,14 @@ const SubscriptionSettings = () => {
         syncAppleSubscription();
         return () => { cancelled = true; };
     }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (!showWelcome) return;
+        sessionStorage.removeItem("proWelcome");
+        const fadeTimer = setTimeout(() => setWelcomeLeaving(true), 4000);
+        const hideTimer = setTimeout(() => setShowWelcome(false), 4600);
+        return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer); };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const showOwnerError = async (jwsRepresentation: string) => {
         const ownerEmail = await getAppleSubscriptionOwner(jwsRepresentation);
@@ -119,6 +135,7 @@ const SubscriptionSettings = () => {
             if (result?.url) {
                 window.location.href = result.url;
             } else {
+                setError(t("subscription.purchaseError"));
                 setUpgradeLoading(false);
             }
         }
@@ -183,11 +200,7 @@ const SubscriptionSettings = () => {
 
             {/* Actions */}
             {isPro ? (
-                isCancelled ? (
-                    <p className={styles.cancelSuccess}>
-                        {t("subscription.cancelSuccess", { date: expiryDate })}
-                    </p>
-                ) : cancelConfirm ? (
+                cancelConfirm ? (
                     <div className={styles.confirmBox}>
                         <p className={styles.confirmText}>
                             {isApple
@@ -209,6 +222,14 @@ const SubscriptionSettings = () => {
                             </button>
                         </div>
                     </div>
+                ) : isCancelled ? (
+                    <button className={styles.upgradeBtn} onClick={handleUpgrade} disabled={upgradeLoading}>
+                        {upgradeLoading
+                            ? isMacosTauri() ? t("subscription.purchasing") : t("subscription.redirecting")
+                            : t("subscription.resubscribe")
+                        }
+                        {!upgradeLoading && <ArrowRight size={16} />}
+                    </button>
                 ) : (
                     <button className={styles.cancelBtn} onClick={() => setCancelConfirm(true)}>
                         {t("subscription.cancel")}
@@ -224,6 +245,12 @@ const SubscriptionSettings = () => {
                 </button>
             )}
 
+            {showWelcome && (
+                <div className={`${styles.welcomeBox} ${welcomeLeaving ? styles.welcomeBoxLeaving : ""}`}>
+                    <Sparkles size={15} className={styles.welcomeIcon} />
+                    <span>{t("subscription.welcomePro")}</span>
+                </div>
+            )}
             {error && <p className={styles.errorMessage}>{error}</p>}
         </div>
     );

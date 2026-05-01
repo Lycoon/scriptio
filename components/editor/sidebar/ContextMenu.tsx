@@ -634,15 +634,17 @@ const ContextMenu = () => {
         updateContextMenu(undefined);
     }, [updateContextMenu]);
 
+    if (!contextMenu) return null;
+
     return (
         <div
             className={context.menu}
             style={{
-                top: contextMenu?.position.y,
-                left: contextMenu?.position.x,
+                top: contextMenu.position.y,
+                left: contextMenu.position.x,
             }}
         >
-            {contextMenu && renderContextMenu(contextMenu)}
+            {renderContextMenu(contextMenu)}
         </div>
     );
 };

@@ -41,7 +41,7 @@ export interface UserSettings {
 }
 
 export type UserLanguage = "en" | "es" | "fr" | "zh" | "ko" | "ja" | "de" | "pl";
-export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint" | "blossom";
+export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint" | "blossom" | "midnight";
 
 /* Dictionaries */
 

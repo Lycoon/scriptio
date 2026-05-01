@@ -25,7 +25,7 @@ import AboutSettings from "./AboutSettings";
 const DashboardModal = () => {
     const { isOpen, closeDashboard, activeTab, setActiveTab } = useContext(DashboardContext);
     const { project, isYjsReady } = useContext(ProjectContext);
-    const { user } = useCookieUser();
+    const { user, isLoading: isUserLoading } = useCookieUser();
     const t = useTranslations("modal");
 
     const PROJECT_MENU = useMemo<MenuSection>(() => ({
@@ -83,6 +83,7 @@ const DashboardModal = () => {
     // loading would silently bounce the user to Profile.
     const prevSignedInRef = useRef(isSignedIn);
     useEffect(() => {
+        if (isUserLoading) return;
         const projectTabIds = PROJECT_MENU.items.map((item) => item.id);
         const accountTabIds = ACCOUNT_MENU.items.map((item) => item.id);
         if ((!isInProject && projectTabIds.includes(activeTab)) || (!isSignedIn && accountTabIds.includes(activeTab))) {
@@ -93,7 +94,7 @@ const DashboardModal = () => {
             setActiveTab("Profile");
         }
         prevSignedInRef.current = isSignedIn;
-    }, [isInProject, isSignedIn, activeTab, setActiveTab, ACCOUNT_MENU, PREFERENCES_MENU, PROJECT_MENU]);
+    }, [isInProject, isSignedIn, isUserLoading, activeTab, setActiveTab, ACCOUNT_MENU, PREFERENCES_MENU, PROJECT_MENU]);
 
     const [prevActiveTab, setPrevActiveTab] = useState(activeTab);
     const [isScrolled, setIsScrolled] = useState(false);

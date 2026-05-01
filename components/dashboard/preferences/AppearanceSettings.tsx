@@ -21,6 +21,20 @@ const THEME_COLORS: Record<
         text: "#ffffff",
         subtext: "#9b9b9b",
     },
+    wonka: {
+        primary: "#1e1410",
+        secondary: "#2c1e1a",
+        tertiary: "#4d3b36",
+        text: "#e6dcca",
+        subtext: "#a89b91",
+    },
+    midnight: {
+        primary: "#0d1117",
+        secondary: "#161c2d",
+        tertiary: "#1e2a45",
+        text: "#c8d8f0",
+        subtext: "#6878a8",
+    },
     light: {
         primary: "#f3f3f3",
         secondary: "#ffffff",
@@ -34,13 +48,6 @@ const THEME_COLORS: Record<
         tertiary: "#ecdab4",
         text: "#7a6129",
         subtext: "#c09c50",
-    },
-    wonka: {
-        primary: "#1e1410",
-        secondary: "#2c1e1a",
-        tertiary: "#4d3b36",
-        text: "#e6dcca",
-        subtext: "#a89b91",
     },
     mint: {
         primary: "#dcf5de",
@@ -65,6 +72,7 @@ const THEME_LABELS: Record<string, string> = {
     wonka: "Wonka",
     mint: "Mint",
     blossom: "Blossom",
+    midnight: "Midnight",
 };
 
 const AppearanceSettings = () => {

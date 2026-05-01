@@ -37,7 +37,8 @@
       "latte": "따뜻하고 가독성이 좋은 크림색 테마입니다.",
       "wonka": "깊고 고급스러운 초콜릿 톤의 테마입니다.",
       "mint": "신선하고 균형 잡힌 민트색 테마입니다.",
-      "blossom": "부드럽고 화사한 꽃잎 톤의 테마입니다."
+      "blossom": "부드럽고 화사한 꽃잎 톤의 테마입니다.",
+      "midnight": "깊고 풍부한 한밤의 파란 테마로, 집중적인 작업을 위해 설계되었습니다."
     },
     "editor": "에디터",
     "themedEditor": "테마 에디터",
@@ -149,7 +150,9 @@
       "cancelApple": "Apple 구독은 App Store에서 관리됩니다.",
       "manageApple": "App Store 열기",
       "alreadyBoundTo": "이 구독은 이미 {email}에 연결되어 있습니다.",
-      "alreadyBoundUnknown": "이 구독은 이미 다른 계정에 연결되어 있습니다."
+      "alreadyBoundUnknown": "이 구독은 이미 다른 계정에 연결되어 있습니다.",
+      "welcomePro": "Scriptio Pro를 구독하셨습니다. 환영합니다!",
+      "resubscribe": "구독 재활성화"
     }
   },
   "projects": {
