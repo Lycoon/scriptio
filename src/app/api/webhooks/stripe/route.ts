@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
             const periodEnd = subscription.items.data[0]?.current_period_end;
             await UserService.updateUserFromId(userId, {
                 isProUntil: periodEnd ? new Date(periodEnd * 1000) : null,
+                isSubscriptionCancelled: false,
                 subscriptionProvider: "STRIPE",
             });
             await TransactionService.createTransactionIfNotExists(userId, "STRIPE", subscriptionId);

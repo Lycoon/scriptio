@@ -15,8 +15,8 @@ async function createCheckoutSession(req: NextRequest, { user }: AuthApiContext)
         mode: "subscription",
         line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID!, quantity: 1 }],
         client_reference_id: user.id,
-        success_url: `${baseUrl}/?pro=success`,
-        cancel_url: `${baseUrl}/?pro=cancel`,
+        success_url: `${baseUrl}/projects?pro=success`,
+        cancel_url: `${baseUrl}/projects?pro=cancel`,
     });
 
     return Success({ url: session.url });

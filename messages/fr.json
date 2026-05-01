@@ -38,7 +38,8 @@
       "latte": "Thème doux aux tons crème, alliant chaleur et lisibilité.",
       "wonka": "Thème velouté aux tons cacao, entre luxe profond et confort visuel.",
       "mint": "Thème frais aux notes de menthe, alliant sérénité botanique et équilibre visuel.",
-      "blossom": "Thème délicat aux notes florales, alliant douceur pétale et confort visuel."
+      "blossom": "Thème délicat aux notes florales, alliant douceur pétale et confort visuel.",
+      "midnight": "Thème bleu nuit profond, conçu pour le travail concentré sous un ciel étoilé."
     },
     "editor": "Éditeur",
     "themedEditor": "Éditeur thématisé",
@@ -150,7 +151,9 @@
       "cancelApple": "Les abonnements Apple sont gérés via l'App Store.",
       "manageApple": "Ouvrir l'App Store",
       "alreadyBoundTo": "Cet abonnement est déjà associé à {email}.",
-      "alreadyBoundUnknown": "Cet abonnement est déjà associé à un autre compte."
+      "alreadyBoundUnknown": "Cet abonnement est déjà associé à un autre compte.",
+      "welcomePro": "Vous êtes maintenant abonné à Scriptio Pro. Bienvenue !",
+      "resubscribe": "Réactiver l'abonnement"
     }
   },
   "projects": {

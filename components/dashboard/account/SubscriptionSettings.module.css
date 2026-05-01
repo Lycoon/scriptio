@@ -180,14 +180,68 @@
     margin: 0;
 }
 
+.welcomeBox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--primary-text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--primary-text) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary-text) 22%, transparent);
+    margin: 0;
+    animation: welcomeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.welcomeBoxLeaving {
+    animation: welcomeOut 0.6s ease-in forwards;
+}
+
+.welcomeIcon {
+    flex-shrink: 0;
+    color: var(--primary-text);
+    animation: welcomeSpin 0.6s ease-out 0.1s both;
+}
+
+@keyframes welcomeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes welcomeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes welcomeSpin {
+    from {
+        transform: rotate(-20deg) scale(0.8);
+    }
+    to {
+        transform: rotate(0deg) scale(1);
+    }
+}
+
 .upgradeBtn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     padding: 10px 20px;
-    border-radius: 8px;
-    background: var(--secondary);
+    border-radius: 24px;
+    background: var(--primary);
     color: var(--primary-text);
     border: none;
     font-size: 0.9rem;

@@ -41,7 +41,7 @@ export function Providers({ children }: { children: ReactNode }) {
             value={{
                 revalidateOnFocus: false,
                 fetcher,
-                onSuccess: () => { },
+                onSuccess: () => {},
                 onError: (err) => {
                     // 401/403 are handled by the auth flow. 404 is expected for offline-first
                     // resources (e.g. a cached project whose cloud copy no longer exists) — the
@@ -69,7 +69,7 @@ export function Providers({ children }: { children: ReactNode }) {
                                 attribute="class"
                                 disableTransitionOnChange
                                 defaultTheme="dark"
-                                themes={["dark", "light", "latte", "wonka", "mint", "blossom"]}
+                                themes={["dark", "wonka", "midnight", "light", "latte", "mint", "blossom"]}
                                 enableColorScheme={false}
                             >
                                 <SpellcheckProvider>

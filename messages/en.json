@@ -37,7 +37,8 @@
       "latte": "Soft, cream-based theme that blends warmth with readability.",
       "wonka": "Velvety, cocoa-based theme that blends deep luxury with eye-resting focus.",
       "mint": "Refreshing, mint-infused theme that blends botanical serenity with eye-resting balance.",
-      "blossom": "Gentle, petal-infused theme that blends floral warmth with eye-resting softness."
+      "blossom": "Gentle, petal-infused theme that blends floral warmth with eye-resting softness.",
+      "midnight": "Deep, midnight-blue theme crafted for focused work under a starlit sky."
     },
     "editor": "Editor",
     "themedEditor": "Themed editor",
@@ -149,7 +150,9 @@
       "cancelApple": "Apple subscriptions are managed through the App Store.",
       "manageApple": "Open App Store",
       "alreadyBoundTo": "This subscription is already linked to {email}.",
-      "alreadyBoundUnknown": "This subscription is already linked to another account."
+      "alreadyBoundUnknown": "This subscription is already linked to another account.",
+      "welcomePro": "You're now subscribed to Scriptio Pro. Welcome!",
+      "resubscribe": "Reactivate subscription"
     }
   },
   "projects": {

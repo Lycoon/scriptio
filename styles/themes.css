@@ -289,6 +289,57 @@ html.blossom {
     --editor-scroll-btn-hover: var(--tertiary-hover);
 }
 
+html.midnight {
+    color-scheme: dark;
+
+    --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 0 12px rgba(0, 0, 0, 0.5);
+
+    --main-bg: var(--primary);
+    --primary: #0d1117;
+    --secondary: #161c2d;
+    --tertiary: #1e2a45;
+
+    --primary-hover: #131a2a;
+    --secondary-hover: #1a2438;
+    --tertiary-hover: #263554;
+
+    --primary-text: #c8d8f0;
+    --secondary-text: #6878a8;
+
+    --separator: #1e2a45;
+    --input-outline: #2a3d60;
+    --navbar-outline: #1e2a45;
+    --header-background: #161c2d;
+
+    --project-item-bg: var(--secondary);
+    --project-item-shadow: 6px 6px 0 var(--tertiary);
+    --project-item-shadow-hover: 12px 12px 0 var(--tertiary);
+    --project-item-shadow-active: 12px 12px 0 var(--tertiary);
+    --export-project-selected: #2a3d60;
+
+    --themed-editor-script-bg: var(--secondary);
+    --themed-editor-text: var(--primary-text);
+    --editor-scene: #c8d8f0;
+    --editor-sidebar: #0f1520;
+    --editor-sidebar-list: #1e2a45;
+    --editor-sidebar-hover: var(--primary);
+    --context-menu-bg: var(--secondary);
+    --context-menu-item-hover: var(--primary);
+    --editor-style-bg: #0d1117;
+    --editor-style-bg-hover: #1e2a45;
+    --editor-style-bg-active: #263554;
+    --editor-element-hover: #c8d8f0;
+    --editor-shadow: rgba(0, 0, 30, 0.6);
+
+    --editor-scroll-bg: var(--secondary);
+    --editor-scroll-btn: var(--tertiary);
+    --editor-scroll-btn-hover: var(--tertiary-hover);
+
+    --shadow-s: inset 0 1px 2px #3355aa30, 0 1px 2px #00000040, 0 2px 4px #00000020;
+    --shadow-m: inset 0 1px 2px #3355aa50, 0 2px 4px #00000040, 0 4px 8px #00000020;
+    --shadow-l: inset 0 1px 2px #3355aa70, 0 4px 6px #00000040, 0 6px 10px #00000020;
+}
+
 /* Themed editor: use the theme's own background and text colors instead of black & white */
 html.themed-editor {
     --editor-script-bg: var(--themed-editor-script-bg);

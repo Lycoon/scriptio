@@ -460,23 +460,20 @@ const DocumentEditorPanel = ({
                 spellError = { word, from: spellFrom, to: spellFrom + word.length };
             }
 
-            // Detect shelvable node at click position
+            // Detect shelvable node at caret position
             let nodePos: number | undefined;
             let nodeClass: string | undefined;
             if (config.features.shelving) {
-                const coords = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
-                if (coords) {
-                    const $pos = editor.state.doc.resolve(coords.pos);
-                    if ($pos.depth === 1) {
-                        const cls = $pos.parent.attrs.class as ScreenplayElement;
-                        if (
-                            cls === ScreenplayElement.Scene ||
-                            cls === ScreenplayElement.Character ||
-                            cls === ScreenplayElement.Action
-                        ) {
-                            nodePos = coords.pos;
-                            nodeClass = cls;
-                        }
+                const $pos = editor.state.doc.resolve(from);
+                if ($pos.depth >= 1) {
+                    const cls = $pos.node(1).attrs.class as ScreenplayElement;
+                    if (
+                        cls === ScreenplayElement.Scene ||
+                        cls === ScreenplayElement.Character ||
+                        cls === ScreenplayElement.Action
+                    ) {
+                        nodePos = from;
+                        nodeClass = cls;
                     }
                 }
             }

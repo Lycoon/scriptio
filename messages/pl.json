@@ -37,7 +37,8 @@
       "latte": "Delikatny kremowy motyw, łączący ciepło z czytelnością.",
       "wonka": "Aksamitny czekoladowy motyw, łączący luksus z komfortem wizualnym.",
       "mint": "Świeży miętowy motyw, łączący spokój z równowagą wizualną.",
-      "blossom": "Delikatny kwiatowy motyw, łączący miękkość płatków z komfortem wizualnym."
+      "blossom": "Delikatny kwiatowy motyw, łączący miękkość płatków z komfortem wizualnym.",
+      "midnight": "Głęboki, granatowy motyw stworzony do skupionej pracy pod rozgwieżdżonym niebem."
     },
     "editor": "Edytor",
     "themedEditor": "Edytor z motywem",
@@ -149,7 +150,9 @@
       "cancelApple": "Subskrypcje Apple są zarządzane przez App Store.",
       "manageApple": "Otwórz App Store",
       "alreadyBoundTo": "Ta subskrypcja jest już powiązana z {email}.",
-      "alreadyBoundUnknown": "Ta subskrypcja jest już powiązana z innym kontem."
+      "alreadyBoundUnknown": "Ta subskrypcja jest już powiązana z innym kontem.",
+      "welcomePro": "Subskrybujesz teraz Scriptio Pro. Witamy!",
+      "resubscribe": "Reaktywuj subskrypcję"
     }
   },
   "projects": {

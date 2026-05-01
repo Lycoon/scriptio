@@ -37,7 +37,8 @@
       "latte": "温暖乳白，阅读舒适。",
       "wonka": "丝滑可可，深沉奢华。",
       "mint": "清新薄荷，视觉平衡。",
-      "blossom": "娇柔花卉，视觉温和。"
+      "blossom": "娇柔花卉，视觉温和。",
+      "midnight": "深邃午夜蓝，专为星空下的专注工作而设计。"
     },
     "editor": "编辑器",
     "themedEditor": "主题编辑器",
@@ -149,7 +150,9 @@
       "cancelApple": "Apple 订阅通过 App Store 管理。",
       "manageApple": "打开 App Store",
       "alreadyBoundTo": "此订阅已与 {email} 关联。",
-      "alreadyBoundUnknown": "此订阅已与其他账户关联。"
+      "alreadyBoundUnknown": "此订阅已与其他账户关联。",
+      "welcomePro": "您已成功订阅 Scriptio Pro。欢迎！",
+      "resubscribe": "重新激活订阅"
     }
   },
   "projects": {
