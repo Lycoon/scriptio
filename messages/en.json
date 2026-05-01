@@ -435,7 +435,8 @@
     "noSaves": "No saves yet",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "upgradeBtn": "Upgrade to Pro",
+    "signInAndUpgrade": "Sign in and Upgrade"
   },
   "auth": {
     "intro": "Enter your email and we'll send you a single-use sign-in link. No password needed.",

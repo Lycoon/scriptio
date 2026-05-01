@@ -94,6 +94,7 @@
     flex-direction: column;
     padding: 30px;
     background: var(--main-bg);
+    min-height: 0;
 }
 
 .contentHeader {
@@ -101,13 +102,33 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-shrink: 0;
 }
 
 .scrollArea {
     overflow-y: auto;
     flex: 1;
+    min-height: 0;
     scrollbar-gutter: stable;
     padding-right: 20px;
+}
+
+.scrollArea::before {
+    content: "";
+    position: sticky;
+    top: 0;
+    display: block;
+    height: 12px;
+    margin-bottom: -12px;
+    background: linear-gradient(to bottom, var(--editor-shadow) 0%, rgba(0, 0, 0, 0) 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 2;
+}
+
+.scrollArea.scrolled::before {
+    opacity: 1;
 }
 
 .input {

@@ -433,9 +433,10 @@
     "confirmRestore": "这将为所有协作成员覆盖当前文档。确认吗？",
     "confirmDelete": "确认删除此备份？",
     "noSaves": "暂无备份",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "需要 Pro 版本",
+    "proRequiredDesc": "版本历史记录是 Pro 功能。升级即可保存和恢复您剧本的命名版本。",
+    "upgradeBtn": "升级到 Pro",
+    "signInAndUpgrade": "登录并升级"
   },
   "auth": {
     "intro": "输入您的邮箱，我们将向您发送一次性登录链接。无需密码。",

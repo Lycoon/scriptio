@@ -96,10 +96,17 @@ const DashboardModal = () => {
     }, [isInProject, isSignedIn, activeTab, setActiveTab, ACCOUNT_MENU, PREFERENCES_MENU, PROJECT_MENU]);
 
     const [prevActiveTab, setPrevActiveTab] = useState(activeTab);
+    const [isScrolled, setIsScrolled] = useState(false);
     if (prevActiveTab !== activeTab) {
         setPrevActiveTab(activeTab);
         setDangerOpen(false);
+        setIsScrolled(false);
     }
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const scrolled = e.currentTarget.scrollTop > 0;
+        setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+    };
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -122,7 +129,7 @@ const DashboardModal = () => {
                         <X className={styles.close_btn} onClick={closeDashboard} />
                     </header>
 
-                    <div className={styles.scrollArea}>
+                    <div className={`${styles.scrollArea} ${isScrolled ? styles.scrolled : ""}`} onScroll={handleScroll}>
                         {/* Project tabs - only rendered when in project context */}
                         {isInProject && activeTab === "General" && <ProjectSettings dangerOpen={dangerOpen} onDangerToggle={() => setDangerOpen((v) => !v)} />}
                         {isInProject && activeTab === "Layout" && <LayoutSettings />}

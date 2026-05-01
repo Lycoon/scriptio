@@ -433,9 +433,10 @@
     "confirmRestore": "全共同作業者の現在のドキュメントがこのバージョンで上書きされます。よろしいですか？",
     "confirmDelete": "この保存データを削除しますか？",
     "noSaves": "保存データはありません",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "Pro が必要です",
+    "proRequiredDesc": "バージョン履歴は Pro の機能です。アップグレードすると、脚本の名前付きバージョンを保存・復元できます。",
+    "upgradeBtn": "Pro にアップグレード",
+    "signInAndUpgrade": "サインインしてアップグレード"
   },
   "auth": {
     "intro": "メールアドレスを入力してください。一度きりのサインインリンクをお送りします。パスワードは必要ありません。",

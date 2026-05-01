@@ -110,25 +110,21 @@
 }
 
 .clearBtn {
-  padding: 6px 12px;
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
   color: var(--secondary-text);
-  border: 1px solid var(--separator);
-  background: var(--tertiary);
-  font-size: 12px;
-  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .clearBtn:hover {
-  background: var(--tertiary-hover);
   color: var(--primary-text);
-  border-color: var(--primary-text);
-}
-
-.clearBtn:active {
-  background: var(--tertiary-hover);
+  background: var(--secondary-hover);
 }
 
 .optionCard {
