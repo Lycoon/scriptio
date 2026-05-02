@@ -3,19 +3,22 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ConnectionStatus } from "@src/lib/utils/enums";
-import { useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
+import { useCookieUser, useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import { redirectHome } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
+import { UserContext } from "@src/context/UserContext";
 import { useViewContext } from "@src/context/ViewContext";
 import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
+import { uploadToCloudPopup } from "@src/lib/screenplay/popup";
 import { DashboardContext } from "@src/context/DashboardContext";
 import {
     BarChart2,
     CircleArrowLeft,
     CircleCheckBig,
+    CloudUpload,
     History,
     Monitor,
     Settings,
@@ -89,17 +92,40 @@ const CollaboratorsDisplay = () => {
 const ProjectNavbar = () => {
     const { openDashboard } = useContext(DashboardContext);
     const { project: membership, setProjectTitle: setContextTitle } = useContext(ProjectContext);
+    const userCtx = useContext(UserContext);
 
     const [projectTitle, setProjectTitle] = useState<string>("");
     const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
     const [isSavesOpen, setIsSavesOpen] = useState(false);
+    const [isLocalOnly, setIsLocalOnly] = useState<boolean | null>(null);
     const isLocalEdit = useRef(false);
 
     const { isPro } = useIsPro();
+    const { user } = useCookieUser();
     const projectId = useProjectIdFromUrl();
 
     const t = useTranslations("navbar");
     const viewContext = useViewContext();
+
+    useEffect(() => {
+        if (!projectId) {
+            setIsLocalOnly(null);
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            const { isLocalOnlyProject, cachedProjectExists } =
+                await import("@src/lib/persistence/storage-provider/local-persistence");
+            const exists = await cachedProjectExists(projectId);
+            const local = exists ? await isLocalOnlyProject(projectId) : false;
+            if (!cancelled) setIsLocalOnly(local);
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [projectId, membership]);
+
+    const canUploadToCloud = !membership && !!user && isPro && !!projectId && isLocalOnly === true;
 
     const isInProject = !!projectId;
     const hasScreenplay = viewContext.visiblePanels.includes("screenplay");
@@ -164,6 +190,18 @@ const ProjectNavbar = () => {
                         <div className={navbar.navbar_island}>
                             {membership ? (
                                 <StatusIndicator />
+                            ) : canUploadToCloud ? (
+                                <div
+                                    className={navbar.tooltip}
+                                    data-hint={t("uploadToCloud")}
+                                    onClick={() => uploadToCloudPopup(projectId, userCtx)}
+                                    style={{ cursor: "pointer" }}
+                                >
+                                    <CloudUpload
+                                        style={{ color: "var(--primary-text)" }}
+                                        className={navbar.status_icon}
+                                    />
+                                </div>
                             ) : (
                                 <div className={navbar.tooltip} data-hint={t("localProject")}>
                                     <Monitor

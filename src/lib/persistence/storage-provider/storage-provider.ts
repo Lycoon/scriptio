@@ -31,6 +31,7 @@ export interface StorageProvider {
     getAll(): Promise<CachedProject[]>;
     get(id: string): Promise<CachedProject | null>;
     update(id: string, updates: { title?: string; description?: string; author?: string }): Promise<void>;
+    markAsSynced(id: string): Promise<void>;
     touch(id: string): Promise<void>;
     delete(id: string): Promise<void>;
     exists(id: string): Promise<boolean>;

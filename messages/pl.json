@@ -7,6 +7,7 @@
     "noConnection": "Brak połączenia",
     "reconnecting": "Łączenie...",
     "localProject": "Projekt lokalny",
+    "uploadToCloud": "Wyślij do chmury",
     "endlessScroll": "Nieskończone przewijanie",
     "toggleComments": "Pokaż/ukryj komentarze",
     "focusMode": "Tryb skupienia",
@@ -121,7 +122,7 @@
     "deleteModalTitle": "Usuń konto",
     "deleteModalDesc": "To trwale usunie Twoje konto i wszystkie powiązane dane. Tej akcji nie można cofnąć.",
     "deleteConfirmPhrase": "Potwierdzam usunięcie mojego konta",
-    "deleteConfirmLabel": "Wpisz <ph/>, aby potwierdzić.",
+    "deleteConfirmLabel": "Wpisz poniższy tekst, aby potwierdzić usunięcie:",
     "deleting": "Usuwanie...",
     "deleteAccountBtn": "Usuń moje konto",
     "subscription": {
@@ -362,7 +363,7 @@
     "edit": "Edytuj",
     "copy": "Kopiuj",
     "cut": "Wytnij",
-    "selectInEditor": "Zaznacz w edytorze",
+    "selectInEditor": "Zaznacz",
     "remove": "Usuń",
     "paste": "Wklej",
     "highlight": "Wyróżnij",
@@ -408,6 +409,14 @@
       "synopsis": "Opis sceny",
       "synopsisPlaceholder": "Wpisz krótki opis tej sceny...",
       "save": "Zapisz"
+    },
+    "uploadToCloud": {
+      "title": "Wyślij do chmury",
+      "body": "Wysłać ten projekt do chmury? Twój projekt zostanie zarchiwizowany i będzie dostępny z dowolnego urządzenia, a także będziesz mógł zapraszać współpracowników.",
+      "confirm": "Wyślij",
+      "cancel": "Anuluj",
+      "uploading": "Wysyłanie do chmury...",
+      "failed": "Wysyłanie nie powiodło się. Spróbuj ponownie."
     }
   },
   "board": {

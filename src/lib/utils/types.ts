@@ -16,6 +16,7 @@ export type User = CookieUser & {
 };
 
 export type ProjectCreation = {
+    id?: string;
     userId: string;
     title: string;
     description?: string;

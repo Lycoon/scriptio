@@ -17,16 +17,25 @@ export type PopupSceneData = {
     scene: Scene;
 };
 
+export type PopupUploadToCloudData = {
+    projectId: string;
+};
+
 // ------------------------------ //
 //         GENERIC POPUP          //
 // ------------------------------ //
-export type PopupUnionData = PopupImportFileData | PopupCharacterData | PopupSceneData;
+export type PopupUnionData =
+    | PopupImportFileData
+    | PopupCharacterData
+    | PopupSceneData
+    | PopupUploadToCloudData;
 
 export enum PopupType {
     NewCharacter,
     EditCharacter,
     ImportFile,
     EditScene,
+    UploadToCloud,
 }
 
 export type PopupData<DataType extends PopupUnionData> = {
@@ -67,5 +76,12 @@ export const editScenePopup = (scene: Scene, userCtx: UserContextType) => {
     userCtx.updatePopup({
         type: PopupType.EditScene,
         data: { scene },
+    });
+};
+
+export const uploadToCloudPopup = (projectId: string, userCtx: UserContextType) => {
+    userCtx.updatePopup({
+        type: PopupType.UploadToCloud,
+        data: { projectId },
     });
 };

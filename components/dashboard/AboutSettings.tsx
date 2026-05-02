@@ -29,9 +29,7 @@ const AboutSettings = () => {
                         <GitCommit size={18} className={styles.icon} />
                         <span className={styles.label}>Build</span>
                     </div>
-                    <span className={styles.value} style={{ fontFamily: "monospace", letterSpacing: "0.05em" }}>
-                        {buildId}
-                    </span>
+                    <span className={styles.value}>{buildId}</span>
                 </div>
             </div>
         </div>

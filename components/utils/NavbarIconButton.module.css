@@ -6,20 +6,17 @@
     padding-inline: 10px;
     gap: 12px;
     border-radius: 64px;
-    border: 2px solid var(--tertiary);
-    color: var(--secondary-text);
-    background-color: var(--main-bg);
+    border: 2px solid var(--secondary);
+    background-color: var(--secondary);
     user-select: none;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .button:hover {
-    background-color: var(--secondary-hover);
-    color: var(--primary-text);
+    border-color: var(--tertiary);
 }
 
 .active {
-    background-color: var(--primary);
-    color: var(--primary-text);
+    border-color: var(--tertiary);
 }
