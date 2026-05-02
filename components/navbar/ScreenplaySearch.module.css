@@ -10,15 +10,21 @@
     flex-direction: row;
     align-items: center;
     border-radius: 64px;
-    border: 2px solid var(--tertiary);
+    border: 2px solid var(--secondary);
+    background-color: var(--secondary);
     overflow: hidden;
     transition: width 0.25s ease;
     width: 44px;
+    transition: border-color 0.2s ease;
+}
+
+.search_wrapper:hover {
+    border-color: var(--tertiary);
 }
 
 .search_wrapper_open {
     width: 220px;
-    background-color: var(--secondary);
+    border-color: var(--tertiary);
 }
 
 .search_input {
@@ -49,7 +55,7 @@
 }
 
 .search_btn:hover {
-    background-color: var(--secondary-hover);
+    border-color: var(--tertiary);
 }
 
 .search_btn_active {

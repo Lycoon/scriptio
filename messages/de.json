@@ -7,6 +7,7 @@
     "noConnection": "Keine Verbindung",
     "reconnecting": "Verbindung wird wiederhergestellt...",
     "localProject": "Lokales Projekt",
+    "uploadToCloud": "In die Cloud hochladen",
     "cachedProject": "Gecachtes Projekt",
     "endlessScroll": "Endloses Scrollen",
     "toggleComments": "Kommentare ein/aus",
@@ -122,7 +123,7 @@
     "deleteModalTitle": "Konto löschen",
     "deleteModalDesc": "Dies wird dauerhaft Ihr Konto und alle verknüpften Daten löschen. Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleteConfirmPhrase": "Ich bestätige die Löschung meines Kontos",
-    "deleteConfirmLabel": "Tippe <ph/> zur Bestätigung.",
+    "deleteConfirmLabel": "Gib folgenden Text ein, um die Löschung zu bestätigen:",
     "deleting": "Löschen...",
     "deleteAccountBtn": "Mein Konto löschen",
     "subscription": {
@@ -363,7 +364,7 @@
     "edit": "Bearbeiten",
     "copy": "Kopieren",
     "cut": "Ausschneiden",
-    "selectInEditor": "Im Editor auswählen",
+    "selectInEditor": "Auswählen",
     "remove": "Entfernen",
     "paste": "Einfügen",
     "highlight": "Hervorheben",
@@ -409,6 +410,14 @@
       "synopsis": "Kurzbeschreibung",
       "synopsisPlaceholder": "Schreiben Sie eine kurze Beschreibung dieser Szene...",
       "save": "Speichern"
+    },
+    "uploadToCloud": {
+      "title": "In die Cloud hochladen",
+      "body": "Dieses Projekt in die Cloud hochladen? Ihr Projekt wird gesichert und ist von jedem Gerät zugänglich, und Sie können Mitarbeiter einladen.",
+      "confirm": "Hochladen",
+      "cancel": "Abbrechen",
+      "uploading": "Wird hochgeladen...",
+      "failed": "Hochladen fehlgeschlagen. Bitte versuchen Sie es erneut."
     }
   },
   "board": {

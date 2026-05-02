@@ -1,6 +1,7 @@
 "use client";
 
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { useCookieUser, useIsPro, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
 import { CookieUser } from "@src/lib/utils/types";
@@ -53,36 +54,53 @@ const CollaboratorsSettings = () => {
         return result;
     }, [membership, collaborators, invites]);
 
+    const iconRef = useRef<HTMLDivElement>(null);
+    const [hintPos, setHintPos] = useState<{ top: number; left: number } | null>(null);
+
     if (isLocalOnly) return <p style={{ color: "var(--secondary-text)", fontSize: "0.85rem" }}>{t("localProjectOnly")}</p>;
     if (!membership || !user) return null;
 
+    const hint = hintPos && createPortal(
+        <div className={styles.permissionsHint} style={{ top: hintPos.top, left: hintPos.left }}>
+            <div className={styles.hintItem}>
+                <span className={styles.hintRole}>{t("roles.owner")}</span>
+                {t("roleDesc.owner")}
+            </div>
+            <div className={styles.hintItem}>
+                <span className={styles.hintRole}>{t("roles.admin")}</span>
+                {t("roleDesc.admin")}
+            </div>
+            <div className={styles.hintItem}>
+                <span className={styles.hintRole}>{t("roles.editor")}</span>
+                {t("roleDesc.editor")}
+            </div>
+            <div className={styles.hintItem}>
+                <span className={styles.hintRole}>{t("roles.viewer")}</span>
+                {t("roleDesc.viewer")}
+            </div>
+        </div>,
+        document.body,
+    );
+
     return (
         <div className={styles.container}>
+            {hint}
             <section className={styles.section}>
                 <div className={styles.labelRow}>
                     <label className={form.label}>
                         {t("projectTeam", { count: collaborators.length + invites.length, max: MAX_COLLABORATORS })}
                     </label>
-                    <div className={styles.infoIconWrapper}>
+                    <div
+                        className={styles.infoIconWrapper}
+                        ref={iconRef}
+                        onMouseEnter={() => {
+                            if (!iconRef.current) return;
+                            const rect = iconRef.current.getBoundingClientRect();
+                            setHintPos({ top: rect.bottom + 8, left: rect.left });
+                        }}
+                        onMouseLeave={() => setHintPos(null)}
+                    >
                         <Info size={16} className={styles.infoIcon} />
-                        <div className={styles.permissionsHint}>
-                            <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>{t("roles.owner")}</span>
-                                {t("roleDesc.owner")}
-                            </div>
-                            <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>{t("roles.admin")}</span>
-                                {t("roleDesc.admin")}
-                            </div>
-                            <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>{t("roles.editor")}</span>
-                                {t("roleDesc.editor")}
-                            </div>
-                            <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>{t("roles.viewer")}</span>
-                                {t("roleDesc.viewer")}
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <p className={shared.helpText}>{t("teamHelp")}</p>
@@ -147,7 +165,7 @@ const MemberSlot = ({ data, membership, mutateCollaborators, user }: MemberSlotP
     const isOwner = data.role === ProjectRole.OWNER;
     const isAdmin = Roles.hasRoleOrGreater(membership.role, ProjectRole.ADMIN);
     const isSelf = data.user.email === user.email;
-    const canKick = (isSelf && !isOwner) || isAdmin;
+    const canKick = (isSelf && !isOwner) || (!isSelf && isAdmin);
 
     const handleKick = async () => {
         const res = await kickCollaborator(membership.project.id, data.user.id);

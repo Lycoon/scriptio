@@ -10,10 +10,12 @@ import { RequestMagicLinkBody } from "@src/lib/utils/api-bodies";
 import { useDesktopBridgeAuth } from "@src/lib/utils/hooks";
 
 import OAuthButtons from "./OAuthButtons";
+import { ArrowLeft } from "lucide-react";
 
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./AuthForm.module.css";
+import dangerStyles from "../project/DangerZone.module.css";
 
 type MessageType = "success" | "error" | "info";
 

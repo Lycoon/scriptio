@@ -20,6 +20,7 @@ import {
     ClipboardPaste,
     Columns2,
     Copy,
+    Highlighter,
     Loader2,
     LucideIcon,
     MessageSquarePlus,
@@ -95,14 +96,15 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
                 icon={ArrowDownRight}
                 action={() => focusOnPosition(editor!, scene.position)}
             />
-            <ContextMenuItem text={t("edit")} action={() => editScenePopup(scene, userCtx)} />
-            <ContextMenuItem
-                text={t("cut")}
-                action={() => cutText(editor!, scene.position, scene.nextPosition)}
-            />
             <ContextMenuItem
                 text={t("selectInEditor")}
                 action={() => selectTextInEditor(editor!, scene.position, scene.nextPosition)}
+            />
+            <div className={context.menu_separator} />
+            <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
+            <ContextMenuItem
+                text={t("cut")}
+                action={() => cutText(editor!, scene.position, scene.nextPosition)}
             />
         </>
     );
@@ -136,8 +138,10 @@ const CharacterItemMenu = ({ props }: SubMenuProps<CharacterContextProps>) => {
                 text={t("paste")}
                 action={() => pasteText(projectCtx.editor!, character.name)}
             />
+            <div className={context.menu_separator} />
             <ContextMenuItem
                 text={t("highlight")}
+                icon={Highlighter}
                 action={() => toggleCharacterHighlight(character.name)}
             />
         </>

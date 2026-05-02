@@ -41,6 +41,13 @@ export const editProject = (projectId: string, body: UpdateProjectBody) => {
     return request(`/api/projects/${projectId}`, "PATCH", body);
 };
 
+export const uploadProjectToCloud = (
+    projectId: string,
+    body: { title: string; description?: string; author?: string },
+) => {
+    return request(`/api/projects/${projectId}/upload-to-cloud`, "POST", body);
+};
+
 /* Saves / Version History */
 
 export interface SaveEntry {

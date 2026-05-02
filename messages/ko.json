@@ -7,6 +7,7 @@
     "noConnection": "연결 없음",
     "reconnecting": "재연결 중...",
     "localProject": "로컬 프로젝트",
+    "uploadToCloud": "클라우드에 업로드",
     "endlessScroll": "무한 스크롤",
     "toggleComments": "댓글 표시 전환",
     "focusMode": "집중 모드",
@@ -121,7 +122,7 @@
     "deleteModalTitle": "계정 삭제",
     "deleteModalDesc": "계정과 모든 데이터를 영구적으로 삭제합니다. 이 작업은 취소할 수 없습니다.",
     "deleteConfirmPhrase": "계정 삭제를 확인합니다",
-    "deleteConfirmLabel": "확인을 위해 <ph/>를 입력하세요.",
+    "deleteConfirmLabel": "삭제를 확인하려면 아래 텍스트를 입력하세요:",
     "deleting": "삭제 중...",
     "deleteAccountBtn": "내 계정 삭제",
     "subscription": {
@@ -362,7 +363,7 @@
     "edit": "편집",
     "copy": "복사",
     "cut": "잘라내기",
-    "selectInEditor": "에디터에서 선택",
+    "selectInEditor": "선택",
     "remove": "삭제",
     "paste": "붙여넣기",
     "highlight": "하이라이트",
@@ -408,6 +409,14 @@
       "synopsis": "시놉시스",
       "synopsisPlaceholder": "장면에 대한 간단한 설명을 입력하세요...",
       "save": "저장"
+    },
+    "uploadToCloud": {
+      "title": "클라우드에 업로드",
+      "body": "이 프로젝트를 클라우드에 업로드하시겠습니까? 프로젝트가 백업되어 어떤 기기에서든 액세스할 수 있으며, 협업자를 초대할 수 있습니다.",
+      "confirm": "업로드",
+      "cancel": "취소",
+      "uploading": "업로드 중...",
+      "failed": "업로드에 실패했습니다. 다시 시도해 주세요."
     }
   },
   "board": {

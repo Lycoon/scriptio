@@ -187,6 +187,12 @@ export class IndexedDBStorageProvider implements StorageProvider {
         });
     }
 
+    async markAsSynced(id: string): Promise<void> {
+        const existing = await idbGet(id);
+        if (!existing) return;
+        await idbPut({ ...existing, is_synced: 1, updatedAt: Date.now() });
+    }
+
     async touch(id: string): Promise<void> {
         const existing = await idbGet(id);
         if (existing) {

@@ -129,14 +129,18 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                         <div className={dangerStyles.modal}>
                             <h2 className={dangerStyles.modalTitle}>{t("deleteModalTitle")}</h2>
                             <p className={dangerStyles.modalDescription}>{t("deleteModalDesc")}</p>
-                            <label htmlFor="delete-confirm" className={dangerStyles.modalDescription} style={{ display: "block" }}>
-                                {t.rich("deleteConfirmLabel", { ph: () => <strong>{confirmPhrase}</strong> })}
+                            <label
+                                htmlFor="delete-confirm"
+                                className={dangerStyles.modalDescription}
+                                style={{ display: "block" }}
+                            >
+                                {t("deleteConfirmLabel")}
+                                <strong style={{ display: "block", marginTop: 6 }}>{confirmPhrase}</strong>
                             </label>
                             <input
                                 id="delete-confirm"
                                 type="text"
                                 className={`${sharedStyles.input} ${dangerStyles.modalInput}`}
-                                placeholder={confirmPhrase}
                                 value={deleteConfirmInput}
                                 onChange={(e) => setDeleteConfirmInput(e.target.value)}
                                 autoComplete="off"
@@ -172,13 +176,24 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         <div className={sharedStyles.settingsForm}>
             {/* Email */}
             <div className={sharedStyles.formGroup}>
-                <label htmlFor="email" className={form.label}>{t("email")}</label>
-                <input id="email" type="email" value={user?.email ?? ""} disabled className={sharedStyles.input} autoComplete="email" />
+                <label htmlFor="email" className={form.label}>
+                    {t("email")}
+                </label>
+                <input
+                    id="email"
+                    type="email"
+                    value={user?.email ?? ""}
+                    disabled
+                    className={sharedStyles.input}
+                    autoComplete="email"
+                />
             </div>
 
             {/* Username */}
             <div className={sharedStyles.formGroup}>
-                <label htmlFor="username" className={form.label}>{t("username")}</label>
+                <label htmlFor="username" className={form.label}>
+                    {t("username")}
+                </label>
                 <input
                     id="username"
                     type="text"
@@ -236,7 +251,12 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                     <Save size={18} />
                     {loading ? t("saving") : tCommon("save")}
                 </button>
-                <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title={t("dangerZoneTitle")}>
+                <button
+                    type="button"
+                    className={dangerStyles.arrowBtn}
+                    onClick={onDangerToggle}
+                    title={t("dangerZoneTitle")}
+                >
                     <ArrowRight size={16} />
                 </button>
             </div>

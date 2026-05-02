@@ -7,6 +7,7 @@
     "noConnection": "无连接",
     "reconnecting": "正在重新连接...",
     "localProject": "本地项目",
+    "uploadToCloud": "上传到云端",
     "endlessScroll": "无限滚动",
     "toggleComments": "切换显示评论",
     "focusMode": "聚焦模式",
@@ -121,7 +122,7 @@
     "deleteModalTitle": "删除账户",
     "deleteModalDesc": "该操作不可撤销。",
     "deleteConfirmPhrase": "我确认删除我的账户",
-    "deleteConfirmLabel": "输入 <ph/> 以确认。",
+    "deleteConfirmLabel": "请输入以下文字以确认删除：",
     "deleting": "正在注销...",
     "deleteAccountBtn": "确认注销账户",
     "subscription": {
@@ -362,7 +363,7 @@
     "edit": "编辑",
     "copy": "复制",
     "cut": "剪切",
-    "selectInEditor": "在编辑器中选择",
+    "selectInEditor": "选择",
     "remove": "移除",
     "paste": "粘贴",
     "highlight": "高亮",
@@ -408,6 +409,14 @@
       "synopsis": "简介",
       "synopsisPlaceholder": "场景简述...",
       "save": "保存"
+    },
+    "uploadToCloud": {
+      "title": "上传到云端",
+      "body": "将此项目上传到云端？您的项目将被备份，可从任何设备访问，并且可以邀请协作者。",
+      "confirm": "上传",
+      "cancel": "取消",
+      "uploading": "正在上传...",
+      "failed": "上传失败。请重试。"
     }
   },
   "board": {

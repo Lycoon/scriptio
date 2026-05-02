@@ -3,6 +3,7 @@ import { Prisma, ProjectRole } from "../../generated/client/client";
 import prisma from "../db";
 
 import * as S3 from "@src/lib/s3";
+import { ConflictError } from "@src/lib/utils/api-utils";
 
 const projectMembershipSelect = {
     project: {
@@ -126,21 +127,29 @@ export class ProjectRepository {
         });
     }
 
-    createProject(project: ProjectCreation) {
-        return prisma.project.create({
-            data: {
-                title: project.title,
-                description: project.description,
-                author: project.author,
-                hasPoster: project.hasPoster,
-                members: {
-                    create: {
-                        userId: project.userId,
-                        role: ProjectRole.OWNER,
+    async createProject(project: ProjectCreation) {
+        try {
+            return await prisma.project.create({
+                data: {
+                    ...(project.id && { id: project.id }),
+                    title: project.title,
+                    description: project.description,
+                    author: project.author,
+                    hasPoster: project.hasPoster,
+                    members: {
+                        create: {
+                            userId: project.userId,
+                            role: ProjectRole.OWNER,
+                        },
                     },
                 },
-            },
-        });
+            });
+        } catch (e) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+                throw new ConflictError("A project with this id already exists");
+            }
+            throw e;
+        }
     }
 
     updateProject(project: ProjectUpdate) {

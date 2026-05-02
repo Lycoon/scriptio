@@ -1,15 +1,11 @@
 .card {
+    background: var(--secondary);
     border: 1px solid var(--separator);
     border-radius: 12px;
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 16px;
-}
-
-.card[data-pro="true"] {
-    border-color: color-mix(in srgb, var(--primary-text) 30%, transparent);
-    background: var(--secondary);
 }
 
 .header {

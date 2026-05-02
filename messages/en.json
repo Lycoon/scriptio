@@ -7,6 +7,7 @@
     "noConnection": "No connection",
     "reconnecting": "Reconnecting...",
     "localProject": "Local project",
+    "uploadToCloud": "Upload to cloud",
     "endlessScroll": "Endless Scroll",
     "toggleComments": "Toggle Comments",
     "focusMode": "Focus Mode",
@@ -121,7 +122,7 @@
     "deleteModalTitle": "Delete account",
     "deleteModalDesc": "This will permanently delete your account and all associated data. This action cannot be undone.",
     "deleteConfirmPhrase": "I confirm my account deletion",
-    "deleteConfirmLabel": "Type <ph/> to confirm.",
+    "deleteConfirmLabel": "Type the following text to confirm deletion:",
     "deleting": "Deleting...",
     "deleteAccountBtn": "Delete my account",
     "subscription": {
@@ -362,7 +363,7 @@
     "edit": "Edit",
     "copy": "Copy",
     "cut": "Cut",
-    "selectInEditor": "Select in editor",
+    "selectInEditor": "Select",
     "remove": "Remove",
     "paste": "Paste",
     "highlight": "Highlight",
@@ -408,6 +409,14 @@
       "synopsis": "Synopsis",
       "synopsisPlaceholder": "Write a brief description of this scene...",
       "save": "Save"
+    },
+    "uploadToCloud": {
+      "title": "Upload to cloud",
+      "body": "Upload this project to the cloud? Your project will be backed up and accessible from any device, and you'll be able to invite collaborators.",
+      "confirm": "Upload",
+      "cancel": "Cancel",
+      "uploading": "Uploading...",
+      "failed": "Upload failed. Please try again."
     }
   },
   "board": {

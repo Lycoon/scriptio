@@ -14,7 +14,7 @@ html.light {
     --tertiary: #e2e2e2;
 
     --primary-hover: #f0f0f3;
-    --secondary-hover: #e7e7e7;
+    --secondary-hover: #ececec;
     --tertiary-hover: rgb(211, 211, 211);
 
     --primary-text: #1a1a1c;
@@ -34,11 +34,11 @@ html.light {
     --themed-editor-script-bg: var(--secondary);
     --themed-editor-text: var(--primary-text);
     --editor-scene: #f1f5f9;
-    --editor-sidebar: #ffffff;
+    --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
-    --context-menu-bg: #ffffff;
-    --context-menu-item-hover: #f0f4ff;
+    --context-menu-bg: var(--secondary);
+    --context-menu-item-hover: var(--secondary-hover);
     --editor-style-bg: #ffffff;
     --editor-style-bg-hover: #f1f5f9;
     --editor-style-bg-active: #f1f5f9;
@@ -57,11 +57,11 @@ html.dark {
 
     --main-bg: var(--primary);
     --primary: #1d1d1d;
-    --secondary: #2e2e2e;
-    --tertiary: #3a3a3a;
+    --secondary: #272727;
+    --tertiary: #585858;
 
     --primary-hover: #2e2e2e;
-    --secondary-hover: #3a3a3a;
+    --secondary-hover: #363636;
     --tertiary-hover: #464646;
 
     --primary-text: #ffffff;
@@ -81,11 +81,11 @@ html.dark {
     --themed-editor-script-bg: var(--secondary);
     --themed-editor-text: var(--primary-text);
     --editor-scene: #dadada;
-    --editor-sidebar: #272727;
+    --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #3c3c3c;
     --editor-sidebar-hover: var(--primary);
     --context-menu-bg: var(--secondary);
-    --context-menu-item-hover: var(--primary);
+    --context-menu-item-hover: var(--secondary-hover);
     --editor-style-bg: #1d1d1d;
     --editor-style-bg-hover: #3c3c3c;
     --editor-style-bg-active: #5d5d5d;
@@ -136,7 +136,7 @@ html.latte {
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
     --context-menu-bg: var(--secondary);
-    --context-menu-item-hover: var(--primary);
+    --context-menu-item-hover: var(--secondary-hover);
     --editor-style-bg: var(--primary);
     --editor-style-bg-hover: var(--primary-hover);
     --editor-style-bg-active: var(--primary-hover);
@@ -183,7 +183,7 @@ html.wonka {
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
     --context-menu-bg: var(--secondary);
-    --context-menu-item-hover: var(--primary);
+    --context-menu-item-hover: var(--secondary-hover);
     --editor-style-bg: var(--primary);
     --editor-style-bg-hover: var(--primary-hover);
     --editor-style-bg-active: var(--primary-hover);
@@ -201,12 +201,12 @@ html.mint {
     --panel-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
 
     --main-bg: var(--primary);
-    --primary: #dcf5de;
+    --primary: #d3eed5;
     --secondary: #ecfdec;
     --tertiary: #bce0bc;
 
-    --primary-hover: #c6e7c8;
-    --secondary-hover: #e2ffe4;
+    --primary-hover: #c6e4c8;
+    --secondary-hover: #d5ecd5;
     --tertiary-hover: #c7e4c7;
 
     --primary-text: #354937;
@@ -229,8 +229,8 @@ html.mint {
     --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
-    --context-menu-bg: var(--primary);
-    --context-menu-item-hover: var(--primary-hover);
+    --context-menu-bg: var(--secondary);
+    --context-menu-item-hover: var(--secondary-hover);
     --editor-style-bg: var(--primary);
     --editor-style-bg-hover: var(--primary-hover);
     --editor-style-bg-active: var(--primary-hover);
@@ -250,11 +250,11 @@ html.blossom {
     --main-bg: var(--primary);
     --primary: #ffe7f3;
     --secondary: #fff6fb;
-    --tertiary: #ffbbdd;
+    --tertiary: #ffc8e6;
 
     --primary-hover: #ffe7f3;
-    --secondary-hover: #fff1f9;
-    --tertiary-hover: #ffa0d0;
+    --secondary-hover: #fae5f0;
+    --tertiary-hover: #fdbde1;
 
     --primary-text: #bb4bbb;
     --secondary-text: #a579a5;
@@ -277,7 +277,7 @@ html.blossom {
     --editor-sidebar-list: #ededf3;
     --editor-sidebar-hover: var(--primary);
     --context-menu-bg: var(--secondary);
-    --context-menu-item-hover: var(--primary);
+    --context-menu-item-hover: var(--secondary-hover);
     --editor-style-bg: var(--primary);
     --editor-style-bg-hover: var(--primary-hover);
     --editor-style-bg-active: var(--primary-hover);
@@ -297,16 +297,16 @@ html.midnight {
     --main-bg: var(--primary);
     --primary: #0d1117;
     --secondary: #161c2d;
-    --tertiary: #1e2a45;
+    --tertiary: #283758;
 
     --primary-hover: #131a2a;
-    --secondary-hover: #1a2438;
-    --tertiary-hover: #263554;
+    --secondary-hover: #253453;
+    --tertiary-hover: #304166;
 
     --primary-text: #c8d8f0;
     --secondary-text: #6878a8;
 
-    --separator: #1e2a45;
+    --separator: #2b3a5e;
     --input-outline: #2a3d60;
     --navbar-outline: #1e2a45;
     --header-background: #161c2d;
@@ -320,11 +320,11 @@ html.midnight {
     --themed-editor-script-bg: var(--secondary);
     --themed-editor-text: var(--primary-text);
     --editor-scene: #c8d8f0;
-    --editor-sidebar: #0f1520;
+    --editor-sidebar: var(--secondary);
     --editor-sidebar-list: #1e2a45;
     --editor-sidebar-hover: var(--primary);
     --context-menu-bg: var(--secondary);
-    --context-menu-item-hover: var(--primary);
+    --context-menu-item-hover: var(--secondary-hover);
     --editor-style-bg: #0d1117;
     --editor-style-bg-hover: #1e2a45;
     --editor-style-bg-active: #263554;

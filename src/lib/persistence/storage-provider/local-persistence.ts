@@ -49,6 +49,10 @@ export async function updateCachedProject(
     return (await getStorageProvider()).update(id, updates);
 }
 
+export async function markCachedProjectAsSynced(id: string): Promise<void> {
+    return (await getStorageProvider()).markAsSynced(id);
+}
+
 export async function touchCachedProject(id: string): Promise<void> {
     return (await getStorageProvider()).touch(id);
 }
@@ -124,6 +128,30 @@ export async function migrateToCachedProject(
     await discardCloudProjectData(oldProjectId);
 
     return newProject;
+}
+
+/**
+ * Promote a local-only cached project to a cloud project, reusing the same id.
+ * Creates a cloud project record + membership, then flips the local cache flag.
+ * The Y.js doc at `scriptio-{projectId}` is unchanged — `useCloudSync` will
+ * push it to the empty server doc on next mount via the standard CRDT handshake.
+ */
+export async function promoteLocalProjectToCloud(projectId: string): Promise<void> {
+    const local = await getCachedProject(projectId);
+    if (!local) throw new Error("Project not found in local cache");
+    if (!local.isLocalOnly) return;
+
+    const { uploadProjectToCloud } = await import("@src/lib/utils/requests");
+    const res = await uploadProjectToCloud(projectId, {
+        title: local.title,
+        description: local.description ?? undefined,
+        author: local.author ?? undefined,
+    });
+    if (!res.ok) {
+        const json = (await res.json().catch(() => ({}))) as { message?: string };
+        throw new Error(json.message ?? `Upload failed (${res.status})`);
+    }
+    await markCachedProjectAsSynced(projectId);
 }
 
 /**

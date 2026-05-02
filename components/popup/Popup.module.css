@@ -3,7 +3,7 @@
     width: 500px;
     min-height: 250px;
     padding: 16px;
-
+    border: 2px solid var(--separator);
     box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
     background-color: var(--primary);
     border-radius: 12px;
@@ -41,7 +41,7 @@
     font-size: 1.4rem;
     font-weight: bold;
     color: var(--primary-text);
-    font-family: var(--font-inter);
+    font-family: var(--font-josef);
     text-transform: uppercase;
 }
 
@@ -116,11 +116,13 @@
 }
 
 .confirm {
-    background-color: var(--tertiary) !important;
+    background-color: var(--secondary);
+    border-radius: 8px !important;
+    transition: background-color 0.15s ease !important;
 }
 
 .confirm:hover {
-    background-color: var(--tertiary-hover) !important;
+    background-color: var(--secondary-hover) !important;
 }
 
 .confirm:disabled {

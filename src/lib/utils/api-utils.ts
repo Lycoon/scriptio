@@ -53,6 +53,11 @@ export class MissingBodyError extends AppError {
         super(400, message);
     }
 }
+export class ConflictError extends AppError {
+    constructor(message = "Resource already exists") {
+        super(409, message);
+    }
+}
 export class InternalServerError extends AppError {
     constructor(message = "Internal server error") {
         super(500, message);
