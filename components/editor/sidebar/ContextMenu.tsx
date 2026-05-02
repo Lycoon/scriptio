@@ -9,6 +9,7 @@ import { Scene } from "@src/lib/screenplay/scenes";
 import context from "./ContextMenu.module.css";
 import { CharacterData, deleteCharacter } from "@src/lib/screenplay/characters";
 import { LocationData, deleteLocation } from "@src/lib/screenplay/locations";
+import { isTauri } from "@tauri-apps/api/core";
 import { cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/screenplay/editor";
 import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/screenplay/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -65,6 +66,26 @@ type ContextMenuItemProps = {
 };
 
 type SubMenuProps<T> = { props: T };
+
+const openWebSearch = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const url = `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
+    if (isTauri()) {
+        const { openUrl } = await import("@tauri-apps/plugin-opener");
+        await openUrl(url);
+    } else {
+        window.open(url, "_blank");
+    }
+};
+
+const readClipboardText = async (): Promise<string> => {
+    if (isTauri()) {
+        const { readText } = await import("@tauri-apps/plugin-clipboard-manager");
+        return readText();
+    }
+    return navigator.clipboard.readText();
+};
 
 export const ContextMenuItem = ({ text, action, icon: Icon, disabled }: ContextMenuItemProps) => {
     return (
@@ -213,16 +234,13 @@ const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps
 
     const handlePaste = async () => {
         if (!editor) return;
-        const text = await navigator.clipboard.readText();
-        editor.commands.insertContent(text);
+        editor.commands.insertContent(await readClipboardText());
         updateContextMenu(undefined);
     };
 
     const handleSearchOnWeb = () => {
         if (!editor) return;
-        const selectedText = editor.state.doc.textBetween(from, to, " ");
-        if (!selectedText.trim()) return;
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedText)}`, "_blank");
+        openWebSearch(editor.state.doc.textBetween(from, to, " "));
     };
 
     return (
@@ -456,8 +474,7 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
 
     const handlePaste = async () => {
         if (!editor) return;
-        const text = await navigator.clipboard.readText();
-        editor.commands.insertContent(text);
+        editor.commands.insertContent(await readClipboardText());
         updateContextMenu(undefined);
     };
 
@@ -482,9 +499,7 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
 
     const handleSearchOnWeb = () => {
         if (!editor) return;
-        const selectedText = editor.state.doc.textBetween(from, to, " ");
-        if (!selectedText.trim()) return;
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedText)}`, "_blank");
+        openWebSearch(editor.state.doc.textBetween(from, to, " "));
     };
 
     const handleShelve = () => {

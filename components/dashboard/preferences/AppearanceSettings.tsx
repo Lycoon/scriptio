@@ -8,7 +8,18 @@ import { UserTheme } from "@src/lib/utils/types";
 import { useTheme } from "next-themes";
 import { useSettings } from "@src/lib/utils/hooks";
 import { useTranslations } from "next-intl";
+import { isTauri } from "@tauri-apps/api/core";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
+
+const THEME_WINDOW_MODE: Record<string, "dark" | "light"> = {
+    dark: "dark",
+    wonka: "dark",
+    midnight: "dark",
+    light: "light",
+    latte: "light",
+    mint: "light",
+    blossom: "light",
+};
 
 const THEME_COLORS: Record<
     string,
@@ -122,9 +133,13 @@ const AppearanceSettings = () => {
                 <label className={form.label}>{t("theme")}</label>
                 <Dropdown
                     value={theme || "dark"}
-                    onChange={(value) => {
+                    onChange={async (value) => {
                         setTheme(value);
                         saveSettings({ theme: value as UserTheme });
+                        if (isTauri()) {
+                            const { setTheme: setWindowTheme } = await import("@tauri-apps/api/app");
+                            await setWindowTheme(THEME_WINDOW_MODE[value] ?? "dark");
+                        }
                     }}
                     options={themeOptions}
                     className={`${sharedStyles.input} ${styles.input}`}
