@@ -12,6 +12,7 @@
         "store:allow-load",
         "dialog:allow-save",
         "fs:allow-write-file",
+        "clipboard-manager:allow-read-text",
         "opener:default",
         "iap:default"
     ]
