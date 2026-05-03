@@ -18,10 +18,7 @@ import {
 } from "./types";
 import { handleProtocolMessage } from "./protocol";
 import { ProjectState } from "../project/project-doc";
-import {
-    migrateProjectDocCore,
-    readProjectDocVersion,
-} from "../project/migrations/project-migration-runner";
+import { migrateProjectDocCore, readProjectDocVersion } from "../project/migrations/project-migration-runner";
 import { CURRENT_PROJECT_VERSION } from "../project/migrations/project-migrations";
 
 export class ProjectRoom extends DurableObject {
@@ -31,7 +28,6 @@ export class ProjectRoom extends DurableObject {
     sessions: Map<WebSocket, SessionInfo>;
     userConnections: Map<string, WebSocket>;
     blacklist: Set<string>;
-    cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
     private isDirty: boolean = false;
     private alarmScheduled: boolean = false;
@@ -50,7 +46,10 @@ export class ProjectRoom extends DurableObject {
     // (esbuild does not guarantee class-field arrow functions are initialized
     // before the constructor body runs.)
     private handleDocUpdate!: (update: Uint8Array, origin: unknown) => void;
-    private handleAwarenessUpdate!: (changes: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void;
+    private handleAwarenessUpdate!: (
+        changes: { added: number[]; updated: number[]; removed: number[] },
+        origin: unknown,
+    ) => void;
 
     constructor(ctx: DurableObjectState, env: Env) {
         super(ctx, env);
@@ -67,7 +66,10 @@ export class ProjectRoom extends DurableObject {
             this.markDirty();
         };
 
-        this.handleAwarenessUpdate = ({ added }: { added: number[]; updated: number[]; removed: number[] }, origin: unknown): void => {
+        this.handleAwarenessUpdate = (
+            { added }: { added: number[]; updated: number[]; removed: number[] },
+            origin: unknown,
+        ): void => {
             if (origin instanceof WebSocket) {
                 const session = this.sessions.get(origin);
                 if (session) {
@@ -179,8 +181,7 @@ export class ProjectRoom extends DurableObject {
                 this.docMigrationFailed = true;
                 this.docVersion = outcome.from;
                 console.error(
-                    `[Room] Doc migration failed at step v${outcome.failedAt} ` +
-                        `(stored v${outcome.from}):`,
+                    `[Room] Doc migration failed at step v${outcome.failedAt} ` + `(stored v${outcome.from}):`,
                     outcome.error,
                 );
                 break;
@@ -335,12 +336,16 @@ export class ProjectRoom extends DurableObject {
     }
 
     /**
-     * Start periodic cleanup of stale awareness states
+     * Throttled inline cleanup. Called from message/connect paths instead of
+     * setInterval — a live timer would prevent the DO from hibernating, which
+     * keeps it billed continuously. With this approach the DO only does
+     * cleanup work when traffic is already arriving.
      */
-    private startAwarenessCleanup(): void {
-        this.cleanupInterval = setInterval(() => {
-            this.cleanupStaleAwareness();
-        }, AWARENESS_CLEANUP_INTERVAL_MS);
+    maybeCleanupStaleAwareness(): void {
+        const now = Date.now();
+        if (now - this.lastAwarenessCleanup < AWARENESS_CLEANUP_INTERVAL_MS) return;
+        this.lastAwarenessCleanup = now;
+        this.cleanupStaleAwareness();
     }
 
     /**
@@ -572,9 +577,7 @@ export class ProjectRoom extends DurableObject {
             const clientVersionParam = url.searchParams.get("clientVersion");
             const clientVersion = clientVersionParam !== null ? Number(clientVersionParam) : NaN;
             if (Number.isFinite(clientVersion) && clientVersion < this.docVersion) {
-                console.log(
-                    `[Room] Rejecting stale client v${clientVersion} (doc at v${this.docVersion})`,
-                );
+                console.log(`[Room] Rejecting stale client v${clientVersion} (doc at v${this.docVersion})`);
                 try {
                     server.close(4006, `Stale client: update to access v${this.docVersion}`);
                 } catch {}
@@ -610,6 +613,10 @@ export class ProjectRoom extends DurableObject {
             }
 
             console.log(`[Room] User ${userId} connected. Total sessions: ${this.sessions.size}`);
+
+            // Opportunistic cleanup on connect — a new client arriving is the
+            // best moment to drop awareness for clients that quietly went away.
+            this.maybeCleanupStaleAwareness();
 
             // Request all existing clients to re-broadcast their awareness
             // This ensures the new client receives everyone's current state,
@@ -802,6 +809,7 @@ export class ProjectRoom extends DurableObject {
         if (fullMessage.length === 0) return;
 
         handleProtocolMessage(this, fullMessage, ws);
+        this.maybeCleanupStaleAwareness();
     }
 
     scheduleSave(): void {

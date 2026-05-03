@@ -27,7 +27,7 @@ async function projectCloudTokenRoute(req: NextRequest, { routeParams, user }: A
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
     const token = await new SignJWT(payload)
         .setProtectedHeader({ alg: "HS256" })
-        .setExpirationTime("1m")
+        .setExpirationTime("1h")
         .sign(secret);
 
     return Success(token);

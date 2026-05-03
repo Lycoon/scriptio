@@ -8,7 +8,6 @@ import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
 import { CURRENT_PROJECT_VERSION } from "../project/migrations/project-migrations";
 
-
 declare const window: Window & typeof globalThis;
 
 /**
@@ -28,7 +27,10 @@ type WebsocketProviderOptions = {
 
 type WSInternals = {
     _updateHandler: (update: Uint8Array, origin: unknown) => void;
-    _awarenessUpdateHandler: (changes: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void;
+    _awarenessUpdateHandler: (
+        changes: { added: number[]; updated: number[]; removed: number[] },
+        origin: unknown,
+    ) => void;
     messageHandlers: Array<(encoder: encoding.Encoder, ...rest: unknown[]) => void>;
     ws: WebSocket | null;
     bcconnected: boolean;
@@ -62,6 +64,11 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private lastFlushTime: number = 0; // Milliseconds (Date.now())
     private lastMessageTime: number = 0; // Milliseconds (Date.now())
     private userIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // Cap the queue so a long disconnect can't grow it without bound. The
+    // local Yjs doc is the source of truth — on reconnect, syncStep1/2 will
+    // re-converge state regardless of what's in the queue.
+    private readonly MAX_UPDATE_QUEUE = 1000;
 
     // Throttling configuration (all in milliseconds)
     private readonly SOLO_USER_UPDATE_MS = 1000; // 1s when alone
@@ -113,14 +120,9 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             ...(options.params ?? {}),
             clientVersion: String(CURRENT_PROJECT_VERSION),
         };
-        super(
-            serverUrl,
-            room,
-            doc,
-            { ...options, params, connect: false } as unknown as ConstructorParameters<
-                typeof WebsocketProvider
-            >[3],
-        );
+        super(serverUrl, room, doc, { ...options, params, connect: false } as unknown as ConstructorParameters<
+            typeof WebsocketProvider
+        >[3]);
 
         this.localClientId = doc.clientID;
         this.boundResetIdleTimer = this.resetUserIdleTimer.bind(this);
@@ -143,9 +145,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         // Handle awareness query (message type 3 = messageQueryAwareness)
         // When the server requests awareness, immediately send our current state
-        (this as unknown as WSInternals).messageHandlers[3] = (
-            encoder: encoding.Encoder,
-        ) => {
+        (this as unknown as WSInternals).messageHandlers[3] = (encoder: encoding.Encoder) => {
             this.lastMessageTime = Date.now();
             // Write awareness update to the encoder (y-websocket will send it)
             encoding.writeVarUint(encoder, 1); // messageAwareness
@@ -256,20 +256,14 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         console.log("[WS] Session was replaced by another connection. Stopping reconnection.");
         this.isSessionReplaced = true;
 
-        // Cancel any pending reconnects from our custom logic
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
 
-        // Tell y-websocket to not reconnect
         this.shouldConnect = false;
-
-        // Disconnect properly to clean up
         this.disconnect();
-
-        // Emit custom event for UI to handle
-        //this.emit("session-replaced", []);
+        this.emit("session-replaced", []);
     }
 
     /**
@@ -587,11 +581,22 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
     /**
      * Reconnect after wake (visibility restored or network online).
-     * Only acts if not connected, not idle-disconnected (that case is handled
-     * by resetUserIdleTimer on next user activity), and not session-replaced.
+     *
+     * Visibility/online return is a strong "user is back" signal — strong
+     * enough that we treat it the same as user input and reset the idle
+     * state. Previously we bailed out for idle-disconnected sessions, which
+     * left the user offline (no presence, no incoming updates) until they
+     * happened to type or move the mouse.
      */
     private handleWakeUp(source: string): void {
-        if (this.isDestroyed || this.isSessionReplaced || this.isIdleDisconnected) return;
+        if (this.isDestroyed || this.isSessionReplaced) return;
+
+        // resetUserIdleTimer clears isIdleDisconnected and triggers a
+        // reconnect when we were idle, so it covers that path.
+        const wasIdleDisconnected = this.isIdleDisconnected;
+        this.resetUserIdleTimer();
+        if (wasIdleDisconnected) return;
+
         if (!this.wsconnected) {
             console.log(`[WS] Reconnecting after wake (${source})...`);
             this.reconnectAttempts = 0;
@@ -650,6 +655,11 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private onThrottledUpdate = (update: Uint8Array, origin: unknown): void => {
         if (origin !== this) {
             this.updateQueue.push(update);
+            // Cap queue length on long disconnects. The local doc still holds
+            // every change; sync on reconnect will replay them.
+            if (this.updateQueue.length > this.MAX_UPDATE_QUEUE) {
+                this.updateQueue.splice(0, this.updateQueue.length - this.MAX_UPDATE_QUEUE);
+            }
         }
     };
 
@@ -714,18 +724,24 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     /**
-     * Flush all pending updates to the server and BroadcastChannel
+     * Flush all pending updates to the server and BroadcastChannel.
+     *
+     * Queues are only cleared if at least one transport (WS or BC) actually
+     * delivered the message. Otherwise the entries stay queued for the next
+     * flush — important when the WS is mid-reconnect: the previous code
+     * dropped the queue regardless, relying on Yjs re-sync to recover.
      */
     public flush(): void {
         const ws = this.ws;
-        const isWsConnected = this.wsconnected && ws && ws.readyState === 1;
+        const internals = this as unknown as WSInternals;
+        const isWsConnected = this.wsconnected && !!ws && ws.readyState === 1;
+        const isBcConnected = internals.bcconnected;
+        const canDeliver = isWsConnected || isBcConnected;
 
         // Send document updates
-        if (this.updateQueue.length > 0) {
+        if (this.updateQueue.length > 0 && canDeliver) {
             try {
                 const updates = this.updateQueue;
-                this.updateQueue = [];
-
                 const encoder = encoding.createEncoder();
                 encoding.writeVarUint(encoder, 0); // sync message type
                 for (const update of updates) {
@@ -736,21 +752,19 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                 if (isWsConnected) {
                     ws.send(message);
                 }
-
-                if ((this as unknown as WSInternals).bcconnected) {
-                    bc.publish((this as unknown as WSInternals).bcChannel, message, this);
+                if (isBcConnected) {
+                    bc.publish(internals.bcChannel, message, this);
                 }
+                this.updateQueue = [];
             } catch (e) {
                 console.error("[WS] Failed to send document updates:", e);
             }
         }
 
         // Send awareness updates
-        if (this.awarenessQueue.size > 0) {
+        if (this.awarenessQueue.size > 0 && canDeliver) {
             try {
                 const changedClients = Array.from(this.awarenessQueue);
-                this.awarenessQueue.clear();
-
                 const encoder = encoding.createEncoder();
                 encoding.writeVarUint(encoder, 1); // awareness message type
                 encoding.writeVarUint8Array(
@@ -762,10 +776,10 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                 if (isWsConnected) {
                     ws.send(message);
                 }
-
-                if ((this as unknown as WSInternals).bcconnected) {
-                    bc.publish((this as unknown as WSInternals).bcChannel, message, this);
+                if (isBcConnected) {
+                    bc.publish(internals.bcChannel, message, this);
                 }
+                this.awarenessQueue.clear();
             } catch (e) {
                 console.error("[WS] Failed to send awareness updates:", e);
             }
@@ -855,10 +869,7 @@ export const allowOnWebsocket = async (userId: string, projectId: string) => {
     };
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-    const token = await new SignJWT(payload)
-        .setProtectedHeader({ alg: "HS256" })
-        .setExpirationTime("1m")
-        .sign(secret);
+    const token = await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setExpirationTime("1m").sign(secret);
     await fetch(`${process.env.NEXT_PUBLIC_CLOUD_URL}/${projectId}/allow`, {
         method: "POST",
         headers: {
@@ -876,10 +887,7 @@ export const blacklistFromWebsocket = async (userId: string, projectId: string) 
     };
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-    const token = await new SignJWT(payload)
-        .setProtectedHeader({ alg: "HS256" })
-        .setExpirationTime("1m")
-        .sign(secret);
+    const token = await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setExpirationTime("1m").sign(secret);
     await fetch(`${process.env.NEXT_PUBLIC_CLOUD_URL}/${projectId}/blacklist`, {
         method: "POST",
         headers: {
