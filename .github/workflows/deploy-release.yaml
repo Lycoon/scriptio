@@ -71,7 +71,7 @@ jobs:
               env:
                   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
                   NEXT_PUBLIC_API_URL: https://scriptio.app
-                  NEXT_PUBLIC_CLOUD_URL: wss://cloud.scriptio.app
+                  NEXT_PUBLIC_CLOUD_URL: https://cloud.scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
                   NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
 
@@ -114,7 +114,7 @@ jobs:
               run: npm run build:windows
               env:
                   NEXT_PUBLIC_API_URL: https://scriptio.app
-                  NEXT_PUBLIC_CLOUD_URL: wss://cloud.scriptio.app
+                  NEXT_PUBLIC_CLOUD_URL: https://cloud.scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
                   NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
 
@@ -184,7 +184,7 @@ jobs:
                       ${{ env.IMAGE_NAME }}:${{ needs.prepare.outputs.version }}
                   build-args: |
                       NEXT_PUBLIC_API_URL=https://scriptio.app
-                      NEXT_PUBLIC_CLOUD_URL=wss://cloud.scriptio.app
+                      NEXT_PUBLIC_CLOUD_URL=https://cloud.scriptio.app
                       NEXT_PUBLIC_COMMIT_SHA=${{ env.COMMIT_SHA }}
                       NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}
 
