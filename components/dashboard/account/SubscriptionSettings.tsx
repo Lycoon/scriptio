@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Check, Lock, Sparkles } from "lucide-react";
 import { isTauri } from "@tauri-apps/api/core";
-import { cancelStripeSubscription, createStripeCheckout, getAppleSubscriptionOwner, submitApplePurchase } from "@src/lib/utils/requests";
+import { cancelStripeSubscription, createStripeCheckout, getAppleSubscriptionOwner, submitApplePurchase, transferAppleSubscription } from "@src/lib/utils/requests";
 import { useUser } from "@src/lib/utils/hooks";
 import { useLocale } from "@src/context/LocaleContext";
 
@@ -13,6 +13,11 @@ import styles from "./SubscriptionSettings.module.css";
 const APPLE_PRODUCT_ID = "app.scriptio.pro.monthly";
 const APPLE_SUBSCRIPTIONS_URL = "https://apps.apple.com/account/subscriptions";
 const PERKS = ["perkProjects", "perkSaves", "perkCollaborators", "perkAutoSave"] as const;
+
+// Apple IAP is disabled at launch — Pro is sold exclusively via the website.
+// All IAP code paths (mount sync, purchase, restore/transfer) are kept but
+// gated by this flag so re-enabling later is a one-line change.
+const APPLE_IAP_ENABLED = false;
 
 // Apple IAP is only available on the macOS Tauri build. The Windows Tauri
 // build is distributed via the Microsoft Store but uses Stripe for billing.
@@ -32,6 +37,18 @@ const SubscriptionSettings = () => {
         () => typeof window !== "undefined" && sessionStorage.getItem("proWelcome") === "1"
     );
     const [welcomeLeaving, setWelcomeLeaving] = useState(false);
+    // When the App Store account has an active subscription bound to a
+    // different Scriptio account, we capture the JWS + masked owner email so
+    // we can offer a "Restore Purchases" flow that transfers it.
+    const [transferableJws, setTransferableJws] = useState<string | null>(null);
+    const [transferableEmail, setTransferableEmail] = useState<string | null>(null);
+    const [transferConfirm, setTransferConfirm] = useState(false);
+    const [transferring, setTransferring] = useState(false);
+    // Detect macOS Tauri after mount so SSR renders the same tree the client
+    // initially does, avoiding hydration mismatches.
+    const [isAppleStoreBuild, setIsAppleStoreBuild] = useState(false);
+    useEffect(() => { setIsAppleStoreBuild(isMacosTauri()); }, []);
+    const showAppleStoreNotice = isAppleStoreBuild && !APPLE_IAP_ENABLED;
 
     const isPro = !!user?.isProUntil && new Date(user.isProUntil) > new Date();
     const isCancelled = !!user?.isSubscriptionCancelled;
@@ -42,7 +59,7 @@ const SubscriptionSettings = () => {
 
     // Restore Apple purchases on mount to sync subscription state with the server.
     useEffect(() => {
-        if (!isMacosTauri() || !user?.id) return;
+        if (!APPLE_IAP_ENABLED || !isMacosTauri() || !user?.id) return;
 
         let cancelled = false;
 
@@ -55,10 +72,20 @@ const SubscriptionSettings = () => {
                         && p.purchaseState === PurchaseState.PURCHASED
                         && p.jwsRepresentation,
                 );
+                if (cancelled || !active?.jwsRepresentation) return;
+
+                const ok = await submitApplePurchase(active.jwsRepresentation);
                 if (cancelled) return;
-                if (active?.jwsRepresentation) {
-                    await submitApplePurchase(active.jwsRepresentation);
+                if (ok) {
                     await mutate();
+                } else {
+                    // The App Store has an active sub but it's bound to a
+                    // different Scriptio account — surface a Restore Purchases
+                    // flow rather than the regular Upgrade button.
+                    const ownerEmail = await getAppleSubscriptionOwner(active.jwsRepresentation);
+                    if (cancelled) return;
+                    setTransferableJws(active.jwsRepresentation);
+                    setTransferableEmail(ownerEmail);
                 }
             } catch {
                 // Restore can fail if the user is not signed into the App Store — silently ignore.
@@ -141,6 +168,25 @@ const SubscriptionSettings = () => {
         }
     };
 
+    const handleTransfer = async () => {
+        if (!transferableJws) return;
+        setError(null);
+        setTransferring(true);
+        try {
+            const ok = await transferAppleSubscription(transferableJws);
+            if (ok) {
+                setTransferableJws(null);
+                setTransferableEmail(null);
+                setTransferConfirm(false);
+                await mutate();
+            } else {
+                setError(t("subscription.purchaseError"));
+            }
+        } finally {
+            setTransferring(false);
+        }
+    };
+
     const handleCancel = async () => {
         setCancelling(true);
 
@@ -199,7 +245,14 @@ const SubscriptionSettings = () => {
             </div>
 
             {/* Actions */}
-            {isPro ? (
+            {showAppleStoreNotice ? (
+                <p className={styles.infoText}>
+                    {isPro
+                        ? t("subscription.appleStoreProInfo")
+                        : t("subscription.appleStoreFreeInfo")
+                    }
+                </p>
+            ) : isPro ? (
                 cancelConfirm ? (
                     <div className={styles.confirmBox}>
                         <p className={styles.confirmText}>
@@ -233,6 +286,30 @@ const SubscriptionSettings = () => {
                 ) : (
                     <button className={styles.cancelBtn} onClick={() => setCancelConfirm(true)}>
                         {t("subscription.cancel")}
+                    </button>
+                )
+            ) : transferableJws ? (
+                transferConfirm ? (
+                    <div className={styles.confirmBox}>
+                        <p className={styles.confirmText}>
+                            {transferableEmail
+                                ? t("subscription.transferConfirm", { email: transferableEmail })
+                                : t("subscription.transferConfirmUnknown")
+                            }
+                        </p>
+                        <div className={styles.confirmBtns}>
+                            <button className={styles.confirmYes} onClick={handleTransfer} disabled={transferring}>
+                                {transferring ? t("subscription.transferring") : t("subscription.transferYes")}
+                            </button>
+                            <button className={styles.confirmNo} onClick={() => setTransferConfirm(false)} disabled={transferring}>
+                                {t("subscription.cancelNo")}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <button className={styles.upgradeBtn} onClick={() => setTransferConfirm(true)}>
+                        {t("subscription.restorePurchases")}
+                        <ArrowRight size={16} />
                     </button>
                 )
             ) : (

@@ -1,8 +1,9 @@
-import { BoardData, LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
+import { BoardData, LayoutData, ProjectData, ProjectMetadata, ProjectState, screenplayOf, titlepageOf } from "@src/lib/project/project-state";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { replaceScreenplay } from "../../screenplay/editor";
 import { Editor } from "@tiptap/react";
 import { ProjectRepository } from "../../project/project-repository";
+import { CURRENT_PROJECT_VERSION } from "../../project/migrations/project-migrations";
 import * as fflate from "fflate";
 import * as Y from "yjs";
 
@@ -11,13 +12,12 @@ import * as Y from "yjs";
 //  Offset  Size  Description
 //  ──────  ────  ──────────────────────────────────────────────────────────────
 //   0       8    Magic bytes: ASCII "SCRIPTIO"
-//   8       1    Version (u8):  current = 1
+//   8       1    Version (u8):  see CURRENT_PROJECT_VERSION
 //   9       1    Flags   (u8):  bit 0 → 0 = zlib-compressed binary Yjs state
 //                                        1 = human-readable JSON (ProjectData)
 //  10       …    Payload
 //
 const MAGIC = new Uint8Array([0x53, 0x43, 0x52, 0x49, 0x50, 0x54, 0x49, 0x4f]); // "SCRIPTIO"
-const CURRENT_VERSION = 1;
 const HEADER_SIZE = MAGIC.length + 1 + 1; // 8 magic + 1 version + 1 flags = 10 bytes
 
 const FLAG_READABLE_JSON = 0x01; // bit 0: payload is UTF-8 JSON, not compressed Yjs
@@ -47,7 +47,7 @@ function parseHeader(data: Uint8Array): { version: number; flags: number; payloa
     }
 
     const version = data[MAGIC.length];
-    if (version > CURRENT_VERSION) {
+    if (version > CURRENT_PROJECT_VERSION) {
         throw new Error(`Unsupported .scriptio file version: ${version}. Please update Scriptio.`);
     }
 
@@ -62,7 +62,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
     convertTo(project: ProjectState, options: ScriptioExportOptions): Promise<Blob> {
         const isReadable = options.readable ?? false;
         const flags = isReadable ? FLAG_READABLE_JSON : 0x00;
-        const header = buildHeader(CURRENT_VERSION, flags);
+        const header = buildHeader(CURRENT_PROJECT_VERSION, flags);
 
         let payload: Uint8Array;
 
@@ -71,8 +71,8 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
             // This produces a larger file but makes the content inspectable
             // with any text editor.
             const data: ProjectData = {
-                screenplay: project.screenplay(),
-                titlepage: project.titlepage(),
+                screenplay: screenplayOf(project),
+                titlepage: titlepageOf(project),
                 metadata: project.metadata().toJSON() as ProjectMetadata,
                 characters: project.characters().toJSON(),
                 scenes: project.scenes().toJSON(),
@@ -121,8 +121,8 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
             Y.applyUpdate(tmpDoc, decompressed);
 
             return {
-                screenplay: tmpDoc.screenplay(),
-                titlepage: tmpDoc.titlepage(),
+                screenplay: screenplayOf(tmpDoc),
+                titlepage: titlepageOf(tmpDoc),
                 metadata: tmpDoc.metadata().toJSON() as ProjectMetadata,
                 characters: tmpDoc.characters().toJSON(),
                 scenes: tmpDoc.scenes().toJSON(),

@@ -153,7 +153,14 @@
       "alreadyBoundTo": "このサブスクリプションは既に {email} に関連付けられています。",
       "alreadyBoundUnknown": "このサブスクリプションは既に別のアカウントに関連付けられています。",
       "welcomePro": "Scriptio Pro にご登録いただきました。ようこそ！",
-      "resubscribe": "サブスクリプションを再開する"
+      "resubscribe": "サブスクリプションを再開する",
+      "restorePurchases": "購入を復元",
+      "transferConfirm": "App Storeアカウントには {email} に関連付けられた有効なサブスクリプションがあります。復元するとProがこのアカウントに移行し、{email} はProアクセスを失います。Appleは引き続き同じApple IDに請求します。続けますか？",
+      "transferConfirmUnknown": "App Storeアカウントには別のScriptioアカウントに関連付けられた有効なサブスクリプションがあります。復元するとProがこのアカウントに移行し、もう一方のアカウントはProアクセスを失います。Appleは引き続き同じApple IDに請求します。続けますか？",
+      "transferYes": "はい、移行する",
+      "transferring": "移行中...",
+      "appleStoreFreeInfo": "Pro機能は当社のウェブサイトでアップグレードされたアカウントでご利用いただけます。",
+      "appleStoreProInfo": "お支払い方法の更新やキャンセルは、scriptio.app のプロフィール設定からお手続きください。"
     }
   },
   "projects": {

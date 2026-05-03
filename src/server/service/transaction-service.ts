@@ -40,3 +40,8 @@ export const createTransactionIfNotExists = async (
     logger.debug("[TransactionService] Transaction upserted", { id: result.id, transactionId });
     return result;
 };
+
+export const reassignTransactionToUser = async (transactionId: string, newUserId: string) => {
+    logger.debug("[TransactionService] Reassigning transaction", { transactionId, newUserId });
+    return repository.reassignToUser(transactionId, newUserId);
+};

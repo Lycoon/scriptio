@@ -18,12 +18,18 @@
  *   3. Existing projects upgrade lazily on first open.
  */
 
-import type { ProjectState } from "../project-state";
+import type { ProjectState } from "../project-doc";
 
 export interface ProjectMigration {
     from: number;
     to: number;
     description: string;
+    /**
+     * Mutate the project Yjs document. The runner wraps this call in a
+     * single `Y.transact` with origin "migration". The argument is a
+     * `ProjectState` (Y.Doc subclass) so steps get typed accessors:
+     * `ydoc.metadata()`, `ydoc.comments()`, `ydoc.layout()`, etc.
+     */
     run: (ydoc: ProjectState) => void;
 }
 
@@ -37,14 +43,7 @@ export const PROJECT_MIGRATIONS: ProjectMigration[] = [
     // },
 ];
 
-/**
- * Version every project should be at after migration. Legacy projects (no
- * version field in metadata) are treated as version 1, matching the schema
- * shipped before the migration framework existed.
- */
-export const LEGACY_PROJECT_VERSION = 1;
-
 export const CURRENT_PROJECT_VERSION =
     PROJECT_MIGRATIONS.length === 0
-        ? LEGACY_PROJECT_VERSION
+        ? 1
         : PROJECT_MIGRATIONS[PROJECT_MIGRATIONS.length - 1].to;

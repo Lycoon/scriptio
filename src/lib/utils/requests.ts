@@ -150,6 +150,11 @@ export const submitApplePurchase = async (jwsTransaction: string): Promise<boole
     return res.ok;
 };
 
+export const transferAppleSubscription = async (jwsTransaction: string): Promise<boolean> => {
+    const res = await request("/api/apple/transfer-subscription", "POST", { jwsTransaction });
+    return res.ok;
+};
+
 export const getAppleSubscriptionOwner = async (jwsTransaction: string): Promise<string | null> => {
     const res = await request("/api/apple/subscription-owner", "POST", { jwsTransaction });
     if (!res.ok) return null;

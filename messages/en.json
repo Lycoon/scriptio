@@ -153,7 +153,14 @@
       "alreadyBoundTo": "This subscription is already linked to {email}.",
       "alreadyBoundUnknown": "This subscription is already linked to another account.",
       "welcomePro": "You're now subscribed to Scriptio Pro. Welcome!",
-      "resubscribe": "Reactivate subscription"
+      "resubscribe": "Reactivate subscription",
+      "restorePurchases": "Restore Purchases",
+      "transferConfirm": "Your App Store account has an active subscription linked to {email}. Restoring will transfer Pro to this account, and {email} will lose Pro access. Apple will continue billing the same Apple ID. Continue?",
+      "transferConfirmUnknown": "Your App Store account has an active subscription linked to another Scriptio account. Restoring will transfer Pro to this account, and the other account will lose Pro access. Apple will continue billing the same Apple ID. Continue?",
+      "transferYes": "Yes, transfer",
+      "transferring": "Transferring...",
+      "appleStoreFreeInfo": "Pro features are available for accounts upgraded via our website.",
+      "appleStoreProInfo": "To update your billing method or cancel, please visit your profile settings on scriptio.app."
     }
   },
   "projects": {

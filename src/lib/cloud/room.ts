@@ -17,9 +17,15 @@ import {
     SaveEntry,
 } from "./types";
 import { handleProtocolMessage } from "./protocol";
+import { ProjectState } from "../project/project-doc";
+import {
+    migrateProjectDocCore,
+    readProjectDocVersion,
+} from "../project/migrations/project-migration-runner";
+import { CURRENT_PROJECT_VERSION } from "../project/migrations/project-migrations";
 
 export class ProjectRoom extends DurableObject {
-    doc: Y.Doc;
+    doc: ProjectState;
     saveTimeout: ReturnType<typeof setTimeout> | null = null;
     awareness: awarenessProtocol.Awareness;
     sessions: Map<WebSocket, SessionInfo>;
@@ -30,6 +36,14 @@ export class ProjectRoom extends DurableObject {
     private isDirty: boolean = false;
     private alarmScheduled: boolean = false;
     private projectId: string | null = null;
+
+    /** Project schema version of the in-memory doc; the gatekeeper compares
+     *  client-advertised versions against this on connect. */
+    private docVersion: number = CURRENT_PROJECT_VERSION;
+
+    /** Set if server-side migration threw; we refuse new connections until
+     *  the project is fixed manually (preserves data integrity). */
+    private docMigrationFailed: boolean = false;
 
     // Typed references to bound handlers — initialized in the constructor body
     // so they're guaranteed to exist before being passed to doc.on/doc.off.
@@ -63,7 +77,7 @@ export class ProjectRoom extends DurableObject {
             }
         };
 
-        this.doc = new Y.Doc();
+        this.doc = new ProjectState();
         this.awareness = new awarenessProtocol.Awareness(this.doc);
 
         // Disable the built-in 30s outdated-state cleanup — we manage session
@@ -117,10 +131,75 @@ export class ProjectRoom extends DurableObject {
             this.projectId = configRows[0].value as string;
         }
 
+        // Server-side migration gatekeeper: bring the doc up to
+        // CURRENT_PROJECT_VERSION before any client is allowed to connect.
+        // blockConcurrencyWhile makes incoming requests wait for completion.
+        this.ctx.blockConcurrencyWhile(async () => {
+            await this.runDocMigration();
+            this.observeDocVersion();
+        });
+
         // Start periodic stale awareness cleanup
         this.startAwarenessCleanup();
 
         console.log("[Room] Initialized");
+    }
+
+    /**
+     * Apply pending project-doc migrations to the in-memory doc and persist
+     * the result. Idempotent: a no-op when the doc is already at
+     * CURRENT_PROJECT_VERSION.
+     */
+    private async runDocMigration(): Promise<void> {
+        const outcome = await migrateProjectDocCore({ ydoc: this.doc });
+        switch (outcome.kind) {
+            case "up-to-date":
+                this.docVersion = outcome.version;
+                break;
+            case "migrated":
+                this.docVersion = outcome.to;
+                console.log(
+                    `[Room] Migrated doc from v${outcome.from} to v${outcome.to} ` +
+                        `(${outcome.appliedSteps.length} step${outcome.appliedSteps.length === 1 ? "" : "s"})`,
+                );
+                // Persist the migrated state immediately so a restart doesn't replay.
+                await this.saveToDisk();
+                break;
+            case "future-version":
+                // The on-disk doc is at a version newer than this worker knows.
+                // Refuse new connections until the worker is upgraded.
+                this.docMigrationFailed = true;
+                this.docVersion = outcome.storedVersion;
+                console.error(
+                    `[Room] Doc at v${outcome.storedVersion} but worker only supports v${outcome.expected}. ` +
+                        `Worker is out of date — refusing connections.`,
+                );
+                break;
+            case "failed":
+                this.docMigrationFailed = true;
+                this.docVersion = outcome.from;
+                console.error(
+                    `[Room] Doc migration failed at step v${outcome.failedAt} ` +
+                        `(stored v${outcome.from}):`,
+                    outcome.error,
+                );
+                break;
+        }
+    }
+
+    /**
+     * Track upward changes to metadata.version so the connection gatekeeper
+     * always sees the latest doc version (e.g., after a higher-version client
+     * propagates a migration we don't yet know about — would-be future-version).
+     */
+    private observeDocVersion(): void {
+        const map = this.doc.getMap("metadata") as Y.Map<unknown>;
+        map.observe(() => {
+            const v = map.get("version");
+            if (typeof v === "number" && v > this.docVersion) {
+                this.docVersion = v;
+            }
+        });
     }
 
     /**
@@ -455,6 +534,13 @@ export class ProjectRoom extends DurableObject {
                 return new Response("Unauthorized: You have been kicked.", { status: 403 });
             }
 
+            // Server-side migration gatekeeper. Refuse the upgrade if
+            // server-side migration failed — data integrity is at risk and
+            // the project should be inspected manually.
+            if (this.docMigrationFailed) {
+                return new Response("Project temporarily unavailable", { status: 503 });
+            }
+
             // Clean up any existing connection for this user (e.g., stale tab).
             // This ensures awareness states don't duplicate for the same user.
             const existingSocket = this.userConnections.get(userId);
@@ -479,6 +565,21 @@ export class ProjectRoom extends DurableObject {
             const [client, server] = Object.values(pair);
 
             this.ctx.acceptWebSocket(server);
+
+            // Stale-client gate: reject clients whose bundle is older than
+            // the doc's schema version. Sending sync to them would let them
+            // write back the pre-migration shape and corrupt the doc.
+            const clientVersionParam = url.searchParams.get("clientVersion");
+            const clientVersion = clientVersionParam !== null ? Number(clientVersionParam) : NaN;
+            if (Number.isFinite(clientVersion) && clientVersion < this.docVersion) {
+                console.log(
+                    `[Room] Rejecting stale client v${clientVersion} (doc at v${this.docVersion})`,
+                );
+                try {
+                    server.close(4006, `Stale client: update to access v${this.docVersion}`);
+                } catch {}
+                return new Response(null, { status: 101, webSocket: client });
+            }
 
             // Initialize session
             this.sessions.set(server, {
@@ -618,7 +719,7 @@ export class ProjectRoom extends DurableObject {
         this.awareness.destroy();
 
         // 2. Build the restored doc.
-        this.doc = new Y.Doc();
+        this.doc = new ProjectState();
         this.doc.on("update", this.handleDocUpdate);
         Y.applyUpdate(this.doc, data);
 
@@ -628,10 +729,19 @@ export class ProjectRoom extends DurableObject {
         this.awareness.setLocalState(null);
         this.awareness.on("update", this.handleAwarenessUpdate);
 
-        // 4. Persist the restored state immediately to SQLite.
+        // 4. Migrate the restored doc forward — snapshots can be from any
+        //    historical version. Resets docMigrationFailed so this restore
+        //    attempt has a clean slate; runDocMigration will set it again
+        //    if migration fails on the restored data.
+        this.docMigrationFailed = false;
+        this.docVersion = readProjectDocVersion(this.doc);
+        await this.runDocMigration();
+        this.observeDocVersion();
+
+        // 5. Persist the restored (and possibly migrated) state to SQLite.
         await this.saveToDisk();
 
-        // 5. Close all connected clients with "document-restored" (4005).
+        // 6. Close all connected clients with "document-restored" (4005).
         //    The client provider will clear its local cache and reload so it
         //    reconnects with an empty doc and receives the restored state via sync.
         for (const [socket] of this.sessions) {

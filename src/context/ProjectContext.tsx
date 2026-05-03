@@ -217,12 +217,14 @@ export const ProjectContext = createContext<ProjectContextType>(defaultContextVa
 interface ProjectReadyContextType {
     isYjsReady: boolean;
     isProjectUnavailable: boolean;
+    isStaleClient: boolean;
     migrationOutcome: ProjectMigrationOutcome | null;
 }
 
 const ProjectReadyContext = createContext<ProjectReadyContextType>({
     isYjsReady: false,
     isProjectUnavailable: false,
+    isStaleClient: false,
     migrationOutcome: null,
 });
 
@@ -253,6 +255,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         connectionStatus: yjsConnectionStatus,
         users: yjsUsers,
         isProjectUnavailable,
+        isStaleClient,
         migrationOutcome,
     } = useProjectYjs({
         projectId,
@@ -845,8 +848,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     );
 
     const readyValue = useMemo(
-        () => ({ isYjsReady, isProjectUnavailable, migrationOutcome }),
-        [isYjsReady, isProjectUnavailable, migrationOutcome],
+        () => ({ isYjsReady, isProjectUnavailable, isStaleClient, migrationOutcome }),
+        [isYjsReady, isProjectUnavailable, isStaleClient, migrationOutcome],
     );
 
     return (

@@ -153,7 +153,14 @@
       "alreadyBoundTo": "此订阅已与 {email} 关联。",
       "alreadyBoundUnknown": "此订阅已与其他账户关联。",
       "welcomePro": "您已成功订阅 Scriptio Pro。欢迎！",
-      "resubscribe": "重新激活订阅"
+      "resubscribe": "重新激活订阅",
+      "restorePurchases": "恢复购买",
+      "transferConfirm": "您的 App Store 账户有一个与 {email} 关联的有效订阅。恢复将把 Pro 转移到此账户，{email} 将失去 Pro 访问权限。Apple 将继续向同一个 Apple ID 收费。继续吗？",
+      "transferConfirmUnknown": "您的 App Store 账户有一个与另一个 Scriptio 账户关联的有效订阅。恢复将把 Pro 转移到此账户，另一个账户将失去 Pro 访问权限。Apple 将继续向同一个 Apple ID 收费。继续吗？",
+      "transferYes": "是的，转移",
+      "transferring": "转移中...",
+      "appleStoreFreeInfo": "Pro 功能适用于通过我们网站升级的账户。",
+      "appleStoreProInfo": "如需更新付款方式或取消，请访问 scriptio.app 上的个人资料设置。"
     }
   },
   "projects": {

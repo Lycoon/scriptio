@@ -5,18 +5,46 @@ import { getRandomColor } from "@src/lib/utils/misc";
 import { getCloudToken } from "../utils/requests";
 import { JSONContent } from "@tiptap/react";
 import { Screenplay } from "../utils/types";
-import { PageFormat } from "../utils/enums";
 import * as Y from "yjs";
 import type { ThrottledWebsocketProvider } from "../cloud/utils";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { TitlePageSchema } from "../titlepage/editor";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
-import type { CharacterItem, CharacterMap } from "../screenplay/characters";
-import type { LocationItem, LocationMap } from "../screenplay/locations";
-import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
-import type { Comment } from "../utils/types";
+import type { CharacterMap } from "../screenplay/characters";
+import type { LocationMap } from "../screenplay/locations";
+import type { PersistentSceneMap } from "../screenplay/scenes";
 import type { YjsLocalProvider } from "../persistence/y-local-provider";
 import type { ProjectMigrationOutcome } from "./migrations/project-migration-runner";
+
+import { ProjectState } from "./project-doc";
+
+// Re-export all schema types & the class so existing consumers continue to
+// import from "@src/lib/project/project-state" without changes.
+export {
+    ProjectState,
+    DEFAULT_PAGE_MARGINS,
+    DEFAULT_ELEMENT_MARGINS,
+    DEFAULT_ELEMENT_STYLES,
+    getCharactersMap,
+    getLocationsMap,
+    getScenesMap,
+    getBoardMap,
+} from "./project-doc";
+export type {
+    ShelfEntryType,
+    ShelfVersionMeta,
+    ShelfEntry,
+    ProjectMetadata,
+    ElementMargin,
+    PageMargin,
+    ElementStyle,
+    LayoutData,
+    BoardCardData,
+    BoardArrowData,
+    BoardData,
+    ProjectData,
+    TypedMap,
+} from "./project-doc";
 
 // Lazy re-export repository for convenient access (avoid loading yjs at module level)
 export const getProjectRepository = async () => {
@@ -33,21 +61,6 @@ export const getProjectRepository = async () => {
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
 
-// ---- Shelf types ----
-
-export type ShelfEntryType = "scene" | "character" | "action";
-
-export type ShelfVersionMeta = {
-    id: string; // unique version ID (nanoid)
-    title: string; // default: today's date on creation
-};
-
-export type ShelfEntry = {
-    title: string; // text content of the shelved node
-    type: ShelfEntryType;
-    versions: ShelfVersionMeta[];
-};
-
 export interface ProjectYjsState {
     ydoc: ProjectState | null;
     provider: ThrottledWebsocketProvider | null;
@@ -59,6 +72,7 @@ export interface ProjectYjsState {
     isLockedByServer: boolean;
     isSessionReplaced: boolean;
     isProjectUnavailable: boolean;
+    isStaleClient: boolean;
     migrationOutcome: ProjectMigrationOutcome | null;
 }
 
@@ -73,117 +87,6 @@ export interface UserInfo {
     name: string;
     color: string;
     userId?: string;
-}
-
-export type ProjectMetadata = {
-    version: number;
-    id: string;
-    title: string;
-    author: string;
-    titlepageInitialized?: boolean;
-};
-
-export type ElementMargin = { left: number; right: number }; // values in inches (offset from page margin)
-
-export type PageMargin = { top: number; bottom: number; left: number; right: number }; // values in inches
-
-/** Default page margins (in inches). */
-export const DEFAULT_PAGE_MARGINS: PageMargin = {
-    top: 1.0,
-    bottom: 1.0,
-    left: 1.5,
-    right: 1.0,
-};
-
-/** Default margins per screenplay element (offset from page margin, in inches). */
-export const DEFAULT_ELEMENT_MARGINS: Record<string, ElementMargin> = {
-    action: { left: 0, right: 0 },
-    scene: { left: 0, right: 0 },
-    character: { left: 2.5, right: 0 },
-    dialogue: { left: 1.3, right: 1.0 },
-    parenthetical: { left: 2.0, right: 2.0 },
-    transition: { left: 0, right: 0 },
-    section: { left: 0, right: 0 },
-};
-
-export type ElementStyle = {
-    bold?: boolean;
-    italic?: boolean;
-    underline?: boolean;
-    uppercase?: boolean;
-    align?: "left" | "center" | "right";
-    startNewPage?: boolean;
-};
-
-/** Default styling per screenplay element */
-export const DEFAULT_ELEMENT_STYLES: Record<string, ElementStyle> = {
-    action: { align: "left" },
-    scene: { bold: true, align: "left", uppercase: true },
-    character: { align: "left", uppercase: true },
-    dialogue: { align: "left" },
-    parenthetical: { align: "left" },
-    transition: { align: "right", uppercase: true },
-    section: { align: "center", underline: true, startNewPage: true, uppercase: true },
-};
-
-export type LayoutData = {
-    pageSize: PageFormat;
-    pageMargins: PageMargin;
-    displaySceneNumbers: boolean;
-    sceneHeadingSpacing: number;
-    sceneNumberOnRight: boolean;
-    contdLabel: string;
-    moreLabel: string;
-    elementMargins: Record<string, ElementMargin>;
-    elementStyles: Record<string, ElementStyle>;
-};
-
-export interface BoardCardData {
-    id: string;
-    title: string;
-    description: string;
-    color: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-export interface BoardArrowData {
-    id: string;
-    fromCardId: string;
-    toCardId: string;
-}
-
-export type BoardData = {
-    cards: string; // JSON string of BoardCardData[]
-    arrows: string; // JSON string of BoardArrowData[]
-};
-
-export type ProjectData = {
-    screenplay: JSONContent[];
-    titlepage?: JSONContent[];
-    characters: CharacterMap;
-    scenes: PersistentSceneMap;
-    locations: LocationMap;
-    metadata: ProjectMetadata;
-    board: BoardData;
-    layout: LayoutData;
-    comments?: Record<string, Comment>;
-    shelf?: Record<string, ShelfEntry>;
-};
-
-/**
- * Helper to provide stronger typing for Y.Map where different keys have different types.
- * This avoids manual casts when accessing known keys.
- */
-export interface TypedMap<T extends Record<string, unknown>> extends Omit<
-    Y.Map<T[keyof T]>,
-    "get" | "set" | "toJSON"
-> {
-    get<K extends keyof T>(key: K): T[K] | undefined;
-    set<K extends keyof T>(key: K, value: T[K]): T[K];
-    toJSON(): T;
 }
 
 // -------------------------------- //
@@ -224,123 +127,27 @@ export async function clearLocalProjectCache(projectId: string): Promise<void> {
 }
 
 // -------------------------------- //
-//          PROJECT STATE           //
-// -------------------------------- //
-
-// ProjectState class - created dynamically to avoid SSR issues
-export class ProjectState extends Y.Doc {
-    KEYS = {
-        SCREENPLAY: "screenplay",
-        TITLEPAGE: "titlepage",
-        CHARACTERS: "characters",
-        SCENES: "scenes",
-        LOCATIONS: "locations",
-        METADATA: "metadata",
-        BOARD: "board",
-        LAYOUT: "layout",
-        COMMENTS: "comments",
-        DICTIONARY: "dictionary",
-        SHELF: "shelf",
-    } as const;
-
-    metadata(): TypedMap<ProjectMetadata> {
-        return this.getMap(this.KEYS.METADATA) as unknown as TypedMap<ProjectMetadata>;
-    }
-
-    screenplay(): Screenplay {
-        const fragment = this.screenplayFragment();
-        const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
-        return proseMirrorNode.content.toJSON() as Screenplay;
-    }
-
-    screenplayFragment(): Y.XmlFragment {
-        return this.getXmlFragment(this.KEYS.SCREENPLAY);
-    }
-
-    titlepage(): JSONContent[] {
-        const fragment = this.titlepageFragment();
-        const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, TitlePageSchema);
-        return proseMirrorNode.content.toJSON() as JSONContent[];
-    }
-
-    titlepageFragment(): Y.XmlFragment {
-        return this.getXmlFragment(this.KEYS.TITLEPAGE);
-    }
-
-    characters(): Y.Map<CharacterItem> {
-        return this.getMap(this.KEYS.CHARACTERS);
-    }
-
-    locations(): Y.Map<LocationItem> {
-        return this.getMap(this.KEYS.LOCATIONS);
-    }
-
-    scenes(): Y.Map<PersistentScene> {
-        return this.getMap(this.KEYS.SCENES);
-    }
-
-    board(): TypedMap<BoardData> {
-        return this.getMap(this.KEYS.BOARD) as unknown as TypedMap<BoardData>;
-    }
-
-    layout(): TypedMap<LayoutData> {
-        return this.getMap(this.KEYS.LAYOUT) as unknown as TypedMap<LayoutData>;
-    }
-
-    comments(): Y.Map<Comment> {
-        return this.getMap(this.KEYS.COMMENTS);
-    }
-
-    /** Per-project custom dictionary words (keys are words, values are true). */
-    dictionary(): Y.Map<boolean> {
-        return this.getMap(this.KEYS.DICTIONARY);
-    }
-
-    /** Shelf entries keyed by node UUID. */
-    shelf(): Y.Map<ShelfEntry> {
-        return this.getMap(this.KEYS.SHELF);
-    }
-
-    /** Get the Y.XmlFragment for a specific shelf version's content. */
-    shelfFragment(nodeId: string, versionId: string): Y.XmlFragment {
-        return this.getXmlFragment(`shelf_${nodeId}_${versionId}`);
-    }
-}
-
-// -------------------------------- //
-//       HELPER FUNCTIONS           //
+//   PROSEMIRROR HELPERS (browser)  //
 // -------------------------------- //
 
 /**
- * Get the characters Y.Map from a ProjectState.
- * Convenience function for direct access without repository.
+ * Convert the screenplay Y.XmlFragment to ProseMirror JSONContent[].
+ * Browser-only: uses tiptap's ScreenplaySchema and y-prosemirror.
  */
-export const getCharactersMap = (ydoc: ProjectState): Y.Map<CharacterItem> => {
-    return ydoc.characters();
+export const screenplayOf = (ydoc: ProjectState): Screenplay => {
+    const fragment = ydoc.screenplayFragment();
+    const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
+    return proseMirrorNode.content.toJSON() as Screenplay;
 };
 
 /**
- * Get the locations Y.Map from a ProjectState.
- * Convenience function for direct access without repository.
+ * Convert the title-page Y.XmlFragment to ProseMirror JSONContent[].
+ * Browser-only: uses tiptap's TitlePageSchema and y-prosemirror.
  */
-export const getLocationsMap = (ydoc: ProjectState): Y.Map<LocationItem> => {
-    return ydoc.locations();
-};
-
-/**
- * Get the scenes Y.Map from a ProjectState.
- * Convenience function for direct access without repository.
- */
-export const getScenesMap = (ydoc: ProjectState): Y.Map<PersistentScene> => {
-    return ydoc.scenes();
-};
-
-/**
- * Get the board Y.Map from a ProjectState.
- * Convenience function for direct access without repository.
- */
-export const getBoardMap = (ydoc: ProjectState): TypedMap<BoardData> => {
-    return ydoc.board();
+export const titlepageOf = (ydoc: ProjectState): JSONContent[] => {
+    const fragment = ydoc.titlepageFragment();
+    const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, TitlePageSchema);
+    return proseMirrorNode.content.toJSON() as JSONContent[];
 };
 
 // -------------------------------- //
@@ -349,7 +156,6 @@ export const getBoardMap = (ydoc: ProjectState): TypedMap<BoardData> => {
 
 /**
  * Hook to initialize local persistence for the Yjs document.
- * Uses SQLite on desktop (Tauri) and IndexedDB on browser.
  */
 export const useLocalPersistence = (projectId: string | null) => {
     const [ydoc, setYdoc] = useState<ProjectState | null>(null);
@@ -430,6 +236,7 @@ export const useCloudSync = (
     const [isLockedByServer] = useState(false);
     const [isSessionReplaced] = useState(false);
     const [isProjectUnavailable, setIsProjectUnavailable] = useState(false);
+    const [isStaleClient, setIsStaleClient] = useState(false);
 
     const isMountedRef = useRef(true);
     const providerRef = useRef<ThrottledWebsocketProvider | null>(null);
@@ -512,8 +319,9 @@ export const useCloudSync = (
                 // Dynamically import collaboration utils
                 const { ThrottledWebsocketProvider } = await import("../cloud/utils");
 
+                const cloudWsUrl = (process.env.NEXT_PUBLIC_CLOUD_URL || "").replace(/^http/, "ws");
                 const cloudProvider = new ThrottledWebsocketProvider(
-                    `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
+                    cloudWsUrl,
                     projectId,
                     ydoc,
                     {
@@ -594,6 +402,15 @@ export const useCloudSync = (
                     );
                     await clearLocalProjectCache(projectId);
                     window.location.reload();
+                });
+
+                // Server rejected this client as stale — its bundle predates
+                // the doc's schema version. Surface to the UI so the user is
+                // prompted to update.
+                cloudProvider.on("stale-client-version", () => {
+                    if (!isMountedRef.current) return;
+                    console.warn("[ProjectYjs] Server rejected this client as stale");
+                    setIsStaleClient(true);
                 });
 
                 // Poll for synced status
@@ -679,6 +496,7 @@ export const useCloudSync = (
         isLockedByServer,
         isSessionReplaced,
         isProjectUnavailable,
+        isStaleClient,
     };
 };
 
@@ -725,6 +543,7 @@ export const useProjectYjs = ({
         isLockedByServer,
         isSessionReplaced,
         isProjectUnavailable,
+        isStaleClient,
     } = useCloudSync(projectId, isLocalReady ? ydoc : null, userInfo);
 
     // isReady: project is ready when ydoc exists and local storage is synced
@@ -745,6 +564,7 @@ export const useProjectYjs = ({
         isLockedByServer,
         isSessionReplaced,
         isProjectUnavailable,
+        isStaleClient,
         migrationOutcome,
     };
 };

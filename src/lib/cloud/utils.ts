@@ -6,6 +6,7 @@ import * as Y from "yjs";
 import * as encoding from "lib0/encoding";
 import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
+import { CURRENT_PROJECT_VERSION } from "../project/migrations/project-migrations";
 
 
 declare const window: Window & typeof globalThis;
@@ -36,6 +37,7 @@ type WSInternals = {
 
 export class ThrottledWebsocketProvider extends WebsocketProvider {
     on(event: "document-restored", listener: () => void): this;
+    on(event: "stale-client-version", listener: () => void): this;
     on(event: Parameters<WebsocketProvider["on"]>[0], listener: Parameters<WebsocketProvider["on"]>[1]): this;
     on(event: string, listener: (...args: unknown[]) => void): this {
         return super.on(
@@ -45,6 +47,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     emit(event: "document-restored", args: []): this;
+    emit(event: "stale-client-version", args: []): this;
     emit(event: Parameters<WebsocketProvider["emit"]>[0], args: Parameters<WebsocketProvider["emit"]>[1]): this;
     emit(event: string, args: unknown[]): this {
         super.emit(
@@ -79,6 +82,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private readonly localClientId: number;
     private isIdleDisconnected: boolean = false;
     private isSessionReplaced: boolean = false;
+    private isStaleClient: boolean = false;
     private lastKnownUserCount: number = 1;
 
     // Store userInfo so we can restore it on reconnection
@@ -87,6 +91,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     // Close codes from server
     private readonly CLOSE_CODE_SESSION_REPLACED = 4001;
     private readonly CLOSE_CODE_DOCUMENT_RESTORED = 4005;
+    private readonly CLOSE_CODE_STALE_CLIENT_VERSION = 4006;
 
     // Bound event handlers for proper cleanup
     private boundResetIdleTimer: () => void;
@@ -100,8 +105,22 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         options: WebsocketProviderOptions & { userInfo?: { name: string; color: string; userId?: string } },
     ) {
         // Pass connect: false to prevent immediate connection
-        // We'll connect after setting up user info
-        super(serverUrl, room, doc, { ...options, connect: false });
+        // We'll connect after setting up user info.
+        // Always advertise the client's project schema version via `params`
+        // so the DO can refuse stale-bundle connections that would write back
+        // a pre-migration shape and corrupt the doc.
+        const params: { [x: string]: string } = {
+            ...(options.params ?? {}),
+            clientVersion: String(CURRENT_PROJECT_VERSION),
+        };
+        super(
+            serverUrl,
+            room,
+            doc,
+            { ...options, params, connect: false } as unknown as ConstructorParameters<
+                typeof WebsocketProvider
+            >[3],
+        );
 
         this.localClientId = doc.clientID;
         this.boundResetIdleTimer = this.resetUserIdleTimer.bind(this);
@@ -191,8 +210,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         let currentWs: WebSocket | null = null;
 
         const checkAndHookWs = () => {
-            // Don't hook if session was already replaced
-            if (this.isSessionReplaced) return;
+            // Don't hook if session was already replaced or rejected as stale
+            if (this.isSessionReplaced || this.isStaleClient) return;
 
             const ws = (this as unknown as WSInternals).ws;
             if (ws && ws !== currentWs) {
@@ -207,6 +226,10 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                         this.handleDocumentRestored();
                         return;
                     }
+                    if (event.code === this.CLOSE_CODE_STALE_CLIENT_VERSION) {
+                        this.handleStaleClientVersion();
+                        return;
+                    }
                     if (originalClose) {
                         originalClose.call(ws, event);
                     }
@@ -216,8 +239,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         // Hook into new WebSocket connections when status changes
         this.on("status", (event: { status: string }) => {
-            // Only hook when connecting, not when already replaced
-            if (event.status === "connecting" && !this.isSessionReplaced) {
+            // Only hook when connecting, not when already replaced or stale-rejected
+            if (event.status === "connecting" && !this.isSessionReplaced && !this.isStaleClient) {
                 setTimeout(checkAndHookWs, 0);
             }
         });
@@ -264,6 +287,29 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.shouldConnect = false;
         this.disconnect();
         this.emit("document-restored", []);
+    }
+
+    /**
+     * Handle stale-client-version close — this client's bundle is older than
+     * the project's schema version. Stop reconnecting (would just be rejected
+     * again) and notify the consumer to prompt the user to update.
+     */
+    private handleStaleClientVersion(): void {
+        console.warn("[WS] Client version is stale. Notifying consumer to prompt update.");
+        this.isStaleClient = true;
+
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
+        this.shouldConnect = false;
+        this.disconnect();
+        this.emit("stale-client-version", []);
+    }
+
+    public get wasStaleClient(): boolean {
+        return this.isStaleClient;
     }
 
     /**
@@ -813,7 +859,7 @@ export const allowOnWebsocket = async (userId: string, projectId: string) => {
         .setProtectedHeader({ alg: "HS256" })
         .setExpirationTime("1m")
         .sign(secret);
-    await fetch(`${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}/${projectId}/allow`, {
+    await fetch(`${process.env.NEXT_PUBLIC_CLOUD_URL}/${projectId}/allow`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -834,7 +880,7 @@ export const blacklistFromWebsocket = async (userId: string, projectId: string) 
         .setProtectedHeader({ alg: "HS256" })
         .setExpirationTime("1m")
         .sign(secret);
-    await fetch(`${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}/${projectId}/blacklist`, {
+    await fetch(`${process.env.NEXT_PUBLIC_CLOUD_URL}/${projectId}/blacklist`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

@@ -99,7 +99,7 @@
     cursor: pointer;
     color: var(--secondary-text);
     background-color: var(--secondary);
-    border-radius: 6px;
+    border-radius: 16px;
     border: none;
 }
 

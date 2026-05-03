@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import * as Y from "yjs";
 
 import { ProjectState } from "@src/lib/project/project-state";
-import { migrateProjectDoc } from "@src/lib/project/migrations/project-migration-runner";
+import {
+    migrateProjectDoc,
+    migrateProjectDocCore,
+    readProjectDocVersion,
+} from "@src/lib/project/migrations/project-migration-runner";
 import type { ProjectMigration } from "@src/lib/project/migrations/project-migrations";
 
 interface FakeBackupStore {
@@ -19,6 +23,7 @@ function makeBackupStore(): FakeBackupStore {
         },
     };
 }
+
 
 describe("migrateProjectDoc", () => {
     it("returns up-to-date and writes nothing when version equals current", async () => {
@@ -222,6 +227,157 @@ describe("migrateProjectDoc", () => {
         });
         expect(outcome.kind).toBe("up-to-date");
         expect(Y.encodeStateAsUpdate(ydoc)).toEqual(stateAfterFirst);
+        ydoc.destroy();
+    });
+});
+
+describe("migrateProjectDocCore", () => {
+    /** Idempotent migration that only sets keys (the contract from project-migrations.ts). */
+    const setAuthor: ProjectMigration = {
+        from: 1,
+        to: 2,
+        description: "set-author",
+        run: (doc) => doc.metadata().set("author", "v2-author"),
+    };
+
+    it("runs without a backup store (DO-style invocation)", async () => {
+        const ydoc = new ProjectState();
+        const outcome = await migrateProjectDocCore({
+            ydoc,
+            migrations: [setAuthor],
+            currentVersion: 2,
+        });
+        expect(outcome.kind).toBe("migrated");
+        expect(ydoc.metadata().get("version")).toBe(2);
+        expect(ydoc.metadata().get("author")).toBe("v2-author");
+        ydoc.destroy();
+    });
+
+    it("invokes onBeforeMutate exactly once with the pre-mutation snapshot", async () => {
+        const ydoc = new ProjectState();
+        ydoc.metadata().set("title", "T");
+        const beforeBytes = Y.encodeStateAsUpdate(ydoc);
+
+        const calls: Array<{ snapshot: Uint8Array; fromVersion: number }> = [];
+        await migrateProjectDocCore({
+            ydoc,
+            migrations: [setAuthor],
+            currentVersion: 2,
+            onBeforeMutate: async (snapshot, fromVersion) => {
+                calls.push({ snapshot, fromVersion });
+            },
+        });
+
+        expect(calls).toHaveLength(1);
+        expect(calls[0].fromVersion).toBe(1);
+        expect(calls[0].snapshot).toEqual(beforeBytes);
+        ydoc.destroy();
+    });
+
+    it("does NOT call onBeforeMutate when there's nothing to do (no steps, version-only bump)", async () => {
+        const ydoc = new ProjectState();
+        // No registered migrations — the runner just brings the version field forward.
+        let called = false;
+        await migrateProjectDocCore({
+            ydoc,
+            migrations: [],
+            currentVersion: 5,
+            onBeforeMutate: async () => {
+                called = true;
+            },
+        });
+        expect(called).toBe(false);
+        expect(ydoc.metadata().get("version")).toBe(5);
+        ydoc.destroy();
+    });
+});
+
+describe("multi-source migration convergence", () => {
+    /**
+     * Simulates the gatekeeper-on-both-sides architecture: the DurableObject
+     * migrates its in-memory doc; the client also migrates its local cache;
+     * they exchange Y.js updates and must converge to the same shape.
+     */
+    it("client and server independently migrate then sync to identical state", async () => {
+        const migrations: ProjectMigration[] = [
+            {
+                from: 1,
+                to: 2,
+                description: "set-author",
+                run: (doc) => doc.metadata().set("author", "post-migration"),
+            },
+        ];
+
+        // Server side: starts at v1 (legacy), runs migration.
+        const server = new ProjectState();
+        server.metadata().set("title", "shared-title");
+        await migrateProjectDocCore({ ydoc: server, migrations, currentVersion: 2 });
+
+        // Client side: cold cache (empty), runs migration on empty doc, then
+        // applies the server's update (the race we're closing).
+        const client = new ProjectState();
+        await migrateProjectDocCore({ ydoc: client, migrations, currentVersion: 2 });
+        Y.applyUpdate(client, Y.encodeStateAsUpdate(server));
+
+        // Both must converge to v2 with author + title set.
+        expect(client.metadata().get("version")).toBe(2);
+        expect(client.metadata().get("author")).toBe("post-migration");
+        expect(client.metadata().get("title")).toBe("shared-title");
+
+        // Reverse direction also converges — round-trip the client's state to server.
+        Y.applyUpdate(server, Y.encodeStateAsUpdate(client));
+        expect(server.metadata().get("version")).toBe(2);
+        expect(server.metadata().get("author")).toBe("post-migration");
+        server.destroy();
+        client.destroy();
+    });
+
+    it("re-migrates when an old-version update arrives after migration", async () => {
+        const migrations: ProjectMigration[] = [
+            {
+                from: 1,
+                to: 2,
+                description: "init-author",
+                // Idempotent: only sets if missing.
+                run: (doc) => {
+                    if (!doc.metadata().has("author")) doc.metadata().set("author", "default");
+                },
+            },
+        ];
+
+        // Doc A starts at v1 with content, never migrated.
+        const oldDoc = new ProjectState();
+        oldDoc.metadata().set("title", "from-old-client");
+        const oldUpdate = Y.encodeStateAsUpdate(oldDoc);
+
+        // Doc B migrates fresh.
+        const migrated = new ProjectState();
+        await migrateProjectDocCore({ ydoc: migrated, migrations, currentVersion: 2 });
+        // Now an old-version update arrives (e.g., from a client that bypassed the gate).
+        Y.applyUpdate(migrated, oldUpdate);
+
+        // The doc still has version=2 (LWW with a newer clock) and the title.
+        expect(migrated.metadata().get("version")).toBe(2);
+        expect(migrated.metadata().get("title")).toBe("from-old-client");
+        // Re-running migration is a no-op (already at v2).
+        const second = await migrateProjectDocCore({ ydoc: migrated, migrations, currentVersion: 2 });
+        expect(second.kind).toBe("up-to-date");
+        oldDoc.destroy();
+        migrated.destroy();
+    });
+});
+
+describe("readProjectDocVersion", () => {
+    it("returns 1 when no version field is set", () => {
+        const ydoc = new Y.Doc();
+        expect(readProjectDocVersion(ydoc)).toBe(1);
+        ydoc.destroy();
+    });
+
+    it("returns the stored version when set", () => {
+        const ydoc = new Y.Doc();
+        ydoc.getMap("metadata").set("version", 7);
+        expect(readProjectDocVersion(ydoc)).toBe(7);
         ydoc.destroy();
     });
 });
