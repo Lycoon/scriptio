@@ -2,14 +2,17 @@
 
 import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RefreshCw, RotateCcw } from "lucide-react";
 
 import type { ProjectMigrationOutcome } from "@src/lib/project/migrations/project-migration-runner";
 
 import styles from "./ProjectMigrationErrorDialog.module.css";
 
 interface Props {
-    outcome: Extract<ProjectMigrationOutcome, { kind: "future-version" | "failed" }>;
+    outcome: Extract<
+        ProjectMigrationOutcome,
+        { kind: "future-version" | "failed" | "stale-client" }
+    >;
 }
 
 const ProjectMigrationErrorDialog = ({ outcome }: Props) => {
@@ -54,6 +57,33 @@ const ProjectMigrationErrorDialog = ({ outcome }: Props) => {
                         Project version: {outcome.storedVersion} — App expects: {outcome.expected}
                     </p>
                     <div className={styles.actions}>
+                        <button className={`${styles.btn} ${styles.secondaryBtn}`} onClick={goBack}>
+                            <ArrowLeft size={16} />
+                            Back to projects
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (outcome.kind === "stale-client") {
+        return (
+            <div className={styles.overlay}>
+                <div className={styles.modal}>
+                    <h2 className={styles.title}>Update Scriptio to open this project</h2>
+                    <p className={styles.description}>
+                        The cloud copy of this project is at a newer schema version than your app
+                        knows. Reload to fetch the latest version, or update the desktop app.
+                    </p>
+                    <div className={styles.actions}>
+                        <button
+                            className={`${styles.btn} ${styles.primaryBtn}`}
+                            onClick={() => window.location.reload()}
+                        >
+                            <RefreshCw size={16} />
+                            Reload
+                        </button>
                         <button className={`${styles.btn} ${styles.secondaryBtn}`} onClick={goBack}>
                             <ArrowLeft size={16} />
                             Back to projects

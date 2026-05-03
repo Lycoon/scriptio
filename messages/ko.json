@@ -153,7 +153,14 @@
       "alreadyBoundTo": "이 구독은 이미 {email}에 연결되어 있습니다.",
       "alreadyBoundUnknown": "이 구독은 이미 다른 계정에 연결되어 있습니다.",
       "welcomePro": "Scriptio Pro를 구독하셨습니다. 환영합니다!",
-      "resubscribe": "구독 재활성화"
+      "resubscribe": "구독 재활성화",
+      "restorePurchases": "구매 복원",
+      "transferConfirm": "App Store 계정에 {email}에 연결된 활성 구독이 있습니다. 복원하면 Pro가 이 계정으로 이전되며 {email}은(는) Pro 액세스를 잃게 됩니다. Apple은 계속해서 동일한 Apple ID에 청구합니다. 계속하시겠습니까?",
+      "transferConfirmUnknown": "App Store 계정에 다른 Scriptio 계정에 연결된 활성 구독이 있습니다. 복원하면 Pro가 이 계정으로 이전되며 다른 계정은 Pro 액세스를 잃게 됩니다. Apple은 계속해서 동일한 Apple ID에 청구합니다. 계속하시겠습니까?",
+      "transferYes": "예, 이전",
+      "transferring": "이전 중...",
+      "appleStoreFreeInfo": "Pro 기능은 웹사이트를 통해 업그레이드된 계정에서 이용할 수 있습니다.",
+      "appleStoreProInfo": "결제 수단을 업데이트하거나 취소하려면 scriptio.app의 프로필 설정을 방문하세요."
     }
   },
   "projects": {

@@ -92,7 +92,6 @@ export function validate<T>(schema: z.ZodSchema<T>, data: unknown): T {
  * Useful for calling REST endpoints on the collaboration Worker from the Next.js server.
  */
 export function getCollabHttpUrl(path: string): string {
-    const baseUrl = process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL || "";
-    const httpUrl = baseUrl.replace(/^ws/, "http");
-    return `${httpUrl}${path}`;
+    const baseUrl = process.env.NEXT_PUBLIC_CLOUD_URL || "";
+    return `${baseUrl}${path}`;
 }

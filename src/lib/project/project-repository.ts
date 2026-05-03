@@ -12,6 +12,7 @@ import {
     ShelfEntry,
     ShelfEntryType,
     ShelfVersionMeta,
+    screenplayOf,
 } from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
@@ -65,7 +66,7 @@ export class ProjectRepository {
      * This converts the Y.js XmlFragment to a ProseMirror document structure.
      */
     get screenplay(): Screenplay {
-        return this.ydoc.screenplay();
+        return screenplayOf(this.ydoc);
     }
 
     /**

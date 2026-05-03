@@ -153,7 +153,14 @@
             "alreadyBoundTo": "Esta suscripción ya está vinculada a {email}.",
             "alreadyBoundUnknown": "Esta suscripción ya está vinculada a otra cuenta.",
             "welcomePro": "Ya estás suscrito a Scriptio Pro. ¡Bienvenido!",
-            "resubscribe": "Reactivar suscripción"
+            "resubscribe": "Reactivar suscripción",
+            "restorePurchases": "Restaurar compras",
+            "transferConfirm": "Tu cuenta de App Store tiene una suscripción activa vinculada a {email}. La restauración transferirá Pro a esta cuenta, y {email} perderá el acceso a Pro. Apple seguirá facturando al mismo ID de Apple. ¿Continuar?",
+            "transferConfirmUnknown": "Tu cuenta de App Store tiene una suscripción activa vinculada a otra cuenta de Scriptio. La restauración transferirá Pro a esta cuenta, y la otra cuenta perderá el acceso a Pro. Apple seguirá facturando al mismo ID de Apple. ¿Continuar?",
+            "transferYes": "Sí, transferir",
+            "transferring": "Transfiriendo...",
+            "appleStoreFreeInfo": "Las funciones Pro están disponibles para las cuentas actualizadas a través de nuestro sitio web.",
+            "appleStoreProInfo": "Para actualizar tu método de pago o cancelar, visita la configuración de tu perfil en scriptio.app."
         }
     },
     "projects": {

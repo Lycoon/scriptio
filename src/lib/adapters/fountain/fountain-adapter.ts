@@ -4,7 +4,7 @@ import fountain from "./fountain_parser";
 import { generateJSON, JSONContent } from "@tiptap/react";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { BASE_EXTENSIONS } from "@src/lib/screenplay/editor";
-import { ProjectData, ProjectState } from "@src/lib/project/project-state";
+import { ProjectData, ProjectState, screenplayOf, titlepageOf } from "@src/lib/project/project-state";
 
 export class FountainAdapter extends ProjectAdapter {
     label = "Fountain Script";
@@ -42,7 +42,7 @@ export class FountainAdapter extends ProjectAdapter {
      * and plain text lines to Credit.
      */
     private buildFountainTitlePage(project: ProjectState, options: BaseExportOptions): string {
-        const titlePageContent = project.titlepage();
+        const titlePageContent = titlepageOf(project);
         if (!titlePageContent || titlePageContent.length === 0) return "";
 
         const lines: string[] = [];
@@ -87,7 +87,7 @@ export class FountainAdapter extends ProjectAdapter {
         let fountain = this.buildFountainTitlePage(project, options);
 
         let sceneCount = 1;
-        const nodes = project.screenplay();
+        const nodes = screenplayOf(project);
         const characters = options.characters;
 
         for (let i = 0; i < nodes.length; i++) {

@@ -166,6 +166,13 @@
     margin: 0;
 }
 
+.infoText {
+    font-size: 0.85rem;
+    color: var(--secondary-text);
+    line-height: 1.5;
+    margin: 0;
+}
+
 .errorMessage {
     font-size: 0.82rem;
     color: var(--error);

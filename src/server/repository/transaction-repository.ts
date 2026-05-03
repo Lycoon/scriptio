@@ -39,4 +39,11 @@ export class TransactionRepository {
             create: { userId, provider, transactionId },
         });
     }
+
+    reassignToUser(transactionId: string, newUserId: string) {
+        return prisma.transaction.update({
+            where: { transactionId },
+            data: { userId: newUserId },
+        });
+    }
 }

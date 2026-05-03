@@ -50,12 +50,19 @@ interface ProjectLayoutInnerProps {
 }
 
 const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
-    const { isYjsReady, isProjectUnavailable, migrationOutcome } = useProjectReady();
+    const { isYjsReady, isProjectUnavailable, isStaleClient, migrationOutcome } = useProjectReady();
     const { membership, isLoading: isMembershipLoading, isLocalOnly: isBrowserLocalOnly } = useProjectMembership();
 
     // Desktop (Tauri) and browser local-only projects skip the cloud membership requirement
     const isDesktop = isTauri();
     const isLocalAccess = isDesktop || isBrowserLocalOnly;
+
+    // Server rejected this client as stale — its bundle predates the doc's
+    // schema version. Treat as a future-version outcome so the user gets a
+    // clear "update required" message.
+    if (isStaleClient) {
+        return <ProjectMigrationErrorDialog outcome={{ kind: "stale-client" }} />;
+    }
 
     // Migration blocked the project from loading: show a dedicated error dialog
     // before any other gating logic, so the user always gets a clear message.
