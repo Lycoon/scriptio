@@ -9,6 +9,17 @@ compatibility_flags = ["nodejs_compat"]
 tag = "v1"
 new_sqlite_classes = ["ProjectRoom"]
 
+# --- Local dev (default env, wrangler dev with no --env flag) ---
+# Wrangler simulates DOs and R2 locally when bindings are declared here.
+
+[[durable_objects.bindings]]
+name = "PROJECT_ROOM"
+class_name = "ProjectRoom"
+
+[[r2_buckets]]
+binding = "SNAPSHOTS"
+bucket_name = "scriptio-snapshots-local"
+
 # --- Production ---
 [env.production]
 name = "scriptio-cloud"

@@ -74,7 +74,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private readonly SOLO_USER_UPDATE_MS = 1000; // 1s when alone
     private readonly MULTI_USER_UPDATE_MS = 200; // 200ms with others
     private readonly MAX_SILENCE_DURATION_MS = 20000; // 20s max silence before ping
-    private readonly MAX_IDLE_DURATION_MS = 10 * 60 * 1000; // 10 minutes idle timeout
+    private readonly MAX_IDLE_DURATION_MS = 30 * 1000; // 30 seconds idle timeout
     private readonly FLUSH_CHECK_INTERVAL_MS = 100; // Check flush every 100ms
 
     private readonly ACTIVITY_EVENTS = ["mousedown", "mousemove", "keydown", "touchstart", "scroll"];
@@ -134,7 +134,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         // Store and set user info BEFORE connecting so awareness is correct from the start
         if (options.userInfo) {
             this.userInfo = options.userInfo;
-            this.awareness.setLocalStateField("user", options.userInfo);
+            const currentState = this.awareness.getLocalState() || {};
+            this.awareness.setLocalState({ ...currentState, user: options.userInfo });
         }
 
         // Replace default handlers with throttled versions
@@ -190,8 +191,10 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
             // Restore user info if it was lost during reconnection
             // y-websocket may clear awareness state internally during reconnect
-            if (this.userInfo && !this.awareness.getLocalState()?.user) {
-                this.awareness.setLocalStateField("user", this.userInfo);
+            const localState = this.awareness.getLocalState();
+            if (this.userInfo && !localState?.user) {
+                const currentState = localState || {};
+                this.awareness.setLocalState({ ...currentState, user: this.userInfo });
             }
 
             // Queue and send our awareness update
@@ -341,7 +344,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      */
     public setUserInfo(userInfo: { name: string; color: string; userId?: string }): void {
         this.userInfo = userInfo;
-        this.awareness.setLocalStateField("user", userInfo);
+        const currentState = this.awareness.getLocalState() || {};
+        this.awareness.setLocalState({ ...currentState, user: userInfo });
     }
 
     /**
@@ -409,7 +413,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
                 // Restore user info after cleanup (it will also be restored in onStatusChange)
                 if (this.userInfo) {
-                    this.awareness.setLocalStateField("user", this.userInfo);
+                    const currentState = this.awareness.getLocalState() || {};
+                    this.awareness.setLocalState({ ...currentState, user: this.userInfo });
                 }
 
                 // Clear any pending reconnect

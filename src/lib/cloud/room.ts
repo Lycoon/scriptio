@@ -32,6 +32,7 @@ export class ProjectRoom extends DurableObject {
     private isDirty: boolean = false;
     private alarmScheduled: boolean = false;
     private projectId: string | null = null;
+    private lastAwarenessCleanup: number = 0;
 
     /** Project schema version of the in-memory doc; the gatekeeper compares
      *  client-advertised versions against this on connect. */
@@ -67,14 +68,23 @@ export class ProjectRoom extends DurableObject {
         };
 
         this.handleAwarenessUpdate = (
-            { added }: { added: number[]; updated: number[]; removed: number[] },
+            { added, updated }: { added: number[]; updated: number[]; removed: number[] },
             origin: unknown,
         ): void => {
             if (origin instanceof WebSocket) {
                 const session = this.sessions.get(origin);
                 if (session) {
-                    added.forEach((id: number) => session.clientIds.add(id));
+                    let changed = false;
+                    const toAdd = [...added, ...updated];
+                    toAdd.forEach((id: number) => {
+                        if (!session.clientIds.has(id)) {
+                            session.clientIds.add(id);
+                            changed = true;
+                        }
+                    });
                     session.lastActivity = Date.now();
+                    // Persist updated clientIds so they survive DO hibernation.
+                    if (changed) this.persistSessionAttachment(origin);
                 }
             }
         };
@@ -90,10 +100,6 @@ export class ProjectRoom extends DurableObject {
         this.sessions = new Map();
         this.userConnections = new Map();
         this.blacklist = new Set();
-
-        // Listen for document updates and handle broadcasting + persistence.
-        // This is the source of truth for ALL changes to the document.
-        this.doc.on("update", this.handleDocUpdate);
 
         // Track client IDs when awareness updates come from a WebSocket
         this.awareness.on("update", this.handleAwarenessUpdate);
@@ -113,13 +119,21 @@ export class ProjectRoom extends DurableObject {
             );
         `);
 
-        // Restore project state
+        // Restore project state from SQLite. Attach the update handler AFTER
+        // the restore so that re-loading persisted bytes on every DO wake-up
+        // doesn't trigger scheduleSave / markDirty (which would save identical
+        // bytes and schedule an unnecessary R2 snapshot).
         const cursor = this.ctx.storage.sql.exec("SELECT data FROM project WHERE id = 1;");
         for (const row of cursor) {
             if (row.data) {
                 Y.applyUpdate(this.doc, new Uint8Array(row.data as ArrayBuffer));
             }
         }
+
+        // Listen for document updates and handle broadcasting + persistence.
+        // Attached here (after restore) so only live writes from WS clients
+        // and server-side migrations trigger the save pipeline.
+        this.doc.on("update", this.handleDocUpdate);
 
         // Restore blacklist
         const blacklistRows = this.ctx.storage.sql.exec("SELECT user_id FROM blacklist;").toArray();
@@ -141,10 +155,50 @@ export class ProjectRoom extends DurableObject {
             this.observeDocVersion();
         });
 
-        // Start periodic stale awareness cleanup
-        this.startAwarenessCleanup();
+        // Restore sessions from hibernated WebSockets. Cloudflare DOs can
+        // hibernate to save memory while WebSockets stay connected; on the
+        // next message the constructor runs again with empty maps. Without
+        // this restoration, incoming messages have no session to attach to,
+        // session activity tracking breaks, webSocketClose finds nothing to
+        // clean up, and broadcastAwarenessRequest counts wrongly.
+        const hibernatedSockets = this.ctx.getWebSockets();
+        for (const ws of hibernatedSockets) {
+            const attachment = ws.deserializeAttachment() as
+                | { userId: string; clientIds: number[] }
+                | null;
+            if (!attachment) continue;
+            this.sessions.set(ws, {
+                clientIds: new Set(attachment.clientIds),
+                userId: attachment.userId,
+                lastActivity: Date.now(),
+            });
+            this.userConnections.set(attachment.userId, ws);
+        }
+        if (hibernatedSockets.length > 0) {
+            console.log(
+                `[Room] Restored ${this.sessions.size} session(s) from ${hibernatedSockets.length} hibernated WebSocket(s)`,
+            );
+            // Awareness state was lost when the DO hibernated. Ask all
+            // restored clients to re-broadcast their awareness so we can
+            // rebuild room.awareness from scratch.
+            this.broadcastAwarenessRequest();
+        }
 
         console.log("[Room] Initialized");
+    }
+
+    /**
+     * Persist the current session state on the WebSocket so it survives
+     * Cloudflare DO hibernation. Called whenever clientIds or userId changes
+     * for a session.
+     */
+    private persistSessionAttachment(ws: WebSocket): void {
+        const session = this.sessions.get(ws);
+        if (!session) return;
+        ws.serializeAttachment({
+            userId: session.userId,
+            clientIds: Array.from(session.clientIds),
+        });
     }
 
     /**
@@ -591,6 +645,9 @@ export class ProjectRoom extends DurableObject {
                 lastActivity: Date.now(),
             });
             this.userConnections.set(userId, server);
+            // Persist immediately so a hibernation-wake before the first
+            // awareness message can still identify this socket.
+            this.persistSessionAttachment(server);
 
             // Send current document state (sync step 1) using the same encoder
             // pattern as all other outgoing messages — avoids fragile manual byte prepend.
