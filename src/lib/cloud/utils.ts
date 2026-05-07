@@ -40,6 +40,7 @@ type WSInternals = {
 export class ThrottledWebsocketProvider extends WebsocketProvider {
     on(event: "document-restored", listener: () => void): this;
     on(event: "stale-client-version", listener: () => void): this;
+    on(event: "session-replaced", listener: () => void): this;
     on(event: Parameters<WebsocketProvider["on"]>[0], listener: Parameters<WebsocketProvider["on"]>[1]): this;
     on(event: string, listener: (...args: unknown[]) => void): this {
         return super.on(
@@ -50,6 +51,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
     emit(event: "document-restored", args: []): this;
     emit(event: "stale-client-version", args: []): this;
+    emit(event: "session-replaced", args: []): this;
     emit(event: Parameters<WebsocketProvider["emit"]>[0], args: Parameters<WebsocketProvider["emit"]>[1]): this;
     emit(event: string, args: unknown[]): this {
         super.emit(
