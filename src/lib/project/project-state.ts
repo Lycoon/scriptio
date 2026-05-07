@@ -234,7 +234,7 @@ export const useCloudSync = (
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [isCloudSynced, setIsCloudSynced] = useState(false);
     const [isLockedByServer] = useState(false);
-    const [isSessionReplaced] = useState(false);
+    const [isSessionReplaced, setIsSessionReplaced] = useState(false);
     const [isProjectUnavailable, setIsProjectUnavailable] = useState(false);
     const [isStaleClient, setIsStaleClient] = useState(false);
 
@@ -274,6 +274,7 @@ export const useCloudSync = (
     useEffect(() => {
         isMountedRef.current = true;
         setIsProjectUnavailable(false);
+        setIsSessionReplaced(false);
 
         if (!ydoc || !projectId || typeof window === "undefined") {
             setConnectionStatus("disconnected");
@@ -375,15 +376,10 @@ export const useCloudSync = (
 
                 // Status updates
                 cloudProvider.on("status", (e: { status: string }) => {
-                    if (isMountedRef.current) {
-                        setTimeout(() => {
-                            if (isMountedRef.current) {
-                                setConnectionStatus(e.status as ConnectionStatus);
-                                if (e.status === "connected" && cloudProvider.synced) {
-                                    setIsCloudSynced(true);
-                                }
-                            }
-                        }, 0);
+                    if (!isMountedRef.current) return;
+                    setConnectionStatus(e.status as ConnectionStatus);
+                    if (e.status === "connected" && cloudProvider.synced) {
+                        setIsCloudSynced(true);
                     }
                 });
 
@@ -392,6 +388,15 @@ export const useCloudSync = (
                     if (isMountedRef.current && isSynced) {
                         setIsCloudSynced(true);
                     }
+                });
+
+                // Surface session-replaced state to the UI so the connection
+                // indicator and recovery dialogs reflect the terminal state
+                // (the provider stops reconnecting after this fires).
+                cloudProvider.on("session-replaced", () => {
+                    if (!isMountedRef.current) return;
+                    setIsSessionReplaced(true);
+                    setConnectionStatus("disconnected");
                 });
 
                 // Handle document restore
