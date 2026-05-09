@@ -13,7 +13,9 @@
         "focusMode": "Modo concentración",
         "splitPanel": "Dividir panel",
         "unsplitPanel": "Unir panel",
-        "draftEditor": "Editor de borrador"
+        "draftEditor": "Editor de borrador",
+        "viewOnly": "Solo lectura",
+        "viewOnlyHint": "Tienes acceso de solo visualización. La edición está desactivada."
     },
     "common": {
         "save": "Guardar cambios",

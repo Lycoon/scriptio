@@ -181,6 +181,16 @@ export class ProjectState extends Y.Doc {
         SHELF: "shelf",
     } as const;
 
+    private _readOnly: boolean = false;
+
+    setReadOnly(readOnly: boolean): void {
+        this._readOnly = readOnly;
+    }
+
+    get isReadOnly(): boolean {
+        return this._readOnly;
+    }
+
     metadata(): TypedMap<ProjectMetadata> {
         return this.getMap(this.KEYS.METADATA) as unknown as TypedMap<ProjectMetadata>;
     }
@@ -233,11 +243,3 @@ export class ProjectState extends Y.Doc {
     }
 }
 
-// -------------------------------- //
-//          MAP HELPERS             //
-// -------------------------------- //
-
-export const getCharactersMap = (ydoc: ProjectState): Y.Map<CharacterItem> => ydoc.characters();
-export const getLocationsMap = (ydoc: ProjectState): Y.Map<LocationItem> => ydoc.locations();
-export const getScenesMap = (ydoc: ProjectState): Y.Map<PersistentScene> => ydoc.scenes();
-export const getBoardMap = (ydoc: ProjectState): TypedMap<BoardData> => ydoc.board();

@@ -14,7 +14,9 @@
     "focusMode": "Fokus-Modus",
     "splitPanel": "Panel teilen",
     "unsplitPanel": "Panel schließen",
-    "draftEditor": "Entwurfseditor"
+    "draftEditor": "Entwurfseditor",
+    "viewOnly": "Nur ansehen",
+    "viewOnlyHint": "Sie haben Lesezugriff. Die Bearbeitung ist deaktiviert."
   },
   "common": {
     "save": "Änderungen speichern",

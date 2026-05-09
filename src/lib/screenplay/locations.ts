@@ -11,7 +11,6 @@ import { ProjectContextType } from "@src/context/ProjectContext";
 import { getNodeFlattenContent } from "./screenplay";
 import { ScreenplayElement } from "../utils/enums";
 import { Screenplay } from "../utils/types";
-import { getLocationsMap } from "@src/lib/project/project-state";
 
 // -------------------------------- //
 //          TYPE DEFINITIONS        //
@@ -38,13 +37,14 @@ export type LocationItem = {
  * This will automatically sync to all connected collaborators.
  */
 export const upsertLocationData = (data: LocationData, projectCtx: ProjectContextType) => {
+    if (projectCtx.isReadOnly) return;
     const ydoc = projectCtx.repository?.getState();
     if (!ydoc) {
         console.warn("[Locations] Cannot upsert: Yjs document not available");
         return;
     }
 
-    const locationsMap = getLocationsMap(ydoc);
+    const locationsMap = ydoc.locations();
     const locationItem: LocationItem = {
         persistent: true,
         description: data.description,
@@ -61,13 +61,14 @@ export const upsertLocationData = (data: LocationData, projectCtx: ProjectContex
  * Delete a location from the Yjs document.
  */
 export const deleteLocation = (name: string, projectCtx: ProjectContextType) => {
+    if (projectCtx.isReadOnly) return;
     const ydoc = projectCtx.repository?.getState();
     if (!ydoc) {
         console.warn("[Locations] Cannot delete: Yjs document not available");
         return;
     }
 
-    const locationsMap = getLocationsMap(ydoc);
+    const locationsMap = ydoc.locations();
     if (locationsMap.has(name)) {
         locationsMap.delete(name);
         console.log(`[Locations] Deleted location: ${name}`);
@@ -78,13 +79,14 @@ export const deleteLocation = (name: string, projectCtx: ProjectContextType) => 
  * Rename a location in the Yjs document.
  */
 export const renameLocation = (oldName: string, newName: string, projectCtx: ProjectContextType) => {
+    if (projectCtx.isReadOnly) return;
     const ydoc = projectCtx.repository?.getState();
     if (!ydoc) {
         console.warn("[Locations] Cannot rename: Yjs document not available");
         return;
     }
 
-    const locationsMap = getLocationsMap(ydoc);
+    const locationsMap = ydoc.locations();
     const location = locationsMap.get(oldName);
 
     if (location) {
@@ -233,7 +235,7 @@ export const isLocationPersistent = (name: string, projectCtx: ProjectContextTyp
     const ydoc = projectCtx.repository?.getState();
     if (!ydoc) return false;
 
-    const locationsMap = getLocationsMap(ydoc);
+    const locationsMap = ydoc.locations();
     const upperName = name.toUpperCase();
 
     let found = false;
@@ -252,10 +254,11 @@ export const isLocationPersistent = (name: string, projectCtx: ProjectContextTyp
  * If not, creates a new persistent location entry.
  */
 export const makeLocationPersistent = (name: string, projectCtx: ProjectContextType, data?: Partial<LocationItem>) => {
+    if (projectCtx.isReadOnly) return;
     const ydoc = projectCtx.repository?.getState();
     if (!ydoc) return;
 
-    const locationsMap = getLocationsMap(ydoc);
+    const locationsMap = ydoc.locations();
 
     // Get existing data from merged locations (could be auto-detected)
     const existingData = projectCtx.locations?.[name] || createDefaultLocationItem();

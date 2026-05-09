@@ -21,6 +21,8 @@ export const RETENTION_INTERVAL_30MIN_MS = 30 * 60 * 1000;
 export interface SessionInfo {
     clientIds: Set<number>;
     userId: string;
+    /** Project role from the JWT — used to gate doc writes (VIEWER is read-only). */
+    role: string;
     lastActivity: number;
 }
 

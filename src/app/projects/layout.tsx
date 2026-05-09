@@ -50,48 +50,30 @@ interface ProjectLayoutInnerProps {
 }
 
 const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
-    const { isYjsReady, isProjectUnavailable, isStaleClient, migrationOutcome } = useProjectReady();
+    const { status } = useProjectReady();
     const { membership, isLoading: isMembershipLoading, isLocalOnly: isBrowserLocalOnly } = useProjectMembership();
 
-    // Desktop (Tauri) and browser local-only projects skip the cloud membership requirement
-    const isDesktop = isTauri();
-    const isLocalAccess = isDesktop || isBrowserLocalOnly;
+    // Desktop (Tauri) and browser local-only projects skip the cloud membership requirement.
+    const isLocalAccess = isTauri() || isBrowserLocalOnly;
 
-    // Server rejected this client as stale — its bundle predates the doc's
-    // schema version. Treat as a future-version outcome so the user gets a
-    // clear "update required" message.
-    if (isStaleClient) {
-        return <ProjectMigrationErrorDialog outcome={{ kind: "stale-client" }} />;
+    // Surface terminal error states first so the user always gets a clear message,
+    // before any redirect or loading gating runs.
+    if (status.kind === "needs-update") {
+        return <ProjectMigrationErrorDialog outcome={status.outcome} />;
     }
-
-    // Migration blocked the project from loading: show a dedicated error dialog
-    // before any other gating logic, so the user always gets a clear message.
-    if (
-        migrationOutcome &&
-        (migrationOutcome.kind === "future-version" || migrationOutcome.kind === "failed")
-    ) {
-        return <ProjectMigrationErrorDialog outcome={migrationOutcome} />;
+    // The cloud copy is gone (project deleted, or the user was removed). Checked
+    // before the redirect so a kicked user with a stale (undefined) membership
+    // lands on the dialog instead of being bounced to /projects mid-loop.
+    if (status.kind === "unavailable") {
+        return <ProjectUnavailableDialog />;
     }
-
-    // Wait for membership to resolve for potential cloud projects
-    if (!isLocalAccess && isMembershipLoading) {
+    // Wait for local data and (for cloud projects) for membership to resolve.
+    if (status.kind === "loading" || (!isLocalAccess && isMembershipLoading)) {
         return <Loading />;
     }
-
-    // Always wait for local data to be ready
-    if (!isYjsReady) {
-        return <Loading />;
-    }
-
-    // On web, redirect if no cloud membership and not a local project
+    // On web, redirect if no cloud membership and not a local project.
     if (!isLocalAccess && !membership) {
         redirect("/projects");
-    }
-
-    // The cloud copy is gone (project deleted, or the user was removed). Offer the
-    // user a choice between keeping a local copy or discarding it — same on web and desktop.
-    if (isProjectUnavailable) {
-        return <ProjectUnavailableDialog />;
     }
 
     return (

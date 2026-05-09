@@ -10,9 +10,6 @@ import type { ThrottledWebsocketProvider } from "../cloud/utils";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { TitlePageSchema } from "../titlepage/editor";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
-import type { CharacterMap } from "../screenplay/characters";
-import type { LocationMap } from "../screenplay/locations";
-import type { PersistentSceneMap } from "../screenplay/scenes";
 import type { YjsLocalProvider } from "../persistence/y-local-provider";
 import type { ProjectMigrationOutcome } from "./migrations/project-migration-runner";
 
@@ -25,10 +22,6 @@ export {
     DEFAULT_PAGE_MARGINS,
     DEFAULT_ELEMENT_MARGINS,
     DEFAULT_ELEMENT_STYLES,
-    getCharactersMap,
-    getLocationsMap,
-    getScenesMap,
-    getBoardMap,
 } from "./project-doc";
 export type {
     ShelfEntryType,
@@ -61,19 +54,31 @@ export const getProjectRepository = async () => {
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
 
+/**
+ * High-level state of a project from the layout's perspective. Replaces the
+ * previous bag of `isReady` / `isProjectUnavailable` / `isStaleClient` /
+ * `migrationOutcome` booleans — a single discriminated union makes the
+ * priority of error states explicit and lets the layout switch on one value.
+ *
+ * Priority (highest first): needs-update > unavailable > loading > ready.
+ */
+export type ProjectStatusOutcome = Extract<
+    ProjectMigrationOutcome,
+    { kind: "future-version" | "failed" | "stale-client" }
+>;
+
+export type ProjectStatus =
+    | { kind: "loading" }
+    | { kind: "ready" }
+    | { kind: "needs-update"; outcome: ProjectStatusOutcome }
+    | { kind: "unavailable" };
+
 export interface ProjectYjsState {
     ydoc: ProjectState | null;
     provider: ThrottledWebsocketProvider | null;
-    isLocalReady: boolean;
-    isCloudReady: boolean;
-    isCloudSynced: boolean;
+    status: ProjectStatus;
     connectionStatus: ConnectionStatus;
     users: CollaboratorInfo[];
-    isLockedByServer: boolean;
-    isSessionReplaced: boolean;
-    isProjectUnavailable: boolean;
-    isStaleClient: boolean;
-    migrationOutcome: ProjectMigrationOutcome | null;
 }
 
 export interface CollaboratorInfo {
@@ -103,28 +108,6 @@ async function getYProtocols() {
     return yProtocolsModule;
 }
 
-/**
- * Utility to clear the local IndexedDB cache for a specific project.
- * Used when the server restores a document from a snapshot to avoid merge conflicts.
- */
-export async function clearLocalProjectCache(projectId: string): Promise<void> {
-    try {
-        const { IndexeddbPersistence } = await import("y-indexeddb");
-        const tmpDoc = new Y.Doc();
-        const tmpPersistence = new IndexeddbPersistence(`scriptio-${projectId}`, tmpDoc);
-
-        // Check if clearData is available on the persistence instance
-        const provider = tmpPersistence as unknown as { clearData?: () => Promise<void> };
-        if (typeof provider.clearData === "function") {
-            await provider.clearData();
-        }
-
-        tmpPersistence.destroy();
-        tmpDoc.destroy();
-    } catch (e) {
-        console.warn(`[ProjectState] Failed to clear local cache for ${projectId}:`, e);
-    }
-}
 
 // -------------------------------- //
 //   PROSEMIRROR HELPERS (browser)  //
@@ -151,358 +134,293 @@ export const titlepageOf = (ydoc: ProjectState): JSONContent[] => {
 };
 
 // -------------------------------- //
-//          LOCAL PERSISTENCE       //
+//        SESSION CACHE             //
 // -------------------------------- //
 
 /**
- * Hook to initialize local persistence for the Yjs document.
+ * Per-projectId session cache holding the Yjs doc, the IndexedDB local
+ * provider, and the cloud WebSocket provider. RefCount + a deferred dispose
+ * timer let a synchronous unmount/remount pair (React StrictMode in dev,
+ * route remounts) reuse the same resources instead of tearing them down and
+ * rebuilding from scratch — which previously produced two disconnect/connect
+ * cycles per page refresh in dev.
  */
-export const useLocalPersistence = (projectId: string | null) => {
-    const [ydoc, setYdoc] = useState<ProjectState | null>(null);
-    const [isLocalReady, setIsLocalReady] = useState(false);
-    const [migrationOutcome, setMigrationOutcome] = useState<ProjectMigrationOutcome | null>(null);
-    const persistenceRef = useRef<YjsLocalProvider | null>(null);
-
-    useEffect(() => {
-        if (!projectId || typeof window === "undefined") {
-            setYdoc(null);
-            setIsLocalReady(false);
-            setMigrationOutcome(null);
-            return;
-        }
-
-        let isDestroyed = false;
-        const initPersistence = async () => {
-            const state = new ProjectState();
-            const { createLocalYjsProvider } = await import("../persistence/y-local-provider");
-            const localProvider = await createLocalYjsProvider(projectId, state);
-
-            localProvider.on("synced", async () => {
-                if (isDestroyed) return;
-                const { migrateProjectDoc } = await import("./migrations/project-migration-runner");
-                const outcome = await migrateProjectDoc({ ydoc: state, projectId });
-                if (isDestroyed) return;
-                setMigrationOutcome(outcome);
-                if (outcome.kind === "future-version" || outcome.kind === "failed") {
-                    // Block UI from rendering the project; layout shows error dialog instead.
-                    return;
-                }
-                setIsLocalReady(true);
-            });
-
-            persistenceRef.current = localProvider;
-
-            if (!isDestroyed) {
-                setYdoc(state);
-            }
-        };
-
-        initPersistence();
-
-        return () => {
-            isDestroyed = true;
-            if (persistenceRef.current) {
-                persistenceRef.current.destroy();
-                persistenceRef.current = null;
-            }
-            setYdoc((prev) => {
-                prev?.destroy();
-                return null;
-            });
-            setIsLocalReady(false);
-            setMigrationOutcome(null);
-        };
-    }, [projectId]);
-
-    return { ydoc, isLocalReady, migrationOutcome };
+type SessionEntry = {
+    projectId: string;
+    state: ProjectState;
+    localProvider: YjsLocalProvider | null;
+    cloudProvider: ThrottledWebsocketProvider | null;
+    isLocalReady: boolean;
+    isCloudSynced: boolean;
+    isCloudInitStarted: boolean;
+    migrationOutcome: ProjectMigrationOutcome | null;
+    connectionStatus: ConnectionStatus;
+    users: CollaboratorInfo[];
+    isProjectUnavailable: boolean;
+    isSessionReplaced: boolean;
+    isStaleClient: boolean;
+    currentUserInfo: UserInfo;
+    lastUsersJson: string;
+    refCount: number;
+    disposeTimer: ReturnType<typeof setTimeout> | null;
+    subscribers: Set<() => void>;
 };
 
-// -------------------------------- //
-//          CLOUD SYNC              //
-// -------------------------------- //
+const sessionCache = new Map<string, SessionEntry>();
+
+const notifySubscribers = (entry: SessionEntry): void => {
+    entry.subscribers.forEach((cb) => cb());
+};
 
 /**
- * Hook to manage cloud WebSocket synchronization.
+ * Has the cache evicted this entry while we were awaiting? Used to bail out
+ * of async init paths whose entry was disposed before they completed.
  */
-export const useCloudSync = (
-    projectId: string | null,
-    ydoc: ProjectState | null,
-    userInfo: UserInfo,
-) => {
-    const [provider, setProvider] = useState<ThrottledWebsocketProvider | null>(null);
-    const [users, setUsers] = useState<CollaboratorInfo[]>([]);
-    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
-    const [isCloudSynced, setIsCloudSynced] = useState(false);
-    const [isLockedByServer] = useState(false);
-    const [isSessionReplaced, setIsSessionReplaced] = useState(false);
-    const [isProjectUnavailable, setIsProjectUnavailable] = useState(false);
-    const [isStaleClient, setIsStaleClient] = useState(false);
+const isLive = (entry: SessionEntry): boolean => sessionCache.get(entry.projectId) === entry;
 
-    const isMountedRef = useRef(true);
-    const providerRef = useRef<ThrottledWebsocketProvider | null>(null);
-    const lastUsersJsonRef = useRef<string>("");
+const initLocalProvider = async (entry: SessionEntry): Promise<void> => {
+    const { createLocalYjsProvider } = await import("../persistence/y-local-provider");
+    if (!isLive(entry)) return;
 
-    // Use ref for userInfo to avoid triggering effects on every render
-    const userInfoRef = useRef(userInfo);
-    useEffect(() => {
-        userInfoRef.current = userInfo;
-    }, [userInfo]);
+    const localProvider = await createLocalYjsProvider(entry.projectId, entry.state);
+    if (!isLive(entry)) {
+        localProvider.destroy();
+        return;
+    }
+    entry.localProvider = localProvider;
 
-    // Ref for the refresh function so it can be called from event handlers
-    const refreshAndReconnectRef = useRef<() => Promise<void>>();
+    localProvider.on("synced", async () => {
+        const { migrateProjectDoc } = await import("./migrations/project-migration-runner");
+        const outcome = await migrateProjectDoc({ ydoc: entry.state, projectId: entry.projectId });
+        if (!isLive(entry)) return;
+        entry.migrationOutcome = outcome;
+        if (outcome.kind === "future-version" || outcome.kind === "failed") {
+            notifySubscribers(entry);
+            return;
+        }
+        entry.isLocalReady = true;
+        notifySubscribers(entry);
+        void initCloudProvider(entry);
+    });
+};
 
-    // Refresh token and reconnect
-    const refreshAndReconnect = useCallback(async () => {
-        if (!providerRef.current || !projectId) return;
+const initCloudProvider = async (entry: SessionEntry): Promise<void> => {
+    if (entry.isCloudInitStarted) return;
+    entry.isCloudInitStarted = true;
+    entry.connectionStatus = "connecting";
+    notifySubscribers(entry);
 
-        try {
-            const { token } = await getCloudToken(projectId);
-            if (token && isMountedRef.current) {
-                await providerRef.current.updateToken(token);
+    try {
+        const { isTauri } = await import("@tauri-apps/api/core");
+        const isDesktop = isTauri();
+
+        const { isLocalOnlyProject } = await import(
+            "../persistence/storage-provider/local-persistence"
+        );
+        if (await isLocalOnlyProject(entry.projectId)) {
+            if (!isLive(entry)) return;
+            entry.connectionStatus = "disconnected";
+            entry.isCloudSynced = true;
+            notifySubscribers(entry);
+            return;
+        }
+
+        const { token, status } = await getCloudToken(entry.projectId);
+        if (!isLive(entry)) return;
+        if (!token) {
+            entry.connectionStatus = "disconnected";
+            entry.isCloudSynced = true;
+            // 403 means the cloud project was deleted or the user was removed.
+            // Surface the recovery dialog on both desktop and web — the local
+            // cache is still valid and the user should choose what to do with it.
+            if (status === 403) entry.isProjectUnavailable = true;
+            notifySubscribers(entry);
+            return;
+        }
+
+        const { ThrottledWebsocketProvider } = await import("../cloud/utils");
+        if (!isLive(entry)) return;
+
+        const cloudWsUrl = (process.env.NEXT_PUBLIC_CLOUD_URL || "").replace(/^http/, "ws");
+        const cloudProvider = new ThrottledWebsocketProvider(
+            cloudWsUrl,
+            entry.projectId,
+            entry.state,
+            {
+                params: { token, clientId: entry.state.clientID.toString() },
+                userInfo: entry.currentUserInfo,
+                disableBc: isDesktop,
+            },
+        );
+        entry.cloudProvider = cloudProvider;
+        notifySubscribers(entry);
+
+        cloudProvider.awareness.on("update", () => {
+            const states = Array.from(cloudProvider.awareness.getStates().values());
+            const uniqueUsers = new Map<string, CollaboratorInfo>();
+            for (const s of states) {
+                if (s.user) {
+                    const user = s.user as CollaboratorInfo;
+                    const key = user.userId || user.name;
+                    if (!uniqueUsers.has(key)) uniqueUsers.set(key, user);
+                }
             }
-        } catch (e) {
-            console.warn("[ProjectYjs] Failed to refresh token:", e);
-        }
-    }, [projectId]);
+            const next = Array.from(uniqueUsers.values());
+            const nextJson = JSON.stringify(next);
+            if (nextJson !== entry.lastUsersJson) {
+                entry.lastUsersJson = nextJson;
+                entry.users = next;
+                notifySubscribers(entry);
+            }
+        });
 
-    // Keep the ref up to date
-    useEffect(() => {
-        refreshAndReconnectRef.current = refreshAndReconnect;
-    }, [refreshAndReconnect]);
-
-    // Initialize provider when doc is ready
-    useEffect(() => {
-        isMountedRef.current = true;
-        setIsProjectUnavailable(false);
-        setIsSessionReplaced(false);
-
-        if (!ydoc || !projectId || typeof window === "undefined") {
-            setConnectionStatus("disconnected");
-            return;
-        }
-
-        // If provider already exists for this doc, don't recreate
-        if (providerRef.current) {
-            return;
-        }
-
-        const setupProvider = async () => {
-            setConnectionStatus("connecting");
-
+        cloudProvider.on("connection-error", async () => {
+            // Skip terminal states — refreshing after a kick would just hit
+            // cloud-token, get 403, and loop forever.
+            if (cloudProvider.wasSessionReplaced || cloudProvider.wasKicked) return;
+            console.warn("[ProjectYjs] Connection error, attempting to refresh token...");
+            entry.connectionStatus = "connecting";
+            notifySubscribers(entry);
             try {
-                // Check if we're in Tauri environment first
-                const { isTauri } = await import("@tauri-apps/api/core");
-                const isDesktop = isTauri();
-
-                // Local-only projects (not cloud-synced) don't need cloud sync
-                const { isLocalOnlyProject } =
-                    await import("../persistence/storage-provider/local-persistence");
-                if (await isLocalOnlyProject(projectId)) {
-                    setConnectionStatus("disconnected");
-                    setIsCloudSynced(true);
-                    return;
-                }
-
-                const { token, status } = await getCloudToken(projectId);
-                if (!token || !isMountedRef.current) {
-                    setConnectionStatus("disconnected");
-                    setIsCloudSynced(true); // Mark as "synced" so isReady becomes true
-
-                    // 403 means the cloud project was deleted or the user was removed.
-                    // Surface the recovery dialog on both desktop and web — the local
-                    // cache is still valid and the user should choose what to do with it.
-                    if (status === 403) {
-                        setIsProjectUnavailable(true);
-                    }
-                    return;
-                }
-
-                // Dynamically import collaboration utils
-                const { ThrottledWebsocketProvider } = await import("../cloud/utils");
-
-                const cloudWsUrl = (process.env.NEXT_PUBLIC_CLOUD_URL || "").replace(/^http/, "ws");
-                const cloudProvider = new ThrottledWebsocketProvider(
-                    cloudWsUrl,
-                    projectId,
-                    ydoc,
-                    {
-                        params: {
-                            token,
-                            clientId: ydoc.clientID.toString(),
-                        },
-                        userInfo: userInfoRef.current,
-                        disableBc: isDesktop,
-                    },
+                const { token: refreshed, status: refreshStatus } = await getCloudToken(
+                    entry.projectId,
                 );
-
-                // Track connected users - only update state if users actually changed
-                cloudProvider.awareness.on("update", () => {
-                    if (!isMountedRef.current) return;
-
-                    const states = Array.from(cloudProvider.awareness.getStates().values());
-                    const uniqueUsersMap = new Map<string, CollaboratorInfo>();
-
-                    for (const state of states) {
-                        if (state.user) {
-                            const user = state.user as CollaboratorInfo;
-                            const key = user.userId || user.name;
-                            if (!uniqueUsersMap.has(key)) {
-                                uniqueUsersMap.set(key, user);
-                            }
-                        }
-                    }
-
-                    const connectedUsers = Array.from(uniqueUsersMap.values());
-                    const usersJson = JSON.stringify(connectedUsers);
-                    if (usersJson !== lastUsersJsonRef.current) {
-                        lastUsersJsonRef.current = usersJson;
-                        setUsers(connectedUsers);
-                    }
-                });
-
-                // Handle connection errors
-                cloudProvider.on("connection-error", async () => {
-                    if (cloudProvider.wasSessionReplaced) return;
-                    console.warn("[ProjectYjs] Connection error, attempting to refresh token...");
-                    if (isMountedRef.current) {
-                        setConnectionStatus("connecting");
-                        if (refreshAndReconnectRef.current) {
-                            await refreshAndReconnectRef.current();
-                        } else {
-                            cloudProvider.scheduleReconnect();
-                        }
-                    }
-                });
-
-                // Status updates
-                cloudProvider.on("status", (e: { status: string }) => {
-                    if (!isMountedRef.current) return;
-                    setConnectionStatus(e.status as ConnectionStatus);
-                    if (e.status === "connected" && cloudProvider.synced) {
-                        setIsCloudSynced(true);
-                    }
-                });
-
-                // Track when initial cloud sync completes
-                cloudProvider.on("sync", (isSynced: boolean) => {
-                    if (isMountedRef.current && isSynced) {
-                        setIsCloudSynced(true);
-                    }
-                });
-
-                // Surface session-replaced state to the UI so the connection
-                // indicator and recovery dialogs reflect the terminal state
-                // (the provider stops reconnecting after this fires).
-                cloudProvider.on("session-replaced", () => {
-                    if (!isMountedRef.current) return;
-                    setIsSessionReplaced(true);
-                    setConnectionStatus("disconnected");
-                });
-
-                // Handle document restore
-                cloudProvider.on("document-restored", async () => {
-                    if (!isMountedRef.current) return;
-                    console.log(
-                        "[ProjectYjs] Document restored — clearing local cache and reloading",
-                    );
-                    await clearLocalProjectCache(projectId);
-                    window.location.reload();
-                });
-
-                // Server rejected this client as stale — its bundle predates
-                // the doc's schema version. Surface to the UI so the user is
-                // prompted to update.
-                cloudProvider.on("stale-client-version", () => {
-                    if (!isMountedRef.current) return;
-                    console.warn("[ProjectYjs] Server rejected this client as stale");
-                    setIsStaleClient(true);
-                });
-
-                // Poll for synced status
-                const checkSynced = () => {
-                    if (!isMountedRef.current) return;
-                    if (cloudProvider.synced) {
-                        setIsCloudSynced(true);
-                    } else {
-                        setTimeout(checkSynced, 100);
-                    }
-                };
-                setTimeout(checkSynced, 50);
-
-                providerRef.current = cloudProvider;
-                setProvider(cloudProvider);
-            } catch (e) {
-                console.error("[ProjectYjs] Failed to initialize provider:", e);
-                if (isMountedRef.current) {
-                    setConnectionStatus("disconnected");
-                    setIsCloudSynced(true);
+                if (!isLive(entry)) return;
+                if (refreshStatus === 403) {
+                    cloudProvider.shouldConnect = false;
+                    cloudProvider.disconnect();
+                    entry.isProjectUnavailable = true;
+                    entry.connectionStatus = "disconnected";
+                    notifySubscribers(entry);
+                    return;
                 }
+                if (refreshed) await cloudProvider.updateToken(refreshed);
+            } catch (e) {
+                console.warn("[ProjectYjs] Failed to refresh token:", e);
             }
-        };
+        });
 
-        setupProvider();
+        cloudProvider.on("status", (e: { status: string }) => {
+            entry.connectionStatus = e.status as ConnectionStatus;
+            if (e.status === "connected" && cloudProvider.synced) entry.isCloudSynced = true;
+            notifySubscribers(entry);
+        });
 
-        const handleUnload = async () => {
-            if (providerRef.current && ydoc) {
+        cloudProvider.on("sync", (isSynced: boolean) => {
+            if (isSynced) {
+                entry.isCloudSynced = true;
+                notifySubscribers(entry);
+            }
+        });
+
+        cloudProvider.on("session-replaced", () => {
+            entry.isSessionReplaced = true;
+            entry.connectionStatus = "disconnected";
+            notifySubscribers(entry);
+        });
+
+        cloudProvider.on("kicked", () => {
+            entry.isProjectUnavailable = true;
+            entry.connectionStatus = "disconnected";
+            notifySubscribers(entry);
+        });
+
+        cloudProvider.on("document-restored", async () => {
+            console.log("[ProjectYjs] Document restored — clearing local cache and reloading");
+            try {
+                if (entry.localProvider?.clearData) {
+                    await entry.localProvider.clearData();
+                } else {
+                    const { clearYjsData } = await import(
+                        "../persistence/storage-provider/local-persistence"
+                    );
+                    await clearYjsData(entry.projectId);
+                }
+            } catch (e) {
+                console.warn("[ProjectYjs] Failed to clear local cache:", e);
+            }
+            window.location.reload();
+        });
+
+        cloudProvider.on("stale-client-version", () => {
+            console.warn("[ProjectYjs] Server rejected this client as stale");
+            entry.isStaleClient = true;
+            notifySubscribers(entry);
+        });
+    } catch (e) {
+        console.error("[ProjectYjs] Failed to initialize provider:", e);
+        if (!isLive(entry)) return;
+        entry.connectionStatus = "disconnected";
+        entry.isCloudSynced = true;
+        notifySubscribers(entry);
+    }
+};
+
+const acquireSession = (projectId: string, userInfo: UserInfo): SessionEntry => {
+    const existing = sessionCache.get(projectId);
+    if (existing) {
+        existing.refCount++;
+        existing.currentUserInfo = userInfo;
+        existing.cloudProvider?.setUserInfo(userInfo);
+        if (existing.disposeTimer) {
+            clearTimeout(existing.disposeTimer);
+            existing.disposeTimer = null;
+        }
+        return existing;
+    }
+
+    const entry: SessionEntry = {
+        projectId,
+        state: new ProjectState(),
+        localProvider: null,
+        cloudProvider: null,
+        isLocalReady: false,
+        isCloudSynced: false,
+        isCloudInitStarted: false,
+        migrationOutcome: null,
+        connectionStatus: "disconnected",
+        users: [],
+        isProjectUnavailable: false,
+        isSessionReplaced: false,
+        isStaleClient: false,
+        currentUserInfo: userInfo,
+        lastUsersJson: "",
+        refCount: 1,
+        disposeTimer: null,
+        subscribers: new Set(),
+    };
+    sessionCache.set(projectId, entry);
+    void initLocalProvider(entry);
+    return entry;
+};
+
+const releaseSession = (projectId: string): void => {
+    const entry = sessionCache.get(projectId);
+    if (!entry) return;
+    entry.refCount--;
+    if (entry.refCount > 0) return;
+
+    // Defer disposal so a synchronous remount (StrictMode) can cancel it via
+    // clearTimeout in acquireSession before the resources are torn down.
+    entry.disposeTimer = setTimeout(async () => {
+        entry.disposeTimer = null;
+        if (entry.refCount > 0) return;
+
+        if (entry.cloudProvider) {
+            try {
                 const { removeAwarenessStates } = await getYProtocols();
                 removeAwarenessStates(
-                    providerRef.current.awareness,
-                    [ydoc.clientID],
-                    "window unload",
+                    entry.cloudProvider.awareness,
+                    [entry.state.clientID],
+                    "session release",
                 );
-            }
-        };
-
-        window.addEventListener("beforeunload", handleUnload);
-
-        return () => {
-            isMountedRef.current = false;
-            window.removeEventListener("beforeunload", handleUnload);
-        };
-    }, [ydoc, projectId]);
-
-    useEffect(() => {
-        if (providerRef.current) {
-            providerRef.current.setUserInfo(userInfo);
+            } catch {}
+            entry.cloudProvider.destroy();
         }
-    }, [userInfo]);
-
-    useEffect(() => {
-        return () => {
-            if (providerRef.current) {
-                if (ydoc) {
-                    getYProtocols().then(({ removeAwarenessStates }) => {
-                        if (providerRef.current) {
-                            removeAwarenessStates(
-                                providerRef.current.awareness,
-                                [ydoc.clientID],
-                                "component unmount",
-                            );
-                            providerRef.current.destroy();
-                            providerRef.current = null;
-                            setProvider(null);
-                        }
-                    });
-                } else {
-                    providerRef.current.destroy();
-                    providerRef.current = null;
-                    setProvider(null);
-                }
-            }
-        };
-    }, [ydoc]);
-
-    return {
-        provider,
-        users,
-        connectionStatus,
-        isCloudSynced,
-        refreshAndReconnect,
-        isLockedByServer,
-        isSessionReplaced,
-        isProjectUnavailable,
-        isStaleClient,
-    };
+        entry.localProvider?.destroy();
+        entry.state.destroy();
+        sessionCache.delete(projectId);
+    }, 0);
 };
 
 // -------------------------------- //
@@ -516,13 +434,28 @@ export interface UseProjectYjsOptions {
     userId?: string;
 }
 
+const computeStatus = (entry: SessionEntry | null): ProjectStatus => {
+    if (!entry) return { kind: "loading" };
+    if (entry.isStaleClient) {
+        return { kind: "needs-update", outcome: { kind: "stale-client" } };
+    }
+    if (
+        entry.migrationOutcome?.kind === "future-version" ||
+        entry.migrationOutcome?.kind === "failed"
+    ) {
+        return { kind: "needs-update", outcome: entry.migrationOutcome };
+    }
+    if (entry.isProjectUnavailable) return { kind: "unavailable" };
+    if (!entry.isLocalReady) return { kind: "loading" };
+    return { kind: "ready" };
+};
+
 export const useProjectYjs = ({
     projectId,
     userName,
     userColor,
     userId,
 }: UseProjectYjsOptions): ProjectYjsState & {
-    isReady: boolean;
     refreshAndReconnect: () => Promise<void>;
 } => {
     const [fallback] = useState(() => ({
@@ -538,39 +471,80 @@ export const useProjectYjs = ({
         [userName, userColor, userId, fallback.name, fallback.color],
     );
 
-    const { ydoc, isLocalReady, migrationOutcome } = useLocalPersistence(projectId);
-    const {
-        provider,
-        users,
-        connectionStatus,
-        isCloudSynced,
-        refreshAndReconnect,
-        isLockedByServer,
-        isSessionReplaced,
-        isProjectUnavailable,
-        isStaleClient,
-    } = useCloudSync(projectId, isLocalReady ? ydoc : null, userInfo);
+    const entryRef = useRef<SessionEntry | null>(null);
+    const [, setVersion] = useState(0);
 
-    // isReady: project is ready when ydoc exists and local storage is synced
-    // Cloud sync happens in the background and will merge data when it arrives
-    const isCloudReady = connectionStatus === "connected";
-    const isReady = ydoc !== null && isLocalReady;
+    useEffect(() => {
+        if (!projectId || typeof window === "undefined") {
+            entryRef.current = null;
+            setVersion((v) => v + 1);
+            return;
+        }
 
+        const entry = acquireSession(projectId, userInfo);
+        entryRef.current = entry;
+        const onChange = () => setVersion((v) => v + 1);
+        entry.subscribers.add(onChange);
+        setVersion((v) => v + 1);
+
+        const handleUnload = async () => {
+            if (entry.cloudProvider) {
+                const { removeAwarenessStates } = await getYProtocols();
+                removeAwarenessStates(
+                    entry.cloudProvider.awareness,
+                    [entry.state.clientID],
+                    "window unload",
+                );
+            }
+        };
+        window.addEventListener("beforeunload", handleUnload);
+
+        return () => {
+            window.removeEventListener("beforeunload", handleUnload);
+            entry.subscribers.delete(onChange);
+            entryRef.current = null;
+            releaseSession(projectId);
+        };
+        // userInfo is intentionally NOT in the deps: re-acquiring on every
+        // userInfo change would defeat the cache. Updates flow via the
+        // separate effect below, which calls setUserInfo on the live provider.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [projectId]);
+
+    useEffect(() => {
+        const entry = entryRef.current;
+        if (!entry) return;
+        entry.currentUserInfo = userInfo;
+        entry.cloudProvider?.setUserInfo(userInfo);
+    }, [userInfo]);
+
+    const refreshAndReconnect = useCallback(async () => {
+        const entry = entryRef.current;
+        if (!entry?.cloudProvider || !projectId) return;
+        try {
+            const { token, status } = await getCloudToken(projectId);
+            if (status === 403) {
+                entry.cloudProvider.shouldConnect = false;
+                entry.cloudProvider.disconnect();
+                entry.isProjectUnavailable = true;
+                entry.connectionStatus = "disconnected";
+                notifySubscribers(entry);
+                return;
+            }
+            if (token) await entry.cloudProvider.updateToken(token);
+        } catch (e) {
+            console.warn("[ProjectYjs] Failed to refresh token:", e);
+        }
+    }, [projectId]);
+
+    const entry = entryRef.current;
     return {
-        ydoc,
-        provider,
-        isLocalReady,
-        isCloudReady,
-        isCloudSynced,
-        isReady,
-        connectionStatus,
-        users,
+        ydoc: entry?.state ?? null,
+        provider: entry?.cloudProvider ?? null,
+        status: computeStatus(entry),
+        connectionStatus: entry?.connectionStatus ?? "disconnected",
+        users: entry?.users ?? [],
         refreshAndReconnect,
-        isLockedByServer,
-        isSessionReplaced,
-        isProjectUnavailable,
-        isStaleClient,
-        migrationOutcome,
     };
 };
 

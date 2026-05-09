@@ -107,7 +107,7 @@ export type SceneContextProps = {
 const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
     const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
-    const { editor } = useContext(ProjectContext);
+    const { editor, isReadOnly } = useContext(ProjectContext);
     const scene: Scene = props.scene;
 
     return (
@@ -121,12 +121,16 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
                 text={t("selectInEditor")}
                 action={() => selectTextInEditor(editor!, scene.position, scene.nextPosition)}
             />
-            <div className={context.menu_separator} />
-            <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
-            <ContextMenuItem
-                text={t("cut")}
-                action={() => cutText(editor!, scene.position, scene.nextPosition)}
-            />
+            {!isReadOnly && (
+                <>
+                    <div className={context.menu_separator} />
+                    <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
+                    <ContextMenuItem
+                        text={t("cut")}
+                        action={() => cutText(editor!, scene.position, scene.nextPosition)}
+                    />
+                </>
+            )}
         </>
     );
 };
@@ -148,18 +152,22 @@ const CharacterItemMenu = ({ props }: SubMenuProps<CharacterContextProps>) => {
     const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
-    const { toggleCharacterHighlight } = projectCtx;
+    const { toggleCharacterHighlight, isReadOnly } = projectCtx;
     const character: CharacterData = props.character;
 
     return (
         <>
-            <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editCharacterPopup(character, userCtx)} />
-            <ContextMenuItem text={t("remove")} action={() => deleteCharacter(character.name, projectCtx)} />
-            <ContextMenuItem
-                text={t("paste")}
-                action={() => pasteText(projectCtx.editor!, character.name)}
-            />
-            <div className={context.menu_separator} />
+            {!isReadOnly && (
+                <>
+                    <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editCharacterPopup(character, userCtx)} />
+                    <ContextMenuItem text={t("remove")} action={() => deleteCharacter(character.name, projectCtx)} />
+                    <ContextMenuItem
+                        text={t("paste")}
+                        action={() => pasteText(projectCtx.editor!, character.name)}
+                    />
+                    <div className={context.menu_separator} />
+                </>
+            )}
             <ContextMenuItem
                 text={t("highlight")}
                 icon={Highlighter}
@@ -186,7 +194,10 @@ export type LocationContextProps = {
 const LocationItemMenu = ({ props }: SubMenuProps<LocationContextProps>) => {
     const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
+    const { isReadOnly } = projectCtx;
     const location: LocationData = props.location;
+
+    if (isReadOnly) return null;
 
     return (
         <>
@@ -212,7 +223,7 @@ export type EditorSelectionContextProps = {
 const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps>) => {
     const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
-    const { editor } = projectCtx;
+    const { editor, isReadOnly } = projectCtx;
     const { updateContextMenu } = useContext(UserContext);
     const { from, to, onAddComment } = props;
     const hasSelection = from !== to;
@@ -225,7 +236,7 @@ const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps
     };
 
     const handleCut = async () => {
-        if (!editor) return;
+        if (!editor || isReadOnly) return;
         const text = editor.state.doc.textBetween(from, to, "\n");
         await navigator.clipboard.writeText(text);
         editor.commands.deleteRange({ from, to });
@@ -233,7 +244,7 @@ const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps
     };
 
     const handlePaste = async () => {
-        if (!editor) return;
+        if (!editor || isReadOnly) return;
         editor.commands.insertContent(await readClipboardText());
         updateContextMenu(undefined);
     };
@@ -246,12 +257,16 @@ const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps
     return (
         <>
             {hasSelection && <ContextMenuItem text={t("copy")} icon={Copy} action={handleCopy} />}
-            {hasSelection && <ContextMenuItem text={t("cut")} action={handleCut} />}
-            <ContextMenuItem text={t("paste")} icon={hasSelection ? undefined : ClipboardPaste} action={handlePaste} />
+            {hasSelection && !isReadOnly && <ContextMenuItem text={t("cut")} action={handleCut} />}
+            {!isReadOnly && (
+                <ContextMenuItem text={t("paste")} icon={hasSelection ? undefined : ClipboardPaste} action={handlePaste} />
+            )}
             {hasSelection && (
                 <>
                     <div className={context.menu_separator} />
-                    <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
+                    {!isReadOnly && (
+                        <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
+                    )}
                     <ContextMenuItem text={t("searchOnWeb")} action={handleSearchOnWeb} />
                 </>
             )}
@@ -345,9 +360,11 @@ const SpellcheckMenu = ({ props }: SubMenuProps<SpellcheckContextProps>) => {
 
 const DualDialogueMenu = ({ props }: SubMenuProps<{ pos: number }>) => {
     const t = useTranslations("contextMenu");
-    const { editor } = useContext(ProjectContext);
+    const { editor, isReadOnly } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
     const { pos } = props;
+
+    if (isReadOnly) return null;
 
     return (
         <ContextMenuItem
@@ -367,12 +384,12 @@ const DualDialogueMenu = ({ props }: SubMenuProps<{ pos: number }>) => {
 
 const ShelveNodeMenu = ({ props }: SubMenuProps<{ pos: number; nodeClass: string }>) => {
     const t = useTranslations("contextMenu");
-    const { editor, repository } = useContext(ProjectContext);
+    const { editor, repository, isReadOnly } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
     const { pos, nodeClass } = props;
 
     const handleShelve = () => {
-        if (!editor || !repository) return;
+        if (!editor || !repository || isReadOnly) return;
         const candidate = extractShelveCandidate(editor, pos);
         if (candidate) {
             repository.shelveNode(candidate.nodeId, candidate.title, candidate.type, candidate.content);
@@ -406,6 +423,8 @@ const ShelveNodeMenu = ({ props }: SubMenuProps<{ pos: number; nodeClass: string
               ? t("shelveDialogue")
               : t("shelveAction");
 
+    if (isReadOnly) return null;
+
     return (
         <>
             <ContextMenuItem text={shelveLabel} icon={Archive} action={handleShelve} />
@@ -437,7 +456,7 @@ export type EditorContextMenuProps = {
 
 const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     const t = useTranslations("contextMenu");
-    const { editor, repository } = useContext(ProjectContext);
+    const { editor, repository, isReadOnly } = useContext(ProjectContext);
     const { worker } = useSpellcheck();
     const { updateContextMenu } = useContext(UserContext);
     const { from, to, onAddComment, spellError, nodePos, nodeClass } = props;
@@ -466,20 +485,20 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     };
 
     const handleCut = async () => {
-        if (!editor) return;
+        if (!editor || isReadOnly) return;
         await navigator.clipboard.writeText(editor.state.doc.textBetween(from, to, "\n"));
         editor.commands.deleteRange({ from, to });
         updateContextMenu(undefined);
     };
 
     const handlePaste = async () => {
-        if (!editor) return;
+        if (!editor || isReadOnly) return;
         editor.commands.insertContent(await readClipboardText());
         updateContextMenu(undefined);
     };
 
     const handleSpellReplace = (suggestion: string) => {
-        if (!editor || !spellError) return;
+        if (!editor || !spellError || isReadOnly) return;
         const tr = editor.state.tr.replaceWith(spellError.from, spellError.to, editor.state.schema.text(suggestion));
         editor.view.dispatch(tr);
         updateContextMenu(undefined);
@@ -503,7 +522,7 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     };
 
     const handleShelve = () => {
-        if (!editor || !repository || nodePos === undefined) return;
+        if (!editor || !repository || nodePos === undefined || isReadOnly) return;
         const candidate = extractShelveCandidate(editor, nodePos);
         if (candidate) {
             repository.shelveNode(candidate.nodeId, candidate.title, candidate.type, candidate.content);
@@ -554,27 +573,33 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
                             <p className="unselectable">{s}</p>
                         </div>
                     ))}
-                    <ContextMenuItem text={t("addToDictionary")} icon={BookPlus} action={handleAddToDictionary} />
+                    {!isReadOnly && (
+                        <ContextMenuItem text={t("addToDictionary")} icon={BookPlus} action={handleAddToDictionary} />
+                    )}
                     <div className={context.menu_separator} />
                 </>
             )}
 
-            {/* Clipboard — always visible */}
-            <ContextMenuItem text={t("cut")} icon={Scissors} action={handleCut} disabled={!hasSelection} />
+            {/* Clipboard — copy is always visible; cut/paste hidden for viewers */}
+            {!isReadOnly && (
+                <ContextMenuItem text={t("cut")} icon={Scissors} action={handleCut} disabled={!hasSelection} />
+            )}
             <ContextMenuItem text={t("copy")} action={handleCopy} disabled={!hasSelection} />
-            <ContextMenuItem text={t("paste")} action={handlePaste} />
+            {!isReadOnly && <ContextMenuItem text={t("paste")} action={handlePaste} />}
 
             {/* Selection actions — only when there's a selection and no spellcheck error */}
             {hasSelection && !spellError && (
                 <>
                     <div className={context.menu_separator} />
-                    <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
+                    {!isReadOnly && (
+                        <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
+                    )}
                     <ContextMenuItem text={t("searchOnWeb")} action={handleSearchOnWeb} />
                 </>
             )}
 
             {/* Node actions — shelve and optional dual dialogue */}
-            {isShelvable && (
+            {isShelvable && !isReadOnly && (
                 <>
                     <div className={context.menu_separator} />
                     <ContextMenuItem

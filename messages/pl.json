@@ -13,7 +13,9 @@
     "focusMode": "Tryb skupienia",
     "splitPanel": "Podziel panel",
     "unsplitPanel": "Zamknij panel",
-    "draftEditor": "Edytor szkiców"
+    "draftEditor": "Edytor szkiców",
+    "viewOnly": "Tylko podgląd",
+    "viewOnlyHint": "Masz dostęp gościa. Edytowanie jest wyłączone."
   },
   "common": {
     "save": "Zapisz zmiany",

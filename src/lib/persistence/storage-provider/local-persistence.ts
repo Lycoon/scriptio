@@ -133,8 +133,9 @@ export async function migrateToCachedProject(
 /**
  * Promote a local-only cached project to a cloud project, reusing the same id.
  * Creates a cloud project record + membership, then flips the local cache flag.
- * The Y.js doc at `scriptio-{projectId}` is unchanged — `useCloudSync` will
- * push it to the empty server doc on next mount via the standard CRDT handshake.
+ * The Y.js doc at `scriptio-{projectId}` is unchanged — the cloud provider in
+ * `useProjectYjs` will push it to the empty server doc on next mount via the
+ * standard CRDT handshake.
  */
 export async function promoteLocalProjectToCloud(projectId: string): Promise<void> {
     const local = await getCachedProject(projectId);
@@ -155,18 +156,23 @@ export async function promoteLocalProjectToCloud(projectId: string): Promise<voi
 }
 
 /**
+ * Delete the Yjs IndexedDB database for a project without touching its metadata.
+ * Used when the server restores a snapshot so the next load syncs a clean state.
+ */
+export async function clearYjsData(projectId: string): Promise<void> {
+    const dbName = yjsDbKey(projectId);
+    await new Promise<void>((resolve) => {
+        const req = indexedDB.deleteDatabase(dbName);
+        req.onsuccess = () => resolve();
+        req.onerror = () => resolve(); // best-effort
+        req.onblocked = () => resolve();
+    });
+}
+
+/**
  * Discard a cloud project's local data (cached entry + Yjs IndexedDB database).
  */
 export async function discardCloudProjectData(projectId: string): Promise<void> {
-    // Remove the cached project entry
     await deleteCachedProject(projectId);
-
-    // Delete the Yjs IndexedDB database for this project
-    const dbName = yjsDbKey(projectId);
-    await new Promise<void>((resolve, reject) => {
-        const req = indexedDB.deleteDatabase(dbName);
-        req.onsuccess = () => resolve();
-        req.onerror = () => reject(req.error);
-        req.onblocked = () => resolve();
-    });
+    await clearYjsData(projectId);
 }

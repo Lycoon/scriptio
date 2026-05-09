@@ -4,6 +4,7 @@ import * as bc from "lib0/broadcastchannel";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 import * as encoding from "lib0/encoding";
+import * as decoding from "lib0/decoding";
 import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
 import { CURRENT_PROJECT_VERSION } from "../project/migrations/project-migrations";
@@ -41,8 +42,11 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     on(event: "document-restored", listener: () => void): this;
     on(event: "stale-client-version", listener: () => void): this;
     on(event: "session-replaced", listener: () => void): this;
+    on(event: "kicked", listener: () => void): this;
+    on(event: "role-changed", listener: (role: string) => void): this;
     on(event: Parameters<WebsocketProvider["on"]>[0], listener: Parameters<WebsocketProvider["on"]>[1]): this;
-    on(event: string, listener: (...args: unknown[]) => void): this {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    on(event: string, listener: (...args: any[]) => void): this {
         return super.on(
             event as unknown as Parameters<WebsocketProvider["on"]>[0],
             listener as unknown as Parameters<WebsocketProvider["on"]>[1],
@@ -52,6 +56,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     emit(event: "document-restored", args: []): this;
     emit(event: "stale-client-version", args: []): this;
     emit(event: "session-replaced", args: []): this;
+    emit(event: "kicked", args: []): this;
+    emit(event: "role-changed", args: [string]): this;
     emit(event: Parameters<WebsocketProvider["emit"]>[0], args: Parameters<WebsocketProvider["emit"]>[1]): this;
     emit(event: string, args: unknown[]): this {
         super.emit(
@@ -59,6 +65,20 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             args as unknown as Parameters<WebsocketProvider["emit"]>[1],
         );
         return this;
+    }
+
+    off(event: "document-restored", listener: () => void): this;
+    off(event: "stale-client-version", listener: () => void): this;
+    off(event: "session-replaced", listener: () => void): this;
+    off(event: "kicked", listener: () => void): this;
+    off(event: "role-changed", listener: (role: string) => void): this;
+    off(event: Parameters<WebsocketProvider["off"]>[0], listener: Parameters<WebsocketProvider["off"]>[1]): this;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    off(event: string, listener: (...args: any[]) => void): this {
+        return super.off(
+            event as unknown as Parameters<WebsocketProvider["off"]>[0],
+            listener as unknown as Parameters<WebsocketProvider["off"]>[1],
+        ) as unknown as this;
     }
     private updateQueue: Uint8Array[] = [];
     private awarenessQueue: Set<number> = new Set();
@@ -92,6 +112,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     private isIdleDisconnected: boolean = false;
     private isSessionReplaced: boolean = false;
     private isStaleClient: boolean = false;
+    private isKicked: boolean = false;
     private lastKnownUserCount: number = 1;
 
     // Store userInfo so we can restore it on reconnection
@@ -99,6 +120,7 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
     // Close codes from server
     private readonly CLOSE_CODE_SESSION_REPLACED = 4001;
+    private readonly CLOSE_CODE_KICKED = 4003;
     private readonly CLOSE_CODE_DOCUMENT_RESTORED = 4005;
     private readonly CLOSE_CODE_STALE_CLIENT_VERSION = 4006;
 
@@ -165,6 +187,22 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             this.lastMessageTime = Date.now();
         };
 
+        // Custom message type 100 — server pushes the user's new role when an
+        // admin changes it. The DO has already updated its in-memory SessionInfo
+        // (so the server-side write gate is correct on the next message); this
+        // handler propagates the change to the UI so editor affordances flip
+        // immediately, without waiting for an SWR revalidation.
+        (this as unknown as WSInternals).messageHandlers[100] = (_encoder, ...rest: unknown[]) => {
+            this.lastMessageTime = Date.now();
+            const decoder = rest[0] as decoding.Decoder;
+            try {
+                const role = decoding.readVarString(decoder);
+                this.emit("role-changed", [role]);
+            } catch (e) {
+                console.warn("[WS] Failed to read role-changed message:", e);
+            }
+        };
+
         // Handle connection status changes
         this.on("status", this.onStatusChange);
 
@@ -215,8 +253,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         let currentWs: WebSocket | null = null;
 
         const checkAndHookWs = () => {
-            // Don't hook if session was already replaced or rejected as stale
-            if (this.isSessionReplaced || this.isStaleClient) return;
+            // Don't hook if session was already replaced, rejected as stale, or kicked
+            if (this.isSessionReplaced || this.isStaleClient || this.isKicked) return;
 
             const ws = (this as unknown as WSInternals).ws;
             if (ws && ws !== currentWs) {
@@ -225,6 +263,10 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
                 ws.onclose = (event: CloseEvent) => {
                     if (event.code === this.CLOSE_CODE_SESSION_REPLACED) {
                         this.handleSessionReplaced();
+                        return;
+                    }
+                    if (event.code === this.CLOSE_CODE_KICKED) {
+                        this.handleKicked();
                         return;
                     }
                     if (event.code === this.CLOSE_CODE_DOCUMENT_RESTORED) {
@@ -244,8 +286,13 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
 
         // Hook into new WebSocket connections when status changes
         this.on("status", (event: { status: string }) => {
-            // Only hook when connecting, not when already replaced or stale-rejected
-            if (event.status === "connecting" && !this.isSessionReplaced && !this.isStaleClient) {
+            // Only hook when connecting, not when already replaced, stale-rejected, or kicked
+            if (
+                event.status === "connecting" &&
+                !this.isSessionReplaced &&
+                !this.isStaleClient &&
+                !this.isKicked
+            ) {
                 setTimeout(checkAndHookWs, 0);
             }
         });
@@ -286,6 +333,29 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
         this.shouldConnect = false;
         this.disconnect();
         this.emit("document-restored", []);
+    }
+
+    /**
+     * Handle kick close (4003) — the user was removed from the project. Stop
+     * reconnecting (the cloud token endpoint will reject us with 403 forever)
+     * and notify the consumer to surface the project-unavailable dialog.
+     */
+    private handleKicked(): void {
+        console.log("[WS] User was kicked from the project. Stopping reconnection.");
+        this.isKicked = true;
+
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
+        this.shouldConnect = false;
+        this.disconnect();
+        this.emit("kicked", []);
+    }
+
+    public get wasKicked(): boolean {
+        return this.isKicked;
     }
 
     /**
@@ -660,13 +730,21 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
      * Handle document updates (throttled)
      */
     private onThrottledUpdate = (update: Uint8Array, origin: unknown): void => {
-        if (origin !== this) {
-            this.updateQueue.push(update);
-            // Cap queue length on long disconnects. The local doc still holds
-            // every change; sync on reconnect will replay them.
-            if (this.updateQueue.length > this.MAX_UPDATE_QUEUE) {
-                this.updateQueue.splice(0, this.updateQueue.length - this.MAX_UPDATE_QUEUE);
-            }
+        if (origin === this) return;
+
+        // Read-only short-circuit: when the local doc is in viewer mode, the
+        // ProjectState rollback guard reverts every local write immediately.
+        // Both the original write and the inverse op fire `update` events, but
+        // the server would drop them anyway (protocol.ts blocks viewer writes).
+        // Skip the queue entirely to save bandwidth and keep the WS quiet.
+        const ydoc = this.doc as { isReadOnly?: boolean };
+        if (ydoc.isReadOnly) return;
+
+        this.updateQueue.push(update);
+        // Cap queue length on long disconnects. The local doc still holds
+        // every change; sync on reconnect will replay them.
+        if (this.updateQueue.length > this.MAX_UPDATE_QUEUE) {
+            this.updateQueue.splice(0, this.updateQueue.length - this.MAX_UPDATE_QUEUE);
         }
     };
 
@@ -902,5 +980,23 @@ export const blacklistFromWebsocket = async (userId: string, projectId: string) 
             Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ userId }),
+    });
+};
+
+export const notifyRoleChange = async (userId: string, projectId: string, role: string) => {
+    const payload = {
+        type: "admin-action",
+        projectId,
+    };
+
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    const token = await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setExpirationTime("1m").sign(secret);
+    await fetch(`${process.env.NEXT_PUBLIC_CLOUD_URL}/${projectId}/role-update`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId, role }),
     });
 };
