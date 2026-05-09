@@ -2,7 +2,7 @@
 
 import { useContext, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { getBoardMap, BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
+import { BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
 import BoardCard from "./BoardCard";
 import styles from "./BoardCanvas.module.css";
 import { v7 as uuidv7 } from "uuid";
@@ -36,9 +36,9 @@ interface ArrowContextMenuState {
 }
 
 const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
-    const { repository, isYjsReady } = useContext(ProjectContext);
+    const { repository, isYjsReady, isReadOnly } = useContext(ProjectContext);
     const t = useTranslations("board");
-    const ydoc = repository?.getState();
+    const projectState = repository?.getState();
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -123,9 +123,9 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
 
     // Sync cards with Yjs
     useEffect(() => {
-        if (!ydoc || !isYjsReady) return;
+        if (!projectState || !isYjsReady) return;
 
-        const boardMap = getBoardMap(ydoc);
+        const boardMap = projectState.board();
 
         const syncCards = () => {
             const cardsData = boardMap.get("cards");
@@ -176,26 +176,26 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         return () => {
             boardMap.unobserve(syncCards);
         };
-    }, [ydoc, isYjsReady, centerCameraOnCards]);
+    }, [projectState, isYjsReady, centerCameraOnCards]);
 
     // Save cards to Yjs
     const saveCards = useCallback(
         (newCards: BoardCardData[]) => {
-            if (!ydoc || !isYjsReady) return;
-            const boardMap = getBoardMap(ydoc);
+            if (!projectState || !isYjsReady || isReadOnly) return;
+            const boardMap = projectState.board();
             boardMap.set("cards", JSON.stringify(newCards));
         },
-        [ydoc, isYjsReady],
+        [projectState, isYjsReady, isReadOnly],
     );
 
     // Save arrows to Yjs
     const saveArrows = useCallback(
         (newArrows: BoardArrowData[]) => {
-            if (!ydoc || !isYjsReady) return;
-            const boardMap = getBoardMap(ydoc);
+            if (!projectState || !isYjsReady || isReadOnly) return;
+            const boardMap = projectState.board();
             boardMap.set("arrows", JSON.stringify(newArrows));
         },
-        [ydoc, isYjsReady],
+        [projectState, isYjsReady, isReadOnly],
     );
 
     // Handle keyboard events for snapping

@@ -15,9 +15,7 @@ import styles from "./CollaboratorsSettings.module.css";
 import { deleteInvite, inviteCollaborator, kickCollaborator, updateMemberRole } from "@src/lib/utils/requests";
 
 import * as Roles from "@src/lib/utils/roles";
-import { ApiResponse } from "@src/lib/utils/api-utils";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 
 const MAX_COLLABORATORS = 5;
@@ -169,18 +167,17 @@ const MemberSlot = ({ data, membership, mutateCollaborators, user }: MemberSlotP
 
     const handleKick = async () => {
         const res = await kickCollaborator(membership.project.id, data.user.id);
+        if (!res.ok) return;
 
-        if (res.ok) {
-            if (res.status !== 204) {
-                // If user left the project by himself, redirect him to home
-                const json = (await res.json()) as ApiResponse<{ redirectUrl: string }>;
-                if (json.data && json.data.redirectUrl) {
-                    closeDashboard();
-                    redirect(json.data.redirectUrl);
-                }
-            } else {
-                mutateCollaborators();
-            }
+        if (isSelf) {
+            // Self-leave: the server has already deleted the membership and
+            // blacklisted the user on the WS, so a 4003 close is on its way.
+            // The cloud-sync hook surfaces ProjectUnavailableDialog from there,
+            // letting the leaver decide whether to keep a local copy or discard.
+            // We just close the dashboard so the dialog isn't covered.
+            closeDashboard();
+        } else {
+            mutateCollaborators();
         }
     };
 

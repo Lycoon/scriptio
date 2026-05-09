@@ -58,6 +58,11 @@ export async function importFileIntoProject(
         throw new Error(`Unsupported file type: ${file.name.split(".").pop()}`);
     }
 
+    // Bail before reading the file when the doc is in read-only mode (viewer
+    // role). The Y.Doc rollback gate would revert every write the adapter
+    // emits — this just avoids a brief flash of imported content in the UI.
+    if (repository?.getState().isReadOnly) return;
+
     const content = await file.arrayBuffer();
     adapter.import(content, editor, titlePageEditor, repository);
     if (editor) editor.commands.focus();

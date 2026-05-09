@@ -164,12 +164,16 @@ export class ProjectRoom extends DurableObject {
         const hibernatedSockets = this.ctx.getWebSockets();
         for (const ws of hibernatedSockets) {
             const attachment = ws.deserializeAttachment() as
-                | { userId: string; clientIds: number[] }
+                | { userId: string; role?: string; clientIds: number[] }
                 | null;
             if (!attachment) continue;
             this.sessions.set(ws, {
                 clientIds: new Set(attachment.clientIds),
                 userId: attachment.userId,
+                // Older attachments may not have a role; default to VIEWER
+                // (read-only) to fail safe — the client will reconnect with a
+                // fresh JWT carrying the correct role on the next message.
+                role: attachment.role || "VIEWER",
                 lastActivity: Date.now(),
             });
             this.userConnections.set(attachment.userId, ws);
@@ -189,14 +193,15 @@ export class ProjectRoom extends DurableObject {
 
     /**
      * Persist the current session state on the WebSocket so it survives
-     * Cloudflare DO hibernation. Called whenever clientIds or userId changes
-     * for a session.
+     * Cloudflare DO hibernation. Called whenever clientIds, userId, or role
+     * changes for a session.
      */
     private persistSessionAttachment(ws: WebSocket): void {
         const session = this.sessions.get(ws);
         if (!session) return;
         ws.serializeAttachment({
             userId: session.userId,
+            role: session.role,
             clientIds: Array.from(session.clientIds),
         });
     }
@@ -582,12 +587,46 @@ export class ProjectRoom extends DurableObject {
             return new Response(`User ${userId} allowed.`, { status: 200 });
         }
 
+        // Role-update endpoint — push a role change to a connected user.
+        // Updates the in-memory SessionInfo so the protocol's write gate uses
+        // the new role on the next message, and notifies the client so its
+        // local `project.role` updates without a manual refresh. We don't
+        // close the socket: the existing JWT carries the OLD role, but the
+        // server-side gate is the source of truth and is now correct.
+        if (request.method === "POST" && url.pathname === "/role-update") {
+            const { userId, role } = (await request.json()) as { userId?: string; role?: string };
+            if (!userId || !role) {
+                return new Response("Missing userId or role", { status: 400 });
+            }
+
+            const socket = this.userConnections.get(userId);
+            if (socket) {
+                const session = this.sessions.get(socket);
+                if (session) {
+                    session.role = role;
+                    this.persistSessionAttachment(socket);
+                }
+                try {
+                    const encoder = encoding.createEncoder();
+                    encoding.writeVarUint(encoder, 100); // custom message type: role-update
+                    encoding.writeVarString(encoder, role);
+                    socket.send(encoding.toUint8Array(encoder));
+                } catch (e) {
+                    console.warn(`[Room] Failed to push role-update to ${userId}:`, e);
+                }
+            }
+
+            console.log(`[Room] Role updated for user ${userId} -> ${role}`);
+            return new Response(`User ${userId} role updated.`, { status: 200 });
+        }
+
         // WebSocket upgrade
         if (request.headers.get("Upgrade") === "websocket") {
             const userId = request.headers.get("X-User-Id");
             if (!userId) {
                 return new Response("Missing User Identity", { status: 400 });
             }
+            const role = request.headers.get("X-User-Role") || "VIEWER";
 
             if (this.blacklist.has(userId)) {
                 return new Response("Unauthorized: You have been kicked.", { status: 403 });
@@ -642,6 +681,7 @@ export class ProjectRoom extends DurableObject {
             this.sessions.set(server, {
                 clientIds: new Set(),
                 userId,
+                role,
                 lastActivity: Date.now(),
             });
             this.userConnections.set(userId, server);

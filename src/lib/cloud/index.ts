@@ -7,6 +7,7 @@ interface DecodedToken extends JWTPayload {
     type?: string;
     projectId?: string;
     userId?: string;
+    role?: string;
 }
 
 async function getVerifiedPayload(token: string | null, secret: string): Promise<DecodedToken | null> {
@@ -36,9 +37,12 @@ const worker = {
         // segments: [projectId, ...rest]
         const doPath = "/" + segments.slice(1).join("/");
 
-        // Authenticated API endpoints (saves, blacklist, allow)
+        // Authenticated API endpoints (saves, blacklist, allow, role-update)
         const isAuthEndpoint =
-            url.pathname.includes("/saves") || url.pathname.endsWith("/blacklist") || url.pathname.endsWith("/allow");
+            url.pathname.includes("/saves") ||
+            url.pathname.endsWith("/blacklist") ||
+            url.pathname.endsWith("/allow") ||
+            url.pathname.endsWith("/role-update");
 
         if (isAuthEndpoint && request.method !== "GET") {
             const authHeader = request.headers.get("Authorization");
@@ -99,6 +103,7 @@ const worker = {
 
             const newRequest = new Request(request);
             newRequest.headers.set("X-User-Id", userId);
+            newRequest.headers.set("X-User-Role", decoded.role || "VIEWER");
             newRequest.headers.set("X-Project-Id", projectId);
 
             const stub = env.PROJECT_ROOM.get(env.PROJECT_ROOM.idFromName(projectId));

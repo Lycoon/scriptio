@@ -6,6 +6,8 @@ import { EditorContent } from "@tiptap/react";
 
 import { applyElement, insertElement, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
 import { ScreenplayElement } from "@src/lib/utils/enums";
+import { Eye } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { DUAL_DIALOGUE_COLUMN } from "@src/lib/screenplay/nodes/dual-dialogue-column-node";
 import { DEFAULT_ELEMENT_MARGINS, DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
 import { join } from "@src/lib/utils/misc";
@@ -59,6 +61,7 @@ const DocumentEditorPanel = ({
     const projectCtx = useContext(ProjectContext);
     const {
         isYjsReady,
+        isReadOnly,
         selectedElement,
         setSelectedElement,
         setSelectedStyles,
@@ -123,6 +126,17 @@ const DocumentEditorPanel = ({
             onEditorCreated?.(null);
         };
     }, [editor, onEditorCreated]);
+
+    // Read-only enforcement for VIEWER role.
+    //
+    // The server already drops doc writes from viewers (see protocol.ts), but
+    // disabling tiptap locally avoids a confusing "I typed but nothing
+    // happened" experience: keystrokes are blocked at the editor level and
+    // collaboration carets/awareness still render normally.
+    useEffect(() => {
+        if (!editor || editor.isDestroyed) return;
+        editor.setEditable(!isReadOnly);
+    }, [editor, isReadOnly]);
 
     // Ready state
     useEffect(() => {
@@ -514,6 +528,15 @@ const DocumentEditorPanel = ({
     const focusType =
         focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
 
+    const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
+    const wrapperStyle = pageSize
+        ? ({
+              "--page-width": `${pageSize.pageWidth}px`,
+              "--page-height": `${pageSize.pageHeight}px`,
+          } as React.CSSProperties)
+        : undefined;
+
+    const t = useTranslations("navbar");
     const isLocalAccess = isTauri() || isLocalOnly;
     if (!isLocalAccess && (!membership || isLoading)) return <Loading />;
 
@@ -524,13 +547,30 @@ const DocumentEditorPanel = ({
                 onScroll={onScroll}
                 onMouseDown={handleContainerMouseDown}
                 onFocus={() => setFocusedEditorType(focusType)}
+                onPasteCapture={
+                    isReadOnly
+                        ? (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                          }
+                        : undefined
+                }
             >
                 <div
                     className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}
+                    style={wrapperStyle}
                 >
                     <div
                         className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")}
                     />
+                    {isReadOnly && (
+                        <div className={styles.viewOnlyBannerWrapper}>
+                            <div className={styles.viewOnlyBanner} title={t("viewOnlyHint")}>
+                                <Eye size={14} />
+                                <span>{t("viewOnly")}</span>
+                            </div>
+                        </div>
+                    )}
                     <div onContextMenu={onEditorContextMenu}>
                         <EditorContent editor={editor} spellCheck={false} />
                     </div>

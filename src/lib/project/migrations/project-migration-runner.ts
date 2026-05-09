@@ -6,9 +6,9 @@
  *     DurableObject (server-side gatekeeper) to migrate the doc on load
  *     before serving updates to clients.
  *   - `migrateProjectDoc`: client wrapper that adds an IndexedDB pre-migration
- *     backup so a failed step can be rolled back. Called from
- *     `useLocalPersistence` after `y-indexeddb` has synced and before the
- *     cloud `WebsocketProvider` connects.
+ *     backup so a failed step can be rolled back. Called from the session
+ *     cache in `project-state.ts` after `y-indexeddb` has synced and before
+ *     the cloud `WebsocketProvider` connects.
  *
  * Both rely on idempotent migration steps so concurrent migrations across
  * the DO and any number of clients converge cleanly under CRDT merge.

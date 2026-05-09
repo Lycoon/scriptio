@@ -12,21 +12,15 @@
     align-items: center;
     gap: 16px;
 
-    border-radius: 18px;
-    border: none;
+    border-radius: 24px;
+    border: 2px solid var(--separator);
     background-color: var(--project-item-bg);
-    box-shadow: var(--panel-shadow);
 
-    transition: background-color 0.15s ease, transform 0.15s ease;
-}
-
-.container:hover {
-    background-color: var(--secondary-hover);
-    transform: translateY(-1px);
+    transition: transform 0.15s ease;
 }
 
 .container:active {
-    transform: scale(0.99);
+    transform: scale(0.98);
     transition: transform 0.07s;
 }
 
@@ -53,8 +47,7 @@
     font-family: var(--font-inter), sans-serif;
     font-style: italic;
     font-weight: 400;
-    font-size: 1.3rem;
-    text-align: left;
+    font-size: 1.4rem;
 
     white-space: nowrap;
     overflow: hidden;

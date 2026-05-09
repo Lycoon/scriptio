@@ -14,7 +14,9 @@
     "focusMode": "Mode concentration",
     "splitPanel": "Diviser le panneau",
     "unsplitPanel": "Fermer le panneau divisé",
-    "draftEditor": "Éditeur de brouillon"
+    "draftEditor": "Éditeur de brouillon",
+    "viewOnly": "Vue seule",
+    "viewOnlyHint": "Vous avez un accès visiteur. La modification est désactivée."
   },
   "common": {
     "save": "Enregistrer",

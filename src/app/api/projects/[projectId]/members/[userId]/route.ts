@@ -80,6 +80,10 @@ async function updateProjectMemberRole(req: NextRequest, { routeParams, user }: 
     }
 
     const updated = await ProjectService.upsertMember(projectId, userToUpdateId, newRole);
+    // Push the new role to any active WS so the server-side write gate and the
+    // client UI flip to the new permissions immediately. Without this the
+    // downgraded user keeps editing until they refresh — a security hole.
+    await CollabUtils.notifyRoleChange(userToUpdateId, projectId, newRole);
     return Success(updated);
 }
 
@@ -99,7 +103,12 @@ async function deleteProjectMember(req: NextRequest, { routeParams, user }: Auth
     if (isSelf) {
         if (member.role !== ProjectRole.OWNER) {
             await ProjectService.deleteProjectMember(projectId, userToDelete);
-            return Success({ redirectUrl: "/projects" });
+            // Blacklist the leaver too so any open WS gets a 4003 close,
+            // which surfaces ProjectUnavailableDialog on the leaver's tab
+            // (consistent with the kick flow). Without this the user would
+            // stay connected with stale credentials until the JWT expires.
+            await CollabUtils.blacklistFromWebsocket(userToDelete, projectId);
+            return SuccessNoContent();
         } else {
             throw new ForbiddenError("Owner cannot leave project");
         }

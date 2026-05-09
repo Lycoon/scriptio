@@ -8,6 +8,7 @@ import * as UserService from "@src/server/service/user-service";
 import * as ProjectService from "@src/server/service/project-service";
 import * as MagicLinkService from "@src/server/service/magic-link-service";
 import * as Misc from "@src/lib/utils/misc";
+import * as CollabUtils from "@src/lib/cloud/utils";
 import { putBridgeToken } from "@src/lib/desktop-bridge";
 import {
     encodeDesktopBearer,
@@ -65,6 +66,14 @@ async function verifyMagicLinkRoute(req: NextRequest) {
             ) {
                 await ProjectService.upsertMember(invite.projectId, user.id);
                 await ProjectService.deleteInviteFromToken(record.inviteToken);
+                // Clear any leftover DO blacklist entry from a prior kick so
+                // the freshly re-invited user can actually open a WS to the
+                // project room (otherwise the upgrade returns 403 forever).
+                try {
+                    await CollabUtils.allowOnWebsocket(user.id, invite.projectId);
+                } catch (err) {
+                    console.error("[magic-link] Failed to clear blacklist:", err);
+                }
             }
         } catch (err) {
             console.error("[magic-link] Invite acceptance failed:", err);

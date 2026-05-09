@@ -24,6 +24,22 @@
     contain: layout;
 }
 
+/* Default page-shaped sizing for the ProseMirror element so it is correctly
+ * dimensioned from its very first paint. The pagination extension's onCreate
+ * fires asynchronously (Tiptap emits 'create' via setTimeout(0)), which would
+ * otherwise leave a gap where .ProseMirror exists without the .pagination
+ * class — stretching to the full wrapper width before snapping back to the
+ * page width. The wrapper sets --page-width / --page-height inline based on
+ * pageFormat, and the !important rule from the pagination extension's
+ * stylesheet still wins once the class is added (with the same value, so no
+ * visible change). */
+.editor_wrapper :global(.ProseMirror) {
+    width: var(--page-width);
+    min-height: var(--page-height);
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
 .editor_shadow {
     position: sticky;
     top: 0;
@@ -40,7 +56,48 @@
     transition: opacity 0.7s ease;
     background: linear-gradient(to bottom, var(--editor-shadow) 0%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 20%,
+        black 80%,
+        transparent 100%
+    );
+}
+
+/* Zero-height sticky container so the banner overlays the editor without
+ * shifting any content — overflow: visible lets the banner render beyond it. */
+.viewOnlyBannerWrapper {
+    position: sticky;
+    top: 0;
+    z-index: 51;
+    height: 0;
+    overflow: visible;
+    pointer-events: none;
+    width: 100%;
+}
+
+/* Read-only banner shown to VIEWER role at the top of the editor scroll area. */
+.viewOnlyBanner {
+    pointer-events: auto;
+    width: fit-content;
+    margin: 0 auto;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 0 0 12px 12px;
+
+    background-color: var(--main-bg);
+    border-top: none;
+    color: var(--secondary-text);
+    font-size: 0.75rem;
+    font-weight: 500;
+    user-select: none;
+    cursor: default;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .show_shadow {

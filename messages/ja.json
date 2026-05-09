@@ -13,7 +13,9 @@
     "focusMode": "集中モード",
     "splitPanel": "パネルを分割",
     "unsplitPanel": "パネルを閉じる",
-    "draftEditor": "下書きエディター"
+    "draftEditor": "下書きエディター",
+    "viewOnly": "閲覧のみ",
+    "viewOnlyHint": "閲覧者アクセスです。編集は無効になっています。"
   },
   "common": {
     "save": "変更を保存",

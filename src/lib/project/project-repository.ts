@@ -41,6 +41,22 @@ export class ProjectRepository {
         this.ydoc = ydoc;
     }
 
+    setReadOnly(readOnly: boolean): void {
+        this.ydoc.setReadOnly(readOnly);
+    }
+
+    get readOnly(): boolean {
+        return this.ydoc.isReadOnly;
+    }
+
+    private guardWrite(op: string): boolean {
+        if (this.ydoc.isReadOnly) {
+            console.warn(`[Repo] Blocked ${op}: project is read-only`);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Get the underlying Y.js document.
      * Use sparingly - prefer using repository methods when possible.
@@ -118,10 +134,12 @@ export class ProjectRepository {
     }
 
     setTitle(title: string): void {
+        if (this.guardWrite("setTitle")) return;
         this.ydoc.metadata().set("title", title);
     }
 
     setAuthor(author: string): void {
+        if (this.guardWrite("setAuthor")) return;
         this.ydoc.metadata().set("author", author);
     }
 
@@ -229,6 +247,7 @@ export class ProjectRepository {
      * Returns the scene id.
      */
     upsertScene(sceneId: string, data: Partial<PersistentScene>): string {
+        if (this.guardWrite("upsertScene")) return sceneId;
         const map = this.ydoc.scenes();
         const existing = map.get(sceneId) as PersistentScene | undefined;
 
@@ -266,6 +285,7 @@ export class ProjectRepository {
      * Delete a scene's persistent data.
      */
     deleteScene(sceneId: string): void {
+        if (this.guardWrite("deleteScene")) return;
         const map = this.ydoc.scenes();
         if (map.has(sceneId)) {
             map.delete(sceneId);
@@ -305,30 +325,39 @@ export class ProjectRepository {
     }
 
     setPageSize(pageSize: PageFormat) {
+        if (this.guardWrite("setPageSize")) return;
         this.ydoc.layout().set("pageSize", pageSize);
     }
     setPageMargins(margins: PageMargin) {
+        if (this.guardWrite("setPageMargins")) return;
         this.ydoc.layout().set("pageMargins", margins);
     }
     setDisplaySceneNumbers(display: boolean) {
+        if (this.guardWrite("setDisplaySceneNumbers")) return;
         this.ydoc.layout().set("displaySceneNumbers", display);
     }
     setSceneHeadingSpacing(spacing: number) {
+        if (this.guardWrite("setSceneHeadingSpacing")) return;
         this.ydoc.layout().set("sceneHeadingSpacing", spacing);
     }
     setSceneNumberOnRight(onRight: boolean) {
+        if (this.guardWrite("setSceneNumberOnRight")) return;
         this.ydoc.layout().set("sceneNumberOnRight", onRight);
     }
     setContdLabel(label: string) {
+        if (this.guardWrite("setContdLabel")) return;
         this.ydoc.layout().set("contdLabel", label);
     }
     setMoreLabel(label: string) {
+        if (this.guardWrite("setMoreLabel")) return;
         this.ydoc.layout().set("moreLabel", label);
     }
     setElementMargins(margins: Record<string, { left: number; right: number }>) {
+        if (this.guardWrite("setElementMargins")) return;
         this.ydoc.layout().set("elementMargins", margins);
     }
     setElementStyles(styles: Record<string, ElementStyle>) {
+        if (this.guardWrite("setElementStyles")) return;
         this.ydoc.layout().set("elementStyles", styles);
     }
 
@@ -350,12 +379,14 @@ export class ProjectRepository {
     }
 
     addCommentToMap(map: Y.Map<Comment>, comment: Omit<Comment, "id">): string {
+        if (this.guardWrite("addComment")) return "";
         const id = uuidv7();
         map.set(id, { ...comment, id });
         return id;
     }
 
     updateCommentInMap(map: Y.Map<Comment>, commentId: string, data: Partial<Comment>): void {
+        if (this.guardWrite("updateComment")) return;
         const existing = map.get(commentId);
         if (!existing) return;
         map.set(commentId, { ...existing, ...data });
@@ -366,6 +397,7 @@ export class ProjectRepository {
     }
 
     addReplyToMap(map: Y.Map<Comment>, commentId: string, reply: Omit<CommentReply, "id">): string | undefined {
+        if (this.guardWrite("addReply")) return undefined;
         const existing = map.get(commentId);
         if (!existing) return undefined;
         const id = uuidv7();
@@ -375,6 +407,7 @@ export class ProjectRepository {
     }
 
     deleteCommentFromMap(map: Y.Map<Comment>, commentId: string): void {
+        if (this.guardWrite("deleteComment")) return;
         if (map.has(commentId)) {
             map.delete(commentId);
         }
@@ -434,6 +467,7 @@ export class ProjectRepository {
 
     /** Create a new shelf entry or add a version to an existing one. Returns the version ID. */
     shelveNode(nodeId: string, title: string, type: ShelfEntryType, content: JSONContent[]): string {
+        if (this.guardWrite("shelveNode")) return "";
         const map = this.ydoc.shelf();
         const existing = map.get(nodeId) as ShelfEntry | undefined;
         const versionId = generateNodeId();
@@ -465,6 +499,7 @@ export class ProjectRepository {
     }
 
     renameShelfVersion(nodeId: string, versionId: string, newTitle: string): void {
+        if (this.guardWrite("renameShelfVersion")) return;
         const map = this.ydoc.shelf();
         const entry = map.get(nodeId) as ShelfEntry | undefined;
         if (!entry) return;
@@ -473,6 +508,7 @@ export class ProjectRepository {
     }
 
     deleteShelfEntry(nodeId: string): void {
+        if (this.guardWrite("deleteShelfEntry")) return;
         const map = this.ydoc.shelf();
         const entry = map.get(nodeId) as ShelfEntry | undefined;
         if (!entry) return;
@@ -487,6 +523,7 @@ export class ProjectRepository {
     }
 
     deleteShelfVersion(nodeId: string, versionId: string): void {
+        if (this.guardWrite("deleteShelfVersion")) return;
         const map = this.ydoc.shelf();
         const entry = map.get(nodeId) as ShelfEntry | undefined;
         if (!entry) return;

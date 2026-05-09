@@ -13,7 +13,9 @@
     "focusMode": "Focus Mode",
     "splitPanel": "Split Panel",
     "unsplitPanel": "Unsplit Panel",
-    "draftEditor": "Draft Editor"
+    "draftEditor": "Draft Editor",
+    "viewOnly": "View only",
+    "viewOnlyHint": "You have viewer access. Editing is disabled."
   },
   "common": {
     "save": "Save",

@@ -14,6 +14,7 @@ import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/character
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
 import { mergeScenesData, PersistentSceneMap, Scene } from "@src/lib/screenplay/scenes";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { ProjectRole } from "@src/generated/client/browser";
 import { useUser } from "@src/lib/utils/hooks";
 import {
     CollaboratorInfo,
@@ -24,8 +25,8 @@ import {
     PageMargin,
     DEFAULT_PAGE_MARGINS,
     ShelfEntry,
+    ProjectStatus,
 } from "@src/lib/project/project-state";
-import type { ProjectMigrationOutcome } from "@src/lib/project/migrations/project-migration-runner";
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
@@ -47,6 +48,11 @@ export interface ProjectContextType {
     repository: ProjectRepository | null;
     provider: ThrottledWebsocketProvider | null;
     isYjsReady: boolean;
+
+    /** True when the current user has VIEWER role on a cloud project.
+     *  All edit affordances must be hidden/disabled when this is true,
+     *  and the repository's writes are no-ops as a safety net. */
+    isReadOnly: boolean;
 
     // Connection state
     connectionStatus: ConnectionStatus;
@@ -137,6 +143,7 @@ const defaultContextValue: ProjectContextType = {
     repository: null,
     provider: null,
     isYjsReady: false,
+    isReadOnly: false,
 
     connectionStatus: "disconnected",
     users: [],
@@ -215,17 +222,11 @@ export const ProjectContext = createContext<ProjectContextType>(defaultContextVa
 // Stable context for rarely-changing infrastructure values.
 // Prevents ProjectLayoutInner from re-rendering on every screenplay change.
 interface ProjectReadyContextType {
-    isYjsReady: boolean;
-    isProjectUnavailable: boolean;
-    isStaleClient: boolean;
-    migrationOutcome: ProjectMigrationOutcome | null;
+    status: ProjectStatus;
 }
 
 const ProjectReadyContext = createContext<ProjectReadyContextType>({
-    isYjsReady: false,
-    isProjectUnavailable: false,
-    isStaleClient: false,
-    migrationOutcome: null,
+    status: { kind: "loading" },
 });
 
 export const useProjectReady = () => useContext(ProjectReadyContext);
@@ -251,12 +252,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const {
         ydoc,
         provider,
-        isReady: isYjsReady,
+        status,
         connectionStatus: yjsConnectionStatus,
         users: yjsUsers,
-        isProjectUnavailable,
-        isStaleClient,
-        migrationOutcome,
     } = useProjectYjs({
         projectId,
         userName,
@@ -264,10 +262,15 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         userId: user?.id,
     });
 
+    // Derived for downstream consumers (editor, board, etc.) that only care
+    // whether the project is renderable, not which error state we're in.
+    const isYjsReady = status.kind === "ready";
+
     // Repository state - loaded dynamically
     const [repository, setRepository] = useState<ProjectRepository | null>(null);
 
     const [project, setProject] = useState<ProjectMembershipPayload | null>(null);
+    const isReadOnly = !!project && project.role === ProjectRole.VIEWER;
     const [editor, setEditor] = useState<Editor | null>(null);
     const [screenplay, setScreenplay] = useState<Screenplay>([]);
     const [characters, setCharacters] = useState<CharacterMap | undefined>(undefined);
@@ -356,6 +359,25 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             isMounted = false;
         };
     }, [ydoc]);
+
+    useEffect(() => {
+        repository?.setReadOnly(isReadOnly);
+    }, [repository, isReadOnly]);
+
+    // The DO pushes a role-changed message whenever an admin updates this
+    // user's role. Mirror it into local state so isReadOnly flips and the
+    // editor/repository gates apply immediately, without waiting for an SWR
+    // revalidation of the membership endpoint.
+    useEffect(() => {
+        if (!provider) return;
+        const handler = (newRole: string) => {
+            setProject((prev) => (prev ? { ...prev, role: newRole as ProjectRole } : prev));
+        };
+        provider.on("role-changed", handler);
+        return () => {
+            provider.off("role-changed", handler);
+        };
+    }, [provider]);
 
     const updateScreenplay = useCallback((newScreenplay: Screenplay) => {
         setScreenplay(newScreenplay);
@@ -725,6 +747,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             repository,
             provider,
             isYjsReady,
+            isReadOnly,
             connectionStatus,
             users,
             editor,
@@ -788,6 +811,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             repository,
             provider,
             isYjsReady,
+            isReadOnly,
             connectionStatus,
             users,
             editor,
@@ -847,10 +871,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         ],
     );
 
-    const readyValue = useMemo(
-        () => ({ isYjsReady, isProjectUnavailable, isStaleClient, migrationOutcome }),
-        [isYjsReady, isProjectUnavailable, isStaleClient, migrationOutcome],
-    );
+    const readyValue = useMemo(() => ({ status }), [status]);
 
     return (
         <ProjectReadyContext.Provider value={readyValue}>
