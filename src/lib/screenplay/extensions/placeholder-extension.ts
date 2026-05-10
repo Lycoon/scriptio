@@ -70,7 +70,7 @@ export const Placeholder = Extension.create<PlaceholderOptions>({
       emptyEditorClass: 'is-editor-empty',
       emptyNodeClass: 'is-empty',
       placeholder: 'Write something …',
-      showOnlyWhenEditable: true,
+      showOnlyWhenEditable: false,
       showOnlyCurrent: false,
       includeChildren: true,
     }

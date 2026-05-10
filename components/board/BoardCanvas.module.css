@@ -397,7 +397,7 @@
         transform 0.15s ease,
         background-color 0.15s ease;
     z-index: 10;
-    background: radial-gradient(circle, var(--secondary) 30%, transparent 30%);
+    background: radial-gradient(circle, white 30%, transparent 30%);
 }
 
 .connection_handle::before {
@@ -408,7 +408,7 @@
     width: 16px;
     height: 16px;
     transform: translate(-50%, -50%);
-    border: 2px solid var(--secondary);
+    border: 2px solid white;
     border-radius: 50%;
     opacity: 0.6;
 }
@@ -419,7 +419,7 @@
 
 .connection_handle:hover {
     transform: scale(1.2);
-    background: radial-gradient(circle, var(--secondary) 40%, transparent 40%);
+    background: radial-gradient(circle, white 40%, transparent 40%);
 }
 
 .connection_handle:hover::before {
@@ -449,6 +449,6 @@
 
 .card_connecting:hover {
     box-shadow:
-        0 0 0 3px var(--secondary),
+        0 0 0 3px white,
         0 4px 16px rgba(0, 0, 0, 0.2);
 }
