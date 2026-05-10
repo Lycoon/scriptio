@@ -205,7 +205,11 @@
     "goTo": "Przejdź do scenariusza",
     "confirmRestore": "Spowoduje to zastąpienie pasującej treści w scenariuszu.",
     "restore": "Przywróć",
-    "cancel": "Anuluj"
+    "cancel": "Anuluj",
+    "scenesEmpty": "Brak scen",
+    "comments": "Komentarze",
+    "commentsEmpty": "Brak aktywnych komentarzy",
+    "shelfEmptySelection": "Wybierz wersję z półki do edycji"
   },
   "formatDropdown": {
     "elements": {

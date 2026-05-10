@@ -205,7 +205,11 @@
     "goTo": "在剧本中定位",
     "confirmRestore": "这将替换剧本中匹配的内容。",
     "restore": "恢复",
-    "cancel": "取消"
+    "cancel": "取消",
+    "scenesEmpty": "暂无场景",
+    "comments": "评论",
+    "commentsEmpty": "没有活动的评论",
+    "shelfEmptySelection": "选择要编辑的搁置版本"
   },
   "formatDropdown": {
     "elements": {

@@ -206,7 +206,11 @@
     "goTo": "Aller au scénario",
     "confirmRestore": "Cela remplacera le contenu correspondant dans votre scénario.",
     "restore": "Restaurer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "scenesEmpty": "Aucune scène pour le moment",
+    "comments": "Commentaires",
+    "commentsEmpty": "Aucun commentaire actif",
+    "shelfEmptySelection": "Sélectionnez une version sur l'étagère pour la modifier"
   },
   "formatDropdown": {
     "elements": {
