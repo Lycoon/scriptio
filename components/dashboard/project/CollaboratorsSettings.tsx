@@ -3,11 +3,11 @@
 import { useContext, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { useCookieUser, useIsPro, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
+import { useCookieUser, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
 import { CookieUser } from "@src/lib/utils/types";
 import { ProjectRole } from "../../../src/generated/client/browser";
 import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
-import { Info, Lock } from "lucide-react";
+import { Info } from "lucide-react";
 
 import form from "./../../utils/Form.module.css";
 import shared from "./ProjectSettings.module.css";
@@ -16,7 +16,6 @@ import { deleteInvite, inviteCollaborator, kickCollaborator, updateMemberRole } 
 
 import * as Roles from "@src/lib/utils/roles";
 import { DashboardContext } from "@src/context/DashboardContext";
-import Link from "next/link";
 
 const MAX_COLLABORATORS = 5;
 
@@ -26,7 +25,6 @@ const CollaboratorsSettings = () => {
     const { invites, mutate: mutateInvites } = useProjectInvites(membership?.project.id);
     const { collaborators, mutate: mutateCollaborators } = useProjectCollaborators(membership?.project.id);
     const { user } = useCookieUser();
-    const { isPro } = useIsPro();
 
     const slots = useMemo(() => {
         if (!membership) return [];
@@ -103,15 +101,6 @@ const CollaboratorsSettings = () => {
                 </div>
                 <p className={shared.helpText}>{t("teamHelp")}</p>
 
-                {/* Pro gate banner */}
-                {!isPro && (
-                    <div className={styles.proGateBanner}>
-                        <Lock size={14} />
-                        <span>{t("proRequired")}</span>
-                        <Link href="/?settings=Profile" className={styles.proGateLink}>{t("upgrade")}</Link>
-                    </div>
-                )}
-
                 {/* Project Collaborators */}
                 <div className={styles.slotGrid}>
                     {slots.map((slot) => {
@@ -137,7 +126,7 @@ const CollaboratorsSettings = () => {
                                 );
                             case "EMPTY":
                                 return (
-                                    <EmptySlot key={slot.key} membership={membership} mutateInvites={mutateInvites} isPro={isPro} />
+                                    <EmptySlot key={slot.key} membership={membership} mutateInvites={mutateInvites} />
                                 );
                             default:
                                 return null;
@@ -257,10 +246,9 @@ const InviteSlot = ({ data, membership, mutateInvites }: InviteSlotProps) => {
 interface EmptySlotProps {
     membership: ProjectMembershipPayload;
     mutateInvites: () => void;
-    isPro: boolean;
 }
 
-const EmptySlot = ({ membership, mutateInvites, isPro }: EmptySlotProps) => {
+const EmptySlot = ({ membership, mutateInvites }: EmptySlotProps) => {
     const t = useTranslations("collaborators");
     const [email, setEmail] = useState("");
 
@@ -272,14 +260,6 @@ const EmptySlot = ({ membership, mutateInvites, isPro }: EmptySlotProps) => {
             setEmail("");
         }
     };
-
-    if (!isPro) {
-        return (
-            <div className={`${styles.slot} ${styles.empty}`}>
-                <span className={styles.proHint}>{t("proRequiredInvite")}</span>
-            </div>
-        );
-    }
 
     return (
         <div className={`${styles.slot} ${styles.empty}`}>

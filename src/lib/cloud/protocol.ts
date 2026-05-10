@@ -42,9 +42,10 @@ export function handleProtocolMessage(room: ProjectRoom, fullMessage: Uint8Array
                             // apply them, so the rest of the packet stays parseable.
                             if (isReadOnly) {
                                 decoding.readVarUint8Array(decoder);
-                                console.warn(
-                                    `[Room] Dropped doc write from viewer ${session?.userId ?? "?"}`,
-                                );
+                                console.warn(JSON.stringify({
+                                    event: "dropped_write_from_viewer",
+                                    userId: session?.userId ?? "?"
+                                }));
                             } else if (subType === SYNC_STEP_2) {
                                 syncProtocol.readSyncStep2(decoder, room.doc, sender);
                             } else {
@@ -52,12 +53,15 @@ export function handleProtocolMessage(room: ProjectRoom, fullMessage: Uint8Array
                             }
                         } else {
                             // Unknown sub-type — bail to avoid mis-aligning the decoder.
-                            console.warn(`[Room] Unknown sync sub-message type: ${subType}`);
+                            console.warn(JSON.stringify({
+                                event: "unknown_sync_sub_message_type",
+                                subType
+                            }));
                             break;
                         }
                     }
                 } catch (e) {
-                    console.error("[Room] Error reading sync message:", e);
+                    console.error(JSON.stringify({ event: "error_reading_sync_message", error: String(e) }));
                 }
 
                 // If there's a response to send (e.g., SyncStep2 in response to SyncStep1),
@@ -96,11 +100,15 @@ export function handleProtocolMessage(room: ProjectRoom, fullMessage: Uint8Array
                 break;
 
             default:
-                console.warn(`[Room] Unknown message type: ${messageType}`);
+                console.warn(JSON.stringify({ event: "unknown_message_type", messageType }));
                 break;
         }
     } catch (e) {
-        console.error(`[Room] Protocol error for message type ${messageType}:`, e);
+        console.error(JSON.stringify({
+            event: "protocol_error",
+            messageType,
+            error: String(e)
+        }));
         // For non-awareness messages, still try to broadcast (might be important)
         if (messageType !== 1) {
             room.broadcast(fullMessage, sender);

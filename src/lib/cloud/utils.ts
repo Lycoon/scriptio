@@ -421,10 +421,11 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 
     /**
-     * Update the authentication token and reconnect.
-     * This allows refreshing expired tokens without destroying the provider.
+     * Update the authentication token.
+     * @param newToken The new JWT token
+     * @param forceReconnect Whether to immediately disconnect and reconnect using the new token (default: true)
      */
-    public async updateToken(newToken: string): Promise<void> {
+    public async updateToken(newToken: string, forceReconnect: boolean = true): Promise<void> {
         if (this.isDestroyed) {
             console.warn("[WS] Cannot update token on destroyed provider");
             return;
@@ -435,26 +436,26 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
             return;
         }
 
-        console.log("[WS] Updating token and reconnecting...");
-
         // Snapshot current params so we can roll back if reconnect fails.
-        // Without this, a failed reconnect would leave the provider holding
-        // a new (possibly invalid) token with no active connection.
         const previousParams = { ...this.params };
 
-        try {
-            // Update params with new token
-            this.params = {
-                ...this.params,
-                token: newToken,
-            };
-            await this.reconnect();
-        } catch (e) {
-            // Restore original params — the old token stays in effect so that
-            // a future updateToken() call or reconnect attempt can succeed.
-            this.params = previousParams;
-            console.warn("[WS] Failed to update token, params restored to previous state", e);
-            throw e;
+        // Update params with new token
+        this.params = {
+            ...this.params,
+            token: newToken,
+        };
+
+        if (forceReconnect) {
+            console.log("[WS] Updating token and reconnecting...");
+            try {
+                await this.reconnect();
+            } catch (e) {
+                // Restore original params — the old token stays in effect so that
+                // a future updateToken() call or reconnect attempt can succeed.
+                this.params = previousParams;
+                console.warn("[WS] Failed to update token, params restored to previous state", e);
+                throw e;
+            }
         }
     }
 
