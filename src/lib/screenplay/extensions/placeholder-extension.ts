@@ -135,33 +135,13 @@ export const Placeholder = Extension.create<PlaceholderOptions>({
             const oldAnchor = oldState.selection.anchor
             const newAnchor = newState.selection.anchor
 
-            // Check if we need to recompute:
-            // 1. Anchor moved to a different node
-            // 2. A node became empty or non-empty
-            const anchorNodeChanged = oldState.doc.resolve(oldAnchor).parent !== newState.doc.resolve(newAnchor).parent
-
             if (tr.docChanged) {
-              // Check if the node at the cursor changed emptiness
-              try {
-                const newNode = newState.doc.resolve(newAnchor).parent
-                const wasEmpty = !oldState.doc.resolve(oldAnchor).parent.content.size
-                const isEmpty = !newNode.content.size
-
-                // If emptiness changed or anchor moved to different node, recompute
-                if (wasEmpty !== isEmpty || anchorNodeChanged) {
-                  return computePlaceholderDecorations(newState.doc, newAnchor)
-                }
-              } catch {
-                // Position resolution failed, recompute to be safe
-                return computePlaceholderDecorations(newState.doc, newAnchor)
-              }
-
-              // Simple text edit in non-empty node — just remap positions (O(log n))
-              return oldDecorations.map(tr.mapping, newState.doc)
+              return computePlaceholderDecorations(newState.doc, newAnchor)
             }
 
             // Selection-only change: recompute if anchor moved to different node
             // (showOnlyCurrent mode needs this, but also hasAnchor attribute changes)
+            const anchorNodeChanged = oldState.doc.resolve(oldAnchor).parent !== newState.doc.resolve(newAnchor).parent
             if (anchorNodeChanged) {
               return computePlaceholderDecorations(newState.doc, newAnchor)
             }

@@ -103,6 +103,34 @@
         height: var(--line-height);
     }
 
+    /* Stabilize the absolute caret's containing block. Without this, the caret
+       resolves up to .ProseMirror — and during a backspace that destroys the
+       paragraph it lives in, y-prosemirror briefly remaps the caret's head
+       position to 0 before awareness syncs, painting it for one frame at the
+       editor's leftmost edge (the very start of the document). Pinning the
+       containing block to whichever paragraph the caret currently sits in
+       keeps the absolute position bounded to that paragraph's box. */
+    p:has(.collab-caret),
+    .dual_dialogue_column p:has(.collab-caret) {
+        position: relative;
+    }
+
+    /* Empty non-parenthetical paragraphs additionally need overflow:visible so
+       the caret's pseudo-element username label (anchored above the line via
+       top: -1.8em) isn't clipped. Parenthetical empties keep overflow:hidden
+       to clip the trailing line box that would push their `)` to a second
+       line; the label is sacrificed there as an acceptable trade. */
+    .is-empty:has(.collab-caret):not(.parenthetical) {
+        overflow: visible;
+    }
+
+    /* Defensive: the widget should always live inside a paragraph. If a
+       transaction ever briefly attaches it directly to .ProseMirror (e.g.
+       during a structural restructure), don't paint it. */
+    > .collab-caret {
+        display: none;
+    }
+
     .action {
         text-align: var(--action-align, left) !important;
         font-weight: var(--action-weight, normal);
@@ -308,10 +336,19 @@
         pointer-events: none;
         user-select: none;
         -webkit-user-select: none !important;
-        transition: transform 0.1s ease-out;
+        -moz-user-select: none !important;
     }
 
-    .collab-caret-label {
+    /* Username label rendered as a pseudo-element rather than a child <div>.
+       Pseudo-elements aren't in the DOM, so they cannot host a text cursor;
+       this prevents Firefox from placing the local HTML caret into the
+       label's text node when the local user clicks an empty node hosting a
+       remote caret. The color and name come from custom properties set
+       inline by the cursor render function. */
+    .collab-caret::before {
+        content: var(--collab-caret-name, "");
+        background-color: var(--collab-caret-color, currentColor);
+
         position: absolute;
         top: -1.8em;
         left: -0.5em;
@@ -322,7 +359,7 @@
         border-radius: 1em;
         line-height: normal;
 
-        /* Prevent the collaboration caret from inheriting parent styles, such as with scene headings (uppercase & bold) */
+        /* Prevent inheritance of parent styles (scene headings are uppercase & bold). */
         text-transform: none !important;
         font-weight: 400 !important;
         font-style: normal !important;

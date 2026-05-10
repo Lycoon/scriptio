@@ -179,16 +179,14 @@ export class ProjectRoom extends DurableObject {
             this.userConnections.set(attachment.userId, ws);
         }
         if (hibernatedSockets.length > 0) {
-            console.log(
-                `[Room] Restored ${this.sessions.size} session(s) from ${hibernatedSockets.length} hibernated WebSocket(s)`,
-            );
+            console.log(JSON.stringify({ event: "room_restore", hibernatedSockets: hibernatedSockets.length, restoredSessions: this.sessions.size }));
             // Awareness state was lost when the DO hibernated. Ask all
             // restored clients to re-broadcast their awareness so we can
             // rebuild room.awareness from scratch.
             this.broadcastAwarenessRequest();
         }
 
-        console.log("[Room] Initialized");
+        console.log(JSON.stringify({ event: "room_initialized" }));
     }
 
     /**
@@ -219,10 +217,7 @@ export class ProjectRoom extends DurableObject {
                 break;
             case "migrated":
                 this.docVersion = outcome.to;
-                console.log(
-                    `[Room] Migrated doc from v${outcome.from} to v${outcome.to} ` +
-                        `(${outcome.appliedSteps.length} step${outcome.appliedSteps.length === 1 ? "" : "s"})`,
-                );
+                console.log(JSON.stringify({ event: "document_migrated", fromVersion: outcome.from, toVersion: outcome.to, steps: outcome.appliedSteps.length }));
                 // Persist the migrated state immediately so a restart doesn't replay.
                 await this.saveToDisk();
                 break;
@@ -231,18 +226,12 @@ export class ProjectRoom extends DurableObject {
                 // Refuse new connections until the worker is upgraded.
                 this.docMigrationFailed = true;
                 this.docVersion = outcome.storedVersion;
-                console.error(
-                    `[Room] Doc at v${outcome.storedVersion} but worker only supports v${outcome.expected}. ` +
-                        `Worker is out of date — refusing connections.`,
-                );
+                console.error(JSON.stringify({ event: "document_migration_future_version", storedVersion: outcome.storedVersion, expectedVersion: outcome.expected, message: "Worker is out of date — refusing connections." }));
                 break;
             case "failed":
                 this.docMigrationFailed = true;
                 this.docVersion = outcome.from;
-                console.error(
-                    `[Room] Doc migration failed at step v${outcome.failedAt} ` + `(stored v${outcome.from}):`,
-                    outcome.error,
-                );
+                console.error(JSON.stringify({ event: "document_migration_failed", failedAtStep: outcome.failedAt, storedVersion: outcome.from, error: String(outcome.error) }));
                 break;
         }
     }
@@ -305,12 +294,12 @@ export class ProjectRoom extends DurableObject {
                 await (this.env as Env).SNAPSHOTS.put(key, state, {
                     customMetadata: { type: "auto" },
                 });
-                console.log(`[Room] Snapshot saved to R2: ${key}`);
+                console.log(JSON.stringify({ event: "snapshot_saved", key }));
 
                 // Run retention cleanup
                 await this.cleanupAutoSaves();
             } catch (e) {
-                console.error("[Room] Failed to snapshot to R2:", e);
+                console.error(JSON.stringify({ event: "snapshot_failed", error: String(e) }));
                 // Re-mark dirty so next alarm retries
                 this.isDirty = true;
                 this.scheduleSnapshotAlarm();
@@ -381,7 +370,7 @@ export class ProjectRoom extends DurableObject {
         // Batch delete (R2 supports up to 1000 keys per delete)
         if (toDelete.length > 0) {
             await (this.env as Env).SNAPSHOTS.delete(toDelete);
-            console.log(`[Room] Retention cleanup: deleted ${toDelete.length} auto-saves`);
+            console.log(JSON.stringify({ event: "retention_cleanup", deletedCount: toDelete.length }));
         }
     }
 
@@ -419,9 +408,7 @@ export class ProjectRoom extends DurableObject {
             const timeSinceActivity = now - session.lastActivity;
 
             if (timeSinceActivity > STALE_AWARENESS_TIMEOUT_MS) {
-                console.log(
-                    `[Room] Session for user ${session.userId} is stale (${timeSinceActivity}ms since activity)`,
-                );
+                console.log(JSON.stringify({ event: "stale_session", userId: session.userId, timeSinceActivity }));
                 staleClientIds.push(...session.clientIds);
                 staleSockets.push(socket);
             }
@@ -470,7 +457,7 @@ export class ProjectRoom extends DurableObject {
                 }
             }
 
-            console.log(`[Room] Cleaned up ${staleClientIds.length} stale awareness states`);
+            console.log(JSON.stringify({ event: "cleaned_stale_awareness", count: staleClientIds.length }));
         }
     }
 
@@ -567,7 +554,7 @@ export class ProjectRoom extends DurableObject {
 
             this.ctx.storage.sql.exec("INSERT OR IGNORE INTO blacklist (user_id) VALUES (?);", userId);
 
-            console.log(`[Room] Blacklisted user ${userId}`);
+            console.log(JSON.stringify({ event: "user_blacklisted", userId }));
             return new Response(`User ${userId} blacklisted.`, { status: 200 });
         }
 
@@ -583,7 +570,7 @@ export class ProjectRoom extends DurableObject {
                 this.ctx.storage.sql.exec("DELETE FROM blacklist WHERE user_id = ?;", userId);
             }
 
-            console.log(`[Room] Allowed user ${userId}`);
+            console.log(JSON.stringify({ event: "user_allowed", userId }));
             return new Response(`User ${userId} allowed.`, { status: 200 });
         }
 
@@ -612,11 +599,11 @@ export class ProjectRoom extends DurableObject {
                     encoding.writeVarString(encoder, role);
                     socket.send(encoding.toUint8Array(encoder));
                 } catch (e) {
-                    console.warn(`[Room] Failed to push role-update to ${userId}:`, e);
+                    console.error(JSON.stringify({ event: "role_update_push_failed", userId, error: String(e) }));
                 }
             }
 
-            console.log(`[Room] Role updated for user ${userId} -> ${role}`);
+            console.log(JSON.stringify({ event: "role_updated", userId, role }));
             return new Response(`User ${userId} role updated.`, { status: 200 });
         }
 
@@ -670,7 +657,7 @@ export class ProjectRoom extends DurableObject {
             const clientVersionParam = url.searchParams.get("clientVersion");
             const clientVersion = clientVersionParam !== null ? Number(clientVersionParam) : NaN;
             if (Number.isFinite(clientVersion) && clientVersion < this.docVersion) {
-                console.log(`[Room] Rejecting stale client v${clientVersion} (doc at v${this.docVersion})`);
+                console.warn(JSON.stringify({ event: "client_rejected_stale", clientVersion, docVersion: this.docVersion }));
                 try {
                     server.close(4006, `Stale client: update to access v${this.docVersion}`);
                 } catch {}
@@ -709,7 +696,7 @@ export class ProjectRoom extends DurableObject {
                 server.send(encoding.toUint8Array(awarenessEncoder));
             }
 
-            console.log(`[Room] User ${userId} connected. Total sessions: ${this.sessions.size}`);
+            console.log(JSON.stringify({ event: "user_connected", userId, totalSessions: this.sessions.size }));
 
             // Opportunistic cleanup on connect — a new client arriving is the
             // best moment to drop awareness for clients that quietly went away.
@@ -793,7 +780,7 @@ export class ProjectRoom extends DurableObject {
             customMetadata: { type: "manual", name },
         });
 
-        console.log(`[Room] Manual save created: ${name}`);
+        console.log(JSON.stringify({ event: "manual_save_created", name }));
 
         const entry: SaveEntry = { key, type: "manual", name, date: timestamp, size: state.byteLength };
         return Response.json(entry, { status: 201 });
@@ -856,7 +843,7 @@ export class ProjectRoom extends DurableObject {
         this.sessions.clear();
         this.userConnections.clear();
 
-        console.log(`[Room] Restored from: ${key}`);
+        console.log(JSON.stringify({ event: "restored_from_save", key }));
         return new Response("Restored", { status: 200 });
     }
 
@@ -882,7 +869,7 @@ export class ProjectRoom extends DurableObject {
         });
         await (this.env as Env).SNAPSHOTS.delete(key);
 
-        console.log(`[Room] Renamed save: ${key} -> ${name}`);
+        console.log(JSON.stringify({ event: "save_renamed", key, name }));
         return new Response("Renamed", { status: 200 });
     }
 
@@ -893,7 +880,7 @@ export class ProjectRoom extends DurableObject {
         }
 
         await (this.env as Env).SNAPSHOTS.delete(key);
-        console.log(`[Room] Deleted save: ${key}`);
+        console.log(JSON.stringify({ event: "save_deleted", key }));
         return new Response("Deleted", { status: 200 });
     }
 
@@ -921,17 +908,17 @@ export class ProjectRoom extends DurableObject {
             const fullDocState = Y.encodeStateAsUpdate(this.doc);
             this.ctx.storage.sql.exec("INSERT OR REPLACE INTO project (id, data) VALUES (1, ?);", fullDocState);
             this.saveTimeout = null;
-            console.log("[Room] Document saved to disk");
+            console.log(JSON.stringify({ event: "document_saved" }));
         } catch (e) {
-            console.error("[Room] Failed to save document:", e);
+            console.error(JSON.stringify({ event: "document_save_failed", error: String(e) }));
         }
     }
 
-    async webSocketClose(ws: WebSocket): Promise<void> {
+    async webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean): Promise<void> {
         const session = this.sessions.get(ws);
 
         if (session) {
-            console.log(`[Room] User ${session.userId} disconnected`);
+            console.log(JSON.stringify({ event: "websocket_close", userId: session.userId }));
 
             if (session.clientIds.size > 0) {
                 const clientIds = Array.from(session.clientIds);
@@ -942,7 +929,7 @@ export class ProjectRoom extends DurableObject {
                 // Broadcast removal to remaining clients
                 this.broadcastAwarenessRemoval(clientIds, ws);
 
-                console.log(`[Room] Removed awareness for clients: ${clientIds.join(", ")}`);
+                console.log(JSON.stringify({ event: "awareness_removed", clientIds }));
             }
 
             // Only delete from userConnections if this is the active entry
@@ -952,11 +939,24 @@ export class ProjectRoom extends DurableObject {
         }
 
         this.sessions.delete(ws);
-        console.log(`[Room] Remaining sessions: ${this.sessions.size}`);
+        console.log(JSON.stringify({ event: "session_count_update", count: this.sessions.size }));
     }
 
     async webSocketError(ws: WebSocket, error: unknown): Promise<void> {
-        console.error("[Room] WebSocket error:", error);
+        const errStr = String(error);
+        if (errStr.includes("Network connection lost") || errStr.includes("WebSocket disconnected") || errStr.includes("1006") || errStr.includes("1005")) {
+            console.log(JSON.stringify({
+                event: "websocket_disconnect",
+                level: "info",
+                reason: "idle or network connection lost",
+                error: errStr
+            }));
+        } else {
+            console.error(JSON.stringify({
+                event: "websocket_error",
+                error: errStr
+            }));
+        }
         // The close handler will clean up
     }
 
@@ -979,7 +979,7 @@ export class ProjectRoom extends DurableObject {
         const encoder = encoding.createEncoder();
         encoding.writeVarUint(encoder, 3); // Message type 3: messageQueryAwareness
         this.broadcast(encoding.toUint8Array(encoder), excludeSocket);
-        console.log("[Room] Sent awareness request to existing clients");
+        console.log(JSON.stringify({ event: "awareness_request_sent" }));
     }
 
     /**
@@ -991,7 +991,7 @@ export class ProjectRoom extends DurableObject {
                 try {
                     client.send(message);
                 } catch (e) {
-                    console.error(`[Room] Failed to send to client ${session.userId}:`, e);
+                    console.error(JSON.stringify({ event: "send_to_client_failed", userId: session.userId, error: String(e) }));
                 }
             }
         }

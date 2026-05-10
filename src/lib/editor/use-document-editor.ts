@@ -305,15 +305,18 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                               provider,
                               user: userInfo,
                               render: (user: { color: string; name: string }) => {
+                                  // Render with no DOM children. The username label is rendered
+                                  // via a ::before pseudo-element (see styles/scriptio.css),
+                                  // so there is no text node Firefox can place the local HTML
+                                  // caret into when the user clicks an empty node containing
+                                  // this remote caret.
                                   const caret = document.createElement("span");
                                   caret.classList.add("collab-caret");
                                   caret.style.borderLeft = `2px solid ${user.color}`;
-                                  const label = document.createElement("div");
-                                  label.classList.add("collab-caret-label");
-                                  label.style.backgroundColor = user.color;
-                                  label.innerText = user.name;
-                                  label.contentEditable = "false";
-                                  caret.appendChild(label);
+                                  caret.style.setProperty("--collab-caret-color", user.color);
+                                  // JSON.stringify yields a CSS-safe quoted string (escapes \ and ").
+                                  caret.style.setProperty("--collab-caret-name", JSON.stringify(user.name));
+                                  caret.contentEditable = "false";
                                   return caret;
                               },
                           }),
