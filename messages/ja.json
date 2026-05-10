@@ -205,7 +205,11 @@
     "goTo": "脚本内で移動",
     "confirmRestore": "脚本内の一致するコンテンツが置き換えられます。",
     "restore": "復元",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "scenesEmpty": "まだシーンはありません",
+    "comments": "コメント",
+    "commentsEmpty": "アクティブなコメントはありません",
+    "shelfEmptySelection": "編集するシェルフのバージョンを選択してください"
   },
   "formatDropdown": {
     "elements": {

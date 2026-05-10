@@ -205,7 +205,11 @@
     "goTo": "각본에서 이동",
     "confirmRestore": "이것은 각본의 해당 내용을 대체합니다.",
     "restore": "복원",
-    "cancel": "취소"
+    "cancel": "취소",
+    "scenesEmpty": "아직 씬이 없습니다",
+    "comments": "코멘트",
+    "commentsEmpty": "활성 코멘트가 없습니다",
+    "shelfEmptySelection": "편집할 보관함 버전을 선택하세요"
   },
   "formatDropdown": {
     "elements": {

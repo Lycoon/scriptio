@@ -206,7 +206,11 @@
     "goTo": "Im Drehbuch anzeigen",
     "confirmRestore": "Dies ersetzt den passenden Inhalt in Ihrem Drehbuch.",
     "restore": "Wiederherstellen",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "scenesEmpty": "Noch keine Szenen",
+    "comments": "Kommentare",
+    "commentsEmpty": "Keine aktiven Kommentare",
+    "shelfEmptySelection": "Wählen Sie eine Version aus der Ablage zur Bearbeitung aus"
   },
   "formatDropdown": {
     "elements": {
