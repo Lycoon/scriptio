@@ -7,9 +7,10 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { Scene } from "@src/lib/screenplay/scenes";
 import { focusOnPosition } from "@src/lib/screenplay/editor";
-import { Archive, Clapperboard } from "lucide-react";
+import { Archive, Clapperboard, MessageSquare } from "lucide-react";
 import SidebarSceneItem from "./SidebarSceneItem";
 import ShelfSidebarView from "./ShelfSidebarView";
+import CommentSidebarView from "./CommentSidebarView";
 
 import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
@@ -19,7 +20,7 @@ const EditorSidebarNavigation = () => {
     const { scenes, updateScenes, editor } = useContext(ProjectContext);
     const { leftSidebarOpen } = useViewContext();
 
-    const [activeTab, setActiveTab] = useState<"scenes" | "shelf">("scenes");
+    const [activeTab, setActiveTab] = useState<"scenes" | "shelf" | "comments">("scenes");
 
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     // indicatorIndex represents the gap where the item will be inserted.
@@ -193,7 +194,7 @@ const EditorSidebarNavigation = () => {
                                 className={join(sidebar_nav.list, sidebar_nav.scene_list)}
                                 onPointerMove={handlePointerMove}
                             >
-                                {scenes.length != 0 &&
+                                {scenes.length != 0 ?
                                     scenes.map((scene: Scene, index: number) => {
                                         const isNoOp =
                                             dragIndex === null ||
@@ -214,11 +215,17 @@ const EditorSidebarNavigation = () => {
                                                 onDoubleClick={handleDoubleClick}
                                             />
                                         );
-                                    })}
+                                    }) : (
+                                        <div className={sidebar_nav.empty_state}>
+                                            {t("scenesEmpty")}
+                                        </div>
+                                    )}
                             </div>
                         </>
-                    ) : (
+                    ) : activeTab === "shelf" ? (
                         <ShelfSidebarView />
+                    ) : (
+                        <CommentSidebarView />
                     )}
                     <div className={sidebar_nav.tab_bar}>
                         <button
@@ -226,6 +233,12 @@ const EditorSidebarNavigation = () => {
                             onClick={() => setActiveTab("scenes")}
                         >
                             <Clapperboard size={16} />
+                        </button>
+                        <button
+                            className={join(sidebar_nav.tab_btn, activeTab === "comments" ? sidebar_nav.tab_btn_active : "")}
+                            onClick={() => setActiveTab("comments")}
+                        >
+                            <MessageSquare size={16} />
                         </button>
                         <button
                             className={join(sidebar_nav.tab_btn, activeTab === "shelf" ? sidebar_nav.tab_btn_active : "")}

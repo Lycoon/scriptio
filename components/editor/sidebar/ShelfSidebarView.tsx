@@ -24,15 +24,21 @@ const ShelfSidebarView = () => {
                 <p className={form.label}>{t("shelf")}</p>
             </div>
             <div className={join(sidebar_nav.list, sidebar_nav.scene_list)}>
-                {entries.map(([nodeId, entry]) => (
-                    <ShelfSidebarItem
-                        key={nodeId}
-                        nodeId={nodeId}
-                        entry={entry}
-                        isExpanded={expandedId === nodeId}
-                        onToggle={() => setExpandedId(expandedId === nodeId ? null : nodeId)}
-                    />
-                ))}
+                {entries.length !== 0 ? (
+                    entries.map(([nodeId, entry]) => (
+                        <ShelfSidebarItem
+                            key={nodeId}
+                            nodeId={nodeId}
+                            entry={entry}
+                            isExpanded={expandedId === nodeId}
+                            onToggle={() => setExpandedId(expandedId === nodeId ? null : nodeId)}
+                        />
+                    ))
+                ) : (
+                    <div className={sidebar_nav.empty_state}>
+                        {t("shelfEmpty")}
+                    </div>
+                )}
             </div>
         </>
     );

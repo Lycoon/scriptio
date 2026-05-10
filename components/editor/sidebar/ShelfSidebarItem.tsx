@@ -114,16 +114,13 @@ const ShelfSidebarItem = memo(({ nodeId, entry, isExpanded, onToggle }: ShelfSid
         [nodeId, entry.type, repository, editor],
     );
 
-    const handleRenameStart = useCallback(
-        (e: React.MouseEvent, versionId: string, currentTitle: string) => {
-            e.stopPropagation();
-            setRenamingVersionId(versionId);
-            setRenameValue(currentTitle);
-            // Focus the input on next tick
-            setTimeout(() => renameInputRef.current?.focus(), 0);
-        },
-        [],
-    );
+    const handleRenameStart = useCallback((e: React.MouseEvent, versionId: string, currentTitle: string) => {
+        e.stopPropagation();
+        setRenamingVersionId(versionId);
+        setRenameValue(currentTitle);
+        // Focus the input on next tick
+        setTimeout(() => renameInputRef.current?.focus(), 0);
+    }, []);
 
     const handleRenameCommit = useCallback(() => {
         if (!renamingVersionId || !repository) return;
@@ -145,20 +142,13 @@ const ShelfSidebarItem = memo(({ nodeId, entry, isExpanded, onToggle }: ShelfSid
     return (
         <div className={styles.container}>
             <div className={join(styles.header, isExpanded ? styles.header_active : "")} onClick={onToggle}>
-                <ChevronRight
-                    size={13}
-                    className={join(styles.chevron, isExpanded ? styles.chevron_expanded : "")}
-                />
+                <ChevronRight size={13} className={join(styles.chevron, isExpanded ? styles.chevron_expanded : "")} />
                 <Icon size={14} className={styles.type_icon} />
                 <span className={join(styles.title, "unselectable")}>{entry.title}</span>
-                <span className={join(styles.version_count, "unselectable")}>{entry.versions.length}</span>
-                <button
-                    className={styles.goto_btn}
-                    title={t("goTo")}
-                    onClick={handleGoTo}
-                >
+                <button className={styles.goto_btn} title={t("goTo")} onClick={handleGoTo}>
                     <CornerDownLeft size={12} />
                 </button>
+                <span className={join(styles.version_count, "unselectable")}>{entry.versions.length}</span>
             </div>
             {isExpanded && (
                 <div className={styles.versions_list}>
@@ -185,10 +175,7 @@ const ShelfSidebarItem = memo(({ nodeId, entry, isExpanded, onToggle }: ShelfSid
                                         onClick={(e) => e.stopPropagation()}
                                     />
                                 ) : isConfirmingRestore ? (
-                                    <div
-                                        className={styles.confirm_row}
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
+                                    <div className={styles.confirm_row} onClick={(e) => e.stopPropagation()}>
                                         <span className={styles.confirm_text}>{t("confirmRestore")}</span>
                                         <div className={styles.confirm_btns}>
                                             <button
@@ -210,7 +197,9 @@ const ShelfSidebarItem = memo(({ nodeId, entry, isExpanded, onToggle }: ShelfSid
                                     </div>
                                 ) : (
                                     <>
-                                        <span className={join(styles.version_title, "unselectable")}>{version.title}</span>
+                                        <span className={join(styles.version_title, "unselectable")}>
+                                            {version.title}
+                                        </span>
                                         <div className={styles.version_actions}>
                                             <button
                                                 className={styles.action_btn}
@@ -222,7 +211,10 @@ const ShelfSidebarItem = memo(({ nodeId, entry, isExpanded, onToggle }: ShelfSid
                                             <button
                                                 className={styles.action_btn}
                                                 title="Restore to screenplay"
-                                                onClick={(e) => { e.stopPropagation(); setConfirmRestoreVersionId(version.id); }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setConfirmRestoreVersionId(version.id);
+                                                }}
                                             >
                                                 <CornerUpLeft size={12} />
                                             </button>
