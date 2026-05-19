@@ -81,6 +81,7 @@
     "tabs": {
       "General": "Allgemein",
       "Layout": "Layout",
+      "Production": "Produktion",
       "Export": "Import/Export",
       "Collaborators": "Mitwirkende",
       "Keybinds": "Tastenkürzel",
@@ -390,7 +391,9 @@
     "shelve": "Ablegen",
     "shelveScene": "Szene ablegen",
     "shelveDialogue": "Dialog ablegen",
-    "shelveAction": "Aktion ablegen"
+    "shelveAction": "Aktion ablegen",
+    "omitScene": "Szene auslassen",
+    "unomitScene": "Szene wiederherstellen"
   },
   "popup": {
     "character": {
@@ -445,6 +448,26 @@
     "untitled": "Unbenannt",
     "titlePlaceholder": "Titel",
     "descriptionPlaceholder": "Beschreibung"
+  },
+  "production": {
+    "title": "Produktion",
+    "sceneLocking": "Szenen sperren",
+    "pageLocking": "Seiten sperren",
+    "revisions": "Revisionen",
+    "relock": "Sperren",
+    "provisionalTitle": "Nicht gesperrte Szenen",
+    "unlockTitle": "Szenennummern entsperren?",
+    "unlockWarning": "<b>Alle gesperrten und ausgelassenen Szenen verlieren ihre fixierte Nummerierung.</b>",
+    "unlockInfo": "Dies betrifft alle Mitarbeiter. Das Drehbuch kehrt zu positionalen Szenennummern zurück. OMITTED-Szenen bleiben ausgelassen — heben Sie die Auslassung einzeln auf, um den Inhalt wiederherzustellen.",
+    "unlock": "Entsperren",
+    "cancel": "Abbrechen",
+    "numberingStyleTitle": "Szenennummerierung",
+    "numberingStyleHelp": "Wie neu eingefügte Szenen zwischen zwei gesperrten Szenen nummeriert werden. Suffix verweist auf die vorherige Szene, Präfix auf die nächste.",
+    "suffixName": "Suffix",
+    "prefixName": "Präfix",
+    "suffixExample": "2 → 2A",
+    "prefixExample": "2 → A3",
+    "appliesToNewOnly": "Bereits gesperrte Szenen behalten ihre Nummer — nur vorläufige Szenen und zukünftige Sperrungen sind betroffen."
   },
   "saves": {
     "title": "Versionsverlauf",

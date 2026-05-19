@@ -97,6 +97,16 @@ export interface ProjectContextType {
     elementStyles: Record<string, ElementStyle>;
     setElementStyles: (styles: Record<string, ElementStyle>) => void;
 
+    // Production
+    sceneLocking: boolean;
+    setSceneLocking: (locked: boolean) => void;
+    sceneNumberingStyle: "suffix" | "prefix";
+    setSceneNumberingStyle: (style: "suffix" | "prefix") => void;
+    /** Raw persistent scene map (UUID → PersistentScene). Includes synopsis,
+     *  color, and production-lock fields (token, omitted) for every scene that
+     *  has been persisted. */
+    persistentScenes: PersistentSceneMap;
+
     // Search state
     searchTerm: string;
     setSearchTerm: (term: string) => void;
@@ -173,6 +183,11 @@ const defaultContextValue: ProjectContextType = {
     setElementMargins: () => {},
     elementStyles: {},
     setElementStyles: () => {},
+    sceneLocking: false,
+    setSceneLocking: () => {},
+    sceneNumberingStyle: "suffix",
+    setSceneNumberingStyle: () => {},
+    persistentScenes: {},
     characters: {},
     locations: {},
     scenes: [],
@@ -292,6 +307,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         Record<string, { left: number; right: number }>
     >({});
     const [elementStyles, setElementStylesState] = useState<Record<string, ElementStyle>>({});
+    const [sceneLocking, setSceneLockingState] = useState<boolean>(false);
+    const [sceneNumberingStyle, setSceneNumberingStyleState] =
+        useState<"suffix" | "prefix">("suffix");
+    const [persistentScenes, setPersistentScenesState] = useState<PersistentSceneMap>({});
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
 
@@ -469,7 +488,16 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (initialLayout.elementStyles !== undefined) {
                 setElementStylesState(initialLayout.elementStyles);
             }
+            if (initialLayout.sceneLocking !== undefined) {
+                setSceneLockingState(initialLayout.sceneLocking);
+            }
+            if (initialLayout.sceneNumberingStyle !== undefined) {
+                setSceneNumberingStyleState(initialLayout.sceneNumberingStyle);
+            }
         }
+
+        // Read initial persistent scenes
+        setPersistentScenesState(repository.scenes);
 
         // Observe layout changes
         const unsubscribeLayout = repository.observeLayout((layout: Partial<LayoutData>) => {
@@ -509,6 +537,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (layout.elementStyles !== undefined) {
                 setElementStylesState(layout.elementStyles);
             }
+            if (layout.sceneLocking !== undefined) {
+                setSceneLockingState(layout.sceneLocking);
+            }
+            if (layout.sceneNumberingStyle !== undefined) {
+                setSceneNumberingStyleState(layout.sceneNumberingStyle);
+            }
         });
 
         // Observe character changes - get current screenplay from repository
@@ -530,6 +564,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             const currentScreenplay = repository.screenplay;
             const allScenes = mergeScenesData(_scenes, currentScreenplay);
             updateScenes(allScenes);
+            setPersistentScenesState(_scenes);
         });
 
         // Observe metadata changes (for title page placeholders)
@@ -707,6 +742,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    const setSceneLocking = useCallback(
+        (locked: boolean) => {
+            setSceneLockingState(locked);
+            repository?.setSceneLocking(locked);
+        },
+        [repository],
+    );
+
+    const setSceneNumberingStyle = useCallback(
+        (style: "suffix" | "prefix") => {
+            setSceneNumberingStyleState(style);
+            repository?.setSceneNumberingStyle(style);
+        },
+        [repository],
+    );
+
     const setSearchTerm = useCallback((term: string) => {
         setSearchTermState(term);
         // Reset to first match when search term changes
@@ -791,6 +842,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setElementMargins,
             elementStyles,
             setElementStyles,
+            sceneLocking,
+            setSceneLocking,
+            sceneNumberingStyle,
+            setSceneNumberingStyle,
+            persistentScenes,
             screenplay,
             scenes,
             updateScenes,
@@ -855,6 +911,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setElementMargins,
             elementStyles,
             setElementStyles,
+            sceneLocking,
+            setSceneLocking,
+            sceneNumberingStyle,
+            setSceneNumberingStyle,
+            persistentScenes,
             screenplay,
             scenes,
             updateScenes,

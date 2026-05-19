@@ -274,7 +274,7 @@ export const PopupCharacterItem = ({ type, data: { character } }: PopupData<Popu
                     </div>
                     <button
                         disabled={newNameWarning || takenNameError}
-                        className={join(form.btn, popup.confirm)}
+                        className={popup.confirm}
                         type="submit"
                     >
                         {t("confirm")}

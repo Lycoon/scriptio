@@ -1,0 +1,56 @@
+.styleOptions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.styleOption {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--separator);
+    border-radius: 6px;
+    background: var(--main-bg);
+    color: var(--primary-text);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.styleOption:hover:not(:disabled) {
+    border-color: var(--primary-text);
+}
+
+.styleOption:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.styleOptionActive {
+    border-color: var(--primary-text);
+    background: color-mix(in srgb, var(--primary-text) 8%, transparent);
+}
+
+.styleExample {
+    font-family: var(--font-screenplay);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.styleName {
+    font-size: 0.7rem;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.note {
+    margin-top: 16px;
+    font-size: 0.78rem;
+    color: var(--secondary-text);
+    font-style: italic;
+    line-height: 1.4;
+}

@@ -12,6 +12,7 @@ import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./ProfileSettings.module.css";
 import dangerStyles from "../project/DangerZone.module.css";
+import modal from "../../utils/ModalBtn.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { useUser } from "@src/lib/utils/hooks";
 
@@ -147,7 +148,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                             />
                             <div className={dangerStyles.modalActions}>
                                 <button
-                                    className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnDanger}`}
+                                    className={`${modal.modalBtn} ${modal.modalBtnDanger}`}
                                     onClick={handleDeleteAccount}
                                     disabled={deleteLoading || deleteConfirmInput !== confirmPhrase}
                                 >
@@ -155,7 +156,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                                     {deleteLoading ? t("deleting") : t("deleteAccountBtn")}
                                 </button>
                                 <button
-                                    className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnCancel}`}
+                                    className={`${modal.modalBtn} ${modal.modalBtnCancel}`}
                                     onClick={() => {
                                         setShowDeleteDialog(false);
                                         setDeleteConfirmInput("");

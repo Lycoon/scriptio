@@ -80,6 +80,7 @@
     "tabs": {
       "General": "General",
       "Layout": "Diseño",
+      "Production": "Producción",
       "Export": "Importar/Exportar",
       "Collaborators": "Colaboradores",
       "Keybinds": "Atajos de teclado",
@@ -389,7 +390,9 @@
     "shelve": "Archivar",
     "shelveScene": "Archivar escena",
     "shelveDialogue": "Archivar diálogo",
-    "shelveAction": "Archivar acción"
+    "shelveAction": "Archivar acción",
+    "omitScene": "Omitir escena",
+    "unomitScene": "Restaurar escena"
   },
   "popup": {
     "character": {
@@ -444,6 +447,26 @@
     "untitled": "Sin título",
     "titlePlaceholder": "Título",
     "descriptionPlaceholder": "Descripción"
+  },
+  "production": {
+    "title": "Producción",
+    "sceneLocking": "Bloquear escenas",
+    "pageLocking": "Bloquear páginas",
+    "revisions": "Revisiones",
+    "relock": "Bloquear",
+    "provisionalTitle": "Escenas no bloqueadas",
+    "unlockTitle": "¿Desbloquear los números de escena?",
+    "unlockWarning": "<b>Todas las escenas bloqueadas y omitidas perderán su numeración fija.</b>",
+    "unlockInfo": "Esto afecta a todos los colaboradores. El guion volverá a una numeración posicional. Las escenas OMITTED siguen omitidas — anula la omisión individualmente si quieres recuperar su contenido.",
+    "unlock": "Desbloquear",
+    "cancel": "Cancelar",
+    "numberingStyleTitle": "Numeración de escenas",
+    "numberingStyleHelp": "Cómo se numeran las escenas recién insertadas entre dos escenas bloqueadas. El sufijo se refiere a la escena anterior, el prefijo a la siguiente.",
+    "suffixName": "Sufijo",
+    "prefixName": "Prefijo",
+    "suffixExample": "2 → 2A",
+    "prefixExample": "2 → A3",
+    "appliesToNewOnly": "Las escenas ya bloqueadas conservan su número — solo se ven afectadas las escenas provisionales y los futuros bloqueos."
   },
   "saves": {
     "title": "Historial de versiones",

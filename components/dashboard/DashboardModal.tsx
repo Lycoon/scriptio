@@ -11,7 +11,7 @@ import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { CreditCard, FileDown, Folder, Globe, Keyboard, Palette, PanelsTopLeft, User, Users, X } from "lucide-react";
+import { CreditCard, FileDown, Folder, Globe, Keyboard, Lock, Palette, PanelsTopLeft, User, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
@@ -19,6 +19,7 @@ import LanguageSettings from "./preferences/LanguageSettings";
 import ProfileSettings from "./account/ProfileSettings";
 import SubscriptionSettings from "./account/SubscriptionSettings";
 import LayoutSettings from "./project/LayoutSettings";
+import ProductionSettings from "./project/ProductionSettings";
 import DashboardAuth from "./account/DashboardAuth";
 import AboutSettings from "./AboutSettings";
 
@@ -33,6 +34,7 @@ const DashboardModal = () => {
         items: [
             { id: "General",       label: t("tabs.General"),       icon: <Folder size={18} /> },
             { id: "Layout",        label: t("tabs.Layout"),        icon: <PanelsTopLeft size={18} /> },
+            { id: "Production",    label: t("tabs.Production"),    icon: <Lock size={18} /> },
             { id: "Export",        label: t("tabs.Export"),        icon: <FileDown size={18} /> },
             { id: "Collaborators", label: t("tabs.Collaborators"), icon: <Users size={18} /> },
         ],
@@ -134,6 +136,7 @@ const DashboardModal = () => {
                         {/* Project tabs - only rendered when in project context */}
                         {isInProject && activeTab === "General" && <ProjectSettings dangerOpen={dangerOpen} onDangerToggle={() => setDangerOpen((v) => !v)} />}
                         {isInProject && activeTab === "Layout" && <LayoutSettings />}
+                        {isInProject && activeTab === "Production" && <ProductionSettings />}
                         {isInProject && activeTab === "Export" && <ExportProject />}
                         {isInProject && activeTab === "Collaborators" && <CollaboratorsSettings />}
                         {/* Preferences tabs */}

@@ -1,10 +1,8 @@
 "use client";
 
 import popup from "./Popup.module.css";
-import form from "../utils/Form.module.css";
 
 import { X } from "lucide-react";
-import { join } from "@src/lib/utils/misc";
 import { useDraggable } from "@src/lib/utils/hooks";
 import { PopupData, PopupUploadToCloudData, closePopup } from "@src/lib/screenplay/popup";
 import { useContext, useState } from "react";
@@ -58,14 +56,14 @@ const PopupUploadToCloud = ({ data: { projectId } }: PopupData<PopupUploadToClou
                 </div>
                 {info && <FormInfo info={info} />}
                 <button
-                    className={join(form.btn, popup.confirm)}
+                    className={popup.confirm}
                     onClick={onConfirm}
                     disabled={isUploading}
                 >
                     {isUploading ? t("uploading") : t("confirm")}
                 </button>
                 <button
-                    className={join(form.btn, popup.cancel)}
+                    className={popup.cancel}
                     onClick={onCancel}
                     disabled={isUploading}
                 >

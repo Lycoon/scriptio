@@ -27,6 +27,10 @@ import {
     createSceneBookmarkExtension,
     refreshSceneBookmarks,
 } from "@src/lib/screenplay/extensions/scene-bookmark-extension";
+import {
+    createSceneLockingExtension,
+    refreshSceneLocking,
+} from "@src/lib/screenplay/extensions/scene-locking-extension";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
@@ -71,6 +75,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         setSearchMatches,
         contdLabel,
         moreLabel,
+        sceneLocking,
+        sceneNumberingStyle,
+        persistentScenes,
     } = projectCtx;
 
     const projectState = repository?.getState();
@@ -163,6 +170,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         searchFilters,
         currentSearchIndex,
         setSearchMatches,
+        sceneLocking,
+        sceneNumberingStyle,
+        persistentScenes,
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }), []);
     ext.highlightedCharacters = highlightedCharacters;
@@ -176,6 +186,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     ext.searchFilters = searchFilters;
     ext.currentSearchIndex = currentSearchIndex;
     ext.setSearchMatches = setSearchMatches;
+    ext.sceneLocking = sceneLocking;
+    ext.sceneNumberingStyle = sceneNumberingStyle;
+    ext.persistentScenes = persistentScenes;
 
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
 
@@ -248,6 +261,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
               duplicatePersistentScene: (originalId: string, newId: string) => {
                   ext.repository?.duplicateScene(originalId, newId);
               },
+          })
+        : null;
+
+    const sceneLockingExtension = features.sceneLocking
+        ? createSceneLockingExtension({
+              getSceneLocking: () => !!ext.sceneLocking,
+              getScenes: () => ext.repository?.scenes ?? {},
+              getNumberingStyle: () => ext.sceneNumberingStyle ?? "suffix",
           })
         : null;
 
@@ -363,6 +384,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 ...(characterHighlightExtension ? [characterHighlightExtension] : []),
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
+                ...(sceneLockingExtension ? [sceneLockingExtension] : []),
                 ...(nodeIdDedupExtension ? [nodeIdDedupExtension] : []),
                 ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
@@ -568,6 +590,13 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
             refreshSceneBookmarks(editor);
         }
     }, [editor, scenes, features.sceneBookmarks]);
+
+    // Refresh scene locking decorations when the lock map or toggle changes
+    useEffect(() => {
+        if (editor && features.sceneLocking) {
+            refreshSceneLocking(editor);
+        }
+    }, [editor, sceneLocking, sceneNumberingStyle, persistentScenes, features.sceneLocking]);
 
     // Refresh search highlights
     useEffect(() => {

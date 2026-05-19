@@ -1,0 +1,37 @@
+.track {
+    position: relative;
+    flex-shrink: 0;
+    width: 32px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background-color: var(--separator);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.track.checked {
+    background-color: var(--success);
+}
+
+.track.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pip {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: white;
+    transition: transform 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.track.checked .pip {
+    transform: translateX(14px);
+}

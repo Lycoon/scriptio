@@ -80,6 +80,7 @@
     "tabs": {
       "General": "Ogólne",
       "Layout": "Układ",
+      "Production": "Produkcja",
       "Export": "Import/Eksport",
       "Collaborators": "Współpracownicy",
       "Keybinds": "Skróty klawiszowe",
@@ -389,7 +390,9 @@
     "shelve": "Odłóż",
     "shelveScene": "Odłóż scenę",
     "shelveDialogue": "Odłóż dialog",
-    "shelveAction": "Odłóż akcję"
+    "shelveAction": "Odłóż akcję",
+    "omitScene": "Pomiń scenę",
+    "unomitScene": "Przywróć scenę"
   },
   "popup": {
     "character": {
@@ -444,6 +447,26 @@
     "untitled": "Bez tytułu",
     "titlePlaceholder": "Tytuł",
     "descriptionPlaceholder": "Opis"
+  },
+  "production": {
+    "title": "Produkcja",
+    "sceneLocking": "Blokowanie scen",
+    "pageLocking": "Blokowanie stron",
+    "revisions": "Wersje",
+    "relock": "Zablokuj",
+    "provisionalTitle": "Niezablokowane sceny",
+    "unlockTitle": "Odblokować numery scen?",
+    "unlockWarning": "<b>Wszystkie zablokowane i pominięte sceny utracą zamrożoną numerację.</b>",
+    "unlockInfo": "Wpłynie to na wszystkich współpracowników. Scenariusz powróci do numeracji pozycyjnej. Sceny OMITTED pozostają pominięte — anuluj pominięcie pojedynczo, aby odzyskać ich zawartość.",
+    "unlock": "Odblokuj",
+    "cancel": "Anuluj",
+    "numberingStyleTitle": "Numeracja scen",
+    "numberingStyleHelp": "Jak są numerowane nowo wstawione sceny między dwiema zablokowanymi. Sufiks odnosi się do poprzedniej sceny, prefiks do następnej.",
+    "suffixName": "Sufiks",
+    "prefixName": "Prefiks",
+    "suffixExample": "2 → 2A",
+    "prefixExample": "2 → A3",
+    "appliesToNewOnly": "Już zablokowane sceny zachowują swój numer — wpływa tylko na sceny tymczasowe i przyszłe blokady."
   },
   "saves": {
     "title": "Historia wersji",

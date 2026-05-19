@@ -9,6 +9,7 @@ import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import styles from "./DangerZone.module.css";
+import modal from "../../utils/ModalBtn.module.css";
 import form from "../../utils/Form.module.css";
 
 interface DangerZoneProps {
@@ -95,7 +96,7 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
                         <p className={styles.modalDescription}>{t("modalDesc")}</p>
                         <div className={styles.modalActions}>
                             <button
-                                className={`${styles.modalBtn} ${styles.modalBtnDanger}`}
+                                className={`${modal.modalBtn} ${modal.modalBtnDanger}`}
                                 onClick={handleDeleteProject}
                                 disabled={loading}
                             >
@@ -103,7 +104,7 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
                                 {loading ? t("deleting") : t("confirmDeleteBtn")}
                             </button>
                             <button
-                                className={`${styles.modalBtn} ${styles.modalBtnCancel}`}
+                                className={`${modal.modalBtn} ${modal.modalBtnCancel}`}
                                 onClick={() => setShowDeleteDialog(false)}
                                 disabled={loading}
                             >

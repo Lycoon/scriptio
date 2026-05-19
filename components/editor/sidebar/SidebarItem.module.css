@@ -35,6 +35,12 @@
     background-color: var(--editor-style-bg-hover);
 }
 
+.scene_number {
+    color: var(--secondary-text);
+    font-weight: 600;
+    margin-right: 2px;
+}
+
 .header {
     display: flex;
     flex-direction: row;

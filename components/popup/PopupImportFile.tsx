@@ -1,10 +1,8 @@
 "use client";
 
 import popup from "./Popup.module.css";
-import form from "../utils/Form.module.css";
 
 import { X } from "lucide-react";
-import { join } from "@src/lib/utils/misc";
 import { useDraggable } from "@src/lib/utils/hooks";
 import { PopupData, PopupImportFileData, closePopup } from "@src/lib/screenplay/popup";
 import { useContext } from "react";
@@ -39,10 +37,10 @@ const PopupImportFile = ({ data: { confirmImport } }: PopupData<PopupImportFileD
                         {t("info")}
                     </p>
                 </div>
-                <button className={join(form.btn, popup.confirm, popup.import_confirm)} onClick={onConfirmImport}>
+                <button className={popup.import_confirm} onClick={onConfirmImport}>
                     {t("yesImport")}
                 </button>
-                <button className={join(form.btn, popup.cancel)} onClick={() => closePopup(userCtx)}>
+                <button className={popup.cancel} onClick={() => closePopup(userCtx)}>
                     {t("no")}
                 </button>
             </div>

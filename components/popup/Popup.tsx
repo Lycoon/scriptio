@@ -7,12 +7,14 @@ import {
     PopupImportFileData,
     PopupSceneData,
     PopupType,
+    PopupUnlockScenesData,
     PopupUploadToCloudData,
 } from "@src/lib/screenplay/popup";
 import { useContext } from "react";
 import PopupCharacterItem from "./PopupCharacterItem";
 import PopupImportFile from "./PopupImportFile";
 import PopupSceneItem from "./PopupSceneItem";
+import PopupUnlockScenes from "./PopupUnlockScenes";
 import PopupUploadToCloud from "./PopupUploadToCloud";
 
 export const Popup = () => {
@@ -30,6 +32,8 @@ export const Popup = () => {
             return <PopupSceneItem {...(popup as PopupData<PopupSceneData>)} />;
         case PopupType.UploadToCloud:
             return <PopupUploadToCloud {...(popup as PopupData<PopupUploadToCloudData>)} />;
+        case PopupType.UnlockScenes:
+            return <PopupUnlockScenes {...(popup as PopupData<PopupUnlockScenesData>)} />;
         default:
             return null;
     }

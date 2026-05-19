@@ -80,6 +80,7 @@
     "tabs": {
       "General": "全般",
       "Layout": "レイアウト",
+      "Production": "プロダクション",
       "Export": "インポート/エクスポート",
       "Collaborators": "共同作業者",
       "Keybinds": "ショートカットキー",
@@ -389,7 +390,9 @@
     "shelve": "保管する",
     "shelveScene": "シーンを保管する",
     "shelveDialogue": "セリフを保管する",
-    "shelveAction": "アクションを保管する"
+    "shelveAction": "アクションを保管する",
+    "omitScene": "シーンを省略",
+    "unomitScene": "シーンを復元"
   },
   "popup": {
     "character": {
@@ -444,6 +447,26 @@
     "untitled": "無題",
     "titlePlaceholder": "タイトル",
     "descriptionPlaceholder": "説明"
+  },
+  "production": {
+    "title": "プロダクション",
+    "sceneLocking": "シーンロック",
+    "pageLocking": "ページロック",
+    "revisions": "改訂",
+    "relock": "ロック",
+    "provisionalTitle": "未ロックのシーン",
+    "unlockTitle": "シーン番号のロックを解除しますか？",
+    "unlockWarning": "<b>ロック済みおよび省略されたシーンの固定番号はすべて失われます。</b>",
+    "unlockInfo": "この操作はすべてのコラボレーターに影響します。脚本は位置ベースの番号に戻ります。OMITTED シーンは省略のまま残ります — 内容を復元したい場合は個別に省略を解除してください。",
+    "unlock": "ロック解除",
+    "cancel": "キャンセル",
+    "numberingStyleTitle": "シーン番号",
+    "numberingStyleHelp": "ロック済みの2つのシーンの間に挿入された新しいシーンの番号付け方法。サフィックスは前のシーン、プレフィックスは次のシーンを参照します。",
+    "suffixName": "サフィックス",
+    "prefixName": "プレフィックス",
+    "suffixExample": "2 → 2A",
+    "prefixExample": "2 → A3",
+    "appliesToNewOnly": "すでにロックされているシーンは番号を保持します — 仮シーンと今後のロックのみが影響を受けます。"
   },
   "saves": {
     "title": "バージョン履歴",

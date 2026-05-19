@@ -1,11 +1,13 @@
 
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { ProjectData, ProjectState } from "@src/lib/project/project-state";
+import type { PersistentSceneMap } from "@src/lib/screenplay/scenes";
 import { PageFormat } from "@src/lib/utils/enums";
 import { getFontForCodePoint, ScriptFont } from "./pdf-utils";
 import type { TextRun } from "./pdf.worker";
 import { BASE_URL } from "@src/lib/utils/constants";
 import { PAGE_SIZES } from "@src/lib/screenplay/extensions/pagination-extension";
+import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,6 +23,10 @@ export type PDFExportOptions = BaseExportOptions & {
     moreLabel?: string;
     editorElement?: HTMLElement;
     titlePageElement?: HTMLElement;
+    /** Production-mode flag + persistent scene entries, set internally from the ProjectState. */
+    sceneLocking?: boolean;
+    sceneNumberingStyle?: "suffix" | "prefix";
+    persistentScenes?: PersistentSceneMap;
 };
 
 import type { WorkerMessage, WorkerPayload, VisualLine } from "./pdf.worker";
@@ -72,13 +78,27 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         const format = options.format;
         const pdfPageSize = PDF_PAGE_SIZES[format];
 
+        // Resolve production state from the project. Persistent scenes carry
+        // synopsis/color (irrelevant here) and token/omitted (used for labels).
+        const layout = project.layout().toJSON() as {
+            sceneLocking?: boolean;
+            sceneNumberingStyle?: "suffix" | "prefix";
+        };
+        const persistentScenes = project.scenes().toJSON() as PersistentSceneMap;
+        const enrichedOptions: PDFExportOptions = {
+            ...options,
+            sceneLocking: !!layout.sceneLocking,
+            sceneNumberingStyle: layout.sceneNumberingStyle ?? "suffix",
+            persistentScenes,
+        };
+
         // ── Collect all visual lines from the browser DOM ───────────────────
         const titlePageEl = options.titlePageElement;
 
-        const titlePageLines = titlePageEl ? this.collectLines(titlePageEl, options) : [];
+        const titlePageLines = titlePageEl ? this.collectLines(titlePageEl, enrichedOptions) : [];
         const titlePageLeftPx = titlePageEl ? this.getPageLeftPx(titlePageEl) : 0;
 
-        const screenplayLines = this.collectLines(editorEl, options);
+        const screenplayLines = this.collectLines(editorEl, enrichedOptions);
         const screenplayLeftPx = this.getPageLeftPx(editorEl);
 
         return new Promise((resolve, reject) => {
@@ -142,6 +162,28 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         let sceneCount = 0;
         let yOffset = 0;
 
+        // Pre-compute label per scene UUID when production lock is on.
+        const sceneLabels: { label: string; omitted: boolean }[] = [];
+        let sceneLabelIdx = 0;
+        if (options.sceneLocking) {
+            const uuids: string[] = [];
+            for (let i = 0; i < editorEl.children.length; i++) {
+                const child = editorEl.children[i] as HTMLElement;
+                if (child?.tagName === "P" && child.classList.contains("scene")) {
+                    const uuid = child.getAttribute("data-id");
+                    if (uuid) uuids.push(uuid);
+                }
+            }
+            const computed = computeSceneLabels(
+                uuids,
+                options.persistentScenes ?? {},
+                options.sceneNumberingStyle ?? "suffix",
+            );
+            for (const l of computed) {
+                sceneLabels.push({ label: l.label, omitted: l.status === "omitted" });
+            }
+        }
+
         for (let i = 0; i < editorEl.children.length; i++) {
             const el = editorEl.children[i] as HTMLElement;
             if (!el) continue;
@@ -164,6 +206,11 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
             const isScene = el.classList.contains("scene");
             if (isScene) sceneCount++;
+            const sceneInfo = isScene
+                ? options.sceneLocking
+                    ? sceneLabels[sceneLabelIdx++] ?? { label: String(sceneCount), omitted: false }
+                    : { label: String(sceneCount), omitted: false }
+                : undefined;
 
             // Extract the paragraph type from classList
             let nodeType: string | undefined;
@@ -200,7 +247,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     if (yOffset > 0) {
                         for (const line of beforeLines) line.y -= yOffset;
                     }
-                    this.injectPseudoContent(el, beforeLines, options, isScene ? sceneCount : undefined);
+                    this.injectPseudoContent(el, beforeLines, options, sceneInfo);
                     allLines.push(...beforeLines);
                 }
 
@@ -224,7 +271,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                         for (const line of paragraphLines) line.y -= yOffset;
                     }
                     // ── Pseudo-element content (not captured by TreeWalker) ──
-                    this.injectPseudoContent(el, paragraphLines, options, isScene ? sceneCount : undefined);
+                    this.injectPseudoContent(el, paragraphLines, options, sceneInfo);
                     allLines.push(...paragraphLines);
                 } else {
                     // Empty paragraph — no text nodes, so collectParagraphLines
@@ -370,7 +417,24 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 // ── Measure position ─────────────────────────────────────
                 range.setStart(textNode, ci);
                 range.setEnd(textNode, ci + 1);
-                const rect = range.getBoundingClientRect();
+                // WebKit (Safari, Tauri on macOS) has a long-standing quirk:
+                // for the FIRST character of a wrapped line, the single-char
+                // range straddles a line boundary because position `ci` is
+                // bidi-ambiguous between the end of the previous line and the
+                // start of the new one. `getBoundingClientRect()` returns the
+                // UNION of both lines — `rect.top` then lands on the *previous*
+                // line, so we mistakenly attribute the char to it. The visible
+                // result in PDFs is "one letter at the end of every wrapped
+                // line plus a leading space on the next".
+                //
+                // `getClientRects()` returns one rect per line box the range
+                // intersects; the LAST rect is always the actual rendering
+                // line. For normal (single-line) chars only one rect is
+                // returned, so this is a no-op everywhere else.
+                const rects = range.getClientRects();
+                const rect = rects.length > 0
+                    ? rects[rects.length - 1]
+                    : range.getBoundingClientRect();
 
                 // If height is 0, it is usually a trailing wrapped space or hidden char
                 if (rect.height === 0) {
@@ -454,20 +518,21 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         el: HTMLElement,
         paragraphLines: VisualLine[],
         options: PDFExportOptions,
-        sceneNumber?: number,
+        sceneInfo?: { label: string; omitted: boolean },
     ): void {
         const firstLine = paragraphLines[0];
         const lastLine = paragraphLines[paragraphLines.length - 1];
 
-        if (sceneNumber !== undefined && options.displaySceneNumbers) {
+        if (sceneInfo && options.displaySceneNumbers) {
             const elStyle = getComputedStyle(el);
-            // Left scene number — mirrors CSS `right: 100%; margin-right: -120px` on .scene::before:
-            // right edge lands at scene_element_left + 120px.
+            const paddingLeft = parseFloat(elStyle.paddingLeft) || 0;
+
+            // Left scene number — mirrors CSS `right: 100%; margin-right: -120px`
+            // on .scene::before: right edge lands at scene_element_left + 120px.
             if (firstLine.runs.length > 0) {
                 const leadRun = firstLine.runs[0];
-                const paddingLeft = parseFloat(elStyle.paddingLeft) || 0;
                 firstLine.runs.unshift({
-                    text: String(sceneNumber),
+                    text: sceneInfo.label,
                     x: leadRun.x - paddingLeft + 120,
                     fontFamily: leadRun.fontFamily,
                     bold: leadRun.bold,
@@ -478,12 +543,12 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 });
             }
 
-            // Right scene number — mirrors CSS `left: 100%; margin-left: -85px` on .scene::after:
-            // left edge lands at scene_element_right - 85px.
+            // Right scene number — mirrors CSS `left: 100%; margin-left: -85px`
+            // on .scene::after: left edge lands at scene_element_right - 85px.
             if (options.sceneNumberOnRight && firstLine.runs.length > 0) {
                 const tailRun = firstLine.runs[firstLine.runs.length - 1];
                 firstLine.runs.push({
-                    text: String(sceneNumber),
+                    text: sceneInfo.label,
                     x: el.getBoundingClientRect().right - 85,
                     fontFamily: tailRun.fontFamily,
                     bold: tailRun.bold,

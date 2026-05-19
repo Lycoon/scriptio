@@ -80,6 +80,7 @@
     "tabs": {
       "General": "常规",
       "Layout": "布局",
+      "Production": "制作",
       "Export": "导入/导出",
       "Collaborators": "协作",
       "Keybinds": "键位",
@@ -389,7 +390,9 @@
     "shelve": "搁置",
     "shelveScene": "搁置场景",
     "shelveDialogue": "搁置对白",
-    "shelveAction": "搁置动作"
+    "shelveAction": "搁置动作",
+    "omitScene": "省略场景",
+    "unomitScene": "恢复场景"
   },
   "popup": {
     "character": {
@@ -444,6 +447,26 @@
     "untitled": "未命名",
     "titlePlaceholder": "标题",
     "descriptionPlaceholder": "描述"
+  },
+  "production": {
+    "title": "制作",
+    "sceneLocking": "锁定场景",
+    "pageLocking": "锁定页面",
+    "revisions": "修订",
+    "relock": "锁定",
+    "provisionalTitle": "未锁定的场景",
+    "unlockTitle": "解锁场景编号?",
+    "unlockWarning": "<b>所有锁定和省略的场景都将失去固定编号。</b>",
+    "unlockInfo": "此操作会影响所有协作者。剧本将恢复为按位置编号。OMITTED 场景仍保持省略状态 — 如需恢复内容,请单独取消省略。",
+    "unlock": "解锁",
+    "cancel": "取消",
+    "numberingStyleTitle": "场景编号",
+    "numberingStyleHelp": "两个锁定场景之间新插入场景的编号方式。后缀参考上一个场景，前缀参考下一个场景。",
+    "suffixName": "后缀",
+    "prefixName": "前缀",
+    "suffixExample": "2 → 2A",
+    "prefixExample": "2 → A3",
+    "appliesToNewOnly": "已锁定的场景保留其编号 — 仅影响临时场景和将来的锁定。"
   },
   "saves": {
     "title": "版本历史",

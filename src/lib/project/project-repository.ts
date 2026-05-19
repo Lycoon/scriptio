@@ -244,20 +244,30 @@ export class ProjectRepository {
 
     /**
      * Create or update a scene's persistent data.
+     *
+     * Fields that appear in `data` (including ones explicitly set to undefined)
+     * overwrite the corresponding existing fields; everything else is preserved.
+     * Any final undefined values are stripped before writing.
+     *
      * Returns the scene id.
      */
     upsertScene(sceneId: string, data: Partial<PersistentScene>): string {
         if (this.guardWrite("upsertScene")) return sceneId;
         const map = this.ydoc.scenes();
-        const existing = map.get(sceneId) as PersistentScene | undefined;
+        const existing = (map.get(sceneId) as PersistentScene | undefined) ?? {};
 
-        const sceneData: PersistentScene = {
-            synopsis: data.synopsis ?? existing?.synopsis ?? "",
-            color: "color" in data ? data.color : existing?.color,
-        };
+        const merged: PersistentScene = { ...existing };
+        const FIELDS = ["synopsis", "color", "token", "omitted"] as const;
+        for (const key of FIELDS) {
+            if (key in data) {
+                (merged as Record<string, unknown>)[key] = data[key];
+            }
+        }
+        for (const key of FIELDS) {
+            if (merged[key] === undefined) delete merged[key];
+        }
 
-        map.set(sceneId, sceneData);
-        console.log(`[Scenes] Upserted scene: ${sceneId}`);
+        map.set(sceneId, merged);
         return sceneId;
     }
 
@@ -359,6 +369,48 @@ export class ProjectRepository {
     setElementStyles(styles: Record<string, ElementStyle>) {
         if (this.guardWrite("setElementStyles")) return;
         this.ydoc.layout().set("elementStyles", styles);
+    }
+    setSceneLocking(locked: boolean) {
+        if (this.guardWrite("setSceneLocking")) return;
+        this.ydoc.layout().set("sceneLocking", locked);
+    }
+    setSceneNumberingStyle(style: "suffix" | "prefix") {
+        if (this.guardWrite("setSceneNumberingStyle")) return;
+        this.ydoc.layout().set("sceneNumberingStyle", style);
+    }
+
+    /**
+     * Strip the frozen production `token` from every persistent scene entry.
+     * Entries that have no remaining content (no `synopsis`, `color`, or
+     * `omitted` flag) are deleted outright. Used by the Production panel
+     * when the user unlocks scenes. The `omitted` flag is preserved — omit
+     * is independent of production lock and survives unlock.
+     */
+    clearSceneLocks(): void {
+        if (this.guardWrite("clearSceneLocks")) return;
+        const map = this.ydoc.scenes();
+        const entries: [string, PersistentScene][] = [];
+        map.forEach((value, key) => {
+            entries.push([key, value as PersistentScene]);
+        });
+        for (const [uuid, scene] of entries) {
+            const next: PersistentScene = { ...scene };
+            delete next.token;
+            if (!next.synopsis && !next.color && !next.omitted) {
+                map.delete(uuid);
+            } else {
+                map.set(uuid, next);
+            }
+        }
+    }
+
+    /**
+     * Run a function inside a single Y.js transaction.
+     * Useful for batching multiple repository mutations into one collab update.
+     */
+    transact(fn: () => void): void {
+        if (this.guardWrite("transact")) return;
+        this.ydoc.transact(fn);
     }
 
     // -------------------------------- //

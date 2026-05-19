@@ -101,6 +101,16 @@ export type LayoutData = {
     moreLabel: string;
     elementMargins: Record<string, ElementMargin>;
     elementStyles: Record<string, ElementStyle>;
+    sceneLocking?: boolean;
+    /**
+     * How provisional scenes inserted under production lock are labeled.
+     * - "suffix" (default): scene inserted between 3 and 4 → "3A".
+     * - "prefix": scene inserted between 3 and 4 → "A4". Letters decrease
+     *   going forward (closest to L_next gets "A").
+     * Only affects scenes that are computed/locked AFTER this setting is set;
+     * already-locked scenes keep their stored label.
+     */
+    sceneNumberingStyle?: "suffix" | "prefix";
 };
 
 // -------------------------------- //

@@ -74,6 +74,7 @@ const DocumentEditorPanel = ({
         moreLabel,
         elementMargins,
         elementStyles,
+        sceneLocking,
         setFocusedEditorType,
         setSelectedTitlePageElement,
         repository,
@@ -172,6 +173,12 @@ const DocumentEditorPanel = ({
             editorElement.classList.remove("scene-number-right");
         }
 
+        if (sceneLocking) {
+            editorElement.classList.add("production-locked");
+        } else {
+            editorElement.classList.remove("production-locked");
+        }
+
         editorElement.style.setProperty("--contd-label", `"${contdLabel}"`);
         editorElement.style.setProperty("--more-label", `"${moreLabel}"`);
 
@@ -246,6 +253,7 @@ const DocumentEditorPanel = ({
         moreLabel,
         elementMargins,
         elementStyles,
+        sceneLocking,
     ]);
 
     // ---- Pagination update (title page only) ----

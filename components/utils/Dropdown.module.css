@@ -68,7 +68,8 @@
     font-family: var(--font-inter);
 }
 
-.dropdown_item:hover {
+.dropdown_item:hover,
+.dropdown_item_active {
     background-color: var(--primary);
 }
 

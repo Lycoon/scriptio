@@ -185,6 +185,65 @@
         display: none;
     }
 
+    /* Production lock: suppress CSS counter pseudo-elements — labels come
+       from widget decorations (scene-locking-extension) so we can render
+       suffixed / OMITTED labels that CSS counters can't express. */
+    &.production-locked .scene::before,
+    &.production-locked .scene::after {
+        display: none;
+    }
+
+    /* Widget decoration for the left scene label (mirrors the ::before slot).
+       text-transform: none !important is required to defeat the parent
+       .scene's text-transform: uppercase (matching the same pattern used by
+       .collab-caret-name above) so lowercase suffix markers like "3aA"
+       render with their original case. */
+    .scene-label-left {
+        position: absolute;
+        right: 100%;
+        margin-right: -120px;
+        user-select: none;
+        pointer-events: none;
+        text-transform: none !important;
+    }
+
+    /* Widget decoration for the right scene label (mirrors the ::after slot). */
+    .scene-label-right {
+        position: absolute;
+        top: 0;
+        left: 100%;
+        margin-left: -85px;
+        user-select: none;
+        pointer-events: none;
+        display: none;
+        text-transform: none !important;
+    }
+    &.scene-number-right .scene-label-right {
+        display: block;
+    }
+    &.hide-scene-numbers .scene-label-left,
+    &.hide-scene-numbers .scene-label-right {
+        display: none;
+    }
+
+    /* OMITTED scene placeholder. The heading text and body paragraphs are
+       preserved in the document so the user can restore them; we just hide
+       them visually and overlay "OMITTED" in place of the heading. */
+    .scene[data-omitted-overlay="true"] {
+        color: var(--secondary-text);
+    }
+    .scene-heading-omitted-text {
+        display: none;
+    }
+    [data-omitted-body="true"] {
+        display: none;
+    }
+    .scene-omitted-overlay {
+        user-select: none;
+        pointer-events: none;
+        font-style: normal;
+    }
+
     /* Normal weight scene headings (when bold disabled) */
     &.scene-heading-normal .scene {
         font-weight: normal;
