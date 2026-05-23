@@ -78,12 +78,23 @@ const buildOmittedWidget = (): HTMLElement => {
     return span;
 };
 
+const hasAnyOmitted = (scenes: Record<string, PersistentScene>): boolean => {
+    for (const key in scenes) {
+        if (scenes[key]?.omitted) return true;
+    }
+    return false;
+};
+
 const computeDecorations = (
     doc: Node,
     locking: boolean,
     scenes: Record<string, PersistentScene>,
     style: SceneNumberingStyle,
 ): DecorationSet => {
+    // Nothing to render: no production lock and no omitted scenes. Skip the
+    // doc traversal entirely — this is the common case for most users.
+    if (!locking && !hasAnyOmitted(scenes)) return DecorationSet.empty;
+
     const entries = collectSceneEntries(doc);
     if (entries.length === 0) return DecorationSet.empty;
 
