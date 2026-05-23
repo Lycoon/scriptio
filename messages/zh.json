@@ -461,12 +461,12 @@
     "unlock": "解锁",
     "cancel": "取消",
     "numberingStyleTitle": "场景编号",
-    "numberingStyleHelp": "两个锁定场景之间新插入场景的编号方式。后缀参考上一个场景，前缀参考下一个场景。",
+    "numberingStyleHelp": "决定两个锁定场景之间新插入场景的编号方式。",
     "suffixName": "后缀",
     "prefixName": "前缀",
-    "suffixExample": "2 → 2A",
-    "prefixExample": "2 → A3",
-    "appliesToNewOnly": "已锁定的场景保留其编号 — 仅影响临时场景和将来的锁定。"
+    "skippedLettersTitle": "跳过的字母",
+    "skippedLettersHelp": "生成场景编号时省略的字母，通常用于避免混淆。",
+    "skipLetterAriaLabel": "跳过字母 {letter}"
   },
   "saves": {
     "title": "版本历史",

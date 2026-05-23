@@ -14,6 +14,7 @@ type SceneLockingConfig = {
     getSceneLocking: () => boolean;
     getScenes: () => Record<string, PersistentScene>;
     getNumberingStyle: () => SceneNumberingStyle;
+    getSkippedLetters: () => readonly string[];
 };
 
 type SceneEntry = { uuid: string; pos: number; nodeSize: number };
@@ -90,6 +91,7 @@ const computeDecorations = (
     locking: boolean,
     scenes: Record<string, PersistentScene>,
     style: SceneNumberingStyle,
+    skippedLetters: readonly string[],
 ): DecorationSet => {
     // Nothing to render: no production lock and no omitted scenes. Skip the
     // doc traversal entirely — this is the common case for most users.
@@ -106,6 +108,7 @@ const computeDecorations = (
             entries.map((e) => e.uuid),
             scenes,
             style,
+            skippedLetters,
         );
 
         for (let i = 0; i < entries.length; i++) {
@@ -193,7 +196,7 @@ export const createSceneLockingExtension = (config: SceneLockingConfig) => {
         name: "sceneLocking",
 
         addProseMirrorPlugins() {
-            const { getSceneLocking, getScenes, getNumberingStyle } = config;
+            const { getSceneLocking, getScenes, getNumberingStyle, getSkippedLetters } = config;
 
             return [
                 new Plugin({
@@ -205,6 +208,7 @@ export const createSceneLockingExtension = (config: SceneLockingConfig) => {
                                 getSceneLocking(),
                                 getScenes(),
                                 getNumberingStyle(),
+                                getSkippedLetters(),
                             );
                         },
                         apply(tr, oldDecorations, _oldState, newState) {
@@ -215,6 +219,7 @@ export const createSceneLockingExtension = (config: SceneLockingConfig) => {
                                     getSceneLocking(),
                                     getScenes(),
                                     getNumberingStyle(),
+                                    getSkippedLetters(),
                                 );
                             }
 
@@ -231,6 +236,7 @@ export const createSceneLockingExtension = (config: SceneLockingConfig) => {
                                 getSceneLocking(),
                                 getScenes(),
                                 getNumberingStyle(),
+                                getSkippedLetters(),
                             );
                         },
                     },

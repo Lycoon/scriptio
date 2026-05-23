@@ -461,12 +461,12 @@
     "unlock": "Desbloquear",
     "cancel": "Cancelar",
     "numberingStyleTitle": "Numeración de escenas",
-    "numberingStyleHelp": "Cómo se numeran las escenas recién insertadas entre dos escenas bloqueadas. El sufijo se refiere a la escena anterior, el prefijo a la siguiente.",
+    "numberingStyleHelp": "Determina cómo se numeran las escenas recién insertadas entre dos escenas bloqueadas.",
     "suffixName": "Sufijo",
     "prefixName": "Prefijo",
-    "suffixExample": "2 → 2A",
-    "prefixExample": "2 → A3",
-    "appliesToNewOnly": "Las escenas ya bloqueadas conservan su número — solo se ven afectadas las escenas provisionales y los futuros bloqueos."
+    "skippedLettersTitle": "Letras omitidas",
+    "skippedLettersHelp": "Letras que se omiten al generar los números de escena, generalmente para evitar confusiones.",
+    "skipLetterAriaLabel": "Omitir la letra {letter}"
   },
   "saves": {
     "title": "Historial de versiones",

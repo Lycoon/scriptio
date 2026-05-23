@@ -78,18 +78,38 @@ export type SceneLabel = {
 
 export type SceneNumberingStyle = "suffix" | "prefix";
 
+const FULL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+/**
+ * Build the effective alphabet by removing any letters the user wants to
+ * skip (e.g. "I" and "O" are commonly skipped because they're confused with
+ * digits). Always returns at least 2 letters so the labeling math doesn't
+ * degenerate — pathological skip lists fall back to the full alphabet.
+ */
+export const buildSceneAlphabet = (skipped: readonly string[] = []): string => {
+    const skipSet = new Set(skipped.map((s) => s.toUpperCase()));
+    const filtered = FULL_ALPHABET.split("").filter((c) => !skipSet.has(c)).join("");
+    return filtered.length >= 2 ? filtered : FULL_ALPHABET;
+};
+
 // --------------------------------------------------------------------------
 //                          ENCODING & DISPLAY
 // --------------------------------------------------------------------------
 
-/** Excel-style alphabetic letter: 1 → A, 26 → Z, 27 → AA, … */
-const letterFromValue = (n: number, lower: boolean): string => {
+/**
+ * Excel-style alphabetic letter over a configurable alphabet:
+ *   1 → alphabet[0], alphabet.length → last letter, alphabet.length+1 → "AA", …
+ * The alphabet defaults to A–Z but callers can pass a filtered one (e.g.
+ * with "I" and "O" removed).
+ */
+const letterFromValue = (n: number, lower: boolean, alphabet: string = FULL_ALPHABET): string => {
+    const base = alphabet.length;
     let out = "";
-    const charBase = lower ? 97 : 65;
     while (n > 0) {
-        const m = (n - 1) % 26;
-        out = String.fromCharCode(charBase + m) + out;
-        n = Math.floor((n - 1) / 26);
+        const m = (n - 1) % base;
+        const ch = alphabet[m];
+        out = (lower ? ch.toLowerCase() : ch) + out;
+        n = Math.floor((n - 1) / base);
     }
     return out;
 };
@@ -99,18 +119,18 @@ const letterFromValue = (n: number, lower: boolean): string => {
  * each level is taken directly from `level.lower`, so the result is the
  * same regardless of the project's `SceneNumberingStyle` setting.
  */
-export const compileSceneLabel = (token: SceneToken): string => {
+export const compileSceneLabel = (token: SceneToken, alphabet: string = FULL_ALPHABET): string => {
     // Prefixes are stored inner-first (closest to base at index 0). Render
     // outer-to-inner, i.e. reverse before joining.
     let out = "";
     for (let i = token.prefixes.length - 1; i >= 0; i--) {
         const lvl = token.prefixes[i];
-        out += letterFromValue(lvl.value, lvl.lower);
+        out += letterFromValue(lvl.value, lvl.lower, alphabet);
     }
     out += String(token.baseNumber);
     for (let i = 0; i < token.suffixes.length; i++) {
         const lvl = token.suffixes[i];
-        out += letterFromValue(lvl.value, lvl.lower);
+        out += letterFromValue(lvl.value, lvl.lower, alphabet);
     }
     return out;
 };
@@ -201,8 +221,10 @@ const withLevels = (t: SceneToken, axis: Axis, levels: SceneLevel[]): SceneToken
 // Wedge convention per axis. lowercase < uppercase at the same value (see
 // `compareTokens`). Suffix levels count UP, so 'a' (value 1) is the deepest
 // wedge — decrementing past it means descending a level. Prefix levels are
-// mirrored: 'z' (value 26) is the bound; incrementing past it descends.
-const wedgeBound = (axis: Axis): number => (axis === "suffix" ? 1 : 26);
+// mirrored: the alphabet's last letter (value = alphabet.length) is the
+// bound; incrementing past it descends.
+const wedgeBound = (axis: Axis, alphabetSize: number): number =>
+    axis === "suffix" ? 1 : alphabetSize;
 const wedgeStep = (axis: Axis): number => (axis === "suffix" ? -1 : 1);
 
 /** Bump the deepest level of `anchor` along `axis` by k. */
@@ -240,10 +262,11 @@ const wedgeAlong = (
     target: SceneToken,
     k: number,
     axis: Axis,
+    alphabetSize: number,
 ): SceneToken | null => {
     const fromLevels = levelsOf(from, axis);
     const targetLevels = levelsOf(target, axis);
-    const bound = wedgeBound(axis);
+    const bound = wedgeBound(axis, alphabetSize);
     const step = wedgeStep(axis);
 
     let i = 0;
@@ -295,6 +318,7 @@ const computeProvisionalToken = (
     next: SceneToken | null,
     k: number,
     style: SceneNumberingStyle,
+    alphabetSize: number,
 ): SceneToken => {
     if (!prev && !next) return baseToken(k);
 
@@ -309,7 +333,7 @@ const computeProvisionalToken = (
             return [
                 continueAlong(prev, k, "suffix"),
                 nestAlong(prev, k, "suffix"),
-                next ? wedgeAlong(prev, next, k, "suffix") : null,
+                next ? wedgeAlong(prev, next, k, "suffix", alphabetSize) : null,
             ];
         }
         // No prev — nothing to grow from on the suffix axis. The natural
@@ -323,7 +347,7 @@ const computeProvisionalToken = (
             return [
                 prev ? continueAlong(prev, k, "prefix") : null,
                 nestAlong(next, k, "prefix"),
-                prev ? wedgeAlong(next, prev, k, "prefix") : null,
+                prev ? wedgeAlong(next, prev, k, "prefix", alphabetSize) : null,
             ];
         }
         return prev ? [continueAlong(prev, k, "suffix")] : [];
@@ -361,7 +385,10 @@ export const computeSceneLabels = (
     sceneUuids: string[],
     persistent: Record<string, LockReadable | undefined>,
     style: SceneNumberingStyle = "suffix",
+    skippedLetters: readonly string[] = [],
 ): SceneLabel[] => {
+    const alphabet = buildSceneAlphabet(skippedLetters);
+    const alphabetSize = alphabet.length;
     const n = sceneUuids.length;
     const result: SceneLabel[] = new Array(n);
 
@@ -404,7 +431,7 @@ export const computeSceneLabels = (
             result[i] = {
                 uuid,
                 token: entry.token,
-                label: compileSceneLabel(entry.token),
+                label: compileSceneLabel(entry.token, alphabet),
                 status: entry.omitted ? "omitted" : "locked",
             };
             continue;
@@ -415,11 +442,12 @@ export const computeSceneLabels = (
             nextLocked[i],
             segmentIdx[i],
             style,
+            alphabetSize,
         );
         result[i] = {
             uuid,
             token,
-            label: compileSceneLabel(token),
+            label: compileSceneLabel(token, alphabet),
             status: "provisional",
         };
     }

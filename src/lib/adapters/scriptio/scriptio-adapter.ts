@@ -1,4 +1,4 @@
-import { BoardData, LayoutData, ProjectData, ProjectMetadata, ProjectState, screenplayOf, titlepageOf } from "@src/lib/project/project-state";
+import { BoardData, LayoutData, ProductionData, ProjectData, ProjectMetadata, ProjectState, screenplayOf, titlepageOf } from "@src/lib/project/project-state";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { replaceScreenplay } from "../../screenplay/editor";
 import { Editor } from "@tiptap/react";
@@ -79,6 +79,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
                 locations: project.locations().toJSON(),
                 board: project.board().toJSON() as BoardData,
                 layout: project.layout().toJSON() as LayoutData,
+                production: project.production().toJSON() as ProductionData,
                 comments: project.comments().toJSON(),
             };
             payload = new TextEncoder().encode(JSON.stringify(data, null, 2));
@@ -129,6 +130,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
                 locations: tmpDoc.locations().toJSON(),
                 board: tmpDoc.board().toJSON() as BoardData,
                 layout: tmpDoc.layout().toJSON() as LayoutData,
+                production: tmpDoc.production().toJSON() as ProductionData,
                 comments: tmpDoc.comments().toJSON(),
             };
         } catch (error) {
@@ -171,6 +173,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
                     ydoc.locations().clear();
                     ydoc.board().clear();
                     ydoc.layout().clear();
+                    ydoc.production().clear();
                     ydoc.comments().clear();
                 });
 

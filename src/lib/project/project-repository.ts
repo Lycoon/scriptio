@@ -5,6 +5,7 @@ import { ScreenplaySchema } from "../screenplay/editor";
 import { Comment, CommentReply, Screenplay } from "../utils/types";
 import {
     LayoutData,
+    ProductionData,
     ProjectMetadata,
     ProjectState,
     ElementStyle,
@@ -370,13 +371,33 @@ export class ProjectRepository {
         if (this.guardWrite("setElementStyles")) return;
         this.ydoc.layout().set("elementStyles", styles);
     }
+
+    // -------------------------------- //
+    //           PRODUCTION             //
+    // -------------------------------- //
+
+    getProduction(): Partial<ProductionData> {
+        return this.ydoc.production().toJSON() as Partial<ProductionData>;
+    }
+
+    observeProduction(callback: (production: Partial<ProductionData>) => void): () => void {
+        const map = this.ydoc.production();
+        const observer = () => callback(map.toJSON() as Partial<ProductionData>);
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
     setSceneLocking(locked: boolean) {
         if (this.guardWrite("setSceneLocking")) return;
-        this.ydoc.layout().set("sceneLocking", locked);
+        this.ydoc.production().set("sceneLocking", locked);
     }
     setSceneNumberingStyle(style: "suffix" | "prefix") {
         if (this.guardWrite("setSceneNumberingStyle")) return;
-        this.ydoc.layout().set("sceneNumberingStyle", style);
+        this.ydoc.production().set("sceneNumberingStyle", style);
+    }
+    setSkippedSceneLetters(letters: string[]) {
+        if (this.guardWrite("setSkippedSceneLetters")) return;
+        this.ydoc.production().set("skippedSceneLetters", letters);
     }
 
     /**

@@ -462,12 +462,12 @@
     "unlock": "Entsperren",
     "cancel": "Abbrechen",
     "numberingStyleTitle": "Szenennummerierung",
-    "numberingStyleHelp": "Wie neu eingefügte Szenen zwischen zwei gesperrten Szenen nummeriert werden. Suffix verweist auf die vorherige Szene, Präfix auf die nächste.",
+    "numberingStyleHelp": "Bestimmt, wie neu eingefügte Szenen zwischen zwei gesperrten Szenen nummeriert werden.",
     "suffixName": "Suffix",
     "prefixName": "Präfix",
-    "suffixExample": "2 → 2A",
-    "prefixExample": "2 → A3",
-    "appliesToNewOnly": "Bereits gesperrte Szenen behalten ihre Nummer — nur vorläufige Szenen und zukünftige Sperrungen sind betroffen."
+    "skippedLettersTitle": "Übersprungene Buchstaben",
+    "skippedLettersHelp": "Buchstaben, die bei der Szenennummerierung weggelassen werden, meist um Verwechslungen zu vermeiden.",
+    "skipLetterAriaLabel": "Buchstabe {letter} überspringen"
   },
   "saves": {
     "title": "Versionsverlauf",

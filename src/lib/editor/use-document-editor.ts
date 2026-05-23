@@ -77,6 +77,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         moreLabel,
         sceneLocking,
         sceneNumberingStyle,
+        skippedSceneLetters,
         persistentScenes,
     } = projectCtx;
 
@@ -172,6 +173,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         setSearchMatches,
         sceneLocking,
         sceneNumberingStyle,
+        skippedSceneLetters,
         persistentScenes,
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }), []);
@@ -188,6 +190,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     ext.setSearchMatches = setSearchMatches;
     ext.sceneLocking = sceneLocking;
     ext.sceneNumberingStyle = sceneNumberingStyle;
+    ext.skippedSceneLetters = skippedSceneLetters;
     ext.persistentScenes = persistentScenes;
 
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
@@ -269,6 +272,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
               getSceneLocking: () => !!ext.sceneLocking,
               getScenes: () => ext.repository?.scenes ?? {},
               getNumberingStyle: () => ext.sceneNumberingStyle ?? "suffix",
+              getSkippedLetters: () => ext.skippedSceneLetters ?? [],
           })
         : null;
 
@@ -596,7 +600,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         if (editor && features.sceneLocking) {
             refreshSceneLocking(editor);
         }
-    }, [editor, sceneLocking, sceneNumberingStyle, persistentScenes, features.sceneLocking]);
+    }, [editor, sceneLocking, sceneNumberingStyle, skippedSceneLetters, persistentScenes, features.sceneLocking]);
 
     // Refresh search highlights
     useEffect(() => {

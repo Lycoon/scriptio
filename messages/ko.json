@@ -461,12 +461,12 @@
     "unlock": "잠금 해제",
     "cancel": "취소",
     "numberingStyleTitle": "씬 번호",
-    "numberingStyleHelp": "잠긴 두 씬 사이에 새로 삽입된 씬의 번호 매김 방식. 접미사는 이전 씬을, 접두사는 다음 씬을 참조합니다.",
+    "numberingStyleHelp": "잠긴 두 씬 사이에 새로 삽입된 씬의 번호 매김 방식을 결정합니다.",
     "suffixName": "접미사",
     "prefixName": "접두사",
-    "suffixExample": "2 → 2A",
-    "prefixExample": "2 → A3",
-    "appliesToNewOnly": "이미 잠긴 씬은 번호를 유지합니다 — 임시 씬과 향후 잠금에만 영향을 미칩니다."
+    "skippedLettersTitle": "건너뛸 문자",
+    "skippedLettersHelp": "씬 번호를 생성할 때 제외할 문자입니다. 보통 혼동을 피하기 위해 사용합니다.",
+    "skipLetterAriaLabel": "{letter} 문자 건너뛰기"
   },
   "saves": {
     "title": "버전 히스토리",

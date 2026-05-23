@@ -461,12 +461,12 @@
     "unlock": "Odblokuj",
     "cancel": "Anuluj",
     "numberingStyleTitle": "Numeracja scen",
-    "numberingStyleHelp": "Jak są numerowane nowo wstawione sceny między dwiema zablokowanymi. Sufiks odnosi się do poprzedniej sceny, prefiks do następnej.",
+    "numberingStyleHelp": "Określa, jak numerowane są nowo wstawione sceny między dwiema zablokowanymi scenami.",
     "suffixName": "Sufiks",
     "prefixName": "Prefiks",
-    "suffixExample": "2 → 2A",
-    "prefixExample": "2 → A3",
-    "appliesToNewOnly": "Już zablokowane sceny zachowują swój numer — wpływa tylko na sceny tymczasowe i przyszłe blokady."
+    "skippedLettersTitle": "Pomijane litery",
+    "skippedLettersHelp": "Litery pomijane podczas generowania numerów scen, zwykle aby uniknąć pomyłek.",
+    "skipLetterAriaLabel": "Pomiń literę {letter}"
   },
   "saves": {
     "title": "Historia wersji",

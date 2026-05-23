@@ -462,12 +462,12 @@
     "unlock": "Déverrouiller",
     "cancel": "Annuler",
     "numberingStyleTitle": "Numérotation des scènes",
-    "numberingStyleHelp": "Comment les scènes nouvellement insérées sont numérotées entre deux scènes verrouillées. Le suffixe se réfère à la scène précédente, le préfixe à la suivante.",
+    "numberingStyleHelp": "Détermine comment les scènes nouvellement insérées sont numérotées entre deux scènes verrouillées.",
     "suffixName": "Suffixe",
     "prefixName": "Préfixe",
-    "suffixExample": "2 → 2A",
-    "prefixExample": "2 → A3",
-    "appliesToNewOnly": "Les scènes déjà verrouillées conservent leur numéro — seules les scènes provisoires et les futurs verrouillages sont concernés."
+    "skippedLettersTitle": "Lettres ignorées",
+    "skippedLettersHelp": "Lettres à omettre lors de la génération des numéros de scène, généralement pour éviter toute confusion.",
+    "skipLetterAriaLabel": "Ignorer la lettre {letter}"
   },
   "saves": {
     "title": "Historique des versions",

@@ -461,12 +461,12 @@
     "unlock": "ロック解除",
     "cancel": "キャンセル",
     "numberingStyleTitle": "シーン番号",
-    "numberingStyleHelp": "ロック済みの2つのシーンの間に挿入された新しいシーンの番号付け方法。サフィックスは前のシーン、プレフィックスは次のシーンを参照します。",
+    "numberingStyleHelp": "ロック済みの2つのシーンの間に挿入された新しいシーンの番号付け方法を決定します。",
     "suffixName": "サフィックス",
     "prefixName": "プレフィックス",
-    "suffixExample": "2 → 2A",
-    "prefixExample": "2 → A3",
-    "appliesToNewOnly": "すでにロックされているシーンは番号を保持します — 仮シーンと今後のロックのみが影響を受けます。"
+    "skippedLettersTitle": "スキップする文字",
+    "skippedLettersHelp": "シーン番号生成時に省略する文字。通常は混同を避けるために使用します。",
+    "skipLetterAriaLabel": "{letter} をスキップ"
   },
   "saves": {
     "title": "バージョン履歴",

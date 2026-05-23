@@ -461,12 +461,12 @@
     "unlock": "Unlock",
     "cancel": "Cancel",
     "numberingStyleTitle": "Scene numbering",
-    "numberingStyleHelp": "How newly inserted scenes are numbered between two locked scenes. Suffix references the previous scene, prefix references the next.",
+    "numberingStyleHelp": "Dictates how newly inserted scenes should be numbered between two locked scenes.",
     "suffixName": "Suffix",
     "prefixName": "Prefix",
-    "suffixExample": "2 → 2A",
-    "prefixExample": "2 → A3",
-    "appliesToNewOnly": "Already-locked scenes keep their stored number — only provisional scenes and future locks are affected."
+    "skippedLettersTitle": "Skipped letters",
+    "skippedLettersHelp": "Letters to omit when generating scene numbers usually to avoid confusion.",
+    "skipLetterAriaLabel": "Skip letter {letter}"
   },
   "saves": {
     "title": "Version History",

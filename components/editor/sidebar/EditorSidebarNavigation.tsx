@@ -18,7 +18,15 @@ import sidebar_nav from "./EditorSidebarNavigation.module.css";
 
 const EditorSidebarNavigation = () => {
     const t = useTranslations("editorSidebar");
-    const { scenes, updateScenes, editor, sceneLocking, sceneNumberingStyle, persistentScenes } = useContext(ProjectContext);
+    const {
+        scenes,
+        updateScenes,
+        editor,
+        sceneLocking,
+        sceneNumberingStyle,
+        skippedSceneLetters,
+        persistentScenes,
+    } = useContext(ProjectContext);
     const { leftSidebarOpen } = useViewContext();
 
     const [activeTab, setActiveTab] = useState<"scenes" | "shelf" | "comments">("scenes");
@@ -38,14 +46,19 @@ const EditorSidebarNavigation = () => {
     const sceneDisplays = useMemo(() => {
         if (sceneLocking) {
             const uuids = scenes.map((s) => s.id ?? "");
-            const labels = computeSceneLabels(uuids, persistentScenes, sceneNumberingStyle);
+            const labels = computeSceneLabels(
+                uuids,
+                persistentScenes,
+                sceneNumberingStyle,
+                skippedSceneLetters,
+            );
             return scenes.map((_, i) => ({
                 label: labels[i]?.label ?? `${i + 1}`,
                 isOmitted: labels[i]?.status === "omitted",
             }));
         }
         return scenes.map((_, i) => ({ label: `${i + 1}`, isOmitted: false }));
-    }, [scenes, sceneLocking, sceneNumberingStyle, persistentScenes]);
+    }, [scenes, sceneLocking, sceneNumberingStyle, skippedSceneLetters, persistentScenes]);
 
     const listRef = useRef<HTMLDivElement>(null);
     const currentSceneRef = useRef<HTMLDivElement>(null);

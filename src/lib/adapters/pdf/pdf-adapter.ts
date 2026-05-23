@@ -1,13 +1,11 @@
 
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { ProjectData, ProjectState } from "@src/lib/project/project-state";
-import type { PersistentSceneMap } from "@src/lib/screenplay/scenes";
 import { PageFormat } from "@src/lib/utils/enums";
 import { getFontForCodePoint, ScriptFont } from "./pdf-utils";
 import type { TextRun } from "./pdf.worker";
 import { BASE_URL } from "@src/lib/utils/constants";
 import { PAGE_SIZES } from "@src/lib/screenplay/extensions/pagination-extension";
-import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,10 +21,6 @@ export type PDFExportOptions = BaseExportOptions & {
     moreLabel?: string;
     editorElement?: HTMLElement;
     titlePageElement?: HTMLElement;
-    /** Production-mode flag + persistent scene entries, set internally from the ProjectState. */
-    sceneLocking?: boolean;
-    sceneNumberingStyle?: "suffix" | "prefix";
-    persistentScenes?: PersistentSceneMap;
 };
 
 import type { WorkerMessage, WorkerPayload, VisualLine } from "./pdf.worker";
@@ -71,34 +65,25 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
     label = "PDF";
     extension = "pdf";
 
-    async convertTo(project: ProjectState, options: PDFExportOptions): Promise<Blob> {
+    async convertTo(_project: ProjectState, options: PDFExportOptions): Promise<Blob> {
         const editorEl = options.editorElement;
         if (!editorEl) throw new Error("Editor element is required for DOM-based PDF export");
 
         const format = options.format;
         const pdfPageSize = PDF_PAGE_SIZES[format];
 
-        // Resolve production state from the project. Persistent scenes carry
-        // synopsis/color (irrelevant here) and token/omitted (used for labels).
-        const layout = project.layout().toJSON() as {
-            sceneLocking?: boolean;
-            sceneNumberingStyle?: "suffix" | "prefix";
-        };
-        const persistentScenes = project.scenes().toJSON() as PersistentSceneMap;
-        const enrichedOptions: PDFExportOptions = {
-            ...options,
-            sceneLocking: !!layout.sceneLocking,
-            sceneNumberingStyle: layout.sceneNumberingStyle ?? "suffix",
-            persistentScenes,
-        };
+        // Scene labels (under production lock) and OMITTED state are already
+        // rendered as ProseMirror decoration widgets inside each scene <p>.
+        // `collectLines` reads them directly from the DOM, so we don't need to
+        // re-run the scene-labeling logic here.
 
         // ── Collect all visual lines from the browser DOM ───────────────────
         const titlePageEl = options.titlePageElement;
 
-        const titlePageLines = titlePageEl ? this.collectLines(titlePageEl, enrichedOptions) : [];
+        const titlePageLines = titlePageEl ? this.collectLines(titlePageEl, options) : [];
         const titlePageLeftPx = titlePageEl ? this.getPageLeftPx(titlePageEl) : 0;
 
-        const screenplayLines = this.collectLines(editorEl, enrichedOptions);
+        const screenplayLines = this.collectLines(editorEl, options);
         const screenplayLeftPx = this.getPageLeftPx(editorEl);
 
         return new Promise((resolve, reject) => {
@@ -162,28 +147,6 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         let sceneCount = 0;
         let yOffset = 0;
 
-        // Pre-compute label per scene UUID when production lock is on.
-        const sceneLabels: { label: string; omitted: boolean }[] = [];
-        let sceneLabelIdx = 0;
-        if (options.sceneLocking) {
-            const uuids: string[] = [];
-            for (let i = 0; i < editorEl.children.length; i++) {
-                const child = editorEl.children[i] as HTMLElement;
-                if (child?.tagName === "P" && child.classList.contains("scene")) {
-                    const uuid = child.getAttribute("data-id");
-                    if (uuid) uuids.push(uuid);
-                }
-            }
-            const computed = computeSceneLabels(
-                uuids,
-                options.persistentScenes ?? {},
-                options.sceneNumberingStyle ?? "suffix",
-            );
-            for (const l of computed) {
-                sceneLabels.push({ label: l.label, omitted: l.status === "omitted" });
-            }
-        }
-
         for (let i = 0; i < editorEl.children.length; i++) {
             const el = editorEl.children[i] as HTMLElement;
             if (!el) continue;
@@ -206,10 +169,19 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
             const isScene = el.classList.contains("scene");
             if (isScene) sceneCount++;
+            // Label widgets are injected by `scene-locking-extension` when
+            // production lock is on. Read whichever side is present (left or
+            // right) and fall back to a positional number when neither is.
             const sceneInfo = isScene
-                ? options.sceneLocking
-                    ? sceneLabels[sceneLabelIdx++] ?? { label: String(sceneCount), omitted: false }
-                    : { label: String(sceneCount), omitted: false }
+                ? {
+                      label:
+                          (el.querySelector(".scene-label-left") as HTMLElement | null)?.textContent
+                              ?.trim() ||
+                          (el.querySelector(".scene-label-right") as HTMLElement | null)?.textContent
+                              ?.trim() ||
+                          String(sceneCount),
+                      omitted: el.getAttribute("data-omitted-overlay") === "true",
+                  }
                 : undefined;
 
             // Extract the paragraph type from classList

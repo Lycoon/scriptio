@@ -20,10 +20,12 @@ import {
     CollaboratorInfo,
     ConnectionStatus,
     LayoutData,
+    ProductionData,
     useProjectYjs,
     ElementStyle,
     PageMargin,
     DEFAULT_PAGE_MARGINS,
+    DEFAULT_SKIPPED_SCENE_LETTERS,
     ShelfEntry,
     ProjectStatus,
 } from "@src/lib/project/project-state";
@@ -102,6 +104,8 @@ export interface ProjectContextType {
     setSceneLocking: (locked: boolean) => void;
     sceneNumberingStyle: "suffix" | "prefix";
     setSceneNumberingStyle: (style: "suffix" | "prefix") => void;
+    skippedSceneLetters: string[];
+    setSkippedSceneLetters: (letters: string[]) => void;
     /** Raw persistent scene map (UUID → PersistentScene). Includes synopsis,
      *  color, and production-lock fields (token, omitted) for every scene that
      *  has been persisted. */
@@ -187,6 +191,8 @@ const defaultContextValue: ProjectContextType = {
     setSceneLocking: () => {},
     sceneNumberingStyle: "suffix",
     setSceneNumberingStyle: () => {},
+    skippedSceneLetters: DEFAULT_SKIPPED_SCENE_LETTERS,
+    setSkippedSceneLetters: () => {},
     persistentScenes: {},
     characters: {},
     locations: {},
@@ -310,6 +316,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [sceneLocking, setSceneLockingState] = useState<boolean>(false);
     const [sceneNumberingStyle, setSceneNumberingStyleState] =
         useState<"suffix" | "prefix">("suffix");
+    const [skippedSceneLetters, setSkippedSceneLettersState] =
+        useState<string[]>(DEFAULT_SKIPPED_SCENE_LETTERS);
     const [persistentScenes, setPersistentScenesState] = useState<PersistentSceneMap>({});
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
@@ -488,11 +496,19 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (initialLayout.elementStyles !== undefined) {
                 setElementStylesState(initialLayout.elementStyles);
             }
-            if (initialLayout.sceneLocking !== undefined) {
-                setSceneLockingState(initialLayout.sceneLocking);
+        }
+
+        // Read initial production data (separate Y.Map from layout).
+        const initialProduction = repository.getProduction();
+        if (initialProduction) {
+            if (initialProduction.sceneLocking !== undefined) {
+                setSceneLockingState(initialProduction.sceneLocking);
             }
-            if (initialLayout.sceneNumberingStyle !== undefined) {
-                setSceneNumberingStyleState(initialLayout.sceneNumberingStyle);
+            if (initialProduction.sceneNumberingStyle !== undefined) {
+                setSceneNumberingStyleState(initialProduction.sceneNumberingStyle);
+            }
+            if (initialProduction.skippedSceneLetters !== undefined) {
+                setSkippedSceneLettersState(initialProduction.skippedSceneLetters);
             }
         }
 
@@ -537,11 +553,18 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (layout.elementStyles !== undefined) {
                 setElementStylesState(layout.elementStyles);
             }
-            if (layout.sceneLocking !== undefined) {
-                setSceneLockingState(layout.sceneLocking);
+        });
+
+        // Observe production changes
+        const unsubscribeProduction = repository.observeProduction((production: Partial<ProductionData>) => {
+            if (production.sceneLocking !== undefined) {
+                setSceneLockingState(production.sceneLocking);
             }
-            if (layout.sceneNumberingStyle !== undefined) {
-                setSceneNumberingStyleState(layout.sceneNumberingStyle);
+            if (production.sceneNumberingStyle !== undefined) {
+                setSceneNumberingStyleState(production.sceneNumberingStyle);
+            }
+            if (production.skippedSceneLetters !== undefined) {
+                setSkippedSceneLettersState(production.skippedSceneLetters);
             }
         });
 
@@ -586,6 +609,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         return () => {
             repository.unregisterScreenplayCallback(recomputeFromScreenplay);
             unsubscribeLayout();
+            unsubscribeProduction();
             unsubscribeCharacters();
             unsubscribeLocations();
             unsubscribeScenes();
@@ -758,6 +782,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    const setSkippedSceneLetters = useCallback(
+        (letters: string[]) => {
+            setSkippedSceneLettersState(letters);
+            repository?.setSkippedSceneLetters(letters);
+        },
+        [repository],
+    );
+
     const setSearchTerm = useCallback((term: string) => {
         setSearchTermState(term);
         // Reset to first match when search term changes
@@ -846,6 +878,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setSceneLocking,
             sceneNumberingStyle,
             setSceneNumberingStyle,
+            skippedSceneLetters,
+            setSkippedSceneLetters,
             persistentScenes,
             screenplay,
             scenes,
@@ -915,6 +949,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setSceneLocking,
             sceneNumberingStyle,
             setSceneNumberingStyle,
+            skippedSceneLetters,
+            setSkippedSceneLetters,
             persistentScenes,
             screenplay,
             scenes,

@@ -32,8 +32,15 @@ const REVISION_COLORS = [
 
 const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     const t = useTranslations("production");
-    const { sceneLocking, sceneNumberingStyle, persistentScenes, scenes, repository, isReadOnly } =
-        useContext(ProjectContext);
+    const {
+        sceneLocking,
+        sceneNumberingStyle,
+        skippedSceneLetters,
+        persistentScenes,
+        scenes,
+        repository,
+        isReadOnly,
+    } = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
 
     const panelRef = useRef<HTMLDivElement>(null);
@@ -58,9 +65,14 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     const labels = useMemo(
         () =>
             sceneLocking
-                ? computeSceneLabels(sceneUuids, persistentScenes, sceneNumberingStyle)
+                ? computeSceneLabels(
+                      sceneUuids,
+                      persistentScenes,
+                      sceneNumberingStyle,
+                      skippedSceneLetters,
+                  )
                 : [],
-        [sceneLocking, sceneUuids, persistentScenes, sceneNumberingStyle],
+        [sceneLocking, sceneUuids, persistentScenes, sceneNumberingStyle, skippedSceneLetters],
     );
 
     const provisionalLabels = useMemo(
@@ -93,7 +105,12 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                 // tokens, this falls through to baseToken(idx+1) for every
                 // scene, matching the previous behaviour.
                 const persistentSnapshot = repository.scenes;
-                const labels = computeSceneLabels(uuids, persistentSnapshot, sceneNumberingStyle);
+                const labels = computeSceneLabels(
+                    uuids,
+                    persistentSnapshot,
+                    sceneNumberingStyle,
+                    skippedSceneLetters,
+                );
 
                 labels.forEach((label) => {
                     if (label.status === "provisional") {
@@ -122,6 +139,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                 uuids,
                 persistentSnapshot,
                 sceneNumberingStyle,
+                skippedSceneLetters,
             );
 
             console.log("[ProductionPanel] RELOCKING PROVISIONAL. Full snapshot:", currentLabels.map(l => ({
