@@ -11,7 +11,7 @@ import { ScreenplayElement, Style, TitlePageElement } from "@src/lib/utils/enums
 import { getRandomColor } from "@src/lib/utils/misc";
 import { useUser } from "@src/lib/utils/hooks";
 import { getStylesFromMarks, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
-import { ScriptioPagination } from "@src/lib/screenplay/extensions/pagination-extension";
+import { ScriptioPagination, refreshPageLocking } from "@src/lib/screenplay/extensions/pagination-extension";
 import { KeybindsExtension } from "@src/lib/screenplay/extensions/keybinds-extension";
 import { executeKeybindAction, KeybindId } from "@src/lib/utils/keybinds";
 import {
@@ -27,6 +27,10 @@ import {
     createSceneBookmarkExtension,
     refreshSceneBookmarks,
 } from "@src/lib/screenplay/extensions/scene-bookmark-extension";
+import {
+    createSceneLockingExtension,
+    refreshSceneLocking,
+} from "@src/lib/screenplay/extensions/scene-locking-extension";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
@@ -71,6 +75,12 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         setSearchMatches,
         contdLabel,
         moreLabel,
+        sceneLocking,
+        sceneNumberingStyle,
+        skippedSceneLetters,
+        persistentScenes,
+        pageLocking,
+        persistentPages,
     } = projectCtx;
 
     const projectState = repository?.getState();
@@ -163,6 +173,12 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         searchFilters,
         currentSearchIndex,
         setSearchMatches,
+        sceneLocking,
+        sceneNumberingStyle,
+        skippedSceneLetters,
+        persistentScenes,
+        pageLocking,
+        persistentPages,
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }), []);
     ext.highlightedCharacters = highlightedCharacters;
@@ -176,6 +192,12 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     ext.searchFilters = searchFilters;
     ext.currentSearchIndex = currentSearchIndex;
     ext.setSearchMatches = setSearchMatches;
+    ext.sceneLocking = sceneLocking;
+    ext.sceneNumberingStyle = sceneNumberingStyle;
+    ext.skippedSceneLetters = skippedSceneLetters;
+    ext.persistentScenes = persistentScenes;
+    ext.pageLocking = pageLocking;
+    ext.persistentPages = persistentPages;
 
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
 
@@ -248,6 +270,15 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
               duplicatePersistentScene: (originalId: string, newId: string) => {
                   ext.repository?.duplicateScene(originalId, newId);
               },
+          })
+        : null;
+
+    const sceneLockingExtension = features.sceneLocking
+        ? createSceneLockingExtension({
+              getSceneLocking: () => !!ext.sceneLocking,
+              getScenes: () => ext.repository?.scenes ?? {},
+              getNumberingStyle: () => ext.sceneNumberingStyle ?? "suffix",
+              getSkippedLetters: () => ext.skippedSceneLetters ?? [],
           })
         : null;
 
@@ -337,6 +368,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                               },
                               footerRight: "",
                               ...SCREENPLAY_FORMATS[pageSize],
+                              getPageLocking: () => !!ext.pageLocking,
+                              getPageLocks: () => ext.persistentPages ?? {},
+                              getSkippedLetters: () => ext.skippedSceneLetters ?? [],
                           }
                         : {
                               pageGap: 20,
@@ -363,6 +397,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 ...(characterHighlightExtension ? [characterHighlightExtension] : []),
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
+                ...(sceneLockingExtension ? [sceneLockingExtension] : []),
                 ...(nodeIdDedupExtension ? [nodeIdDedupExtension] : []),
                 ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
@@ -568,6 +603,23 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
             refreshSceneBookmarks(editor);
         }
     }, [editor, scenes, features.sceneBookmarks]);
+
+    // Refresh scene locking decorations when the lock map or toggle changes
+    useEffect(() => {
+        if (editor && features.sceneLocking) {
+            refreshSceneLocking(editor);
+        }
+    }, [editor, sceneLocking, sceneNumberingStyle, skippedSceneLetters, persistentScenes, features.sceneLocking]);
+
+    // Refresh pagination when page locking or the page-lock map changes.
+    // Pagination only reads these via getter closures on its options, so
+    // we must explicitly kick it to re-run; otherwise stale labels render
+    // until the user types.
+    useEffect(() => {
+        if (editor && config.features.paginationMode === "screenplay") {
+            refreshPageLocking(editor);
+        }
+    }, [editor, pageLocking, persistentPages, skippedSceneLetters, config.features.paginationMode]);
 
     // Refresh search highlights
     useEffect(() => {

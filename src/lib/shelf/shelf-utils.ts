@@ -12,6 +12,24 @@ export interface ShelveCandidate {
 }
 
 /**
+ * Removes 'comment' marks from a node's JSON to prevent it from being
+ * dropped by the shelf editor which lacks the comment extension.
+ */
+function stripComments(nodeJson: JSONContent): JSONContent {
+    const result = { ...nodeJson };
+    if (result.marks) {
+        result.marks = result.marks.filter((m) => m.type !== "comment");
+        if (result.marks.length === 0) {
+            delete result.marks;
+        }
+    }
+    if (result.content) {
+        result.content = result.content.map(stripComments);
+    }
+    return result;
+}
+
+/**
  * Given a position in the document, determine the shelvable content.
  * Returns null if the node at the position is not shelvable.
  */
@@ -32,7 +50,7 @@ export function extractShelveCandidate(editor: Editor, pos: number): ShelveCandi
         case ScreenplayElement.Character:
             return extractDialogueBlockContent(doc, docChildIndex, nodeId, node.textContent);
         case ScreenplayElement.Action:
-            return { nodeId, title: node.textContent, type: "action", content: [node.toJSON()] };
+            return { nodeId, title: node.textContent, type: "action", content: [stripComments(node.toJSON())] };
         default:
             return null;
     }
@@ -48,12 +66,12 @@ function extractSceneContent(
     const content: JSONContent[] = [];
     const count = doc.childCount;
 
-    content.push(doc.child(startIndex).toJSON());
+    content.push(stripComments(doc.child(startIndex).toJSON()));
 
     for (let i = startIndex + 1; i < count; i++) {
         const child = doc.child(i);
         if (child.attrs.class === ScreenplayElement.Scene) break;
-        content.push(child.toJSON());
+        content.push(stripComments(child.toJSON()));
     }
 
     return { nodeId, title, type: "scene", content };
@@ -69,7 +87,7 @@ function extractDialogueBlockContent(
     const content: JSONContent[] = [];
     const count = doc.childCount;
 
-    content.push(doc.child(startIndex).toJSON());
+    content.push(stripComments(doc.child(startIndex).toJSON()));
 
     for (let i = startIndex + 1; i < count; i++) {
         const cls = doc.child(i).attrs.class;
@@ -77,7 +95,7 @@ function extractDialogueBlockContent(
             cls === ScreenplayElement.Dialogue ||
             cls === ScreenplayElement.Parenthetical
         ) {
-            content.push(doc.child(i).toJSON());
+            content.push(stripComments(doc.child(i).toJSON()));
         } else {
             break;
         }

@@ -5,7 +5,7 @@ import { ScreenplayElement, Style, TitlePageElement } from "../utils/enums";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 
-import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline } from "@src/lib/screenplay/nodes";
+import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline, generateNodeId } from "@src/lib/screenplay/nodes";
 import { Placeholder } from "./extensions/placeholder-extension";
 import { PAGE_SIZES } from "./extensions/pagination-extension";
 import { ContdExtension } from "./extensions/contd-extension";
@@ -19,8 +19,14 @@ export const applyMarkToggle = (editor: Editor, style: Style) => {
 };
 
 export const applyElement = (editor: Editor, element: ScreenplayElement) => {
-    // Use the element value directly as the node name since they now match
-    editor.chain().focus().setNode(element, { class: element }).run();
+    // Pass a fresh data-id explicitly: Tiptap pre-resolves the schema's
+    // function defaults at setup time (see @tiptap/core
+    // helpers/getAttributesFromExtensions.ts), so the data-id default is a
+    // static string after init. Without this, every type-conversion would
+    // produce a duplicate that the dedup extension renames — and the
+    // rename would transfer any locked persistent entry to the new node,
+    // silently breaking scene locks.
+    editor.chain().focus().setNode(element, { class: element, "data-id": generateNodeId() }).run();
 };
 
 export const focusOnPosition = (editor: Editor, position: number) => {

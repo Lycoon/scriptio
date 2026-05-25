@@ -80,6 +80,7 @@
     "tabs": {
       "General": "常规",
       "Layout": "布局",
+      "Production": "制作",
       "Export": "导入/导出",
       "Collaborators": "协作",
       "Keybinds": "键位",
@@ -389,7 +390,9 @@
     "shelve": "搁置",
     "shelveScene": "搁置场景",
     "shelveDialogue": "搁置对白",
-    "shelveAction": "搁置动作"
+    "shelveAction": "搁置动作",
+    "omitScene": "省略场景",
+    "unomitScene": "恢复场景"
   },
   "popup": {
     "character": {
@@ -444,6 +447,31 @@
     "untitled": "未命名",
     "titlePlaceholder": "标题",
     "descriptionPlaceholder": "描述"
+  },
+  "production": {
+    "title": "制作",
+    "sceneLocking": "锁定场景",
+    "pageLocking": "锁定页面",
+    "revisions": "修订",
+    "relock": "锁定",
+    "provisionalTitle": "未锁定的场景",
+    "unlockTitle": "解锁场景编号?",
+    "unlockWarning": "<b>所有锁定和省略的场景都将失去固定编号。</b>",
+    "unlockInfo": "此操作会影响所有协作者。剧本将恢复为按位置编号。OMITTED 场景仍保持省略状态 — 如需恢复内容,请单独取消省略。",
+    "unlock": "解锁",
+    "pageRelock": "重新锁定",
+    "pageProvisionalTitle": "未锁定的页面",
+    "unlockPagesTitle": "解锁页面?",
+    "unlockPagesWarning": "所有页面将失去锁定的编号,恢复为自然分页。",
+    "unlockPages": "解锁页面",
+    "cancel": "取消",
+    "numberingStyleTitle": "场景编号",
+    "numberingStyleHelp": "决定两个锁定场景之间新插入场景的编号方式。",
+    "suffixName": "后缀",
+    "prefixName": "前缀",
+    "skippedLettersTitle": "跳过的字母",
+    "skippedLettersHelp": "生成场景编号时省略的字母，通常用于避免混淆。",
+    "skipLetterAriaLabel": "跳过字母 {letter}"
   },
   "saves": {
     "title": "版本历史",

@@ -108,33 +108,25 @@
     font-size: 16px !important;
 }
 
-/* Popup confirm button */
-.import_confirm {
-    border-width: 2px !important;
-    border-style: dashed !important;
-    border-color: var(--error) !important;
-}
+/* Popup buttons — reuse the rounded "modal button" styling from DangerZone
+   so every modal/popup shares one consistent look. The popup container
+   stretches them to fill its width via `width: 100%` (DangerZone uses a
+   flex-column wrapper instead, so its variant doesn't need that). Use
+   these classes STANDALONE — do not pair with form.btn, since its
+   !important border/radius rules would override the composed styling. */
 
 .confirm {
-    background-color: var(--secondary);
-    border-radius: 8px !important;
-    transition: background-color 0.15s ease !important;
+    composes: modalBtn from "../utils/ModalBtn.module.css";
+    width: 100% !important;
 }
 
-.confirm:hover {
-    background-color: var(--secondary-hover) !important;
-}
-
-.confirm:disabled {
-    filter: brightness(60%);
-    cursor: not-allowed;
+.import_confirm {
+    composes: modalBtn modalBtnDanger from "../utils/ModalBtn.module.css";
+    width: 100% !important;
 }
 
 .cancel {
+    composes: modalBtn modalBtnCancel from "../utils/ModalBtn.module.css";
+    width: 100% !important;
     margin-top: 10px;
-    background-color: var(--tertiary) !important;
-}
-
-.cancel:hover {
-    background-color: var(--tertiary-hover) !important;
 }

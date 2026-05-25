@@ -2,7 +2,7 @@
 
 import { useContext, useEffect, useState, useCallback, useRef } from "react";
 
-import styles from "./SuggestionMenu.module.css";
+import styles from "../utils/Dropdown.module.css";
 import { pasteTextAt, insertElement } from "@src/lib/screenplay/editor";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -124,10 +124,19 @@ const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
 
     return (
         <div
-            className={styles.menu}
+            className={styles.dropdown_menu}
             style={{
+                position: "fixed",
                 top: suggestionData.position.y + 20,
                 left: suggestionData.position.x,
+                width: "auto",
+                minWidth: "120px",
+                maxWidth: "220px",
+                maxHeight: "180px",
+                boxShadow: "0 0 10px 0 rgba(0, 0, 0, 0.2)",
+                padding: "6px",
+                backgroundColor: "var(--context-menu-bg)",
+                borderColor: "var(--separator)",
             }}
         >
             {suggestions.map((suggestion: string, index: number) => (
@@ -135,11 +144,19 @@ const SuggestionMenu = ({ suggestionData, suggestions, onSelect }: Props) => {
                     ref={(el) => {
                         itemRefs.current[index] = el;
                     }}
-                    className={`${styles.menu_item} ${index === selectedIdx ? styles.selected : ""}`}
+                    className={styles.dropdown_item}
                     onClick={() => selectSuggestion(index)}
                     key={index}
+                    style={{ 
+                        padding: "6px 12px",
+                        backgroundColor: index === selectedIdx ? "var(--context-menu-item-hover)" : "transparent"
+                    }}
                 >
-                    <p className={styles.item + " unselectable"}>{suggestion}</p>
+                    <div className={styles.item_content}>
+                        <p style={{ overflowX: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", margin: 0, fontSize: "14px" }} className="unselectable">
+                            {suggestion}
+                        </p>
+                    </div>
                 </div>
             ))}
         </div>

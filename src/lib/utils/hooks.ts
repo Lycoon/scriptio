@@ -13,6 +13,7 @@ import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProjectRole } from "../../generated/client/browser";
 import { isTauri } from "@tauri-apps/api/core";
+import { useTranslations } from "next-intl";
 
 interface Position {
     x: number;
@@ -502,6 +503,34 @@ const useDesktopBridgeAuth = () => {
     return { completeBridgeAuth };
 };
 
+const useFormatTimestamp = () => {
+    const t = useTranslations("dates");
+    return useCallback(
+        (ts: number | string | Date): string => {
+            const date = new Date(ts);
+            const now = new Date();
+            const diffMs = now.getTime() - date.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+
+            if (diffMins < 1) return t("justNow");
+            if (diffMins < 60) return t("minutesAgo", { mins: diffMins });
+
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return t("hoursAgo", { hours: diffHours });
+
+            const diffDays = Math.floor(diffHours / 24);
+            if (diffDays < 7) return t("daysAgo", { days: diffDays });
+
+            return date.toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+            });
+        },
+        [t],
+    );
+};
+
 export {
     useDraggable,
     useUser,
@@ -518,4 +547,5 @@ export {
     useCachedProjectInfo,
     useProjectIdFromUrl,
     useDesktopBridgeAuth,
+    useFormatTimestamp,
 };

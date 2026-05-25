@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 
 import styles from "./DashboardModal.module.css";
 import dangerStyles from "./project/DangerZone.module.css";
+import modal from "../utils/ModalBtn.module.css";
 import { signOut } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useCookieUser } from "@src/lib/utils/hooks";
@@ -15,6 +16,7 @@ import { useCookieUser } from "@src/lib/utils/hooks";
 export type Category =
     | "General"
     | "Layout"
+    | "Production"
     | "Export"
     | "Collaborators"
     | "Profile"
@@ -72,13 +74,13 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
                         <p className={dangerStyles.modalDescription}>{t("logOutConfirmDesc")}</p>
                         <div className={dangerStyles.modalActions}>
                             <button
-                                className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnDanger}`}
+                                className={`${modal.modalBtn} ${modal.modalBtnDanger}`}
                                 onClick={onLogOut}
                             >
                                 {t("logOutConfirmBtn")}
                             </button>
                             <button
-                                className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnCancel}`}
+                                className={`${modal.modalBtn} ${modal.modalBtnCancel}`}
                                 onClick={() => setShowLogOutConfirm(false)}
                             >
                                 {t("logOutCancelBtn")}

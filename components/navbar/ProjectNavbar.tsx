@@ -20,6 +20,7 @@ import {
     CircleCheckBig,
     CloudUpload,
     History,
+    Lock,
     Monitor,
     Settings,
     WifiOff,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import AnalyticsModal from "@components/analytics/AnalyticsModal";
 import SavesPanel from "./SavesPanel";
+import ProductionPanel from "./ProductionPanel";
 
 import navbar from "./ProjectNavbar.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
@@ -97,6 +99,7 @@ const ProjectNavbar = () => {
     const [projectTitle, setProjectTitle] = useState<string>("");
     const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
     const [isSavesOpen, setIsSavesOpen] = useState(false);
+    const [isProductionOpen, setIsProductionOpen] = useState(false);
     const [isLocalOnly, setIsLocalOnly] = useState<boolean | null>(null);
     const isLocalEdit = useRef(false);
 
@@ -248,6 +251,26 @@ const ProjectNavbar = () => {
                                 isOpen={isSavesOpen}
                                 onClose={() => setIsSavesOpen(false)}
                                 isPro={isPro}
+                            />
+                        </div>
+                        <div
+                            style={{
+                                position: "relative",
+                                height: "100%",
+                                width: "fit-content",
+                                display: "flex",
+                                alignItems: "center",
+                            }}
+                        >
+                            <div
+                                className={`${navBtn.button} ${isProductionOpen ? navBtn.active : ""}`}
+                                onClick={() => setIsProductionOpen(!isProductionOpen)}
+                            >
+                                <Lock size={18} />
+                            </div>
+                            <ProductionPanel
+                                isOpen={isProductionOpen}
+                                onClose={() => setIsProductionOpen(false)}
                             />
                         </div>
                     </div>

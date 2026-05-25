@@ -3,8 +3,12 @@ import { CircularBuffer } from "@src/lib/utils/circular-buffer";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { Editor, Extension } from "@tiptap/core";
 import { Node } from "@tiptap/pm/model";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { ySyncPluginKey } from "@tiptap/y-tiptap";
+
+import { compareTokens, computeSceneLabels, SceneToken } from "@src/lib/screenplay/scene-locking";
+import { PAGE_ONE_KEY, PersistentPageMap } from "@src/lib/screenplay/page-locking";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -33,6 +37,8 @@ interface NodeInfo {
     type: ScreenplayElement;
     height: number;
     positionTop: number;
+    /** data-id of the top-level node, used by page locking to anchor breaks. */
+    dataId?: string;
 }
 
 interface BreakLogic {
@@ -108,6 +114,15 @@ export interface PaginationOptions {
     customFooter: Record<PageNumber, FooterOptions>;
     /** Element types that force a page break before them. */
     startNewPageTypes: Set<string>;
+    /**
+     * Production page-lock getters. When the editor is wired with page
+     * locking, these expose the live toggle and lock map. Optional so test
+     * harnesses and benchmarks can keep their lean Pagination.configure calls.
+     */
+    getPageLocking?: () => boolean;
+    getPageLocks?: () => PersistentPageMap;
+    /** Letters skipped from generated labels (shared with scene locking). */
+    getSkippedLetters?: () => readonly string[];
 }
 
 export interface PageBreakInfo {
@@ -116,6 +131,19 @@ export interface PageBreakInfo {
     freespace: number; // empty space remaining at the bottom of the ending page's content area
     contdName: string; // non-empty only for dialogue splits: Character cue name for the (CONT'D) label
     splitNodeType: ScreenplayElement | null; // non-null when the break is mid-node (sentence split); drives overlay escape
+    /** data-id of the top-level node that begins the page after this break.
+     *  Set on every non-synthetic break; used by page locking to detect orphan locks. */
+    anchorId?: string;
+    /** True for synthetic breaks that represent an entirely empty (orphan-locked) page.
+     *  The widget renders the empty content area + the next page's chrome on top of
+     *  the normal break chrome. */
+    isEmpty?: boolean;
+    /** Display label for the page beginning after this break (e.g. "4", "4A").
+     *  Equals String(pagenum) when no page-lock is in effect. */
+    label?: string;
+    /** Display label for the page ending before this break — used by the footer of
+     *  the previous page. Undefined for the first break (footer uses page-1 label). */
+    prevLabel?: string;
 }
 
 declare module "@tiptap/core" {
@@ -183,27 +211,27 @@ function syncVars(dom: HTMLElement, o: PaginationOptions) {
 // Decoration builders
 // ---------------------------------------------------------------------------
 
-function renderHeader(pagenum: number, options: PaginationOptions): string {
+function renderHeader(pagenum: number, label: string, options: PaginationOptions): string {
     const custom = options.customHeader[pagenum];
     const left = custom?.headerLeft ?? options.headerLeft;
-    const right = (custom?.headerRight ?? options.headerRight).replace("{page}", `${pagenum}`);
+    const right = (custom?.headerRight ?? options.headerRight).replace("{page}", label);
     if (!left && !right) return "";
     return (
         `<span class="pagination-header-left">${left}</span>` + `<span class="pagination-header-right">${right}</span>`
     );
 }
 
-function renderFooter(pagenum: number, options: PaginationOptions): string {
+function renderFooter(pagenum: number, label: string, options: PaginationOptions): string {
     const custom = options.customFooter[pagenum];
     const left = custom?.footerLeft ?? options.footerLeft;
-    const right = (custom?.footerRight ?? options.footerRight).replace("{page}", `${pagenum}`);
+    const right = (custom?.footerRight ?? options.footerRight).replace("{page}", label);
     if (!left && !right) return "";
     return (
         `<span class="pagination-footer-left">${left}</span>` + `<span class="pagination-footer-right">${right}</span>`
     );
 }
 
-function createFirstPageWidget(options: PaginationOptions): HTMLElement {
+function createFirstPageWidget(firstPageLabel: string, options: PaginationOptions): HTMLElement {
     const container = document.createElement("div");
     container.className = "pagination-first-page";
     container.contentEditable = "false";
@@ -220,7 +248,7 @@ function createFirstPageWidget(options: PaginationOptions): HTMLElement {
     const headerArea = document.createElement("div");
     headerArea.className = "pagination-header-area";
     headerArea.style.height = `${options.marginTop}px`;
-    headerArea.innerHTML = renderHeader(1, options);
+    headerArea.innerHTML = renderHeader(1, firstPageLabel, options);
 
     overlay.appendChild(headerArea);
     container.appendChild(spacer);
@@ -244,9 +272,23 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
     container.className = "pagination-page-break";
     container.contentEditable = "false";
 
+    const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
+    const isEmpty = !!breakInfo.isEmpty;
+
+    // Empty (orphan-locked) pages append `contentHeight` worth of blank
+    // content to the normal break chrome — the prev→empty transition is
+    // rendered here (footer of prev, gap, header of the empty page, then
+    // the empty content area). The empty→next transition is handled by
+    // the break that follows this one in the breaks array (a lock force-
+    // break, or a subsequent orphan synthetic, or the last-page widget).
+    // Splitting it this way keeps each page transition rendered exactly
+    // once and lets the synthetic absorb the previous page's freespace.
+    const emptyPageExtension = isEmpty ? contentHeight : 0;
+
     // Spacer: pushes text in the document flow past the entire page boundary.
     // Includes freespace because the spacer is the only thing that moves text.
-    const spacerHeight = breakInfo.freespace + options.marginBottom + options.pageGap + options.marginTop;
+    const spacerHeight =
+        breakInfo.freespace + options.marginBottom + options.pageGap + options.marginTop + emptyPageExtension;
     const spacer = document.createElement("div");
     spacer.className = "pagination-spacer";
     spacer.style.height = `${spacerHeight}px`;
@@ -270,11 +312,16 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
         overlay.style.right = `calc(-1 * ${rightVar})`;
     }
 
+    // Labels for the surrounding pages. Defaults preserve legacy behavior
+    // (pagenum-1 / pagenum) when no labels were assigned (page locking off).
+    const prevLabel = breakInfo.prevLabel ?? String(breakInfo.pagenum - 1);
+    const thisLabel = breakInfo.label ?? String(breakInfo.pagenum);
+
     // Footer area of the ending page (fixed size = marginBottom)
     const footerArea = document.createElement("div");
     footerArea.className = "pagination-footer-area";
     footerArea.style.height = `${options.marginBottom}px`;
-    footerArea.innerHTML = renderFooter(breakInfo.pagenum - 1, options);
+    footerArea.innerHTML = renderFooter(breakInfo.pagenum - 1, prevLabel, options);
 
     // Visual gap between pages (fixed size = pageGap)
     const divider = document.createElement("div");
@@ -286,11 +333,24 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
     const headerArea = document.createElement("div");
     headerArea.className = "pagination-header-area";
     headerArea.style.height = `${options.marginTop}px`;
-    headerArea.innerHTML = renderHeader(breakInfo.pagenum, options);
+    headerArea.innerHTML = renderHeader(breakInfo.pagenum, thisLabel, options);
 
     overlay.appendChild(footerArea);
     overlay.appendChild(divider);
     overlay.appendChild(headerArea);
+
+    if (isEmpty) {
+        // Empty content area for the orphan-locked page. Renders a faint
+        // label centred in the page so the user can see which locked
+        // number is being preserved. The empty→next transition (footer of
+        // this empty page, gap, header of the next page) is rendered by
+        // the break that follows this synthetic in the breaks array.
+        const emptyArea = document.createElement("div");
+        emptyArea.className = "pagination-empty-page";
+        emptyArea.style.height = `${contentHeight}px`;
+        emptyArea.textContent = thisLabel;
+        overlay.appendChild(emptyArea);
+    }
 
     // For dialogue/parenthetical splits: add (MORE) at the end of the current page
     // and CHARACTER (CONT'D) at the top of the next page.
@@ -317,7 +377,12 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
     return container;
 }
 
-function createLastPageWidget(pagenum: number, freespace: number, options: PaginationOptions): HTMLElement {
+function createLastPageWidget(
+    pagenum: number,
+    label: string,
+    freespace: number,
+    options: PaginationOptions,
+): HTMLElement {
     const container = document.createElement("div");
     container.className = "pagination-last-page";
     container.contentEditable = "false";
@@ -335,7 +400,7 @@ function createLastPageWidget(pagenum: number, freespace: number, options: Pagin
     const footerArea = document.createElement("div");
     footerArea.className = "pagination-footer-area";
     footerArea.style.height = `${options.marginBottom}px`;
-    footerArea.innerHTML = renderFooter(pagenum, options);
+    footerArea.innerHTML = renderFooter(pagenum, label, options);
 
     overlay.appendChild(footerArea);
     container.appendChild(spacer);
@@ -347,39 +412,49 @@ function buildDecorations(
     doc: Node,
     breaks: PageBreakInfo[],
     lastPageFreespace: number,
+    firstPageLabel: string,
     options: PaginationOptions,
 ): DecorationSet {
     const decorations: Decoration[] = [];
 
     // First page top margin / header
     decorations.push(
-        Decoration.widget(0, createFirstPageWidget(options), {
+        Decoration.widget(0, createFirstPageWidget(firstPageLabel, options), {
             side: -1,
-            key: "page-1-header",
+            key: `page-1-header-${firstPageLabel}`,
         }),
     );
 
     // Page breaks
     // The key MUST include every value that affects the widget DOM (freespace,
-    // contdName, splitNodeType) — not just pagenum.  ProseMirror's WidgetType.eq
-    // short-circuits on matching keys and reuses the old DOM element, so a key
-    // that omits e.g. freespace causes stale spacer heights after content edits.
+    // contdName, splitNodeType, label, isEmpty) — not just pagenum.  ProseMirror's
+    // WidgetType.eq short-circuits on matching keys and reuses the old DOM element,
+    // so a key that omits e.g. freespace causes stale spacer heights after content edits.
     for (const b of breaks) {
         decorations.push(
             Decoration.widget(b.pos, createPageBreakWidget(b, options), {
                 side: -1,
-                key: `pb-${b.pagenum}-${b.freespace}-${b.contdName}-${b.splitNodeType}`,
+                key: `pb-${b.pagenum}-${b.freespace}-${b.contdName}-${b.splitNodeType}-${b.label ?? ""}-${b.prevLabel ?? ""}-${b.isEmpty ? "E" : ""}`,
             }),
         );
     }
 
-    // Last page bottom margin / footer
+    // Last page bottom margin / footer.
+    // Label of the last page = label of the most recent break (or firstPageLabel
+    // when no breaks exist).
     const lastPagenum = breaks.length > 0 ? breaks[breaks.length - 1].pagenum : 1;
+    const lastPageLabel = breaks.length > 0
+        ? breaks[breaks.length - 1].label ?? String(lastPagenum)
+        : firstPageLabel;
     decorations.push(
-        Decoration.widget(doc.content.size, createLastPageWidget(lastPagenum, lastPageFreespace, options), {
-            side: 1,
-            key: `lp-${lastPagenum}-${lastPageFreespace}`,
-        }),
+        Decoration.widget(
+            doc.content.size,
+            createLastPageWidget(lastPagenum, lastPageLabel, lastPageFreespace, options),
+            {
+                side: 1,
+                key: `lp-${lastPagenum}-${lastPageLabel}-${lastPageFreespace}`,
+            },
+        ),
     );
 
     return DecorationSet.create(doc, decorations);
@@ -554,6 +629,34 @@ interface PaginationState {
     decset: DecorationSet;
     breaks: PageBreakInfo[];
     lastPageFreespace: number;
+    firstPageLabel: string;
+}
+
+/**
+ * Compute display labels for every page using the same token math that
+ * powers scene locking. Page 1 is anchored to the sentinel PAGE_ONE_KEY;
+ * later pages are anchored to the data-id of the top-level node that
+ * begins them. Returns one label per page (length = breaks.length + 1).
+ *
+ * Synthetic empty-page breaks consume one "logical page" each — their
+ * anchorId comes from the page-lock map, and the page that physically
+ * follows the empty slot gets its own label slot in the result.
+ */
+function computePageLabels(
+    breaks: PageBreakInfo[],
+    pageLocks: PersistentPageMap,
+    skippedLetters: readonly string[],
+): string[] {
+    const anchors: string[] = [PAGE_ONE_KEY];
+    for (const b of breaks) {
+        // Empty pages anchor to the orphan lock's anchorId. Real pages anchor
+        // to the data-id of the top-level node where the page starts. If
+        // anchorId is somehow missing, fall back to a unique synthetic key
+        // so the label-computer still produces a usable result.
+        anchors.push(b.anchorId ?? `__break_${b.pos}_${b.pagenum}__`);
+    }
+    const labels = computeSceneLabels(anchors, pageLocks, "suffix", skippedLetters);
+    return labels.map((l) => l.label);
 }
 
 const createPaginationPlugin = (extension: { options: PaginationOptions; editor: Editor }) =>
@@ -564,6 +667,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                 decset: DecorationSet.empty,
                 breaks: [],
                 lastPageFreespace: 0,
+                firstPageLabel: "1",
             }),
             apply(tr, value: PaginationState, oldState, newState): PaginationState {
                 const options = extension.options as PaginationOptions;
@@ -631,6 +735,21 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
 
                 const serializer = DOMSerializer.fromSchema(newState.schema);
 
+                // --- Page-lock setup ---
+                // Hot-path discipline: when locking is off (the common case),
+                // pageLocks/lockedAnchorIds stay null and the per-node check
+                // short-circuits on the first `&&` — zero allocations, zero
+                // map lookups. The set is rebuilt once per pass when locking
+                // is active; lock counts are typically tens, never thousands.
+                const pageLocking = options.getPageLocking?.() ?? false;
+                const pageLocks: PersistentPageMap | null = pageLocking
+                    ? options.getPageLocks?.() ?? null
+                    : null;
+                const lockedAnchorIds: Set<string> | null = pageLocks
+                    ? new Set(Object.keys(pageLocks).filter((k) => k !== PAGE_ONE_KEY))
+                    : null;
+                const skippedLetters = options.getSkippedLetters?.() ?? [];
+
                 const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
                 const breaks: PageBreakInfo[] = [];
                 let pagePos = 0;
@@ -673,6 +792,8 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                         lastCharName = node.textContent.trim();
                     }
 
+                    const dataId: string | undefined = node.attrs["data-id"];
+
                     // --- Force page break for "start new page" elements ---
                     // If this node type is configured to start a new page and we're
                     // not already at the top of a page, insert a break before it.
@@ -684,6 +805,24 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                             freespace: Math.max(0, freespace),
                             contdName: "",
                             splitNodeType: null,
+                            anchorId: dataId,
+                        });
+                        pagePos = 0;
+                        lastNodes = new CircularBuffer(3);
+                    }
+
+                    // --- Force page break for locked page anchors ---
+                    // O(1) Set.has when locking is on; the leading `lockedAnchorIds &&`
+                    // short-circuits to false when locking is disabled — hot-path safe.
+                    if (lockedAnchorIds && dataId && pagePos > 0 && lockedAnchorIds.has(dataId)) {
+                        const freespace = contentHeight - pagePos;
+                        breaks.push({
+                            pos,
+                            pagenum: ++pagenum,
+                            freespace: Math.max(0, freespace),
+                            contdName: "",
+                            splitNodeType: null,
+                            anchorId: dataId,
                         });
                         pagePos = 0;
                         lastNodes = new CircularBuffer(3);
@@ -693,7 +832,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                     pagePos += height;
 
                     // We keep the last 3 nodes for orphan resolution on page break
-                    lastNodes.push({ pos, type: nodeType, height, positionTop: pagePos - height });
+                    lastNodes.push({ pos, type: nodeType, height, positionTop: pagePos - height, dataId });
 
                     // Page break needed — record it and reset page position
                     if (pagePos > contentHeight) {
@@ -721,11 +860,13 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                                     contdName: logic.showMoreContd ? lastCharName : "",
                                     // splitNodeType drives the overlay padding-escape in createPageBreakWidget.
                                     splitNodeType: nodeType,
+                                    // Anchor for page locking: the node being split owns both halves.
+                                    anchorId: dataId,
                                 });
                                 // The bottom half of the split node is the first item on the new page.
                                 pagePos = split.bottomHeight;
                                 lastNodes = new CircularBuffer(3);
-                                lastNodes.push({ pos, type: nodeType, height: split.bottomHeight, positionTop: 0 });
+                                lastNodes.push({ pos, type: nodeType, height: split.bottomHeight, positionTop: 0, dataId });
                                 continue; // split handled — skip orphan resolution for this node
                             }
                         }
@@ -741,6 +882,16 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                         for (let back = 1; back <= 2; back++) {
                             const prev = lastNodes.at(back); // at(1) = last fitted, at(2) = one before
                             if (!prev) break;
+                            // A locked anchor owns its page and must never be displaced by
+                            // walkback — otherwise the next overflow would yank it onto an
+                            // A page and the locked frame would lose its head.
+                            if (
+                                lockedAnchorIds &&
+                                prev.dataId &&
+                                lockedAnchorIds.has(prev.dataId)
+                            ) {
+                                break;
+                            }
                             if (BREAK_LOGIC[prev.type]?.keepWithNext) {
                                 breakPos = prev.pos;
                                 carryHeight += prev.height;
@@ -766,12 +917,18 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                             (firstMovingType === ScreenplayElement.Dialogue ||
                                 firstMovingType === ScreenplayElement.Parenthetical);
 
+                        // Anchor = data-id of the first node that moved to the new page.
+                        // When backCount==0 the current node is the one moving (no walkback);
+                        // otherwise the carried-back node from the buffer owns the anchor.
+                        const anchorDataId = backCount === 0 ? dataId : firstMovingNode?.dataId;
+
                         const breakInfo: PageBreakInfo = {
                             pos: breakPos,
                             pagenum: pagenum + 1,
                             freespace: Math.max(0, freespace),
                             contdName: isDialogueSplit ? lastCharName : "",
                             splitNodeType: null,
+                            anchorId: anchorDataId,
                         };
                         breaks.push(breakInfo);
                         pagenum++;
@@ -812,30 +969,262 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                 }
 
                 // Compute remaining space on the last page so the last-page widget
-                // can pad it to full page height.
-                const lastPageFreespace = Math.max(0, contentHeight - pagePos);
+                // can pad it to full page height. Mutable because orphan handling
+                // may consume it: when an orphan synthetic empty page lands at
+                // doc end, it absorbs this freespace so the last real page stays
+                // at its full height and the empty page renders after it.
+                let lastPageFreespace = Math.max(0, contentHeight - pagePos);
+
+                // --- Orphan page handling ---
+                // A locked page whose anchor data-id is no longer present in the doc
+                // becomes an "orphan" — we insert a synthetic empty-page break so the
+                // page still appears in the layout (preserving its locked number).
+                // Orphans are placed at the doc position of the next surviving lock
+                // (or doc end) and consume a full content-height of vertical space.
+                if (pageLocks) {
+                    const seenAnchors = new Set<string>();
+                    for (const b of breaks) {
+                        if (b.anchorId) seenAnchors.add(b.anchorId);
+                    }
+
+                    // Tokens for ordered comparison. Provisional pages (no token in
+                    // the lock map) aren't relevant here — only locked entries can be
+                    // orphans. We need the orphan list in TOKEN order so insertions
+                    // happen at the right spots.
+                    type OrphanEntry = { anchorId: string; token: SceneToken };
+                    const orphans: OrphanEntry[] = [];
+                    for (const [anchorId, page] of Object.entries(pageLocks)) {
+                        if (anchorId === PAGE_ONE_KEY) continue;
+                        if (!page?.token) continue;
+                        if (seenAnchors.has(anchorId)) continue;
+                        orphans.push({ anchorId, token: page.token });
+                    }
+
+                    if (orphans.length > 0) {
+                        // Build an ordered list of live-locked anchors keyed by token,
+                        // so we can find the "next live lock after orphan X" quickly.
+                        type LiveLock = { anchorId: string; token: SceneToken; pos: number };
+                        const liveLocks: LiveLock[] = [];
+                        for (const b of breaks) {
+                            if (!b.anchorId) continue;
+                            const lock = pageLocks[b.anchorId];
+                            if (lock?.token) liveLocks.push({ anchorId: b.anchorId, token: lock.token, pos: b.pos });
+                        }
+                        liveLocks.sort((a, b) => compareTokens(a.token, b.token));
+                        orphans.sort((a, b) => compareTokens(a.token, b.token));
+
+                        const docSize = newState.doc.content.size;
+
+                        for (const orphan of orphans) {
+                            // Token-gap segment this orphan belongs in: bounded by the
+                            // greatest live lock with a smaller token (prev) and the
+                            // smallest live lock with a larger token (next). Positions
+                            // of those bounding locks define the doc-position window
+                            // where this orphan can be slotted in.
+                            let prevLive: LiveLock | null = null;
+                            let nextLive: LiveLock | null = null;
+                            for (const l of liveLocks) {
+                                if (compareTokens(l.token, orphan.token) < 0) {
+                                    if (!prevLive || compareTokens(prevLive.token, l.token) < 0) {
+                                        prevLive = l;
+                                    }
+                                } else if (compareTokens(l.token, orphan.token) > 0) {
+                                    if (!nextLive || compareTokens(l.token, nextLive.token) < 0) {
+                                        nextLive = l;
+                                    }
+                                }
+                            }
+                            const segmentStart = prevLive?.pos ?? 0;
+                            const segmentEnd = nextLive?.pos ?? docSize;
+
+                            // First try to consume an existing provisional break inside
+                            // this segment. That break is the natural overflow from the
+                            // previous page — by re-anchoring it to the orphan, we make
+                            // the overflow content flow INTO the empty deleted-page slot
+                            // (Final Draft-style) instead of producing a phantom A page
+                            // alongside a separately-rendered empty page.
+                            let consumed = false;
+                            for (let j = 0; j < breaks.length; j++) {
+                                const b = breaks[j];
+                                if (b.pos < segmentStart) continue;
+                                if (b.pos >= segmentEnd) break;
+                                const bLock = b.anchorId ? pageLocks[b.anchorId] : undefined;
+                                if (bLock?.token) continue; // already a locked break — skip
+                                // Provisional in the orphan's segment: reassign anchorId
+                                // so the label flips from "NA" to the orphan's frozen label.
+                                b.anchorId = orphan.anchorId;
+                                liveLocks.push({
+                                    anchorId: orphan.anchorId,
+                                    token: orphan.token,
+                                    pos: b.pos,
+                                });
+                                liveLocks.sort((a, b) => compareTokens(a.token, b.token));
+                                consumed = true;
+                                break;
+                            }
+
+                            if (consumed) continue;
+
+                            // No provisional to absorb the orphan — fall back to a
+                            // synthetic empty-page break at the segment's end position.
+                            //
+                            // Insert index walks the breaks list. We want the synthetic
+                            // to land at segmentEnd, AFTER any break at the same pos
+                            // whose token is smaller (so multiple orphans at one
+                            // segmentEnd line up in token order: orphan-2, orphan-3,
+                            // then the live lock that bounds the segment).
+                            let insertIdx = breaks.length;
+                            for (let j = 0; j < breaks.length; j++) {
+                                const b = breaks[j];
+                                if (b.pos > segmentEnd) {
+                                    insertIdx = j;
+                                    break;
+                                }
+                                if (b.pos === segmentEnd) {
+                                    const bLock = b.anchorId ? pageLocks[b.anchorId] : undefined;
+                                    if (
+                                        bLock?.token &&
+                                        compareTokens(orphan.token, bLock.token) < 0
+                                    ) {
+                                        insertIdx = j;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Freespace transfer: the synthetic empty page's widget
+                            // renders the prev→empty transition (footer of previous
+                            // page + chrome + empty content area). For the previous
+                            // page to keep its full height, the synthetic must absorb
+                            // its bottom freespace. That freespace currently lives on
+                            // the break that the synthetic is being inserted BEFORE
+                            // (either a lock force-break at the same pos, or the last-
+                            // page widget at doc end). Transfer it, then zero out the
+                            // donor — its "previous page" is now the empty synthetic,
+                            // which already gets a full `contentHeight` slot, so no
+                            // additional freespace is needed there.
+                            let syntheticFreespace = 0;
+                            if (
+                                insertIdx < breaks.length &&
+                                breaks[insertIdx].pos === segmentEnd
+                            ) {
+                                syntheticFreespace = breaks[insertIdx].freespace;
+                                breaks[insertIdx].freespace = 0;
+                            } else if (insertIdx === breaks.length) {
+                                // Doc end — the synthetic is the new "last empty page",
+                                // and the existing last-page widget would have padded
+                                // out the freespace below the previous real page.
+                                // Transfer that to the synthetic.
+                                syntheticFreespace = lastPageFreespace;
+                                lastPageFreespace = 0;
+                            }
+
+                            const synthetic: PageBreakInfo = {
+                                pos: segmentEnd,
+                                pagenum: 0, // re-numbered below
+                                freespace: syntheticFreespace,
+                                contdName: "",
+                                splitNodeType: null,
+                                anchorId: orphan.anchorId,
+                                isEmpty: true,
+                            };
+                            breaks.splice(insertIdx, 0, synthetic);
+                            liveLocks.push({
+                                anchorId: orphan.anchorId,
+                                token: orphan.token,
+                                pos: segmentEnd,
+                            });
+                            liveLocks.sort((a, b) => compareTokens(a.token, b.token));
+                        }
+
+                        // Renumber pagenums after insertions (synthetic breaks have pagenum: 0).
+                        for (let i = 0; i < breaks.length; i++) {
+                            breaks[i].pagenum = i + 2; // page 1 has no break; first break starts page 2.
+                        }
+                    }
+                }
+
+                // --- Label assignment ---
+                // Run computeSceneLabels over [page1Anchor, ...breakAnchors] so locked
+                // pages keep their frozen labels, provisional inserts get suffix labels
+                // (e.g. "4A"), and pages past the last lock continue the integer sequence.
+                let firstPageLabel = "1";
+                if (pageLocks) {
+                    const labels = computePageLabels(breaks, pageLocks, skippedLetters);
+                    firstPageLabel = labels[0];
+                    for (let i = 0; i < breaks.length; i++) {
+                        const label = labels[i + 1];
+                        const prevLabel = labels[i];
+                        breaks[i].label = label;
+                        breaks[i].prevLabel = prevLabel;
+                    }
+                }
 
                 // Check if breaks actually changed compared to mapped old breaks.
                 const breaksChanged =
                     fullRemeasure ||
                     lastPageFreespace !== value.lastPageFreespace ||
+                    firstPageLabel !== value.firstPageLabel ||
                     breaks.length !== mappedOldBreaks.length ||
                     breaks.some(
                         (b, i) =>
                             b.pos !== mappedOldBreaks[i].pos ||
                             b.freespace !== mappedOldBreaks[i].freespace ||
-                            b.contdName !== mappedOldBreaks[i].contdName,
+                            b.contdName !== mappedOldBreaks[i].contdName ||
+                            b.label !== mappedOldBreaks[i].label ||
+                            b.prevLabel !== mappedOldBreaks[i].prevLabel ||
+                            !!b.isEmpty !== !!mappedOldBreaks[i].isEmpty,
                     );
 
                 const decset = breaksChanged
-                    ? buildDecorations(newState.doc, breaks, lastPageFreespace, options)
+                    ? buildDecorations(newState.doc, breaks, lastPageFreespace, firstPageLabel, options)
                     : value.decset.map(tr.mapping, tr.doc);
 
-                return { decset, breaks, lastPageFreespace };
+                return { decset, breaks, lastPageFreespace, firstPageLabel };
             },
         },
         appendTransaction() {
             return null;
+        },
+        filterTransaction(tr) {
+            // Page-lock guard: prevent content from spilling upward out of a
+            // locked page. The signature of that spill — Backspace at the
+            // start of a locked anchor, Delete at the end of the node before
+            // it, or a selection delete that swallows the anchor — is the
+            // locked anchor's data-id disappearing from the top-level node
+            // list. If that would happen, reject the transaction so the
+            // cursor stays put and no content moves across the lock.
+            if (!tr.docChanged) return true;
+
+            // Allow yjs sync (remote updates and yjs-based undo/redo) through
+            // unconditionally — cross-peer consistency must not be blocked by
+            // local lock enforcement, and the lock map itself lives in the
+            // Yjs doc so peers agree on which pages are locked.
+            if (tr.getMeta(ySyncPluginKey)) return true;
+
+            const opts = extension.options as PaginationOptions;
+            if (!opts.getPageLocking?.()) return true;
+
+            const pageLocks = opts.getPageLocks?.();
+            if (!pageLocks) return true;
+
+            // PAGE_ONE_KEY has no node to defend — page 1 can't lose its
+            // lock through doc edits.
+            const lockedAnchors: string[] = [];
+            for (const key of Object.keys(pageLocks)) {
+                if (key !== PAGE_ONE_KEY) lockedAnchors.push(key);
+            }
+            if (lockedAnchors.length === 0) return true;
+
+            const present = new Set<string>();
+            tr.doc.forEach((node) => {
+                const dataId = node.attrs?.["data-id"];
+                if (typeof dataId === "string") present.add(dataId);
+            });
+            for (const anchor of lockedAnchors) {
+                if (!present.has(anchor)) return false;
+            }
+            return true;
         },
         props: {
             decorations(state) {
@@ -927,6 +1316,20 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 .pagination-footer-right {
                     text-align: right;
                 }
+
+                .pagination-empty-page {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: var(--editor-script-bg);
+                    color: var(--secondary-text);
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    letter-spacing: 0.08em;
+                    opacity: 0.35;
+                    text-transform: uppercase;
+                    box-sizing: border-box;
+                }
             `;
             document.head.appendChild(style);
         }
@@ -952,6 +1355,45 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
 
     addProseMirrorPlugins() {
         return [createPaginationPlugin(this)];
+    },
+
+    addKeyboardShortcuts() {
+        return {
+            Backspace: ({ editor }) => {
+                // joinBackward has a variant — joinMaybeClear — that deletes
+                // the PREVIOUS block instead of the current one. It fires when
+                // both blocks are empty. If that previous block is a locked
+                // page anchor, the plugin's filterTransaction rejects the
+                // resulting transaction (the anchor's data-id would go
+                // missing), and the user sees the cursor stuck on the second
+                // empty line. Patch the case by deleting the current empty
+                // block ourselves and parking the cursor inside the preserved
+                // anchor — the natural "step up one line" behavior.
+                const { state, view } = editor;
+                const { $from, empty } = state.selection;
+                if (!empty || $from.parentOffset !== 0) return false;
+                if ($from.parent.textContent.length !== 0) return false;
+
+                const opts = this.options as PaginationOptions;
+                if (!opts.getPageLocking?.()) return false;
+                const pageLocks = opts.getPageLocks?.();
+                if (!pageLocks) return false;
+
+                const curStart = $from.before();
+                if (curStart === 0) return false;
+
+                const prev = state.doc.resolve(curStart).nodeBefore;
+                if (!prev || prev.textContent.length !== 0) return false;
+
+                const prevDataId = prev.attrs?.["data-id"];
+                if (typeof prevDataId !== "string" || !pageLocks[prevDataId]) return false;
+
+                const tr = state.tr.delete(curStart, $from.after());
+                tr.setSelection(TextSelection.create(tr.doc, curStart - 1));
+                view.dispatch(tr);
+                return true;
+            },
+        };
     },
 
     addCommands() {
@@ -1061,4 +1503,53 @@ export function getPageForPos(editor: Editor, pos: number): number {
         page = b.pagenum;
     }
     return page;
+}
+
+/**
+ * Returns the display label (e.g. "4", "4A") for the page containing
+ * the given document position. Falls back to the integer pagenum when
+ * page locking isn't active.
+ */
+export function getPageLabelForPos(editor: Editor, pos: number): string {
+    const state = paginationKey.getState(editor.state) as PaginationState | undefined;
+    if (!state) return "1";
+    if (state.breaks.length === 0) return state.firstPageLabel;
+    let label = state.firstPageLabel;
+    for (const b of state.breaks) {
+        if (b.pos > pos) break;
+        label = b.label ?? String(b.pagenum);
+    }
+    return label;
+}
+
+/**
+ * Returns the ordered list of page anchors for the current document
+ * (page 1 sentinel first, then the data-id of each subsequent page's
+ * first top-level node). Used by the ProductionPanel to snapshot the
+ * current layout when locking pages and to compute provisional labels.
+ *
+ * Synthetic empty-page breaks contribute their orphan anchor id, so the
+ * sequence stays aligned with what the user sees in the editor.
+ */
+export function getPageAnchors(editor: Editor): string[] {
+    const state = paginationKey.getState(editor.state) as PaginationState | undefined;
+    if (!state) return [PAGE_ONE_KEY];
+    const out: string[] = [PAGE_ONE_KEY];
+    for (const b of state.breaks) {
+        if (b.anchorId) out.push(b.anchorId);
+    }
+    return out;
+}
+
+/**
+ * Force a pagination recompute. Call when the page-lock map or the
+ * page-locking toggle changes — layout may shift even though the
+ * document content did not.
+ */
+export function refreshPageLocking(editor: Editor | null): void {
+    if (!editor || !editor.view) return;
+    const tr = editor.state.tr;
+    tr.setMeta("forcePaginationUpdate", true);
+    tr.setMeta("addToHistory", false);
+    editor.view.dispatch(tr);
 }

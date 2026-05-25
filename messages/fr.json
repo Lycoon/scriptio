@@ -81,6 +81,7 @@
     "tabs": {
       "General": "Général",
       "Layout": "Mise en page",
+      "Production": "Production",
       "Export": "Import/Export",
       "Collaborators": "Collaborateurs",
       "Keybinds": "Raccourcis",
@@ -390,7 +391,9 @@
     "shelve": "Mettre de côté",
     "shelveScene": "Mettre la scène de côté",
     "shelveDialogue": "Mettre le dialogue de côté",
-    "shelveAction": "Mettre l'action de côté"
+    "shelveAction": "Mettre l'action de côté",
+    "omitScene": "Omettre la scène",
+    "unomitScene": "Restaurer la scène"
   },
   "popup": {
     "character": {
@@ -445,6 +448,31 @@
     "untitled": "Sans titre",
     "titlePlaceholder": "Titre",
     "descriptionPlaceholder": "Description"
+  },
+  "production": {
+    "title": "Production",
+    "sceneLocking": "Verrouillage des scènes",
+    "pageLocking": "Verrouillage des pages",
+    "revisions": "Révisions",
+    "relock": "Verrouiller",
+    "provisionalTitle": "Scènes non verrouillées",
+    "unlockTitle": "Déverrouiller les numéros de scène ?",
+    "unlockWarning": "<b>Toutes les scènes verrouillées et omises perdront leur numérotation figée.</b>",
+    "unlockInfo": "Ceci affecte tous les collaborateurs. Le scénario reviendra à une numérotation positionnelle. Les scènes OMITTED restent omises — démasquez-les individuellement si vous souhaitez en récupérer le contenu.",
+    "unlock": "Déverrouiller",
+    "pageRelock": "Reverrouiller",
+    "pageProvisionalTitle": "Pages non verrouillées",
+    "unlockPagesTitle": "Déverrouiller les pages",
+    "unlockPagesWarning": "Toutes les pages perdront leur numérotation verrouillée et reviendront à la pagination naturelle.",
+    "unlockPages": "Déverrouiller les pages",
+    "cancel": "Annuler",
+    "numberingStyleTitle": "Numérotation des scènes",
+    "numberingStyleHelp": "Détermine comment les scènes nouvellement insérées sont numérotées entre deux scènes verrouillées.",
+    "suffixName": "Suffixe",
+    "prefixName": "Préfixe",
+    "skippedLettersTitle": "Lettres ignorées",
+    "skippedLettersHelp": "Lettres à omettre lors de la génération des numéros de scène, généralement pour éviter toute confusion.",
+    "skipLetterAriaLabel": "Ignorer la lettre {letter}"
   },
   "saves": {
     "title": "Historique des versions",

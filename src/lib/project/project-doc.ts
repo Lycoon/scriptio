@@ -17,6 +17,7 @@ import type { PageFormat } from "../utils/enums";
 import type { CharacterItem } from "../screenplay/characters";
 import type { LocationItem } from "../screenplay/locations";
 import type { PersistentScene } from "../screenplay/scenes";
+import type { PersistentPage } from "../screenplay/page-locking";
 import type { Comment } from "../utils/types";
 
 // -------------------------------- //
@@ -104,6 +105,44 @@ export type LayoutData = {
 };
 
 // -------------------------------- //
+//          PRODUCTION              //
+// -------------------------------- //
+
+export type ProductionData = {
+    sceneLocking?: boolean;
+    /**
+     * How provisional scenes inserted under production lock are labeled.
+     * - "suffix" (default): scene inserted between 3 and 4 → "3A".
+     * - "prefix": scene inserted between 3 and 4 → "A4". Letters decrease
+     *   going forward (closest to L_next gets "A").
+     * Only affects scenes that are computed/locked AFTER this setting is set;
+     * already-locked scenes keep their stored label.
+     */
+    sceneNumberingStyle?: "suffix" | "prefix";
+    /**
+     * Uppercase letters to omit from generated scene labels (e.g. "I" and "O"
+     * are visually confused with "1" and "0"). Stored explicitly so the user's
+     * choice survives — when `undefined`, callers fall back to
+     * `DEFAULT_SKIPPED_SCENE_LETTERS`.
+     */
+    skippedSceneLetters?: string[];
+    /**
+     * Page-locking master switch. When true, pagination freezes the numbering
+     * of each page using anchors stored in the `pages` Y.Map. Pages inserted
+     * between locks get suffix-style labels (e.g. "4A"); pages appended after
+     * the last lock continue the integer sequence; deletion of a locked page's
+     * content leaves an empty page slot in its place.
+     */
+    pageLocking?: boolean;
+};
+
+/** Letters skipped by default in newly-created projects. */
+export const DEFAULT_SKIPPED_SCENE_LETTERS: string[] = ["I", "O"];
+
+/** Letters the user can toggle via Production Settings. */
+export const TOGGLEABLE_SCENE_LETTERS: readonly string[] = ["I", "O", "Q", "Z"];
+
+// -------------------------------- //
 //          BOARD                   //
 // -------------------------------- //
 
@@ -138,10 +177,12 @@ export type ProjectData = {
     titlepage?: JSONContent[];
     characters: Record<string, CharacterItem>;
     scenes: Record<string, PersistentScene>;
+    pages: Record<string, PersistentPage>;
     locations: Record<string, LocationItem>;
     metadata: ProjectMetadata;
     board: BoardData;
     layout: LayoutData;
+    production: ProductionData;
     comments?: Record<string, Comment>;
     shelf?: Record<string, ShelfEntry>;
 };
@@ -172,10 +213,12 @@ export class ProjectState extends Y.Doc {
         TITLEPAGE: "titlepage",
         CHARACTERS: "characters",
         SCENES: "scenes",
+        PAGES: "pages",
         LOCATIONS: "locations",
         METADATA: "metadata",
         BOARD: "board",
         LAYOUT: "layout",
+        PRODUCTION: "production",
         COMMENTS: "comments",
         DICTIONARY: "dictionary",
         SHELF: "shelf",
@@ -215,12 +258,20 @@ export class ProjectState extends Y.Doc {
         return this.getMap(this.KEYS.SCENES);
     }
 
+    pages(): Y.Map<PersistentPage> {
+        return this.getMap(this.KEYS.PAGES);
+    }
+
     board(): TypedMap<BoardData> {
         return this.getMap(this.KEYS.BOARD) as unknown as TypedMap<BoardData>;
     }
 
     layout(): TypedMap<LayoutData> {
         return this.getMap(this.KEYS.LAYOUT) as unknown as TypedMap<LayoutData>;
+    }
+
+    production(): TypedMap<ProductionData> {
+        return this.getMap(this.KEYS.PRODUCTION) as unknown as TypedMap<ProductionData>;
     }
 
     comments(): Y.Map<Comment> {

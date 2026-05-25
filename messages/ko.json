@@ -80,6 +80,7 @@
     "tabs": {
       "General": "일반",
       "Layout": "레이아웃",
+      "Production": "프로덕션",
       "Export": "가져오기/내보내기",
       "Collaborators": "공동 작업자",
       "Keybinds": "단축키",
@@ -389,7 +390,9 @@
     "shelve": "보관하기",
     "shelveScene": "장면 보관하기",
     "shelveDialogue": "대사 보관하기",
-    "shelveAction": "행동 보관하기"
+    "shelveAction": "행동 보관하기",
+    "omitScene": "씬 생략",
+    "unomitScene": "씬 복원"
   },
   "popup": {
     "character": {
@@ -444,6 +447,31 @@
     "untitled": "제목 없음",
     "titlePlaceholder": "제목",
     "descriptionPlaceholder": "설명"
+  },
+  "production": {
+    "title": "프로덕션",
+    "sceneLocking": "씬 잠금",
+    "pageLocking": "페이지 잠금",
+    "revisions": "개정",
+    "relock": "잠그기",
+    "provisionalTitle": "잠기지 않은 씬",
+    "unlockTitle": "씬 번호 잠금을 해제하시겠습니까?",
+    "unlockWarning": "<b>잠긴 씬과 생략된 씬의 고정 번호가 모두 사라집니다.</b>",
+    "unlockInfo": "이 작업은 모든 협업자에게 영향을 미칩니다. 시나리오는 위치 기반 씬 번호로 되돌아갑니다. OMITTED 씬은 그대로 유지되며, 내용을 복원하려면 개별적으로 생략을 해제하세요.",
+    "unlock": "잠금 해제",
+    "pageRelock": "다시 잠그기",
+    "pageProvisionalTitle": "잠기지 않은 페이지",
+    "unlockPagesTitle": "페이지 잠금 해제",
+    "unlockPagesWarning": "모든 페이지의 잠긴 번호가 사라지고 자연스러운 페이지 번호로 되돌아갑니다.",
+    "unlockPages": "페이지 잠금 해제",
+    "cancel": "취소",
+    "numberingStyleTitle": "씬 번호",
+    "numberingStyleHelp": "잠긴 두 씬 사이에 새로 삽입된 씬의 번호 매김 방식을 결정합니다.",
+    "suffixName": "접미사",
+    "prefixName": "접두사",
+    "skippedLettersTitle": "건너뛸 문자",
+    "skippedLettersHelp": "씬 번호를 생성할 때 제외할 문자입니다. 보통 혼동을 피하기 위해 사용합니다.",
+    "skipLetterAriaLabel": "{letter} 문자 건너뛰기"
   },
   "saves": {
     "title": "버전 히스토리",

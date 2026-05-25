@@ -22,6 +22,8 @@ export {
     DEFAULT_PAGE_MARGINS,
     DEFAULT_ELEMENT_MARGINS,
     DEFAULT_ELEMENT_STYLES,
+    DEFAULT_SKIPPED_SCENE_LETTERS,
+    TOGGLEABLE_SCENE_LETTERS,
 } from "./project-doc";
 export type {
     ShelfEntryType,
@@ -32,6 +34,7 @@ export type {
     PageMargin,
     ElementStyle,
     LayoutData,
+    ProductionData,
     BoardCardData,
     BoardArrowData,
     BoardData,

@@ -5,6 +5,7 @@ import { ScreenplaySchema } from "../screenplay/editor";
 import { Comment, CommentReply, Screenplay } from "../utils/types";
 import {
     LayoutData,
+    ProductionData,
     ProjectMetadata,
     ProjectState,
     ElementStyle,
@@ -17,6 +18,7 @@ import {
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
+import { PersistentPage, PersistentPageMap } from "../screenplay/page-locking";
 import { PageFormat } from "../utils/enums";
 import { generateNodeId } from "../screenplay/nodes";
 import { JSONContent } from "@tiptap/react";
@@ -244,20 +246,30 @@ export class ProjectRepository {
 
     /**
      * Create or update a scene's persistent data.
+     *
+     * Fields that appear in `data` (including ones explicitly set to undefined)
+     * overwrite the corresponding existing fields; everything else is preserved.
+     * Any final undefined values are stripped before writing.
+     *
      * Returns the scene id.
      */
     upsertScene(sceneId: string, data: Partial<PersistentScene>): string {
         if (this.guardWrite("upsertScene")) return sceneId;
         const map = this.ydoc.scenes();
-        const existing = map.get(sceneId) as PersistentScene | undefined;
+        const existing = (map.get(sceneId) as PersistentScene | undefined) ?? {};
 
-        const sceneData: PersistentScene = {
-            synopsis: data.synopsis ?? existing?.synopsis ?? "",
-            color: "color" in data ? data.color : existing?.color,
-        };
+        const merged: PersistentScene = { ...existing };
+        const FIELDS = ["synopsis", "color", "token", "omitted"] as const;
+        for (const key of FIELDS) {
+            if (key in data) {
+                (merged as Record<string, unknown>)[key] = data[key];
+            }
+        }
+        for (const key of FIELDS) {
+            if (merged[key] === undefined) delete merged[key];
+        }
 
-        map.set(sceneId, sceneData);
-        console.log(`[Scenes] Upserted scene: ${sceneId}`);
+        map.set(sceneId, merged);
         return sceneId;
     }
 
@@ -359,6 +371,139 @@ export class ProjectRepository {
     setElementStyles(styles: Record<string, ElementStyle>) {
         if (this.guardWrite("setElementStyles")) return;
         this.ydoc.layout().set("elementStyles", styles);
+    }
+
+    // -------------------------------- //
+    //           PRODUCTION             //
+    // -------------------------------- //
+
+    getProduction(): Partial<ProductionData> {
+        return this.ydoc.production().toJSON() as Partial<ProductionData>;
+    }
+
+    observeProduction(callback: (production: Partial<ProductionData>) => void): () => void {
+        const map = this.ydoc.production();
+        const observer = () => callback(map.toJSON() as Partial<ProductionData>);
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
+    setSceneLocking(locked: boolean) {
+        if (this.guardWrite("setSceneLocking")) return;
+        this.ydoc.production().set("sceneLocking", locked);
+    }
+    setPageLocking(locked: boolean) {
+        if (this.guardWrite("setPageLocking")) return;
+        this.ydoc.production().set("pageLocking", locked);
+    }
+    setSceneNumberingStyle(style: "suffix" | "prefix") {
+        if (this.guardWrite("setSceneNumberingStyle")) return;
+        this.ydoc.production().set("sceneNumberingStyle", style);
+    }
+    setSkippedSceneLetters(letters: string[]) {
+        if (this.guardWrite("setSkippedSceneLetters")) return;
+        this.ydoc.production().set("skippedSceneLetters", letters);
+    }
+
+    /**
+     * Strip the frozen production `token` from every persistent scene entry.
+     * Entries that have no remaining content (no `synopsis`, `color`, or
+     * `omitted` flag) are deleted outright. Used by the Production panel
+     * when the user unlocks scenes. The `omitted` flag is preserved — omit
+     * is independent of production lock and survives unlock.
+     */
+    clearSceneLocks(): void {
+        if (this.guardWrite("clearSceneLocks")) return;
+        const map = this.ydoc.scenes();
+        const entries: [string, PersistentScene][] = [];
+        map.forEach((value, key) => {
+            entries.push([key, value as PersistentScene]);
+        });
+        for (const [uuid, scene] of entries) {
+            const next: PersistentScene = { ...scene };
+            delete next.token;
+            if (!next.synopsis && !next.color && !next.omitted) {
+                map.delete(uuid);
+            } else {
+                map.set(uuid, next);
+            }
+        }
+    }
+
+    /**
+     * Raw persistent page-lock map keyed by anchor data-id (with the
+     * sentinel `PAGE_ONE_KEY` for page 1). Empty when page locking has
+     * never been enabled.
+     */
+    get pages(): PersistentPageMap {
+        return this.ydoc.pages().toJSON() as PersistentPageMap;
+    }
+
+    getPage(anchorId: string): PersistentPage | undefined {
+        const map = this.ydoc.pages();
+        return map.get(anchorId) as PersistentPage | undefined;
+    }
+
+    /**
+     * Create or update a page lock keyed by its anchor data-id.
+     * Fields present in `data` (including explicit `undefined`s) overwrite
+     * the existing fields; everything else is preserved. Final undefined
+     * values are stripped before writing.
+     */
+    upsertPage(anchorId: string, data: Partial<PersistentPage>): string {
+        if (this.guardWrite("upsertPage")) return anchorId;
+        const map = this.ydoc.pages();
+        const existing = (map.get(anchorId) as PersistentPage | undefined) ?? {};
+
+        const merged: PersistentPage = { ...existing };
+        const FIELDS = ["token"] as const;
+        for (const key of FIELDS) {
+            if (key in data) {
+                (merged as Record<string, unknown>)[key] = data[key];
+            }
+        }
+        for (const key of FIELDS) {
+            if (merged[key] === undefined) delete merged[key];
+        }
+
+        map.set(anchorId, merged);
+        return anchorId;
+    }
+
+    deletePage(anchorId: string): void {
+        if (this.guardWrite("deletePage")) return;
+        const map = this.ydoc.pages();
+        if (map.has(anchorId)) {
+            map.delete(anchorId);
+        }
+    }
+
+    /**
+     * Wipe every persistent page-lock entry. Used when the user toggles
+     * page locking off — pagination reverts to plain integer numbering.
+     */
+    clearPageLocks(): void {
+        if (this.guardWrite("clearPageLocks")) return;
+        const map = this.ydoc.pages();
+        const keys: string[] = [];
+        map.forEach((_, key) => keys.push(key));
+        for (const key of keys) map.delete(key);
+    }
+
+    observePages(callback: (pages: PersistentPageMap) => void): () => void {
+        const map = this.ydoc.pages();
+        const observer = () => callback(map.toJSON() as PersistentPageMap);
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
+    /**
+     * Run a function inside a single Y.js transaction.
+     * Useful for batching multiple repository mutations into one collab update.
+     */
+    transact(fn: () => void): void {
+        if (this.guardWrite("transact")) return;
+        this.ydoc.transact(fn);
     }
 
     // -------------------------------- //

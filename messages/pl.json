@@ -80,6 +80,7 @@
     "tabs": {
       "General": "Ogólne",
       "Layout": "Układ",
+      "Production": "Produkcja",
       "Export": "Import/Eksport",
       "Collaborators": "Współpracownicy",
       "Keybinds": "Skróty klawiszowe",
@@ -389,7 +390,9 @@
     "shelve": "Odłóż",
     "shelveScene": "Odłóż scenę",
     "shelveDialogue": "Odłóż dialog",
-    "shelveAction": "Odłóż akcję"
+    "shelveAction": "Odłóż akcję",
+    "omitScene": "Pomiń scenę",
+    "unomitScene": "Przywróć scenę"
   },
   "popup": {
     "character": {
@@ -444,6 +447,31 @@
     "untitled": "Bez tytułu",
     "titlePlaceholder": "Tytuł",
     "descriptionPlaceholder": "Opis"
+  },
+  "production": {
+    "title": "Produkcja",
+    "sceneLocking": "Blokowanie scen",
+    "pageLocking": "Blokowanie stron",
+    "revisions": "Wersje",
+    "relock": "Zablokuj",
+    "provisionalTitle": "Niezablokowane sceny",
+    "unlockTitle": "Odblokować numery scen?",
+    "unlockWarning": "<b>Wszystkie zablokowane i pominięte sceny utracą zamrożoną numerację.</b>",
+    "unlockInfo": "Wpłynie to na wszystkich współpracowników. Scenariusz powróci do numeracji pozycyjnej. Sceny OMITTED pozostają pominięte — anuluj pominięcie pojedynczo, aby odzyskać ich zawartość.",
+    "unlock": "Odblokuj",
+    "pageRelock": "Zablokuj ponownie",
+    "pageProvisionalTitle": "Niezablokowane strony",
+    "unlockPagesTitle": "Odblokować strony?",
+    "unlockPagesWarning": "Wszystkie strony utracą zablokowaną numerację i powrócą do naturalnej paginacji.",
+    "unlockPages": "Odblokuj strony",
+    "cancel": "Anuluj",
+    "numberingStyleTitle": "Numeracja scen",
+    "numberingStyleHelp": "Określa, jak numerowane są nowo wstawione sceny między dwiema zablokowanymi scenami.",
+    "suffixName": "Sufiks",
+    "prefixName": "Prefiks",
+    "skippedLettersTitle": "Pomijane litery",
+    "skippedLettersHelp": "Litery pomijane podczas generowania numerów scen, zwykle aby uniknąć pomyłek.",
+    "skipLetterAriaLabel": "Pomiń literę {letter}"
   },
   "saves": {
     "title": "Historia wersji",

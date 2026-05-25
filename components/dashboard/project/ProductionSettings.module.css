@@ -1,0 +1,48 @@
+.styleOptions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.styleName {
+    font-size: 0.7rem;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+
+.styleExample {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    font-family: var(--font-screenplay);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+.arrowIcon {
+    opacity: 0.5;
+}
+
+.letterToggles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.letterCard {
+    justify-content: center;
+    padding: 12px;
+}
+
+.letter {
+    font-family: var(--font-screenplay);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-text);
+}

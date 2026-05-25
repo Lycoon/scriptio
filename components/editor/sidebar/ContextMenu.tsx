@@ -21,6 +21,8 @@ import {
     ClipboardPaste,
     Columns2,
     Copy,
+    EyeOff,
+    Eye,
     Highlighter,
     Loader2,
     LucideIcon,
@@ -32,6 +34,7 @@ import {
 } from "lucide-react";
 import { makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
 import { extractShelveCandidate } from "@src/lib/shelf/shelf-utils";
+import { omitSceneByUuid, unomitSceneByUuid } from "@src/lib/screenplay/scene-locking";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 
 /* ==================== */
@@ -107,8 +110,21 @@ export type SceneContextProps = {
 const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
     const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
-    const { editor, isReadOnly } = useContext(ProjectContext);
+    const { editor, isReadOnly, repository } = useContext(ProjectContext);
     const scene: Scene = props.scene;
+
+    const canOmit = !!scene.id && !scene.omitted;
+    const canUnomit = !!scene.id && !!scene.omitted;
+
+    const handleOmit = () => {
+        if (!repository || !scene.id) return;
+        omitSceneByUuid(repository, scene.id);
+    };
+
+    const handleUnomit = () => {
+        if (!repository || !scene.id) return;
+        unomitSceneByUuid(repository, scene.id);
+    };
 
     return (
         <>
@@ -129,6 +145,12 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
                         text={t("cut")}
                         action={() => cutText(editor!, scene.position, scene.nextPosition)}
                     />
+                    {canOmit && (
+                        <ContextMenuItem text={t("omitScene")} icon={EyeOff} action={handleOmit} />
+                    )}
+                    {canUnomit && (
+                        <ContextMenuItem text={t("unomitScene")} icon={Eye} action={handleUnomit} />
+                    )}
                 </>
             )}
         </>
@@ -456,11 +478,46 @@ export type EditorContextMenuProps = {
 
 const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     const t = useTranslations("contextMenu");
-    const { editor, repository, isReadOnly } = useContext(ProjectContext);
+    const { editor, repository, isReadOnly, persistentScenes } =
+        useContext(ProjectContext);
     const { worker } = useSpellcheck();
     const { updateContextMenu } = useContext(UserContext);
     const { from, to, onAddComment, spellError, nodePos, nodeClass } = props;
     const hasSelection = from !== to;
+
+    // Resolve scene UUID + lock state if right-clicked on a scene heading.
+    // `nodePos` is the cursor position inside the paragraph (from the editor
+    // dispatcher), so we resolve up to the depth-1 ancestor — the scene <p>
+    // node itself — rather than calling `doc.nodeAt(nodePos)` which would
+    // return the inner text node.
+    const sceneInfo = (() => {
+        if (nodeClass !== ScreenplayElement.Scene || nodePos === undefined || !editor) {
+            return null;
+        }
+        let sceneNode;
+        try {
+            sceneNode = editor.state.doc.resolve(nodePos).node(1);
+        } catch {
+            return null;
+        }
+        if (!sceneNode || sceneNode.attrs?.class !== ScreenplayElement.Scene) return null;
+        const uuid: string | undefined = sceneNode.attrs?.["data-id"];
+        if (!uuid) return null;
+        const entry = persistentScenes[uuid];
+        return { uuid, isOmitted: !!entry?.omitted };
+    })();
+
+    const handleOmitScene = () => {
+        if (!repository || !sceneInfo) return;
+        omitSceneByUuid(repository, sceneInfo.uuid);
+        updateContextMenu(undefined);
+    };
+
+    const handleUnomitScene = () => {
+        if (!repository || !sceneInfo) return;
+        unomitSceneByUuid(repository, sceneInfo.uuid);
+        updateContextMenu(undefined);
+    };
 
     const [suggestions, setSuggestions] = useState<string[] | null>(null);
     const displaySuggestions = spellError && !worker ? [] : suggestions;
@@ -620,6 +677,26 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
                                 if (editor && nodePos !== undefined) makeDualDialogue(editor, nodePos);
                                 updateContextMenu(undefined);
                             }}
+                        />
+                    )}
+                </>
+            )}
+
+            {/* Production: Omit / Unomit on a locked scene heading */}
+            {sceneInfo && !isReadOnly && (
+                <>
+                    <div className={context.menu_separator} />
+                    {sceneInfo.isOmitted ? (
+                        <ContextMenuItem
+                            text={t("unomitScene")}
+                            icon={Eye}
+                            action={handleUnomitScene}
+                        />
+                    ) : (
+                        <ContextMenuItem
+                            text={t("omitScene")}
+                            icon={EyeOff}
+                            action={handleOmitScene}
                         />
                     )}
                 </>

@@ -80,6 +80,7 @@
     "tabs": {
       "General": "General",
       "Layout": "Layout",
+      "Production": "Production",
       "Export": "Import/Export",
       "Collaborators": "Collaborators",
       "Keybinds": "Keybinds",
@@ -389,7 +390,9 @@
     "shelve": "Shelve",
     "shelveScene": "Shelve scene",
     "shelveDialogue": "Shelve dialogue",
-    "shelveAction": "Shelve action"
+    "shelveAction": "Shelve action",
+    "omitScene": "Omit scene",
+    "unomitScene": "Unomit scene"
   },
   "popup": {
     "character": {
@@ -444,6 +447,31 @@
     "untitled": "Untitled",
     "titlePlaceholder": "Title",
     "descriptionPlaceholder": "Description"
+  },
+  "production": {
+    "title": "Production",
+    "sceneLocking": "Scene locking",
+    "pageLocking": "Page locking",
+    "revisions": "Revisions",
+    "relock": "Relock",
+    "provisionalTitle": "Non-locked scenes",
+    "unlockTitle": "Unlock scenes",
+    "unlockWarning": "All scenes will lose their locked numbering, reverting to their initial positional numbering.",
+    "unlockInfo": "This affects every collaborator. The screenplay will revert to positional scene numbers. OMITTED scenes stay omitted — unomit them individually if you want their content back.",
+    "unlock": "Unlock",
+    "pageRelock": "Relock",
+    "pageProvisionalTitle": "Non-locked pages",
+    "unlockPagesTitle": "Unlock pages",
+    "unlockPagesWarning": "All pages will lose their locked numbering, reverting to their natural pagination-based numbering.",
+    "unlockPages": "Unlock pages",
+    "cancel": "Cancel",
+    "numberingStyleTitle": "Scene numbering",
+    "numberingStyleHelp": "Dictates how newly inserted scenes should be numbered between two locked scenes.",
+    "suffixName": "Suffix",
+    "prefixName": "Prefix",
+    "skippedLettersTitle": "Skipped letters",
+    "skippedLettersHelp": "Letters to omit when generating scene numbers usually to avoid confusion.",
+    "skipLetterAriaLabel": "Skip letter {letter}"
   },
   "saves": {
     "title": "Version History",

@@ -18,6 +18,8 @@ export interface DocumentEditorFeatures {
     searchHighlights: boolean;
     /** Scene color bookmark decorations. */
     sceneBookmarks: boolean;
+    /** Production-mode scene labels + OMITTED placeholders. */
+    sceneLocking: boolean;
     /** Prevent duplicate data-ids on paste. */
     nodeIdDedup: boolean;
     /** Character / location autocomplete menus. */
@@ -67,6 +69,7 @@ export const SCREENPLAY_EDITOR_CONFIG: DocumentEditorConfig = {
         characterHighlights: true,
         searchHighlights: true,
         sceneBookmarks: true,
+        sceneLocking: true,
         nodeIdDedup: true,
         suggestions: true,
         orphanPrevention: true,
@@ -89,6 +92,7 @@ export const TITLEPAGE_EDITOR_CONFIG: DocumentEditorConfig = {
         characterHighlights: false,
         searchHighlights: false,
         sceneBookmarks: false,
+        sceneLocking: false,
         nodeIdDedup: false,
         suggestions: false,
         orphanPrevention: false,
