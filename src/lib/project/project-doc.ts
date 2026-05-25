@@ -17,6 +17,7 @@ import type { PageFormat } from "../utils/enums";
 import type { CharacterItem } from "../screenplay/characters";
 import type { LocationItem } from "../screenplay/locations";
 import type { PersistentScene } from "../screenplay/scenes";
+import type { PersistentPage } from "../screenplay/page-locking";
 import type { Comment } from "../utils/types";
 
 // -------------------------------- //
@@ -125,6 +126,14 @@ export type ProductionData = {
      * `DEFAULT_SKIPPED_SCENE_LETTERS`.
      */
     skippedSceneLetters?: string[];
+    /**
+     * Page-locking master switch. When true, pagination freezes the numbering
+     * of each page using anchors stored in the `pages` Y.Map. Pages inserted
+     * between locks get suffix-style labels (e.g. "4A"); pages appended after
+     * the last lock continue the integer sequence; deletion of a locked page's
+     * content leaves an empty page slot in its place.
+     */
+    pageLocking?: boolean;
 };
 
 /** Letters skipped by default in newly-created projects. */
@@ -168,6 +177,7 @@ export type ProjectData = {
     titlepage?: JSONContent[];
     characters: Record<string, CharacterItem>;
     scenes: Record<string, PersistentScene>;
+    pages: Record<string, PersistentPage>;
     locations: Record<string, LocationItem>;
     metadata: ProjectMetadata;
     board: BoardData;
@@ -203,6 +213,7 @@ export class ProjectState extends Y.Doc {
         TITLEPAGE: "titlepage",
         CHARACTERS: "characters",
         SCENES: "scenes",
+        PAGES: "pages",
         LOCATIONS: "locations",
         METADATA: "metadata",
         BOARD: "board",
@@ -245,6 +256,10 @@ export class ProjectState extends Y.Doc {
 
     scenes(): Y.Map<PersistentScene> {
         return this.getMap(this.KEYS.SCENES);
+    }
+
+    pages(): Y.Map<PersistentPage> {
+        return this.getMap(this.KEYS.PAGES);
     }
 
     board(): TypedMap<BoardData> {

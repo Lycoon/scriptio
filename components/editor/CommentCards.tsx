@@ -3,44 +3,29 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Comment, CommentReply } from "@src/lib/utils/types";
 import { Send, Trash2, X } from "lucide-react";
-import { useUser } from "@src/lib/utils/hooks";
+import { useFormatTimestamp, useUser } from "@src/lib/utils/hooks";
 import { getCommentPositions } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { useViewContext } from "@src/context/ViewContext";
 import { Editor } from "@tiptap/react";
 import { Transaction } from "@tiptap/pm/state";
 import styles from "./CommentCard.module.css";
 
-function formatTimestamp(ts: number): string {
-    const date = new Date(ts);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return `${diffDays}d ago`;
-
-    return date.toLocaleDateString();
-}
-
 // -------------------------------- //
 //          Reply bubble            //
 // -------------------------------- //
 
-const ReplyBubble = ({ reply }: { reply: CommentReply }) => (
-    <div className={styles.reply}>
-        <div className={styles.reply_header}>
-            <span className={styles.comment_author}>{reply.author}</span>
-            <span className={styles.comment_time}>{formatTimestamp(reply.createdAt)}</span>
+const ReplyBubble = ({ reply }: { reply: CommentReply }) => {
+    const formatTimestamp = useFormatTimestamp();
+    return (
+        <div className={styles.reply}>
+            <div className={styles.reply_header}>
+                <span className={styles.comment_author}>{reply.author}</span>
+                <span className={styles.comment_time}>{formatTimestamp(reply.createdAt)}</span>
+            </div>
+            <div className={styles.reply_text}>{reply.text}</div>
         </div>
-        <div className={styles.reply_text}>{reply.text}</div>
-    </div>
-);
+    );
+};
 
 // -------------------------------- //
 //          Comment card             //
@@ -62,6 +47,7 @@ const CommentCard = ({ comment, isActive, onActivate, onDeactivate, onSave, onDe
     const [draft, setDraft] = useState(comment.text);
     const [replyDraft, setReplyDraft] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const formatTimestamp = useFormatTimestamp();
 
     useEffect(() => {
         if (isEditing && textareaRef.current) {

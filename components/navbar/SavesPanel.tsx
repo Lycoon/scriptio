@@ -3,7 +3,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { useCookieUser } from "@src/lib/utils/hooks";
+import { useCookieUser, useFormatTimestamp } from "@src/lib/utils/hooks";
 import {
     X,
     Save,
@@ -35,10 +35,10 @@ interface SavesPanelProps {
 
 const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
     const t = useTranslations("saves");
-    const tDates = useTranslations("dates");
     const { openDashboard } = useContext(DashboardContext);
     const { user } = useCookieUser();
     const isSignedIn = !!user;
+    const formatDate = useFormatTimestamp();
 
     const handleUpgrade = () => {
         onClose();
@@ -148,26 +148,6 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
         await deleteSave(projectId, key);
         setSaves((prev) => prev.filter((s) => s.key !== key));
         setConfirmDeleteKey(null);
-    };
-
-    const formatDate = (iso: string) => {
-        const date = new Date(iso);
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
-
-        if (diffMins < 1) return tDates("justNow");
-        if (diffMins < 60) return tDates("minutesAgo", { mins: diffMins });
-        if (diffHours < 24) return tDates("hoursAgo", { hours: diffHours });
-        if (diffDays < 7) return tDates("daysAgo", { days: diffDays });
-
-        return date.toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-        });
     };
 
     const formatFullDate = (iso: string) => {

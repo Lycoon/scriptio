@@ -18,6 +18,7 @@ import {
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
+import { PersistentPage, PersistentPageMap } from "../screenplay/page-locking";
 import { PageFormat } from "../utils/enums";
 import { generateNodeId } from "../screenplay/nodes";
 import { JSONContent } from "@tiptap/react";
@@ -391,6 +392,10 @@ export class ProjectRepository {
         if (this.guardWrite("setSceneLocking")) return;
         this.ydoc.production().set("sceneLocking", locked);
     }
+    setPageLocking(locked: boolean) {
+        if (this.guardWrite("setPageLocking")) return;
+        this.ydoc.production().set("pageLocking", locked);
+    }
     setSceneNumberingStyle(style: "suffix" | "prefix") {
         if (this.guardWrite("setSceneNumberingStyle")) return;
         this.ydoc.production().set("sceneNumberingStyle", style);
@@ -423,6 +428,73 @@ export class ProjectRepository {
                 map.set(uuid, next);
             }
         }
+    }
+
+    /**
+     * Raw persistent page-lock map keyed by anchor data-id (with the
+     * sentinel `PAGE_ONE_KEY` for page 1). Empty when page locking has
+     * never been enabled.
+     */
+    get pages(): PersistentPageMap {
+        return this.ydoc.pages().toJSON() as PersistentPageMap;
+    }
+
+    getPage(anchorId: string): PersistentPage | undefined {
+        const map = this.ydoc.pages();
+        return map.get(anchorId) as PersistentPage | undefined;
+    }
+
+    /**
+     * Create or update a page lock keyed by its anchor data-id.
+     * Fields present in `data` (including explicit `undefined`s) overwrite
+     * the existing fields; everything else is preserved. Final undefined
+     * values are stripped before writing.
+     */
+    upsertPage(anchorId: string, data: Partial<PersistentPage>): string {
+        if (this.guardWrite("upsertPage")) return anchorId;
+        const map = this.ydoc.pages();
+        const existing = (map.get(anchorId) as PersistentPage | undefined) ?? {};
+
+        const merged: PersistentPage = { ...existing };
+        const FIELDS = ["token"] as const;
+        for (const key of FIELDS) {
+            if (key in data) {
+                (merged as Record<string, unknown>)[key] = data[key];
+            }
+        }
+        for (const key of FIELDS) {
+            if (merged[key] === undefined) delete merged[key];
+        }
+
+        map.set(anchorId, merged);
+        return anchorId;
+    }
+
+    deletePage(anchorId: string): void {
+        if (this.guardWrite("deletePage")) return;
+        const map = this.ydoc.pages();
+        if (map.has(anchorId)) {
+            map.delete(anchorId);
+        }
+    }
+
+    /**
+     * Wipe every persistent page-lock entry. Used when the user toggles
+     * page locking off — pagination reverts to plain integer numbering.
+     */
+    clearPageLocks(): void {
+        if (this.guardWrite("clearPageLocks")) return;
+        const map = this.ydoc.pages();
+        const keys: string[] = [];
+        map.forEach((_, key) => keys.push(key));
+        for (const key of keys) map.delete(key);
+    }
+
+    observePages(callback: (pages: PersistentPageMap) => void): () => void {
+        const map = this.ydoc.pages();
+        const observer = () => callback(map.toJSON() as PersistentPageMap);
+        map.observe(observer);
+        return () => map.unobserve(observer);
     }
 
     /**

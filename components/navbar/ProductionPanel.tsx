@@ -2,13 +2,14 @@
 
 import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Lock, X } from "lucide-react";
+import { Lock, X, Layers } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
 import { computeSceneItems } from "@src/lib/screenplay/scenes";
-import { unlockScenesPopup } from "@src/lib/screenplay/popup";
+import { unlockPagesPopup, unlockScenesPopup } from "@src/lib/screenplay/popup";
+import { getPageAnchors } from "@src/lib/screenplay/extensions/pagination-extension";
 import Switch from "@components/utils/Switch";
 
 import styles from "./ProductionPanel.module.css";
@@ -37,7 +38,11 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         sceneNumberingStyle,
         skippedSceneLetters,
         persistentScenes,
+        pageLocking,
+        persistentPages,
         scenes,
+        screenplay,
+        editor,
         repository,
         isReadOnly,
     } = useContext(ProjectContext);
@@ -131,7 +136,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
             const currentScreenplay = repository.screenplay;
             const scenes = computeSceneItems(currentScreenplay);
             const uuids = scenes.map(s => s.id).filter((id): id is string => !!id);
-            
+
             // Re-read fresh persistent data
             const persistentSnapshot = repository.scenes;
 
@@ -142,23 +147,91 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                 skippedSceneLetters,
             );
 
-            console.log("[ProductionPanel] RELOCKING PROVISIONAL. Full snapshot:", currentLabels.map(l => ({
-                uuid: l.uuid,
-                label: l.label,
-                status: l.status,
-                token: l.token
-            })));
-
-            let relockedCount = 0;
             currentLabels.forEach((label) => {
                 if (label.status === "provisional") {
-                    console.log(`[ProductionPanel] -> Freezing ${label.uuid} as "${label.label}"`);
                     repository.upsertScene(label.uuid, { token: label.token });
-                    relockedCount++;
                 }
             });
+        });
+    };
 
-            console.log(`[ProductionPanel] Relock complete. Persisted ${relockedCount} tokens.`);
+    // -------------- Page locking --------------
+    // Pulls anchors from the live pagination state; recomputed whenever the
+    // screenplay or the persistent maps change. Each render is cheap (a single
+    // Set traversal over the plugin state); we don't subscribe to pagination
+    // events because the production panel is only meaningful as a snapshot
+    // when the user opens it.
+    const pageAnchors = useMemo(() => {
+        if (!editor) return [];
+        return getPageAnchors(editor);
+        // `screenplay` and `persistentPages` are listed so the memo refreshes
+        // when content/locks change — they're not used inside the body.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editor, screenplay, persistentPages, persistentScenes]);
+
+    const pageLabels = useMemo(() => {
+        if (!pageLocking || pageAnchors.length === 0) return [];
+        return computeSceneLabels(pageAnchors, persistentPages, "suffix", skippedSceneLetters);
+    }, [pageLocking, pageAnchors, persistentPages, skippedSceneLetters]);
+
+    const provisionalPageLabels = useMemo(
+        () => pageLabels.filter((l) => l.status === "provisional"),
+        [pageLabels],
+    );
+
+    const performPageUnlock = useCallback(() => {
+        if (!repository) return;
+        repository.transact(() => {
+            repository.clearPageLocks();
+            repository.setPageLocking(false);
+        });
+    }, [repository]);
+
+    const handlePageLockingToggle = (next: boolean) => {
+        if (!repository || isReadOnly) return;
+        if (next) {
+            if (!editor) return;
+            repository.transact(() => {
+                const anchors = getPageAnchors(editor);
+                const persistentSnapshot = repository.pages;
+                // Idempotent: any anchor that already has a token keeps it.
+                // Only provisional anchors (no token yet) get a freshly-computed
+                // one. A fresh lock-on with no existing tokens assigns every
+                // page baseToken(idx+1) — same shape as scene locking.
+                const computed = computeSceneLabels(
+                    anchors,
+                    persistentSnapshot,
+                    "suffix",
+                    skippedSceneLetters,
+                );
+                computed.forEach((label) => {
+                    if (label.status === "provisional") {
+                        repository.upsertPage(label.uuid, { token: label.token });
+                    }
+                });
+                repository.setPageLocking(true);
+            });
+        } else {
+            unlockPagesPopup(performPageUnlock, userCtx);
+        }
+    };
+
+    const handlePageRelock = () => {
+        if (!repository || isReadOnly || !editor) return;
+        repository.transact(() => {
+            const anchors = getPageAnchors(editor);
+            const persistentSnapshot = repository.pages;
+            const currentLabels = computeSceneLabels(
+                anchors,
+                persistentSnapshot,
+                "suffix",
+                skippedSceneLetters,
+            );
+            currentLabels.forEach((label) => {
+                if (label.status === "provisional") {
+                    repository.upsertPage(label.uuid, { token: label.token });
+                }
+            });
         });
     };
 
@@ -217,14 +290,48 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                 )}
             </div>
 
-            {/* Page Locking (inert in v1) */}
+            {/* Page Locking */}
             <div className={styles.section}>
                 <div className={styles.row}>
                     <div className={styles.row_main}>
+                        <Layers size={14} className={styles.row_icon} />
                         <span className={styles.row_label}>{t("pageLocking")}</span>
                     </div>
-                    <Switch checked={false} onChange={() => {}} ariaLabel={t("pageLocking")} />
+                    <div className={styles.row_actions}>
+                        {pageLocking && provisionalPageLabels.length > 0 && (
+                            <button
+                                type="button"
+                                className={styles.relock_btn}
+                                onClick={handlePageRelock}
+                                disabled={isReadOnly}
+                            >
+                                {t("pageRelock")}
+                            </button>
+                        )}
+                        <Switch
+                            checked={pageLocking}
+                            onChange={handlePageLockingToggle}
+                            disabled={isReadOnly}
+                            ariaLabel={t("pageLocking")}
+                        />
+                    </div>
                 </div>
+
+                {pageLocking && provisionalPageLabels.length > 0 && (
+                    <div className={styles.provisional_box}>
+                        <div className={styles.provisional_title}>{t("pageProvisionalTitle")}</div>
+                        <div className={styles.provisional_list}>
+                            {provisionalPageLabels.map((l, idx) => (
+                                <span
+                                    key={`${l.uuid}-${idx}`}
+                                    className={styles.provisional_label}
+                                >
+                                    {l.label}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Revisions (inert in v1) */}

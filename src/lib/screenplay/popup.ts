@@ -25,6 +25,10 @@ export type PopupUnlockScenesData = {
     confirmUnlock: () => void;
 };
 
+export type PopupUnlockPagesData = {
+    confirmUnlock: () => void;
+};
+
 // ------------------------------ //
 //         GENERIC POPUP          //
 // ------------------------------ //
@@ -33,7 +37,8 @@ export type PopupUnionData =
     | PopupCharacterData
     | PopupSceneData
     | PopupUploadToCloudData
-    | PopupUnlockScenesData;
+    | PopupUnlockScenesData
+    | PopupUnlockPagesData;
 
 export enum PopupType {
     NewCharacter,
@@ -42,6 +47,7 @@ export enum PopupType {
     EditScene,
     UploadToCloud,
     UnlockScenes,
+    UnlockPages,
 }
 
 export type PopupData<DataType extends PopupUnionData> = {
@@ -95,6 +101,13 @@ export const uploadToCloudPopup = (projectId: string, userCtx: UserContextType) 
 export const unlockScenesPopup = (confirmUnlock: () => void, userCtx: UserContextType) => {
     userCtx.updatePopup({
         type: PopupType.UnlockScenes,
+        data: { confirmUnlock },
+    });
+};
+
+export const unlockPagesPopup = (confirmUnlock: () => void, userCtx: UserContextType) => {
+    userCtx.updatePopup({
+        type: PopupType.UnlockPages,
         data: { confirmUnlock },
     });
 };

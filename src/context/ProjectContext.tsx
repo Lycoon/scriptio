@@ -13,6 +13,7 @@ import { Editor } from "@tiptap/react";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
 import { mergeScenesData, PersistentSceneMap, Scene } from "@src/lib/screenplay/scenes";
+import { PersistentPageMap } from "@src/lib/screenplay/page-locking";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { ProjectRole } from "@src/generated/client/browser";
 import { useUser } from "@src/lib/utils/hooks";
@@ -111,6 +112,14 @@ export interface ProjectContextType {
      *  has been persisted. */
     persistentScenes: PersistentSceneMap;
 
+    /** Page-locking master switch (production lock for page numbering). */
+    pageLocking: boolean;
+    setPageLocking: (locked: boolean) => void;
+    /** Raw persistent page-lock map (anchor data-id → PersistentPage).
+     *  Keyed by `PAGE_ONE_KEY` for page 1, by the top-level node's data-id
+     *  for subsequent pages. */
+    persistentPages: PersistentPageMap;
+
     // Search state
     searchTerm: string;
     setSearchTerm: (term: string) => void;
@@ -194,6 +203,9 @@ const defaultContextValue: ProjectContextType = {
     skippedSceneLetters: DEFAULT_SKIPPED_SCENE_LETTERS,
     setSkippedSceneLetters: () => {},
     persistentScenes: {},
+    pageLocking: false,
+    setPageLocking: () => {},
+    persistentPages: {},
     characters: {},
     locations: {},
     scenes: [],
@@ -319,6 +331,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [skippedSceneLetters, setSkippedSceneLettersState] =
         useState<string[]>(DEFAULT_SKIPPED_SCENE_LETTERS);
     const [persistentScenes, setPersistentScenesState] = useState<PersistentSceneMap>({});
+    const [pageLocking, setPageLockingState] = useState<boolean>(false);
+    const [persistentPages, setPersistentPagesState] = useState<PersistentPageMap>({});
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
 
@@ -510,10 +524,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (initialProduction.skippedSceneLetters !== undefined) {
                 setSkippedSceneLettersState(initialProduction.skippedSceneLetters);
             }
+            if (initialProduction.pageLocking !== undefined) {
+                setPageLockingState(initialProduction.pageLocking);
+            }
         }
 
-        // Read initial persistent scenes
+        // Read initial persistent scenes & pages
         setPersistentScenesState(repository.scenes);
+        setPersistentPagesState(repository.pages);
 
         // Observe layout changes
         const unsubscribeLayout = repository.observeLayout((layout: Partial<LayoutData>) => {
@@ -566,6 +584,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (production.skippedSceneLetters !== undefined) {
                 setSkippedSceneLettersState(production.skippedSceneLetters);
             }
+            if (production.pageLocking !== undefined) {
+                setPageLockingState(production.pageLocking);
+            }
+        });
+
+        // Observe page-lock changes
+        const unsubscribePages = repository.observePages((pages: PersistentPageMap) => {
+            setPersistentPagesState(pages);
         });
 
         // Observe character changes - get current screenplay from repository
@@ -610,6 +636,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             repository.unregisterScreenplayCallback(recomputeFromScreenplay);
             unsubscribeLayout();
             unsubscribeProduction();
+            unsubscribePages();
             unsubscribeCharacters();
             unsubscribeLocations();
             unsubscribeScenes();
@@ -774,6 +801,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    const setPageLocking = useCallback(
+        (locked: boolean) => {
+            setPageLockingState(locked);
+            repository?.setPageLocking(locked);
+        },
+        [repository],
+    );
+
     const setSceneNumberingStyle = useCallback(
         (style: "suffix" | "prefix") => {
             setSceneNumberingStyleState(style);
@@ -881,6 +916,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             skippedSceneLetters,
             setSkippedSceneLetters,
             persistentScenes,
+            pageLocking,
+            setPageLocking,
+            persistentPages,
             screenplay,
             scenes,
             updateScenes,
@@ -952,6 +990,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             skippedSceneLetters,
             setSkippedSceneLetters,
             persistentScenes,
+            pageLocking,
+            setPageLocking,
+            persistentPages,
             screenplay,
             scenes,
             updateScenes,

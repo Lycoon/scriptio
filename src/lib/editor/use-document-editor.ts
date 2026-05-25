@@ -11,7 +11,7 @@ import { ScreenplayElement, Style, TitlePageElement } from "@src/lib/utils/enums
 import { getRandomColor } from "@src/lib/utils/misc";
 import { useUser } from "@src/lib/utils/hooks";
 import { getStylesFromMarks, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
-import { ScriptioPagination } from "@src/lib/screenplay/extensions/pagination-extension";
+import { ScriptioPagination, refreshPageLocking } from "@src/lib/screenplay/extensions/pagination-extension";
 import { KeybindsExtension } from "@src/lib/screenplay/extensions/keybinds-extension";
 import { executeKeybindAction, KeybindId } from "@src/lib/utils/keybinds";
 import {
@@ -79,6 +79,8 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         sceneNumberingStyle,
         skippedSceneLetters,
         persistentScenes,
+        pageLocking,
+        persistentPages,
     } = projectCtx;
 
     const projectState = repository?.getState();
@@ -175,6 +177,8 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         sceneNumberingStyle,
         skippedSceneLetters,
         persistentScenes,
+        pageLocking,
+        persistentPages,
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }), []);
     ext.highlightedCharacters = highlightedCharacters;
@@ -192,6 +196,8 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     ext.sceneNumberingStyle = sceneNumberingStyle;
     ext.skippedSceneLetters = skippedSceneLetters;
     ext.persistentScenes = persistentScenes;
+    ext.pageLocking = pageLocking;
+    ext.persistentPages = persistentPages;
 
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
 
@@ -362,6 +368,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                               },
                               footerRight: "",
                               ...SCREENPLAY_FORMATS[pageSize],
+                              getPageLocking: () => !!ext.pageLocking,
+                              getPageLocks: () => ext.persistentPages ?? {},
+                              getSkippedLetters: () => ext.skippedSceneLetters ?? [],
                           }
                         : {
                               pageGap: 20,
@@ -601,6 +610,16 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
             refreshSceneLocking(editor);
         }
     }, [editor, sceneLocking, sceneNumberingStyle, skippedSceneLetters, persistentScenes, features.sceneLocking]);
+
+    // Refresh pagination when page locking or the page-lock map changes.
+    // Pagination only reads these via getter closures on its options, so
+    // we must explicitly kick it to re-run; otherwise stale labels render
+    // until the user types.
+    useEffect(() => {
+        if (editor && config.features.paginationMode === "screenplay") {
+            refreshPageLocking(editor);
+        }
+    }, [editor, pageLocking, persistentPages, skippedSceneLetters, config.features.paginationMode]);
 
     // Refresh search highlights
     useEffect(() => {
