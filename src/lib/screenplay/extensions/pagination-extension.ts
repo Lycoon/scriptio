@@ -3,8 +3,9 @@ import { CircularBuffer } from "@src/lib/utils/circular-buffer";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { Editor, Extension } from "@tiptap/core";
 import { Node } from "@tiptap/pm/model";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { ySyncPluginKey } from "@tiptap/y-tiptap";
 
 import { compareTokens, computeSceneLabels, SceneToken } from "@src/lib/screenplay/scene-locking";
 import { PAGE_ONE_KEY, PersistentPageMap } from "@src/lib/screenplay/page-locking";
@@ -1185,6 +1186,46 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
         appendTransaction() {
             return null;
         },
+        filterTransaction(tr) {
+            // Page-lock guard: prevent content from spilling upward out of a
+            // locked page. The signature of that spill — Backspace at the
+            // start of a locked anchor, Delete at the end of the node before
+            // it, or a selection delete that swallows the anchor — is the
+            // locked anchor's data-id disappearing from the top-level node
+            // list. If that would happen, reject the transaction so the
+            // cursor stays put and no content moves across the lock.
+            if (!tr.docChanged) return true;
+
+            // Allow yjs sync (remote updates and yjs-based undo/redo) through
+            // unconditionally — cross-peer consistency must not be blocked by
+            // local lock enforcement, and the lock map itself lives in the
+            // Yjs doc so peers agree on which pages are locked.
+            if (tr.getMeta(ySyncPluginKey)) return true;
+
+            const opts = extension.options as PaginationOptions;
+            if (!opts.getPageLocking?.()) return true;
+
+            const pageLocks = opts.getPageLocks?.();
+            if (!pageLocks) return true;
+
+            // PAGE_ONE_KEY has no node to defend — page 1 can't lose its
+            // lock through doc edits.
+            const lockedAnchors: string[] = [];
+            for (const key of Object.keys(pageLocks)) {
+                if (key !== PAGE_ONE_KEY) lockedAnchors.push(key);
+            }
+            if (lockedAnchors.length === 0) return true;
+
+            const present = new Set<string>();
+            tr.doc.forEach((node) => {
+                const dataId = node.attrs?.["data-id"];
+                if (typeof dataId === "string") present.add(dataId);
+            });
+            for (const anchor of lockedAnchors) {
+                if (!present.has(anchor)) return false;
+            }
+            return true;
+        },
         props: {
             decorations(state) {
                 return (paginationKey.getState(state) as PaginationState)?.decset ?? DecorationSet.empty;
@@ -1314,6 +1355,45 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
 
     addProseMirrorPlugins() {
         return [createPaginationPlugin(this)];
+    },
+
+    addKeyboardShortcuts() {
+        return {
+            Backspace: ({ editor }) => {
+                // joinBackward has a variant — joinMaybeClear — that deletes
+                // the PREVIOUS block instead of the current one. It fires when
+                // both blocks are empty. If that previous block is a locked
+                // page anchor, the plugin's filterTransaction rejects the
+                // resulting transaction (the anchor's data-id would go
+                // missing), and the user sees the cursor stuck on the second
+                // empty line. Patch the case by deleting the current empty
+                // block ourselves and parking the cursor inside the preserved
+                // anchor — the natural "step up one line" behavior.
+                const { state, view } = editor;
+                const { $from, empty } = state.selection;
+                if (!empty || $from.parentOffset !== 0) return false;
+                if ($from.parent.textContent.length !== 0) return false;
+
+                const opts = this.options as PaginationOptions;
+                if (!opts.getPageLocking?.()) return false;
+                const pageLocks = opts.getPageLocks?.();
+                if (!pageLocks) return false;
+
+                const curStart = $from.before();
+                if (curStart === 0) return false;
+
+                const prev = state.doc.resolve(curStart).nodeBefore;
+                if (!prev || prev.textContent.length !== 0) return false;
+
+                const prevDataId = prev.attrs?.["data-id"];
+                if (typeof prevDataId !== "string" || !pageLocks[prevDataId]) return false;
+
+                const tr = state.tr.delete(curStart, $from.after());
+                tr.setSelection(TextSelection.create(tr.doc, curStart - 1));
+                view.dispatch(tr);
+                return true;
+            },
+        };
     },
 
     addCommands() {

@@ -153,7 +153,12 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
             // ── Direct-child pagination widget → explicit page break ──
             if (el.classList.contains("pagination-page-break")) {
-                allLines.push({ runs: [], y: 0, type: "__page_break__" });
+                allLines.push({
+                    runs: [],
+                    y: 0,
+                    type: "__page_break__",
+                    pageLabel: this.extractPageLabel(el),
+                });
                 continue;
             }
 
@@ -224,7 +229,12 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 }
 
                 // Emit page break sentinel
-                allLines.push({ runs: [], y: 0, type: "__page_break__" });
+                allLines.push({
+                    runs: [],
+                    y: 0,
+                    type: "__page_break__",
+                    pageLabel: this.extractPageLabel(splitWidget),
+                });
 
                 // Collect lines AFTER the split widget
                 const afterLines = this.collectParagraphLines(el, nodeType, splitWidget, "after");
@@ -572,6 +582,24 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 tailRun.text += " " + label;
             }
         }
+    }
+
+    /**
+     * Read the user-visible page label out of a `.pagination-page-break`
+     * widget. The widget renders its destination page's header inside
+     * `.pagination-header-area > .pagination-header-right` (the configured
+     * headerRight template, with `{page}` already substituted) — so the
+     * textContent IS the final label string the user sees. Under page
+     * locking this string is the frozen "4A." form; otherwise it's the
+     * default sequential "4.". Returns undefined when no header is
+     * present so the worker falls back to its integer pageNumber.
+     */
+    private extractPageLabel(widget: HTMLElement): string | undefined {
+        const right = widget.querySelector(
+            ".pagination-header-area .pagination-header-right",
+        ) as HTMLElement | null;
+        if (!right) return undefined;
+        return right.textContent?.trim() ?? undefined;
     }
 
     // ── VisualLine[] → PDF ───────────────────────────────────────────────────
