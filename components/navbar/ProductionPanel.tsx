@@ -9,7 +9,7 @@ import { UserContext } from "@src/context/UserContext";
 import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
 import { computeSceneItems } from "@src/lib/screenplay/scenes";
 import { unlockPagesPopup, unlockScenesPopup } from "@src/lib/screenplay/popup";
-import { getPageAnchors } from "@src/lib/screenplay/extensions/pagination-extension";
+import { getPageAnchors, getPageAnchorInfo } from "@src/lib/screenplay/extensions/pagination-extension";
 import Switch from "@components/utils/Switch";
 
 import styles from "./ProductionPanel.module.css";
@@ -192,7 +192,8 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         if (next) {
             if (!editor) return;
             repository.transact(() => {
-                const anchors = getPageAnchors(editor);
+                const anchorInfos = getPageAnchorInfo(editor);
+                const anchors = anchorInfos.map((a) => a.anchorId);
                 const persistentSnapshot = repository.pages;
                 // Idempotent: any anchor that already has a token keeps it.
                 // Only provisional anchors (no token yet) get a freshly-computed
@@ -204,9 +205,16 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                     "suffix",
                     skippedSceneLetters,
                 );
-                computed.forEach((label) => {
+                computed.forEach((label, idx) => {
                     if (label.status === "provisional") {
-                        repository.upsertPage(label.uuid, { token: label.token });
+                        // splitOffset is captured alongside the token so the
+                        // pagination plugin can reproduce mid-node splits
+                        // (straddling dialogues) on recompute instead of
+                        // force-pushing the whole anchor node forward.
+                        repository.upsertPage(label.uuid, {
+                            token: label.token,
+                            splitOffset: anchorInfos[idx]?.splitOffset,
+                        });
                     }
                 });
                 repository.setPageLocking(true);
@@ -219,7 +227,8 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     const handlePageRelock = () => {
         if (!repository || isReadOnly || !editor) return;
         repository.transact(() => {
-            const anchors = getPageAnchors(editor);
+            const anchorInfos = getPageAnchorInfo(editor);
+            const anchors = anchorInfos.map((a) => a.anchorId);
             const persistentSnapshot = repository.pages;
             const currentLabels = computeSceneLabels(
                 anchors,
@@ -227,9 +236,12 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                 "suffix",
                 skippedSceneLetters,
             );
-            currentLabels.forEach((label) => {
+            currentLabels.forEach((label, idx) => {
                 if (label.status === "provisional") {
-                    repository.upsertPage(label.uuid, { token: label.token });
+                    repository.upsertPage(label.uuid, {
+                        token: label.token,
+                        splitOffset: anchorInfos[idx]?.splitOffset,
+                    });
                 }
             });
         });

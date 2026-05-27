@@ -456,7 +456,7 @@ export class ProjectRepository {
         const existing = (map.get(anchorId) as PersistentPage | undefined) ?? {};
 
         const merged: PersistentPage = { ...existing };
-        const FIELDS = ["token"] as const;
+        const FIELDS = ["token", "splitOffset"] as const;
         for (const key of FIELDS) {
             if (key in data) {
                 (merged as Record<string, unknown>)[key] = data[key];

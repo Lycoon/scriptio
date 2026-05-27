@@ -238,6 +238,15 @@
     [data-omitted-body="true"] {
         display: none;
     }
+    /* Both the OMITTED overlay and the scene-number widgets are spans inside
+       the scene heading, which the `.ProseMirror > p span` rule above pins to
+       --editor-text. Re-grey them here so they share the omitted scene's
+       --secondary-text color instead of standing out at full text color. */
+    .scene-omitted-overlay,
+    .scene[data-omitted-overlay="true"] .scene-label-left,
+    .scene[data-omitted-overlay="true"] .scene-label-right {
+        color: var(--secondary-text);
+    }
     .scene-omitted-overlay {
         user-select: none;
         pointer-events: none;

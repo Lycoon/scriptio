@@ -371,6 +371,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                               getPageLocking: () => !!ext.pageLocking,
                               getPageLocks: () => ext.persistentPages ?? {},
                               getSkippedLetters: () => ext.skippedSceneLetters ?? [],
+                              getScenes: () => ext.repository?.scenes ?? {},
                           }
                         : {
                               pageGap: 20,
@@ -615,11 +616,17 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     // Pagination only reads these via getter closures on its options, so
     // we must explicitly kick it to re-run; otherwise stale labels render
     // until the user types.
+    //
+    // persistentScenes is included so toggling a scene's `omitted` flag
+    // re-runs pagination immediately: omitted body paragraphs collapse to
+    // zero height in the layout (mirroring the visual display:none from
+    // scene-locking-extension), so the page they sit on must shrink/grow
+    // without waiting for the next keystroke.
     useEffect(() => {
         if (editor && config.features.paginationMode === "screenplay") {
             refreshPageLocking(editor);
         }
-    }, [editor, pageLocking, persistentPages, skippedSceneLetters, config.features.paginationMode]);
+    }, [editor, pageLocking, persistentPages, persistentScenes, skippedSceneLetters, config.features.paginationMode]);
 
     // Refresh search highlights
     useEffect(() => {

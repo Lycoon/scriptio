@@ -9,6 +9,7 @@ import { ySyncPluginKey } from "@tiptap/y-tiptap";
 
 import { compareTokens, computeSceneLabels, SceneToken } from "@src/lib/screenplay/scene-locking";
 import { PAGE_ONE_KEY, PersistentPageMap } from "@src/lib/screenplay/page-locking";
+import type { PersistentSceneMap } from "@src/lib/screenplay/scenes";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -123,6 +124,11 @@ export interface PaginationOptions {
     getPageLocks?: () => PersistentPageMap;
     /** Letters skipped from generated labels (shared with scene locking). */
     getSkippedLetters?: () => readonly string[];
+    /** Persistent scene map. Used to detect omitted scenes so their hidden
+     *  body paragraphs contribute zero height to the page layout — without
+     *  this, omission would visually collapse the body but pagination would
+     *  still allocate full height, leaving the page short on real content. */
+    getScenes?: () => PersistentSceneMap;
 }
 
 export interface PageBreakInfo {
@@ -144,6 +150,11 @@ export interface PageBreakInfo {
     /** Display label for the page ending before this break — used by the footer of
      *  the previous page. Undefined for the first break (footer uses page-1 label). */
     prevLabel?: string;
+    /** Character offset within the anchor node where the break occurs.
+     *  Set for sentence-split breaks (mid-node) — both the original split and
+     *  the locked re-application of it — and read by the production panel when
+     *  freezing page locks so the split can be reproduced on later recomputes. */
+    splitOffset?: number;
 }
 
 declare module "@tiptap/core" {
@@ -551,6 +562,8 @@ const setupTestDiv = (editorDom: HTMLElement, _: PaginationOptions): HTMLElement
 interface SplitResult {
     /** Absolute document position of the split point (inside the straddling node's text). */
     pos: number;
+    /** Character offset within the node's text where the split occurs (= pos - nodeDocPos - 1). */
+    offset: number;
     /** Rendered height of the portion staying on the current page. */
     topHeight: number;
     /** Rendered height of the portion moving to the next page. */
@@ -611,7 +624,12 @@ function trySplitNode(
             // The split position in document space:
             // nodeDocPos + 1 skips the node's opening token; topText.length then walks
             // through the text characters (marks are zero-width in ProseMirror's position space).
-            return { pos: nodeDocPos + 1 + topText.length, topHeight, bottomHeight };
+            return {
+                pos: nodeDocPos + 1 + topText.length,
+                offset: topText.length,
+                topHeight,
+                bottomHeight,
+            };
         }
     }
 
@@ -748,7 +766,16 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                 const lockedAnchorIds: Set<string> | null = pageLocks
                     ? new Set(Object.keys(pageLocks).filter((k) => k !== PAGE_ONE_KEY))
                     : null;
+                // Tracks locked anchors already consumed by a break in this pass.
+                // ProseMirror's split (Enter at position 0 of a node) duplicates
+                // node attrs across both halves — including data-id — so until
+                // node-id-dedup-extension runs in appendTransaction we transiently
+                // see the same locked anchor twice. Without this set, both halves
+                // would each force a page break, briefly rendering a phantom page
+                // with the same locked label until the dedup transaction fires.
+                const consumedAnchors = new Set<string>();
                 const skippedLetters = options.getSkippedLetters?.() ?? [];
+                const scenesMap = options.getScenes?.() ?? null;
 
                 const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
                 const breaks: PageBreakInfo[] = [];
@@ -760,6 +787,24 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                 // Tracks the most recent Character cue text so we can label split-dialogue breaks
                 // with "CHARACTER (CONT'D)" on the next page.
                 let lastCharName = "";
+
+                // Tracks whether the currently-open scene is OMITTED. Body
+                // paragraphs under an omitted scene are hidden via decorations
+                // (display:none) but still present in the document — pagination
+                // must mirror the visual collapse by treating them as zero-
+                // height, otherwise the page they sit on appears short while
+                // the layout still allocates their original height.
+                let currentSceneOmitted = false;
+
+                // Set when the short-circuit exits the per-node loop early.
+                // pagePos at that point reflects only the carry node(s) sitting
+                // on the new page right after the matched break — not the real
+                // last page — so the post-loop freespace computation must NOT
+                // derive from pagePos. The previous pass's lastPageFreespace is
+                // still authoritative because the short-circuit condition (matching
+                // pos / freespace / contdName past maxChangedPos) guarantees every
+                // subsequent page is byte-identical to the previous layout.
+                let shortCircuited = false;
 
                 let lastNodes: CircularBuffer<NodeInfo> = new CircularBuffer(3);
                 for (let i = 0; i < childCount; i++) {
@@ -794,6 +839,15 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
 
                     const dataId: string | undefined = node.attrs["data-id"];
 
+                    // Update the omitted-scene flag at each Scene boundary. Body
+                    // paragraphs that follow stay flagged until the next Scene
+                    // resets it. Scene headings themselves always render (with
+                    // the OMITTED overlay sitting on top) so their height is
+                    // kept regardless.
+                    if (nodeType === ScreenplayElement.Scene) {
+                        currentSceneOmitted = !!(scenesMap && dataId && scenesMap[dataId]?.omitted);
+                    }
+
                     // --- Force page break for "start new page" elements ---
                     // If this node type is configured to start a new page and we're
                     // not already at the top of a page, insert a break before it.
@@ -814,25 +868,109 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                     // --- Force page break for locked page anchors ---
                     // O(1) Set.has when locking is on; the leading `lockedAnchorIds &&`
                     // short-circuits to false when locking is disabled — hot-path safe.
-                    if (lockedAnchorIds && dataId && pagePos > 0 && lockedAnchorIds.has(dataId)) {
-                        const freespace = contentHeight - pagePos;
-                        breaks.push({
-                            pos,
-                            pagenum: ++pagenum,
-                            freespace: Math.max(0, freespace),
-                            contdName: "",
-                            splitNodeType: null,
-                            anchorId: dataId,
-                        });
-                        pagePos = 0;
-                        lastNodes = new CircularBuffer(3);
+                    // The `consumedAnchors` guard ignores the transient duplicate
+                    // data-id that appears after Enter splits a locked anchor — only
+                    // the first occurrence in doc order is honored as the lock site,
+                    // matching the post-dedup state and avoiding a phantom break.
+                    if (
+                        lockedAnchorIds &&
+                        dataId &&
+                        lockedAnchorIds.has(dataId) &&
+                        !consumedAnchors.has(dataId)
+                    ) {
+                        consumedAnchors.add(dataId);
+                        const lockInfo = pageLocks?.[dataId];
+                        const splitOffset = lockInfo?.splitOffset;
+                        const textLen = node.textContent?.length ?? 0;
+
+                        if (
+                            pagePos > 0 &&
+                            splitOffset != null &&
+                            splitOffset > 0 &&
+                            splitOffset < textLen
+                        ) {
+                            // The lock was originally created on a mid-node sentence split
+                            // (straddling dialogue or action). Reproduce that split here:
+                            // top portion stays on the current page, break goes at the
+                            // stored offset, bottom portion starts the locked page. Without
+                            // this branch the whole node would be force-pushed to the next
+                            // page, making the locked page taller than its frozen layout
+                            // and forcing a phantom "A" page to be inserted before it.
+                            if (!element) element = serializer.serializeNode(node) as HTMLElement;
+
+                            const topText = node.textContent.slice(0, splitOffset);
+                            const topElement = element.cloneNode(false) as HTMLElement;
+                            topElement.textContent = topText;
+                            const topHeight = getHTMLHeight(
+                                topElement,
+                                editorDOM,
+                                node.type.name,
+                                options,
+                            );
+                            const bottomHeight = Math.max(0, height - topHeight);
+
+                            pagePos += topHeight;
+                            const freespace = contentHeight - pagePos;
+
+                            breaks.push({
+                                pos: pos + 1 + splitOffset,
+                                pagenum: ++pagenum,
+                                freespace: Math.max(0, freespace),
+                                contdName: logic?.showMoreContd ? lastCharName : "",
+                                splitNodeType: nodeType,
+                                anchorId: dataId,
+                                splitOffset,
+                            });
+
+                            pagePos = bottomHeight;
+                            lastNodes = new CircularBuffer(3);
+                            lastNodes.push({
+                                pos,
+                                type: nodeType,
+                                height: bottomHeight,
+                                positionTop: 0,
+                                dataId,
+                            });
+                            continue;
+                        }
+
+                        if (pagePos > 0) {
+                            // Whole-node lock: force break before the anchor so the locked
+                            // page begins exactly with this node.
+                            const freespace = contentHeight - pagePos;
+                            breaks.push({
+                                pos,
+                                pagenum: ++pagenum,
+                                freespace: Math.max(0, freespace),
+                                contdName: "",
+                                splitNodeType: null,
+                                anchorId: dataId,
+                            });
+                            pagePos = 0;
+                            lastNodes = new CircularBuffer(3);
+                        }
                     }
 
+                    // Omitted-scene body paragraphs are visually hidden by
+                    // scene-locking decorations (display:none) but still live in
+                    // the document. Treat them as zero-height so pagination
+                    // matches what the user actually sees on the page. The
+                    // measured height stays cached for cheap restoration when
+                    // the scene is un-omitted.
+                    const effectiveHeight =
+                        currentSceneOmitted && nodeType !== ScreenplayElement.Scene ? 0 : height;
+
                     // Accumulate height on current page
-                    pagePos += height;
+                    pagePos += effectiveHeight;
 
                     // We keep the last 3 nodes for orphan resolution on page break
-                    lastNodes.push({ pos, type: nodeType, height, positionTop: pagePos - height, dataId });
+                    lastNodes.push({
+                        pos,
+                        type: nodeType,
+                        height: effectiveHeight,
+                        positionTop: pagePos - effectiveHeight,
+                        dataId,
+                    });
 
                     // Page break needed — record it and reset page position
                     if (pagePos > contentHeight) {
@@ -862,6 +1000,10 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                                     splitNodeType: nodeType,
                                     // Anchor for page locking: the node being split owns both halves.
                                     anchorId: dataId,
+                                    // splitOffset is captured by the production panel when locking,
+                                    // so the same mid-node split can be reproduced on later recomputes
+                                    // instead of force-pushing the whole node onto the locked page.
+                                    splitOffset: split.offset,
                                 });
                                 // The bottom half of the split node is the first item on the new page.
                                 pagePos = split.bottomHeight;
@@ -962,6 +1104,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                                     // Spread preserves all fields (contdName, splitNodeType, …); override pagenum only.
                                     breaks.push({ ...mappedOldBreaks[j], pagenum });
                                 }
+                                shortCircuited = true;
                                 break;
                             }
                         }
@@ -973,7 +1116,17 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                 // may consume it: when an orphan synthetic empty page lands at
                 // doc end, it absorbs this freespace so the last real page stays
                 // at its full height and the empty page renders after it.
-                let lastPageFreespace = Math.max(0, contentHeight - pagePos);
+                //
+                // When the per-node loop short-circuited, pagePos is the carry
+                // height after the matched break — NOT the height of the real
+                // last page — so deriving from it would make the last page's
+                // spacer grow or shrink with every edit on earlier pages. The
+                // short-circuit condition guarantees content past that break
+                // is identical to the previous pass, so the previously stored
+                // freespace is still the correct answer.
+                let lastPageFreespace = shortCircuited
+                    ? value.lastPageFreespace
+                    : Math.max(0, contentHeight - pagePos);
 
                 // --- Orphan page handling ---
                 // A locked page whose anchor data-id is no longer present in the doc
@@ -1360,19 +1513,18 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
     addKeyboardShortcuts() {
         return {
             Backspace: ({ editor }) => {
-                // joinBackward has a variant — joinMaybeClear — that deletes
-                // the PREVIOUS block instead of the current one. It fires when
-                // both blocks are empty. If that previous block is a locked
-                // page anchor, the plugin's filterTransaction rejects the
-                // resulting transaction (the anchor's data-id would go
-                // missing), and the user sees the cursor stuck on the second
-                // empty line. Patch the case by deleting the current empty
-                // block ourselves and parking the cursor inside the preserved
-                // anchor — the natural "step up one line" behavior.
+                // ProseMirror's joinMaybeClear (a joinBackward variant) deletes
+                // the PREVIOUS block instead of the current one whenever the
+                // previous block is empty and the two blocks share a type. If
+                // that empty previous block is a locked page anchor the plugin's
+                // filterTransaction rejects the resulting transaction — the
+                // anchor's data-id would disappear — and the cursor appears
+                // stuck. Patch both flavors of the case (empty current and
+                // non-empty current) so the locked anchor survives and the user
+                // still gets the natural "step up one line" / "merge up" feel.
                 const { state, view } = editor;
                 const { $from, empty } = state.selection;
                 if (!empty || $from.parentOffset !== 0) return false;
-                if ($from.parent.textContent.length !== 0) return false;
 
                 const opts = this.options as PaginationOptions;
                 if (!opts.getPageLocking?.()) return false;
@@ -1388,7 +1540,22 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 const prevDataId = prev.attrs?.["data-id"];
                 if (typeof prevDataId !== "string" || !pageLocks[prevDataId]) return false;
 
-                const tr = state.tr.delete(curStart, $from.after());
+                const tr = state.tr;
+                if ($from.parent.textContent.length === 0) {
+                    // Both blocks empty: drop the current empty block — the
+                    // locked anchor stays put and the cursor parks inside it.
+                    tr.delete(curStart, $from.after());
+                } else {
+                    // Current has text: merge it INTO the empty previous block
+                    // via tr.join, which keeps the before node's structure
+                    // (and its locked data-id) and absorbs after's content.
+                    // join requires both children to share a type; for cross-
+                    // type cases we bail out and let the default chain do
+                    // whatever fallback it has — those cases don't trip
+                    // joinMaybeClear in the first place.
+                    if (prev.type !== $from.parent.type) return false;
+                    tr.join(curStart);
+                }
                 tr.setSelection(TextSelection.create(tr.doc, curStart - 1));
                 view.dispatch(tr);
                 return true;
@@ -1537,6 +1704,34 @@ export function getPageAnchors(editor: Editor): string[] {
     const out: string[] = [PAGE_ONE_KEY];
     for (const b of state.breaks) {
         if (b.anchorId) out.push(b.anchorId);
+    }
+    return out;
+}
+
+export interface PageAnchorInfo {
+    anchorId: string;
+    /** Character offset within the anchor node where the page begins.
+     *  Set when the page starts on the bottom half of a sentence-split node;
+     *  undefined for whole-node anchors. Frozen into the page lock so the
+     *  split survives recomputes. */
+    splitOffset?: number;
+}
+
+/**
+ * Same ordering as {@link getPageAnchors} but each entry also carries the
+ * splitOffset (when the page begins mid-node). Used by the production panel
+ * when first locking pages so the lock map can reproduce mid-node splits
+ * on subsequent recomputes.
+ */
+export function getPageAnchorInfo(editor: Editor): PageAnchorInfo[] {
+    const state = paginationKey.getState(editor.state) as PaginationState | undefined;
+    if (!state) return [{ anchorId: PAGE_ONE_KEY }];
+    const out: PageAnchorInfo[] = [{ anchorId: PAGE_ONE_KEY }];
+    for (const b of state.breaks) {
+        if (!b.anchorId) continue;
+        const entry: PageAnchorInfo = { anchorId: b.anchorId };
+        if (b.splitOffset != null) entry.splitOffset = b.splitOffset;
+        out.push(entry);
     }
     return out;
 }
