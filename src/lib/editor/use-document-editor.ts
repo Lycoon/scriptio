@@ -31,6 +31,7 @@ import {
     createSceneLockingExtension,
     refreshSceneLocking,
 } from "@src/lib/screenplay/extensions/scene-locking-extension";
+import { SCENE_OMIT_UNDO_ORIGIN } from "@src/lib/screenplay/scene-locking";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
@@ -553,11 +554,20 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         }
     }, [userInfo, provider]);
 
-    // Fix Yjs undo cursor restoration: y-tiptap's stack-item-popped fires AFTER
-    // the undo transaction commits, so beforeTransactionSelection is captured wrong
-    // by beforeAllTransactions. Patch undo/redo to pre-set it from the stack item.
+    // Post-mount UndoManager setup. y-tiptap's UndoManager is constructed to
+    // track only the editor XmlFragment (scope) and only `ySyncPluginKey`
+    // (origin), and y-tiptap's stack-item-popped fires AFTER the undo
+    // transaction commits — so a few tweaks are needed:
+    //   - addToScope(scenes): scene metadata lives in a separate Y.Map; without
+    //     this the UndoManager silently ignores every mutation to it.
+    //   - trackedOrigins.add(SCENE_OMIT_UNDO_ORIGIN): omit/unomit bundle a PM
+    //     dispatch and a Map.set into one Yjs transaction tagged with this
+    //     symbol so Ctrl+Z reverts both halves atomically.
+    //   - undo/redo patch: pre-seed beforeTransactionSelection from the
+    //     popped stack item so the cursor restores correctly (y-tiptap
+    //     otherwise captures it after the fact).
     useEffect(() => {
-        if (!editor || !isYjsReady) return;
+        if (!editor || !isYjsReady || !projectState) return;
 
         const state = editor.state;
         const yUndoState = yUndoPluginKey.getState(state);
@@ -566,6 +576,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
 
         const um = yUndoState.undoManager;
         const binding = ySyncState.binding;
+        um.addToScope([projectState.scenes()]);
+        um.trackedOrigins.add(SCENE_OMIT_UNDO_ORIGIN);
+
         const originalUndo = um.undo.bind(um);
         const originalRedo = um.redo.bind(um);
 
@@ -588,8 +601,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         return () => {
             um.undo = originalUndo;
             um.redo = originalRedo;
+            um.trackedOrigins.delete(SCENE_OMIT_UNDO_ORIGIN);
         };
-    }, [editor, isYjsReady]);
+    }, [editor, isYjsReady, projectState]);
 
     // Refresh character highlights
     useEffect(() => {

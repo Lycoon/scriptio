@@ -185,7 +185,6 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                           (el.querySelector(".scene-label-right") as HTMLElement | null)?.textContent
                               ?.trim() ||
                           String(sceneCount),
-                      omitted: el.getAttribute("data-omitted-overlay") === "true",
                   }
                 : undefined;
 
@@ -500,7 +499,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         el: HTMLElement,
         paragraphLines: VisualLine[],
         options: PDFExportOptions,
-        sceneInfo?: { label: string; omitted: boolean },
+        sceneInfo?: { label: string },
     ): void {
         const firstLine = paragraphLines[0];
         const lastLine = paragraphLines[paragraphLines.length - 1];

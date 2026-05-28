@@ -37,13 +37,15 @@ const PopupUnlockScenes = ({ data: { confirmUnlock } }: PopupData<PopupUnlockSce
                 <div className={popup.info}>
                     <p>{t("unlockWarning")}</p>
                 </div>
-                <button className={popup.import_confirm} onClick={onConfirm}>
-                    <Unlock size={18} color="white" />
-                    {t("unlock")}
-                </button>
-                <button className={popup.cancel} onClick={() => closePopup(userCtx)}>
-                    {t("cancel")}
-                </button>
+                <div className={popup.buttons}>
+                    <button className={popup.import_confirm} onClick={onConfirm}>
+                        <Unlock size={18} color="white" />
+                        {t("unlock")}
+                    </button>
+                    <button className={popup.cancel} onClick={() => closePopup(userCtx)}>
+                        {t("cancel")}
+                    </button>
+                </div>
             </div>
         </div>
     );

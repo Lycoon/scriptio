@@ -55,20 +55,22 @@ const PopupUploadToCloud = ({ data: { projectId } }: PopupData<PopupUploadToClou
                     <p>{t("body")}</p>
                 </div>
                 {info && <FormInfo info={info} />}
-                <button
-                    className={popup.confirm}
-                    onClick={onConfirm}
-                    disabled={isUploading}
-                >
-                    {isUploading ? t("uploading") : t("confirm")}
-                </button>
-                <button
-                    className={popup.cancel}
-                    onClick={onCancel}
-                    disabled={isUploading}
-                >
-                    {t("cancel")}
-                </button>
+                <div className={popup.buttons}>
+                    <button
+                        className={popup.confirm}
+                        onClick={onConfirm}
+                        disabled={isUploading}
+                    >
+                        {isUploading ? t("uploading") : t("confirm")}
+                    </button>
+                    <button
+                        className={popup.cancel}
+                        onClick={onCancel}
+                        disabled={isUploading}
+                    >
+                        {t("cancel")}
+                    </button>
+                </div>
             </div>
         </div>
     );

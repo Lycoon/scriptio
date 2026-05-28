@@ -259,7 +259,7 @@ export class ProjectRepository {
         const existing = (map.get(sceneId) as PersistentScene | undefined) ?? {};
 
         const merged: PersistentScene = { ...existing };
-        const FIELDS = ["synopsis", "color", "token", "omitted"] as const;
+        const FIELDS = ["synopsis", "color", "token", "omitted", "originalHeading"] as const;
         for (const key of FIELDS) {
             if (key in data) {
                 (merged as Record<string, unknown>)[key] = data[key];
@@ -500,10 +500,15 @@ export class ProjectRepository {
     /**
      * Run a function inside a single Y.js transaction.
      * Useful for batching multiple repository mutations into one collab update.
+     *
+     * Pass `origin` to tag the transaction — required for the Y.UndoManager
+     * to track the changes (the manager ignores transactions whose origin is
+     * not in its `trackedOrigins` set). Custom origins must also be added to
+     * the editor's `trackedOrigins` set; see `use-document-editor.ts`.
      */
-    transact(fn: () => void): void {
+    transact(fn: () => void, origin?: unknown): void {
         if (this.guardWrite("transact")) return;
-        this.ydoc.transact(fn);
+        this.ydoc.transact(fn, origin);
     }
 
     // -------------------------------- //

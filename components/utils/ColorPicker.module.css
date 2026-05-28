@@ -6,7 +6,7 @@
 .trigger {
     width: 26px;
     height: 26px;
-    border-radius: 6px;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -20,7 +20,7 @@
 }
 
 .trigger_empty {
-    border: 3px solid var(--secondary-text);
+    border: 4px solid var(--secondary-text);
     position: relative;
 }
 

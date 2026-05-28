@@ -37,13 +37,15 @@ const PopupUnlockPages = ({ data: { confirmUnlock } }: PopupData<PopupUnlockPage
                 <div className={popup.info}>
                     <p>{t("unlockPagesWarning")}</p>
                 </div>
-                <button className={popup.import_confirm} onClick={onConfirm}>
-                    <Unlock size={18} color="white" />
-                    {t("unlockPages")}
-                </button>
-                <button className={popup.cancel} onClick={() => closePopup(userCtx)}>
-                    {t("cancel")}
-                </button>
+                <div className={popup.buttons}>
+                    <button className={popup.import_confirm} onClick={onConfirm}>
+                        <Unlock size={18} color="white" />
+                        {t("unlockPages")}
+                    </button>
+                    <button className={popup.cancel} onClick={() => closePopup(userCtx)}>
+                        {t("cancel")}
+                    </button>
+                </div>
             </div>
         </div>
     );

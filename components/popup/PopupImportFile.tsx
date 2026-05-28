@@ -37,12 +37,14 @@ const PopupImportFile = ({ data: { confirmImport } }: PopupData<PopupImportFileD
                         {t("info")}
                     </p>
                 </div>
-                <button className={popup.import_confirm} onClick={onConfirmImport}>
-                    {t("yesImport")}
-                </button>
-                <button className={popup.cancel} onClick={() => closePopup(userCtx)}>
-                    {t("no")}
-                </button>
+                <div className={popup.buttons}>
+                    <button className={popup.import_confirm} onClick={onConfirmImport}>
+                        {t("yesImport")}
+                    </button>
+                    <button className={popup.cancel} onClick={() => closePopup(userCtx)}>
+                        {t("no")}
+                    </button>
+                </div>
             </div>
         </div>
     );
