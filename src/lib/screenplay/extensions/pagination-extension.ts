@@ -454,9 +454,7 @@ function buildDecorations(
     // Label of the last page = label of the most recent break (or firstPageLabel
     // when no breaks exist).
     const lastPagenum = breaks.length > 0 ? breaks[breaks.length - 1].pagenum : 1;
-    const lastPageLabel = breaks.length > 0
-        ? breaks[breaks.length - 1].label ?? String(lastPagenum)
-        : firstPageLabel;
+    const lastPageLabel = breaks.length > 0 ? (breaks[breaks.length - 1].label ?? String(lastPagenum)) : firstPageLabel;
     decorations.push(
         Decoration.widget(
             doc.content.size,
@@ -677,7 +675,11 @@ function computePageLabels(
     return labels.map((l) => l.label);
 }
 
-const createPaginationPlugin = (extension: { options: PaginationOptions; editor: Editor }) =>
+const createPaginationPlugin = (extension: {
+    options: PaginationOptions;
+    editor: Editor;
+    storage: { fontsReady: boolean };
+}) =>
     new Plugin({
         key: paginationKey,
         state: {
@@ -688,6 +690,14 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                 firstPageLabel: "1",
             }),
             apply(tr, value: PaginationState, oldState, newState): PaginationState {
+                // Wait for the screenplay fonts to finish loading before doing
+                // anything. Measuring against the OS monospace fallback writes
+                // wrong heights into the cache; gating here keeps the cache
+                // empty until the real font is in play. onCreate dispatches a
+                // forcePaginationUpdate once fonts.ready resolves, which is
+                // what eventually pulls us past this guard.
+                if (!extension.storage.fontsReady) return value;
+
                 const options = extension.options as PaginationOptions;
                 const formatUpdate = tr.getMeta("pageFormatUpdate");
                 const forceUpdate = tr.getMeta("forcePaginationUpdate");
@@ -760,9 +770,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                 // map lookups. The set is rebuilt once per pass when locking
                 // is active; lock counts are typically tens, never thousands.
                 const pageLocking = options.getPageLocking?.() ?? false;
-                const pageLocks: PersistentPageMap | null = pageLocking
-                    ? options.getPageLocks?.() ?? null
-                    : null;
+                const pageLocks: PersistentPageMap | null = pageLocking ? (options.getPageLocks?.() ?? null) : null;
                 const lockedAnchorIds: Set<string> | null = pageLocks
                     ? new Set(Object.keys(pageLocks).filter((k) => k !== PAGE_ONE_KEY))
                     : null;
@@ -872,23 +880,13 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                     // data-id that appears after Enter splits a locked anchor — only
                     // the first occurrence in doc order is honored as the lock site,
                     // matching the post-dedup state and avoiding a phantom break.
-                    if (
-                        lockedAnchorIds &&
-                        dataId &&
-                        lockedAnchorIds.has(dataId) &&
-                        !consumedAnchors.has(dataId)
-                    ) {
+                    if (lockedAnchorIds && dataId && lockedAnchorIds.has(dataId) && !consumedAnchors.has(dataId)) {
                         consumedAnchors.add(dataId);
                         const lockInfo = pageLocks?.[dataId];
                         const splitOffset = lockInfo?.splitOffset;
                         const textLen = node.textContent?.length ?? 0;
 
-                        if (
-                            pagePos > 0 &&
-                            splitOffset != null &&
-                            splitOffset > 0 &&
-                            splitOffset < textLen
-                        ) {
+                        if (pagePos > 0 && splitOffset != null && splitOffset > 0 && splitOffset < textLen) {
                             // The lock was originally created on a mid-node sentence split
                             // (straddling dialogue or action). Reproduce that split here:
                             // top portion stays on the current page, break goes at the
@@ -901,12 +899,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                             const topText = node.textContent.slice(0, splitOffset);
                             const topElement = element.cloneNode(false) as HTMLElement;
                             topElement.textContent = topText;
-                            const topHeight = getHTMLHeight(
-                                topElement,
-                                editorDOM,
-                                node.type.name,
-                                options,
-                            );
+                            const topHeight = getHTMLHeight(topElement, editorDOM, node.type.name, options);
                             const bottomHeight = Math.max(0, height - topHeight);
 
                             pagePos += topHeight;
@@ -957,8 +950,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                     // matches what the user actually sees on the page. The
                     // measured height stays cached for cheap restoration when
                     // the scene is un-omitted.
-                    const effectiveHeight =
-                        currentSceneOmitted && nodeType !== ScreenplayElement.Scene ? 0 : height;
+                    const effectiveHeight = currentSceneOmitted && nodeType !== ScreenplayElement.Scene ? 0 : height;
 
                     // Accumulate height on current page
                     pagePos += effectiveHeight;
@@ -1008,7 +1000,13 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                                 // The bottom half of the split node is the first item on the new page.
                                 pagePos = split.bottomHeight;
                                 lastNodes = new CircularBuffer(3);
-                                lastNodes.push({ pos, type: nodeType, height: split.bottomHeight, positionTop: 0, dataId });
+                                lastNodes.push({
+                                    pos,
+                                    type: nodeType,
+                                    height: split.bottomHeight,
+                                    positionTop: 0,
+                                    dataId,
+                                });
                                 continue; // split handled — skip orphan resolution for this node
                             }
                         }
@@ -1027,11 +1025,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                             // A locked anchor owns its page and must never be displaced by
                             // walkback — otherwise the next overflow would yank it onto an
                             // A page and the locked frame would lose its head.
-                            if (
-                                lockedAnchorIds &&
-                                prev.dataId &&
-                                lockedAnchorIds.has(prev.dataId)
-                            ) {
+                            if (lockedAnchorIds && prev.dataId && lockedAnchorIds.has(prev.dataId)) {
                                 break;
                             }
                             if (BREAK_LOGIC[prev.type]?.keepWithNext) {
@@ -1124,9 +1118,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                 // short-circuit condition guarantees content past that break
                 // is identical to the previous pass, so the previously stored
                 // freespace is still the correct answer.
-                let lastPageFreespace = shortCircuited
-                    ? value.lastPageFreespace
-                    : Math.max(0, contentHeight - pagePos);
+                let lastPageFreespace = shortCircuited ? value.lastPageFreespace : Math.max(0, contentHeight - pagePos);
 
                 // --- Orphan page handling ---
                 // A locked page whose anchor data-id is no longer present in the doc
@@ -1235,10 +1227,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                                 }
                                 if (b.pos === segmentEnd) {
                                     const bLock = b.anchorId ? pageLocks[b.anchorId] : undefined;
-                                    if (
-                                        bLock?.token &&
-                                        compareTokens(orphan.token, bLock.token) < 0
-                                    ) {
+                                    if (bLock?.token && compareTokens(orphan.token, bLock.token) < 0) {
                                         insertIdx = j;
                                         break;
                                     }
@@ -1257,10 +1246,7 @@ const createPaginationPlugin = (extension: { options: PaginationOptions; editor:
                             // which already gets a full `contentHeight` slot, so no
                             // additional freespace is needed there.
                             let syntheticFreespace = 0;
-                            if (
-                                insertIdx < breaks.length &&
-                                breaks[insertIdx].pos === segmentEnd
-                            ) {
+                            if (insertIdx < breaks.length && breaks[insertIdx].pos === segmentEnd) {
                                 syntheticFreespace = breaks[insertIdx].freespace;
                                 breaks[insertIdx].freespace = 0;
                             } else if (insertIdx === breaks.length) {
@@ -1398,7 +1384,15 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
     },
 
     addStorage() {
-        return { initTimer: null as ReturnType<typeof setTimeout> | null };
+        return {
+            initTimer: null as ReturnType<typeof setTimeout> | null,
+            /** False until the screenplay @font-face fonts have finished loading.
+             *  The plugin's `apply` checks this flag and skips height measurement
+             *  while it is false, so the cache never picks up bad heights taken
+             *  with a fallback monospace font (Consolas etc.) that produces a
+             *  different line-wrap from CourierPrime. */
+            fontsReady: false,
+        };
     },
 
     onCreate() {
@@ -1489,14 +1483,79 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
 
         setupTestDiv(editorDOM, this.options);
 
-        // Trigger initial pagination after editor is ready
-        this.storage.initTimer = setTimeout(() => {
-            this.storage.initTimer = null;
+        // The screenplay @font-face fonts (CourierPrime + fallbacks) load
+        // asynchronously. Until the real font is applied, the test div lays
+        // text out in the OS monospace fallback (Consolas on Windows), whose
+        // slightly different character widths cause text to wrap to a
+        // different number of lines. Heights measured against the fallback
+        // disagree with what the editor will eventually render — and once
+        // cached, they keep that disagreement alive (hence the cold-open vs
+        // hard-refresh mismatch, and the shrink-on-edit symptom when a
+        // cache-miss re-measures against the now-loaded real font).
+        //
+        // We defer the first pagination run until the font is genuinely
+        // usable; until then the plugin's `apply` returns the empty initial
+        // state (no measurement, no cache writes). Once ready we flip the flag
+        // and dispatch a single force update — every subsequent measurement
+        // happens against the real font, so the heightCache fills with correct
+        // values from the start.
+        //
+        // IMPORTANT: `document.fonts.ready` is NOT enough on Chrome. Chrome
+        // loads @font-face fonts lazily (only once a rendered element needs
+        // them), so at the moment the editor mounts nothing has triggered the
+        // CourierPrime fetch yet — `fonts.ready` resolves reporting
+        // status:"loaded" while `fonts.check('12pt "CourierPrime"')` is still
+        // false and zero faces are actually loaded. Firefox eagerly starts the
+        // load, which is why it worked there but not here. The fix is to
+        // ACTIVELY request the faces with `document.fonts.load(...)`, which
+        // forces the fetch and resolves only once they are usable for layout.
+        const triggerInitialPagination = () => {
+            if (this.editor.isDestroyed) return;
+            this.storage.fontsReady = true;
             const tr = this.editor.state.tr;
             tr.setMeta("forcePaginationUpdate", true);
             tr.setMeta("addToHistory", false);
             this.editor.view.dispatch(tr);
-        }, 0);
+        };
+
+        const fontsApi = typeof document !== "undefined" ? document.fonts : null;
+        if (fontsApi && typeof fontsApi.load === "function") {
+            // Actively request every CourierPrime variant the screenplay uses.
+            // `load()` forces the fetch (even on Chrome's lazy loader) and
+            // resolves once the faces are usable for measurement. `.catch` per
+            // spec keeps one failed variant from blocking the others, and a
+            // safety timeout guarantees pagination still runs if the network
+            // never delivers a font — better a fallback-font layout than a
+            // permanently blank document.
+            const specs = [
+                '12pt "CourierPrime"',
+                'bold 12pt "CourierPrime"',
+                'italic 12pt "CourierPrime"',
+                'bold italic 12pt "CourierPrime"',
+            ];
+            let fired = false;
+            const fireOnce = () => {
+                if (fired) return;
+                fired = true;
+                if (this.storage.initTimer != null) {
+                    clearTimeout(this.storage.initTimer);
+                    this.storage.initTimer = null;
+                }
+                triggerInitialPagination();
+            };
+            Promise.all(specs.map((s) => fontsApi.load(s).catch(() => undefined)))
+                .then(() => fireOnce())
+                .catch(() => fireOnce());
+            // Safety net: never wait more than 3s on the font fetch.
+            this.storage.initTimer = setTimeout(() => fireOnce(), 3000);
+        } else {
+            // No FontFaceSet API (SSR, very old browsers): fall back to the
+            // legacy setTimeout(0) trigger so pagination still runs.
+            this.storage.initTimer = setTimeout(() => {
+                this.storage.initTimer = null;
+                triggerInitialPagination();
+            }, 0);
+        }
     },
 
     onDestroy() {
