@@ -23,6 +23,12 @@ export const PAGE_ONE_KEY = "__page1__";
 export type PersistentPage = {
     /** Frozen structural position under production page-lock. */
     token?: SceneToken;
+    /** Character offset within the anchor node where the locked page begins.
+     *  Set when the page was originally split mid-node at a sentence boundary
+     *  (straddling dialogue/action). Preserves the split on recompute so the
+     *  locked page doesn't inherit the whole anchor node and overflow into a
+     *  phantom "A" page. */
+    splitOffset?: number;
 };
 
 export type PersistentPageMap = { [anchorId: string]: PersistentPage };

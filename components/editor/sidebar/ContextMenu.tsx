@@ -117,13 +117,13 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
     const canUnomit = !!scene.id && !!scene.omitted;
 
     const handleOmit = () => {
-        if (!repository || !scene.id) return;
-        omitSceneByUuid(repository, scene.id);
+        if (!editor || !repository || !scene.id) return;
+        omitSceneByUuid(editor, repository, scene.id);
     };
 
     const handleUnomit = () => {
-        if (!repository || !scene.id) return;
-        unomitSceneByUuid(repository, scene.id);
+        if (!editor || !repository || !scene.id) return;
+        unomitSceneByUuid(editor, repository, scene.id);
     };
 
     return (
@@ -508,14 +508,14 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     })();
 
     const handleOmitScene = () => {
-        if (!repository || !sceneInfo) return;
-        omitSceneByUuid(repository, sceneInfo.uuid);
+        if (!editor || !repository || !sceneInfo) return;
+        omitSceneByUuid(editor, repository, sceneInfo.uuid);
         updateContextMenu(undefined);
     };
 
     const handleUnomitScene = () => {
-        if (!repository || !sceneInfo) return;
-        unomitSceneByUuid(repository, sceneInfo.uuid);
+        if (!editor || !repository || !sceneInfo) return;
+        unomitSceneByUuid(editor, repository, sceneInfo.uuid);
         updateContextMenu(undefined);
     };
 

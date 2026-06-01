@@ -3,16 +3,22 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    width: 100%;
     padding: 10px 16px;
     border-radius: 40px;
     border: none;
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
+    font-weight: bold;
     transition: opacity 0.2s ease;
-    transform: translateZ(0);
     backface-visibility: hidden;
-    width: 100%;
+    background-color: var(--secondary);
+    color: var(--primary-text);
+}
+
+.modalBtn:hover:not(:disabled) {
+    opacity: 0.85;
 }
 
 .modalBtn:disabled {
@@ -22,6 +28,7 @@
 
 .modalBtnDanger {
     background: var(--error);
+    font-weight: bold;
     color: white;
 }
 
@@ -37,6 +44,5 @@
 }
 
 .modalBtnCancel:hover:not(:disabled) {
-    color: var(--primary-text);
-    border-color: var(--primary-text);
+    opacity: 0.7;
 }

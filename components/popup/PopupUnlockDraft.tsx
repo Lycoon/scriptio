@@ -1,48 +1,49 @@
 "use client";
 
+import { useContext } from "react";
+import { useTranslations } from "next-intl";
+import { X, Unlock } from "lucide-react";
+
 import popup from "./Popup.module.css";
 
-import { X } from "lucide-react";
 import { useDraggable } from "@src/lib/utils/hooks";
-import { PopupData, PopupImportFileData, closePopup } from "@src/lib/screenplay/popup";
-import { useContext } from "react";
+import { PopupData, PopupUnlockDraftData, closePopup } from "@src/lib/screenplay/popup";
 import { UserContext } from "@src/context/UserContext";
-import { useTranslations } from "next-intl";
 
-const PopupImportFile = ({ data: { confirmImport } }: PopupData<PopupImportFileData>) => {
+const PopupUnlockDraft = ({ data: { confirmUnlock } }: PopupData<PopupUnlockDraftData>) => {
     const userCtx = useContext(UserContext);
     const { position, handleMouseDown, isDragging } = useDraggable();
-    const t = useTranslations("popup.import");
+    const t = useTranslations("production");
 
-    const onConfirmImport = () => {
-        confirmImport();
+    const onConfirm = () => {
+        confirmUnlock();
         closePopup(userCtx);
     };
 
     return (
         <div className={popup.window}>
-            <div className={popup.container} style={{ transform: `translate(${position.x}px, ${position.y}px)` }}>
+            <div
+                className={popup.container}
+                style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
+            >
                 <div
                     className={popup.header}
                     onMouseDown={handleMouseDown}
                     style={{ cursor: isDragging ? "grabbing" : "grab" }}
                 >
-                    <h2 className={popup.title}>{t("title")}</h2>
+                    <h2 className={popup.title}>{t("unlockDraftTitle")}</h2>
                     <X className={popup.close_btn} onClick={() => closePopup(userCtx)} />
                 </div>
                 <div className={popup.info}>
-                    <p>
-                        {t.rich("warning", { b: (chunks) => <b>{chunks}</b> })}
-                        <br />
-                        {t("info")}
-                    </p>
+                    <p>{t("unlockDraftWarning")}</p>
                 </div>
                 <div className={popup.buttons}>
-                    <button className={popup.import_confirm} onClick={onConfirmImport}>
-                        {t("yesImport")}
+                    <button className={popup.import_confirm} onClick={onConfirm}>
+                        <Unlock size={18} color="white" />
+                        {t("unlockDraft")}
                     </button>
                     <button className={popup.cancel} onClick={() => closePopup(userCtx)}>
-                        {t("no")}
+                        {t("cancel")}
                     </button>
                 </div>
             </div>
@@ -50,4 +51,4 @@ const PopupImportFile = ({ data: { confirmImport } }: PopupData<PopupImportFileD
     );
 };
 
-export default PopupImportFile;
+export default PopupUnlockDraft;

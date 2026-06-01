@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 
 export const redirectHome = () => {
-    redirect("/projects");
+    redirect("/projects", RedirectType.replace);
 };
 
 export const redirectProject = (projectId: string) => {
-    redirect(`/projects?projectId=${projectId}`);
+    redirect(`/projects?projectId=${projectId}`, RedirectType.replace);
 };
 
 // Legacy aliases for backwards compatibility during migration

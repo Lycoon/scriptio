@@ -68,6 +68,17 @@
         box-sizing: border-box;
     }
 
+    /* Suppress the first paragraph's margin-top when it sits directly under
+       a pagination widget. Without this, the page-break div's margin-bottom
+       (0) collapses with the next paragraph's margin-top (16) and leaves a
+       wasted 16px gap at the top of every page. Pagination's break decisions
+       use measured outer heights in isolation, so removing the margin only
+       affects rendering — same paragraphs per page, no determinism hit. */
+    > .pagination-page-break + p,
+    > .pagination-first-page + p {
+        margin-top: 0 !important;
+    }
+
     /* Spans inside paragraphs - NO display/width overrides
        These must remain inline (default) to not break text flow */
     > p span,
@@ -226,22 +237,19 @@
         display: none;
     }
 
-    /* OMITTED scene placeholder. The heading text and body paragraphs are
-       preserved in the document so the user can restore them; we just hide
-       them visually and overlay "OMITTED" in place of the heading. */
-    .scene[data-omitted-overlay="true"] {
+    /* OMITTED scene: heading text is rewritten to "OMITTED" in the document
+       by `omitSceneByUuid` (original preserved in scene metadata), so the
+       heading is a normal editable paragraph. We just grey it and collapse
+       the body paragraphs; the scene-number widgets are re-greyed because
+       the generic `.ProseMirror > p span` rule above pins them to
+       --editor-text. */
+    .scene[data-scene-omitted="true"],
+    .scene[data-scene-omitted="true"] .scene-label-left,
+    .scene[data-scene-omitted="true"] .scene-label-right {
         color: var(--secondary-text);
-    }
-    .scene-heading-omitted-text {
-        display: none;
     }
     [data-omitted-body="true"] {
         display: none;
-    }
-    .scene-omitted-overlay {
-        user-select: none;
-        pointer-events: none;
-        font-style: normal;
     }
 
     /* Normal weight scene headings (when bold disabled) */

@@ -71,14 +71,6 @@ const buildLabelWidget = (label: string, side: "left" | "right"): HTMLElement =>
     return span;
 };
 
-const buildOmittedWidget = (): HTMLElement => {
-    const span = document.createElement("span");
-    span.className = "scene-omitted-overlay";
-    span.contentEditable = "false";
-    span.textContent = "OMITTED";
-    return span;
-};
-
 const hasAnyOmitted = (scenes: Record<string, PersistentScene>): boolean => {
     for (const key in scenes) {
         if (scenes[key]?.omitted) return true;
@@ -131,39 +123,21 @@ const computeDecorations = (
         }
     }
 
-    // OMITTED decorations are independent of production lock — the user can
-    // omit any scene at any time and the original heading + body are kept
-    // in the document; we just hide them visually until they unomit.
+    // OMITTED decorations are independent of production lock. The heading
+    // text itself is replaced with "OMITTED" inside the document by
+    // `omitSceneByUuid` (the original is preserved in scene metadata), so
+    // here we only need to grey the heading via `data-scene-omitted` and
+    // collapse the body paragraphs via `data-omitted-body`.
     for (let i = 0; i < entries.length; i++) {
         const entry = entries[i];
         if (!scenes[entry.uuid]?.omitted) continue;
 
         decorations.push(
             Decoration.node(entry.pos, entry.pos + entry.nodeSize, {
-                "data-omitted-overlay": "true",
-            }),
-        );
-        decorations.push(
-            Decoration.widget(entry.pos + 1, () => buildOmittedWidget(), {
-                side: -1,
-                key: `scene-omitted-${entry.uuid}`,
+                "data-scene-omitted": "true",
             }),
         );
 
-        // Hide the original heading text behind the OMITTED widget. Skip
-        // empty headings — there's nothing to hide and the inline range
-        // would be degenerate.
-        if (entry.nodeSize > 2) {
-            decorations.push(
-                Decoration.inline(entry.pos + 1, entry.pos + entry.nodeSize - 1, {
-                    class: "scene-heading-omitted-text",
-                }),
-            );
-        }
-
-        // Hide every top-level paragraph between this heading and the next
-        // scene heading. We tag them with `data-omitted-body` so CSS can
-        // collapse them while leaving the underlying document untouched.
         const nextEntry = entries[i + 1];
         const bodyEnd = nextEntry ? nextEntry.pos : doc.content.size;
         const bodyStart = entry.pos + entry.nodeSize;

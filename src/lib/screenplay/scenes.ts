@@ -70,6 +70,8 @@ export type PersistentScene = {
     token?: SceneToken;
     /** True when the scene is an OMITTED placeholder (only meaningful with `token`). */
     omitted?: boolean;
+    /** Original heading text saved when the scene was omitted, restored on unomit. */
+    originalHeading?: string;
 };
 
 /**

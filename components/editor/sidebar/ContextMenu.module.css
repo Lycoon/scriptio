@@ -18,10 +18,8 @@
     align-items: center;
     gap: 10px;
 
-    border-radius: 6px;
     padding-block: 6px;
     padding-inline: 12px;
-    margin-inline: 6px;
 
     font-size: 14px;
     cursor: pointer;

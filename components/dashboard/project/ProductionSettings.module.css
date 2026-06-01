@@ -6,7 +6,7 @@
 }
 
 .styleName {
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     color: var(--secondary-text);
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -18,10 +18,13 @@
     align-items: center;
     gap: 6px;
     margin-left: auto;
-    font-family: var(--font-screenplay);
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--primary-text);
+}
+
+.styleExample span {
+    font-family: var(--font-screenplay);
 }
 
 .arrowIcon {

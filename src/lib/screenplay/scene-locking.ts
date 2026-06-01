@@ -45,7 +45,21 @@
  * Together these give:  1 < 1aA < 1A < 1AA < 1AB < 1B < 2.
  */
 
+import type { Editor } from "@tiptap/core";
+import type { Node } from "@tiptap/pm/model";
+
 import type { ProjectRepository } from "../project/project-repository";
+import { ScreenplayElement } from "../utils/enums";
+
+const OMITTED_HEADING_TEXT = "OMITTED";
+
+/**
+ * Yjs transaction origin used by `omitSceneByUuid` / `unomitSceneByUuid` so
+ * the editor's UndoManager records both the document edit and the scene
+ * metadata change as a single, atomic undo step. `use-document-editor`
+ * registers this symbol in the UndoManager's `trackedOrigins`.
+ */
+export const SCENE_OMIT_UNDO_ORIGIN = Symbol("scene-omit-undo");
 
 // --------------------------------------------------------------------------
 //                                TYPES
@@ -459,19 +473,74 @@ export const computeSceneLabels = (
 //                              ACTIONS
 // --------------------------------------------------------------------------
 
-/**
- * Mark a scene as OMITTED. The scene's heading text and body content are
- * preserved in the document; the editor overlays "OMITTED" and hides the
- * underlying content via decorations so the original screenplay survives an
- * unomit. Works regardless of production lock state.
- */
-export const omitSceneByUuid = (repository: ProjectRepository, uuid: string): void => {
-    repository.upsertScene(uuid, { omitted: true });
+/** Locate the scene heading node in the document by its `data-id` UUID. */
+const findSceneHeadingByUuid = (
+    editor: Editor,
+    uuid: string,
+): { node: Node; pos: number } | null => {
+    let result: { node: Node; pos: number } | null = null;
+    editor.state.doc.descendants((node, pos) => {
+        if (result) return false;
+        if (node.attrs?.class === ScreenplayElement.Scene && node.attrs?.["data-id"] === uuid) {
+            result = { node, pos };
+            return false;
+        }
+        return true;
+    });
+    return result;
 };
 
-/** Clear an OMITTED scene's `omitted` flag, restoring the heading + body. */
-export const unomitSceneByUuid = (repository: ProjectRepository, uuid: string): void => {
+/**
+ * Mark a scene as OMITTED. The heading's current text is saved into the
+ * scene's `originalHeading` metadata and the heading content in the
+ * document is replaced with "OMITTED" — so the heading remains a normal
+ * editable paragraph (cursor + Enter behave naturally) while the body
+ * paragraphs are still visually collapsed via decorations.
+ *
+ * Both the document edit and the metadata update are wrapped in a single
+ * Yjs transaction so Ctrl+Z reverts them atomically.
+ */
+export const omitSceneByUuid = (
+    editor: Editor,
+    repository: ProjectRepository,
+    uuid: string,
+): void => {
+    const heading = findSceneHeadingByUuid(editor, uuid);
+    if (!heading) return;
+
+    const currentText = heading.node.textContent;
+    repository.transact(() => {
+        const headingStart = heading.pos + 1;
+        const headingEnd = heading.pos + heading.node.nodeSize - 1;
+        const tr = editor.state.tr.insertText(OMITTED_HEADING_TEXT, headingStart, headingEnd);
+        editor.view.dispatch(tr);
+        repository.upsertScene(uuid, { omitted: true, originalHeading: currentText });
+    }, SCENE_OMIT_UNDO_ORIGIN);
+};
+
+/**
+ * Clear an OMITTED scene's flag and restore its original heading text from
+ * `originalHeading` metadata. Inverse of `omitSceneByUuid`, batched in a
+ * single Yjs transaction for atomic undo.
+ */
+export const unomitSceneByUuid = (
+    editor: Editor,
+    repository: ProjectRepository,
+    uuid: string,
+): void => {
     const scene = repository.getScene(uuid);
     if (!scene?.omitted) return;
-    repository.upsertScene(uuid, { omitted: undefined });
+    const heading = findSceneHeadingByUuid(editor, uuid);
+    if (!heading) return;
+
+    const restoreText = scene.originalHeading ?? "";
+    repository.transact(() => {
+        const headingStart = heading.pos + 1;
+        const headingEnd = heading.pos + heading.node.nodeSize - 1;
+        const tr = restoreText.length > 0
+            ? editor.state.tr.insertText(restoreText, headingStart, headingEnd)
+            : editor.state.tr.delete(headingStart, headingEnd);
+        editor.view.dispatch(tr);
+        repository.upsertScene(uuid, { omitted: undefined, originalHeading: undefined });
+    }, SCENE_OMIT_UNDO_ORIGIN);
 };

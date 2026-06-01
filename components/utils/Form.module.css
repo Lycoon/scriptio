@@ -112,6 +112,7 @@
     font-size: 1.15rem;
     border-radius: 7px;
     padding: 8px;
+    background-color: var(--secondary);
 }
 
 .input::placeholder {

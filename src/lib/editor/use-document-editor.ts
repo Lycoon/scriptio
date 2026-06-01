@@ -31,6 +31,7 @@ import {
     createSceneLockingExtension,
     refreshSceneLocking,
 } from "@src/lib/screenplay/extensions/scene-locking-extension";
+import { SCENE_OMIT_UNDO_ORIGIN } from "@src/lib/screenplay/scene-locking";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
@@ -371,6 +372,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                               getPageLocking: () => !!ext.pageLocking,
                               getPageLocks: () => ext.persistentPages ?? {},
                               getSkippedLetters: () => ext.skippedSceneLetters ?? [],
+                              getScenes: () => ext.repository?.scenes ?? {},
                           }
                         : {
                               pageGap: 20,
@@ -552,11 +554,20 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         }
     }, [userInfo, provider]);
 
-    // Fix Yjs undo cursor restoration: y-tiptap's stack-item-popped fires AFTER
-    // the undo transaction commits, so beforeTransactionSelection is captured wrong
-    // by beforeAllTransactions. Patch undo/redo to pre-set it from the stack item.
+    // Post-mount UndoManager setup. y-tiptap's UndoManager is constructed to
+    // track only the editor XmlFragment (scope) and only `ySyncPluginKey`
+    // (origin), and y-tiptap's stack-item-popped fires AFTER the undo
+    // transaction commits — so a few tweaks are needed:
+    //   - addToScope(scenes): scene metadata lives in a separate Y.Map; without
+    //     this the UndoManager silently ignores every mutation to it.
+    //   - trackedOrigins.add(SCENE_OMIT_UNDO_ORIGIN): omit/unomit bundle a PM
+    //     dispatch and a Map.set into one Yjs transaction tagged with this
+    //     symbol so Ctrl+Z reverts both halves atomically.
+    //   - undo/redo patch: pre-seed beforeTransactionSelection from the
+    //     popped stack item so the cursor restores correctly (y-tiptap
+    //     otherwise captures it after the fact).
     useEffect(() => {
-        if (!editor || !isYjsReady) return;
+        if (!editor || !isYjsReady || !projectState) return;
 
         const state = editor.state;
         const yUndoState = yUndoPluginKey.getState(state);
@@ -565,6 +576,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
 
         const um = yUndoState.undoManager;
         const binding = ySyncState.binding;
+        um.addToScope([projectState.scenes()]);
+        um.trackedOrigins.add(SCENE_OMIT_UNDO_ORIGIN);
+
         const originalUndo = um.undo.bind(um);
         const originalRedo = um.redo.bind(um);
 
@@ -587,8 +601,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         return () => {
             um.undo = originalUndo;
             um.redo = originalRedo;
+            um.trackedOrigins.delete(SCENE_OMIT_UNDO_ORIGIN);
         };
-    }, [editor, isYjsReady]);
+    }, [editor, isYjsReady, projectState]);
 
     // Refresh character highlights
     useEffect(() => {
@@ -615,11 +630,17 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     // Pagination only reads these via getter closures on its options, so
     // we must explicitly kick it to re-run; otherwise stale labels render
     // until the user types.
+    //
+    // persistentScenes is included so toggling a scene's `omitted` flag
+    // re-runs pagination immediately: omitted body paragraphs collapse to
+    // zero height in the layout (mirroring the visual display:none from
+    // scene-locking-extension), so the page they sit on must shrink/grow
+    // without waiting for the next keystroke.
     useEffect(() => {
         if (editor && config.features.paginationMode === "screenplay") {
             refreshPageLocking(editor);
         }
-    }, [editor, pageLocking, persistentPages, skippedSceneLetters, config.features.paginationMode]);
+    }, [editor, pageLocking, persistentPages, persistentScenes, skippedSceneLetters, config.features.paginationMode]);
 
     // Refresh search highlights
     useEffect(() => {

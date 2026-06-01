@@ -19,16 +19,18 @@
 - **Cloud Synchronization**
 - **Real-time Collaboration**
 - **Cross-platform** (Windows, MacOS, browser)
-- **Industry-standard Formats** (PDF, Fountain, Final Draft)
+- **Industry Formatting** (layout, page breaks, dual dialogue)
+- **Compatibility Formats** (PDF, Fountain, Final Draft)
+- **Production Ready** (revisions, scene & page locking)
 - **Scene Management** (easy navigation, reordering)
 - **Character Management** (color highlighting, synopsis)
 - **Beat Board** (story cards, outlining)
-- **Smart formatting** (context aware auto-completion)
+- **Smart Editor** (context aware auto-completion, spellchecker)
 - **Customization** (themes & custom keybinds)
 - **Statistics** (distribution, frequency)
 - **Search & Replace** (advanced filtering)
 - **Script Comments** (inline annotations)
-- **Focus mode** (distraction-free writing)
+- **Focus Mode** (distraction-free writing)
 
 # Core Values
 
