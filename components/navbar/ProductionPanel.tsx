@@ -2,13 +2,14 @@
 
 import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Lock, X, Layers } from "lucide-react";
+import { X, BookOpen, Clapperboard, PencilLine, Settings } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
+import { DashboardContext } from "@src/context/DashboardContext";
 import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
 import { computeSceneItems } from "@src/lib/screenplay/scenes";
-import { unlockPagesPopup, unlockScenesPopup } from "@src/lib/screenplay/popup";
+import { unlockDraftPopup, unlockPagesPopup, unlockScenesPopup } from "@src/lib/screenplay/popup";
 import { getPageAnchors, getPageAnchorInfo } from "@src/lib/screenplay/extensions/pagination-extension";
 import Switch from "@components/utils/Switch";
 
@@ -47,8 +48,14 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         isReadOnly,
     } = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
+    const { openDashboard } = useContext(DashboardContext);
 
     const panelRef = useRef<HTMLDivElement>(null);
+
+    const handleOpenSettings = () => {
+        onClose();
+        openDashboard("Production");
+    };
 
     // Click outside to close
     useEffect(() => {
@@ -94,36 +101,45 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         });
     }, [repository]);
 
+    // Writes-only scene relock: assigns a frozen token to every scene that
+    // `computeSceneLabels` reports as provisional. Idempotent — scenes that
+    // already hold a token keep it. Must be called inside `repository.transact`
+    // so it can be composed with the page writes for a combined draft lock.
+    const relockScenesWrites = useCallback(() => {
+        if (!repository) return;
+        const currentScreenplay = repository.screenplay;
+        const scenes = computeSceneItems(currentScreenplay);
+        const uuids = scenes.map((s) => s.id).filter((id): id is string => !!id);
+
+        // Re-read fresh persistent data
+        const persistentSnapshot = repository.scenes;
+
+        const currentLabels = computeSceneLabels(
+            uuids,
+            persistentSnapshot,
+            sceneNumberingStyle,
+            skippedSceneLetters,
+        );
+
+        currentLabels.forEach((label) => {
+            if (label.status === "provisional") {
+                repository.upsertScene(label.uuid, { token: label.token });
+            }
+        });
+    }, [repository, sceneNumberingStyle, skippedSceneLetters]);
+
+    // Lock = freeze the current provisional tokens, then flip the flag on.
+    const lockScenesWrites = useCallback(() => {
+        if (!repository) return;
+        relockScenesWrites();
+        repository.setSceneLocking(true);
+    }, [repository, relockScenesWrites]);
+
     const handleSceneLockingToggle = (next: boolean) => {
         if (!repository || isReadOnly) return;
         if (next) {
             repository.transact(() => {
-                const currentScreenplay = repository.screenplay;
-                const scenes = computeSceneItems(currentScreenplay);
-                const uuids = scenes.map(s => s.id).filter((id): id is string => !!id);
-
-                // Idempotent: any scene that already has a token (e.g. left
-                // over from an earlier session, or that survived an unlock
-                // in read-only mode) keeps its frozen label. Only scenes
-                // computed as provisional by `computeSceneLabels` get a new
-                // token written. On a fresh lock-on with no existing
-                // tokens, this falls through to baseToken(idx+1) for every
-                // scene, matching the previous behaviour.
-                const persistentSnapshot = repository.scenes;
-                const labels = computeSceneLabels(
-                    uuids,
-                    persistentSnapshot,
-                    sceneNumberingStyle,
-                    skippedSceneLetters,
-                );
-
-                labels.forEach((label) => {
-                    if (label.status === "provisional") {
-                        repository.upsertScene(label.uuid, { token: label.token });
-                    }
-                });
-
-                repository.setSceneLocking(true);
+                lockScenesWrites();
             });
         } else {
             unlockScenesPopup(performUnlock, userCtx);
@@ -133,25 +149,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     const handleRelock = () => {
         if (!repository || isReadOnly) return;
         repository.transact(() => {
-            const currentScreenplay = repository.screenplay;
-            const scenes = computeSceneItems(currentScreenplay);
-            const uuids = scenes.map(s => s.id).filter((id): id is string => !!id);
-
-            // Re-read fresh persistent data
-            const persistentSnapshot = repository.scenes;
-
-            const currentLabels = computeSceneLabels(
-                uuids,
-                persistentSnapshot,
-                sceneNumberingStyle,
-                skippedSceneLetters,
-            );
-
-            currentLabels.forEach((label) => {
-                if (label.status === "provisional") {
-                    repository.upsertScene(label.uuid, { token: label.token });
-                }
-            });
+            relockScenesWrites();
         });
     };
 
@@ -187,37 +185,45 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         });
     }, [repository]);
 
+    // Writes-only page relock. Idempotent: any anchor that already has a token
+    // keeps it; only provisional anchors (no token yet) get a freshly-computed
+    // one. splitOffset is captured alongside the token so the pagination plugin
+    // can reproduce mid-node splits (straddling dialogues) on recompute instead
+    // of force-pushing the whole anchor node forward. Must be called inside
+    // `repository.transact`.
+    const relockPagesWrites = useCallback(() => {
+        if (!repository || !editor) return;
+        const anchorInfos = getPageAnchorInfo(editor);
+        const anchors = anchorInfos.map((a) => a.anchorId);
+        const persistentSnapshot = repository.pages;
+        const currentLabels = computeSceneLabels(
+            anchors,
+            persistentSnapshot,
+            "suffix",
+            skippedSceneLetters,
+        );
+        currentLabels.forEach((label, idx) => {
+            if (label.status === "provisional") {
+                repository.upsertPage(label.uuid, {
+                    token: label.token,
+                    splitOffset: anchorInfos[idx]?.splitOffset,
+                });
+            }
+        });
+    }, [repository, editor, skippedSceneLetters]);
+
+    const lockPagesWrites = useCallback(() => {
+        if (!repository || !editor) return;
+        relockPagesWrites();
+        repository.setPageLocking(true);
+    }, [repository, editor, relockPagesWrites]);
+
     const handlePageLockingToggle = (next: boolean) => {
         if (!repository || isReadOnly) return;
         if (next) {
             if (!editor) return;
             repository.transact(() => {
-                const anchorInfos = getPageAnchorInfo(editor);
-                const anchors = anchorInfos.map((a) => a.anchorId);
-                const persistentSnapshot = repository.pages;
-                // Idempotent: any anchor that already has a token keeps it.
-                // Only provisional anchors (no token yet) get a freshly-computed
-                // one. A fresh lock-on with no existing tokens assigns every
-                // page baseToken(idx+1) — same shape as scene locking.
-                const computed = computeSceneLabels(
-                    anchors,
-                    persistentSnapshot,
-                    "suffix",
-                    skippedSceneLetters,
-                );
-                computed.forEach((label, idx) => {
-                    if (label.status === "provisional") {
-                        // splitOffset is captured alongside the token so the
-                        // pagination plugin can reproduce mid-node splits
-                        // (straddling dialogues) on recompute instead of
-                        // force-pushing the whole anchor node forward.
-                        repository.upsertPage(label.uuid, {
-                            token: label.token,
-                            splitOffset: anchorInfos[idx]?.splitOffset,
-                        });
-                    }
-                });
-                repository.setPageLocking(true);
+                lockPagesWrites();
             });
         } else {
             unlockPagesPopup(performPageUnlock, userCtx);
@@ -227,23 +233,49 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     const handlePageRelock = () => {
         if (!repository || isReadOnly || !editor) return;
         repository.transact(() => {
-            const anchorInfos = getPageAnchorInfo(editor);
-            const anchors = anchorInfos.map((a) => a.anchorId);
-            const persistentSnapshot = repository.pages;
-            const currentLabels = computeSceneLabels(
-                anchors,
-                persistentSnapshot,
-                "suffix",
-                skippedSceneLetters,
-            );
-            currentLabels.forEach((label, idx) => {
-                if (label.status === "provisional") {
-                    repository.upsertPage(label.uuid, {
-                        token: label.token,
-                        splitOffset: anchorInfos[idx]?.splitOffset,
-                    });
-                }
+            relockPagesWrites();
+        });
+    };
+
+    // -------------- Draft locking (scenes + pages together) --------------
+    // The draft toggle reflects whether *everything* is locked. Turning it on
+    // locks scenes and pages in a single transaction (each write is idempotent,
+    // so a partially-locked draft is brought fully in line); turning it off
+    // clears both via one confirmation popup.
+    const draftLocking = sceneLocking && pageLocking;
+
+    const hasProvisionalDraft =
+        (sceneLocking && provisionalLabels.length > 0) ||
+        (pageLocking && provisionalPageLabels.length > 0);
+
+    const performDraftUnlock = useCallback(() => {
+        if (!repository) return;
+        repository.transact(() => {
+            repository.clearSceneLocks();
+            repository.setSceneLocking(false);
+            repository.clearPageLocks();
+            repository.setPageLocking(false);
+        });
+    }, [repository]);
+
+    const handleDraftLockingToggle = (next: boolean) => {
+        if (!repository || isReadOnly) return;
+        if (next) {
+            if (!editor) return;
+            repository.transact(() => {
+                lockScenesWrites();
+                lockPagesWrites();
             });
+        } else {
+            unlockDraftPopup(performDraftUnlock, userCtx);
+        }
+    };
+
+    const handleDraftRelock = () => {
+        if (!repository || isReadOnly) return;
+        repository.transact(() => {
+            if (sceneLocking) relockScenesWrites();
+            if (pageLocking) relockPagesWrites();
         });
     };
 
@@ -253,16 +285,54 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         <div className={styles.container} ref={panelRef}>
             <div className={styles.header}>
                 <span className={styles.title}>{t("title")}</span>
-                <button className={styles.close_btn} onClick={onClose} aria-label="Close">
-                    <X size={16} />
-                </button>
+                <div className={styles.header_actions}>
+                    <button
+                        className={styles.close_btn}
+                        onClick={handleOpenSettings}
+                        aria-label={t("settings")}
+                        title={t("settings")}
+                    >
+                        <Settings size={16} />
+                    </button>
+                    <button className={styles.close_btn} onClick={onClose} aria-label="Close">
+                        <X size={16} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Draft Locking (scenes + pages together) */}
+            <div className={styles.section}>
+                <div className={styles.row}>
+                    <div className={styles.row_main}>
+                        <PencilLine size={14} className={styles.row_icon} />
+                        <span className={styles.row_label}>{t("draftLocking")}</span>
+                    </div>
+                    <div className={styles.row_actions}>
+                        {draftLocking && hasProvisionalDraft && (
+                            <button
+                                type="button"
+                                className={styles.relock_btn}
+                                onClick={handleDraftRelock}
+                                disabled={isReadOnly}
+                            >
+                                {t("draftRelock")}
+                            </button>
+                        )}
+                        <Switch
+                            checked={draftLocking}
+                            onChange={handleDraftLockingToggle}
+                            disabled={isReadOnly}
+                            ariaLabel={t("draftLocking")}
+                        />
+                    </div>
+                </div>
             </div>
 
             {/* Scene Locking */}
             <div className={styles.section}>
                 <div className={styles.row}>
                     <div className={styles.row_main}>
-                        <Lock size={14} className={styles.row_icon} />
+                        <Clapperboard size={14} className={styles.row_icon} />
                         <span className={styles.row_label}>{t("sceneLocking")}</span>
                     </div>
                     <div className={styles.row_actions}>
@@ -306,7 +376,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
             <div className={styles.section}>
                 <div className={styles.row}>
                     <div className={styles.row_main}>
-                        <Layers size={14} className={styles.row_icon} />
+                        <BookOpen size={14} className={styles.row_icon} />
                         <span className={styles.row_label}>{t("pageLocking")}</span>
                     </div>
                     <div className={styles.row_actions}>

@@ -7,10 +7,10 @@ import { X, Unlock } from "lucide-react";
 import popup from "./Popup.module.css";
 
 import { useDraggable } from "@src/lib/utils/hooks";
-import { PopupData, PopupUnlockScenesData, closePopup } from "@src/lib/screenplay/popup";
+import { PopupData, PopupUnlockDraftData, closePopup } from "@src/lib/screenplay/popup";
 import { UserContext } from "@src/context/UserContext";
 
-const PopupUnlockScenes = ({ data: { confirmUnlock } }: PopupData<PopupUnlockScenesData>) => {
+const PopupUnlockDraft = ({ data: { confirmUnlock } }: PopupData<PopupUnlockDraftData>) => {
     const userCtx = useContext(UserContext);
     const { position, handleMouseDown, isDragging } = useDraggable();
     const t = useTranslations("production");
@@ -31,16 +31,16 @@ const PopupUnlockScenes = ({ data: { confirmUnlock } }: PopupData<PopupUnlockSce
                     onMouseDown={handleMouseDown}
                     style={{ cursor: isDragging ? "grabbing" : "grab" }}
                 >
-                    <h2 className={popup.title}>{t("unlockTitle")}</h2>
+                    <h2 className={popup.title}>{t("unlockDraftTitle")}</h2>
                     <X className={popup.close_btn} onClick={() => closePopup(userCtx)} />
                 </div>
                 <div className={popup.info}>
-                    <p>{t.rich("unlockWarning", { b: (chunks) => <b>{chunks}</b> })}</p>
+                    <p>{t("unlockDraftWarning")}</p>
                 </div>
                 <div className={popup.buttons}>
                     <button className={popup.import_confirm} onClick={onConfirm}>
                         <Unlock size={18} color="white" />
-                        {t("unlock")}
+                        {t("unlockDraft")}
                     </button>
                     <button className={popup.cancel} onClick={() => closePopup(userCtx)}>
                         {t("cancel")}
@@ -51,4 +51,4 @@ const PopupUnlockScenes = ({ data: { confirmUnlock } }: PopupData<PopupUnlockSce
     );
 };
 
-export default PopupUnlockScenes;
+export default PopupUnlockDraft;

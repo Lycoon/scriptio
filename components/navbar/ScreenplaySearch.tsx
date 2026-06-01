@@ -88,6 +88,23 @@ const ScreenplaySearch = () => {
         setReplaceValue("");
     }, [setSearchTerm]);
 
+    // Click outside to close — only when the search field is empty. If there's
+    // an in-progress search, keep the panel open so it isn't lost on a stray
+    // click. Reads the live input value (uncontrolled) rather than the debounced
+    // context term so it stays accurate before the debounce fires.
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                if (!inputRef.current?.value) {
+                    handleClose();
+                }
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isOpen, handleClose]);
+
     // Use uncontrolled input with debounced updates to context
     const handleSearchChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {

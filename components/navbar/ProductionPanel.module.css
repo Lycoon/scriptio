@@ -27,6 +27,12 @@
     color: var(--primary-text);
 }
 
+.header_actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .close_btn {
     display: flex;
     align-items: center;
