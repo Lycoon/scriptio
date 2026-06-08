@@ -259,7 +259,10 @@ export class ProjectRepository {
         const existing = (map.get(sceneId) as PersistentScene | undefined) ?? {};
 
         const merged: PersistentScene = { ...existing };
-        const FIELDS = ["synopsis", "color", "token", "omitted", "originalHeading"] as const;
+        const FIELDS = [
+            "synopsis", "color", "token", "omitted", "originalHeading",
+            "omittedBody", "omittedPageLocks", "reanchoredSuccessor",
+        ] as const;
         for (const key of FIELDS) {
             if (key in data) {
                 (merged as Record<string, unknown>)[key] = data[key];

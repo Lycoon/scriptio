@@ -13,6 +13,7 @@
     "focusMode": "집중 모드",
     "splitPanel": "패널 분할",
     "unsplitPanel": "패널 통합",
+    "swapPanels": "패널 교체",
     "draftEditor": "초안 편집기",
     "viewOnly": "보기 전용",
     "viewOnlyHint": "뷰어 권한이 있습니다. 편집이 비활성화되었습니다."

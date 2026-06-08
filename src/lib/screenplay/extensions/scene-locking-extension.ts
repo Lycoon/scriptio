@@ -31,12 +31,11 @@ const collectSceneEntries = (doc: Node): SceneEntry[] => {
 };
 
 /**
- * Does any step in this transaction touch a Scene node or any node that sits
- * between Scene boundaries? Used as a cheap early-exit so we don't rebuild
- * decorations on every keystroke inside an action paragraph far away from
- * any omitted scene. We have to be conservative when omitted scenes exist
- * because hiding the body of an omitted scene means body-paragraph edits
- * must trigger decoration recomputation too.
+ * Does any step in this transaction touch a Scene node? Used as a cheap
+ * early-exit so we don't rebuild scene-number / OMITTED heading decorations on
+ * every keystroke inside an action paragraph. Both kinds of decoration are
+ * anchored on the Scene heading nodes, so only edits that touch a Scene node
+ * can change them.
  */
 const didSceneNodesChange = (tr: Transaction): boolean => {
     if (!tr.docChanged) return false;
@@ -123,11 +122,10 @@ const computeDecorations = (
         }
     }
 
-    // OMITTED decorations are independent of production lock. The heading
-    // text itself is replaced with "OMITTED" inside the document by
-    // `omitSceneByUuid` (the original is preserved in scene metadata), so
-    // here we only need to grey the heading via `data-scene-omitted` and
-    // collapse the body paragraphs via `data-omitted-body`.
+    // OMITTED decorations are independent of production lock. The heading text
+    // is replaced with "OMITTED" in the document and the body is cut out and
+    // parked in scene metadata by `omitSceneByUuid`, so here we only grey the
+    // remaining one-line heading via `data-scene-omitted`.
     for (let i = 0; i < entries.length; i++) {
         const entry = entries[i];
         if (!scenes[entry.uuid]?.omitted) continue;
@@ -137,19 +135,6 @@ const computeDecorations = (
                 "data-scene-omitted": "true",
             }),
         );
-
-        const nextEntry = entries[i + 1];
-        const bodyEnd = nextEntry ? nextEntry.pos : doc.content.size;
-        const bodyStart = entry.pos + entry.nodeSize;
-        doc.forEach((node, pos) => {
-            if (pos >= bodyStart && pos < bodyEnd) {
-                decorations.push(
-                    Decoration.node(pos, pos + node.nodeSize, {
-                        "data-omitted-body": "true",
-                    }),
-                );
-            }
-        });
     }
 
     return DecorationSet.create(doc, decorations);

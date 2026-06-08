@@ -24,6 +24,7 @@ interface ViewContextType {
     setFocusedSide: (side: SplitSide) => void;
     setFocusedPanel: (panel: PanelType) => void;
     setSidePanel: (side: SplitSide, panel: PanelType) => void;
+    swapPanels: () => void;
     setIsEndlessScroll: (value: boolean | ((prev: boolean) => boolean)) => void;
     setShowComments: (value: boolean | ((prev: boolean) => boolean)) => void;
     setLeftSidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
@@ -163,6 +164,13 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
         [primaryPanel, secondaryPanel],
     );
 
+    const swapPanels = useCallback(() => {
+        if (!secondaryPanel) return;
+        setPrimaryPanelState(secondaryPanel);
+        setSecondaryPanelState(primaryPanel);
+        setFocusedSideState((prev) => (prev === "primary" ? "secondary" : "primary"));
+    }, [primaryPanel, secondaryPanel]);
+
     const value = useMemo(
         () => ({
             primaryPanel,
@@ -183,12 +191,13 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setFocusedSide,
             setFocusedPanel,
             setSidePanel,
+            swapPanels,
             setIsEndlessScroll,
             setShowComments,
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setIsEndlessScroll, setShowComments],
+        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, swapPanels, setIsEndlessScroll, setShowComments],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

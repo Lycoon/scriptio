@@ -13,6 +13,7 @@
     "focusMode": "聚焦模式",
     "splitPanel": "分割面板",
     "unsplitPanel": "合并面板",
+    "swapPanels": "交换面板",
     "draftEditor": "草稿编辑器",
     "viewOnly": "仅查看",
     "viewOnlyHint": "您拥有访客权限，编辑功能已禁用。"

@@ -14,6 +14,7 @@
     "focusMode": "Fokus-Modus",
     "splitPanel": "Panel teilen",
     "unsplitPanel": "Panel schließen",
+    "swapPanels": "Panels tauschen",
     "draftEditor": "Entwurfseditor",
     "viewOnly": "Nur ansehen",
     "viewOnlyHint": "Sie haben Lesezugriff. Die Bearbeitung ist deaktiviert."

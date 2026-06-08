@@ -13,6 +13,7 @@
     "focusMode": "Modo concentración",
     "splitPanel": "Dividir panel",
     "unsplitPanel": "Unir panel",
+    "swapPanels": "Intercambiar paneles",
     "draftEditor": "Editor de borrador",
     "viewOnly": "Solo lectura",
     "viewOnlyHint": "Tienes acceso de solo visualización. La edición está desactivada."

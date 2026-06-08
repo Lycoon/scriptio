@@ -91,25 +91,27 @@
 .tab_bar {
     display: flex;
     flex-direction: row;
+    justify-content: center;
     border-top: 1px solid var(--separator);
     margin-top: auto;
     padding-top: 4px;
     padding-inline: 12px;
-    gap: 4px;
+    gap: 8px;
 }
 
 .tab_btn {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 0;
+    padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
     color: var(--secondary-text);
     background: none;
     border: none;
-    transition: color 0.15s, background-color 0.15s;
+    transition:
+        color 0.15s,
+        background-color 0.15s;
 }
 
 .tab_btn:hover {
@@ -118,5 +120,10 @@
 }
 
 .tab_btn_active {
+    color: var(--primary-text);
+    background-color: var(--editor-sidebar-hover);
+}
+
+.tab_btn_active:hover {
     color: var(--primary-text);
 }

@@ -20,6 +20,22 @@ import type { SceneToken } from "./scene-locking";
 /** Sentinel key used for the first page (which has no anchor node). */
 export const PAGE_ONE_KEY = "__page1__";
 
+/** Transaction meta flag set by scene omit/unomit. The pagination plugin's
+ *  `filterTransaction` normally rejects any local edit that makes a locked
+ *  page anchor's data-id disappear (content must not cross a lock). Omitting a
+ *  scene legitimately removes a whole scene — including any locked anchors
+ *  inside it — so the omit transaction carries this flag to bypass that guard.
+ *  The omit also re-homes the affected page locks so nothing is left orphaned. */
+export const SCENE_OMIT_META = "scene-omit";
+
+/** Transaction meta flag set by the Backspace handler when it collapses an
+ *  emptied locked page (deletes the page's only, now-empty, anchor node and
+ *  moves the cursor up to the previous page). Like SCENE_OMIT_META it lets the
+ *  pagination `filterTransaction` allow a locked anchor's data-id to disappear.
+ *  The lock itself is left in the map as an orphan so the page's frozen number
+ *  is absorbed into the following page as a range instead of vanishing. */
+export const PAGE_COLLAPSE_META = "page-collapse";
+
 export type PersistentPage = {
     /** Frozen structural position under production page-lock. */
     token?: SceneToken;

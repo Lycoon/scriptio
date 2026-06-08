@@ -13,6 +13,7 @@ import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import {
     Archive,
+    ArrowLeftRight,
     ChevronLeft,
     ChevronRight,
     Clapperboard,
@@ -82,6 +83,7 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
         isSplit,
         primaryPanel,
         setSecondaryPanel,
+        swapPanels,
         isEndlessScroll,
         setIsEndlessScroll,
         showComments,
@@ -176,6 +178,17 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
                     >
                         {isSplit ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
                         <span className={dropdown.item_label}>{isSplit ? t("unsplitPanel") : t("splitPanel")}</span>
+                    </button>
+                    <button
+                        className={dropdown.dropdown_item}
+                        onClick={() => {
+                            swapPanels();
+                            setIsOpen(false);
+                        }}
+                        disabled={!isSplit}
+                    >
+                        <ArrowLeftRight size={14} />
+                        <span className={dropdown.item_label}>{t("swapPanels")}</span>
                     </button>
                     <div className={styles.panel_switcher_separator} />
                     {SWITCHABLE_PANELS.map(({ type, icon: Icon, labelKey }) => (

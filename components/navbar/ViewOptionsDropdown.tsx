@@ -13,6 +13,7 @@ import {
     Minimize,
     PanelRight,
     PanelRightClose,
+    ArrowLeftRight,
     Eye,
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ const ViewOptionsDropdown = () => {
         isSplit,
         primaryPanel,
         setSecondaryPanel,
+        swapPanels,
     } = useViewContext();
 
     const handleSplitToggle = useCallback(() => {
@@ -141,6 +143,14 @@ const ViewOptionsDropdown = () => {
                     >
                         {isSplit ? <PanelRightClose size={16} /> : <PanelRight size={16} />}
                         <span className={styles.item_label}>{isSplit ? t("unsplitPanel") : t("splitPanel")}</span>
+                    </button>
+                    <button
+                        className={styles.dropdown_item}
+                        onClick={swapPanels}
+                        disabled={!isSplit}
+                    >
+                        <ArrowLeftRight size={16} />
+                        <span className={styles.item_label}>{t("swapPanels")}</span>
                     </button>
                 </div>
             )}

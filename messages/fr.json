@@ -14,6 +14,7 @@
     "focusMode": "Mode concentration",
     "splitPanel": "Diviser le panneau",
     "unsplitPanel": "Fermer le panneau divisé",
+    "swapPanels": "Inverser les panneaux",
     "draftEditor": "Éditeur de brouillon",
     "viewOnly": "Vue seule",
     "viewOnlyHint": "Vous avez un accès visiteur. La modification est désactivée."
