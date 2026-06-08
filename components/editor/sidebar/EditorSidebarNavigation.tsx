@@ -8,10 +8,11 @@ import { useViewContext } from "@src/context/ViewContext";
 import { Scene } from "@src/lib/screenplay/scenes";
 import { focusOnPosition } from "@src/lib/screenplay/editor";
 import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
-import { Archive, Clapperboard, MessageSquare } from "lucide-react";
+import { Archive, Clapperboard, FolderTree, MessageSquare } from "lucide-react";
 import SidebarSceneItem from "./SidebarSceneItem";
 import ShelfSidebarView from "./ShelfSidebarView";
 import CommentSidebarView from "./CommentSidebarView";
+import DocumentTreeSidebarView from "./DocumentTreeSidebarView";
 
 import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
@@ -29,7 +30,7 @@ const EditorSidebarNavigation = () => {
     } = useContext(ProjectContext);
     const { leftSidebarOpen } = useViewContext();
 
-    const [activeTab, setActiveTab] = useState<"scenes" | "shelf" | "comments">("scenes");
+    const [activeTab, setActiveTab] = useState<"scenes" | "shelf" | "comments" | "documents">("scenes");
 
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     // indicatorIndex represents the gap where the item will be inserted.
@@ -256,6 +257,8 @@ const EditorSidebarNavigation = () => {
                         </>
                     ) : activeTab === "shelf" ? (
                         <ShelfSidebarView />
+                    ) : activeTab === "documents" ? (
+                        <DocumentTreeSidebarView />
                     ) : (
                         <CommentSidebarView />
                     )}
@@ -265,6 +268,12 @@ const EditorSidebarNavigation = () => {
                             onClick={() => setActiveTab("scenes")}
                         >
                             <Clapperboard size={16} />
+                        </button>
+                        <button
+                            className={join(sidebar_nav.tab_btn, activeTab === "documents" ? sidebar_nav.tab_btn_active : "")}
+                            onClick={() => setActiveTab("documents")}
+                        >
+                            <FolderTree size={16} />
                         </button>
                         <button
                             className={join(sidebar_nav.tab_btn, activeTab === "comments" ? sidebar_nav.tab_btn_active : "")}

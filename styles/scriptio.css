@@ -238,18 +238,15 @@
     }
 
     /* OMITTED scene: heading text is rewritten to "OMITTED" in the document
-       by `omitSceneByUuid` (original preserved in scene metadata), so the
-       heading is a normal editable paragraph. We just grey it and collapse
-       the body paragraphs; the scene-number widgets are re-greyed because
+       by `omitSceneByUuid` (original preserved in scene metadata) and the body
+       is cut out of the document entirely, so the omitted scene is just a
+       greyed one-line heading. The scene-number widgets are re-greyed because
        the generic `.ProseMirror > p span` rule above pins them to
        --editor-text. */
     .scene[data-scene-omitted="true"],
     .scene[data-scene-omitted="true"] .scene-label-left,
     .scene[data-scene-omitted="true"] .scene-label-right {
         color: var(--secondary-text);
-    }
-    [data-omitted-body="true"] {
-        display: none;
     }
 
     /* Normal weight scene headings (when bold disabled) */

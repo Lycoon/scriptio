@@ -3,7 +3,7 @@
  * Creates remote projects for logged-in users, local projects for offline/desktop.
  */
 
-import { BoardData, LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
+import { LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
 import { CURRENT_PROJECT_VERSION } from "@src/lib/project/migrations/project-migrations";
 import { getAdapterByFilename } from "@src/lib/adapters/registry";
 import { createCachedProject, createCachedProjectWithId } from "@src/lib/persistence/storage-provider/local-persistence";
@@ -118,11 +118,6 @@ async function createLocalYjsDocument(projectId: string, projectData: ProjectDat
         if (projectData.scenes) {
             const scenesMap = ydoc.scenes();
             Object.entries(projectData.scenes).forEach(([key, value]) => scenesMap.set(key, value));
-        }
-
-        if (projectData.board) {
-            const boardMap = ydoc.board();
-            Object.entries(projectData.board).forEach(([key, value]) => boardMap.set(key as keyof BoardData, value));
         }
 
         if (projectData.layout) {

@@ -7,9 +7,15 @@ import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "@tiptap/y-tiptap";
 
-import { compareTokens, computeSceneLabels, SceneToken } from "@src/lib/screenplay/scene-locking";
-import { PAGE_ONE_KEY, PersistentPageMap } from "@src/lib/screenplay/page-locking";
-import type { PersistentSceneMap } from "@src/lib/screenplay/scenes";
+import {
+    buildSceneAlphabet,
+    compareTokens,
+    compileSceneLabel,
+    computeSceneLabels,
+    SceneLabel,
+    SceneToken,
+} from "@src/lib/screenplay/scene-locking";
+import { PAGE_COLLAPSE_META, PAGE_ONE_KEY, PersistentPageMap, SCENE_OMIT_META } from "@src/lib/screenplay/page-locking";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -124,11 +130,11 @@ export interface PaginationOptions {
     getPageLocks?: () => PersistentPageMap;
     /** Letters skipped from generated labels (shared with scene locking). */
     getSkippedLetters?: () => readonly string[];
-    /** Persistent scene map. Used to detect omitted scenes so their hidden
-     *  body paragraphs contribute zero height to the page layout — without
-     *  this, omission would visually collapse the body but pagination would
-     *  still allocate full height, leaving the page short on real content. */
-    getScenes?: () => PersistentSceneMap;
+    /** Tokens of locked pages that an omitted scene collapsed out of the
+     *  document. Rendered as a combined range on the preceding surviving page
+     *  (e.g. "4-5") so omitting a full page doesn't leave a gap in the
+     *  numbering. Empty/absent when no scene is omitted. */
+    getOmittedPages?: () => SceneToken[];
 }
 
 export interface PageBreakInfo {
@@ -662,7 +668,7 @@ function computePageLabels(
     breaks: PageBreakInfo[],
     pageLocks: PersistentPageMap,
     skippedLetters: readonly string[],
-): string[] {
+): SceneLabel[] {
     const anchors: string[] = [PAGE_ONE_KEY];
     for (const b of breaks) {
         // Empty pages anchor to the orphan lock's anchorId. Real pages anchor
@@ -671,8 +677,7 @@ function computePageLabels(
         // so the label-computer still produces a usable result.
         anchors.push(b.anchorId ?? `__break_${b.pos}_${b.pagenum}__`);
     }
-    const labels = computeSceneLabels(anchors, pageLocks, "suffix", skippedLetters);
-    return labels.map((l) => l.label);
+    return computeSceneLabels(anchors, pageLocks, "suffix", skippedLetters);
 }
 
 const createPaginationPlugin = (extension: {
@@ -783,7 +788,6 @@ const createPaginationPlugin = (extension: {
                 // with the same locked label until the dedup transaction fires.
                 const consumedAnchors = new Set<string>();
                 const skippedLetters = options.getSkippedLetters?.() ?? [];
-                const scenesMap = options.getScenes?.() ?? null;
 
                 const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
                 const breaks: PageBreakInfo[] = [];
@@ -795,14 +799,6 @@ const createPaginationPlugin = (extension: {
                 // Tracks the most recent Character cue text so we can label split-dialogue breaks
                 // with "CHARACTER (CONT'D)" on the next page.
                 let lastCharName = "";
-
-                // Tracks whether the currently-open scene is OMITTED. Body
-                // paragraphs under an omitted scene are hidden via decorations
-                // (display:none) but still present in the document — pagination
-                // must mirror the visual collapse by treating them as zero-
-                // height, otherwise the page they sit on appears short while
-                // the layout still allocates their original height.
-                let currentSceneOmitted = false;
 
                 // Set when the short-circuit exits the per-node loop early.
                 // pagePos at that point reflects only the carry node(s) sitting
@@ -846,15 +842,6 @@ const createPaginationPlugin = (extension: {
                     }
 
                     const dataId: string | undefined = node.attrs["data-id"];
-
-                    // Update the omitted-scene flag at each Scene boundary. Body
-                    // paragraphs that follow stay flagged until the next Scene
-                    // resets it. Scene headings themselves always render (with
-                    // the OMITTED overlay sitting on top) so their height is
-                    // kept regardless.
-                    if (nodeType === ScreenplayElement.Scene) {
-                        currentSceneOmitted = !!(scenesMap && dataId && scenesMap[dataId]?.omitted);
-                    }
 
                     // --- Force page break for "start new page" elements ---
                     // If this node type is configured to start a new page and we're
@@ -944,23 +931,15 @@ const createPaginationPlugin = (extension: {
                         }
                     }
 
-                    // Omitted-scene body paragraphs are visually hidden by
-                    // scene-locking decorations (display:none) but still live in
-                    // the document. Treat them as zero-height so pagination
-                    // matches what the user actually sees on the page. The
-                    // measured height stays cached for cheap restoration when
-                    // the scene is un-omitted.
-                    const effectiveHeight = currentSceneOmitted && nodeType !== ScreenplayElement.Scene ? 0 : height;
-
                     // Accumulate height on current page
-                    pagePos += effectiveHeight;
+                    pagePos += height;
 
                     // We keep the last 3 nodes for orphan resolution on page break
                     lastNodes.push({
                         pos,
                         type: nodeType,
-                        height: effectiveHeight,
-                        positionTop: pagePos - effectiveHeight,
+                        height,
+                        positionTop: pagePos - height,
                         dataId,
                     });
 
@@ -1118,168 +1097,29 @@ const createPaginationPlugin = (extension: {
                 // short-circuit condition guarantees content past that break
                 // is identical to the previous pass, so the previously stored
                 // freespace is still the correct answer.
-                let lastPageFreespace = shortCircuited ? value.lastPageFreespace : Math.max(0, contentHeight - pagePos);
+                const lastPageFreespace = shortCircuited
+                    ? value.lastPageFreespace
+                    : Math.max(0, contentHeight - pagePos);
 
-                // --- Orphan page handling ---
-                // A locked page whose anchor data-id is no longer present in the doc
-                // becomes an "orphan" — we insert a synthetic empty-page break so the
-                // page still appears in the layout (preserving its locked number).
-                // Orphans are placed at the doc position of the next surviving lock
-                // (or doc end) and consume a full content-height of vertical space.
+                // --- Orphan page collection ---
+                // A locked page whose anchor data-id is no longer present in the
+                // doc is an "orphan" — e.g. the user emptied a locked page and
+                // collapsed it (see PAGE_COLLAPSE_META), or a collaborator's edit
+                // removed its anchor. Its frozen number must not vanish, so its
+                // token is folded into the FOLLOWING surviving page as a range
+                // ("5-6") — or reclaimed by a provisional page grown into the
+                // gap — by the absorb pipeline below, exactly like an omitted
+                // scene's removed pages.
+                const orphanTokens: SceneToken[] = [];
                 if (pageLocks) {
                     const seenAnchors = new Set<string>();
                     for (const b of breaks) {
                         if (b.anchorId) seenAnchors.add(b.anchorId);
                     }
-
-                    // Tokens for ordered comparison. Provisional pages (no token in
-                    // the lock map) aren't relevant here — only locked entries can be
-                    // orphans. We need the orphan list in TOKEN order so insertions
-                    // happen at the right spots.
-                    type OrphanEntry = { anchorId: string; token: SceneToken };
-                    const orphans: OrphanEntry[] = [];
                     for (const [anchorId, page] of Object.entries(pageLocks)) {
-                        if (anchorId === PAGE_ONE_KEY) continue;
-                        if (!page?.token) continue;
+                        if (anchorId === PAGE_ONE_KEY || !page?.token) continue;
                         if (seenAnchors.has(anchorId)) continue;
-                        orphans.push({ anchorId, token: page.token });
-                    }
-
-                    if (orphans.length > 0) {
-                        // Build an ordered list of live-locked anchors keyed by token,
-                        // so we can find the "next live lock after orphan X" quickly.
-                        type LiveLock = { anchorId: string; token: SceneToken; pos: number };
-                        const liveLocks: LiveLock[] = [];
-                        for (const b of breaks) {
-                            if (!b.anchorId) continue;
-                            const lock = pageLocks[b.anchorId];
-                            if (lock?.token) liveLocks.push({ anchorId: b.anchorId, token: lock.token, pos: b.pos });
-                        }
-                        liveLocks.sort((a, b) => compareTokens(a.token, b.token));
-                        orphans.sort((a, b) => compareTokens(a.token, b.token));
-
-                        const docSize = newState.doc.content.size;
-
-                        for (const orphan of orphans) {
-                            // Token-gap segment this orphan belongs in: bounded by the
-                            // greatest live lock with a smaller token (prev) and the
-                            // smallest live lock with a larger token (next). Positions
-                            // of those bounding locks define the doc-position window
-                            // where this orphan can be slotted in.
-                            let prevLive: LiveLock | null = null;
-                            let nextLive: LiveLock | null = null;
-                            for (const l of liveLocks) {
-                                if (compareTokens(l.token, orphan.token) < 0) {
-                                    if (!prevLive || compareTokens(prevLive.token, l.token) < 0) {
-                                        prevLive = l;
-                                    }
-                                } else if (compareTokens(l.token, orphan.token) > 0) {
-                                    if (!nextLive || compareTokens(l.token, nextLive.token) < 0) {
-                                        nextLive = l;
-                                    }
-                                }
-                            }
-                            const segmentStart = prevLive?.pos ?? 0;
-                            const segmentEnd = nextLive?.pos ?? docSize;
-
-                            // First try to consume an existing provisional break inside
-                            // this segment. That break is the natural overflow from the
-                            // previous page — by re-anchoring it to the orphan, we make
-                            // the overflow content flow INTO the empty deleted-page slot
-                            // (Final Draft-style) instead of producing a phantom A page
-                            // alongside a separately-rendered empty page.
-                            let consumed = false;
-                            for (let j = 0; j < breaks.length; j++) {
-                                const b = breaks[j];
-                                if (b.pos < segmentStart) continue;
-                                if (b.pos >= segmentEnd) break;
-                                const bLock = b.anchorId ? pageLocks[b.anchorId] : undefined;
-                                if (bLock?.token) continue; // already a locked break — skip
-                                // Provisional in the orphan's segment: reassign anchorId
-                                // so the label flips from "NA" to the orphan's frozen label.
-                                b.anchorId = orphan.anchorId;
-                                liveLocks.push({
-                                    anchorId: orphan.anchorId,
-                                    token: orphan.token,
-                                    pos: b.pos,
-                                });
-                                liveLocks.sort((a, b) => compareTokens(a.token, b.token));
-                                consumed = true;
-                                break;
-                            }
-
-                            if (consumed) continue;
-
-                            // No provisional to absorb the orphan — fall back to a
-                            // synthetic empty-page break at the segment's end position.
-                            //
-                            // Insert index walks the breaks list. We want the synthetic
-                            // to land at segmentEnd, AFTER any break at the same pos
-                            // whose token is smaller (so multiple orphans at one
-                            // segmentEnd line up in token order: orphan-2, orphan-3,
-                            // then the live lock that bounds the segment).
-                            let insertIdx = breaks.length;
-                            for (let j = 0; j < breaks.length; j++) {
-                                const b = breaks[j];
-                                if (b.pos > segmentEnd) {
-                                    insertIdx = j;
-                                    break;
-                                }
-                                if (b.pos === segmentEnd) {
-                                    const bLock = b.anchorId ? pageLocks[b.anchorId] : undefined;
-                                    if (bLock?.token && compareTokens(orphan.token, bLock.token) < 0) {
-                                        insertIdx = j;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // Freespace transfer: the synthetic empty page's widget
-                            // renders the prev→empty transition (footer of previous
-                            // page + chrome + empty content area). For the previous
-                            // page to keep its full height, the synthetic must absorb
-                            // its bottom freespace. That freespace currently lives on
-                            // the break that the synthetic is being inserted BEFORE
-                            // (either a lock force-break at the same pos, or the last-
-                            // page widget at doc end). Transfer it, then zero out the
-                            // donor — its "previous page" is now the empty synthetic,
-                            // which already gets a full `contentHeight` slot, so no
-                            // additional freespace is needed there.
-                            let syntheticFreespace = 0;
-                            if (insertIdx < breaks.length && breaks[insertIdx].pos === segmentEnd) {
-                                syntheticFreespace = breaks[insertIdx].freespace;
-                                breaks[insertIdx].freespace = 0;
-                            } else if (insertIdx === breaks.length) {
-                                // Doc end — the synthetic is the new "last empty page",
-                                // and the existing last-page widget would have padded
-                                // out the freespace below the previous real page.
-                                // Transfer that to the synthetic.
-                                syntheticFreespace = lastPageFreespace;
-                                lastPageFreespace = 0;
-                            }
-
-                            const synthetic: PageBreakInfo = {
-                                pos: segmentEnd,
-                                pagenum: 0, // re-numbered below
-                                freespace: syntheticFreespace,
-                                contdName: "",
-                                splitNodeType: null,
-                                anchorId: orphan.anchorId,
-                                isEmpty: true,
-                            };
-                            breaks.splice(insertIdx, 0, synthetic);
-                            liveLocks.push({
-                                anchorId: orphan.anchorId,
-                                token: orphan.token,
-                                pos: segmentEnd,
-                            });
-                            liveLocks.sort((a, b) => compareTokens(a.token, b.token));
-                        }
-
-                        // Renumber pagenums after insertions (synthetic breaks have pagenum: 0).
-                        for (let i = 0; i < breaks.length; i++) {
-                            breaks[i].pagenum = i + 2; // page 1 has no break; first break starts page 2.
-                        }
+                        orphanTokens.push(page.token);
                     }
                 }
 
@@ -1289,13 +1129,127 @@ const createPaginationPlugin = (extension: {
                 // (e.g. "4A"), and pages past the last lock continue the integer sequence.
                 let firstPageLabel = "1";
                 if (pageLocks) {
-                    const labels = computePageLabels(breaks, pageLocks, skippedLetters);
-                    firstPageLabel = labels[0];
+                    // Omitted scenes collapse whole locked pages out of the
+                    // document. Each such removed page contributes an "absorbed"
+                    // token we must keep visible so the numbering doesn't jump
+                    // ("14" then "16"). Two outcomes per token, decided below:
+                    //   1. RECLAIM — if content has grown a provisional (unlocked)
+                    //      page back into the gap where the token belongs, hand the
+                    //      token to that page so it becomes a real numbered page
+                    //      again ("15"). This is what lets a collapsed "15-16"
+                    //      revert to a fresh "15" + "16" as the user types.
+                    //   2. FOLD — no provisional page available: fold the token
+                    //      into the FOLLOWING surviving page as the low end of a
+                    //      range. Deleting page 15 makes the next page read
+                    //      "15-16"; deleting 14 too makes it "14-16".
+                    // Two sources feed this: omitted scenes (their locks were
+                    // deleted from the map; tokens come via getOmittedPages) and
+                    // orphan locks still in the map (collapsed/deleted pages).
+                    const absorbed = [...(options.getOmittedPages?.() ?? []), ...orphanTokens].sort(compareTokens);
+
+                    // Per-page frozen token (null for provisional pages). Page 0
+                    // is page 1 (PAGE_ONE_KEY); page p>0 starts at breaks[p-1].
+                    const pageCount = breaks.length + 1;
+                    const lockedTok: (SceneToken | null)[] = new Array(pageCount);
+                    for (let p = 0; p < pageCount; p++) {
+                        const anchor = p === 0 ? PAGE_ONE_KEY : breaks[p - 1].anchorId;
+                        lockedTok[p] = (anchor ? pageLocks[anchor]?.token : undefined) ?? null;
+                    }
+
+                    const synthetic: Record<string, { token: SceneToken }> = {};
+                    const leftover: SceneToken[] = [];
+                    if (absorbed.length > 0) {
+                        // Nearest locked token before / after each page, so we can
+                        // tell which gap a provisional page sits in.
+                        const prevLockedArr: (SceneToken | null)[] = new Array(pageCount);
+                        const nextLockedArr: (SceneToken | null)[] = new Array(pageCount);
+                        let seen: SceneToken | null = null;
+                        for (let p = 0; p < pageCount; p++) {
+                            prevLockedArr[p] = seen;
+                            if (lockedTok[p]) seen = lockedTok[p];
+                        }
+                        seen = null;
+                        for (let p = pageCount - 1; p >= 0; p--) {
+                            nextLockedArr[p] = seen;
+                            if (lockedTok[p]) seen = lockedTok[p];
+                        }
+
+                        const consumed = new Set<number>();
+                        for (const t of absorbed) {
+                            let placed = false;
+                            // Page 0 is page 1 and never reclaims an absorbed
+                            // number; start at the first real break.
+                            for (let p = 1; p < pageCount; p++) {
+                                if (consumed.has(p) || lockedTok[p]) continue;
+                                const before = prevLockedArr[p];
+                                const after = nextLockedArr[p];
+                                // Provisional page p is in t's gap when t sorts
+                                // strictly between the locks bounding p.
+                                if (
+                                    (before === null || compareTokens(before, t) < 0) &&
+                                    (after === null || compareTokens(t, after) < 0)
+                                ) {
+                                    const anchor = breaks[p - 1].anchorId;
+                                    if (anchor) {
+                                        synthetic[anchor] = { token: t };
+                                        consumed.add(p);
+                                        placed = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!placed) leftover.push(t);
+                        }
+                    }
+
+                    // Reclaimed pages join the lock map for label computation so
+                    // they get their absorbed number (and following provisional
+                    // pages suffix off it: "18", "18A", …).
+                    const labelLocks =
+                        Object.keys(synthetic).length > 0 ? { ...pageLocks, ...synthetic } : pageLocks;
+                    const pageLabels = computePageLabels(breaks, labelLocks, skippedLetters);
+
+                    // Fold the unreclaimed tokens into the FOLLOWING surviving
+                    // page — the first page whose token is larger — so the
+                    // removed number becomes the low end of that page's range
+                    // ("15-16", then "14-16" as more are removed). A removed
+                    // page past the last surviving page has no follower; it
+                    // falls back to the last page as the high end instead.
+                    if (leftover.length > 0) {
+                        const alphabet = buildSceneAlphabet(skippedLetters);
+                        const bucket = new Map<number, SceneToken[]>();
+                        for (const t of leftover) {
+                            let attach = pageLabels.length - 1;
+                            for (let p = 0; p < pageLabels.length; p++) {
+                                if (compareTokens(pageLabels[p].token, t) > 0) {
+                                    attach = p;
+                                    break;
+                                }
+                            }
+                            const list = bucket.get(attach);
+                            if (list) list.push(t);
+                            else bucket.set(attach, [t]);
+                        }
+                        // A page's range spans the min..max of its own token plus
+                        // every number it absorbed — "14-16" for own 16 absorbing
+                        // 14 and 15, "14-15" for a trailing own 14 absorbing 15.
+                        for (const [p, tokens] of bucket) {
+                            let lo = pageLabels[p].token;
+                            let hi = pageLabels[p].token;
+                            for (const t of tokens) {
+                                if (compareTokens(t, lo) < 0) lo = t;
+                                if (compareTokens(t, hi) > 0) hi = t;
+                            }
+                            const loLabel = compileSceneLabel(lo, alphabet);
+                            const hiLabel = compileSceneLabel(hi, alphabet);
+                            pageLabels[p].label = loLabel === hiLabel ? loLabel : `${loLabel}-${hiLabel}`;
+                        }
+                    }
+
+                    firstPageLabel = pageLabels[0].label;
                     for (let i = 0; i < breaks.length; i++) {
-                        const label = labels[i + 1];
-                        const prevLabel = labels[i];
-                        breaks[i].label = label;
-                        breaks[i].prevLabel = prevLabel;
+                        breaks[i].label = pageLabels[i + 1].label;
+                        breaks[i].prevLabel = pageLabels[i].label;
                     }
                 }
 
@@ -1315,9 +1269,29 @@ const createPaginationPlugin = (extension: {
                             !!b.isEmpty !== !!mappedOldBreaks[i].isEmpty,
                     );
 
-                const decset = breaksChanged
-                    ? buildDecorations(newState.doc, breaks, lastPageFreespace, firstPageLabel, options)
-                    : value.decset.map(tr.mapping, tr.doc);
+                let decset: DecorationSet;
+                if (breaksChanged) {
+                    decset = buildDecorations(newState.doc, breaks, lastPageFreespace, firstPageLabel, options);
+                } else {
+                    // Fast path: the set of breaks is unchanged, so remap the
+                    // existing decorations instead of rebuilding. This matters for
+                    // long scripts — a rebuild re-creates every break widget's DOM
+                    // subtree on each keystroke (hundreds of throwaway elements on a
+                    // 200-page doc), whereas `map` just re-anchors the existing set.
+                    const mapped = value.decset.map(tr.mapping, tr.doc);
+                    // BUT `DecorationSet.map` silently drops a *widget* whose anchor
+                    // sits at a position a replace step touches — e.g. editing a
+                    // page's last node, which hosts the following page break at its
+                    // trailing boundary (realigning it or re-applying its element
+                    // type with no height change keeps `breaks` identical, so we land
+                    // here). The lost break makes the next page merge upward into a
+                    // too-tall page. `map` never adds decorations, so a drop shows up
+                    // as a smaller count — only then do we pay for a full rebuild.
+                    decset =
+                        mapped.find().length === value.decset.find().length
+                            ? mapped
+                            : buildDecorations(newState.doc, breaks, lastPageFreespace, firstPageLabel, options);
+                }
 
                 return { decset, breaks, lastPageFreespace, firstPageLabel };
             },
@@ -1329,10 +1303,10 @@ const createPaginationPlugin = (extension: {
             // Page-lock guard: prevent content from spilling upward out of a
             // locked page. The signature of that spill — Backspace at the
             // start of a locked anchor, Delete at the end of the node before
-            // it, or a selection delete that swallows the anchor — is the
-            // locked anchor's data-id disappearing from the top-level node
-            // list. If that would happen, reject the transaction so the
-            // cursor stays put and no content moves across the lock.
+            // it, or a selection delete that swallows the anchor — is a locked
+            // anchor's data-id disappearing as a RESULT of this transaction. If
+            // that would happen, reject it so the cursor stays put and no
+            // content moves across the lock.
             if (!tr.docChanged) return true;
 
             // Allow yjs sync (remote updates and yjs-based undo/redo) through
@@ -1340,6 +1314,16 @@ const createPaginationPlugin = (extension: {
             // local lock enforcement, and the lock map itself lives in the
             // Yjs doc so peers agree on which pages are locked.
             if (tr.getMeta(ySyncPluginKey)) return true;
+
+            // Scene omit/unomit removes (or restores) an entire scene and
+            // re-homes any page locks inside it, so it is allowed to make a
+            // locked anchor's data-id disappear. See SCENE_OMIT_META.
+            if (tr.getMeta(SCENE_OMIT_META)) return true;
+
+            // Collapsing an emptied locked page deliberately deletes that page's
+            // (now empty) anchor node and merges the cursor up to the previous
+            // page. See PAGE_COLLAPSE_META and the Backspace handler.
+            if (tr.getMeta(PAGE_COLLAPSE_META)) return true;
 
             const opts = extension.options as PaginationOptions;
             if (!opts.getPageLocking?.()) return true;
@@ -1355,13 +1339,36 @@ const createPaginationPlugin = (extension: {
             }
             if (lockedAnchors.length === 0) return true;
 
-            const present = new Set<string>();
+            // Fast path: scan the resulting doc once. If every locked anchor is
+            // still present, nothing crossed a lock — allow it. This is the
+            // common case on every keystroke.
+            const after = new Set<string>();
             tr.doc.forEach((node) => {
                 const dataId = node.attrs?.["data-id"];
-                if (typeof dataId === "string") present.add(dataId);
+                if (typeof dataId === "string") after.add(dataId);
+            });
+            let someMissing = false;
+            for (const anchor of lockedAnchors) {
+                if (!after.has(anchor)) {
+                    someMissing = true;
+                    break;
+                }
+            }
+            if (!someMissing) return true;
+
+            // A locked anchor is missing from the result. Only reject if THIS
+            // transaction is what removed it (present before, gone after). An
+            // anchor that was already gone (an orphan-collapsed page whose lock
+            // lingers in the map so its number is absorbed) must not block
+            // further edits — otherwise every keystroke after a collapse would
+            // be rejected.
+            const before = new Set<string>();
+            tr.before.forEach((node) => {
+                const dataId = node.attrs?.["data-id"];
+                if (typeof dataId === "string") before.add(dataId);
             });
             for (const anchor of lockedAnchors) {
-                if (!present.has(anchor)) return false;
+                if (before.has(anchor) && !after.has(anchor)) return false;
             }
             return true;
         },
@@ -1592,6 +1599,28 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
 
                 const curStart = $from.before();
                 if (curStart === 0) return false;
+
+                // Collapse case: the current block is itself a locked page anchor
+                // and is now empty (the page's last element was just deleted).
+                // Default joinBackward would remove the anchor's data-id and the
+                // guard would reject it, leaving a blank page with a stranded
+                // empty node. Instead delete the empty anchor node and drop the
+                // cursor at the end of the previous page. The lock stays in the
+                // map as an orphan so the page's frozen number is absorbed into
+                // the following page as a range (e.g. "5-6") rather than vanishing.
+                const curDataId = $from.parent.attrs?.["data-id"];
+                if (
+                    $from.parent.textContent.length === 0 &&
+                    typeof curDataId === "string" &&
+                    pageLocks[curDataId]
+                ) {
+                    const tr = state.tr;
+                    tr.delete(curStart, $from.after());
+                    tr.setSelection(TextSelection.create(tr.doc, curStart - 1));
+                    tr.setMeta(PAGE_COLLAPSE_META, true);
+                    view.dispatch(tr);
+                    return true;
+                }
 
                 const prev = state.doc.resolve(curStart).nodeBefore;
                 if (!prev || prev.textContent.length !== 0) return false;

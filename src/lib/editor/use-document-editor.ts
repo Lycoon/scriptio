@@ -31,7 +31,7 @@ import {
     createSceneLockingExtension,
     refreshSceneLocking,
 } from "@src/lib/screenplay/extensions/scene-locking-extension";
-import { SCENE_OMIT_UNDO_ORIGIN } from "@src/lib/screenplay/scene-locking";
+import { computeAbsorbedPageTokens, SCENE_OMIT_UNDO_ORIGIN } from "@src/lib/screenplay/scene-locking";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
@@ -372,7 +372,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                               getPageLocking: () => !!ext.pageLocking,
                               getPageLocks: () => ext.persistentPages ?? {},
                               getSkippedLetters: () => ext.skippedSceneLetters ?? [],
-                              getScenes: () => ext.repository?.scenes ?? {},
+                              getOmittedPages: () => computeAbsorbedPageTokens(ext.repository?.scenes ?? {}),
                           }
                         : {
                               pageGap: 20,
@@ -558,8 +558,12 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     // track only the editor XmlFragment (scope) and only `ySyncPluginKey`
     // (origin), and y-tiptap's stack-item-popped fires AFTER the undo
     // transaction commits — so a few tweaks are needed:
-    //   - addToScope(scenes): scene metadata lives in a separate Y.Map; without
-    //     this the UndoManager silently ignores every mutation to it.
+    //   - addToScope(scenes, pages): scene metadata and page locks each live in
+    //     a separate Y.Map; without this the UndoManager silently ignores every
+    //     mutation to them. Pages must be in scope too — omit deletes in-body
+    //     page locks and re-homes the successor lock, and undo must revert those
+    //     alongside the doc edit, otherwise the restored body's anchor stays
+    //     unlocked and a phantom page appears (undo would differ from Unomit).
     //   - trackedOrigins.add(SCENE_OMIT_UNDO_ORIGIN): omit/unomit bundle a PM
     //     dispatch and a Map.set into one Yjs transaction tagged with this
     //     symbol so Ctrl+Z reverts both halves atomically.
@@ -576,7 +580,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
 
         const um = yUndoState.undoManager;
         const binding = ySyncState.binding;
-        um.addToScope([projectState.scenes()]);
+        um.addToScope([projectState.scenes(), projectState.pages()]);
         um.trackedOrigins.add(SCENE_OMIT_UNDO_ORIGIN);
 
         const originalUndo = um.undo.bind(um);
@@ -629,18 +633,13 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     // Refresh pagination when page locking or the page-lock map changes.
     // Pagination only reads these via getter closures on its options, so
     // we must explicitly kick it to re-run; otherwise stale labels render
-    // until the user types.
-    //
-    // persistentScenes is included so toggling a scene's `omitted` flag
-    // re-runs pagination immediately: omitted body paragraphs collapse to
-    // zero height in the layout (mirroring the visual display:none from
-    // scene-locking-extension), so the page they sit on must shrink/grow
-    // without waiting for the next keystroke.
+    // until the user types. (Omitting a scene re-homes locks in this map, so
+    // this also covers the omitted-scene case.)
     useEffect(() => {
         if (editor && config.features.paginationMode === "screenplay") {
             refreshPageLocking(editor);
         }
-    }, [editor, pageLocking, persistentPages, persistentScenes, skippedSceneLetters, config.features.paginationMode]);
+    }, [editor, pageLocking, persistentPages, skippedSceneLetters, config.features.paginationMode]);
 
     // Refresh search highlights
     useEffect(() => {

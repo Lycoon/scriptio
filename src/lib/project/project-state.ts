@@ -38,6 +38,8 @@ export type {
     BoardCardData,
     BoardArrowData,
     BoardData,
+    DocumentNode,
+    DocumentNodeType,
     ProjectData,
     TypedMap,
 } from "./project-doc";

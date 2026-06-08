@@ -35,7 +35,7 @@ interface ArrowContextMenuState {
     arrow: BoardArrowData;
 }
 
-const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
+const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }) => {
     const { repository, isYjsReady, isReadOnly } = useContext(ProjectContext);
     const t = useTranslations("board");
     const projectState = repository?.getState();
@@ -125,7 +125,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     useEffect(() => {
         if (!projectState || !isYjsReady) return;
 
-        const boardMap = projectState.board();
+        const boardMap = projectState.boardData(docId);
 
         const syncCards = () => {
             const cardsData = boardMap.get("cards");
@@ -176,26 +176,26 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         return () => {
             boardMap.unobserve(syncCards);
         };
-    }, [projectState, isYjsReady, centerCameraOnCards]);
+    }, [projectState, isYjsReady, docId, centerCameraOnCards]);
 
     // Save cards to Yjs
     const saveCards = useCallback(
         (newCards: BoardCardData[]) => {
             if (!projectState || !isYjsReady || isReadOnly) return;
-            const boardMap = projectState.board();
+            const boardMap = projectState.boardData(docId);
             boardMap.set("cards", JSON.stringify(newCards));
         },
-        [projectState, isYjsReady, isReadOnly],
+        [projectState, isYjsReady, isReadOnly, docId],
     );
 
     // Save arrows to Yjs
     const saveArrows = useCallback(
         (newArrows: BoardArrowData[]) => {
             if (!projectState || !isYjsReady || isReadOnly) return;
-            const boardMap = projectState.board();
+            const boardMap = projectState.boardData(docId);
             boardMap.set("arrows", JSON.stringify(newArrows));
         },
-        [projectState, isYjsReady, isReadOnly],
+        [projectState, isYjsReady, isReadOnly, docId],
     );
 
     // Handle keyboard events for snapping

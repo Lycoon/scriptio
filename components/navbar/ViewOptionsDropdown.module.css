@@ -68,9 +68,14 @@
         color 0.15s ease;
 }
 
-.dropdown_item:hover {
+.dropdown_item:hover:not(:disabled) {
     background-color: var(--secondary-hover);
     color: var(--primary-text);
+}
+
+.dropdown_item:disabled {
+    opacity: 0.4;
+    cursor: default;
 }
 
 .dropdown_item_active {

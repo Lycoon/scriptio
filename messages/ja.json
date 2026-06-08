@@ -13,6 +13,7 @@
     "focusMode": "集中モード",
     "splitPanel": "パネルを分割",
     "unsplitPanel": "パネルを閉じる",
+    "swapPanels": "パネルを入れ替え",
     "draftEditor": "下書きエディター",
     "viewOnly": "閲覧のみ",
     "viewOnlyHint": "閲覧者アクセスです。編集は無効になっています。"
@@ -210,7 +211,19 @@
     "scenesEmpty": "まだシーンはありません",
     "comments": "コメント",
     "commentsEmpty": "アクティブなコメントはありません",
-    "shelfEmptySelection": "編集するシェルフのバージョンを選択してください"
+    "shelfEmptySelection": "編集するシェルフのバージョンを選択してください",
+    "documents": "ドキュメント",
+    "documentsEmpty": "ドキュメントがありません",
+    "newFolder": "新しいフォルダ",
+    "newDocument": "新しいドキュメント",
+    "newBoard": "新しいボード",
+    "untitledFolder": "新しいフォルダ",
+    "untitledDocument": "無題",
+    "boardTitle": "ボード",
+    "rename": "名前を変更",
+    "delete": "削除",
+    "confirmDelete": "このドキュメントを削除しますか？",
+    "confirmDeleteFolder": "フォルダとその内容を削除しますか？"
   },
   "formatDropdown": {
     "elements": {

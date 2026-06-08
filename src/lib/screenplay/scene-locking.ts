@@ -45,11 +45,12 @@
  * Together these give:  1 < 1aA < 1A < 1AA < 1AB < 1B < 2.
  */
 
-import type { Editor } from "@tiptap/core";
+import type { Editor, JSONContent } from "@tiptap/core";
 import type { Node } from "@tiptap/pm/model";
 
 import type { ProjectRepository } from "../project/project-repository";
 import { ScreenplayElement } from "../utils/enums";
+import { SCENE_OMIT_META } from "./page-locking";
 
 const OMITTED_HEADING_TEXT = "OMITTED";
 
@@ -469,6 +470,50 @@ export const computeSceneLabels = (
     return result;
 };
 
+/**
+ * Minimal shape of a persistent scene needed to derive absorbed page numbers.
+ * `PersistentScene` is structurally compatible; typed locally to avoid a
+ * circular import with `scenes.ts` (which imports from this module).
+ */
+type OmittableScene = {
+    omitted?: boolean;
+    omittedPageLocks?: { token: SceneToken }[];
+    reanchoredSuccessor?: string;
+};
+
+/**
+ * Collect the page tokens of locked pages that an omitted scene removed from
+ * the document but that could NOT be re-homed onto a following scene.
+ *
+ * Omitting a scene whose body fills one or more locked pages deletes those
+ * pages' locks. `omitSceneByUuid` re-homes the *earliest* such lock onto the
+ * next scene heading when that heading isn't itself locked, so it survives as
+ * a real page; every other removed page would otherwise vanish, leaving a gap
+ * in the numbering (e.g. "4" then "6"). These leftover tokens are returned so
+ * pagination can fold them into the preceding surviving page as a combined
+ * range label ("4-5") instead of dropping them.
+ */
+export const computeAbsorbedPageTokens = (
+    scenes: Record<string, OmittableScene | undefined>,
+): SceneToken[] => {
+    const out: SceneToken[] = [];
+    for (const scene of Object.values(scenes)) {
+        if (!scene?.omitted) continue;
+        const locks = scene.omittedPageLocks;
+        if (!locks || locks.length === 0) continue;
+        const tokens = locks.map((l) => l.token);
+        if (scene.reanchoredSuccessor) {
+            // The earliest lock was re-homed onto the following scene heading,
+            // so it survives as a real page — only the remaining locks collapsed.
+            const min = tokens.reduce((m, t) => (compareTokens(t, m) < 0 ? t : m), tokens[0]);
+            for (const t of tokens) if (compareTokens(t, min) !== 0) out.push(t);
+        } else {
+            out.push(...tokens);
+        }
+    }
+    return out;
+};
+
 // --------------------------------------------------------------------------
 //                              ACTIONS
 // --------------------------------------------------------------------------
@@ -491,14 +536,18 @@ const findSceneHeadingByUuid = (
 };
 
 /**
- * Mark a scene as OMITTED. The heading's current text is saved into the
- * scene's `originalHeading` metadata and the heading content in the
- * document is replaced with "OMITTED" — so the heading remains a normal
- * editable paragraph (cursor + Enter behave naturally) while the body
- * paragraphs are still visually collapsed via decorations.
+ * Mark a scene as OMITTED. The heading text is replaced with "OMITTED" (the
+ * original is saved in `originalHeading`) and the scene's body is *cut out of
+ * the document* and parked in `omittedBody` as serialized ProseMirror JSON.
  *
- * Both the document edit and the metadata update are wrapped in a single
- * Yjs transaction so Ctrl+Z reverts them atomically.
+ * Removing the body — rather than hiding it in place — means an omitted scene
+ * is just a one-line heading as far as the rest of the editor is concerned:
+ * pagination, PDF export and decorations need no special "omitted body" path.
+ * The body's nodes keep their attrs (including `data-id`) so unomit restores
+ * them verbatim.
+ *
+ * Both the document edit and the metadata update are wrapped in a single Yjs
+ * transaction so Ctrl+Z reverts them atomically.
  */
 export const omitSceneByUuid = (
     editor: Editor,
@@ -508,20 +557,83 @@ export const omitSceneByUuid = (
     const heading = findSceneHeadingByUuid(editor, uuid);
     if (!heading) return;
 
+    const doc = editor.state.doc;
     const currentText = heading.node.textContent;
+    const headingEnd = heading.pos + heading.node.nodeSize;
+
+    // The body runs from the end of this heading to the next scene heading (or
+    // the end of the document).
+    let bodyEnd = doc.content.size;
+    doc.forEach((node, pos) => {
+        if (pos > heading.pos && bodyEnd === doc.content.size && node.attrs?.class === ScreenplayElement.Scene) {
+            bodyEnd = pos;
+        }
+    });
+
+    // Snapshot the body as JSON before it is removed.
+    const omittedBody: JSONContent[] = [];
+    doc.forEach((node, pos) => {
+        if (pos >= headingEnd && pos < bodyEnd) omittedBody.push(node.toJSON());
+    });
+
+    // If the body crosses one or more locked page breaks, its locked anchor
+    // nodes are about to be removed. Collect them, then re-home the earliest
+    // (lowest) lock onto the following scene heading so that scene stays pinned
+    // to its locked page (no content spills upward); the rest collapse. The
+    // originals are saved so unomit can restore the exact locked layout.
+    const pageLocks = repository.pages;
+    const omittedPageLocks: { anchorId: string; token: SceneToken; splitOffset?: number }[] = [];
+    doc.forEach((node, pos) => {
+        if (pos < headingEnd || pos >= bodyEnd) return;
+        const id = node.attrs?.["data-id"] as string | undefined;
+        const lock = id ? pageLocks[id] : undefined;
+        if (id && lock?.token) omittedPageLocks.push({ anchorId: id, token: lock.token, splitOffset: lock.splitOffset });
+    });
+
+    const successorId =
+        bodyEnd < doc.content.size ? (doc.nodeAt(bodyEnd)?.attrs?.["data-id"] as string | undefined) : undefined;
+    const primaryToken = omittedPageLocks.reduce<SceneToken | undefined>(
+        (min, l) => (min === undefined || compareTokens(l.token, min) < 0 ? l.token : min),
+        undefined,
+    );
+    const reanchoredSuccessor =
+        primaryToken && successorId && !pageLocks[successorId]?.token ? successorId : undefined;
+
     repository.transact(() => {
+        // Re-home page locks before the doc edit so the layout settles cleanly.
+        for (const l of omittedPageLocks) repository.deletePage(l.anchorId);
+        if (reanchoredSuccessor && primaryToken) repository.upsertPage(reanchoredSuccessor, { token: primaryToken });
+
+        // Commit the scene metadata BEFORE dispatching the doc edit: pagination
+        // runs synchronously inside dispatch and reads the omitted-scene info
+        // (via computeAbsorbedPageTokens) to render the combined "4-5" range.
+        // Setting it first means the correct labels appear on the first pass —
+        // no flash of the gapped numbering that would otherwise show until the
+        // page-lock effect kicks a second recompute.
+        repository.upsertScene(uuid, {
+            omitted: true,
+            originalHeading: currentText,
+            omittedBody,
+            omittedPageLocks: omittedPageLocks.length > 0 ? omittedPageLocks : undefined,
+            reanchoredSuccessor,
+        });
+
+        const tr = editor.state.tr;
+        tr.setMeta(SCENE_OMIT_META, true);
+        // Delete the body first (it sits after the heading, so the heading's own
+        // positions stay valid), then swap in the OMITTED heading text.
+        if (bodyEnd > headingEnd) tr.delete(headingEnd, bodyEnd);
         const headingStart = heading.pos + 1;
-        const headingEnd = heading.pos + heading.node.nodeSize - 1;
-        const tr = editor.state.tr.insertText(OMITTED_HEADING_TEXT, headingStart, headingEnd);
+        const headingTextEnd = heading.pos + heading.node.nodeSize - 1;
+        tr.insertText(OMITTED_HEADING_TEXT, headingStart, headingTextEnd);
         editor.view.dispatch(tr);
-        repository.upsertScene(uuid, { omitted: true, originalHeading: currentText });
     }, SCENE_OMIT_UNDO_ORIGIN);
 };
 
 /**
- * Clear an OMITTED scene's flag and restore its original heading text from
- * `originalHeading` metadata. Inverse of `omitSceneByUuid`, batched in a
- * single Yjs transaction for atomic undo.
+ * Clear an OMITTED scene's flag, restore its original heading text, and
+ * re-insert its saved body right after the heading. Inverse of
+ * `omitSceneByUuid`, batched in a single Yjs transaction for atomic undo.
  */
 export const unomitSceneByUuid = (
     editor: Editor,
@@ -534,13 +646,43 @@ export const unomitSceneByUuid = (
     if (!heading) return;
 
     const restoreText = scene.originalHeading ?? "";
+    const bodyJSON = scene.omittedBody ?? [];
+    const savedPageLocks = scene.omittedPageLocks ?? [];
+    const reanchoredSuccessor = scene.reanchoredSuccessor;
+
     repository.transact(() => {
+        // Undo the omit's lock re-homing first: drop the lock parked on the
+        // successor heading, then restore the body's original locked anchors.
+        if (reanchoredSuccessor) repository.deletePage(reanchoredSuccessor);
+        for (const l of savedPageLocks) repository.upsertPage(l.anchorId, { token: l.token, splitOffset: l.splitOffset });
+
+        // Clear the omitted metadata BEFORE the doc edit so the pagination run
+        // inside dispatch no longer absorbs these (now-restored) page numbers
+        // into a range — mirrors the ordering in `omitSceneByUuid`.
+        repository.upsertScene(uuid, {
+            omitted: undefined,
+            originalHeading: undefined,
+            omittedBody: undefined,
+            omittedPageLocks: undefined,
+            reanchoredSuccessor: undefined,
+        });
+
+        const tr = editor.state.tr;
+        tr.setMeta(SCENE_OMIT_META, true);
         const headingStart = heading.pos + 1;
-        const headingEnd = heading.pos + heading.node.nodeSize - 1;
-        const tr = restoreText.length > 0
-            ? editor.state.tr.insertText(restoreText, headingStart, headingEnd)
-            : editor.state.tr.delete(headingStart, headingEnd);
+        const headingTextEnd = heading.pos + heading.node.nodeSize - 1;
+        if (restoreText.length > 0) tr.insertText(restoreText, headingStart, headingTextEnd);
+        else tr.delete(headingStart, headingTextEnd);
+
+        if (bodyJSON.length > 0) {
+            // Use the editor's own schema to rebuild nodes so they share its
+            // prosemirror-model instance (a bare `Node.fromJSON` can pull in a
+            // second copy of the model and fail the Fragment check).
+            const nodes = bodyJSON.map((json) => editor.schema.nodeFromJSON(json));
+            // Map the post-heading position through the heading-text edit above.
+            const insertPos = tr.mapping.map(heading.pos + heading.node.nodeSize);
+            tr.insert(insertPos, nodes);
+        }
         editor.view.dispatch(tr);
-        repository.upsertScene(uuid, { omitted: undefined, originalHeading: undefined });
     }, SCENE_OMIT_UNDO_ORIGIN);
 };

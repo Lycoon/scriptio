@@ -7,17 +7,18 @@ import { PanelType, useViewContext } from "@src/context/ViewContext";
 import EditorPanel from "@components/editor/EditorPanel";
 import TitlePagePanel from "@components/editor/TitlePagePanel";
 import DraftEditorPanel from "@components/editor/DraftEditorPanel";
-import BoardCanvas from "@components/board/BoardCanvas";
+import TreeDocumentPanel from "@components/editor/TreeDocumentPanel";
+import BoardPanel from "@components/editor/BoardPanel";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import {
     Archive,
+    ArrowLeftRight,
     ChevronLeft,
     ChevronRight,
     Clapperboard,
     FileText,
-    LayoutDashboard,
     Maximize,
     Menu,
     MessageSquare,
@@ -57,19 +58,22 @@ const PanelRenderer = ({
                 />
             );
         case "board":
-            return <BoardCanvas isVisible={isVisible} />;
+            return <BoardPanel isVisible={isVisible} />;
         case "statistics":
             return <StatisticsClientPage />;
         case "title":
             return <TitlePagePanel isVisible={isVisible} />;
         case "draft":
             return <DraftEditorPanel isVisible={isVisible} />;
+        case "document":
+            return <TreeDocumentPanel isVisible={isVisible} />;
     }
 };
 
+// Boards and tree documents are opened from the document-tree sidebar (they are
+// per-document), so they are not listed here.
 const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey: string }[] = [
     { type: "screenplay", icon: Clapperboard, labelKey: "screenplay" },
-    { type: "board", icon: LayoutDashboard, labelKey: "board" },
     { type: "title", icon: FileText, labelKey: "titlePage" },
     { type: "draft", icon: Archive, labelKey: "draftEditor" },
 ];
@@ -82,6 +86,7 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
         isSplit,
         primaryPanel,
         setSecondaryPanel,
+        swapPanels,
         isEndlessScroll,
         setIsEndlessScroll,
         showComments,
@@ -177,6 +182,17 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
                         {isSplit ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
                         <span className={dropdown.item_label}>{isSplit ? t("unsplitPanel") : t("splitPanel")}</span>
                     </button>
+                    <button
+                        className={dropdown.dropdown_item}
+                        onClick={() => {
+                            swapPanels();
+                            setIsOpen(false);
+                        }}
+                        disabled={!isSplit}
+                    >
+                        <ArrowLeftRight size={14} />
+                        <span className={dropdown.item_label}>{t("swapPanels")}</span>
+                    </button>
                     <div className={styles.panel_switcher_separator} />
                     {SWITCHABLE_PANELS.map(({ type, icon: Icon, labelKey }) => (
                         <button
@@ -239,7 +255,7 @@ const SplitPanelContainer = ({
         };
     }, [isSplit, splitRatio]);
 
-    const allPanels: PanelType[] = ["screenplay", "board", "statistics", "title", "draft"];
+    const allPanels: PanelType[] = ["screenplay", "board", "statistics", "title", "draft", "document"];
 
     return (
         <div className={styles.split_panel_container} style={gridStyle}>

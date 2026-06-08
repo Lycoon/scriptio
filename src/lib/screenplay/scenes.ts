@@ -72,6 +72,21 @@ export type PersistentScene = {
     omitted?: boolean;
     /** Original heading text saved when the scene was omitted, restored on unomit. */
     originalHeading?: string;
+    /** The scene's body nodes (serialized ProseMirror JSON) captured when the
+     *  scene was omitted. Omitting cuts the body out of the document and parks
+     *  it here; unomitting re-inserts it right after the heading. Keeping it out
+     *  of the document means an omitted scene paginates like a one-line heading
+     *  with no special handling. */
+    omittedBody?: JSONContent[];
+    /** Page locks whose anchor nodes lived inside the cut body, saved so unomit
+     *  can restore them. Only set when the omitted scene crossed a locked page
+     *  break. */
+    omittedPageLocks?: { anchorId: string; token: SceneToken; splitOffset?: number }[];
+    /** When the omitted scene crossed a locked page break, the lock is re-homed
+     *  onto the following scene heading (`reanchoredSuccessor`) so it stays
+     *  pinned to its locked page instead of spilling upward. unomit removes that
+     *  re-homed lock before restoring `omittedPageLocks`. */
+    reanchoredSuccessor?: string;
 };
 
 /**

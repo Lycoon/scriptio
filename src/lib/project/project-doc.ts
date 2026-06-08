@@ -169,6 +169,32 @@ export type BoardData = {
 };
 
 // -------------------------------- //
+//        DOCUMENT TREE             //
+// -------------------------------- //
+
+/** Kinds of nodes the user can create in the document hierarchy. */
+export type DocumentNodeType = "folder" | "editor" | "board";
+
+/**
+ * A node in the project's document hierarchy. The tree is stored flat in the
+ * `documents` Y.Map keyed by `id`; hierarchy is reconstructed from `parentId`,
+ * siblings ordered by ascending `order` (fractional float so moves never
+ * rewrite neighbours).
+ *
+ * - `editor` nodes own a dedicated Y.XmlFragment (`doc_<id>`).
+ * - `board` nodes own a dedicated board data map (`board_<id>`), read via
+ *   `boardData(id)`. Projects can hold any number of boards.
+ * - `folder` nodes just group children.
+ */
+export type DocumentNode = {
+    id: string;
+    type: DocumentNodeType;
+    title: string;
+    parentId: string | null;
+    order: number;
+};
+
+// -------------------------------- //
 //          PROJECT DATA            //
 // -------------------------------- //
 
@@ -180,7 +206,7 @@ export type ProjectData = {
     pages: Record<string, PersistentPage>;
     locations: Record<string, LocationItem>;
     metadata: ProjectMetadata;
-    board: BoardData;
+    documents?: Record<string, DocumentNode>;
     layout: LayoutData;
     production: ProductionData;
     comments?: Record<string, Comment>;
@@ -216,7 +242,7 @@ export class ProjectState extends Y.Doc {
         PAGES: "pages",
         LOCATIONS: "locations",
         METADATA: "metadata",
-        BOARD: "board",
+        DOCUMENTS: "documents",
         LAYOUT: "layout",
         PRODUCTION: "production",
         COMMENTS: "comments",
@@ -262,8 +288,19 @@ export class ProjectState extends Y.Doc {
         return this.getMap(this.KEYS.PAGES);
     }
 
-    board(): TypedMap<BoardData> {
-        return this.getMap(this.KEYS.BOARD) as unknown as TypedMap<BoardData>;
+    /** Document-hierarchy nodes (folders, editor docs, boards) keyed by node id. */
+    documents(): Y.Map<DocumentNode> {
+        return this.getMap(this.KEYS.DOCUMENTS);
+    }
+
+    /** Content fragment for an `editor` document node. */
+    documentFragment(docId: string): Y.XmlFragment {
+        return this.getXmlFragment(`doc_${docId}`);
+    }
+
+    /** Per-board data map (cards + arrows) for a `board` document node. */
+    boardData(docId: string): TypedMap<BoardData> {
+        return this.getMap(`board_${docId}`) as unknown as TypedMap<BoardData>;
     }
 
     layout(): TypedMap<LayoutData> {

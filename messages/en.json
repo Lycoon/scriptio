@@ -13,6 +13,7 @@
     "focusMode": "Focus Mode",
     "splitPanel": "Split Panel",
     "unsplitPanel": "Unsplit Panel",
+    "swapPanels": "Swap Panels",
     "draftEditor": "Draft Editor",
     "viewOnly": "View only",
     "viewOnlyHint": "You have viewer access. Editing is disabled."
@@ -210,7 +211,19 @@
     "goTo": "Go to in screenplay",
     "confirmRestore": "This will replace the matching content in your screenplay.",
     "restore": "Restore",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "documents": "Documents",
+    "documentsEmpty": "No documents yet",
+    "newFolder": "New folder",
+    "newDocument": "New document",
+    "newBoard": "New board",
+    "untitledFolder": "New folder",
+    "untitledDocument": "Untitled",
+    "boardTitle": "Board",
+    "rename": "Rename",
+    "delete": "Delete",
+    "confirmDelete": "Delete this document?",
+    "confirmDeleteFolder": "Delete folder and its contents?"
   },
   "formatDropdown": {
     "elements": {

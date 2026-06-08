@@ -28,6 +28,7 @@ import {
     DEFAULT_PAGE_MARGINS,
     DEFAULT_SKIPPED_SCENE_LETTERS,
     ShelfEntry,
+    DocumentNode,
     ProjectStatus,
 } from "@src/lib/project/project-state";
 import { Screenplay } from "@src/lib/utils/types";
@@ -154,6 +155,13 @@ export interface ProjectContextType {
     shelfEntries: Record<string, ShelfEntry>;
     activeShelfVersion: { nodeId: string; versionId: string } | null;
     setActiveShelfVersion: (v: { nodeId: string; versionId: string } | null) => void;
+
+    // Document tree (folders + editor/board documents)
+    documents: Record<string, DocumentNode>;
+    activeDocument: { docId: string; type: "editor" | "board" } | null;
+    setActiveDocument: (v: { docId: string; type: "editor" | "board" } | null) => void;
+    documentEditor: Editor | null;
+    updateDocumentEditor: (editor: Editor | null) => void;
 }
 
 // -------------------------------- //
@@ -248,6 +256,12 @@ const defaultContextValue: ProjectContextType = {
     shelfEntries: {},
     activeShelfVersion: null,
     setActiveShelfVersion: () => {},
+    // Document tree defaults
+    documents: {},
+    activeDocument: null,
+    setActiveDocument: () => {},
+    documentEditor: null,
+    updateDocumentEditor: () => {},
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -377,6 +391,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         nodeId: string;
         versionId: string;
     } | null>(null);
+
+    // Document-tree state
+    const [documents, setDocuments] = useState<Record<string, DocumentNode>>({});
+    const [activeDocument, setActiveDocument] = useState<{ docId: string; type: "editor" | "board" } | null>(
+        null,
+    );
+    const [documentEditor, setDocumentEditor] = useState<Editor | null>(null);
+    const updateDocumentEditor = useCallback((editor: Editor | null) => setDocumentEditor(editor), []);
 
     // Create repository instance when ydoc is available (dynamically imported)
     useEffect(() => {
@@ -632,6 +654,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setShelfEntries(entries);
         });
 
+        // Observe document-tree changes
+        setDocuments(repository.documents);
+        const unsubscribeDocuments = repository.observeDocuments((docs) => {
+            setDocuments(docs);
+        });
+
         return () => {
             repository.unregisterScreenplayCallback(recomputeFromScreenplay);
             unsubscribeLayout();
@@ -642,6 +670,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             unsubscribeScenes();
             unsubscribeMetadata();
             unsubscribeShelf();
+            unsubscribeDocuments();
         };
     }, [repository, updateCharacters, updateLocations, updateScenes, updateScreenplay]);
 
@@ -947,6 +976,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             shelfEntries,
             activeShelfVersion,
             setActiveShelfVersion,
+            documents,
+            activeDocument,
+            setActiveDocument,
+            documentEditor,
+            updateDocumentEditor,
         }),
         [
             project,
@@ -1021,6 +1055,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             shelfEntries,
             activeShelfVersion,
             setActiveShelfVersion,
+            documents,
+            activeDocument,
+            setActiveDocument,
+            documentEditor,
+            updateDocumentEditor,
         ],
     );
 

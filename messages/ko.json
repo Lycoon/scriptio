@@ -13,6 +13,7 @@
     "focusMode": "집중 모드",
     "splitPanel": "패널 분할",
     "unsplitPanel": "패널 통합",
+    "swapPanels": "패널 교체",
     "draftEditor": "초안 편집기",
     "viewOnly": "보기 전용",
     "viewOnlyHint": "뷰어 권한이 있습니다. 편집이 비활성화되었습니다."
@@ -210,7 +211,19 @@
     "scenesEmpty": "아직 씬이 없습니다",
     "comments": "코멘트",
     "commentsEmpty": "활성 코멘트가 없습니다",
-    "shelfEmptySelection": "편집할 보관함 버전을 선택하세요"
+    "shelfEmptySelection": "편집할 보관함 버전을 선택하세요",
+    "documents": "문서",
+    "documentsEmpty": "아직 문서가 없습니다",
+    "newFolder": "새 폴더",
+    "newDocument": "새 문서",
+    "newBoard": "새 보드",
+    "untitledFolder": "새 폴더",
+    "untitledDocument": "제목 없음",
+    "boardTitle": "보드",
+    "rename": "이름 바꾸기",
+    "delete": "삭제",
+    "confirmDelete": "이 문서를 삭제하시겠습니까?",
+    "confirmDeleteFolder": "폴더와 내용을 삭제하시겠습니까?"
   },
   "formatDropdown": {
     "elements": {
