@@ -82,6 +82,45 @@
     font-size: 1rem;
 }
 
+/* Header action buttons (e.g. document-tree create buttons) */
+.header_spacer {
+    flex: 1;
+}
+
+.header_actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    padding-right: 16px;
+}
+
+.header_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition:
+        color 0.15s,
+        background-color 0.15s;
+}
+
+.header_btn:hover {
+    background-color: var(--editor-sidebar-hover);
+    color: var(--primary-text);
+}
+
+/* Drop-to-root target highlight */
+.tree_root_drop {
+    box-shadow: inset 0 0 0 1px var(--primary-text);
+    border-radius: 8px;
+}
+
 .list_fill {
     min-height: 30px;
     height: 100%;

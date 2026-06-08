@@ -13,6 +13,7 @@ import {
     ShelfEntry,
     ShelfEntryType,
     ShelfVersionMeta,
+    DocumentNode,
     screenplayOf,
 } from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
@@ -706,6 +707,146 @@ export class ProjectRepository {
         const observer = () => callback(map.toJSON() as Record<string, ShelfEntry>);
         map.observe(observer);
         return () => map.unobserve(observer);
+    }
+
+    // -------------------------------- //
+    //          DOCUMENT TREE           //
+    // -------------------------------- //
+
+    /** All document-hierarchy nodes keyed by node id. */
+    get documents(): Record<string, DocumentNode> {
+        return this.ydoc.documents().toJSON() as Record<string, DocumentNode>;
+    }
+
+    getDocumentNode(id: string): DocumentNode | undefined {
+        return this.ydoc.documents().get(id) as DocumentNode | undefined;
+    }
+
+    observeDocuments(callback: (documents: Record<string, DocumentNode>) => void): () => void {
+        const map = this.ydoc.documents();
+        const observer = () => callback(map.toJSON() as Record<string, DocumentNode>);
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
+    /** Append position = one past the greatest order among the parent's children. */
+    private nextDocumentOrder(parentId: string | null): number {
+        let max = -1;
+        this.ydoc.documents().forEach((node) => {
+            if (node.parentId === parentId && node.order > max) max = node.order;
+        });
+        return max + 1;
+    }
+
+    /** Is `ancestorId` an ancestor of `nodeId`? Used to block cyclic moves. */
+    private isDocumentAncestor(nodeId: string, ancestorId: string): boolean {
+        const map = this.ydoc.documents();
+        const seen = new Set<string>();
+        let cur = map.get(nodeId) as DocumentNode | undefined;
+        while (cur && cur.parentId) {
+            if (seen.has(cur.id)) break;
+            seen.add(cur.id);
+            if (cur.parentId === ancestorId) return true;
+            cur = map.get(cur.parentId) as DocumentNode | undefined;
+        }
+        return false;
+    }
+
+    createFolder(title: string, parentId: string | null = null): string {
+        if (this.guardWrite("createFolder")) return "";
+        const id = uuidv7();
+        this.ydoc
+            .documents()
+            .set(id, { id, type: "folder", title, parentId, order: this.nextDocumentOrder(parentId) });
+        return id;
+    }
+
+    /**
+     * Create an `editor` document node. Its content lives in a dedicated
+     * Y.XmlFragment (`doc_<id>`) which is left empty — an empty fragment binds
+     * to a fresh screenplay editor exactly like a brand-new project's main
+     * screenplay, so no seeding is required.
+     */
+    createEditorDocument(title: string, parentId: string | null = null): string {
+        if (this.guardWrite("createEditorDocument")) return "";
+        const id = uuidv7();
+        this.ydoc
+            .documents()
+            .set(id, { id, type: "editor", title, parentId, order: this.nextDocumentOrder(parentId) });
+        return id;
+    }
+
+    /**
+     * Create a `board` document node. Each board owns a dedicated data map
+     * (`board_<id>`, read via `boardData(id)`); a project may hold any number
+     * of boards. Returns the new board node id.
+     */
+    createBoardDocument(title: string, parentId: string | null = null): string {
+        if (this.guardWrite("createBoardDocument")) return "";
+        const id = uuidv7();
+        this.ydoc
+            .documents()
+            .set(id, { id, type: "board", title, parentId, order: this.nextDocumentOrder(parentId) });
+        return id;
+    }
+
+    renameDocument(id: string, title: string): void {
+        if (this.guardWrite("renameDocument")) return;
+        const map = this.ydoc.documents();
+        const node = map.get(id) as DocumentNode | undefined;
+        if (!node) return;
+        map.set(id, { ...node, title });
+    }
+
+    /**
+     * Move a node under a new parent at the given fractional order. No-ops on a
+     * move that would create a cycle (into itself or one of its descendants).
+     */
+    moveDocument(id: string, newParentId: string | null, order: number): void {
+        if (this.guardWrite("moveDocument")) return;
+        const map = this.ydoc.documents();
+        const node = map.get(id) as DocumentNode | undefined;
+        if (!node) return;
+        if (newParentId !== null && (newParentId === id || this.isDocumentAncestor(newParentId, id))) {
+            return;
+        }
+        map.set(id, { ...node, parentId: newParentId, order });
+    }
+
+    /**
+     * Delete a node and all its descendants in one transaction. Editor nodes
+     * have their content fragment cleared; board nodes have their per-board
+     * data map cleared.
+     */
+    deleteDocument(id: string): void {
+        if (this.guardWrite("deleteDocument")) return;
+        const map = this.ydoc.documents();
+        if (!map.has(id)) return;
+
+        const all = map.toJSON() as Record<string, DocumentNode>;
+        const toDelete: string[] = [];
+        const stack = [id];
+        while (stack.length > 0) {
+            const cur = stack.pop()!;
+            toDelete.push(cur);
+            for (const node of Object.values(all)) {
+                if (node.parentId === cur) stack.push(node.id);
+            }
+        }
+
+        this.ydoc.transact(() => {
+            for (const nid of toDelete) {
+                const node = all[nid];
+                if (!node) continue;
+                if (node.type === "editor") {
+                    const frag = this.ydoc.documentFragment(nid);
+                    if (frag.length > 0) frag.delete(0, frag.length);
+                } else if (node.type === "board") {
+                    this.ydoc.boardData(nid).clear();
+                }
+                map.delete(nid);
+            }
+        });
     }
 }
 

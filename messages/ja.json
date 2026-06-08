@@ -211,7 +211,19 @@
     "scenesEmpty": "まだシーンはありません",
     "comments": "コメント",
     "commentsEmpty": "アクティブなコメントはありません",
-    "shelfEmptySelection": "編集するシェルフのバージョンを選択してください"
+    "shelfEmptySelection": "編集するシェルフのバージョンを選択してください",
+    "documents": "ドキュメント",
+    "documentsEmpty": "ドキュメントがありません",
+    "newFolder": "新しいフォルダ",
+    "newDocument": "新しいドキュメント",
+    "newBoard": "新しいボード",
+    "untitledFolder": "新しいフォルダ",
+    "untitledDocument": "無題",
+    "boardTitle": "ボード",
+    "rename": "名前を変更",
+    "delete": "削除",
+    "confirmDelete": "このドキュメントを削除しますか？",
+    "confirmDeleteFolder": "フォルダとその内容を削除しますか？"
   },
   "formatDropdown": {
     "elements": {

@@ -211,7 +211,19 @@
     "scenesEmpty": "暂无场景",
     "comments": "评论",
     "commentsEmpty": "没有活动的评论",
-    "shelfEmptySelection": "选择要编辑的搁置版本"
+    "shelfEmptySelection": "选择要编辑的搁置版本",
+    "documents": "文档",
+    "documentsEmpty": "还没有文档",
+    "newFolder": "新建文件夹",
+    "newDocument": "新建文档",
+    "newBoard": "新建白板",
+    "untitledFolder": "新建文件夹",
+    "untitledDocument": "无标题",
+    "boardTitle": "白板",
+    "rename": "重命名",
+    "delete": "删除",
+    "confirmDelete": "删除此文档？",
+    "confirmDeleteFolder": "删除文件夹及其内容？"
   },
   "formatDropdown": {
     "elements": {

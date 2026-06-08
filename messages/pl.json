@@ -211,7 +211,19 @@
     "scenesEmpty": "Brak scen",
     "comments": "Komentarze",
     "commentsEmpty": "Brak aktywnych komentarzy",
-    "shelfEmptySelection": "Wybierz wersję z półki do edycji"
+    "shelfEmptySelection": "Wybierz wersję z półki do edycji",
+    "documents": "Dokumenty",
+    "documentsEmpty": "Brak dokumentów",
+    "newFolder": "Nowy folder",
+    "newDocument": "Nowy dokument",
+    "newBoard": "Nowa tablica",
+    "untitledFolder": "Nowy folder",
+    "untitledDocument": "Bez tytułu",
+    "boardTitle": "Tablica",
+    "rename": "Zmień nazwę",
+    "delete": "Usuń",
+    "confirmDelete": "Usunąć ten dokument?",
+    "confirmDeleteFolder": "Usunąć folder i jego zawartość?"
   },
   "formatDropdown": {
     "elements": {

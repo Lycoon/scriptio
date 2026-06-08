@@ -211,7 +211,19 @@
     "scenesEmpty": "Aún no hay escenas",
     "comments": "Comentarios",
     "commentsEmpty": "No hay comentarios activos",
-    "shelfEmptySelection": "Selecciona una versión del estante para editar"
+    "shelfEmptySelection": "Selecciona una versión del estante para editar",
+    "documents": "Documentos",
+    "documentsEmpty": "Aún no hay documentos",
+    "newFolder": "Nueva carpeta",
+    "newDocument": "Nuevo documento",
+    "newBoard": "Nuevo tablero",
+    "untitledFolder": "Nueva carpeta",
+    "untitledDocument": "Sin título",
+    "boardTitle": "Tablero",
+    "rename": "Renombrar",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Eliminar este documento?",
+    "confirmDeleteFolder": "¿Eliminar la carpeta y su contenido?"
   },
   "formatDropdown": {
     "elements": {

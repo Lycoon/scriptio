@@ -212,7 +212,19 @@
     "scenesEmpty": "Noch keine Szenen",
     "comments": "Kommentare",
     "commentsEmpty": "Keine aktiven Kommentare",
-    "shelfEmptySelection": "Wählen Sie eine Version aus der Ablage zur Bearbeitung aus"
+    "shelfEmptySelection": "Wählen Sie eine Version aus der Ablage zur Bearbeitung aus",
+    "documents": "Dokumente",
+    "documentsEmpty": "Noch keine Dokumente",
+    "newFolder": "Neuer Ordner",
+    "newDocument": "Neues Dokument",
+    "newBoard": "Neues Board",
+    "untitledFolder": "Neuer Ordner",
+    "untitledDocument": "Unbenannt",
+    "boardTitle": "Board",
+    "rename": "Umbenennen",
+    "delete": "Löschen",
+    "confirmDelete": "Dieses Dokument löschen?",
+    "confirmDeleteFolder": "Ordner und Inhalt löschen?"
   },
   "formatDropdown": {
     "elements": {
