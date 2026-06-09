@@ -192,6 +192,49 @@ export type DocumentNode = {
     title: string;
     parentId: string | null;
     order: number;
+    /** Optional accent color (hex) set via the sidebar right-click color picker. */
+    color?: string;
+};
+
+// -------------------------------- //
+//            OUTLINE               //
+// -------------------------------- //
+
+/**
+ * Kind of source element an outline block references. Extensible — board cards
+ * will later come in image/voice/link flavours, which become new source kinds
+ * without a schema rewrite.
+ */
+export type OutlineItemSource = "scene" | "card";
+
+/**
+ * Sentinel `refDocId` for scenes that live in the project's main screenplay
+ * fragment (as opposed to a per-document `editor` fragment).
+ */
+export const MAIN_SCREENPLAY_REF = "screenplay";
+
+/**
+ * A block in the project's Outline view. Like the document tree, the outline is
+ * stored flat in the `outline` Y.Map keyed by `id`; hierarchy is reconstructed
+ * from `parentId`, siblings ordered by ascending `order` (fractional float so
+ * moves never rewrite neighbours). Any block can nest children.
+ *
+ * Each block references a live source element via (`source`, `refDocId`,
+ * `refId`); `title`/`preview`/`color` are a cached snapshot kept in sync by the
+ * Outline view's resolver and shown (greyed) when the source no longer exists.
+ */
+export type OutlineItem = {
+    id: string;
+    parentId: string | null;
+    order: number;
+    source: OutlineItemSource;
+    /** card: board docId · scene: MAIN_SCREENPLAY_REF or the editor doc id. */
+    refDocId: string;
+    /** card: card id · scene: scene heading `data-id`. */
+    refId: string;
+    title: string;
+    preview: string;
+    color?: string;
 };
 
 // -------------------------------- //
@@ -207,6 +250,7 @@ export type ProjectData = {
     locations: Record<string, LocationItem>;
     metadata: ProjectMetadata;
     documents?: Record<string, DocumentNode>;
+    outline?: Record<string, OutlineItem>;
     layout: LayoutData;
     production: ProductionData;
     comments?: Record<string, Comment>;
@@ -243,6 +287,7 @@ export class ProjectState extends Y.Doc {
         LOCATIONS: "locations",
         METADATA: "metadata",
         DOCUMENTS: "documents",
+        OUTLINE: "outline",
         LAYOUT: "layout",
         PRODUCTION: "production",
         COMMENTS: "comments",
@@ -291,6 +336,11 @@ export class ProjectState extends Y.Doc {
     /** Document-hierarchy nodes (folders, editor docs, boards) keyed by node id. */
     documents(): Y.Map<DocumentNode> {
         return this.getMap(this.KEYS.DOCUMENTS);
+    }
+
+    /** Outline blocks keyed by block id. */
+    outline(): Y.Map<OutlineItem> {
+        return this.getMap(this.KEYS.OUTLINE);
     }
 
     /** Content fragment for an `editor` document node. */

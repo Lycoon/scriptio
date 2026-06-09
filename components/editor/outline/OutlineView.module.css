@@ -1,0 +1,28 @@
+.outline_panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background-color: var(--main-bg);
+}
+
+.outline_scroll {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: clip;
+    scrollbar-gutter: stable;
+}
+
+.outline_list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 16px;
+    box-sizing: border-box;
+}

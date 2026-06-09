@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "大纲",
+    "empty": "将场景和卡片发送到这里，开始梳理你的故事大纲。",
+    "untitled": "无标题",
+    "unlinked": "已断开",
+    "unlinkedHint": "此区块的来源已不存在。",
+    "removeFromOutline": "从大纲中移除"
+  },
   "navbar": {
+    "outline": "大纲",
     "screenplay": "剧本",
     "board": "剧本板",
     "titlePage": "扉页",
@@ -386,6 +395,7 @@
     "dangerZoneTitle": "危险区域"
   },
   "contextMenu": {
+    "sendToOutline": "发送到大纲",
     "goToScene": "跳转到场景",
     "edit": "编辑",
     "copy": "复制",
@@ -449,6 +459,7 @@
     }
   },
   "board": {
+    "sendToOutline": "发送到大纲",
     "duplicate": "复制",
     "delete": "删除",
     "hints": {

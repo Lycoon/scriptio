@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "아웃라인",
+    "empty": "장면과 카드를 여기로 보내 이야기 구성을 시작하세요.",
+    "untitled": "제목 없음",
+    "unlinked": "연결 해제됨",
+    "unlinkedHint": "이 블록의 원본이 더 이상 존재하지 않습니다.",
+    "removeFromOutline": "아웃라인에서 제거"
+  },
   "navbar": {
+    "outline": "아웃라인",
     "screenplay": "시나리오",
     "board": "보드",
     "titlePage": "타이틀 페이지",
@@ -386,6 +395,7 @@
     "dangerZoneTitle": "위험 구역"
   },
   "contextMenu": {
+    "sendToOutline": "아웃라인으로 보내기",
     "goToScene": "장면으로 이동",
     "edit": "편집",
     "copy": "복사",
@@ -449,6 +459,7 @@
     }
   },
   "board": {
+    "sendToOutline": "아웃라인으로 보내기",
     "duplicate": "복제",
     "delete": "삭제",
     "hints": {

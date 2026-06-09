@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "Outline",
+    "empty": "Send scenes and cards here to start outlining your story.",
+    "untitled": "Untitled",
+    "unlinked": "Unlinked",
+    "unlinkedHint": "The source of this block no longer exists.",
+    "removeFromOutline": "Remove from outline"
+  },
   "navbar": {
+    "outline": "Outline",
     "screenplay": "Screenplay",
     "board": "Board",
     "titlePage": "Title Page",
@@ -386,6 +395,7 @@
     "dangerZoneTitle": "Danger zone"
   },
   "contextMenu": {
+    "sendToOutline": "Send to outline",
     "goToScene": "Go to scene",
     "edit": "Edit",
     "copy": "Copy",
@@ -449,6 +459,7 @@
     }
   },
   "board": {
+    "sendToOutline": "Send to outline",
     "duplicate": "Duplicate",
     "delete": "Delete",
     "hints": {

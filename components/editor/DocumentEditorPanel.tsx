@@ -500,6 +500,24 @@ const DocumentEditorPanel = ({
                 }
             }
 
+            // Detect a scene heading at the caret to offer "Send to outline".
+            // Independent of `shelving` so it works in editor documents too.
+            let outlineScene: { refDocId: string; refId: string; title: string } | undefined;
+            if (config.documentId) {
+                const $pos = editor.state.doc.resolve(from);
+                if ($pos.depth >= 1) {
+                    const node = $pos.node(1);
+                    const dataId = node.attrs?.["data-id"] as string | undefined;
+                    if (node.attrs?.class === ScreenplayElement.Scene && dataId) {
+                        outlineScene = {
+                            refDocId: config.documentId,
+                            refId: dataId,
+                            title: node.textContent.toUpperCase(),
+                        };
+                    }
+                }
+            }
+
             const onAddComment = () => {
                 if (!editor) return;
                 const commentId = commentOps.addComment({
@@ -516,10 +534,10 @@ const DocumentEditorPanel = ({
             updateContextMenu({
                 type: ContextMenuType.EditorContextMenu,
                 position: { x: e.clientX, y: e.clientY },
-                typeSpecificProps: { from, to, onAddComment, spellError, nodePos, nodeClass },
+                typeSpecificProps: { from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene },
             });
         },
-        [editor, updateContextMenu, commentOps, user, config.features.shelving],
+        [editor, updateContextMenu, commentOps, user, config.features.shelving, config.documentId],
     );
 
     // Clear active comment on mousedown

@@ -24,6 +24,7 @@ export {
     DEFAULT_ELEMENT_STYLES,
     DEFAULT_SKIPPED_SCENE_LETTERS,
     TOGGLEABLE_SCENE_LETTERS,
+    MAIN_SCREENPLAY_REF,
 } from "./project-doc";
 export type {
     ShelfEntryType,
@@ -40,6 +41,8 @@ export type {
     BoardData,
     DocumentNode,
     DocumentNodeType,
+    OutlineItem,
+    OutlineItemSource,
     ProjectData,
     TypedMap,
 } from "./project-doc";

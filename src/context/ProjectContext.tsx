@@ -29,6 +29,7 @@ import {
     DEFAULT_SKIPPED_SCENE_LETTERS,
     ShelfEntry,
     DocumentNode,
+    OutlineItem,
     ProjectStatus,
 } from "@src/lib/project/project-state";
 import { Screenplay } from "@src/lib/utils/types";
@@ -158,10 +159,15 @@ export interface ProjectContextType {
 
     // Document tree (folders + editor/board documents)
     documents: Record<string, DocumentNode>;
-    activeDocument: { docId: string; type: "editor" | "board" } | null;
-    setActiveDocument: (v: { docId: string; type: "editor" | "board" } | null) => void;
     documentEditor: Editor | null;
     updateDocumentEditor: (editor: Editor | null) => void;
+
+    // Outline view (project-wide ordered list of scene/card references)
+    outline: Record<string, OutlineItem>;
+    /** A board card to focus next time its board canvas mounts/becomes visible
+     *  (set when navigating to a card from the Outline). Cleared by the canvas. */
+    boardFocusCardId: string | null;
+    setBoardFocusCardId: (cardId: string | null) => void;
 }
 
 // -------------------------------- //
@@ -258,10 +264,12 @@ const defaultContextValue: ProjectContextType = {
     setActiveShelfVersion: () => {},
     // Document tree defaults
     documents: {},
-    activeDocument: null,
-    setActiveDocument: () => {},
     documentEditor: null,
     updateDocumentEditor: () => {},
+    // Outline defaults
+    outline: {},
+    boardFocusCardId: null,
+    setBoardFocusCardId: () => {},
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -394,11 +402,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     // Document-tree state
     const [documents, setDocuments] = useState<Record<string, DocumentNode>>({});
-    const [activeDocument, setActiveDocument] = useState<{ docId: string; type: "editor" | "board" } | null>(
-        null,
-    );
     const [documentEditor, setDocumentEditor] = useState<Editor | null>(null);
     const updateDocumentEditor = useCallback((editor: Editor | null) => setDocumentEditor(editor), []);
+
+    // Outline state
+    const [outline, setOutline] = useState<Record<string, OutlineItem>>({});
+    const [boardFocusCardId, setBoardFocusCardId] = useState<string | null>(null);
 
     // Create repository instance when ydoc is available (dynamically imported)
     useEffect(() => {
@@ -660,6 +669,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setDocuments(docs);
         });
 
+        // Observe outline changes
+        setOutline(repository.outlineItems);
+        const unsubscribeOutline = repository.observeOutline((items) => {
+            setOutline(items);
+        });
+
         return () => {
             repository.unregisterScreenplayCallback(recomputeFromScreenplay);
             unsubscribeLayout();
@@ -671,6 +686,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             unsubscribeMetadata();
             unsubscribeShelf();
             unsubscribeDocuments();
+            unsubscribeOutline();
         };
     }, [repository, updateCharacters, updateLocations, updateScenes, updateScreenplay]);
 
@@ -977,10 +993,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             activeShelfVersion,
             setActiveShelfVersion,
             documents,
-            activeDocument,
-            setActiveDocument,
             documentEditor,
             updateDocumentEditor,
+            outline,
+            boardFocusCardId,
+            setBoardFocusCardId,
         }),
         [
             project,
@@ -1056,10 +1073,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             activeShelfVersion,
             setActiveShelfVersion,
             documents,
-            activeDocument,
-            setActiveDocument,
             documentEditor,
             updateDocumentEditor,
+            outline,
+            boardFocusCardId,
+            setBoardFocusCardId,
         ],
     );
 

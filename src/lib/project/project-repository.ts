@@ -14,11 +14,12 @@ import {
     ShelfEntryType,
     ShelfVersionMeta,
     DocumentNode,
+    OutlineItem,
     screenplayOf,
 } from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
-import { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
+import { computeSceneItems, PersistentScene, PersistentSceneMap, TransientScene } from "../screenplay/scenes";
 import { PersistentPage, PersistentPageMap } from "../screenplay/page-locking";
 import { PageFormat } from "../utils/enums";
 import { generateNodeId } from "../screenplay/nodes";
@@ -798,6 +799,15 @@ export class ProjectRepository {
         map.set(id, { ...node, title });
     }
 
+    /** Set (or clear, with `undefined`) a document node's accent color. */
+    setDocumentColor(id: string, color: string | undefined): void {
+        if (this.guardWrite("setDocumentColor")) return;
+        const map = this.ydoc.documents();
+        const node = map.get(id) as DocumentNode | undefined;
+        if (!node) return;
+        map.set(id, { ...node, color });
+    }
+
     /**
      * Move a node under a new parent at the given fractional order. No-ops on a
      * move that would create a cycle (into itself or one of its descendants).
@@ -847,6 +857,127 @@ export class ProjectRepository {
                 map.delete(nid);
             }
         });
+    }
+
+    // -------------------------------- //
+    //            OUTLINE               //
+    // -------------------------------- //
+
+    /** All outline blocks keyed by block id. */
+    get outlineItems(): Record<string, OutlineItem> {
+        return this.ydoc.outline().toJSON() as Record<string, OutlineItem>;
+    }
+
+    observeOutline(callback: (outline: Record<string, OutlineItem>) => void): () => void {
+        const map = this.ydoc.outline();
+        const observer = () => callback(map.toJSON() as Record<string, OutlineItem>);
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
+    /** Append position = one past the greatest order among the parent's children. */
+    private nextOutlineOrder(parentId: string | null): number {
+        let max = -1;
+        this.ydoc.outline().forEach((item) => {
+            if (item.parentId === parentId && item.order > max) max = item.order;
+        });
+        return max + 1;
+    }
+
+    /** Is `ancestorId` an ancestor of `itemId`? Used to block cyclic moves. */
+    private isOutlineAncestor(itemId: string, ancestorId: string): boolean {
+        const map = this.ydoc.outline();
+        const seen = new Set<string>();
+        let cur = map.get(itemId) as OutlineItem | undefined;
+        while (cur && cur.parentId) {
+            if (seen.has(cur.id)) break;
+            seen.add(cur.id);
+            if (cur.parentId === ancestorId) return true;
+            cur = map.get(cur.parentId) as OutlineItem | undefined;
+        }
+        return false;
+    }
+
+    /**
+     * Add a block to the outline at the end of the root (or a given parent).
+     * De-duplicates: if a block already references the same source element, the
+     * existing block's id is returned and nothing is added.
+     */
+    addOutlineItem(item: Omit<OutlineItem, "id" | "order">): string {
+        if (this.guardWrite("addOutlineItem")) return "";
+        const map = this.ydoc.outline();
+
+        let existingId = "";
+        map.forEach((existing) => {
+            if (
+                existing.source === item.source &&
+                existing.refDocId === item.refDocId &&
+                existing.refId === item.refId
+            ) {
+                existingId = existing.id;
+            }
+        });
+        if (existingId) return existingId;
+
+        const id = uuidv7();
+        map.set(id, { ...item, id, order: this.nextOutlineOrder(item.parentId ?? null) });
+        return id;
+    }
+
+    /**
+     * Move a block under a new parent at the given fractional order. No-ops on a
+     * move that would create a cycle (into itself or one of its descendants).
+     */
+    moveOutlineItem(id: string, newParentId: string | null, order: number): void {
+        if (this.guardWrite("moveOutlineItem")) return;
+        const map = this.ydoc.outline();
+        const item = map.get(id) as OutlineItem | undefined;
+        if (!item) return;
+        if (newParentId !== null && (newParentId === id || this.isOutlineAncestor(newParentId, id))) {
+            return;
+        }
+        map.set(id, { ...item, parentId: newParentId, order });
+    }
+
+    /** Patch the cached display snapshot of a block (title/preview/color). */
+    refreshOutlineSnapshot(id: string, snapshot: Pick<OutlineItem, "title" | "preview" | "color">): void {
+        if (this.guardWrite("refreshOutlineSnapshot")) return;
+        const map = this.ydoc.outline();
+        const item = map.get(id) as OutlineItem | undefined;
+        if (!item) return;
+        map.set(id, { ...item, ...snapshot });
+    }
+
+    /**
+     * Remove a block from the outline. Its children are promoted to the removed
+     * block's parent so other referenced beats are not destroyed.
+     */
+    deleteOutlineItem(id: string): void {
+        if (this.guardWrite("deleteOutlineItem")) return;
+        const map = this.ydoc.outline();
+        const target = map.get(id) as OutlineItem | undefined;
+        if (!target) return;
+
+        this.ydoc.transact(() => {
+            map.forEach((child) => {
+                if (child.parentId === id) {
+                    map.set(child.id, { ...child, parentId: target.parentId });
+                }
+            });
+            map.delete(id);
+        });
+    }
+
+    /**
+     * Parse an `editor` document's content into transient scenes (heading text +
+     * preview + position), so the outline can resolve scene references that live
+     * in document-tree editor docs rather than the main screenplay.
+     */
+    getEditorDocumentScenes(docId: string): TransientScene[] {
+        const fragment = this.ydoc.documentFragment(docId);
+        const root = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
+        const content = root.content.toJSON() as Screenplay;
+        return computeSceneItems(content);
     }
 }
 

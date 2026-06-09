@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "アウトライン",
+    "empty": "シーンやカードをここに送って、ストーリーの構成を始めましょう。",
+    "untitled": "無題",
+    "unlinked": "リンク解除",
+    "unlinkedHint": "このブロックの参照元は存在しなくなりました。",
+    "removeFromOutline": "アウトラインから削除"
+  },
   "navbar": {
+    "outline": "アウトライン",
     "screenplay": "脚本",
     "board": "ボード",
     "titlePage": "タイトルページ",
@@ -386,6 +395,7 @@
     "dangerZoneTitle": "危険ゾーン"
   },
   "contextMenu": {
+    "sendToOutline": "アウトラインに送る",
     "goToScene": "シーンへ移動",
     "edit": "編集",
     "copy": "コピー",
@@ -449,6 +459,7 @@
     }
   },
   "board": {
+    "sendToOutline": "アウトラインに送る",
     "duplicate": "複製",
     "delete": "削除",
     "hints": {
