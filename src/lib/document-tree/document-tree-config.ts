@@ -9,6 +9,7 @@ import { BASE_EXTENSIONS } from "../screenplay/editor";
 export function createDocumentTreeConfig(docId: string): DocumentEditorConfig {
     return {
         type: "screenplay",
+        documentId: docId,
         baseExtensions: BASE_EXTENSIONS,
         getFragment: (s) => s.documentFragment(docId),
         getCommentsMap: () => null,

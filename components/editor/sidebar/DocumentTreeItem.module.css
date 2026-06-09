@@ -24,10 +24,21 @@
     background-color: var(--editor-sidebar-hover);
 }
 
+/* Slim accent bar on the left edge showing the node's color. */
+.color_bar {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    pointer-events: none;
+}
+
 /* Drop indicators */
 .row_drop_into {
     background-color: var(--editor-style-bg-hover);
-    box-shadow: inset 0 0 0 1px var(--primary-text);
+    box-shadow: inset 0 0 0 1px var(--tertiary-hover);
 }
 
 .row_drop_before::before,
@@ -37,16 +48,19 @@
     left: 8px;
     right: 8px;
     height: 2px;
-    background-color: var(--primary-text);
+    background-color: var(--tertiary-hover);
     pointer-events: none;
 }
 
+/* Centered on the row boundary so "after A" and "before B" (the same gap, which
+   the cursor alternates between) render at the exact same position — one line,
+   not two offset by a pixel. */
 .row_drop_before::before {
-    top: 0;
+    top: -1px;
 }
 
 .row_drop_after::after {
-    bottom: 0;
+    bottom: -1px;
 }
 
 .chevron {

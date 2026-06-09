@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "Gliederung",
+    "empty": "Sende Szenen und Karten hierher, um deine Geschichte zu gliedern.",
+    "untitled": "Ohne Titel",
+    "unlinked": "Getrennt",
+    "unlinkedHint": "Die Quelle dieses Blocks existiert nicht mehr.",
+    "removeFromOutline": "Aus Gliederung entfernen"
+  },
   "navbar": {
+    "outline": "Gliederung",
     "screenplay": "Drehbuch",
     "board": "Board",
     "titlePage": "Titelseite",
@@ -387,6 +396,7 @@
     "dangerZoneTitle": "Gefahrenzone"
   },
   "contextMenu": {
+    "sendToOutline": "An Gliederung senden",
     "goToScene": "Zur Szene gehen",
     "edit": "Bearbeiten",
     "copy": "Kopieren",
@@ -450,6 +460,7 @@
     }
   },
   "board": {
+    "sendToOutline": "An Gliederung senden",
     "duplicate": "Duplizieren",
     "delete": "Löschen",
     "hints": {

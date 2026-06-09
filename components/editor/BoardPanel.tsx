@@ -1,8 +1,6 @@
 "use client";
 
-import { useContext } from "react";
 import { useTranslations } from "next-intl";
-import { ProjectContext } from "@src/context/ProjectContext";
 import BoardCanvas from "@components/board/BoardCanvas";
 import { LayoutDashboard } from "lucide-react";
 
@@ -20,19 +18,16 @@ const EmptyBoardState = () => {
 };
 
 /**
- * Renders the board document currently selected in the document tree. The
- * "board" panel is doc-aware: it reads `activeDocument` and mounts a fresh
- * BoardCanvas (keyed by id) for the active board, or an empty state when the
- * active document isn't a board.
+ * Renders the board bound to this panel side (`docId`). Each side carries its
+ * own docId, so two boards can be open at once. A fresh BoardCanvas is mounted
+ * per docId; an empty state shows when the side has no document.
  */
-const BoardPanel = ({ isVisible }: { isVisible: boolean }) => {
-    const { activeDocument } = useContext(ProjectContext);
-
-    if (!activeDocument || activeDocument.type !== "board") {
+const BoardPanel = ({ isVisible, docId }: { isVisible: boolean; docId: string | null }) => {
+    if (!docId) {
         return <EmptyBoardState />;
     }
 
-    return <BoardCanvas key={activeDocument.docId} docId={activeDocument.docId} isVisible={isVisible} />;
+    return <BoardCanvas key={docId} docId={docId} isVisible={isVisible} />;
 };
 
 export default BoardPanel;

@@ -64,11 +64,9 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
             onDoubleClick={handleDoubleClick}
             className={containerClass}
         >
+            {scene.color && <span className={nav_item.color_bar} style={{ backgroundColor: scene.color }} />}
             <div className={nav_item.header}>
                 <div className={nav_item.title_row}>
-                    {scene.color && (
-                        <span className={nav_item.color_indicator} style={{ backgroundColor: scene.color }} />
-                    )}
                     <p className={join(nav_item.title, "unselectable")}>
                         <span className={nav_item.scene_number}>{label}.</span> {titleText}
                     </p>

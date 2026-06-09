@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "Esquema",
+    "empty": "Envía escenas y tarjetas aquí para empezar a esquematizar tu historia.",
+    "untitled": "Sin título",
+    "unlinked": "Desvinculado",
+    "unlinkedHint": "La fuente de este bloque ya no existe.",
+    "removeFromOutline": "Quitar del esquema"
+  },
   "navbar": {
+    "outline": "Esquema",
     "screenplay": "Guión",
     "board": "Tablero",
     "titlePage": "Portada",
@@ -386,6 +395,7 @@
     "dangerZoneTitle": "Zona de peligro"
   },
   "contextMenu": {
+    "sendToOutline": "Enviar al esquema",
     "goToScene": "Ir a la escena",
     "edit": "Editar",
     "copy": "Copiar",
@@ -449,6 +459,7 @@
     }
   },
   "board": {
+    "sendToOutline": "Enviar al esquema",
     "duplicate": "Duplicar",
     "delete": "Eliminar",
     "hints": {

@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "Séquencier",
+    "empty": "Envoyez des scènes et des cartes ici pour commencer à structurer votre histoire.",
+    "untitled": "Sans titre",
+    "unlinked": "Détaché",
+    "unlinkedHint": "La source de ce bloc n'existe plus.",
+    "removeFromOutline": "Retirer du séquencier"
+  },
   "navbar": {
+    "outline": "Séquencier",
     "screenplay": "Scénario",
     "board": "Tableau",
     "titlePage": "Page de titre",
@@ -387,6 +396,7 @@
     "dangerZoneTitle": "Zone dangereuse"
   },
   "contextMenu": {
+    "sendToOutline": "Envoyer vers le séquencier",
     "goToScene": "Aller à la scène",
     "edit": "Modifier",
     "copy": "Copier",
@@ -450,6 +460,7 @@
     }
   },
   "board": {
+    "sendToOutline": "Envoyer vers le séquencier",
     "duplicate": "Dupliquer",
     "delete": "Supprimer",
     "hints": {

@@ -2,12 +2,18 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
 
-export type PanelType = "screenplay" | "board" | "statistics" | "title" | "draft" | "document";
+export type PanelType = "screenplay" | "board" | "statistics" | "title" | "draft" | "document" | "outline";
 export type SplitSide = "primary" | "secondary";
+
+/** Panel kinds that display a specific document, and so carry a docId per side. */
+export type DocumentPanelKind = "board" | "document";
 
 interface ViewContextType {
     primaryPanel: PanelType;
     secondaryPanel: PanelType | null;
+    /** Document shown on each side when its panel is a board/editor document. */
+    primaryDocId: string | null;
+    secondaryDocId: string | null;
     splitRatio: number;
     isSplit: boolean;
     visiblePanels: PanelType[];
@@ -24,6 +30,10 @@ interface ViewContextType {
     setFocusedSide: (side: SplitSide) => void;
     setFocusedPanel: (panel: PanelType) => void;
     setSidePanel: (side: SplitSide, panel: PanelType) => void;
+    /** Open a specific document (board/editor) on a given side and focus it. */
+    setSideDocument: (side: SplitSide, docId: string, kind: DocumentPanelKind) => void;
+    /** Clear a document from any side currently showing it (e.g. after delete). */
+    closeDocument: (docId: string) => void;
     swapPanels: () => void;
     setIsEndlessScroll: (value: boolean | ((prev: boolean) => boolean)) => void;
     setShowComments: (value: boolean | ((prev: boolean) => boolean)) => void;
@@ -38,6 +48,10 @@ export const useViewContext = () => useContext(ViewContext);
 export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [primaryPanel, setPrimaryPanelState] = useState<PanelType>("screenplay");
     const [secondaryPanel, setSecondaryPanelState] = useState<PanelType | null>(null);
+    // Per-side document binding. Only meaningful when the side's panel is a
+    // board/editor document; null for singleton views (screenplay, title, …).
+    const [primaryDocId, setPrimaryDocId] = useState<string | null>(null);
+    const [secondaryDocId, setSecondaryDocId] = useState<string | null>(null);
     const [splitRatio, setSplitRatio] = useState(0.5);
     const [mountedPanels, setMountedPanels] = useState<Set<PanelType>>(() => new Set(["screenplay", "title"]));
     const [focusedSide, setFocusedSideState] = useState<SplitSide>("primary");
@@ -59,9 +73,10 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
         return panels;
     }, [primaryPanel, secondaryPanel]);
 
-    const setPrimaryPanel = useCallback((panel: PanelType) => {
-        setPrimaryPanelState(panel);
-        setSecondaryPanelState(null);
+    // Mount a singleton panel so the keep-alive renderer keeps it in the DOM.
+    // Document panels (board/document) are rendered per-side, so they don't need
+    // a mount entry.
+    const mount = useCallback((panel: PanelType) => {
         setMountedPanels((prev) => {
             if (prev.has(panel)) return prev;
             const next = new Set(prev);
@@ -70,22 +85,29 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
         });
     }, []);
 
+    const setPrimaryPanel = useCallback(
+        (panel: PanelType) => {
+            setPrimaryPanelState(panel);
+            setPrimaryDocId(null);
+            setSecondaryPanelState(null);
+            setSecondaryDocId(null);
+            mount(panel);
+        },
+        [mount],
+    );
+
     const setSecondaryPanel = useCallback(
         (panel: PanelType | null) => {
             if (panel === primaryPanel) return;
             setSecondaryPanelState(panel);
+            setSecondaryDocId(null);
             if (panel) {
-                setMountedPanels((prev) => {
-                    if (prev.has(panel)) return prev;
-                    const next = new Set(prev);
-                    next.add(panel);
-                    return next;
-                });
+                mount(panel);
             } else {
                 setFocusedSideState("primary");
             }
         },
-        [primaryPanel],
+        [primaryPanel, mount],
     );
 
     const setFocusedSide = useCallback(
@@ -98,53 +120,43 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
 
     const setFocusedPanel = useCallback(
         (panel: PanelType) => {
-            // Mount the panel lazily
-            setMountedPanels((prev) => {
-                if (prev.has(panel)) return prev;
-                const next = new Set(prev);
-                next.add(panel);
-                return next;
-            });
+            mount(panel);
 
             if (!secondaryPanel) {
-                // Not split: set as primary
                 setPrimaryPanelState(panel);
+                setPrimaryDocId(null);
                 return;
             }
 
-            // Split mode: update the focused side's panel
             const currentOnFocused = focusedSide === "primary" ? primaryPanel : secondaryPanel;
             if (panel === currentOnFocused) return;
 
             const currentOnOther = focusedSide === "primary" ? secondaryPanel : primaryPanel;
 
             if (panel === currentOnOther) {
-                // Requested panel is on the other side — swap
+                // Requested panel is on the other side — swap both sides (panels + docs).
                 setPrimaryPanelState(secondaryPanel);
                 setSecondaryPanelState(primaryPanel);
+                setPrimaryDocId(secondaryDocId);
+                setSecondaryDocId(primaryDocId);
+            } else if (focusedSide === "primary") {
+                setPrimaryPanelState(panel);
+                setPrimaryDocId(null);
             } else {
-                // Replace the focused side's panel
-                if (focusedSide === "primary") {
-                    setPrimaryPanelState(panel);
-                } else {
-                    setSecondaryPanelState(panel);
-                }
+                setSecondaryPanelState(panel);
+                setSecondaryDocId(null);
             }
         },
-        [focusedSide, primaryPanel, secondaryPanel],
+        [focusedSide, primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, mount],
     );
 
     const setSidePanel = useCallback(
         (side: SplitSide, panel: PanelType) => {
-            setMountedPanels((prev) => {
-                if (prev.has(panel)) return prev;
-                const next = new Set(prev);
-                next.add(panel);
-                return next;
-            });
+            mount(panel);
 
             if (!secondaryPanel) {
                 setPrimaryPanelState(panel);
+                setPrimaryDocId(null);
                 return;
             }
 
@@ -155,26 +167,53 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             if (panel === currentOnOther) {
                 setPrimaryPanelState(secondaryPanel);
                 setSecondaryPanelState(primaryPanel);
+                setPrimaryDocId(secondaryDocId);
+                setSecondaryDocId(primaryDocId);
             } else if (side === "primary") {
                 setPrimaryPanelState(panel);
+                setPrimaryDocId(null);
             } else {
                 setSecondaryPanelState(panel);
+                setSecondaryDocId(null);
             }
         },
-        [primaryPanel, secondaryPanel],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, mount],
     );
+
+    const setSideDocument = useCallback((side: SplitSide, docId: string, kind: DocumentPanelKind) => {
+        // Documents can live on both sides simultaneously (e.g. two boards), so
+        // this sets the side's panel + doc directly without the de-duplication
+        // swap logic that the singleton setters use.
+        if (side === "primary") {
+            setPrimaryPanelState(kind);
+            setPrimaryDocId(docId);
+        } else {
+            setSecondaryPanelState(kind);
+            setSecondaryDocId(docId);
+        }
+        setFocusedSideState(side);
+    }, []);
+
+    const closeDocument = useCallback((docId: string) => {
+        setPrimaryDocId((prev) => (prev === docId ? null : prev));
+        setSecondaryDocId((prev) => (prev === docId ? null : prev));
+    }, []);
 
     const swapPanels = useCallback(() => {
         if (!secondaryPanel) return;
         setPrimaryPanelState(secondaryPanel);
         setSecondaryPanelState(primaryPanel);
+        setPrimaryDocId(secondaryDocId);
+        setSecondaryDocId(primaryDocId);
         setFocusedSideState((prev) => (prev === "primary" ? "secondary" : "primary"));
-    }, [primaryPanel, secondaryPanel]);
+    }, [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId]);
 
     const value = useMemo(
         () => ({
             primaryPanel,
             secondaryPanel,
+            primaryDocId,
+            secondaryDocId,
             splitRatio,
             isSplit,
             visiblePanels,
@@ -191,13 +230,15 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setFocusedSide,
             setFocusedPanel,
             setSidePanel,
+            setSideDocument,
+            closeDocument,
             swapPanels,
             setIsEndlessScroll,
             setShowComments,
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, swapPanels, setIsEndlessScroll, setShowComments],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

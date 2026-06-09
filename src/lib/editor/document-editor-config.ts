@@ -1,6 +1,6 @@
 import * as Y from "yjs";
 import type { AnyExtension } from "@tiptap/core";
-import { ProjectState } from "@src/lib/project/project-state";
+import { MAIN_SCREENPLAY_REF, ProjectState } from "@src/lib/project/project-state";
 import type { Comment } from "@src/lib/utils/types";
 import { BASE_EXTENSIONS } from "@src/lib/screenplay/editor";
 import { TITLEPAGE_BASE_EXTENSIONS } from "@src/lib/titlepage/editor";
@@ -41,6 +41,13 @@ export interface DocumentEditorFeatures {
 export interface DocumentEditorConfig {
     /** Logical type for conditional behaviour in the hook/panel. */
     type: "screenplay" | "title";
+    /**
+     * Identifier of the document this editor edits, used to attribute scenes
+     * sent to the Outline. `MAIN_SCREENPLAY_REF` for the main screenplay, the
+     * document-tree node id for editor documents, `undefined` otherwise (drafts,
+     * title page) — those cannot send scenes to the Outline.
+     */
+    documentId?: string;
     /** Base Tiptap extensions (defines the ProseMirror schema). */
     baseExtensions: AnyExtension[];
     /**
@@ -60,6 +67,7 @@ export interface DocumentEditorConfig {
 
 export const SCREENPLAY_EDITOR_CONFIG: DocumentEditorConfig = {
     type: "screenplay",
+    documentId: MAIN_SCREENPLAY_REF,
     baseExtensions: BASE_EXTENSIONS,  // CommentMark added dynamically by hook when features.comments=true
     getFragment: (s) => s.screenplayFragment(),
     getCommentsMap: (s) => s.comments(),

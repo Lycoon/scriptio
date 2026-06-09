@@ -15,6 +15,7 @@ import {
     PanelRightClose,
     ArrowLeftRight,
     Eye,
+    ListTree,
 } from "lucide-react";
 
 import styles from "./ViewOptionsDropdown.module.css";
@@ -33,16 +34,17 @@ const ViewOptionsDropdown = () => {
         primaryPanel,
         setSecondaryPanel,
         swapPanels,
+        focusedPanel,
+        setFocusedPanel,
     } = useViewContext();
 
     const handleSplitToggle = useCallback(() => {
         if (isSplit) {
             setSecondaryPanel(null);
         } else {
-            const other: PanelType =
-                primaryPanel === "screenplay" ? "board"
-                : primaryPanel === "title" ? "screenplay"
-                : "screenplay";
+            // Default the new side to a singleton view (documents need a docId,
+            // which only opening from the sidebar/outline provides).
+            const other: PanelType = primaryPanel === "screenplay" ? "title" : "screenplay";
             setSecondaryPanel(other);
         }
     }, [isSplit, primaryPanel, setSecondaryPanel]);
@@ -112,6 +114,16 @@ const ViewOptionsDropdown = () => {
 
             {isOpen && (
                 <div className={styles.dropdown_menu}>
+                    <button
+                        className={`${styles.dropdown_item} ${focusedPanel === "outline" ? styles.dropdown_item_active : ""}`}
+                        onClick={() => {
+                            setFocusedPanel("outline");
+                            setIsOpen(false);
+                        }}
+                    >
+                        <ListTree size={16} />
+                        <span className={styles.item_label}>{t("outline")}</span>
+                    </button>
                     <button
                         className={`${styles.dropdown_item} ${isEndlessScroll ? styles.dropdown_item_active : ""}`}
                         onClick={() => setIsEndlessScroll(!isEndlessScroll)}

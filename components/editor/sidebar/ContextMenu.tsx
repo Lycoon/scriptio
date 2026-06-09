@@ -24,6 +24,7 @@ import {
     EyeOff,
     Eye,
     Highlighter,
+    ListTree,
     Loader2,
     LucideIcon,
     MessageSquarePlus,
@@ -36,6 +37,7 @@ import { makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
 import { extractShelveCandidate } from "@src/lib/shelf/shelf-utils";
 import { omitSceneByUuid, unomitSceneByUuid } from "@src/lib/screenplay/scene-locking";
 import { ScreenplayElement } from "@src/lib/utils/enums";
+import { MAIN_SCREENPLAY_REF } from "@src/lib/project/project-state";
 
 /* ==================== */
 /*     Context menu     */
@@ -126,6 +128,19 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
         unomitSceneByUuid(editor, repository, scene.id);
     };
 
+    const handleSendToOutline = () => {
+        if (!repository || !scene.id) return;
+        repository.addOutlineItem({
+            source: "scene",
+            refDocId: MAIN_SCREENPLAY_REF,
+            refId: scene.id,
+            title: scene.title,
+            preview: scene.synopsis || scene.preview,
+            color: scene.color,
+            parentId: null,
+        });
+    };
+
     return (
         <>
             <ContextMenuItem
@@ -140,6 +155,13 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
             {!isReadOnly && (
                 <>
                     <div className={context.menu_separator} />
+                    {scene.id && (
+                        <ContextMenuItem
+                            text={t("sendToOutline")}
+                            icon={ListTree}
+                            action={handleSendToOutline}
+                        />
+                    )}
                     <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
                     <ContextMenuItem
                         text={t("cut")}
@@ -474,6 +496,8 @@ export type EditorContextMenuProps = {
     spellError?: { word: string; from: number; to: number };
     nodePos?: number;
     nodeClass?: string;
+    /** Present when the caret sits on a scene heading that can be sent to the Outline. */
+    outlineScene?: { refDocId: string; refId: string; title: string };
 };
 
 const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
@@ -482,8 +506,21 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
         useContext(ProjectContext);
     const { worker } = useSpellcheck();
     const { updateContextMenu } = useContext(UserContext);
-    const { from, to, onAddComment, spellError, nodePos, nodeClass } = props;
+    const { from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene } = props;
     const hasSelection = from !== to;
+
+    const handleSendToOutline = () => {
+        if (!repository || !outlineScene) return;
+        repository.addOutlineItem({
+            source: "scene",
+            refDocId: outlineScene.refDocId,
+            refId: outlineScene.refId,
+            title: outlineScene.title,
+            preview: "",
+            parentId: null,
+        });
+        updateContextMenu(undefined);
+    };
 
     // Resolve scene UUID + lock state if right-clicked on a scene heading.
     // `nodePos` is the cursor position inside the paragraph (from the editor
@@ -679,6 +716,14 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
                             }}
                         />
                     )}
+                </>
+            )}
+
+            {/* Send a scene heading to the Outline */}
+            {outlineScene && !isReadOnly && (
+                <>
+                    <div className={context.menu_separator} />
+                    <ContextMenuItem text={t("sendToOutline")} icon={ListTree} action={handleSendToOutline} />
                 </>
             )}
 

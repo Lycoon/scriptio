@@ -56,6 +56,35 @@
     margin: 2px 0;
 }
 
+/* Right-click color picker (document tree items) */
+.colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 12px;
+}
+
+.color_swatch {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.color_swatch:hover {
+    transform: scale(1.15);
+}
+
+.color_swatch_active {
+    border-color: var(--primary-text);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
 .suggestion_item {
     display: flex;
     align-items: center;

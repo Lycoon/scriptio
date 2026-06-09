@@ -20,13 +20,10 @@ const EmptyDocumentState = () => {
     );
 };
 
-const TreeDocumentPanel = ({ isVisible }: { isVisible: boolean }) => {
-    const { activeDocument, updateDocumentEditor } = useContext(ProjectContext);
+const TreeDocumentPanel = ({ isVisible, docId }: { isVisible: boolean; docId: string | null }) => {
+    const { updateDocumentEditor } = useContext(ProjectContext);
 
-    const config = useMemo(() => {
-        if (!activeDocument || activeDocument.type !== "editor") return null;
-        return createDocumentTreeConfig(activeDocument.docId);
-    }, [activeDocument]);
+    const config = useMemo(() => (docId ? createDocumentTreeConfig(docId) : null), [docId]);
 
     const handleEditorCreated = useCallback(
         (editor: import("@tiptap/react").Editor | null) => {
@@ -35,13 +32,13 @@ const TreeDocumentPanel = ({ isVisible }: { isVisible: boolean }) => {
         [updateDocumentEditor],
     );
 
-    if (!config || !activeDocument || activeDocument.type !== "editor") {
+    if (!config || !docId) {
         return <EmptyDocumentState />;
     }
 
     return (
         <DocumentEditorPanel
-            key={activeDocument.docId}
+            key={docId}
             config={config}
             isVisible={isVisible}
             onEditorCreated={handleEditorCreated}

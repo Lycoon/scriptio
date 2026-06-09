@@ -6,24 +6,13 @@ import { BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
 import BoardCard from "./BoardCard";
 import styles from "./BoardCanvas.module.css";
 import { v7 as uuidv7 } from "uuid";
-import { Trash2, Plus, Minus, Copy } from "lucide-react";
+import { Trash2, Plus, Minus, Copy, ListTree } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
 
 const GRID_SIZE = 20;
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 2;
-
-const DEFAULT_CARD_COLORS = [
-    "#ef4444",
-    "#f97316",
-    "#eab308",
-    "#22c55e",
-    "#06b6d4",
-    "#3b82f6",
-    "#8b5cf6",
-    "#ec4899",
-    "#6b7280",
-];
 
 interface CardContextMenuState {
     position: { x: number; y: number };
@@ -36,7 +25,8 @@ interface ArrowContextMenuState {
 }
 
 const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }) => {
-    const { repository, isYjsReady, isReadOnly } = useContext(ProjectContext);
+    const { repository, isYjsReady, isReadOnly, boardFocusCardId, setBoardFocusCardId } =
+        useContext(ProjectContext);
     const t = useTranslations("board");
     const projectState = repository?.getState();
     const containerRef = useRef<HTMLDivElement>(null);
@@ -120,6 +110,17 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         setScale(newScale);
         setOffset({ x: newOffsetX, y: newOffsetY });
     }, []);
+
+    // Focus a specific card when navigated to from the Outline. Waits until the
+    // board's cards have loaded and the target exists on this board, then centers
+    // on it and clears the request so it fires once.
+    useEffect(() => {
+        if (!boardFocusCardId || !isVisible) return;
+        const card = cards.find((c) => c.id === boardFocusCardId);
+        if (!card) return;
+        centerCameraOnCards([card]);
+        setBoardFocusCardId(null);
+    }, [boardFocusCardId, isVisible, cards, centerCameraOnCards, setBoardFocusCardId]);
 
     // Sync cards with Yjs
     useEffect(() => {
@@ -475,7 +476,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             const x = (e.clientX - rect.left - offset.x) / scale;
             const y = (e.clientY - rect.top - offset.y) / scale;
 
-            const randomColor = DEFAULT_CARD_COLORS[Math.floor(Math.random() * DEFAULT_CARD_COLORS.length)];
+            const randomColor = DEFAULT_ITEM_COLORS[Math.floor(Math.random() * DEFAULT_ITEM_COLORS.length)];
 
             const newCard: BoardCardData = {
                 id: uuidv7(),
@@ -569,6 +570,23 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             setCardContextMenu(null);
         },
         [cards, saveCards],
+    );
+
+    // Send card to the Outline view
+    const handleSendToOutline = useCallback(
+        (card: BoardCardData) => {
+            repository?.addOutlineItem({
+                source: "card",
+                refDocId: docId,
+                refId: card.id,
+                title: card.title,
+                preview: card.description,
+                color: card.color,
+                parentId: null,
+            });
+            setCardContextMenu(null);
+        },
+        [repository, docId],
     );
 
     // Context menu for card
@@ -917,7 +935,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                         }}
                     >
                         <div className={styles.context_menu_colors}>
-                            {DEFAULT_CARD_COLORS.map((color) => (
+                            {DEFAULT_ITEM_COLORS.map((color) => (
                                 <button
                                     key={color}
                                     className={`${styles.context_menu_color_swatch} ${cardContextMenu.card.color === color ? styles.context_menu_color_swatch_active : ""}`}
@@ -932,6 +950,13 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                         >
                             <Copy size={16} />
                             <p className="unselectable">{t("duplicate")}</p>
+                        </div>
+                        <div
+                            className={styles.context_menu_item}
+                            onClick={() => handleSendToOutline(cardContextMenu.card)}
+                        >
+                            <ListTree size={16} />
+                            <p className="unselectable">{t("sendToOutline")}</p>
                         </div>
                         <div
                             className={styles.context_menu_item}

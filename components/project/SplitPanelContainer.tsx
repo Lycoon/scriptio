@@ -3,22 +3,24 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { UserContext } from "@src/context/UserContext";
-import { PanelType, useViewContext } from "@src/context/ViewContext";
+import { PanelType, SplitSide, useViewContext } from "@src/context/ViewContext";
+import { DOC_DND_MIME } from "@components/editor/sidebar/DocumentTreeItem";
 import EditorPanel from "@components/editor/EditorPanel";
 import TitlePagePanel from "@components/editor/TitlePagePanel";
 import DraftEditorPanel from "@components/editor/DraftEditorPanel";
 import TreeDocumentPanel from "@components/editor/TreeDocumentPanel";
 import BoardPanel from "@components/editor/BoardPanel";
+import OutlinePanel from "@components/editor/outline/OutlinePanel";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import {
-    Archive,
     ArrowLeftRight,
     ChevronLeft,
     ChevronRight,
     Clapperboard,
     FileText,
+    ListTree,
     Maximize,
     Menu,
     MessageSquare,
@@ -57,25 +59,31 @@ const PanelRenderer = ({
                     updateSuggestionData={updateSuggestionData}
                 />
             );
-        case "board":
-            return <BoardPanel isVisible={isVisible} />;
         case "statistics":
             return <StatisticsClientPage />;
         case "title":
             return <TitlePagePanel isVisible={isVisible} />;
         case "draft":
             return <DraftEditorPanel isVisible={isVisible} />;
-        case "document":
-            return <TreeDocumentPanel isVisible={isVisible} />;
+        case "outline":
+            return <OutlinePanel isVisible={isVisible} />;
+        default:
+            // board/document are document panels, rendered per-side (not here).
+            return null;
     }
 };
+
+// Singleton view panels are kept mounted and swapped in/out via CSS so heavy
+// editors don't reinitialise. Board/editor documents are rendered per-side
+// instead, so two documents can be open at once.
+const SINGLETON_PANELS: PanelType[] = ["screenplay", "statistics", "title", "draft", "outline"];
 
 // Boards and tree documents are opened from the document-tree sidebar (they are
 // per-document), so they are not listed here.
 const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey: string }[] = [
     { type: "screenplay", icon: Clapperboard, labelKey: "screenplay" },
     { type: "title", icon: FileText, labelKey: "titlePage" },
-    { type: "draft", icon: Archive, labelKey: "draftEditor" },
+    { type: "outline", icon: ListTree, labelKey: "outline" },
 ];
 
 const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; side: "primary" | "secondary" }) => {
@@ -100,8 +108,9 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
         if (isSplit) {
             setSecondaryPanel(null);
         } else {
-            const other: PanelType =
-                primaryPanel === "screenplay" ? "board" : primaryPanel === "title" ? "screenplay" : "screenplay";
+            // Default the new side to a singleton view (documents need a docId,
+            // which only opening from the sidebar/outline provides).
+            const other: PanelType = primaryPanel === "screenplay" ? "title" : "screenplay";
             setSecondaryPanel(other);
         }
     }, [isSplit, primaryPanel, setSecondaryPanel]);
@@ -238,8 +247,51 @@ const SplitPanelContainer = ({
     suggestionData,
     updateSuggestionData,
 }: SplitPanelContainerProps) => {
-    const { primaryPanel, secondaryPanel, splitRatio, isSplit, mountedPanels, focusedSide, setFocusedSide } =
-        useViewContext();
+    const {
+        primaryPanel,
+        secondaryPanel,
+        primaryDocId,
+        secondaryDocId,
+        splitRatio,
+        isSplit,
+        mountedPanels,
+        focusedSide,
+        setFocusedSide,
+        setSideDocument,
+    } = useViewContext();
+
+    // Side currently highlighted while a document is dragged from the sidebar.
+    const [docDragOverSide, setDocDragOverSide] = useState<SplitSide | null>(null);
+
+    // Capture-phase so the panel claims a document drop before the editor's own
+    // drop handling sees it; non-document drags fall through untouched.
+    const handleDocDragOver = useCallback(
+        (side: SplitSide) => (e: React.DragEvent) => {
+            if (!e.dataTransfer.types.includes(DOC_DND_MIME)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+            setDocDragOverSide((prev) => (prev === side ? prev : side));
+        },
+        [],
+    );
+
+    const handleDocDrop = useCallback(
+        (side: SplitSide) => (e: React.DragEvent) => {
+            const raw = e.dataTransfer.getData(DOC_DND_MIME);
+            if (!raw) return;
+            e.preventDefault();
+            e.stopPropagation();
+            setDocDragOverSide(null);
+            let data: { id: string; type: "editor" | "board" };
+            try {
+                data = JSON.parse(raw);
+            } catch {
+                return;
+            }
+            setSideDocument(side, data.id, data.type === "board" ? "board" : "document");
+        },
+        [setSideDocument],
+    );
 
     const gridStyle = useMemo(() => {
         if (!isSplit) {
@@ -255,38 +307,60 @@ const SplitPanelContainer = ({
         };
     }, [isSplit, splitRatio]);
 
-    const allPanels: PanelType[] = ["screenplay", "board", "statistics", "title", "draft", "document"];
+    // Shared wrapper for one slot: focus styling, document drop target, switcher.
+    const renderShell = (opts: {
+        keyId: string;
+        panelKind: PanelType;
+        side: SplitSide;
+        isPrimary: boolean;
+        isVisible: boolean;
+        content: React.ReactNode;
+    }) => {
+        const { keyId, panelKind, side, isPrimary, isVisible, content } = opts;
+        const isFocused = isSplit && isVisible && focusedSide === side;
+        const isDocDropTarget = isVisible && docDragOverSide === side;
+        const panelClass = !isVisible
+            ? styles.panel_hidden
+            : `${styles.panel}${isFocused ? ` ${styles.panel_focused}` : ""}`;
+
+        return (
+            <div
+                key={keyId}
+                className={panelClass}
+                style={isVisible ? { order: isPrimary ? 0 : 2, position: "relative" } : undefined}
+                onPointerDown={isVisible && isSplit ? () => setFocusedSide(side) : undefined}
+                onDragOverCapture={isVisible ? handleDocDragOver(side) : undefined}
+                onDropCapture={isVisible ? handleDocDrop(side) : undefined}
+                onDragLeave={
+                    isVisible
+                        ? (e) => {
+                              if (!e.currentTarget.contains(e.relatedTarget as Node)) setDocDragOverSide(null);
+                          }
+                        : undefined
+                }
+            >
+                {isDocDropTarget && <div className={styles.panel_drop_overlay} />}
+                {isVisible && <PanelSwitcherMenu currentPanel={panelKind} side={side} />}
+                {content}
+            </div>
+        );
+    };
 
     return (
         <div className={styles.split_panel_container} style={gridStyle}>
-            {allPanels.map((panel) => {
+            {/* Singleton view panels — kept mounted, shown/hidden via CSS. */}
+            {SINGLETON_PANELS.map((panel) => {
+                if (!mountedPanels.has(panel)) return null;
                 const isPrimary = panel === primaryPanel;
                 const isSecondary = panel === secondaryPanel;
                 const isVisible = isPrimary || isSecondary;
-
-                // Lazy mount: only render panels that have been visited at least once
-                if (!mountedPanels.has(panel)) return null;
-
-                const isFocused =
-                    isSplit && isVisible && (isPrimary ? focusedSide === "primary" : focusedSide === "secondary");
-                const panelClass = !isVisible
-                    ? styles.panel_hidden
-                    : isFocused
-                      ? `${styles.panel} ${styles.panel_focused}`
-                      : styles.panel;
-
-                return (
-                    <div
-                        key={panel}
-                        className={panelClass}
-                        style={isVisible ? { order: isPrimary ? 0 : 2, position: "relative" } : undefined}
-                        onPointerDown={
-                            isVisible && isSplit ? () => setFocusedSide(isPrimary ? "primary" : "secondary") : undefined
-                        }
-                    >
-                        {isVisible && (
-                            <PanelSwitcherMenu currentPanel={panel} side={isPrimary ? "primary" : "secondary"} />
-                        )}
+                return renderShell({
+                    keyId: panel,
+                    panelKind: panel,
+                    side: isPrimary ? "primary" : "secondary",
+                    isPrimary,
+                    isVisible,
+                    content: (
                         <PanelRenderer
                             panel={panel}
                             isVisible={isVisible}
@@ -295,9 +369,31 @@ const SplitPanelContainer = ({
                             suggestionData={suggestionData}
                             updateSuggestionData={updateSuggestionData}
                         />
-                    </div>
-                );
+                    ),
+                });
             })}
+
+            {/* Document panels — one per side, each bound to its own docId so two
+                documents (e.g. two boards, or a board + an editor) can be open. */}
+            {(["primary", "secondary"] as SplitSide[]).map((side) => {
+                const panelKind = side === "primary" ? primaryPanel : secondaryPanel;
+                if (panelKind !== "board" && panelKind !== "document") return null;
+                const docId = side === "primary" ? primaryDocId : secondaryDocId;
+                return renderShell({
+                    keyId: `doc-${side}`,
+                    panelKind,
+                    side,
+                    isPrimary: side === "primary",
+                    isVisible: true,
+                    content:
+                        panelKind === "board" ? (
+                            <BoardPanel isVisible docId={docId} />
+                        ) : (
+                            <TreeDocumentPanel isVisible docId={docId} />
+                        ),
+                });
+            })}
+
             {isSplit && (
                 <div style={{ order: 1, height: "100%" }}>
                     <DragHandle />

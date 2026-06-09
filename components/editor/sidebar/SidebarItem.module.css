@@ -1,4 +1,5 @@
 .container {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -15,6 +16,17 @@
 
 .container:not(:last-child) {
     border-bottom: 1px solid var(--separator);
+}
+
+/* Slim accent bar on the left edge showing the scene's color. */
+.color_bar {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    pointer-events: none;
 }
 
 .data {
