@@ -486,6 +486,8 @@
   "production": {
     "title": "プロダクション",
     "draftLocking": "ドラフトロック",
+    "draftLockingHint": "ドラフトをロックすると、現在のシーンとページが自動的にロックされ、次のリビジョンに切り替わります。手動で設定するには「詳細設定」セクションを開いてください。",
+    "advanced": "詳細設定",
     "draftRelock": "再ロック",
     "settings": "制作設定",
     "unlockDraftTitle": "ドラフトのロック解除",

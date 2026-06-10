@@ -3,14 +3,11 @@
  * Creates remote projects for logged-in users, local projects for offline/desktop.
  */
 
-import { LayoutData, ProjectData, ProjectMetadata, ProjectState } from "@src/lib/project/project-state";
+import { ProjectData, ProjectState, applyProjectData } from "@src/lib/project/project-state";
 import { CURRENT_PROJECT_VERSION } from "@src/lib/project/migrations/project-migrations";
 import { getAdapterByFilename } from "@src/lib/adapters/registry";
 import { createCachedProject, createCachedProjectWithId } from "@src/lib/persistence/storage-provider/local-persistence";
 import { writeYjsDocumentLocally } from "@src/lib/persistence/y-local-provider";
-import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
-import { ScreenplaySchema } from "@src/lib/screenplay/editor";
-import { TitlePageSchema } from "@src/lib/titlepage/editor";
 import { Editor } from "@tiptap/react";
 import { createProject } from "@src/lib/utils/requests";
 import { CreateProjectBody } from "@src/lib/utils/api-bodies";
@@ -74,62 +71,18 @@ export async function importFileIntoProject(
 async function createLocalYjsDocument(projectId: string, projectData: ProjectData): Promise<void> {
     const ydoc = new ProjectState();
 
-    ydoc.transact(() => {
-        // Screenplay fragment
-        const screenplayFragment = ydoc.screenplayFragment();
-        prosemirrorJSONToYXmlFragment(
-            ScreenplaySchema,
-            { type: "doc", content: projectData.screenplay },
-            screenplayFragment,
-        );
+    // Write every map and fragment the adapter produced. Adapters that only
+    // parse a screenplay (fountain/fdx) supply a partial `ProjectData`;
+    // `applyProjectData` ignores the keys they leave out.
+    applyProjectData(ydoc, projectData);
 
-        // Titlepage fragment
-        if (projectData.titlepage) {
-            const titlepageFragment = ydoc.titlepageFragment();
-            prosemirrorJSONToYXmlFragment(
-                TitlePageSchema,
-                { type: "doc", content: projectData.titlepage },
-                titlepageFragment,
-            );
-        }
-
-        // Maps
-        const metadataMap = ydoc.metadata();
-        if (projectData.metadata) {
-            Object.entries(projectData.metadata).forEach(([key, value]) => metadataMap.set(key as keyof ProjectMetadata, value));
-        }
-        // Stamp the schema version: preserves the imported file's version if it
-        // had one (so future-version files surface a migration error on open),
-        // otherwise marks the doc as current so it skips migration on first load.
-        if (metadataMap.get("version") === undefined) {
-            metadataMap.set("version", CURRENT_PROJECT_VERSION);
-        }
-
-        if (projectData.characters) {
-            const charactersMap = ydoc.characters();
-            Object.entries(projectData.characters).forEach(([key, value]) => charactersMap.set(key, value));
-        }
-
-        if (projectData.locations) {
-            const locationsMap = ydoc.locations();
-            Object.entries(projectData.locations).forEach(([key, value]) => locationsMap.set(key, value));
-        }
-
-        if (projectData.scenes) {
-            const scenesMap = ydoc.scenes();
-            Object.entries(projectData.scenes).forEach(([key, value]) => scenesMap.set(key, value));
-        }
-
-        if (projectData.layout) {
-            const layoutMap = ydoc.layout();
-            Object.entries(projectData.layout).forEach(([key, value]) => layoutMap.set(key as keyof LayoutData, value));
-        }
-
-        if (projectData.comments) {
-            const commentsMap = ydoc.comments();
-            Object.entries(projectData.comments).forEach(([key, value]) => commentsMap.set(key, value));
-        }
-    });
+    // Stamp the schema version: preserves the imported file's version if it had
+    // one (so future-version files surface a migration error on open), otherwise
+    // marks the doc as current so it skips migration on first load.
+    const metadataMap = ydoc.metadata();
+    if (metadataMap.get("version") === undefined) {
+        ydoc.transact(() => metadataMap.set("version", CURRENT_PROJECT_VERSION));
+    }
 
     await writeYjsDocumentLocally(projectId, ydoc);
     ydoc.destroy();

@@ -487,6 +487,8 @@
   "production": {
     "title": "Produktion",
     "draftLocking": "Entwurf sperren",
+    "draftLockingHint": "Beim Sperren eines Entwurfs werden die aktuellen Szenen und Seiten automatisch gesperrt und zur nächsten Revision gewechselt. Öffnen Sie den Bereich „Erweitert“, um diese manuell zu konfigurieren.",
+    "advanced": "Erweitert",
     "draftRelock": "Erneut sperren",
     "settings": "Produktionseinstellungen",
     "unlockDraftTitle": "Entwurf entsperren",

@@ -32,6 +32,12 @@
     cursor: grabbing;
 }
 
+/* Highlight the canvas while an image file is dragged over it. */
+.container.drag_over {
+    outline: 2px dashed var(--secondary-text);
+    outline-offset: -8px;
+}
+
 .grid {
     position: absolute;
     inset: 0;
@@ -74,6 +80,29 @@
     opacity: 0.9;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     z-index: 1000;
+}
+
+/* Image resource card: bare image, no colored header/border chrome. */
+.card.image_card {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background-color: var(--main-bg);
+    padding: 0;
+    overflow: hidden;
+}
+
+.card_image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+}
+
+.card_image_placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 .card_header {

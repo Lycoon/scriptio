@@ -12,7 +12,7 @@ type TimerMode = "countdown" | "stopwatch";
 const PRESETS = [10, 15, 25, 45];
 // Minutes added/removed per stepper click, and the allowed duration range (sec).
 const STEP = 5;
-const MIN_SECONDS = 30;
+const MIN_SECONDS = 1;
 const MAX_SECONDS = 180 * 60;
 
 const clampSeconds = (sec: number) => Math.min(MAX_SECONDS, Math.max(MIN_SECONDS, Math.round(sec)));

@@ -486,6 +486,8 @@
   "production": {
     "title": "制作",
     "draftLocking": "锁定草稿",
+    "draftLockingHint": "锁定草稿会自动锁定当前场景、页面并切换到下一个修订版本。打开「高级」部分可手动配置这些选项。",
+    "advanced": "高级",
     "draftRelock": "重新锁定",
     "settings": "制作设置",
     "unlockDraftTitle": "解锁草稿",

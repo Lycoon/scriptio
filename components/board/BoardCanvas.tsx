@@ -9,10 +9,14 @@ import { v7 as uuidv7 } from "uuid";
 import { Trash2, Plus, Minus, Copy, ListTree } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
+import { importImageFile } from "@src/lib/assets/asset-store";
+import { scheduleAssetGc } from "@src/lib/assets/asset-gc";
 
 const GRID_SIZE = 20;
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 2;
+/** Largest edge (in canvas px) an image card is sized to on first drop. */
+const MAX_IMAGE_CARD_SIZE = 400;
 
 interface CardContextMenuState {
     position: { x: number; y: number };
@@ -25,7 +29,7 @@ interface ArrowContextMenuState {
 }
 
 const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }) => {
-    const { repository, isYjsReady, isReadOnly, boardFocusCardId, setBoardFocusCardId } =
+    const { projectId, repository, isYjsReady, isReadOnly, boardFocusCardId, setBoardFocusCardId } =
         useContext(ProjectContext);
     const t = useTranslations("board");
     const projectState = repository?.getState();
@@ -37,6 +41,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const [scale, setScale] = useState(1);
     const [isPanning, setIsPanning] = useState(false);
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
     const [isSnapping, setIsSnapping] = useState(true);
     const [cardContextMenu, setCardContextMenu] = useState<CardContextMenuState | null>(null);
     const [arrowContextMenu, setArrowContextMenu] = useState<ArrowContextMenuState | null>(null);
@@ -496,6 +501,73 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         [cards, offset, scale, isSnapping, saveCards],
     );
 
+    // Highlight the canvas while an OS file drag hovers over it.
+    const handleDragOver = useCallback(
+        (e: React.DragEvent) => {
+            if (isReadOnly) return;
+            if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+            setIsDraggingFile(true);
+        },
+        [isReadOnly],
+    );
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        // Ignore leave events fired when moving between the container's children.
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setIsDraggingFile(false);
+    }, []);
+
+    // Drop image files → store each in IndexedDB (deduped) and drop an image
+    // card referencing its hash at the cursor.
+    const handleDrop = useCallback(
+        async (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDraggingFile(false);
+            if (isReadOnly || !projectId) return;
+
+            const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+            if (files.length === 0) return;
+
+            const container = containerRef.current;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const dropX = (e.clientX - rect.left - offset.x) / scale;
+            const dropY = (e.clientY - rect.top - offset.y) / scale;
+
+            const created: BoardCardData[] = [];
+            for (const file of files) {
+                try {
+                    const { hash, width, height } = await importImageFile(projectId, file);
+                    const fit = Math.min(1, MAX_IMAGE_CARD_SIZE / Math.max(width, height, 1));
+                    const i = created.length;
+                    created.push({
+                        id: uuidv7(),
+                        type: "image",
+                        assetId: hash,
+                        title: "",
+                        description: "",
+                        color: "transparent",
+                        x: dropX + i * 24,
+                        y: dropY + i * 24,
+                        width: Math.max(60, Math.round(width * fit)),
+                        height: Math.max(60, Math.round(height * fit)),
+                    });
+                } catch (err) {
+                    console.error("[BoardCanvas] Failed to import image:", err);
+                }
+            }
+            if (created.length === 0) return;
+
+            setCards((prev) => {
+                const next = [...prev, ...created];
+                saveCards(next);
+                return next;
+            });
+        },
+        [isReadOnly, projectId, offset, scale, saveCards],
+    );
+
     // Update card (with multi-drag support)
     const handleUpdateCard = useCallback(
         (updatedCard: BoardCardData) => {
@@ -540,8 +612,10 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             setArrows(newArrows);
             saveArrows(newArrows);
             setCardContextMenu(null);
+            // Deleting an image card may orphan its asset — reconcile (debounced).
+            if (projectId && projectState) scheduleAssetGc(projectId, projectState);
         },
-        [cards, arrows, saveCards, saveArrows],
+        [cards, arrows, saveCards, saveArrows, projectId, projectState],
     );
 
     // Change card color
@@ -769,10 +843,13 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             <div className={styles.board_shadow} />
             <div
                 ref={containerRef}
-                className={`${styles.container} ${isPanning ? styles.panning : ""}`}
+                className={`${styles.container} ${isPanning ? styles.panning : ""} ${isDraggingFile ? styles.drag_over : ""}`}
                 onMouseDown={handleContainerMouseDown}
                 onDoubleClick={handleDoubleClick}
                 onWheel={handleWheel}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
             >
                 <div className={styles.grid} style={gridPattern} />
 
@@ -899,6 +976,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                         <BoardCard
                             key={card.id}
                             card={card}
+                            projectId={projectId}
                             scale={scale}
                             isSnapping={isSnapping}
                             gridSize={GRID_SIZE}
@@ -934,16 +1012,19 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                             left: cardContextMenu.position.x,
                         }}
                     >
-                        <div className={styles.context_menu_colors}>
-                            {DEFAULT_ITEM_COLORS.map((color) => (
-                                <button
-                                    key={color}
-                                    className={`${styles.context_menu_color_swatch} ${cardContextMenu.card.color === color ? styles.context_menu_color_swatch_active : ""}`}
-                                    style={{ backgroundColor: color }}
-                                    onClick={() => handleChangeCardColor(cardContextMenu.card.id, color)}
-                                />
-                            ))}
-                        </div>
+                        {/* Color + outline apply to text notes; image cards have neither. */}
+                        {cardContextMenu.card.type !== "image" && (
+                            <div className={styles.context_menu_colors}>
+                                {DEFAULT_ITEM_COLORS.map((color) => (
+                                    <button
+                                        key={color}
+                                        className={`${styles.context_menu_color_swatch} ${cardContextMenu.card.color === color ? styles.context_menu_color_swatch_active : ""}`}
+                                        style={{ backgroundColor: color }}
+                                        onClick={() => handleChangeCardColor(cardContextMenu.card.id, color)}
+                                    />
+                                ))}
+                            </div>
+                        )}
                         <div
                             className={styles.context_menu_item}
                             onClick={() => handleDuplicateCard(cardContextMenu.card)}
@@ -951,13 +1032,15 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                             <Copy size={16} />
                             <p className="unselectable">{t("duplicate")}</p>
                         </div>
-                        <div
-                            className={styles.context_menu_item}
-                            onClick={() => handleSendToOutline(cardContextMenu.card)}
-                        >
-                            <ListTree size={16} />
-                            <p className="unselectable">{t("sendToOutline")}</p>
-                        </div>
+                        {cardContextMenu.card.type !== "image" && (
+                            <div
+                                className={styles.context_menu_item}
+                                onClick={() => handleSendToOutline(cardContextMenu.card)}
+                            >
+                                <ListTree size={16} />
+                                <p className="unselectable">{t("sendToOutline")}</p>
+                            </div>
+                        )}
                         <div
                             className={styles.context_menu_item}
                             onClick={() => handleDeleteCard(cardContextMenu.card.id)}

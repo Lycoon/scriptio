@@ -7,8 +7,12 @@
  */
 
 import type { InstalledDictionary, UserSettings } from "@src/lib/utils/types";
-import { CachedProject, ProjectEntryInput, StorageProvider } from "./storage-provider";
-import { CURRENT_STORE_VERSION, STORE_NAMES } from "./migrations/store-migrations";
+import { CachedProject, ProjectEntryInput, StorageProvider, StoredAsset } from "./storage-provider";
+import {
+    ASSETS_BY_PROJECT_INDEX,
+    CURRENT_STORE_VERSION,
+    STORE_NAMES,
+} from "./migrations/store-migrations";
 import { runStoreMigrations } from "./migrations/store-migration-runner";
 import { StoreVersionTooNewError } from "./migrations/errors";
 
@@ -17,7 +21,11 @@ const PROJECTS_STORE = STORE_NAMES.PROJECTS;
 const SETTINGS_STORE = STORE_NAMES.SETTINGS;
 const DICTIONARIES_STORE = STORE_NAMES.DICTIONARIES;
 const MIGRATION_BACKUPS_STORE = STORE_NAMES.MIGRATION_BACKUPS;
+const ASSETS_STORE = STORE_NAMES.ASSETS;
 const SETTINGS_KEY = "global";
+
+/** Primary key for an asset record: `${projectId}/${hash}`. */
+const assetKey = (projectId: string, hash: string): string => `${projectId}/${hash}`;
 
 interface BrowserStoredProject {
     id: string;
@@ -336,6 +344,115 @@ export class IndexedDBStorageProvider implements StorageProvider {
         return new Promise((resolve, reject) => {
             const tx = db.transaction(MIGRATION_BACKUPS_STORE, "readwrite");
             tx.objectStore(MIGRATION_BACKUPS_STORE).delete(projectId);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    // ── Assets ────────────────────────────────────────────────────────────────
+
+    async putAsset(asset: StoredAsset): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(ASSETS_STORE, "readwrite");
+            tx.objectStore(ASSETS_STORE).put(asset);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async hasAsset(projectId: string, hash: string): Promise<boolean> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const req = db
+                .transaction(ASSETS_STORE, "readonly")
+                .objectStore(ASSETS_STORE)
+                .getKey(assetKey(projectId, hash));
+            req.onsuccess = () => resolve(req.result !== undefined);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async getAsset(projectId: string, hash: string): Promise<StoredAsset | null> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const req = db
+                .transaction(ASSETS_STORE, "readonly")
+                .objectStore(ASSETS_STORE)
+                .get(assetKey(projectId, hash));
+            req.onsuccess = () => resolve((req.result as StoredAsset | undefined) ?? null);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async listAssetHashes(projectId: string): Promise<string[]> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const hashes: string[] = [];
+            const index = db
+                .transaction(ASSETS_STORE, "readonly")
+                .objectStore(ASSETS_STORE)
+                .index(ASSETS_BY_PROJECT_INDEX);
+            const req = index.openCursor(IDBKeyRange.only(projectId));
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) {
+                    hashes.push((cursor.value as StoredAsset).hash);
+                    cursor.continue();
+                } else {
+                    resolve(hashes);
+                }
+            };
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async deleteAsset(projectId: string, hash: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(ASSETS_STORE, "readwrite");
+            tx.objectStore(ASSETS_STORE).delete(assetKey(projectId, hash));
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async deleteProjectAssets(projectId: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(ASSETS_STORE, "readwrite");
+            const store = tx.objectStore(ASSETS_STORE);
+            const req = store.index(ASSETS_BY_PROJECT_INDEX).openCursor(IDBKeyRange.only(projectId));
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                }
+            };
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async copyProjectAssets(fromProjectId: string, toProjectId: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(ASSETS_STORE, "readwrite");
+            const store = tx.objectStore(ASSETS_STORE);
+            const req = store.index(ASSETS_BY_PROJECT_INDEX).openCursor(IDBKeyRange.only(fromProjectId));
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) {
+                    const src = cursor.value as StoredAsset;
+                    store.put({
+                        ...src,
+                        key: assetKey(toProjectId, src.hash),
+                        projectId: toProjectId,
+                    });
+                    cursor.continue();
+                }
+            };
             tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
         });

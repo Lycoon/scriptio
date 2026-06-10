@@ -487,6 +487,8 @@
   "production": {
     "title": "Production",
     "draftLocking": "Verrouillage du brouillon",
+    "draftLockingHint": "Verrouiller un brouillon verrouille automatiquement les scènes et pages actuelles et passe à la révision suivante. Ouvrez la section Avancé pour les configurer manuellement.",
+    "advanced": "Avancé",
     "draftRelock": "Reverrouiller",
     "settings": "Paramètres de production",
     "unlockDraftTitle": "Déverrouiller le brouillon",

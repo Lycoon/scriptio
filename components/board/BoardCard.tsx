@@ -4,9 +4,11 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import styles from "./BoardCanvas.module.css";
 import { useTranslations } from "next-intl";
 import { BoardCardData } from "@src/lib/project/project-state";
+import { useAssetUrl } from "@src/lib/assets/use-asset-url";
 
 interface BoardCardProps {
     card: BoardCardData;
+    projectId: string;
     scale: number;
     isSnapping: boolean;
     gridSize: number;
@@ -20,6 +22,7 @@ interface BoardCardProps {
 
 const BoardCard = ({
     card,
+    projectId,
     scale,
     isSnapping,
     gridSize,
@@ -30,6 +33,9 @@ const BoardCard = ({
     isConnecting,
     isSelected,
 }: BoardCardProps) => {
+    const isImage = card.type === "image";
+    // Only resolves bytes for image cards (null assetId is a no-op for text notes).
+    const imageUrl = useAssetUrl(projectId, isImage ? card.assetId : null);
     const t = useTranslations("board");
     const cardRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -237,63 +243,74 @@ const BoardCard = ({
     return (
         <div
             ref={cardRef}
-            className={`${styles.card} ${isDragging ? styles.card_dragging : ""} ${isConnecting ? styles.card_connecting : ""} ${isSelected ? styles.card_selected : ""}`}
+            className={`${styles.card} ${isImage ? styles.image_card : ""} ${isDragging ? styles.card_dragging : ""} ${isConnecting ? styles.card_connecting : ""} ${isSelected ? styles.card_selected : ""}`}
             style={{
                 left: card.x,
                 top: card.y,
                 width: card.width,
                 height: card.height,
-                borderColor: card.color,
-                backgroundColor: card.color,
+                ...(isImage ? {} : { borderColor: card.color, backgroundColor: card.color }),
             }}
             onMouseDown={handleMouseDown}
             onMouseUp={handleCardMouseUp}
-            onDoubleClick={handleDoubleClick}
+            onDoubleClick={isImage ? undefined : handleDoubleClick}
             onContextMenu={handleRightClick}
         >
-            <div className={styles.card_header} style={{ backgroundColor: card.color }}>
-                {isEditingTitle ? (
-                    <input
-                        type="text"
-                        className={styles.card_header_title_input}
-                        value={localTitle}
-                        onChange={(e) => setLocalTitle(e.target.value)}
-                        onBlur={handleTitleBlur}
-                        onKeyDown={handleTitleKeyDown}
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        placeholder={t("titlePlaceholder")}
-                        autoFocus
-                    />
+            {isImage ? (
+                imageUrl ? (
+                    // Blob object URLs can't be optimized by next/image; a plain <img> is correct here.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imageUrl} alt="" draggable={false} className={styles.card_image} />
                 ) : (
-                    <span className={styles.card_header_title} onDoubleClick={handleTitleDoubleClick}>
-                        {card.title || t("untitled")}
-                    </span>
-                )}
-            </div>
+                    <div className={styles.card_image_placeholder} />
+                )
+            ) : (
+                <>
+                    <div className={styles.card_header} style={{ backgroundColor: card.color }}>
+                        {isEditingTitle ? (
+                            <input
+                                type="text"
+                                className={styles.card_header_title_input}
+                                value={localTitle}
+                                onChange={(e) => setLocalTitle(e.target.value)}
+                                onBlur={handleTitleBlur}
+                                onKeyDown={handleTitleKeyDown}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                placeholder={t("titlePlaceholder")}
+                                autoFocus
+                            />
+                        ) : (
+                            <span className={styles.card_header_title} onDoubleClick={handleTitleDoubleClick}>
+                                {card.title || t("untitled")}
+                            </span>
+                        )}
+                    </div>
 
-            <div
-                className={styles.card_content}
-                style={{ backgroundColor: `color-mix(in srgb, ${card.color} 20%, white)` }}
-                onDoubleClick={handleDoubleClick}
-            >
-                <p className={styles.card_description} style={{ display: isEditing ? "none" : undefined }}>
-                    {card.description}
-                </p>
-                {isEditing && (
-                    <textarea
-                        className={styles.card_description_input}
-                        value={localDescription}
-                        onChange={(e) => setLocalDescription(e.target.value)}
-                        onBlur={handleDescriptionBlur}
-                        onKeyDown={handleDescriptionKeyDown}
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        placeholder={t("descriptionPlaceholder")}
-                        autoFocus
-                    />
-                )}
-            </div>
+                    <div
+                        className={styles.card_content}
+                        style={{ backgroundColor: `color-mix(in srgb, ${card.color} 20%, white)` }}
+                        onDoubleClick={handleDoubleClick}
+                    >
+                        <p className={styles.card_description} style={{ display: isEditing ? "none" : undefined }}>
+                            {card.description}
+                        </p>
+                        {isEditing && (
+                            <textarea
+                                className={styles.card_description_input}
+                                value={localDescription}
+                                onChange={(e) => setLocalDescription(e.target.value)}
+                                onBlur={handleDescriptionBlur}
+                                onKeyDown={handleDescriptionKeyDown}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                placeholder={t("descriptionPlaceholder")}
+                                autoFocus
+                            />
+                        )}
+                    </div>
+                </>
+            )}
 
             <div className={styles.card_resize_handle} onMouseDown={handleResizeStart} />
 

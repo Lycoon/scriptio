@@ -486,6 +486,8 @@
   "production": {
     "title": "Production",
     "draftLocking": "Draft locking",
+    "draftLockingHint": "Locking a draft automatically locks current scenes, pages and switches to the next revision. Open the Advanced section to configure these manually.",
+    "advanced": "Advanced",
     "draftRelock": "Relock",
     "settings": "Production settings",
     "unlockDraftTitle": "Unlock draft",

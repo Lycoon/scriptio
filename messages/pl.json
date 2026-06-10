@@ -486,6 +486,8 @@
   "production": {
     "title": "Produkcja",
     "draftLocking": "Blokowanie wersji roboczej",
+    "draftLockingHint": "Zablokowanie wersji roboczej automatycznie blokuje bieżące sceny i strony oraz przełącza na następną wersję. Otwórz sekcję Zaawansowane, aby skonfigurować je ręcznie.",
+    "advanced": "Zaawansowane",
     "draftRelock": "Zablokuj ponownie",
     "settings": "Ustawienia produkcji",
     "unlockDraftTitle": "Odblokuj wersję roboczą",

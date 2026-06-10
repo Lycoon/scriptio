@@ -486,6 +486,8 @@
   "production": {
     "title": "Producción",
     "draftLocking": "Bloquear borrador",
+    "draftLockingHint": "Bloquear un borrador bloquea automáticamente las escenas y páginas actuales y pasa a la siguiente revisión. Abre la sección Avanzado para configurarlas manualmente.",
+    "advanced": "Avanzado",
     "draftRelock": "Volver a bloquear",
     "settings": "Ajustes de producción",
     "unlockDraftTitle": "Desbloquear borrador",

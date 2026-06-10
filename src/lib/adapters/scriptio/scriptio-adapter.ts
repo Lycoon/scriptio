@@ -1,4 +1,4 @@
-import { LayoutData, ProductionData, ProjectData, ProjectMetadata, ProjectState, screenplayOf, titlepageOf } from "@src/lib/project/project-state";
+import { ProjectData, ProjectState, applyProjectData, clearProjectData, projectDataOf } from "@src/lib/project/project-state";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { replaceScreenplay } from "../../screenplay/editor";
 import { Editor } from "@tiptap/react";
@@ -69,20 +69,9 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
         if (isReadable) {
             // Human-readable path: serialize the full project as indented JSON.
             // This produces a larger file but makes the content inspectable
-            // with any text editor.
-            const data: ProjectData = {
-                screenplay: screenplayOf(project),
-                titlepage: titlepageOf(project),
-                metadata: project.metadata().toJSON() as ProjectMetadata,
-                characters: project.characters().toJSON(),
-                scenes: project.scenes().toJSON(),
-                pages: project.pages().toJSON(),
-                locations: project.locations().toJSON(),
-                layout: project.layout().toJSON() as LayoutData,
-                production: project.production().toJSON() as ProductionData,
-                comments: project.comments().toJSON(),
-            };
-            payload = new TextEncoder().encode(JSON.stringify(data, null, 2));
+            // with any text editor. `projectDataOf` captures every map and
+            // fragment, so the readable export is just as lossless as binary.
+            payload = new TextEncoder().encode(JSON.stringify(projectDataOf(project), null, 2));
         } else {
             // Binary path: zlib-compress the raw Yjs state.
             // Preserves the full CRDT document, including collaboration history.
@@ -121,18 +110,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
             const decompressed = fflate.unzlibSync(payload);
             Y.applyUpdate(tmpDoc, decompressed);
 
-            return {
-                screenplay: screenplayOf(tmpDoc),
-                titlepage: titlepageOf(tmpDoc),
-                metadata: tmpDoc.metadata().toJSON() as ProjectMetadata,
-                characters: tmpDoc.characters().toJSON(),
-                scenes: tmpDoc.scenes().toJSON(),
-                pages: tmpDoc.pages().toJSON(),
-                locations: tmpDoc.locations().toJSON(),
-                layout: tmpDoc.layout().toJSON() as LayoutData,
-                production: tmpDoc.production().toJSON() as ProductionData,
-                comments: tmpDoc.comments().toJSON(),
-            };
+            return projectDataOf(tmpDoc);
         } catch (error) {
             console.error("Failed to parse .scriptio file", error);
             throw new Error("Invalid Scriptio file format");
@@ -152,32 +130,21 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
         const payload = data.subarray(payloadOffset);
         const isReadable = (flags & FLAG_READABLE_JSON) !== 0;
 
-        if (!isReadable && repository) {
+        if (repository) {
             const ydoc = repository.getState() as ProjectState;
             try {
-                const decompressed = fflate.unzlibSync(payload);
+                // Truly "replace" the project: wipe every existing map and
+                // fragment first so the import never merges with prior data.
+                clearProjectData(ydoc);
 
-                // To truly "replace" the state, we clear existing content
-                // to avoid merging with the previous project data.
-                ydoc.transact(() => {
-                    // Fragments - delete all content
-                    const screenplay = ydoc.screenplayFragment();
-                    if (screenplay.length > 0) screenplay.delete(0, screenplay.length);
-                    const titlepage = ydoc.titlepageFragment();
-                    if (titlepage.length > 0) titlepage.delete(0, titlepage.length);
-
-                    // Maps - clear all entries
-                    ydoc.metadata().clear();
-                    ydoc.characters().clear();
-                    ydoc.scenes().clear();
-                    ydoc.locations().clear();
-                    ydoc.layout().clear();
-                    ydoc.production().clear();
-                    ydoc.comments().clear();
-                });
-
-                // Apply the new state
-                Y.applyUpdate(ydoc, decompressed);
+                if (isReadable) {
+                    const json = new TextDecoder().decode(payload);
+                    applyProjectData(ydoc, JSON.parse(json) as ProjectData);
+                } else {
+                    // Applying the raw Yjs update preserves the full CRDT state,
+                    // including any collaboration history baked into the file.
+                    Y.applyUpdate(ydoc, fflate.unzlibSync(payload));
+                }
 
                 // Refresh editors if provided
                 const projectData = this.convertFrom(rawContent);
@@ -190,11 +157,11 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
 
                 return;
             } catch (error) {
-                console.warn("Failed to apply binary Scriptio update directly, falling back to base import.", error);
+                console.warn("Failed to apply Scriptio update directly, falling back to base import.", error);
             }
         }
 
-        // Fallback to the base implementation for readable JSON or if repository is missing
+        // Fallback to the base implementation if no repository is available.
         super.import(rawContent, editor, titlePageEditor, repository);
     }
 }

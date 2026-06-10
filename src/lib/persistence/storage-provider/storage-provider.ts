@@ -25,6 +25,29 @@ export interface ProjectEntryInput {
     updatedAt: Date;
 }
 
+/**
+ * A binary resource (currently board images) stored locally, decoupled from the
+ * Yjs document. Content-addressed by SHA-256 so the same bytes are stored once.
+ * Scoped per project: the primary key is `${projectId}/${hash}`.
+ */
+export interface StoredAsset {
+    /** Primary key: `${projectId}/${hash}`. */
+    key: string;
+    /** Owning project id (indexed, for per-project list/delete). */
+    projectId: string;
+    /** SHA-256 hex digest of `blob` — this is the assetId referenced by cards. */
+    hash: string;
+    mime: string;
+    size: number;
+    /** Intrinsic pixel dimensions, used to size the card on first drop. */
+    width: number;
+    height: number;
+    /** Raw image bytes. Stored as ArrayBuffer (not Blob) for WebKit IndexedDB
+     *  compatibility, matching the dictionaries/migration-backup stores. */
+    data: ArrayBuffer;
+    createdAt: number;
+}
+
 export interface StorageProvider {
     // Project CRUD
     createProject(id: string, title: string, description?: string, synced?: boolean, author?: string): Promise<void>;
@@ -54,6 +77,18 @@ export interface StorageProvider {
     saveMigrationBackup(projectId: string, snapshot: Uint8Array, fromVersion: number): Promise<void>;
     loadMigrationBackup(projectId: string): Promise<{ snapshot: Uint8Array; fromVersion: number } | null>;
     clearMigrationBackup(projectId: string): Promise<void>;
+
+    // Assets: content-addressed binary resources (board images), per project.
+    putAsset(asset: StoredAsset): Promise<void>;
+    hasAsset(projectId: string, hash: string): Promise<boolean>;
+    getAsset(projectId: string, hash: string): Promise<StoredAsset | null>;
+    /** SHA-256 hashes of every asset stored for a project. */
+    listAssetHashes(projectId: string): Promise<string[]>;
+    deleteAsset(projectId: string, hash: string): Promise<void>;
+    /** Remove every asset belonging to a project (called on project deletion). */
+    deleteProjectAssets(projectId: string): Promise<void>;
+    /** Duplicate every asset of `fromProjectId` under `toProjectId` (id-changing copy). */
+    copyProjectAssets(fromProjectId: string, toProjectId: string): Promise<void>;
 }
 
 // Singleton cache

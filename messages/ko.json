@@ -486,6 +486,8 @@
   "production": {
     "title": "프로덕션",
     "draftLocking": "드래프트 잠금",
+    "draftLockingHint": "드래프트를 잠그면 현재 씬과 페이지가 자동으로 잠기고 다음 리비전으로 전환됩니다. 수동으로 설정하려면 고급 섹션을 여세요.",
+    "advanced": "고급",
     "draftRelock": "다시 잠그기",
     "settings": "프로덕션 설정",
     "unlockDraftTitle": "드래프트 잠금 해제",

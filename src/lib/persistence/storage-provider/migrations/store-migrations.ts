@@ -25,17 +25,23 @@ export const STORE_NAMES = {
     SETTINGS: "settings",
     DICTIONARIES: "dictionaries",
     MIGRATION_BACKUPS: "migration_backups",
+    ASSETS: "assets",
 } as const;
 
+/** Index on the `assets` store used to list/delete every asset of a project. */
+export const ASSETS_BY_PROJECT_INDEX = "byProject";
+
 /**
- * v0 → v1: baseline. Creates the three original stores. This is the schema
- * shipped before the migration framework existed; users already on v1 skip
- * this step.
+ * v0 → v1: baseline. Creates the original stores, including the binary
+ * `assets` store (board image resources, content-addressed by SHA-256, keyed
+ * `${projectId}/${hash}` with a `byProject` index). The app isn't released
+ * yet, so this is folded into the baseline rather than a separate migration
+ * step — existing local databases should just be reset.
  */
 const baselineV1: StoreMigration = {
     from: 0,
     to: 1,
-    description: "Baseline: create cached_projects, settings, dictionaries",
+    description: "Baseline: create cached_projects, settings, dictionaries, assets",
     run: (db) => {
         if (!db.objectStoreNames.contains(STORE_NAMES.PROJECTS)) {
             db.createObjectStore(STORE_NAMES.PROJECTS, { keyPath: "id" });
@@ -45,6 +51,10 @@ const baselineV1: StoreMigration = {
         }
         if (!db.objectStoreNames.contains(STORE_NAMES.DICTIONARIES)) {
             db.createObjectStore(STORE_NAMES.DICTIONARIES, { keyPath: "code" });
+        }
+        if (!db.objectStoreNames.contains(STORE_NAMES.ASSETS)) {
+            const assets = db.createObjectStore(STORE_NAMES.ASSETS, { keyPath: "key" });
+            assets.createIndex(ASSETS_BY_PROJECT_INDEX, "projectId", { unique: false });
         }
     },
 };
@@ -65,7 +75,10 @@ const addMigrationBackupsStore: StoreMigration = {
     },
 };
 
-export const STORE_MIGRATIONS: StoreMigration[] = [baselineV1, addMigrationBackupsStore];
+export const STORE_MIGRATIONS: StoreMigration[] = [
+    baselineV1,
+    addMigrationBackupsStore,
+];
 
 export const CURRENT_STORE_VERSION =
     STORE_MIGRATIONS.length === 0 ? 1 : STORE_MIGRATIONS[STORE_MIGRATIONS.length - 1].to;
