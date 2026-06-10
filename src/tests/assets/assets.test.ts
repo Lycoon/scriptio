@@ -9,6 +9,7 @@ import {
 } from "@src/lib/persistence/storage-provider/storage-provider";
 import { ProjectState } from "@src/lib/project/project-state";
 import { createProjectRepository } from "@src/lib/project/project-repository";
+import { ScriptioAdapter, restoreScriptioAssets } from "@src/lib/adapters/scriptio/scriptio-adapter";
 
 const pid = () => `test-${Math.random().toString(36).slice(2)}`;
 
@@ -178,6 +179,75 @@ describe("asset GC (reconcile from doc)", () => {
         expect(await provider.listAssetHashes(p)).toEqual(["B"]);
 
         await provider.deleteProjectAssets(p);
+        ydoc.destroy();
+    });
+});
+
+describe("scriptio asset bundling", () => {
+    it("bundles board image assets into the archive and restores them", async () => {
+        const provider = await getStorageProvider();
+        const src = pid();
+
+        // A board referencing a real stored image.
+        const file = await makePngFile("pic.png", 12, 8, "#0f0");
+        const { hash } = await importImageFile(src, file);
+
+        const ydoc = new ProjectState();
+        const repo = createProjectRepository(ydoc)!;
+        const board = repo.createBoardDocument("B");
+        ydoc.boardData(board).set(
+            "cards",
+            JSON.stringify([{ id: "c1", type: "image", assetId: hash, ...cardBase }]),
+        );
+
+        const adapter = new ScriptioAdapter();
+        const blob = await adapter.convertTo(ydoc, {
+            title: "t",
+            author: "a",
+            includeNotes: false,
+            projectId: src,
+        });
+        const buffer = await blob.arrayBuffer();
+
+        // The document still parses out of the zip and carries the board card.
+        const parsed = adapter.convertFrom(buffer);
+        expect(parsed.boards?.[board]?.cards).toContain(hash);
+
+        // Assets restore into a *different* project id (the import target).
+        const dest = pid();
+        expect(await provider.hasAsset(dest, hash)).toBe(false);
+        await restoreScriptioAssets(dest, buffer);
+
+        const restored = await provider.getAsset(dest, hash);
+        expect(restored?.width).toBe(12);
+        expect(restored?.height).toBe(8);
+        expect(restored?.mime).toBe("image/png");
+        // Bytes survive the round trip intact.
+        expect(await sha256Hex(restored!.data)).toBe(hash);
+
+        await provider.deleteProjectAssets(src);
+        await provider.deleteProjectAssets(dest);
+        ydoc.destroy();
+    });
+
+    it("exports a document with no assets and restore is a no-op", async () => {
+        const ydoc = new ProjectState();
+        const repo = createProjectRepository(ydoc)!;
+        repo.createBoardDocument("B"); // empty board, no image cards
+
+        const adapter = new ScriptioAdapter();
+        const blob = await adapter.convertTo(ydoc, {
+            title: "t",
+            author: "a",
+            includeNotes: false,
+            projectId: pid(),
+        });
+        const buffer = await blob.arrayBuffer();
+
+        const dest = pid();
+        await restoreScriptioAssets(dest, buffer); // must not throw
+        expect(await (await getStorageProvider()).listAssetHashes(dest)).toEqual([]);
+
         ydoc.destroy();
     });
 });

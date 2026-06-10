@@ -55,7 +55,9 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         }
     }
     const [isCameraReady, setIsCameraReady] = useState(false);
-    const [connectingFrom, setConnectingFrom] = useState<{ cardId: string; side: string } | null>(null);
+    const [connectingFrom, setConnectingFrom] = useState<{ cardId: string; side: string } | null>(
+        null,
+    );
     const [connectingLine, setConnectingLine] = useState<{ x: number; y: number } | null>(null);
     const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
     const [selectionRect, setSelectionRect] = useState<{
@@ -137,7 +139,8 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             const cardsData = boardMap.get("cards");
             if (cardsData) {
                 try {
-                    const parsed = typeof cardsData === "string" ? JSON.parse(cardsData) : cardsData;
+                    const parsed =
+                        typeof cardsData === "string" ? JSON.parse(cardsData) : cardsData;
                     setCards(parsed);
 
                     // Center camera on first load
@@ -168,7 +171,8 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             const arrowsData = boardMap.get("arrows");
             if (arrowsData) {
                 try {
-                    const parsed = typeof arrowsData === "string" ? JSON.parse(arrowsData) : arrowsData;
+                    const parsed =
+                        typeof arrowsData === "string" ? JSON.parse(arrowsData) : arrowsData;
                     setArrows(parsed);
                 } catch (e) {
                     console.error("[BoardCanvas] Failed to parse arrows:", e);
@@ -387,7 +391,12 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                         const cardRight = card.x + card.width;
                         const cardBottom = card.y + card.height;
 
-                        if (card.x < right && cardRight > left && card.y < bottom && cardBottom > top) {
+                        if (
+                            card.x < right &&
+                            cardRight > left &&
+                            card.y < bottom &&
+                            cardBottom > top
+                        ) {
                             selected.add(card.id);
                         }
                     }
@@ -481,7 +490,8 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             const x = (e.clientX - rect.left - offset.x) / scale;
             const y = (e.clientY - rect.top - offset.y) / scale;
 
-            const randomColor = DEFAULT_ITEM_COLORS[Math.floor(Math.random() * DEFAULT_ITEM_COLORS.length)];
+            const randomColor =
+                DEFAULT_ITEM_COLORS[Math.floor(Math.random() * DEFAULT_ITEM_COLORS.length)];
 
             const newCard: BoardCardData = {
                 id: uuidv7(),
@@ -526,7 +536,9 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             setIsDraggingFile(false);
             if (isReadOnly || !projectId) return;
 
-            const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+            const files = Array.from(e.dataTransfer.files).filter((f) =>
+                f.type.startsWith("image/"),
+            );
             if (files.length === 0) return;
 
             const container = containerRef.current;
@@ -559,11 +571,9 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             }
             if (created.length === 0) return;
 
-            setCards((prev) => {
-                const next = [...prev, ...created];
-                saveCards(next);
-                return next;
-            });
+            const newCards = [...cardsRef.current, ...created];
+            setCards(newCards);
+            saveCards(newCards);
         },
         [isReadOnly, projectId, offset, scale, saveCards],
     );
@@ -579,11 +589,14 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                     const dy = updatedCard.y - oldCard.y;
                     // Only apply multi-drag for position changes, not resize
                     if (dx !== 0 || dy !== 0) {
-                        const isResize = updatedCard.width !== oldCard.width || updatedCard.height !== oldCard.height;
+                        const isResize =
+                            updatedCard.width !== oldCard.width ||
+                            updatedCard.height !== oldCard.height;
                         if (!isResize) {
                             const newCards = cards.map((c) => {
                                 if (c.id === updatedCard.id) return updatedCard;
-                                if (selectedCardIds.has(c.id)) return { ...c, x: c.x + dx, y: c.y + dy };
+                                if (selectedCardIds.has(c.id))
+                                    return { ...c, x: c.x + dx, y: c.y + dy };
                                 return c;
                             });
                             setCards(newCards);
@@ -693,26 +706,32 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
     );
 
     // Get connection point position for a card
-    const getConnectionPoint = useCallback((card: BoardCardData, side: "top" | "right" | "bottom" | "left") => {
-        const centerX = card.x + card.width / 2;
-        const centerY = card.y + card.height / 2;
+    const getConnectionPoint = useCallback(
+        (card: BoardCardData, side: "top" | "right" | "bottom" | "left") => {
+            const centerX = card.x + card.width / 2;
+            const centerY = card.y + card.height / 2;
 
-        switch (side) {
-            case "top":
-                return { x: centerX, y: card.y };
-            case "right":
-                return { x: card.x + card.width, y: centerY };
-            case "bottom":
-                return { x: centerX, y: card.y + card.height };
-            case "left":
-                return { x: card.x, y: centerY };
-        }
-    }, []);
+            switch (side) {
+                case "top":
+                    return { x: centerX, y: card.y };
+                case "right":
+                    return { x: card.x + card.width, y: centerY };
+                case "bottom":
+                    return { x: centerX, y: card.y + card.height };
+                case "left":
+                    return { x: card.x, y: centerY };
+            }
+        },
+        [],
+    );
 
     // Calculate best connection points between two cards with perpendicular tangent directions
     const getArrowPoints = useCallback(
         (fromCard: BoardCardData, toCard: BoardCardData) => {
-            const fromCenter = { x: fromCard.x + fromCard.width / 2, y: fromCard.y + fromCard.height / 2 };
+            const fromCenter = {
+                x: fromCard.x + fromCard.width / 2,
+                y: fromCard.y + fromCard.height / 2,
+            };
             const toCenter = { x: toCard.x + toCard.width / 2, y: toCard.y + toCard.height / 2 };
 
             const dx = toCenter.x - fromCenter.x;
@@ -756,10 +775,13 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
     );
 
     // Handle starting a connection from a card
-    const handleStartConnection = useCallback((cardId: string, side: string, initialX: number, initialY: number) => {
-        setConnectingFrom({ cardId, side });
-        setConnectingLine({ x: initialX, y: initialY });
-    }, []);
+    const handleStartConnection = useCallback(
+        (cardId: string, side: string, initialX: number, initialY: number) => {
+            setConnectingFrom({ cardId, side });
+            setConnectingLine({ x: initialX, y: initialY });
+        },
+        [],
+    );
 
     // Handle mouse move while connecting
     const handleConnectionMouseMove = useCallback(
@@ -870,7 +892,10 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                             const points = getArrowPoints(fromCard, toCard);
 
                             // Calculate distance for control point offset (perpendicular to border)
-                            const dist = Math.hypot(points.to.x - points.from.x, points.to.y - points.from.y);
+                            const dist = Math.hypot(
+                                points.to.x - points.from.x,
+                                points.to.y - points.from.y,
+                            );
                             const controlDist = Math.max(50, dist * 0.4);
 
                             // Control points extend perpendicular to the borders
@@ -886,10 +911,22 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
 
                             // Arrowhead points matching original marker shape: M 0 0 L 12 4 L 0 8 L 3 4 Z
                             // Back corners (perpendicular to arrow direction)
-                            const ax1 = points.to.x - arrowLength * Math.cos(angle) + arrowWidth * Math.sin(angle);
-                            const ay1 = points.to.y - arrowLength * Math.sin(angle) - arrowWidth * Math.cos(angle);
-                            const ax2 = points.to.x - arrowLength * Math.cos(angle) - arrowWidth * Math.sin(angle);
-                            const ay2 = points.to.y - arrowLength * Math.sin(angle) + arrowWidth * Math.cos(angle);
+                            const ax1 =
+                                points.to.x -
+                                arrowLength * Math.cos(angle) +
+                                arrowWidth * Math.sin(angle);
+                            const ay1 =
+                                points.to.y -
+                                arrowLength * Math.sin(angle) -
+                                arrowWidth * Math.cos(angle);
+                            const ax2 =
+                                points.to.x -
+                                arrowLength * Math.cos(angle) -
+                                arrowWidth * Math.sin(angle);
+                            const ay2 =
+                                points.to.y -
+                                arrowLength * Math.sin(angle) +
+                                arrowWidth * Math.cos(angle);
                             // Inner notch (25% from back toward tip)
                             const notchDepth = arrowLength * 0.75;
                             const axm = points.to.x - notchDepth * Math.cos(angle);
@@ -920,7 +957,11 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                                         strokeWidth={2.5}
                                     />
                                     {/* Arrowhead */}
-                                    <path className={styles.arrow_head} d={arrowheadD} fill="var(--secondary-text)" />
+                                    <path
+                                        className={styles.arrow_head}
+                                        d={arrowheadD}
+                                        fill="var(--secondary-text)"
+                                    />
                                 </g>
                             );
                         })}
@@ -951,7 +992,10 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                                 }
 
                                 const fromPoint = getConnectionPoint(fromCard, fromSide);
-                                const dist = Math.hypot(connectingLine.x - fromPoint.x, connectingLine.y - fromPoint.y);
+                                const dist = Math.hypot(
+                                    connectingLine.x - fromPoint.x,
+                                    connectingLine.y - fromPoint.y,
+                                );
                                 const controlDist = Math.max(30, dist * 0.3);
 
                                 const cx = fromPoint.x + fromDir.x * controlDist;
@@ -1020,7 +1064,9 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                                         key={color}
                                         className={`${styles.context_menu_color_swatch} ${cardContextMenu.card.color === color ? styles.context_menu_color_swatch_active : ""}`}
                                         style={{ backgroundColor: color }}
-                                        onClick={() => handleChangeCardColor(cardContextMenu.card.id, color)}
+                                        onClick={() =>
+                                            handleChangeCardColor(cardContextMenu.card.id, color)
+                                        }
                                     />
                                 ))}
                             </div>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
+import * as fflate from "fflate";
 
 import {
     ProjectState,
@@ -136,6 +137,52 @@ describe("scriptio adapter full round trip", () => {
             rebuilt.destroy();
         });
     }
+
+    it("names the document entry by type and writes a header-free readable JSON", async () => {
+        const project = buildPopulatedProject();
+        const adapter = new ScriptioAdapter();
+
+        const readableZip = fflate.unzipSync(
+            new Uint8Array(await (await adapter.convertTo(project, { ...baseOptions, readable: true })).arrayBuffer()),
+        );
+        expect(Object.keys(readableZip)).toContain("document.json");
+        expect(Object.keys(readableZip)).not.toContain("document.ydoc");
+
+        // The readable entry is pure JSON — no binary header to strip first.
+        const text = fflate.strFromU8(readableZip["document.json"]);
+        expect(text.trimStart().startsWith("{")).toBe(true);
+        expect(JSON.parse(text).metadata.title).toBe("My Script");
+
+        const binaryZip = fflate.unzipSync(
+            new Uint8Array(await (await adapter.convertTo(project, { ...baseOptions, readable: false })).arrayBuffer()),
+        );
+        expect(Object.keys(binaryZip)).toContain("document.ydoc");
+        expect(Object.keys(binaryZip)).not.toContain("document.json");
+
+        project.destroy();
+    });
+
+    it("writes an uncompressed mimetype as the first archive entry", async () => {
+        const project = buildPopulatedProject();
+        const adapter = new ScriptioAdapter();
+        const blob = await adapter.convertTo(project, { ...baseOptions, readable: false });
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+
+        // First ZIP local file header, then its filename and (stored) content.
+        expect(Array.from(bytes.slice(0, 4))).toEqual([0x50, 0x4b, 0x03, 0x04]);
+        const nameLen = bytes[26] | (bytes[27] << 8);
+        const extraLen = bytes[28] | (bytes[29] << 8);
+        expect(new TextDecoder().decode(bytes.slice(30, 30 + nameLen))).toBe("mimetype");
+
+        // Stored (not deflated): the value appears verbatim right after the name.
+        const dataStart = 30 + nameLen + extraLen;
+        const mimetype = "application/vnd.scriptio+zip";
+        expect(new TextDecoder().decode(bytes.slice(dataStart, dataStart + mimetype.length))).toBe(
+            mimetype,
+        );
+
+        project.destroy();
+    });
 
     it("clearProjectData wipes maps and dynamic fragments before a replace", () => {
         const ydoc = buildPopulatedProject();

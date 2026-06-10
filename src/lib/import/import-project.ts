@@ -6,6 +6,7 @@
 import { ProjectData, ProjectState, applyProjectData } from "@src/lib/project/project-state";
 import { CURRENT_PROJECT_VERSION } from "@src/lib/project/migrations/project-migrations";
 import { getAdapterByFilename } from "@src/lib/adapters/registry";
+import { restoreScriptioAssets } from "@src/lib/adapters/scriptio/scriptio-adapter";
 import { createCachedProject, createCachedProjectWithId } from "@src/lib/persistence/storage-provider/local-persistence";
 import { writeYjsDocumentLocally } from "@src/lib/persistence/y-local-provider";
 import { Editor } from "@tiptap/react";
@@ -25,13 +26,12 @@ export interface ImportResult {
 /**
  * Parse a file and extract project content.
  */
-async function parseFile(file: File): Promise<ProjectData> {
-    const adapter = getAdapterByFilename(file.name);
+function parseProjectData(filename: string, content: ArrayBuffer): ProjectData {
+    const adapter = getAdapterByFilename(filename);
     if (!adapter) {
-        throw new Error(`Unsupported file type: ${file.name.split(".").pop()}`);
+        throw new Error(`Unsupported file type: ${filename.split(".").pop()}`);
     }
 
-    const content = await file.arrayBuffer();
     const projectData = adapter.convertFrom(content) as ProjectData;
 
     if (!projectData.screenplay || projectData.screenplay.length === 0) {
@@ -43,9 +43,14 @@ async function parseFile(file: File): Promise<ProjectData> {
 
 /**
  * Import a file into an existing project.
+ *
+ * `projectId` identifies the target project so bundled board image assets land
+ * under the right key in local storage; it's the currently-open project, not
+ * the (possibly different) id stamped inside the imported file.
  */
 export async function importFileIntoProject(
     file: File,
+    projectId: string,
     editor?: Editor | null,
     titlePageEditor?: Editor | null,
     repository?: ProjectRepository | null,
@@ -62,6 +67,8 @@ export async function importFileIntoProject(
 
     const content = await file.arrayBuffer();
     adapter.import(content, editor, titlePageEditor, repository);
+    // Restore any bundled board image assets (no-op for non-Scriptio files).
+    await restoreScriptioAssets(projectId, content);
     if (editor) editor.commands.focus();
 }
 
@@ -123,8 +130,10 @@ export async function importFileAsProject(
     isPro?: boolean,
 ): Promise<ImportResult> {
     try {
-        // Parse the file content
-        const projectData = await parseFile(file);
+        // Parse the file content (kept as a buffer so bundled assets can be
+        // restored after the new project id is known).
+        const content = await file.arrayBuffer();
+        const projectData = parseProjectData(file.name, content);
 
         // Create project title from filename if not provided
         const projectTitle = title || file.name.replace(/\.[^/.]+$/, "");
@@ -157,6 +166,10 @@ export async function importFileAsProject(
 
         // Create Yjs document with the project content
         await createLocalYjsDocument(projectId, projectData);
+
+        // Restore any bundled board image assets under the new project id
+        // (no-op for non-Scriptio files).
+        await restoreScriptioAssets(projectId, content);
 
         return {
             success: true,
