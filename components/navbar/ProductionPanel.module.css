@@ -9,7 +9,9 @@
     display: flex;
     flex-direction: column;
     border-radius: 16px;
-    overflow: hidden;
+    /* Not `hidden`: the revision dropdown menu in the last section needs to
+       extend past the panel's bottom edge without being clipped. */
+    overflow: visible;
 }
 
 .header {
@@ -162,19 +164,27 @@
     cursor: not-allowed;
 }
 
-/* Revision swatches */
-.swatches {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+/* Revision color dropdown */
+.revision_select {
     margin-top: 10px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    color: var(--primary-text);
 }
 
-.swatch {
-    width: 18px;
-    height: 18px;
+.revision_option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.revision_dot {
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     border: 1px solid var(--separator);
-    opacity: 0.5;
-    cursor: not-allowed;
+    flex-shrink: 0;
 }

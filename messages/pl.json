@@ -25,7 +25,18 @@
     "swapPanels": "Zamień panele",
     "draftEditor": "Edytor szkiców",
     "viewOnly": "Tylko podgląd",
-    "viewOnlyHint": "Masz dostęp gościa. Edytowanie jest wyłączone."
+    "viewOnlyHint": "Masz dostęp gościa. Edytowanie jest wyłączone.",
+    "pageCount": "{count, plural, one {# strona} few {# strony} other {# stron}}"
+  },
+  "timer": {
+    "title": "Sesja pisania",
+    "countdown": "Odliczanie",
+    "stopwatch": "Stoper",
+    "start": "Start",
+    "pause": "Pauza",
+    "resume": "Wznów",
+    "reset": "Resetuj",
+    "minutesShort": "min"
   },
   "common": {
     "save": "Zapisz zmiany",

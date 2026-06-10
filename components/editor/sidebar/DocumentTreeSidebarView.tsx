@@ -77,9 +77,12 @@ const DocumentTreeSidebarView = () => {
         (parentId: string | null, type: "folder" | "editor" | "board") => {
             if (!repository) return;
             if (parentId) setExpanded((prev) => new Set(prev).add(parentId));
-            if (type === "folder") repository.createFolder(t("untitledFolder"), parentId);
-            else if (type === "board") repository.createBoardDocument(t("boardTitle"), parentId);
-            else repository.createEditorDocument(t("untitledDocument"), parentId);
+            let id: string;
+            if (type === "folder") id = repository.createFolder(t("untitledFolder"), parentId);
+            else if (type === "board") id = repository.createBoardDocument(t("boardTitle"), parentId);
+            else id = repository.createEditorDocument(t("untitledDocument"), parentId);
+            // Drop the new node straight into inline rename so the writer can name it instantly.
+            if (id) setRenamingId(id);
         },
         [repository, t],
     );

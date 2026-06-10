@@ -1,0 +1,223 @@
+.anchor {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.time {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--secondary-text);
+    min-width: 38px;
+    text-align: center;
+}
+
+.time_done {
+    color: var(--primary-text);
+    font-weight: 600;
+}
+
+/* Popover opens above the footer pill. */
+.panel {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: 0;
+    z-index: 20;
+    width: 220px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 14px;
+    box-shadow: var(--panel-shadow);
+    color: var(--secondary-text);
+    cursor: default;
+}
+
+.title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+.tabs {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    background-color: var(--main-bg);
+    border-radius: 8px;
+}
+
+.tab {
+    flex: 1;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--secondary-text);
+    font-size: 11px;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.tab:hover:not(:disabled) {
+    color: var(--primary-text);
+}
+
+.tab_active {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+.tab:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+/* Big time flanked by up/down minute steppers (countdown setup only). */
+.stepper_group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 20px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--main-bg);
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.stepper:hover {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+/* The display and its edit input occupy an identical fixed box so swapping
+   between them (on click) causes no layout shift: same width, height, border
+   (the display's is transparent), font, and box-sizing. A fixed height avoids
+   the input's intrinsic font-based height differing from the div's. */
+.display,
+.display_input {
+    box-sizing: border-box;
+    width: 130px;
+    height: 44px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 30px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+    text-align: center;
+    color: var(--primary-text);
+    border: 1px solid transparent;
+    border-radius: 8px;
+}
+
+/* Center the div text to match the input's intrinsic vertical centering. */
+.display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.display_done {
+    color: var(--tertiary-hover);
+}
+
+/* Click-to-edit affordance on the countdown display. */
+.display_editable {
+    cursor: text;
+    transition: background-color 0.15s ease;
+}
+
+.display_editable:hover {
+    background-color: var(--main-bg);
+}
+
+.display_input {
+    background-color: var(--main-bg);
+    border-color: var(--tertiary-hover);
+    outline: none;
+}
+
+.presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.chip {
+    flex: 1 1 calc(25% - 6px);
+    padding: 6px 0;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--secondary-text);
+    font-size: 11px;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.chip:hover {
+    color: var(--primary-text);
+    border-color: var(--tertiary-hover);
+}
+
+.chip_active {
+    background-color: var(--secondary-hover);
+    border-color: var(--tertiary-hover);
+    color: var(--primary-text);
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    flex: 1;
+    padding: 8px 0;
+    border: none;
+    border-radius: 9px;
+    background-color: var(--main-bg);
+    color: var(--primary-text);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        opacity 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.btn_primary {
+    background-color: var(--tertiary-hover);
+    color: var(--primary-text);
+}
+
+.btn_primary:hover {
+    opacity: 0.9;
+    background-color: var(--tertiary-hover);
+}

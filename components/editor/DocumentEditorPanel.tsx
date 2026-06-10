@@ -139,6 +139,16 @@ const DocumentEditorPanel = ({
         editor.setEditable(!isReadOnly);
     }, [editor, isReadOnly]);
 
+    // Marker class on the editor DOM so global CSS (scriptio.css) can drop the
+    // first-of-page top-margin reset in endless-scroll mode. There the page-break
+    // widgets are hidden, so the reset would otherwise make each page's first
+    // node stick to the previous page's content.
+    useEffect(() => {
+        const el = editor?.view?.dom;
+        if (!el) return;
+        el.classList.toggle("endless-scroll", isEndlessScroll);
+    }, [editor, isEndlessScroll]);
+
     // Ready state
     useEffect(() => {
         if (editor && isYjsReady) {

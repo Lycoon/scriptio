@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { X, BookOpen, Clapperboard, PencilLine, Settings } from "lucide-react";
 
@@ -12,6 +12,7 @@ import { computeSceneItems } from "@src/lib/screenplay/scenes";
 import { unlockDraftPopup, unlockPagesPopup, unlockScenesPopup } from "@src/lib/screenplay/popup";
 import { getPageAnchors, getPageAnchorInfo } from "@src/lib/screenplay/extensions/pagination-extension";
 import Switch from "@components/utils/Switch";
+import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 
 import styles from "./ProductionPanel.module.css";
 
@@ -20,16 +21,18 @@ interface ProductionPanelProps {
     onClose: () => void;
 }
 
-const REVISION_COLORS = [
-    "#ffffff", // white
-    "#bbdfff", // blue
-    "#ffb6c1", // pink
-    "#ffea7a", // yellow
-    "#a5d6a7", // green
-    "#d4a017", // goldenrod
-    "#e0c58b", // buff
-    "#fa8072", // salmon
-    "#9b1c2a", // cherry
+// Standard production revision color order. Names stay in English on purpose —
+// they're surfaced verbatim in the printed page headers.
+const REVISION_COLORS: { name: string; value: string }[] = [
+    { name: "White", value: "#ffffff" },
+    { name: "Blue", value: "#bbdfff" },
+    { name: "Pink", value: "#ffb6c1" },
+    { name: "Yellow", value: "#ffea7a" },
+    { name: "Green", value: "#a5d6a7" },
+    { name: "Goldenrod", value: "#d4a017" },
+    { name: "Buff", value: "#e0c58b" },
+    { name: "Salmon", value: "#fa8072" },
+    { name: "Cherry", value: "#9b1c2a" },
 ];
 
 const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
@@ -51,6 +54,20 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     const { openDashboard } = useContext(DashboardContext);
 
     const panelRef = useRef<HTMLDivElement>(null);
+
+    // Revisions are inert in v1: this only tracks the previewed color locally
+    // until revision tracking is wired to the repository.
+    const [revisionColor, setRevisionColor] = useState(REVISION_COLORS[0].name);
+
+    const revisionOptions: DropdownOption[] = REVISION_COLORS.map((c) => ({
+        value: c.name,
+        label: (
+            <span className={styles.revision_option}>
+                <span className={styles.revision_dot} style={{ backgroundColor: c.value }} />
+                {c.name}
+            </span>
+        ),
+    }));
 
     const handleOpenSettings = () => {
         onClose();
@@ -424,16 +441,12 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                     </div>
                     <Switch checked={false} onChange={() => {}} ariaLabel={t("revisions")} />
                 </div>
-                <div className={styles.swatches}>
-                    {REVISION_COLORS.map((color, idx) => (
-                        <span
-                            key={idx}
-                            className={styles.swatch}
-                            style={{ backgroundColor: color }}
-                            aria-disabled
-                        />
-                    ))}
-                </div>
+                <Dropdown
+                    value={revisionColor}
+                    onChange={setRevisionColor}
+                    options={revisionOptions}
+                    className={styles.revision_select}
+                />
             </div>
         </div>
     );

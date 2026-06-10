@@ -26,7 +26,18 @@
     "swapPanels": "Panels tauschen",
     "draftEditor": "Entwurfseditor",
     "viewOnly": "Nur ansehen",
-    "viewOnlyHint": "Sie haben Lesezugriff. Die Bearbeitung ist deaktiviert."
+    "viewOnlyHint": "Sie haben Lesezugriff. Die Bearbeitung ist deaktiviert.",
+    "pageCount": "{count, plural, one {# Seite} other {# Seiten}}"
+  },
+  "timer": {
+    "title": "Schreibsitzung",
+    "countdown": "Countdown",
+    "stopwatch": "Stoppuhr",
+    "start": "Starten",
+    "pause": "Pause",
+    "resume": "Fortsetzen",
+    "reset": "Zurücksetzen",
+    "minutesShort": "Min"
   },
   "common": {
     "save": "Änderungen speichern",

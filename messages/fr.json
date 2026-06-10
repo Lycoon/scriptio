@@ -26,7 +26,18 @@
     "swapPanels": "Inverser les panneaux",
     "draftEditor": "Éditeur de brouillon",
     "viewOnly": "Vue seule",
-    "viewOnlyHint": "Vous avez un accès visiteur. La modification est désactivée."
+    "viewOnlyHint": "Vous avez un accès visiteur. La modification est désactivée.",
+    "pageCount": "{count, plural, one {# page} other {# pages}}"
+  },
+  "timer": {
+    "title": "Session d'écriture",
+    "countdown": "Compte à rebours",
+    "stopwatch": "Chronomètre",
+    "start": "Démarrer",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "reset": "Réinitialiser",
+    "minutesShort": "min"
   },
   "common": {
     "save": "Enregistrer",
