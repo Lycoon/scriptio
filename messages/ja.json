@@ -25,7 +25,18 @@
     "swapPanels": "パネルを入れ替え",
     "draftEditor": "下書きエディター",
     "viewOnly": "閲覧のみ",
-    "viewOnlyHint": "閲覧者アクセスです。編集は無効になっています。"
+    "viewOnlyHint": "閲覧者アクセスです。編集は無効になっています。",
+    "pageCount": "{count}ページ"
+  },
+  "timer": {
+    "title": "執筆セッション",
+    "countdown": "カウントダウン",
+    "stopwatch": "ストップウォッチ",
+    "start": "開始",
+    "pause": "一時停止",
+    "resume": "再開",
+    "reset": "リセット",
+    "minutesShort": "分"
   },
   "common": {
     "save": "変更を保存",

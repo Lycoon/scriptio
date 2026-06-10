@@ -25,7 +25,18 @@
     "swapPanels": "Intercambiar paneles",
     "draftEditor": "Editor de borrador",
     "viewOnly": "Solo lectura",
-    "viewOnlyHint": "Tienes acceso de solo visualización. La edición está desactivada."
+    "viewOnlyHint": "Tienes acceso de solo visualización. La edición está desactivada.",
+    "pageCount": "{count, plural, one {# página} other {# páginas}}"
+  },
+  "timer": {
+    "title": "Sesión de escritura",
+    "countdown": "Cuenta atrás",
+    "stopwatch": "Cronómetro",
+    "start": "Iniciar",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "reset": "Reiniciar",
+    "minutesShort": "min"
   },
   "common": {
     "save": "Guardar cambios",

@@ -25,7 +25,18 @@
     "swapPanels": "패널 교체",
     "draftEditor": "초안 편집기",
     "viewOnly": "보기 전용",
-    "viewOnlyHint": "뷰어 권한이 있습니다. 편집이 비활성화되었습니다."
+    "viewOnlyHint": "뷰어 권한이 있습니다. 편집이 비활성화되었습니다.",
+    "pageCount": "{count}페이지"
+  },
+  "timer": {
+    "title": "글쓰기 세션",
+    "countdown": "카운트다운",
+    "stopwatch": "스톱워치",
+    "start": "시작",
+    "pause": "일시정지",
+    "resume": "계속",
+    "reset": "초기화",
+    "minutesShort": "분"
   },
   "common": {
     "save": "변경사항 저장",

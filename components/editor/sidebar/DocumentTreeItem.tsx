@@ -161,7 +161,11 @@ const DocumentTreeItem = ({
                 ) : (
                     <span className={styles.chevron_placeholder} />
                 )}
-                <Icon size={14} className={styles.type_icon} />
+                <Icon
+                    size={14}
+                    className={styles.type_icon}
+                    style={node.color ? { color: node.color } : undefined}
+                />
 
                 {isRenaming ? (
                     <input

@@ -17,6 +17,7 @@ import { PersistentPageMap } from "@src/lib/screenplay/page-locking";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { ProjectRole } from "@src/generated/client/browser";
 import { useUser } from "@src/lib/utils/hooks";
+import { getCloudToken } from "@src/lib/utils/requests";
 import {
     CollaboratorInfo,
     ConnectionStatus,
@@ -446,14 +447,11 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setProject((prev) => (prev ? { ...prev, role: newRole as ProjectRole } : prev));
             if (project?.project.id) {
                 try {
-                    const res = await fetch(`/api/projects/${project.project.id}/cloud-token`);
-                    if (res.ok) {
-                        const { token } = (await res.json()) as { token: string };
-                        if (token) {
-                            // Update token silently so future reconnects use the new role
-                            // We don't force reconnect because the DO already updated our active session
-                            await provider.updateToken(token, false);
-                        }
+                    const { token } = await getCloudToken(project.project.id);
+                    if (token) {
+                        // Update token silently so future reconnects use the new role.
+                        // We don't force reconnect because the DO already updated our active session.
+                        await provider.updateToken(token, false);
                     }
                 } catch (e) {
                     console.warn("Failed to fetch new token on role change", e);

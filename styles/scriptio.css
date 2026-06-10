@@ -73,8 +73,15 @@
        (0) collapses with the next paragraph's margin-top (16) and leaves a
        wasted 16px gap at the top of every page. Pagination's break decisions
        use measured outer heights in isolation, so removing the margin only
-       affects rendering — same paragraphs per page, no determinism hit. */
-    > .pagination-page-break + p,
+       affects rendering — same paragraphs per page, no determinism hit.
+
+       In endless-scroll mode the page-break widgets are hidden (display:none),
+       so there is no gap to collapse and zeroing the margin would make each
+       page's first node stick to the previous page's content. The
+       `:not(.endless-scroll)` guard skips it there so the node keeps its
+       natural top margin. The first-page widget is still shown in endless
+       scroll, so its following paragraph keeps the reset. */
+    &:not(.endless-scroll) > .pagination-page-break + p,
     > .pagination-first-page + p {
         margin-top: 0 !important;
     }

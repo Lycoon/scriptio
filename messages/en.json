@@ -25,7 +25,18 @@
     "swapPanels": "Swap Panels",
     "draftEditor": "Draft Editor",
     "viewOnly": "View only",
-    "viewOnlyHint": "You have viewer access. Editing is disabled."
+    "viewOnlyHint": "You have viewer access. Editing is disabled.",
+    "pageCount": "{count, plural, one {# page} other {# pages}}"
+  },
+  "timer": {
+    "title": "Writing session",
+    "countdown": "Countdown",
+    "stopwatch": "Stopwatch",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "reset": "Reset",
+    "minutesShort": "min"
   },
   "common": {
     "save": "Save",

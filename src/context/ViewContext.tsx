@@ -32,6 +32,12 @@ interface ViewContextType {
     setSidePanel: (side: SplitSide, panel: PanelType) => void;
     /** Open a specific document (board/editor) on a given side and focus it. */
     setSideDocument: (side: SplitSide, docId: string, kind: DocumentPanelKind) => void;
+    /**
+     * Split the single panel and open a document on one side, keeping the
+     * currently-shown panel on the other. `side` is where the new document
+     * goes. Assumes the view is not already split.
+     */
+    splitWithDocument: (docId: string, kind: DocumentPanelKind, side: SplitSide) => void;
     /** Clear a document from any side currently showing it (e.g. after delete). */
     closeDocument: (docId: string) => void;
     swapPanels: () => void;
@@ -194,6 +200,25 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
         setFocusedSideState(side);
     }, []);
 
+    const splitWithDocument = useCallback(
+        (docId: string, kind: DocumentPanelKind, side: SplitSide) => {
+            if (side === "primary") {
+                // New document takes the left; the existing panel slides right.
+                setSecondaryPanelState(primaryPanel);
+                setSecondaryDocId(primaryDocId);
+                setPrimaryPanelState(kind);
+                setPrimaryDocId(docId);
+                setFocusedSideState("primary");
+            } else {
+                // Existing panel stays on the left; new document opens on the right.
+                setSecondaryPanelState(kind);
+                setSecondaryDocId(docId);
+                setFocusedSideState("secondary");
+            }
+        },
+        [primaryPanel, primaryDocId],
+    );
+
     const closeDocument = useCallback((docId: string) => {
         setPrimaryDocId((prev) => (prev === docId ? null : prev));
         setSecondaryDocId((prev) => (prev === docId ? null : prev));
@@ -231,6 +256,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setFocusedPanel,
             setSidePanel,
             setSideDocument,
+            splitWithDocument,
             closeDocument,
             swapPanels,
             setIsEndlessScroll,
@@ -238,7 +264,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

@@ -25,7 +25,18 @@
     "swapPanels": "交换面板",
     "draftEditor": "草稿编辑器",
     "viewOnly": "仅查看",
-    "viewOnlyHint": "您拥有访客权限，编辑功能已禁用。"
+    "viewOnlyHint": "您拥有访客权限，编辑功能已禁用。",
+    "pageCount": "{count} 页"
+  },
+  "timer": {
+    "title": "写作计时",
+    "countdown": "倒计时",
+    "stopwatch": "秒表",
+    "start": "开始",
+    "pause": "暂停",
+    "resume": "继续",
+    "reset": "重置",
+    "minutesShort": "分钟"
   },
   "common": {
     "save": "保存",

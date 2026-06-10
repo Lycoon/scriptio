@@ -989,11 +989,11 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
 
                 <div className={styles.zoom_controls}>
                     <button className={styles.zoom_btn} onClick={() => zoomFromCenter(false)}>
-                        <Minus />
+                        <Minus size={14} />
                     </button>
                     <span className={styles.zoom_level}>{Math.round(scale * 100)}%</span>
                     <button className={styles.zoom_btn} onClick={() => zoomFromCenter(true)}>
-                        <Plus />
+                        <Plus size={14} />
                     </button>
                 </div>
 
