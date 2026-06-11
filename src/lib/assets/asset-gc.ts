@@ -12,7 +12,7 @@ import type { BoardCardData } from "../project/project-doc";
 import type { ProjectState } from "../project/project-state";
 import { getStorageProvider } from "../persistence/storage-provider/storage-provider";
 
-/** Every asset hash referenced by an image card across all board documents. */
+/** Every asset hash referenced by an image or audio card across all board documents. */
 export function collectReferencedHashes(ydoc: ProjectState): Set<string> {
     const referenced = new Set<string>();
     ydoc.documents().forEach((node) => {
@@ -22,7 +22,8 @@ export function collectReferencedHashes(ydoc: ProjectState): Set<string> {
         try {
             const cards = JSON.parse(raw) as BoardCardData[];
             for (const card of cards) {
-                if (card.type === "image" && card.assetId) referenced.add(card.assetId);
+                if ((card.type === "image" || card.type === "audio") && card.assetId)
+                    referenced.add(card.assetId);
             }
         } catch {
             // A malformed cards blob shouldn't make us delete live assets — skip.

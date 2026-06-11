@@ -482,7 +482,14 @@
     },
     "untitled": "Sans titre",
     "titlePlaceholder": "Titre",
-    "descriptionPlaceholder": "Description"
+    "descriptionPlaceholder": "Description",
+    "recordAudio": "Enregistrer un audio",
+    "stopRecording": "Arrêter",
+    "audioUnsupported": "L'enregistrement audio n'est pas pris en charge par ce navigateur — glissez plutôt un fichier audio",
+    "audioHint": "Note vocale",
+    "play": "Lire",
+    "pause": "Pause",
+    "rename": "Double-cliquez pour renommer"
   },
   "production": {
     "title": "Production",

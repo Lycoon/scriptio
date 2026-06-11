@@ -155,12 +155,15 @@ export interface BoardCardData {
     y: number;
     width: number;
     height: number;
-    /** Card kind. `undefined`/"text" is the default note card; "image" renders a resource. */
-    type?: "text" | "image";
     /**
-     * For `type: "image"` cards: the SHA-256 hash of the source image, which is
-     * stored separately in IndexedDB (decoupled from Yjs). The bytes never live
-     * in the document — only this reference does.
+     * Card kind. `undefined`/"text" is the default note card; "image" renders a
+     * picture resource; "audio" renders a voice note with a play/pause control.
+     */
+    type?: "text" | "image" | "audio";
+    /**
+     * For `type: "image"`/`"audio"` cards: the SHA-256 hash of the source bytes,
+     * which are stored separately in IndexedDB (decoupled from Yjs). The bytes
+     * never live in the document — only this reference does.
      */
     assetId?: string;
 }

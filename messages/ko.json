@@ -481,7 +481,14 @@
     },
     "untitled": "제목 없음",
     "titlePlaceholder": "제목",
-    "descriptionPlaceholder": "설명"
+    "descriptionPlaceholder": "설명",
+    "recordAudio": "오디오 녹음",
+    "stopRecording": "정지",
+    "audioUnsupported": "이 브라우저에서는 오디오 녹음을 지원하지 않습니다. 대신 오디오 파일을 끌어다 놓으세요",
+    "audioHint": "음성 메모",
+    "play": "재생",
+    "pause": "일시정지",
+    "rename": "더블클릭하여 이름 변경"
   },
   "production": {
     "title": "프로덕션",

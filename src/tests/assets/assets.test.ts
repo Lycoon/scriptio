@@ -1,7 +1,7 @@
 import { beforeAll, describe, it, expect } from "vitest";
 
 import { sha256Hex } from "@src/lib/assets/asset-hash";
-import { importImageFile, loadAssetObjectUrl } from "@src/lib/assets/asset-store";
+import { importImageFile, importAudioFile, loadAssetObjectUrl } from "@src/lib/assets/asset-store";
 import { collectReferencedHashes, gcProjectAssets } from "@src/lib/assets/asset-gc";
 import {
     getStorageProvider,
@@ -223,6 +223,49 @@ describe("scriptio asset bundling", () => {
         expect(restored?.height).toBe(8);
         expect(restored?.mime).toBe("image/png");
         // Bytes survive the round trip intact.
+        expect(await sha256Hex(restored!.data)).toBe(hash);
+
+        await provider.deleteProjectAssets(src);
+        await provider.deleteProjectAssets(dest);
+        ydoc.destroy();
+    });
+
+    it("bundles board audio assets into the archive and restores them", async () => {
+        const provider = await getStorageProvider();
+        const src = pid();
+
+        // A board referencing a recorded/dropped audio clip (synthetic bytes).
+        const blobIn = new Blob([new Uint8Array([1, 2, 3, 4, 5])], { type: "audio/mp4" });
+        const { hash } = await importAudioFile(src, blobIn);
+
+        const ydoc = new ProjectState();
+        const repo = createProjectRepository(ydoc)!;
+        const board = repo.createBoardDocument("B");
+        ydoc.boardData(board).set(
+            "cards",
+            JSON.stringify([{ id: "c1", type: "audio", assetId: hash, ...cardBase }]),
+        );
+
+        const adapter = new ScriptioAdapter();
+        const blob = await adapter.convertTo(ydoc, {
+            title: "t",
+            author: "a",
+            includeNotes: false,
+            projectId: src,
+        });
+        const buffer = await blob.arrayBuffer();
+
+        const parsed = adapter.convertFrom(buffer);
+        expect(parsed.boards?.[board]?.cards).toContain(hash);
+
+        // Audio cards keep their assets referenced (GC must not drop them).
+        expect(collectReferencedHashes(ydoc).has(hash)).toBe(true);
+
+        const dest = pid();
+        await restoreScriptioAssets(dest, buffer);
+
+        const restored = await provider.getAsset(dest, hash);
+        expect(restored?.mime).toBe("audio/mp4");
         expect(await sha256Hex(restored!.data)).toBe(hash);
 
         await provider.deleteProjectAssets(src);

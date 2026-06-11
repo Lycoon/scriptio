@@ -6,17 +6,33 @@ import { BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
 import BoardCard from "./BoardCard";
 import styles from "./BoardCanvas.module.css";
 import { v7 as uuidv7 } from "uuid";
-import { Trash2, Plus, Minus, Copy, ListTree } from "lucide-react";
+import { Trash2, Plus, Minus, Copy, ListTree, Mic, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
-import { importImageFile } from "@src/lib/assets/asset-store";
+import { importImageFile, importAudioFile } from "@src/lib/assets/asset-store";
 import { scheduleAssetGc } from "@src/lib/assets/asset-gc";
+import { useAudioRecorder } from "./use-audio-recorder";
 
 const GRID_SIZE = 20;
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 2;
 /** Largest edge (in canvas px) an image card is sized to on first drop. */
 const MAX_IMAGE_CARD_SIZE = 400;
+/** Default size (in canvas px) of an audio voice-note card. */
+const AUDIO_CARD_WIDTH = 260;
+const AUDIO_CARD_HEIGHT = 96;
+
+/** A random swatch from the default palette (used for new colored cards). */
+function randomCardColor(): string {
+    return DEFAULT_ITEM_COLORS[Math.floor(Math.random() * DEFAULT_ITEM_COLORS.length)];
+}
+
+/** Seconds → `m:ss` for the recording indicator. */
+function formatRecordingTime(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+}
 
 interface CardContextMenuState {
     position: { x: number; y: number };
@@ -26,6 +42,14 @@ interface CardContextMenuState {
 interface ArrowContextMenuState {
     position: { x: number; y: number };
     arrow: BoardArrowData;
+}
+
+interface CanvasContextMenuState {
+    /** Viewport position for placing the menu. */
+    position: { x: number; y: number };
+    /** Canvas-space coords where a new card should be created. */
+    canvasX: number;
+    canvasY: number;
 }
 
 const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }) => {
@@ -45,6 +69,8 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
     const [isSnapping, setIsSnapping] = useState(true);
     const [cardContextMenu, setCardContextMenu] = useState<CardContextMenuState | null>(null);
     const [arrowContextMenu, setArrowContextMenu] = useState<ArrowContextMenuState | null>(null);
+    const [canvasContextMenu, setCanvasContextMenu] = useState<CanvasContextMenuState | null>(null);
+    const recorder = useAudioRecorder();
     const [prevIsVisible, setPrevIsVisible] = useState(isVisible);
     if (prevIsVisible !== isVisible) {
         setPrevIsVisible(isVisible);
@@ -52,6 +78,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             setIsSnapping(true);
             if (cardContextMenu) setCardContextMenu(null);
             if (arrowContextMenu) setArrowContextMenu(null);
+            if (canvasContextMenu) setCanvasContextMenu(null);
         }
     }
     const [isCameraReady, setIsCameraReady] = useState(false);
@@ -243,13 +270,14 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         const handleClick = () => {
             if (cardContextMenu) setCardContextMenu(null);
             if (arrowContextMenu) setArrowContextMenu(null);
+            if (canvasContextMenu) setCanvasContextMenu(null);
         };
 
         window.addEventListener("click", handleClick);
         return () => {
             window.removeEventListener("click", handleClick);
         };
-    }, [cardContextMenu, arrowContextMenu, isVisible]);
+    }, [cardContextMenu, arrowContextMenu, canvasContextMenu, isVisible]);
 
     // Panning with middle-click
     const handlePanMouseDown = useCallback(
@@ -334,6 +362,8 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
     const offsetRef = useRef(offset);
     const scaleRef = useRef(scale);
     const cardsRef = useRef(cards);
+    /** Canvas-space coords captured when recording starts, for the resulting card. */
+    const recordCoords = useRef({ x: 0, y: 0 });
     useEffect(() => {
         offsetRef.current = offset;
     }, [offset]);
@@ -490,14 +520,11 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             const x = (e.clientX - rect.left - offset.x) / scale;
             const y = (e.clientY - rect.top - offset.y) / scale;
 
-            const randomColor =
-                DEFAULT_ITEM_COLORS[Math.floor(Math.random() * DEFAULT_ITEM_COLORS.length)];
-
             const newCard: BoardCardData = {
                 id: uuidv7(),
                 title: "",
                 description: "",
-                color: randomColor,
+                color: randomCardColor(),
                 x: isSnapping ? Math.round(x / GRID_SIZE) * GRID_SIZE : x,
                 y: isSnapping ? Math.round(y / GRID_SIZE) * GRID_SIZE : y,
                 width: 450,
@@ -536,8 +563,8 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             setIsDraggingFile(false);
             if (isReadOnly || !projectId) return;
 
-            const files = Array.from(e.dataTransfer.files).filter((f) =>
-                f.type.startsWith("image/"),
+            const files = Array.from(e.dataTransfer.files).filter(
+                (f) => f.type.startsWith("image/") || f.type.startsWith("audio/"),
             );
             if (files.length === 0) return;
 
@@ -549,10 +576,26 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
 
             const created: BoardCardData[] = [];
             for (const file of files) {
+                const i = created.length;
                 try {
+                    if (file.type.startsWith("audio/")) {
+                        const { hash } = await importAudioFile(projectId, file);
+                        created.push({
+                            id: uuidv7(),
+                            type: "audio",
+                            assetId: hash,
+                            title: "",
+                            description: "",
+                            color: randomCardColor(),
+                            x: dropX + i * 24,
+                            y: dropY + i * 24,
+                            width: AUDIO_CARD_WIDTH,
+                            height: AUDIO_CARD_HEIGHT,
+                        });
+                        continue;
+                    }
                     const { hash, width, height } = await importImageFile(projectId, file);
                     const fit = Math.min(1, MAX_IMAGE_CARD_SIZE / Math.max(width, height, 1));
-                    const i = created.length;
                     created.push({
                         id: uuidv7(),
                         type: "image",
@@ -566,7 +609,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                         height: Math.max(60, Math.round(height * fit)),
                     });
                 } catch (err) {
-                    console.error("[BoardCanvas] Failed to import image:", err);
+                    console.error("[BoardCanvas] Failed to import dropped file:", err);
                 }
             }
             if (created.length === 0) return;
@@ -577,6 +620,76 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         },
         [isReadOnly, projectId, offset, scale, saveCards],
     );
+
+    // Right-clicking empty canvas opens a menu (record audio). Cards and arrows
+    // have their own menus, so bail when the click landed on one.
+    const handleCanvasContextMenu = useCallback(
+        (e: React.MouseEvent) => {
+            if (isReadOnly) return;
+            const target = e.target as HTMLElement;
+            if (
+                target.closest(`.${styles.card}`) ||
+                target.closest(`.${styles.arrow_group}`) ||
+                target.closest(`.${styles.context_menu}`) ||
+                target.closest(`.${styles.zoom_controls}`) ||
+                target.closest(`.${styles.hints}`)
+            )
+                return;
+
+            const container = containerRef.current;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            e.preventDefault();
+            setCardContextMenu(null);
+            setArrowContextMenu(null);
+            setCanvasContextMenu({
+                // Match the card/arrow menus: positioned with raw viewport coords.
+                position: { x: e.clientX, y: e.clientY },
+                canvasX: (e.clientX - rect.left - offset.x) / scale,
+                canvasY: (e.clientY - rect.top - offset.y) / scale,
+            });
+        },
+        [isReadOnly, offset, scale],
+    );
+
+    // Begin recording from the canvas menu; remember where to drop the card.
+    const handleStartRecording = useCallback(async () => {
+        if (!canvasContextMenu) return;
+        recordCoords.current = { x: canvasContextMenu.canvasX, y: canvasContextMenu.canvasY };
+        setCanvasContextMenu(null);
+        try {
+            await recorder.start();
+        } catch (err) {
+            console.error("[BoardCanvas] Microphone access failed:", err);
+        }
+    }, [canvasContextMenu, recorder]);
+
+    // Stop recording, store the clip as an asset, and drop an audio card.
+    const handleStopRecording = useCallback(async () => {
+        const blob = await recorder.stop();
+        if (!blob || !projectId) return;
+        try {
+            const { hash } = await importAudioFile(projectId, blob);
+            const { x, y } = recordCoords.current;
+            const newCard: BoardCardData = {
+                id: uuidv7(),
+                type: "audio",
+                assetId: hash,
+                title: "",
+                description: "",
+                color: randomCardColor(),
+                x,
+                y,
+                width: AUDIO_CARD_WIDTH,
+                height: AUDIO_CARD_HEIGHT,
+            };
+            const newCards = [...cardsRef.current, newCard];
+            setCards(newCards);
+            saveCards(newCards);
+        } catch (err) {
+            console.error("[BoardCanvas] Failed to store recording:", err);
+        }
+    }, [recorder, projectId, saveCards]);
 
     // Update card (with multi-drag support)
     const handleUpdateCard = useCallback(
@@ -868,6 +981,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                 className={`${styles.container} ${isPanning ? styles.panning : ""} ${isDraggingFile ? styles.drag_over : ""}`}
                 onMouseDown={handleContainerMouseDown}
                 onDoubleClick={handleDoubleClick}
+                onContextMenu={handleCanvasContextMenu}
                 onWheel={handleWheel}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -1056,7 +1170,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                             left: cardContextMenu.position.x,
                         }}
                     >
-                        {/* Color + outline apply to text notes; image cards have neither. */}
+                        {/* Color applies to text + audio notes; image cards have none. */}
                         {cardContextMenu.card.type !== "image" && (
                             <div className={styles.context_menu_colors}>
                                 {DEFAULT_ITEM_COLORS.map((color) => (
@@ -1078,7 +1192,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                             <Copy size={16} />
                             <p className="unselectable">{t("duplicate")}</p>
                         </div>
-                        {cardContextMenu.card.type !== "image" && (
+                        {(cardContextMenu.card.type ?? "text") === "text" && (
                             <div
                                 className={styles.context_menu_item}
                                 onClick={() => handleSendToOutline(cardContextMenu.card)}
@@ -1094,6 +1208,40 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                             <Trash2 size={16} />
                             <p className="unselectable">{t("delete")}</p>
                         </div>
+                    </div>
+                )}
+
+                {/* Canvas Context Menu (empty-area right-click) */}
+                {canvasContextMenu && (
+                    <div
+                        className={styles.context_menu}
+                        style={{
+                            top: canvasContextMenu.position.y,
+                            left: canvasContextMenu.position.x,
+                        }}
+                    >
+                        <div
+                            className={`${styles.context_menu_item} ${recorder.isSupported ? "" : styles.context_menu_item_disabled}`}
+                            title={recorder.isSupported ? undefined : t("audioUnsupported")}
+                            onClick={recorder.isSupported ? handleStartRecording : undefined}
+                        >
+                            <Mic size={16} />
+                            <p className="unselectable">{t("recordAudio")}</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Recording indicator */}
+                {recorder.isRecording && (
+                    <div className={styles.recording_indicator}>
+                        <span className={styles.recording_dot} />
+                        <span className={styles.recording_time}>
+                            {formatRecordingTime(recorder.elapsed)}
+                        </span>
+                        <button className={styles.recording_stop} onClick={handleStopRecording}>
+                            <Square size={12} />
+                            <span className="unselectable">{t("stopRecording")}</span>
+                        </button>
                     </div>
                 )}
 

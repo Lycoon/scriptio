@@ -76,6 +76,50 @@ export async function importImageFile(projectId: string, file: File): Promise<As
     return { hash, mime, width, height };
 }
 
+/** The base mime type without any `;codecs=...` parameters. */
+function baseMime(mime: string): string {
+    return mime.split(";")[0].trim();
+}
+
+/**
+ * Store an audio file (a recording or a dropped file) for a project and return
+ * its metadata. Like {@link importImageFile} but audio has no intrinsic pixel
+ * size, so `width`/`height` are stored as `0`. Idempotent (dedup by SHA-256).
+ *
+ * `mime` may be passed explicitly because recorded blobs sometimes carry a
+ * `;codecs=...` suffix; it is normalized to the base type before storing.
+ */
+export async function importAudioFile(
+    projectId: string,
+    file: Blob,
+    mime?: string,
+): Promise<AssetMeta> {
+    const buffer = await file.arrayBuffer();
+    const hash = await sha256Hex(buffer);
+    const resolvedMime = baseMime(mime || file.type || "audio/mp4");
+
+    const provider = await getStorageProvider();
+
+    const existing = await provider.getAsset(projectId, hash);
+    if (existing) {
+        return { hash, mime: existing.mime, width: existing.width, height: existing.height };
+    }
+
+    await provider.putAsset({
+        key: `${projectId}/${hash}`,
+        projectId,
+        hash,
+        mime: resolvedMime,
+        size: file.size,
+        width: 0,
+        height: 0,
+        data: buffer,
+        createdAt: Date.now(),
+    });
+
+    return { hash, mime: resolvedMime, width: 0, height: 0 };
+}
+
 /**
  * Resolve an asset to an object URL for rendering, or null if it isn't stored
  * locally. Callers own the URL and must `URL.revokeObjectURL` it when done.

@@ -481,7 +481,14 @@
     },
     "untitled": "未命名",
     "titlePlaceholder": "标题",
-    "descriptionPlaceholder": "描述"
+    "descriptionPlaceholder": "描述",
+    "recordAudio": "录制音频",
+    "stopRecording": "停止",
+    "audioUnsupported": "此浏览器不支持录音，请改为拖入音频文件",
+    "audioHint": "语音备注",
+    "play": "播放",
+    "pause": "暂停",
+    "rename": "双击重命名"
   },
   "production": {
     "title": "制作",

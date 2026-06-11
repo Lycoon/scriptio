@@ -481,7 +481,14 @@
     },
     "untitled": "Bez tytułu",
     "titlePlaceholder": "Tytuł",
-    "descriptionPlaceholder": "Opis"
+    "descriptionPlaceholder": "Opis",
+    "recordAudio": "Nagraj dźwięk",
+    "stopRecording": "Zatrzymaj",
+    "audioUnsupported": "Nagrywanie dźwięku nie jest obsługiwane w tej przeglądarce — przeciągnij plik audio",
+    "audioHint": "Notatka głosowa",
+    "play": "Odtwórz",
+    "pause": "Wstrzymaj",
+    "rename": "Kliknij dwukrotnie, aby zmienić nazwę"
   },
   "production": {
     "title": "Produkcja",

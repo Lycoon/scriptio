@@ -481,7 +481,14 @@
     },
     "untitled": "無題",
     "titlePlaceholder": "タイトル",
-    "descriptionPlaceholder": "説明"
+    "descriptionPlaceholder": "説明",
+    "recordAudio": "音声を録音",
+    "stopRecording": "停止",
+    "audioUnsupported": "このブラウザは音声録音に対応していません。代わりに音声ファイルをドラッグしてください",
+    "audioHint": "ボイスメモ",
+    "play": "再生",
+    "pause": "一時停止",
+    "rename": "ダブルクリックで名前を変更"
   },
   "production": {
     "title": "プロダクション",
