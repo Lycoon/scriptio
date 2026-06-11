@@ -473,12 +473,7 @@
     "sendToOutline": "发送到大纲",
     "duplicate": "复制",
     "delete": "删除",
-    "hints": {
-      "pan": "中键平移",
-      "select": "拖动选择卡片",
-      "create": "双击创建卡片",
-      "move": "Shift 自由移动"
-    },
+    "createCard": "创建卡片",
     "untitled": "未命名",
     "titlePlaceholder": "标题",
     "descriptionPlaceholder": "描述",

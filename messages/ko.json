@@ -473,12 +473,7 @@
     "sendToOutline": "아웃라인으로 보내기",
     "duplicate": "복제",
     "delete": "삭제",
-    "hints": {
-      "pan": "휠 클릭으로 드래그",
-      "select": "드래그하여 카드 선택",
-      "create": "더블 클릭하여 카드 생성",
-      "move": "Shift를 누르고 자유 이동"
-    },
+    "createCard": "카드 생성",
     "untitled": "제목 없음",
     "titlePlaceholder": "제목",
     "descriptionPlaceholder": "설명",

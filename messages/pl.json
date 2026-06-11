@@ -473,12 +473,7 @@
     "sendToOutline": "Wyślij do konspektu",
     "duplicate": "Powiel",
     "delete": "Usuń",
-    "hints": {
-      "pan": "Środkowy przycisk, aby przesuwać",
-      "select": "Przeciągnij, aby zaznaczyć karty",
-      "create": "Kliknij dwukrotnie, aby utworzyć kartę",
-      "move": "Przytrzymaj Shift, aby swobodnie przesuwać"
-    },
+    "createCard": "Utwórz kartę",
     "untitled": "Bez tytułu",
     "titlePlaceholder": "Tytuł",
     "descriptionPlaceholder": "Opis",

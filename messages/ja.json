@@ -473,12 +473,7 @@
     "sendToOutline": "アウトラインに送る",
     "duplicate": "複製",
     "delete": "削除",
-    "hints": {
-      "pan": "ホイールクリックでドラッグ",
-      "select": "ドラッグでカードを選択",
-      "create": "ダブルクリックでカードを作成",
-      "move": "Shiftキーで自由移動"
-    },
+    "createCard": "カードを作成",
     "untitled": "無題",
     "titlePlaceholder": "タイトル",
     "descriptionPlaceholder": "説明",

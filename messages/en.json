@@ -473,12 +473,7 @@
     "sendToOutline": "Send to outline",
     "duplicate": "Duplicate",
     "delete": "Delete",
-    "hints": {
-      "pan": "Middle-click to pan",
-      "select": "Drag to select cards",
-      "create": "Double-click to create card",
-      "move": "Hold Shift to move freely"
-    },
+    "createCard": "Create card",
     "untitled": "Untitled",
     "titlePlaceholder": "Title",
     "descriptionPlaceholder": "Description",

@@ -302,7 +302,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             if (e.button !== 0) return;
             if ((e.target as HTMLElement).closest(`.${styles.card}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
-            if ((e.target as HTMLElement).closest(`.${styles.hints}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.context_menu}`)) return;
 
             const container = containerRef.current;
@@ -448,9 +447,11 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         };
     }, [selectionRect !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Zoom with mouse wheel - centered on cursor
+    // Zoom with mouse wheel - centered on cursor.
+    // Attached as a native non-passive listener (see effect below) because React
+    // registers onWheel as passive, which makes preventDefault() a no-op and warns.
     const handleWheel = useCallback(
-        (e: React.WheelEvent) => {
+        (e: WheelEvent) => {
             e.preventDefault();
 
             const container = containerRef.current;
@@ -476,6 +477,13 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         },
         [scale, offset],
     );
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        container.addEventListener("wheel", handleWheel, { passive: false });
+        return () => container.removeEventListener("wheel", handleWheel);
+    }, [handleWheel]);
 
     // Zoom from buttons - centered on viewport
     const zoomFromCenter = useCallback(
@@ -508,7 +516,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             e.preventDefault();
             if ((e.target as HTMLElement).closest(`.${styles.card}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
-            if ((e.target as HTMLElement).closest(`.${styles.hints}`)) return;
 
             // Clear selection when creating a new card
             setSelectedCardIds(new Set());
@@ -621,8 +628,8 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         [isReadOnly, projectId, offset, scale, saveCards],
     );
 
-    // Right-clicking empty canvas opens a menu (record audio). Cards and arrows
-    // have their own menus, so bail when the click landed on one.
+    // Right-clicking empty canvas opens a menu (create card / record audio).
+    // Cards and arrows have their own menus, so bail when the click landed on one.
     const handleCanvasContextMenu = useCallback(
         (e: React.MouseEvent) => {
             if (isReadOnly) return;
@@ -631,8 +638,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                 target.closest(`.${styles.card}`) ||
                 target.closest(`.${styles.arrow_group}`) ||
                 target.closest(`.${styles.context_menu}`) ||
-                target.closest(`.${styles.zoom_controls}`) ||
-                target.closest(`.${styles.hints}`)
+                target.closest(`.${styles.zoom_controls}`)
             )
                 return;
 
@@ -651,6 +657,29 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         },
         [isReadOnly, offset, scale],
     );
+
+    // Create a text card at the spot the canvas menu was opened.
+    const handleCreateCard = useCallback(() => {
+        if (!canvasContextMenu) return;
+        const { canvasX: x, canvasY: y } = canvasContextMenu;
+        setCanvasContextMenu(null);
+        setSelectedCardIds(new Set());
+
+        const newCard: BoardCardData = {
+            id: uuidv7(),
+            title: "",
+            description: "",
+            color: randomCardColor(),
+            x: isSnapping ? Math.round(x / GRID_SIZE) * GRID_SIZE : x,
+            y: isSnapping ? Math.round(y / GRID_SIZE) * GRID_SIZE : y,
+            width: 450,
+            height: 280,
+        };
+
+        const newCards = [...cardsRef.current, newCard];
+        setCards(newCards);
+        saveCards(newCards);
+    }, [canvasContextMenu, isSnapping, saveCards]);
 
     // Begin recording from the canvas menu; remember where to drop the card.
     const handleStartRecording = useCallback(async () => {
@@ -982,7 +1011,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                 onMouseDown={handleContainerMouseDown}
                 onDoubleClick={handleDoubleClick}
                 onContextMenu={handleCanvasContextMenu}
-                onWheel={handleWheel}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -1220,6 +1248,10 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                             left: canvasContextMenu.position.x,
                         }}
                     >
+                        <div className={styles.context_menu_item} onClick={handleCreateCard}>
+                            <Plus size={16} />
+                            <p className="unselectable">{t("createCard")}</p>
+                        </div>
                         <div
                             className={`${styles.context_menu_item} ${recorder.isSupported ? "" : styles.context_menu_item_disabled}`}
                             title={recorder.isSupported ? undefined : t("audioUnsupported")}
@@ -1272,13 +1304,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                     <button className={styles.zoom_btn} onClick={() => zoomFromCenter(true)}>
                         <Plus size={14} />
                     </button>
-                </div>
-
-                <div className={styles.hints}>
-                    <span>{t("hints.pan")}</span>
-                    <span>{t("hints.select")}</span>
-                    <span>{t("hints.create")}</span>
-                    <span>{t("hints.move")}</span>
                 </div>
             </div>
         </div>
