@@ -9,11 +9,12 @@ import * as Y from "yjs";
 import type { ThrottledWebsocketProvider } from "../cloud/utils";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { TitlePageSchema } from "../titlepage/editor";
-import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
+import { prosemirrorJSONToYXmlFragment, yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import type { YjsLocalProvider } from "../persistence/y-local-provider";
 import type { ProjectMigrationOutcome } from "./migrations/project-migration-runner";
 
 import { ProjectState } from "./project-doc";
+import type { BoardData, ProjectData } from "./project-doc";
 
 // Re-export all schema types & the class so existing consumers continue to
 // import from "@src/lib/project/project-state" without changes.
@@ -139,6 +140,190 @@ export const titlepageOf = (ydoc: ProjectState): JSONContent[] => {
     const fragment = ydoc.titlepageFragment();
     const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, TitlePageSchema);
     return proseMirrorNode.content.toJSON() as JSONContent[];
+};
+
+// -------------------------------- //
+//   FULL PROJECT (DE)SERIALIZATION //
+// -------------------------------- //
+
+/** Convert a screenplay-schema Y.XmlFragment (editor docs, shelf versions) to JSON. */
+const fragmentContentOf = (fragment: Y.XmlFragment): JSONContent[] =>
+    yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema).content.toJSON() as JSONContent[];
+
+/** Content of every `editor` document node's fragment, keyed by node id. */
+const documentContentOf = (ydoc: ProjectState): Record<string, JSONContent[]> => {
+    const result: Record<string, JSONContent[]> = {};
+    ydoc.documents().forEach((node) => {
+        if (node.type === "editor") result[node.id] = fragmentContentOf(ydoc.documentFragment(node.id));
+    });
+    return result;
+};
+
+/** Board data (cards + arrows) for every `board` node, keyed by node id. */
+const boardsOf = (ydoc: ProjectState): Record<string, BoardData> => {
+    const result: Record<string, BoardData> = {};
+    ydoc.documents().forEach((node) => {
+        if (node.type === "board") result[node.id] = ydoc.boardData(node.id).toJSON();
+    });
+    return result;
+};
+
+/** Content of every shelf version, keyed by `${nodeId}::${versionId}`. */
+const shelfContentOf = (ydoc: ProjectState): Record<string, JSONContent[]> => {
+    const result: Record<string, JSONContent[]> = {};
+    ydoc.shelf().forEach((entry, nodeId) => {
+        for (const version of entry.versions) {
+            result[`${nodeId}::${version.id}`] = fragmentContentOf(ydoc.shelfFragment(nodeId, version.id));
+        }
+    });
+    return result;
+};
+
+/**
+ * Serialize the entire project Y.Doc to a plain `ProjectData` — every map, both
+ * screenplay/title-page fragments, and the dynamic per-document / per-board /
+ * per-shelf-version content. Browser-only (uses ProseMirror conversion).
+ */
+export const projectDataOf = (ydoc: ProjectState): ProjectData => ({
+    screenplay: screenplayOf(ydoc),
+    titlepage: titlepageOf(ydoc),
+    metadata: ydoc.metadata().toJSON(),
+    characters: ydoc.characters().toJSON(),
+    scenes: ydoc.scenes().toJSON(),
+    pages: ydoc.pages().toJSON(),
+    locations: ydoc.locations().toJSON(),
+    layout: ydoc.layout().toJSON(),
+    production: ydoc.production().toJSON(),
+    comments: ydoc.comments().toJSON(),
+    documents: ydoc.documents().toJSON(),
+    outline: ydoc.outline().toJSON(),
+    shelf: ydoc.shelf().toJSON(),
+    dictionary: ydoc.dictionary().toJSON(),
+    documentContent: documentContentOf(ydoc),
+    boards: boardsOf(ydoc),
+    shelfContent: shelfContentOf(ydoc),
+});
+
+/** Loosened Y.Map view used to bulk-write a record into a typed/plain map. */
+const asMap = (m: object): Y.Map<unknown> => m as unknown as Y.Map<unknown>;
+
+const fillMap = (map: Y.Map<unknown>, record: Record<string, unknown> | undefined): void => {
+    if (!record) return;
+    for (const [key, value] of Object.entries(record)) map.set(key, value);
+};
+
+/**
+ * Write a (possibly partial) `ProjectData` into `ydoc`. Additive — it sets the
+ * keys/fragments present in `data` without removing what is already there, so a
+ * caller that needs a clean replace should `clearProjectData(ydoc)` first.
+ * Browser-only (rebuilds fragments via ProseMirror).
+ */
+export const applyProjectData = (ydoc: ProjectState, data: Partial<ProjectData>): void => {
+    ydoc.transact(() => {
+        if (data.screenplay && data.screenplay.length > 0) {
+            prosemirrorJSONToYXmlFragment(
+                ScreenplaySchema,
+                { type: "doc", content: data.screenplay },
+                ydoc.screenplayFragment(),
+            );
+        }
+        if (data.titlepage && data.titlepage.length > 0) {
+            prosemirrorJSONToYXmlFragment(
+                TitlePageSchema,
+                { type: "doc", content: data.titlepage },
+                ydoc.titlepageFragment(),
+            );
+        }
+
+        fillMap(asMap(ydoc.metadata()), data.metadata);
+        fillMap(asMap(ydoc.characters()), data.characters);
+        fillMap(asMap(ydoc.locations()), data.locations);
+        fillMap(asMap(ydoc.scenes()), data.scenes);
+        fillMap(asMap(ydoc.pages()), data.pages);
+        fillMap(asMap(ydoc.layout()), data.layout);
+        fillMap(asMap(ydoc.production()), data.production);
+        fillMap(asMap(ydoc.comments()), data.comments);
+        fillMap(asMap(ydoc.documents()), data.documents);
+        fillMap(asMap(ydoc.outline()), data.outline);
+        fillMap(asMap(ydoc.shelf()), data.shelf);
+        fillMap(asMap(ydoc.dictionary()), data.dictionary);
+
+        if (data.documentContent) {
+            for (const [id, content] of Object.entries(data.documentContent)) {
+                if (content.length === 0) continue;
+                prosemirrorJSONToYXmlFragment(
+                    ScreenplaySchema,
+                    { type: "doc", content },
+                    ydoc.documentFragment(id),
+                );
+            }
+        }
+        if (data.boards) {
+            for (const [id, board] of Object.entries(data.boards)) {
+                const map = ydoc.boardData(id);
+                for (const [key, value] of Object.entries(board)) {
+                    map.set(key as keyof BoardData, value as BoardData[keyof BoardData]);
+                }
+            }
+        }
+        if (data.shelfContent) {
+            for (const [key, content] of Object.entries(data.shelfContent)) {
+                if (content.length === 0) continue;
+                const sep = key.indexOf("::");
+                const nodeId = key.slice(0, sep);
+                const versionId = key.slice(sep + 2);
+                prosemirrorJSONToYXmlFragment(
+                    ScreenplaySchema,
+                    { type: "doc", content },
+                    ydoc.shelfFragment(nodeId, versionId),
+                );
+            }
+        }
+    });
+};
+
+/**
+ * Remove every shared type's content from `ydoc` — both fragments, all maps, and
+ * the dynamic per-document / per-board / per-shelf fragments — so an imported
+ * state can fully replace the existing project instead of merging with it.
+ */
+export const clearProjectData = (ydoc: ProjectState): void => {
+    ydoc.transact(() => {
+        const screenplay = ydoc.screenplayFragment();
+        if (screenplay.length > 0) screenplay.delete(0, screenplay.length);
+        const titlepage = ydoc.titlepageFragment();
+        if (titlepage.length > 0) titlepage.delete(0, titlepage.length);
+
+        // Clear dynamic fragments before their owning maps, while the nodes that
+        // reference them can still be enumerated.
+        ydoc.documents().forEach((node) => {
+            if (node.type === "editor") {
+                const frag = ydoc.documentFragment(node.id);
+                if (frag.length > 0) frag.delete(0, frag.length);
+            } else if (node.type === "board") {
+                ydoc.boardData(node.id).clear();
+            }
+        });
+        ydoc.shelf().forEach((entry, nodeId) => {
+            for (const version of entry.versions) {
+                const frag = ydoc.shelfFragment(nodeId, version.id);
+                if (frag.length > 0) frag.delete(0, frag.length);
+            }
+        });
+
+        ydoc.metadata().clear();
+        ydoc.characters().clear();
+        ydoc.scenes().clear();
+        ydoc.pages().clear();
+        ydoc.locations().clear();
+        ydoc.layout().clear();
+        ydoc.production().clear();
+        ydoc.comments().clear();
+        ydoc.documents().clear();
+        ydoc.outline().clear();
+        ydoc.shelf().clear();
+        ydoc.dictionary().clear();
+    });
 };
 
 // -------------------------------- //

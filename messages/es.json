@@ -481,11 +481,20 @@
     },
     "untitled": "Sin título",
     "titlePlaceholder": "Título",
-    "descriptionPlaceholder": "Descripción"
+    "descriptionPlaceholder": "Descripción",
+    "recordAudio": "Grabar audio",
+    "stopRecording": "Detener",
+    "audioUnsupported": "La grabación de audio no es compatible con este navegador: arrastra un archivo de audio en su lugar",
+    "audioHint": "Nota de voz",
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "rename": "Doble clic para renombrar"
   },
   "production": {
     "title": "Producción",
     "draftLocking": "Bloquear borrador",
+    "draftLockingHint": "Bloquear un borrador bloquea automáticamente las escenas y páginas actuales y pasa a la siguiente revisión. Abre la sección Avanzado para configurarlas manualmente.",
+    "advanced": "Avanzado",
     "draftRelock": "Volver a bloquear",
     "settings": "Ajustes de producción",
     "unlockDraftTitle": "Desbloquear borrador",

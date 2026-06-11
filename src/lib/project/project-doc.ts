@@ -155,6 +155,17 @@ export interface BoardCardData {
     y: number;
     width: number;
     height: number;
+    /**
+     * Card kind. `undefined`/"text" is the default note card; "image" renders a
+     * picture resource; "audio" renders a voice note with a play/pause control.
+     */
+    type?: "text" | "image" | "audio";
+    /**
+     * For `type: "image"`/`"audio"` cards: the SHA-256 hash of the source bytes,
+     * which are stored separately in IndexedDB (decoupled from Yjs). The bytes
+     * never live in the document — only this reference does.
+     */
+    assetId?: string;
 }
 
 export interface BoardArrowData {
@@ -255,6 +266,14 @@ export type ProjectData = {
     production: ProductionData;
     comments?: Record<string, Comment>;
     shelf?: Record<string, ShelfEntry>;
+    /** Per-project custom dictionary words (keys are words, values are true). */
+    dictionary?: Record<string, boolean>;
+    /** Content of every `editor` document node's fragment, keyed by node id. */
+    documentContent?: Record<string, JSONContent[]>;
+    /** Board data (cards + arrows) for every `board` node, keyed by node id. */
+    boards?: Record<string, BoardData>;
+    /** Content of every shelf version, keyed by `${nodeId}::${versionId}`. */
+    shelfContent?: Record<string, JSONContent[]>;
 };
 
 /**

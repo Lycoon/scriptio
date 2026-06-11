@@ -481,11 +481,20 @@
     },
     "untitled": "無題",
     "titlePlaceholder": "タイトル",
-    "descriptionPlaceholder": "説明"
+    "descriptionPlaceholder": "説明",
+    "recordAudio": "音声を録音",
+    "stopRecording": "停止",
+    "audioUnsupported": "このブラウザは音声録音に対応していません。代わりに音声ファイルをドラッグしてください",
+    "audioHint": "ボイスメモ",
+    "play": "再生",
+    "pause": "一時停止",
+    "rename": "ダブルクリックで名前を変更"
   },
   "production": {
     "title": "プロダクション",
     "draftLocking": "ドラフトロック",
+    "draftLockingHint": "ドラフトをロックすると、現在のシーンとページが自動的にロックされ、次のリビジョンに切り替わります。手動で設定するには「詳細設定」セクションを開いてください。",
+    "advanced": "詳細設定",
     "draftRelock": "再ロック",
     "settings": "制作設定",
     "unlockDraftTitle": "ドラフトのロック解除",

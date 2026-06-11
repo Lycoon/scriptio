@@ -36,6 +36,7 @@ import {
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
+import { useAssetGc } from "@src/lib/assets/use-asset-gc";
 
 // Import types only - these don't cause module loading
 import type { ThrottledWebsocketProvider } from "@src/lib/cloud/utils";
@@ -47,6 +48,8 @@ import type { ProjectRepository } from "@src/lib/project/project-repository";
 
 export interface ProjectContextType {
     // Project data
+    /** The active project's id (stable for the provider's lifetime). */
+    projectId: string;
     project: ProjectMembershipPayload | null;
     updateProject: (project: ProjectMembershipPayload) => void;
 
@@ -176,6 +179,7 @@ export interface ProjectContextType {
 // -------------------------------- //
 
 const defaultContextValue: ProjectContextType = {
+    projectId: "",
     project: null,
     updateProject: () => {},
     repository: null,
@@ -436,6 +440,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     useEffect(() => {
         repository?.setReadOnly(isReadOnly);
     }, [repository, isReadOnly]);
+
+    // Keep IndexedDB image assets reconciled with the document (orphan sweep).
+    useAssetGc(projectId, repository, isYjsReady);
 
     // The DO pushes a role-changed message whenever an admin updates this
     // user's role. Mirror it into local state so isReadOnly flips and the
@@ -918,6 +925,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     const contextValue = useMemo<ProjectContextType>(
         () => ({
+            projectId,
             project,
             updateProject,
             repository,
@@ -998,6 +1006,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setBoardFocusCardId,
         }),
         [
+            projectId,
             project,
             updateProject,
             repository,

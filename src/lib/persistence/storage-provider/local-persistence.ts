@@ -58,7 +58,11 @@ export async function touchCachedProject(id: string): Promise<void> {
 }
 
 export async function deleteCachedProject(id: string): Promise<void> {
-    return (await getStorageProvider()).delete(id);
+    const provider = await getStorageProvider();
+    await provider.delete(id);
+    // Reclaim the project's binary assets (board images). This is the chokepoint
+    // every deletion flow funnels through (DangerZone + discardCloudProjectData).
+    await provider.deleteProjectAssets(id);
 }
 
 export async function isCachedProject(projectId: string): Promise<boolean> {
@@ -123,6 +127,10 @@ export async function migrateToCachedProject(
     await new Promise((resolve) => setTimeout(resolve, 100));
     newProvider.destroy();
     newDoc.destroy();
+
+    // 3b. Copy the project's binary assets to the new id (they are keyed by
+    // projectId, so the copied board cards would otherwise reference nothing).
+    await (await getStorageProvider()).copyProjectAssets(oldProjectId, newProject.id);
 
     // 4. Clean up old project data
     await discardCloudProjectData(oldProjectId);

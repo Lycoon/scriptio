@@ -71,7 +71,7 @@ const ExportProject = () => {
 
         const confirmImport = async () => {
             try {
-                await importFileIntoProject(file, editor, titlePageEditor, repository);
+                await importFileIntoProject(file, projectId, editor, titlePageEditor, repository);
             } catch (error) {
                 console.error("Import failed:", error);
             }
@@ -127,6 +127,7 @@ const ExportProject = () => {
             const scriptioOptions: ScriptioExportOptions = {
                 ...baseOptions,
                 readable: readableExport,
+                projectId,
             };
             await adapter.export(ydoc, scriptioOptions as BaseExportOptions);
         } else {

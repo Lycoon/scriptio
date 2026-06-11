@@ -482,11 +482,20 @@
     },
     "untitled": "Unbenannt",
     "titlePlaceholder": "Titel",
-    "descriptionPlaceholder": "Beschreibung"
+    "descriptionPlaceholder": "Beschreibung",
+    "recordAudio": "Audio aufnehmen",
+    "stopRecording": "Stopp",
+    "audioUnsupported": "Audioaufnahme wird in diesem Browser nicht unterstützt – ziehen Sie stattdessen eine Audiodatei hierher",
+    "audioHint": "Sprachnotiz",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "rename": "Zum Umbenennen doppelklicken"
   },
   "production": {
     "title": "Produktion",
     "draftLocking": "Entwurf sperren",
+    "draftLockingHint": "Beim Sperren eines Entwurfs werden die aktuellen Szenen und Seiten automatisch gesperrt und zur nächsten Revision gewechselt. Öffnen Sie den Bereich „Erweitert“, um diese manuell zu konfigurieren.",
+    "advanced": "Erweitert",
     "draftRelock": "Erneut sperren",
     "settings": "Produktionseinstellungen",
     "unlockDraftTitle": "Entwurf entsperren",

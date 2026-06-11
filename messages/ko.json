@@ -481,11 +481,20 @@
     },
     "untitled": "제목 없음",
     "titlePlaceholder": "제목",
-    "descriptionPlaceholder": "설명"
+    "descriptionPlaceholder": "설명",
+    "recordAudio": "오디오 녹음",
+    "stopRecording": "정지",
+    "audioUnsupported": "이 브라우저에서는 오디오 녹음을 지원하지 않습니다. 대신 오디오 파일을 끌어다 놓으세요",
+    "audioHint": "음성 메모",
+    "play": "재생",
+    "pause": "일시정지",
+    "rename": "더블클릭하여 이름 변경"
   },
   "production": {
     "title": "프로덕션",
     "draftLocking": "드래프트 잠금",
+    "draftLockingHint": "드래프트를 잠그면 현재 씬과 페이지가 자동으로 잠기고 다음 리비전으로 전환됩니다. 수동으로 설정하려면 고급 섹션을 여세요.",
+    "advanced": "고급",
     "draftRelock": "다시 잠그기",
     "settings": "프로덕션 설정",
     "unlockDraftTitle": "드래프트 잠금 해제",

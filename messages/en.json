@@ -481,11 +481,20 @@
     },
     "untitled": "Untitled",
     "titlePlaceholder": "Title",
-    "descriptionPlaceholder": "Description"
+    "descriptionPlaceholder": "Description",
+    "recordAudio": "Record audio",
+    "stopRecording": "Stop",
+    "audioUnsupported": "Audio recording isn't supported in this browser — drag in an audio file instead",
+    "audioHint": "Voice note",
+    "play": "Play",
+    "pause": "Pause",
+    "rename": "Double-click to rename"
   },
   "production": {
     "title": "Production",
     "draftLocking": "Draft locking",
+    "draftLockingHint": "Locking a draft automatically locks current scenes, pages and switches to the next revision. Open the Advanced section to configure these manually.",
+    "advanced": "Advanced",
     "draftRelock": "Relock",
     "settings": "Production settings",
     "unlockDraftTitle": "Unlock draft",

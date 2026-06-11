@@ -44,6 +44,7 @@ html.light {
     --editor-style-bg-active: #f1f5f9;
     --editor-element-hover: #f8fafc;
     --editor-shadow: rgba(0, 0, 0, 0.15);
+    --board-card-body-text: var(--primary-text);
 
     --editor-scroll-bg: var(--secondary);
     --editor-scroll-btn: var(--tertiary);
@@ -91,6 +92,7 @@ html.dark {
     --editor-style-bg-active: #5d5d5d;
     --editor-element-hover: #eeeeee;
     --editor-shadow: rgba(0, 0, 0, 0.4);
+    --board-card-body-text: var(--primary);
 
     --editor-scroll-bg: var(--secondary);
     --editor-scroll-btn: var(--tertiary);
@@ -142,6 +144,7 @@ html.latte {
     --editor-style-bg-active: var(--primary-hover);
     --editor-element-hover: #f8fafc;
     --editor-shadow: #c7b28563;
+    --board-card-body-text: var(--primary-text);
 
     --editor-scroll-bg: var(--secondary);
     --editor-scroll-btn: var(--tertiary);
@@ -189,6 +192,7 @@ html.wonka {
     --editor-style-bg-active: var(--primary-hover);
     --editor-element-hover: #f8fafc;
     --editor-shadow: rgba(0, 0, 0, 0.4);
+    --board-card-body-text: var(--primary);
 
     --editor-scroll-bg: var(--secondary);
     --editor-scroll-btn: var(--tertiary);
@@ -236,6 +240,7 @@ html.mint {
     --editor-style-bg-active: var(--primary-hover);
     --editor-element-hover: #f8fafc;
     --editor-shadow: #9bc29e81;
+    --board-card-body-text: var(--primary-text);
 
     --editor-scroll-bg: var(--secondary);
     --editor-scroll-btn: var(--tertiary);
@@ -283,6 +288,7 @@ html.blossom {
     --editor-style-bg-active: var(--primary-hover);
     --editor-element-hover: #f8fafc;
     --editor-shadow: #ffbaffa6;
+    --board-card-body-text: var(--primary-text);
 
     --editor-scroll-bg: var(--secondary);
     --editor-scroll-btn: var(--tertiary);
@@ -330,6 +336,7 @@ html.midnight {
     --editor-style-bg-active: #263554;
     --editor-element-hover: #c8d8f0;
     --editor-shadow: rgba(0, 0, 30, 0.6);
+    --board-card-body-text: var(--primary);
 
     --editor-scroll-bg: var(--secondary);
     --editor-scroll-btn: var(--tertiary);

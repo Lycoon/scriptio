@@ -2,7 +2,7 @@
 
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { X, BookOpen, Clapperboard, PencilLine, Settings } from "lucide-react";
+import { X, BookOpen, Clapperboard, PencilLine, Settings, Info, ChevronDown } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
@@ -59,6 +59,10 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     // until revision tracking is wired to the repository.
     const [revisionColor, setRevisionColor] = useState(REVISION_COLORS[0].name);
 
+    // Scene/page/revision controls are tucked under a collapsed "Advanced"
+    // section — the draft toggle covers the common case on its own.
+    const [advancedOpen, setAdvancedOpen] = useState(false);
+
     const revisionOptions: DropdownOption[] = REVISION_COLORS.map((c) => ({
         value: c.name,
         label: (
@@ -86,28 +90,17 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isOpen, onClose]);
 
-    const sceneUuids = useMemo(
-        () => scenes.map((s) => s.id).filter((id): id is string => !!id),
-        [scenes],
-    );
+    const sceneUuids = useMemo(() => scenes.map((s) => s.id).filter((id): id is string => !!id), [scenes]);
 
     const labels = useMemo(
         () =>
             sceneLocking
-                ? computeSceneLabels(
-                      sceneUuids,
-                      persistentScenes,
-                      sceneNumberingStyle,
-                      skippedSceneLetters,
-                  )
+                ? computeSceneLabels(sceneUuids, persistentScenes, sceneNumberingStyle, skippedSceneLetters)
                 : [],
         [sceneLocking, sceneUuids, persistentScenes, sceneNumberingStyle, skippedSceneLetters],
     );
 
-    const provisionalLabels = useMemo(
-        () => labels.filter((l) => l.status === "provisional"),
-        [labels],
-    );
+    const provisionalLabels = useMemo(() => labels.filter((l) => l.status === "provisional"), [labels]);
 
     // Stable across renders: the popup keeps a reference to this callback.
     const performUnlock = useCallback(() => {
@@ -131,12 +124,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         // Re-read fresh persistent data
         const persistentSnapshot = repository.scenes;
 
-        const currentLabels = computeSceneLabels(
-            uuids,
-            persistentSnapshot,
-            sceneNumberingStyle,
-            skippedSceneLetters,
-        );
+        const currentLabels = computeSceneLabels(uuids, persistentSnapshot, sceneNumberingStyle, skippedSceneLetters);
 
         currentLabels.forEach((label) => {
             if (label.status === "provisional") {
@@ -189,10 +177,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         return computeSceneLabels(pageAnchors, persistentPages, "suffix", skippedSceneLetters);
     }, [pageLocking, pageAnchors, persistentPages, skippedSceneLetters]);
 
-    const provisionalPageLabels = useMemo(
-        () => pageLabels.filter((l) => l.status === "provisional"),
-        [pageLabels],
-    );
+    const provisionalPageLabels = useMemo(() => pageLabels.filter((l) => l.status === "provisional"), [pageLabels]);
 
     const performPageUnlock = useCallback(() => {
         if (!repository) return;
@@ -213,12 +198,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         const anchorInfos = getPageAnchorInfo(editor);
         const anchors = anchorInfos.map((a) => a.anchorId);
         const persistentSnapshot = repository.pages;
-        const currentLabels = computeSceneLabels(
-            anchors,
-            persistentSnapshot,
-            "suffix",
-            skippedSceneLetters,
-        );
+        const currentLabels = computeSceneLabels(anchors, persistentSnapshot, "suffix", skippedSceneLetters);
         currentLabels.forEach((label, idx) => {
             if (label.status === "provisional") {
                 repository.upsertPage(label.uuid, {
@@ -262,8 +242,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     const draftLocking = sceneLocking && pageLocking;
 
     const hasProvisionalDraft =
-        (sceneLocking && provisionalLabels.length > 0) ||
-        (pageLocking && provisionalPageLabels.length > 0);
+        (sceneLocking && provisionalLabels.length > 0) || (pageLocking && provisionalPageLabels.length > 0);
 
     const performDraftUnlock = useCallback(() => {
         if (!repository) return;
@@ -318,11 +297,16 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
             </div>
 
             {/* Draft Locking (scenes + pages together) */}
-            <div className={styles.section}>
+            <div className={`${styles.section} ${styles.section_flush}`}>
                 <div className={styles.row}>
                     <div className={styles.row_main}>
-                        <PencilLine size={14} className={styles.row_icon} />
                         <span className={styles.row_label}>{t("draftLocking")}</span>
+                        <span className={styles.hint} tabIndex={0}>
+                            <Info size={14} className={styles.hint_icon} />
+                            <span className={styles.hint_popover} role="tooltip">
+                                {t("draftLockingHint")}
+                            </span>
+                        </span>
                     </div>
                     <div className={styles.row_actions}>
                         {draftLocking && hasProvisionalDraft && (
@@ -345,11 +329,29 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                 </div>
             </div>
 
+            {/* Advanced — a labeled separator that folds the scene/page/revision
+                controls. The label sits on the divider line under Draft locking. */}
+            <button
+                type="button"
+                className={styles.advanced_divider}
+                onClick={() => setAdvancedOpen((open) => !open)}
+                aria-expanded={advancedOpen}
+            >
+                <span className={styles.advanced_divider_label}>
+                    {t("advanced")}
+                    <ChevronDown
+                        size={13}
+                        className={`${styles.advanced_chevron} ${advancedOpen ? styles.advanced_chevron_open : ""}`}
+                    />
+                </span>
+            </button>
+
+            {advancedOpen && (
+                <>
             {/* Scene Locking */}
             <div className={styles.section}>
                 <div className={styles.row}>
                     <div className={styles.row_main}>
-                        <Clapperboard size={14} className={styles.row_icon} />
                         <span className={styles.row_label}>{t("sceneLocking")}</span>
                     </div>
                     <div className={styles.row_actions}>
@@ -377,10 +379,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                         <div className={styles.provisional_title}>{t("provisionalTitle")}</div>
                         <div className={styles.provisional_list}>
                             {provisionalLabels.map((l, idx) => (
-                                <span
-                                    key={`${l.uuid}-${idx}`}
-                                    className={styles.provisional_label}
-                                >
+                                <span key={`${l.uuid}-${idx}`} className={styles.provisional_label}>
                                     {l.label}
                                 </span>
                             ))}
@@ -393,7 +392,6 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
             <div className={styles.section}>
                 <div className={styles.row}>
                     <div className={styles.row_main}>
-                        <BookOpen size={14} className={styles.row_icon} />
                         <span className={styles.row_label}>{t("pageLocking")}</span>
                     </div>
                     <div className={styles.row_actions}>
@@ -421,10 +419,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                         <div className={styles.provisional_title}>{t("pageProvisionalTitle")}</div>
                         <div className={styles.provisional_list}>
                             {provisionalPageLabels.map((l, idx) => (
-                                <span
-                                    key={`${l.uuid}-${idx}`}
-                                    className={styles.provisional_label}
-                                >
+                                <span key={`${l.uuid}-${idx}`} className={styles.provisional_label}>
                                     {l.label}
                                 </span>
                             ))}
@@ -448,6 +443,8 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                     className={styles.revision_select}
                 />
             </div>
+                </>
+            )}
         </div>
     );
 };
