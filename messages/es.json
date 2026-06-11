@@ -473,12 +473,7 @@
     "sendToOutline": "Enviar al esquema",
     "duplicate": "Duplicar",
     "delete": "Eliminar",
-    "hints": {
-      "pan": "Clic central para desplazar",
-      "select": "Arrastrar para seleccionar tarjetas",
-      "create": "Doble clic para crear tarjeta",
-      "move": "Mantener Shift para mover libremente"
-    },
+    "createCard": "Crear tarjeta",
     "untitled": "Sin título",
     "titlePlaceholder": "Título",
     "descriptionPlaceholder": "Descripción",

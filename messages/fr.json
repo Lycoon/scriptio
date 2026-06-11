@@ -474,12 +474,7 @@
     "sendToOutline": "Envoyer vers le séquencier",
     "duplicate": "Dupliquer",
     "delete": "Supprimer",
-    "hints": {
-      "pan": "Clic-milieu pour déplacer",
-      "select": "Glissez pour sélectionner des cartes",
-      "create": "Double-cliquez pour créer une carte",
-      "move": "Maintenez Maj pour vous déplacer librement"
-    },
+    "createCard": "Créer une carte",
     "untitled": "Sans titre",
     "titlePlaceholder": "Titre",
     "descriptionPlaceholder": "Description",

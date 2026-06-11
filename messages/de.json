@@ -474,12 +474,7 @@
     "sendToOutline": "An Gliederung senden",
     "duplicate": "Duplizieren",
     "delete": "Löschen",
-    "hints": {
-      "pan": "Mittelklick zum Schwenken",
-      "select": "Ziehen, um Karten auszuwählen",
-      "create": "Doppelklick zum Erstellen einer Karte",
-      "move": "Umschalt zum freien Bewegen halten"
-    },
+    "createCard": "Karte erstellen",
     "untitled": "Unbenannt",
     "titlePlaceholder": "Titel",
     "descriptionPlaceholder": "Beschreibung",
