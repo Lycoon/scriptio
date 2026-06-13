@@ -12,6 +12,7 @@ import { useLocale } from "@src/context/LocaleContext";
 import { useTheme } from "next-themes";
 import { ReactNode, Suspense, useEffect } from "react";
 import ProjectNavbar from "@components/navbar/ProjectNavbar";
+import ApplyTimingPanel from "@components/debug/ApplyTimingPanel";
 import { isTauri } from "@tauri-apps/api/core";
 
 /**
@@ -83,6 +84,7 @@ const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
                 {children}
             </div>
             <DashboardModal />
+            <ApplyTimingPanel />
         </ViewProvider>
     );
 };

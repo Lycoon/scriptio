@@ -2,6 +2,7 @@ import { Editor, Mark, mergeAttributes } from "@tiptap/core";
 import { Mark as PMMark, Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { timeApply } from "./apply-timing";
 
 declare module "@tiptap/core" {
     interface Commands<ReturnType> {
@@ -162,7 +163,7 @@ export const CommentMark = Mark.create<CommentOptions, CommentStorage>({
                     init(_, { doc }) {
                         return computeActiveCommentDecorations(doc, extensionStorage.activeCommentId);
                     },
-                    apply(tr, oldDecorations, _oldState, newState) {
+                    apply: timeApply("comment-highlight", (tr, oldDecorations, _oldState, newState) => {
                         // Only recompute when active comment changes
                         const activeCommentChanged = tr.getMeta("activeCommentChanged");
                         if (activeCommentChanged !== undefined) {
@@ -174,7 +175,7 @@ export const CommentMark = Mark.create<CommentOptions, CommentStorage>({
                             return oldDecorations.map(tr.mapping, newState.doc);
                         }
                         return oldDecorations;
-                    },
+                    }),
                 },
                 props: {
                     decorations(state) {

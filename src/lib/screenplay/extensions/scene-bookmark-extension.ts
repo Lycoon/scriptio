@@ -2,6 +2,7 @@ import { Editor, Extension } from "@tiptap/core";
 import { Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { timeApply } from "./apply-timing";
 
 const sceneBookmarkPluginKey = new PluginKey("sceneBookmark");
 
@@ -94,7 +95,7 @@ export const createSceneBookmarkExtension = (config: SceneBookmarkConfig) => {
                         init(_, { doc }) {
                             return computeBookmarkDecorations(doc, getSceneColor);
                         },
-                        apply(tr, oldDecorations, _oldState, newState) {
+                        apply: timeApply("scene-bookmark", (tr, oldDecorations, _oldState, newState) => {
                             // Always recompute when explicitly refreshed (color changed from UI)
                             if (tr.getMeta("sceneBookmarkRefresh")) {
                                 return computeBookmarkDecorations(tr.doc, getSceneColor);
@@ -110,7 +111,7 @@ export const createSceneBookmarkExtension = (config: SceneBookmarkConfig) => {
                             }
 
                             return oldDecorations;
-                        },
+                        }),
                     },
                     props: {
                         decorations(state) {

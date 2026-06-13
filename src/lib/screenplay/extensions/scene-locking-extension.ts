@@ -6,6 +6,7 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { PersistentScene } from "../scenes";
 import { computeSceneLabels, SceneNumberingStyle } from "../scene-locking";
 import { ScreenplayElement } from "../../utils/enums";
+import { timeApply } from "./apply-timing";
 
 const sceneLockingPluginKey = new PluginKey("sceneLocking");
 const REFRESH_META = "sceneLockingRefresh";
@@ -170,7 +171,7 @@ export const createSceneLockingExtension = (config: SceneLockingConfig) => {
                                 getSkippedLetters(),
                             );
                         },
-                        apply(tr, oldDecorations, _oldState, newState) {
+                        apply: timeApply("scene-locking", (tr, oldDecorations, _oldState, newState) => {
                             // Explicit refresh (lock toggle, lock-map change) → recompute.
                             if (tr.getMeta(REFRESH_META)) {
                                 return computeDecorations(
@@ -197,7 +198,7 @@ export const createSceneLockingExtension = (config: SceneLockingConfig) => {
                                 getNumberingStyle(),
                                 getSkippedLetters(),
                             );
-                        },
+                        }),
                     },
                     props: {
                         decorations(state) {

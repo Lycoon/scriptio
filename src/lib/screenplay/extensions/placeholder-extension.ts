@@ -3,6 +3,7 @@ import { Extension, isNodeEmpty } from '@tiptap/core'
 import type { Node as ProsemirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import { timeApply } from './apply-timing'
 
 export interface PlaceholderOptions {
   /**
@@ -131,7 +132,7 @@ export const Placeholder = Extension.create<PlaceholderOptions>({
           init(_, state) {
             return computePlaceholderDecorations(state.doc, state.selection.anchor)
           },
-          apply(tr, oldDecorations, oldState, newState) {
+          apply: timeApply("placeholder", (tr, oldDecorations, oldState, newState) => {
             const oldAnchor = oldState.selection.anchor
             const newAnchor = newState.selection.anchor
 
@@ -147,7 +148,7 @@ export const Placeholder = Extension.create<PlaceholderOptions>({
             }
 
             return oldDecorations
-          },
+          }),
         },
         props: {
           decorations(state) {

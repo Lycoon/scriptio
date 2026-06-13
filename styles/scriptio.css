@@ -75,14 +75,22 @@
        use measured outer heights in isolation, so removing the margin only
        affects rendering — same paragraphs per page, no determinism hit.
 
+       These target classes are applied by the pagination extension as node
+       decorations (pagination-doc-start / pagination-break-start) rather than
+       via an adjacent-sibling selector (`.pagination-page-break + p`). The
+       sibling combinator forced Blink to invalidate the style of the whole
+       document tail on every structural edit — the dominant cost in the
+       per-keystroke "Recalculate Style". A plain class carries no sibling
+       dependency, so only nodes whose first-of-page status changed restyle.
+
        In endless-scroll mode the page-break widgets are hidden (display:none),
        so there is no gap to collapse and zeroing the margin would make each
        page's first node stick to the previous page's content. The
-       `:not(.endless-scroll)` guard skips it there so the node keeps its
-       natural top margin. The first-page widget is still shown in endless
-       scroll, so its following paragraph keeps the reset. */
-    &:not(.endless-scroll) > .pagination-page-break + p,
-    > .pagination-first-page + p {
+       `:not(.endless-scroll)` guard skips the break-start reset there. The
+       first-page widget is still shown in endless scroll, so pagination-doc-start
+       keeps its reset unconditionally. */
+    &:not(.endless-scroll) > p.pagination-break-start,
+    > p.pagination-doc-start {
         margin-top: 0 !important;
     }
 
