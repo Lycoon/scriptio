@@ -668,6 +668,36 @@ const getHTMLHeight = (
     return height;
 };
 
+/** Element types whose screenplay CSS collapses the top margin to 0
+ *  (`.dialogue` / `.parenthetical` set `margin-top: 0`; `.dual_dialogue` is a
+ *  flex container with no margin). Every other element inherits the `> p`
+ *  rule `margin-top: var(--line-height)`. */
+const ZERO_TOP_MARGIN_TYPES = new Set<ScreenplayElement>([
+    ScreenplayElement.Dialogue,
+    ScreenplayElement.Parenthetical,
+    ScreenplayElement.DualDialogue,
+]);
+
+/**
+ * Top margin (px) the screenplay CSS gives a node type.
+ *
+ * This is the amount the `.pagination-doc-start` / `.pagination-break-start`
+ * rule strips from the first node of each page (so text starts flush at the top
+ * of the content area), and the amount a straddling node's continuation lacks
+ * (the continuation is mid-node and has no top margin). The height accounting
+ * measures every node WITH its margin, so callers subtract this where the margin
+ * is not actually rendered — keeping each page a constant height.
+ *
+ * Margins are a fixed binary in the live editor: 0 for the types above, else
+ * LINE_HEIGHT (which already mirrors the fixed `--line-height: 16px`). The
+ * `scene-heading-spacing-*` multipliers live only in the print CSS and are never
+ * applied to the editor DOM, so there is no per-instance variation to measure —
+ * a constant keeps this off the layout path entirely, the same way LINE_HEIGHT
+ * mirrors --line-height. Keep in sync with the margin-top rules in scriptio.css.
+ */
+const nodeTopMargin = (nodeType: ScreenplayElement): number =>
+    ZERO_TOP_MARGIN_TYPES.has(nodeType) ? 0 : LINE_HEIGHT;
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const setupTestDiv = (editorDom: HTMLElement, _: PaginationOptions): HTMLElement => {
     let testDiv = document.getElementById("pagination-test-div");
@@ -730,7 +760,8 @@ interface SplitResult {
     offset: number;
     /** Rendered height of the portion staying on the current page. */
     topHeight: number;
-    /** Rendered height of the portion moving to the next page. */
+    /** Rendered height of the portion continuing on the next page, excluding the
+     *  node's top margin (the continuation is mid-node and has no top margin). */
     bottomHeight: number;
 }
 
@@ -750,6 +781,7 @@ interface SplitResult {
 function trySplitNode(
     node: Node,
     nodeDocPos: number,
+    nodeMarginTop: number,
     freespace: number,
     nodeElement: HTMLElement,
     editorDOM: HTMLElement,
@@ -776,11 +808,29 @@ function trySplitNode(
         const topHeight = getHTMLHeight(topElement, editorDOM, node.type.name, options);
 
         if (topHeight <= freespace) {
-            // Measure the bottom half to guard against a degenerate single-line remainder.
+            // Height of the bottom half as it actually renders on the next page.
+            //
+            // The split is drawn as a single <p> with a block break widget inserted
+            // mid-node. That widget forces the bottom text onto a fresh line, so the
+            // continuation wraps *independently* of the top half — exactly like a
+            // standalone clone of the bottom text. We therefore measure it that way
+            // and then strip the one thing the standalone clone gets wrong: the
+            // node type's top margin (16px for Action's `.action`, 0 for Dialogue's
+            // `.dialogue`), which the continuation does not have because it is
+            // mid-node.
+            //
+            // Deriving it as (nodeHeight - topHeight) instead is only correct when
+            // the sentence boundary lands at a line boundary. When it falls mid-line
+            // the full node flows continuously (all_lines < top_lines + bottom_lines),
+            // so that formula underestimates the fresh-wrapped continuation by a line
+            // and the next page expands ~16px — the residual bug this measurement fixes.
             const bottomText = sentences.slice(i + 1).join("");
             const bottomElement = nodeElement.cloneNode(false) as HTMLElement;
             bottomElement.textContent = bottomText;
-            const bottomHeight = getHTMLHeight(bottomElement, editorDOM, node.type.name, options);
+            const bottomHeight = Math.max(
+                0,
+                getHTMLHeight(bottomElement, editorDOM, node.type.name, options) - nodeMarginTop,
+            );
 
             // Bottom too short — not worth a split; force the whole node to the next page.
             if (bottomHeight < LINE_HEIGHT * MIN_SPLIT_BOTTOM_LINES) return null;
@@ -952,6 +1002,13 @@ const createPaginationPlugin = (extension: {
                 const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
                 const breaks: PageBreakInfo[] = [];
                 let pagePos = 0;
+                // Top margin (px) stripped from the current page's first whole node by the
+                // .pagination-doc-start / .pagination-break-start CSS rule. Added back to the
+                // ending page's freespace at each break so every page stays a constant height
+                // even though the first node renders shorter than it measures. Continuation
+                // pages (after a mid-node sentence split) keep this at 0 — their first item is
+                // not a page-start node and never had a margin to strip. See nodeTopMargin.
+                let pageStartMargin = 0;
                 let pagenum = 1;
                 const childCount = newState.doc.childCount;
                 let offset = 0;
@@ -1011,11 +1068,13 @@ const createPaginationPlugin = (extension: {
                         breaks.push({
                             pos,
                             pagenum: ++pagenum,
-                            freespace: Math.max(0, freespace),
+                            // + pageStartMargin: this page's first node rendered margin-stripped.
+                            freespace: Math.max(0, freespace + pageStartMargin),
                             contdName: "",
                             splitNodeType: null,
                             anchorId: dataId,
                         });
+                        // New page's first node margin is set by the pagePos === 0 path below.
                         pagePos = 0;
                         lastNodes = new CircularBuffer(3);
                     }
@@ -1047,7 +1106,20 @@ const createPaginationPlugin = (extension: {
                             const topElement = element.cloneNode(false) as HTMLElement;
                             topElement.textContent = topText;
                             const topHeight = getHTMLHeight(topElement, editorDOM, node.type.name, options);
-                            const bottomHeight = Math.max(0, height - topHeight);
+
+                            // Bottom = the continuation as it renders on the locked page: the
+                            // bottom text wraps fresh after the block break widget, so measure it
+                            // standalone and strip the node's top margin (the mid-node continuation
+                            // has none). Deriving (height - topHeight) instead would mis-size the
+                            // page when splitOffset falls mid-line — see trySplitNode.
+                            const bottomText = node.textContent.slice(splitOffset);
+                            const bottomElement = element.cloneNode(false) as HTMLElement;
+                            bottomElement.textContent = bottomText;
+                            const bottomHeight = Math.max(
+                                0,
+                                getHTMLHeight(bottomElement, editorDOM, node.type.name, options) -
+                                    nodeTopMargin(nodeType),
+                            );
 
                             pagePos += topHeight;
                             const freespace = contentHeight - pagePos;
@@ -1055,13 +1127,17 @@ const createPaginationPlugin = (extension: {
                             breaks.push({
                                 pos: pos + 1 + splitOffset,
                                 pagenum: ++pagenum,
-                                freespace: Math.max(0, freespace),
+                                // + pageStartMargin: the ending page's first node was margin-stripped.
+                                freespace: Math.max(0, freespace + pageStartMargin),
                                 contdName: logic?.showMoreContd ? lastCharName : "",
                                 splitNodeType: nodeType,
                                 anchorId: dataId,
                                 splitOffset,
                             });
 
+                            // The locked page begins with this node's continuation (a mid-node
+                            // split is not a page-start node) — no top margin to strip.
+                            pageStartMargin = 0;
                             pagePos = bottomHeight;
                             lastNodes = new CircularBuffer(3);
                             lastNodes.push({
@@ -1081,17 +1157,26 @@ const createPaginationPlugin = (extension: {
                             breaks.push({
                                 pos,
                                 pagenum: ++pagenum,
-                                freespace: Math.max(0, freespace),
+                                // + pageStartMargin: this page's first node rendered margin-stripped.
+                                freespace: Math.max(0, freespace + pageStartMargin),
                                 contdName: "",
                                 splitNodeType: null,
                                 anchorId: dataId,
                             });
+                            // New page's first node margin is set by the pagePos === 0 path below.
                             pagePos = 0;
                             lastNodes = new CircularBuffer(3);
                         }
                     }
 
-                    // Accumulate height on current page
+                    // Accumulate height on current page.
+                    // pagePos === 0 means this whole node opens a fresh page (doc start, or a
+                    // forced/locked/orphan whole-node break reset it). Such nodes render with
+                    // their top margin stripped, so remember that margin to pad the ending
+                    // page's freespace when the next break is recorded.
+                    if (pagePos === 0) {
+                        pageStartMargin = nodeTopMargin(nodeType);
+                    }
                     pagePos += height;
 
                     // We keep the last 3 nodes for orphan resolution on page break
@@ -1119,12 +1204,21 @@ const createPaginationPlugin = (extension: {
                             // Serialize lazily — only needed here when not already serialized above.
                             if (!element) element = serializer.serializeNode(node) as HTMLElement;
 
-                            const split = trySplitNode(node, pos, freespaceBeforeNode, element, editorDOM, options);
+                            const split = trySplitNode(
+                                node,
+                                pos,
+                                nodeTopMargin(nodeType),
+                                freespaceBeforeNode,
+                                element,
+                                editorDOM,
+                                options,
+                            );
                             if (split) {
                                 breaks.push({
                                     pos: split.pos,
                                     pagenum: ++pagenum,
-                                    freespace: Math.max(0, freespaceBeforeNode - split.topHeight),
+                                    // + pageStartMargin: the ending page's first node was margin-stripped.
+                                    freespace: Math.max(0, freespaceBeforeNode - split.topHeight + pageStartMargin),
                                     // contdName non-empty for dialogue: triggers (MORE)/(CONT'D) labels.
                                     contdName: logic.showMoreContd ? lastCharName : "",
                                     // splitNodeType drives the overlay padding-escape in createPageBreakWidget.
@@ -1136,7 +1230,10 @@ const createPaginationPlugin = (extension: {
                                     // instead of force-pushing the whole node onto the locked page.
                                     splitOffset: split.offset,
                                 });
-                                // The bottom half of the split node is the first item on the new page.
+                                // The bottom half of the split node is the first item on the new
+                                // page; a mid-node continuation is not a page-start node, so it has
+                                // no top margin to strip.
+                                pageStartMargin = 0;
                                 pagePos = split.bottomHeight;
                                 lastNodes = new CircularBuffer(3);
                                 lastNodes.push({
@@ -1200,7 +1297,8 @@ const createPaginationPlugin = (extension: {
                         const breakInfo: PageBreakInfo = {
                             pos: breakPos,
                             pagenum: pagenum + 1,
-                            freespace: Math.max(0, freespace),
+                            // + pageStartMargin: the ending page's first node was margin-stripped.
+                            freespace: Math.max(0, freespace + pageStartMargin),
                             contdName: isDialogueSplit ? lastCharName : "",
                             splitNodeType: null,
                             anchorId: anchorDataId,
@@ -1208,6 +1306,13 @@ const createPaginationPlugin = (extension: {
                         breaks.push(breakInfo);
                         pagenum++;
                         pagePos = carryHeight;
+
+                        // The first node carried onto the new page renders margin-stripped
+                        // (it gets the .pagination-break-start class). Remember its margin for
+                        // the next break's freespace — firstMovingNode carries its type, so no
+                        // node re-lookup is needed (it is the current node when backCount === 0,
+                        // otherwise the keep-with-next node carried back from the buffer).
+                        pageStartMargin = nodeTopMargin(firstMovingNode?.type ?? nodeType);
 
                         // positionTop values in the buffer are page-relative — reset and re-seed
                         // with the carry nodes using new-page positionTop values so orphan checking
@@ -1257,9 +1362,11 @@ const createPaginationPlugin = (extension: {
                 // short-circuit condition guarantees content past that break
                 // is identical to the previous pass, so the previously stored
                 // freespace is still the correct answer.
+                // + pageStartMargin: the last page's first node also renders margin-stripped.
+                // (shortCircuited reuses the previous pass's value, already compensated.)
                 const lastPageFreespace = shortCircuited
                     ? value.lastPageFreespace
-                    : Math.max(0, contentHeight - pagePos);
+                    : Math.max(0, contentHeight - pagePos + pageStartMargin);
 
                 // --- Orphan page collection ---
                 // A locked page whose anchor data-id is no longer present in the
