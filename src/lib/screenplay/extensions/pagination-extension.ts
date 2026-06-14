@@ -16,6 +16,7 @@ import {
     SceneToken,
 } from "@src/lib/screenplay/scene-locking";
 import { PAGE_COLLAPSE_META, PAGE_ONE_KEY, PersistentPageMap, SCENE_OMIT_META } from "@src/lib/screenplay/page-locking";
+import { timeApply } from "./apply-timing";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -228,24 +229,69 @@ function syncVars(dom: HTMLElement, o: PaginationOptions) {
 // Decoration builders
 // ---------------------------------------------------------------------------
 
-function renderHeader(pagenum: number, label: string, options: PaginationOptions): string {
+/**
+ * A header/footer span, built once per (class, html) and cloned on reuse.
+ *
+ * The left/right strings are HTML templates — the default page-number header
+ * is e.g. `<p class="page-number" ...>{page}.</p>` — so the content must be
+ * parsed as markup (innerHTML), not inserted as literal text. Parsing is the
+ * expensive part; a screenplay has only as many distinct strings as it has
+ * page labels, so caching the parsed span and `cloneNode`-ing it skips the
+ * HTML parse on the per-keystroke widget rebuilds. Bounded so a session that
+ * churns through many labels can't grow it without limit.
+ */
+const areaSpanCache = new Map<string, HTMLSpanElement>();
+
+function makeAreaSpan(className: string, html: string): HTMLSpanElement {
+    const key = `${className} ${html}`;
+    let tpl = areaSpanCache.get(key);
+    if (!tpl) {
+        tpl = document.createElement("span");
+        tpl.className = className;
+        tpl.innerHTML = html;
+        if (areaSpanCache.size > 2000) areaSpanCache.clear();
+        areaSpanCache.set(key, tpl);
+    }
+    return tpl.cloneNode(true) as HTMLSpanElement;
+}
+
+function appendAreaSpans(area: HTMLElement, kind: "header" | "footer", left: string, right: string): void {
+    if (!left && !right) return;
+    area.appendChild(makeAreaSpan(`pagination-${kind}-left`, left));
+    area.appendChild(makeAreaSpan(`pagination-${kind}-right`, right));
+}
+
+function fillHeader(area: HTMLElement, pagenum: number, label: string, options: PaginationOptions): void {
     const custom = options.customHeader[pagenum];
     const left = custom?.headerLeft ?? options.headerLeft;
     const right = (custom?.headerRight ?? options.headerRight).replace("{page}", label);
-    if (!left && !right) return "";
-    return (
-        `<span class="pagination-header-left">${left}</span>` + `<span class="pagination-header-right">${right}</span>`
-    );
+    appendAreaSpans(area, "header", left, right);
 }
 
-function renderFooter(pagenum: number, label: string, options: PaginationOptions): string {
+function fillFooter(area: HTMLElement, pagenum: number, label: string, options: PaginationOptions): void {
     const custom = options.customFooter[pagenum];
     const left = custom?.footerLeft ?? options.footerLeft;
     const right = (custom?.footerRight ?? options.footerRight).replace("{page}", label);
-    if (!left && !right) return "";
-    return (
-        `<span class="pagination-footer-left">${left}</span>` + `<span class="pagination-footer-right">${right}</span>`
-    );
+    appendAreaSpans(area, "footer", left, right);
+}
+
+/**
+ * Let offscreen widgets skip style recalculation and layout entirely.
+ *
+ * A mid-document edit shifts every following page boundary, so ProseMirror
+ * relocates (recreates) every downstream break widget — content-visibility
+ * keeps the browser from doing rendering work for the ones outside the
+ * viewport, which is almost all of them. The exact intrinsic height keeps
+ * in-flow geometry (and the PDF adapter's measurements) identical while
+ * skipped.
+ *
+ * NOT applied to mid-node split widgets: their overlay escapes the container
+ * box via negative offsets, and the paint containment implied by
+ * content-visibility would clip it.
+ */
+function containOffscreen(container: HTMLElement, intrinsicHeight: number): void {
+    container.style.setProperty("content-visibility", "auto");
+    container.style.setProperty("contain-intrinsic-size", `none ${intrinsicHeight}px`);
 }
 
 function createFirstPageWidget(firstPageLabel: string, options: PaginationOptions): HTMLElement {
@@ -265,11 +311,12 @@ function createFirstPageWidget(firstPageLabel: string, options: PaginationOption
     const headerArea = document.createElement("div");
     headerArea.className = "pagination-header-area";
     headerArea.style.height = `${options.marginTop}px`;
-    headerArea.innerHTML = renderHeader(1, firstPageLabel, options);
+    fillHeader(headerArea, 1, firstPageLabel, options);
 
     overlay.appendChild(headerArea);
     container.appendChild(spacer);
     container.appendChild(overlay);
+    containOffscreen(container, options.marginTop);
     return container;
 }
 
@@ -284,10 +331,66 @@ function getSplitPaddingVars(nodeType: ScreenplayElement): [string, string] {
     return [`var(--${nodeType}-l-margin)`, `var(--${nodeType}-r-margin)`];
 }
 
-function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOptions): HTMLElement {
+/**
+ * Static skeleton for the page-break widget, built once and cloned per use.
+ *
+ * createPageBreakWidget runs for every break that changes on a keystroke, and
+ * the profiler showed its `createElement`/`appendChild` calls adding up. The
+ * structure (container › spacer + overlay › footer + divider + header) is
+ * identical for every break — only heights and label text differ — so the
+ * tree is assembled once here and a single native `cloneNode(true)` replaces
+ * the ~10 element-creation calls. Only the static styling lives on the
+ * skeleton; per-break heights/content are patched onto the clone.
+ *
+ * Clone layout (indices are stable — optional empty/contd nodes are appended
+ * after, so they never shift these):
+ *   clone.children[0]            = spacer
+ *   clone.children[1]            = overlay
+ *   overlay.children[0/1/2]      = footer / divider / header
+ */
+let pageBreakSkeleton: HTMLDivElement | null = null;
+
+function getPageBreakSkeleton(): HTMLDivElement {
+    if (pageBreakSkeleton) return pageBreakSkeleton;
+
     const container = document.createElement("div");
     container.className = "pagination-page-break";
     container.contentEditable = "false";
+
+    const spacer = document.createElement("div");
+    spacer.className = "pagination-spacer";
+
+    const overlay = document.createElement("div");
+    overlay.className = "pagination-overlay";
+    overlay.style.top = "0";
+
+    const footerArea = document.createElement("div");
+    footerArea.className = "pagination-footer-area";
+
+    const divider = document.createElement("div");
+    divider.className = "pagination-divider";
+    divider.style.backgroundColor = "var(--main-bg)";
+
+    const headerArea = document.createElement("div");
+    headerArea.className = "pagination-header-area";
+
+    overlay.appendChild(footerArea);
+    overlay.appendChild(divider);
+    overlay.appendChild(headerArea);
+    container.appendChild(spacer);
+    container.appendChild(overlay);
+
+    pageBreakSkeleton = container;
+    return container;
+}
+
+function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOptions): HTMLElement {
+    const container = getPageBreakSkeleton().cloneNode(true) as HTMLDivElement;
+    const spacer = container.children[0] as HTMLElement;
+    const overlay = container.children[1] as HTMLElement;
+    const footerArea = overlay.children[0] as HTMLElement;
+    const divider = overlay.children[1] as HTMLElement;
+    const headerArea = overlay.children[2] as HTMLElement;
 
     const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
     const isEmpty = !!breakInfo.isEmpty;
@@ -306,16 +409,11 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
     // Includes freespace because the spacer is the only thing that moves text.
     const spacerHeight =
         breakInfo.freespace + options.marginBottom + options.pageGap + options.marginTop + emptyPageExtension;
-    const spacer = document.createElement("div");
-    spacer.className = "pagination-spacer";
     spacer.style.height = `${spacerHeight}px`;
 
     // Overlay: sits on top of the spacer (top:0, same height).
     // Uses flex justify-content:flex-end so footer/divider/header are pushed to the bottom.
     // The remaining space at the top is the freespace zone, covered by the overlay's background.
-    const overlay = document.createElement("div");
-    overlay.className = "pagination-overlay";
-    overlay.style.top = "0";
     overlay.style.height = `${spacerHeight}px`;
 
     // For mid-node splits, the widget is inserted inside a padded <p> element.
@@ -335,26 +433,15 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
     const thisLabel = breakInfo.label ?? String(breakInfo.pagenum);
 
     // Footer area of the ending page (fixed size = marginBottom)
-    const footerArea = document.createElement("div");
-    footerArea.className = "pagination-footer-area";
     footerArea.style.height = `${options.marginBottom}px`;
-    footerArea.innerHTML = renderFooter(breakInfo.pagenum - 1, prevLabel, options);
+    fillFooter(footerArea, breakInfo.pagenum - 1, prevLabel, options);
 
     // Visual gap between pages (fixed size = pageGap)
-    const divider = document.createElement("div");
-    divider.className = "pagination-divider";
     divider.style.height = `${options.pageGap}px`;
-    divider.style.backgroundColor = "var(--main-bg)";
 
     // Header area of the new page (fixed size = marginTop)
-    const headerArea = document.createElement("div");
-    headerArea.className = "pagination-header-area";
     headerArea.style.height = `${options.marginTop}px`;
-    headerArea.innerHTML = renderHeader(breakInfo.pagenum, thisLabel, options);
-
-    overlay.appendChild(footerArea);
-    overlay.appendChild(divider);
-    overlay.appendChild(headerArea);
+    fillHeader(headerArea, breakInfo.pagenum, thisLabel, options);
 
     if (isEmpty) {
         // Empty content area for the orphan-locked page. Renders a faint
@@ -389,8 +476,12 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
         overlay.appendChild(contdEl);
     }
 
-    container.appendChild(spacer);
-    container.appendChild(overlay);
+    // spacer + overlay are already in the cloned skeleton; nothing to append.
+    // Split widgets must keep full rendering: their overlay escapes the
+    // container box, which content-visibility's paint containment would clip.
+    if (breakInfo.splitNodeType === null) {
+        containOffscreen(container, spacerHeight);
+    }
     return container;
 }
 
@@ -417,12 +508,59 @@ function createLastPageWidget(
     const footerArea = document.createElement("div");
     footerArea.className = "pagination-footer-area";
     footerArea.style.height = `${options.marginBottom}px`;
-    footerArea.innerHTML = renderFooter(pagenum, label, options);
+    fillFooter(footerArea, pagenum, label, options);
 
     overlay.appendChild(footerArea);
     container.appendChild(spacer);
     container.appendChild(overlay);
+    containOffscreen(container, spacerHeight);
     return container;
+}
+
+/**
+ * Compact fingerprint of every option value baked into the widget DOM
+ * (spacer heights, header/footer markup). Appended to each widget key so
+ * an option change re-keys the widgets and forces a redraw — required now
+ * that widgets are constructed lazily and a matching key keeps the old DOM.
+ */
+function widgetOptionsFingerprint(options: PaginationOptions): string {
+    const src =
+        `${options.pageHeight}|${options.pageGap}|${options.marginTop}|${options.marginBottom}|` +
+        `${options.headerLeft}|${options.headerRight}|${options.footerLeft}|${options.footerRight}|` +
+        `${JSON.stringify(options.customHeader)}|${JSON.stringify(options.customFooter)}`;
+    // djb2 — collisions are vanishingly unlikely across the handful of option
+    // states a session sees, and a false match only delays a redraw until the
+    // next forced update.
+    let hash = 5381;
+    for (let i = 0; i < src.length; i++) hash = ((hash << 5) + hash + src.charCodeAt(i)) | 0;
+    return (hash >>> 0).toString(36);
+}
+
+/**
+ * Index the previous decoration set by `pos:key` so a rebuild can reuse the
+ * *exact same* Decoration instance for any widget that hasn't changed.
+ *
+ * This is the single most important optimization on the typing hot path. A
+ * mid-document edit shifts the last page's freespace, which forces a full
+ * rebuild even though all but a couple of widgets are untouched. ProseMirror's
+ * view diffing only keeps a widget's mounted DOM in place when it sees the
+ * *same Decoration object* across updates — a freshly built `Decoration.widget`
+ * with a matching key is still torn down and re-inserted when the surrounding
+ * content is dirty. Re-inserting ~95 widget subtrees into the editor's flat
+ * sibling list is what drives the document-wide "Recalculate Style" (the
+ * pagination `apply` itself is only ~1.7 ms; the view update is ~25 ms).
+ *
+ * By handing back the previous instance for unchanged widgets, only the
+ * handful that genuinely changed (typically just the last-page widget) get
+ * recreated, and the rest keep their DOM untouched — no style invalidation.
+ */
+function buildReuseMap(mapped: DecorationSet): Map<string, Decoration> {
+    const reuse = new Map<string, Decoration>();
+    for (const d of mapped.find()) {
+        const key = d.spec.key as string | undefined;
+        if (key) reuse.set(`${d.from}:${key}`, d);
+    }
+    return reuse;
 }
 
 function buildDecorations(
@@ -431,29 +569,58 @@ function buildDecorations(
     lastPageFreespace: number,
     firstPageLabel: string,
     options: PaginationOptions,
+    reuse?: Map<string, Decoration>,
 ): DecorationSet {
     const decorations: Decoration[] = [];
+    const fp = widgetOptionsFingerprint(options);
+
+    // Push a widget, reusing the previous Decoration instance when one exists at
+    // the same position with the same key (see buildReuseMap). Reusing the
+    // instance is what lets ProseMirror keep the mounted DOM in place instead of
+    // recreating the subtree. Widget DOM is also built LAZILY (toDOM closure,
+    // not an eager node): the closure only runs for widgets actually drawn, and
+    // a function has no `parentNode`, which is the other condition prosemirror's
+    // placeWidget needs to reuse DOM across differing instances.
+    const pushWidget = (pos: number, key: string, side: number, build: () => HTMLElement) => {
+        const existing = reuse?.get(`${pos}:${key}`);
+        decorations.push(existing ?? Decoration.widget(pos, build, { side, key }));
+    };
+
+    // Mark the first in-flow node of a page so its top margin can be zeroed.
+    //
+    // This replaces the CSS adjacent-sibling rules `.pagination-page-break + p`
+    // / `.pagination-first-page + p`. Those combinators are a per-keystroke
+    // performance trap: the editor is a *flat* list of thousands of sibling
+    // <p>/widget elements, and inserting or moving any element forces Blink to
+    // re-evaluate the `+ p` match across a long run of siblings — invalidating
+    // the style of the entire tail of the document (the ~3.4k-element
+    // "Recalculate Style" seen while typing). A plain class selector carries no
+    // sibling dependency, so only the handful of nodes whose first-of-page
+    // status actually changed get restyled.
+    const markPageStart = (pos: number, cls: string) => {
+        const node = doc.resolve(pos).nodeAfter;
+        if (node) decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: cls }));
+    };
 
     // First page top margin / header
-    decorations.push(
-        Decoration.widget(0, createFirstPageWidget(firstPageLabel, options), {
-            side: -1,
-            key: `page-1-header-${firstPageLabel}`,
-        }),
+    pushWidget(0, `page-1-header-${firstPageLabel}-${fp}`, -1, () =>
+        createFirstPageWidget(firstPageLabel, options),
     );
+    markPageStart(0, "pagination-doc-start");
 
     // Page breaks
     // The key MUST include every value that affects the widget DOM (freespace,
-    // contdName, splitNodeType, label, isEmpty) — not just pagenum.  ProseMirror's
-    // WidgetType.eq short-circuits on matching keys and reuses the old DOM element,
-    // so a key that omits e.g. freespace causes stale spacer heights after content edits.
+    // contdName, splitNodeType, label, isEmpty, options fingerprint) — not just
+    // pagenum. A matching key keeps the previously drawn DOM, so a key that
+    // omits e.g. freespace causes stale spacer heights after content edits.
     for (const b of breaks) {
-        decorations.push(
-            Decoration.widget(b.pos, createPageBreakWidget(b, options), {
-                side: -1,
-                key: `pb-${b.pagenum}-${b.freespace}-${b.contdName}-${b.splitNodeType}-${b.label ?? ""}-${b.prevLabel ?? ""}-${b.isEmpty ? "E" : ""}`,
-            }),
-        );
+        const key = `pb-${b.pagenum}-${b.freespace}-${b.contdName}-${b.splitNodeType}-${b.label ?? ""}-${b.prevLabel ?? ""}-${b.isEmpty ? "E" : ""}-${fp}`;
+        pushWidget(b.pos, key, -1, () => createPageBreakWidget(b, options));
+        // Only whole-node breaks start a fresh node; mid-node sentence splits
+        // (splitNodeType !== null) keep the straddling node, which never had a
+        // margin to reset — the old `> .pagination-page-break + p` rule didn't
+        // match inside-<p> widgets either.
+        if (b.splitNodeType === null) markPageStart(b.pos, "pagination-break-start");
     }
 
     // Last page bottom margin / footer.
@@ -461,15 +628,8 @@ function buildDecorations(
     // when no breaks exist).
     const lastPagenum = breaks.length > 0 ? breaks[breaks.length - 1].pagenum : 1;
     const lastPageLabel = breaks.length > 0 ? (breaks[breaks.length - 1].label ?? String(lastPagenum)) : firstPageLabel;
-    decorations.push(
-        Decoration.widget(
-            doc.content.size,
-            createLastPageWidget(lastPagenum, lastPageLabel, lastPageFreespace, options),
-            {
-                side: 1,
-                key: `lp-${lastPagenum}-${lastPageLabel}-${lastPageFreespace}`,
-            },
-        ),
+    pushWidget(doc.content.size, `lp-${lastPagenum}-${lastPageLabel}-${lastPageFreespace}-${fp}`, 1, () =>
+        createLastPageWidget(lastPagenum, lastPageLabel, lastPageFreespace, options),
     );
 
     return DecorationSet.create(doc, decorations);
@@ -507,6 +667,36 @@ const getHTMLHeight = (
 
     return height;
 };
+
+/** Element types whose screenplay CSS collapses the top margin to 0
+ *  (`.dialogue` / `.parenthetical` set `margin-top: 0`; `.dual_dialogue` is a
+ *  flex container with no margin). Every other element inherits the `> p`
+ *  rule `margin-top: var(--line-height)`. */
+const ZERO_TOP_MARGIN_TYPES = new Set<ScreenplayElement>([
+    ScreenplayElement.Dialogue,
+    ScreenplayElement.Parenthetical,
+    ScreenplayElement.DualDialogue,
+]);
+
+/**
+ * Top margin (px) the screenplay CSS gives a node type.
+ *
+ * This is the amount the `.pagination-doc-start` / `.pagination-break-start`
+ * rule strips from the first node of each page (so text starts flush at the top
+ * of the content area), and the amount a straddling node's continuation lacks
+ * (the continuation is mid-node and has no top margin). The height accounting
+ * measures every node WITH its margin, so callers subtract this where the margin
+ * is not actually rendered — keeping each page a constant height.
+ *
+ * Margins are a fixed binary in the live editor: 0 for the types above, else
+ * LINE_HEIGHT (which already mirrors the fixed `--line-height: 16px`). The
+ * `scene-heading-spacing-*` multipliers live only in the print CSS and are never
+ * applied to the editor DOM, so there is no per-instance variation to measure —
+ * a constant keeps this off the layout path entirely, the same way LINE_HEIGHT
+ * mirrors --line-height. Keep in sync with the margin-top rules in scriptio.css.
+ */
+const nodeTopMargin = (nodeType: ScreenplayElement): number =>
+    ZERO_TOP_MARGIN_TYPES.has(nodeType) ? 0 : LINE_HEIGHT;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const setupTestDiv = (editorDom: HTMLElement, _: PaginationOptions): HTMLElement => {
@@ -570,7 +760,8 @@ interface SplitResult {
     offset: number;
     /** Rendered height of the portion staying on the current page. */
     topHeight: number;
-    /** Rendered height of the portion moving to the next page. */
+    /** Rendered height of the portion continuing on the next page, excluding the
+     *  node's top margin (the continuation is mid-node and has no top margin). */
     bottomHeight: number;
 }
 
@@ -590,6 +781,7 @@ interface SplitResult {
 function trySplitNode(
     node: Node,
     nodeDocPos: number,
+    nodeMarginTop: number,
     freespace: number,
     nodeElement: HTMLElement,
     editorDOM: HTMLElement,
@@ -616,11 +808,29 @@ function trySplitNode(
         const topHeight = getHTMLHeight(topElement, editorDOM, node.type.name, options);
 
         if (topHeight <= freespace) {
-            // Measure the bottom half to guard against a degenerate single-line remainder.
+            // Height of the bottom half as it actually renders on the next page.
+            //
+            // The split is drawn as a single <p> with a block break widget inserted
+            // mid-node. That widget forces the bottom text onto a fresh line, so the
+            // continuation wraps *independently* of the top half — exactly like a
+            // standalone clone of the bottom text. We therefore measure it that way
+            // and then strip the one thing the standalone clone gets wrong: the
+            // node type's top margin (16px for Action's `.action`, 0 for Dialogue's
+            // `.dialogue`), which the continuation does not have because it is
+            // mid-node.
+            //
+            // Deriving it as (nodeHeight - topHeight) instead is only correct when
+            // the sentence boundary lands at a line boundary. When it falls mid-line
+            // the full node flows continuously (all_lines < top_lines + bottom_lines),
+            // so that formula underestimates the fresh-wrapped continuation by a line
+            // and the next page expands ~16px — the residual bug this measurement fixes.
             const bottomText = sentences.slice(i + 1).join("");
             const bottomElement = nodeElement.cloneNode(false) as HTMLElement;
             bottomElement.textContent = bottomText;
-            const bottomHeight = getHTMLHeight(bottomElement, editorDOM, node.type.name, options);
+            const bottomHeight = Math.max(
+                0,
+                getHTMLHeight(bottomElement, editorDOM, node.type.name, options) - nodeMarginTop,
+            );
 
             // Bottom too short — not worth a split; force the whole node to the next page.
             if (bottomHeight < LINE_HEIGHT * MIN_SPLIT_BOTTOM_LINES) return null;
@@ -694,7 +904,7 @@ const createPaginationPlugin = (extension: {
                 lastPageFreespace: 0,
                 firstPageLabel: "1",
             }),
-            apply(tr, value: PaginationState, oldState, newState): PaginationState {
+            apply: timeApply("pagination", (tr, value: PaginationState, oldState, newState): PaginationState => {
                 // Wait for the screenplay fonts to finish loading before doing
                 // anything. Measuring against the OS monospace fallback writes
                 // wrong heights into the cache; gating here keeps the cache
@@ -792,6 +1002,13 @@ const createPaginationPlugin = (extension: {
                 const contentHeight = options.pageHeight - options.marginTop - options.marginBottom;
                 const breaks: PageBreakInfo[] = [];
                 let pagePos = 0;
+                // Top margin (px) stripped from the current page's first whole node by the
+                // .pagination-doc-start / .pagination-break-start CSS rule. Added back to the
+                // ending page's freespace at each break so every page stays a constant height
+                // even though the first node renders shorter than it measures. Continuation
+                // pages (after a mid-node sentence split) keep this at 0 — their first item is
+                // not a page-start node and never had a margin to strip. See nodeTopMargin.
+                let pageStartMargin = 0;
                 let pagenum = 1;
                 const childCount = newState.doc.childCount;
                 let offset = 0;
@@ -851,11 +1068,13 @@ const createPaginationPlugin = (extension: {
                         breaks.push({
                             pos,
                             pagenum: ++pagenum,
-                            freespace: Math.max(0, freespace),
+                            // + pageStartMargin: this page's first node rendered margin-stripped.
+                            freespace: Math.max(0, freespace + pageStartMargin),
                             contdName: "",
                             splitNodeType: null,
                             anchorId: dataId,
                         });
+                        // New page's first node margin is set by the pagePos === 0 path below.
                         pagePos = 0;
                         lastNodes = new CircularBuffer(3);
                     }
@@ -887,7 +1106,20 @@ const createPaginationPlugin = (extension: {
                             const topElement = element.cloneNode(false) as HTMLElement;
                             topElement.textContent = topText;
                             const topHeight = getHTMLHeight(topElement, editorDOM, node.type.name, options);
-                            const bottomHeight = Math.max(0, height - topHeight);
+
+                            // Bottom = the continuation as it renders on the locked page: the
+                            // bottom text wraps fresh after the block break widget, so measure it
+                            // standalone and strip the node's top margin (the mid-node continuation
+                            // has none). Deriving (height - topHeight) instead would mis-size the
+                            // page when splitOffset falls mid-line — see trySplitNode.
+                            const bottomText = node.textContent.slice(splitOffset);
+                            const bottomElement = element.cloneNode(false) as HTMLElement;
+                            bottomElement.textContent = bottomText;
+                            const bottomHeight = Math.max(
+                                0,
+                                getHTMLHeight(bottomElement, editorDOM, node.type.name, options) -
+                                    nodeTopMargin(nodeType),
+                            );
 
                             pagePos += topHeight;
                             const freespace = contentHeight - pagePos;
@@ -895,13 +1127,17 @@ const createPaginationPlugin = (extension: {
                             breaks.push({
                                 pos: pos + 1 + splitOffset,
                                 pagenum: ++pagenum,
-                                freespace: Math.max(0, freespace),
+                                // + pageStartMargin: the ending page's first node was margin-stripped.
+                                freespace: Math.max(0, freespace + pageStartMargin),
                                 contdName: logic?.showMoreContd ? lastCharName : "",
                                 splitNodeType: nodeType,
                                 anchorId: dataId,
                                 splitOffset,
                             });
 
+                            // The locked page begins with this node's continuation (a mid-node
+                            // split is not a page-start node) — no top margin to strip.
+                            pageStartMargin = 0;
                             pagePos = bottomHeight;
                             lastNodes = new CircularBuffer(3);
                             lastNodes.push({
@@ -921,17 +1157,26 @@ const createPaginationPlugin = (extension: {
                             breaks.push({
                                 pos,
                                 pagenum: ++pagenum,
-                                freespace: Math.max(0, freespace),
+                                // + pageStartMargin: this page's first node rendered margin-stripped.
+                                freespace: Math.max(0, freespace + pageStartMargin),
                                 contdName: "",
                                 splitNodeType: null,
                                 anchorId: dataId,
                             });
+                            // New page's first node margin is set by the pagePos === 0 path below.
                             pagePos = 0;
                             lastNodes = new CircularBuffer(3);
                         }
                     }
 
-                    // Accumulate height on current page
+                    // Accumulate height on current page.
+                    // pagePos === 0 means this whole node opens a fresh page (doc start, or a
+                    // forced/locked/orphan whole-node break reset it). Such nodes render with
+                    // their top margin stripped, so remember that margin to pad the ending
+                    // page's freespace when the next break is recorded.
+                    if (pagePos === 0) {
+                        pageStartMargin = nodeTopMargin(nodeType);
+                    }
                     pagePos += height;
 
                     // We keep the last 3 nodes for orphan resolution on page break
@@ -959,12 +1204,21 @@ const createPaginationPlugin = (extension: {
                             // Serialize lazily — only needed here when not already serialized above.
                             if (!element) element = serializer.serializeNode(node) as HTMLElement;
 
-                            const split = trySplitNode(node, pos, freespaceBeforeNode, element, editorDOM, options);
+                            const split = trySplitNode(
+                                node,
+                                pos,
+                                nodeTopMargin(nodeType),
+                                freespaceBeforeNode,
+                                element,
+                                editorDOM,
+                                options,
+                            );
                             if (split) {
                                 breaks.push({
                                     pos: split.pos,
                                     pagenum: ++pagenum,
-                                    freespace: Math.max(0, freespaceBeforeNode - split.topHeight),
+                                    // + pageStartMargin: the ending page's first node was margin-stripped.
+                                    freespace: Math.max(0, freespaceBeforeNode - split.topHeight + pageStartMargin),
                                     // contdName non-empty for dialogue: triggers (MORE)/(CONT'D) labels.
                                     contdName: logic.showMoreContd ? lastCharName : "",
                                     // splitNodeType drives the overlay padding-escape in createPageBreakWidget.
@@ -976,7 +1230,10 @@ const createPaginationPlugin = (extension: {
                                     // instead of force-pushing the whole node onto the locked page.
                                     splitOffset: split.offset,
                                 });
-                                // The bottom half of the split node is the first item on the new page.
+                                // The bottom half of the split node is the first item on the new
+                                // page; a mid-node continuation is not a page-start node, so it has
+                                // no top margin to strip.
+                                pageStartMargin = 0;
                                 pagePos = split.bottomHeight;
                                 lastNodes = new CircularBuffer(3);
                                 lastNodes.push({
@@ -1040,7 +1297,8 @@ const createPaginationPlugin = (extension: {
                         const breakInfo: PageBreakInfo = {
                             pos: breakPos,
                             pagenum: pagenum + 1,
-                            freespace: Math.max(0, freespace),
+                            // + pageStartMargin: the ending page's first node was margin-stripped.
+                            freespace: Math.max(0, freespace + pageStartMargin),
                             contdName: isDialogueSplit ? lastCharName : "",
                             splitNodeType: null,
                             anchorId: anchorDataId,
@@ -1048,6 +1306,13 @@ const createPaginationPlugin = (extension: {
                         breaks.push(breakInfo);
                         pagenum++;
                         pagePos = carryHeight;
+
+                        // The first node carried onto the new page renders margin-stripped
+                        // (it gets the .pagination-break-start class). Remember its margin for
+                        // the next break's freespace — firstMovingNode carries its type, so no
+                        // node re-lookup is needed (it is the current node when backCount === 0,
+                        // otherwise the keep-with-next node carried back from the buffer).
+                        pageStartMargin = nodeTopMargin(firstMovingNode?.type ?? nodeType);
 
                         // positionTop values in the buffer are page-relative — reset and re-seed
                         // with the carry nodes using new-page positionTop values so orphan checking
@@ -1097,9 +1362,11 @@ const createPaginationPlugin = (extension: {
                 // short-circuit condition guarantees content past that break
                 // is identical to the previous pass, so the previously stored
                 // freespace is still the correct answer.
+                // + pageStartMargin: the last page's first node also renders margin-stripped.
+                // (shortCircuited reuses the previous pass's value, already compensated.)
                 const lastPageFreespace = shortCircuited
                     ? value.lastPageFreespace
-                    : Math.max(0, contentHeight - pagePos);
+                    : Math.max(0, contentHeight - pagePos + pageStartMargin);
 
                 // --- Orphan page collection ---
                 // A locked page whose anchor data-id is no longer present in the
@@ -1269,16 +1536,30 @@ const createPaginationPlugin = (extension: {
                             !!b.isEmpty !== !!mappedOldBreaks[i].isEmpty,
                     );
 
+                // Always map the previous set first: it re-anchors every existing
+                // widget to its new position AND preserves the Decoration instances,
+                // which is what lets the rebuild below reuse unchanged widgets'
+                // mounted DOM (see buildReuseMap).
+                const mapped = value.decset.map(tr.mapping, tr.doc);
+
                 let decset: DecorationSet;
                 if (breaksChanged) {
-                    decset = buildDecorations(newState.doc, breaks, lastPageFreespace, firstPageLabel, options);
+                    // Rebuild, but reuse the previous Decoration instance for every
+                    // widget whose position+key is unchanged. On a typical edit only
+                    // the last-page widget (or a break near the edit) actually
+                    // changes, so ~95 of ~96 widgets keep their DOM untouched and the
+                    // document-wide style recalc collapses to a couple of elements.
+                    decset = buildDecorations(
+                        newState.doc,
+                        breaks,
+                        lastPageFreespace,
+                        firstPageLabel,
+                        options,
+                        buildReuseMap(mapped),
+                    );
                 } else {
-                    // Fast path: the set of breaks is unchanged, so remap the
-                    // existing decorations instead of rebuilding. This matters for
-                    // long scripts — a rebuild re-creates every break widget's DOM
-                    // subtree on each keystroke (hundreds of throwaway elements on a
-                    // 200-page doc), whereas `map` just re-anchors the existing set.
-                    const mapped = value.decset.map(tr.mapping, tr.doc);
+                    // Fast path: the set of breaks is unchanged, so the mapped set is
+                    // already correct — no rebuild at all.
                     // BUT `DecorationSet.map` silently drops a *widget* whose anchor
                     // sits at a position a replace step touches — e.g. editing a
                     // page's last node, which hosts the following page break at its
@@ -1286,15 +1567,23 @@ const createPaginationPlugin = (extension: {
                     // type with no height change keeps `breaks` identical, so we land
                     // here). The lost break makes the next page merge upward into a
                     // too-tall page. `map` never adds decorations, so a drop shows up
-                    // as a smaller count — only then do we pay for a full rebuild.
+                    // as a smaller count — only then do we pay for a rebuild (still
+                    // reusing the survivors' instances).
                     decset =
                         mapped.find().length === value.decset.find().length
                             ? mapped
-                            : buildDecorations(newState.doc, breaks, lastPageFreespace, firstPageLabel, options);
+                            : buildDecorations(
+                                  newState.doc,
+                                  breaks,
+                                  lastPageFreespace,
+                                  firstPageLabel,
+                                  options,
+                                  buildReuseMap(mapped),
+                              );
                 }
 
                 return { decset, breaks, lastPageFreespace, firstPageLabel };
-            },
+            }),
         },
         appendTransaction() {
             return null;

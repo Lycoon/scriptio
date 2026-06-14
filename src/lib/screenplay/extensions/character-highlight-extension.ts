@@ -3,6 +3,7 @@ import { Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ScreenplayElement } from "../../utils/enums";
+import { timeApply } from "./apply-timing";
 
 const characterHighlightPluginKey = new PluginKey("characterHighlight");
 
@@ -196,7 +197,7 @@ export const createCharacterHighlightExtension = (config: CharacterHighlightConf
                         init(_, { doc }) {
                             return computeHighlightDecorations(doc, getHighlightedCharacters(), getCharacterColor);
                         },
-                        apply(tr, oldDecorations, _oldState, newState) {
+                        apply: timeApply("character-highlight", (tr, oldDecorations, _oldState, newState) => {
                             // Explicit refresh (highlight toggled, color changed)
                             if (tr.getMeta("characterHighlightRefresh")) {
                                 return computeHighlightDecorations(
@@ -240,7 +241,7 @@ export const createCharacterHighlightExtension = (config: CharacterHighlightConf
                             );
 
                             return DecorationSet.create(newState.doc, [...outside, ...inside]);
-                        },
+                        }),
                     },
                     props: {
                         decorations(state) {

@@ -3,6 +3,7 @@ import { Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ScreenplayElement } from "../../utils/enums";
+import { timeApply } from "./apply-timing";
 
 const searchHighlightPluginKey = new PluginKey("searchHighlight");
 
@@ -220,7 +221,7 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
                             onMatchesFound(result.matches);
                             return result.decorations;
                         },
-                        apply(tr, oldDecorations, _oldState, newState) {
+                        apply: timeApply("search-highlight", (tr, oldDecorations, _oldState, newState) => {
                             const searchTerm = getSearchTerm();
 
                             // Fast path: no search term and wasn't searching before
@@ -336,7 +337,7 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
                             }
 
                             return result;
-                        },
+                        }),
                     },
                     props: {
                         decorations(state) {

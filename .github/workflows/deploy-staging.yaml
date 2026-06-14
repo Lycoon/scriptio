@@ -123,6 +123,18 @@ jobs:
               run: |
                   Get-Item "src-tauri/target/msix/*.msixbundle" | Rename-Item -NewName "Scriptio_${{ needs.prepare.outputs.version }}.msixbundle"
 
+            - name: Verify MSIX package version
+              run: |
+                  $zip = "$env:APP_PATH"
+                  Copy-Item $zip bundle.zip
+                  Expand-Archive bundle.zip out -Force
+                  $line = Select-String -Path out/AppxMetadata/AppxBundleManifest.xml -Pattern 'Version="([\d.]+)"' | Select-Object -First 1
+                  $version = $line.Matches[0].Groups[1].Value
+                  Write-Host "Built MSIX Identity Version: $version"
+                  if ($version -notmatch '\.0$') {
+                      throw "MSIX revision field must be 0 (got '$version'); the MS Store reserves the 4th component."
+                  }
+
             - name: Configure Microsoft Store CLI
               uses: microsoft/microsoft-store-apppublisher@v1.1
 

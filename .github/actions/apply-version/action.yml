@@ -24,19 +24,26 @@ runs:
               SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
               MAJOR=$(echo "$INPUT_VERSION" | cut -d. -f1)
               MINOR=$(echo "$INPUT_VERSION" | cut -d. -f2)
+              PATCH=$(echo "$INPUT_VERSION" | cut -d. -f3)
+              REVISION=$(echo "$INPUT_VERSION" | cut -d. -f4)
 
               if [[ "$INPUT_STAGING" == "true" ]]; then
                   PRODUCT_NAME="Scriptio (Staging)"
                   WINDOW_TITLE="Scriptio (Staging)"
                   APPSTORE_IDENTIFIER="app.scriptio.staging"
                   WINDOWS_IDENTIFIER="ArkoLogic.ScriptioStaging"
-                  MSIX_VERSION="${MAJOR}.${MINOR}.${GITHUB_RUN_NUMBER:-1}.0"
+                  # MS Store reserves the 4th version field (must stay 0). Staging's
+                  # build counter (REVISION) sits in that slot, so fold PATCH+REVISION
+                  # into the 3rd field to keep MSIX versions strictly increasing
+                  # across staging pushes and release bumps.
+                  MSIX_VERSION="${MAJOR}.${MINOR}.$(( PATCH * 10000 + REVISION )).0"
               else
                   PRODUCT_NAME="Scriptio"
                   WINDOW_TITLE="Scriptio"
                   APPSTORE_IDENTIFIER="app.scriptio"
                   WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
-                  MSIX_VERSION="$INPUT_VERSION"
+                  # Release builds carry REVISION=0, so the app version is Store-legal as-is.
+                  MSIX_VERSION="${MAJOR}.${MINOR}.${PATCH}.0"
               fi
 
               jq --arg v "$SEMVER" --arg t "$WINDOW_TITLE" --arg n "$PRODUCT_NAME" \

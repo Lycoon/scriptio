@@ -313,7 +313,31 @@ const DocumentTreeSidebarView = () => {
                         />
                     ))
                 ) : (
-                    <div className={sidebar_nav.empty_state}>{t("documentsEmpty")}</div>
+                    <div className={sidebar_nav.empty_state}>
+                        <div className={sidebar_nav.empty_actions}>
+                            <button
+                                className={sidebar_nav.empty_action}
+                                onClick={() => createInside(null, "folder")}
+                            >
+                                <FolderPlus size={16} />
+                                {t("newFolder")}
+                            </button>
+                            <button
+                                className={sidebar_nav.empty_action}
+                                onClick={() => createInside(null, "editor")}
+                            >
+                                <FilePlus size={16} />
+                                {t("newDocument")}
+                            </button>
+                            <button
+                                className={sidebar_nav.empty_action}
+                                onClick={() => createInside(null, "board")}
+                            >
+                                <LayoutDashboard size={16} />
+                                {t("newBoard")}
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
             {renderMenu()}
