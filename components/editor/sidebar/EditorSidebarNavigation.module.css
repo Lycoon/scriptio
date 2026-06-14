@@ -60,10 +60,40 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 16px;
     padding: 20px;
     text-align: center;
     color: var(--secondary-text);
     font-size: 12px;
+}
+
+.empty_actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    width: fit-content;
+}
+
+.empty_action {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 40px;
+    cursor: pointer;
+    color: var(--secondary-text);
+    background: none;
+    border: 1px solid var(--separator);
+    font-size: 12px;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+}
+
+.empty_action:hover {
+    opacity: 0.7;
 }
 
 .scene_list {
