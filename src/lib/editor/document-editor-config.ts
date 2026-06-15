@@ -8,7 +8,7 @@ import { TITLEPAGE_BASE_EXTENSIONS } from "@src/lib/titlepage/editor";
 export type PaginationMode = "screenplay" | "titlepage";
 
 export interface DocumentEditorFeatures {
-    /** Whether comments are enabled (CommentMark, CommentCards). */
+    /** Whether comments are enabled (node-anchored comments + margin gutter). */
     comments: boolean;
     /** Whether right-click "Shelve" actions are available (always false until shelf phase). */
     shelving: boolean;
@@ -68,7 +68,7 @@ export interface DocumentEditorConfig {
 export const SCREENPLAY_EDITOR_CONFIG: DocumentEditorConfig = {
     type: "screenplay",
     documentId: MAIN_SCREENPLAY_REF,
-    baseExtensions: BASE_EXTENSIONS,  // CommentMark added dynamically by hook when features.comments=true
+    baseExtensions: BASE_EXTENSIONS,
     getFragment: (s) => s.screenplayFragment(),
     getCommentsMap: (s) => s.comments(),
     features: {

@@ -11,7 +11,7 @@ export function createShelfEditorConfig(nodeId: string, versionId: string): Docu
             comments: false,
             shelving: false,
             characterHighlights: false,
-            searchHighlights: false,
+            searchHighlights: true,
             sceneBookmarks: false,
             sceneLocking: false,
             nodeIdDedup: true,

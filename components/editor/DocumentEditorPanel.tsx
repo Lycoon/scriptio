@@ -17,13 +17,14 @@ import { useViewContext } from "@src/context/ViewContext";
 import { ContextMenuType } from "@components/editor/sidebar/ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { useUser } from "@src/lib/utils/hooks";
-import CommentCards from "@components/editor/CommentCards";
+import CommentGutter from "@components/editor/CommentGutter";
 import Loading from "@components/utils/Loading";
 
-import { TextSelection } from "@tiptap/pm/state";
+import { TextSelection, Transaction } from "@tiptap/pm/state";
 import { EditorView } from "@tiptap/pm/view";
 import { DocumentEditorConfig } from "@src/lib/editor/document-editor-config";
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
+import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
 
@@ -80,7 +81,7 @@ const DocumentEditorPanel = ({
         repository,
     } = projectCtx;
     const { settings } = useSettings();
-    const { isEndlessScroll, showComments } = useViewContext();
+    const { isEndlessScroll } = useViewContext();
     const { user } = useUser();
 
     const [isEditorReady, setIsEditorReady] = useState(false);
@@ -114,7 +115,6 @@ const DocumentEditorPanel = ({
         setSelectedStyles,
         updateSuggestions,
         updateSuggestionsData: updateSuggestionData,
-        setActiveCommentId: commentOps.setActiveCommentId,
         userKeybinds: keybinds,
         globalContext,
         setSelectedTitlePageElement,
@@ -156,6 +156,53 @@ const DocumentEditorPanel = ({
             return () => clearTimeout(timer);
         }
     }, [editor, isYjsReady]);
+
+    // ---- Orphaned comment cleanup ----
+    // Comments anchor to a node's data-id. When that node is deleted the comment
+    // is orphaned (no gutter icon, unreachable), so prune it from the project.
+    const pruneOrphanedComments = useCallback(() => {
+        if (!editor || editor.isDestroyed || isReadOnly || !config.features.comments) return;
+
+        const liveIds = new Set<string>();
+        editor.state.doc.descendants((node) => {
+            const id = node.attrs?.["data-id"];
+            if (typeof id === "string") liveIds.add(id);
+        });
+        // Don't prune before the document has synced — an empty doc would
+        // otherwise wipe every comment.
+        if (liveIds.size === 0) return;
+
+        for (const comment of commentOps.comments) {
+            if (comment.nodeId && !liveIds.has(comment.nodeId)) {
+                commentOps.deleteComment(comment.id);
+            }
+        }
+    }, [editor, isReadOnly, config.features.comments, commentOps]);
+
+    const pruneRef = useRef(pruneOrphanedComments);
+    useEffect(() => {
+        pruneRef.current = pruneOrphanedComments;
+    }, [pruneOrphanedComments]);
+
+    useEffect(() => {
+        if (!editor || editor.isDestroyed || !config.features.comments) return;
+
+        let debounce: ReturnType<typeof setTimeout> | null = null;
+        const schedule = () => {
+            if (debounce) clearTimeout(debounce);
+            debounce = setTimeout(() => pruneRef.current(), 600);
+        };
+        // Only prune when a transaction actually removes a node — never on typing.
+        const onTransaction = ({ transaction }: { transaction: Transaction }) => {
+            if (transactionDeletesNode(transaction)) schedule();
+        };
+
+        editor.on("transaction", onTransaction);
+        return () => {
+            editor.off("transaction", onTransaction);
+            if (debounce) clearTimeout(debounce);
+        };
+    }, [editor, config.features.comments]);
 
     // ---- CSS variable application (screenplay only) ----
     useEffect(() => {
@@ -474,6 +521,22 @@ const DocumentEditorPanel = ({
         return () => removeEventListener("keydown", pressedKeyEvent);
     }, [isVisible, config.type, editor]);
 
+    // Create a new empty comment anchored to a node and open its thread.
+    const addCommentToNode = useCallback(
+        (nodeId: string) => {
+            commentOps.addComment({
+                nodeId,
+                text: "",
+                author: user?.username || "Anonymous",
+                createdAt: Date.now(),
+                resolved: false,
+                replies: [],
+            });
+            commentOps.setActiveNodeId(nodeId);
+        },
+        [commentOps, user],
+    );
+
     // ---- Context menu ----
     const onEditorContextMenu = useCallback(
         (e: React.MouseEvent) => {
@@ -528,18 +591,11 @@ const DocumentEditorPanel = ({
                 }
             }
 
-            const onAddComment = () => {
-                if (!editor) return;
-                const commentId = commentOps.addComment({
-                    text: "",
-                    author: user?.username || "Anonymous",
-                    createdAt: Date.now(),
-                    resolved: false,
-                    replies: [],
-                });
-                editor.chain().setTextSelection({ from, to }).setComment(commentId).run();
-                commentOps.setActiveCommentId(commentId);
-            };
+            // Comments anchor to the node under the caret, not a text range.
+            const commentNodeId = getNodeIdAtPos(editor.state, from);
+            const onAddComment = commentNodeId
+                ? () => addCommentToNode(commentNodeId)
+                : undefined;
 
             updateContextMenu({
                 type: ContextMenuType.EditorContextMenu,
@@ -547,12 +603,12 @@ const DocumentEditorPanel = ({
                 typeSpecificProps: { from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene },
             });
         },
-        [editor, updateContextMenu, commentOps, user, config.features.shelving, config.documentId],
+        [editor, updateContextMenu, addCommentToNode, config.features.shelving, config.documentId],
     );
 
-    // Clear active comment on mousedown
+    // Clear the open discussion when clicking elsewhere in the editor.
     const handleContainerMouseDown = useCallback(() => {
-        commentOps.setActiveCommentId(null);
+        commentOps.setActiveNodeId(null);
     }, [commentOps]);
 
     const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -579,7 +635,7 @@ const DocumentEditorPanel = ({
     return (
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
             <div
-                className={`${styles.container} ${!showComments ? "hide-comments" : ""}`}
+                className={styles.container}
                 onScroll={onScroll}
                 onMouseDown={handleContainerMouseDown}
                 onFocus={() => setFocusedEditorType(focusType)}
@@ -612,13 +668,15 @@ const DocumentEditorPanel = ({
                     </div>
                 </div>
                 {config.features.comments && (
-                    <CommentCards
+                    <CommentGutter
                         editor={editor}
                         comments={commentOps.comments}
-                        activeCommentId={commentOps.activeCommentId}
-                        setActiveCommentId={commentOps.setActiveCommentId}
+                        activeNodeId={commentOps.activeNodeId}
+                        setActiveNodeId={commentOps.setActiveNodeId}
+                        onAddComment={addCommentToNode}
                         onUpdateComment={(id, data) => commentOps.updateComment(id, data)}
                         onDeleteComment={(id) => commentOps.deleteComment(id)}
+                        onResolveComment={(id) => commentOps.resolveComment(id)}
                         onAddReply={(commentId, text, author) =>
                             commentOps.addReply(commentId, { text, author, createdAt: Date.now() })
                         }

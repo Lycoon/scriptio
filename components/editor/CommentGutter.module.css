@@ -1,0 +1,126 @@
+/* ---- Margin comment icon ---- */
+
+.gutter_icon {
+    position: absolute;
+    z-index: 10;
+
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 22px;
+    min-width: 22px;
+    padding: 0 4px;
+
+    border: 1px solid var(--separator);
+    border-radius: 6px 6px 6px 2px;
+    background-color: var(--editor-sidebar);
+    color: var(--text-secondary);
+    cursor: pointer;
+
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.gutter_icon:hover {
+    color: var(--text);
+    background-color: var(--editor-sidebar-hover);
+    border-color: rgba(255, 213, 0, 0.6);
+}
+
+.gutter_icon_active {
+    color: var(--text);
+    border-color: rgba(255, 213, 0, 0.8);
+    background-color: var(--editor-sidebar-hover);
+}
+
+.gutter_count {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* ---- Discussion thread popover ---- */
+
+.thread {
+    position: absolute;
+    z-index: 12;
+
+    display: flex;
+    flex-direction: column;
+    max-height: 60vh;
+
+    background-color: var(--editor-sidebar);
+    border: 1px solid var(--separator);
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.thread_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--separator);
+}
+
+.thread_title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.thread_close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.thread_close:hover {
+    background-color: var(--editor-style-bg-hover);
+    color: var(--text);
+}
+
+.thread_body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    overflow-y: auto;
+}
+
+.thread_add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 0 8px 8px;
+    padding: 6px;
+
+    border: 1px dashed var(--separator);
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.thread_add:hover {
+    background-color: var(--editor-style-bg-hover);
+    color: var(--text);
+}

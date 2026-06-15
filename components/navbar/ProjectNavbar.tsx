@@ -8,7 +8,6 @@ import { redirectHome } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
-import { useViewContext } from "@src/context/ViewContext";
 import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
@@ -108,7 +107,6 @@ const ProjectNavbar = () => {
     const projectId = useProjectIdFromUrl();
 
     const t = useTranslations("navbar");
-    const viewContext = useViewContext();
 
     useEffect(() => {
         if (!projectId) {
@@ -131,8 +129,6 @@ const ProjectNavbar = () => {
     const canUploadToCloud = !membership && !!user && isPro && !!projectId && isLocalOnly === true;
 
     const isInProject = !!projectId;
-    const hasScreenplay = viewContext.visiblePanels.includes("screenplay");
-    const hasTitlePage = viewContext.visiblePanels.includes("title");
 
     const deferredTitleUpdate = useMemo(
         () =>
@@ -276,8 +272,9 @@ const ProjectNavbar = () => {
                     </div>
                 )}
             </nav>
-            {/* Center - Format dropdown */}
-            {isInProject && projectId && (hasScreenplay || hasTitlePage) && (
+            {/* Center - Format dropdown (always visible in a project, regardless
+                of which panel is open) */}
+            {isInProject && projectId && (
                 <div className={navbar.center}>
                     <div className={navbar.navbar_island}>
                         <ScreenplayFormatDropdown />
@@ -289,7 +286,7 @@ const ProjectNavbar = () => {
             {/* Right side - Collaborators + Search + Settings */}
             <div className={navbar.right_btns}>
                 {isInProject && <CollaboratorsDisplay />}
-                {hasScreenplay && <ScreenplaySearch />}
+                {isInProject && <ScreenplaySearch />}
                 <div
                     className={`${navBtn.button} ${isAnalyticsOpen ? navBtn.active : ""}`}
                     onClick={() => setIsAnalyticsOpen(true)}

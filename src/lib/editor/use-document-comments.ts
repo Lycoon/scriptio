@@ -7,8 +7,9 @@ import type { ProjectRepository } from "@src/lib/project/project-repository";
 
 export interface DocumentCommentOps {
     comments: Comment[];
-    activeCommentId: string | null;
-    setActiveCommentId: (id: string | null) => void;
+    /** data-id of the node whose discussion is currently open, or null. */
+    activeNodeId: string | null;
+    setActiveNodeId: (id: string | null) => void;
     addComment: (partial: Omit<Comment, "id">) => string;
     updateComment: (id: string, data: Partial<Comment>) => void;
     deleteComment: (id: string) => void;
@@ -24,7 +25,7 @@ export const useDocumentComments = (
     commentsMap: Y.Map<Comment> | null | undefined,
     repository: ProjectRepository | null,
 ): DocumentCommentOps => {
-    const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+    const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
 
     // Refs so CRUD callbacks do not need to be recreated on every map/repo change
     const mapRef = useRef(commentsMap);
@@ -89,8 +90,8 @@ export const useDocumentComments = (
 
     return {
         comments,
-        activeCommentId,
-        setActiveCommentId,
+        activeNodeId,
+        setActiveNodeId,
         addComment,
         updateComment,
         deleteComment,

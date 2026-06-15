@@ -88,6 +88,8 @@ export type CommentReply = {
 
 export type Comment = {
     id: string;
+    /** data-id of the screenplay node this comment is anchored to. */
+    nodeId: string;
     text: string;
     author: string;
     createdAt: number;

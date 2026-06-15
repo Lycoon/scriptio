@@ -135,6 +135,9 @@ export interface ProjectContextType {
     setCurrentSearchIndex: (index: number) => void;
     searchMatches: SearchMatch[];
     setSearchMatches: (matches: SearchMatch[]) => void;
+    /** Editor that search/replace targets: the focused screenplay-type editor
+     *  (draft or tree document), falling back to the main screenplay. */
+    activeSearchEditor: Editor | null;
 
     // Project metadata (for title page placeholders)
     projectTitle: string;
@@ -247,6 +250,7 @@ const defaultContextValue: ProjectContextType = {
     setCurrentSearchIndex: () => {},
     searchMatches: [],
     setSearchMatches: () => {},
+    activeSearchEditor: null,
     // Project metadata defaults
     projectTitle: "",
     setProjectTitle: () => {},
@@ -923,6 +927,17 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setFocusedEditorTypeState(type);
     }, []);
 
+    // Scope search to the focused screenplay-type editor. `focusedEditorType`
+    // flips on every editor focus change, so it gates *when* we re-resolve, while
+    // `isFocused` picks the concrete editor — disambiguating a draft from a tree
+    // document, which both report "draft". Falls back to the main screenplay.
+    const activeSearchEditor = useMemo(
+        () => [editor, draftEditor, documentEditor].find((e) => e?.isFocused) ?? editor,
+        // focusedEditorType is the intentional re-resolve trigger (not read directly).
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [focusedEditorType, editor, draftEditor, documentEditor],
+    );
+
     const contextValue = useMemo<ProjectContextType>(
         () => ({
             projectId,
@@ -983,6 +998,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setCurrentSearchIndex,
             searchMatches,
             setSearchMatches,
+            activeSearchEditor,
             projectTitle,
             setProjectTitle,
             projectAuthor,
@@ -1064,6 +1080,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setCurrentSearchIndex,
             searchMatches,
             setSearchMatches,
+            activeSearchEditor,
             projectTitle,
             setProjectTitle,
             projectAuthor,

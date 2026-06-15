@@ -25,7 +25,7 @@ const CommentSidebarView = () => {
         [projectState],
     );
 
-    const { comments, activeCommentId, setActiveCommentId } = useDocumentComments(commentsMap, repository);
+    const { comments, activeNodeId, setActiveNodeId } = useDocumentComments(commentsMap, repository);
 
     const unresolvedComments = useMemo(() => comments.filter((c) => !c.resolved), [comments]);
 
@@ -41,8 +41,8 @@ const CommentSidebarView = () => {
                         <CommentSidebarItem
                             key={comment.id}
                             comment={comment}
-                            isActive={activeCommentId === comment.id}
-                            onActivate={() => setActiveCommentId(comment.id)}
+                            isActive={activeNodeId === comment.nodeId}
+                            onActivate={() => setActiveNodeId(comment.nodeId)}
                         />
                     ))
                 ) : (

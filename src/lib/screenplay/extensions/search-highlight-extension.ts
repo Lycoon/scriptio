@@ -18,6 +18,13 @@ type SearchHighlightConfig = {
     getEnabledFilters: () => Set<ScreenplayElement>;
     getCurrentMatchIndex: () => number;
     onMatchesFound: (matches: SearchMatch[]) => void;
+    /**
+     * Returns the editor search currently targets. Optional: when provided, this
+     * instance only highlights and reports matches while it belongs to the active
+     * editor, so search is scoped to the focused panel and several open editors
+     * don't clobber the single shared match list. Omitted → always active.
+     */
+    getActiveEditor?: () => Editor | null;
 };
 
 /**
@@ -191,7 +198,7 @@ function applyCurrentMatchClass(
 }
 
 export const createSearchHighlightExtension = (config: SearchHighlightConfig) => {
-    const { getSearchTerm, getEnabledFilters, getCurrentMatchIndex, onMatchesFound } = config;
+    const { getSearchTerm, getEnabledFilters, getCurrentMatchIndex, onMatchesFound, getActiveEditor } = config;
 
     // Track previous state to avoid unnecessary updates
     let previousMatchCount = 0;
@@ -203,11 +210,18 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
         name: "searchHighlight",
 
         addProseMirrorPlugins() {
+            // `this.editor` is the instance this extension is bound to. Search is
+            // scoped to the focused editor: only the active instance highlights
+            // and reports matches (see getActiveEditor above).
+            const ownEditor = this.editor;
+            const isActive = () => !getActiveEditor || getActiveEditor() === ownEditor;
+
             return [
                 new Plugin({
                     key: searchHighlightPluginKey,
                     state: {
                         init(_, { doc }) {
+                            if (!isActive()) return DecorationSet.empty;
                             const searchTerm = getSearchTerm();
                             const result = computeSearchDecorations(
                                 doc,
@@ -222,6 +236,18 @@ export const createSearchHighlightExtension = (config: SearchHighlightConfig) =>
                             return result.decorations;
                         },
                         apply: timeApply("search-highlight", (tr, oldDecorations, _oldState, newState) => {
+                            // Not the active search editor: render nothing and don't report
+                            // matches (the active editor owns the shared match list). Reset
+                            // bookkeeping so re-activation recomputes from scratch.
+                            if (!isActive()) {
+                                if (previousSearchTerm !== "" || previousMatchCount !== 0 || cachedMatches.length !== 0) {
+                                    previousSearchTerm = "";
+                                    previousMatchCount = 0;
+                                    cachedMatches = [];
+                                }
+                                return DecorationSet.empty;
+                            }
+
                             const searchTerm = getSearchTerm();
 
                             // Fast path: no search term and wasn't searching before

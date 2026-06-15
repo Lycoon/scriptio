@@ -33,7 +33,6 @@ import {
 } from "@src/lib/screenplay/extensions/scene-locking-extension";
 import { computeAbsorbedPageTokens, SCENE_OMIT_UNDO_ORIGIN } from "@src/lib/screenplay/scene-locking";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
-import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
 import { getActiveTitlePageElement } from "@src/lib/titlepage/editor";
@@ -46,8 +45,6 @@ export interface DocumentEditorCallbacks {
     setSelectedStyles?: (style: Style) => void;
     updateSuggestions?: (suggestions: string[]) => void;
     updateSuggestionsData?: (data: SuggestionData) => void;
-    /** Per-document: wired from useDocumentComments */
-    setActiveCommentId?: (id: string | null) => void;
     userKeybinds?: Record<string, string>;
     globalContext?: { toggleFocusMode: () => void; saveProject: () => void };
     // Title-type callbacks
@@ -74,6 +71,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         searchFilters,
         currentSearchIndex,
         setSearchMatches,
+        activeSearchEditor,
         contdLabel,
         moreLabel,
         sceneLocking,
@@ -174,6 +172,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         searchFilters,
         currentSearchIndex,
         setSearchMatches,
+        activeSearchEditor,
         sceneLocking,
         sceneNumberingStyle,
         skippedSceneLetters,
@@ -193,6 +192,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     ext.searchFilters = searchFilters;
     ext.currentSearchIndex = currentSearchIndex;
     ext.setSearchMatches = setSearchMatches;
+    ext.activeSearchEditor = activeSearchEditor;
     ext.sceneLocking = sceneLocking;
     ext.sceneNumberingStyle = sceneNumberingStyle;
     ext.skippedSceneLetters = skippedSceneLetters;
@@ -283,14 +283,6 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
           })
         : null;
 
-    const commentMarkExtension = features.comments
-        ? CommentMark.configure({
-              onCommentActivated: (commentId: string | null) => {
-                  ext.callbacks.setActiveCommentId?.(commentId);
-              },
-          })
-        : null;
-
     const spellcheckExtension = features.spellcheck
         ? createSpellcheckExtension({
               getWorker: () => ext.spellWorker,
@@ -307,6 +299,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
               onMatchesFound: (matches: SearchMatch[]) => {
                   ext.setSearchMatches(matches);
               },
+              getActiveEditor: () => ext.activeSearchEditor,
           })
         : null;
 
@@ -316,9 +309,6 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
             immediatelyRender: false,
             extensions: [
                 ...config.baseExtensions,
-
-                // Comment mark (screenplay only, requires configured callback)
-                ...(commentMarkExtension ? [commentMarkExtension] : []),
 
                 // Collaborative editing
                 ...(projectState && isYjsReady
@@ -641,12 +631,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         }
     }, [editor, pageLocking, persistentPages, skippedSceneLetters, config.features.paginationMode]);
 
-    // Refresh search highlights
+    // Refresh search highlights. `activeSearchEditor` is a dependency so that when
+    // focus moves between panels, the newly-active editor recomputes/reports its
+    // matches and the de-activated one clears its highlights.
     useEffect(() => {
         if (editor && features.searchHighlights) {
             refreshSearchHighlights(editor);
         }
-    }, [editor, searchTerm, searchFilters, currentSearchIndex, features.searchHighlights]);
+    }, [editor, searchTerm, searchFilters, currentSearchIndex, activeSearchEditor, features.searchHighlights]);
 
     // Refresh spellcheck when worker becomes ready or language changes
     useEffect(() => {

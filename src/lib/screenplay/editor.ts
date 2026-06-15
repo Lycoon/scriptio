@@ -9,7 +9,6 @@ import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline, gener
 import { Placeholder } from "./extensions/placeholder-extension";
 import { PAGE_SIZES } from "./extensions/pagination-extension";
 import { ContdExtension } from "./extensions/contd-extension";
-import { CommentMark } from "./extensions/comment-highlight-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
 
 export const applyMarkToggle = (editor: Editor, style: Style) => {
@@ -164,4 +163,4 @@ export const BASE_EXTENSIONS = [
     }),
 ];
 
-export const ScreenplaySchema = getSchema([...BASE_EXTENSIONS, CommentMark]);
+export const ScreenplaySchema = getSchema([...BASE_EXTENSIONS]);
