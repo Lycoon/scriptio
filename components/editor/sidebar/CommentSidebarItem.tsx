@@ -3,7 +3,7 @@
 import { memo, useCallback, useContext } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { Comment } from "@src/lib/utils/types";
-import { getCommentPositions } from "@src/lib/screenplay/extensions/comment-highlight-extension";
+import { getNodePositions } from "@src/lib/screenplay/comment-anchors";
 import { focusOnPosition } from "@src/lib/screenplay/editor";
 import { join } from "@src/lib/utils/misc";
 import nav_item from "./SidebarItem.module.css";
@@ -19,12 +19,12 @@ const CommentSidebarItem = memo(({ comment, isActive, onActivate }: CommentSideb
 
     const handleDoubleClick = useCallback(() => {
         if (!editor) return;
-        const positions = getCommentPositions(editor);
-        const pos = positions.get(comment.id);
+        const positions = getNodePositions(editor);
+        const pos = positions.get(comment.nodeId);
         if (pos) {
             focusOnPosition(editor, pos.from);
         }
-    }, [comment.id, editor]);
+    }, [comment.nodeId, editor]);
 
     const handleClick = useCallback(() => {
         onActivate();

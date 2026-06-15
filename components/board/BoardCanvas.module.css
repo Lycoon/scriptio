@@ -380,43 +380,6 @@
 }
 
 /* Context menu - matching ContextMenu.module.css */
-.context_menu {
-    display: flex;
-    flex-direction: column;
-    width: 220px;
-    z-index: 1000;
-    position: fixed;
-    padding-block: 6px;
-    overflow-y: auto;
-    border-radius: 12px;
-    background-color: var(--context-menu-bg);
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-}
-
-.context_menu_item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    padding-block: 6px;
-    padding-inline: 12px;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.context_menu_item:hover {
-    background-color: var(--context-menu-item-hover);
-}
-
-.context_menu_item_disabled {
-    opacity: 0.45;
-    cursor: default;
-}
-
-.context_menu_item_disabled:hover {
-    background-color: transparent;
-}
-
 /* Recording indicator: a pill in the top toolbar row, right of the zoom controls. */
 .recording_indicator {
     position: absolute;
@@ -474,33 +437,6 @@
     background-color: #d33b40;
 }
 
-.context_menu_colors {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--separator);
-}
-
-.context_menu_color_swatch {
-    width: 20px;
-    height: 20px;
-    border: 2px solid transparent;
-    border-radius: 50%;
-    cursor: pointer;
-    transition:
-        transform 0.15s ease,
-        border-color 0.15s ease;
-}
-
-.context_menu_color_swatch:hover {
-    transform: scale(1.15);
-}
-
-.context_menu_color_swatch_active {
-    border-color: white;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
-}
 
 /* Zoom controls - styled like the panel switcher buttons (secondary pill, no
    border, secondary-hover on hover) and sitting in the same top toolbar row,

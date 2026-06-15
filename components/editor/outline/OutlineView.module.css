@@ -19,9 +19,9 @@
 .outline_list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0;
     width: 100%;
-    max-width: 760px;
+    max-width: 580px;
     margin: 0 auto;
     padding: 16px;
     box-sizing: border-box;

@@ -485,26 +485,6 @@
         text-decoration-skip-ink: none;
     }
 
-    /* Comment highlighting */
-    .hide-comments .comment-highlight,
-    .hide-comments .comment-highlight-active {
-        background-color: transparent !important;
-        border-bottom: none !important;
-        cursor: text !important;
-    }
-
-    .comment-highlight {
-        background-color: rgba(255, 213, 0, 0.2);
-        border-bottom: 2px solid rgba(255, 213, 0, 0.5);
-        cursor: pointer;
-        border-radius: 2px;
-    }
-
-    .comment-highlight-active {
-        background-color: rgba(255, 213, 0, 0.4);
-        border-bottom-color: rgba(255, 213, 0, 0.8);
-    }
-
     /* Scene bookmark marker (widget decoration inserted by scene-bookmark-extension) */
     .scene-bookmark-marker {
         position: absolute;

@@ -38,7 +38,9 @@ const ScreenplaySearch = () => {
     };
 
     const {
-        editor,
+        // Search is scoped to the focused panel; `editor` here is the active
+        // search target (main screenplay, or the focused draft / tree document).
+        activeSearchEditor: editor,
         searchTerm,
         setSearchTerm,
         searchFilters,
@@ -71,6 +73,12 @@ const ScreenplaySearch = () => {
             inputRef.current.focus();
         }
     }, [isOpen]);
+
+    // When the search target switches panels (focus moved), the new document's
+    // matches are a different set — reset navigation so the index stays in range.
+    useEffect(() => {
+        setCurrentSearchIndex(0);
+    }, [editor, setCurrentSearchIndex]);
 
     const handleOpen = useCallback(() => {
         setIsOpen(true);

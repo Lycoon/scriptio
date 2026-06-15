@@ -1,89 +1,5 @@
-.menu {
-    display: flex;
-    flex-direction: column;
-    width: 220px;
-
-    z-index: 100;
-    position: fixed;
-    padding-block: 6px;
-    overflow-y: auto;
-    border-radius: 12px;
-    background-color: var(--context-menu-bg);
-    border: 1px solid var(--separator);
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-}
-
-.menu_item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    padding-block: 6px;
-    padding-inline: 12px;
-
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.menu_item:hover {
-    background-color: var(--context-menu-item-hover);
-}
-
-.menu_item_disabled {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    padding-block: 6px;
-    padding-inline: 12px;
-
-    font-size: 14px;
-    cursor: default;
-    opacity: 0.4;
-}
-
-.menu_item_icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    flex-shrink: 0;
-}
-
-.menu_separator {
-    height: 1px;
-    background-color: var(--separator);
-    margin: 2px 0;
-}
-
-/* Right-click color picker (document tree items) */
-.colors {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 10px 12px;
-}
-
-.color_swatch {
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: 2px solid transparent;
-    border-radius: 50%;
-    cursor: pointer;
-    transition:
-        transform 0.15s ease,
-        border-color 0.15s ease;
-}
-
-.color_swatch:hover {
-    transform: scale(1.15);
-}
-
-.color_swatch_active {
-    border-color: var(--primary-text);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
-}
+/* Editor-specific context-menu pieces. The shared menu surface, items,
+   separator, and color row live in components/utils/ContextMenu. */
 
 .suggestion_item {
     display: flex;
@@ -91,7 +7,8 @@
     gap: 10px;
 
     padding-block: 6px;
-    padding-inline: 12px;
+    padding-inline: 6px;
+    border-radius: 6px;
 
     font-size: 14px;
     font-weight: 600;
@@ -108,7 +25,7 @@
     align-items: center;
 
     padding-block: 6px;
-    padding-inline: 12px;
+    padding-inline: 6px;
 
     font-size: 13px;
     color: var(--secondary-text);

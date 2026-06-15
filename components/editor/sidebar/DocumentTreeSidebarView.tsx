@@ -1,25 +1,28 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
+import { UserContext } from "@src/context/UserContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { DocumentNode } from "@src/lib/project/project-state";
 import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
 import { join } from "@src/lib/utils/misc";
 import { FilePlus, FolderPlus, FolderTree, LayoutDashboard, Pencil, Trash2 } from "lucide-react";
 import DocumentTreeItem, { DropPosition } from "./DocumentTreeItem";
-import { ContextMenuItem } from "./ContextMenu";
+import {
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuColorRow,
+} from "@components/utils/ContextMenu";
 
 import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
-import context from "./ContextMenu.module.css";
-
-type MenuState = { x: number; y: number; node: DocumentNode | null };
 
 const DocumentTreeSidebarView = () => {
     const t = useTranslations("editorSidebar");
     const { documents, repository } = useContext(ProjectContext);
+    const { updateContextMenu } = useContext(UserContext);
     const { setSideDocument, closeDocument, primaryDocId, secondaryDocId } = useViewContext();
 
     // Documents currently open in a panel — highlighted in the tree.
@@ -32,8 +35,7 @@ const DocumentTreeSidebarView = () => {
     const [draggingId, setDraggingId] = useState<string | null>(null);
     const [dropTarget, setDropTarget] = useState<{ id: string; pos: DropPosition } | null>(null);
 
-    // Right-click menu + inline edit state (lifted here so the menu can drive it).
-    const [menu, setMenu] = useState<MenuState | null>(null);
+    // Inline edit state (lifted here so the right-click menu can drive it).
     const [renamingId, setRenamingId] = useState<string | null>(null);
     const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
@@ -118,35 +120,71 @@ const DocumentTreeSidebarView = () => {
         (id: string, color: string) => {
             const current = documents[id]?.color;
             repository?.setDocumentColor(id, current === color ? undefined : color);
-            setMenu(null);
         },
         [repository, documents],
     );
 
     // ---- Right-click menu ----
-    const openMenu = useCallback((node: DocumentNode | null, e: React.MouseEvent) => {
-        e.preventDefault();
-        setMenu({ x: e.clientX, y: e.clientY, node });
-    }, []);
-
-    // Close the menu on any left-click, scroll, resize, or Escape.
-    useEffect(() => {
-        if (!menu) return;
-        const close = () => setMenu(null);
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === "Escape") setMenu(null);
-        };
-        window.addEventListener("click", close);
-        window.addEventListener("resize", close);
-        window.addEventListener("scroll", close, true);
-        window.addEventListener("keydown", onKey);
-        return () => {
-            window.removeEventListener("click", close);
-            window.removeEventListener("resize", close);
-            window.removeEventListener("scroll", close, true);
-            window.removeEventListener("keydown", onKey);
-        };
-    }, [menu]);
+    // Opens the shared single context-menu host with this node's actions.
+    const openMenu = useCallback(
+        (node: DocumentNode | null, e: React.MouseEvent) => {
+            e.preventDefault();
+            const left = Math.min(e.clientX, window.innerWidth - 230);
+            const top = Math.min(e.clientY, window.innerHeight - 220);
+            // Where create actions should put new nodes: inside a right-clicked
+            // folder, otherwise at the root.
+            const parentId = node?.type === "folder" ? node.id : null;
+            const showCreate = !node || node.type === "folder";
+            const showEdit = !!node;
+            updateContextMenu({
+                position: { x: left, y: top },
+                content: (
+                    <>
+                        {showCreate && (
+                            <>
+                                <ContextMenuItem
+                                    text={t("newDocument")}
+                                    icon={FilePlus}
+                                    action={() => createInside(parentId, "editor")}
+                                />
+                                <ContextMenuItem
+                                    text={t("newFolder")}
+                                    icon={FolderPlus}
+                                    action={() => createInside(parentId, "folder")}
+                                />
+                                <ContextMenuItem
+                                    text={t("newBoard")}
+                                    icon={LayoutDashboard}
+                                    action={() => createInside(parentId, "board")}
+                                />
+                            </>
+                        )}
+                        {showCreate && showEdit && <ContextMenuSeparator />}
+                        {showEdit && node && (
+                            <>
+                                <ContextMenuColorRow
+                                    colors={DEFAULT_ITEM_COLORS}
+                                    selected={node.color}
+                                    onSelect={(color) => setColor(node.id, color)}
+                                />
+                                <ContextMenuItem
+                                    text={t("rename")}
+                                    icon={Pencil}
+                                    action={() => setRenamingId(node.id)}
+                                />
+                                <ContextMenuItem
+                                    text={t("delete")}
+                                    icon={Trash2}
+                                    action={() => setConfirmingDeleteId(node.id)}
+                                />
+                            </>
+                        )}
+                    </>
+                ),
+            });
+        },
+        [updateContextMenu, t, createInside, setColor],
+    );
 
     // ---- Drag & drop ----
     const onDragStart = useCallback((id: string) => setDraggingId(id), []);
@@ -196,74 +234,6 @@ const DocumentTreeSidebarView = () => {
         if (!repository || !dragId) return;
         repository.moveDocument(dragId, null, appendOrder(null, dragId));
     }, [draggingId, repository, appendOrder, resetDrag]);
-
-    const renderMenu = () => {
-        if (!menu) return null;
-        const node = menu.node;
-        const left = Math.min(menu.x, window.innerWidth - 230);
-        const top = Math.min(menu.y, window.innerHeight - 220);
-        // Where create actions should put new nodes: inside a right-clicked
-        // folder, otherwise at the root.
-        const parentId = node?.type === "folder" ? node.id : null;
-        const showCreate = !node || node.type === "folder";
-        const showEdit = !!node;
-
-        return (
-            <div
-                className={context.menu}
-                style={{ top, left }}
-                onContextMenu={(e) => e.preventDefault()}
-            >
-                {showCreate && (
-                    <>
-                        <ContextMenuItem
-                            text={t("newDocument")}
-                            icon={FilePlus}
-                            action={() => createInside(parentId, "editor")}
-                        />
-                        <ContextMenuItem
-                            text={t("newFolder")}
-                            icon={FolderPlus}
-                            action={() => createInside(parentId, "folder")}
-                        />
-                        <ContextMenuItem
-                            text={t("newBoard")}
-                            icon={LayoutDashboard}
-                            action={() => createInside(parentId, "board")}
-                        />
-                    </>
-                )}
-                {showCreate && showEdit && <div className={context.menu_separator} />}
-                {showEdit && node && (
-                    <>
-                        <div className={context.colors}>
-                            {DEFAULT_ITEM_COLORS.map((color) => (
-                                <button
-                                    key={color}
-                                    className={join(
-                                        context.color_swatch,
-                                        node.color === color ? context.color_swatch_active : "",
-                                    )}
-                                    style={{ backgroundColor: color }}
-                                    onClick={() => setColor(node.id, color)}
-                                />
-                            ))}
-                        </div>
-                        <ContextMenuItem
-                            text={t("rename")}
-                            icon={Pencil}
-                            action={() => setRenamingId(node.id)}
-                        />
-                        <ContextMenuItem
-                            text={t("delete")}
-                            icon={Trash2}
-                            action={() => setConfirmingDeleteId(node.id)}
-                        />
-                    </>
-                )}
-            </div>
-        );
-    };
 
     return (
         <>
@@ -340,7 +310,6 @@ const DocumentTreeSidebarView = () => {
                     </div>
                 )}
             </div>
-            {renderMenu()}
         </>
     );
 };

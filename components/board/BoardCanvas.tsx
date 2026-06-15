@@ -2,8 +2,14 @@
 
 import { useContext, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
+import { UserContext } from "@src/context/UserContext";
 import { BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
 import BoardCard from "./BoardCard";
+import {
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuColorRow,
+} from "@components/utils/ContextMenu";
 import styles from "./BoardCanvas.module.css";
 import { v7 as uuidv7 } from "uuid";
 import { Trash2, Plus, Minus, Copy, ListTree, Mic, Square } from "lucide-react";
@@ -34,27 +40,10 @@ function formatRecordingTime(seconds: number): string {
     return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-interface CardContextMenuState {
-    position: { x: number; y: number };
-    card: BoardCardData;
-}
-
-interface ArrowContextMenuState {
-    position: { x: number; y: number };
-    arrow: BoardArrowData;
-}
-
-interface CanvasContextMenuState {
-    /** Viewport position for placing the menu. */
-    position: { x: number; y: number };
-    /** Canvas-space coords where a new card should be created. */
-    canvasX: number;
-    canvasY: number;
-}
-
-const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }) => {
+const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string }) => {
     const { projectId, repository, isYjsReady, isReadOnly, boardFocusCardId, setBoardFocusCardId } =
         useContext(ProjectContext);
+    const { updateContextMenu } = useContext(UserContext);
     const t = useTranslations("board");
     const projectState = repository?.getState();
     const containerRef = useRef<HTMLDivElement>(null);
@@ -67,19 +56,11 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
     const [isPanning, setIsPanning] = useState(false);
     const [isDraggingFile, setIsDraggingFile] = useState(false);
     const [isSnapping, setIsSnapping] = useState(true);
-    const [cardContextMenu, setCardContextMenu] = useState<CardContextMenuState | null>(null);
-    const [arrowContextMenu, setArrowContextMenu] = useState<ArrowContextMenuState | null>(null);
-    const [canvasContextMenu, setCanvasContextMenu] = useState<CanvasContextMenuState | null>(null);
     const recorder = useAudioRecorder();
     const [prevIsVisible, setPrevIsVisible] = useState(isVisible);
     if (prevIsVisible !== isVisible) {
         setPrevIsVisible(isVisible);
-        if (!isVisible) {
-            setIsSnapping(true);
-            if (cardContextMenu) setCardContextMenu(null);
-            if (arrowContextMenu) setArrowContextMenu(null);
-            if (canvasContextMenu) setCanvasContextMenu(null);
-        }
+        if (!isVisible) setIsSnapping(true);
     }
     const [isCameraReady, setIsCameraReady] = useState(false);
     const [connectingFrom, setConnectingFrom] = useState<{ cardId: string; side: string } | null>(
@@ -263,22 +244,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         };
     }, [isVisible]);
 
-    // Close context menus on click anywhere
-    useEffect(() => {
-        if (!isVisible) return;
-
-        const handleClick = () => {
-            if (cardContextMenu) setCardContextMenu(null);
-            if (arrowContextMenu) setArrowContextMenu(null);
-            if (canvasContextMenu) setCanvasContextMenu(null);
-        };
-
-        window.addEventListener("click", handleClick);
-        return () => {
-            window.removeEventListener("click", handleClick);
-        };
-    }, [cardContextMenu, arrowContextMenu, canvasContextMenu, isVisible]);
-
     // Panning with middle-click
     const handlePanMouseDown = useCallback(
         (e: React.MouseEvent) => {
@@ -302,7 +267,7 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             if (e.button !== 0) return;
             if ((e.target as HTMLElement).closest(`.${styles.card}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
-            if ((e.target as HTMLElement).closest(`.${styles.context_menu}`)) return;
+            if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
 
             const container = containerRef.current;
             if (!container) return;
@@ -628,70 +593,41 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
         [isReadOnly, projectId, offset, scale, saveCards],
     );
 
-    // Right-clicking empty canvas opens a menu (create card / record audio).
-    // Cards and arrows have their own menus, so bail when the click landed on one.
-    const handleCanvasContextMenu = useCallback(
-        (e: React.MouseEvent) => {
-            if (isReadOnly) return;
-            const target = e.target as HTMLElement;
-            if (
-                target.closest(`.${styles.card}`) ||
-                target.closest(`.${styles.arrow_group}`) ||
-                target.closest(`.${styles.context_menu}`) ||
-                target.closest(`.${styles.zoom_controls}`)
-            )
-                return;
+    // Create a text card at the given canvas-space coords (from the canvas menu).
+    const handleCreateCard = useCallback(
+        (x: number, y: number) => {
+            setSelectedCardIds(new Set());
 
-            const container = containerRef.current;
-            if (!container) return;
-            const rect = container.getBoundingClientRect();
-            e.preventDefault();
-            setCardContextMenu(null);
-            setArrowContextMenu(null);
-            setCanvasContextMenu({
-                // Match the card/arrow menus: positioned with raw viewport coords.
-                position: { x: e.clientX, y: e.clientY },
-                canvasX: (e.clientX - rect.left - offset.x) / scale,
-                canvasY: (e.clientY - rect.top - offset.y) / scale,
-            });
+            const newCard: BoardCardData = {
+                id: uuidv7(),
+                title: "",
+                description: "",
+                color: randomCardColor(),
+                x: isSnapping ? Math.round(x / GRID_SIZE) * GRID_SIZE : x,
+                y: isSnapping ? Math.round(y / GRID_SIZE) * GRID_SIZE : y,
+                width: 450,
+                height: 280,
+            };
+
+            const newCards = [...cardsRef.current, newCard];
+            setCards(newCards);
+            saveCards(newCards);
         },
-        [isReadOnly, offset, scale],
+        [isSnapping, saveCards],
     );
 
-    // Create a text card at the spot the canvas menu was opened.
-    const handleCreateCard = useCallback(() => {
-        if (!canvasContextMenu) return;
-        const { canvasX: x, canvasY: y } = canvasContextMenu;
-        setCanvasContextMenu(null);
-        setSelectedCardIds(new Set());
-
-        const newCard: BoardCardData = {
-            id: uuidv7(),
-            title: "",
-            description: "",
-            color: randomCardColor(),
-            x: isSnapping ? Math.round(x / GRID_SIZE) * GRID_SIZE : x,
-            y: isSnapping ? Math.round(y / GRID_SIZE) * GRID_SIZE : y,
-            width: 450,
-            height: 280,
-        };
-
-        const newCards = [...cardsRef.current, newCard];
-        setCards(newCards);
-        saveCards(newCards);
-    }, [canvasContextMenu, isSnapping, saveCards]);
-
-    // Begin recording from the canvas menu; remember where to drop the card.
-    const handleStartRecording = useCallback(async () => {
-        if (!canvasContextMenu) return;
-        recordCoords.current = { x: canvasContextMenu.canvasX, y: canvasContextMenu.canvasY };
-        setCanvasContextMenu(null);
-        try {
-            await recorder.start();
-        } catch (err) {
-            console.error("[BoardCanvas] Microphone access failed:", err);
-        }
-    }, [canvasContextMenu, recorder]);
+    // Begin recording; remember where to drop the resulting card.
+    const handleStartRecording = useCallback(
+        async (x: number, y: number) => {
+            recordCoords.current = { x, y };
+            try {
+                await recorder.start();
+            } catch (err) {
+                console.error("[BoardCanvas] Microphone access failed:", err);
+            }
+        },
+        [recorder],
+    );
 
     // Stop recording, store the clip as an asset, and drop an audio card.
     const handleStopRecording = useCallback(async () => {
@@ -719,6 +655,49 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             console.error("[BoardCanvas] Failed to store recording:", err);
         }
     }, [recorder, projectId, saveCards]);
+
+    // Right-clicking empty canvas opens a menu (create card / record audio).
+    // Cards and arrows have their own menus, so bail when the click landed on one.
+    const handleCanvasContextMenu = useCallback(
+        (e: React.MouseEvent) => {
+            if (isReadOnly) return;
+            const target = e.target as HTMLElement;
+            if (
+                target.closest(`.${styles.card}`) ||
+                target.closest(`.${styles.arrow_group}`) ||
+                target.closest("[data-context-menu]") ||
+                target.closest(`.${styles.zoom_controls}`)
+            )
+                return;
+
+            const container = containerRef.current;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            e.preventDefault();
+            const canvasX = (e.clientX - rect.left - offset.x) / scale;
+            const canvasY = (e.clientY - rect.top - offset.y) / scale;
+            updateContextMenu({
+                position: { x: e.clientX, y: e.clientY },
+                content: (
+                    <>
+                        <ContextMenuItem
+                            icon={Plus}
+                            text={t("createCard")}
+                            action={() => handleCreateCard(canvasX, canvasY)}
+                        />
+                        <ContextMenuItem
+                            icon={Mic}
+                            text={t("recordAudio")}
+                            action={() => handleStartRecording(canvasX, canvasY)}
+                            disabled={!recorder.isSupported}
+                            title={recorder.isSupported ? undefined : t("audioUnsupported")}
+                        />
+                    </>
+                ),
+            });
+        },
+        [isReadOnly, offset, scale, updateContextMenu, t, handleCreateCard, handleStartRecording, recorder.isSupported],
+    );
 
     // Update card (with multi-drag support)
     const handleUpdateCard = useCallback(
@@ -766,7 +745,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             const newArrows = arrows.filter((a) => a.fromCardId !== id && a.toCardId !== id);
             setArrows(newArrows);
             saveArrows(newArrows);
-            setCardContextMenu(null);
             // Deleting an image card may orphan its asset — reconcile (debounced).
             if (projectId && projectState) scheduleAssetGc(projectId, projectState);
         },
@@ -779,7 +757,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             const newCards = cards.map((c) => (c.id === id ? { ...c, color } : c));
             setCards(newCards);
             saveCards(newCards);
-            setCardContextMenu(null);
         },
         [cards, saveCards],
     );
@@ -796,7 +773,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             const newCards = [...cards, newCard];
             setCards(newCards);
             saveCards(newCards);
-            setCardContextMenu(null);
         },
         [cards, saveCards],
     );
@@ -813,28 +789,9 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                 color: card.color,
                 parentId: null,
             });
-            setCardContextMenu(null);
         },
         [repository, docId],
     );
-
-    // Context menu for card
-    const handleCardContextMenu = useCallback((e: React.MouseEvent, card: BoardCardData) => {
-        setCardContextMenu({
-            position: { x: e.clientX, y: e.clientY },
-            card,
-        });
-    }, []);
-
-    // Context menu for arrow
-    const handleArrowContextMenu = useCallback((e: React.MouseEvent, arrow: BoardArrowData) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setArrowContextMenu({
-            position: { x: e.clientX, y: e.clientY },
-            arrow,
-        });
-    }, []);
 
     // Delete arrow
     const handleDeleteArrow = useCallback(
@@ -842,9 +799,69 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
             const newArrows = arrows.filter((a) => a.id !== id);
             setArrows(newArrows);
             saveArrows(newArrows);
-            setArrowContextMenu(null);
         },
         [arrows, saveArrows],
+    );
+
+    // Open the shared context-menu host for a card.
+    const handleCardContextMenu = useCallback(
+        (e: React.MouseEvent, card: BoardCardData) => {
+            updateContextMenu({
+                position: { x: e.clientX, y: e.clientY },
+                content: (
+                    <>
+                        {/* Color applies to text + audio notes; image cards have none. */}
+                        {card.type !== "image" && (
+                            <>
+                                <ContextMenuColorRow
+                                    colors={DEFAULT_ITEM_COLORS}
+                                    selected={card.color}
+                                    onSelect={(color) => handleChangeCardColor(card.id, color)}
+                                />
+                                <ContextMenuSeparator />
+                            </>
+                        )}
+                        <ContextMenuItem
+                            icon={Copy}
+                            text={t("duplicate")}
+                            action={() => handleDuplicateCard(card)}
+                        />
+                        {(card.type ?? "text") === "text" && (
+                            <ContextMenuItem
+                                icon={ListTree}
+                                text={t("sendToOutline")}
+                                action={() => handleSendToOutline(card)}
+                            />
+                        )}
+                        <ContextMenuItem
+                            icon={Trash2}
+                            text={t("delete")}
+                            action={() => handleDeleteCard(card.id)}
+                        />
+                    </>
+                ),
+            });
+        },
+        [updateContextMenu, t, handleChangeCardColor, handleDuplicateCard, handleSendToOutline, handleDeleteCard],
+    );
+
+    // Open the shared context-menu host for an arrow.
+    const handleArrowContextMenu = useCallback(
+        (e: React.MouseEvent, arrow: BoardArrowData) => {
+            e.preventDefault();
+            e.stopPropagation();
+            updateContextMenu({
+                position: { x: e.clientX, y: e.clientY },
+                content: (
+                    <ContextMenuItem
+                        icon={Trash2}
+                        text={t("delete")}
+                        action={() => handleDeleteArrow(arrow.id)}
+                    />
+                ),
+            });
+        },
+        [updateContextMenu, t, handleDeleteArrow],
     );
 
     // Get connection point position for a card
@@ -1189,80 +1206,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                     )}
                 </div>
 
-                {/* Card Context Menu */}
-                {cardContextMenu && (
-                    <div
-                        className={styles.context_menu}
-                        style={{
-                            top: cardContextMenu.position.y,
-                            left: cardContextMenu.position.x,
-                        }}
-                    >
-                        {/* Color applies to text + audio notes; image cards have none. */}
-                        {cardContextMenu.card.type !== "image" && (
-                            <div className={styles.context_menu_colors}>
-                                {DEFAULT_ITEM_COLORS.map((color) => (
-                                    <button
-                                        key={color}
-                                        className={`${styles.context_menu_color_swatch} ${cardContextMenu.card.color === color ? styles.context_menu_color_swatch_active : ""}`}
-                                        style={{ backgroundColor: color }}
-                                        onClick={() =>
-                                            handleChangeCardColor(cardContextMenu.card.id, color)
-                                        }
-                                    />
-                                ))}
-                            </div>
-                        )}
-                        <div
-                            className={styles.context_menu_item}
-                            onClick={() => handleDuplicateCard(cardContextMenu.card)}
-                        >
-                            <Copy size={16} />
-                            <p className="unselectable">{t("duplicate")}</p>
-                        </div>
-                        {(cardContextMenu.card.type ?? "text") === "text" && (
-                            <div
-                                className={styles.context_menu_item}
-                                onClick={() => handleSendToOutline(cardContextMenu.card)}
-                            >
-                                <ListTree size={16} />
-                                <p className="unselectable">{t("sendToOutline")}</p>
-                            </div>
-                        )}
-                        <div
-                            className={styles.context_menu_item}
-                            onClick={() => handleDeleteCard(cardContextMenu.card.id)}
-                        >
-                            <Trash2 size={16} />
-                            <p className="unselectable">{t("delete")}</p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Canvas Context Menu (empty-area right-click) */}
-                {canvasContextMenu && (
-                    <div
-                        className={styles.context_menu}
-                        style={{
-                            top: canvasContextMenu.position.y,
-                            left: canvasContextMenu.position.x,
-                        }}
-                    >
-                        <div className={styles.context_menu_item} onClick={handleCreateCard}>
-                            <Plus size={16} />
-                            <p className="unselectable">{t("createCard")}</p>
-                        </div>
-                        <div
-                            className={`${styles.context_menu_item} ${recorder.isSupported ? "" : styles.context_menu_item_disabled}`}
-                            title={recorder.isSupported ? undefined : t("audioUnsupported")}
-                            onClick={recorder.isSupported ? handleStartRecording : undefined}
-                        >
-                            <Mic size={16} />
-                            <p className="unselectable">{t("recordAudio")}</p>
-                        </div>
-                    </div>
-                )}
-
                 {/* Recording indicator */}
                 {recorder.isRecording && (
                     <div className={styles.recording_indicator}>
@@ -1274,25 +1217,6 @@ const BoardCanvas = ({ isVisible, docId }: { isVisible: boolean; docId: string }
                             <Square size={12} />
                             <span className="unselectable">{t("stopRecording")}</span>
                         </button>
-                    </div>
-                )}
-
-                {/* Arrow Context Menu */}
-                {arrowContextMenu && (
-                    <div
-                        className={styles.context_menu}
-                        style={{
-                            top: arrowContextMenu.position.y,
-                            left: arrowContextMenu.position.x,
-                        }}
-                    >
-                        <div
-                            className={styles.context_menu_item}
-                            onClick={() => handleDeleteArrow(arrowContextMenu.arrow.id)}
-                        >
-                            <Trash2 size={16} />
-                            <p className="unselectable">{t("delete")}</p>
-                        </div>
                     </div>
                 )}
 

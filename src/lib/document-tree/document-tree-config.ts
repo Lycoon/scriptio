@@ -17,7 +17,7 @@ export function createDocumentTreeConfig(docId: string): DocumentEditorConfig {
             comments: false,
             shelving: false,
             characterHighlights: false,
-            searchHighlights: false,
+            searchHighlights: true,
             sceneBookmarks: false,
             sceneLocking: false,
             nodeIdDedup: true,

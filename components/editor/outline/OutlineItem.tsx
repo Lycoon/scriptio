@@ -81,7 +81,10 @@ const OutlineItem = ({
             <div style={{ paddingLeft: depth * INDENT }}>
                 <div
                     className={blockClass}
-                    style={{ opacity: draggingId === node.id ? 0.4 : 1 }}
+                    style={{
+                        opacity: draggingId === node.id ? 0.4 : 1,
+                        ...(r.color ? { "--card-color": r.color } : {}),
+                    } as React.CSSProperties}
                     onClick={() => onNavigate(node)}
                     draggable
                     onDragStart={(e) => {
@@ -96,9 +99,7 @@ const OutlineItem = ({
                     }}
                     onDragEnd={onDragEnd}
                 >
-                    {isCard && node.color && (
-                        <span className={styles.color_bar} style={{ backgroundColor: node.color }} />
-                    )}
+                    <div className={styles.color_strip} />
                     <div className={styles.body}>
                         <div className={styles.title_row}>
                             {!isCard && <Film size={14} className={styles.type_icon} />}

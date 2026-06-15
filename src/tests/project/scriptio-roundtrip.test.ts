@@ -46,7 +46,7 @@ function buildPopulatedProject(): ProjectState {
         repo.setPageSize("A4" as never);
         repo.setSceneLocking(true);
         repo.setSkippedSceneLetters(["I", "O", "Q"]);
-        repo.addComment({ content: "note", resolved: false } as never);
+        repo.addComment({ nodeId: "b1", text: "note", author: "Ada", createdAt: 0, resolved: false, replies: [] });
         ydoc.dictionary().set("zoetrope", true);
     });
 
