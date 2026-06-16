@@ -16,6 +16,7 @@ import {
     SceneToken,
 } from "@src/lib/screenplay/scene-locking";
 import { PAGE_COLLAPSE_META, PAGE_ONE_KEY, PersistentPageMap, SCENE_OMIT_META } from "@src/lib/screenplay/page-locking";
+import { generateNodeId } from "@src/lib/screenplay/nodes";
 import { timeApply } from "./apply-timing";
 
 // ---------------------------------------------------------------------------
@@ -157,6 +158,10 @@ export interface PageBreakInfo {
     /** Display label for the page ending before this break — used by the footer of
      *  the previous page. Undefined for the first break (footer uses page-1 label). */
     prevLabel?: string;
+    /** True when the page beginning after this break holds a frozen page-lock
+     *  token (status "locked"). Drives the subtle lock badge in the page's
+     *  top-right corner. Only ever set while page locking is active. */
+    locked?: boolean;
     /** Character offset within the anchor node where the break occurs.
      *  Set for sentence-split breaks (mid-node) — both the original split and
      *  the locked re-application of it — and read by the production panel when
@@ -228,6 +233,57 @@ function syncVars(dom: HTMLElement, o: PaginationOptions) {
 // ---------------------------------------------------------------------------
 // Decoration builders
 // ---------------------------------------------------------------------------
+
+/**
+ * Lock badge shown in the top-right corner of a page-locked page.
+ *
+ * Built once and cloned on reuse — every locked page mounts an identical copy,
+ * so the SVG is parsed a single time. CSS floats it just past the page's
+ * top-right corner, in the gutter. It carries no text, so the PDF adapter's
+ * label extraction (which reads `.pagination-header-right`) and the header-area
+ * textContent are both untouched.
+ */
+let pageLockBadgeTemplate: HTMLSpanElement | null = null;
+
+function makePageLockBadge(): HTMLSpanElement {
+    if (!pageLockBadgeTemplate) {
+        const badge = document.createElement("span");
+        badge.className = "page-lock-badge";
+        badge.setAttribute("aria-hidden", "true");
+        // Lucide "lock" glyph, matching the icon set used across the app.
+        badge.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"' +
+            ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"' +
+            ' stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>' +
+            '<path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+        pageLockBadgeTemplate = badge;
+    }
+    return pageLockBadgeTemplate.cloneNode(true) as HTMLSpanElement;
+}
+
+/**
+ * Standalone lock-marker widget for a whole-node locked page.
+ *
+ * Rendered as its own decoration at the page-start boundary — a sibling of the
+ * page-break widget and the page's first paragraph, belonging to neither. It is
+ * therefore NOT a descendant of the content-visibility-contained break/first-page
+ * widget (whose paint containment would clip it) and NOT tied to the paragraph.
+ * A zero-height, full-page-width block establishes the positioning context at
+ * the new page's top edge; the badge inside it floats up into the top-right
+ * gutter via CSS.
+ */
+function makePageLockMarker(): HTMLDivElement {
+    const marker = document.createElement("div");
+    marker.className = "page-lock-marker";
+    marker.contentEditable = "false";
+    marker.appendChild(makePageLockBadge());
+    return marker;
+}
+
+/** Append the lock badge to a page's header area when that page is locked. */
+function applyPageLock(headerArea: HTMLElement, locked: boolean | undefined): void {
+    if (locked) headerArea.appendChild(makePageLockBadge());
+}
 
 /**
  * A header/footer span, built once per (class, html) and cloned on reuse.
@@ -312,6 +368,9 @@ function createFirstPageWidget(firstPageLabel: string, options: PaginationOption
     headerArea.className = "pagination-header-area";
     headerArea.style.height = `${options.marginTop}px`;
     fillHeader(headerArea, 1, firstPageLabel, options);
+    // Page 1's lock badge is mounted on its first paragraph (see
+    // pushPageLockBadge) — not here — because this widget carries
+    // content-visibility, whose paint containment would hide it.
 
     overlay.appendChild(headerArea);
     container.appendChild(spacer);
@@ -442,6 +501,12 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
     // Header area of the new page (fixed size = marginTop)
     headerArea.style.height = `${options.marginTop}px`;
     fillHeader(headerArea, breakInfo.pagenum, thisLabel, options);
+    // Only mid-node split pages render the lock badge in the header area: their
+    // widget is exempt from content-visibility (its overlay escapes the box), so
+    // the badge actually paints. Whole-node pages would have it clipped by this
+    // widget's paint containment, so they mount it on the page's first paragraph
+    // instead (see pushPageLockBadge).
+    if (breakInfo.splitNodeType !== null) applyPageLock(headerArea, breakInfo.locked);
 
     if (isEmpty) {
         // Empty content area for the orphan-locked page. Renders a faint
@@ -568,6 +633,7 @@ function buildDecorations(
     breaks: PageBreakInfo[],
     lastPageFreespace: number,
     firstPageLabel: string,
+    firstPageLocked: boolean,
     options: PaginationOptions,
     reuse?: Map<string, Decoration>,
 ): DecorationSet {
@@ -602,11 +668,25 @@ function buildDecorations(
         if (node) decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: cls }));
     };
 
+    // Mount the lock badge for a locked, whole-node page as its own standalone
+    // widget at the page-start boundary. It must live OUTSIDE the page-break /
+    // first-page widget — those carry content-visibility, whose paint containment
+    // hides anything inside them. A sibling widget in the flat list is a direct
+    // child of `.pagination` (not contained), so it paints into the gutter. Side
+    // +1 keeps it after the page-break widget at the same position, i.e. on the
+    // new page's side of the boundary. Mid-node split pages can't use this (their
+    // page has no fresh boundary node), but their break widget is
+    // content-visibility-exempt, so they keep the header-area badge instead.
+    const pushPageLockBadge = (pos: number) => {
+        pushWidget(pos, "page-lock-marker", 1, makePageLockMarker);
+    };
+
     // First page top margin / header
     pushWidget(0, `page-1-header-${firstPageLabel}-${fp}`, -1, () =>
         createFirstPageWidget(firstPageLabel, options),
     );
     markPageStart(0, "pagination-doc-start");
+    if (firstPageLocked) pushPageLockBadge(0);
 
     // Page breaks
     // The key MUST include every value that affects the widget DOM (freespace,
@@ -614,13 +694,18 @@ function buildDecorations(
     // pagenum. A matching key keeps the previously drawn DOM, so a key that
     // omits e.g. freespace causes stale spacer heights after content edits.
     for (const b of breaks) {
-        const key = `pb-${b.pagenum}-${b.freespace}-${b.contdName}-${b.splitNodeType}-${b.label ?? ""}-${b.prevLabel ?? ""}-${b.isEmpty ? "E" : ""}-${fp}`;
+        const key = `pb-${b.pagenum}-${b.freespace}-${b.contdName}-${b.splitNodeType}-${b.label ?? ""}-${b.prevLabel ?? ""}-${b.isEmpty ? "E" : ""}-${b.locked ? "L" : ""}-${fp}`;
         pushWidget(b.pos, key, -1, () => createPageBreakWidget(b, options));
         // Only whole-node breaks start a fresh node; mid-node sentence splits
         // (splitNodeType !== null) keep the straddling node, which never had a
         // margin to reset — the old `> .pagination-page-break + p` rule didn't
         // match inside-<p> widgets either.
-        if (b.splitNodeType === null) markPageStart(b.pos, "pagination-break-start");
+        if (b.splitNodeType === null) {
+            markPageStart(b.pos, "pagination-break-start");
+            // Whole-node locked page → mount its badge on the new page's first
+            // paragraph (split locked pages render it in the header area above).
+            if (b.locked) pushPageLockBadge(b.pos);
+        }
     }
 
     // Last page bottom margin / footer.
@@ -695,8 +780,7 @@ const ZERO_TOP_MARGIN_TYPES = new Set<ScreenplayElement>([
  * a constant keeps this off the layout path entirely, the same way LINE_HEIGHT
  * mirrors --line-height. Keep in sync with the margin-top rules in scriptio.css.
  */
-const nodeTopMargin = (nodeType: ScreenplayElement): number =>
-    ZERO_TOP_MARGIN_TYPES.has(nodeType) ? 0 : LINE_HEIGHT;
+const nodeTopMargin = (nodeType: ScreenplayElement): number => (ZERO_TOP_MARGIN_TYPES.has(nodeType) ? 0 : LINE_HEIGHT);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const setupTestDiv = (editorDom: HTMLElement, _: PaginationOptions): HTMLElement => {
@@ -862,6 +946,8 @@ interface PaginationState {
     breaks: PageBreakInfo[];
     lastPageFreespace: number;
     firstPageLabel: string;
+    /** Whether page 1 carries a frozen page-lock token (drives its lock badge). */
+    firstPageLocked: boolean;
 }
 
 /**
@@ -903,6 +989,7 @@ const createPaginationPlugin = (extension: {
                 breaks: [],
                 lastPageFreespace: 0,
                 firstPageLabel: "1",
+                firstPageLocked: false,
             }),
             apply: timeApply("pagination", (tr, value: PaginationState, oldState, newState): PaginationState => {
                 // Wait for the screenplay fonts to finish loading before doing
@@ -1395,6 +1482,7 @@ const createPaginationPlugin = (extension: {
                 // pages keep their frozen labels, provisional inserts get suffix labels
                 // (e.g. "4A"), and pages past the last lock continue the integer sequence.
                 let firstPageLabel = "1";
+                let firstPageLocked = false;
                 if (pageLocks) {
                     // Omitted scenes collapse whole locked pages out of the
                     // document. Each such removed page contributes an "absorbed"
@@ -1472,8 +1560,7 @@ const createPaginationPlugin = (extension: {
                     // Reclaimed pages join the lock map for label computation so
                     // they get their absorbed number (and following provisional
                     // pages suffix off it: "18", "18A", …).
-                    const labelLocks =
-                        Object.keys(synthetic).length > 0 ? { ...pageLocks, ...synthetic } : pageLocks;
+                    const labelLocks = Object.keys(synthetic).length > 0 ? { ...pageLocks, ...synthetic } : pageLocks;
                     const pageLabels = computePageLabels(breaks, labelLocks, skippedLetters);
 
                     // Fold the unreclaimed tokens into the FOLLOWING surviving
@@ -1514,9 +1601,11 @@ const createPaginationPlugin = (extension: {
                     }
 
                     firstPageLabel = pageLabels[0].label;
+                    firstPageLocked = pageLabels[0].status === "locked";
                     for (let i = 0; i < breaks.length; i++) {
                         breaks[i].label = pageLabels[i + 1].label;
                         breaks[i].prevLabel = pageLabels[i].label;
+                        breaks[i].locked = pageLabels[i + 1].status === "locked";
                     }
                 }
 
@@ -1525,6 +1614,7 @@ const createPaginationPlugin = (extension: {
                     fullRemeasure ||
                     lastPageFreespace !== value.lastPageFreespace ||
                     firstPageLabel !== value.firstPageLabel ||
+                    firstPageLocked !== value.firstPageLocked ||
                     breaks.length !== mappedOldBreaks.length ||
                     breaks.some(
                         (b, i) =>
@@ -1533,7 +1623,8 @@ const createPaginationPlugin = (extension: {
                             b.contdName !== mappedOldBreaks[i].contdName ||
                             b.label !== mappedOldBreaks[i].label ||
                             b.prevLabel !== mappedOldBreaks[i].prevLabel ||
-                            !!b.isEmpty !== !!mappedOldBreaks[i].isEmpty,
+                            !!b.isEmpty !== !!mappedOldBreaks[i].isEmpty ||
+                            !!b.locked !== !!mappedOldBreaks[i].locked,
                     );
 
                 // Always map the previous set first: it re-anchors every existing
@@ -1554,6 +1645,7 @@ const createPaginationPlugin = (extension: {
                         breaks,
                         lastPageFreespace,
                         firstPageLabel,
+                        firstPageLocked,
                         options,
                         buildReuseMap(mapped),
                     );
@@ -1577,12 +1669,13 @@ const createPaginationPlugin = (extension: {
                                   breaks,
                                   lastPageFreespace,
                                   firstPageLabel,
+                                  firstPageLocked,
                                   options,
                                   buildReuseMap(mapped),
                               );
                 }
 
-                return { decset, breaks, lastPageFreespace, firstPageLabel };
+                return { decset, breaks, lastPageFreespace, firstPageLabel, firstPageLocked };
             }),
         },
         appendTransaction() {
@@ -1701,7 +1794,14 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
         if (!style) {
             style = document.createElement("style");
             style.id = "pagination-style";
-            style.textContent = `
+            document.head.appendChild(style);
+        }
+        // Always (re)write the rules. The <style> element is created once and
+        // then persists across editor instances and hot reloads, so guarding the
+        // assignment (the old `if (!style)`) would pin the very first CSS — a
+        // hot-swapped rule set (e.g. a newly added affordance like the page-lock
+        // badge) would never take effect until a full page reload.
+        style.textContent = `
                 .pagination {
                     position: relative;
                     width: var(--page-width) !important;
@@ -1773,9 +1873,44 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                     text-transform: uppercase;
                     box-sizing: border-box;
                 }
+
+                /* Subtle lock badge for page-locked pages. It floats just past
+                   the page's top-right corner, in the gutter. */
+                .page-lock-badge {
+                    position: absolute;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 22px;
+                    height: 22px;
+                    color: var(--secondary-text);
+                    opacity: 0.5;
+                    pointer-events: none;
+                    right: 0;
+                }
+
+                /* Whole-node pages carry a standalone, zero-height marker at the
+                   page-start boundary (a sibling of the break widget / paragraph,
+                   NOT inside the content-visibility-contained widget that would
+                   clip it). The marker spans the page width and sits at the new
+                   page's top edge, so lift the badge by the top margin to reach
+                   the physical top-right corner, then nudge it into the gutter. */
+                .page-lock-marker {
+                    position: relative;
+                    height: 0;
+                }
+                .page-lock-marker > .page-lock-badge {
+                    top: 0;
+                    transform: translate(calc(100% + 8px), calc(-1 * var(--page-margin-top) + 10px));
+                }
+
+                /* Split pages render the badge in the (content-visibility-exempt)
+                   header area, whose top already is the page's physical top. */
+                .pagination-header-area .page-lock-badge {
+                    top: 10px;
+                    transform: translateX(calc(100% + 8px));
+                }
             `;
-            document.head.appendChild(style);
-        }
 
         setupTestDiv(editorDOM, this.options);
 
@@ -1898,11 +2033,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 // map as an orphan so the page's frozen number is absorbed into
                 // the following page as a range (e.g. "5-6") rather than vanishing.
                 const curDataId = $from.parent.attrs?.["data-id"];
-                if (
-                    $from.parent.textContent.length === 0 &&
-                    typeof curDataId === "string" &&
-                    pageLocks[curDataId]
-                ) {
+                if ($from.parent.textContent.length === 0 && typeof curDataId === "string" && pageLocks[curDataId]) {
                     const tr = state.tr;
                     tr.delete(curStart, $from.after());
                     tr.setSelection(TextSelection.create(tr.doc, curStart - 1));
@@ -1934,6 +2065,45 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                     tr.join(curStart);
                 }
                 tr.setSelection(TextSelection.create(tr.doc, curStart - 1));
+                view.dispatch(tr);
+                return true;
+            },
+            Enter: ({ editor }) => {
+                // Enter at the very start of a locked page's anchor node.
+                //
+                // We want the standard "open a line above" feel: the new empty
+                // line becomes the page's FIRST line, the page keeps its number,
+                // and any overflow flows FORWARD (an A-page that carries real
+                // content) — never a blank page pushed backward onto the previous
+                // (already full) page.
+                //
+                // The default split is inconsistent: Action keeps the page token
+                // on the new empty half (forward, correct), but keep-with-next
+                // types (Character, Parenthetical, Transition, Scene) keep it on
+                // the content half, which shoves a blank line backward and spawns
+                // a blank A-page on the previous page. Normalize every type to the
+                // forward behavior: the empty half retains the locked data-id (so
+                // it anchors the page) and the content half gets a fresh id.
+                const { state, view } = editor;
+                const { $from, empty } = state.selection;
+                if (!empty || $from.parentOffset !== 0) return false;
+                if ($from.parent.textContent.length === 0) return false; // nothing to push down
+
+                const opts = this.options as PaginationOptions;
+                if (!opts.getPageLocking?.()) return false;
+                const pageLocks = opts.getPageLocks?.();
+                if (!pageLocks) return false;
+
+                const dataId = $from.parent.attrs?.["data-id"];
+                if (typeof dataId !== "string" || !pageLocks[dataId]) return false;
+
+                // split with typesAfter re-keying the CONTENT half; the new empty
+                // first half keeps the original (locked) data-id and so stays the
+                // page anchor.
+                const attrs = $from.parent.attrs;
+                const tr = state.tr.split($from.pos, 1, [
+                    { type: $from.parent.type, attrs: { ...attrs, "data-id": generateNodeId() } },
+                ]);
                 view.dispatch(tr);
                 return true;
             },
