@@ -1,5 +1,4 @@
 import { DOMSerializer } from "@node_modules/prosemirror-model/dist";
-import { CircularBuffer } from "@src/lib/utils/circular-buffer";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { Editor, Extension } from "@tiptap/core";
 import { Node } from "@tiptap/pm/model";
@@ -682,9 +681,7 @@ function buildDecorations(
     };
 
     // First page top margin / header
-    pushWidget(0, `page-1-header-${firstPageLabel}-${fp}`, -1, () =>
-        createFirstPageWidget(firstPageLabel, options),
-    );
+    pushWidget(0, `page-1-header-${firstPageLabel}-${fp}`, -1, () => createFirstPageWidget(firstPageLabel, options));
     markPageStart(0, "pagination-doc-start");
     if (firstPageLocked) pushPageLockBadge(0);
 
@@ -916,8 +913,14 @@ function trySplitNode(
                 getHTMLHeight(bottomElement, editorDOM, node.type.name, options) - nodeMarginTop,
             );
 
-            // Bottom too short — not worth a split; force the whole node to the next page.
-            if (bottomHeight < LINE_HEIGHT * MIN_SPLIT_BOTTOM_LINES) return null;
+            // Bottom would be a widow (< MIN_SPLIT_BOTTOM_LINES). Don't abandon the
+            // split — try a SHORTER top prefix instead. A shorter top pushes the
+            // next sentence down too, growing the bottom past the threshold while
+            // the (smaller) top still fits the freespace. Heights are monotonic in
+            // the prefix length, so the loop keeps walking down until it finds the
+            // largest prefix that BOTH fits and leaves an adequate bottom; only if
+            // no prefix qualifies do we fall out of the loop and move the whole node.
+            if (bottomHeight < LINE_HEIGHT * MIN_SPLIT_BOTTOM_LINES) continue;
 
             // The split position in document space:
             // nodeDocPos + 1 skips the node's opening token; topText.length then walks
@@ -931,7 +934,8 @@ function trySplitNode(
         }
     }
 
-    // No prefix fits — the first sentence alone is too tall; move the whole node.
+    // No valid split: either the first sentence alone is too tall to fit, or every
+    // prefix that fits would leave a too-short widow on the next page. Move the whole node.
     return null;
 }
 
@@ -1114,13 +1118,16 @@ const createPaginationPlugin = (extension: {
                 // subsequent page is byte-identical to the previous layout.
                 let shortCircuited = false;
 
-                let lastNodes: CircularBuffer<NodeInfo> = new CircularBuffer(3);
+                // Nodes on the current page, oldest first; reset at every break, so it
+                // only ever holds one page's worth (bounded by page height). The orphan
+                // walkback scans it from the end and must see the ENTIRE trailing
+                // keep-with-next run — Scene → Character → Parenthetical is already 3
+                // long — so a fixed 3-slot window would strand the head of longer runs.
+                let lastNodes: NodeInfo[] = [];
                 for (let i = 0; i < childCount; i++) {
                     const node = newState.doc.child(i);
                     const pos = offset;
                     offset += node.nodeSize;
-
-                    if (!("height" in node.attrs)) continue;
 
                     const nodeType = node.type.name as ScreenplayElement;
                     const logic = BREAK_LOGIC[nodeType];
@@ -1163,7 +1170,7 @@ const createPaginationPlugin = (extension: {
                         });
                         // New page's first node margin is set by the pagePos === 0 path below.
                         pagePos = 0;
-                        lastNodes = new CircularBuffer(3);
+                        lastNodes = [];
                     }
 
                     // --- Force page break for locked page anchors ---
@@ -1226,7 +1233,7 @@ const createPaginationPlugin = (extension: {
                             // split is not a page-start node) — no top margin to strip.
                             pageStartMargin = 0;
                             pagePos = bottomHeight;
-                            lastNodes = new CircularBuffer(3);
+                            lastNodes = [];
                             lastNodes.push({
                                 pos,
                                 type: nodeType,
@@ -1252,7 +1259,7 @@ const createPaginationPlugin = (extension: {
                             });
                             // New page's first node margin is set by the pagePos === 0 path below.
                             pagePos = 0;
-                            lastNodes = new CircularBuffer(3);
+                            lastNodes = [];
                         }
                     }
 
@@ -1266,7 +1273,8 @@ const createPaginationPlugin = (extension: {
                     }
                     pagePos += height;
 
-                    // We keep the last 3 nodes for orphan resolution on page break
+                    // Record this node for orphan resolution; the walkback at the next
+                    // break scans this list backward through the trailing keep-with-next run.
                     lastNodes.push({
                         pos,
                         type: nodeType,
@@ -1322,7 +1330,7 @@ const createPaginationPlugin = (extension: {
                                 // no top margin to strip.
                                 pageStartMargin = 0;
                                 pagePos = split.bottomHeight;
-                                lastNodes = new CircularBuffer(3);
+                                lastNodes = [];
                                 lastNodes.push({
                                     pos,
                                     type: nodeType,
@@ -1335,15 +1343,23 @@ const createPaginationPlugin = (extension: {
                         }
 
                         // --- Orphan resolution ---
-                        // Walk back through the buffer: if the last fitted node has keepWithNext,
-                        // slide the break back to its position (and carry its height to the next page).
-                        // Repeat once more for the double-orphan case (e.g. Character → Parenthetical).
+                        // Walk back through this page's nodes, sliding the break before each
+                        // node that would otherwise be stranded as the page's last item: while
+                        // the would-be last node has keepWithNext, carry it (and its height) to
+                        // the next page. This handles a keep-with-next run of ANY length, e.g.
+                        // Scene → Character → Parenthetical → Dialogue, not just the two-node
+                        // case. It stops at the first node safe to end a page on, at a locked
+                        // anchor (which owns its page), or before the page's first node.
                         let breakPos = pos;
                         let carryHeight = height; // cumulative height that moves to the next page
                         let backCount = 0; // how many nodes slid back
 
-                        for (let back = 1; back <= 2; back++) {
-                            const prev = lastNodes.at(back); // at(1) = last fitted, at(2) = one before
+                        // lastNodes[length - 1] is the current (overflowing) node; index
+                        // (length - 1 - back) walks backward from it (back = 1 is the last
+                        // fitted node). The `back < length - 1` bound never reaches index 0,
+                        // so at least one node always stays — a break can never empty a page.
+                        for (let back = 1; back < lastNodes.length - 1; back++) {
+                            const prev = lastNodes[lastNodes.length - 1 - back];
                             if (!prev) break;
                             // A locked anchor owns its page and must never be displaced by
                             // walkback — otherwise the next overflow would yank it onto an
@@ -1361,9 +1377,10 @@ const createPaginationPlugin = (extension: {
                         }
 
                         // freespace = space left before the first node that moved down.
-                        // lastNodes.at(backCount) is that first node; positionTop is its accumulated
-                        // page height just before it was added — i.e. the used space above it.
-                        const firstMovingNode = lastNodes.at(backCount);
+                        // That first moving node sits backCount steps back from the current node;
+                        // positionTop is its accumulated page height just before it was added —
+                        // i.e. the used space above it.
+                        const firstMovingNode = lastNodes[lastNodes.length - 1 - backCount];
                         const freespace = contentHeight - (firstMovingNode?.positionTop ?? pagePos - height);
 
                         // If the first node moving to the next page is Dialogue or Parenthetical,
@@ -1407,12 +1424,13 @@ const createPaginationPlugin = (extension: {
                         const carryNodes: NodeInfo[] = [];
                         let carryTop = 0;
                         for (let back = backCount; back >= 0; back--) {
-                            const n = lastNodes.at(back)!;
+                            const n = lastNodes[lastNodes.length - 1 - back];
                             carryNodes.push({ ...n, positionTop: carryTop });
                             carryTop += n.height;
                         }
-                        lastNodes = new CircularBuffer(3);
-                        for (const n of carryNodes) lastNodes.push(n);
+                        // carryNodes is already oldest→newest with fresh positionTop values,
+                        // which is exactly the page-relative ordering lastNodes expects.
+                        lastNodes = carryNodes;
 
                         // Short-circuit: past the changed range and this break matches an old break
                         // (same position, freespace, and contdName) → layout is back in sync;
