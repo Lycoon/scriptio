@@ -65,8 +65,11 @@ const worker = {
             return stub.fetch(doRequest);
         }
 
-        // GET /saves also needs auth
-        if (request.method === "GET" && url.pathname.includes("/saves")) {
+        // GET /saves and GET /asset-refs also need auth (admin-action token)
+        if (
+            request.method === "GET" &&
+            (url.pathname.includes("/saves") || url.pathname.endsWith("/asset-refs"))
+        ) {
             const authHeader = request.headers.get("Authorization");
             const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 

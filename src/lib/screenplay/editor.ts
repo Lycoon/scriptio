@@ -7,7 +7,7 @@ import Text from "@tiptap/extension-text";
 
 import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline, generateNodeId } from "@src/lib/screenplay/nodes";
 import { Placeholder } from "./extensions/placeholder-extension";
-import { PAGE_SIZES } from "./extensions/pagination-extension";
+import { PAGE_SIZES, PageBreakAttribute } from "./extensions/pagination-extension";
 import { ContdExtension } from "./extensions/contd-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
 
@@ -146,6 +146,10 @@ export const BASE_EXTENSIONS = [
 
     // Individual screenplay element nodes
     ...ScreenplayNodes,
+
+    // Manual page-break attribute (schema-level; logic lives in ScriptioPagination).
+    // In BASE_EXTENSIONS so it survives full-project serialization via ScreenplaySchema.
+    PageBreakAttribute,
 
     // Mark extensions
     ScriptioBold,

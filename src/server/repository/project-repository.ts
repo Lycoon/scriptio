@@ -273,6 +273,74 @@ export class ProjectRepository {
         });
     }
 
+    // ── Cloud assets (board images / audio) ────────────────────────────────
+
+    /** The user id of the project's OWNER (the quota holder), or null. */
+    async fetchProjectOwnerId(projectId: string): Promise<string | null> {
+        const owner = await prisma.projectMember.findFirst({
+            where: { projectId, role: ProjectRole.OWNER },
+            select: { userId: true },
+        });
+        return owner?.userId ?? null;
+    }
+
+    /** Total bytes stored across every project owned by `ownerId`. */
+    async sumOwnerAssetSize(ownerId: string): Promise<number> {
+        const agg = await prisma.projectAsset.aggregate({
+            _sum: { size: true },
+            where: { project: { members: { some: { userId: ownerId, role: ProjectRole.OWNER } } } },
+        });
+        return agg._sum.size ?? 0;
+    }
+
+    /** Total bytes stored for a single project. */
+    async sumProjectAssetSize(projectId: string): Promise<number> {
+        const agg = await prisma.projectAsset.aggregate({
+            _sum: { size: true },
+            where: { projectId },
+        });
+        return agg._sum.size ?? 0;
+    }
+
+    fetchAsset(projectId: string, hash: string) {
+        return prisma.projectAsset.findUnique({
+            where: { projectId_hash: { projectId, hash } },
+        });
+    }
+
+    createAsset(asset: { projectId: string; hash: string; mime: string; size: number; width: number; height: number }) {
+        return prisma.projectAsset.create({ data: asset });
+    }
+
+    listAssetHashes(projectId: string) {
+        return prisma.projectAsset.findMany({
+            where: { projectId },
+            select: { hash: true, createdAt: true },
+        });
+    }
+
+    listAssets(projectId: string) {
+        return prisma.projectAsset.findMany({
+            where: { projectId },
+            select: { hash: true, mime: true, size: true, width: true, height: true },
+        });
+    }
+
+    async existingAssetHashes(projectId: string, hashes: string[]): Promise<string[]> {
+        if (hashes.length === 0) return [];
+        const rows = await prisma.projectAsset.findMany({
+            where: { projectId, hash: { in: hashes } },
+            select: { hash: true },
+        });
+        return rows.map((r) => r.hash);
+    }
+
+    deleteAssets(projectId: string, hashes: string[]) {
+        return prisma.projectAsset.deleteMany({
+            where: { projectId, hash: { in: hashes } },
+        });
+    }
+
     async searchProjects(term: string, limit: number, cursor?: number) {
         if (term) {
             const isUuid = /^[0-9a-f-]{36,}$/i.test(term);

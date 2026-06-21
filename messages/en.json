@@ -17,8 +17,11 @@
     "reconnecting": "Reconnecting...",
     "localProject": "Local project",
     "uploadToCloud": "Upload to cloud",
+    "storageProject": "This project",
+    "storageTotal": "Total used",
     "endlessScroll": "Endless Scroll",
     "toggleComments": "Toggle Comments",
+    "toggleSpellcheck": "Toggle Spell Check",
     "focusMode": "Focus Mode",
     "splitPanel": "Split Panel",
     "unsplitPanel": "Unsplit Panel",
@@ -87,6 +90,7 @@
     "spellcheckLabel": "Spell Check",
     "spellcheckHelpText": "Download a dictionary for in-editor spell checking.",
     "spellcheckNone": "Disabled",
+    "spellcheckBuiltin": "Built-in",
     "customDictLabel": "Project Dictionary",
     "customDictAdd": "Add",
     "customDictEmpty": "No custom words yet.",
@@ -103,6 +107,7 @@
       "Layout": "Layout",
       "Production": "Production",
       "Export": "Import/Export",
+      "Storage": "Storage",
       "Collaborators": "Collaborators",
       "Keybinds": "Keybinds",
       "Appearance": "Appearance",
@@ -113,6 +118,21 @@
       "About": "About",
       "Subscription": "Subscription"
     }
+  },
+  "storage": {
+    "total": "Total used",
+    "description": "Images and audio used by this project's boards.",
+    "sharedStorage": "Shared storage",
+    "thisProject": "This project",
+    "otherProjects": "Other projects",
+    "free": "Free",
+    "localNote": "This project isn't synced yet — shown as it would count toward your cloud storage.",
+    "empty": "No images or audio in this project yet.",
+    "image": "Image",
+    "audio": "Audio",
+    "remove": "Remove",
+    "confirm": "Remove from project",
+    "cancel": "Cancel"
   },
   "dangerZone": {
     "transferOwnership": "Transfer ownership",
@@ -426,7 +446,10 @@
     "shelveDialogue": "Shelve dialogue",
     "shelveAction": "Shelve action",
     "omitScene": "Omit scene",
-    "unomitScene": "Unomit scene"
+    "unomitScene": "Unomit scene",
+    "insertPageBreak": "Insert page break",
+    "removePageBreak": "Remove page break",
+    "pageBreakHint": "Page break"
   },
   "popup": {
     "character": {
@@ -483,7 +506,8 @@
     "audioHint": "Voice note",
     "play": "Play",
     "pause": "Pause",
-    "rename": "Double-click to rename"
+    "rename": "Double-click to rename",
+    "storageLimitReached": "Storage limit reached — couldn't save this file"
   },
   "production": {
     "title": "Production",

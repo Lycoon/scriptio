@@ -17,8 +17,11 @@
     "reconnecting": "재연결 중...",
     "localProject": "로컬 프로젝트",
     "uploadToCloud": "클라우드에 업로드",
+    "storageProject": "이 프로젝트",
+    "storageTotal": "총 사용량",
     "endlessScroll": "무한 스크롤",
     "toggleComments": "댓글 표시 전환",
+    "toggleSpellcheck": "맞춤법 검사 전환",
     "focusMode": "집중 모드",
     "splitPanel": "패널 분할",
     "unsplitPanel": "패널 통합",
@@ -87,6 +90,7 @@
     "spellcheckLabel": "맞춤법 검사",
     "spellcheckHelpText": "에디터에서 맞춤법 검사를 위해 사전을 다운로드하세요.",
     "spellcheckNone": "비활성화됨",
+    "spellcheckBuiltin": "내장",
     "customDictLabel": "프로젝트 사전",
     "customDictAdd": "추가",
     "customDictEmpty": "아직 사용자 정의 단어가 없습니다.",
@@ -103,6 +107,7 @@
       "Layout": "레이아웃",
       "Production": "프로덕션",
       "Export": "가져오기/내보내기",
+      "Storage": "저장 공간",
       "Collaborators": "공동 작업자",
       "Keybinds": "단축키",
       "Appearance": "테마",
@@ -113,6 +118,21 @@
       "About": "정보",
       "Subscription": "구독"
     }
+  },
+  "storage": {
+    "total": "사용 용량",
+    "description": "이 프로젝트의 보드에서 사용 중인 이미지와 오디오입니다.",
+    "sharedStorage": "공유 저장 공간",
+    "thisProject": "이 프로젝트",
+    "otherProjects": "다른 프로젝트",
+    "free": "여유 공간",
+    "localNote": "이 프로젝트는 아직 동기화되지 않았습니다 — 클라우드 저장 공간에 차지할 용량으로 표시됩니다.",
+    "empty": "이 프로젝트에는 아직 이미지나 오디오가 없습니다.",
+    "image": "이미지",
+    "audio": "오디오",
+    "remove": "삭제",
+    "confirm": "프로젝트에서 제거",
+    "cancel": "취소"
   },
   "dangerZone": {
     "transferOwnership": "소유권 이전",
@@ -426,7 +446,10 @@
     "shelveDialogue": "대사 보관하기",
     "shelveAction": "행동 보관하기",
     "omitScene": "씬 생략",
-    "unomitScene": "씬 복원"
+    "unomitScene": "씬 복원",
+    "insertPageBreak": "페이지 나누기 삽입",
+    "removePageBreak": "페이지 나누기 제거",
+    "pageBreakHint": "페이지 나누기"
   },
   "popup": {
     "character": {
@@ -483,7 +506,8 @@
     "audioHint": "음성 메모",
     "play": "재생",
     "pause": "일시정지",
-    "rename": "더블클릭하여 이름 변경"
+    "rename": "더블클릭하여 이름 변경",
+    "storageLimitReached": "저장 용량 한도 초과 — 이 파일을 저장할 수 없습니다"
   },
   "production": {
     "title": "프로덕션",

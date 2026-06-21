@@ -63,6 +63,11 @@ export class InternalServerError extends AppError {
         super(500, message);
     }
 }
+export class StorageQuotaExceededError extends AppError {
+    constructor(message = "Storage limit reached") {
+        super(507, message);
+    }
+}
 
 export const SuccessNoContent = () => {
     return new NextResponse(null, { status: 204 });

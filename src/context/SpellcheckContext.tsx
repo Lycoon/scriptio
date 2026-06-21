@@ -3,6 +3,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { InstalledDictionary, SpellWorkerResponse } from "@src/lib/spellcheck/spellcheck-types";
 import type { StorageProvider } from "@src/lib/persistence/storage-provider/storage-provider";
+import { BUILTIN_DICTIONARY_CODE, loadBuiltinDictionary } from "@src/lib/spellcheck/spellcheck-dictionaries";
 
 const LANG_KEY = "scriptio-spellcheck-lang";
 
@@ -31,7 +32,11 @@ const SpellcheckContext = createContext<SpellcheckContextValue>({
 export function SpellcheckProvider({ children }: { children: ReactNode }) {
     const [spellcheckLang, setSpellcheckLangState] = useState<string | null>(() => {
         if (typeof window === "undefined") return null;
-        return window.localStorage.getItem(LANG_KEY);
+        const stored = window.localStorage.getItem(LANG_KEY);
+        // No stored preference → spell check defaults to English. An empty string is the
+        // explicit "disabled" marker, so it is not re-defaulted on the next load.
+        if (stored === null) return "en";
+        return stored === "" ? null : stored;
     });
 
     const [installedDictionaries, setInstalledDictionaries] = useState<InstalledDictionary[]>([]);
@@ -74,14 +79,18 @@ export function SpellcheckProvider({ children }: { children: ReactNode }) {
 
     // Initialize or swap the worker when the spellcheck language changes
     useEffect(() => {
-        if (typeof window === "undefined" || !spellcheckLang || !storeRef.current) return;
+        if (typeof window === "undefined" || !spellcheckLang) return;
 
+        // The built-in dictionary ships with the app, so it doesn't wait on the store.
+        const isBuiltin = spellcheckLang === BUILTIN_DICTIONARY_CODE;
         const store = storeRef.current;
+        if (!isBuiltin && !store) return;
+
         let cancelled = false;
 
         const initWorker = async () => {
-            // Check if dictionary is installed
-            const dictData = await store.loadDictionary(spellcheckLang);
+            // Load the dictionary bytes: bundled asset for the built-in, IndexedDB otherwise.
+            const dictData = isBuiltin ? await loadBuiltinDictionary() : await store!.loadDictionary(spellcheckLang);
             if (!dictData || cancelled) return;
 
             // Terminate old worker
@@ -148,11 +157,9 @@ export function SpellcheckProvider({ children }: { children: ReactNode }) {
 
     const setSpellcheckLang = useCallback((code: string | null) => {
         setSpellcheckLangState(code);
-        if (code) {
-            window.localStorage.setItem(LANG_KEY, code);
-        } else {
-            window.localStorage.removeItem(LANG_KEY);
-        }
+        // Persist disabled as an empty string (not a removed key) so it survives reloads
+        // instead of falling back to the English default.
+        window.localStorage.setItem(LANG_KEY, code ?? "");
     }, []);
 
     const installDictionary = useCallback(

@@ -83,6 +83,10 @@ const DocumentEditorPanel = ({
     const { settings } = useSettings();
     const { isEndlessScroll } = useViewContext();
     const { user } = useUser();
+    // Localised label for the manual page-break hint rendered in the page gap.
+    // Injected as a CSS variable so the plain-DOM pagination widget can show it,
+    // mirroring how the (MORE)/(CONT'D) labels are localised.
+    const pageBreakHint = useTranslations("contextMenu")("pageBreakHint");
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -238,6 +242,7 @@ const DocumentEditorPanel = ({
 
         editorElement.style.setProperty("--contd-label", `"${contdLabel}"`);
         editorElement.style.setProperty("--more-label", `"${moreLabel}"`);
+        editorElement.style.setProperty("--page-break-label", `"${pageBreakHint}"`);
 
         const elementKeys = [
             "action",
@@ -308,6 +313,7 @@ const DocumentEditorPanel = ({
         sceneNumberOnRight,
         contdLabel,
         moreLabel,
+        pageBreakHint,
         elementMargins,
         elementStyles,
         sceneLocking,
@@ -591,6 +597,20 @@ const DocumentEditorPanel = ({
                 }
             }
 
+            // Manual page break: the top-level block under the caret, plus whether
+            // it already forces a page break. Paginated screenplay editors only, and
+            // never the document's first block (there is nothing to break before it).
+            let pageBreak: { pos: number; active: boolean } | undefined;
+            if (config.features.paginationMode === "screenplay") {
+                const $pos = editor.state.doc.resolve(from);
+                if ($pos.depth >= 1) {
+                    const nodeStart = $pos.before(1);
+                    if (nodeStart > 0) {
+                        pageBreak = { pos: nodeStart, active: !!$pos.node(1).attrs.pageBreak };
+                    }
+                }
+            }
+
             // Comments anchor to the node under the caret, not a text range.
             const commentNodeId = getNodeIdAtPos(editor.state, from);
             const onAddComment = commentNodeId
@@ -600,10 +620,21 @@ const DocumentEditorPanel = ({
             updateContextMenu({
                 type: ContextMenuType.EditorContextMenu,
                 position: { x: e.clientX, y: e.clientY },
-                typeSpecificProps: { from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene },
+                // Pass the editor that was right-clicked: positions above are
+                // resolved against it, and ProjectContext.editor is always the
+                // MAIN screenplay editor — so secondary editors (tree document,
+                // draft, title page) must act on this instance, not that one.
+                typeSpecificProps: { editor, from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene, pageBreak },
             });
         },
-        [editor, updateContextMenu, addCommentToNode, config.features.shelving, config.documentId],
+        [
+            editor,
+            updateContextMenu,
+            addCommentToNode,
+            config.features.shelving,
+            config.features.paginationMode,
+            config.documentId,
+        ],
     );
 
     // Clear the open discussion when clicking elsewhere in the editor.

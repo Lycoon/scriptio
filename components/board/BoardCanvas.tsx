@@ -15,7 +15,8 @@ import { v7 as uuidv7 } from "uuid";
 import { Trash2, Plus, Minus, Copy, ListTree, Mic, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
-import { importImageFile, importAudioFile } from "@src/lib/assets/asset-store";
+import { importImageFile, importAudioFile, syncAssetToCloud } from "@src/lib/assets/asset-store";
+import { CloudQuotaError } from "@src/lib/assets/cloud-asset-sync";
 import { scheduleAssetGc } from "@src/lib/assets/asset-gc";
 import { useAudioRecorder } from "./use-audio-recorder";
 
@@ -56,6 +57,9 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     const [isPanning, setIsPanning] = useState(false);
     const [isDraggingFile, setIsDraggingFile] = useState(false);
     const [isSnapping, setIsSnapping] = useState(true);
+    /** Transient banner shown when an asset can't be saved (e.g. cloud quota). */
+    const [assetError, setAssetError] = useState<string | null>(null);
+    const assetErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const recorder = useAudioRecorder();
     const [prevIsVisible, setPrevIsVisible] = useState(isVisible);
     if (prevIsVisible !== isVisible) {
@@ -527,6 +531,50 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setIsDraggingFile(false);
     }, []);
 
+    // Show a transient error banner (auto-dismissed). Used when an asset can't be
+    // persisted, e.g. the owner is out of cloud storage.
+    const showAssetError = useCallback((message: string) => {
+        setAssetError(message);
+        if (assetErrorTimer.current) clearTimeout(assetErrorTimer.current);
+        assetErrorTimer.current = setTimeout(() => setAssetError(null), 4000);
+    }, []);
+
+    useEffect(() => () => {
+        if (assetErrorTimer.current) clearTimeout(assetErrorTimer.current);
+    }, []);
+
+    // Remove cards by id (used to roll back a card whose asset can't be saved).
+    const removeCards = useCallback(
+        (ids: Set<string>) => {
+            const next = cardsRef.current.filter((c) => !ids.has(c.id));
+            cardsRef.current = next; // keep the ref current so concurrent removals don't race
+            setCards(next);
+            saveCards(next);
+        },
+        [saveCards],
+    );
+
+    // Upload the new cards' assets to the cloud in the background, so the cards
+    // appear instantly (the bytes are already cached locally and render offline).
+    // If an upload is rejected for quota, roll back that card and explain why.
+    const syncCreatedAssets = useCallback(
+        (createdCards: BoardCardData[], pid: string) => {
+            for (const card of createdCards) {
+                if (!card.assetId) continue;
+                const cardId = card.id;
+                void syncAssetToCloud(pid, card.assetId).catch((err) => {
+                    if (err instanceof CloudQuotaError) {
+                        removeCards(new Set([cardId]));
+                        showAssetError(t("storageLimitReached"));
+                    } else {
+                        console.error("[BoardCanvas] cloud asset upload failed:", err);
+                    }
+                });
+            }
+        },
+        [removeCards, showAssetError, t],
+    );
+
     // Drop image files → store each in IndexedDB (deduped) and drop an image
     // card referencing its hash at the cursor.
     const handleDrop = useCallback(
@@ -589,8 +637,11 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             const newCards = [...cardsRef.current, ...created];
             setCards(newCards);
             saveCards(newCards);
+
+            // Upload to the cloud in the background (cards already show locally).
+            syncCreatedAssets(created, projectId);
         },
-        [isReadOnly, projectId, offset, scale, saveCards],
+        [isReadOnly, projectId, offset, scale, saveCards, syncCreatedAssets],
     );
 
     // Create a text card at the given canvas-space coords (from the canvas menu).
@@ -651,10 +702,13 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             const newCards = [...cardsRef.current, newCard];
             setCards(newCards);
             saveCards(newCards);
+
+            // Upload to the cloud in the background (card already shows locally).
+            syncCreatedAssets([newCard], projectId);
         } catch (err) {
             console.error("[BoardCanvas] Failed to store recording:", err);
         }
-    }, [recorder, projectId, saveCards]);
+    }, [recorder, projectId, saveCards, syncCreatedAssets]);
 
     // Right-clicking empty canvas opens a menu (create card / record audio).
     // Cards and arrows have their own menus, so bail when the click landed on one.
@@ -1205,6 +1259,9 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                         />
                     )}
                 </div>
+
+                {/* Transient asset error (e.g. cloud storage limit reached) */}
+                {assetError && <div className={styles.asset_error}>{assetError}</div>}
 
                 {/* Recording indicator */}
                 {recorder.isRecording && (

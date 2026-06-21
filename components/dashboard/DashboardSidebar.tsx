@@ -18,6 +18,7 @@ export type Category =
     | "Layout"
     | "Production"
     | "Export"
+    | "Storage"
     | "Collaborators"
     | "Profile"
     | "Subscription"

@@ -106,6 +106,13 @@ async function deleteProject(req: NextRequest, { routeParams, user }: AuthApiCon
         throw new ForbiddenError();
     }
 
+    // Reclaim the project's R2 assets before the cascade drops their tracking
+    // rows (afterwards we'd no longer know which objects to delete).
+    const assets = await ProjectService.listAssetHashes(projectId);
+    if (assets.length > 0) {
+        await S3.destroyMany(assets.map((a) => `assets/${projectId}/${a.hash}`));
+    }
+
     const deleted = await ProjectService.destroy(projectId);
     if (!deleted) {
         throw new InternalServerError();

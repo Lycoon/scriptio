@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Download, Loader2, Plus, X } from "lucide-react";
+import { Check, ChevronDown, Download, Loader2, Plus, SpellCheck, X } from "lucide-react";
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./SpellcheckSettings.module.css";
@@ -10,7 +10,11 @@ import { useLocale } from "@src/context/LocaleContext";
 import { useSettings } from "@src/lib/utils/hooks";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { DICTIONARY_CATALOG, formatDictionarySize } from "@src/lib/spellcheck/spellcheck-dictionaries";
+import {
+    BUILTIN_DICTIONARY_CODE,
+    DICTIONARY_CATALOG,
+    formatDictionarySize,
+} from "@src/lib/spellcheck/spellcheck-dictionaries";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import { useTranslations } from "next-intl";
 
@@ -72,12 +76,8 @@ const LanguageSettings = () => {
     );
 
     const spellcheckOptions: DropdownOption[] = useMemo(() => {
-        const noneOption: DropdownOption = {
-            value: "none",
-            label: t("spellcheckNone"),
-        };
-
-        const dictOptions: DropdownOption[] = DICTIONARY_CATALOG.map((dict) => {
+        return DICTIONARY_CATALOG.map((dict) => {
+            const isBuiltin = dict.code === BUILTIN_DICTIONARY_CODE;
             const installed = installedDictionaries.find((d) => d.code === dict.code);
             const isDownloading = downloadProgress?.code === dict.code;
 
@@ -87,7 +87,12 @@ const LanguageSettings = () => {
                     <div className={styles.dictOption}>
                         <span>{dict.name}</span>
                         <span className={styles.dictMeta}>
-                            {isDownloading ? (
+                            {isBuiltin ? (
+                                <>
+                                    <span className={styles.size}>{t("spellcheckBuiltin")}</span>
+                                    <Check size={14} className={styles.checkmark} />
+                                </>
+                            ) : isDownloading ? (
                                 <Loader2 size={14} className={styles.spinner} />
                             ) : installed ? (
                                 <>
@@ -100,20 +105,19 @@ const LanguageSettings = () => {
                         </span>
                     </div>
                 ),
-                triggerLabel: dict.name,
+                triggerLabel: (
+                    <span className={styles.triggerLabel}>
+                        <SpellCheck size={14} className={styles.triggerIcon} />
+                        {dict.name}
+                    </span>
+                ),
             };
         });
-
-        return [noneOption, ...dictOptions];
     }, [installedDictionaries, downloadProgress, t]);
 
     const handleSpellcheckChange = useCallback(
         (value: string) => {
-            if (value === "none") {
-                setSpellcheckLang(null);
-                return;
-            }
-            const isInstalled = installedDictionaries.some((d) => d.code === value);
+            const isInstalled = value === BUILTIN_DICTIONARY_CODE || installedDictionaries.some((d) => d.code === value);
             if (isInstalled) {
                 setSpellcheckLang(value);
             } else {
@@ -140,7 +144,7 @@ const LanguageSettings = () => {
                 <label className={form.label}>{t("spellcheckLabel")}</label>
                 <p className={sharedStyles.helpText}>{t("spellcheckHelpText")}</p>
                 <Dropdown
-                    value={spellcheckLang ?? "none"}
+                    value={spellcheckLang ?? "en"}
                     onChange={handleSpellcheckChange}
                     options={spellcheckOptions}
                     className={sharedStyles.input}

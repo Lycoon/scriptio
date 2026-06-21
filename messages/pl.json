@@ -17,8 +17,11 @@
     "reconnecting": "Łączenie...",
     "localProject": "Projekt lokalny",
     "uploadToCloud": "Wyślij do chmury",
+    "storageProject": "Ten projekt",
+    "storageTotal": "Łącznie użyte",
     "endlessScroll": "Nieskończone przewijanie",
     "toggleComments": "Pokaż/ukryj komentarze",
+    "toggleSpellcheck": "Włącz/wyłącz sprawdzanie pisowni",
     "focusMode": "Tryb skupienia",
     "splitPanel": "Podziel panel",
     "unsplitPanel": "Zamknij panel",
@@ -87,6 +90,7 @@
     "spellcheckLabel": "Korekta pisowni",
     "spellcheckHelpText": "Pobierz słownik do sprawdzania pisowni w edytorze.",
     "spellcheckNone": "Wyłączone",
+    "spellcheckBuiltin": "Wbudowany",
     "customDictLabel": "Słownik projektu",
     "customDictAdd": "Dodaj",
     "customDictEmpty": "Brak niestandardowych słów.",
@@ -103,6 +107,7 @@
       "Layout": "Układ",
       "Production": "Produkcja",
       "Export": "Import/Eksport",
+      "Storage": "Pamięć",
       "Collaborators": "Współpracownicy",
       "Keybinds": "Skróty klawiszowe",
       "Appearance": "Wygląd",
@@ -113,6 +118,21 @@
       "About": "O aplikacji",
       "Subscription": "Subskrypcja"
     }
+  },
+  "storage": {
+    "total": "Wykorzystane miejsce",
+    "description": "Obrazy i dźwięki używane przez tablice tego projektu.",
+    "sharedStorage": "Współdzielona pamięć",
+    "thisProject": "Ten projekt",
+    "otherProjects": "Inne projekty",
+    "free": "Wolne",
+    "localNote": "Ten projekt nie jest jeszcze zsynchronizowany — pokazano, ile zająłby z Twojej pamięci w chmurze.",
+    "empty": "W tym projekcie nie ma jeszcze obrazów ani dźwięków.",
+    "image": "Obraz",
+    "audio": "Dźwięk",
+    "remove": "Usuń",
+    "confirm": "Usuń z projektu",
+    "cancel": "Anuluj"
   },
   "dangerZone": {
     "transferOwnership": "Przekaż własność",
@@ -426,7 +446,10 @@
     "shelveDialogue": "Odłóż dialog",
     "shelveAction": "Odłóż akcję",
     "omitScene": "Pomiń scenę",
-    "unomitScene": "Przywróć scenę"
+    "unomitScene": "Przywróć scenę",
+    "insertPageBreak": "Wstaw podział strony",
+    "removePageBreak": "Usuń podział strony",
+    "pageBreakHint": "Podział strony"
   },
   "popup": {
     "character": {
@@ -483,7 +506,8 @@
     "audioHint": "Notatka głosowa",
     "play": "Odtwórz",
     "pause": "Wstrzymaj",
-    "rename": "Kliknij dwukrotnie, aby zmienić nazwę"
+    "rename": "Kliknij dwukrotnie, aby zmienić nazwę",
+    "storageLimitReached": "Osiągnięto limit pamięci — nie można zapisać tego pliku"
   },
   "production": {
     "title": "Produkcja",

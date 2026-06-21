@@ -79,3 +79,48 @@ export async function getProjectById(projectId: string) {
 export async function getInvitesWithMeta(projectId: string) {
     return repository.fetchInvitesWithMeta(projectId);
 }
+
+// ── Cloud assets ───────────────────────────────────────────────────────────
+
+export async function getProjectOwnerId(projectId: string) {
+    return repository.fetchProjectOwnerId(projectId);
+}
+
+export async function getOwnerStorageUsed(ownerId: string) {
+    return repository.sumOwnerAssetSize(ownerId);
+}
+
+export async function getProjectStorageUsed(projectId: string) {
+    return repository.sumProjectAssetSize(projectId);
+}
+
+export async function getAsset(projectId: string, hash: string) {
+    return repository.fetchAsset(projectId, hash);
+}
+
+export async function createAsset(asset: {
+    projectId: string;
+    hash: string;
+    mime: string;
+    size: number;
+    width: number;
+    height: number;
+}) {
+    return repository.createAsset(asset);
+}
+
+export async function listAssetHashes(projectId: string) {
+    return repository.listAssetHashes(projectId);
+}
+
+export async function getExistingAssetHashes(projectId: string, hashes: string[]) {
+    return repository.existingAssetHashes(projectId, hashes);
+}
+
+export async function getProjectAssets(projectId: string) {
+    return repository.listAssets(projectId);
+}
+
+export async function deleteAssets(projectId: string, hashes: string[]) {
+    return repository.deleteAssets(projectId, hashes);
+}

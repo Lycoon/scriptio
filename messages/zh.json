@@ -17,8 +17,11 @@
     "reconnecting": "正在重新连接...",
     "localProject": "本地项目",
     "uploadToCloud": "上传到云端",
+    "storageProject": "本项目",
+    "storageTotal": "已用总量",
     "endlessScroll": "无限滚动",
     "toggleComments": "切换显示评论",
+    "toggleSpellcheck": "切换拼写检查",
     "focusMode": "聚焦模式",
     "splitPanel": "分割面板",
     "unsplitPanel": "合并面板",
@@ -87,6 +90,7 @@
     "spellcheckLabel": "拼写检查",
     "spellcheckHelpText": "下载字典以在编辑器中进行拼写检查。",
     "spellcheckNone": "已禁用",
+    "spellcheckBuiltin": "内置",
     "customDictLabel": "项目词典",
     "customDictAdd": "添加",
     "customDictEmpty": "暂无自定义词汇。",
@@ -103,6 +107,7 @@
       "Layout": "布局",
       "Production": "制作",
       "Export": "导入/导出",
+      "Storage": "存储",
       "Collaborators": "协作",
       "Keybinds": "键位",
       "Appearance": "外观",
@@ -113,6 +118,21 @@
       "About": "关于",
       "Subscription": "订阅"
     }
+  },
+  "storage": {
+    "total": "已用空间",
+    "description": "本项目板块使用的图片和音频。",
+    "sharedStorage": "共享存储",
+    "thisProject": "本项目",
+    "otherProjects": "其他项目",
+    "free": "可用",
+    "localNote": "此项目尚未同步——按其将占用的云存储显示。",
+    "empty": "本项目还没有图片或音频。",
+    "image": "图片",
+    "audio": "音频",
+    "remove": "删除",
+    "confirm": "从项目中移除",
+    "cancel": "取消"
   },
   "dangerZone": {
     "transferOwnership": "转移所有权",
@@ -426,7 +446,10 @@
     "shelveDialogue": "搁置对白",
     "shelveAction": "搁置动作",
     "omitScene": "省略场景",
-    "unomitScene": "恢复场景"
+    "unomitScene": "恢复场景",
+    "insertPageBreak": "插入分页符",
+    "removePageBreak": "移除分页符",
+    "pageBreakHint": "分页符"
   },
   "popup": {
     "character": {
@@ -483,7 +506,8 @@
     "audioHint": "语音备注",
     "play": "播放",
     "pause": "暂停",
-    "rename": "双击重命名"
+    "rename": "双击重命名",
+    "storageLimitReached": "存储空间已满 — 无法保存此文件"
   },
   "production": {
     "title": "制作",

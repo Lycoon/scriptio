@@ -1,5 +1,6 @@
 "use client";
 
+import { Editor } from "@tiptap/react";
 import { ReactNode, useContext, useEffect, useState } from "react";
 import { UserContext } from "@src/context/UserContext";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
@@ -34,6 +35,7 @@ import {
     MessageSquarePlus,
     Pencil,
     Scissors,
+    SeparatorHorizontal,
     Trash2,
     UserRound,
 } from "lucide-react";
@@ -485,6 +487,9 @@ const ShelveNodeMenu = ({ props }: SubMenuProps<{ pos: number; nodeClass: string
 /* ============================== */
 
 export type EditorContextMenuProps = {
+    /** The editor that was right-clicked. All actions act on this instance — not
+     *  ProjectContext.editor, which is always the main screenplay editor. */
+    editor: Editor;
     from: number;
     to: number;
     /** Present when the caret sits on a node a comment can anchor to. */
@@ -494,15 +499,20 @@ export type EditorContextMenuProps = {
     nodeClass?: string;
     /** Present when the caret sits on a scene heading that can be sent to the Outline. */
     outlineScene?: { refDocId: string; refId: string; title: string };
+    /** Present on paginated screenplay editors: the top-level block under the
+     *  caret (`pos`) and whether it already forces a manual page break. */
+    pageBreak?: { pos: number; active: boolean };
 };
 
 const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     const t = useTranslations("contextMenu");
-    const { editor, repository, isReadOnly, persistentScenes } =
-        useContext(ProjectContext);
+    const { repository, isReadOnly, persistentScenes } = useContext(ProjectContext);
     const { worker } = useSpellcheck();
     const { updateContextMenu } = useContext(UserContext);
-    const { from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene } = props;
+    // Act on the editor that was right-clicked (passed through props), NOT
+    // ProjectContext.editor — that one is always the main screenplay editor, so
+    // using it would misfire actions in the tree-document / draft / title editors.
+    const { editor, from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene, pageBreak } = props;
     const hasSelection = from !== to;
 
     const handleSendToOutline = () => {
@@ -620,6 +630,12 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
         updateContextMenu(undefined);
     };
 
+    const handleTogglePageBreak = () => {
+        if (!editor || !pageBreak || isReadOnly) return;
+        editor.commands.toggleManualPageBreak(pageBreak.pos);
+        updateContextMenu(undefined);
+    };
+
     const canDualDialogue = (() => {
         if (nodeClass !== ScreenplayElement.Character || !editor || nodePos === undefined) return false;
         const doc = editor.state.doc;
@@ -714,6 +730,18 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
                             }}
                         />
                     )}
+                </>
+            )}
+
+            {/* Manual page break — force a new page that begins at this block */}
+            {pageBreak && !isReadOnly && (
+                <>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem
+                        text={pageBreak.active ? t("removePageBreak") : t("insertPageBreak")}
+                        icon={SeparatorHorizontal}
+                        action={handleTogglePageBreak}
+                    />
                 </>
             )}
 

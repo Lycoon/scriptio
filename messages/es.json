@@ -17,8 +17,11 @@
     "reconnecting": "Reconectando...",
     "localProject": "Proyecto local",
     "uploadToCloud": "Subir a la nube",
+    "storageProject": "Este proyecto",
+    "storageTotal": "Total usado",
     "endlessScroll": "Desplazamiento infinito",
     "toggleComments": "Mostrar/ocultar comentarios",
+    "toggleSpellcheck": "Activar/desactivar corrector ortográfico",
     "focusMode": "Modo concentración",
     "splitPanel": "Dividir panel",
     "unsplitPanel": "Unir panel",
@@ -87,6 +90,7 @@
     "spellcheckLabel": "Corrector orthográfico",
     "spellcheckHelpText": "Descarga un diccionario para la corrección ortográfica en el editor.",
     "spellcheckNone": "Desactivado",
+    "spellcheckBuiltin": "Integrado",
     "customDictLabel": "Diccionario del proyecto",
     "customDictAdd": "Añadir",
     "customDictEmpty": "Aún no hay palabras personalizadas.",
@@ -103,6 +107,7 @@
       "Layout": "Diseño",
       "Production": "Producción",
       "Export": "Importar/Exportar",
+      "Storage": "Almacenamiento",
       "Collaborators": "Colaboradores",
       "Keybinds": "Atajos de teclado",
       "Appearance": "Apariencia",
@@ -113,6 +118,21 @@
       "About": "Acerca de",
       "Subscription": "Suscripción"
     }
+  },
+  "storage": {
+    "total": "Espacio usado",
+    "description": "Imágenes y audio usados por los tableros de este proyecto.",
+    "sharedStorage": "Almacenamiento compartido",
+    "thisProject": "Este proyecto",
+    "otherProjects": "Otros proyectos",
+    "free": "Libre",
+    "localNote": "Este proyecto aún no está sincronizado — se muestra como contaría en tu almacenamiento en la nube.",
+    "empty": "Aún no hay imágenes ni audio en este proyecto.",
+    "image": "Imagen",
+    "audio": "Audio",
+    "remove": "Eliminar",
+    "confirm": "Quitar del proyecto",
+    "cancel": "Cancelar"
   },
   "dangerZone": {
     "transferOwnership": "Transferir propiedad",
@@ -426,7 +446,10 @@
     "shelveDialogue": "Archivar diálogo",
     "shelveAction": "Archivar acción",
     "omitScene": "Omitir escena",
-    "unomitScene": "Restaurar escena"
+    "unomitScene": "Restaurar escena",
+    "insertPageBreak": "Insertar salto de página",
+    "removePageBreak": "Quitar salto de página",
+    "pageBreakHint": "Salto de página"
   },
   "popup": {
     "character": {
@@ -483,7 +506,8 @@
     "audioHint": "Nota de voz",
     "play": "Reproducir",
     "pause": "Pausar",
-    "rename": "Doble clic para renombrar"
+    "rename": "Doble clic para renombrar",
+    "storageLimitReached": "Límite de almacenamiento alcanzado: no se pudo guardar este archivo"
   },
   "production": {
     "title": "Producción",

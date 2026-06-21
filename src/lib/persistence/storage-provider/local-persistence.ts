@@ -73,6 +73,14 @@ export async function isLocalOnlyProject(id: string): Promise<boolean> {
     return (await getStorageProvider()).get(id).then((p) => p?.isLocalOnly ?? false);
 }
 
+/** True only when a project is cached AND synced to the cloud (i.e. not
+ *  local-only). An unknown/uncached project is treated as not cloud-synced, so
+ *  asset code never fires network requests for it. */
+export async function isCloudSyncedProject(id: string): Promise<boolean> {
+    const project = await (await getStorageProvider()).get(id);
+    return project ? !project.isLocalOnly : false;
+}
+
 export async function cachedProjectExists(id: string): Promise<boolean> {
     return (await getStorageProvider()).exists(id);
 }
@@ -150,6 +158,23 @@ export async function promoteLocalProjectToCloud(projectId: string): Promise<voi
     if (!local) throw new Error("Project not found in local cache");
     if (!local.isLocalOnly) return;
 
+    // Gather the project's local assets and pre-check the owner's quota before we
+    // create anything in the cloud, so we can fail cleanly if there's no room.
+    const provider = await getStorageProvider();
+    const hashes = await provider.listAssetHashes(projectId);
+    const assets = (await Promise.all(hashes.map((h) => provider.getAsset(projectId, h)))).filter(
+        (a): a is NonNullable<typeof a> => a !== null,
+    );
+
+    if (assets.length > 0) {
+        const { fetchMyStorage } = await import("@src/lib/assets/cloud-asset-sync");
+        const storage = await fetchMyStorage();
+        const totalSize = assets.reduce((sum, a) => sum + a.size, 0);
+        if (storage && storage.used + totalSize > storage.quota) {
+            throw new Error("Uploading this project would exceed your storage limit.");
+        }
+    }
+
     const { uploadProjectToCloud } = await import("@src/lib/utils/requests");
     const res = await uploadProjectToCloud(projectId, {
         title: local.title,
@@ -161,6 +186,19 @@ export async function promoteLocalProjectToCloud(projectId: string): Promise<voi
         throw new Error(json.message ?? `Upload failed (${res.status})`);
     }
     await markCachedProjectAsSynced(projectId);
+
+    // Push existing board assets to R2 now that the cloud project exists. A quota
+    // error aborts (pre-check should make this rare); other per-asset failures are
+    // logged so promotion still completes.
+    const { uploadAssetToCloud, CloudQuotaError } = await import("@src/lib/assets/cloud-asset-sync");
+    for (const asset of assets) {
+        try {
+            await uploadAssetToCloud(projectId, asset);
+        } catch (e) {
+            if (e instanceof CloudQuotaError) throw e;
+            console.warn("[assets] failed to upload asset on cloud promotion:", e);
+        }
+    }
 }
 
 /**

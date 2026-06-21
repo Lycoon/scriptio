@@ -117,7 +117,6 @@ async function getYProtocols() {
     return yProtocolsModule;
 }
 
-
 // -------------------------------- //
 //   PROSEMIRROR HELPERS (browser)  //
 // -------------------------------- //
@@ -160,7 +159,7 @@ const documentContentOf = (ydoc: ProjectState): Record<string, JSONContent[]> =>
 };
 
 /** Board data (cards + arrows) for every `board` node, keyed by node id. */
-const boardsOf = (ydoc: ProjectState): Record<string, BoardData> => {
+const boardContentOf = (ydoc: ProjectState): Record<string, BoardData> => {
     const result: Record<string, BoardData> = {};
     ydoc.documents().forEach((node) => {
         if (node.type === "board") result[node.id] = ydoc.boardData(node.id).toJSON();
@@ -200,7 +199,7 @@ export const projectDataOf = (ydoc: ProjectState): ProjectData => ({
     shelf: ydoc.shelf().toJSON(),
     dictionary: ydoc.dictionary().toJSON(),
     documentContent: documentContentOf(ydoc),
-    boards: boardsOf(ydoc),
+    boardContent: boardContentOf(ydoc),
     shelfContent: shelfContentOf(ydoc),
 });
 
@@ -251,15 +250,11 @@ export const applyProjectData = (ydoc: ProjectState, data: Partial<ProjectData>)
         if (data.documentContent) {
             for (const [id, content] of Object.entries(data.documentContent)) {
                 if (content.length === 0) continue;
-                prosemirrorJSONToYXmlFragment(
-                    ScreenplaySchema,
-                    { type: "doc", content },
-                    ydoc.documentFragment(id),
-                );
+                prosemirrorJSONToYXmlFragment(ScreenplaySchema, { type: "doc", content }, ydoc.documentFragment(id));
             }
         }
-        if (data.boards) {
-            for (const [id, board] of Object.entries(data.boards)) {
+        if (data.boardContent) {
+            for (const [id, board] of Object.entries(data.boardContent)) {
                 const map = ydoc.boardData(id);
                 for (const [key, value] of Object.entries(board)) {
                     map.set(key as keyof BoardData, value as BoardData[keyof BoardData]);
@@ -407,9 +402,7 @@ const initCloudProvider = async (entry: SessionEntry): Promise<void> => {
         const { isTauri } = await import("@tauri-apps/api/core");
         const isDesktop = isTauri();
 
-        const { isLocalOnlyProject } = await import(
-            "../persistence/storage-provider/local-persistence"
-        );
+        const { isLocalOnlyProject } = await import("../persistence/storage-provider/local-persistence");
         if (await isLocalOnlyProject(entry.projectId)) {
             if (!isLive(entry)) return;
             entry.connectionStatus = "disconnected";
@@ -435,16 +428,11 @@ const initCloudProvider = async (entry: SessionEntry): Promise<void> => {
         if (!isLive(entry)) return;
 
         const cloudWsUrl = (process.env.NEXT_PUBLIC_CLOUD_URL || "").replace(/^http/, "ws");
-        const cloudProvider = new ThrottledWebsocketProvider(
-            cloudWsUrl,
-            entry.projectId,
-            entry.state,
-            {
-                params: { token, clientId: entry.state.clientID.toString() },
-                userInfo: entry.currentUserInfo,
-                disableBc: isDesktop,
-            },
-        );
+        const cloudProvider = new ThrottledWebsocketProvider(cloudWsUrl, entry.projectId, entry.state, {
+            params: { token, clientId: entry.state.clientID.toString() },
+            userInfo: entry.currentUserInfo,
+            disableBc: isDesktop,
+        });
         entry.cloudProvider = cloudProvider;
         notifySubscribers(entry);
 
@@ -475,9 +463,7 @@ const initCloudProvider = async (entry: SessionEntry): Promise<void> => {
             entry.connectionStatus = "connecting";
             notifySubscribers(entry);
             try {
-                const { token: refreshed, status: refreshStatus } = await getCloudToken(
-                    entry.projectId,
-                );
+                const { token: refreshed, status: refreshStatus } = await getCloudToken(entry.projectId);
                 if (!isLive(entry)) return;
                 if (refreshStatus === 403) {
                     cloudProvider.shouldConnect = false;
@@ -524,9 +510,7 @@ const initCloudProvider = async (entry: SessionEntry): Promise<void> => {
                 if (entry.localProvider?.clearData) {
                     await entry.localProvider.clearData();
                 } else {
-                    const { clearYjsData } = await import(
-                        "../persistence/storage-provider/local-persistence"
-                    );
+                    const { clearYjsData } = await import("../persistence/storage-provider/local-persistence");
                     await clearYjsData(entry.projectId);
                 }
             } catch (e) {
@@ -602,11 +586,7 @@ const releaseSession = (projectId: string): void => {
         if (entry.cloudProvider) {
             try {
                 const { removeAwarenessStates } = await getYProtocols();
-                removeAwarenessStates(
-                    entry.cloudProvider.awareness,
-                    [entry.state.clientID],
-                    "session release",
-                );
+                removeAwarenessStates(entry.cloudProvider.awareness, [entry.state.clientID], "session release");
             } catch {}
             entry.cloudProvider.destroy();
         }
@@ -632,10 +612,7 @@ const computeStatus = (entry: SessionEntry | null): ProjectStatus => {
     if (entry.isStaleClient) {
         return { kind: "needs-update", outcome: { kind: "stale-client" } };
     }
-    if (
-        entry.migrationOutcome?.kind === "future-version" ||
-        entry.migrationOutcome?.kind === "failed"
-    ) {
+    if (entry.migrationOutcome?.kind === "future-version" || entry.migrationOutcome?.kind === "failed") {
         return { kind: "needs-update", outcome: entry.migrationOutcome };
     }
     if (entry.isProjectUnavailable) return { kind: "unavailable" };
@@ -683,11 +660,7 @@ export const useProjectYjs = ({
         const handleUnload = async () => {
             if (entry.cloudProvider) {
                 const { removeAwarenessStates } = await getYProtocols();
-                removeAwarenessStates(
-                    entry.cloudProvider.awareness,
-                    [entry.state.clientID],
-                    "window unload",
-                );
+                removeAwarenessStates(entry.cloudProvider.awareness, [entry.state.clientID], "window unload");
             }
         };
         window.addEventListener("beforeunload", handleUnload);

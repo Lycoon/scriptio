@@ -21,6 +21,9 @@
     width: 100%;
     max-width: 1000px;
     margin: 0 auto;
+    /* Breathing room so the last page doesn't butt against the viewport edge
+     * when scrolled to the bottom. Matches the inter-page gap (20px). */
+    padding-bottom: 30%;
     contain: layout;
 }
 
@@ -56,13 +59,7 @@
     transition: opacity 0.7s ease;
     background: linear-gradient(to bottom, var(--editor-shadow) 0%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(
-        to right,
-        transparent 0%,
-        black 20%,
-        black 80%,
-        transparent 100%
-    );
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
 }
 
 /* Zero-height sticky container so the banner overlays the editor without

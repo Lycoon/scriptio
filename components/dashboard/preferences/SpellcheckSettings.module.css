@@ -6,6 +6,18 @@
     gap: 8px;
 }
 
+/* Selected language shown in the collapsed dropdown trigger, with a leading icon. */
+.triggerLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.triggerIcon {
+    color: var(--secondary-text);
+    flex-shrink: 0;
+}
+
 .dictMeta {
     display: flex;
     align-items: center;
