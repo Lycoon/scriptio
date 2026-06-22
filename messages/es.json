@@ -473,6 +473,7 @@
       "warning": "¿Estás seguro de que quieres <b>sobrescribir</b> tu proyecto actual?",
       "info": "Puedes exportar tu proyecto antes de importar uno nuevo.",
       "yesImport": "Sí, importar",
+      "importing": "Importando…",
       "no": "No"
     },
     "scene": {

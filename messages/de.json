@@ -474,6 +474,7 @@
       "warning": "Sind Sie sicher, dass Sie Ihr aktuelles Projekt <b>überschreiben</b> möchten?",
       "info": "Sie können Ihr Projekt exportieren, bevor Sie ein neues importieren.",
       "yesImport": "Ja, importieren",
+      "importing": "Importieren…",
       "no": "Nein"
     },
     "scene": {

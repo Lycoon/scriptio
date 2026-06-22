@@ -47,15 +47,38 @@ const fontFamilyFor = (sf: ScriptFont): string => sf ?? "CourierPrime";
  *
  * Using `getComputedStyle` captures both TipTap inline marks (`<span class="bold">`)
  * and paragraph-level styling (e.g. `.scene { font-weight: bold }`).
+ *
+ * `bold`/`italic` are inherited CSS properties, so the direct parent's computed
+ * value already reflects every ancestor. `text-decoration-line` is NOT inherited,
+ * so underline is resolved by walking the ancestor chain up to the paragraph and
+ * skipping `.spellcheck-error` decoration spans — their wavy red underline is an
+ * editor-only affordance that must never bleed into exports, while a real
+ * underline on a wrapping mark or on the paragraph itself (e.g. `.section`) is
+ * still honoured.
  */
 const getMarksFromComputedStyle = (textNode: Text): { bold: boolean; italic: boolean; underline: boolean } => {
     const el = textNode.parentElement;
     if (!el) return { bold: false, italic: false, underline: false };
     const cs = getComputedStyle(el);
+
+    let underline = false;
+    let node: HTMLElement | null = el;
+    while (node) {
+        if (!node.classList.contains("spellcheck-error")) {
+            const style = node === el ? cs : getComputedStyle(node);
+            if (style.textDecorationLine.includes("underline")) {
+                underline = true;
+                break;
+            }
+        }
+        if (node.tagName === "P") break; // reached the paragraph block
+        node = node.parentElement;
+    }
+
     return {
         bold: cs.fontWeight === "bold" || parseInt(cs.fontWeight) >= 700,
         italic: cs.fontStyle === "italic",
-        underline: cs.textDecorationLine.includes("underline"),
+        underline,
     };
 };
 

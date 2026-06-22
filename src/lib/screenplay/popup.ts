@@ -6,7 +6,7 @@ import { Scene } from "./scenes";
 //      SPECIFIC POPUP DATA       //
 // ------------------------------ //
 export type PopupImportFileData = {
-    confirmImport: () => void;
+    confirmImport: () => void | Promise<void>;
 };
 
 export type PopupCharacterData = {

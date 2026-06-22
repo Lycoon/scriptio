@@ -474,6 +474,7 @@
       "warning": "Êtes-vous sûr de vouloir <b>écraser</b> votre projet actuel ?",
       "info": "Vous pouvez exporter votre projet avant d'en importer un nouveau.",
       "yesImport": "Oui, importer",
+      "importing": "Importation…",
       "no": "Non"
     },
     "scene": {

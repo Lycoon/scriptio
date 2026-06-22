@@ -473,6 +473,7 @@
       "warning": "Are you sure you want to <b>overwrite</b> your current project?",
       "info": "You can export your project before importing a new one.",
       "yesImport": "Yes, import",
+      "importing": "Importing…",
       "no": "No"
     },
     "scene": {

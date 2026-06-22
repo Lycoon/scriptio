@@ -40,30 +40,37 @@ const TitlePagePanel = ({ isVisible }: { isVisible?: boolean }) => {
         const state = repository.getState();
         const meta = state.metadata();
 
-        if (!meta.get("titlepageInitialized")) {
-            titleEditor.commands.setContent(DEFAULT_TITLEPAGE_CONTENT);
-
-            const { state: editorState, view } = titleEditor;
-            const tr = editorState.tr;
-            let modified = false;
-
-            tr.doc.descendants((node, pos) => {
-                if (node.type.name === TitlePageElement.Title) {
-                    const markType = editorState.schema.marks.underline;
-                    if (markType) {
-                        tr.addMark(pos, pos + node.nodeSize, markType.create({ class: "underline" }));
-                        modified = true;
-                    }
-                    return false;
-                }
-            });
-
-            if (modified && view) {
-                view.dispatch(tr);
-            }
-
-            meta.set("titlepageInitialized", true);
+        // Seed the default template only into a genuinely empty title page. Guard
+        // on the Yjs fragment being empty — not on the metadata flag alone — so a
+        // fresh editor mount, a not-yet-synced flag, or an imported title page
+        // never gets overwritten or has the template appended more than once.
+        if (meta.get("titlepageInitialized") || state.titlepageFragment().length > 0) {
+            if (!meta.get("titlepageInitialized")) meta.set("titlepageInitialized", true);
+            return;
         }
+
+        titleEditor.commands.setContent(DEFAULT_TITLEPAGE_CONTENT);
+
+        const { state: editorState, view } = titleEditor;
+        const tr = editorState.tr;
+        let modified = false;
+
+        tr.doc.descendants((node, pos) => {
+            if (node.type.name === TitlePageElement.Title) {
+                const markType = editorState.schema.marks.underline;
+                if (markType) {
+                    tr.addMark(pos, pos + node.nodeSize, markType.create({ class: "underline" }));
+                    modified = true;
+                }
+                return false;
+            }
+        });
+
+        if (modified && view) {
+            view.dispatch(tr);
+        }
+
+        meta.set("titlepageInitialized", true);
     }, [titleEditor, isYjsReady, repository]);
 
     // Sync project metadata into the module-level ref and editor storage for node view rendering

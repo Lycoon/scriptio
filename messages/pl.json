@@ -473,6 +473,7 @@
       "warning": "Czy na pewno chcesz <b>nadpisać</b> aktualny projekt?",
       "info": "Możesz wyeksportować swój projekt przed zaimportowaniem nowego.",
       "yesImport": "Tak, importuj",
+      "importing": "Importowanie…",
       "no": "Nie"
     },
     "scene": {

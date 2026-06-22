@@ -16,7 +16,7 @@ import { BaseExportOptions } from "@src/lib/adapters/screenplay-adapter";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import { PDFExportOptions } from "@src/lib/adapters/pdf/pdf-adapter";
 import { ScriptioExportOptions } from "@src/lib/adapters/scriptio/scriptio-adapter";
-import { importFileIntoProject } from "@src/lib/import/import-project";
+import { importFileIntoProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
 
 export enum ExportFormat {
     PDF = "pdf",
@@ -156,7 +156,7 @@ const ExportProject = () => {
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileImport}
-                    accept=".fountain,.txt,.fdx,.scriptio"
+                    accept={getSupportedImportExtensions()}
                     style={{ display: "none" }}
                 />
 
