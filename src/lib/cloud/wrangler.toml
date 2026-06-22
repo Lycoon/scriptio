@@ -24,12 +24,19 @@ class_name = "ProjectRoom"
 binding = "SNAPSHOTS"
 bucket_name = "scriptio-snapshots-local"
 
+[vars]
+# Base URL of the Next.js app for the asset-GC callback (local dev).
+API_URL = "http://127.0.0.1:3000"
+
 # --- Production ---
 [env.production]
 name = "scriptio-cloud"
 routes = [
   { pattern = "cloud.scriptio.app", custom_domain = true }
 ]
+
+[env.production.vars]
+API_URL = "https://scriptio.app"
 
 [[env.production.durable_objects.bindings]]
 name = "PROJECT_ROOM"
@@ -53,3 +60,7 @@ class_name = "ProjectRoom"
 [[env.staging.r2_buckets]]
 binding = "SNAPSHOTS"
 bucket_name = "scriptio-snapshots-staging"
+
+[env.staging.vars]
+# Verify this matches the staging app domain.
+API_URL = "https://staging.scriptio.app"

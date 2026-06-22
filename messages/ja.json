@@ -17,8 +17,11 @@
     "reconnecting": "再接続中...",
     "localProject": "ローカルプロジェクト",
     "uploadToCloud": "クラウドにアップロード",
+    "storageProject": "このプロジェクト",
+    "storageTotal": "合計使用量",
     "endlessScroll": "無限スクロール",
     "toggleComments": "コメントの表示/非表示",
+    "toggleSpellcheck": "スペルチェックの切り替え",
     "focusMode": "集中モード",
     "splitPanel": "パネルを分割",
     "unsplitPanel": "パネルを閉じる",
@@ -87,6 +90,7 @@
     "spellcheckLabel": "スペルチェック",
     "spellcheckHelpText": "エディタでスペルチェックを行うための辞書をダウンロードしてください。",
     "spellcheckNone": "無効",
+    "spellcheckBuiltin": "内蔵",
     "customDictLabel": "プロジェクト辞書",
     "customDictAdd": "追加",
     "customDictEmpty": "カスタム単語はまだありません。",
@@ -103,6 +107,7 @@
       "Layout": "レイアウト",
       "Production": "プロダクション",
       "Export": "インポート/エクスポート",
+      "Storage": "ストレージ",
       "Collaborators": "共同作業者",
       "Keybinds": "ショートカットキー",
       "Appearance": "外観",
@@ -113,6 +118,21 @@
       "About": "アプリについて",
       "Subscription": "サブスクリプション"
     }
+  },
+  "storage": {
+    "total": "使用容量",
+    "description": "このプロジェクトのボードで使用されている画像と音声。",
+    "sharedStorage": "共有ストレージ",
+    "thisProject": "このプロジェクト",
+    "otherProjects": "他のプロジェクト",
+    "free": "空き",
+    "localNote": "このプロジェクトはまだ同期されていません — クラウドストレージにどれだけ使用するかを表示しています。",
+    "empty": "このプロジェクトにはまだ画像や音声がありません。",
+    "image": "画像",
+    "audio": "音声",
+    "remove": "削除",
+    "confirm": "プロジェクトから削除",
+    "cancel": "キャンセル"
   },
   "dangerZone": {
     "transferOwnership": "所有権を譲渡",
@@ -426,7 +446,10 @@
     "shelveDialogue": "セリフを保管する",
     "shelveAction": "アクションを保管する",
     "omitScene": "シーンを省略",
-    "unomitScene": "シーンを復元"
+    "unomitScene": "シーンを復元",
+    "insertPageBreak": "改ページを挿入",
+    "removePageBreak": "改ページを削除",
+    "pageBreakHint": "改ページ"
   },
   "popup": {
     "character": {
@@ -450,6 +473,7 @@
       "warning": "現在のプロジェクトを <b>上書き</b> しますか？",
       "info": "必要に応じて事前にエクスポートを行ってください。",
       "yesImport": "はい、インポートする",
+      "importing": "インポート中…",
       "no": "いいえ"
     },
     "scene": {
@@ -483,7 +507,8 @@
     "audioHint": "ボイスメモ",
     "play": "再生",
     "pause": "一時停止",
-    "rename": "ダブルクリックで名前を変更"
+    "rename": "ダブルクリックで名前を変更",
+    "storageLimitReached": "ストレージの上限に達しました — このファイルを保存できませんでした"
   },
   "production": {
     "title": "プロダクション",

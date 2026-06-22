@@ -211,7 +211,7 @@ describe("scriptio asset bundling", () => {
 
         // The document still parses out of the zip and carries the board card.
         const parsed = adapter.convertFrom(buffer);
-        expect(parsed.boards?.[board]?.cards).toContain(hash);
+        expect(parsed.boardContent?.[board]?.cards).toContain(hash);
 
         // Assets restore into a *different* project id (the import target).
         const dest = pid();
@@ -256,7 +256,7 @@ describe("scriptio asset bundling", () => {
         const buffer = await blob.arrayBuffer();
 
         const parsed = adapter.convertFrom(buffer);
-        expect(parsed.boards?.[board]?.cards).toContain(hash);
+        expect(parsed.boardContent?.[board]?.cards).toContain(hash);
 
         // Audio cards keep their assets referenced (GC must not drop them).
         expect(collectReferencedHashes(ydoc).has(hash)).toBe(true);

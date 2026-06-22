@@ -188,5 +188,5 @@ export async function importFileAsProject(
  * Get supported import file extensions.
  */
 export function getSupportedImportExtensions(): string {
-    return ".fountain,.txt,.fdx,.scriptio";
+    return ".fountain,.txt,.fdx,.scriptio,.fadein,.wdz";
 }

@@ -108,6 +108,7 @@
     .page-number > * {
         color: var(--editor-text);
         font-family: var(--font-screenplay);
+        line-height: var(--line-height);
     }
 
     /* Editor styles */

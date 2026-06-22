@@ -420,6 +420,25 @@
     font-variant-numeric: tabular-nums;
 }
 
+.asset_error {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 80%;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 16px;
+    background-color: var(--error);
+    color: #fff;
+    font-size: 13px;
+    user-select: none;
+}
+
 .recording_stop {
     display: flex;
     align-items: center;

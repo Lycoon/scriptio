@@ -11,7 +11,7 @@ import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { CreditCard, FileDown, Folder, Globe, Keyboard, Lock, Palette, PanelsTopLeft, User, Users, X } from "lucide-react";
+import { CreditCard, FileDown, Folder, Globe, HardDrive, Keyboard, Lock, Palette, PanelsTopLeft, User, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
@@ -20,6 +20,7 @@ import ProfileSettings from "./account/ProfileSettings";
 import SubscriptionSettings from "./account/SubscriptionSettings";
 import LayoutSettings from "./project/LayoutSettings";
 import ProductionSettings from "./project/ProductionSettings";
+import StorageSettings from "./project/StorageSettings";
 import DashboardAuth from "./account/DashboardAuth";
 import AboutSettings from "./AboutSettings";
 
@@ -36,6 +37,7 @@ const DashboardModal = () => {
             { id: "Layout",        label: t("tabs.Layout"),        icon: <PanelsTopLeft size={18} /> },
             { id: "Production",    label: t("tabs.Production"),    icon: <Lock size={18} /> },
             { id: "Export",        label: t("tabs.Export"),        icon: <FileDown size={18} /> },
+            { id: "Storage",       label: t("tabs.Storage"),       icon: <HardDrive size={18} /> },
             { id: "Collaborators", label: t("tabs.Collaborators"), icon: <Users size={18} /> },
         ],
     }), [t]);
@@ -138,6 +140,7 @@ const DashboardModal = () => {
                         {isInProject && activeTab === "Layout" && <LayoutSettings />}
                         {isInProject && activeTab === "Production" && <ProductionSettings />}
                         {isInProject && activeTab === "Export" && <ExportProject />}
+                        {isInProject && activeTab === "Storage" && <StorageSettings />}
                         {isInProject && activeTab === "Collaborators" && <CollaboratorsSettings />}
                         {/* Preferences tabs */}
                         {activeTab === "Keybinds" && <KeybindsSettings />}

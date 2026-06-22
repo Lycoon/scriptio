@@ -1,4 +1,10 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+    DeleteObjectCommand,
+    DeleteObjectsCommand,
+    GetObjectCommand,
+    PutObjectCommand,
+    S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "process";
 
@@ -56,6 +62,59 @@ export const destroy = async (name: string): Promise<boolean> => {
         return true;
     } catch (e) {
         console.error("An error occurred while destroying object from S3: ", e);
+        return false;
+    }
+};
+
+/** Read an object's raw bytes (null if missing). Used to proxy private assets
+ *  through the same-origin API, avoiding R2 CORS configuration. */
+export const getObjectBytes = async (key: string): Promise<Uint8Array | null> => {
+    try {
+        const res = await client.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
+        if (!res.Body) return null;
+        return await res.Body.transformToByteArray();
+    } catch (e) {
+        console.error("An error occurred while reading object from S3: ", e);
+        return null;
+    }
+};
+
+/** Upload raw bytes under `key` (generic binary, e.g. board image/audio assets). */
+export const putObject = async (
+    key: string,
+    body: Uint8Array | Buffer,
+    contentType: string,
+): Promise<boolean> => {
+    const params = {
+        Bucket: env.S3_BUCKET,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+    };
+
+    try {
+        await client.send(new PutObjectCommand(params));
+        return true;
+    } catch (e) {
+        console.error("An error occurred while uploading object to S3: ", e);
+        return false;
+    }
+};
+
+/** Delete many objects at once (best-effort). No-op on an empty list. */
+export const destroyMany = async (keys: string[]): Promise<boolean> => {
+    if (keys.length === 0) return true;
+
+    const params = {
+        Bucket: env.S3_BUCKET,
+        Delete: { Objects: keys.map((Key) => ({ Key })) },
+    };
+
+    try {
+        await client.send(new DeleteObjectsCommand(params));
+        return true;
+    } catch (e) {
+        console.error("An error occurred while destroying objects from S3: ", e);
         return false;
     }
 };

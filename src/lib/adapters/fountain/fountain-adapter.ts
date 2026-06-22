@@ -114,6 +114,14 @@ export class FountainAdapter extends ProjectAdapter {
                 continue;
             }
 
+            // Manual page break: emit a standalone `===` line before this block,
+            // surrounded by blank lines so the parser reads it as a page break and
+            // re-attaches it to this block on import. Placed after the skip checks
+            // so the break stays anchored to a block that is actually exported.
+            if (nodes[i].attrs?.pageBreak) {
+                fountain += "\n===\n\n";
+            }
+
             // Handle styled text fragments
             let fullText: string = "";
             for (let j = 0; j < content.length; j++) {
@@ -173,7 +181,14 @@ export class FountainAdapter extends ProjectAdapter {
         const decoder = new TextDecoder("utf-8");
         const text = decoder.decode(rawContent);
         const output = fountain.parse(text, true);
-        const html = output["html"]["script"];
+        // A Fountain page break (a line of `===`) parses to an <hr /> in the
+        // script HTML. Our schema has no horizontal-rule node; a page break is
+        // instead a `pageBreak` attribute on the block that STARTS the new page.
+        // Fold each <hr /> into the following block as data-page-break, which
+        // PageBreakAttribute.parseHTML turns into the attribute. A trailing
+        // <hr /> with no following block (page break at end of file) simply has
+        // no match and is dropped — a break with no content is meaningless.
+        const html = output["html"]["script"].replace(/<hr\s*\/>\s*<p\b/g, '<p data-page-break="true"');
         const json = generateJSON(html, BASE_EXTENSIONS) as JSONContent;
 
         const project: Partial<ProjectData> = {

@@ -103,10 +103,13 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         name: "User_" + Math.floor(Math.random() * 1000),
         color: getRandomColor(),
     }));
-    const userInfo = useMemo(() => ({
-        name: user?.username || fallbackUserInfo.name,
-        color: user?.color || fallbackUserInfo.color,
-    }), [user?.username, user?.color, fallbackUserInfo]);
+    const userInfo = useMemo(
+        () => ({
+            name: user?.username || fallbackUserInfo.name,
+            color: user?.color || fallbackUserInfo.color,
+        }),
+        [user?.username, user?.color, fallbackUserInfo],
+    );
 
     // Keep all refs in sync
     useEffect(() => {
@@ -160,27 +163,30 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     // ---- Mutable container for extension getter functions ----
     // useMemo with [] creates a stable object reference; we mutate its properties each render
     // so that extension getter closures always return the latest values without .current accesses.
-    const ext = useMemo(() => ({
-        highlightedCharacters,
-        characters,
-        scenes,
-        repository,
-        callbacks,
-        spellWorker,
-        isSpellWorkerReady,
-        searchTerm,
-        searchFilters,
-        currentSearchIndex,
-        setSearchMatches,
-        activeSearchEditor,
-        sceneLocking,
-        sceneNumberingStyle,
-        skippedSceneLetters,
-        persistentScenes,
-        pageLocking,
-        persistentPages,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }), []);
+    const ext = useMemo(
+        () => ({
+            highlightedCharacters,
+            characters,
+            scenes,
+            repository,
+            callbacks,
+            spellWorker,
+            isSpellWorkerReady,
+            searchTerm,
+            searchFilters,
+            currentSearchIndex,
+            setSearchMatches,
+            activeSearchEditor,
+            sceneLocking,
+            sceneNumberingStyle,
+            skippedSceneLetters,
+            persistentScenes,
+            pageLocking,
+            persistentPages,
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }),
+        [],
+    );
     ext.highlightedCharacters = highlightedCharacters;
     ext.characters = characters;
     ext.scenes = scenes;
@@ -231,15 +237,18 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         cb(data);
     }, []);
 
-    const onKeybindAction = useCallback((id: KeybindId, editorInstance: Editor) => {
-        const gc = callbacks.globalContext;
-        if (!gc) return;
-        executeKeybindAction(id, {
-            editor: editorInstance,
-            toggleFocusMode: gc.toggleFocusMode,
-            saveProject: gc.saveProject,
-        });
-    }, [callbacks.globalContext]);
+    const onKeybindAction = useCallback(
+        (id: KeybindId, editorInstance: Editor) => {
+            const gc = callbacks.globalContext;
+            if (!gc) return;
+            executeKeybindAction(id, {
+                editor: editorInstance,
+                toggleFocusMode: gc.toggleFocusMode,
+                saveProject: gc.saveProject,
+            });
+        },
+        [callbacks.globalContext],
+    );
 
     // ---- Dynamic extensions (created once, read from ext container) ----
     const characterHighlightExtension = features.characterHighlights
@@ -350,11 +359,11 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                     config.features.paginationMode === "screenplay"
                         ? {
                               pageGap: 20,
-                              headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
+                              headerRight: `<p class="page-number">{page}.</p>`,
                               customHeader: {
                                   1: {
                                       headerLeft: "",
-                                      headerRight: `<p class="page-number" style="margin-top: 50px;"></p>`,
+                                      headerRight: `<p class="page-number"></p>`,
                                   },
                               },
                               footerRight: "",
@@ -393,7 +402,6 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 ...(nodeIdDedupExtension ? [nodeIdDedupExtension] : []),
                 ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
-
 
             onSelectionUpdate({ editor, transaction }) {
                 const cb = callbacksRef.current;

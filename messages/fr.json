@@ -17,9 +17,12 @@
     "reconnecting": "Reconnexion...",
     "localProject": "Projet local",
     "uploadToCloud": "Téléverser dans le cloud",
+    "storageProject": "Ce projet",
+    "storageTotal": "Total utilisé",
     "cachedProject": "Projet en cache",
     "endlessScroll": "Défilement infini",
     "toggleComments": "Afficher/masquer les commentaires",
+    "toggleSpellcheck": "Activer/désactiver la correction orthographique",
     "focusMode": "Mode concentration",
     "splitPanel": "Diviser le panneau",
     "unsplitPanel": "Fermer le panneau divisé",
@@ -88,6 +91,7 @@
     "spellcheckLabel": "Correcteur orthographique",
     "spellcheckHelpText": "Téléchargez un dictionnaire pour la vérification orthographique dans l'éditeur.",
     "spellcheckNone": "Désactivé",
+    "spellcheckBuiltin": "Intégré",
     "customDictLabel": "Dictionnaire du projet",
     "customDictAdd": "Ajouter",
     "customDictEmpty": "Aucun mot personnalisé pour l'instant.",
@@ -104,6 +108,7 @@
       "Layout": "Mise en page",
       "Production": "Production",
       "Export": "Import/Export",
+      "Storage": "Stockage",
       "Collaborators": "Collaborateurs",
       "Keybinds": "Raccourcis",
       "Appearance": "Apparence",
@@ -114,6 +119,21 @@
       "About": "À propos",
       "Subscription": "Abonnement"
     }
+  },
+  "storage": {
+    "total": "Espace utilisé",
+    "description": "Images et audio utilisés par les tableaux de ce projet.",
+    "sharedStorage": "Stockage partagé",
+    "thisProject": "Ce projet",
+    "otherProjects": "Autres projets",
+    "free": "Libre",
+    "localNote": "Ce projet n'est pas encore synchronisé — affiché tel qu'il compterait dans votre stockage cloud.",
+    "empty": "Aucune image ou audio dans ce projet pour l'instant.",
+    "image": "Image",
+    "audio": "Audio",
+    "remove": "Supprimer",
+    "confirm": "Retirer du projet",
+    "cancel": "Annuler"
   },
   "dangerZone": {
     "transferOwnership": "Transférer la propriété",
@@ -427,7 +447,10 @@
     "shelveDialogue": "Mettre le dialogue de côté",
     "shelveAction": "Mettre l'action de côté",
     "omitScene": "Omettre la scène",
-    "unomitScene": "Restaurer la scène"
+    "unomitScene": "Restaurer la scène",
+    "insertPageBreak": "Insérer un saut de page",
+    "removePageBreak": "Supprimer le saut de page",
+    "pageBreakHint": "Saut de page"
   },
   "popup": {
     "character": {
@@ -451,6 +474,7 @@
       "warning": "Êtes-vous sûr de vouloir <b>écraser</b> votre projet actuel ?",
       "info": "Vous pouvez exporter votre projet avant d'en importer un nouveau.",
       "yesImport": "Oui, importer",
+      "importing": "Importation…",
       "no": "Non"
     },
     "scene": {
@@ -484,7 +508,8 @@
     "audioHint": "Note vocale",
     "play": "Lire",
     "pause": "Pause",
-    "rename": "Double-cliquez pour renommer"
+    "rename": "Double-cliquez pour renommer",
+    "storageLimitReached": "Limite de stockage atteinte — impossible d'enregistrer ce fichier"
   },
   "production": {
     "title": "Production",

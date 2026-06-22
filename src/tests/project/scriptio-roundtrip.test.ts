@@ -108,7 +108,7 @@ function snapshot(data: ReturnType<typeof projectDataOf>) {
         shelf: data.shelf,
         dictionary: data.dictionary,
         documentContent: data.documentContent,
-        boards: data.boards,
+        boardContent: data.boardContent,
         shelfContent: data.shelfContent,
     };
 }

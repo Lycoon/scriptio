@@ -12,6 +12,7 @@ const PUBLIC_API_PREFIXES = [
     "/api/projects/accept-invite", // Accessible to unauthenticated users via invite link
     "/api/contact", // Public contact form
     "/api/metrics", // Prometheus scrape (gated by bearer token in route handler)
+    "/api/internal/", // Worker→app callbacks (gated by a Worker-signed JWT in the route)
 ];
 
 function isPublicApiRoute(pathname: string): boolean {

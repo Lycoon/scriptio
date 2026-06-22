@@ -1,5 +1,4 @@
 import { DOMSerializer } from "@node_modules/prosemirror-model/dist";
-import { CircularBuffer } from "@src/lib/utils/circular-buffer";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { Editor, Extension } from "@tiptap/core";
 import { Node } from "@tiptap/pm/model";
@@ -167,6 +166,10 @@ export interface PageBreakInfo {
      *  the locked re-application of it — and read by the production panel when
      *  freezing page locks so the split can be reproduced on later recomputes. */
     splitOffset?: number;
+    /** True when this break was forced by a node's manual `pageBreak` attribute
+     *  (inserted from the editor context menu) rather than by natural overflow.
+     *  Drives the "page break" hint rendered in the page gap. */
+    manual?: boolean;
 }
 
 declare module "@tiptap/core" {
@@ -182,6 +185,9 @@ declare module "@tiptap/core" {
             updatePageBreakBackground: (color: string) => ReturnType;
             updateStartNewPageTypes: (types: Set<string>) => ReturnType;
             refreshPagination: () => ReturnType;
+            /** Toggle the manual page-break flag on the top-level node at `pos`.
+             *  When set, pagination forces a new page that begins with that node. */
+            toggleManualPageBreak: (pos: number) => ReturnType;
         };
     }
 }
@@ -498,6 +504,18 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
     // Visual gap between pages (fixed size = pageGap)
     divider.style.height = `${options.pageGap}px`;
 
+    // Manual page break: hint the user that this boundary was forced from the
+    // context menu (vs a natural overflow break). A dashed line spans the gap
+    // with a centred "page break" pill; the label text comes from the
+    // --page-break-label CSS variable (set per-locale by the editor panel),
+    // matching how the (MORE)/(CONT'D) labels are localised.
+    if (breakInfo.manual) {
+        container.classList.add("pagination-manual-break");
+        const marker = document.createElement("div");
+        marker.className = "pagination-manual-break-label";
+        divider.appendChild(marker);
+    }
+
     // Header area of the new page (fixed size = marginTop)
     headerArea.style.height = `${options.marginTop}px`;
     fillHeader(headerArea, breakInfo.pagenum, thisLabel, options);
@@ -682,9 +700,7 @@ function buildDecorations(
     };
 
     // First page top margin / header
-    pushWidget(0, `page-1-header-${firstPageLabel}-${fp}`, -1, () =>
-        createFirstPageWidget(firstPageLabel, options),
-    );
+    pushWidget(0, `page-1-header-${firstPageLabel}-${fp}`, -1, () => createFirstPageWidget(firstPageLabel, options));
     markPageStart(0, "pagination-doc-start");
     if (firstPageLocked) pushPageLockBadge(0);
 
@@ -694,7 +710,7 @@ function buildDecorations(
     // pagenum. A matching key keeps the previously drawn DOM, so a key that
     // omits e.g. freespace causes stale spacer heights after content edits.
     for (const b of breaks) {
-        const key = `pb-${b.pagenum}-${b.freespace}-${b.contdName}-${b.splitNodeType}-${b.label ?? ""}-${b.prevLabel ?? ""}-${b.isEmpty ? "E" : ""}-${b.locked ? "L" : ""}-${fp}`;
+        const key = `pb-${b.pagenum}-${b.freespace}-${b.contdName}-${b.splitNodeType}-${b.label ?? ""}-${b.prevLabel ?? ""}-${b.isEmpty ? "E" : ""}-${b.locked ? "L" : ""}-${b.manual ? "M" : ""}-${fp}`;
         pushWidget(b.pos, key, -1, () => createPageBreakWidget(b, options));
         // Only whole-node breaks start a fresh node; mid-node sentence splits
         // (splitNodeType !== null) keep the straddling node, which never had a
@@ -916,8 +932,14 @@ function trySplitNode(
                 getHTMLHeight(bottomElement, editorDOM, node.type.name, options) - nodeMarginTop,
             );
 
-            // Bottom too short — not worth a split; force the whole node to the next page.
-            if (bottomHeight < LINE_HEIGHT * MIN_SPLIT_BOTTOM_LINES) return null;
+            // Bottom would be a widow (< MIN_SPLIT_BOTTOM_LINES). Don't abandon the
+            // split — try a SHORTER top prefix instead. A shorter top pushes the
+            // next sentence down too, growing the bottom past the threshold while
+            // the (smaller) top still fits the freespace. Heights are monotonic in
+            // the prefix length, so the loop keeps walking down until it finds the
+            // largest prefix that BOTH fits and leaves an adequate bottom; only if
+            // no prefix qualifies do we fall out of the loop and move the whole node.
+            if (bottomHeight < LINE_HEIGHT * MIN_SPLIT_BOTTOM_LINES) continue;
 
             // The split position in document space:
             // nodeDocPos + 1 skips the node's opening token; topText.length then walks
@@ -931,7 +953,8 @@ function trySplitNode(
         }
     }
 
-    // No prefix fits — the first sentence alone is too tall; move the whole node.
+    // No valid split: either the first sentence alone is too tall to fit, or every
+    // prefix that fits would leave a too-short widow on the next page. Move the whole node.
     return null;
 }
 
@@ -1114,13 +1137,16 @@ const createPaginationPlugin = (extension: {
                 // subsequent page is byte-identical to the previous layout.
                 let shortCircuited = false;
 
-                let lastNodes: CircularBuffer<NodeInfo> = new CircularBuffer(3);
+                // Nodes on the current page, oldest first; reset at every break, so it
+                // only ever holds one page's worth (bounded by page height). The orphan
+                // walkback scans it from the end and must see the ENTIRE trailing
+                // keep-with-next run — Scene → Character → Parenthetical is already 3
+                // long — so a fixed 3-slot window would strand the head of longer runs.
+                let lastNodes: NodeInfo[] = [];
                 for (let i = 0; i < childCount; i++) {
                     const node = newState.doc.child(i);
                     const pos = offset;
                     offset += node.nodeSize;
-
-                    if (!("height" in node.attrs)) continue;
 
                     const nodeType = node.type.name as ScreenplayElement;
                     const logic = BREAK_LOGIC[nodeType];
@@ -1147,10 +1173,14 @@ const createPaginationPlugin = (extension: {
 
                     const dataId: string | undefined = node.attrs["data-id"];
 
-                    // --- Force page break for "start new page" elements ---
-                    // If this node type is configured to start a new page and we're
-                    // not already at the top of a page, insert a break before it.
-                    if (options.startNewPageTypes.has(nodeType) && pagePos > 0) {
+                    // --- Force page break for "start new page" elements and manual breaks ---
+                    // A node starts a new page when its type is configured to (startNewPage)
+                    // or when the user attached a manual page break to it from the context
+                    // menu. Reading node.attrs.pageBreak is a single property access — the
+                    // loop already reads node.attrs["data-id"] — so this is hot-path free;
+                    // the break itself is only built for the handful of nodes that carry it.
+                    const manualBreak = node.attrs.pageBreak === true;
+                    if (pagePos > 0 && (manualBreak || options.startNewPageTypes.has(nodeType))) {
                         const freespace = contentHeight - pagePos;
                         breaks.push({
                             pos,
@@ -1160,10 +1190,11 @@ const createPaginationPlugin = (extension: {
                             contdName: "",
                             splitNodeType: null,
                             anchorId: dataId,
+                            manual: manualBreak,
                         });
                         // New page's first node margin is set by the pagePos === 0 path below.
                         pagePos = 0;
-                        lastNodes = new CircularBuffer(3);
+                        lastNodes = [];
                     }
 
                     // --- Force page break for locked page anchors ---
@@ -1226,7 +1257,7 @@ const createPaginationPlugin = (extension: {
                             // split is not a page-start node) — no top margin to strip.
                             pageStartMargin = 0;
                             pagePos = bottomHeight;
-                            lastNodes = new CircularBuffer(3);
+                            lastNodes = [];
                             lastNodes.push({
                                 pos,
                                 type: nodeType,
@@ -1252,7 +1283,7 @@ const createPaginationPlugin = (extension: {
                             });
                             // New page's first node margin is set by the pagePos === 0 path below.
                             pagePos = 0;
-                            lastNodes = new CircularBuffer(3);
+                            lastNodes = [];
                         }
                     }
 
@@ -1266,7 +1297,8 @@ const createPaginationPlugin = (extension: {
                     }
                     pagePos += height;
 
-                    // We keep the last 3 nodes for orphan resolution on page break
+                    // Record this node for orphan resolution; the walkback at the next
+                    // break scans this list backward through the trailing keep-with-next run.
                     lastNodes.push({
                         pos,
                         type: nodeType,
@@ -1322,7 +1354,7 @@ const createPaginationPlugin = (extension: {
                                 // no top margin to strip.
                                 pageStartMargin = 0;
                                 pagePos = split.bottomHeight;
-                                lastNodes = new CircularBuffer(3);
+                                lastNodes = [];
                                 lastNodes.push({
                                     pos,
                                     type: nodeType,
@@ -1335,15 +1367,23 @@ const createPaginationPlugin = (extension: {
                         }
 
                         // --- Orphan resolution ---
-                        // Walk back through the buffer: if the last fitted node has keepWithNext,
-                        // slide the break back to its position (and carry its height to the next page).
-                        // Repeat once more for the double-orphan case (e.g. Character → Parenthetical).
+                        // Walk back through this page's nodes, sliding the break before each
+                        // node that would otherwise be stranded as the page's last item: while
+                        // the would-be last node has keepWithNext, carry it (and its height) to
+                        // the next page. This handles a keep-with-next run of ANY length, e.g.
+                        // Scene → Character → Parenthetical → Dialogue, not just the two-node
+                        // case. It stops at the first node safe to end a page on, at a locked
+                        // anchor (which owns its page), or before the page's first node.
                         let breakPos = pos;
                         let carryHeight = height; // cumulative height that moves to the next page
                         let backCount = 0; // how many nodes slid back
 
-                        for (let back = 1; back <= 2; back++) {
-                            const prev = lastNodes.at(back); // at(1) = last fitted, at(2) = one before
+                        // lastNodes[length - 1] is the current (overflowing) node; index
+                        // (length - 1 - back) walks backward from it (back = 1 is the last
+                        // fitted node). The `back < length - 1` bound never reaches index 0,
+                        // so at least one node always stays — a break can never empty a page.
+                        for (let back = 1; back < lastNodes.length - 1; back++) {
+                            const prev = lastNodes[lastNodes.length - 1 - back];
                             if (!prev) break;
                             // A locked anchor owns its page and must never be displaced by
                             // walkback — otherwise the next overflow would yank it onto an
@@ -1361,9 +1401,10 @@ const createPaginationPlugin = (extension: {
                         }
 
                         // freespace = space left before the first node that moved down.
-                        // lastNodes.at(backCount) is that first node; positionTop is its accumulated
-                        // page height just before it was added — i.e. the used space above it.
-                        const firstMovingNode = lastNodes.at(backCount);
+                        // That first moving node sits backCount steps back from the current node;
+                        // positionTop is its accumulated page height just before it was added —
+                        // i.e. the used space above it.
+                        const firstMovingNode = lastNodes[lastNodes.length - 1 - backCount];
                         const freespace = contentHeight - (firstMovingNode?.positionTop ?? pagePos - height);
 
                         // If the first node moving to the next page is Dialogue or Parenthetical,
@@ -1407,12 +1448,13 @@ const createPaginationPlugin = (extension: {
                         const carryNodes: NodeInfo[] = [];
                         let carryTop = 0;
                         for (let back = backCount; back >= 0; back--) {
-                            const n = lastNodes.at(back)!;
+                            const n = lastNodes[lastNodes.length - 1 - back];
                             carryNodes.push({ ...n, positionTop: carryTop });
                             carryTop += n.height;
                         }
-                        lastNodes = new CircularBuffer(3);
-                        for (const n of carryNodes) lastNodes.push(n);
+                        // carryNodes is already oldest→newest with fresh positionTop values,
+                        // which is exactly the page-relative ordering lastNodes expects.
+                        lastNodes = carryNodes;
 
                         // Short-circuit: past the changed range and this break matches an old break
                         // (same position, freespace, and contdName) → layout is back in sync;
@@ -1745,12 +1787,20 @@ const createPaginationPlugin = (extension: {
             // further edits — otherwise every keystroke after a collapse would
             // be rejected.
             const before = new Set<string>();
+            // Anchors whose node carried a MANUAL page break are exempt from the
+            // spill guard. A manual break is user-controlled, so deleting its
+            // (now empty) node must always be allowed — even when production page
+            // locking froze that node as an anchor. Without this, forward-Delete
+            // and selection-delete of a manual-break line are silently rejected.
+            const manualBreakBefore = new Set<string>();
             tr.before.forEach((node) => {
                 const dataId = node.attrs?.["data-id"];
-                if (typeof dataId === "string") before.add(dataId);
+                if (typeof dataId !== "string") return;
+                before.add(dataId);
+                if (node.attrs?.["pageBreak"]) manualBreakBefore.add(dataId);
             });
             for (const anchor of lockedAnchors) {
-                if (before.has(anchor) && !after.has(anchor)) return false;
+                if (before.has(anchor) && !after.has(anchor) && !manualBreakBefore.has(anchor)) return false;
             }
             return true;
         },
@@ -1762,8 +1812,53 @@ const createPaginationPlugin = (extension: {
     });
 
 // ---------------------------------------------------------------------------
-// Extension
+// Extensions
 // ---------------------------------------------------------------------------
+
+/**
+ * Declares the `pageBreak` block attribute that drives manual page breaks.
+ *
+ * Kept SEPARATE from ScriptioPagination on purpose: this extension is part of
+ * BASE_EXTENSIONS, so the attribute lives in ScreenplaySchema and survives the
+ * full-project `.scriptio` (de)serialization paths (screenplayOf /
+ * applyProjectData), which build nodes from BASE_EXTENSIONS alone — without the
+ * pagination plugin. The pagination *logic*, the toggle command, and the visual
+ * hint stay in ScriptioPagination; only the schema-level attribute lives here.
+ *
+ * Only meaningful on top-level blocks (the pagination loop walks doc children),
+ * so it is limited to those types — off text/marks and the inner dual-dialogue
+ * column. Default null so y-prosemirror persists nothing for the vast majority
+ * of nodes that never carry a break (createTypeFromElementNode skips null
+ * attrs): zero storage and zero hot-path cost.
+ */
+export const PageBreakAttribute = Extension.create({
+    name: "pageBreakAttribute",
+
+    addGlobalAttributes() {
+        return [
+            {
+                types: [
+                    ScreenplayElement.Scene,
+                    ScreenplayElement.Action,
+                    ScreenplayElement.Character,
+                    ScreenplayElement.Dialogue,
+                    ScreenplayElement.Parenthetical,
+                    ScreenplayElement.Transition,
+                    ScreenplayElement.Section,
+                    ScreenplayElement.Note,
+                    ScreenplayElement.DualDialogue,
+                ],
+                attributes: {
+                    pageBreak: {
+                        default: null,
+                        parseHTML: (element) => (element.getAttribute("data-page-break") === "true" ? true : null),
+                        renderHTML: (attributes) => (attributes.pageBreak ? { "data-page-break": "true" } : {}),
+                    },
+                },
+            },
+        ];
+    },
+});
 
 export const ScriptioPagination = Extension.create<PaginationOptions>({
     name: "Pagination",
@@ -1910,6 +2005,41 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                     top: 10px;
                     transform: translateX(calc(100% + 8px));
                 }
+
+                /* Manual (context-menu) page break hint: a dashed line across the
+                   inter-page gap with a centred "page break" pill. Scoped to manual
+                   breaks so natural breaks keep their plain divider. The label text
+                   is supplied per-locale via --page-break-label (set by the editor
+                   panel), mirroring how (MORE)/(CONT'D) are localised. */
+                .pagination-manual-break .pagination-divider {
+                    position: relative;
+                }
+                .pagination-manual-break-label {
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    border-top: 1px dashed var(--secondary-text);
+                    opacity: 0.55;
+                    pointer-events: none;
+                }
+                .pagination-manual-break-label::after {
+                    content: var(--page-break-label, "Page break");
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%, -50%);
+                    background: var(--main-bg);
+                    color: var(--secondary-text);
+                    padding: 1px 10px;
+                    border-radius: 999px;
+                    font-size: 0.68rem;
+                    font-weight: 600;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    white-space: nowrap;
+                }
             `;
 
         setupTestDiv(editorDOM, this.options);
@@ -2024,6 +2154,14 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 const curStart = $from.before();
                 if (curStart === 0) return false;
 
+                // Manual page breaks are user-controlled and exempt from the lock
+                // safeguard: an empty node carrying one must delete like any other
+                // line. Defer to the default joinBackward (the filterTransaction
+                // exemption lets it through) instead of the orphan-preserving
+                // collapse below — otherwise the node goes but its frozen number
+                // lingers as a ghost page.
+                if ($from.parent.attrs?.["pageBreak"]) return false;
+
                 // Collapse case: the current block is itself a locked page anchor
                 // and is now empty (the page's last element was just deleted).
                 // Default joinBackward would remove the anchor's data-id and the
@@ -2044,6 +2182,11 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
 
                 const prev = state.doc.resolve(curStart).nodeBefore;
                 if (!prev || prev.textContent.length !== 0) return false;
+
+                // An empty PREVIOUS node with a manual break is likewise exempt:
+                // backspacing into it should remove the break line, so defer to
+                // the default (allowed by the filterTransaction exemption).
+                if (prev.attrs?.["pageBreak"]) return false;
 
                 const prevDataId = prev.attrs?.["data-id"];
                 if (typeof prevDataId !== "string" || !pageLocks[prevDataId]) return false;
@@ -2197,6 +2340,22 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 () =>
                 ({ tr }) => {
                     tr.setMeta("forcePaginationUpdate", true);
+                    return true;
+                },
+            toggleManualPageBreak:
+                (pos) =>
+                ({ state, tr, dispatch }) => {
+                    // `pos` is the start position of a top-level block (the value
+                    // the context menu resolves via $pos.before(1)). Flip its
+                    // pageBreak flag; the pagination plugin picks the change up
+                    // through the normal doc-changed path and re-breaks the page.
+                    const node = state.doc.nodeAt(pos);
+                    if (!node || !node.isBlock) return false;
+                    if (dispatch) {
+                        const next = node.attrs.pageBreak ? null : true;
+                        tr.setNodeMarkup(pos, undefined, { ...node.attrs, pageBreak: next });
+                        dispatch(tr);
+                    }
                     return true;
                 },
         };

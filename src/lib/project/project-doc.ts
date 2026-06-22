@@ -271,7 +271,7 @@ export type ProjectData = {
     /** Content of every `editor` document node's fragment, keyed by node id. */
     documentContent?: Record<string, JSONContent[]>;
     /** Board data (cards + arrows) for every `board` node, keyed by node id. */
-    boards?: Record<string, BoardData>;
+    boardContent?: Record<string, BoardData>;
     /** Content of every shelf version, keyed by `${nodeId}::${versionId}`. */
     shelfContent?: Record<string, JSONContent[]>;
 };

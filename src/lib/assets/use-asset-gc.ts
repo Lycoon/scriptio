@@ -11,7 +11,8 @@
 
 import { useEffect } from "react";
 import type { ProjectRepository } from "../project/project-repository";
-import { gcProjectAssets, scheduleAssetGc } from "./asset-gc";
+import { gcCloudProjectAssets, gcProjectAssets, scheduleAssetGc } from "./asset-gc";
+import { pushPendingAssets } from "./asset-store";
 
 export function useAssetGc(
     projectId: string | null,
@@ -25,6 +26,13 @@ export function useAssetGc(
         void gcProjectAssets(projectId, ydoc).catch((e) =>
             console.warn("[assets] initial GC failed:", e),
         );
+
+        // Cloud reconcile runs once per open (it scans snapshots server-side, so
+        // it's intentionally not tied to per-edit sweeps).
+        void gcCloudProjectAssets(projectId);
+
+        // Re-upload anything added offline that the cloud is still missing.
+        void pushPendingAssets(projectId, ydoc);
 
         return repository.observeDocuments(() => scheduleAssetGc(projectId, ydoc));
     }, [projectId, repository, isReady]);

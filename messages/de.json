@@ -17,9 +17,12 @@
     "reconnecting": "Verbindung wird wiederhergestellt...",
     "localProject": "Lokales Projekt",
     "uploadToCloud": "In die Cloud hochladen",
+    "storageProject": "Dieses Projekt",
+    "storageTotal": "Gesamt belegt",
     "cachedProject": "Gecachtes Projekt",
     "endlessScroll": "Endloses Scrollen",
     "toggleComments": "Kommentare ein/aus",
+    "toggleSpellcheck": "Rechtschreibprüfung ein/aus",
     "focusMode": "Fokus-Modus",
     "splitPanel": "Panel teilen",
     "unsplitPanel": "Panel schließen",
@@ -88,6 +91,7 @@
     "spellcheckLabel": "Rechtschreibprüfung",
     "spellcheckHelpText": "Laden Sie ein Wörterbuch für die Rechtschreibprüfung im Editor herunter.",
     "spellcheckNone": "Deaktiviert",
+    "spellcheckBuiltin": "Integriert",
     "customDictLabel": "Projektwörterbuch",
     "customDictAdd": "Hinzufügen",
     "customDictEmpty": "Noch keine eigenen Wörter.",
@@ -104,6 +108,7 @@
       "Layout": "Layout",
       "Production": "Produktion",
       "Export": "Import/Export",
+      "Storage": "Speicher",
       "Collaborators": "Mitwirkende",
       "Keybinds": "Tastenkürzel",
       "Appearance": "Erscheinungsbild",
@@ -114,6 +119,21 @@
       "About": "Über",
       "Subscription": "Abonnement"
     }
+  },
+  "storage": {
+    "total": "Belegter Speicher",
+    "description": "Bilder und Audio, die von den Boards dieses Projekts verwendet werden.",
+    "sharedStorage": "Gemeinsamer Speicher",
+    "thisProject": "Dieses Projekt",
+    "otherProjects": "Andere Projekte",
+    "free": "Frei",
+    "localNote": "Dieses Projekt ist noch nicht synchronisiert — angezeigt, wie es auf deinen Cloud-Speicher angerechnet würde.",
+    "empty": "Noch keine Bilder oder Audio in diesem Projekt.",
+    "image": "Bild",
+    "audio": "Audio",
+    "remove": "Entfernen",
+    "confirm": "Aus Projekt entfernen",
+    "cancel": "Abbrechen"
   },
   "dangerZone": {
     "transferOwnership": "Besitz übertragen",
@@ -427,7 +447,10 @@
     "shelveDialogue": "Dialog ablegen",
     "shelveAction": "Aktion ablegen",
     "omitScene": "Szene auslassen",
-    "unomitScene": "Szene wiederherstellen"
+    "unomitScene": "Szene wiederherstellen",
+    "insertPageBreak": "Seitenumbruch einfügen",
+    "removePageBreak": "Seitenumbruch entfernen",
+    "pageBreakHint": "Seitenumbruch"
   },
   "popup": {
     "character": {
@@ -451,6 +474,7 @@
       "warning": "Sind Sie sicher, dass Sie Ihr aktuelles Projekt <b>überschreiben</b> möchten?",
       "info": "Sie können Ihr Projekt exportieren, bevor Sie ein neues importieren.",
       "yesImport": "Ja, importieren",
+      "importing": "Importieren…",
       "no": "Nein"
     },
     "scene": {
@@ -484,7 +508,8 @@
     "audioHint": "Sprachnotiz",
     "play": "Abspielen",
     "pause": "Pause",
-    "rename": "Zum Umbenennen doppelklicken"
+    "rename": "Zum Umbenennen doppelklicken",
+    "storageLimitReached": "Speicherlimit erreicht – diese Datei konnte nicht gespeichert werden"
   },
   "production": {
     "title": "Produktion",

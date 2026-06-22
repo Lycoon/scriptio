@@ -26,6 +26,25 @@ export const DICTIONARY_CATALOG: DictionaryInfo[] = [
 const BASE_URL = "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries";
 
 /**
+ * Dictionary shipped with the app under `public/dictionaries/{code}`. It is loaded
+ * locally — no CDN download — so spell check works on first launch and fully offline.
+ */
+export const BUILTIN_DICTIONARY_CODE = "en";
+
+/**
+ * Load the bundled dictionary from the app's static assets. Resolves against the page
+ * origin, which is the served Next app on web and the static export inside Tauri.
+ */
+export async function loadBuiltinDictionary(): Promise<{ aff: Uint8Array; dic: Uint8Array }> {
+    const dir = `/dictionaries/${BUILTIN_DICTIONARY_CODE}`;
+    const [aff, dic] = await Promise.all([
+        fetch(`${dir}/index.aff`).then((r) => r.arrayBuffer()),
+        fetch(`${dir}/index.dic`).then((r) => r.arrayBuffer()),
+    ]);
+    return { aff: new Uint8Array(aff), dic: new Uint8Array(dic) };
+}
+
+/**
  * Fetch a URL as Uint8Array with optional progress tracking.
  * Uses ReadableStream when available for byte-level progress.
  */

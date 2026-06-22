@@ -3,11 +3,12 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Editor } from "@tiptap/react";
-import { FileText, Maximize, MessageSquare, MessageSquareOff, Minimize, Scroll } from "lucide-react";
+import { FileText, Maximize, Minimize, Scroll, SpellCheck } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { useViewContext } from "@src/context/ViewContext";
+import { useSpellcheck } from "@src/context/SpellcheckContext";
 import { paginationKey } from "@src/lib/screenplay/extensions/pagination-extension";
 import { join } from "@src/lib/utils/misc";
 import WritingTimer from "./WritingTimer";
@@ -50,16 +51,21 @@ const EditorFooter = () => {
     const t = useTranslations("navbar");
     const { editor } = useContext(ProjectContext);
     const { isZenMode, updateIsZenMode } = useContext(UserContext);
-    const {
-        isEndlessScroll,
-        setIsEndlessScroll,
-        showComments,
-        setShowComments,
-        setLeftSidebarOpen,
-        setRightSidebarOpen,
-    } = useViewContext();
+    const { isEndlessScroll, setIsEndlessScroll, setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const { spellcheckLang, setSpellcheckLang } = useSpellcheck();
 
     const pageCount = useScreenplayPageCount(editor);
+
+    // Remember the last active language so the toggle can restore it after being turned
+    // off; default to English when nothing has been selected yet.
+    const lastSpellcheckLang = useRef("en");
+    useEffect(() => {
+        if (spellcheckLang) lastSpellcheckLang.current = spellcheckLang;
+    }, [spellcheckLang]);
+
+    const toggleSpellcheck = useCallback(() => {
+        setSpellcheckLang(spellcheckLang ? null : lastSpellcheckLang.current);
+    }, [spellcheckLang, setSpellcheckLang]);
 
     // Sidebar open-state captured on entering focus mode so it can be restored on exit.
     const sidebarsBeforeFocus = useRef<{ left: boolean; right: boolean } | null>(null);
@@ -124,12 +130,12 @@ const EditorFooter = () => {
             </button>
             <button
                 type="button"
-                className={join(styles.action, !showComments ? styles.action_active : "")}
-                onClick={() => setShowComments((prev) => !prev)}
-                title={t("toggleComments")}
-                aria-label={t("toggleComments")}
+                className={join(styles.action, spellcheckLang ? styles.action_active : "")}
+                onClick={toggleSpellcheck}
+                title={t("toggleSpellcheck")}
+                aria-label={t("toggleSpellcheck")}
             >
-                {showComments ? <MessageSquare size={14} /> : <MessageSquareOff size={14} />}
+                <SpellCheck size={14} />
             </button>
             <button
                 type="button"

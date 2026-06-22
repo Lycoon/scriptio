@@ -1,8 +1,10 @@
+import { FadeInAdapter } from "./fadein/fadein-adapter";
 import { FinalDraftAdapter } from "./fdx/finaldraft-adapter";
 import { FountainAdapter } from "./fountain/fountain-adapter";
 import { PDFAdapter } from "./pdf/pdf-adapter";
 import { ProjectAdapter } from "./screenplay-adapter";
 import { ScriptioAdapter } from "./scriptio/scriptio-adapter";
+import { WriterSoloAdapter } from "./writersolo/writersolo-adapter";
 
 const adapterMap = new Map<string, ProjectAdapter>();
 const registeredAdapters: ProjectAdapter[] = [
@@ -10,6 +12,8 @@ const registeredAdapters: ProjectAdapter[] = [
     new FinalDraftAdapter(),
     new PDFAdapter(),
     new ScriptioAdapter(),
+    new FadeInAdapter(),
+    new WriterSoloAdapter(),
 ];
 
 registeredAdapters.forEach((adapter) => {

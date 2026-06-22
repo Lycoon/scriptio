@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import { SignJWT } from "jose";
 import * as Y from "yjs";
 import * as encoding from "lib0/encoding";
 import * as syncProtocol from "y-protocols/sync";
@@ -18,6 +19,7 @@ import {
 } from "./types";
 import { handleProtocolMessage } from "./protocol";
 import { ProjectState } from "../project/project-doc";
+import { collectReferencedHashes } from "../assets/asset-refs";
 import { migrateProjectDocCore, readProjectDocVersion } from "../project/migrations/project-migration-runner";
 import { CURRENT_PROJECT_VERSION } from "../project/migrations/project-migrations";
 
@@ -117,6 +119,11 @@ export class ProjectRoom extends DurableObject {
                 key TEXT PRIMARY KEY,
                 value TEXT
             );
+            CREATE TABLE IF NOT EXISTS snapshot_assets (
+                snapshot_key TEXT,
+                hash TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_snapshot_assets_key ON snapshot_assets(snapshot_key);
         `);
 
         // Restore project state from SQLite. Attach the update handler AFTER
@@ -294,9 +301,10 @@ export class ProjectRoom extends DurableObject {
                 await (this.env as Env).SNAPSHOTS.put(key, state, {
                     customMetadata: { type: "auto" },
                 });
+                this.indexSnapshotAssets(key);
                 console.log(JSON.stringify({ event: "snapshot_saved", key }));
 
-                // Run retention cleanup
+                // Run retention cleanup (prunes old snapshots + reclaims their assets)
                 await this.cleanupAutoSaves();
             } catch (e) {
                 console.error(JSON.stringify({ event: "snapshot_failed", error: String(e) }));
@@ -370,7 +378,11 @@ export class ProjectRoom extends DurableObject {
         // Batch delete (R2 supports up to 1000 keys per delete)
         if (toDelete.length > 0) {
             await (this.env as Env).SNAPSHOTS.delete(toDelete);
+            this.unindexSnapshots(toDelete);
             console.log(JSON.stringify({ event: "retention_cleanup", deletedCount: toDelete.length }));
+            // Pruning snapshots may have orphaned assets — reclaim them now,
+            // rather than waiting for the next project open.
+            await this.triggerAssetGc();
         }
     }
 
@@ -485,6 +497,11 @@ export class ProjectRoom extends DurableObject {
         // GET /saves — list all saves
         if (request.method === "GET" && url.pathname === "/saves") {
             return this.handleListSaves();
+        }
+
+        // GET /asset-refs — asset hashes referenced by the live doc + every snapshot
+        if (request.method === "GET" && url.pathname === "/asset-refs") {
+            return this.handleAssetRefs();
         }
 
         // POST /saves/manual — create manual save
@@ -715,6 +732,119 @@ export class ProjectRoom extends DurableObject {
         return new Response("Not Found", { status: 404 });
     }
 
+    // ---- Asset GC support ----
+
+    /** Marker hash recorded when a snapshot's board cards couldn't be parsed, so
+     *  reference computation reports `complete: false` and the caller skips GC. */
+    private static readonly UNPARSED = "__unparsed__";
+
+    /**
+     * Record the asset hashes a snapshot references, into the `snapshot_assets`
+     * index. Called right after a snapshot is written to R2 — the doc is in
+     * memory, so this is cheap (no decode). On a parse failure we store a marker
+     * so GC stays conservative.
+     */
+    private indexSnapshotAssets(snapshotKey: string): void {
+        let hashes: Set<string>;
+        try {
+            hashes = collectReferencedHashes(this.doc);
+        } catch {
+            this.ctx.storage.sql.exec(
+                "INSERT INTO snapshot_assets (snapshot_key, hash) VALUES (?, ?)",
+                snapshotKey,
+                ProjectRoom.UNPARSED,
+            );
+            return;
+        }
+        for (const hash of hashes) {
+            this.ctx.storage.sql.exec(
+                "INSERT INTO snapshot_assets (snapshot_key, hash) VALUES (?, ?)",
+                snapshotKey,
+                hash,
+            );
+        }
+    }
+
+    /** Drop a snapshot's rows from the index (after it's deleted/expired). */
+    private unindexSnapshots(snapshotKeys: string[]): void {
+        for (const key of snapshotKeys) {
+            this.ctx.storage.sql.exec("DELETE FROM snapshot_assets WHERE snapshot_key = ?", key);
+        }
+    }
+
+    /** Re-key a snapshot's rows (rename re-puts under a new key). */
+    private rekeySnapshot(oldKey: string, newKey: string): void {
+        this.ctx.storage.sql.exec(
+            "UPDATE snapshot_assets SET snapshot_key = ? WHERE snapshot_key = ?",
+            newKey,
+            oldKey,
+        );
+    }
+
+    /**
+     * The asset hashes referenced by the live doc plus every retained snapshot
+     * (the latter read cheaply from the `snapshot_assets` index — no snapshot
+     * decode). `complete` is false if the live doc or any indexed snapshot
+     * couldn't be parsed, so the caller skips deletion.
+     */
+    private computeReferencedHashes(): { hashes: string[]; complete: boolean } {
+        const referenced = new Set<string>();
+        let complete = true;
+
+        try {
+            for (const hash of collectReferencedHashes(this.doc)) referenced.add(hash);
+        } catch {
+            complete = false;
+        }
+
+        const cursor = this.ctx.storage.sql.exec("SELECT DISTINCT hash FROM snapshot_assets");
+        for (const row of cursor) {
+            const hash = row.hash as string;
+            if (hash === ProjectRoom.UNPARSED) {
+                complete = false;
+                continue;
+            }
+            referenced.add(hash);
+        }
+
+        return { hashes: [...referenced], complete };
+    }
+
+    /**
+     * Tell the Next.js app to reclaim now-orphaned R2 assets. Called after a
+     * snapshot is deleted/expired (the moment an asset can become unreferenced
+     * without any user action). Best-effort — failures are retried on the next
+     * retention pass or the next project open.
+     */
+    private async triggerAssetGc(): Promise<void> {
+        const env = this.env as Env;
+        if (!this.projectId || !env.API_URL) return;
+        try {
+            const { hashes, complete } = this.computeReferencedHashes();
+            const token = await new SignJWT({ type: "asset-gc", projectId: this.projectId })
+                .setProtectedHeader({ alg: "HS256" })
+                .setExpirationTime("1m")
+                .sign(new TextEncoder().encode(env.JWT_SECRET));
+
+            await fetch(`${env.API_URL}/api/internal/asset-gc`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ projectId: this.projectId, referenced: hashes, complete }),
+            });
+        } catch (e) {
+            console.error(JSON.stringify({ event: "asset_gc_trigger_failed", error: String(e) }));
+        }
+    }
+
+    /**
+     * Asset hashes referenced by the live doc + every retained snapshot, served
+     * from the index (cheap). The Next.js asset GC route deletes only assets in
+     * none of these, so restoring an older save never loses its images/audio.
+     */
+    private handleAssetRefs(): Response {
+        return Response.json(this.computeReferencedHashes(), { status: 200 });
+    }
+
     // ---- Save/Restore handlers ----
 
     private async handleListSaves(): Promise<Response> {
@@ -779,6 +909,7 @@ export class ProjectRoom extends DurableObject {
         await (this.env as Env).SNAPSHOTS.put(key, state, {
             customMetadata: { type: "manual", name },
         });
+        this.indexSnapshotAssets(key);
 
         console.log(JSON.stringify({ event: "manual_save_created", name }));
 
@@ -868,6 +999,7 @@ export class ProjectRoom extends DurableObject {
             customMetadata: { type: "manual", name },
         });
         await (this.env as Env).SNAPSHOTS.delete(key);
+        this.rekeySnapshot(key, newKey); // refs unchanged — just follow the key
 
         console.log(JSON.stringify({ event: "save_renamed", key, name }));
         return new Response("Renamed", { status: 200 });
@@ -880,7 +1012,10 @@ export class ProjectRoom extends DurableObject {
         }
 
         await (this.env as Env).SNAPSHOTS.delete(key);
+        this.unindexSnapshots([key]);
         console.log(JSON.stringify({ event: "save_deleted", key }));
+        // Deleting a save may have orphaned assets — reclaim them now.
+        await this.triggerAssetGc();
         return new Response("Deleted", { status: 200 });
     }
 
