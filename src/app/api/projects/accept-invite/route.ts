@@ -4,6 +4,7 @@ import { InternalServerError, NotFoundError, validate } from "@src/lib/utils/api
 import * as ProjectService from "@src/server/service/project-service";
 import * as UserService from "@src/server/service/user-service";
 import * as Misc from "@src/lib/utils/misc";
+import * as CollabUtils from "@src/lib/cloud/utils";
 
 import z from "zod";
 import { NextRequest } from "next/server";
@@ -37,6 +38,16 @@ async function acceptProjectInvite(req: NextRequest, { searchParams }: ApiContex
         // If user exists, we can add him as a project member
         await ProjectService.upsertMember(invite.projectId, user.id);
         await ProjectService.deleteInviteFromToken(token);
+
+        // The DO keeps a blacklist of kicked userIds (persisted in SQLite).
+        // If this user was previously kicked from this project, the entry is
+        // still there and would reject their next WS upgrade with 403. Clear
+        // it now so the re-invite actually grants access.
+        try {
+            await CollabUtils.allowOnWebsocket(user.id, invite.projectId);
+        } catch (err) {
+            console.error("[accept-invite] Failed to clear blacklist:", err);
+        }
 
         // If user is not logged in, send them to the home page with the email pre-filled
         // so they can request a magic link.

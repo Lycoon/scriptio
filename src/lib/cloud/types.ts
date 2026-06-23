@@ -1,9 +1,11 @@
 /// <reference types="@cloudflare/workers-types" />
 
 export interface Env {
-    SCREENPLAY_ROOM: DurableObjectNamespace;
+    PROJECT_ROOM: DurableObjectNamespace;
     JWT_SECRET: string;
     SNAPSHOTS: R2Bucket;
+    /** Base URL of the Next.js app, for the asset-GC callback (e.g. https://scriptio.app). */
+    API_URL: string;
 }
 
 // Configuration
@@ -21,6 +23,8 @@ export const RETENTION_INTERVAL_30MIN_MS = 30 * 60 * 1000;
 export interface SessionInfo {
     clientIds: Set<number>;
     userId: string;
+    /** Project role from the JWT — used to gate doc writes (VIEWER is read-only). */
+    role: string;
     lastActivity: number;
 }
 

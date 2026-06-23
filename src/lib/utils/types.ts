@@ -16,6 +16,7 @@ export type User = CookieUser & {
 };
 
 export type ProjectCreation = {
+    id?: string;
     userId: string;
     title: string;
     description?: string;
@@ -41,7 +42,7 @@ export interface UserSettings {
 }
 
 export type UserLanguage = "en" | "es" | "fr" | "zh" | "ko" | "ja" | "de" | "pl";
-export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint" | "blossom";
+export type UserTheme = "light" | "dark" | "latte" | "wonka" | "mint" | "blossom" | "midnight";
 
 /* Dictionaries */
 
@@ -87,6 +88,8 @@ export type CommentReply = {
 
 export type Comment = {
     id: string;
+    /** data-id of the screenplay node this comment is anchored to. */
+    nodeId: string;
     text: string;
     author: string;
     createdAt: number;

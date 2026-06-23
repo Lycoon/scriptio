@@ -4,7 +4,7 @@ import fountain from "./fountain_parser";
 import { generateJSON, JSONContent } from "@tiptap/react";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { BASE_EXTENSIONS } from "@src/lib/screenplay/editor";
-import { ProjectData, ProjectState } from "@src/lib/project/project-state";
+import { ProjectData, ProjectState, screenplayOf, titlepageOf } from "@src/lib/project/project-state";
 
 export class FountainAdapter extends ProjectAdapter {
     label = "Fountain Script";
@@ -42,7 +42,7 @@ export class FountainAdapter extends ProjectAdapter {
      * and plain text lines to Credit.
      */
     private buildFountainTitlePage(project: ProjectState, options: BaseExportOptions): string {
-        const titlePageContent = project.titlepage();
+        const titlePageContent = titlepageOf(project);
         if (!titlePageContent || titlePageContent.length === 0) return "";
 
         const lines: string[] = [];
@@ -87,7 +87,7 @@ export class FountainAdapter extends ProjectAdapter {
         let fountain = this.buildFountainTitlePage(project, options);
 
         let sceneCount = 1;
-        const nodes = project.screenplay();
+        const nodes = screenplayOf(project);
         const characters = options.characters;
 
         for (let i = 0; i < nodes.length; i++) {
@@ -112,6 +112,14 @@ export class FountainAdapter extends ProjectAdapter {
                 }
                 i = j - 1;
                 continue;
+            }
+
+            // Manual page break: emit a standalone `===` line before this block,
+            // surrounded by blank lines so the parser reads it as a page break and
+            // re-attaches it to this block on import. Placed after the skip checks
+            // so the break stays anchored to a block that is actually exported.
+            if (nodes[i].attrs?.pageBreak) {
+                fountain += "\n===\n\n";
             }
 
             // Handle styled text fragments
@@ -173,7 +181,14 @@ export class FountainAdapter extends ProjectAdapter {
         const decoder = new TextDecoder("utf-8");
         const text = decoder.decode(rawContent);
         const output = fountain.parse(text, true);
-        const html = output["html"]["script"];
+        // A Fountain page break (a line of `===`) parses to an <hr /> in the
+        // script HTML. Our schema has no horizontal-rule node; a page break is
+        // instead a `pageBreak` attribute on the block that STARTS the new page.
+        // Fold each <hr /> into the following block as data-page-break, which
+        // PageBreakAttribute.parseHTML turns into the attribute. A trailing
+        // <hr /> with no following block (page break at end of file) simply has
+        // no match and is dropped — a break with no content is meaningless.
+        const html = output["html"]["script"].replace(/<hr\s*\/>\s*<p\b/g, '<p data-page-break="true"');
         const json = generateJSON(html, BASE_EXTENSIONS) as JSONContent;
 
         const project: Partial<ProjectData> = {

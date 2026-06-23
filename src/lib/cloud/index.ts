@@ -1,12 +1,13 @@
 /// <reference types="@cloudflare/workers-types" />
 import { jwtVerify, JWTPayload } from "jose";
 import { Env } from "./types";
-import { ScreenplayRoom } from "./room";
+import { ProjectRoom } from "./room";
 
 interface DecodedToken extends JWTPayload {
     type?: string;
     projectId?: string;
     userId?: string;
+    role?: string;
 }
 
 async function getVerifiedPayload(token: string | null, secret: string): Promise<DecodedToken | null> {
@@ -20,7 +21,7 @@ async function getVerifiedPayload(token: string | null, secret: string): Promise
     }
 }
 
-export { ScreenplayRoom };
+export { ProjectRoom };
 
 const worker = {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -36,11 +37,12 @@ const worker = {
         // segments: [projectId, ...rest]
         const doPath = "/" + segments.slice(1).join("/");
 
-        // Authenticated API endpoints (saves, blacklist, allow)
+        // Authenticated API endpoints (saves, blacklist, allow, role-update)
         const isAuthEndpoint =
             url.pathname.includes("/saves") ||
             url.pathname.endsWith("/blacklist") ||
-            url.pathname.endsWith("/allow");
+            url.pathname.endsWith("/allow") ||
+            url.pathname.endsWith("/role-update");
 
         if (isAuthEndpoint && request.method !== "GET") {
             const authHeader = request.headers.get("Authorization");
@@ -55,7 +57,7 @@ const worker = {
                 return new Response("Unauthorized: Project mismatch", { status: 401 });
             }
 
-            const stub = env.SCREENPLAY_ROOM.get(env.SCREENPLAY_ROOM.idFromName(projectId));
+            const stub = env.PROJECT_ROOM.get(env.PROJECT_ROOM.idFromName(projectId));
             const doUrl = new URL(request.url);
             doUrl.pathname = doPath;
             const doRequest = new Request(doUrl.toString(), request);
@@ -63,8 +65,11 @@ const worker = {
             return stub.fetch(doRequest);
         }
 
-        // GET /saves also needs auth
-        if (request.method === "GET" && url.pathname.includes("/saves")) {
+        // GET /saves and GET /asset-refs also need auth (admin-action token)
+        if (
+            request.method === "GET" &&
+            (url.pathname.includes("/saves") || url.pathname.endsWith("/asset-refs"))
+        ) {
             const authHeader = request.headers.get("Authorization");
             const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
@@ -77,7 +82,7 @@ const worker = {
                 return new Response("Unauthorized: Project mismatch", { status: 401 });
             }
 
-            const stub = env.SCREENPLAY_ROOM.get(env.SCREENPLAY_ROOM.idFromName(projectId));
+            const stub = env.PROJECT_ROOM.get(env.PROJECT_ROOM.idFromName(projectId));
             const doUrl = new URL(request.url);
             doUrl.pathname = doPath;
             const doRequest = new Request(doUrl.toString(), request);
@@ -101,9 +106,10 @@ const worker = {
 
             const newRequest = new Request(request);
             newRequest.headers.set("X-User-Id", userId);
+            newRequest.headers.set("X-User-Role", decoded.role || "VIEWER");
             newRequest.headers.set("X-Project-Id", projectId);
 
-            const stub = env.SCREENPLAY_ROOM.get(env.SCREENPLAY_ROOM.idFromName(projectId));
+            const stub = env.PROJECT_ROOM.get(env.PROJECT_ROOM.idFromName(projectId));
             return stub.fetch(newRequest);
         }
 

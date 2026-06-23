@@ -1,3 +1,5 @@
+import ScriptioLogo from "@public/images/scriptio.svg";
+import { Tag, GitCommit } from "lucide-react";
 import styles from "./AboutSettings.module.css";
 
 const AboutSettings = () => {
@@ -6,13 +8,29 @@ const AboutSettings = () => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.row}>
-                <span className={styles.label}>Version</span>
-                <span className={styles.value}>v{version}</span>
+            <div className={styles.brandSection}>
+                <div className={styles.logoWrapper}>
+                    <ScriptioLogo className={styles.logo} />
+                </div>
+                <h1 className={styles.title}>Scriptio</h1>
+                <p className={styles.copyright}>© {new Date().getFullYear()} Arko Logic</p>
             </div>
-            <div className={styles.row}>
-                <span className={styles.label}>Build</span>
-                <span className={styles.value}>{buildId}</span>
+
+            <div className={styles.infoSection}>
+                <div className={styles.row}>
+                    <div className={styles.labelGroup}>
+                        <Tag size={18} className={styles.icon} />
+                        <span className={styles.label}>Version</span>
+                    </div>
+                    <span className={styles.value}>v{version}</span>
+                </div>
+                <div className={styles.row}>
+                    <div className={styles.labelGroup}>
+                        <GitCommit size={18} className={styles.icon} />
+                        <span className={styles.label}>Build</span>
+                    </div>
+                    <span className={styles.value}>{buildId}</span>
+                </div>
             </div>
         </div>
     );

@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import { SignJWT } from "jose";
 import * as Y from "yjs";
 import * as encoding from "lib0/encoding";
 import * as syncProtocol from "y-protocols/sync";
@@ -17,26 +18,41 @@ import {
     SaveEntry,
 } from "./types";
 import { handleProtocolMessage } from "./protocol";
+import { ProjectState } from "../project/project-doc";
+import { collectReferencedHashes } from "../assets/asset-refs";
+import { migrateProjectDocCore, readProjectDocVersion } from "../project/migrations/project-migration-runner";
+import { CURRENT_PROJECT_VERSION } from "../project/migrations/project-migrations";
 
-export class ScreenplayRoom extends DurableObject {
-    doc: Y.Doc;
+export class ProjectRoom extends DurableObject {
+    doc: ProjectState;
     saveTimeout: ReturnType<typeof setTimeout> | null = null;
     awareness: awarenessProtocol.Awareness;
     sessions: Map<WebSocket, SessionInfo>;
     userConnections: Map<string, WebSocket>;
     blacklist: Set<string>;
-    cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
     private isDirty: boolean = false;
     private alarmScheduled: boolean = false;
     private projectId: string | null = null;
+    private lastAwarenessCleanup: number = 0;
+
+    /** Project schema version of the in-memory doc; the gatekeeper compares
+     *  client-advertised versions against this on connect. */
+    private docVersion: number = CURRENT_PROJECT_VERSION;
+
+    /** Set if server-side migration threw; we refuse new connections until
+     *  the project is fixed manually (preserves data integrity). */
+    private docMigrationFailed: boolean = false;
 
     // Typed references to bound handlers — initialized in the constructor body
     // so they're guaranteed to exist before being passed to doc.on/doc.off.
     // (esbuild does not guarantee class-field arrow functions are initialized
     // before the constructor body runs.)
     private handleDocUpdate!: (update: Uint8Array, origin: unknown) => void;
-    private handleAwarenessUpdate!: (changes: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => void;
+    private handleAwarenessUpdate!: (
+        changes: { added: number[]; updated: number[]; removed: number[] },
+        origin: unknown,
+    ) => void;
 
     constructor(ctx: DurableObjectState, env: Env) {
         super(ctx, env);
@@ -53,17 +69,29 @@ export class ScreenplayRoom extends DurableObject {
             this.markDirty();
         };
 
-        this.handleAwarenessUpdate = ({ added }: { added: number[]; updated: number[]; removed: number[] }, origin: unknown): void => {
+        this.handleAwarenessUpdate = (
+            { added, updated }: { added: number[]; updated: number[]; removed: number[] },
+            origin: unknown,
+        ): void => {
             if (origin instanceof WebSocket) {
                 const session = this.sessions.get(origin);
                 if (session) {
-                    added.forEach((id: number) => session.clientIds.add(id));
+                    let changed = false;
+                    const toAdd = [...added, ...updated];
+                    toAdd.forEach((id: number) => {
+                        if (!session.clientIds.has(id)) {
+                            session.clientIds.add(id);
+                            changed = true;
+                        }
+                    });
                     session.lastActivity = Date.now();
+                    // Persist updated clientIds so they survive DO hibernation.
+                    if (changed) this.persistSessionAttachment(origin);
                 }
             }
         };
 
-        this.doc = new Y.Doc();
+        this.doc = new ProjectState();
         this.awareness = new awarenessProtocol.Awareness(this.doc);
 
         // Disable the built-in 30s outdated-state cleanup — we manage session
@@ -74,10 +102,6 @@ export class ScreenplayRoom extends DurableObject {
         this.sessions = new Map();
         this.userConnections = new Map();
         this.blacklist = new Set();
-
-        // Listen for document updates and handle broadcasting + persistence.
-        // This is the source of truth for ALL changes to the document.
-        this.doc.on("update", this.handleDocUpdate);
 
         // Track client IDs when awareness updates come from a WebSocket
         this.awareness.on("update", this.handleAwarenessUpdate);
@@ -95,15 +119,28 @@ export class ScreenplayRoom extends DurableObject {
                 key TEXT PRIMARY KEY,
                 value TEXT
             );
+            CREATE TABLE IF NOT EXISTS snapshot_assets (
+                snapshot_key TEXT,
+                hash TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_snapshot_assets_key ON snapshot_assets(snapshot_key);
         `);
 
-        // Restore project state
+        // Restore project state from SQLite. Attach the update handler AFTER
+        // the restore so that re-loading persisted bytes on every DO wake-up
+        // doesn't trigger scheduleSave / markDirty (which would save identical
+        // bytes and schedule an unnecessary R2 snapshot).
         const cursor = this.ctx.storage.sql.exec("SELECT data FROM project WHERE id = 1;");
         for (const row of cursor) {
             if (row.data) {
                 Y.applyUpdate(this.doc, new Uint8Array(row.data as ArrayBuffer));
             }
         }
+
+        // Listen for document updates and handle broadcasting + persistence.
+        // Attached here (after restore) so only live writes from WS clients
+        // and server-side migrations trigger the save pipeline.
+        this.doc.on("update", this.handleDocUpdate);
 
         // Restore blacklist
         const blacklistRows = this.ctx.storage.sql.exec("SELECT user_id FROM blacklist;").toArray();
@@ -117,10 +154,108 @@ export class ScreenplayRoom extends DurableObject {
             this.projectId = configRows[0].value as string;
         }
 
-        // Start periodic stale awareness cleanup
-        this.startAwarenessCleanup();
+        // Server-side migration gatekeeper: bring the doc up to
+        // CURRENT_PROJECT_VERSION before any client is allowed to connect.
+        // blockConcurrencyWhile makes incoming requests wait for completion.
+        this.ctx.blockConcurrencyWhile(async () => {
+            await this.runDocMigration();
+            this.observeDocVersion();
+        });
 
-        console.log("[Room] Initialized");
+        // Restore sessions from hibernated WebSockets. Cloudflare DOs can
+        // hibernate to save memory while WebSockets stay connected; on the
+        // next message the constructor runs again with empty maps. Without
+        // this restoration, incoming messages have no session to attach to,
+        // session activity tracking breaks, webSocketClose finds nothing to
+        // clean up, and broadcastAwarenessRequest counts wrongly.
+        const hibernatedSockets = this.ctx.getWebSockets();
+        for (const ws of hibernatedSockets) {
+            const attachment = ws.deserializeAttachment() as
+                | { userId: string; role?: string; clientIds: number[] }
+                | null;
+            if (!attachment) continue;
+            this.sessions.set(ws, {
+                clientIds: new Set(attachment.clientIds),
+                userId: attachment.userId,
+                // Older attachments may not have a role; default to VIEWER
+                // (read-only) to fail safe — the client will reconnect with a
+                // fresh JWT carrying the correct role on the next message.
+                role: attachment.role || "VIEWER",
+                lastActivity: Date.now(),
+            });
+            this.userConnections.set(attachment.userId, ws);
+        }
+        if (hibernatedSockets.length > 0) {
+            console.log(JSON.stringify({ event: "room_restore", hibernatedSockets: hibernatedSockets.length, restoredSessions: this.sessions.size }));
+            // Awareness state was lost when the DO hibernated. Ask all
+            // restored clients to re-broadcast their awareness so we can
+            // rebuild room.awareness from scratch.
+            this.broadcastAwarenessRequest();
+        }
+
+        console.log(JSON.stringify({ event: "room_initialized" }));
+    }
+
+    /**
+     * Persist the current session state on the WebSocket so it survives
+     * Cloudflare DO hibernation. Called whenever clientIds, userId, or role
+     * changes for a session.
+     */
+    private persistSessionAttachment(ws: WebSocket): void {
+        const session = this.sessions.get(ws);
+        if (!session) return;
+        ws.serializeAttachment({
+            userId: session.userId,
+            role: session.role,
+            clientIds: Array.from(session.clientIds),
+        });
+    }
+
+    /**
+     * Apply pending project-doc migrations to the in-memory doc and persist
+     * the result. Idempotent: a no-op when the doc is already at
+     * CURRENT_PROJECT_VERSION.
+     */
+    private async runDocMigration(): Promise<void> {
+        const outcome = await migrateProjectDocCore({ ydoc: this.doc });
+        switch (outcome.kind) {
+            case "up-to-date":
+                this.docVersion = outcome.version;
+                break;
+            case "migrated":
+                this.docVersion = outcome.to;
+                console.log(JSON.stringify({ event: "document_migrated", fromVersion: outcome.from, toVersion: outcome.to, steps: outcome.appliedSteps.length }));
+                // Persist the migrated state immediately so a restart doesn't replay.
+                await this.saveToDisk();
+                break;
+            case "future-version":
+                // The on-disk doc is at a version newer than this worker knows.
+                // Refuse new connections until the worker is upgraded.
+                this.docMigrationFailed = true;
+                this.docVersion = outcome.storedVersion;
+                console.error(JSON.stringify({ event: "document_migration_future_version", storedVersion: outcome.storedVersion, expectedVersion: outcome.expected, message: "Worker is out of date — refusing connections." }));
+                break;
+            case "failed":
+                this.docMigrationFailed = true;
+                this.docVersion = outcome.from;
+                console.error(JSON.stringify({ event: "document_migration_failed", failedAtStep: outcome.failedAt, storedVersion: outcome.from, error: String(outcome.error) }));
+                break;
+        }
+    }
+
+    /**
+     * Track upward changes to metadata.version so the connection gatekeeper
+     * always sees the latest doc version (e.g., after a higher-version client
+     * propagates a migration we don't yet know about — would-be future-version).
+     */
+    private observeDocVersion(): void {
+        const map = this.doc.getMap("metadata") as Y.Map<unknown>;
+        map.observe(() => {
+            const v = map.get("version");
+            if (typeof v === "number" && v > this.docVersion) {
+                this.docVersion = v;
+            }
+        });
     }
 
     /**
@@ -166,12 +301,13 @@ export class ScreenplayRoom extends DurableObject {
                 await (this.env as Env).SNAPSHOTS.put(key, state, {
                     customMetadata: { type: "auto" },
                 });
-                console.log(`[Room] Snapshot saved to R2: ${key}`);
+                this.indexSnapshotAssets(key);
+                console.log(JSON.stringify({ event: "snapshot_saved", key }));
 
-                // Run retention cleanup
+                // Run retention cleanup (prunes old snapshots + reclaims their assets)
                 await this.cleanupAutoSaves();
             } catch (e) {
-                console.error("[Room] Failed to snapshot to R2:", e);
+                console.error(JSON.stringify({ event: "snapshot_failed", error: String(e) }));
                 // Re-mark dirty so next alarm retries
                 this.isDirty = true;
                 this.scheduleSnapshotAlarm();
@@ -242,7 +378,11 @@ export class ScreenplayRoom extends DurableObject {
         // Batch delete (R2 supports up to 1000 keys per delete)
         if (toDelete.length > 0) {
             await (this.env as Env).SNAPSHOTS.delete(toDelete);
-            console.log(`[Room] Retention cleanup: deleted ${toDelete.length} auto-saves`);
+            this.unindexSnapshots(toDelete);
+            console.log(JSON.stringify({ event: "retention_cleanup", deletedCount: toDelete.length }));
+            // Pruning snapshots may have orphaned assets — reclaim them now,
+            // rather than waiting for the next project open.
+            await this.triggerAssetGc();
         }
     }
 
@@ -256,12 +396,16 @@ export class ScreenplayRoom extends DurableObject {
     }
 
     /**
-     * Start periodic cleanup of stale awareness states
+     * Throttled inline cleanup. Called from message/connect paths instead of
+     * setInterval — a live timer would prevent the DO from hibernating, which
+     * keeps it billed continuously. With this approach the DO only does
+     * cleanup work when traffic is already arriving.
      */
-    private startAwarenessCleanup(): void {
-        this.cleanupInterval = setInterval(() => {
-            this.cleanupStaleAwareness();
-        }, AWARENESS_CLEANUP_INTERVAL_MS);
+    maybeCleanupStaleAwareness(): void {
+        const now = Date.now();
+        if (now - this.lastAwarenessCleanup < AWARENESS_CLEANUP_INTERVAL_MS) return;
+        this.lastAwarenessCleanup = now;
+        this.cleanupStaleAwareness();
     }
 
     /**
@@ -276,9 +420,7 @@ export class ScreenplayRoom extends DurableObject {
             const timeSinceActivity = now - session.lastActivity;
 
             if (timeSinceActivity > STALE_AWARENESS_TIMEOUT_MS) {
-                console.log(
-                    `[Room] Session for user ${session.userId} is stale (${timeSinceActivity}ms since activity)`,
-                );
+                console.log(JSON.stringify({ event: "stale_session", userId: session.userId, timeSinceActivity }));
                 staleClientIds.push(...session.clientIds);
                 staleSockets.push(socket);
             }
@@ -327,7 +469,7 @@ export class ScreenplayRoom extends DurableObject {
                 }
             }
 
-            console.log(`[Room] Cleaned up ${staleClientIds.length} stale awareness states`);
+            console.log(JSON.stringify({ event: "cleaned_stale_awareness", count: staleClientIds.length }));
         }
     }
 
@@ -355,6 +497,11 @@ export class ScreenplayRoom extends DurableObject {
         // GET /saves — list all saves
         if (request.method === "GET" && url.pathname === "/saves") {
             return this.handleListSaves();
+        }
+
+        // GET /asset-refs — asset hashes referenced by the live doc + every snapshot
+        if (request.method === "GET" && url.pathname === "/asset-refs") {
+            return this.handleAssetRefs();
         }
 
         // POST /saves/manual — create manual save
@@ -424,7 +571,7 @@ export class ScreenplayRoom extends DurableObject {
 
             this.ctx.storage.sql.exec("INSERT OR IGNORE INTO blacklist (user_id) VALUES (?);", userId);
 
-            console.log(`[Room] Blacklisted user ${userId}`);
+            console.log(JSON.stringify({ event: "user_blacklisted", userId }));
             return new Response(`User ${userId} blacklisted.`, { status: 200 });
         }
 
@@ -440,8 +587,41 @@ export class ScreenplayRoom extends DurableObject {
                 this.ctx.storage.sql.exec("DELETE FROM blacklist WHERE user_id = ?;", userId);
             }
 
-            console.log(`[Room] Allowed user ${userId}`);
+            console.log(JSON.stringify({ event: "user_allowed", userId }));
             return new Response(`User ${userId} allowed.`, { status: 200 });
+        }
+
+        // Role-update endpoint — push a role change to a connected user.
+        // Updates the in-memory SessionInfo so the protocol's write gate uses
+        // the new role on the next message, and notifies the client so its
+        // local `project.role` updates without a manual refresh. We don't
+        // close the socket: the existing JWT carries the OLD role, but the
+        // server-side gate is the source of truth and is now correct.
+        if (request.method === "POST" && url.pathname === "/role-update") {
+            const { userId, role } = (await request.json()) as { userId?: string; role?: string };
+            if (!userId || !role) {
+                return new Response("Missing userId or role", { status: 400 });
+            }
+
+            const socket = this.userConnections.get(userId);
+            if (socket) {
+                const session = this.sessions.get(socket);
+                if (session) {
+                    session.role = role;
+                    this.persistSessionAttachment(socket);
+                }
+                try {
+                    const encoder = encoding.createEncoder();
+                    encoding.writeVarUint(encoder, 100); // custom message type: role-update
+                    encoding.writeVarString(encoder, role);
+                    socket.send(encoding.toUint8Array(encoder));
+                } catch (e) {
+                    console.error(JSON.stringify({ event: "role_update_push_failed", userId, error: String(e) }));
+                }
+            }
+
+            console.log(JSON.stringify({ event: "role_updated", userId, role }));
+            return new Response(`User ${userId} role updated.`, { status: 200 });
         }
 
         // WebSocket upgrade
@@ -450,9 +630,17 @@ export class ScreenplayRoom extends DurableObject {
             if (!userId) {
                 return new Response("Missing User Identity", { status: 400 });
             }
+            const role = request.headers.get("X-User-Role") || "VIEWER";
 
             if (this.blacklist.has(userId)) {
                 return new Response("Unauthorized: You have been kicked.", { status: 403 });
+            }
+
+            // Server-side migration gatekeeper. Refuse the upgrade if
+            // server-side migration failed — data integrity is at risk and
+            // the project should be inspected manually.
+            if (this.docMigrationFailed) {
+                return new Response("Project temporarily unavailable", { status: 503 });
             }
 
             // Clean up any existing connection for this user (e.g., stale tab).
@@ -480,13 +668,30 @@ export class ScreenplayRoom extends DurableObject {
 
             this.ctx.acceptWebSocket(server);
 
+            // Stale-client gate: reject clients whose bundle is older than
+            // the doc's schema version. Sending sync to them would let them
+            // write back the pre-migration shape and corrupt the doc.
+            const clientVersionParam = url.searchParams.get("clientVersion");
+            const clientVersion = clientVersionParam !== null ? Number(clientVersionParam) : NaN;
+            if (Number.isFinite(clientVersion) && clientVersion < this.docVersion) {
+                console.warn(JSON.stringify({ event: "client_rejected_stale", clientVersion, docVersion: this.docVersion }));
+                try {
+                    server.close(4006, `Stale client: update to access v${this.docVersion}`);
+                } catch {}
+                return new Response(null, { status: 101, webSocket: client });
+            }
+
             // Initialize session
             this.sessions.set(server, {
                 clientIds: new Set(),
                 userId,
+                role,
                 lastActivity: Date.now(),
             });
             this.userConnections.set(userId, server);
+            // Persist immediately so a hibernation-wake before the first
+            // awareness message can still identify this socket.
+            this.persistSessionAttachment(server);
 
             // Send current document state (sync step 1) using the same encoder
             // pattern as all other outgoing messages — avoids fragile manual byte prepend.
@@ -508,7 +713,11 @@ export class ScreenplayRoom extends DurableObject {
                 server.send(encoding.toUint8Array(awarenessEncoder));
             }
 
-            console.log(`[Room] User ${userId} connected. Total sessions: ${this.sessions.size}`);
+            console.log(JSON.stringify({ event: "user_connected", userId, totalSessions: this.sessions.size }));
+
+            // Opportunistic cleanup on connect — a new client arriving is the
+            // best moment to drop awareness for clients that quietly went away.
+            this.maybeCleanupStaleAwareness();
 
             // Request all existing clients to re-broadcast their awareness
             // This ensures the new client receives everyone's current state,
@@ -521,6 +730,119 @@ export class ScreenplayRoom extends DurableObject {
         }
 
         return new Response("Not Found", { status: 404 });
+    }
+
+    // ---- Asset GC support ----
+
+    /** Marker hash recorded when a snapshot's board cards couldn't be parsed, so
+     *  reference computation reports `complete: false` and the caller skips GC. */
+    private static readonly UNPARSED = "__unparsed__";
+
+    /**
+     * Record the asset hashes a snapshot references, into the `snapshot_assets`
+     * index. Called right after a snapshot is written to R2 — the doc is in
+     * memory, so this is cheap (no decode). On a parse failure we store a marker
+     * so GC stays conservative.
+     */
+    private indexSnapshotAssets(snapshotKey: string): void {
+        let hashes: Set<string>;
+        try {
+            hashes = collectReferencedHashes(this.doc);
+        } catch {
+            this.ctx.storage.sql.exec(
+                "INSERT INTO snapshot_assets (snapshot_key, hash) VALUES (?, ?)",
+                snapshotKey,
+                ProjectRoom.UNPARSED,
+            );
+            return;
+        }
+        for (const hash of hashes) {
+            this.ctx.storage.sql.exec(
+                "INSERT INTO snapshot_assets (snapshot_key, hash) VALUES (?, ?)",
+                snapshotKey,
+                hash,
+            );
+        }
+    }
+
+    /** Drop a snapshot's rows from the index (after it's deleted/expired). */
+    private unindexSnapshots(snapshotKeys: string[]): void {
+        for (const key of snapshotKeys) {
+            this.ctx.storage.sql.exec("DELETE FROM snapshot_assets WHERE snapshot_key = ?", key);
+        }
+    }
+
+    /** Re-key a snapshot's rows (rename re-puts under a new key). */
+    private rekeySnapshot(oldKey: string, newKey: string): void {
+        this.ctx.storage.sql.exec(
+            "UPDATE snapshot_assets SET snapshot_key = ? WHERE snapshot_key = ?",
+            newKey,
+            oldKey,
+        );
+    }
+
+    /**
+     * The asset hashes referenced by the live doc plus every retained snapshot
+     * (the latter read cheaply from the `snapshot_assets` index — no snapshot
+     * decode). `complete` is false if the live doc or any indexed snapshot
+     * couldn't be parsed, so the caller skips deletion.
+     */
+    private computeReferencedHashes(): { hashes: string[]; complete: boolean } {
+        const referenced = new Set<string>();
+        let complete = true;
+
+        try {
+            for (const hash of collectReferencedHashes(this.doc)) referenced.add(hash);
+        } catch {
+            complete = false;
+        }
+
+        const cursor = this.ctx.storage.sql.exec("SELECT DISTINCT hash FROM snapshot_assets");
+        for (const row of cursor) {
+            const hash = row.hash as string;
+            if (hash === ProjectRoom.UNPARSED) {
+                complete = false;
+                continue;
+            }
+            referenced.add(hash);
+        }
+
+        return { hashes: [...referenced], complete };
+    }
+
+    /**
+     * Tell the Next.js app to reclaim now-orphaned R2 assets. Called after a
+     * snapshot is deleted/expired (the moment an asset can become unreferenced
+     * without any user action). Best-effort — failures are retried on the next
+     * retention pass or the next project open.
+     */
+    private async triggerAssetGc(): Promise<void> {
+        const env = this.env as Env;
+        if (!this.projectId || !env.API_URL) return;
+        try {
+            const { hashes, complete } = this.computeReferencedHashes();
+            const token = await new SignJWT({ type: "asset-gc", projectId: this.projectId })
+                .setProtectedHeader({ alg: "HS256" })
+                .setExpirationTime("1m")
+                .sign(new TextEncoder().encode(env.JWT_SECRET));
+
+            await fetch(`${env.API_URL}/api/internal/asset-gc`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ projectId: this.projectId, referenced: hashes, complete }),
+            });
+        } catch (e) {
+            console.error(JSON.stringify({ event: "asset_gc_trigger_failed", error: String(e) }));
+        }
+    }
+
+    /**
+     * Asset hashes referenced by the live doc + every retained snapshot, served
+     * from the index (cheap). The Next.js asset GC route deletes only assets in
+     * none of these, so restoring an older save never loses its images/audio.
+     */
+    private handleAssetRefs(): Response {
+        return Response.json(this.computeReferencedHashes(), { status: 200 });
     }
 
     // ---- Save/Restore handlers ----
@@ -587,8 +909,9 @@ export class ScreenplayRoom extends DurableObject {
         await (this.env as Env).SNAPSHOTS.put(key, state, {
             customMetadata: { type: "manual", name },
         });
+        this.indexSnapshotAssets(key);
 
-        console.log(`[Room] Manual save created: ${name}`);
+        console.log(JSON.stringify({ event: "manual_save_created", name }));
 
         const entry: SaveEntry = { key, type: "manual", name, date: timestamp, size: state.byteLength };
         return Response.json(entry, { status: 201 });
@@ -618,7 +941,7 @@ export class ScreenplayRoom extends DurableObject {
         this.awareness.destroy();
 
         // 2. Build the restored doc.
-        this.doc = new Y.Doc();
+        this.doc = new ProjectState();
         this.doc.on("update", this.handleDocUpdate);
         Y.applyUpdate(this.doc, data);
 
@@ -628,10 +951,19 @@ export class ScreenplayRoom extends DurableObject {
         this.awareness.setLocalState(null);
         this.awareness.on("update", this.handleAwarenessUpdate);
 
-        // 4. Persist the restored state immediately to SQLite.
+        // 4. Migrate the restored doc forward — snapshots can be from any
+        //    historical version. Resets docMigrationFailed so this restore
+        //    attempt has a clean slate; runDocMigration will set it again
+        //    if migration fails on the restored data.
+        this.docMigrationFailed = false;
+        this.docVersion = readProjectDocVersion(this.doc);
+        await this.runDocMigration();
+        this.observeDocVersion();
+
+        // 5. Persist the restored (and possibly migrated) state to SQLite.
         await this.saveToDisk();
 
-        // 5. Close all connected clients with "document-restored" (4005).
+        // 6. Close all connected clients with "document-restored" (4005).
         //    The client provider will clear its local cache and reload so it
         //    reconnects with an empty doc and receives the restored state via sync.
         for (const [socket] of this.sessions) {
@@ -642,7 +974,7 @@ export class ScreenplayRoom extends DurableObject {
         this.sessions.clear();
         this.userConnections.clear();
 
-        console.log(`[Room] Restored from: ${key}`);
+        console.log(JSON.stringify({ event: "restored_from_save", key }));
         return new Response("Restored", { status: 200 });
     }
 
@@ -667,8 +999,9 @@ export class ScreenplayRoom extends DurableObject {
             customMetadata: { type: "manual", name },
         });
         await (this.env as Env).SNAPSHOTS.delete(key);
+        this.rekeySnapshot(key, newKey); // refs unchanged — just follow the key
 
-        console.log(`[Room] Renamed save: ${key} -> ${name}`);
+        console.log(JSON.stringify({ event: "save_renamed", key, name }));
         return new Response("Renamed", { status: 200 });
     }
 
@@ -679,7 +1012,10 @@ export class ScreenplayRoom extends DurableObject {
         }
 
         await (this.env as Env).SNAPSHOTS.delete(key);
-        console.log(`[Room] Deleted save: ${key}`);
+        this.unindexSnapshots([key]);
+        console.log(JSON.stringify({ event: "save_deleted", key }));
+        // Deleting a save may have orphaned assets — reclaim them now.
+        await this.triggerAssetGc();
         return new Response("Deleted", { status: 200 });
     }
 
@@ -692,6 +1028,7 @@ export class ScreenplayRoom extends DurableObject {
         if (fullMessage.length === 0) return;
 
         handleProtocolMessage(this, fullMessage, ws);
+        this.maybeCleanupStaleAwareness();
     }
 
     scheduleSave(): void {
@@ -706,17 +1043,17 @@ export class ScreenplayRoom extends DurableObject {
             const fullDocState = Y.encodeStateAsUpdate(this.doc);
             this.ctx.storage.sql.exec("INSERT OR REPLACE INTO project (id, data) VALUES (1, ?);", fullDocState);
             this.saveTimeout = null;
-            console.log("[Room] Document saved to disk");
+            console.log(JSON.stringify({ event: "document_saved" }));
         } catch (e) {
-            console.error("[Room] Failed to save document:", e);
+            console.error(JSON.stringify({ event: "document_save_failed", error: String(e) }));
         }
     }
 
-    async webSocketClose(ws: WebSocket): Promise<void> {
+    async webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean): Promise<void> {
         const session = this.sessions.get(ws);
 
         if (session) {
-            console.log(`[Room] User ${session.userId} disconnected`);
+            console.log(JSON.stringify({ event: "websocket_close", userId: session.userId }));
 
             if (session.clientIds.size > 0) {
                 const clientIds = Array.from(session.clientIds);
@@ -727,7 +1064,7 @@ export class ScreenplayRoom extends DurableObject {
                 // Broadcast removal to remaining clients
                 this.broadcastAwarenessRemoval(clientIds, ws);
 
-                console.log(`[Room] Removed awareness for clients: ${clientIds.join(", ")}`);
+                console.log(JSON.stringify({ event: "awareness_removed", clientIds }));
             }
 
             // Only delete from userConnections if this is the active entry
@@ -737,11 +1074,24 @@ export class ScreenplayRoom extends DurableObject {
         }
 
         this.sessions.delete(ws);
-        console.log(`[Room] Remaining sessions: ${this.sessions.size}`);
+        console.log(JSON.stringify({ event: "session_count_update", count: this.sessions.size }));
     }
 
     async webSocketError(ws: WebSocket, error: unknown): Promise<void> {
-        console.error("[Room] WebSocket error:", error);
+        const errStr = String(error);
+        if (errStr.includes("Network connection lost") || errStr.includes("WebSocket disconnected") || errStr.includes("1006") || errStr.includes("1005")) {
+            console.log(JSON.stringify({
+                event: "websocket_disconnect",
+                level: "info",
+                reason: "idle or network connection lost",
+                error: errStr
+            }));
+        } else {
+            console.error(JSON.stringify({
+                event: "websocket_error",
+                error: errStr
+            }));
+        }
         // The close handler will clean up
     }
 
@@ -764,7 +1114,7 @@ export class ScreenplayRoom extends DurableObject {
         const encoder = encoding.createEncoder();
         encoding.writeVarUint(encoder, 3); // Message type 3: messageQueryAwareness
         this.broadcast(encoding.toUint8Array(encoder), excludeSocket);
-        console.log("[Room] Sent awareness request to existing clients");
+        console.log(JSON.stringify({ event: "awareness_request_sent" }));
     }
 
     /**
@@ -776,7 +1126,7 @@ export class ScreenplayRoom extends DurableObject {
                 try {
                     client.send(message);
                 } catch (e) {
-                    console.error(`[Room] Failed to send to client ${session.userId}:`, e);
+                    console.error(JSON.stringify({ event: "send_to_client_failed", userId: session.userId, error: String(e) }));
                 }
             }
         }

@@ -11,7 +11,7 @@ import { ScreenplayElement, Style, TitlePageElement } from "@src/lib/utils/enums
 import { getRandomColor } from "@src/lib/utils/misc";
 import { useUser } from "@src/lib/utils/hooks";
 import { getStylesFromMarks, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
-import { ScriptioPagination } from "@src/lib/screenplay/extensions/pagination-extension";
+import { ScriptioPagination, refreshPageLocking } from "@src/lib/screenplay/extensions/pagination-extension";
 import { KeybindsExtension } from "@src/lib/screenplay/extensions/keybinds-extension";
 import { executeKeybindAction, KeybindId } from "@src/lib/utils/keybinds";
 import {
@@ -27,8 +27,12 @@ import {
     createSceneBookmarkExtension,
     refreshSceneBookmarks,
 } from "@src/lib/screenplay/extensions/scene-bookmark-extension";
+import {
+    createSceneLockingExtension,
+    refreshSceneLocking,
+} from "@src/lib/screenplay/extensions/scene-locking-extension";
+import { computeAbsorbedPageTokens, SCENE_OMIT_UNDO_ORIGIN } from "@src/lib/screenplay/scene-locking";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
-import { CommentMark } from "@src/lib/screenplay/extensions/comment-highlight-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
 import { getActiveTitlePageElement } from "@src/lib/titlepage/editor";
@@ -41,8 +45,6 @@ export interface DocumentEditorCallbacks {
     setSelectedStyles?: (style: Style) => void;
     updateSuggestions?: (suggestions: string[]) => void;
     updateSuggestionsData?: (data: SuggestionData) => void;
-    /** Per-document: wired from useDocumentComments */
-    setActiveCommentId?: (id: string | null) => void;
     userKeybinds?: Record<string, string>;
     globalContext?: { toggleFocusMode: () => void; saveProject: () => void };
     // Title-type callbacks
@@ -69,8 +71,15 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         searchFilters,
         currentSearchIndex,
         setSearchMatches,
+        activeSearchEditor,
         contdLabel,
         moreLabel,
+        sceneLocking,
+        sceneNumberingStyle,
+        skippedSceneLetters,
+        persistentScenes,
+        pageLocking,
+        persistentPages,
     } = projectCtx;
 
     const projectState = repository?.getState();
@@ -94,10 +103,13 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         name: "User_" + Math.floor(Math.random() * 1000),
         color: getRandomColor(),
     }));
-    const userInfo = useMemo(() => ({
-        name: user?.username || fallbackUserInfo.name,
-        color: user?.color || fallbackUserInfo.color,
-    }), [user?.username, user?.color, fallbackUserInfo]);
+    const userInfo = useMemo(
+        () => ({
+            name: user?.username || fallbackUserInfo.name,
+            color: user?.color || fallbackUserInfo.color,
+        }),
+        [user?.username, user?.color, fallbackUserInfo],
+    );
 
     // Keep all refs in sync
     useEffect(() => {
@@ -151,20 +163,30 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     // ---- Mutable container for extension getter functions ----
     // useMemo with [] creates a stable object reference; we mutate its properties each render
     // so that extension getter closures always return the latest values without .current accesses.
-    const ext = useMemo(() => ({
-        highlightedCharacters,
-        characters,
-        scenes,
-        repository,
-        callbacks,
-        spellWorker,
-        isSpellWorkerReady,
-        searchTerm,
-        searchFilters,
-        currentSearchIndex,
-        setSearchMatches,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }), []);
+    const ext = useMemo(
+        () => ({
+            highlightedCharacters,
+            characters,
+            scenes,
+            repository,
+            callbacks,
+            spellWorker,
+            isSpellWorkerReady,
+            searchTerm,
+            searchFilters,
+            currentSearchIndex,
+            setSearchMatches,
+            activeSearchEditor,
+            sceneLocking,
+            sceneNumberingStyle,
+            skippedSceneLetters,
+            persistentScenes,
+            pageLocking,
+            persistentPages,
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }),
+        [],
+    );
     ext.highlightedCharacters = highlightedCharacters;
     ext.characters = characters;
     ext.scenes = scenes;
@@ -176,6 +198,13 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     ext.searchFilters = searchFilters;
     ext.currentSearchIndex = currentSearchIndex;
     ext.setSearchMatches = setSearchMatches;
+    ext.activeSearchEditor = activeSearchEditor;
+    ext.sceneLocking = sceneLocking;
+    ext.sceneNumberingStyle = sceneNumberingStyle;
+    ext.skippedSceneLetters = skippedSceneLetters;
+    ext.persistentScenes = persistentScenes;
+    ext.pageLocking = pageLocking;
+    ext.persistentPages = persistentPages;
 
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
 
@@ -208,15 +237,18 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         cb(data);
     }, []);
 
-    const onKeybindAction = useCallback((id: KeybindId, editorInstance: Editor) => {
-        const gc = callbacks.globalContext;
-        if (!gc) return;
-        executeKeybindAction(id, {
-            editor: editorInstance,
-            toggleFocusMode: gc.toggleFocusMode,
-            saveProject: gc.saveProject,
-        });
-    }, [callbacks.globalContext]);
+    const onKeybindAction = useCallback(
+        (id: KeybindId, editorInstance: Editor) => {
+            const gc = callbacks.globalContext;
+            if (!gc) return;
+            executeKeybindAction(id, {
+                editor: editorInstance,
+                toggleFocusMode: gc.toggleFocusMode,
+                saveProject: gc.saveProject,
+            });
+        },
+        [callbacks.globalContext],
+    );
 
     // ---- Dynamic extensions (created once, read from ext container) ----
     const characterHighlightExtension = features.characterHighlights
@@ -251,11 +283,12 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
           })
         : null;
 
-    const commentMarkExtension = features.comments
-        ? CommentMark.configure({
-              onCommentActivated: (commentId: string | null) => {
-                  ext.callbacks.setActiveCommentId?.(commentId);
-              },
+    const sceneLockingExtension = features.sceneLocking
+        ? createSceneLockingExtension({
+              getSceneLocking: () => !!ext.sceneLocking,
+              getScenes: () => ext.repository?.scenes ?? {},
+              getNumberingStyle: () => ext.sceneNumberingStyle ?? "suffix",
+              getSkippedLetters: () => ext.skippedSceneLetters ?? [],
           })
         : null;
 
@@ -275,6 +308,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
               onMatchesFound: (matches: SearchMatch[]) => {
                   ext.setSearchMatches(matches);
               },
+              getActiveEditor: () => ext.activeSearchEditor,
           })
         : null;
 
@@ -284,9 +318,6 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
             immediatelyRender: false,
             extensions: [
                 ...config.baseExtensions,
-
-                // Comment mark (screenplay only, requires configured callback)
-                ...(commentMarkExtension ? [commentMarkExtension] : []),
 
                 // Collaborative editing
                 ...(projectState && isYjsReady
@@ -305,15 +336,18 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                               provider,
                               user: userInfo,
                               render: (user: { color: string; name: string }) => {
+                                  // Render with no DOM children. The username label is rendered
+                                  // via a ::before pseudo-element (see styles/scriptio.css),
+                                  // so there is no text node Firefox can place the local HTML
+                                  // caret into when the user clicks an empty node containing
+                                  // this remote caret.
                                   const caret = document.createElement("span");
                                   caret.classList.add("collab-caret");
                                   caret.style.borderLeft = `2px solid ${user.color}`;
-                                  const label = document.createElement("div");
-                                  label.classList.add("collab-caret-label");
-                                  label.style.backgroundColor = user.color;
-                                  label.innerText = user.name;
-                                  label.contentEditable = "false";
-                                  caret.appendChild(label);
+                                  caret.style.setProperty("--collab-caret-color", user.color);
+                                  // JSON.stringify yields a CSS-safe quoted string (escapes \ and ").
+                                  caret.style.setProperty("--collab-caret-name", JSON.stringify(user.name));
+                                  caret.contentEditable = "false";
                                   return caret;
                               },
                           }),
@@ -325,15 +359,19 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                     config.features.paginationMode === "screenplay"
                         ? {
                               pageGap: 20,
-                              headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
+                              headerRight: `<p class="page-number">{page}.</p>`,
                               customHeader: {
                                   1: {
                                       headerLeft: "",
-                                      headerRight: `<p class="page-number" style="margin-top: 50px;"></p>`,
+                                      headerRight: `<p class="page-number"></p>`,
                                   },
                               },
                               footerRight: "",
                               ...SCREENPLAY_FORMATS[pageSize],
+                              getPageLocking: () => !!ext.pageLocking,
+                              getPageLocks: () => ext.persistentPages ?? {},
+                              getSkippedLetters: () => ext.skippedSceneLetters ?? [],
+                              getOmittedPages: () => computeAbsorbedPageTokens(ext.repository?.scenes ?? {}),
                           }
                         : {
                               pageGap: 20,
@@ -360,10 +398,10 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 ...(characterHighlightExtension ? [characterHighlightExtension] : []),
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
+                ...(sceneLockingExtension ? [sceneLockingExtension] : []),
                 ...(nodeIdDedupExtension ? [nodeIdDedupExtension] : []),
                 ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
-
 
             onSelectionUpdate({ editor, transaction }) {
                 const cb = callbacksRef.current;
@@ -514,11 +552,24 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         }
     }, [userInfo, provider]);
 
-    // Fix Yjs undo cursor restoration: y-tiptap's stack-item-popped fires AFTER
-    // the undo transaction commits, so beforeTransactionSelection is captured wrong
-    // by beforeAllTransactions. Patch undo/redo to pre-set it from the stack item.
+    // Post-mount UndoManager setup. y-tiptap's UndoManager is constructed to
+    // track only the editor XmlFragment (scope) and only `ySyncPluginKey`
+    // (origin), and y-tiptap's stack-item-popped fires AFTER the undo
+    // transaction commits — so a few tweaks are needed:
+    //   - addToScope(scenes, pages): scene metadata and page locks each live in
+    //     a separate Y.Map; without this the UndoManager silently ignores every
+    //     mutation to them. Pages must be in scope too — omit deletes in-body
+    //     page locks and re-homes the successor lock, and undo must revert those
+    //     alongside the doc edit, otherwise the restored body's anchor stays
+    //     unlocked and a phantom page appears (undo would differ from Unomit).
+    //   - trackedOrigins.add(SCENE_OMIT_UNDO_ORIGIN): omit/unomit bundle a PM
+    //     dispatch and a Map.set into one Yjs transaction tagged with this
+    //     symbol so Ctrl+Z reverts both halves atomically.
+    //   - undo/redo patch: pre-seed beforeTransactionSelection from the
+    //     popped stack item so the cursor restores correctly (y-tiptap
+    //     otherwise captures it after the fact).
     useEffect(() => {
-        if (!editor || !isYjsReady) return;
+        if (!editor || !isYjsReady || !projectState) return;
 
         const state = editor.state;
         const yUndoState = yUndoPluginKey.getState(state);
@@ -527,6 +578,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
 
         const um = yUndoState.undoManager;
         const binding = ySyncState.binding;
+        um.addToScope([projectState.scenes(), projectState.pages()]);
+        um.trackedOrigins.add(SCENE_OMIT_UNDO_ORIGIN);
+
         const originalUndo = um.undo.bind(um);
         const originalRedo = um.redo.bind(um);
 
@@ -549,8 +603,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         return () => {
             um.undo = originalUndo;
             um.redo = originalRedo;
+            um.trackedOrigins.delete(SCENE_OMIT_UNDO_ORIGIN);
         };
-    }, [editor, isYjsReady]);
+    }, [editor, isYjsReady, projectState]);
 
     // Refresh character highlights
     useEffect(() => {
@@ -566,12 +621,32 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         }
     }, [editor, scenes, features.sceneBookmarks]);
 
-    // Refresh search highlights
+    // Refresh scene locking decorations when the lock map or toggle changes
+    useEffect(() => {
+        if (editor && features.sceneLocking) {
+            refreshSceneLocking(editor);
+        }
+    }, [editor, sceneLocking, sceneNumberingStyle, skippedSceneLetters, persistentScenes, features.sceneLocking]);
+
+    // Refresh pagination when page locking or the page-lock map changes.
+    // Pagination only reads these via getter closures on its options, so
+    // we must explicitly kick it to re-run; otherwise stale labels render
+    // until the user types. (Omitting a scene re-homes locks in this map, so
+    // this also covers the omitted-scene case.)
+    useEffect(() => {
+        if (editor && config.features.paginationMode === "screenplay") {
+            refreshPageLocking(editor);
+        }
+    }, [editor, pageLocking, persistentPages, skippedSceneLetters, config.features.paginationMode]);
+
+    // Refresh search highlights. `activeSearchEditor` is a dependency so that when
+    // focus moves between panels, the newly-active editor recomputes/reports its
+    // matches and the de-activated one clears its highlights.
     useEffect(() => {
         if (editor && features.searchHighlights) {
             refreshSearchHighlights(editor);
         }
-    }, [editor, searchTerm, searchFilters, currentSearchIndex, features.searchHighlights]);
+    }, [editor, searchTerm, searchFilters, currentSearchIndex, activeSearchEditor, features.searchHighlights]);
 
     // Refresh spellcheck when worker becomes ready or language changes
     useEffect(() => {

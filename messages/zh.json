@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "大纲",
+    "empty": "将场景和卡片发送到这里，开始梳理你的故事大纲。",
+    "untitled": "无标题",
+    "unlinked": "已断开",
+    "unlinkedHint": "此区块的来源已不存在。",
+    "removeFromOutline": "从大纲中移除"
+  },
   "navbar": {
+    "outline": "大纲",
     "screenplay": "剧本",
     "board": "剧本板",
     "titlePage": "扉页",
@@ -7,12 +16,30 @@
     "noConnection": "无连接",
     "reconnecting": "正在重新连接...",
     "localProject": "本地项目",
+    "uploadToCloud": "上传到云端",
+    "storageProject": "本项目",
+    "storageTotal": "已用总量",
     "endlessScroll": "无限滚动",
     "toggleComments": "切换显示评论",
+    "toggleSpellcheck": "切换拼写检查",
     "focusMode": "聚焦模式",
     "splitPanel": "分割面板",
     "unsplitPanel": "合并面板",
-    "draftEditor": "草稿编辑器"
+    "swapPanels": "交换面板",
+    "draftEditor": "草稿编辑器",
+    "viewOnly": "仅查看",
+    "viewOnlyHint": "您拥有访客权限，编辑功能已禁用。",
+    "pageCount": "{count} 页"
+  },
+  "timer": {
+    "title": "写作计时",
+    "countdown": "倒计时",
+    "stopwatch": "秒表",
+    "start": "开始",
+    "pause": "暂停",
+    "resume": "继续",
+    "reset": "重置",
+    "minutesShort": "分钟"
   },
   "common": {
     "save": "保存",
@@ -37,7 +64,8 @@
       "latte": "温暖乳白，阅读舒适。",
       "wonka": "丝滑可可，深沉奢华。",
       "mint": "清新薄荷，视觉平衡。",
-      "blossom": "娇柔花卉，视觉温和。"
+      "blossom": "娇柔花卉，视觉温和。",
+      "midnight": "深邃午夜蓝，专为星空下的专注工作而设计。"
     },
     "editor": "编辑器",
     "themedEditor": "主题编辑器",
@@ -62,6 +90,7 @@
     "spellcheckLabel": "拼写检查",
     "spellcheckHelpText": "下载字典以在编辑器中进行拼写检查。",
     "spellcheckNone": "已禁用",
+    "spellcheckBuiltin": "内置",
     "customDictLabel": "项目词典",
     "customDictAdd": "添加",
     "customDictEmpty": "暂无自定义词汇。",
@@ -76,7 +105,9 @@
     "tabs": {
       "General": "常规",
       "Layout": "布局",
+      "Production": "制作",
       "Export": "导入/导出",
+      "Storage": "存储",
       "Collaborators": "协作",
       "Keybinds": "键位",
       "Appearance": "外观",
@@ -87,6 +118,21 @@
       "About": "关于",
       "Subscription": "订阅"
     }
+  },
+  "storage": {
+    "total": "已用空间",
+    "description": "本项目板块使用的图片和音频。",
+    "sharedStorage": "共享存储",
+    "thisProject": "本项目",
+    "otherProjects": "其他项目",
+    "free": "可用",
+    "localNote": "此项目尚未同步——按其将占用的云存储显示。",
+    "empty": "本项目还没有图片或音频。",
+    "image": "图片",
+    "audio": "音频",
+    "remove": "删除",
+    "confirm": "从项目中移除",
+    "cancel": "取消"
   },
   "dangerZone": {
     "transferOwnership": "转移所有权",
@@ -120,7 +166,7 @@
     "deleteModalTitle": "删除账户",
     "deleteModalDesc": "该操作不可撤销。",
     "deleteConfirmPhrase": "我确认删除我的账户",
-    "deleteConfirmLabel": "输入 <ph/> 以确认。",
+    "deleteConfirmLabel": "请输入以下文字以确认删除：",
     "deleting": "正在注销...",
     "deleteAccountBtn": "确认注销账户",
     "subscription": {
@@ -147,7 +193,18 @@
       "purchasing": "购买中...",
       "purchaseError": "购买失败，请重试。",
       "cancelApple": "Apple 订阅通过 App Store 管理。",
-      "manageApple": "打开 App Store"
+      "manageApple": "打开 App Store",
+      "alreadyBoundTo": "此订阅已与 {email} 关联。",
+      "alreadyBoundUnknown": "此订阅已与其他账户关联。",
+      "welcomePro": "您已成功订阅 Scriptio Pro。欢迎！",
+      "resubscribe": "重新激活订阅",
+      "restorePurchases": "恢复购买",
+      "transferConfirm": "您的 App Store 账户有一个与 {email} 关联的有效订阅。恢复将把 Pro 转移到此账户，{email} 将失去 Pro 访问权限。Apple 将继续向同一个 Apple ID 收费。继续吗？",
+      "transferConfirmUnknown": "您的 App Store 账户有一个与另一个 Scriptio 账户关联的有效订阅。恢复将把 Pro 转移到此账户，另一个账户将失去 Pro 访问权限。Apple 将继续向同一个 Apple ID 收费。继续吗？",
+      "transferYes": "是的，转移",
+      "transferring": "转移中...",
+      "appleStoreFreeInfo": "Pro 功能适用于通过我们网站升级的账户。",
+      "appleStoreProInfo": "如需更新付款方式或取消，请访问 scriptio.app 上的个人资料设置。"
     }
   },
   "projects": {
@@ -158,6 +215,8 @@
     "importing": "正在导入...",
     "createBtn": "创建",
     "empty": {
+      "title": "你的故事从这里开始",
+      "subtitle": "创建新剧本或导入现有脚本",
       "createFirst": "新建项目",
       "createDesc": "从空白页面开始",
       "importExisting": "导入",
@@ -188,7 +247,23 @@
     "goTo": "在剧本中定位",
     "confirmRestore": "这将替换剧本中匹配的内容。",
     "restore": "恢复",
-    "cancel": "取消"
+    "cancel": "取消",
+    "scenesEmpty": "暂无场景",
+    "comments": "评论",
+    "commentsEmpty": "没有活动的评论",
+    "shelfEmptySelection": "选择要编辑的搁置版本",
+    "documents": "文档",
+    "documentsEmpty": "还没有文档",
+    "newFolder": "新建文件夹",
+    "newDocument": "新建文档",
+    "newBoard": "新建白板",
+    "untitledFolder": "新建文件夹",
+    "untitledDocument": "无标题",
+    "boardTitle": "白板",
+    "rename": "重命名",
+    "delete": "删除",
+    "confirmDelete": "删除此文档？",
+    "confirmDeleteFolder": "删除文件夹及其内容？"
   },
   "formatDropdown": {
     "elements": {
@@ -351,16 +426,17 @@
     "dangerZoneTitle": "危险区域"
   },
   "contextMenu": {
+    "sendToOutline": "发送到大纲",
     "goToScene": "跳转到场景",
     "edit": "编辑",
     "copy": "复制",
     "cut": "剪切",
-    "selectInEditor": "在编辑器中选择",
+    "selectInEditor": "选择",
     "remove": "移除",
     "paste": "粘贴",
     "highlight": "高亮",
     "addCharacter": "添加角色",
-    "addComment": "添加评论",
+    "addComment": "评论",
     "searchOnWeb": "网页搜索",
     "noSuggestions": "无建议",
     "addToDictionary": "添加到字典",
@@ -368,7 +444,12 @@
     "shelve": "搁置",
     "shelveScene": "搁置场景",
     "shelveDialogue": "搁置对白",
-    "shelveAction": "搁置动作"
+    "shelveAction": "搁置动作",
+    "omitScene": "省略场景",
+    "unomitScene": "恢复场景",
+    "insertPageBreak": "插入分页符",
+    "removePageBreak": "移除分页符",
+    "pageBreakHint": "分页符"
   },
   "popup": {
     "character": {
@@ -392,6 +473,7 @@
       "warning": "确认 <b>覆盖</b> 当前项目？",
       "info": "您可以先导出当前项目备份。",
       "yesImport": "确认导入",
+      "importing": "正在导入…",
       "no": "取消"
     },
     "scene": {
@@ -401,20 +483,65 @@
       "synopsis": "简介",
       "synopsisPlaceholder": "场景简述...",
       "save": "保存"
+    },
+    "uploadToCloud": {
+      "title": "上传到云端",
+      "body": "将此项目上传到云端？您的项目将被备份，可从任何设备访问，并且可以邀请协作者。",
+      "confirm": "上传",
+      "cancel": "取消",
+      "uploading": "正在上传...",
+      "failed": "上传失败。请重试。"
     }
   },
   "board": {
+    "sendToOutline": "发送到大纲",
     "duplicate": "复制",
     "delete": "删除",
-    "hints": {
-      "pan": "中键平移",
-      "select": "拖动选择卡片",
-      "create": "双击创建卡片",
-      "move": "Shift 自由移动"
-    },
+    "createCard": "创建卡片",
     "untitled": "未命名",
     "titlePlaceholder": "标题",
-    "descriptionPlaceholder": "描述"
+    "descriptionPlaceholder": "描述",
+    "recordAudio": "录制音频",
+    "stopRecording": "停止",
+    "audioUnsupported": "此浏览器不支持录音，请改为拖入音频文件",
+    "audioHint": "语音备注",
+    "play": "播放",
+    "pause": "暂停",
+    "rename": "双击重命名",
+    "storageLimitReached": "存储空间已满 — 无法保存此文件"
+  },
+  "production": {
+    "title": "制作",
+    "draftLocking": "锁定草稿",
+    "draftLockingHint": "锁定草稿会自动锁定当前场景、页面并切换到下一个修订版本。打开「高级」部分可手动配置这些选项。",
+    "advanced": "高级",
+    "draftRelock": "重新锁定",
+    "settings": "制作设置",
+    "unlockDraftTitle": "解锁草稿",
+    "unlockDraftWarning": "场景和页面都将失去其锁定的编号，恢复为各自的自然编号。",
+    "unlockDraft": "解锁草稿",
+    "sceneLocking": "锁定场景",
+    "pageLocking": "锁定页面",
+    "revisions": "修订",
+    "relock": "重新锁定",
+    "provisionalTitle": "未锁定的场景",
+    "unlockTitle": "解锁场景编号?",
+    "unlockWarning": "<b>所有锁定和省略的场景都将失去固定编号。</b>",
+    "unlockInfo": "此操作会影响所有协作者。剧本将恢复为按位置编号。OMITTED 场景仍保持省略状态 — 如需恢复内容,请单独取消省略。",
+    "unlock": "解锁",
+    "pageRelock": "重新锁定",
+    "pageProvisionalTitle": "未锁定的页面",
+    "unlockPagesTitle": "解锁页面?",
+    "unlockPagesWarning": "所有页面将失去锁定的编号,恢复为自然分页。",
+    "unlockPages": "解锁页面",
+    "cancel": "取消",
+    "numberingStyleTitle": "场景编号",
+    "numberingStyleHelp": "决定两个锁定场景之间新插入场景的编号方式。",
+    "suffixName": "后缀",
+    "prefixName": "前缀",
+    "skippedLettersTitle": "跳过的字母",
+    "skippedLettersHelp": "生成场景编号时省略的字母，通常用于避免混淆。",
+    "skipLetterAriaLabel": "跳过字母 {letter}"
   },
   "saves": {
     "title": "版本历史",
@@ -429,9 +556,10 @@
     "confirmRestore": "这将为所有协作成员覆盖当前文档。确认吗？",
     "confirmDelete": "确认删除此备份？",
     "noSaves": "暂无备份",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "需要 Pro 版本",
+    "proRequiredDesc": "版本历史记录是 Pro 功能。升级即可保存和恢复您剧本的命名版本。",
+    "upgradeBtn": "升级到 Pro",
+    "signInAndUpgrade": "登录并升级"
   },
   "auth": {
     "intro": "输入您的邮箱，我们将向您发送一次性登录链接。无需密码。",

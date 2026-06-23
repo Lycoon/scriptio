@@ -53,6 +53,7 @@ export default function HomePageContainer() {
                             alt="Scriptio Interface Preview"
                             width={1920}
                             height={1080}
+                            loading="eager"
                             className={styles.heroBackgroundImage}
                         />
                     </div>

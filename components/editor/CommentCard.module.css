@@ -1,35 +1,43 @@
 .comment_card {
-    width: 250px;
-    background-color: var(--editor-sidebar);
-    border-radius: 12px;
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-    padding: 10px 12px;
+    width: 100%;
+    background-color: var(--editor-style-bg);
+    border-radius: 10px;
+    padding: 8px 10px;
     cursor: default;
     border: 1px solid var(--separator);
-    z-index: 50;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.comment_card_active {
-    border-color: rgba(255, 213, 0, 0.5);
+    box-sizing: border-box;
 }
 
 .comment_header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
+    min-height: 22px;
     margin-bottom: 6px;
+}
+
+.comment_meta {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
 }
 
 .comment_author {
     font-size: 13px;
     font-weight: 600;
     color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .comment_time {
     font-size: 11px;
     color: var(--text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .comment_text {
@@ -40,24 +48,31 @@
     word-wrap: break-word;
 }
 
+/* Icon actions sit in the header, hidden until the card is hovered/focused so
+   the resting thread stays uncluttered while Delete et al. remain one hover away. */
 .comment_actions {
     display: flex;
-    gap: 4px;
-    justify-content: flex-end;
-    border-top: 1px solid var(--separator);
-    padding-top: 8px;
+    gap: 2px;
+    align-items: center;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.comment_card:hover .comment_actions,
+.comment_card:focus-within .comment_actions {
+    opacity: 1;
 }
 
 .comment_btn {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
+    justify-content: center;
+    padding: 3px;
     border: none;
-    border-radius: 8px;
-    font-size: 13px;
+    border-radius: 6px;
     cursor: pointer;
-    background-color: var(--editor-style-bg);
+    background-color: transparent;
     color: var(--text-secondary);
     transition: background-color 0.15s ease, color 0.15s ease;
 }
@@ -151,14 +166,38 @@
 .reply {
     padding: 6px 8px;
     border-radius: 8px;
-    background-color: var(--editor-style-bg);
+    background-color: var(--editor-sidebar);
+    border: 1px solid var(--separator);
 }
 
 .reply_header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
+    min-height: 20px;
     margin-bottom: 2px;
+}
+
+.reply_meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* Per-reply icon actions, revealed when that reply is hovered/focused. */
+.reply_actions {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.reply:hover .reply_actions,
+.reply:focus-within .reply_actions {
+    opacity: 1;
 }
 
 .reply_text {
@@ -177,6 +216,8 @@
 
 .reply_input {
     flex: 1;
+    width: 100%;
+    box-sizing: border-box;
     padding: 5px 8px;
     border: 1px solid var(--separator);
     border-radius: 8px;

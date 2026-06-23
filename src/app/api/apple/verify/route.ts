@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { decodeJwt } from "jose";
-import prisma from "@src/server/db";
 import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 import { BodyFieldError, ForbiddenError, Success } from "@src/lib/utils/api-utils";
 import * as UserService from "@src/server/service/user-service";
+import * as TransactionService from "@src/server/service/transaction-service";
 
 const APPLE_PRODUCT_ID = "app.scriptio.pro.monthly";
 const APPLE_BUNDLE_IDS = ["app.scriptio", "app.scriptio.staging"];
@@ -34,6 +34,9 @@ async function verifyApplePurchase(req: NextRequest, { user }: AuthApiContext) {
     if (payload.productId !== APPLE_PRODUCT_ID) {
         throw new ForbiddenError("Invalid product ID");
     }
+    if (payload.appAccountToken && payload.appAccountToken !== user.id) {
+        throw new ForbiddenError("This purchase belongs to a different account");
+    }
 
     const expiresDate = new Date(payload.expiresDate);
     if (expiresDate <= new Date()) {
@@ -46,13 +49,7 @@ async function verifyApplePurchase(req: NextRequest, { user }: AuthApiContext) {
         isSubscriptionCancelled: false,
     });
 
-    await prisma.transaction.create({
-        data: {
-            userId: user.id,
-            provider: "APPLE",
-            transactionId: payload.transactionId,
-        },
-    });
+    await TransactionService.createTransactionIfNotExists(user.id, "APPLE", payload.transactionId);
 
     return Success(null);
 }

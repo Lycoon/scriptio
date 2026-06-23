@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { editUserInfo } from "@src/lib/utils/requests";
+import { editUserInfo, deleteUser } from "@src/lib/utils/requests";
 import { signOut } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,7 @@ import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./ProfileSettings.module.css";
 import dangerStyles from "../project/DangerZone.module.css";
+import modal from "../../utils/ModalBtn.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { useUser } from "@src/lib/utils/hooks";
 
@@ -67,7 +68,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
     const handleDeleteAccount = async () => {
         setDeleteLoading(true);
         try {
-            const res = await fetch("/api/users", { method: "DELETE" });
+            const res = await deleteUser();
             if (res.ok) {
                 if (isTauri()) {
                     const { clearDesktopToken } = await import("@src/lib/desktop-auth");
@@ -129,21 +130,25 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                         <div className={dangerStyles.modal}>
                             <h2 className={dangerStyles.modalTitle}>{t("deleteModalTitle")}</h2>
                             <p className={dangerStyles.modalDescription}>{t("deleteModalDesc")}</p>
-                            <label htmlFor="delete-confirm" className={dangerStyles.modalDescription} style={{ display: "block" }}>
-                                {t.rich("deleteConfirmLabel", { ph: () => <strong>{confirmPhrase}</strong> })}
+                            <label
+                                htmlFor="delete-confirm"
+                                className={dangerStyles.modalDescription}
+                                style={{ display: "block" }}
+                            >
+                                {t("deleteConfirmLabel")}
+                                <strong style={{ display: "block", marginTop: 6 }}>{confirmPhrase}</strong>
                             </label>
                             <input
                                 id="delete-confirm"
                                 type="text"
                                 className={`${sharedStyles.input} ${dangerStyles.modalInput}`}
-                                placeholder={confirmPhrase}
                                 value={deleteConfirmInput}
                                 onChange={(e) => setDeleteConfirmInput(e.target.value)}
                                 autoComplete="off"
                             />
                             <div className={dangerStyles.modalActions}>
                                 <button
-                                    className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnDanger}`}
+                                    className={`${modal.modalBtn} ${modal.modalBtnDanger}`}
                                     onClick={handleDeleteAccount}
                                     disabled={deleteLoading || deleteConfirmInput !== confirmPhrase}
                                 >
@@ -151,7 +156,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                                     {deleteLoading ? t("deleting") : t("deleteAccountBtn")}
                                 </button>
                                 <button
-                                    className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnCancel}`}
+                                    className={`${modal.modalBtn} ${modal.modalBtnCancel}`}
                                     onClick={() => {
                                         setShowDeleteDialog(false);
                                         setDeleteConfirmInput("");
@@ -172,13 +177,24 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         <div className={sharedStyles.settingsForm}>
             {/* Email */}
             <div className={sharedStyles.formGroup}>
-                <label htmlFor="email" className={form.label}>{t("email")}</label>
-                <input id="email" type="email" value={user?.email ?? ""} disabled className={sharedStyles.input} autoComplete="email" />
+                <label htmlFor="email" className={form.label}>
+                    {t("email")}
+                </label>
+                <input
+                    id="email"
+                    type="email"
+                    value={user?.email ?? ""}
+                    disabled
+                    className={sharedStyles.input}
+                    autoComplete="email"
+                />
             </div>
 
             {/* Username */}
             <div className={sharedStyles.formGroup}>
-                <label htmlFor="username" className={form.label}>{t("username")}</label>
+                <label htmlFor="username" className={form.label}>
+                    {t("username")}
+                </label>
                 <input
                     id="username"
                     type="text"
@@ -236,7 +252,12 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                     <Save size={18} />
                     {loading ? t("saving") : tCommon("save")}
                 </button>
-                <button type="button" className={dangerStyles.arrowBtn} onClick={onDangerToggle} title={t("dangerZoneTitle")}>
+                <button
+                    type="button"
+                    className={dangerStyles.arrowBtn}
+                    onClick={onDangerToggle}
+                    title={t("dangerZoneTitle")}
+                >
                     <ArrowRight size={16} />
                 </button>
             </div>

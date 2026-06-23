@@ -1,77 +1,106 @@
 .container {
     display: flex;
-    flex-direction: row;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     flex: 1;
-    background: none;
-    border: none;
+    gap: 32px;
 }
 
-.cards {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    padding-bottom: 70px;
-}
-
-.card {
+.heading {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-
-    width: 220px;
-    padding: 28px 24px;
-
-    border-radius: 18px;
-    border: 3px solid var(--tertiary);
-    background-color: var(--project-item-bg);
-
-    cursor: pointer;
-    text-align: left;
-
-    transition: border-color 0.2s, transform 0.2s;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
 }
 
-.card:hover {
+.title {
+    font-family: var(--font-josefin), sans-serif;
+    font-size: 2.25rem;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--primary-text);
+    letter-spacing: 0.01em;
+    margin: 0;
+}
+
+.subtitle {
+    font-family: var(--font-inter), sans-serif;
+    font-size: 0.95rem;
+    color: var(--secondary-text);
+    margin: 0;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+}
+
+.btnWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.formats {
+    font-family: var(--font-inter), sans-serif;
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+    letter-spacing: 0.02em;
+}
+
+.createBtn,
+.importBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 280px;
+    padding: 16px 0;
+    border-radius: 40px;
+    font-family: var(--font-inter), sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.createBtn {
+    border: 3px solid var(--tertiary);
+    background-color: var(--secondary);
+    color: var(--primary-text);
+}
+
+.createBtn:hover {
     border-color: var(--tertiary-hover);
 }
 
-.card:active {
+.createBtn:active {
     transform: scale(0.98);
     transition: transform 0.07s;
 }
 
-.card:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.cardIcon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background-color: var(--tertiary);
-    color: var(--primary-text);
-    flex-shrink: 0;
-}
-
-.cardTitle {
-    font-family: var(--font-inter), sans-serif;
-    font-style: italic;
-    font-size: 1.2rem;
-    font-weight: 400;
-    color: var(--primary-text);
-    margin: 0;
-}
-
-.cardDesc {
-    font-size: 0.8rem;
+.importBtn {
+    border: 3px solid var(--tertiary);
+    background: transparent;
     color: var(--secondary-text);
-    margin: 0;
-    line-height: 1.4;
+}
+
+.importBtn:hover {
+    border-color: var(--tertiary-hover);
+    color: var(--primary-text);
+}
+
+.importBtn:active {
+    transform: scale(0.98);
+    transition: transform 0.07s;
+}
+
+.importBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }

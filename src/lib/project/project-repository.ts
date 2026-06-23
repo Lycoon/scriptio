@@ -5,6 +5,7 @@ import { ScreenplaySchema } from "../screenplay/editor";
 import { Comment, CommentReply, Screenplay } from "../utils/types";
 import {
     LayoutData,
+    ProductionData,
     ProjectMetadata,
     ProjectState,
     ElementStyle,
@@ -12,10 +13,14 @@ import {
     ShelfEntry,
     ShelfEntryType,
     ShelfVersionMeta,
+    DocumentNode,
+    OutlineItem,
+    screenplayOf,
 } from "./project-state";
 import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
-import { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
+import { computeSceneItems, PersistentScene, PersistentSceneMap, TransientScene } from "../screenplay/scenes";
+import { PersistentPage, PersistentPageMap } from "../screenplay/page-locking";
 import { PageFormat } from "../utils/enums";
 import { generateNodeId } from "../screenplay/nodes";
 import { JSONContent } from "@tiptap/react";
@@ -38,6 +43,22 @@ export class ProjectRepository {
 
     constructor(ydoc: ProjectState) {
         this.ydoc = ydoc;
+    }
+
+    setReadOnly(readOnly: boolean): void {
+        this.ydoc.setReadOnly(readOnly);
+    }
+
+    get readOnly(): boolean {
+        return this.ydoc.isReadOnly;
+    }
+
+    private guardWrite(op: string): boolean {
+        if (this.ydoc.isReadOnly) {
+            console.warn(`[Repo] Blocked ${op}: project is read-only`);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -65,7 +86,7 @@ export class ProjectRepository {
      * This converts the Y.js XmlFragment to a ProseMirror document structure.
      */
     get screenplay(): Screenplay {
-        return this.ydoc.screenplay();
+        return screenplayOf(this.ydoc);
     }
 
     /**
@@ -117,10 +138,12 @@ export class ProjectRepository {
     }
 
     setTitle(title: string): void {
+        if (this.guardWrite("setTitle")) return;
         this.ydoc.metadata().set("title", title);
     }
 
     setAuthor(author: string): void {
+        if (this.guardWrite("setAuthor")) return;
         this.ydoc.metadata().set("author", author);
     }
 
@@ -225,19 +248,33 @@ export class ProjectRepository {
 
     /**
      * Create or update a scene's persistent data.
+     *
+     * Fields that appear in `data` (including ones explicitly set to undefined)
+     * overwrite the corresponding existing fields; everything else is preserved.
+     * Any final undefined values are stripped before writing.
+     *
      * Returns the scene id.
      */
     upsertScene(sceneId: string, data: Partial<PersistentScene>): string {
+        if (this.guardWrite("upsertScene")) return sceneId;
         const map = this.ydoc.scenes();
-        const existing = map.get(sceneId) as PersistentScene | undefined;
+        const existing = (map.get(sceneId) as PersistentScene | undefined) ?? {};
 
-        const sceneData: PersistentScene = {
-            synopsis: data.synopsis ?? existing?.synopsis ?? "",
-            color: "color" in data ? data.color : existing?.color,
-        };
+        const merged: PersistentScene = { ...existing };
+        const FIELDS = [
+            "synopsis", "color", "token", "omitted", "originalHeading",
+            "omittedBody", "omittedPageLocks", "reanchoredSuccessor",
+        ] as const;
+        for (const key of FIELDS) {
+            if (key in data) {
+                (merged as Record<string, unknown>)[key] = data[key];
+            }
+        }
+        for (const key of FIELDS) {
+            if (merged[key] === undefined) delete merged[key];
+        }
 
-        map.set(sceneId, sceneData);
-        console.log(`[Scenes] Upserted scene: ${sceneId}`);
+        map.set(sceneId, merged);
         return sceneId;
     }
 
@@ -265,6 +302,7 @@ export class ProjectRepository {
      * Delete a scene's persistent data.
      */
     deleteScene(sceneId: string): void {
+        if (this.guardWrite("deleteScene")) return;
         const map = this.ydoc.scenes();
         if (map.has(sceneId)) {
             map.delete(sceneId);
@@ -304,31 +342,178 @@ export class ProjectRepository {
     }
 
     setPageSize(pageSize: PageFormat) {
+        if (this.guardWrite("setPageSize")) return;
         this.ydoc.layout().set("pageSize", pageSize);
     }
     setPageMargins(margins: PageMargin) {
+        if (this.guardWrite("setPageMargins")) return;
         this.ydoc.layout().set("pageMargins", margins);
     }
     setDisplaySceneNumbers(display: boolean) {
+        if (this.guardWrite("setDisplaySceneNumbers")) return;
         this.ydoc.layout().set("displaySceneNumbers", display);
     }
     setSceneHeadingSpacing(spacing: number) {
+        if (this.guardWrite("setSceneHeadingSpacing")) return;
         this.ydoc.layout().set("sceneHeadingSpacing", spacing);
     }
     setSceneNumberOnRight(onRight: boolean) {
+        if (this.guardWrite("setSceneNumberOnRight")) return;
         this.ydoc.layout().set("sceneNumberOnRight", onRight);
     }
     setContdLabel(label: string) {
+        if (this.guardWrite("setContdLabel")) return;
         this.ydoc.layout().set("contdLabel", label);
     }
     setMoreLabel(label: string) {
+        if (this.guardWrite("setMoreLabel")) return;
         this.ydoc.layout().set("moreLabel", label);
     }
     setElementMargins(margins: Record<string, { left: number; right: number }>) {
+        if (this.guardWrite("setElementMargins")) return;
         this.ydoc.layout().set("elementMargins", margins);
     }
     setElementStyles(styles: Record<string, ElementStyle>) {
+        if (this.guardWrite("setElementStyles")) return;
         this.ydoc.layout().set("elementStyles", styles);
+    }
+
+    // -------------------------------- //
+    //           PRODUCTION             //
+    // -------------------------------- //
+
+    getProduction(): Partial<ProductionData> {
+        return this.ydoc.production().toJSON() as Partial<ProductionData>;
+    }
+
+    observeProduction(callback: (production: Partial<ProductionData>) => void): () => void {
+        const map = this.ydoc.production();
+        const observer = () => callback(map.toJSON() as Partial<ProductionData>);
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
+    setSceneLocking(locked: boolean) {
+        if (this.guardWrite("setSceneLocking")) return;
+        this.ydoc.production().set("sceneLocking", locked);
+    }
+    setPageLocking(locked: boolean) {
+        if (this.guardWrite("setPageLocking")) return;
+        this.ydoc.production().set("pageLocking", locked);
+    }
+    setSceneNumberingStyle(style: "suffix" | "prefix") {
+        if (this.guardWrite("setSceneNumberingStyle")) return;
+        this.ydoc.production().set("sceneNumberingStyle", style);
+    }
+    setSkippedSceneLetters(letters: string[]) {
+        if (this.guardWrite("setSkippedSceneLetters")) return;
+        this.ydoc.production().set("skippedSceneLetters", letters);
+    }
+
+    /**
+     * Strip the frozen production `token` from every persistent scene entry.
+     * Entries that have no remaining content (no `synopsis`, `color`, or
+     * `omitted` flag) are deleted outright. Used by the Production panel
+     * when the user unlocks scenes. The `omitted` flag is preserved — omit
+     * is independent of production lock and survives unlock.
+     */
+    clearSceneLocks(): void {
+        if (this.guardWrite("clearSceneLocks")) return;
+        const map = this.ydoc.scenes();
+        const entries: [string, PersistentScene][] = [];
+        map.forEach((value, key) => {
+            entries.push([key, value as PersistentScene]);
+        });
+        for (const [uuid, scene] of entries) {
+            const next: PersistentScene = { ...scene };
+            delete next.token;
+            if (!next.synopsis && !next.color && !next.omitted) {
+                map.delete(uuid);
+            } else {
+                map.set(uuid, next);
+            }
+        }
+    }
+
+    /**
+     * Raw persistent page-lock map keyed by anchor data-id (with the
+     * sentinel `PAGE_ONE_KEY` for page 1). Empty when page locking has
+     * never been enabled.
+     */
+    get pages(): PersistentPageMap {
+        return this.ydoc.pages().toJSON() as PersistentPageMap;
+    }
+
+    getPage(anchorId: string): PersistentPage | undefined {
+        const map = this.ydoc.pages();
+        return map.get(anchorId) as PersistentPage | undefined;
+    }
+
+    /**
+     * Create or update a page lock keyed by its anchor data-id.
+     * Fields present in `data` (including explicit `undefined`s) overwrite
+     * the existing fields; everything else is preserved. Final undefined
+     * values are stripped before writing.
+     */
+    upsertPage(anchorId: string, data: Partial<PersistentPage>): string {
+        if (this.guardWrite("upsertPage")) return anchorId;
+        const map = this.ydoc.pages();
+        const existing = (map.get(anchorId) as PersistentPage | undefined) ?? {};
+
+        const merged: PersistentPage = { ...existing };
+        const FIELDS = ["token", "splitOffset"] as const;
+        for (const key of FIELDS) {
+            if (key in data) {
+                (merged as Record<string, unknown>)[key] = data[key];
+            }
+        }
+        for (const key of FIELDS) {
+            if (merged[key] === undefined) delete merged[key];
+        }
+
+        map.set(anchorId, merged);
+        return anchorId;
+    }
+
+    deletePage(anchorId: string): void {
+        if (this.guardWrite("deletePage")) return;
+        const map = this.ydoc.pages();
+        if (map.has(anchorId)) {
+            map.delete(anchorId);
+        }
+    }
+
+    /**
+     * Wipe every persistent page-lock entry. Used when the user toggles
+     * page locking off — pagination reverts to plain integer numbering.
+     */
+    clearPageLocks(): void {
+        if (this.guardWrite("clearPageLocks")) return;
+        const map = this.ydoc.pages();
+        const keys: string[] = [];
+        map.forEach((_, key) => keys.push(key));
+        for (const key of keys) map.delete(key);
+    }
+
+    observePages(callback: (pages: PersistentPageMap) => void): () => void {
+        const map = this.ydoc.pages();
+        const observer = () => callback(map.toJSON() as PersistentPageMap);
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
+    /**
+     * Run a function inside a single Y.js transaction.
+     * Useful for batching multiple repository mutations into one collab update.
+     *
+     * Pass `origin` to tag the transaction — required for the Y.UndoManager
+     * to track the changes (the manager ignores transactions whose origin is
+     * not in its `trackedOrigins` set). Custom origins must also be added to
+     * the editor's `trackedOrigins` set; see `use-document-editor.ts`.
+     */
+    transact(fn: () => void, origin?: unknown): void {
+        if (this.guardWrite("transact")) return;
+        this.ydoc.transact(fn, origin);
     }
 
     // -------------------------------- //
@@ -349,12 +534,14 @@ export class ProjectRepository {
     }
 
     addCommentToMap(map: Y.Map<Comment>, comment: Omit<Comment, "id">): string {
+        if (this.guardWrite("addComment")) return "";
         const id = uuidv7();
         map.set(id, { ...comment, id });
         return id;
     }
 
     updateCommentInMap(map: Y.Map<Comment>, commentId: string, data: Partial<Comment>): void {
+        if (this.guardWrite("updateComment")) return;
         const existing = map.get(commentId);
         if (!existing) return;
         map.set(commentId, { ...existing, ...data });
@@ -365,6 +552,7 @@ export class ProjectRepository {
     }
 
     addReplyToMap(map: Y.Map<Comment>, commentId: string, reply: Omit<CommentReply, "id">): string | undefined {
+        if (this.guardWrite("addReply")) return undefined;
         const existing = map.get(commentId);
         if (!existing) return undefined;
         const id = uuidv7();
@@ -374,6 +562,7 @@ export class ProjectRepository {
     }
 
     deleteCommentFromMap(map: Y.Map<Comment>, commentId: string): void {
+        if (this.guardWrite("deleteComment")) return;
         if (map.has(commentId)) {
             map.delete(commentId);
         }
@@ -433,6 +622,7 @@ export class ProjectRepository {
 
     /** Create a new shelf entry or add a version to an existing one. Returns the version ID. */
     shelveNode(nodeId: string, title: string, type: ShelfEntryType, content: JSONContent[]): string {
+        if (this.guardWrite("shelveNode")) return "";
         const map = this.ydoc.shelf();
         const existing = map.get(nodeId) as ShelfEntry | undefined;
         const versionId = generateNodeId();
@@ -464,6 +654,7 @@ export class ProjectRepository {
     }
 
     renameShelfVersion(nodeId: string, versionId: string, newTitle: string): void {
+        if (this.guardWrite("renameShelfVersion")) return;
         const map = this.ydoc.shelf();
         const entry = map.get(nodeId) as ShelfEntry | undefined;
         if (!entry) return;
@@ -472,6 +663,7 @@ export class ProjectRepository {
     }
 
     deleteShelfEntry(nodeId: string): void {
+        if (this.guardWrite("deleteShelfEntry")) return;
         const map = this.ydoc.shelf();
         const entry = map.get(nodeId) as ShelfEntry | undefined;
         if (!entry) return;
@@ -486,6 +678,7 @@ export class ProjectRepository {
     }
 
     deleteShelfVersion(nodeId: string, versionId: string): void {
+        if (this.guardWrite("deleteShelfVersion")) return;
         const map = this.ydoc.shelf();
         const entry = map.get(nodeId) as ShelfEntry | undefined;
         if (!entry) return;
@@ -515,6 +708,276 @@ export class ProjectRepository {
         const observer = () => callback(map.toJSON() as Record<string, ShelfEntry>);
         map.observe(observer);
         return () => map.unobserve(observer);
+    }
+
+    // -------------------------------- //
+    //          DOCUMENT TREE           //
+    // -------------------------------- //
+
+    /** All document-hierarchy nodes keyed by node id. */
+    get documents(): Record<string, DocumentNode> {
+        return this.ydoc.documents().toJSON() as Record<string, DocumentNode>;
+    }
+
+    getDocumentNode(id: string): DocumentNode | undefined {
+        return this.ydoc.documents().get(id) as DocumentNode | undefined;
+    }
+
+    observeDocuments(callback: (documents: Record<string, DocumentNode>) => void): () => void {
+        const map = this.ydoc.documents();
+        const observer = () => callback(map.toJSON() as Record<string, DocumentNode>);
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
+    /** Append position = one past the greatest order among the parent's children. */
+    private nextDocumentOrder(parentId: string | null): number {
+        let max = -1;
+        this.ydoc.documents().forEach((node) => {
+            if (node.parentId === parentId && node.order > max) max = node.order;
+        });
+        return max + 1;
+    }
+
+    /** Is `ancestorId` an ancestor of `nodeId`? Used to block cyclic moves. */
+    private isDocumentAncestor(nodeId: string, ancestorId: string): boolean {
+        const map = this.ydoc.documents();
+        const seen = new Set<string>();
+        let cur = map.get(nodeId) as DocumentNode | undefined;
+        while (cur && cur.parentId) {
+            if (seen.has(cur.id)) break;
+            seen.add(cur.id);
+            if (cur.parentId === ancestorId) return true;
+            cur = map.get(cur.parentId) as DocumentNode | undefined;
+        }
+        return false;
+    }
+
+    createFolder(title: string, parentId: string | null = null): string {
+        if (this.guardWrite("createFolder")) return "";
+        const id = uuidv7();
+        this.ydoc
+            .documents()
+            .set(id, { id, type: "folder", title, parentId, order: this.nextDocumentOrder(parentId) });
+        return id;
+    }
+
+    /**
+     * Create an `editor` document node. Its content lives in a dedicated
+     * Y.XmlFragment (`doc_<id>`) which is left empty — an empty fragment binds
+     * to a fresh screenplay editor exactly like a brand-new project's main
+     * screenplay, so no seeding is required.
+     */
+    createEditorDocument(title: string, parentId: string | null = null): string {
+        if (this.guardWrite("createEditorDocument")) return "";
+        const id = uuidv7();
+        this.ydoc
+            .documents()
+            .set(id, { id, type: "editor", title, parentId, order: this.nextDocumentOrder(parentId) });
+        return id;
+    }
+
+    /**
+     * Create a `board` document node. Each board owns a dedicated data map
+     * (`board_<id>`, read via `boardData(id)`); a project may hold any number
+     * of boards. Returns the new board node id.
+     */
+    createBoardDocument(title: string, parentId: string | null = null): string {
+        if (this.guardWrite("createBoardDocument")) return "";
+        const id = uuidv7();
+        this.ydoc
+            .documents()
+            .set(id, { id, type: "board", title, parentId, order: this.nextDocumentOrder(parentId) });
+        return id;
+    }
+
+    renameDocument(id: string, title: string): void {
+        if (this.guardWrite("renameDocument")) return;
+        const map = this.ydoc.documents();
+        const node = map.get(id) as DocumentNode | undefined;
+        if (!node) return;
+        map.set(id, { ...node, title });
+    }
+
+    /** Set (or clear, with `undefined`) a document node's accent color. */
+    setDocumentColor(id: string, color: string | undefined): void {
+        if (this.guardWrite("setDocumentColor")) return;
+        const map = this.ydoc.documents();
+        const node = map.get(id) as DocumentNode | undefined;
+        if (!node) return;
+        map.set(id, { ...node, color });
+    }
+
+    /**
+     * Move a node under a new parent at the given fractional order. No-ops on a
+     * move that would create a cycle (into itself or one of its descendants).
+     */
+    moveDocument(id: string, newParentId: string | null, order: number): void {
+        if (this.guardWrite("moveDocument")) return;
+        const map = this.ydoc.documents();
+        const node = map.get(id) as DocumentNode | undefined;
+        if (!node) return;
+        if (newParentId !== null && (newParentId === id || this.isDocumentAncestor(newParentId, id))) {
+            return;
+        }
+        map.set(id, { ...node, parentId: newParentId, order });
+    }
+
+    /**
+     * Delete a node and all its descendants in one transaction. Editor nodes
+     * have their content fragment cleared; board nodes have their per-board
+     * data map cleared.
+     */
+    deleteDocument(id: string): void {
+        if (this.guardWrite("deleteDocument")) return;
+        const map = this.ydoc.documents();
+        if (!map.has(id)) return;
+
+        const all = map.toJSON() as Record<string, DocumentNode>;
+        const toDelete: string[] = [];
+        const stack = [id];
+        while (stack.length > 0) {
+            const cur = stack.pop()!;
+            toDelete.push(cur);
+            for (const node of Object.values(all)) {
+                if (node.parentId === cur) stack.push(node.id);
+            }
+        }
+
+        this.ydoc.transact(() => {
+            for (const nid of toDelete) {
+                const node = all[nid];
+                if (!node) continue;
+                if (node.type === "editor") {
+                    const frag = this.ydoc.documentFragment(nid);
+                    if (frag.length > 0) frag.delete(0, frag.length);
+                } else if (node.type === "board") {
+                    this.ydoc.boardData(nid).clear();
+                }
+                map.delete(nid);
+            }
+        });
+    }
+
+    // -------------------------------- //
+    //            OUTLINE               //
+    // -------------------------------- //
+
+    /** All outline blocks keyed by block id. */
+    get outlineItems(): Record<string, OutlineItem> {
+        return this.ydoc.outline().toJSON() as Record<string, OutlineItem>;
+    }
+
+    observeOutline(callback: (outline: Record<string, OutlineItem>) => void): () => void {
+        const map = this.ydoc.outline();
+        const observer = () => callback(map.toJSON() as Record<string, OutlineItem>);
+        map.observe(observer);
+        return () => map.unobserve(observer);
+    }
+
+    /** Append position = one past the greatest order among the parent's children. */
+    private nextOutlineOrder(parentId: string | null): number {
+        let max = -1;
+        this.ydoc.outline().forEach((item) => {
+            if (item.parentId === parentId && item.order > max) max = item.order;
+        });
+        return max + 1;
+    }
+
+    /** Is `ancestorId` an ancestor of `itemId`? Used to block cyclic moves. */
+    private isOutlineAncestor(itemId: string, ancestorId: string): boolean {
+        const map = this.ydoc.outline();
+        const seen = new Set<string>();
+        let cur = map.get(itemId) as OutlineItem | undefined;
+        while (cur && cur.parentId) {
+            if (seen.has(cur.id)) break;
+            seen.add(cur.id);
+            if (cur.parentId === ancestorId) return true;
+            cur = map.get(cur.parentId) as OutlineItem | undefined;
+        }
+        return false;
+    }
+
+    /**
+     * Add a block to the outline at the end of the root (or a given parent).
+     * De-duplicates: if a block already references the same source element, the
+     * existing block's id is returned and nothing is added.
+     */
+    addOutlineItem(item: Omit<OutlineItem, "id" | "order">): string {
+        if (this.guardWrite("addOutlineItem")) return "";
+        const map = this.ydoc.outline();
+
+        let existingId = "";
+        map.forEach((existing) => {
+            if (
+                existing.source === item.source &&
+                existing.refDocId === item.refDocId &&
+                existing.refId === item.refId
+            ) {
+                existingId = existing.id;
+            }
+        });
+        if (existingId) return existingId;
+
+        const id = uuidv7();
+        map.set(id, { ...item, id, order: this.nextOutlineOrder(item.parentId ?? null) });
+        return id;
+    }
+
+    /**
+     * Move a block under a new parent at the given fractional order. No-ops on a
+     * move that would create a cycle (into itself or one of its descendants).
+     */
+    moveOutlineItem(id: string, newParentId: string | null, order: number): void {
+        if (this.guardWrite("moveOutlineItem")) return;
+        const map = this.ydoc.outline();
+        const item = map.get(id) as OutlineItem | undefined;
+        if (!item) return;
+        if (newParentId !== null && (newParentId === id || this.isOutlineAncestor(newParentId, id))) {
+            return;
+        }
+        map.set(id, { ...item, parentId: newParentId, order });
+    }
+
+    /** Patch the cached display snapshot of a block (title/preview/color). */
+    refreshOutlineSnapshot(id: string, snapshot: Pick<OutlineItem, "title" | "preview" | "color">): void {
+        if (this.guardWrite("refreshOutlineSnapshot")) return;
+        const map = this.ydoc.outline();
+        const item = map.get(id) as OutlineItem | undefined;
+        if (!item) return;
+        map.set(id, { ...item, ...snapshot });
+    }
+
+    /**
+     * Remove a block from the outline. Its children are promoted to the removed
+     * block's parent so other referenced beats are not destroyed.
+     */
+    deleteOutlineItem(id: string): void {
+        if (this.guardWrite("deleteOutlineItem")) return;
+        const map = this.ydoc.outline();
+        const target = map.get(id) as OutlineItem | undefined;
+        if (!target) return;
+
+        this.ydoc.transact(() => {
+            map.forEach((child) => {
+                if (child.parentId === id) {
+                    map.set(child.id, { ...child, parentId: target.parentId });
+                }
+            });
+            map.delete(id);
+        });
+    }
+
+    /**
+     * Parse an `editor` document's content into transient scenes (heading text +
+     * preview + position), so the outline can resolve scene references that live
+     * in document-tree editor docs rather than the main screenplay.
+     */
+    getEditorDocumentScenes(docId: string): TransientScene[] {
+        const fragment = this.ydoc.documentFragment(docId);
+        const root = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
+        const content = root.content.toJSON() as Screenplay;
+        return computeSceneItems(content);
     }
 }
 

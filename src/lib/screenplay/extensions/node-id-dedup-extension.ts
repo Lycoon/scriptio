@@ -16,6 +16,9 @@ type NodeIdDedupConfig = {
  * This plugin only handles the duplicate case: when a node is copy-pasted, both the
  * original and copy share the same data-id. A new ID is generated for the copy, and
  * for persistent scene headings, the persistent scene data is duplicated as well.
+ *
+ * NOTE: production sceneLocks are intentionally NOT duplicated here — a pasted scene
+ * should start unlocked/provisional, not inherit the source's frozen label.
  */
 export const createNodeIdDedupExtension = (config: NodeIdDedupConfig) => {
     return Extension.create({

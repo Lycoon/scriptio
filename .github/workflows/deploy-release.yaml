@@ -16,6 +16,7 @@ jobs:
             short_version: ${{ steps.version.outputs.short_version }}
             revision: ${{ steps.version.outputs.revision }}
             git_tag: ${{ steps.version.outputs.git_tag }}
+            commit_sha: ${{ steps.version.outputs.commit_sha }}
         steps:
             - uses: actions/checkout@v6
               with:
@@ -27,7 +28,7 @@ jobs:
 
     publish-macos:
         runs-on: macos-latest
-        needs: prepare
+        needs: [prepare, deploy-web]
         env:
             APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio.app
             PKG_PATH: Scriptio.pkg
@@ -41,7 +42,7 @@ jobs:
                   p12-password: ${{ secrets.APPLE_CERT_PASSWORD }}
 
             - name: Download provisioning profile
-              uses: apple-actions/download-provisioning-profiles@v5
+              uses: apple-actions/download-provisioning-profiles@v6
               with:
                   bundle-id: "app.scriptio"
                   profile-type: "MAC_APP_STORE"
@@ -52,7 +53,6 @@ jobs:
             - name: Copy provisioning profile to known path
               run: |
                   PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.provisionprofile \
-                               "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision \
                              2>/dev/null | head -n 1)
                   cp "$PROFILE" src-tauri/embedded.provisionprofile
 
@@ -71,7 +71,9 @@ jobs:
               env:
                   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
                   NEXT_PUBLIC_API_URL: https://scriptio.app
+                  NEXT_PUBLIC_CLOUD_URL: https://cloud.scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+                  NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
 
             - name: Build signed .pkg installer
               run: |
@@ -81,17 +83,18 @@ jobs:
                     "$PKG_PATH"
 
             - name: Upload to App Store Connect
-              uses: apple-actions/upload-testflight-build@v3
+              uses: apple-actions/upload-testflight-build@v5
               with:
                   app-path: ${{ env.PKG_PATH }}
                   issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
                   api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
                   api-private-key: ${{ secrets.APPSTORE_API_KEY_P8 }}
+                  backend: "altool"
                   app-type: "macos"
 
     publish-windows:
         runs-on: windows-latest
-        needs: prepare
+        needs: [prepare, deploy-web]
         env:
             APP_PATH: src-tauri/target/msix/Scriptio.msixbundle
         steps:
@@ -111,7 +114,9 @@ jobs:
               run: npm run build:windows
               env:
                   NEXT_PUBLIC_API_URL: https://scriptio.app
+                  NEXT_PUBLIC_CLOUD_URL: https://cloud.scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+                  NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
 
             - name: Rename output to fixed name
               run: |
@@ -129,6 +134,24 @@ jobs:
 
             - name: Publish to Microsoft Store
               run: msstore publish "$env:APP_PATH" -id "9P4M1XPHJKS1"
+
+    deploy-cloud:
+        runs-on: ubuntu-latest
+        needs: prepare
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: "25.2.1"
+                  cache: "npm"
+
+            - run: npm ci
+
+            - name: Deploy Cloudflare Worker (production)
+              run: npm run cloud:deploy:prod
+              env:
+                  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
     deploy-web:
         runs-on: ubuntu-latest
@@ -161,6 +184,7 @@ jobs:
                       ${{ env.IMAGE_NAME }}:${{ needs.prepare.outputs.version }}
                   build-args: |
                       NEXT_PUBLIC_API_URL=https://scriptio.app
+                      NEXT_PUBLIC_CLOUD_URL=https://cloud.scriptio.app
                       NEXT_PUBLIC_COMMIT_SHA=${{ env.COMMIT_SHA }}
                       NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}
 
@@ -190,7 +214,7 @@ jobs:
 
     tag-release:
         runs-on: ubuntu-latest
-        needs: [prepare, publish-macos, publish-windows, deploy-web]
+        needs: [prepare, deploy-web]
         steps:
             - uses: actions/checkout@v6
               with:

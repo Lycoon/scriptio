@@ -38,7 +38,9 @@ const ScreenplaySearch = () => {
     };
 
     const {
-        editor,
+        // Search is scoped to the focused panel; `editor` here is the active
+        // search target (main screenplay, or the focused draft / tree document).
+        activeSearchEditor: editor,
         searchTerm,
         setSearchTerm,
         searchFilters,
@@ -72,6 +74,12 @@ const ScreenplaySearch = () => {
         }
     }, [isOpen]);
 
+    // When the search target switches panels (focus moved), the new document's
+    // matches are a different set — reset navigation so the index stays in range.
+    useEffect(() => {
+        setCurrentSearchIndex(0);
+    }, [editor, setCurrentSearchIndex]);
+
     const handleOpen = useCallback(() => {
         setIsOpen(true);
     }, []);
@@ -87,6 +95,23 @@ const ScreenplaySearch = () => {
         setSearchTerm("");
         setReplaceValue("");
     }, [setSearchTerm]);
+
+    // Click outside to close — only when the search field is empty. If there's
+    // an in-progress search, keep the panel open so it isn't lost on a stray
+    // click. Reads the live input value (uncontrolled) rather than the debounced
+    // context term so it stays accurate before the debounce fires.
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                if (!inputRef.current?.value) {
+                    handleClose();
+                }
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isOpen, handleClose]);
 
     // Use uncontrolled input with debounced updates to context
     const handleSearchChange = useCallback(

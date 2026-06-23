@@ -1,25 +1,36 @@
 "use client";
 
 import { join } from "@src/lib/utils/misc";
-import { useContext, useState, useCallback, useRef, useEffect } from "react";
+import { useContext, useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { Scene } from "@src/lib/screenplay/scenes";
 import { focusOnPosition } from "@src/lib/screenplay/editor";
-import { Archive, Clapperboard } from "lucide-react";
+import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
+import { Archive, Clapperboard, FolderTree, MessageSquare } from "lucide-react";
 import SidebarSceneItem from "./SidebarSceneItem";
 import ShelfSidebarView from "./ShelfSidebarView";
+import CommentSidebarView from "./CommentSidebarView";
+import DocumentTreeSidebarView from "./DocumentTreeSidebarView";
 
 import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
 
 const EditorSidebarNavigation = () => {
     const t = useTranslations("editorSidebar");
-    const { scenes, updateScenes, editor } = useContext(ProjectContext);
+    const {
+        scenes,
+        updateScenes,
+        editor,
+        sceneLocking,
+        sceneNumberingStyle,
+        skippedSceneLetters,
+        persistentScenes,
+    } = useContext(ProjectContext);
     const { leftSidebarOpen } = useViewContext();
 
-    const [activeTab, setActiveTab] = useState<"scenes" | "shelf">("scenes");
+    const [activeTab, setActiveTab] = useState<"scenes" | "shelf" | "comments" | "documents">("scenes");
 
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     // indicatorIndex represents the gap where the item will be inserted.
@@ -29,6 +40,26 @@ const EditorSidebarNavigation = () => {
 
     // Track which scene the cursor is currently in
     const [currentSceneIndex, setCurrentSceneIndex] = useState<number | null>(null);
+
+    // Compute display labels and omitted flags for every scene. When locking is
+    // off we fall back to positional numbers so the user always has a number to
+    // navigate by.
+    const sceneDisplays = useMemo(() => {
+        if (sceneLocking) {
+            const uuids = scenes.map((s) => s.id ?? "");
+            const labels = computeSceneLabels(
+                uuids,
+                persistentScenes,
+                sceneNumberingStyle,
+                skippedSceneLetters,
+            );
+            return scenes.map((_, i) => ({
+                label: labels[i]?.label ?? `${i + 1}`,
+                isOmitted: labels[i]?.status === "omitted",
+            }));
+        }
+        return scenes.map((_, i) => ({ label: `${i + 1}`, isOmitted: false }));
+    }, [scenes, sceneLocking, sceneNumberingStyle, skippedSceneLetters, persistentScenes]);
 
     const listRef = useRef<HTMLDivElement>(null);
     const currentSceneRef = useRef<HTMLDivElement>(null);
@@ -193,7 +224,7 @@ const EditorSidebarNavigation = () => {
                                 className={join(sidebar_nav.list, sidebar_nav.scene_list)}
                                 onPointerMove={handlePointerMove}
                             >
-                                {scenes.length != 0 &&
+                                {scenes.length != 0 ?
                                     scenes.map((scene: Scene, index: number) => {
                                         const isNoOp =
                                             dragIndex === null ||
@@ -201,12 +232,15 @@ const EditorSidebarNavigation = () => {
                                             indicatorIndex === dragIndex + 1;
                                         const showIndicator = !isNoOp && indicatorIndex === index;
                                         const isCurrent = index === currentSceneIndex;
+                                        const display = sceneDisplays[index];
                                         return (
                                             <SidebarSceneItem
                                                 key={scene.position}
                                                 scrollRef={isCurrent ? currentSceneRef : undefined}
                                                 scene={scene}
                                                 index={index}
+                                                label={display?.label ?? `${index + 1}`}
+                                                isOmitted={display?.isOmitted ?? false}
                                                 showDropIndicator={showIndicator}
                                                 isDragging={dragIndex === index}
                                                 isCurrent={isCurrent}
@@ -214,11 +248,19 @@ const EditorSidebarNavigation = () => {
                                                 onDoubleClick={handleDoubleClick}
                                             />
                                         );
-                                    })}
+                                    }) : (
+                                        <div className={sidebar_nav.empty_state}>
+                                            {t("scenesEmpty")}
+                                        </div>
+                                    )}
                             </div>
                         </>
-                    ) : (
+                    ) : activeTab === "shelf" ? (
                         <ShelfSidebarView />
+                    ) : activeTab === "documents" ? (
+                        <DocumentTreeSidebarView />
+                    ) : (
+                        <CommentSidebarView />
                     )}
                     <div className={sidebar_nav.tab_bar}>
                         <button
@@ -226,6 +268,18 @@ const EditorSidebarNavigation = () => {
                             onClick={() => setActiveTab("scenes")}
                         >
                             <Clapperboard size={16} />
+                        </button>
+                        <button
+                            className={join(sidebar_nav.tab_btn, activeTab === "documents" ? sidebar_nav.tab_btn_active : "")}
+                            onClick={() => setActiveTab("documents")}
+                        >
+                            <FolderTree size={16} />
+                        </button>
+                        <button
+                            className={join(sidebar_nav.tab_btn, activeTab === "comments" ? sidebar_nav.tab_btn_active : "")}
+                            onClick={() => setActiveTab("comments")}
+                        >
+                            <MessageSquare size={16} />
                         </button>
                         <button
                             className={join(sidebar_nav.tab_btn, activeTab === "shelf" ? sidebar_nav.tab_btn_active : "")}

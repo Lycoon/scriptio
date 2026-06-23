@@ -84,26 +84,34 @@ export function generateBridgeNonce(): string {
  */
 export async function pollBridgeToken(
     nonce: string,
-    options: { intervalMs?: number; timeoutMs?: number } = {},
+    options: { intervalMs?: number; timeoutMs?: number; signal?: AbortSignal } = {},
 ): Promise<string | null> {
     const intervalMs = options.intervalMs ?? 2000;
     const timeoutMs = options.timeoutMs ?? 5 * 60 * 1000;
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+    const { signal } = options;
+
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
     const url = `${apiBase}/api/desktop/token/poll?nonce=${encodeURIComponent(nonce)}`;
     const deadline = Date.now() + timeoutMs;
 
     while (Date.now() < deadline) {
+        if (signal?.aborted) return null;
         try {
-            const res = await fetch(url, { headers: { "x-client-type": "desktop" } });
+            const res = await fetch(url, { headers: { "x-client-type": "desktop" }, signal });
             if (res.ok) {
                 const json = (await res.json()) as { data?: { token?: string | null } };
                 const token = json.data?.token;
                 if (token) return token;
             }
         } catch {
+            if (signal?.aborted) return null;
             // network blip — keep polling
         }
-        await new Promise((r) => setTimeout(r, intervalMs));
+        if (signal?.aborted) return null;
+        await new Promise<void>((resolve, reject) => {
+            const t = setTimeout(resolve, intervalMs);
+            signal?.addEventListener("abort", () => { clearTimeout(t); reject(new DOMException("Aborted", "AbortError")); }, { once: true });
+        }).catch(() => null);
     }
     return null;
 }

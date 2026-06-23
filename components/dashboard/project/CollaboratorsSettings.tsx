@@ -1,12 +1,13 @@
 "use client";
 
-import { useContext, useMemo, useState } from "react";
+import { useContext, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { useCookieUser, useIsPro, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
+import { useCookieUser, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
 import { CookieUser } from "@src/lib/utils/types";
 import { ProjectRole } from "../../../src/generated/client/browser";
 import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
-import { Info, Lock } from "lucide-react";
+import { Info } from "lucide-react";
 
 import form from "./../../utils/Form.module.css";
 import shared from "./ProjectSettings.module.css";
@@ -14,10 +15,7 @@ import styles from "./CollaboratorsSettings.module.css";
 import { deleteInvite, inviteCollaborator, kickCollaborator, updateMemberRole } from "@src/lib/utils/requests";
 
 import * as Roles from "@src/lib/utils/roles";
-import { ApiResponse } from "@src/lib/utils/api-utils";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { redirect } from "next/navigation";
-import Link from "next/link";
 
 const MAX_COLLABORATORS = 5;
 
@@ -27,7 +25,6 @@ const CollaboratorsSettings = () => {
     const { invites, mutate: mutateInvites } = useProjectInvites(membership?.project.id);
     const { collaborators, mutate: mutateCollaborators } = useProjectCollaborators(membership?.project.id);
     const { user } = useCookieUser();
-    const { isPro } = useIsPro();
 
     const slots = useMemo(() => {
         if (!membership) return [];
@@ -53,48 +50,56 @@ const CollaboratorsSettings = () => {
         return result;
     }, [membership, collaborators, invites]);
 
+    const iconRef = useRef<HTMLDivElement>(null);
+    const [hintPos, setHintPos] = useState<{ top: number; left: number } | null>(null);
+
     if (isLocalOnly) return <p style={{ color: "var(--secondary-text)", fontSize: "0.85rem" }}>{t("localProjectOnly")}</p>;
     if (!membership || !user) return null;
 
+    const hint = hintPos && createPortal(
+        <div className={styles.permissionsHint} style={{ top: hintPos.top, left: hintPos.left }}>
+            <div className={styles.hintItem}>
+                <span className={styles.hintRole}>{t("roles.owner")}</span>
+                {t("roleDesc.owner")}
+            </div>
+            <div className={styles.hintItem}>
+                <span className={styles.hintRole}>{t("roles.admin")}</span>
+                {t("roleDesc.admin")}
+            </div>
+            <div className={styles.hintItem}>
+                <span className={styles.hintRole}>{t("roles.editor")}</span>
+                {t("roleDesc.editor")}
+            </div>
+            <div className={styles.hintItem}>
+                <span className={styles.hintRole}>{t("roles.viewer")}</span>
+                {t("roleDesc.viewer")}
+            </div>
+        </div>,
+        document.body,
+    );
+
     return (
         <div className={styles.container}>
+            {hint}
             <section className={styles.section}>
                 <div className={styles.labelRow}>
                     <label className={form.label}>
                         {t("projectTeam", { count: collaborators.length + invites.length, max: MAX_COLLABORATORS })}
                     </label>
-                    <div className={styles.infoIconWrapper}>
+                    <div
+                        className={styles.infoIconWrapper}
+                        ref={iconRef}
+                        onMouseEnter={() => {
+                            if (!iconRef.current) return;
+                            const rect = iconRef.current.getBoundingClientRect();
+                            setHintPos({ top: rect.bottom + 8, left: rect.left });
+                        }}
+                        onMouseLeave={() => setHintPos(null)}
+                    >
                         <Info size={16} className={styles.infoIcon} />
-                        <div className={styles.permissionsHint}>
-                            <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>{t("roles.owner")}</span>
-                                {t("roleDesc.owner")}
-                            </div>
-                            <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>{t("roles.admin")}</span>
-                                {t("roleDesc.admin")}
-                            </div>
-                            <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>{t("roles.editor")}</span>
-                                {t("roleDesc.editor")}
-                            </div>
-                            <div className={styles.hintItem}>
-                                <span className={styles.hintRole}>{t("roles.viewer")}</span>
-                                {t("roleDesc.viewer")}
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <p className={shared.helpText}>{t("teamHelp")}</p>
-
-                {/* Pro gate banner */}
-                {!isPro && (
-                    <div className={styles.proGateBanner}>
-                        <Lock size={14} />
-                        <span>{t("proRequired")}</span>
-                        <Link href="/?settings=Profile" className={styles.proGateLink}>{t("upgrade")}</Link>
-                    </div>
-                )}
 
                 {/* Project Collaborators */}
                 <div className={styles.slotGrid}>
@@ -121,7 +126,7 @@ const CollaboratorsSettings = () => {
                                 );
                             case "EMPTY":
                                 return (
-                                    <EmptySlot key={slot.key} membership={membership} mutateInvites={mutateInvites} isPro={isPro} />
+                                    <EmptySlot key={slot.key} membership={membership} mutateInvites={mutateInvites} />
                                 );
                             default:
                                 return null;
@@ -147,22 +152,21 @@ const MemberSlot = ({ data, membership, mutateCollaborators, user }: MemberSlotP
     const isOwner = data.role === ProjectRole.OWNER;
     const isAdmin = Roles.hasRoleOrGreater(membership.role, ProjectRole.ADMIN);
     const isSelf = data.user.email === user.email;
-    const canKick = (isSelf && !isOwner) || isAdmin;
+    const canKick = (isSelf && !isOwner) || (!isSelf && isAdmin);
 
     const handleKick = async () => {
         const res = await kickCollaborator(membership.project.id, data.user.id);
+        if (!res.ok) return;
 
-        if (res.ok) {
-            if (res.status !== 204) {
-                // If user left the project by himself, redirect him to home
-                const json = (await res.json()) as ApiResponse<{ redirectUrl: string }>;
-                if (json.data && json.data.redirectUrl) {
-                    closeDashboard();
-                    redirect(json.data.redirectUrl);
-                }
-            } else {
-                mutateCollaborators();
-            }
+        if (isSelf) {
+            // Self-leave: the server has already deleted the membership and
+            // blacklisted the user on the WS, so a 4003 close is on its way.
+            // The cloud-sync hook surfaces ProjectUnavailableDialog from there,
+            // letting the leaver decide whether to keep a local copy or discard.
+            // We just close the dashboard so the dialog isn't covered.
+            closeDashboard();
+        } else {
+            mutateCollaborators();
         }
     };
 
@@ -242,10 +246,9 @@ const InviteSlot = ({ data, membership, mutateInvites }: InviteSlotProps) => {
 interface EmptySlotProps {
     membership: ProjectMembershipPayload;
     mutateInvites: () => void;
-    isPro: boolean;
 }
 
-const EmptySlot = ({ membership, mutateInvites, isPro }: EmptySlotProps) => {
+const EmptySlot = ({ membership, mutateInvites }: EmptySlotProps) => {
     const t = useTranslations("collaborators");
     const [email, setEmail] = useState("");
 
@@ -257,14 +260,6 @@ const EmptySlot = ({ membership, mutateInvites, isPro }: EmptySlotProps) => {
             setEmail("");
         }
     };
-
-    if (!isPro) {
-        return (
-            <div className={`${styles.slot} ${styles.empty}`}>
-                <span className={styles.proHint}>{t("proRequiredInvite")}</span>
-            </div>
-        );
-    }
 
     return (
         <div className={`${styles.slot} ${styles.empty}`}>

@@ -90,13 +90,14 @@ export class UserRepository {
     }
 
     searchUsers(term: string, limit: number, cursor?: number) {
-        const isLikelyId = /^[0-9a-f-]{30,}$/i.test(term);
-        const where: Prisma.UserWhereInput = isLikelyId
-            ? { OR: [{ id: term }, { email: { contains: term, mode: "insensitive" } }] }
-            : { email: { contains: term, mode: "insensitive" } };
+        const where: Prisma.UserWhereInput | undefined = term
+            ? (/^[0-9a-f-]{30,}$/i.test(term)
+                ? { OR: [{ id: term }, { email: { contains: term, mode: "insensitive" } }] }
+                : { email: { contains: term, mode: "insensitive" } })
+            : undefined;
 
         return prisma.user.findMany({
-            where,
+            ...(where && { where }),
             orderBy: { createdAt: "desc" },
             take: limit,
             ...(cursor !== undefined && { skip: cursor }),

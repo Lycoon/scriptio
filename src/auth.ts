@@ -1,3 +1,19 @@
+/**
+ * NextAuth (Auth.js v5) configuration.
+ *
+ * This file is the spine of four cooperating auth flows:
+ *   1. Browser magic link  — verify route mints a JWE and sets the session cookie.
+ *   2. Browser OAuth       — Google/Apple, handled end-to-end by NextAuth.
+ *   3. Desktop magic link  — verify route puts a JWE on the bridge for Tauri.
+ *   4. Desktop OAuth       — browser OAuth here, then /api/desktop/token mints
+ *                            a fresh JWE for Tauri to pick up via the bridge.
+ *
+ * The desktop bearer JWEs all use `DESKTOP_BEARER_SALT` (lib/auth-tokens.ts)
+ * so lib/session.ts can decrypt them in middleware. The web cookie uses Auth.js's
+ * default salt (= cookie name) and is never encoded by us directly except in the
+ * magic-link verify route, which uses `getWebSessionCookie()` to stay aligned.
+ */
+
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
@@ -6,10 +22,11 @@ import { UserRole } from "./generated/client/client";
 
 import prisma from "@src/server/db";
 import * as UserService from "@src/server/service/user-service";
+import { SESSION_TTL_SECONDS } from "@src/lib/auth-tokens";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: PrismaAdapter(prisma),
-    session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+    session: { strategy: "jwt", maxAge: SESSION_TTL_SECONDS },
     pages: { signIn: "/" },
     providers: [
         Google({
@@ -19,10 +36,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }),
         Apple({
             allowDangerousEmailAccountLinking: true,
-            profile: (profile) => ({ id: profile.sub, email: profile.email }),
+            // Explicitly request email on first consent. Apple only returns it once —
+            // subsequent sign-ins omit it, so the adapter links via providerAccountId
+            // and we re-sync email from the DB in the jwt callback instead.
+            authorization: { params: { scope: "name email" } },
+            profile: (profile) => {
+                if (!profile.email) {
+                    // This only runs on first sign-in. If Apple didn't return an email
+                    // (e.g. user denied the scope), fail early rather than creating a
+                    // User row with a missing email field.
+                    throw new Error("Apple did not return an email address. Ensure the email scope is granted.");
+                }
+                return { id: profile.sub, email: profile.email };
+            },
         }),
     ],
     callbacks: {
+        // Apple uses response_mode=form_post; the cross-site POST back from
+        // appleid.apple.com drops the `callbackUrl` cookie, so Auth.js falls back to
+        // url.origin and never calls this callback for that case. The actual Apple
+        // redirect fix lives in /api/auth/[...nextauth]/route.ts which intercepts
+        // the 302 response before it leaves the server.
+        //
+        // This callback still runs for explicit callbackUrl values (e.g. Google OAuth,
+        // magic-link flows). Apple form_post with no callbackUrl bypasses it entirely.
+        redirect: async ({ url, baseUrl }) => {
+            if (url === baseUrl || url === `${baseUrl}/`) return `${baseUrl}/projects`;
+            if (url.startsWith("/")) return `${baseUrl}${url}`;
+            try {
+                if (new URL(url).origin === baseUrl) return url;
+            } catch {}
+            return `${baseUrl}/projects`;
+        },
         jwt: async ({ token, user }) => {
             if (user) {
                 token.id = user.id;
@@ -35,11 +80,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             }
             // Always sync from DB so role changes (e.g. granting admin) are reflected
             // without requiring a sign-out. Called on every auth() invocation.
+            // Email is also re-synced — Apple omits it on subsequent sign-ins, so the
+            // initial `user.email` may be undefined on a re-sign-in if PrismaAdapter
+            // routed through profile() rather than the existing User row.
             if (token.id) {
                 const dbUser = await UserService.getUserFromId(token.id as string);
                 if (dbUser) {
                     if (!token.createdAt) token.createdAt = dbUser.createdAt.toISOString();
                     token.role = dbUser.role;
+                    token.email = dbUser.email;
                 }
             }
             return token;

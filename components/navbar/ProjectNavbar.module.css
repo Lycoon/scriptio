@@ -146,6 +146,61 @@
     height: 20px;
 }
 
+/* Storage usage panel (hover of the cloud status indicator) */
+.status_wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.storage_panel {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    min-width: 220px;
+    background-color: var(--secondary);
+    color: var(--primary-text);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.storage_status {
+    font-weight: 600;
+}
+
+.storage_separator {
+    height: 1px;
+    background-color: var(--tertiary);
+    margin: 1px 0;
+}
+
+.storage_row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    color: var(--secondary-text);
+}
+
+.storage_bar {
+    height: 6px;
+    border-radius: 3px;
+    background-color: var(--tertiary);
+    overflow: hidden;
+}
+
+.storage_bar_fill {
+    height: 100%;
+    background-color: var(--primary);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
 .failed {
     color: var(--error);
 }

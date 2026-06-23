@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import prisma from "@src/server/db";
 import * as UserService from "@src/server/service/user-service";
+import * as TransactionService from "@src/server/service/transaction-service";
 
 export async function POST(req: NextRequest) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -28,15 +28,10 @@ export async function POST(req: NextRequest) {
             const periodEnd = subscription.items.data[0]?.current_period_end;
             await UserService.updateUserFromId(userId, {
                 isProUntil: periodEnd ? new Date(periodEnd * 1000) : null,
+                isSubscriptionCancelled: false,
                 subscriptionProvider: "STRIPE",
             });
-            await prisma.transaction.create({
-                data: {
-                    userId,
-                    provider: "STRIPE",
-                    transactionId: subscriptionId,
-                },
-            });
+            await TransactionService.createTransactionIfNotExists(userId, "STRIPE", subscriptionId);
         }
     }
 

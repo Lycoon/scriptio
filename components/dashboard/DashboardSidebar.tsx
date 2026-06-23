@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 
 import styles from "./DashboardModal.module.css";
 import dangerStyles from "./project/DangerZone.module.css";
+import modal from "../utils/ModalBtn.module.css";
 import { signOut } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useCookieUser } from "@src/lib/utils/hooks";
@@ -15,7 +16,9 @@ import { useCookieUser } from "@src/lib/utils/hooks";
 export type Category =
     | "General"
     | "Layout"
+    | "Production"
     | "Export"
+    | "Storage"
     | "Collaborators"
     | "Profile"
     | "Subscription"
@@ -45,7 +48,7 @@ interface SidebarMenuProps {
 
 const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) => {
     const { closeDashboard } = useContext(DashboardContext);
-    const { user } = useCookieUser();
+    const { user, isLoading: isUserLoading } = useCookieUser();
     const t = useTranslations("sidebar");
     const tModal = useTranslations("modal");
     const [showLogOutConfirm, setShowLogOutConfirm] = useState(false);
@@ -72,13 +75,13 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
                         <p className={dangerStyles.modalDescription}>{t("logOutConfirmDesc")}</p>
                         <div className={dangerStyles.modalActions}>
                             <button
-                                className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnDanger}`}
+                                className={`${modal.modalBtn} ${modal.modalBtnDanger}`}
                                 onClick={onLogOut}
                             >
                                 {t("logOutConfirmBtn")}
                             </button>
                             <button
-                                className={`${dangerStyles.modalBtn} ${dangerStyles.modalBtnCancel}`}
+                                className={`${modal.modalBtn} ${modal.modalBtnCancel}`}
                                 onClick={() => setShowLogOutConfirm(false)}
                             >
                                 {t("logOutCancelBtn")}
@@ -107,7 +110,10 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
                     ))}
                 </nav>
                 <div className={styles.navMenu} style={{ marginTop: "auto" }}>
-                    {user ? (
+                    {/* While the user query is in flight, leave the slot empty rather than
+                        rendering a "Sign in" button against an unknown auth state — clicking
+                        it during loading races the SWR resolution and ends up on Profile. */}
+                    {isUserLoading ? null : user ? (
                         <button className={styles.navItem} onClick={() => setShowLogOutConfirm(true)}>
                             <LogOut size={18} />
                             {t("logOut")}

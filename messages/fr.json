@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "Séquencier",
+    "empty": "Envoyez des scènes et des cartes ici pour commencer à structurer votre histoire.",
+    "untitled": "Sans titre",
+    "unlinked": "Détaché",
+    "unlinkedHint": "La source de ce bloc n'existe plus.",
+    "removeFromOutline": "Retirer du séquencier"
+  },
   "navbar": {
+    "outline": "Séquencier",
     "screenplay": "Scénario",
     "board": "Tableau",
     "titlePage": "Page de titre",
@@ -7,13 +16,31 @@
     "noConnection": "Pas de connexion",
     "reconnecting": "Reconnexion...",
     "localProject": "Projet local",
+    "uploadToCloud": "Téléverser dans le cloud",
+    "storageProject": "Ce projet",
+    "storageTotal": "Total utilisé",
     "cachedProject": "Projet en cache",
     "endlessScroll": "Défilement infini",
     "toggleComments": "Afficher/masquer les commentaires",
+    "toggleSpellcheck": "Activer/désactiver la correction orthographique",
     "focusMode": "Mode concentration",
     "splitPanel": "Diviser le panneau",
     "unsplitPanel": "Fermer le panneau divisé",
-    "draftEditor": "Éditeur de brouillon"
+    "swapPanels": "Inverser les panneaux",
+    "draftEditor": "Éditeur de brouillon",
+    "viewOnly": "Vue seule",
+    "viewOnlyHint": "Vous avez un accès visiteur. La modification est désactivée.",
+    "pageCount": "{count, plural, one {# page} other {# pages}}"
+  },
+  "timer": {
+    "title": "Session d'écriture",
+    "countdown": "Compte à rebours",
+    "stopwatch": "Chronomètre",
+    "start": "Démarrer",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "reset": "Réinitialiser",
+    "minutesShort": "min"
   },
   "common": {
     "save": "Enregistrer",
@@ -38,7 +65,8 @@
       "latte": "Thème doux aux tons crème, alliant chaleur et lisibilité.",
       "wonka": "Thème velouté aux tons cacao, entre luxe profond et confort visuel.",
       "mint": "Thème frais aux notes de menthe, alliant sérénité botanique et équilibre visuel.",
-      "blossom": "Thème délicat aux notes florales, alliant douceur pétale et confort visuel."
+      "blossom": "Thème délicat aux notes florales, alliant douceur pétale et confort visuel.",
+      "midnight": "Thème bleu nuit profond, conçu pour le travail concentré sous un ciel étoilé."
     },
     "editor": "Éditeur",
     "themedEditor": "Éditeur thématisé",
@@ -63,6 +91,7 @@
     "spellcheckLabel": "Correcteur orthographique",
     "spellcheckHelpText": "Téléchargez un dictionnaire pour la vérification orthographique dans l'éditeur.",
     "spellcheckNone": "Désactivé",
+    "spellcheckBuiltin": "Intégré",
     "customDictLabel": "Dictionnaire du projet",
     "customDictAdd": "Ajouter",
     "customDictEmpty": "Aucun mot personnalisé pour l'instant.",
@@ -77,7 +106,9 @@
     "tabs": {
       "General": "Général",
       "Layout": "Mise en page",
+      "Production": "Production",
       "Export": "Import/Export",
+      "Storage": "Stockage",
       "Collaborators": "Collaborateurs",
       "Keybinds": "Raccourcis",
       "Appearance": "Apparence",
@@ -88,6 +119,21 @@
       "About": "À propos",
       "Subscription": "Abonnement"
     }
+  },
+  "storage": {
+    "total": "Espace utilisé",
+    "description": "Images et audio utilisés par les tableaux de ce projet.",
+    "sharedStorage": "Stockage partagé",
+    "thisProject": "Ce projet",
+    "otherProjects": "Autres projets",
+    "free": "Libre",
+    "localNote": "Ce projet n'est pas encore synchronisé — affiché tel qu'il compterait dans votre stockage cloud.",
+    "empty": "Aucune image ou audio dans ce projet pour l'instant.",
+    "image": "Image",
+    "audio": "Audio",
+    "remove": "Supprimer",
+    "confirm": "Retirer du projet",
+    "cancel": "Annuler"
   },
   "dangerZone": {
     "transferOwnership": "Transférer la propriété",
@@ -121,7 +167,7 @@
     "deleteModalTitle": "Supprimer le compte",
     "deleteModalDesc": "Cela supprimera définitivement votre compte et toutes les données associées. Cette action ne peut pas être annulée.",
     "deleteConfirmPhrase": "Je confirme la suppression de mon compte",
-    "deleteConfirmLabel": "Tapez <ph/> pour confirmer.",
+    "deleteConfirmLabel": "Écrivez le texte suivant pour confirmer la suppression :",
     "deleting": "Suppression...",
     "deleteAccountBtn": "Supprimer mon compte",
     "subscription": {
@@ -148,7 +194,18 @@
       "purchasing": "Achat en cours...",
       "purchaseError": "L'achat a échoué. Veuillez réessayer.",
       "cancelApple": "Les abonnements Apple sont gérés via l'App Store.",
-      "manageApple": "Ouvrir l'App Store"
+      "manageApple": "Ouvrir l'App Store",
+      "alreadyBoundTo": "Cet abonnement est déjà associé à {email}.",
+      "alreadyBoundUnknown": "Cet abonnement est déjà associé à un autre compte.",
+      "welcomePro": "Vous êtes maintenant abonné à Scriptio Pro. Bienvenue !",
+      "resubscribe": "Réactiver l'abonnement",
+      "restorePurchases": "Restaurer les achats",
+      "transferConfirm": "Votre compte App Store dispose d'un abonnement actif associé à {email}. La restauration transférera Pro à ce compte, et {email} perdra l'accès Pro. Apple continuera à facturer le même identifiant Apple. Continuer ?",
+      "transferConfirmUnknown": "Votre compte App Store dispose d'un abonnement actif associé à un autre compte Scriptio. La restauration transférera Pro à ce compte, et l'autre compte perdra l'accès Pro. Apple continuera à facturer le même identifiant Apple. Continuer ?",
+      "transferYes": "Oui, transférer",
+      "transferring": "Transfert en cours...",
+      "appleStoreFreeInfo": "Les fonctionnalités Pro sont disponibles pour les comptes abonnés via notre site web.",
+      "appleStoreProInfo": "Pour modifier votre méthode de paiement ou annuler, veuillez consulter les paramètres de votre profil sur scriptio.app."
     }
   },
   "projects": {
@@ -159,6 +216,8 @@
     "importing": "Importation...",
     "createBtn": "Créer",
     "empty": {
+      "title": "Votre Histoire Commence Ici",
+      "subtitle": "Créez un nouveau scénario ou importez un script existant",
       "createFirst": "Nouveau projet",
       "createDesc": "Partir d'une page blanche",
       "importExisting": "Importer",
@@ -189,7 +248,23 @@
     "goTo": "Aller au scénario",
     "confirmRestore": "Cela remplacera le contenu correspondant dans votre scénario.",
     "restore": "Restaurer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "scenesEmpty": "Aucune scène pour le moment",
+    "comments": "Commentaires",
+    "commentsEmpty": "Aucun commentaire actif",
+    "shelfEmptySelection": "Sélectionnez une version sur l'étagère pour la modifier",
+    "documents": "Documents",
+    "documentsEmpty": "Aucun document",
+    "newFolder": "Nouveau dossier",
+    "newDocument": "Nouveau document",
+    "newBoard": "Nouveau tableau",
+    "untitledFolder": "Nouveau dossier",
+    "untitledDocument": "Sans titre",
+    "boardTitle": "Tableau",
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "confirmDelete": "Supprimer ce document ?",
+    "confirmDeleteFolder": "Supprimer le dossier et son contenu ?"
   },
   "formatDropdown": {
     "elements": {
@@ -352,16 +427,17 @@
     "dangerZoneTitle": "Zone dangereuse"
   },
   "contextMenu": {
+    "sendToOutline": "Envoyer vers le séquencier",
     "goToScene": "Aller à la scène",
     "edit": "Modifier",
     "copy": "Copier",
     "cut": "Couper",
-    "selectInEditor": "Sélectionner dans l'éditeur",
+    "selectInEditor": "Sélectionner",
     "remove": "Supprimer",
     "paste": "Coller",
     "highlight": "Surligner",
     "addCharacter": "Ajouter un personnage",
-    "addComment": "Ajouter un commentaire",
+    "addComment": "Commenter",
     "searchOnWeb": "Rechercher sur le web",
     "noSuggestions": "Aucune suggestion",
     "addToDictionary": "Ajouter au dictionnaire",
@@ -369,7 +445,12 @@
     "shelve": "Mettre de côté",
     "shelveScene": "Mettre la scène de côté",
     "shelveDialogue": "Mettre le dialogue de côté",
-    "shelveAction": "Mettre l'action de côté"
+    "shelveAction": "Mettre l'action de côté",
+    "omitScene": "Omettre la scène",
+    "unomitScene": "Restaurer la scène",
+    "insertPageBreak": "Insérer un saut de page",
+    "removePageBreak": "Supprimer le saut de page",
+    "pageBreakHint": "Saut de page"
   },
   "popup": {
     "character": {
@@ -393,6 +474,7 @@
       "warning": "Êtes-vous sûr de vouloir <b>écraser</b> votre projet actuel ?",
       "info": "Vous pouvez exporter votre projet avant d'en importer un nouveau.",
       "yesImport": "Oui, importer",
+      "importing": "Importation…",
       "no": "Non"
     },
     "scene": {
@@ -402,20 +484,65 @@
       "synopsis": "Synopsis",
       "synopsisPlaceholder": "Écrivez une brève description de cette scène...",
       "save": "Enregistrer"
+    },
+    "uploadToCloud": {
+      "title": "Téléverser dans le cloud",
+      "body": "Téléverser ce projet dans le cloud ? Votre projet sera sauvegardé et accessible depuis n'importe quel appareil, et vous pourrez inviter des collaborateurs.",
+      "confirm": "Téléverser",
+      "cancel": "Annuler",
+      "uploading": "Téléversement en cours...",
+      "failed": "Échec du téléversement. Veuillez réessayer."
     }
   },
   "board": {
+    "sendToOutline": "Envoyer vers le séquencier",
     "duplicate": "Dupliquer",
     "delete": "Supprimer",
-    "hints": {
-      "pan": "Clic-milieu pour déplacer",
-      "select": "Glissez pour sélectionner des cartes",
-      "create": "Double-cliquez pour créer une carte",
-      "move": "Maintenez Maj pour vous déplacer librement"
-    },
+    "createCard": "Créer une carte",
     "untitled": "Sans titre",
     "titlePlaceholder": "Titre",
-    "descriptionPlaceholder": "Description"
+    "descriptionPlaceholder": "Description",
+    "recordAudio": "Enregistrer un audio",
+    "stopRecording": "Arrêter",
+    "audioUnsupported": "L'enregistrement audio n'est pas pris en charge par ce navigateur — glissez plutôt un fichier audio",
+    "audioHint": "Note vocale",
+    "play": "Lire",
+    "pause": "Pause",
+    "rename": "Double-cliquez pour renommer",
+    "storageLimitReached": "Limite de stockage atteinte — impossible d'enregistrer ce fichier"
+  },
+  "production": {
+    "title": "Production",
+    "draftLocking": "Verrouillage du brouillon",
+    "draftLockingHint": "Verrouiller un brouillon verrouille automatiquement les scènes et pages actuelles et passe à la révision suivante. Ouvrez la section Avancé pour les configurer manuellement.",
+    "advanced": "Avancé",
+    "draftRelock": "Reverrouiller",
+    "settings": "Paramètres de production",
+    "unlockDraftTitle": "Déverrouiller le brouillon",
+    "unlockDraftWarning": "Les scènes et les pages perdront leur numérotation verrouillée et reviendront à leur numérotation naturelle.",
+    "unlockDraft": "Déverrouiller le brouillon",
+    "sceneLocking": "Verrouillage des scènes",
+    "pageLocking": "Verrouillage des pages",
+    "revisions": "Révisions",
+    "relock": "Reverrouiller",
+    "provisionalTitle": "Scènes non verrouillées",
+    "unlockTitle": "Déverrouiller les numéros de scène ?",
+    "unlockWarning": "<b>Toutes les scènes verrouillées et omises perdront leur numérotation figée.</b>",
+    "unlockInfo": "Ceci affecte tous les collaborateurs. Le scénario reviendra à une numérotation positionnelle. Les scènes OMITTED restent omises — démasquez-les individuellement si vous souhaitez en récupérer le contenu.",
+    "unlock": "Déverrouiller",
+    "pageRelock": "Reverrouiller",
+    "pageProvisionalTitle": "Pages non verrouillées",
+    "unlockPagesTitle": "Déverrouiller les pages",
+    "unlockPagesWarning": "Toutes les pages perdront leur numérotation verrouillée et reviendront à la pagination naturelle.",
+    "unlockPages": "Déverrouiller les pages",
+    "cancel": "Annuler",
+    "numberingStyleTitle": "Numérotation des scènes",
+    "numberingStyleHelp": "Détermine comment les scènes nouvellement insérées sont numérotées entre deux scènes verrouillées.",
+    "suffixName": "Suffixe",
+    "prefixName": "Préfixe",
+    "skippedLettersTitle": "Lettres ignorées",
+    "skippedLettersHelp": "Lettres à omettre lors de la génération des numéros de scène, généralement pour éviter toute confusion.",
+    "skipLetterAriaLabel": "Ignorer la lettre {letter}"
   },
   "saves": {
     "title": "Historique des versions",
@@ -430,9 +557,10 @@
     "confirmRestore": "Cela remplacera le document actuel pour tous les collaborateurs. Êtes-vous sûr ?",
     "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet enregistrement ?",
     "noSaves": "Aucun enregistrement pour le moment",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "Abonnement Pro requis",
+    "proRequiredDesc": "L'historique des versions est une fonctionnalité Pro. Passez à l'abonnement supérieur pour enregistrer et restaurer des versions nommées de votre scénario.",
+    "upgradeBtn": "Passer à Pro",
+    "signInAndUpgrade": "Se connecter et passer à Pro"
   },
   "auth": {
     "intro": "Saisissez votre e-mail et nous vous enverrons un lien de connexion à usage unique. Aucun mot de passe nécessaire.",

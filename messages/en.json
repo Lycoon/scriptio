@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "Outline",
+    "empty": "Send scenes and cards here to start outlining your story.",
+    "untitled": "Untitled",
+    "unlinked": "Unlinked",
+    "unlinkedHint": "The source of this block no longer exists.",
+    "removeFromOutline": "Remove from outline"
+  },
   "navbar": {
+    "outline": "Outline",
     "screenplay": "Screenplay",
     "board": "Board",
     "titlePage": "Title Page",
@@ -7,12 +16,30 @@
     "noConnection": "No connection",
     "reconnecting": "Reconnecting...",
     "localProject": "Local project",
+    "uploadToCloud": "Upload to cloud",
+    "storageProject": "This project",
+    "storageTotal": "Total used",
     "endlessScroll": "Endless Scroll",
     "toggleComments": "Toggle Comments",
+    "toggleSpellcheck": "Toggle Spell Check",
     "focusMode": "Focus Mode",
     "splitPanel": "Split Panel",
     "unsplitPanel": "Unsplit Panel",
-    "draftEditor": "Draft Editor"
+    "swapPanels": "Swap Panels",
+    "draftEditor": "Draft Editor",
+    "viewOnly": "View only",
+    "viewOnlyHint": "You have viewer access. Editing is disabled.",
+    "pageCount": "{count, plural, one {# page} other {# pages}}"
+  },
+  "timer": {
+    "title": "Writing session",
+    "countdown": "Countdown",
+    "stopwatch": "Stopwatch",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "reset": "Reset",
+    "minutesShort": "min"
   },
   "common": {
     "save": "Save",
@@ -37,7 +64,8 @@
       "latte": "Soft, cream-based theme that blends warmth with readability.",
       "wonka": "Velvety, cocoa-based theme that blends deep luxury with eye-resting focus.",
       "mint": "Refreshing, mint-infused theme that blends botanical serenity with eye-resting balance.",
-      "blossom": "Gentle, petal-infused theme that blends floral warmth with eye-resting softness."
+      "blossom": "Gentle, petal-infused theme that blends floral warmth with eye-resting softness.",
+      "midnight": "Deep, midnight-blue theme crafted for focused work under a starlit sky."
     },
     "editor": "Editor",
     "themedEditor": "Themed editor",
@@ -62,6 +90,7 @@
     "spellcheckLabel": "Spell Check",
     "spellcheckHelpText": "Download a dictionary for in-editor spell checking.",
     "spellcheckNone": "Disabled",
+    "spellcheckBuiltin": "Built-in",
     "customDictLabel": "Project Dictionary",
     "customDictAdd": "Add",
     "customDictEmpty": "No custom words yet.",
@@ -76,7 +105,9 @@
     "tabs": {
       "General": "General",
       "Layout": "Layout",
+      "Production": "Production",
       "Export": "Import/Export",
+      "Storage": "Storage",
       "Collaborators": "Collaborators",
       "Keybinds": "Keybinds",
       "Appearance": "Appearance",
@@ -87,6 +118,21 @@
       "About": "About",
       "Subscription": "Subscription"
     }
+  },
+  "storage": {
+    "total": "Total used",
+    "description": "Images and audio used by this project's boards.",
+    "sharedStorage": "Shared storage",
+    "thisProject": "This project",
+    "otherProjects": "Other projects",
+    "free": "Free",
+    "localNote": "This project isn't synced yet — shown as it would count toward your cloud storage.",
+    "empty": "No images or audio in this project yet.",
+    "image": "Image",
+    "audio": "Audio",
+    "remove": "Remove",
+    "confirm": "Remove from project",
+    "cancel": "Cancel"
   },
   "dangerZone": {
     "transferOwnership": "Transfer ownership",
@@ -120,7 +166,7 @@
     "deleteModalTitle": "Delete account",
     "deleteModalDesc": "This will permanently delete your account and all associated data. This action cannot be undone.",
     "deleteConfirmPhrase": "I confirm my account deletion",
-    "deleteConfirmLabel": "Type <ph/> to confirm.",
+    "deleteConfirmLabel": "Type the following text to confirm deletion:",
     "deleting": "Deleting...",
     "deleteAccountBtn": "Delete my account",
     "subscription": {
@@ -147,7 +193,18 @@
       "purchasing": "Purchasing...",
       "purchaseError": "Purchase failed. Please try again.",
       "cancelApple": "Apple subscriptions are managed through the App Store.",
-      "manageApple": "Open App Store"
+      "manageApple": "Open App Store",
+      "alreadyBoundTo": "This subscription is already linked to {email}.",
+      "alreadyBoundUnknown": "This subscription is already linked to another account.",
+      "welcomePro": "You're now subscribed to Scriptio Pro. Welcome!",
+      "resubscribe": "Reactivate subscription",
+      "restorePurchases": "Restore Purchases",
+      "transferConfirm": "Your App Store account has an active subscription linked to {email}. Restoring will transfer Pro to this account, and {email} will lose Pro access. Apple will continue billing the same Apple ID. Continue?",
+      "transferConfirmUnknown": "Your App Store account has an active subscription linked to another Scriptio account. Restoring will transfer Pro to this account, and the other account will lose Pro access. Apple will continue billing the same Apple ID. Continue?",
+      "transferYes": "Yes, transfer",
+      "transferring": "Transferring...",
+      "appleStoreFreeInfo": "Pro features are available for accounts upgraded via our website.",
+      "appleStoreProInfo": "To update your billing method or cancel, please visit your profile settings on scriptio.app."
     }
   },
   "projects": {
@@ -158,6 +215,8 @@
     "importing": "Importing...",
     "createBtn": "Create",
     "empty": {
+      "title": "Your Story Starts Here",
+      "subtitle": "Create a new screenplay or import an existing script",
       "createFirst": "New project",
       "createDesc": "Start from a blank page",
       "importExisting": "Import",
@@ -181,14 +240,30 @@
   },
   "editorSidebar": {
     "scenes": "Scenes",
+    "scenesEmpty": "No scenes yet",
     "characters": "Characters",
     "locations": "Locations",
     "shelf": "Shelf",
-    "shelfEmpty": "Select a shelved version to edit",
+    "shelfEmpty": "No shelved items yet",
+    "comments": "Comments",
+    "commentsEmpty": "No active comments",
+    "shelfEmptySelection": "Select a shelved version to edit",
     "goTo": "Go to in screenplay",
     "confirmRestore": "This will replace the matching content in your screenplay.",
     "restore": "Restore",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "documents": "Documents",
+    "documentsEmpty": "No documents yet",
+    "newFolder": "New folder",
+    "newDocument": "New document",
+    "newBoard": "New board",
+    "untitledFolder": "New folder",
+    "untitledDocument": "Untitled",
+    "boardTitle": "Board",
+    "rename": "Rename",
+    "delete": "Delete",
+    "confirmDelete": "Delete this document?",
+    "confirmDeleteFolder": "Delete folder and its contents?"
   },
   "formatDropdown": {
     "elements": {
@@ -351,24 +426,30 @@
     "dangerZoneTitle": "Danger zone"
   },
   "contextMenu": {
+    "sendToOutline": "Send to outline",
     "goToScene": "Go to scene",
     "edit": "Edit",
     "copy": "Copy",
     "cut": "Cut",
-    "selectInEditor": "Select in editor",
+    "selectInEditor": "Select",
     "remove": "Remove",
     "paste": "Paste",
     "highlight": "Highlight",
     "addCharacter": "Add character",
-    "addComment": "Add Comment",
+    "addComment": "Comment",
     "searchOnWeb": "Search on web",
     "noSuggestions": "No suggestions",
-    "addToDictionary": "Add to Dictionary",
+    "addToDictionary": "Add to dictionary",
     "makeDualDialogue": "Make dual dialogue",
     "shelve": "Shelve",
     "shelveScene": "Shelve scene",
     "shelveDialogue": "Shelve dialogue",
-    "shelveAction": "Shelve action"
+    "shelveAction": "Shelve action",
+    "omitScene": "Omit scene",
+    "unomitScene": "Unomit scene",
+    "insertPageBreak": "Insert page break",
+    "removePageBreak": "Remove page break",
+    "pageBreakHint": "Page break"
   },
   "popup": {
     "character": {
@@ -392,6 +473,7 @@
       "warning": "Are you sure you want to <b>overwrite</b> your current project?",
       "info": "You can export your project before importing a new one.",
       "yesImport": "Yes, import",
+      "importing": "Importing…",
       "no": "No"
     },
     "scene": {
@@ -401,20 +483,65 @@
       "synopsis": "Synopsis",
       "synopsisPlaceholder": "Write a brief description of this scene...",
       "save": "Save"
+    },
+    "uploadToCloud": {
+      "title": "Upload to cloud",
+      "body": "Upload this project to the cloud? Your project will be backed up and accessible from any device, and you'll be able to invite collaborators.",
+      "confirm": "Upload",
+      "cancel": "Cancel",
+      "uploading": "Uploading...",
+      "failed": "Upload failed. Please try again."
     }
   },
   "board": {
+    "sendToOutline": "Send to outline",
     "duplicate": "Duplicate",
     "delete": "Delete",
-    "hints": {
-      "pan": "Middle-click to pan",
-      "select": "Drag to select cards",
-      "create": "Double-click to create card",
-      "move": "Hold Shift to move freely"
-    },
+    "createCard": "Create card",
     "untitled": "Untitled",
     "titlePlaceholder": "Title",
-    "descriptionPlaceholder": "Description"
+    "descriptionPlaceholder": "Description",
+    "recordAudio": "Record audio",
+    "stopRecording": "Stop",
+    "audioUnsupported": "Audio recording isn't supported in this browser — drag in an audio file instead",
+    "audioHint": "Voice note",
+    "play": "Play",
+    "pause": "Pause",
+    "rename": "Double-click to rename",
+    "storageLimitReached": "Storage limit reached — couldn't save this file"
+  },
+  "production": {
+    "title": "Production",
+    "draftLocking": "Draft locking",
+    "draftLockingHint": "Locking a draft automatically locks current scenes, pages and switches to the next revision. Open the Advanced section to configure these manually.",
+    "advanced": "Advanced",
+    "draftRelock": "Relock",
+    "settings": "Production settings",
+    "unlockDraftTitle": "Unlock draft",
+    "unlockDraftWarning": "Both scenes and pages will lose their locked numbering, reverting to their natural numbering.",
+    "unlockDraft": "Unlock draft",
+    "sceneLocking": "Scene locking",
+    "pageLocking": "Page locking",
+    "revisions": "Revisions",
+    "relock": "Relock",
+    "provisionalTitle": "Non-locked scenes",
+    "unlockTitle": "Unlock scenes",
+    "unlockWarning": "All scenes will lose their locked numbering, reverting to their initial positional numbering.",
+    "unlockInfo": "This affects every collaborator. The screenplay will revert to positional scene numbers. OMITTED scenes stay omitted — unomit them individually if you want their content back.",
+    "unlock": "Unlock",
+    "pageRelock": "Relock",
+    "pageProvisionalTitle": "Non-locked pages",
+    "unlockPagesTitle": "Unlock pages",
+    "unlockPagesWarning": "All pages will lose their locked numbering, reverting to their natural pagination-based numbering.",
+    "unlockPages": "Unlock pages",
+    "cancel": "Cancel",
+    "numberingStyleTitle": "Scene numbering",
+    "numberingStyleHelp": "Dictates how newly inserted scenes should be numbered between two locked scenes.",
+    "suffixName": "Suffix",
+    "prefixName": "Prefix",
+    "skippedLettersTitle": "Skipped letters",
+    "skippedLettersHelp": "Letters to omit when generating scene numbers usually to avoid confusion.",
+    "skipLetterAriaLabel": "Skip letter {letter}"
   },
   "saves": {
     "title": "Version History",
@@ -431,7 +558,8 @@
     "noSaves": "No saves yet",
     "proRequired": "Pro Required",
     "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "upgradeBtn": "Upgrade to Pro",
+    "signInAndUpgrade": "Sign in and Upgrade"
   },
   "auth": {
     "intro": "Enter your email and we'll send you a single-use sign-in link. No password needed.",

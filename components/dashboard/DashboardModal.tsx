@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useMemo, useState, Suspense } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useCookieUser } from "@src/lib/utils/hooks";
@@ -11,7 +11,7 @@ import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { CreditCard, FileDown, Folder, Globe, Keyboard, Palette, PanelsTopLeft, User, Users, X } from "lucide-react";
+import { CreditCard, FileDown, Folder, Globe, HardDrive, Keyboard, Lock, Palette, PanelsTopLeft, User, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
@@ -19,13 +19,15 @@ import LanguageSettings from "./preferences/LanguageSettings";
 import ProfileSettings from "./account/ProfileSettings";
 import SubscriptionSettings from "./account/SubscriptionSettings";
 import LayoutSettings from "./project/LayoutSettings";
+import ProductionSettings from "./project/ProductionSettings";
+import StorageSettings from "./project/StorageSettings";
 import DashboardAuth from "./account/DashboardAuth";
 import AboutSettings from "./AboutSettings";
 
 const DashboardModal = () => {
     const { isOpen, closeDashboard, activeTab, setActiveTab } = useContext(DashboardContext);
     const { project, isYjsReady } = useContext(ProjectContext);
-    const { user } = useCookieUser();
+    const { user, isLoading: isUserLoading } = useCookieUser();
     const t = useTranslations("modal");
 
     const PROJECT_MENU = useMemo<MenuSection>(() => ({
@@ -33,7 +35,9 @@ const DashboardModal = () => {
         items: [
             { id: "General",       label: t("tabs.General"),       icon: <Folder size={18} /> },
             { id: "Layout",        label: t("tabs.Layout"),        icon: <PanelsTopLeft size={18} /> },
+            { id: "Production",    label: t("tabs.Production"),    icon: <Lock size={18} /> },
             { id: "Export",        label: t("tabs.Export"),        icon: <FileDown size={18} /> },
+            { id: "Storage",       label: t("tabs.Storage"),       icon: <HardDrive size={18} /> },
             { id: "Collaborators", label: t("tabs.Collaborators"), icon: <Users size={18} /> },
         ],
     }), [t]);
@@ -71,24 +75,43 @@ const DashboardModal = () => {
         return sections;
     }, [isInProject, isSignedIn, PROJECT_MENU, PREFERENCES_MENU, ACCOUNT_MENU]);
 
-    // If active tab is a project tab but we're not in a project, or an account tab but not signed in, switch to first available tab
+    // Auto-switch active tab when the surrounding context changes:
+    //  - leave a project tab when there's no longer a project to talk about
+    //  - leave an account tab when the user signs out
+    //  - on a real signed-out → signed-in *transition* while on the Auth form,
+    //    jump to Profile so the user lands somewhere meaningful after sign-in.
+    //
+    // The transition guard (prevSignedInRef) is critical: without it, isSignedIn
+    // arriving as `true` for the first time after the SWR resolves looks identical
+    // to a real sign-in event, and clicking "Sign in" while user data is still
+    // loading would silently bounce the user to Profile.
+    const prevSignedInRef = useRef(isSignedIn);
     useEffect(() => {
+        if (isUserLoading) return;
         const projectTabIds = PROJECT_MENU.items.map((item) => item.id);
         const accountTabIds = ACCOUNT_MENU.items.map((item) => item.id);
         if ((!isInProject && projectTabIds.includes(activeTab)) || (!isSignedIn && accountTabIds.includes(activeTab))) {
             setActiveTab(PREFERENCES_MENU.items[0].id);
         }
-        // If user just signed in while on the Auth tab, switch to Profile
-        if (isSignedIn && activeTab === "Auth") {
+        const justSignedIn = isSignedIn && !prevSignedInRef.current;
+        if (justSignedIn && activeTab === "Auth") {
             setActiveTab("Profile");
         }
-    }, [isInProject, isSignedIn, activeTab, setActiveTab, ACCOUNT_MENU, PREFERENCES_MENU, PROJECT_MENU]);
+        prevSignedInRef.current = isSignedIn;
+    }, [isInProject, isSignedIn, isUserLoading, activeTab, setActiveTab, ACCOUNT_MENU, PREFERENCES_MENU, PROJECT_MENU]);
 
     const [prevActiveTab, setPrevActiveTab] = useState(activeTab);
+    const [isScrolled, setIsScrolled] = useState(false);
     if (prevActiveTab !== activeTab) {
         setPrevActiveTab(activeTab);
         setDangerOpen(false);
+        setIsScrolled(false);
     }
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const scrolled = e.currentTarget.scrollTop > 0;
+        setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+    };
 
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
@@ -111,11 +134,13 @@ const DashboardModal = () => {
                         <X className={styles.close_btn} onClick={closeDashboard} />
                     </header>
 
-                    <div className={styles.scrollArea}>
+                    <div className={`${styles.scrollArea} ${isScrolled ? styles.scrolled : ""}`} onScroll={handleScroll}>
                         {/* Project tabs - only rendered when in project context */}
                         {isInProject && activeTab === "General" && <ProjectSettings dangerOpen={dangerOpen} onDangerToggle={() => setDangerOpen((v) => !v)} />}
                         {isInProject && activeTab === "Layout" && <LayoutSettings />}
+                        {isInProject && activeTab === "Production" && <ProductionSettings />}
                         {isInProject && activeTab === "Export" && <ExportProject />}
+                        {isInProject && activeTab === "Storage" && <StorageSettings />}
                         {isInProject && activeTab === "Collaborators" && <CollaboratorsSettings />}
                         {/* Preferences tabs */}
                         {activeTab === "Keybinds" && <KeybindsSettings />}

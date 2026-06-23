@@ -10,7 +10,7 @@ import { useSettings } from "@src/lib/utils/hooks";
 import { tinykeys } from "@node_modules/tinykeys/dist/tinykeys";
 import { DEFAULT_KEYBINDS, DefaultKeyBind, prettyPrintKeybind, UserKeybindsMap } from "@src/lib/utils/keybinds";
 import { useTranslations } from "next-intl";
-import { Save } from "lucide-react";
+import { RotateCcw, Save } from "lucide-react";
 
 export type KeybindElementProps = {
     id: string;
@@ -46,6 +46,7 @@ const KeybindElement = ({
                     role="button"
                     tabIndex={0}
                     className={styles.keyArea}
+                    data-listening={isListening}
                     onClick={() => startListening(id)}
                     onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -72,7 +73,7 @@ const KeybindElement = ({
                         onClick={() => resetBinding(id)}
                         title={t("resetTitle")}
                     >
-                        {t("reset")}
+                        <RotateCcw size={16} />
                     </button>
                 </div>
             </div>
@@ -84,6 +85,7 @@ const KeybindsSettings = () => {
     const { settings, saveSettings } = useSettings();
 
     const t = useTranslations("keybinds");
+    const tCommon = useTranslations("common");
     const [userKeybinds, setUserKeybinds] = useState<UserKeybindsMap>(settings?.keybinds ?? {});
     const [listeningFor, setListeningFor] = useState<string | null>(null);
     const [tempCombo, setTempCombo] = useState<string | null>(null);
@@ -171,16 +173,19 @@ const KeybindsSettings = () => {
 
         const onCancel = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
+                // Stop the dashboard's window-level Escape handler from also firing
+                // and closing the modal — Escape during capture only cancels listening.
+                e.stopImmediatePropagation();
                 setListeningFor(null);
                 setTempCombo(null);
             }
         };
 
         window.addEventListener("keydown", onKeyDown);
-        window.addEventListener("keydown", onCancel);
+        window.addEventListener("keydown", onCancel, { capture: true });
         return () => {
             window.removeEventListener("keydown", onKeyDown);
-            window.removeEventListener("keydown", onCancel);
+            window.removeEventListener("keydown", onCancel, { capture: true });
         };
     }, [listeningFor, saveSettings, t]);
 
@@ -238,21 +243,13 @@ const KeybindsSettings = () => {
             </div>
 
             <div className={sharedStyles.formActions}>
-                <button
-                    type="button"
-                    onClick={resetDefaults}
-                    className={`${sharedStyles.formBtn} ${sharedStyles.danger}`}
-                >
-                    {t("resetDefaults")}
+                <button className={sharedStyles.formBtn} onClick={resetDefaults}>
+                    <RotateCcw size={18} />
+                    {tCommon("resetDefaults")}
                 </button>
-                <button
-                    type="button"
-                    onClick={saveChanges}
-                    disabled={!hasUpdatedKeybinds}
-                    className={`${sharedStyles.formBtn}`}
-                >
+                <button className={sharedStyles.formBtn} disabled={!hasUpdatedKeybinds} onClick={saveChanges}>
                     <Save size={18} />
-                    {t("save")}
+                    {tCommon("save")}
                 </button>
             </div>
         </div>

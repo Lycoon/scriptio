@@ -6,6 +6,8 @@ import { EditorContent } from "@tiptap/react";
 
 import { applyElement, insertElement, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
 import { ScreenplayElement } from "@src/lib/utils/enums";
+import { Eye } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { DUAL_DIALOGUE_COLUMN } from "@src/lib/screenplay/nodes/dual-dialogue-column-node";
 import { DEFAULT_ELEMENT_MARGINS, DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
 import { join } from "@src/lib/utils/misc";
@@ -15,13 +17,14 @@ import { useViewContext } from "@src/context/ViewContext";
 import { ContextMenuType } from "@components/editor/sidebar/ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { useUser } from "@src/lib/utils/hooks";
-import CommentCards from "@components/editor/CommentCards";
+import CommentGutter from "@components/editor/CommentGutter";
 import Loading from "@components/utils/Loading";
 
-import { TextSelection } from "@tiptap/pm/state";
+import { TextSelection, Transaction } from "@tiptap/pm/state";
 import { EditorView } from "@tiptap/pm/view";
 import { DocumentEditorConfig } from "@src/lib/editor/document-editor-config";
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
+import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
 
@@ -59,6 +62,7 @@ const DocumentEditorPanel = ({
     const projectCtx = useContext(ProjectContext);
     const {
         isYjsReady,
+        isReadOnly,
         selectedElement,
         setSelectedElement,
         setSelectedStyles,
@@ -71,13 +75,18 @@ const DocumentEditorPanel = ({
         moreLabel,
         elementMargins,
         elementStyles,
+        sceneLocking,
         setFocusedEditorType,
         setSelectedTitlePageElement,
         repository,
     } = projectCtx;
     const { settings } = useSettings();
-    const { isEndlessScroll, showComments } = useViewContext();
+    const { isEndlessScroll } = useViewContext();
     const { user } = useUser();
+    // Localised label for the manual page-break hint rendered in the page gap.
+    // Injected as a CSS variable so the plain-DOM pagination widget can show it,
+    // mirroring how the (MORE)/(CONT'D) labels are localised.
+    const pageBreakHint = useTranslations("contextMenu")("pageBreakHint");
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -110,7 +119,6 @@ const DocumentEditorPanel = ({
         setSelectedStyles,
         updateSuggestions,
         updateSuggestionsData: updateSuggestionData,
-        setActiveCommentId: commentOps.setActiveCommentId,
         userKeybinds: keybinds,
         globalContext,
         setSelectedTitlePageElement,
@@ -124,6 +132,27 @@ const DocumentEditorPanel = ({
         };
     }, [editor, onEditorCreated]);
 
+    // Read-only enforcement for VIEWER role.
+    //
+    // The server already drops doc writes from viewers (see protocol.ts), but
+    // disabling tiptap locally avoids a confusing "I typed but nothing
+    // happened" experience: keystrokes are blocked at the editor level and
+    // collaboration carets/awareness still render normally.
+    useEffect(() => {
+        if (!editor || editor.isDestroyed) return;
+        editor.setEditable(!isReadOnly);
+    }, [editor, isReadOnly]);
+
+    // Marker class on the editor DOM so global CSS (scriptio.css) can drop the
+    // first-of-page top-margin reset in endless-scroll mode. There the page-break
+    // widgets are hidden, so the reset would otherwise make each page's first
+    // node stick to the previous page's content.
+    useEffect(() => {
+        const el = editor?.view?.dom;
+        if (!el) return;
+        el.classList.toggle("endless-scroll", isEndlessScroll);
+    }, [editor, isEndlessScroll]);
+
     // Ready state
     useEffect(() => {
         if (editor && isYjsReady) {
@@ -131,6 +160,53 @@ const DocumentEditorPanel = ({
             return () => clearTimeout(timer);
         }
     }, [editor, isYjsReady]);
+
+    // ---- Orphaned comment cleanup ----
+    // Comments anchor to a node's data-id. When that node is deleted the comment
+    // is orphaned (no gutter icon, unreachable), so prune it from the project.
+    const pruneOrphanedComments = useCallback(() => {
+        if (!editor || editor.isDestroyed || isReadOnly || !config.features.comments) return;
+
+        const liveIds = new Set<string>();
+        editor.state.doc.descendants((node) => {
+            const id = node.attrs?.["data-id"];
+            if (typeof id === "string") liveIds.add(id);
+        });
+        // Don't prune before the document has synced — an empty doc would
+        // otherwise wipe every comment.
+        if (liveIds.size === 0) return;
+
+        for (const comment of commentOps.comments) {
+            if (comment.nodeId && !liveIds.has(comment.nodeId)) {
+                commentOps.deleteComment(comment.id);
+            }
+        }
+    }, [editor, isReadOnly, config.features.comments, commentOps]);
+
+    const pruneRef = useRef(pruneOrphanedComments);
+    useEffect(() => {
+        pruneRef.current = pruneOrphanedComments;
+    }, [pruneOrphanedComments]);
+
+    useEffect(() => {
+        if (!editor || editor.isDestroyed || !config.features.comments) return;
+
+        let debounce: ReturnType<typeof setTimeout> | null = null;
+        const schedule = () => {
+            if (debounce) clearTimeout(debounce);
+            debounce = setTimeout(() => pruneRef.current(), 600);
+        };
+        // Only prune when a transaction actually removes a node — never on typing.
+        const onTransaction = ({ transaction }: { transaction: Transaction }) => {
+            if (transactionDeletesNode(transaction)) schedule();
+        };
+
+        editor.on("transaction", onTransaction);
+        return () => {
+            editor.off("transaction", onTransaction);
+            if (debounce) clearTimeout(debounce);
+        };
+    }, [editor, config.features.comments]);
 
     // ---- CSS variable application (screenplay only) ----
     useEffect(() => {
@@ -158,8 +234,15 @@ const DocumentEditorPanel = ({
             editorElement.classList.remove("scene-number-right");
         }
 
+        if (sceneLocking) {
+            editorElement.classList.add("production-locked");
+        } else {
+            editorElement.classList.remove("production-locked");
+        }
+
         editorElement.style.setProperty("--contd-label", `"${contdLabel}"`);
         editorElement.style.setProperty("--more-label", `"${moreLabel}"`);
+        editorElement.style.setProperty("--page-break-label", `"${pageBreakHint}"`);
 
         const elementKeys = [
             "action",
@@ -230,8 +313,10 @@ const DocumentEditorPanel = ({
         sceneNumberOnRight,
         contdLabel,
         moreLabel,
+        pageBreakHint,
         elementMargins,
         elementStyles,
+        sceneLocking,
     ]);
 
     // ---- Pagination update (title page only) ----
@@ -442,6 +527,22 @@ const DocumentEditorPanel = ({
         return () => removeEventListener("keydown", pressedKeyEvent);
     }, [isVisible, config.type, editor]);
 
+    // Create a new empty comment anchored to a node and open its thread.
+    const addCommentToNode = useCallback(
+        (nodeId: string) => {
+            commentOps.addComment({
+                nodeId,
+                text: "",
+                author: user?.username || "Anonymous",
+                createdAt: Date.now(),
+                resolved: false,
+                replies: [],
+            });
+            commentOps.setActiveNodeId(nodeId);
+        },
+        [commentOps, user],
+    );
+
     // ---- Context menu ----
     const onEditorContextMenu = useCallback(
         (e: React.MouseEvent) => {
@@ -460,52 +561,85 @@ const DocumentEditorPanel = ({
                 spellError = { word, from: spellFrom, to: spellFrom + word.length };
             }
 
-            // Detect shelvable node at click position
+            // Detect shelvable node at caret position
             let nodePos: number | undefined;
             let nodeClass: string | undefined;
             if (config.features.shelving) {
-                const coords = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
-                if (coords) {
-                    const $pos = editor.state.doc.resolve(coords.pos);
-                    if ($pos.depth === 1) {
-                        const cls = $pos.parent.attrs.class as ScreenplayElement;
-                        if (
-                            cls === ScreenplayElement.Scene ||
-                            cls === ScreenplayElement.Character ||
-                            cls === ScreenplayElement.Action
-                        ) {
-                            nodePos = coords.pos;
-                            nodeClass = cls;
-                        }
+                const $pos = editor.state.doc.resolve(from);
+                if ($pos.depth >= 1) {
+                    const cls = $pos.node(1).attrs.class as ScreenplayElement;
+                    if (
+                        cls === ScreenplayElement.Scene ||
+                        cls === ScreenplayElement.Character ||
+                        cls === ScreenplayElement.Action
+                    ) {
+                        nodePos = from;
+                        nodeClass = cls;
                     }
                 }
             }
 
-            const onAddComment = () => {
-                if (!editor) return;
-                const commentId = commentOps.addComment({
-                    text: "",
-                    author: user?.username || "Anonymous",
-                    createdAt: Date.now(),
-                    resolved: false,
-                    replies: [],
-                });
-                editor.chain().setTextSelection({ from, to }).setComment(commentId).run();
-                commentOps.setActiveCommentId(commentId);
-            };
+            // Detect a scene heading at the caret to offer "Send to outline".
+            // Independent of `shelving` so it works in editor documents too.
+            let outlineScene: { refDocId: string; refId: string; title: string } | undefined;
+            if (config.documentId) {
+                const $pos = editor.state.doc.resolve(from);
+                if ($pos.depth >= 1) {
+                    const node = $pos.node(1);
+                    const dataId = node.attrs?.["data-id"] as string | undefined;
+                    if (node.attrs?.class === ScreenplayElement.Scene && dataId) {
+                        outlineScene = {
+                            refDocId: config.documentId,
+                            refId: dataId,
+                            title: node.textContent.toUpperCase(),
+                        };
+                    }
+                }
+            }
+
+            // Manual page break: the top-level block under the caret, plus whether
+            // it already forces a page break. Paginated screenplay editors only, and
+            // never the document's first block (there is nothing to break before it).
+            let pageBreak: { pos: number; active: boolean } | undefined;
+            if (config.features.paginationMode === "screenplay") {
+                const $pos = editor.state.doc.resolve(from);
+                if ($pos.depth >= 1) {
+                    const nodeStart = $pos.before(1);
+                    if (nodeStart > 0) {
+                        pageBreak = { pos: nodeStart, active: !!$pos.node(1).attrs.pageBreak };
+                    }
+                }
+            }
+
+            // Comments anchor to the node under the caret, not a text range.
+            const commentNodeId = getNodeIdAtPos(editor.state, from);
+            const onAddComment = commentNodeId
+                ? () => addCommentToNode(commentNodeId)
+                : undefined;
 
             updateContextMenu({
                 type: ContextMenuType.EditorContextMenu,
                 position: { x: e.clientX, y: e.clientY },
-                typeSpecificProps: { from, to, onAddComment, spellError, nodePos, nodeClass },
+                // Pass the editor that was right-clicked: positions above are
+                // resolved against it, and ProjectContext.editor is always the
+                // MAIN screenplay editor — so secondary editors (tree document,
+                // draft, title page) must act on this instance, not that one.
+                typeSpecificProps: { editor, from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene, pageBreak },
             });
         },
-        [editor, updateContextMenu, commentOps, user, config.features.shelving],
+        [
+            editor,
+            updateContextMenu,
+            addCommentToNode,
+            config.features.shelving,
+            config.features.paginationMode,
+            config.documentId,
+        ],
     );
 
-    // Clear active comment on mousedown
+    // Clear the open discussion when clicking elsewhere in the editor.
     const handleContainerMouseDown = useCallback(() => {
-        commentOps.setActiveCommentId(null);
+        commentOps.setActiveNodeId(null);
     }, [commentOps]);
 
     const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -517,35 +651,63 @@ const DocumentEditorPanel = ({
     const focusType =
         focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
 
+    const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
+    const wrapperStyle = pageSize
+        ? ({
+              "--page-width": `${pageSize.pageWidth}px`,
+              "--page-height": `${pageSize.pageHeight}px`,
+          } as React.CSSProperties)
+        : undefined;
+
+    const t = useTranslations("navbar");
     const isLocalAccess = isTauri() || isLocalOnly;
     if (!isLocalAccess && (!membership || isLoading)) return <Loading />;
 
     return (
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
             <div
-                className={`${styles.container} ${!showComments ? "hide-comments" : ""}`}
+                className={styles.container}
                 onScroll={onScroll}
                 onMouseDown={handleContainerMouseDown}
                 onFocus={() => setFocusedEditorType(focusType)}
+                onPasteCapture={
+                    isReadOnly
+                        ? (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                          }
+                        : undefined
+                }
             >
                 <div
                     className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}
+                    style={wrapperStyle}
                 >
                     <div
                         className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")}
                     />
+                    {isReadOnly && (
+                        <div className={styles.viewOnlyBannerWrapper}>
+                            <div className={styles.viewOnlyBanner} title={t("viewOnlyHint")}>
+                                <Eye size={14} />
+                                <span>{t("viewOnly")}</span>
+                            </div>
+                        </div>
+                    )}
                     <div onContextMenu={onEditorContextMenu}>
                         <EditorContent editor={editor} spellCheck={false} />
                     </div>
                 </div>
                 {config.features.comments && (
-                    <CommentCards
+                    <CommentGutter
                         editor={editor}
                         comments={commentOps.comments}
-                        activeCommentId={commentOps.activeCommentId}
-                        setActiveCommentId={commentOps.setActiveCommentId}
+                        activeNodeId={commentOps.activeNodeId}
+                        setActiveNodeId={commentOps.setActiveNodeId}
+                        onAddComment={addCommentToNode}
                         onUpdateComment={(id, data) => commentOps.updateComment(id, data)}
                         onDeleteComment={(id) => commentOps.deleteComment(id)}
+                        onResolveComment={(id) => commentOps.resolveComment(id)}
                         onAddReply={(commentId, text, author) =>
                             commentOps.addReply(commentId, { text, author, createdAt: Date.now() })
                         }

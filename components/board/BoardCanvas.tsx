@@ -2,43 +2,51 @@
 
 import { useContext, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { getBoardMap, BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
+import { UserContext } from "@src/context/UserContext";
+import { BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
 import BoardCard from "./BoardCard";
+import {
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuColorRow,
+} from "@components/utils/ContextMenu";
 import styles from "./BoardCanvas.module.css";
 import { v7 as uuidv7 } from "uuid";
-import { Trash2, Plus, Minus, Copy } from "lucide-react";
+import { Trash2, Plus, Minus, Copy, ListTree, Mic, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
+import { importImageFile, importAudioFile, syncAssetToCloud } from "@src/lib/assets/asset-store";
+import { CloudQuotaError } from "@src/lib/assets/cloud-asset-sync";
+import { scheduleAssetGc } from "@src/lib/assets/asset-gc";
+import { useAudioRecorder } from "./use-audio-recorder";
 
 const GRID_SIZE = 20;
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 2;
+/** Largest edge (in canvas px) an image card is sized to on first drop. */
+const MAX_IMAGE_CARD_SIZE = 400;
+/** Default size (in canvas px) of an audio voice-note card. */
+const AUDIO_CARD_WIDTH = 260;
+const AUDIO_CARD_HEIGHT = 96;
 
-const DEFAULT_CARD_COLORS = [
-    "#ef4444",
-    "#f97316",
-    "#eab308",
-    "#22c55e",
-    "#06b6d4",
-    "#3b82f6",
-    "#8b5cf6",
-    "#ec4899",
-    "#6b7280",
-];
-
-interface CardContextMenuState {
-    position: { x: number; y: number };
-    card: BoardCardData;
+/** A random swatch from the default palette (used for new colored cards). */
+function randomCardColor(): string {
+    return DEFAULT_ITEM_COLORS[Math.floor(Math.random() * DEFAULT_ITEM_COLORS.length)];
 }
 
-interface ArrowContextMenuState {
-    position: { x: number; y: number };
-    arrow: BoardArrowData;
+/** Seconds → `m:ss` for the recording indicator. */
+function formatRecordingTime(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
-    const { repository, isYjsReady } = useContext(ProjectContext);
+const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string }) => {
+    const { projectId, repository, isYjsReady, isReadOnly, boardFocusCardId, setBoardFocusCardId } =
+        useContext(ProjectContext);
+    const { updateContextMenu } = useContext(UserContext);
     const t = useTranslations("board");
-    const ydoc = repository?.getState();
+    const projectState = repository?.getState();
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -47,20 +55,21 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     const [scale, setScale] = useState(1);
     const [isPanning, setIsPanning] = useState(false);
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
     const [isSnapping, setIsSnapping] = useState(true);
-    const [cardContextMenu, setCardContextMenu] = useState<CardContextMenuState | null>(null);
-    const [arrowContextMenu, setArrowContextMenu] = useState<ArrowContextMenuState | null>(null);
+    /** Transient banner shown when an asset can't be saved (e.g. cloud quota). */
+    const [assetError, setAssetError] = useState<string | null>(null);
+    const assetErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const recorder = useAudioRecorder();
     const [prevIsVisible, setPrevIsVisible] = useState(isVisible);
     if (prevIsVisible !== isVisible) {
         setPrevIsVisible(isVisible);
-        if (!isVisible) {
-            setIsSnapping(true);
-            if (cardContextMenu) setCardContextMenu(null);
-            if (arrowContextMenu) setArrowContextMenu(null);
-        }
+        if (!isVisible) setIsSnapping(true);
     }
     const [isCameraReady, setIsCameraReady] = useState(false);
-    const [connectingFrom, setConnectingFrom] = useState<{ cardId: string; side: string } | null>(null);
+    const [connectingFrom, setConnectingFrom] = useState<{ cardId: string; side: string } | null>(
+        null,
+    );
     const [connectingLine, setConnectingLine] = useState<{ x: number; y: number } | null>(null);
     const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
     const [selectionRect, setSelectionRect] = useState<{
@@ -121,17 +130,29 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         setOffset({ x: newOffsetX, y: newOffsetY });
     }, []);
 
+    // Focus a specific card when navigated to from the Outline. Waits until the
+    // board's cards have loaded and the target exists on this board, then centers
+    // on it and clears the request so it fires once.
+    useEffect(() => {
+        if (!boardFocusCardId || !isVisible) return;
+        const card = cards.find((c) => c.id === boardFocusCardId);
+        if (!card) return;
+        centerCameraOnCards([card]);
+        setBoardFocusCardId(null);
+    }, [boardFocusCardId, isVisible, cards, centerCameraOnCards, setBoardFocusCardId]);
+
     // Sync cards with Yjs
     useEffect(() => {
-        if (!ydoc || !isYjsReady) return;
+        if (!projectState || !isYjsReady) return;
 
-        const boardMap = getBoardMap(ydoc);
+        const boardMap = projectState.boardData(docId);
 
         const syncCards = () => {
             const cardsData = boardMap.get("cards");
             if (cardsData) {
                 try {
-                    const parsed = typeof cardsData === "string" ? JSON.parse(cardsData) : cardsData;
+                    const parsed =
+                        typeof cardsData === "string" ? JSON.parse(cardsData) : cardsData;
                     setCards(parsed);
 
                     // Center camera on first load
@@ -162,7 +183,8 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             const arrowsData = boardMap.get("arrows");
             if (arrowsData) {
                 try {
-                    const parsed = typeof arrowsData === "string" ? JSON.parse(arrowsData) : arrowsData;
+                    const parsed =
+                        typeof arrowsData === "string" ? JSON.parse(arrowsData) : arrowsData;
                     setArrows(parsed);
                 } catch (e) {
                     console.error("[BoardCanvas] Failed to parse arrows:", e);
@@ -176,26 +198,26 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         return () => {
             boardMap.unobserve(syncCards);
         };
-    }, [ydoc, isYjsReady, centerCameraOnCards]);
+    }, [projectState, isYjsReady, docId, centerCameraOnCards]);
 
     // Save cards to Yjs
     const saveCards = useCallback(
         (newCards: BoardCardData[]) => {
-            if (!ydoc || !isYjsReady) return;
-            const boardMap = getBoardMap(ydoc);
+            if (!projectState || !isYjsReady || isReadOnly) return;
+            const boardMap = projectState.boardData(docId);
             boardMap.set("cards", JSON.stringify(newCards));
         },
-        [ydoc, isYjsReady],
+        [projectState, isYjsReady, isReadOnly, docId],
     );
 
     // Save arrows to Yjs
     const saveArrows = useCallback(
         (newArrows: BoardArrowData[]) => {
-            if (!ydoc || !isYjsReady) return;
-            const boardMap = getBoardMap(ydoc);
+            if (!projectState || !isYjsReady || isReadOnly) return;
+            const boardMap = projectState.boardData(docId);
             boardMap.set("arrows", JSON.stringify(newArrows));
         },
-        [ydoc, isYjsReady],
+        [projectState, isYjsReady, isReadOnly, docId],
     );
 
     // Handle keyboard events for snapping
@@ -226,21 +248,6 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         };
     }, [isVisible]);
 
-    // Close context menus on click anywhere
-    useEffect(() => {
-        if (!isVisible) return;
-
-        const handleClick = () => {
-            if (cardContextMenu) setCardContextMenu(null);
-            if (arrowContextMenu) setArrowContextMenu(null);
-        };
-
-        window.addEventListener("click", handleClick);
-        return () => {
-            window.removeEventListener("click", handleClick);
-        };
-    }, [cardContextMenu, arrowContextMenu, isVisible]);
-
     // Panning with middle-click
     const handlePanMouseDown = useCallback(
         (e: React.MouseEvent) => {
@@ -264,8 +271,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             if (e.button !== 0) return;
             if ((e.target as HTMLElement).closest(`.${styles.card}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
-            if ((e.target as HTMLElement).closest(`.${styles.hints}`)) return;
-            if ((e.target as HTMLElement).closest(`.${styles.context_menu}`)) return;
+            if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
 
             const container = containerRef.current;
             if (!container) return;
@@ -324,6 +330,8 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     const offsetRef = useRef(offset);
     const scaleRef = useRef(scale);
     const cardsRef = useRef(cards);
+    /** Canvas-space coords captured when recording starts, for the resulting card. */
+    const recordCoords = useRef({ x: 0, y: 0 });
     useEffect(() => {
         offsetRef.current = offset;
     }, [offset]);
@@ -381,7 +389,12 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                         const cardRight = card.x + card.width;
                         const cardBottom = card.y + card.height;
 
-                        if (card.x < right && cardRight > left && card.y < bottom && cardBottom > top) {
+                        if (
+                            card.x < right &&
+                            cardRight > left &&
+                            card.y < bottom &&
+                            cardBottom > top
+                        ) {
                             selected.add(card.id);
                         }
                     }
@@ -403,9 +416,11 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         };
     }, [selectionRect !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Zoom with mouse wheel - centered on cursor
+    // Zoom with mouse wheel - centered on cursor.
+    // Attached as a native non-passive listener (see effect below) because React
+    // registers onWheel as passive, which makes preventDefault() a no-op and warns.
     const handleWheel = useCallback(
-        (e: React.WheelEvent) => {
+        (e: WheelEvent) => {
             e.preventDefault();
 
             const container = containerRef.current;
@@ -431,6 +446,13 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         },
         [scale, offset],
     );
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        container.addEventListener("wheel", handleWheel, { passive: false });
+        return () => container.removeEventListener("wheel", handleWheel);
+    }, [handleWheel]);
 
     // Zoom from buttons - centered on viewport
     const zoomFromCenter = useCallback(
@@ -463,7 +485,6 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             e.preventDefault();
             if ((e.target as HTMLElement).closest(`.${styles.card}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
-            if ((e.target as HTMLElement).closest(`.${styles.hints}`)) return;
 
             // Clear selection when creating a new card
             setSelectedCardIds(new Set());
@@ -475,13 +496,11 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             const x = (e.clientX - rect.left - offset.x) / scale;
             const y = (e.clientY - rect.top - offset.y) / scale;
 
-            const randomColor = DEFAULT_CARD_COLORS[Math.floor(Math.random() * DEFAULT_CARD_COLORS.length)];
-
             const newCard: BoardCardData = {
                 id: uuidv7(),
                 title: "",
                 description: "",
-                color: randomColor,
+                color: randomCardColor(),
                 x: isSnapping ? Math.round(x / GRID_SIZE) * GRID_SIZE : x,
                 y: isSnapping ? Math.round(y / GRID_SIZE) * GRID_SIZE : y,
                 width: 450,
@@ -495,6 +514,245 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
         [cards, offset, scale, isSnapping, saveCards],
     );
 
+    // Highlight the canvas while an OS file drag hovers over it.
+    const handleDragOver = useCallback(
+        (e: React.DragEvent) => {
+            if (isReadOnly) return;
+            if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+            setIsDraggingFile(true);
+        },
+        [isReadOnly],
+    );
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        // Ignore leave events fired when moving between the container's children.
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setIsDraggingFile(false);
+    }, []);
+
+    // Show a transient error banner (auto-dismissed). Used when an asset can't be
+    // persisted, e.g. the owner is out of cloud storage.
+    const showAssetError = useCallback((message: string) => {
+        setAssetError(message);
+        if (assetErrorTimer.current) clearTimeout(assetErrorTimer.current);
+        assetErrorTimer.current = setTimeout(() => setAssetError(null), 4000);
+    }, []);
+
+    useEffect(() => () => {
+        if (assetErrorTimer.current) clearTimeout(assetErrorTimer.current);
+    }, []);
+
+    // Remove cards by id (used to roll back a card whose asset can't be saved).
+    const removeCards = useCallback(
+        (ids: Set<string>) => {
+            const next = cardsRef.current.filter((c) => !ids.has(c.id));
+            cardsRef.current = next; // keep the ref current so concurrent removals don't race
+            setCards(next);
+            saveCards(next);
+        },
+        [saveCards],
+    );
+
+    // Upload the new cards' assets to the cloud in the background, so the cards
+    // appear instantly (the bytes are already cached locally and render offline).
+    // If an upload is rejected for quota, roll back that card and explain why.
+    const syncCreatedAssets = useCallback(
+        (createdCards: BoardCardData[], pid: string) => {
+            for (const card of createdCards) {
+                if (!card.assetId) continue;
+                const cardId = card.id;
+                void syncAssetToCloud(pid, card.assetId).catch((err) => {
+                    if (err instanceof CloudQuotaError) {
+                        removeCards(new Set([cardId]));
+                        showAssetError(t("storageLimitReached"));
+                    } else {
+                        console.error("[BoardCanvas] cloud asset upload failed:", err);
+                    }
+                });
+            }
+        },
+        [removeCards, showAssetError, t],
+    );
+
+    // Drop image files → store each in IndexedDB (deduped) and drop an image
+    // card referencing its hash at the cursor.
+    const handleDrop = useCallback(
+        async (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDraggingFile(false);
+            if (isReadOnly || !projectId) return;
+
+            const files = Array.from(e.dataTransfer.files).filter(
+                (f) => f.type.startsWith("image/") || f.type.startsWith("audio/"),
+            );
+            if (files.length === 0) return;
+
+            const container = containerRef.current;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const dropX = (e.clientX - rect.left - offset.x) / scale;
+            const dropY = (e.clientY - rect.top - offset.y) / scale;
+
+            const created: BoardCardData[] = [];
+            for (const file of files) {
+                const i = created.length;
+                try {
+                    if (file.type.startsWith("audio/")) {
+                        const { hash } = await importAudioFile(projectId, file);
+                        created.push({
+                            id: uuidv7(),
+                            type: "audio",
+                            assetId: hash,
+                            title: "",
+                            description: "",
+                            color: randomCardColor(),
+                            x: dropX + i * 24,
+                            y: dropY + i * 24,
+                            width: AUDIO_CARD_WIDTH,
+                            height: AUDIO_CARD_HEIGHT,
+                        });
+                        continue;
+                    }
+                    const { hash, width, height } = await importImageFile(projectId, file);
+                    const fit = Math.min(1, MAX_IMAGE_CARD_SIZE / Math.max(width, height, 1));
+                    created.push({
+                        id: uuidv7(),
+                        type: "image",
+                        assetId: hash,
+                        title: "",
+                        description: "",
+                        color: "transparent",
+                        x: dropX + i * 24,
+                        y: dropY + i * 24,
+                        width: Math.max(60, Math.round(width * fit)),
+                        height: Math.max(60, Math.round(height * fit)),
+                    });
+                } catch (err) {
+                    console.error("[BoardCanvas] Failed to import dropped file:", err);
+                }
+            }
+            if (created.length === 0) return;
+
+            const newCards = [...cardsRef.current, ...created];
+            setCards(newCards);
+            saveCards(newCards);
+
+            // Upload to the cloud in the background (cards already show locally).
+            syncCreatedAssets(created, projectId);
+        },
+        [isReadOnly, projectId, offset, scale, saveCards, syncCreatedAssets],
+    );
+
+    // Create a text card at the given canvas-space coords (from the canvas menu).
+    const handleCreateCard = useCallback(
+        (x: number, y: number) => {
+            setSelectedCardIds(new Set());
+
+            const newCard: BoardCardData = {
+                id: uuidv7(),
+                title: "",
+                description: "",
+                color: randomCardColor(),
+                x: isSnapping ? Math.round(x / GRID_SIZE) * GRID_SIZE : x,
+                y: isSnapping ? Math.round(y / GRID_SIZE) * GRID_SIZE : y,
+                width: 450,
+                height: 280,
+            };
+
+            const newCards = [...cardsRef.current, newCard];
+            setCards(newCards);
+            saveCards(newCards);
+        },
+        [isSnapping, saveCards],
+    );
+
+    // Begin recording; remember where to drop the resulting card.
+    const handleStartRecording = useCallback(
+        async (x: number, y: number) => {
+            recordCoords.current = { x, y };
+            try {
+                await recorder.start();
+            } catch (err) {
+                console.error("[BoardCanvas] Microphone access failed:", err);
+            }
+        },
+        [recorder],
+    );
+
+    // Stop recording, store the clip as an asset, and drop an audio card.
+    const handleStopRecording = useCallback(async () => {
+        const blob = await recorder.stop();
+        if (!blob || !projectId) return;
+        try {
+            const { hash } = await importAudioFile(projectId, blob);
+            const { x, y } = recordCoords.current;
+            const newCard: BoardCardData = {
+                id: uuidv7(),
+                type: "audio",
+                assetId: hash,
+                title: "",
+                description: "",
+                color: randomCardColor(),
+                x,
+                y,
+                width: AUDIO_CARD_WIDTH,
+                height: AUDIO_CARD_HEIGHT,
+            };
+            const newCards = [...cardsRef.current, newCard];
+            setCards(newCards);
+            saveCards(newCards);
+
+            // Upload to the cloud in the background (card already shows locally).
+            syncCreatedAssets([newCard], projectId);
+        } catch (err) {
+            console.error("[BoardCanvas] Failed to store recording:", err);
+        }
+    }, [recorder, projectId, saveCards, syncCreatedAssets]);
+
+    // Right-clicking empty canvas opens a menu (create card / record audio).
+    // Cards and arrows have their own menus, so bail when the click landed on one.
+    const handleCanvasContextMenu = useCallback(
+        (e: React.MouseEvent) => {
+            if (isReadOnly) return;
+            const target = e.target as HTMLElement;
+            if (
+                target.closest(`.${styles.card}`) ||
+                target.closest(`.${styles.arrow_group}`) ||
+                target.closest("[data-context-menu]") ||
+                target.closest(`.${styles.zoom_controls}`)
+            )
+                return;
+
+            const container = containerRef.current;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            e.preventDefault();
+            const canvasX = (e.clientX - rect.left - offset.x) / scale;
+            const canvasY = (e.clientY - rect.top - offset.y) / scale;
+            updateContextMenu({
+                position: { x: e.clientX, y: e.clientY },
+                content: (
+                    <>
+                        <ContextMenuItem
+                            icon={Plus}
+                            text={t("createCard")}
+                            action={() => handleCreateCard(canvasX, canvasY)}
+                        />
+                        <ContextMenuItem
+                            icon={Mic}
+                            text={t("recordAudio")}
+                            action={() => handleStartRecording(canvasX, canvasY)}
+                            disabled={!recorder.isSupported}
+                            title={recorder.isSupported ? undefined : t("audioUnsupported")}
+                        />
+                    </>
+                ),
+            });
+        },
+        [isReadOnly, offset, scale, updateContextMenu, t, handleCreateCard, handleStartRecording, recorder.isSupported],
+    );
+
     // Update card (with multi-drag support)
     const handleUpdateCard = useCallback(
         (updatedCard: BoardCardData) => {
@@ -506,11 +764,14 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                     const dy = updatedCard.y - oldCard.y;
                     // Only apply multi-drag for position changes, not resize
                     if (dx !== 0 || dy !== 0) {
-                        const isResize = updatedCard.width !== oldCard.width || updatedCard.height !== oldCard.height;
+                        const isResize =
+                            updatedCard.width !== oldCard.width ||
+                            updatedCard.height !== oldCard.height;
                         if (!isResize) {
                             const newCards = cards.map((c) => {
                                 if (c.id === updatedCard.id) return updatedCard;
-                                if (selectedCardIds.has(c.id)) return { ...c, x: c.x + dx, y: c.y + dy };
+                                if (selectedCardIds.has(c.id))
+                                    return { ...c, x: c.x + dx, y: c.y + dy };
                                 return c;
                             });
                             setCards(newCards);
@@ -538,9 +799,10 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             const newArrows = arrows.filter((a) => a.fromCardId !== id && a.toCardId !== id);
             setArrows(newArrows);
             saveArrows(newArrows);
-            setCardContextMenu(null);
+            // Deleting an image card may orphan its asset — reconcile (debounced).
+            if (projectId && projectState) scheduleAssetGc(projectId, projectState);
         },
-        [cards, arrows, saveCards, saveArrows],
+        [cards, arrows, saveCards, saveArrows, projectId, projectState],
     );
 
     // Change card color
@@ -549,7 +811,6 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             const newCards = cards.map((c) => (c.id === id ? { ...c, color } : c));
             setCards(newCards);
             saveCards(newCards);
-            setCardContextMenu(null);
         },
         [cards, saveCards],
     );
@@ -566,28 +827,25 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             const newCards = [...cards, newCard];
             setCards(newCards);
             saveCards(newCards);
-            setCardContextMenu(null);
         },
         [cards, saveCards],
     );
 
-    // Context menu for card
-    const handleCardContextMenu = useCallback((e: React.MouseEvent, card: BoardCardData) => {
-        setCardContextMenu({
-            position: { x: e.clientX, y: e.clientY },
-            card,
-        });
-    }, []);
-
-    // Context menu for arrow
-    const handleArrowContextMenu = useCallback((e: React.MouseEvent, arrow: BoardArrowData) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setArrowContextMenu({
-            position: { x: e.clientX, y: e.clientY },
-            arrow,
-        });
-    }, []);
+    // Send card to the Outline view
+    const handleSendToOutline = useCallback(
+        (card: BoardCardData) => {
+            repository?.addOutlineItem({
+                source: "card",
+                refDocId: docId,
+                refId: card.id,
+                title: card.title,
+                preview: card.description,
+                color: card.color,
+                parentId: null,
+            });
+        },
+        [repository, docId],
+    );
 
     // Delete arrow
     const handleDeleteArrow = useCallback(
@@ -595,32 +853,98 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             const newArrows = arrows.filter((a) => a.id !== id);
             setArrows(newArrows);
             saveArrows(newArrows);
-            setArrowContextMenu(null);
         },
         [arrows, saveArrows],
     );
 
-    // Get connection point position for a card
-    const getConnectionPoint = useCallback((card: BoardCardData, side: "top" | "right" | "bottom" | "left") => {
-        const centerX = card.x + card.width / 2;
-        const centerY = card.y + card.height / 2;
+    // Open the shared context-menu host for a card.
+    const handleCardContextMenu = useCallback(
+        (e: React.MouseEvent, card: BoardCardData) => {
+            updateContextMenu({
+                position: { x: e.clientX, y: e.clientY },
+                content: (
+                    <>
+                        {/* Color applies to text + audio notes; image cards have none. */}
+                        {card.type !== "image" && (
+                            <>
+                                <ContextMenuColorRow
+                                    colors={DEFAULT_ITEM_COLORS}
+                                    selected={card.color}
+                                    onSelect={(color) => handleChangeCardColor(card.id, color)}
+                                />
+                                <ContextMenuSeparator />
+                            </>
+                        )}
+                        <ContextMenuItem
+                            icon={Copy}
+                            text={t("duplicate")}
+                            action={() => handleDuplicateCard(card)}
+                        />
+                        {(card.type ?? "text") === "text" && (
+                            <ContextMenuItem
+                                icon={ListTree}
+                                text={t("sendToOutline")}
+                                action={() => handleSendToOutline(card)}
+                            />
+                        )}
+                        <ContextMenuItem
+                            icon={Trash2}
+                            text={t("delete")}
+                            action={() => handleDeleteCard(card.id)}
+                        />
+                    </>
+                ),
+            });
+        },
+        [updateContextMenu, t, handleChangeCardColor, handleDuplicateCard, handleSendToOutline, handleDeleteCard],
+    );
 
-        switch (side) {
-            case "top":
-                return { x: centerX, y: card.y };
-            case "right":
-                return { x: card.x + card.width, y: centerY };
-            case "bottom":
-                return { x: centerX, y: card.y + card.height };
-            case "left":
-                return { x: card.x, y: centerY };
-        }
-    }, []);
+    // Open the shared context-menu host for an arrow.
+    const handleArrowContextMenu = useCallback(
+        (e: React.MouseEvent, arrow: BoardArrowData) => {
+            e.preventDefault();
+            e.stopPropagation();
+            updateContextMenu({
+                position: { x: e.clientX, y: e.clientY },
+                content: (
+                    <ContextMenuItem
+                        icon={Trash2}
+                        text={t("delete")}
+                        action={() => handleDeleteArrow(arrow.id)}
+                    />
+                ),
+            });
+        },
+        [updateContextMenu, t, handleDeleteArrow],
+    );
+
+    // Get connection point position for a card
+    const getConnectionPoint = useCallback(
+        (card: BoardCardData, side: "top" | "right" | "bottom" | "left") => {
+            const centerX = card.x + card.width / 2;
+            const centerY = card.y + card.height / 2;
+
+            switch (side) {
+                case "top":
+                    return { x: centerX, y: card.y };
+                case "right":
+                    return { x: card.x + card.width, y: centerY };
+                case "bottom":
+                    return { x: centerX, y: card.y + card.height };
+                case "left":
+                    return { x: card.x, y: centerY };
+            }
+        },
+        [],
+    );
 
     // Calculate best connection points between two cards with perpendicular tangent directions
     const getArrowPoints = useCallback(
         (fromCard: BoardCardData, toCard: BoardCardData) => {
-            const fromCenter = { x: fromCard.x + fromCard.width / 2, y: fromCard.y + fromCard.height / 2 };
+            const fromCenter = {
+                x: fromCard.x + fromCard.width / 2,
+                y: fromCard.y + fromCard.height / 2,
+            };
             const toCenter = { x: toCard.x + toCard.width / 2, y: toCard.y + toCard.height / 2 };
 
             const dx = toCenter.x - fromCenter.x;
@@ -664,10 +988,13 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
     );
 
     // Handle starting a connection from a card
-    const handleStartConnection = useCallback((cardId: string, side: string, initialX: number, initialY: number) => {
-        setConnectingFrom({ cardId, side });
-        setConnectingLine({ x: initialX, y: initialY });
-    }, []);
+    const handleStartConnection = useCallback(
+        (cardId: string, side: string, initialX: number, initialY: number) => {
+            setConnectingFrom({ cardId, side });
+            setConnectingLine({ x: initialX, y: initialY });
+        },
+        [],
+    );
 
     // Handle mouse move while connecting
     const handleConnectionMouseMove = useCallback(
@@ -751,10 +1078,13 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
             <div className={styles.board_shadow} />
             <div
                 ref={containerRef}
-                className={`${styles.container} ${isPanning ? styles.panning : ""}`}
+                className={`${styles.container} ${isPanning ? styles.panning : ""} ${isDraggingFile ? styles.drag_over : ""}`}
                 onMouseDown={handleContainerMouseDown}
                 onDoubleClick={handleDoubleClick}
-                onWheel={handleWheel}
+                onContextMenu={handleCanvasContextMenu}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
             >
                 <div className={styles.grid} style={gridPattern} />
 
@@ -775,7 +1105,10 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                             const points = getArrowPoints(fromCard, toCard);
 
                             // Calculate distance for control point offset (perpendicular to border)
-                            const dist = Math.hypot(points.to.x - points.from.x, points.to.y - points.from.y);
+                            const dist = Math.hypot(
+                                points.to.x - points.from.x,
+                                points.to.y - points.from.y,
+                            );
                             const controlDist = Math.max(50, dist * 0.4);
 
                             // Control points extend perpendicular to the borders
@@ -791,10 +1124,22 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
 
                             // Arrowhead points matching original marker shape: M 0 0 L 12 4 L 0 8 L 3 4 Z
                             // Back corners (perpendicular to arrow direction)
-                            const ax1 = points.to.x - arrowLength * Math.cos(angle) + arrowWidth * Math.sin(angle);
-                            const ay1 = points.to.y - arrowLength * Math.sin(angle) - arrowWidth * Math.cos(angle);
-                            const ax2 = points.to.x - arrowLength * Math.cos(angle) - arrowWidth * Math.sin(angle);
-                            const ay2 = points.to.y - arrowLength * Math.sin(angle) + arrowWidth * Math.cos(angle);
+                            const ax1 =
+                                points.to.x -
+                                arrowLength * Math.cos(angle) +
+                                arrowWidth * Math.sin(angle);
+                            const ay1 =
+                                points.to.y -
+                                arrowLength * Math.sin(angle) -
+                                arrowWidth * Math.cos(angle);
+                            const ax2 =
+                                points.to.x -
+                                arrowLength * Math.cos(angle) -
+                                arrowWidth * Math.sin(angle);
+                            const ay2 =
+                                points.to.y -
+                                arrowLength * Math.sin(angle) +
+                                arrowWidth * Math.cos(angle);
                             // Inner notch (25% from back toward tip)
                             const notchDepth = arrowLength * 0.75;
                             const axm = points.to.x - notchDepth * Math.cos(angle);
@@ -825,7 +1170,11 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                                         strokeWidth={2.5}
                                     />
                                     {/* Arrowhead */}
-                                    <path className={styles.arrow_head} d={arrowheadD} fill="var(--secondary-text)" />
+                                    <path
+                                        className={styles.arrow_head}
+                                        d={arrowheadD}
+                                        fill="var(--secondary-text)"
+                                    />
                                 </g>
                             );
                         })}
@@ -856,7 +1205,10 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                                 }
 
                                 const fromPoint = getConnectionPoint(fromCard, fromSide);
-                                const dist = Math.hypot(connectingLine.x - fromPoint.x, connectingLine.y - fromPoint.y);
+                                const dist = Math.hypot(
+                                    connectingLine.x - fromPoint.x,
+                                    connectingLine.y - fromPoint.y,
+                                );
                                 const controlDist = Math.max(30, dist * 0.3);
 
                                 const cx = fromPoint.x + fromDir.x * controlDist;
@@ -881,6 +1233,7 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                         <BoardCard
                             key={card.id}
                             card={card}
+                            projectId={projectId}
                             scale={scale}
                             isSnapping={isSnapping}
                             gridSize={GRID_SIZE}
@@ -907,76 +1260,31 @@ const BoardCanvas = ({ isVisible }: { isVisible: boolean }) => {
                     )}
                 </div>
 
-                {/* Card Context Menu */}
-                {cardContextMenu && (
-                    <div
-                        className={styles.context_menu}
-                        style={{
-                            top: cardContextMenu.position.y,
-                            left: cardContextMenu.position.x,
-                        }}
-                    >
-                        <div className={styles.context_menu_colors}>
-                            {DEFAULT_CARD_COLORS.map((color) => (
-                                <button
-                                    key={color}
-                                    className={`${styles.context_menu_color_swatch} ${cardContextMenu.card.color === color ? styles.context_menu_color_swatch_active : ""}`}
-                                    style={{ backgroundColor: color }}
-                                    onClick={() => handleChangeCardColor(cardContextMenu.card.id, color)}
-                                />
-                            ))}
-                        </div>
-                        <div
-                            className={styles.context_menu_item}
-                            onClick={() => handleDuplicateCard(cardContextMenu.card)}
-                        >
-                            <Copy size={16} />
-                            <p className="unselectable">{t("duplicate")}</p>
-                        </div>
-                        <div
-                            className={styles.context_menu_item}
-                            onClick={() => handleDeleteCard(cardContextMenu.card.id)}
-                        >
-                            <Trash2 size={16} />
-                            <p className="unselectable">{t("delete")}</p>
-                        </div>
-                    </div>
-                )}
+                {/* Transient asset error (e.g. cloud storage limit reached) */}
+                {assetError && <div className={styles.asset_error}>{assetError}</div>}
 
-                {/* Arrow Context Menu */}
-                {arrowContextMenu && (
-                    <div
-                        className={styles.context_menu}
-                        style={{
-                            top: arrowContextMenu.position.y,
-                            left: arrowContextMenu.position.x,
-                        }}
-                    >
-                        <div
-                            className={styles.context_menu_item}
-                            onClick={() => handleDeleteArrow(arrowContextMenu.arrow.id)}
-                        >
-                            <Trash2 size={16} />
-                            <p className="unselectable">{t("delete")}</p>
-                        </div>
+                {/* Recording indicator */}
+                {recorder.isRecording && (
+                    <div className={styles.recording_indicator}>
+                        <span className={styles.recording_dot} />
+                        <span className={styles.recording_time}>
+                            {formatRecordingTime(recorder.elapsed)}
+                        </span>
+                        <button className={styles.recording_stop} onClick={handleStopRecording}>
+                            <Square size={12} />
+                            <span className="unselectable">{t("stopRecording")}</span>
+                        </button>
                     </div>
                 )}
 
                 <div className={styles.zoom_controls}>
                     <button className={styles.zoom_btn} onClick={() => zoomFromCenter(false)}>
-                        <Minus />
+                        <Minus size={14} />
                     </button>
                     <span className={styles.zoom_level}>{Math.round(scale * 100)}%</span>
                     <button className={styles.zoom_btn} onClick={() => zoomFromCenter(true)}>
-                        <Plus />
+                        <Plus size={14} />
                     </button>
-                </div>
-
-                <div className={styles.hints}>
-                    <span>{t("hints.pan")}</span>
-                    <span>{t("hints.select")}</span>
-                    <span>{t("hints.create")}</span>
-                    <span>{t("hints.move")}</span>
                 </div>
             </div>
         </div>

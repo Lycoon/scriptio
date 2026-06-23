@@ -2,8 +2,14 @@
 
 import { useCallback, useContext, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ProjectContext } from "@src/context/ProjectContext";
 import { Save, Trash2 } from "lucide-react";
+
+import { ProjectContext } from "@src/context/ProjectContext";
+import {
+    discardCloudProjectData,
+    getCachedProject,
+    migrateToCachedProject,
+} from "@src/lib/persistence/storage-provider/local-persistence";
 
 import styles from "./ProjectUnavailableDialog.module.css";
 
@@ -19,25 +25,20 @@ const ProjectUnavailableDialog = () => {
         if (!projectId) return;
         setLoading(true);
         try {
-            const { getCachedProject, migrateToCachedProject } =
-                await import("@src/lib/persistence/storage-provider/local-persistence");
-            const cachedProject = await getCachedProject(projectId);
-            const metadataTitle = repository?.getTitle();
-            const title = cachedProject?.title || project?.project?.title || metadataTitle || "Untitled Project";
-            const newProject = await migrateToCachedProject(projectId, title, cachedProject?.description ?? undefined);
-            router.replace(`/projects/screenplay?projectId=${newProject.id}`);
+            const cached = await getCachedProject(projectId);
+            const title = cached?.title || project?.project?.title || repository?.getTitle() || "Untitled Project";
+            const newProject = await migrateToCachedProject(projectId, title, cached?.description ?? undefined);
+            router.replace(`/projects?projectId=${newProject.id}`);
         } catch (e) {
             console.error("[ProjectUnavailableDialog] Migration failed:", e);
             setLoading(false);
         }
-    }, [projectId, repository, router, project?.project?.title]);
+    }, [projectId, repository, router, project]);
 
     const handleDiscard = useCallback(async () => {
         if (!projectId) return;
         setLoading(true);
         try {
-            const { discardCloudProjectData } =
-                await import("@src/lib/persistence/storage-provider/local-persistence");
             await discardCloudProjectData(projectId);
             router.replace("/projects");
         } catch (e) {

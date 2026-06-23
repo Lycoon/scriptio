@@ -6,7 +6,7 @@ import { Scene } from "./scenes";
 //      SPECIFIC POPUP DATA       //
 // ------------------------------ //
 export type PopupImportFileData = {
-    confirmImport: () => void;
+    confirmImport: () => void | Promise<void>;
 };
 
 export type PopupCharacterData = {
@@ -17,16 +17,43 @@ export type PopupSceneData = {
     scene: Scene;
 };
 
+export type PopupUploadToCloudData = {
+    projectId: string;
+};
+
+export type PopupUnlockScenesData = {
+    confirmUnlock: () => void;
+};
+
+export type PopupUnlockPagesData = {
+    confirmUnlock: () => void;
+};
+
+export type PopupUnlockDraftData = {
+    confirmUnlock: () => void;
+};
+
 // ------------------------------ //
 //         GENERIC POPUP          //
 // ------------------------------ //
-export type PopupUnionData = PopupImportFileData | PopupCharacterData | PopupSceneData;
+export type PopupUnionData =
+    | PopupImportFileData
+    | PopupCharacterData
+    | PopupSceneData
+    | PopupUploadToCloudData
+    | PopupUnlockScenesData
+    | PopupUnlockPagesData
+    | PopupUnlockDraftData;
 
 export enum PopupType {
     NewCharacter,
     EditCharacter,
     ImportFile,
     EditScene,
+    UploadToCloud,
+    UnlockScenes,
+    UnlockPages,
+    UnlockDraft,
 }
 
 export type PopupData<DataType extends PopupUnionData> = {
@@ -67,5 +94,33 @@ export const editScenePopup = (scene: Scene, userCtx: UserContextType) => {
     userCtx.updatePopup({
         type: PopupType.EditScene,
         data: { scene },
+    });
+};
+
+export const uploadToCloudPopup = (projectId: string, userCtx: UserContextType) => {
+    userCtx.updatePopup({
+        type: PopupType.UploadToCloud,
+        data: { projectId },
+    });
+};
+
+export const unlockScenesPopup = (confirmUnlock: () => void, userCtx: UserContextType) => {
+    userCtx.updatePopup({
+        type: PopupType.UnlockScenes,
+        data: { confirmUnlock },
+    });
+};
+
+export const unlockPagesPopup = (confirmUnlock: () => void, userCtx: UserContextType) => {
+    userCtx.updatePopup({
+        type: PopupType.UnlockPages,
+        data: { confirmUnlock },
+    });
+};
+
+export const unlockDraftPopup = (confirmUnlock: () => void, userCtx: UserContextType) => {
+    userCtx.updatePopup({
+        type: PopupType.UnlockDraft,
+        data: { confirmUnlock },
     });
 };

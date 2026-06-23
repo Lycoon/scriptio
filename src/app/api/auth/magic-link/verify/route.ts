@@ -2,36 +2,23 @@ import { ERROR_MAGIC_LINK_EXPIRED } from "@src/lib/messages";
 import { apiHandler } from "@src/lib/utils/api-handler";
 import { BodyFieldError, Success, validate } from "@src/lib/utils/api-utils";
 import { NextResponse, type NextRequest } from "next/server";
-import { encode } from "next-auth/jwt";
 
 import * as SecretService from "@src/lib/utils/secrets";
 import * as UserService from "@src/server/service/user-service";
 import * as ProjectService from "@src/server/service/project-service";
 import * as MagicLinkService from "@src/server/service/magic-link-service";
 import * as Misc from "@src/lib/utils/misc";
+import * as CollabUtils from "@src/lib/cloud/utils";
 import { putBridgeToken } from "@src/lib/desktop-bridge";
+import {
+    encodeDesktopBearer,
+    encodeWebSessionCookie,
+    SESSION_TTL_SECONDS,
+    type EncodedTokenPayload,
+} from "@src/lib/auth-tokens";
 
 import { VerifyMagicLinkBodySchema } from "@src/lib/utils/api-bodies";
 export type { VerifyMagicLinkBody } from "@src/lib/utils/api-bodies";
-
-const SESSION_COOKIE_SALT = "authjs.session-token";
-const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // mirrors auth.ts maxAge
-
-/**
- * Cookie name NextAuth/Auth.js expects when verifying the JWT session.
- * Must stay in sync with Auth.js's internal default for the credentials/JWT cookie:
- *   https → "__Secure-authjs.session-token", http → "authjs.session-token".
- */
-function getSessionCookieName(): { name: string; secure: boolean } {
-    const useSecure =
-        process.env.NEXTAUTH_URL?.startsWith("https://") === true ||
-        process.env.AUTH_URL?.startsWith("https://") === true ||
-        process.env.NODE_ENV === "production";
-    return {
-        name: useSecure ? "__Secure-authjs.session-token" : "authjs.session-token",
-        secure: useSecure,
-    };
-}
 
 /**
  * POST `/api/auth/magic-link/verify`
@@ -48,9 +35,6 @@ function getSessionCookieName(): { name: string; secure: boolean } {
 async function verifyMagicLinkRoute(req: NextRequest) {
     const body = await req.json();
     const { token } = validate(VerifyMagicLinkBodySchema, body);
-
-    const secret = process.env.AUTH_SECRET;
-    if (!secret) throw new BodyFieldError("Server is missing AUTH_SECRET");
 
     const tokenHash = SecretService.hashToken(token);
 
@@ -82,33 +66,38 @@ async function verifyMagicLinkRoute(req: NextRequest) {
             ) {
                 await ProjectService.upsertMember(invite.projectId, user.id);
                 await ProjectService.deleteInviteFromToken(record.inviteToken);
+                // Clear any leftover DO blacklist entry from a prior kick so
+                // the freshly re-invited user can actually open a WS to the
+                // project room (otherwise the upgrade returns 403 forever).
+                try {
+                    await CollabUtils.allowOnWebsocket(user.id, invite.projectId);
+                } catch (err) {
+                    console.error("[magic-link] Failed to clear blacklist:", err);
+                }
             }
         } catch (err) {
             console.error("[magic-link] Invite acceptance failed:", err);
         }
     }
 
-    const jwe = await encode({
-        token: {
-            id: user.id,
-            email: user.email,
-            createdAt: user.createdAt.toISOString(),
-        },
-        secret,
-        salt: SESSION_COOKIE_SALT,
-        maxAge: SESSION_TTL_SECONDS,
-    });
+    const tokenPayload: EncodedTokenPayload = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt.toISOString(),
+    };
 
     if (record.desktopNonce) {
         // Desktop flow: hand the JWE to the bridge for the polling client to pick up.
         // Do NOT set a session cookie on whichever browser opened the magic link, since
         // it may not be the same machine running the desktop app.
-        putBridgeToken(record.desktopNonce, jwe);
+        const desktopJwe = await encodeDesktopBearer(tokenPayload);
+        putBridgeToken(record.desktopNonce, desktopJwe);
         return Success({ mode: "desktop" });
     }
 
     // Web flow: set the NextAuth session cookie directly so the browser is signed in.
-    const { name, secure } = getSessionCookieName();
+    const { jwe, name, secure } = await encodeWebSessionCookie(tokenPayload);
     const response = NextResponse.json(
         { status: "success", data: { mode: "web" } },
         { status: 200 },

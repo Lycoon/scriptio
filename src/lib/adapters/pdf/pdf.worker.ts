@@ -19,6 +19,12 @@ export interface VisualLine {
     runs: TextRun[];
     y: number; // browser Y position in pixels (for line-spacing within a page)
     type?: string; // e.g. "dialogue", "character", "scene", "__page_break__"
+    /** Header text for the page that begins AFTER this sentinel.
+     *  Only set on `__page_break__` lines. Carries the user-visible page
+     *  label ("4.", "4A.", a custom-templated string) read straight from
+     *  the pagination widget's DOM, so page-lock labels propagate to PDF
+     *  exports unchanged. */
+    pageLabel?: string;
 }
 
 /** Font file descriptor for registration in jsPDF. */
@@ -284,7 +290,7 @@ async function renderLines(
 
             // Page number header on pages 2+
             if (showPageNumbers) {
-                drawPageHeader(doc, currentPage, pageSize);
+                drawPageHeader(doc, currentPage, pageSize, line.pageLabel);
             }
 
             // Draw Character Name (CONT'D) at the top of the new page
@@ -415,12 +421,23 @@ async function drawMultiFontText(
     }
 }
 
-function drawPageHeader(doc: jsPDF, pageNumber: number, pageSize: { width: number; height: number }): void {
+function drawPageHeader(
+    doc: jsPDF,
+    pageNumber: number,
+    pageSize: { width: number; height: number },
+    label?: string,
+): void {
     if (pageNumber <= 1) return;
+    // Prefer the label captured from the pagination widget — under page
+    // locking this carries the frozen "4A." style label, otherwise it's the
+    // sequential "4." rendered by the default headerRight template. An empty
+    // string means the editor's custom header is intentionally blank (e.g.
+    // page 1's customHeader override) — honour that and skip drawing.
+    const text = label ?? `${pageNumber}.`;
+    if (!text) return;
     doc.setFont("CourierPrime", "normal");
     doc.setFontSize(FONT_SIZE);
     doc.setTextColor(0, 0, 0);
-    const text = `${pageNumber}.`;
     doc.text(text, pageSize.width - PAGE_RIGHT, HEADER_Y, {
         align: "right",
         baseline: "top",

@@ -4,7 +4,6 @@ import { dbSizeBytes } from "./registry";
 const POLL_INTERVAL_MS = 30_000;
 
 declare global {
-    // eslint-disable-next-line no-var
     var __scriptio_db_size_timer__: NodeJS.Timeout | undefined;
 }
 

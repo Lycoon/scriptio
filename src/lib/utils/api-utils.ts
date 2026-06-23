@@ -53,9 +53,19 @@ export class MissingBodyError extends AppError {
         super(400, message);
     }
 }
+export class ConflictError extends AppError {
+    constructor(message = "Resource already exists") {
+        super(409, message);
+    }
+}
 export class InternalServerError extends AppError {
     constructor(message = "Internal server error") {
         super(500, message);
+    }
+}
+export class StorageQuotaExceededError extends AppError {
+    constructor(message = "Storage limit reached") {
+        super(507, message);
     }
 }
 
@@ -87,7 +97,6 @@ export function validate<T>(schema: z.ZodSchema<T>, data: unknown): T {
  * Useful for calling REST endpoints on the collaboration Worker from the Next.js server.
  */
 export function getCollabHttpUrl(path: string): string {
-    const baseUrl = process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL || "";
-    const httpUrl = baseUrl.replace(/^ws/, "http");
-    return `${httpUrl}${path}`;
+    const baseUrl = process.env.NEXT_PUBLIC_CLOUD_URL || "";
+    return `${baseUrl}${path}`;
 }

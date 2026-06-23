@@ -7,51 +7,16 @@ import {
     RequestMagicLinkBody,
     UpdateUserBody,
 } from "./api-bodies";
-import { isTauri } from "@tauri-apps/api/core";
+import { apiFetch } from "@src/lib/api-client";
 
 type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
-
-const request = async (url: string, method: RESTMethod, body?: object) => {
-    const json = JSON.stringify(body);
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-
-    // In desktop mode, add client type header and use full API URL
-    let fullUrl = url;
-    if (isTauri()) {
-        headers["x-client-type"] = "desktop";
-        fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
-
-        // Add auth token if available (dynamic import to avoid SSR issues)
-        const { getDesktopToken } = await import("@src/lib/desktop-auth");
-        const token = await getDesktopToken();
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        const stagingAuth = process.env.NEXT_PUBLIC_STAGING_BASIC_AUTH;
-        if (stagingAuth) {
-            headers["X-Staging-Auth"] = `Basic ${stagingAuth}`;
-        }
-    }
-
-    return fetch(fullUrl, {
-        headers,
+const request = (url: string, method: RESTMethod, body?: object): Promise<Response> => {
+    return apiFetch(url, {
         method,
-        body: json,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
     });
 };
-
-/**
- * Converts a WebSocket URL (ws:// or wss://) to an HTTP URL (http:// or https://).
- * Useful for calling REST endpoints on the collaboration Worker.
- */
-export function getCollabHttpUrl(path: string): string {
-    const baseUrl = process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL || "";
-    const httpUrl = baseUrl.replace(/^ws/, "http");
-    return `${httpUrl}${path}`;
-}
 
 /* Projects */
 
@@ -64,7 +29,7 @@ export const getCloudToken = async (projectId: string): Promise<{ token: string 
     return { token: null, status: res.status };
 };
 
-export const createProject = async (userId: string, body: CreateProjectBody) => {
+export const createProject = async (body: CreateProjectBody) => {
     return request(`/api/projects`, "POST", body);
 };
 
@@ -74,6 +39,13 @@ export const deleteProject = (projectId: string) => {
 
 export const editProject = (projectId: string, body: UpdateProjectBody) => {
     return request(`/api/projects/${projectId}`, "PATCH", body);
+};
+
+export const uploadProjectToCloud = (
+    projectId: string,
+    body: { title: string; description?: string; author?: string },
+) => {
+    return request(`/api/projects/${projectId}/upload-to-cloud`, "POST", body);
 };
 
 /* Saves / Version History */
@@ -144,10 +116,18 @@ export const editUserInfo = (body: UpdateUserBody) => {
     return request(`/api/users`, "PATCH", body);
 };
 
+export const deleteUser = () => {
+    return request(`/api/users`, "DELETE");
+};
+
 /* Auth */
 
 export const requestMagicLink = (body: RequestMagicLinkBody) => {
     return request(`/api/auth/magic-link`, "POST", body);
+};
+
+export const submitDesktopToken = (nonce: string) => {
+    return request(`/api/desktop/token`, "POST", { nonce });
 };
 
 export const cancelStripeSubscription = async (): Promise<boolean> => {
@@ -165,8 +145,20 @@ export const createStripeCheckout = async (): Promise<{ url: string } | null> =>
     return null;
 };
 
-export const verifyApplePurchase = async (jwsTransaction: string): Promise<boolean> => {
-    const res = await request("/api/apple/verify", "POST", { jwsTransaction });
+export const submitApplePurchase = async (jwsTransaction: string): Promise<boolean> => {
+    const res = await request("/api/apple/purchase", "POST", { jwsTransaction });
     return res.ok;
+};
+
+export const transferAppleSubscription = async (jwsTransaction: string): Promise<boolean> => {
+    const res = await request("/api/apple/transfer-subscription", "POST", { jwsTransaction });
+    return res.ok;
+};
+
+export const getAppleSubscriptionOwner = async (jwsTransaction: string): Promise<string | null> => {
+    const res = await request("/api/apple/subscription-owner", "POST", { jwsTransaction });
+    if (!res.ok) return null;
+    const { email } = (await res.json()) as { email: string | null };
+    return email ?? null;
 };
 

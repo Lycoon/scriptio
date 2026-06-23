@@ -1,11 +1,11 @@
 .container {
     position: absolute;
     width: 500px;
-    min-height: 250px;
-    padding: 16px;
-
-    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    padding-bottom: 24px;
     background-color: var(--primary);
+    border: 2px solid var(--separator);
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
     border-radius: 12px;
     pointer-events: auto;
 }
@@ -41,7 +41,7 @@
     font-size: 1.4rem;
     font-weight: bold;
     color: var(--primary-text);
-    font-family: var(--font-inter);
+    font-family: var(--font-josef);
     text-transform: uppercase;
 }
 
@@ -49,7 +49,7 @@
     display: flex;
     flex-direction: column;
     gap: 18px;
-    margin-bottom: 32px;
+    margin-bottom: 20px;
 }
 
 .info_btns {
@@ -108,31 +108,56 @@
     font-size: 16px !important;
 }
 
-/* Popup confirm button */
-.import_confirm {
-    border-width: 2px !important;
-    border-style: dashed !important;
-    border-color: var(--error) !important;
+/* Popup buttons — reuse the rounded "modal button" styling from DangerZone
+   so every modal/popup shares one consistent look. The popup container
+   stretches them to fill its width via `width: 100%` (DangerZone uses a
+   flex-column wrapper instead, so its variant doesn't need that). Use
+   these classes STANDALONE — do not pair with form.btn, since its
+   !important border/radius rules would override the composed styling. */
+
+.buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.buttons > * {
+    flex: 1;
+    width: auto !important;
+    margin-top: 0 !important;
 }
 
 .confirm {
-    background-color: var(--tertiary) !important;
+    composes: modalBtn from "../utils/ModalBtn.module.css";
+    width: 100% !important;
 }
 
-.confirm:hover {
-    background-color: var(--tertiary-hover) !important;
-}
-
-.confirm:disabled {
-    filter: brightness(60%);
-    cursor: not-allowed;
+.import_confirm {
+    composes: modalBtn modalBtnDanger from "../utils/ModalBtn.module.css";
+    width: 100% !important;
 }
 
 .cancel {
+    composes: modalBtn modalBtnCancel from "../utils/ModalBtn.module.css";
+    width: 100% !important;
     margin-top: 10px;
-    background-color: var(--tertiary) !important;
 }
 
-.cancel:hover {
-    background-color: var(--tertiary-hover) !important;
+.loading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }

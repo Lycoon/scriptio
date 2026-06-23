@@ -1,31 +1,29 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { UserContext } from "@src/context/UserContext";
-import { PanelType, useViewContext } from "@src/context/ViewContext";
+import { DocumentPanelKind, PanelType, SplitSide, useViewContext } from "@src/context/ViewContext";
+import { join } from "@src/lib/utils/misc";
+import { DOC_DND_MIME } from "@components/editor/sidebar/DocumentTreeItem";
 import EditorPanel from "@components/editor/EditorPanel";
 import TitlePagePanel from "@components/editor/TitlePagePanel";
 import DraftEditorPanel from "@components/editor/DraftEditorPanel";
-import BoardCanvas from "@components/board/BoardCanvas";
+import TreeDocumentPanel from "@components/editor/TreeDocumentPanel";
+import BoardPanel from "@components/editor/BoardPanel";
+import OutlinePanel from "@components/editor/outline/OutlinePanel";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
 import {
-    Archive,
+    ArrowLeftRight,
     ChevronLeft,
     ChevronRight,
     Clapperboard,
     FileText,
-    LayoutDashboard,
-    Maximize,
+    ListTree,
     Menu,
-    MessageSquare,
-    MessageSquareOff,
-    Minimize,
     PanelRight,
     PanelRightClose,
-    Scroll,
 } from "lucide-react";
 import styles from "./SplitPanelContainer.module.css";
 import dropdown from "@components/navbar/ViewOptionsDropdown.module.css";
@@ -56,53 +54,57 @@ const PanelRenderer = ({
                     updateSuggestionData={updateSuggestionData}
                 />
             );
-        case "board":
-            return <BoardCanvas isVisible={isVisible} />;
         case "statistics":
             return <StatisticsClientPage />;
         case "title":
             return <TitlePagePanel isVisible={isVisible} />;
         case "draft":
             return <DraftEditorPanel isVisible={isVisible} />;
+        case "outline":
+            return <OutlinePanel isVisible={isVisible} />;
+        default:
+            // board/document are document panels, rendered per-side (not here).
+            return null;
     }
 };
 
+// Singleton view panels are kept mounted and swapped in/out via CSS so heavy
+// editors don't reinitialise. Board/editor documents are rendered per-side
+// instead, so two documents can be open at once.
+const SINGLETON_PANELS: PanelType[] = ["screenplay", "statistics", "title", "draft", "outline"];
+
+// Boards and tree documents are opened from the document-tree sidebar (they are
+// per-document), so they are not listed here.
 const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey: string }[] = [
     { type: "screenplay", icon: Clapperboard, labelKey: "screenplay" },
-    { type: "board", icon: LayoutDashboard, labelKey: "board" },
     { type: "title", icon: FileText, labelKey: "titlePage" },
-    { type: "draft", icon: Archive, labelKey: "draftEditor" },
+    { type: "outline", icon: ListTree, labelKey: "outline" },
 ];
 
 const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; side: "primary" | "secondary" }) => {
     const t = useTranslations("navbar");
-    const { isZenMode, updateIsZenMode } = useContext(UserContext);
     const {
         setSidePanel,
         isSplit,
         primaryPanel,
         setSecondaryPanel,
-        isEndlessScroll,
-        setIsEndlessScroll,
-        showComments,
-        setShowComments,
+        swapPanels,
         leftSidebarOpen,
         setLeftSidebarOpen,
-        setRightSidebarOpen,
     } = useViewContext();
 
     const handleSplitToggle = useCallback(() => {
         if (isSplit) {
             setSecondaryPanel(null);
         } else {
-            const other: PanelType =
-                primaryPanel === "screenplay" ? "board" : primaryPanel === "title" ? "screenplay" : "screenplay";
+            // Default the new side to a singleton view (documents need a docId,
+            // which only opening from the sidebar/outline provides).
+            const other: PanelType = primaryPanel === "screenplay" ? "title" : "screenplay";
             setSecondaryPanel(other);
         }
     }, [isSplit, primaryPanel, setSecondaryPanel]);
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
-    const sidebarsBeforeFocus = useRef<{ left: boolean; right: boolean } | null>(null);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -120,40 +122,6 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
         },
         [currentPanel, side, setSidePanel],
     );
-
-    const enterFocusMode = useCallback(() => {
-        setLeftSidebarOpen((prev) => {
-            setRightSidebarOpen((prevRight) => {
-                sidebarsBeforeFocus.current = { left: prev, right: prevRight };
-                return false;
-            });
-            return false;
-        });
-        updateIsZenMode(true);
-        document.documentElement.requestFullscreen?.();
-    }, [updateIsZenMode, setLeftSidebarOpen, setRightSidebarOpen]);
-
-    const exitFocusMode = useCallback(() => {
-        updateIsZenMode(false);
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-        }
-        if (sidebarsBeforeFocus.current) {
-            setLeftSidebarOpen(sidebarsBeforeFocus.current.left);
-            setRightSidebarOpen(sidebarsBeforeFocus.current.right);
-            sidebarsBeforeFocus.current = null;
-        }
-    }, [updateIsZenMode, setLeftSidebarOpen, setRightSidebarOpen]);
-
-    useEffect(() => {
-        const onFullscreenChange = () => {
-            if (!document.fullscreenElement && isZenMode) {
-                exitFocusMode();
-            }
-        };
-        document.addEventListener("fullscreenchange", onFullscreenChange);
-        return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
-    }, [isZenMode, exitFocusMode]);
 
     return (
         <div ref={ref} className={styles.panel_switcher_anchor}>
@@ -177,6 +145,17 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
                         {isSplit ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
                         <span className={dropdown.item_label}>{isSplit ? t("unsplitPanel") : t("splitPanel")}</span>
                     </button>
+                    <button
+                        className={dropdown.dropdown_item}
+                        onClick={() => {
+                            swapPanels();
+                            setIsOpen(false);
+                        }}
+                        disabled={!isSplit}
+                    >
+                        <ArrowLeftRight size={14} />
+                        <span className={dropdown.item_label}>{t("swapPanels")}</span>
+                    </button>
                     <div className={styles.panel_switcher_separator} />
                     {SWITCHABLE_PANELS.map(({ type, icon: Icon, labelKey }) => (
                         <button
@@ -188,32 +167,26 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
                             <span className={dropdown.item_label}>{t(labelKey as Parameters<typeof t>[0])}</span>
                         </button>
                     ))}
-                    <div className={styles.panel_switcher_separator} />
-                    <button
-                        className={`${dropdown.dropdown_item} ${isEndlessScroll ? dropdown.dropdown_item_active : ""}`}
-                        onClick={() => setIsEndlessScroll(!isEndlessScroll)}
-                    >
-                        <Scroll size={14} />
-                        <span className={dropdown.item_label}>{t("endlessScroll")}</span>
-                    </button>
-                    <button
-                        className={`${dropdown.dropdown_item} ${!showComments ? dropdown.dropdown_item_active : ""}`}
-                        onClick={() => setShowComments(!showComments)}
-                    >
-                        {showComments ? <MessageSquare size={14} /> : <MessageSquareOff size={14} />}
-                        <span className={dropdown.item_label}>{t("toggleComments")}</span>
-                    </button>
-                    <button
-                        className={`${dropdown.dropdown_item} ${isZenMode ? dropdown.dropdown_item_active : ""}`}
-                        onClick={isZenMode ? exitFocusMode : enterFocusMode}
-                    >
-                        {isZenMode ? <Minimize size={14} /> : <Maximize size={14} />}
-                        <span className={dropdown.item_label}>{t("focusMode")}</span>
-                    </button>
                 </div>
             )}
         </div>
     );
+};
+
+// Drop zone within a panel: "center" replaces the panel's content, while the
+// "left"/"right" edges split it and open the document on that side.
+type DropZone = "left" | "center" | "right";
+
+// Fraction of the panel width on each side that counts as a split edge.
+const SPLIT_EDGE_RATIO = 0.3;
+
+const computeDropZone = (e: React.DragEvent, allowSplit: boolean): DropZone => {
+    if (!allowSplit) return "center";
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    if (x < rect.width * SPLIT_EDGE_RATIO) return "left";
+    if (x > rect.width * (1 - SPLIT_EDGE_RATIO)) return "right";
+    return "center";
 };
 
 const SplitPanelContainer = ({
@@ -222,8 +195,62 @@ const SplitPanelContainer = ({
     suggestionData,
     updateSuggestionData,
 }: SplitPanelContainerProps) => {
-    const { primaryPanel, secondaryPanel, splitRatio, isSplit, mountedPanels, focusedSide, setFocusedSide } =
-        useViewContext();
+    const {
+        primaryPanel,
+        secondaryPanel,
+        primaryDocId,
+        secondaryDocId,
+        splitRatio,
+        isSplit,
+        mountedPanels,
+        focusedSide,
+        setFocusedSide,
+        setSideDocument,
+        splitWithDocument,
+    } = useViewContext();
+
+    // Where a document dragged from the sidebar would land: which side it is over
+    // and which zone of that side ("center" replaces the panel; "left"/"right"
+    // splits, opening the document on that edge).
+    const [docDragOver, setDocDragOver] = useState<{ side: SplitSide; zone: DropZone } | null>(null);
+
+    // Capture-phase so the panel claims a document drop before the editor's own
+    // drop handling sees it; non-document drags fall through untouched.
+    const handleDocDragOver = useCallback(
+        (side: SplitSide) => (e: React.DragEvent) => {
+            if (!e.dataTransfer.types.includes(DOC_DND_MIME)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+            // Edge zones only split when there is room for a second panel.
+            const zone = computeDropZone(e, !isSplit);
+            setDocDragOver((prev) => (prev?.side === side && prev.zone === zone ? prev : { side, zone }));
+        },
+        [isSplit],
+    );
+
+    const handleDocDrop = useCallback(
+        (side: SplitSide) => (e: React.DragEvent) => {
+            const raw = e.dataTransfer.getData(DOC_DND_MIME);
+            if (!raw) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const zone = computeDropZone(e, !isSplit);
+            setDocDragOver(null);
+            let data: { id: string; type: "editor" | "board" };
+            try {
+                data = JSON.parse(raw);
+            } catch {
+                return;
+            }
+            const kind: DocumentPanelKind = data.type === "board" ? "board" : "document";
+            if (zone === "center") {
+                setSideDocument(side, data.id, kind);
+            } else {
+                splitWithDocument(data.id, kind, zone === "left" ? "primary" : "secondary");
+            }
+        },
+        [isSplit, setSideDocument, splitWithDocument],
+    );
 
     const gridStyle = useMemo(() => {
         if (!isSplit) {
@@ -239,38 +266,68 @@ const SplitPanelContainer = ({
         };
     }, [isSplit, splitRatio]);
 
-    const allPanels: PanelType[] = ["screenplay", "board", "statistics", "title", "draft"];
+    // Shared wrapper for one slot: focus styling, document drop target, switcher.
+    const renderShell = (opts: {
+        keyId: string;
+        panelKind: PanelType;
+        side: SplitSide;
+        isPrimary: boolean;
+        isVisible: boolean;
+        content: React.ReactNode;
+    }) => {
+        const { keyId, panelKind, side, isPrimary, isVisible, content } = opts;
+        const isFocused = isSplit && isVisible && focusedSide === side;
+        const dropZone = isVisible && docDragOver?.side === side ? docDragOver.zone : null;
+        const panelClass = !isVisible
+            ? styles.panel_hidden
+            : `${styles.panel}${isFocused ? ` ${styles.panel_focused}` : ""}`;
+
+        return (
+            <div
+                key={keyId}
+                className={panelClass}
+                style={isVisible ? { order: isPrimary ? 0 : 2, position: "relative" } : undefined}
+                onPointerDown={isVisible && isSplit ? () => setFocusedSide(side) : undefined}
+                onDragOverCapture={isVisible ? handleDocDragOver(side) : undefined}
+                onDropCapture={isVisible ? handleDocDrop(side) : undefined}
+                onDragLeave={
+                    isVisible
+                        ? (e) => {
+                              if (!e.currentTarget.contains(e.relatedTarget as Node)) setDocDragOver(null);
+                          }
+                        : undefined
+                }
+            >
+                {dropZone && (
+                    <div
+                        className={join(
+                            styles.panel_drop_overlay,
+                            dropZone === "left" ? styles.panel_drop_overlay_left : "",
+                            dropZone === "right" ? styles.panel_drop_overlay_right : "",
+                        )}
+                    />
+                )}
+                {isVisible && <PanelSwitcherMenu currentPanel={panelKind} side={side} />}
+                {content}
+            </div>
+        );
+    };
 
     return (
         <div className={styles.split_panel_container} style={gridStyle}>
-            {allPanels.map((panel) => {
+            {/* Singleton view panels — kept mounted, shown/hidden via CSS. */}
+            {SINGLETON_PANELS.map((panel) => {
+                if (!mountedPanels.has(panel)) return null;
                 const isPrimary = panel === primaryPanel;
                 const isSecondary = panel === secondaryPanel;
                 const isVisible = isPrimary || isSecondary;
-
-                // Lazy mount: only render panels that have been visited at least once
-                if (!mountedPanels.has(panel)) return null;
-
-                const isFocused =
-                    isSplit && isVisible && (isPrimary ? focusedSide === "primary" : focusedSide === "secondary");
-                const panelClass = !isVisible
-                    ? styles.panel_hidden
-                    : isFocused
-                      ? `${styles.panel} ${styles.panel_focused}`
-                      : styles.panel;
-
-                return (
-                    <div
-                        key={panel}
-                        className={panelClass}
-                        style={isVisible ? { order: isPrimary ? 0 : 2, position: "relative" } : undefined}
-                        onPointerDown={
-                            isVisible && isSplit ? () => setFocusedSide(isPrimary ? "primary" : "secondary") : undefined
-                        }
-                    >
-                        {isVisible && (
-                            <PanelSwitcherMenu currentPanel={panel} side={isPrimary ? "primary" : "secondary"} />
-                        )}
+                return renderShell({
+                    keyId: panel,
+                    panelKind: panel,
+                    side: isPrimary ? "primary" : "secondary",
+                    isPrimary,
+                    isVisible,
+                    content: (
                         <PanelRenderer
                             panel={panel}
                             isVisible={isVisible}
@@ -279,9 +336,31 @@ const SplitPanelContainer = ({
                             suggestionData={suggestionData}
                             updateSuggestionData={updateSuggestionData}
                         />
-                    </div>
-                );
+                    ),
+                });
             })}
+
+            {/* Document panels — one per side, each bound to its own docId so two
+                documents (e.g. two boards, or a board + an editor) can be open. */}
+            {(["primary", "secondary"] as SplitSide[]).map((side) => {
+                const panelKind = side === "primary" ? primaryPanel : secondaryPanel;
+                if (panelKind !== "board" && panelKind !== "document") return null;
+                const docId = side === "primary" ? primaryDocId : secondaryDocId;
+                return renderShell({
+                    keyId: `doc-${side}`,
+                    panelKind,
+                    side,
+                    isPrimary: side === "primary",
+                    isVisible: true,
+                    content:
+                        panelKind === "board" ? (
+                            <BoardPanel isVisible docId={docId} />
+                        ) : (
+                            <TreeDocumentPanel isVisible docId={docId} />
+                        ),
+                });
+            })}
+
             {isSplit && (
                 <div style={{ order: 1, height: "100%" }}>
                     <DragHandle />

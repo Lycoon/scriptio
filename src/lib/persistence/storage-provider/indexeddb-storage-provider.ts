@@ -1,17 +1,31 @@
 /**
  * IndexedDB storage provider for browser environments.
  * Stores project metadata and settings in IndexedDB.
+ *
+ * Schema versioning is delegated to the migrations/ module; bumping
+ * CURRENT_STORE_VERSION there is what triggers `onupgradeneeded`.
  */
 
 import type { InstalledDictionary, UserSettings } from "@src/lib/utils/types";
-import { CachedProject, ProjectEntryInput, StorageProvider } from "./storage-provider";
+import { CachedProject, ProjectEntryInput, StorageProvider, StoredAsset } from "./storage-provider";
+import {
+    ASSETS_BY_PROJECT_INDEX,
+    CURRENT_STORE_VERSION,
+    STORE_NAMES,
+} from "./migrations/store-migrations";
+import { runStoreMigrations } from "./migrations/store-migration-runner";
+import { StoreVersionTooNewError } from "./migrations/errors";
 
 const BROWSER_DB_NAME = "scriptio-local";
-const BROWSER_DB_VERSION = 1;
-const PROJECTS_STORE = "cached_projects";
-const SETTINGS_STORE = "settings";
-const DICTIONARIES_STORE = "dictionaries";
+const PROJECTS_STORE = STORE_NAMES.PROJECTS;
+const SETTINGS_STORE = STORE_NAMES.SETTINGS;
+const DICTIONARIES_STORE = STORE_NAMES.DICTIONARIES;
+const MIGRATION_BACKUPS_STORE = STORE_NAMES.MIGRATION_BACKUPS;
+const ASSETS_STORE = STORE_NAMES.ASSETS;
 const SETTINGS_KEY = "global";
+
+/** Primary key for an asset record: `${projectId}/${hash}`. */
+const assetKey = (projectId: string, hash: string): string => `${projectId}/${hash}`;
 
 interface BrowserStoredProject {
     id: string;
@@ -23,24 +37,41 @@ interface BrowserStoredProject {
     is_synced: number; // 0 = local-only, 1 = cloud-synced
 }
 
+interface MigrationBackupRecord {
+    projectId: string;
+    snapshot: Uint8Array;
+    fromVersion: number;
+    createdAt: number;
+}
+
 let browserDbInstance: IDBDatabase | null = null;
 
 async function getBrowserDb(): Promise<IDBDatabase> {
     if (browserDbInstance) return browserDbInstance;
 
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(BROWSER_DB_NAME, BROWSER_DB_VERSION);
+        const request = indexedDB.open(BROWSER_DB_NAME, CURRENT_STORE_VERSION);
+        // Holds a migration error from inside onupgradeneeded so onerror can surface it
+        // instead of the generic AbortError that fires when we manually abort the tx.
+        let upgradeError: unknown = null;
 
         request.onupgradeneeded = (event) => {
-            const db = (event.target as IDBOpenDBRequest).result;
-            if (!db.objectStoreNames.contains(PROJECTS_STORE)) {
-                db.createObjectStore(PROJECTS_STORE, { keyPath: "id" });
+            const req = event.target as IDBOpenDBRequest;
+            const tx = req.transaction;
+            if (!tx) {
+                upgradeError = new Error("upgrade transaction missing");
+                return;
             }
-            if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
-                db.createObjectStore(SETTINGS_STORE);
-            }
-            if (!db.objectStoreNames.contains(DICTIONARIES_STORE)) {
-                db.createObjectStore(DICTIONARIES_STORE, { keyPath: "code" });
+            try {
+                runStoreMigrations({
+                    db: req.result,
+                    tx,
+                    oldVersion: event.oldVersion,
+                    newVersion: event.newVersion ?? CURRENT_STORE_VERSION,
+                });
+            } catch (err) {
+                upgradeError = err;
+                tx.abort();
             }
         };
 
@@ -48,7 +79,20 @@ async function getBrowserDb(): Promise<IDBDatabase> {
             browserDbInstance = request.result;
             resolve(browserDbInstance);
         };
-        request.onerror = () => reject(request.error);
+        request.onerror = () => {
+            if (upgradeError) {
+                reject(upgradeError);
+                return;
+            }
+            const err = request.error;
+            // VersionError fires when the on-disk DB has a higher version than
+            // what we're requesting (user installed a newer build, then downgraded).
+            if (err && err.name === "VersionError") {
+                reject(new StoreVersionTooNewError(0, CURRENT_STORE_VERSION));
+            } else {
+                reject(err);
+            }
+        };
     });
 }
 
@@ -149,6 +193,12 @@ export class IndexedDBStorageProvider implements StorageProvider {
             ...(updates.author !== undefined && { author: updates.author }),
             updatedAt: Date.now(),
         });
+    }
+
+    async markAsSynced(id: string): Promise<void> {
+        const existing = await idbGet(id);
+        if (!existing) return;
+        await idbPut({ ...existing, is_synced: 1, updatedAt: Date.now() });
     }
 
     async touch(id: string): Promise<void> {
@@ -255,6 +305,156 @@ export class IndexedDBStorageProvider implements StorageProvider {
                     })),
                 );
             req.onerror = () => reject(req.error);
+        });
+    }
+
+    async saveMigrationBackup(projectId: string, snapshot: Uint8Array, fromVersion: number): Promise<void> {
+        const db = await getBrowserDb();
+        const record: MigrationBackupRecord = {
+            projectId,
+            snapshot,
+            fromVersion,
+            createdAt: Date.now(),
+        };
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(MIGRATION_BACKUPS_STORE, "readwrite");
+            tx.objectStore(MIGRATION_BACKUPS_STORE).put(record);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async loadMigrationBackup(projectId: string): Promise<{ snapshot: Uint8Array; fromVersion: number } | null> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const req = db
+                .transaction(MIGRATION_BACKUPS_STORE, "readonly")
+                .objectStore(MIGRATION_BACKUPS_STORE)
+                .get(projectId);
+            req.onsuccess = () => {
+                const result = req.result as MigrationBackupRecord | undefined;
+                resolve(result ? { snapshot: result.snapshot, fromVersion: result.fromVersion } : null);
+            };
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async clearMigrationBackup(projectId: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(MIGRATION_BACKUPS_STORE, "readwrite");
+            tx.objectStore(MIGRATION_BACKUPS_STORE).delete(projectId);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    // ── Assets ────────────────────────────────────────────────────────────────
+
+    async putAsset(asset: StoredAsset): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(ASSETS_STORE, "readwrite");
+            tx.objectStore(ASSETS_STORE).put(asset);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async hasAsset(projectId: string, hash: string): Promise<boolean> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const req = db
+                .transaction(ASSETS_STORE, "readonly")
+                .objectStore(ASSETS_STORE)
+                .getKey(assetKey(projectId, hash));
+            req.onsuccess = () => resolve(req.result !== undefined);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async getAsset(projectId: string, hash: string): Promise<StoredAsset | null> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const req = db
+                .transaction(ASSETS_STORE, "readonly")
+                .objectStore(ASSETS_STORE)
+                .get(assetKey(projectId, hash));
+            req.onsuccess = () => resolve((req.result as StoredAsset | undefined) ?? null);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async listAssetHashes(projectId: string): Promise<string[]> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const hashes: string[] = [];
+            const index = db
+                .transaction(ASSETS_STORE, "readonly")
+                .objectStore(ASSETS_STORE)
+                .index(ASSETS_BY_PROJECT_INDEX);
+            const req = index.openCursor(IDBKeyRange.only(projectId));
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) {
+                    hashes.push((cursor.value as StoredAsset).hash);
+                    cursor.continue();
+                } else {
+                    resolve(hashes);
+                }
+            };
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async deleteAsset(projectId: string, hash: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(ASSETS_STORE, "readwrite");
+            tx.objectStore(ASSETS_STORE).delete(assetKey(projectId, hash));
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async deleteProjectAssets(projectId: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(ASSETS_STORE, "readwrite");
+            const store = tx.objectStore(ASSETS_STORE);
+            const req = store.index(ASSETS_BY_PROJECT_INDEX).openCursor(IDBKeyRange.only(projectId));
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                }
+            };
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async copyProjectAssets(fromProjectId: string, toProjectId: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(ASSETS_STORE, "readwrite");
+            const store = tx.objectStore(ASSETS_STORE);
+            const req = store.index(ASSETS_BY_PROJECT_INDEX).openCursor(IDBKeyRange.only(fromProjectId));
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) {
+                    const src = cursor.value as StoredAsset;
+                    store.put({
+                        ...src,
+                        key: assetKey(toProjectId, src.hash),
+                        projectId: toProjectId,
+                    });
+                    cursor.continue();
+                }
+            };
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
         });
     }
 }

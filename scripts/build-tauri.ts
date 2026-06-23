@@ -19,7 +19,7 @@ if (existsSync(adminDir)) {
 }
 
 try {
-    execSync("npx cross-env TAURI_BUILD=true next build", { stdio: "inherit" });
+    execSync("npx cross-env TAURI_BUILD=true NEXT_PUBLIC_TAURI_BUILD=true next build", { stdio: "inherit" });
 } finally {
     if (existsSync(hiddenApiDir)) {
         renameSync(hiddenApiDir, apiDir);

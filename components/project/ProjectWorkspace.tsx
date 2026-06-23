@@ -8,6 +8,7 @@ import ContextMenu from "@components/editor/sidebar/ContextMenu";
 import SuggestionMenu, { SuggestionData } from "@components/editor/SuggestionMenu";
 import { Popup } from "@components/popup/Popup";
 import SplitPanelContainer from "./SplitPanelContainer";
+import EditorFooter from "./EditorFooter";
 import styles from "./ProjectWorkspace.module.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -44,6 +45,9 @@ const ProjectWorkspace = () => {
                 <div className={styles.right_sidebar_toggle} onClick={() => setRightSidebarOpen((prev) => !prev)}>
                     {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                 </div>
+
+                {/* Floating page-count + view-mode bubbles */}
+                <EditorFooter />
             </div>
 
             {/* Right sidebar */}

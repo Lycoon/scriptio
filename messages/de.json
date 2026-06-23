@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "Gliederung",
+    "empty": "Sende Szenen und Karten hierher, um deine Geschichte zu gliedern.",
+    "untitled": "Ohne Titel",
+    "unlinked": "Getrennt",
+    "unlinkedHint": "Die Quelle dieses Blocks existiert nicht mehr.",
+    "removeFromOutline": "Aus Gliederung entfernen"
+  },
   "navbar": {
+    "outline": "Gliederung",
     "screenplay": "Drehbuch",
     "board": "Board",
     "titlePage": "Titelseite",
@@ -7,13 +16,31 @@
     "noConnection": "Keine Verbindung",
     "reconnecting": "Verbindung wird wiederhergestellt...",
     "localProject": "Lokales Projekt",
+    "uploadToCloud": "In die Cloud hochladen",
+    "storageProject": "Dieses Projekt",
+    "storageTotal": "Gesamt belegt",
     "cachedProject": "Gecachtes Projekt",
     "endlessScroll": "Endloses Scrollen",
     "toggleComments": "Kommentare ein/aus",
+    "toggleSpellcheck": "Rechtschreibprüfung ein/aus",
     "focusMode": "Fokus-Modus",
     "splitPanel": "Panel teilen",
     "unsplitPanel": "Panel schließen",
-    "draftEditor": "Entwurfseditor"
+    "swapPanels": "Panels tauschen",
+    "draftEditor": "Entwurfseditor",
+    "viewOnly": "Nur ansehen",
+    "viewOnlyHint": "Sie haben Lesezugriff. Die Bearbeitung ist deaktiviert.",
+    "pageCount": "{count, plural, one {# Seite} other {# Seiten}}"
+  },
+  "timer": {
+    "title": "Schreibsitzung",
+    "countdown": "Countdown",
+    "stopwatch": "Stoppuhr",
+    "start": "Starten",
+    "pause": "Pause",
+    "resume": "Fortsetzen",
+    "reset": "Zurücksetzen",
+    "minutesShort": "Min"
   },
   "common": {
     "save": "Änderungen speichern",
@@ -38,7 +65,8 @@
       "latte": "Ein sanftes Design mit Cremetönen, das Wärme mit Lesbarkeit verbindet.",
       "wonka": "Ein samtiges Design mit Kakaotönen, das tiefen Luxus mit visueller Erholung verbindet.",
       "mint": "Ein frisches Design mit Minzakzenten, das botanische Ruhe mit visueller Balance verbindet.",
-      "blossom": "Ein zartes Design mit floralen Tönen, das blütenhafte Sanftheit mit visuellem Komfort verbindet."
+      "blossom": "Ein zartes Design mit floralen Tönen, das blütenhafte Sanftheit mit visuellem Komfort verbindet.",
+      "midnight": "Ein tiefes Mitternachtsblau-Design für konzentriertes Arbeiten unter dem Sternenhimmel."
     },
     "editor": "Editor",
     "themedEditor": "Themenbasierter Editor",
@@ -63,6 +91,7 @@
     "spellcheckLabel": "Rechtschreibprüfung",
     "spellcheckHelpText": "Laden Sie ein Wörterbuch für die Rechtschreibprüfung im Editor herunter.",
     "spellcheckNone": "Deaktiviert",
+    "spellcheckBuiltin": "Integriert",
     "customDictLabel": "Projektwörterbuch",
     "customDictAdd": "Hinzufügen",
     "customDictEmpty": "Noch keine eigenen Wörter.",
@@ -77,7 +106,9 @@
     "tabs": {
       "General": "Allgemein",
       "Layout": "Layout",
+      "Production": "Produktion",
       "Export": "Import/Export",
+      "Storage": "Speicher",
       "Collaborators": "Mitwirkende",
       "Keybinds": "Tastenkürzel",
       "Appearance": "Erscheinungsbild",
@@ -88,6 +119,21 @@
       "About": "Über",
       "Subscription": "Abonnement"
     }
+  },
+  "storage": {
+    "total": "Belegter Speicher",
+    "description": "Bilder und Audio, die von den Boards dieses Projekts verwendet werden.",
+    "sharedStorage": "Gemeinsamer Speicher",
+    "thisProject": "Dieses Projekt",
+    "otherProjects": "Andere Projekte",
+    "free": "Frei",
+    "localNote": "Dieses Projekt ist noch nicht synchronisiert — angezeigt, wie es auf deinen Cloud-Speicher angerechnet würde.",
+    "empty": "Noch keine Bilder oder Audio in diesem Projekt.",
+    "image": "Bild",
+    "audio": "Audio",
+    "remove": "Entfernen",
+    "confirm": "Aus Projekt entfernen",
+    "cancel": "Abbrechen"
   },
   "dangerZone": {
     "transferOwnership": "Besitz übertragen",
@@ -121,7 +167,7 @@
     "deleteModalTitle": "Konto löschen",
     "deleteModalDesc": "Dies wird dauerhaft Ihr Konto und alle verknüpften Daten löschen. Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleteConfirmPhrase": "Ich bestätige die Löschung meines Kontos",
-    "deleteConfirmLabel": "Tippe <ph/> zur Bestätigung.",
+    "deleteConfirmLabel": "Gib folgenden Text ein, um die Löschung zu bestätigen:",
     "deleting": "Löschen...",
     "deleteAccountBtn": "Mein Konto löschen",
     "subscription": {
@@ -148,7 +194,18 @@
       "purchasing": "Kauf wird durchgeführt...",
       "purchaseError": "Kauf fehlgeschlagen. Bitte erneut versuchen.",
       "cancelApple": "Apple-Abonnements werden über den App Store verwaltet.",
-      "manageApple": "App Store öffnen"
+      "manageApple": "App Store öffnen",
+      "alreadyBoundTo": "Dieses Abonnement ist bereits mit {email} verknüpft.",
+      "alreadyBoundUnknown": "Dieses Abonnement ist bereits mit einem anderen Konto verknüpft.",
+      "welcomePro": "Du hast jetzt Scriptio Pro abonniert. Willkommen!",
+      "resubscribe": "Abonnement reaktivieren",
+      "restorePurchases": "Käufe wiederherstellen",
+      "transferConfirm": "Dein App-Store-Konto hat ein aktives Abonnement, das mit {email} verknüpft ist. Beim Wiederherstellen wird Pro auf dieses Konto übertragen und {email} verliert den Pro-Zugang. Apple stellt weiterhin derselben Apple ID die Rechnung. Fortfahren?",
+      "transferConfirmUnknown": "Dein App-Store-Konto hat ein aktives Abonnement, das mit einem anderen Scriptio-Konto verknüpft ist. Beim Wiederherstellen wird Pro auf dieses Konto übertragen und das andere Konto verliert den Pro-Zugang. Apple stellt weiterhin derselben Apple ID die Rechnung. Fortfahren?",
+      "transferYes": "Ja, übertragen",
+      "transferring": "Wird übertragen...",
+      "appleStoreFreeInfo": "Pro-Funktionen sind für Konten verfügbar, die über unsere Website upgegradet wurden.",
+      "appleStoreProInfo": "Um deine Zahlungsmethode zu aktualisieren oder zu kündigen, besuche bitte die Profileinstellungen auf scriptio.app."
     }
   },
   "projects": {
@@ -159,6 +216,8 @@
     "importing": "Importieren...",
     "createBtn": "Erstellen",
     "empty": {
+      "title": "Deine Geschichte Beginnt Hier",
+      "subtitle": "Erstelle ein neues Drehbuch oder importiere ein vorhandenes Skript",
       "createFirst": "Neues Projekt",
       "createDesc": "Mit einer leeren Seite beginnen",
       "importExisting": "Importieren",
@@ -189,7 +248,23 @@
     "goTo": "Im Drehbuch anzeigen",
     "confirmRestore": "Dies ersetzt den passenden Inhalt in Ihrem Drehbuch.",
     "restore": "Wiederherstellen",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "scenesEmpty": "Noch keine Szenen",
+    "comments": "Kommentare",
+    "commentsEmpty": "Keine aktiven Kommentare",
+    "shelfEmptySelection": "Wählen Sie eine Version aus der Ablage zur Bearbeitung aus",
+    "documents": "Dokumente",
+    "documentsEmpty": "Noch keine Dokumente",
+    "newFolder": "Neuer Ordner",
+    "newDocument": "Neues Dokument",
+    "newBoard": "Neues Board",
+    "untitledFolder": "Neuer Ordner",
+    "untitledDocument": "Unbenannt",
+    "boardTitle": "Board",
+    "rename": "Umbenennen",
+    "delete": "Löschen",
+    "confirmDelete": "Dieses Dokument löschen?",
+    "confirmDeleteFolder": "Ordner und Inhalt löschen?"
   },
   "formatDropdown": {
     "elements": {
@@ -352,16 +427,17 @@
     "dangerZoneTitle": "Gefahrenzone"
   },
   "contextMenu": {
+    "sendToOutline": "An Gliederung senden",
     "goToScene": "Zur Szene gehen",
     "edit": "Bearbeiten",
     "copy": "Kopieren",
     "cut": "Ausschneiden",
-    "selectInEditor": "Im Editor auswählen",
+    "selectInEditor": "Auswählen",
     "remove": "Entfernen",
     "paste": "Einfügen",
     "highlight": "Hervorheben",
     "addCharacter": "Charakter hinzufügen",
-    "addComment": "Kommentar hinzufügen",
+    "addComment": "Kommentieren",
     "searchOnWeb": "Im Web suchen",
     "noSuggestions": "Keine Vorschläge",
     "addToDictionary": "Zum Wörterbuch hinzufügen",
@@ -369,7 +445,12 @@
     "shelve": "Ablegen",
     "shelveScene": "Szene ablegen",
     "shelveDialogue": "Dialog ablegen",
-    "shelveAction": "Aktion ablegen"
+    "shelveAction": "Aktion ablegen",
+    "omitScene": "Szene auslassen",
+    "unomitScene": "Szene wiederherstellen",
+    "insertPageBreak": "Seitenumbruch einfügen",
+    "removePageBreak": "Seitenumbruch entfernen",
+    "pageBreakHint": "Seitenumbruch"
   },
   "popup": {
     "character": {
@@ -393,6 +474,7 @@
       "warning": "Sind Sie sicher, dass Sie Ihr aktuelles Projekt <b>überschreiben</b> möchten?",
       "info": "Sie können Ihr Projekt exportieren, bevor Sie ein neues importieren.",
       "yesImport": "Ja, importieren",
+      "importing": "Importieren…",
       "no": "Nein"
     },
     "scene": {
@@ -402,20 +484,65 @@
       "synopsis": "Kurzbeschreibung",
       "synopsisPlaceholder": "Schreiben Sie eine kurze Beschreibung dieser Szene...",
       "save": "Speichern"
+    },
+    "uploadToCloud": {
+      "title": "In die Cloud hochladen",
+      "body": "Dieses Projekt in die Cloud hochladen? Ihr Projekt wird gesichert und ist von jedem Gerät zugänglich, und Sie können Mitarbeiter einladen.",
+      "confirm": "Hochladen",
+      "cancel": "Abbrechen",
+      "uploading": "Wird hochgeladen...",
+      "failed": "Hochladen fehlgeschlagen. Bitte versuchen Sie es erneut."
     }
   },
   "board": {
+    "sendToOutline": "An Gliederung senden",
     "duplicate": "Duplizieren",
     "delete": "Löschen",
-    "hints": {
-      "pan": "Mittelklick zum Schwenken",
-      "select": "Ziehen, um Karten auszuwählen",
-      "create": "Doppelklick zum Erstellen einer Karte",
-      "move": "Umschalt zum freien Bewegen halten"
-    },
+    "createCard": "Karte erstellen",
     "untitled": "Unbenannt",
     "titlePlaceholder": "Titel",
-    "descriptionPlaceholder": "Beschreibung"
+    "descriptionPlaceholder": "Beschreibung",
+    "recordAudio": "Audio aufnehmen",
+    "stopRecording": "Stopp",
+    "audioUnsupported": "Audioaufnahme wird in diesem Browser nicht unterstützt – ziehen Sie stattdessen eine Audiodatei hierher",
+    "audioHint": "Sprachnotiz",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "rename": "Zum Umbenennen doppelklicken",
+    "storageLimitReached": "Speicherlimit erreicht – diese Datei konnte nicht gespeichert werden"
+  },
+  "production": {
+    "title": "Produktion",
+    "draftLocking": "Entwurf sperren",
+    "draftLockingHint": "Beim Sperren eines Entwurfs werden die aktuellen Szenen und Seiten automatisch gesperrt und zur nächsten Revision gewechselt. Öffnen Sie den Bereich „Erweitert“, um diese manuell zu konfigurieren.",
+    "advanced": "Erweitert",
+    "draftRelock": "Erneut sperren",
+    "settings": "Produktionseinstellungen",
+    "unlockDraftTitle": "Entwurf entsperren",
+    "unlockDraftWarning": "Sowohl Szenen als auch Seiten verlieren ihre gesperrte Nummerierung und kehren zu ihrer natürlichen Nummerierung zurück.",
+    "unlockDraft": "Entwurf entsperren",
+    "sceneLocking": "Szenen sperren",
+    "pageLocking": "Seiten sperren",
+    "revisions": "Revisionen",
+    "relock": "Erneut sperren",
+    "provisionalTitle": "Nicht gesperrte Szenen",
+    "unlockTitle": "Szenennummern entsperren?",
+    "unlockWarning": "<b>Alle gesperrten und ausgelassenen Szenen verlieren ihre fixierte Nummerierung.</b>",
+    "unlockInfo": "Dies betrifft alle Mitarbeiter. Das Drehbuch kehrt zu positionalen Szenennummern zurück. OMITTED-Szenen bleiben ausgelassen — heben Sie die Auslassung einzeln auf, um den Inhalt wiederherzustellen.",
+    "unlock": "Entsperren",
+    "pageRelock": "Erneut sperren",
+    "pageProvisionalTitle": "Nicht gesperrte Seiten",
+    "unlockPagesTitle": "Seiten entsperren",
+    "unlockPagesWarning": "Alle Seiten verlieren ihre gesperrte Nummerierung und kehren zur natürlichen Paginierung zurück.",
+    "unlockPages": "Seiten entsperren",
+    "cancel": "Abbrechen",
+    "numberingStyleTitle": "Szenennummerierung",
+    "numberingStyleHelp": "Bestimmt, wie neu eingefügte Szenen zwischen zwei gesperrten Szenen nummeriert werden.",
+    "suffixName": "Suffix",
+    "prefixName": "Präfix",
+    "skippedLettersTitle": "Übersprungene Buchstaben",
+    "skippedLettersHelp": "Buchstaben, die bei der Szenennummerierung weggelassen werden, meist um Verwechslungen zu vermeiden.",
+    "skipLetterAriaLabel": "Buchstabe {letter} überspringen"
   },
   "saves": {
     "title": "Versionsverlauf",
@@ -430,9 +557,10 @@
     "confirmRestore": "Dies wird das aktuelle Dokument für alle Mitwirkenden ersetzen. Sind Sie sicher?",
     "confirmDelete": "Sind Sie sicher, dass Sie diese Speicherung löschen möchten?",
     "noSaves": "Noch keine Speicherungen vorhanden",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "Pro erforderlich",
+    "proRequiredDesc": "Der Versionsverlauf ist eine Pro-Funktion. Aktualisieren Sie Ihr Abonnement, um benannte Versionen Ihres Drehbuchs zu speichern und wiederherzustellen.",
+    "upgradeBtn": "Auf Pro upgraden",
+    "signInAndUpgrade": "Anmelden und upgraden"
   },
   "auth": {
     "intro": "Geben Sie Ihre E-Mail ein und wir senden Ihnen einen einmaligen Anmeldelink. Kein Passwort erforderlich.",

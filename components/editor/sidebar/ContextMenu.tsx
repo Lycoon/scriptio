@@ -1,14 +1,21 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
+import { Editor } from "@tiptap/react";
+import { ReactNode, useContext, useEffect, useState } from "react";
 import { UserContext } from "@src/context/UserContext";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
 import { refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
 import { Scene } from "@src/lib/screenplay/scenes";
 
 import context from "./ContextMenu.module.css";
+import {
+    ContextMenu as ContextMenuSurface,
+    ContextMenuItem,
+    ContextMenuSeparator,
+} from "@components/utils/ContextMenu";
 import { CharacterData, deleteCharacter } from "@src/lib/screenplay/characters";
 import { LocationData, deleteLocation } from "@src/lib/screenplay/locations";
+import { isTauri } from "@tauri-apps/api/core";
 import { cutText, focusOnPosition, pasteText, selectTextInEditor } from "@src/lib/screenplay/editor";
 import { addCharacterPopup, editCharacterPopup, editScenePopup } from "@src/lib/screenplay/popup";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -20,30 +27,40 @@ import {
     ClipboardPaste,
     Columns2,
     Copy,
+    EyeOff,
+    Eye,
     Highlighter,
+    ListTree,
     Loader2,
-    LucideIcon,
     MessageSquarePlus,
     Pencil,
     Scissors,
-    Search,
-    SquareDashedMousePointer,
+    SeparatorHorizontal,
     Trash2,
     UserRound,
 } from "lucide-react";
 import { makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
 import { extractShelveCandidate } from "@src/lib/shelf/shelf-utils";
+import { omitSceneByUuid, unomitSceneByUuid } from "@src/lib/screenplay/scene-locking";
 import { ScreenplayElement } from "@src/lib/utils/enums";
+import { MAIN_SCREENPLAY_REF } from "@src/lib/project/project-state";
 
 /* ==================== */
 /*     Context menu     */
 /* ==================== */
 
-export type ContextMenuProps = {
-    type: ContextMenuType;
-    position: { x: number; y: number };
-    typeSpecificProps: unknown;
-};
+export type ContextMenuProps =
+    | {
+          type: ContextMenuType;
+          position: { x: number; y: number };
+          typeSpecificProps: unknown;
+      }
+    | {
+          /** Pre-rendered content for menus not driven by the editor type switch
+           *  (board cards, document tree). */
+          content: ReactNode;
+          position: { x: number; y: number };
+      };
 
 export const enum ContextMenuType {
     SceneList,
@@ -59,22 +76,26 @@ export const enum ContextMenuType {
     EditorContextMenu,
 }
 
-type ContextMenuItemProps = {
-    text: string;
-    action: () => void;
-    icon: LucideIcon;
-    disabled?: boolean;
-};
-
 type SubMenuProps<T> = { props: T };
 
-export const ContextMenuItem = ({ text, action, icon: Icon, disabled }: ContextMenuItemProps) => {
-    return (
-        <div onClick={disabled ? undefined : action} className={disabled ? context.menu_item_disabled : context.menu_item}>
-            <Icon size={16} />
-            <p className="unselectable">{text}</p>
-        </div>
-    );
+const openWebSearch = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const url = `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
+    if (isTauri()) {
+        const { openUrl } = await import("@tauri-apps/plugin-opener");
+        await openUrl(url);
+    } else {
+        window.open(url, "_blank");
+    }
+};
+
+const readClipboardText = async (): Promise<string> => {
+    if (isTauri()) {
+        const { readText } = await import("@tauri-apps/plugin-clipboard-manager");
+        return readText();
+    }
+    return navigator.clipboard.readText();
 };
 
 /* ========================== */
@@ -88,8 +109,34 @@ export type SceneContextProps = {
 const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
     const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
-    const { editor } = useContext(ProjectContext);
+    const { editor, isReadOnly, repository } = useContext(ProjectContext);
     const scene: Scene = props.scene;
+
+    const canOmit = !!scene.id && !scene.omitted;
+    const canUnomit = !!scene.id && !!scene.omitted;
+
+    const handleOmit = () => {
+        if (!editor || !repository || !scene.id) return;
+        omitSceneByUuid(editor, repository, scene.id);
+    };
+
+    const handleUnomit = () => {
+        if (!editor || !repository || !scene.id) return;
+        unomitSceneByUuid(editor, repository, scene.id);
+    };
+
+    const handleSendToOutline = () => {
+        if (!repository || !scene.id) return;
+        repository.addOutlineItem({
+            source: "scene",
+            refDocId: MAIN_SCREENPLAY_REF,
+            refId: scene.id,
+            title: scene.title,
+            preview: scene.synopsis || scene.preview,
+            color: scene.color,
+            parentId: null,
+        });
+    };
 
     return (
         <>
@@ -98,17 +145,33 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
                 icon={ArrowDownRight}
                 action={() => focusOnPosition(editor!, scene.position)}
             />
-            <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
-            <ContextMenuItem
-                text={t("cut")}
-                icon={Scissors}
-                action={() => cutText(editor!, scene.position, scene.nextPosition)}
-            />
             <ContextMenuItem
                 text={t("selectInEditor")}
-                icon={SquareDashedMousePointer}
                 action={() => selectTextInEditor(editor!, scene.position, scene.nextPosition)}
             />
+            {!isReadOnly && (
+                <>
+                    <ContextMenuSeparator />
+                    {scene.id && (
+                        <ContextMenuItem
+                            text={t("sendToOutline")}
+                            icon={ListTree}
+                            action={handleSendToOutline}
+                        />
+                    )}
+                    <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
+                    <ContextMenuItem
+                        text={t("cut")}
+                        action={() => cutText(editor!, scene.position, scene.nextPosition)}
+                    />
+                    {canOmit && (
+                        <ContextMenuItem text={t("omitScene")} icon={EyeOff} action={handleOmit} />
+                    )}
+                    {canUnomit && (
+                        <ContextMenuItem text={t("unomitScene")} icon={Eye} action={handleUnomit} />
+                    )}
+                </>
+            )}
         </>
     );
 };
@@ -130,18 +193,22 @@ const CharacterItemMenu = ({ props }: SubMenuProps<CharacterContextProps>) => {
     const t = useTranslations("contextMenu");
     const userCtx = useContext(UserContext);
     const projectCtx = useContext(ProjectContext);
-    const { toggleCharacterHighlight } = projectCtx;
+    const { toggleCharacterHighlight, isReadOnly } = projectCtx;
     const character: CharacterData = props.character;
 
     return (
         <>
-            <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editCharacterPopup(character, userCtx)} />
-            <ContextMenuItem text={t("remove")} icon={Trash2} action={() => deleteCharacter(character.name, projectCtx)} />
-            <ContextMenuItem
-                text={t("paste")}
-                icon={ClipboardPaste}
-                action={() => pasteText(projectCtx.editor!, character.name)}
-            />
+            {!isReadOnly && (
+                <>
+                    <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editCharacterPopup(character, userCtx)} />
+                    <ContextMenuItem text={t("remove")} action={() => deleteCharacter(character.name, projectCtx)} />
+                    <ContextMenuItem
+                        text={t("paste")}
+                        action={() => pasteText(projectCtx.editor!, character.name)}
+                    />
+                    <ContextMenuSeparator />
+                </>
+            )}
             <ContextMenuItem
                 text={t("highlight")}
                 icon={Highlighter}
@@ -168,13 +235,15 @@ export type LocationContextProps = {
 const LocationItemMenu = ({ props }: SubMenuProps<LocationContextProps>) => {
     const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
+    const { isReadOnly } = projectCtx;
     const location: LocationData = props.location;
+
+    if (isReadOnly) return null;
 
     return (
         <>
             <ContextMenuItem icon={Trash2} text={t("remove")} action={() => deleteLocation(location.name, projectCtx)} />
             <ContextMenuItem
-                icon={ClipboardPaste}
                 text={t("paste")}
                 action={() => pasteText(projectCtx.editor!, location.name)}
             />
@@ -195,7 +264,7 @@ export type EditorSelectionContextProps = {
 const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps>) => {
     const t = useTranslations("contextMenu");
     const projectCtx = useContext(ProjectContext);
-    const { editor } = projectCtx;
+    const { editor, isReadOnly } = projectCtx;
     const { updateContextMenu } = useContext(UserContext);
     const { from, to, onAddComment } = props;
     const hasSelection = from !== to;
@@ -208,7 +277,7 @@ const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps
     };
 
     const handleCut = async () => {
-        if (!editor) return;
+        if (!editor || isReadOnly) return;
         const text = editor.state.doc.textBetween(from, to, "\n");
         await navigator.clipboard.writeText(text);
         editor.commands.deleteRange({ from, to });
@@ -216,29 +285,30 @@ const EditorSelectionMenu = ({ props }: SubMenuProps<EditorSelectionContextProps
     };
 
     const handlePaste = async () => {
-        if (!editor) return;
-        const text = await navigator.clipboard.readText();
-        editor.commands.insertContent(text);
+        if (!editor || isReadOnly) return;
+        editor.commands.insertContent(await readClipboardText());
         updateContextMenu(undefined);
     };
 
     const handleSearchOnWeb = () => {
         if (!editor) return;
-        const selectedText = editor.state.doc.textBetween(from, to, " ");
-        if (!selectedText.trim()) return;
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedText)}`, "_blank");
+        openWebSearch(editor.state.doc.textBetween(from, to, " "));
     };
 
     return (
         <>
             {hasSelection && <ContextMenuItem text={t("copy")} icon={Copy} action={handleCopy} />}
-            {hasSelection && <ContextMenuItem text={t("cut")} icon={Scissors} action={handleCut} />}
-            <ContextMenuItem text={t("paste")} icon={ClipboardPaste} action={handlePaste} />
+            {hasSelection && !isReadOnly && <ContextMenuItem text={t("cut")} action={handleCut} />}
+            {!isReadOnly && (
+                <ContextMenuItem text={t("paste")} icon={hasSelection ? undefined : ClipboardPaste} action={handlePaste} />
+            )}
             {hasSelection && (
                 <>
-                    <div className={context.menu_separator} />
-                    <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
-                    <ContextMenuItem text={t("searchOnWeb")} icon={Search} action={handleSearchOnWeb} />
+                    <ContextMenuSeparator />
+                    {!isReadOnly && (
+                        <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
+                    )}
+                    <ContextMenuItem text={t("searchOnWeb")} action={handleSearchOnWeb} />
                 </>
             )}
         </>
@@ -319,7 +389,7 @@ const SpellcheckMenu = ({ props }: SubMenuProps<SpellcheckContextProps>) => {
                     <p className="unselectable">{s}</p>
                 </div>
             ))}
-            {displaySuggestions !== null && displaySuggestions.length > 0 && <div className={context.menu_separator} />}
+            {displaySuggestions !== null && displaySuggestions.length > 0 && <ContextMenuSeparator />}
             <ContextMenuItem text={t("addToDictionary")} icon={BookPlus} action={handleAddToDictionary} />
         </>
     );
@@ -331,9 +401,11 @@ const SpellcheckMenu = ({ props }: SubMenuProps<SpellcheckContextProps>) => {
 
 const DualDialogueMenu = ({ props }: SubMenuProps<{ pos: number }>) => {
     const t = useTranslations("contextMenu");
-    const { editor } = useContext(ProjectContext);
+    const { editor, isReadOnly } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
     const { pos } = props;
+
+    if (isReadOnly) return null;
 
     return (
         <ContextMenuItem
@@ -353,12 +425,12 @@ const DualDialogueMenu = ({ props }: SubMenuProps<{ pos: number }>) => {
 
 const ShelveNodeMenu = ({ props }: SubMenuProps<{ pos: number; nodeClass: string }>) => {
     const t = useTranslations("contextMenu");
-    const { editor, repository } = useContext(ProjectContext);
+    const { editor, repository, isReadOnly } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
     const { pos, nodeClass } = props;
 
     const handleShelve = () => {
-        if (!editor || !repository) return;
+        if (!editor || !repository || isReadOnly) return;
         const candidate = extractShelveCandidate(editor, pos);
         if (candidate) {
             repository.shelveNode(candidate.nodeId, candidate.title, candidate.type, candidate.content);
@@ -392,13 +464,14 @@ const ShelveNodeMenu = ({ props }: SubMenuProps<{ pos: number; nodeClass: string
               ? t("shelveDialogue")
               : t("shelveAction");
 
+    if (isReadOnly) return null;
+
     return (
         <>
             <ContextMenuItem text={shelveLabel} icon={Archive} action={handleShelve} />
             {canDualDialogue && (
                 <ContextMenuItem
                     text={t("makeDualDialogue")}
-                    icon={Columns2}
                     action={() => {
                         if (editor) makeDualDialogue(editor, pos);
                         updateContextMenu(undefined);
@@ -414,21 +487,80 @@ const ShelveNodeMenu = ({ props }: SubMenuProps<{ pos: number; nodeClass: string
 /* ============================== */
 
 export type EditorContextMenuProps = {
+    /** The editor that was right-clicked. All actions act on this instance — not
+     *  ProjectContext.editor, which is always the main screenplay editor. */
+    editor: Editor;
     from: number;
     to: number;
-    onAddComment: () => void;
+    /** Present when the caret sits on a node a comment can anchor to. */
+    onAddComment?: () => void;
     spellError?: { word: string; from: number; to: number };
     nodePos?: number;
     nodeClass?: string;
+    /** Present when the caret sits on a scene heading that can be sent to the Outline. */
+    outlineScene?: { refDocId: string; refId: string; title: string };
+    /** Present on paginated screenplay editors: the top-level block under the
+     *  caret (`pos`) and whether it already forces a manual page break. */
+    pageBreak?: { pos: number; active: boolean };
 };
 
 const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     const t = useTranslations("contextMenu");
-    const { editor, repository } = useContext(ProjectContext);
+    const { repository, isReadOnly, persistentScenes } = useContext(ProjectContext);
     const { worker } = useSpellcheck();
     const { updateContextMenu } = useContext(UserContext);
-    const { from, to, onAddComment, spellError, nodePos, nodeClass } = props;
+    // Act on the editor that was right-clicked (passed through props), NOT
+    // ProjectContext.editor — that one is always the main screenplay editor, so
+    // using it would misfire actions in the tree-document / draft / title editors.
+    const { editor, from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene, pageBreak } = props;
     const hasSelection = from !== to;
+
+    const handleSendToOutline = () => {
+        if (!repository || !outlineScene) return;
+        repository.addOutlineItem({
+            source: "scene",
+            refDocId: outlineScene.refDocId,
+            refId: outlineScene.refId,
+            title: outlineScene.title,
+            preview: "",
+            parentId: null,
+        });
+        updateContextMenu(undefined);
+    };
+
+    // Resolve scene UUID + lock state if right-clicked on a scene heading.
+    // `nodePos` is the cursor position inside the paragraph (from the editor
+    // dispatcher), so we resolve up to the depth-1 ancestor — the scene <p>
+    // node itself — rather than calling `doc.nodeAt(nodePos)` which would
+    // return the inner text node.
+    const sceneInfo = (() => {
+        if (nodeClass !== ScreenplayElement.Scene || nodePos === undefined || !editor) {
+            return null;
+        }
+        let sceneNode;
+        try {
+            sceneNode = editor.state.doc.resolve(nodePos).node(1);
+        } catch {
+            return null;
+        }
+        if (!sceneNode || sceneNode.attrs?.class !== ScreenplayElement.Scene) return null;
+        const uuid: string | undefined = sceneNode.attrs?.["data-id"];
+        if (!uuid) return null;
+        const entry = persistentScenes[uuid];
+        return { uuid, isOmitted: !!entry?.omitted };
+    })();
+
+    const handleOmitScene = () => {
+        if (!editor || !repository || !sceneInfo) return;
+        omitSceneByUuid(editor, repository, sceneInfo.uuid);
+        updateContextMenu(undefined);
+    };
+
+    const handleUnomitScene = () => {
+        if (!editor || !repository || !sceneInfo) return;
+        unomitSceneByUuid(editor, repository, sceneInfo.uuid);
+        updateContextMenu(undefined);
+    };
 
     const [suggestions, setSuggestions] = useState<string[] | null>(null);
     const displaySuggestions = spellError && !worker ? [] : suggestions;
@@ -453,21 +585,20 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     };
 
     const handleCut = async () => {
-        if (!editor) return;
+        if (!editor || isReadOnly) return;
         await navigator.clipboard.writeText(editor.state.doc.textBetween(from, to, "\n"));
         editor.commands.deleteRange({ from, to });
         updateContextMenu(undefined);
     };
 
     const handlePaste = async () => {
-        if (!editor) return;
-        const text = await navigator.clipboard.readText();
-        editor.commands.insertContent(text);
+        if (!editor || isReadOnly) return;
+        editor.commands.insertContent(await readClipboardText());
         updateContextMenu(undefined);
     };
 
     const handleSpellReplace = (suggestion: string) => {
-        if (!editor || !spellError) return;
+        if (!editor || !spellError || isReadOnly) return;
         const tr = editor.state.tr.replaceWith(spellError.from, spellError.to, editor.state.schema.text(suggestion));
         editor.view.dispatch(tr);
         updateContextMenu(undefined);
@@ -487,17 +618,21 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
 
     const handleSearchOnWeb = () => {
         if (!editor) return;
-        const selectedText = editor.state.doc.textBetween(from, to, " ");
-        if (!selectedText.trim()) return;
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedText)}`, "_blank");
+        openWebSearch(editor.state.doc.textBetween(from, to, " "));
     };
 
     const handleShelve = () => {
-        if (!editor || !repository || nodePos === undefined) return;
+        if (!editor || !repository || nodePos === undefined || isReadOnly) return;
         const candidate = extractShelveCandidate(editor, nodePos);
         if (candidate) {
             repository.shelveNode(candidate.nodeId, candidate.title, candidate.type, candidate.content);
         }
+        updateContextMenu(undefined);
+    };
+
+    const handleTogglePageBreak = () => {
+        if (!editor || !pageBreak || isReadOnly) return;
+        editor.commands.toggleManualPageBreak(pageBreak.pos);
         updateContextMenu(undefined);
     };
 
@@ -544,29 +679,37 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
                             <p className="unselectable">{s}</p>
                         </div>
                     ))}
-                    <ContextMenuItem text={t("addToDictionary")} icon={BookPlus} action={handleAddToDictionary} />
-                    <div className={context.menu_separator} />
+                    {!isReadOnly && (
+                        <ContextMenuItem text={t("addToDictionary")} icon={BookPlus} action={handleAddToDictionary} />
+                    )}
+                    <ContextMenuSeparator />
                 </>
             )}
 
-            {/* Clipboard — always visible */}
-            <ContextMenuItem text={t("cut")} icon={Scissors} action={handleCut} disabled={!hasSelection} />
-            <ContextMenuItem text={t("copy")} icon={Copy} action={handleCopy} disabled={!hasSelection} />
-            <ContextMenuItem text={t("paste")} icon={ClipboardPaste} action={handlePaste} />
+            {/* Clipboard — copy is always visible; cut/paste hidden for viewers */}
+            {!isReadOnly && (
+                <ContextMenuItem text={t("cut")} icon={Scissors} action={handleCut} disabled={!hasSelection} />
+            )}
+            <ContextMenuItem text={t("copy")} action={handleCopy} disabled={!hasSelection} />
+            {!isReadOnly && <ContextMenuItem text={t("paste")} action={handlePaste} />}
 
-            {/* Selection actions — only when there's a selection and no spellcheck error */}
-            {hasSelection && !spellError && (
+            {/* Comment on the node at the caret + search a selection on the web */}
+            {!spellError && ((onAddComment && !isReadOnly) || hasSelection) && (
                 <>
-                    <div className={context.menu_separator} />
-                    <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
-                    <ContextMenuItem text={t("searchOnWeb")} icon={Search} action={handleSearchOnWeb} />
+                    <ContextMenuSeparator />
+                    {!isReadOnly && onAddComment && (
+                        <ContextMenuItem text={t("addComment")} icon={MessageSquarePlus} action={onAddComment} />
+                    )}
+                    {hasSelection && (
+                        <ContextMenuItem text={t("searchOnWeb")} action={handleSearchOnWeb} />
+                    )}
                 </>
             )}
 
             {/* Node actions — shelve and optional dual dialogue */}
-            {isShelvable && (
+            {isShelvable && !isReadOnly && (
                 <>
-                    <div className={context.menu_separator} />
+                    <ContextMenuSeparator />
                     <ContextMenuItem
                         text={
                             nodeClass === ScreenplayElement.Scene
@@ -581,11 +724,50 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
                     {canDualDialogue && (
                         <ContextMenuItem
                             text={t("makeDualDialogue")}
-                            icon={Columns2}
                             action={() => {
                                 if (editor && nodePos !== undefined) makeDualDialogue(editor, nodePos);
                                 updateContextMenu(undefined);
                             }}
+                        />
+                    )}
+                </>
+            )}
+
+            {/* Manual page break — force a new page that begins at this block */}
+            {pageBreak && !isReadOnly && (
+                <>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem
+                        text={pageBreak.active ? t("removePageBreak") : t("insertPageBreak")}
+                        icon={SeparatorHorizontal}
+                        action={handleTogglePageBreak}
+                    />
+                </>
+            )}
+
+            {/* Send a scene heading to the Outline */}
+            {outlineScene && !isReadOnly && (
+                <>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem text={t("sendToOutline")} icon={ListTree} action={handleSendToOutline} />
+                </>
+            )}
+
+            {/* Production: Omit / Unomit on a locked scene heading */}
+            {sceneInfo && !isReadOnly && (
+                <>
+                    <ContextMenuSeparator />
+                    {sceneInfo.isOmitted ? (
+                        <ContextMenuItem
+                            text={t("unomitScene")}
+                            icon={Eye}
+                            action={handleUnomitScene}
+                        />
+                    ) : (
+                        <ContextMenuItem
+                            text={t("omitScene")}
+                            icon={EyeOff}
+                            action={handleOmitScene}
                         />
                     )}
                 </>
@@ -595,6 +777,7 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
 };
 
 const renderContextMenu = (contextMenu: ContextMenuProps) => {
+    if ("content" in contextMenu) return contextMenu.content;
     switch (contextMenu.type) {
         case ContextMenuType.SceneList:
             return <SceneListMenu />;
@@ -636,24 +819,27 @@ const ContextMenu = () => {
     useEffect(() => {
         if (!contextMenu) return;
         const prevent = (e: WheelEvent) => e.preventDefault();
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") updateContextMenu(undefined);
+        };
         document.addEventListener("wheel", prevent, { passive: false });
-        return () => document.removeEventListener("wheel", prevent);
-    }, [contextMenu]);
+        document.addEventListener("keydown", onKey);
+        return () => {
+            document.removeEventListener("wheel", prevent);
+            document.removeEventListener("keydown", onKey);
+        };
+    }, [contextMenu, updateContextMenu]);
 
     useEffect(() => {
         updateContextMenu(undefined);
     }, [updateContextMenu]);
 
+    if (!contextMenu) return null;
+
     return (
-        <div
-            className={context.menu}
-            style={{
-                top: contextMenu?.position.y,
-                left: contextMenu?.position.x,
-            }}
-        >
-            {contextMenu && renderContextMenu(contextMenu)}
-        </div>
+        <ContextMenuSurface position={contextMenu.position}>
+            {renderContextMenu(contextMenu)}
+        </ContextMenuSurface>
     );
 };
 

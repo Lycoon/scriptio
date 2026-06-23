@@ -1,0 +1,195 @@
+.row {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding-right: 16px;
+    /* Fixed height so swapping the title for a rename input or a delete-confirm
+       row never changes the row's size (no layout shift while editing). */
+    min-height: 30px;
+    box-sizing: border-box;
+    font-size: 12px;
+    color: var(--secondary-text);
+    cursor: pointer;
+}
+
+.row:hover {
+    background-color: var(--editor-sidebar-hover);
+    color: var(--primary-text);
+}
+
+.row_active {
+    color: var(--primary-text);
+    background-color: var(--editor-sidebar-hover);
+}
+
+/* Slim accent bar on the left edge showing the node's color. */
+.color_bar {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    pointer-events: none;
+}
+
+/* Drop indicators */
+.row_drop_into {
+    background-color: var(--editor-style-bg-hover);
+    box-shadow: inset 0 0 0 1px var(--tertiary-hover);
+}
+
+.row_drop_before::before,
+.row_drop_after::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background-color: var(--tertiary-hover);
+    pointer-events: none;
+}
+
+/* Centered on the row boundary so "after A" and "before B" (the same gap, which
+   the cursor alternates between) render at the exact same position — one line,
+   not two offset by a pixel. */
+.row_drop_before::before {
+    top: -1px;
+}
+
+.row_drop_after::after {
+    bottom: -1px;
+}
+
+.chevron {
+    flex-shrink: 0;
+    color: var(--secondary-text);
+    transition: transform 0.2s ease;
+}
+
+.chevron_expanded {
+    transform: rotate(90deg);
+}
+
+.chevron_placeholder {
+    flex-shrink: 0;
+    width: 13px;
+}
+
+.type_icon {
+    flex-shrink: 0;
+    color: var(--secondary-text);
+}
+
+.title {
+    flex: 1;
+    min-width: 0;
+    overflow-x: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rename_input {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    background: var(--editor-sidebar-hover);
+    border: 1px solid var(--separator);
+    border-radius: 4px;
+    padding: 0 6px;
+    color: var(--primary-text);
+    outline: none;
+    line-height: inherit;
+}
+
+.actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.row:hover .actions,
+.row_active .actions {
+    opacity: 1;
+}
+
+.action_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    border-radius: 4px;
+    border: none;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.action_btn:hover {
+    background-color: var(--editor-style-bg-hover);
+    color: var(--primary-text);
+}
+
+.action_btn_danger:hover {
+    background-color: var(--error, #e53e3e);
+    color: #fff;
+}
+
+/* Inline delete confirmation */
+.confirm_row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.confirm_text {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.72rem;
+    color: var(--secondary-text);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.confirm_btns {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.confirm_yes,
+.confirm_no {
+    padding: 3px 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.1s ease;
+}
+
+.confirm_yes {
+    background-color: var(--error, #e53e3e);
+    color: #fff;
+}
+
+.confirm_no {
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+}
+
+.confirm_yes:hover,
+.confirm_no:hover {
+    opacity: 0.85;
+}

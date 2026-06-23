@@ -56,26 +56,51 @@
 
 /* clickable area where user clicks to record combination */
 .keyArea {
-  min-width: 140px;
+  min-width: 150px;
   max-width: 280px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px dashed var(--primary-text);
-  background: var(--tertiary);
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--separator);
+  background: var(--primary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.keyArea:hover, .keyArea:focus {
-  background: var(--tertiary-hover);
+.keyArea:hover {
+  border-color: var(--primary-text);
+  background: var(--primary-hover);
+}
+
+.keyArea:focus-visible {
+  border-color: var(--primary-text);
+  box-shadow: 0 0 0 3px var(--separator);
+}
+
+.keyArea[data-listening="true"] {
+  border-color: var(--primary-text);
+  background: var(--primary-hover);
+  animation: keyAreaPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes keyAreaPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--separator);
+  }
+  50% {
+    box-shadow: 0 0 0 6px transparent;
+  }
 }
 
 .keyText {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
   font-size: 13px;
+  font-weight: 500;
   color: var(--primary-text);
+  letter-spacing: 0.02em;
 }
 
 .keyAreaActions {
@@ -85,17 +110,21 @@
 }
 
 .clearBtn {
-  padding: 6px 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
   border-radius: 6px;
+  background: transparent;
   color: var(--secondary-text);
-  border: 1px solid var(--secondary-text);
-  background: var(--tertiary);
-  font-size: 12px;
   cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .clearBtn:hover {
-  background: var(--tertiary-hover);
+  color: var(--primary-text);
+  background: var(--secondary-hover);
 }
 
 .optionCard {

@@ -17,7 +17,13 @@
     pointer-events: none;
     background: linear-gradient(to bottom, var(--editor-shadow) 0%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 20%,
+        black 80%,
+        transparent 100%
+    );
 }
 
 .container {
@@ -30,6 +36,12 @@
 
 .container.panning {
     cursor: grabbing;
+}
+
+/* Highlight the canvas while an image file is dragged over it. */
+.container.drag_over {
+    outline: 2px dashed var(--secondary-text);
+    outline-offset: -8px;
 }
 
 .grid {
@@ -58,8 +70,6 @@
     position: absolute;
     display: flex;
     flex-direction: column;
-    border-radius: 8px;
-    border: 8px solid;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     cursor: move;
     user-select: none;
@@ -74,6 +84,147 @@
     opacity: 0.9;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     z-index: 1000;
+}
+
+/* Image resource card: bare image, no colored header/border chrome. */
+.card.image_card {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background-color: var(--main-bg);
+    padding: 0;
+    overflow: hidden;
+}
+
+.card_image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+}
+
+.card_image_placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Audio voice-note card: a colored header (title) over a play/timeline row. */
+.card.audio_card {
+    overflow: hidden;
+}
+
+.audio_content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    overflow: hidden;
+}
+
+/* Remaining-time readout next to the play button. */
+.audio_time {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--board-card-body-text);
+    user-select: none;
+}
+
+/* Seekable timeline. The card content is always a light tint, so the track uses
+   theme greys (--separator / --secondary-text) that read across every theme.
+   `--audio-progress` (set from JS) fills the track up to the cursor on WebKit;
+   Firefox uses its native ::-moz-range-progress. */
+.audio_timeline {
+    flex: 1;
+    min-width: 0;
+    height: 16px;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    --audio-progress: 0%;
+}
+
+.audio_timeline::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(
+        to right,
+        var(--secondary-text) var(--audio-progress),
+        var(--separator) var(--audio-progress)
+    );
+}
+
+.audio_timeline::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--separator);
+}
+
+.audio_timeline::-moz-range-progress {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--secondary-text);
+}
+
+.audio_timeline::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: 12px;
+    height: 12px;
+    margin-top: -4px;
+    border: 2px solid var(--secondary);
+    border-radius: 50%;
+    background: var(--secondary-text);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: transform 0.1s ease;
+}
+
+.audio_timeline::-moz-range-thumb {
+    box-sizing: border-box;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--secondary);
+    border-radius: 50%;
+    background: var(--secondary-text);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.audio_timeline:hover:not(:disabled)::-webkit-slider-thumb {
+    transform: scale(1.15);
+}
+
+.audio_timeline:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.audio_play_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--secondary);
+    color: var(--secondary-text);
+    cursor: pointer;
+}
+
+.audio_play_btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
+.audio_play_btn:disabled {
+    opacity: 0.4;
+    cursor: default;
 }
 
 .card_header {
@@ -229,81 +380,101 @@
 }
 
 /* Context menu - matching ContextMenu.module.css */
-.context_menu {
-    display: flex;
-    flex-direction: column;
-    width: 150px;
-    z-index: 1000;
-    position: fixed;
-    overflow-y: auto;
-    border-radius: 12px;
-    background-color: var(--editor-sidebar);
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
-}
-
-.context_menu_item {
-    display: flex; /* Enables flexbox layout */
-    align-items: center; /* Vertically centers the icon and text */
-    gap: 10px; /* Adds space between the icon and the text */
-
-    /* Your existing styles */
-    padding-block: 8px;
-    padding-left: 12px;
-    padding-right: 35px;
-    font-size: 14px;
-    border-bottom: 1px solid;
-    border-color: var(--separator);
-    cursor: pointer;
-}
-
-.context_menu_item:last-child {
-    border-bottom: none;
-}
-
-.context_menu_item:hover {
-    background-color: var(--editor-sidebar-hover);
-}
-
-.context_menu_colors {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--separator);
-}
-
-.context_menu_color_swatch {
-    width: 20px;
-    height: 20px;
-    border: 2px solid transparent;
-    border-radius: 50%;
-    cursor: pointer;
-    transition:
-        transform 0.15s ease,
-        border-color 0.15s ease;
-}
-
-.context_menu_color_swatch:hover {
-    transform: scale(1.15);
-}
-
-.context_menu_color_swatch_active {
-    border-color: white;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
-}
-
-/* Zoom controls - matching navbar button style */
-.zoom_controls {
+/* Recording indicator: a pill in the top toolbar row, right of the zoom controls. */
+.recording_indicator {
     position: absolute;
-    bottom: 24px;
-    left: 24px;
+    top: 8px;
+    left: 180px;
+    z-index: 11;
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 12px;
-    border-radius: 64px;
-    border: 2px solid var(--tertiary);
+    gap: 8px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 16px;
     background-color: var(--secondary);
+    color: var(--secondary-text);
+    user-select: none;
+}
+
+.recording_dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #e5484d;
+    animation: recording_pulse 1s ease-in-out infinite;
+}
+
+@keyframes recording_pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
+
+.recording_time {
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.asset_error {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 80%;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 16px;
+    background-color: var(--error);
+    color: #fff;
+    font-size: 13px;
+    user-select: none;
+}
+
+.recording_stop {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 12px;
+    background-color: #e5484d;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.recording_stop:hover {
+    background-color: #d33b40;
+}
+
+
+/* Zoom controls - styled like the panel switcher buttons (secondary pill, no
+   border, secondary-hover on hover) and sitting in the same top toolbar row,
+   just to their right. The anchor is at top:8/left:8; the primary side has two
+   20px buttons + 4px gap ending ~52px, so left:56px keeps a matching 4px gap.
+   z-index sits above the board's top shadow gradient (z-index:10). */
+.zoom_controls {
+    position: absolute;
+    top: 8px;
+    left: 56px;
+    z-index: 11;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 36px;
+    padding: 0 4px;
+    border-radius: 16px;
+    background-color: var(--secondary);
+    color: var(--secondary-text);
     user-select: none;
 }
 
@@ -311,42 +482,26 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
+    width: 26px;
     height: 28px;
     border: none;
-    border-radius: 50%;
+    border-radius: 14px;
     background: transparent;
-    color: var(--primary-text);
+    color: var(--secondary-text);
     cursor: pointer;
     transition: background-color 0.15s ease;
 }
 
 .zoom_btn:hover {
-    background-color: var(--tertiary);
+    background-color: var(--secondary-hover);
 }
 
 .zoom_level {
-    min-width: 50px;
+    min-width: 38px;
     text-align: center;
-    font-size: 13px;
-    color: var(--primary-text);
-    font-weight: 500;
-}
-
-/* Hints in corner with low opacity */
-.hints {
-    position: absolute;
-    bottom: 24px;
-    right: 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
     font-size: 12px;
+    font-weight: 500;
     color: var(--secondary-text);
-    opacity: 0.5;
-    pointer-events: none;
-    user-select: none;
 }
 
 /* Arrows SVG layer */
@@ -404,7 +559,7 @@
         transform 0.15s ease,
         background-color 0.15s ease;
     z-index: 10;
-    background: radial-gradient(circle, var(--secondary) 30%, transparent 30%);
+    background: radial-gradient(circle, white 30%, transparent 30%);
 }
 
 .connection_handle::before {
@@ -415,7 +570,7 @@
     width: 16px;
     height: 16px;
     transform: translate(-50%, -50%);
-    border: 2px solid var(--secondary);
+    border: 2px solid white;
     border-radius: 50%;
     opacity: 0.6;
 }
@@ -426,7 +581,7 @@
 
 .connection_handle:hover {
     transform: scale(1.2);
-    background: radial-gradient(circle, var(--secondary) 40%, transparent 40%);
+    background: radial-gradient(circle, white 40%, transparent 40%);
 }
 
 .connection_handle:hover::before {
@@ -456,6 +611,6 @@
 
 .card_connecting:hover {
     box-shadow:
-        0 0 0 3px var(--secondary),
+        0 0 0 3px white,
         0 4px 16px rgba(0, 0, 0, 0.2);
 }

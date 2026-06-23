@@ -63,6 +63,7 @@ const ScreenplayFormatDropdown = () => {
         setSelectedTitlePageElement,
         focusedEditorType,
         draftEditor,
+        isReadOnly,
     } = useContext(ProjectContext);
 
     const [isOpen, setIsOpen] = useState(false);
@@ -89,6 +90,7 @@ const ScreenplayFormatDropdown = () => {
 
     const handleElementSelect = useCallback(
         (element: ScreenplayElement | TitlePageElement) => {
+            if (isReadOnly) return;
             if (isTitleContext) {
                 setSelectedTitlePageElement(element as TitlePageElement);
                 if (titlePageEditor) applyTitlePageElement(titlePageEditor, element as TitlePageElement);
@@ -103,6 +105,7 @@ const ScreenplayFormatDropdown = () => {
 
     const toggleStyle = useCallback(
         (style: Style) => {
+            if (isReadOnly) return;
             setSelectedStyles((prev) => (prev ^ style) as Style);
             if (isTitleContext && titlePageEditor) {
                 applyTitlePageMarkToggle(titlePageEditor, style);
@@ -137,6 +140,7 @@ const ScreenplayFormatDropdown = () => {
 
     const setAlignment = useCallback(
         (align: string) => {
+            if (isReadOnly) return;
             setSelectedAlign(align);
             if (isTitleContext) {
                 if (!titlePageEditor) return;
@@ -208,7 +212,7 @@ const ScreenplayFormatDropdown = () => {
 
             {/* Element dropdown */}
             <div className={styles.dropdown_wrapper}>
-                <button className={styles.dropdown_trigger} onClick={() => setIsOpen(!isOpen)}>
+                <button className={styles.dropdown_trigger} onClick={() => !isReadOnly && setIsOpen(!isOpen)}>
                     <span className={styles.selected_label}>
                         {activeLabels[activeSelected as keyof typeof activeLabels]}
                     </span>

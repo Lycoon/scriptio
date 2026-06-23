@@ -100,13 +100,12 @@ model Transaction {
   id            Int                  @id @default(autoincrement())
   userId        String
   provider      SubscriptionProvider
-  transactionId String
+  transactionId String               @unique
   createdAt     DateTime             @default(now())
 
   user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([transactionId])
 }
 
 model Project {
@@ -121,6 +120,27 @@ model Project {
 
   members             ProjectMember[]
   invitations         ProjectInvitation[]
+  assets              ProjectAsset[]
+}
+
+// Tracking row for a cloud asset (board image / audio recording). The bytes live
+// in R2 at `assets/{projectId}/{hash}`; this row records the size so per-owner
+// storage usage can be summed across all projects a user owns. Content-addressed
+// per project (mirrors the local IndexedDB store), so duplicates collapse.
+model ProjectAsset {
+  id                  String      @id @default(uuid(7))
+  hash                String
+  mime                String
+  size                Int
+  width               Int         @default(0)
+  height              Int         @default(0)
+  createdAt           DateTime    @default(now())
+
+  project             Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId           String
+
+  @@unique([projectId, hash])
+  @@index([projectId])
 }
 
 model ProjectMember {

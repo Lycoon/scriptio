@@ -14,7 +14,7 @@ import { NextRequest } from "next/server";
 
 const UpdateSettingsBodySchema = z.object({
     keybinds: z.record(z.string(), z.string()).optional(),
-    theme: z.enum(["light", "dark", "latte", "wonka", "mint", "blossom"]).optional(),
+    theme: z.enum(["light", "dark", "latte", "wonka", "mint", "blossom", "midnight"]).optional(),
     language: z.enum(["en", "es", "fr", "zh", "ko", "ja", "de", "pl"]).optional(),
     themedEditor: z.boolean().optional(),
     highlightOnHover: z.boolean().optional(),

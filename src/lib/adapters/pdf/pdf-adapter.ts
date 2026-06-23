@@ -47,15 +47,38 @@ const fontFamilyFor = (sf: ScriptFont): string => sf ?? "CourierPrime";
  *
  * Using `getComputedStyle` captures both TipTap inline marks (`<span class="bold">`)
  * and paragraph-level styling (e.g. `.scene { font-weight: bold }`).
+ *
+ * `bold`/`italic` are inherited CSS properties, so the direct parent's computed
+ * value already reflects every ancestor. `text-decoration-line` is NOT inherited,
+ * so underline is resolved by walking the ancestor chain up to the paragraph and
+ * skipping `.spellcheck-error` decoration spans — their wavy red underline is an
+ * editor-only affordance that must never bleed into exports, while a real
+ * underline on a wrapping mark or on the paragraph itself (e.g. `.section`) is
+ * still honoured.
  */
 const getMarksFromComputedStyle = (textNode: Text): { bold: boolean; italic: boolean; underline: boolean } => {
     const el = textNode.parentElement;
     if (!el) return { bold: false, italic: false, underline: false };
     const cs = getComputedStyle(el);
+
+    let underline = false;
+    let node: HTMLElement | null = el;
+    while (node) {
+        if (!node.classList.contains("spellcheck-error")) {
+            const style = node === el ? cs : getComputedStyle(node);
+            if (style.textDecorationLine.includes("underline")) {
+                underline = true;
+                break;
+            }
+        }
+        if (node.tagName === "P") break; // reached the paragraph block
+        node = node.parentElement;
+    }
+
     return {
         bold: cs.fontWeight === "bold" || parseInt(cs.fontWeight) >= 700,
         italic: cs.fontStyle === "italic",
-        underline: cs.textDecorationLine.includes("underline"),
+        underline,
     };
 };
 
@@ -65,12 +88,17 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
     label = "PDF";
     extension = "pdf";
 
-    async convertTo(project: ProjectState, options: PDFExportOptions): Promise<Blob> {
+    async convertTo(_project: ProjectState, options: PDFExportOptions): Promise<Blob> {
         const editorEl = options.editorElement;
         if (!editorEl) throw new Error("Editor element is required for DOM-based PDF export");
 
         const format = options.format;
         const pdfPageSize = PDF_PAGE_SIZES[format];
+
+        // Scene labels (under production lock) and OMITTED state are already
+        // rendered as ProseMirror decoration widgets inside each scene <p>.
+        // `collectLines` reads them directly from the DOM, so we don't need to
+        // re-run the scene-labeling logic here.
 
         // ── Collect all visual lines from the browser DOM ───────────────────
         const titlePageEl = options.titlePageElement;
@@ -148,7 +176,12 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
             // ── Direct-child pagination widget → explicit page break ──
             if (el.classList.contains("pagination-page-break")) {
-                allLines.push({ runs: [], y: 0, type: "__page_break__" });
+                allLines.push({
+                    runs: [],
+                    y: 0,
+                    type: "__page_break__",
+                    pageLabel: this.extractPageLabel(el),
+                });
                 continue;
             }
 
@@ -164,6 +197,19 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
             const isScene = el.classList.contains("scene");
             if (isScene) sceneCount++;
+            // Label widgets are injected by `scene-locking-extension` when
+            // production lock is on. Read whichever side is present (left or
+            // right) and fall back to a positional number when neither is.
+            const sceneInfo = isScene
+                ? {
+                      label:
+                          (el.querySelector(".scene-label-left") as HTMLElement | null)?.textContent
+                              ?.trim() ||
+                          (el.querySelector(".scene-label-right") as HTMLElement | null)?.textContent
+                              ?.trim() ||
+                          String(sceneCount),
+                  }
+                : undefined;
 
             // Extract the paragraph type from classList
             let nodeType: string | undefined;
@@ -200,12 +246,17 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     if (yOffset > 0) {
                         for (const line of beforeLines) line.y -= yOffset;
                     }
-                    this.injectPseudoContent(el, beforeLines, options, isScene ? sceneCount : undefined);
+                    this.injectPseudoContent(el, beforeLines, options, sceneInfo);
                     allLines.push(...beforeLines);
                 }
 
                 // Emit page break sentinel
-                allLines.push({ runs: [], y: 0, type: "__page_break__" });
+                allLines.push({
+                    runs: [],
+                    y: 0,
+                    type: "__page_break__",
+                    pageLabel: this.extractPageLabel(splitWidget),
+                });
 
                 // Collect lines AFTER the split widget
                 const afterLines = this.collectParagraphLines(el, nodeType, splitWidget, "after");
@@ -224,7 +275,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                         for (const line of paragraphLines) line.y -= yOffset;
                     }
                     // ── Pseudo-element content (not captured by TreeWalker) ──
-                    this.injectPseudoContent(el, paragraphLines, options, isScene ? sceneCount : undefined);
+                    this.injectPseudoContent(el, paragraphLines, options, sceneInfo);
                     allLines.push(...paragraphLines);
                 } else {
                     // Empty paragraph — no text nodes, so collectParagraphLines
@@ -370,7 +421,24 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 // ── Measure position ─────────────────────────────────────
                 range.setStart(textNode, ci);
                 range.setEnd(textNode, ci + 1);
-                const rect = range.getBoundingClientRect();
+                // WebKit (Safari, Tauri on macOS) has a long-standing quirk:
+                // for the FIRST character of a wrapped line, the single-char
+                // range straddles a line boundary because position `ci` is
+                // bidi-ambiguous between the end of the previous line and the
+                // start of the new one. `getBoundingClientRect()` returns the
+                // UNION of both lines — `rect.top` then lands on the *previous*
+                // line, so we mistakenly attribute the char to it. The visible
+                // result in PDFs is "one letter at the end of every wrapped
+                // line plus a leading space on the next".
+                //
+                // `getClientRects()` returns one rect per line box the range
+                // intersects; the LAST rect is always the actual rendering
+                // line. For normal (single-line) chars only one rect is
+                // returned, so this is a no-op everywhere else.
+                const rects = range.getClientRects();
+                const rect = rects.length > 0
+                    ? rects[rects.length - 1]
+                    : range.getBoundingClientRect();
 
                 // If height is 0, it is usually a trailing wrapped space or hidden char
                 if (rect.height === 0) {
@@ -454,20 +522,21 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         el: HTMLElement,
         paragraphLines: VisualLine[],
         options: PDFExportOptions,
-        sceneNumber?: number,
+        sceneInfo?: { label: string },
     ): void {
         const firstLine = paragraphLines[0];
         const lastLine = paragraphLines[paragraphLines.length - 1];
 
-        if (sceneNumber !== undefined && options.displaySceneNumbers) {
+        if (sceneInfo && options.displaySceneNumbers) {
             const elStyle = getComputedStyle(el);
-            // Left scene number — mirrors CSS `right: 100%; margin-right: -120px` on .scene::before:
-            // right edge lands at scene_element_left + 120px.
+            const paddingLeft = parseFloat(elStyle.paddingLeft) || 0;
+
+            // Left scene number — mirrors CSS `right: 100%; margin-right: -120px`
+            // on .scene::before: right edge lands at scene_element_left + 120px.
             if (firstLine.runs.length > 0) {
                 const leadRun = firstLine.runs[0];
-                const paddingLeft = parseFloat(elStyle.paddingLeft) || 0;
                 firstLine.runs.unshift({
-                    text: String(sceneNumber),
+                    text: sceneInfo.label,
                     x: leadRun.x - paddingLeft + 120,
                     fontFamily: leadRun.fontFamily,
                     bold: leadRun.bold,
@@ -478,12 +547,12 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 });
             }
 
-            // Right scene number — mirrors CSS `left: 100%; margin-left: -85px` on .scene::after:
-            // left edge lands at scene_element_right - 85px.
+            // Right scene number — mirrors CSS `left: 100%; margin-left: -85px`
+            // on .scene::after: left edge lands at scene_element_right - 85px.
             if (options.sceneNumberOnRight && firstLine.runs.length > 0) {
                 const tailRun = firstLine.runs[firstLine.runs.length - 1];
                 firstLine.runs.push({
-                    text: String(sceneNumber),
+                    text: sceneInfo.label,
                     x: el.getBoundingClientRect().right - 85,
                     fontFamily: tailRun.fontFamily,
                     bold: tailRun.bold,
@@ -535,6 +604,24 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 tailRun.text += " " + label;
             }
         }
+    }
+
+    /**
+     * Read the user-visible page label out of a `.pagination-page-break`
+     * widget. The widget renders its destination page's header inside
+     * `.pagination-header-area > .pagination-header-right` (the configured
+     * headerRight template, with `{page}` already substituted) — so the
+     * textContent IS the final label string the user sees. Under page
+     * locking this string is the frozen "4A." form; otherwise it's the
+     * default sequential "4.". Returns undefined when no header is
+     * present so the worker falls back to its integer pageNumber.
+     */
+    private extractPageLabel(widget: HTMLElement): string | undefined {
+        const right = widget.querySelector(
+            ".pagination-header-area .pagination-header-right",
+        ) as HTMLElement | null;
+        if (!right) return undefined;
+        return right.textContent?.trim() ?? undefined;
     }
 
     // ── VisualLine[] → PDF ───────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import * as Y from "yjs";
 import type { AnyExtension } from "@tiptap/core";
-import { ProjectState } from "@src/lib/project/project-state";
+import { MAIN_SCREENPLAY_REF, ProjectState } from "@src/lib/project/project-state";
 import type { Comment } from "@src/lib/utils/types";
 import { BASE_EXTENSIONS } from "@src/lib/screenplay/editor";
 import { TITLEPAGE_BASE_EXTENSIONS } from "@src/lib/titlepage/editor";
@@ -8,7 +8,7 @@ import { TITLEPAGE_BASE_EXTENSIONS } from "@src/lib/titlepage/editor";
 export type PaginationMode = "screenplay" | "titlepage";
 
 export interface DocumentEditorFeatures {
-    /** Whether comments are enabled (CommentMark, CommentCards). */
+    /** Whether comments are enabled (node-anchored comments + margin gutter). */
     comments: boolean;
     /** Whether right-click "Shelve" actions are available (always false until shelf phase). */
     shelving: boolean;
@@ -18,6 +18,8 @@ export interface DocumentEditorFeatures {
     searchHighlights: boolean;
     /** Scene color bookmark decorations. */
     sceneBookmarks: boolean;
+    /** Production-mode scene labels + OMITTED placeholders. */
+    sceneLocking: boolean;
     /** Prevent duplicate data-ids on paste. */
     nodeIdDedup: boolean;
     /** Character / location autocomplete menus. */
@@ -39,6 +41,13 @@ export interface DocumentEditorFeatures {
 export interface DocumentEditorConfig {
     /** Logical type for conditional behaviour in the hook/panel. */
     type: "screenplay" | "title";
+    /**
+     * Identifier of the document this editor edits, used to attribute scenes
+     * sent to the Outline. `MAIN_SCREENPLAY_REF` for the main screenplay, the
+     * document-tree node id for editor documents, `undefined` otherwise (drafts,
+     * title page) — those cannot send scenes to the Outline.
+     */
+    documentId?: string;
     /** Base Tiptap extensions (defines the ProseMirror schema). */
     baseExtensions: AnyExtension[];
     /**
@@ -58,7 +67,8 @@ export interface DocumentEditorConfig {
 
 export const SCREENPLAY_EDITOR_CONFIG: DocumentEditorConfig = {
     type: "screenplay",
-    baseExtensions: BASE_EXTENSIONS,  // CommentMark added dynamically by hook when features.comments=true
+    documentId: MAIN_SCREENPLAY_REF,
+    baseExtensions: BASE_EXTENSIONS,
     getFragment: (s) => s.screenplayFragment(),
     getCommentsMap: (s) => s.comments(),
     features: {
@@ -67,6 +77,7 @@ export const SCREENPLAY_EDITOR_CONFIG: DocumentEditorConfig = {
         characterHighlights: true,
         searchHighlights: true,
         sceneBookmarks: true,
+        sceneLocking: true,
         nodeIdDedup: true,
         suggestions: true,
         orphanPrevention: true,
@@ -89,6 +100,7 @@ export const TITLEPAGE_EDITOR_CONFIG: DocumentEditorConfig = {
         characterHighlights: false,
         searchHighlights: false,
         sceneBookmarks: false,
+        sceneLocking: false,
         nodeIdDedup: false,
         suggestions: false,
         orphanPrevention: false,

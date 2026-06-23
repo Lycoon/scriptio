@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useSWRConfig } from "swr";
 import { signIn } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useTranslations } from "next-intl";
+import { useDesktopBridgeAuth } from "@src/lib/utils/hooks";
 
 import GoogleIcon from "@components/icons/GoogleIcon";
 import AppleIcon from "@components/icons/AppleIcon";
@@ -19,7 +19,7 @@ type Props = {
 };
 
 const OAuthButtons = ({ callbackUrl = "/projects" }: Props) => {
-    const { mutate } = useSWRConfig();
+    const { completeBridgeAuth } = useDesktopBridgeAuth();
     const t = useTranslations("oauth");
     const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -34,23 +34,16 @@ const OAuthButtons = ({ callbackUrl = "/projects" }: Props) => {
 
         setPendingProvider(provider);
         try {
-            const { generateBridgeNonce, pollBridgeToken, setDesktopToken } = await import("@src/lib/desktop-auth");
+            const { generateBridgeNonce } = await import("@src/lib/desktop-auth");
             const { openUrl } = await import("@tauri-apps/plugin-opener");
 
             const nonce = generateBridgeNonce();
-            const apiBase = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
             const bridgeUrl = `${apiBase}/desktop-oauth/start?provider=${provider}&nonce=${encodeURIComponent(nonce)}`;
             await openUrl(bridgeUrl);
 
-            const token = await pollBridgeToken(nonce);
-            if (!token) {
-                setError(t("timeout"));
-                return;
-            }
-
-            await setDesktopToken(token);
-            await mutate("/api/users/cookie");
-            await mutate("/api/users");
+            const result = await completeBridgeAuth(nonce);
+            if (result === "timeout") setError(t("timeout"));
         } catch (err) {
             console.error("[OAuthButtons] Desktop OAuth failed:", err);
             setError(t("error"));

@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { isTauri } from "@tauri-apps/api/core";
-import { useSWRConfig } from "swr";
 
 import { requestMagicLink } from "@src/lib/utils/requests";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { RequestMagicLinkBody } from "@src/lib/utils/api-bodies";
+import { useDesktopBridgeAuth } from "@src/lib/utils/hooks";
 
 import OAuthButtons from "./OAuthButtons";
+import { ArrowLeft } from "lucide-react";
 
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
@@ -19,14 +20,12 @@ type MessageType = "success" | "error" | "info";
 
 const DashboardAuth = () => {
     const tAuth = useTranslations("auth");
-    const { mutate } = useSWRConfig();
+    const { completeBridgeAuth } = useDesktopBridgeAuth();
 
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [message, setMessage] = useState<{ type: MessageType; text: string } | null>(null);
-    // Desktop-only: poll the bridge after the email is sent so the user is signed in
-    // here as soon as they click the magic link in their browser.
     const [pollingDesktop, setPollingDesktop] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -40,11 +39,7 @@ const DashboardAuth = () => {
             const body: RequestMagicLinkBody = { email };
 
             if (isTauri()) {
-                // Desktop: generate a nonce, request the magic link bound to it, then poll the
-                // bridge until the browser-side click drops the JWE for us to pick up.
-                const { generateBridgeNonce, pollBridgeToken, setDesktopToken } = await import(
-                    "@src/lib/desktop-auth"
-                );
+                const { generateBridgeNonce } = await import("@src/lib/desktop-auth");
                 const nonce = generateBridgeNonce();
                 body.desktopNonce = nonce;
 
@@ -58,16 +53,12 @@ const DashboardAuth = () => {
                 setSubmitted(true);
                 setPollingDesktop(true);
 
-                const token = await pollBridgeToken(nonce);
-                if (!token) {
+                const result = await completeBridgeAuth(nonce);
+                if (result === "timeout") {
                     setMessage({ type: "error", text: tAuth("desktopTimeout") });
                     setPollingDesktop(false);
                     setSubmitted(false);
-                    return;
                 }
-                await setDesktopToken(token);
-                await mutate("/api/users/cookie");
-                await mutate("/api/users");
                 return;
             }
 

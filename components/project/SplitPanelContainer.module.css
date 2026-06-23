@@ -17,9 +17,35 @@
 }
 
 .panel_focused {
-    outline: 2px solid var(--primary-text, rgba(100, 150, 255, 0.35));
+    outline: 2px solid var(--secondary);
     outline-offset: -2px;
     border-radius: 4px;
+}
+
+/* Overlay shown on top of panel content while a document is dragged over it.
+   pointer-events:none lets the drag events fall through to the panel beneath. */
+.panel_drop_overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    border: 2px dashed var(--tertiary-hover);
+    border-radius: 4px;
+    background-color: var(--editor-style-bg-hover);
+    opacity: 0.5;
+    transition:
+        left 0.12s ease,
+        right 0.12s ease;
+}
+
+/* Edge variants preview a split: the overlay shrinks to the half the dropped
+   document would occupy, hinting that the panel will divide rather than swap. */
+.panel_drop_overlay_left {
+    right: 50%;
+}
+
+.panel_drop_overlay_right {
+    left: 50%;
 }
 
 /* Mounted-but-hidden panels: kept alive in the DOM so editors
@@ -99,7 +125,7 @@
     cursor: pointer;
     color: var(--secondary-text);
     background-color: var(--secondary);
-    border-radius: 6px;
+    border-radius: 16px;
     border: none;
 }
 

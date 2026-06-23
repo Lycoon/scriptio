@@ -8,7 +8,18 @@ import { UserTheme } from "@src/lib/utils/types";
 import { useTheme } from "next-themes";
 import { useSettings } from "@src/lib/utils/hooks";
 import { useTranslations } from "next-intl";
+import { isTauri } from "@tauri-apps/api/core";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
+
+const THEME_WINDOW_MODE: Record<string, "dark" | "light"> = {
+    dark: "dark",
+    wonka: "dark",
+    midnight: "dark",
+    light: "light",
+    latte: "light",
+    mint: "light",
+    blossom: "light",
+};
 
 const THEME_COLORS: Record<
     string,
@@ -20,6 +31,20 @@ const THEME_COLORS: Record<
         tertiary: "#3a3a3a",
         text: "#ffffff",
         subtext: "#9b9b9b",
+    },
+    wonka: {
+        primary: "#1e1410",
+        secondary: "#2c1e1a",
+        tertiary: "#4d3b36",
+        text: "#e6dcca",
+        subtext: "#a89b91",
+    },
+    midnight: {
+        primary: "#0d1117",
+        secondary: "#161c2d",
+        tertiary: "#1e2a45",
+        text: "#c8d8f0",
+        subtext: "#6878a8",
     },
     light: {
         primary: "#f3f3f3",
@@ -34,13 +59,6 @@ const THEME_COLORS: Record<
         tertiary: "#ecdab4",
         text: "#7a6129",
         subtext: "#c09c50",
-    },
-    wonka: {
-        primary: "#1e1410",
-        secondary: "#2c1e1a",
-        tertiary: "#4d3b36",
-        text: "#e6dcca",
-        subtext: "#a89b91",
     },
     mint: {
         primary: "#dcf5de",
@@ -65,6 +83,7 @@ const THEME_LABELS: Record<string, string> = {
     wonka: "Wonka",
     mint: "Mint",
     blossom: "Blossom",
+    midnight: "Midnight",
 };
 
 const AppearanceSettings = () => {
@@ -114,9 +133,13 @@ const AppearanceSettings = () => {
                 <label className={form.label}>{t("theme")}</label>
                 <Dropdown
                     value={theme || "dark"}
-                    onChange={(value) => {
+                    onChange={async (value) => {
                         setTheme(value);
                         saveSettings({ theme: value as UserTheme });
+                        if (isTauri()) {
+                            const { setTheme: setWindowTheme } = await import("@tauri-apps/api/app");
+                            await setWindowTheme(THEME_WINDOW_MODE[value] ?? "dark");
+                        }
                     }}
                     options={themeOptions}
                     className={`${sharedStyles.input} ${styles.input}`}

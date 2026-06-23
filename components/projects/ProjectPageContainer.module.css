@@ -39,7 +39,7 @@
 }
 
 .create_btn {
-    font-weight: 500;
+    font-weight: 600;
     padding-inline: 40px !important;
     border-width: 3px;
 }
@@ -50,7 +50,7 @@
     align-items: center;
     white-space: nowrap;
 
-    font-weight: 500;
+    font-weight: 600;
     padding-inline: 40px !important;
     border-width: 3px;
     background: none !important;

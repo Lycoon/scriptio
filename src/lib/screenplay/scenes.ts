@@ -22,6 +22,8 @@ import { getNodeData } from "./screenplay";
 import { ScreenplayElement } from "../utils/enums";
 import { Screenplay } from "../utils/types";
 import { JSONContent } from "@tiptap/react";
+import type { SceneToken } from "./scene-locking";
+import { compileSceneLabel } from "./scene-locking";
 
 /**
  * Recursively compute the ProseMirror nodeSize of a JSONContent node.
@@ -53,12 +55,38 @@ export type TransientScene = {
 
 /**
  * Persistent scene metadata stored in Yjs.
- * Only contains user-editable fields.
  * Keyed by scene id (UUID) in the Yjs map.
+ *
+ * Contains both user-editable fields (synopsis, color) and production-mode
+ * fields (token, omitted). `token` is the structural, mode-independent
+ * representation of the scene's frozen number under production lock; the
+ * display label is derived from it via `compileSceneLabel`. `omitted`
+ * flags the scene as an OMITTED placeholder.
  */
 export type PersistentScene = {
     synopsis?: string;
     color?: string;
+    /** Frozen structural position under production lock. */
+    token?: SceneToken;
+    /** True when the scene is an OMITTED placeholder (only meaningful with `token`). */
+    omitted?: boolean;
+    /** Original heading text saved when the scene was omitted, restored on unomit. */
+    originalHeading?: string;
+    /** The scene's body nodes (serialized ProseMirror JSON) captured when the
+     *  scene was omitted. Omitting cuts the body out of the document and parks
+     *  it here; unomitting re-inserts it right after the heading. Keeping it out
+     *  of the document means an omitted scene paginates like a one-line heading
+     *  with no special handling. */
+    omittedBody?: JSONContent[];
+    /** Page locks whose anchor nodes lived inside the cut body, saved so unomit
+     *  can restore them. Only set when the omitted scene crossed a locked page
+     *  break. */
+    omittedPageLocks?: { anchorId: string; token: SceneToken; splitOffset?: number }[];
+    /** When the omitted scene crossed a locked page break, the lock is re-homed
+     *  onto the following scene heading (`reanchoredSuccessor`) so it stays
+     *  pinned to its locked page instead of spilling upward. unomit removes that
+     *  re-homed lock before restoring `omittedPageLocks`. */
+    reanchoredSuccessor?: string;
 };
 
 /**
@@ -69,10 +97,19 @@ export type PersistentSceneMap = { [id: string]: PersistentScene };
 /**
  * Full scene data combining transient and persistent data.
  * This is what gets exposed to the UI.
+ *
+ * `token` is the structural lock (when persisted); `label` is the derived
+ * display string (compiled from the token). Both are absent for scenes
+ * that have not been locked. UI code that needs *provisional* labels
+ * should call `computeSceneLabels()` over the full ordered scene list
+ * instead of reading `Scene.label` directly.
  */
 export type Scene = TransientScene & {
     synopsis?: string;
     color?: string;
+    token?: SceneToken;
+    label?: string;
+    omitted?: boolean;
 };
 
 // -------------------------------- //
@@ -172,6 +209,9 @@ export const mergeScenesData = (persistentScenes: PersistentSceneMap, screenplay
                 ...item,
                 synopsis: persistent.synopsis,
                 color: persistent.color,
+                token: persistent.token,
+                label: persistent.token ? compileSceneLabel(persistent.token) : undefined,
+                omitted: persistent.omitted,
             };
         }
 

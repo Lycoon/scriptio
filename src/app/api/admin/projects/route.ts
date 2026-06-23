@@ -18,10 +18,6 @@ async function searchProjects(req: NextRequest, { searchParams, user }: AuthApiC
     const { q, limit = 25, cursor } = validate(QuerySchema, searchParams);
     const term = (q ?? "").trim();
 
-    if (!term) {
-        return Success({ projects: [], nextCursor: null });
-    }
-
     const projects = await ProjectService.searchProjects(term, limit + 1, cursor);
     const hasMore = projects.length > limit;
     const page = hasMore ? projects.slice(0, limit) : projects;

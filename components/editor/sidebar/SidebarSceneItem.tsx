@@ -14,12 +14,16 @@ type SidebarSceneItemProps = SceneContextProps & {
     showDropIndicator: boolean;
     isDragging: boolean;
     isCurrent: boolean;
+    /** Display label for the scene number (e.g. "3", "3A"). */
+    label: string;
+    /** True when this scene is a locked OMITTED placeholder. */
+    isOmitted: boolean;
     scrollRef?: Ref<HTMLDivElement>;
     onPointerDown: (index: number, e: React.PointerEvent) => void;
     onDoubleClick: (scene: Scene) => void;
 };
 
-const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, scrollRef, onPointerDown, onDoubleClick }: SidebarSceneItemProps) => {
+const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, label, isOmitted, scrollRef, onPointerDown, onDoubleClick }: SidebarSceneItemProps) => {
     const { updateContextMenu } = useContext(UserContext);
 
     const handleDropdown = (e: React.MouseEvent) => {
@@ -43,6 +47,7 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
 
     // Show synopsis if available, otherwise show preview
     const displayText = scene.synopsis || scene.preview;
+    const titleText = isOmitted ? "OMITTED" : scene.title;
 
     const containerClass = join(
         nav_item.container,
@@ -59,13 +64,12 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
             onDoubleClick={handleDoubleClick}
             className={containerClass}
         >
+            {scene.color && <span className={nav_item.color_bar} style={{ backgroundColor: scene.color }} />}
             <div className={nav_item.header}>
                 <div className={nav_item.title_row}>
-                    {scene.color && (
-                        <span className={nav_item.color_indicator} style={{ backgroundColor: scene.color }} />
-                    )}
-                    <p className={join(nav_item.title, "unselectable")}>{scene.title}</p>
-                    {/*scene.id && <LinkSVG className={nav_item.icon} />*/}
+                    <p className={join(nav_item.title, "unselectable")}>
+                        <span className={nav_item.scene_number}>{label}.</span> {titleText}
+                    </p>
                 </div>
                 <SceneLengthItem scene={scene} />
             </div>

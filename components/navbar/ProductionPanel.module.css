@@ -1,0 +1,292 @@
+.container {
+    composes: panel from "./navbar-shared.module.css";
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 100;
+    width: 340px;
+    max-height: 480px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    /* Not `hidden`: the revision dropdown menu in the last section needs to
+       extend past the panel's bottom edge without being clipped. */
+    overflow: visible;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--separator);
+    flex-shrink: 0;
+}
+
+.title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+.header_actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.close_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.close_btn:hover {
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+}
+
+/* Section */
+.section {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--separator);
+}
+
+.section:last-child {
+    border-bottom: none;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 22px;
+}
+
+.row_main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.row_actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.row_icon {
+    color: var(--secondary-text);
+    flex-shrink: 0;
+}
+
+.row_label {
+    font-size: 0.85rem;
+    color: var(--primary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Info hint — icon next to a label that reveals a small explanatory popover
+   on hover/focus. */
+.hint {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    outline: none;
+}
+
+.hint_icon {
+    color: var(--secondary-text);
+    cursor: help;
+    display: block;
+}
+
+.hint:hover .hint_icon,
+.hint:focus .hint_icon {
+    color: var(--primary-text);
+}
+
+.hint_popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 200;
+    width: 240px;
+    padding: 8px 10px;
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--secondary-text);
+    white-space: normal;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.12s ease;
+    pointer-events: none;
+}
+
+.hint:hover .hint_popover,
+.hint:focus .hint_popover {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Draft locking section drops its own bottom border: the Advanced divider
+   below provides the separating line instead. */
+.section_flush {
+    border-bottom: none;
+}
+
+/* Advanced — a labeled, clickable divider. The flanking lines replace a plain
+   separator, with the toggle label resting on the line. */
+.advanced_divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 2px 16px 12px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--secondary-text);
+}
+
+.advanced_divider::before,
+.advanced_divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--separator);
+}
+
+.advanced_divider_label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    transition: color 0.12s ease;
+}
+
+.advanced_divider:hover .advanced_divider_label {
+    color: var(--primary-text);
+}
+
+.advanced_chevron {
+    color: inherit;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.advanced_chevron_open {
+    transform: rotate(180deg);
+}
+
+/* Provisional labels preview — boxed sub-section under the locking toggle. */
+.provisional_box {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background-color: var(--primary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.provisional_title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--secondary-text);
+    opacity: 0.8;
+}
+
+.provisional_list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.provisional_label {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--primary-text);
+    background: color-mix(in srgb, var(--primary-text) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary-text) 30%, transparent);
+    border-radius: 20px;
+}
+
+.relock_btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 10px;
+    border: none;
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.relock_btn:hover:not(:disabled) {
+    opacity: 0.75;
+}
+
+.relock_btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Revision color dropdown */
+.revision_select {
+    margin-top: 10px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    color: var(--primary-text);
+}
+
+.revision_option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.revision_dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid var(--separator);
+    flex-shrink: 0;
+}

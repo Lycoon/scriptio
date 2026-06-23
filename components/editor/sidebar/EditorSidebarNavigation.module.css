@@ -10,7 +10,7 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 0 15px 30px 30px;
+    padding: 0 15px 20px 30px;
     width: var(--navigation-sidebar-width);
     min-height: 0;
     overflow: hidden;
@@ -54,6 +54,48 @@
     overflow-x: hidden;
 }
 
+.empty_state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px;
+    text-align: center;
+    color: var(--secondary-text);
+    font-size: 12px;
+}
+
+.empty_actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    width: fit-content;
+}
+
+.empty_action {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 40px;
+    cursor: pointer;
+    color: var(--secondary-text);
+    background: none;
+    border: 1px solid var(--separator);
+    font-size: 12px;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+}
+
+.empty_action:hover {
+    opacity: 0.7;
+}
+
 .scene_list {
     flex: 1;
 }
@@ -79,25 +121,27 @@
 .tab_bar {
     display: flex;
     flex-direction: row;
+    justify-content: center;
     border-top: 1px solid var(--separator);
     margin-top: auto;
     padding-top: 4px;
     padding-inline: 12px;
-    gap: 4px;
+    gap: 8px;
 }
 
 .tab_btn {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 0;
+    padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
     color: var(--secondary-text);
     background: none;
     border: none;
-    transition: color 0.15s, background-color 0.15s;
+    transition:
+        color 0.15s,
+        background-color 0.15s;
 }
 
 .tab_btn:hover {
@@ -106,5 +150,10 @@
 }
 
 .tab_btn_active {
+    color: var(--primary-text);
+    background-color: var(--editor-sidebar-hover);
+}
+
+.tab_btn_active:hover {
     color: var(--primary-text);
 }

@@ -5,17 +5,48 @@ import { getRandomColor } from "@src/lib/utils/misc";
 import { getCloudToken } from "../utils/requests";
 import { JSONContent } from "@tiptap/react";
 import { Screenplay } from "../utils/types";
-import { PageFormat } from "../utils/enums";
 import * as Y from "yjs";
 import type { ThrottledWebsocketProvider } from "../cloud/utils";
 import { ScreenplaySchema } from "../screenplay/editor";
 import { TitlePageSchema } from "../titlepage/editor";
-import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
-import type { CharacterItem, CharacterMap } from "../screenplay/characters";
-import type { LocationItem, LocationMap } from "../screenplay/locations";
-import type { PersistentScene, PersistentSceneMap } from "../screenplay/scenes";
-import type { Comment } from "../utils/types";
+import { prosemirrorJSONToYXmlFragment, yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import type { YjsLocalProvider } from "../persistence/y-local-provider";
+import type { ProjectMigrationOutcome } from "./migrations/project-migration-runner";
+
+import { ProjectState } from "./project-doc";
+import type { BoardData, ProjectData } from "./project-doc";
+
+// Re-export all schema types & the class so existing consumers continue to
+// import from "@src/lib/project/project-state" without changes.
+export {
+    ProjectState,
+    DEFAULT_PAGE_MARGINS,
+    DEFAULT_ELEMENT_MARGINS,
+    DEFAULT_ELEMENT_STYLES,
+    DEFAULT_SKIPPED_SCENE_LETTERS,
+    TOGGLEABLE_SCENE_LETTERS,
+    MAIN_SCREENPLAY_REF,
+} from "./project-doc";
+export type {
+    ShelfEntryType,
+    ShelfVersionMeta,
+    ShelfEntry,
+    ProjectMetadata,
+    ElementMargin,
+    PageMargin,
+    ElementStyle,
+    LayoutData,
+    ProductionData,
+    BoardCardData,
+    BoardArrowData,
+    BoardData,
+    DocumentNode,
+    DocumentNodeType,
+    OutlineItem,
+    OutlineItemSource,
+    ProjectData,
+    TypedMap,
+} from "./project-doc";
 
 // Lazy re-export repository for convenient access (avoid loading yjs at module level)
 export const getProjectRepository = async () => {
@@ -32,32 +63,31 @@ export const getProjectRepository = async () => {
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
 
-// ---- Shelf types ----
+/**
+ * High-level state of a project from the layout's perspective. Replaces the
+ * previous bag of `isReady` / `isProjectUnavailable` / `isStaleClient` /
+ * `migrationOutcome` booleans — a single discriminated union makes the
+ * priority of error states explicit and lets the layout switch on one value.
+ *
+ * Priority (highest first): needs-update > unavailable > loading > ready.
+ */
+export type ProjectStatusOutcome = Extract<
+    ProjectMigrationOutcome,
+    { kind: "future-version" | "failed" | "stale-client" }
+>;
 
-export type ShelfEntryType = "scene" | "character" | "action";
-
-export type ShelfVersionMeta = {
-    id: string; // unique version ID (nanoid)
-    title: string; // default: today's date on creation
-};
-
-export type ShelfEntry = {
-    title: string; // text content of the shelved node
-    type: ShelfEntryType;
-    versions: ShelfVersionMeta[];
-};
+export type ProjectStatus =
+    | { kind: "loading" }
+    | { kind: "ready" }
+    | { kind: "needs-update"; outcome: ProjectStatusOutcome }
+    | { kind: "unavailable" };
 
 export interface ProjectYjsState {
     ydoc: ProjectState | null;
     provider: ThrottledWebsocketProvider | null;
-    isLocalReady: boolean;
-    isCloudReady: boolean;
-    isCloudSynced: boolean;
+    status: ProjectStatus;
     connectionStatus: ConnectionStatus;
     users: CollaboratorInfo[];
-    isLockedByServer: boolean;
-    isSessionReplaced: boolean;
-    isProjectUnavailable: boolean;
 }
 
 export interface CollaboratorInfo {
@@ -71,117 +101,6 @@ export interface UserInfo {
     name: string;
     color: string;
     userId?: string;
-}
-
-export type ProjectMetadata = {
-    version: number;
-    id: string;
-    title: string;
-    author: string;
-    titlepageInitialized?: boolean;
-};
-
-export type ElementMargin = { left: number; right: number }; // values in inches (offset from page margin)
-
-export type PageMargin = { top: number; bottom: number; left: number; right: number }; // values in inches
-
-/** Default page margins (in inches). */
-export const DEFAULT_PAGE_MARGINS: PageMargin = {
-    top: 1.0,
-    bottom: 1.0,
-    left: 1.5,
-    right: 1.0,
-};
-
-/** Default margins per screenplay element (offset from page margin, in inches). */
-export const DEFAULT_ELEMENT_MARGINS: Record<string, ElementMargin> = {
-    action: { left: 0, right: 0 },
-    scene: { left: 0, right: 0 },
-    character: { left: 2.5, right: 0 },
-    dialogue: { left: 1.3, right: 1.0 },
-    parenthetical: { left: 2.0, right: 2.0 },
-    transition: { left: 0, right: 0 },
-    section: { left: 0, right: 0 },
-};
-
-export type ElementStyle = {
-    bold?: boolean;
-    italic?: boolean;
-    underline?: boolean;
-    uppercase?: boolean;
-    align?: "left" | "center" | "right";
-    startNewPage?: boolean;
-};
-
-/** Default styling per screenplay element */
-export const DEFAULT_ELEMENT_STYLES: Record<string, ElementStyle> = {
-    action: { align: "left" },
-    scene: { bold: true, align: "left", uppercase: true },
-    character: { align: "left", uppercase: true },
-    dialogue: { align: "left" },
-    parenthetical: { align: "left" },
-    transition: { align: "right", uppercase: true },
-    section: { align: "center", underline: true, startNewPage: true, uppercase: true },
-};
-
-export type LayoutData = {
-    pageSize: PageFormat;
-    pageMargins: PageMargin;
-    displaySceneNumbers: boolean;
-    sceneHeadingSpacing: number;
-    sceneNumberOnRight: boolean;
-    contdLabel: string;
-    moreLabel: string;
-    elementMargins: Record<string, ElementMargin>;
-    elementStyles: Record<string, ElementStyle>;
-};
-
-export interface BoardCardData {
-    id: string;
-    title: string;
-    description: string;
-    color: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-export interface BoardArrowData {
-    id: string;
-    fromCardId: string;
-    toCardId: string;
-}
-
-export type BoardData = {
-    cards: string; // JSON string of BoardCardData[]
-    arrows: string; // JSON string of BoardArrowData[]
-};
-
-export type ProjectData = {
-    screenplay: JSONContent[];
-    titlepage?: JSONContent[];
-    characters: CharacterMap;
-    scenes: PersistentSceneMap;
-    locations: LocationMap;
-    metadata: ProjectMetadata;
-    board: BoardData;
-    layout: LayoutData;
-    comments?: Record<string, Comment>;
-    shelf?: Record<string, ShelfEntry>;
-};
-
-/**
- * Helper to provide stronger typing for Y.Map where different keys have different types.
- * This avoids manual casts when accessing known keys.
- */
-export interface TypedMap<T extends Record<string, unknown>> extends Omit<
-    Y.Map<T[keyof T]>,
-    "get" | "set" | "toJSON"
-> {
-    get<K extends keyof T>(key: K): T[K] | undefined;
-    set<K extends keyof T>(key: K, value: T[K]): T[K];
-    toJSON(): T;
 }
 
 // -------------------------------- //
@@ -198,473 +117,483 @@ async function getYProtocols() {
     return yProtocolsModule;
 }
 
+// -------------------------------- //
+//   PROSEMIRROR HELPERS (browser)  //
+// -------------------------------- //
+
 /**
- * Utility to clear the local IndexedDB cache for a specific project.
- * Used when the server restores a document from a snapshot to avoid merge conflicts.
+ * Convert the screenplay Y.XmlFragment to ProseMirror JSONContent[].
+ * Browser-only: uses tiptap's ScreenplaySchema and y-prosemirror.
  */
-export async function clearLocalProjectCache(projectId: string): Promise<void> {
+export const screenplayOf = (ydoc: ProjectState): Screenplay => {
+    const fragment = ydoc.screenplayFragment();
+    const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
+    return proseMirrorNode.content.toJSON() as Screenplay;
+};
+
+/**
+ * Convert the title-page Y.XmlFragment to ProseMirror JSONContent[].
+ * Browser-only: uses tiptap's TitlePageSchema and y-prosemirror.
+ */
+export const titlepageOf = (ydoc: ProjectState): JSONContent[] => {
+    const fragment = ydoc.titlepageFragment();
+    const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, TitlePageSchema);
+    return proseMirrorNode.content.toJSON() as JSONContent[];
+};
+
+// -------------------------------- //
+//   FULL PROJECT (DE)SERIALIZATION //
+// -------------------------------- //
+
+/** Convert a screenplay-schema Y.XmlFragment (editor docs, shelf versions) to JSON. */
+const fragmentContentOf = (fragment: Y.XmlFragment): JSONContent[] =>
+    yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema).content.toJSON() as JSONContent[];
+
+/** Content of every `editor` document node's fragment, keyed by node id. */
+const documentContentOf = (ydoc: ProjectState): Record<string, JSONContent[]> => {
+    const result: Record<string, JSONContent[]> = {};
+    ydoc.documents().forEach((node) => {
+        if (node.type === "editor") result[node.id] = fragmentContentOf(ydoc.documentFragment(node.id));
+    });
+    return result;
+};
+
+/** Board data (cards + arrows) for every `board` node, keyed by node id. */
+const boardContentOf = (ydoc: ProjectState): Record<string, BoardData> => {
+    const result: Record<string, BoardData> = {};
+    ydoc.documents().forEach((node) => {
+        if (node.type === "board") result[node.id] = ydoc.boardData(node.id).toJSON();
+    });
+    return result;
+};
+
+/** Content of every shelf version, keyed by `${nodeId}::${versionId}`. */
+const shelfContentOf = (ydoc: ProjectState): Record<string, JSONContent[]> => {
+    const result: Record<string, JSONContent[]> = {};
+    ydoc.shelf().forEach((entry, nodeId) => {
+        for (const version of entry.versions) {
+            result[`${nodeId}::${version.id}`] = fragmentContentOf(ydoc.shelfFragment(nodeId, version.id));
+        }
+    });
+    return result;
+};
+
+/**
+ * Serialize the entire project Y.Doc to a plain `ProjectData` — every map, both
+ * screenplay/title-page fragments, and the dynamic per-document / per-board /
+ * per-shelf-version content. Browser-only (uses ProseMirror conversion).
+ */
+export const projectDataOf = (ydoc: ProjectState): ProjectData => ({
+    screenplay: screenplayOf(ydoc),
+    titlepage: titlepageOf(ydoc),
+    metadata: ydoc.metadata().toJSON(),
+    characters: ydoc.characters().toJSON(),
+    scenes: ydoc.scenes().toJSON(),
+    pages: ydoc.pages().toJSON(),
+    locations: ydoc.locations().toJSON(),
+    layout: ydoc.layout().toJSON(),
+    production: ydoc.production().toJSON(),
+    comments: ydoc.comments().toJSON(),
+    documents: ydoc.documents().toJSON(),
+    outline: ydoc.outline().toJSON(),
+    shelf: ydoc.shelf().toJSON(),
+    dictionary: ydoc.dictionary().toJSON(),
+    documentContent: documentContentOf(ydoc),
+    boardContent: boardContentOf(ydoc),
+    shelfContent: shelfContentOf(ydoc),
+});
+
+/** Loosened Y.Map view used to bulk-write a record into a typed/plain map. */
+const asMap = (m: object): Y.Map<unknown> => m as unknown as Y.Map<unknown>;
+
+const fillMap = (map: Y.Map<unknown>, record: Record<string, unknown> | undefined): void => {
+    if (!record) return;
+    for (const [key, value] of Object.entries(record)) map.set(key, value);
+};
+
+/**
+ * Write a (possibly partial) `ProjectData` into `ydoc`. Additive — it sets the
+ * keys/fragments present in `data` without removing what is already there, so a
+ * caller that needs a clean replace should `clearProjectData(ydoc)` first.
+ * Browser-only (rebuilds fragments via ProseMirror).
+ */
+export const applyProjectData = (ydoc: ProjectState, data: Partial<ProjectData>): void => {
+    ydoc.transact(() => {
+        if (data.screenplay && data.screenplay.length > 0) {
+            prosemirrorJSONToYXmlFragment(
+                ScreenplaySchema,
+                { type: "doc", content: data.screenplay },
+                ydoc.screenplayFragment(),
+            );
+        }
+        if (data.titlepage && data.titlepage.length > 0) {
+            prosemirrorJSONToYXmlFragment(
+                TitlePageSchema,
+                { type: "doc", content: data.titlepage },
+                ydoc.titlepageFragment(),
+            );
+        }
+
+        fillMap(asMap(ydoc.metadata()), data.metadata);
+        fillMap(asMap(ydoc.characters()), data.characters);
+        fillMap(asMap(ydoc.locations()), data.locations);
+        fillMap(asMap(ydoc.scenes()), data.scenes);
+        fillMap(asMap(ydoc.pages()), data.pages);
+        fillMap(asMap(ydoc.layout()), data.layout);
+        fillMap(asMap(ydoc.production()), data.production);
+        fillMap(asMap(ydoc.comments()), data.comments);
+        fillMap(asMap(ydoc.documents()), data.documents);
+        fillMap(asMap(ydoc.outline()), data.outline);
+        fillMap(asMap(ydoc.shelf()), data.shelf);
+        fillMap(asMap(ydoc.dictionary()), data.dictionary);
+
+        if (data.documentContent) {
+            for (const [id, content] of Object.entries(data.documentContent)) {
+                if (content.length === 0) continue;
+                prosemirrorJSONToYXmlFragment(ScreenplaySchema, { type: "doc", content }, ydoc.documentFragment(id));
+            }
+        }
+        if (data.boardContent) {
+            for (const [id, board] of Object.entries(data.boardContent)) {
+                const map = ydoc.boardData(id);
+                for (const [key, value] of Object.entries(board)) {
+                    map.set(key as keyof BoardData, value as BoardData[keyof BoardData]);
+                }
+            }
+        }
+        if (data.shelfContent) {
+            for (const [key, content] of Object.entries(data.shelfContent)) {
+                if (content.length === 0) continue;
+                const sep = key.indexOf("::");
+                const nodeId = key.slice(0, sep);
+                const versionId = key.slice(sep + 2);
+                prosemirrorJSONToYXmlFragment(
+                    ScreenplaySchema,
+                    { type: "doc", content },
+                    ydoc.shelfFragment(nodeId, versionId),
+                );
+            }
+        }
+    });
+};
+
+/**
+ * Remove every shared type's content from `ydoc` — both fragments, all maps, and
+ * the dynamic per-document / per-board / per-shelf fragments — so an imported
+ * state can fully replace the existing project instead of merging with it.
+ */
+export const clearProjectData = (ydoc: ProjectState): void => {
+    ydoc.transact(() => {
+        const screenplay = ydoc.screenplayFragment();
+        if (screenplay.length > 0) screenplay.delete(0, screenplay.length);
+        const titlepage = ydoc.titlepageFragment();
+        if (titlepage.length > 0) titlepage.delete(0, titlepage.length);
+
+        // Clear dynamic fragments before their owning maps, while the nodes that
+        // reference them can still be enumerated.
+        ydoc.documents().forEach((node) => {
+            if (node.type === "editor") {
+                const frag = ydoc.documentFragment(node.id);
+                if (frag.length > 0) frag.delete(0, frag.length);
+            } else if (node.type === "board") {
+                ydoc.boardData(node.id).clear();
+            }
+        });
+        ydoc.shelf().forEach((entry, nodeId) => {
+            for (const version of entry.versions) {
+                const frag = ydoc.shelfFragment(nodeId, version.id);
+                if (frag.length > 0) frag.delete(0, frag.length);
+            }
+        });
+
+        ydoc.metadata().clear();
+        ydoc.characters().clear();
+        ydoc.scenes().clear();
+        ydoc.pages().clear();
+        ydoc.locations().clear();
+        ydoc.layout().clear();
+        ydoc.production().clear();
+        ydoc.comments().clear();
+        ydoc.documents().clear();
+        ydoc.outline().clear();
+        ydoc.shelf().clear();
+        ydoc.dictionary().clear();
+    });
+};
+
+// -------------------------------- //
+//        SESSION CACHE             //
+// -------------------------------- //
+
+/**
+ * Per-projectId session cache holding the Yjs doc, the IndexedDB local
+ * provider, and the cloud WebSocket provider. RefCount + a deferred dispose
+ * timer let a synchronous unmount/remount pair (React StrictMode in dev,
+ * route remounts) reuse the same resources instead of tearing them down and
+ * rebuilding from scratch — which previously produced two disconnect/connect
+ * cycles per page refresh in dev.
+ */
+type SessionEntry = {
+    projectId: string;
+    state: ProjectState;
+    localProvider: YjsLocalProvider | null;
+    cloudProvider: ThrottledWebsocketProvider | null;
+    isLocalReady: boolean;
+    isCloudSynced: boolean;
+    isCloudInitStarted: boolean;
+    migrationOutcome: ProjectMigrationOutcome | null;
+    connectionStatus: ConnectionStatus;
+    users: CollaboratorInfo[];
+    isProjectUnavailable: boolean;
+    isSessionReplaced: boolean;
+    isStaleClient: boolean;
+    currentUserInfo: UserInfo;
+    lastUsersJson: string;
+    refCount: number;
+    disposeTimer: ReturnType<typeof setTimeout> | null;
+    subscribers: Set<() => void>;
+};
+
+const sessionCache = new Map<string, SessionEntry>();
+
+const notifySubscribers = (entry: SessionEntry): void => {
+    entry.subscribers.forEach((cb) => cb());
+};
+
+/**
+ * Has the cache evicted this entry while we were awaiting? Used to bail out
+ * of async init paths whose entry was disposed before they completed.
+ */
+const isLive = (entry: SessionEntry): boolean => sessionCache.get(entry.projectId) === entry;
+
+const initLocalProvider = async (entry: SessionEntry): Promise<void> => {
+    const { createLocalYjsProvider } = await import("../persistence/y-local-provider");
+    if (!isLive(entry)) return;
+
+    const localProvider = await createLocalYjsProvider(entry.projectId, entry.state);
+    if (!isLive(entry)) {
+        localProvider.destroy();
+        return;
+    }
+    entry.localProvider = localProvider;
+
+    localProvider.on("synced", async () => {
+        const { migrateProjectDoc } = await import("./migrations/project-migration-runner");
+        const outcome = await migrateProjectDoc({ ydoc: entry.state, projectId: entry.projectId });
+        if (!isLive(entry)) return;
+        entry.migrationOutcome = outcome;
+        if (outcome.kind === "future-version" || outcome.kind === "failed") {
+            notifySubscribers(entry);
+            return;
+        }
+        entry.isLocalReady = true;
+        notifySubscribers(entry);
+        void initCloudProvider(entry);
+    });
+};
+
+const initCloudProvider = async (entry: SessionEntry): Promise<void> => {
+    if (entry.isCloudInitStarted) return;
+    entry.isCloudInitStarted = true;
+    entry.connectionStatus = "connecting";
+    notifySubscribers(entry);
+
     try {
-        const { IndexeddbPersistence } = await import("y-indexeddb");
-        const tmpDoc = new Y.Doc();
-        const tmpPersistence = new IndexeddbPersistence(`scriptio-${projectId}`, tmpDoc);
+        const { isTauri } = await import("@tauri-apps/api/core");
+        const isDesktop = isTauri();
 
-        // Check if clearData is available on the persistence instance
-        const provider = tmpPersistence as unknown as { clearData?: () => Promise<void> };
-        if (typeof provider.clearData === "function") {
-            await provider.clearData();
-        }
-
-        tmpPersistence.destroy();
-        tmpDoc.destroy();
-    } catch (e) {
-        console.warn(`[ProjectState] Failed to clear local cache for ${projectId}:`, e);
-    }
-}
-
-// -------------------------------- //
-//          PROJECT STATE           //
-// -------------------------------- //
-
-// ProjectState class - created dynamically to avoid SSR issues
-export class ProjectState extends Y.Doc {
-    KEYS = {
-        SCREENPLAY: "screenplay",
-        TITLEPAGE: "titlepage",
-        CHARACTERS: "characters",
-        SCENES: "scenes",
-        LOCATIONS: "locations",
-        METADATA: "metadata",
-        BOARD: "board",
-        LAYOUT: "layout",
-        COMMENTS: "comments",
-        DICTIONARY: "dictionary",
-        SHELF: "shelf",
-    } as const;
-
-    metadata(): TypedMap<ProjectMetadata> {
-        return this.getMap(this.KEYS.METADATA) as unknown as TypedMap<ProjectMetadata>;
-    }
-
-    screenplay(): Screenplay {
-        const fragment = this.screenplayFragment();
-        const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, ScreenplaySchema);
-        return proseMirrorNode.content.toJSON() as Screenplay;
-    }
-
-    screenplayFragment(): Y.XmlFragment {
-        return this.getXmlFragment(this.KEYS.SCREENPLAY);
-    }
-
-    titlepage(): JSONContent[] {
-        const fragment = this.titlepageFragment();
-        const proseMirrorNode = yXmlFragmentToProseMirrorRootNode(fragment, TitlePageSchema);
-        return proseMirrorNode.content.toJSON() as JSONContent[];
-    }
-
-    titlepageFragment(): Y.XmlFragment {
-        return this.getXmlFragment(this.KEYS.TITLEPAGE);
-    }
-
-    characters(): Y.Map<CharacterItem> {
-        return this.getMap(this.KEYS.CHARACTERS);
-    }
-
-    locations(): Y.Map<LocationItem> {
-        return this.getMap(this.KEYS.LOCATIONS);
-    }
-
-    scenes(): Y.Map<PersistentScene> {
-        return this.getMap(this.KEYS.SCENES);
-    }
-
-    board(): TypedMap<BoardData> {
-        return this.getMap(this.KEYS.BOARD) as unknown as TypedMap<BoardData>;
-    }
-
-    layout(): TypedMap<LayoutData> {
-        return this.getMap(this.KEYS.LAYOUT) as unknown as TypedMap<LayoutData>;
-    }
-
-    comments(): Y.Map<Comment> {
-        return this.getMap(this.KEYS.COMMENTS);
-    }
-
-    /** Per-project custom dictionary words (keys are words, values are true). */
-    dictionary(): Y.Map<boolean> {
-        return this.getMap(this.KEYS.DICTIONARY);
-    }
-
-    /** Shelf entries keyed by node UUID. */
-    shelf(): Y.Map<ShelfEntry> {
-        return this.getMap(this.KEYS.SHELF);
-    }
-
-    /** Get the Y.XmlFragment for a specific shelf version's content. */
-    shelfFragment(nodeId: string, versionId: string): Y.XmlFragment {
-        return this.getXmlFragment(`shelf_${nodeId}_${versionId}`);
-    }
-}
-
-// -------------------------------- //
-//       HELPER FUNCTIONS           //
-// -------------------------------- //
-
-/**
- * Get the characters Y.Map from a ProjectState.
- * Convenience function for direct access without repository.
- */
-export const getCharactersMap = (ydoc: ProjectState): Y.Map<CharacterItem> => {
-    return ydoc.characters();
-};
-
-/**
- * Get the locations Y.Map from a ProjectState.
- * Convenience function for direct access without repository.
- */
-export const getLocationsMap = (ydoc: ProjectState): Y.Map<LocationItem> => {
-    return ydoc.locations();
-};
-
-/**
- * Get the scenes Y.Map from a ProjectState.
- * Convenience function for direct access without repository.
- */
-export const getScenesMap = (ydoc: ProjectState): Y.Map<PersistentScene> => {
-    return ydoc.scenes();
-};
-
-/**
- * Get the board Y.Map from a ProjectState.
- * Convenience function for direct access without repository.
- */
-export const getBoardMap = (ydoc: ProjectState): TypedMap<BoardData> => {
-    return ydoc.board();
-};
-
-// -------------------------------- //
-//          LOCAL PERSISTENCE       //
-// -------------------------------- //
-
-/**
- * Hook to initialize local persistence for the Yjs document.
- * Uses SQLite on desktop (Tauri) and IndexedDB on browser.
- */
-export const useLocalPersistence = (projectId: string | null) => {
-    const [ydoc, setYdoc] = useState<ProjectState | null>(null);
-    const [isLocalReady, setIsLocalReady] = useState(false);
-    const persistenceRef = useRef<YjsLocalProvider | null>(null);
-
-    useEffect(() => {
-        if (!projectId || typeof window === "undefined") {
-            setYdoc(null);
-            setIsLocalReady(false);
+        const { isLocalOnlyProject } = await import("../persistence/storage-provider/local-persistence");
+        if (await isLocalOnlyProject(entry.projectId)) {
+            if (!isLive(entry)) return;
+            entry.connectionStatus = "disconnected";
+            entry.isCloudSynced = true;
+            notifySubscribers(entry);
             return;
         }
 
-        let isDestroyed = false;
-        const initPersistence = async () => {
-            const state = new ProjectState();
-            const { createLocalYjsProvider } = await import("../persistence/y-local-provider");
-            const localProvider = await createLocalYjsProvider(projectId, state);
-
-            localProvider.on("synced", () => {
-                if (isDestroyed) return;
-                setIsLocalReady(true);
-            });
-
-            persistenceRef.current = localProvider;
-
-            if (!isDestroyed) {
-                setYdoc(state);
-            }
-        };
-
-        initPersistence();
-
-        return () => {
-            isDestroyed = true;
-            if (persistenceRef.current) {
-                persistenceRef.current.destroy();
-                persistenceRef.current = null;
-            }
-            setYdoc((prev) => {
-                prev?.destroy();
-                return null;
-            });
-            setIsLocalReady(false);
-        };
-    }, [projectId]);
-
-    return { ydoc, isLocalReady };
-};
-
-// -------------------------------- //
-//          CLOUD SYNC              //
-// -------------------------------- //
-
-/**
- * Hook to manage cloud WebSocket synchronization.
- */
-export const useCloudSync = (
-    projectId: string | null,
-    ydoc: ProjectState | null,
-    userInfo: UserInfo,
-) => {
-    const [provider, setProvider] = useState<ThrottledWebsocketProvider | null>(null);
-    const [users, setUsers] = useState<CollaboratorInfo[]>([]);
-    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
-    const [isCloudSynced, setIsCloudSynced] = useState(false);
-    const [isLockedByServer] = useState(false);
-    const [isSessionReplaced] = useState(false);
-    const [isProjectUnavailable, setIsProjectUnavailable] = useState(false);
-
-    const isMountedRef = useRef(true);
-    const providerRef = useRef<ThrottledWebsocketProvider | null>(null);
-    const lastUsersJsonRef = useRef<string>("");
-
-    // Use ref for userInfo to avoid triggering effects on every render
-    const userInfoRef = useRef(userInfo);
-    useEffect(() => {
-        userInfoRef.current = userInfo;
-    }, [userInfo]);
-
-    // Ref for the refresh function so it can be called from event handlers
-    const refreshAndReconnectRef = useRef<() => Promise<void>>();
-
-    // Refresh token and reconnect
-    const refreshAndReconnect = useCallback(async () => {
-        if (!providerRef.current || !projectId) return;
-
-        try {
-            const { token } = await getCloudToken(projectId);
-            if (token && isMountedRef.current) {
-                await providerRef.current.updateToken(token);
-            }
-        } catch (e) {
-            console.warn("[ProjectYjs] Failed to refresh token:", e);
-        }
-    }, [projectId]);
-
-    // Keep the ref up to date
-    useEffect(() => {
-        refreshAndReconnectRef.current = refreshAndReconnect;
-    }, [refreshAndReconnect]);
-
-    // Initialize provider when doc is ready
-    useEffect(() => {
-        isMountedRef.current = true;
-        setIsProjectUnavailable(false);
-
-        if (!ydoc || !projectId || typeof window === "undefined") {
-            setConnectionStatus("disconnected");
+        const { token, status } = await getCloudToken(entry.projectId);
+        if (!isLive(entry)) return;
+        if (!token) {
+            entry.connectionStatus = "disconnected";
+            entry.isCloudSynced = true;
+            // 403 means the cloud project was deleted or the user was removed.
+            // Surface the recovery dialog on both desktop and web — the local
+            // cache is still valid and the user should choose what to do with it.
+            if (status === 403) entry.isProjectUnavailable = true;
+            notifySubscribers(entry);
             return;
         }
 
-        // If provider already exists for this doc, don't recreate
-        if (providerRef.current) {
-            return;
-        }
+        const { ThrottledWebsocketProvider } = await import("../cloud/utils");
+        if (!isLive(entry)) return;
 
-        const setupProvider = async () => {
-            setConnectionStatus("connecting");
+        const cloudWsUrl = (process.env.NEXT_PUBLIC_CLOUD_URL || "").replace(/^http/, "ws");
+        const cloudProvider = new ThrottledWebsocketProvider(cloudWsUrl, entry.projectId, entry.state, {
+            params: { token, clientId: entry.state.clientID.toString() },
+            userInfo: entry.currentUserInfo,
+            disableBc: isDesktop,
+        });
+        entry.cloudProvider = cloudProvider;
+        notifySubscribers(entry);
 
+        cloudProvider.awareness.on("update", () => {
+            const states = Array.from(cloudProvider.awareness.getStates().values());
+            const uniqueUsers = new Map<string, CollaboratorInfo>();
+            for (const s of states) {
+                if (s.user) {
+                    const user = s.user as CollaboratorInfo;
+                    const key = user.userId || user.name;
+                    if (!uniqueUsers.has(key)) uniqueUsers.set(key, user);
+                }
+            }
+            const next = Array.from(uniqueUsers.values());
+            const nextJson = JSON.stringify(next);
+            if (nextJson !== entry.lastUsersJson) {
+                entry.lastUsersJson = nextJson;
+                entry.users = next;
+                notifySubscribers(entry);
+            }
+        });
+
+        cloudProvider.on("connection-error", async () => {
+            // Skip terminal states — refreshing after a kick would just hit
+            // cloud-token, get 403, and loop forever.
+            if (cloudProvider.wasSessionReplaced || cloudProvider.wasKicked) return;
+            console.warn("[ProjectYjs] Connection error, attempting to refresh token...");
+            entry.connectionStatus = "connecting";
+            notifySubscribers(entry);
             try {
-                // Check if we're in Tauri environment first
-                const { isTauri } = await import("@tauri-apps/api/core");
-                const isDesktop = isTauri();
-
-                // Local-only projects (not cloud-synced) don't need cloud sync
-                const { isLocalOnlyProject } =
-                    await import("../persistence/storage-provider/local-persistence");
-                if (await isLocalOnlyProject(projectId)) {
-                    setConnectionStatus("disconnected");
-                    setIsCloudSynced(true);
+                const { token: refreshed, status: refreshStatus } = await getCloudToken(entry.projectId);
+                if (!isLive(entry)) return;
+                if (refreshStatus === 403) {
+                    cloudProvider.shouldConnect = false;
+                    cloudProvider.disconnect();
+                    entry.isProjectUnavailable = true;
+                    entry.connectionStatus = "disconnected";
+                    notifySubscribers(entry);
                     return;
                 }
-
-                const { token, status } = await getCloudToken(projectId);
-                if (!token || !isMountedRef.current) {
-                    setConnectionStatus("disconnected");
-                    setIsCloudSynced(true); // Mark as "synced" so isReady becomes true
-
-                    // On desktop, 403 means the cloud project was deleted or user was removed
-                    if (status === 403 && isDesktop) {
-                        setIsProjectUnavailable(true);
-                    }
-                    return;
-                }
-
-                // Dynamically import collaboration utils
-                const { ThrottledWebsocketProvider } = await import("../cloud/utils");
-
-                const cloudProvider = new ThrottledWebsocketProvider(
-                    `${process.env.NEXT_PUBLIC_COLLAB_WEBSOCKET_URL}`,
-                    projectId,
-                    ydoc,
-                    {
-                        params: {
-                            token,
-                            clientId: ydoc.clientID.toString(),
-                        },
-                        userInfo: userInfoRef.current,
-                        disableBc: isDesktop,
-                    },
-                );
-
-                // Track connected users - only update state if users actually changed
-                cloudProvider.awareness.on("update", () => {
-                    if (!isMountedRef.current) return;
-
-                    const states = Array.from(cloudProvider.awareness.getStates().values());
-                    const uniqueUsersMap = new Map<string, CollaboratorInfo>();
-
-                    for (const state of states) {
-                        if (state.user) {
-                            const user = state.user as CollaboratorInfo;
-                            const key = user.userId || user.name;
-                            if (!uniqueUsersMap.has(key)) {
-                                uniqueUsersMap.set(key, user);
-                            }
-                        }
-                    }
-
-                    const connectedUsers = Array.from(uniqueUsersMap.values());
-                    const usersJson = JSON.stringify(connectedUsers);
-                    if (usersJson !== lastUsersJsonRef.current) {
-                        lastUsersJsonRef.current = usersJson;
-                        setUsers(connectedUsers);
-                    }
-                });
-
-                // Handle connection errors
-                cloudProvider.on("connection-error", async () => {
-                    if (cloudProvider.wasSessionReplaced) return;
-                    console.warn("[ProjectYjs] Connection error, attempting to refresh token...");
-                    if (isMountedRef.current) {
-                        setConnectionStatus("connecting");
-                        if (refreshAndReconnectRef.current) {
-                            await refreshAndReconnectRef.current();
-                        } else {
-                            cloudProvider.scheduleReconnect();
-                        }
-                    }
-                });
-
-                // Status updates
-                cloudProvider.on("status", (e: { status: string }) => {
-                    if (isMountedRef.current) {
-                        setTimeout(() => {
-                            if (isMountedRef.current) {
-                                setConnectionStatus(e.status as ConnectionStatus);
-                                if (e.status === "connected" && cloudProvider.synced) {
-                                    setIsCloudSynced(true);
-                                }
-                            }
-                        }, 0);
-                    }
-                });
-
-                // Track when initial cloud sync completes
-                cloudProvider.on("sync", (isSynced: boolean) => {
-                    if (isMountedRef.current && isSynced) {
-                        setIsCloudSynced(true);
-                    }
-                });
-
-                // Handle document restore
-                cloudProvider.on("document-restored", async () => {
-                    if (!isMountedRef.current) return;
-                    console.log(
-                        "[ProjectYjs] Document restored — clearing local cache and reloading",
-                    );
-                    await clearLocalProjectCache(projectId);
-                    window.location.reload();
-                });
-
-                // Poll for synced status
-                const checkSynced = () => {
-                    if (!isMountedRef.current) return;
-                    if (cloudProvider.synced) {
-                        setIsCloudSynced(true);
-                    } else {
-                        setTimeout(checkSynced, 100);
-                    }
-                };
-                setTimeout(checkSynced, 50);
-
-                providerRef.current = cloudProvider;
-                setProvider(cloudProvider);
+                if (refreshed) await cloudProvider.updateToken(refreshed);
             } catch (e) {
-                console.error("[ProjectYjs] Failed to initialize provider:", e);
-                if (isMountedRef.current) {
-                    setConnectionStatus("disconnected");
-                    setIsCloudSynced(true);
-                }
+                console.warn("[ProjectYjs] Failed to refresh token:", e);
             }
-        };
+        });
 
-        setupProvider();
+        cloudProvider.on("status", (e: { status: string }) => {
+            entry.connectionStatus = e.status as ConnectionStatus;
+            if (e.status === "connected" && cloudProvider.synced) entry.isCloudSynced = true;
+            notifySubscribers(entry);
+        });
 
-        const handleUnload = async () => {
-            if (providerRef.current && ydoc) {
-                const { removeAwarenessStates } = await getYProtocols();
-                removeAwarenessStates(
-                    providerRef.current.awareness,
-                    [ydoc.clientID],
-                    "window unload",
-                );
+        cloudProvider.on("sync", (isSynced: boolean) => {
+            if (isSynced) {
+                entry.isCloudSynced = true;
+                notifySubscribers(entry);
             }
-        };
+        });
 
-        window.addEventListener("beforeunload", handleUnload);
+        cloudProvider.on("session-replaced", () => {
+            entry.isSessionReplaced = true;
+            entry.connectionStatus = "disconnected";
+            notifySubscribers(entry);
+        });
 
-        return () => {
-            isMountedRef.current = false;
-            window.removeEventListener("beforeunload", handleUnload);
-        };
-    }, [ydoc, projectId]);
+        cloudProvider.on("kicked", () => {
+            entry.isProjectUnavailable = true;
+            entry.connectionStatus = "disconnected";
+            notifySubscribers(entry);
+        });
 
-    useEffect(() => {
-        if (providerRef.current) {
-            providerRef.current.setUserInfo(userInfo);
-        }
-    }, [userInfo]);
-
-    useEffect(() => {
-        return () => {
-            if (providerRef.current) {
-                if (ydoc) {
-                    getYProtocols().then(({ removeAwarenessStates }) => {
-                        if (providerRef.current) {
-                            removeAwarenessStates(
-                                providerRef.current.awareness,
-                                [ydoc.clientID],
-                                "component unmount",
-                            );
-                            providerRef.current.destroy();
-                            providerRef.current = null;
-                            setProvider(null);
-                        }
-                    });
+        cloudProvider.on("document-restored", async () => {
+            console.log("[ProjectYjs] Document restored — clearing local cache and reloading");
+            try {
+                if (entry.localProvider?.clearData) {
+                    await entry.localProvider.clearData();
                 } else {
-                    providerRef.current.destroy();
-                    providerRef.current = null;
-                    setProvider(null);
+                    const { clearYjsData } = await import("../persistence/storage-provider/local-persistence");
+                    await clearYjsData(entry.projectId);
                 }
+            } catch (e) {
+                console.warn("[ProjectYjs] Failed to clear local cache:", e);
             }
-        };
-    }, [ydoc]);
+            window.location.reload();
+        });
 
-    return {
-        provider,
-        users,
-        connectionStatus,
-        isCloudSynced,
-        refreshAndReconnect,
-        isLockedByServer,
-        isSessionReplaced,
-        isProjectUnavailable,
+        cloudProvider.on("stale-client-version", () => {
+            console.warn("[ProjectYjs] Server rejected this client as stale");
+            entry.isStaleClient = true;
+            notifySubscribers(entry);
+        });
+    } catch (e) {
+        console.error("[ProjectYjs] Failed to initialize provider:", e);
+        if (!isLive(entry)) return;
+        entry.connectionStatus = "disconnected";
+        entry.isCloudSynced = true;
+        notifySubscribers(entry);
+    }
+};
+
+const acquireSession = (projectId: string, userInfo: UserInfo): SessionEntry => {
+    const existing = sessionCache.get(projectId);
+    if (existing) {
+        existing.refCount++;
+        existing.currentUserInfo = userInfo;
+        existing.cloudProvider?.setUserInfo(userInfo);
+        if (existing.disposeTimer) {
+            clearTimeout(existing.disposeTimer);
+            existing.disposeTimer = null;
+        }
+        return existing;
+    }
+
+    const entry: SessionEntry = {
+        projectId,
+        state: new ProjectState(),
+        localProvider: null,
+        cloudProvider: null,
+        isLocalReady: false,
+        isCloudSynced: false,
+        isCloudInitStarted: false,
+        migrationOutcome: null,
+        connectionStatus: "disconnected",
+        users: [],
+        isProjectUnavailable: false,
+        isSessionReplaced: false,
+        isStaleClient: false,
+        currentUserInfo: userInfo,
+        lastUsersJson: "",
+        refCount: 1,
+        disposeTimer: null,
+        subscribers: new Set(),
     };
+    sessionCache.set(projectId, entry);
+    void initLocalProvider(entry);
+    return entry;
+};
+
+const releaseSession = (projectId: string): void => {
+    const entry = sessionCache.get(projectId);
+    if (!entry) return;
+    entry.refCount--;
+    if (entry.refCount > 0) return;
+
+    // Defer disposal so a synchronous remount (StrictMode) can cancel it via
+    // clearTimeout in acquireSession before the resources are torn down.
+    entry.disposeTimer = setTimeout(async () => {
+        entry.disposeTimer = null;
+        if (entry.refCount > 0) return;
+
+        if (entry.cloudProvider) {
+            try {
+                const { removeAwarenessStates } = await getYProtocols();
+                removeAwarenessStates(entry.cloudProvider.awareness, [entry.state.clientID], "session release");
+            } catch {}
+            entry.cloudProvider.destroy();
+        }
+        entry.localProvider?.destroy();
+        entry.state.destroy();
+        sessionCache.delete(projectId);
+    }, 0);
 };
 
 // -------------------------------- //
@@ -678,13 +607,25 @@ export interface UseProjectYjsOptions {
     userId?: string;
 }
 
+const computeStatus = (entry: SessionEntry | null): ProjectStatus => {
+    if (!entry) return { kind: "loading" };
+    if (entry.isStaleClient) {
+        return { kind: "needs-update", outcome: { kind: "stale-client" } };
+    }
+    if (entry.migrationOutcome?.kind === "future-version" || entry.migrationOutcome?.kind === "failed") {
+        return { kind: "needs-update", outcome: entry.migrationOutcome };
+    }
+    if (entry.isProjectUnavailable) return { kind: "unavailable" };
+    if (!entry.isLocalReady) return { kind: "loading" };
+    return { kind: "ready" };
+};
+
 export const useProjectYjs = ({
     projectId,
     userName,
     userColor,
     userId,
 }: UseProjectYjsOptions): ProjectYjsState & {
-    isReady: boolean;
     refreshAndReconnect: () => Promise<void>;
 } => {
     const [fallback] = useState(() => ({
@@ -700,36 +641,76 @@ export const useProjectYjs = ({
         [userName, userColor, userId, fallback.name, fallback.color],
     );
 
-    const { ydoc, isLocalReady } = useLocalPersistence(projectId);
-    const {
-        provider,
-        users,
-        connectionStatus,
-        isCloudSynced,
-        refreshAndReconnect,
-        isLockedByServer,
-        isSessionReplaced,
-        isProjectUnavailable,
-    } = useCloudSync(projectId, ydoc, userInfo);
+    const entryRef = useRef<SessionEntry | null>(null);
+    const [, setVersion] = useState(0);
 
-    // isReady: project is ready when ydoc exists and local storage is synced
-    // Cloud sync happens in the background and will merge data when it arrives
-    const isCloudReady = connectionStatus === "connected";
-    const isReady = ydoc !== null && isLocalReady;
+    useEffect(() => {
+        if (!projectId || typeof window === "undefined") {
+            entryRef.current = null;
+            setVersion((v) => v + 1);
+            return;
+        }
 
+        const entry = acquireSession(projectId, userInfo);
+        entryRef.current = entry;
+        const onChange = () => setVersion((v) => v + 1);
+        entry.subscribers.add(onChange);
+        setVersion((v) => v + 1);
+
+        const handleUnload = async () => {
+            if (entry.cloudProvider) {
+                const { removeAwarenessStates } = await getYProtocols();
+                removeAwarenessStates(entry.cloudProvider.awareness, [entry.state.clientID], "window unload");
+            }
+        };
+        window.addEventListener("beforeunload", handleUnload);
+
+        return () => {
+            window.removeEventListener("beforeunload", handleUnload);
+            entry.subscribers.delete(onChange);
+            entryRef.current = null;
+            releaseSession(projectId);
+        };
+        // userInfo is intentionally NOT in the deps: re-acquiring on every
+        // userInfo change would defeat the cache. Updates flow via the
+        // separate effect below, which calls setUserInfo on the live provider.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [projectId]);
+
+    useEffect(() => {
+        const entry = entryRef.current;
+        if (!entry) return;
+        entry.currentUserInfo = userInfo;
+        entry.cloudProvider?.setUserInfo(userInfo);
+    }, [userInfo]);
+
+    const refreshAndReconnect = useCallback(async () => {
+        const entry = entryRef.current;
+        if (!entry?.cloudProvider || !projectId) return;
+        try {
+            const { token, status } = await getCloudToken(projectId);
+            if (status === 403) {
+                entry.cloudProvider.shouldConnect = false;
+                entry.cloudProvider.disconnect();
+                entry.isProjectUnavailable = true;
+                entry.connectionStatus = "disconnected";
+                notifySubscribers(entry);
+                return;
+            }
+            if (token) await entry.cloudProvider.updateToken(token);
+        } catch (e) {
+            console.warn("[ProjectYjs] Failed to refresh token:", e);
+        }
+    }, [projectId]);
+
+    const entry = entryRef.current;
     return {
-        ydoc,
-        provider,
-        isLocalReady,
-        isCloudReady,
-        isCloudSynced,
-        isReady,
-        connectionStatus,
-        users,
+        ydoc: entry?.state ?? null,
+        provider: entry?.cloudProvider ?? null,
+        status: computeStatus(entry),
+        connectionStatus: entry?.connectionStatus ?? "disconnected",
+        users: entry?.users ?? [],
         refreshAndReconnect,
-        isLockedByServer,
-        isSessionReplaced,
-        isProjectUnavailable,
     };
 };
 

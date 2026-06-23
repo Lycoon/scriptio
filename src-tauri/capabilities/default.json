@@ -5,6 +5,7 @@
     "windows": ["main"],
     "permissions": [
         "core:default",
+        "core:app:allow-set-app-theme",
         "store:allow-get",
         "store:allow-set",
         "store:allow-delete",
@@ -12,6 +13,7 @@
         "store:allow-load",
         "dialog:allow-save",
         "fs:allow-write-file",
+        "clipboard-manager:allow-read-text",
         "opener:default",
         "iap:default"
     ]

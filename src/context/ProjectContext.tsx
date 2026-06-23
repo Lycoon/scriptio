@@ -13,21 +13,30 @@ import { Editor } from "@tiptap/react";
 import { CharacterMap, mergeCharactersData } from "@src/lib/screenplay/characters";
 import { LocationMap, mergeLocationsData } from "@src/lib/screenplay/locations";
 import { mergeScenesData, PersistentSceneMap, Scene } from "@src/lib/screenplay/scenes";
+import { PersistentPageMap } from "@src/lib/screenplay/page-locking";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { ProjectRole } from "@src/generated/client/browser";
 import { useUser } from "@src/lib/utils/hooks";
+import { getCloudToken } from "@src/lib/utils/requests";
 import {
     CollaboratorInfo,
     ConnectionStatus,
     LayoutData,
+    ProductionData,
     useProjectYjs,
     ElementStyle,
     PageMargin,
     DEFAULT_PAGE_MARGINS,
+    DEFAULT_SKIPPED_SCENE_LETTERS,
     ShelfEntry,
+    DocumentNode,
+    OutlineItem,
+    ProjectStatus,
 } from "@src/lib/project/project-state";
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
+import { useAssetGc } from "@src/lib/assets/use-asset-gc";
 
 // Import types only - these don't cause module loading
 import type { ThrottledWebsocketProvider } from "@src/lib/cloud/utils";
@@ -39,6 +48,8 @@ import type { ProjectRepository } from "@src/lib/project/project-repository";
 
 export interface ProjectContextType {
     // Project data
+    /** The active project's id (stable for the provider's lifetime). */
+    projectId: string;
     project: ProjectMembershipPayload | null;
     updateProject: (project: ProjectMembershipPayload) => void;
 
@@ -46,6 +57,11 @@ export interface ProjectContextType {
     repository: ProjectRepository | null;
     provider: ThrottledWebsocketProvider | null;
     isYjsReady: boolean;
+
+    /** True when the current user has VIEWER role on a cloud project.
+     *  All edit affordances must be hidden/disabled when this is true,
+     *  and the repository's writes are no-ops as a safety net. */
+    isReadOnly: boolean;
 
     // Connection state
     connectionStatus: ConnectionStatus;
@@ -90,6 +106,26 @@ export interface ProjectContextType {
     elementStyles: Record<string, ElementStyle>;
     setElementStyles: (styles: Record<string, ElementStyle>) => void;
 
+    // Production
+    sceneLocking: boolean;
+    setSceneLocking: (locked: boolean) => void;
+    sceneNumberingStyle: "suffix" | "prefix";
+    setSceneNumberingStyle: (style: "suffix" | "prefix") => void;
+    skippedSceneLetters: string[];
+    setSkippedSceneLetters: (letters: string[]) => void;
+    /** Raw persistent scene map (UUID → PersistentScene). Includes synopsis,
+     *  color, and production-lock fields (token, omitted) for every scene that
+     *  has been persisted. */
+    persistentScenes: PersistentSceneMap;
+
+    /** Page-locking master switch (production lock for page numbering). */
+    pageLocking: boolean;
+    setPageLocking: (locked: boolean) => void;
+    /** Raw persistent page-lock map (anchor data-id → PersistentPage).
+     *  Keyed by `PAGE_ONE_KEY` for page 1, by the top-level node's data-id
+     *  for subsequent pages. */
+    persistentPages: PersistentPageMap;
+
     // Search state
     searchTerm: string;
     setSearchTerm: (term: string) => void;
@@ -99,6 +135,9 @@ export interface ProjectContextType {
     setCurrentSearchIndex: (index: number) => void;
     searchMatches: SearchMatch[];
     setSearchMatches: (matches: SearchMatch[]) => void;
+    /** Editor that search/replace targets: the focused screenplay-type editor
+     *  (draft or tree document), falling back to the main screenplay. */
+    activeSearchEditor: Editor | null;
 
     // Project metadata (for title page placeholders)
     projectTitle: string;
@@ -124,6 +163,18 @@ export interface ProjectContextType {
     shelfEntries: Record<string, ShelfEntry>;
     activeShelfVersion: { nodeId: string; versionId: string } | null;
     setActiveShelfVersion: (v: { nodeId: string; versionId: string } | null) => void;
+
+    // Document tree (folders + editor/board documents)
+    documents: Record<string, DocumentNode>;
+    documentEditor: Editor | null;
+    updateDocumentEditor: (editor: Editor | null) => void;
+
+    // Outline view (project-wide ordered list of scene/card references)
+    outline: Record<string, OutlineItem>;
+    /** A board card to focus next time its board canvas mounts/becomes visible
+     *  (set when navigating to a card from the Outline). Cleared by the canvas. */
+    boardFocusCardId: string | null;
+    setBoardFocusCardId: (cardId: string | null) => void;
 }
 
 // -------------------------------- //
@@ -131,11 +182,13 @@ export interface ProjectContextType {
 // -------------------------------- //
 
 const defaultContextValue: ProjectContextType = {
+    projectId: "",
     project: null,
     updateProject: () => {},
     repository: null,
     provider: null,
     isYjsReady: false,
+    isReadOnly: false,
 
     connectionStatus: "disconnected",
     users: [],
@@ -165,6 +218,16 @@ const defaultContextValue: ProjectContextType = {
     setElementMargins: () => {},
     elementStyles: {},
     setElementStyles: () => {},
+    sceneLocking: false,
+    setSceneLocking: () => {},
+    sceneNumberingStyle: "suffix",
+    setSceneNumberingStyle: () => {},
+    skippedSceneLetters: DEFAULT_SKIPPED_SCENE_LETTERS,
+    setSkippedSceneLetters: () => {},
+    persistentScenes: {},
+    pageLocking: false,
+    setPageLocking: () => {},
+    persistentPages: {},
     characters: {},
     locations: {},
     scenes: [],
@@ -187,6 +250,7 @@ const defaultContextValue: ProjectContextType = {
     setCurrentSearchIndex: () => {},
     searchMatches: [],
     setSearchMatches: () => {},
+    activeSearchEditor: null,
     // Project metadata defaults
     projectTitle: "",
     setProjectTitle: () => {},
@@ -207,6 +271,14 @@ const defaultContextValue: ProjectContextType = {
     shelfEntries: {},
     activeShelfVersion: null,
     setActiveShelfVersion: () => {},
+    // Document tree defaults
+    documents: {},
+    documentEditor: null,
+    updateDocumentEditor: () => {},
+    // Outline defaults
+    outline: {},
+    boardFocusCardId: null,
+    setBoardFocusCardId: () => {},
 };
 
 export const ProjectContext = createContext<ProjectContextType>(defaultContextValue);
@@ -214,13 +286,11 @@ export const ProjectContext = createContext<ProjectContextType>(defaultContextVa
 // Stable context for rarely-changing infrastructure values.
 // Prevents ProjectLayoutInner from re-rendering on every screenplay change.
 interface ProjectReadyContextType {
-    isYjsReady: boolean;
-    isProjectUnavailable: boolean;
+    status: ProjectStatus;
 }
 
 const ProjectReadyContext = createContext<ProjectReadyContextType>({
-    isYjsReady: false,
-    isProjectUnavailable: false,
+    status: { kind: "loading" },
 });
 
 export const useProjectReady = () => useContext(ProjectReadyContext);
@@ -246,10 +316,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const {
         ydoc,
         provider,
-        isReady: isYjsReady,
+        status,
         connectionStatus: yjsConnectionStatus,
         users: yjsUsers,
-        isProjectUnavailable,
     } = useProjectYjs({
         projectId,
         userName,
@@ -257,10 +326,15 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         userId: user?.id,
     });
 
+    // Derived for downstream consumers (editor, board, etc.) that only care
+    // whether the project is renderable, not which error state we're in.
+    const isYjsReady = status.kind === "ready";
+
     // Repository state - loaded dynamically
     const [repository, setRepository] = useState<ProjectRepository | null>(null);
 
     const [project, setProject] = useState<ProjectMembershipPayload | null>(null);
+    const isReadOnly = !!project && project.role === ProjectRole.VIEWER;
     const [editor, setEditor] = useState<Editor | null>(null);
     const [screenplay, setScreenplay] = useState<Screenplay>([]);
     const [characters, setCharacters] = useState<CharacterMap | undefined>(undefined);
@@ -282,6 +356,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         Record<string, { left: number; right: number }>
     >({});
     const [elementStyles, setElementStylesState] = useState<Record<string, ElementStyle>>({});
+    const [sceneLocking, setSceneLockingState] = useState<boolean>(false);
+    const [sceneNumberingStyle, setSceneNumberingStyleState] =
+        useState<"suffix" | "prefix">("suffix");
+    const [skippedSceneLetters, setSkippedSceneLettersState] =
+        useState<string[]>(DEFAULT_SKIPPED_SCENE_LETTERS);
+    const [persistentScenes, setPersistentScenesState] = useState<PersistentSceneMap>({});
+    const [pageLocking, setPageLockingState] = useState<boolean>(false);
+    const [persistentPages, setPersistentPagesState] = useState<PersistentPageMap>({});
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
 
@@ -327,6 +409,15 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         versionId: string;
     } | null>(null);
 
+    // Document-tree state
+    const [documents, setDocuments] = useState<Record<string, DocumentNode>>({});
+    const [documentEditor, setDocumentEditor] = useState<Editor | null>(null);
+    const updateDocumentEditor = useCallback((editor: Editor | null) => setDocumentEditor(editor), []);
+
+    // Outline state
+    const [outline, setOutline] = useState<Record<string, OutlineItem>>({});
+    const [boardFocusCardId, setBoardFocusCardId] = useState<string | null>(null);
+
     // Create repository instance when ydoc is available (dynamically imported)
     useEffect(() => {
         if (!ydoc) {
@@ -349,6 +440,40 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             isMounted = false;
         };
     }, [ydoc]);
+
+    useEffect(() => {
+        repository?.setReadOnly(isReadOnly);
+    }, [repository, isReadOnly]);
+
+    // Keep IndexedDB image assets reconciled with the document (orphan sweep).
+    useAssetGc(projectId, repository, isYjsReady);
+
+    // The DO pushes a role-changed message whenever an admin updates this
+    // user's role. Mirror it into local state so isReadOnly flips and the
+    // editor/repository gates apply immediately, without waiting for an SWR
+    // revalidation of the membership endpoint.
+    useEffect(() => {
+        if (!provider) return;
+        const handler = async (newRole: string) => {
+            setProject((prev) => (prev ? { ...prev, role: newRole as ProjectRole } : prev));
+            if (project?.project.id) {
+                try {
+                    const { token } = await getCloudToken(project.project.id);
+                    if (token) {
+                        // Update token silently so future reconnects use the new role.
+                        // We don't force reconnect because the DO already updated our active session.
+                        await provider.updateToken(token, false);
+                    }
+                } catch (e) {
+                    console.warn("Failed to fetch new token on role change", e);
+                }
+            }
+        };
+        provider.on("role-changed", handler);
+        return () => {
+            provider.off("role-changed", handler);
+        };
+    }, [provider, project?.project.id]);
 
     const updateScreenplay = useCallback((newScreenplay: Screenplay) => {
         setScreenplay(newScreenplay);
@@ -427,6 +552,27 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             }
         }
 
+        // Read initial production data (separate Y.Map from layout).
+        const initialProduction = repository.getProduction();
+        if (initialProduction) {
+            if (initialProduction.sceneLocking !== undefined) {
+                setSceneLockingState(initialProduction.sceneLocking);
+            }
+            if (initialProduction.sceneNumberingStyle !== undefined) {
+                setSceneNumberingStyleState(initialProduction.sceneNumberingStyle);
+            }
+            if (initialProduction.skippedSceneLetters !== undefined) {
+                setSkippedSceneLettersState(initialProduction.skippedSceneLetters);
+            }
+            if (initialProduction.pageLocking !== undefined) {
+                setPageLockingState(initialProduction.pageLocking);
+            }
+        }
+
+        // Read initial persistent scenes & pages
+        setPersistentScenesState(repository.scenes);
+        setPersistentPagesState(repository.pages);
+
         // Observe layout changes
         const unsubscribeLayout = repository.observeLayout((layout: Partial<LayoutData>) => {
             const _pageSize = layout.pageSize;
@@ -467,6 +613,27 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             }
         });
 
+        // Observe production changes
+        const unsubscribeProduction = repository.observeProduction((production: Partial<ProductionData>) => {
+            if (production.sceneLocking !== undefined) {
+                setSceneLockingState(production.sceneLocking);
+            }
+            if (production.sceneNumberingStyle !== undefined) {
+                setSceneNumberingStyleState(production.sceneNumberingStyle);
+            }
+            if (production.skippedSceneLetters !== undefined) {
+                setSkippedSceneLettersState(production.skippedSceneLetters);
+            }
+            if (production.pageLocking !== undefined) {
+                setPageLockingState(production.pageLocking);
+            }
+        });
+
+        // Observe page-lock changes
+        const unsubscribePages = repository.observePages((pages: PersistentPageMap) => {
+            setPersistentPagesState(pages);
+        });
+
         // Observe character changes - get current screenplay from repository
         const unsubscribeCharacters = repository.observeCharacters((_characters: CharacterMap) => {
             const currentScreenplay = repository.screenplay;
@@ -486,6 +653,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             const currentScreenplay = repository.screenplay;
             const allScenes = mergeScenesData(_scenes, currentScreenplay);
             updateScenes(allScenes);
+            setPersistentScenesState(_scenes);
         });
 
         // Observe metadata changes (for title page placeholders)
@@ -504,14 +672,30 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setShelfEntries(entries);
         });
 
+        // Observe document-tree changes
+        setDocuments(repository.documents);
+        const unsubscribeDocuments = repository.observeDocuments((docs) => {
+            setDocuments(docs);
+        });
+
+        // Observe outline changes
+        setOutline(repository.outlineItems);
+        const unsubscribeOutline = repository.observeOutline((items) => {
+            setOutline(items);
+        });
+
         return () => {
             repository.unregisterScreenplayCallback(recomputeFromScreenplay);
             unsubscribeLayout();
+            unsubscribeProduction();
+            unsubscribePages();
             unsubscribeCharacters();
             unsubscribeLocations();
             unsubscribeScenes();
             unsubscribeMetadata();
             unsubscribeShelf();
+            unsubscribeDocuments();
+            unsubscribeOutline();
         };
     }, [repository, updateCharacters, updateLocations, updateScenes, updateScreenplay]);
 
@@ -663,6 +847,38 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    const setSceneLocking = useCallback(
+        (locked: boolean) => {
+            setSceneLockingState(locked);
+            repository?.setSceneLocking(locked);
+        },
+        [repository],
+    );
+
+    const setPageLocking = useCallback(
+        (locked: boolean) => {
+            setPageLockingState(locked);
+            repository?.setPageLocking(locked);
+        },
+        [repository],
+    );
+
+    const setSceneNumberingStyle = useCallback(
+        (style: "suffix" | "prefix") => {
+            setSceneNumberingStyleState(style);
+            repository?.setSceneNumberingStyle(style);
+        },
+        [repository],
+    );
+
+    const setSkippedSceneLetters = useCallback(
+        (letters: string[]) => {
+            setSkippedSceneLettersState(letters);
+            repository?.setSkippedSceneLetters(letters);
+        },
+        [repository],
+    );
+
     const setSearchTerm = useCallback((term: string) => {
         setSearchTermState(term);
         // Reset to first match when search term changes
@@ -711,13 +927,26 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         setFocusedEditorTypeState(type);
     }, []);
 
+    // Scope search to the focused screenplay-type editor. `focusedEditorType`
+    // flips on every editor focus change, so it gates *when* we re-resolve, while
+    // `isFocused` picks the concrete editor — disambiguating a draft from a tree
+    // document, which both report "draft". Falls back to the main screenplay.
+    const activeSearchEditor = useMemo(
+        () => [editor, draftEditor, documentEditor].find((e) => e?.isFocused) ?? editor,
+        // focusedEditorType is the intentional re-resolve trigger (not read directly).
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [focusedEditorType, editor, draftEditor, documentEditor],
+    );
+
     const contextValue = useMemo<ProjectContextType>(
         () => ({
+            projectId,
             project,
             updateProject,
             repository,
             provider,
             isYjsReady,
+            isReadOnly,
             connectionStatus,
             users,
             editor,
@@ -746,6 +975,16 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setElementMargins,
             elementStyles,
             setElementStyles,
+            sceneLocking,
+            setSceneLocking,
+            sceneNumberingStyle,
+            setSceneNumberingStyle,
+            skippedSceneLetters,
+            setSkippedSceneLetters,
+            persistentScenes,
+            pageLocking,
+            setPageLocking,
+            persistentPages,
             screenplay,
             scenes,
             updateScenes,
@@ -759,6 +998,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setCurrentSearchIndex,
             searchMatches,
             setSearchMatches,
+            activeSearchEditor,
             projectTitle,
             setProjectTitle,
             projectAuthor,
@@ -774,13 +1014,21 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             shelfEntries,
             activeShelfVersion,
             setActiveShelfVersion,
+            documents,
+            documentEditor,
+            updateDocumentEditor,
+            outline,
+            boardFocusCardId,
+            setBoardFocusCardId,
         }),
         [
+            projectId,
             project,
             updateProject,
             repository,
             provider,
             isYjsReady,
+            isReadOnly,
             connectionStatus,
             users,
             editor,
@@ -809,6 +1057,16 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setElementMargins,
             elementStyles,
             setElementStyles,
+            sceneLocking,
+            setSceneLocking,
+            sceneNumberingStyle,
+            setSceneNumberingStyle,
+            skippedSceneLetters,
+            setSkippedSceneLetters,
+            persistentScenes,
+            pageLocking,
+            setPageLocking,
+            persistentPages,
             screenplay,
             scenes,
             updateScenes,
@@ -822,6 +1080,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setCurrentSearchIndex,
             searchMatches,
             setSearchMatches,
+            activeSearchEditor,
             projectTitle,
             setProjectTitle,
             projectAuthor,
@@ -837,13 +1096,16 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             shelfEntries,
             activeShelfVersion,
             setActiveShelfVersion,
+            documents,
+            documentEditor,
+            updateDocumentEditor,
+            outline,
+            boardFocusCardId,
+            setBoardFocusCardId,
         ],
     );
 
-    const readyValue = useMemo(
-        () => ({ isYjsReady, isProjectUnavailable }),
-        [isYjsReady, isProjectUnavailable],
-    );
+    const readyValue = useMemo(() => ({ status }), [status]);
 
     return (
         <ProjectReadyContext.Provider value={readyValue}>

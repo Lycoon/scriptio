@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { decodeJwt } from "jose";
-import prisma from "@src/server/db";
+import { verifyAppleJws } from "@src/lib/apple-jws";
+import { logger } from "@src/lib/utils/logger";
 import * as UserService from "@src/server/service/user-service";
+import * as TransactionService from "@src/server/service/transaction-service";
 
 interface AppleNotificationPayload {
     notificationType: string;
@@ -14,6 +15,7 @@ interface AppleNotificationPayload {
 
 interface AppleTransactionInfo {
     transactionId: string;
+    originalTransactionId: string;
     bundleId: string;
     productId: string;
     purchaseDate: number;
@@ -27,9 +29,24 @@ interface AppleRenewalInfo {
 }
 
 async function findUser(transaction: AppleTransactionInfo): Promise<{ id: string } | null> {
-    if (!transaction.appAccountToken) return null;
-    const user = await UserService.getUserFromId(transaction.appAccountToken);
-    return user ? { id: user.id } : null;
+    // appAccountToken is the user ID set at purchase time via StoreKit's appAccountToken option.
+    if (transaction.appAccountToken) {
+        const user = await UserService.getUserFromId(transaction.appAccountToken);
+        if (user) {
+            logger.debug("[Apple webhook] Resolved user via appAccountToken", { userId: user.id });
+            return { id: user.id };
+        }
+    }
+    // Fallback: look up via originalTransactionId, which is the stable anchor stored
+    // in the Transaction table during the initial /api/apple/purchase call.
+    const tx = await TransactionService.findUserByTransactionId(transaction.originalTransactionId);
+    if (tx) {
+        logger.debug("[Apple webhook] Resolved user via originalTransactionId", {
+            userId: tx.userId,
+            originalTransactionId: transaction.originalTransactionId,
+        });
+    }
+    return tx ? { id: tx.userId } : null;
 }
 
 export async function POST(req: NextRequest) {
@@ -38,15 +55,32 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Missing signedPayload" }, { status: 400 });
     }
 
-    const notification = decodeJwt(body.signedPayload) as unknown as AppleNotificationPayload;
-    const transaction = decodeJwt(notification.data.signedTransactionInfo) as unknown as AppleTransactionInfo;
-    const renewal = notification.data.signedRenewalInfo
-        ? (decodeJwt(notification.data.signedRenewalInfo) as unknown as AppleRenewalInfo)
-        : null;
+    let notification: AppleNotificationPayload;
+    let transaction: AppleTransactionInfo;
+    let renewal: AppleRenewalInfo | null = null;
+
+    try {
+        notification = await verifyAppleJws<AppleNotificationPayload>(body.signedPayload);
+        transaction = await verifyAppleJws<AppleTransactionInfo>(notification.data.signedTransactionInfo);
+        if (notification.data.signedRenewalInfo) {
+            renewal = await verifyAppleJws<AppleRenewalInfo>(notification.data.signedRenewalInfo);
+        }
+    } catch (err) {
+        logger.error("[Apple webhook] JWS verification failed", err);
+        return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+
+    logger.debug("[Apple webhook] Received notification", {
+        type: notification.notificationType,
+        subtype: notification.subtype,
+        originalTransactionId: transaction.originalTransactionId,
+    });
 
     const user = await findUser(transaction);
     if (!user) {
-        console.warn("[Apple webhook] No user found for transaction:", transaction.transactionId);
+        logger.warn("[Apple webhook] No user found for transaction", {
+            originalTransactionId: transaction.originalTransactionId,
+        });
         return NextResponse.json({ received: true });
     }
 
@@ -59,13 +93,8 @@ export async function POST(req: NextRequest) {
                 subscriptionProvider: "APPLE",
                 isSubscriptionCancelled: false,
             });
-            await prisma.transaction.create({
-                data: {
-                    userId: user.id,
-                    provider: "APPLE",
-                    transactionId: transaction.transactionId,
-                },
-            });
+            await TransactionService.createTransactionIfNotExists(user.id, "APPLE", transaction.originalTransactionId);
+            logger.debug("[Apple webhook] Pro granted", { userId: user.id, expiresDate });
             break;
         }
 
@@ -76,14 +105,14 @@ export async function POST(req: NextRequest) {
                 subscriptionProvider: null,
                 isSubscriptionCancelled: false,
             });
+            logger.debug("[Apple webhook] Pro revoked", { userId: user.id, reason: notification.notificationType });
             break;
         }
 
         case "DID_CHANGE_RENEWAL_STATUS": {
             const autoRenewOff = renewal?.autoRenewStatus === 0;
-            await UserService.updateUserFromId(user.id, {
-                isSubscriptionCancelled: autoRenewOff,
-            });
+            await UserService.updateUserFromId(user.id, { isSubscriptionCancelled: autoRenewOff });
+            logger.debug("[Apple webhook] Renewal status changed", { userId: user.id, autoRenewOff });
             break;
         }
 
@@ -93,6 +122,7 @@ export async function POST(req: NextRequest) {
                 subscriptionProvider: null,
                 isSubscriptionCancelled: false,
             });
+            logger.debug("[Apple webhook] Pro refunded", { userId: user.id });
             break;
         }
     }

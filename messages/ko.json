@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "아웃라인",
+    "empty": "장면과 카드를 여기로 보내 이야기 구성을 시작하세요.",
+    "untitled": "제목 없음",
+    "unlinked": "연결 해제됨",
+    "unlinkedHint": "이 블록의 원본이 더 이상 존재하지 않습니다.",
+    "removeFromOutline": "아웃라인에서 제거"
+  },
   "navbar": {
+    "outline": "아웃라인",
     "screenplay": "시나리오",
     "board": "보드",
     "titlePage": "타이틀 페이지",
@@ -7,12 +16,30 @@
     "noConnection": "연결 없음",
     "reconnecting": "재연결 중...",
     "localProject": "로컬 프로젝트",
+    "uploadToCloud": "클라우드에 업로드",
+    "storageProject": "이 프로젝트",
+    "storageTotal": "총 사용량",
     "endlessScroll": "무한 스크롤",
     "toggleComments": "댓글 표시 전환",
+    "toggleSpellcheck": "맞춤법 검사 전환",
     "focusMode": "집중 모드",
     "splitPanel": "패널 분할",
     "unsplitPanel": "패널 통합",
-    "draftEditor": "초안 편집기"
+    "swapPanels": "패널 교체",
+    "draftEditor": "초안 편집기",
+    "viewOnly": "보기 전용",
+    "viewOnlyHint": "뷰어 권한이 있습니다. 편집이 비활성화되었습니다.",
+    "pageCount": "{count}페이지"
+  },
+  "timer": {
+    "title": "글쓰기 세션",
+    "countdown": "카운트다운",
+    "stopwatch": "스톱워치",
+    "start": "시작",
+    "pause": "일시정지",
+    "resume": "계속",
+    "reset": "초기화",
+    "minutesShort": "분"
   },
   "common": {
     "save": "변경사항 저장",
@@ -37,7 +64,8 @@
       "latte": "따뜻하고 가독성이 좋은 크림색 테마입니다.",
       "wonka": "깊고 고급스러운 초콜릿 톤의 테마입니다.",
       "mint": "신선하고 균형 잡힌 민트색 테마입니다.",
-      "blossom": "부드럽고 화사한 꽃잎 톤의 테마입니다."
+      "blossom": "부드럽고 화사한 꽃잎 톤의 테마입니다.",
+      "midnight": "깊고 풍부한 한밤의 파란 테마로, 집중적인 작업을 위해 설계되었습니다."
     },
     "editor": "에디터",
     "themedEditor": "테마 에디터",
@@ -62,6 +90,7 @@
     "spellcheckLabel": "맞춤법 검사",
     "spellcheckHelpText": "에디터에서 맞춤법 검사를 위해 사전을 다운로드하세요.",
     "spellcheckNone": "비활성화됨",
+    "spellcheckBuiltin": "내장",
     "customDictLabel": "프로젝트 사전",
     "customDictAdd": "추가",
     "customDictEmpty": "아직 사용자 정의 단어가 없습니다.",
@@ -76,7 +105,9 @@
     "tabs": {
       "General": "일반",
       "Layout": "레이아웃",
+      "Production": "프로덕션",
       "Export": "가져오기/내보내기",
+      "Storage": "저장 공간",
       "Collaborators": "공동 작업자",
       "Keybinds": "단축키",
       "Appearance": "테마",
@@ -87,6 +118,21 @@
       "About": "정보",
       "Subscription": "구독"
     }
+  },
+  "storage": {
+    "total": "사용 용량",
+    "description": "이 프로젝트의 보드에서 사용 중인 이미지와 오디오입니다.",
+    "sharedStorage": "공유 저장 공간",
+    "thisProject": "이 프로젝트",
+    "otherProjects": "다른 프로젝트",
+    "free": "여유 공간",
+    "localNote": "이 프로젝트는 아직 동기화되지 않았습니다 — 클라우드 저장 공간에 차지할 용량으로 표시됩니다.",
+    "empty": "이 프로젝트에는 아직 이미지나 오디오가 없습니다.",
+    "image": "이미지",
+    "audio": "오디오",
+    "remove": "삭제",
+    "confirm": "프로젝트에서 제거",
+    "cancel": "취소"
   },
   "dangerZone": {
     "transferOwnership": "소유권 이전",
@@ -120,7 +166,7 @@
     "deleteModalTitle": "계정 삭제",
     "deleteModalDesc": "계정과 모든 데이터를 영구적으로 삭제합니다. 이 작업은 취소할 수 없습니다.",
     "deleteConfirmPhrase": "계정 삭제를 확인합니다",
-    "deleteConfirmLabel": "확인을 위해 <ph/>를 입력하세요.",
+    "deleteConfirmLabel": "삭제를 확인하려면 아래 텍스트를 입력하세요:",
     "deleting": "삭제 중...",
     "deleteAccountBtn": "내 계정 삭제",
     "subscription": {
@@ -147,7 +193,18 @@
       "purchasing": "구매 중...",
       "purchaseError": "구매에 실패했습니다. 다시 시도해 주세요.",
       "cancelApple": "Apple 구독은 App Store에서 관리됩니다.",
-      "manageApple": "App Store 열기"
+      "manageApple": "App Store 열기",
+      "alreadyBoundTo": "이 구독은 이미 {email}에 연결되어 있습니다.",
+      "alreadyBoundUnknown": "이 구독은 이미 다른 계정에 연결되어 있습니다.",
+      "welcomePro": "Scriptio Pro를 구독하셨습니다. 환영합니다!",
+      "resubscribe": "구독 재활성화",
+      "restorePurchases": "구매 복원",
+      "transferConfirm": "App Store 계정에 {email}에 연결된 활성 구독이 있습니다. 복원하면 Pro가 이 계정으로 이전되며 {email}은(는) Pro 액세스를 잃게 됩니다. Apple은 계속해서 동일한 Apple ID에 청구합니다. 계속하시겠습니까?",
+      "transferConfirmUnknown": "App Store 계정에 다른 Scriptio 계정에 연결된 활성 구독이 있습니다. 복원하면 Pro가 이 계정으로 이전되며 다른 계정은 Pro 액세스를 잃게 됩니다. Apple은 계속해서 동일한 Apple ID에 청구합니다. 계속하시겠습니까?",
+      "transferYes": "예, 이전",
+      "transferring": "이전 중...",
+      "appleStoreFreeInfo": "Pro 기능은 웹사이트를 통해 업그레이드된 계정에서 이용할 수 있습니다.",
+      "appleStoreProInfo": "결제 수단을 업데이트하거나 취소하려면 scriptio.app의 프로필 설정을 방문하세요."
     }
   },
   "projects": {
@@ -158,6 +215,8 @@
     "importing": "가져오는 중...",
     "createBtn": "생성",
     "empty": {
+      "title": "당신의 이야기가 여기서 시작됩니다",
+      "subtitle": "새 각본을 만들거나 기존 스크립트를 가져오세요",
       "createFirst": "새 프로젝트",
       "createDesc": "빈 페이지에서 시작하기",
       "importExisting": "가져오기",
@@ -188,7 +247,23 @@
     "goTo": "각본에서 이동",
     "confirmRestore": "이것은 각본의 해당 내용을 대체합니다.",
     "restore": "복원",
-    "cancel": "취소"
+    "cancel": "취소",
+    "scenesEmpty": "아직 씬이 없습니다",
+    "comments": "코멘트",
+    "commentsEmpty": "활성 코멘트가 없습니다",
+    "shelfEmptySelection": "편집할 보관함 버전을 선택하세요",
+    "documents": "문서",
+    "documentsEmpty": "아직 문서가 없습니다",
+    "newFolder": "새 폴더",
+    "newDocument": "새 문서",
+    "newBoard": "새 보드",
+    "untitledFolder": "새 폴더",
+    "untitledDocument": "제목 없음",
+    "boardTitle": "보드",
+    "rename": "이름 바꾸기",
+    "delete": "삭제",
+    "confirmDelete": "이 문서를 삭제하시겠습니까?",
+    "confirmDeleteFolder": "폴더와 내용을 삭제하시겠습니까?"
   },
   "formatDropdown": {
     "elements": {
@@ -351,16 +426,17 @@
     "dangerZoneTitle": "위험 구역"
   },
   "contextMenu": {
+    "sendToOutline": "아웃라인으로 보내기",
     "goToScene": "장면으로 이동",
     "edit": "편집",
     "copy": "복사",
     "cut": "잘라내기",
-    "selectInEditor": "에디터에서 선택",
+    "selectInEditor": "선택",
     "remove": "삭제",
     "paste": "붙여넣기",
     "highlight": "하이라이트",
     "addCharacter": "인물 추가",
-    "addComment": "댓글 추가",
+    "addComment": "댓글",
     "searchOnWeb": "웹 검색",
     "noSuggestions": "제안 없음",
     "addToDictionary": "사전에 추가",
@@ -368,7 +444,12 @@
     "shelve": "보관하기",
     "shelveScene": "장면 보관하기",
     "shelveDialogue": "대사 보관하기",
-    "shelveAction": "행동 보관하기"
+    "shelveAction": "행동 보관하기",
+    "omitScene": "씬 생략",
+    "unomitScene": "씬 복원",
+    "insertPageBreak": "페이지 나누기 삽입",
+    "removePageBreak": "페이지 나누기 제거",
+    "pageBreakHint": "페이지 나누기"
   },
   "popup": {
     "character": {
@@ -392,6 +473,7 @@
       "warning": "현재 프로젝트를 <b>덮어쓰시겠습니까</b>?",
       "info": "새 프로젝트를 가져오기 전에 현재 프로젝트를 내보낼 수 있습니다.",
       "yesImport": "예, 가져오기",
+      "importing": "가져오는 중…",
       "no": "아니요"
     },
     "scene": {
@@ -401,20 +483,65 @@
       "synopsis": "시놉시스",
       "synopsisPlaceholder": "장면에 대한 간단한 설명을 입력하세요...",
       "save": "저장"
+    },
+    "uploadToCloud": {
+      "title": "클라우드에 업로드",
+      "body": "이 프로젝트를 클라우드에 업로드하시겠습니까? 프로젝트가 백업되어 어떤 기기에서든 액세스할 수 있으며, 협업자를 초대할 수 있습니다.",
+      "confirm": "업로드",
+      "cancel": "취소",
+      "uploading": "업로드 중...",
+      "failed": "업로드에 실패했습니다. 다시 시도해 주세요."
     }
   },
   "board": {
+    "sendToOutline": "아웃라인으로 보내기",
     "duplicate": "복제",
     "delete": "삭제",
-    "hints": {
-      "pan": "휠 클릭으로 드래그",
-      "select": "드래그하여 카드 선택",
-      "create": "더블 클릭하여 카드 생성",
-      "move": "Shift를 누르고 자유 이동"
-    },
+    "createCard": "카드 생성",
     "untitled": "제목 없음",
     "titlePlaceholder": "제목",
-    "descriptionPlaceholder": "설명"
+    "descriptionPlaceholder": "설명",
+    "recordAudio": "오디오 녹음",
+    "stopRecording": "정지",
+    "audioUnsupported": "이 브라우저에서는 오디오 녹음을 지원하지 않습니다. 대신 오디오 파일을 끌어다 놓으세요",
+    "audioHint": "음성 메모",
+    "play": "재생",
+    "pause": "일시정지",
+    "rename": "더블클릭하여 이름 변경",
+    "storageLimitReached": "저장 용량 한도 초과 — 이 파일을 저장할 수 없습니다"
+  },
+  "production": {
+    "title": "프로덕션",
+    "draftLocking": "드래프트 잠금",
+    "draftLockingHint": "드래프트를 잠그면 현재 씬과 페이지가 자동으로 잠기고 다음 리비전으로 전환됩니다. 수동으로 설정하려면 고급 섹션을 여세요.",
+    "advanced": "고급",
+    "draftRelock": "다시 잠그기",
+    "settings": "프로덕션 설정",
+    "unlockDraftTitle": "드래프트 잠금 해제",
+    "unlockDraftWarning": "씬과 페이지 모두 잠긴 번호를 잃고 각자의 자연스러운 번호로 되돌아갑니다.",
+    "unlockDraft": "드래프트 잠금 해제",
+    "sceneLocking": "씬 잠금",
+    "pageLocking": "페이지 잠금",
+    "revisions": "개정",
+    "relock": "다시 잠그기",
+    "provisionalTitle": "잠기지 않은 씬",
+    "unlockTitle": "씬 번호 잠금을 해제하시겠습니까?",
+    "unlockWarning": "<b>잠긴 씬과 생략된 씬의 고정 번호가 모두 사라집니다.</b>",
+    "unlockInfo": "이 작업은 모든 협업자에게 영향을 미칩니다. 시나리오는 위치 기반 씬 번호로 되돌아갑니다. OMITTED 씬은 그대로 유지되며, 내용을 복원하려면 개별적으로 생략을 해제하세요.",
+    "unlock": "잠금 해제",
+    "pageRelock": "다시 잠그기",
+    "pageProvisionalTitle": "잠기지 않은 페이지",
+    "unlockPagesTitle": "페이지 잠금 해제",
+    "unlockPagesWarning": "모든 페이지의 잠긴 번호가 사라지고 자연스러운 페이지 번호로 되돌아갑니다.",
+    "unlockPages": "페이지 잠금 해제",
+    "cancel": "취소",
+    "numberingStyleTitle": "씬 번호",
+    "numberingStyleHelp": "잠긴 두 씬 사이에 새로 삽입된 씬의 번호 매김 방식을 결정합니다.",
+    "suffixName": "접미사",
+    "prefixName": "접두사",
+    "skippedLettersTitle": "건너뛸 문자",
+    "skippedLettersHelp": "씬 번호를 생성할 때 제외할 문자입니다. 보통 혼동을 피하기 위해 사용합니다.",
+    "skipLetterAriaLabel": "{letter} 문자 건너뛰기"
   },
   "saves": {
     "title": "버전 히스토리",
@@ -429,9 +556,10 @@
     "confirmRestore": "모든 공동 작업자의 현재 문서가 이 버전으로 대체됩니다. 계속하시겠습니까?",
     "confirmDelete": "이 저장본을 삭제하시겠습니까?",
     "noSaves": "저장된 버전이 없습니다",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "Pro 필요",
+    "proRequiredDesc": "버전 기록은 Pro 기능입니다. 업그레이드하여 시나리오의 이름 있는 버전을 저장하고 복원하세요.",
+    "upgradeBtn": "Pro로 업그레이드",
+    "signInAndUpgrade": "로그인하고 업그레이드"
   },
   "auth": {
     "intro": "이메일을 입력하시면 일회용 로그인 링크를 보내드립니다. 비밀번호가 필요 없습니다.",

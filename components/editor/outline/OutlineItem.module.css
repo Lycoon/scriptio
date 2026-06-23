@@ -1,0 +1,141 @@
+.block {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    box-sizing: border-box;
+    /* Board-card look: a full-color strip on the left and a tinted body, driven
+       by `--card-color` (set inline from the element's color). */
+    background-color: color-mix(in srgb, var(--card-color, white) 20%, white);
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.block:hover {
+    background-color: color-mix(in srgb, var(--card-color, white) 20%, #ececec);
+}
+
+.block_missing {
+    opacity: 0.6;
+}
+
+/* Drop indicators */
+.block_drop_into::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--tertiary-hover);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.block_drop_before::before,
+.block_drop_after::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--tertiary-hover);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.block_drop_before::before {
+    top: 0;
+}
+
+.block_drop_after::after {
+    bottom: 0;
+}
+
+/* Full-color strip (board card header); stretches to full height. */
+.color_strip {
+    flex-shrink: 0;
+    width: 8px;
+    background-color: var(--card-color, var(--tertiary));
+}
+
+/* Body (board card body) — transparent so the block's tint and drop highlights
+   show through. */
+.body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 9px 12px;
+}
+
+.title_row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.type_icon {
+    flex-shrink: 0;
+    color: #64748b;
+}
+
+.title {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--board-card-body-text);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.unlinked {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #64748b;
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+.remove_btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: #64748b;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 0.12s ease,
+        background-color 0.12s ease;
+}
+
+.block:hover .remove_btn {
+    opacity: 1;
+}
+
+.remove_btn:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: var(--board-card-body-text);
+}
+
+.preview {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

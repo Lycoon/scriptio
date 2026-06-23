@@ -68,6 +68,32 @@
         box-sizing: border-box;
     }
 
+    /* Suppress the first paragraph's margin-top when it sits directly under
+       a pagination widget. Without this, the page-break div's margin-bottom
+       (0) collapses with the next paragraph's margin-top (16) and leaves a
+       wasted 16px gap at the top of every page. Pagination's break decisions
+       use measured outer heights in isolation, so removing the margin only
+       affects rendering — same paragraphs per page, no determinism hit.
+
+       These target classes are applied by the pagination extension as node
+       decorations (pagination-doc-start / pagination-break-start) rather than
+       via an adjacent-sibling selector (`.pagination-page-break + p`). The
+       sibling combinator forced Blink to invalidate the style of the whole
+       document tail on every structural edit — the dominant cost in the
+       per-keystroke "Recalculate Style". A plain class carries no sibling
+       dependency, so only nodes whose first-of-page status changed restyle.
+
+       In endless-scroll mode the page-break widgets are hidden (display:none),
+       so there is no gap to collapse and zeroing the margin would make each
+       page's first node stick to the previous page's content. The
+       `:not(.endless-scroll)` guard skips the break-start reset there. The
+       first-page widget is still shown in endless scroll, so pagination-doc-start
+       keeps its reset unconditionally. */
+    &:not(.endless-scroll) > p.pagination-break-start,
+    > p.pagination-doc-start {
+        margin-top: 0 !important;
+    }
+
     /* Spans inside paragraphs - NO display/width overrides
        These must remain inline (default) to not break text flow */
     > p span,
@@ -82,6 +108,7 @@
     .page-number > * {
         color: var(--editor-text);
         font-family: var(--font-screenplay);
+        line-height: var(--line-height);
     }
 
     /* Editor styles */
@@ -101,6 +128,34 @@
         background-color: transparent; /* Catches the click */
         overflow: hidden;
         height: var(--line-height);
+    }
+
+    /* Stabilize the absolute caret's containing block. Without this, the caret
+       resolves up to .ProseMirror — and during a backspace that destroys the
+       paragraph it lives in, y-prosemirror briefly remaps the caret's head
+       position to 0 before awareness syncs, painting it for one frame at the
+       editor's leftmost edge (the very start of the document). Pinning the
+       containing block to whichever paragraph the caret currently sits in
+       keeps the absolute position bounded to that paragraph's box. */
+    p:has(.collab-caret),
+    .dual_dialogue_column p:has(.collab-caret) {
+        position: relative;
+    }
+
+    /* Empty non-parenthetical paragraphs additionally need overflow:visible so
+       the caret's pseudo-element username label (anchored above the line via
+       top: -1.8em) isn't clipped. Parenthetical empties keep overflow:hidden
+       to clip the trailing line box that would push their `)` to a second
+       line; the label is sacrificed there as an acceptable trade. */
+    .is-empty:has(.collab-caret):not(.parenthetical) {
+        overflow: visible;
+    }
+
+    /* Defensive: the widget should always live inside a paragraph. If a
+       transaction ever briefly attaches it directly to .ProseMirror (e.g.
+       during a structural restructure), don't paint it. */
+    > .collab-caret {
+        display: none;
     }
 
     .action {
@@ -155,6 +210,59 @@
     &.hide-scene-numbers .scene::before,
     &.hide-scene-numbers .scene::after {
         display: none;
+    }
+
+    /* Production lock: suppress CSS counter pseudo-elements — labels come
+       from widget decorations (scene-locking-extension) so we can render
+       suffixed / OMITTED labels that CSS counters can't express. */
+    &.production-locked .scene::before,
+    &.production-locked .scene::after {
+        display: none;
+    }
+
+    /* Widget decoration for the left scene label (mirrors the ::before slot).
+       text-transform: none !important is required to defeat the parent
+       .scene's text-transform: uppercase (matching the same pattern used by
+       .collab-caret-name above) so lowercase suffix markers like "3aA"
+       render with their original case. */
+    .scene-label-left {
+        position: absolute;
+        right: 100%;
+        margin-right: -120px;
+        user-select: none;
+        pointer-events: none;
+        text-transform: none !important;
+    }
+
+    /* Widget decoration for the right scene label (mirrors the ::after slot). */
+    .scene-label-right {
+        position: absolute;
+        top: 0;
+        left: 100%;
+        margin-left: -85px;
+        user-select: none;
+        pointer-events: none;
+        display: none;
+        text-transform: none !important;
+    }
+    &.scene-number-right .scene-label-right {
+        display: block;
+    }
+    &.hide-scene-numbers .scene-label-left,
+    &.hide-scene-numbers .scene-label-right {
+        display: none;
+    }
+
+    /* OMITTED scene: heading text is rewritten to "OMITTED" in the document
+       by `omitSceneByUuid` (original preserved in scene metadata) and the body
+       is cut out of the document entirely, so the omitted scene is just a
+       greyed one-line heading. The scene-number widgets are re-greyed because
+       the generic `.ProseMirror > p span` rule above pins them to
+       --editor-text. */
+    .scene[data-scene-omitted="true"],
+    .scene[data-scene-omitted="true"] .scene-label-left,
+    .scene[data-scene-omitted="true"] .scene-label-right {
+        color: var(--secondary-text);
     }
 
     /* Normal weight scene headings (when bold disabled) */
@@ -308,10 +416,19 @@
         pointer-events: none;
         user-select: none;
         -webkit-user-select: none !important;
-        transition: transform 0.1s ease-out;
+        -moz-user-select: none !important;
     }
 
-    .collab-caret-label {
+    /* Username label rendered as a pseudo-element rather than a child <div>.
+       Pseudo-elements aren't in the DOM, so they cannot host a text cursor;
+       this prevents Firefox from placing the local HTML caret into the
+       label's text node when the local user clicks an empty node hosting a
+       remote caret. The color and name come from custom properties set
+       inline by the cursor render function. */
+    .collab-caret::before {
+        content: var(--collab-caret-name, "");
+        background-color: var(--collab-caret-color, currentColor);
+
         position: absolute;
         top: -1.8em;
         left: -0.5em;
@@ -322,7 +439,7 @@
         border-radius: 1em;
         line-height: normal;
 
-        /* Prevent the collaboration caret from inheriting parent styles, such as with scene headings (uppercase & bold) */
+        /* Prevent inheritance of parent styles (scene headings are uppercase & bold). */
         text-transform: none !important;
         font-weight: 400 !important;
         font-style: normal !important;
@@ -367,26 +484,6 @@
         text-decoration: underline wavy;
         text-decoration-color: #ef4444;
         text-decoration-skip-ink: none;
-    }
-
-    /* Comment highlighting */
-    .hide-comments .comment-highlight,
-    .hide-comments .comment-highlight-active {
-        background-color: transparent !important;
-        border-bottom: none !important;
-        cursor: text !important;
-    }
-
-    .comment-highlight {
-        background-color: rgba(255, 213, 0, 0.2);
-        border-bottom: 2px solid rgba(255, 213, 0, 0.5);
-        cursor: pointer;
-        border-radius: 2px;
-    }
-
-    .comment-highlight-active {
-        background-color: rgba(255, 213, 0, 0.4);
-        border-bottom-color: rgba(255, 213, 0, 0.8);
     }
 
     /* Scene bookmark marker (widget decoration inserted by scene-bookmark-extension) */

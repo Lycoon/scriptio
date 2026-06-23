@@ -15,6 +15,7 @@ jobs:
             version: ${{ steps.version.outputs.version }}
             short_version: ${{ steps.version.outputs.short_version }}
             revision: ${{ steps.version.outputs.revision }}
+            commit_sha: ${{ steps.version.outputs.commit_sha }}
         steps:
             - uses: actions/checkout@v6
               with:
@@ -26,9 +27,9 @@ jobs:
 
     publish-macos:
         runs-on: macos-latest
-        needs: prepare
+        needs: [prepare]
         env:
-            APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio (Staging).app
+            APP_PATH: src-tauri/target/universal-apple-darwin/debug/bundle/macos/Scriptio (Staging).app
             PKG_PATH: Scriptio.pkg
         steps:
             - uses: actions/checkout@v6
@@ -40,7 +41,7 @@ jobs:
                   p12-password: ${{ secrets.APPLE_CERT_PASSWORD }}
 
             - name: Download provisioning profile
-              uses: apple-actions/download-provisioning-profiles@v5
+              uses: apple-actions/download-provisioning-profiles@v6
               with:
                   bundle-id: "app.scriptio.staging"
                   profile-type: "MAC_APP_STORE"
@@ -51,7 +52,6 @@ jobs:
             - name: Copy provisioning profile to known path
               run: |
                   PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.provisionprofile \
-                               "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision \
                              2>/dev/null | head -n 1)
                   cp "$PROFILE" src-tauri/embedded.provisionprofile
 
@@ -67,12 +67,13 @@ jobs:
                   staging: "true"
 
             - name: Build and sign .app with Tauri
-              run: npm run tauri build -- --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json --config "{\"bundle\":{\"macOS\":{\"bundleVersion\":\"${{ needs.prepare.outputs.revision }}\"}}}"
+              run: npm run tauri build -- --debug --bundles app --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json --config "{\"bundle\":{\"macOS\":{\"bundleVersion\":\"${{ needs.prepare.outputs.revision }}\"}}}"
               env:
                   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
                   NEXT_PUBLIC_API_URL: https://staging.scriptio.app
-                  NEXT_PUBLIC_STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
+                  NEXT_PUBLIC_CLOUD_URL: https://cloud.staging.scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+                  NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
 
             - name: Build signed .pkg installer
               run: |
@@ -82,17 +83,18 @@ jobs:
                     "$PKG_PATH"
 
             - name: Upload to App Store Connect
-              uses: apple-actions/upload-testflight-build@v3
+              uses: apple-actions/upload-testflight-build@v5
               with:
                   app-path: ${{ env.PKG_PATH }}
                   issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
                   api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
                   api-private-key: ${{ secrets.APPSTORE_API_KEY_P8 }}
+                  backend: "altool"
                   app-type: "macos"
 
     publish-windows:
         runs-on: windows-latest
-        needs: prepare
+        needs: [prepare]
         env:
             APP_PATH: src-tauri/target/msix/Scriptio_${{ needs.prepare.outputs.version }}.msixbundle
         steps:
@@ -110,15 +112,28 @@ jobs:
                   staging: "true"
 
             - name: Build MSIX bundle
-              run: npm run build:windows
+              run: npm run debug:windows
               env:
                   NEXT_PUBLIC_API_URL: https://staging.scriptio.app
-                  NEXT_PUBLIC_STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
+                  NEXT_PUBLIC_CLOUD_URL: https://cloud.staging.scriptio.app
                   NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+                  NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
 
             - name: Rename output to fixed name
               run: |
                   Get-Item "src-tauri/target/msix/*.msixbundle" | Rename-Item -NewName "Scriptio_${{ needs.prepare.outputs.version }}.msixbundle"
+
+            - name: Verify MSIX package version
+              run: |
+                  $zip = "$env:APP_PATH"
+                  Copy-Item $zip bundle.zip
+                  Expand-Archive bundle.zip out -Force
+                  $line = Select-String -Path out/AppxMetadata/AppxBundleManifest.xml -Pattern 'Version="([\d.]+)"' | Select-Object -First 1
+                  $version = $line.Matches[0].Groups[1].Value
+                  Write-Host "Built MSIX Identity Version: $version"
+                  if ($version -notmatch '\.0$') {
+                      throw "MSIX revision field must be 0 (got '$version'); the MS Store reserves the 4th component."
+                  }
 
             - name: Configure Microsoft Store CLI
               uses: microsoft/microsoft-store-apppublisher@v1.1
@@ -132,6 +147,24 @@ jobs:
 
             - name: Publish to Microsoft Store (staging)
               run: msstore publish "$env:APP_PATH" -id "9P1N2HMSH40L"
+
+    deploy-cloud:
+        runs-on: ubuntu-latest
+        needs: prepare
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: "25.2.1"
+                  cache: "npm"
+
+            - run: npm ci
+
+            - name: Deploy Cloudflare Worker (staging)
+              run: npm run cloud:deploy:staging
+              env:
+                  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
     deploy-web:
         runs-on: ubuntu-latest
@@ -164,7 +197,7 @@ jobs:
                       ${{ env.IMAGE_NAME }}:staging-${{ needs.prepare.outputs.version }}
                   build-args: |
                       NEXT_PUBLIC_API_URL=https://staging.scriptio.app
-                      NEXT_PUBLIC_STAGING_BASIC_AUTH=${{ secrets.STAGING_BASIC_AUTH }}
+                      NEXT_PUBLIC_CLOUD_URL=https://cloud.staging.scriptio.app
                       NEXT_PUBLIC_COMMIT_SHA=${{ env.COMMIT_SHA }}
                       NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}
 

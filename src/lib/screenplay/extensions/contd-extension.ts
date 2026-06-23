@@ -4,6 +4,7 @@ import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ReplaceAroundStep, ReplaceStep, Step } from "@tiptap/pm/transform";
 import { STRUCTURAL_REFRESH_META, scheduleStructuralRefresh, cancelStructuralRefresh } from "./structural-refresh";
+import { timeApply } from "./apply-timing";
 
 const contdPluginKey = new PluginKey("contd");
 
@@ -102,7 +103,7 @@ export const ContdExtension = Extension.create({
                     init(_, { doc }) {
                         return computeContdDecorations(doc);
                     },
-                    apply(tr, oldDecorations, _oldState, newState) {
+                    apply: timeApply("contd", (tr, oldDecorations, _oldState, newState) => {
                         // Full recompute on deferred structural refresh
                         if (tr.getMeta(STRUCTURAL_REFRESH_META)) {
                             contdNeedsRecompute = false;
@@ -121,7 +122,7 @@ export const ContdExtension = Extension.create({
 
                         // Simple text edit within existing node — just remap positions (O(log n))
                         return oldDecorations.map(tr.mapping, newState.doc);
-                    },
+                    }),
                 },
                 view() {
                     return {

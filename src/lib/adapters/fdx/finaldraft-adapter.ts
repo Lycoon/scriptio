@@ -1,7 +1,7 @@
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { XMLBuilder, XMLParser } from "@node_modules/fast-xml-parser/src/fxp";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
-import { ProjectData, ProjectState } from "@src/lib/project/project-state";
+import { ProjectData, ProjectState, screenplayOf } from "@src/lib/project/project-state";
 import type { JSONContent } from "@tiptap/core";
 
 interface FDXStyledText {
@@ -50,7 +50,7 @@ export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
 
     convertTo(project: ProjectState, options: BaseExportOptions): Promise<Blob> {
         const paragraphNodes: FDXParagraphNode[] = [];
-        const nodes = project.screenplay();
+        const nodes = screenplayOf(project);
         const characters = options.characters;
 
         for (let i = 0; i < nodes.length; i++) {

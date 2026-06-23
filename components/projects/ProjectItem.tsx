@@ -19,11 +19,15 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
     const tDates = useTranslations("dates");
     const elapsedDays = getElapsedDaysFrom(project.updatedAt);
     const lastUpdated =
-        elapsedDays === 0 ? tDates("today") :
-        elapsedDays === 1 ? tDates("yesterday") :
-        elapsedDays <= 30 ? tDates("daysAgo", { days: elapsedDays }) :
-        elapsedDays <= 365 ? tDates("monthsAgo", { months: Math.round(elapsedDays / 30) }) :
-        tDates("moreThanYearAgo");
+        elapsedDays === 0
+            ? tDates("today")
+            : elapsedDays === 1
+              ? tDates("yesterday")
+              : elapsedDays <= 30
+                ? tDates("daysAgo", { days: elapsedDays })
+                : elapsedDays <= 365
+                  ? tDates("monthsAgo", { months: Math.round(elapsedDays / 30) })
+                  : tDates("moreThanYearAgo");
 
     let posterPath;
     if (project.poster) posterPath = project.poster;
@@ -31,12 +35,27 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
 
     return (
         <button className={join(item.container)} onClick={() => redirectScreenplay(project.id)}>
-            <Image className={item.poster} src={posterPath} alt={t("item.posterAlt")} width={160} height={220} style={{ width: "52px", height: "auto", aspectRatio: "0.675" }} />
+            <Image
+                className={item.poster}
+                src={posterPath}
+                alt={t("item.posterAlt")}
+                width={160}
+                height={220}
+                loading="eager"
+                style={{ width: "52px", height: "auto", aspectRatio: "0.675" }}
+            />
             <div className={item.info}>
                 <h2 className={item.title}>{project.title}</h2>
                 <div className={item.date}>
-                    <span className={item.sync_icon} title={isLocalOnly ? t("item.localOnly") : t("item.syncedToCloud")}>
-                        {isLocalOnly ? <HardDrive className={item.icon} size={16} /> : <CloudCheck className={item.icon} size={16} />}
+                    <span
+                        className={item.sync_icon}
+                        title={isLocalOnly ? t("item.localOnly") : t("item.syncedToCloud")}
+                    >
+                        {isLocalOnly ? (
+                            <HardDrive className={item.icon} size={16} />
+                        ) : (
+                            <CloudCheck className={item.icon} size={16} />
+                        )}
                     </span>
                     <p className={item.date_text}>{lastUpdated}</p>
                 </div>

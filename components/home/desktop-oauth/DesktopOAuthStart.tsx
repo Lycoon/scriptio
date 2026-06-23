@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 
 import ScriptioLogo from "@public/images/scriptio.svg";
 import layout from "../../utils/Layout.module.css";
@@ -25,8 +25,18 @@ const DesktopOAuthStart = () => {
 
     useEffect(() => {
         if (!provider || !nonce || !ALLOWED_PROVIDERS.has(provider)) return;
-        const callbackUrl = `/desktop-oauth/complete?nonce=${encodeURIComponent(nonce)}`;
-        signIn(provider, { callbackUrl });
+        // Drop any pre-existing browser session before starting OAuth. If the browser
+        // was previously signed in as user A and the OAuth account being linked here
+        // resolves to user B, handle-login.ts throws OAuthAccountNotLinked because
+        // sessionToken.user.id !== getUserByAccount().id. Starting clean avoids that.
+        (async () => {
+            const callbackUrl = `/desktop-oauth/complete?nonce=${encodeURIComponent(nonce)}`;
+            // Persist the nonce in sessionStorage so /desktop-oauth/complete can recover
+            // it even when Apple's response_mode=form_post drops the callbackUrl cookie.
+            sessionStorage.setItem("desktop-oauth-nonce", nonce);
+            await signOut({ redirect: false });
+            await signIn(provider, { callbackUrl });
+        })();
     }, [provider, nonce]);
 
     const invalid = !provider || !nonce || !ALLOWED_PROVIDERS.has(provider);

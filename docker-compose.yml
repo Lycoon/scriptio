@@ -30,6 +30,12 @@ services:
             - traefik.http.routers.scriptio-app-auth.priority=100
             - traefik.http.routers.scriptio-app-auth.middlewares=prod-auth
             - traefik.http.middlewares.prod-auth.basicauth.users=${PROD_AUTH_USERS}
+            # Allow CORS OPTIONS preflight to bypass basic auth
+            - traefik.http.routers.scriptio-app-auth-options.rule=Host(`scriptio.app`) && (PathPrefix(`/projects`) || PathPrefix(`/api`)) && Method(`OPTIONS`)
+            - traefik.http.routers.scriptio-app-auth-options.entrypoints=secure
+            - traefik.http.routers.scriptio-app-auth-options.tls=true
+            - traefik.http.routers.scriptio-app-auth-options.tls.certresolver=letsencrypt
+            - traefik.http.routers.scriptio-app-auth-options.priority=200
 
     app-staging:
         image: ghcr.io/lycoon/scriptio-app:staging
@@ -53,9 +59,6 @@ services:
             - traefik.http.routers.scriptio-staging.entrypoints=secure
             - traefik.http.routers.scriptio-staging.tls=true
             - traefik.http.routers.scriptio-staging.tls.certresolver=letsencrypt
-            - traefik.http.routers.scriptio-staging.middlewares=staging-auth
-            - traefik.http.middlewares.staging-auth.basicauth.users=${STAGING_AUTH_USERS}
-            - traefik.http.middlewares.staging-auth.basicauth.headerField=X-Staging-Auth
 
     # Production Database
     db-prod:

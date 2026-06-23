@@ -1,16 +1,66 @@
-name = "screenplay-collaboration"
+# Global configuration
+name = "scriptio-cloud"
 main = "index.ts"
 compatibility_date = "2025-12-08"
 compatibility_flags = ["nodejs_compat"]
 
+[observability.logs]
+enabled = true
+invocation_logs = false
+
+# Migrations are global to the script class
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ProjectRoom"]
+
+# --- Local dev (default env, wrangler dev with no --env flag) ---
+# Wrangler simulates DOs and R2 locally when bindings are declared here.
+
 [[durable_objects.bindings]]
-name = "SCREENPLAY_ROOM"
-class_name = "ScreenplayRoom"
+name = "PROJECT_ROOM"
+class_name = "ProjectRoom"
 
 [[r2_buckets]]
 binding = "SNAPSHOTS"
+bucket_name = "scriptio-snapshots-local"
+
+[vars]
+# Base URL of the Next.js app for the asset-GC callback (local dev).
+API_URL = "http://127.0.0.1:3000"
+
+# --- Production ---
+[env.production]
+name = "scriptio-cloud"
+routes = [
+  { pattern = "cloud.scriptio.app", custom_domain = true }
+]
+
+[env.production.vars]
+API_URL = "https://scriptio.app"
+
+[[env.production.durable_objects.bindings]]
+name = "PROJECT_ROOM"
+class_name = "ProjectRoom"
+
+[[env.production.r2_buckets]]
+binding = "SNAPSHOTS"
 bucket_name = "scriptio-snapshots"
 
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["ScreenplayRoom"]
+# --- Staging ---
+[env.staging]
+name = "scriptio-cloud-staging"
+routes = [
+  { pattern = "cloud.staging.scriptio.app", custom_domain = true }
+]
+
+[[env.staging.durable_objects.bindings]]
+name = "PROJECT_ROOM"
+class_name = "ProjectRoom"
+
+[[env.staging.r2_buckets]]
+binding = "SNAPSHOTS"
+bucket_name = "scriptio-snapshots-staging"
+
+[env.staging.vars]
+# Verify this matches the staging app domain.
+API_URL = "https://staging.scriptio.app"

@@ -1,5 +1,14 @@
 {
+  "outline": {
+    "title": "アウトライン",
+    "empty": "シーンやカードをここに送って、ストーリーの構成を始めましょう。",
+    "untitled": "無題",
+    "unlinked": "リンク解除",
+    "unlinkedHint": "このブロックの参照元は存在しなくなりました。",
+    "removeFromOutline": "アウトラインから削除"
+  },
   "navbar": {
+    "outline": "アウトライン",
     "screenplay": "脚本",
     "board": "ボード",
     "titlePage": "タイトルページ",
@@ -7,12 +16,30 @@
     "noConnection": "接続なし",
     "reconnecting": "再接続中...",
     "localProject": "ローカルプロジェクト",
+    "uploadToCloud": "クラウドにアップロード",
+    "storageProject": "このプロジェクト",
+    "storageTotal": "合計使用量",
     "endlessScroll": "無限スクロール",
     "toggleComments": "コメントの表示/非表示",
+    "toggleSpellcheck": "スペルチェックの切り替え",
     "focusMode": "集中モード",
     "splitPanel": "パネルを分割",
     "unsplitPanel": "パネルを閉じる",
-    "draftEditor": "下書きエディター"
+    "swapPanels": "パネルを入れ替え",
+    "draftEditor": "下書きエディター",
+    "viewOnly": "閲覧のみ",
+    "viewOnlyHint": "閲覧者アクセスです。編集は無効になっています。",
+    "pageCount": "{count}ページ"
+  },
+  "timer": {
+    "title": "執筆セッション",
+    "countdown": "カウントダウン",
+    "stopwatch": "ストップウォッチ",
+    "start": "開始",
+    "pause": "一時停止",
+    "resume": "再開",
+    "reset": "リセット",
+    "minutesShort": "分"
   },
   "common": {
     "save": "変更を保存",
@@ -37,7 +64,8 @@
       "latte": "温かみのあるクリームトーン。読みやすさと心地よさを両立します。",
       "wonka": "深みのあるカカオトーン。高級感と視覚的な快適さを提供します。",
       "mint": "爽やかなミントカラー。植物のような安らぎとバランスをもたらします。",
-      "blossom": "繊細なフローラルトーン。花びらのような柔らかさと快適さを提供します。"
+      "blossom": "繊細なフローラルトーン。花びらのような柔らかさと快適さを提供します。",
+      "midnight": "深みのある深夜ブルー。星空の下で集中して作業するための落ち着いたテーマです。"
     },
     "editor": "エディタ",
     "themedEditor": "テーマエディタ",
@@ -62,6 +90,7 @@
     "spellcheckLabel": "スペルチェック",
     "spellcheckHelpText": "エディタでスペルチェックを行うための辞書をダウンロードしてください。",
     "spellcheckNone": "無効",
+    "spellcheckBuiltin": "内蔵",
     "customDictLabel": "プロジェクト辞書",
     "customDictAdd": "追加",
     "customDictEmpty": "カスタム単語はまだありません。",
@@ -76,7 +105,9 @@
     "tabs": {
       "General": "全般",
       "Layout": "レイアウト",
+      "Production": "プロダクション",
       "Export": "インポート/エクスポート",
+      "Storage": "ストレージ",
       "Collaborators": "共同作業者",
       "Keybinds": "ショートカットキー",
       "Appearance": "外観",
@@ -87,6 +118,21 @@
       "About": "アプリについて",
       "Subscription": "サブスクリプション"
     }
+  },
+  "storage": {
+    "total": "使用容量",
+    "description": "このプロジェクトのボードで使用されている画像と音声。",
+    "sharedStorage": "共有ストレージ",
+    "thisProject": "このプロジェクト",
+    "otherProjects": "他のプロジェクト",
+    "free": "空き",
+    "localNote": "このプロジェクトはまだ同期されていません — クラウドストレージにどれだけ使用するかを表示しています。",
+    "empty": "このプロジェクトにはまだ画像や音声がありません。",
+    "image": "画像",
+    "audio": "音声",
+    "remove": "削除",
+    "confirm": "プロジェクトから削除",
+    "cancel": "キャンセル"
   },
   "dangerZone": {
     "transferOwnership": "所有権を譲渡",
@@ -120,7 +166,7 @@
     "deleteModalTitle": "アカウントを削除",
     "deleteModalDesc": "アカウントとすべての関連データを完全に削除します。この操作は取り消せません。",
     "deleteConfirmPhrase": "アカウントの削除を承認します",
-    "deleteConfirmLabel": "確認のために <ph/> と入力してください。",
+    "deleteConfirmLabel": "削除を確認するために以下のテキストを入力してください：",
     "deleting": "削除中...",
     "deleteAccountBtn": "自分のアカウントを削除",
     "subscription": {
@@ -147,7 +193,18 @@
       "purchasing": "購入中...",
       "purchaseError": "購入に失敗しました。もう一度お試しください。",
       "cancelApple": "Appleのサブスクリプションはアプリストアで管理されます。",
-      "manageApple": "App Storeを開く"
+      "manageApple": "App Storeを開く",
+      "alreadyBoundTo": "このサブスクリプションは既に {email} に関連付けられています。",
+      "alreadyBoundUnknown": "このサブスクリプションは既に別のアカウントに関連付けられています。",
+      "welcomePro": "Scriptio Pro にご登録いただきました。ようこそ！",
+      "resubscribe": "サブスクリプションを再開する",
+      "restorePurchases": "購入を復元",
+      "transferConfirm": "App Storeアカウントには {email} に関連付けられた有効なサブスクリプションがあります。復元するとProがこのアカウントに移行し、{email} はProアクセスを失います。Appleは引き続き同じApple IDに請求します。続けますか？",
+      "transferConfirmUnknown": "App Storeアカウントには別のScriptioアカウントに関連付けられた有効なサブスクリプションがあります。復元するとProがこのアカウントに移行し、もう一方のアカウントはProアクセスを失います。Appleは引き続き同じApple IDに請求します。続けますか？",
+      "transferYes": "はい、移行する",
+      "transferring": "移行中...",
+      "appleStoreFreeInfo": "Pro機能は当社のウェブサイトでアップグレードされたアカウントでご利用いただけます。",
+      "appleStoreProInfo": "お支払い方法の更新やキャンセルは、scriptio.app のプロフィール設定からお手続きください。"
     }
   },
   "projects": {
@@ -158,6 +215,8 @@
     "importing": "インポート中...",
     "createBtn": "作成",
     "empty": {
+      "title": "あなたの物語はここから始まる",
+      "subtitle": "新しい脚本を作成するか、既存のスクリプトをインポートしてください",
       "createFirst": "新規プロジェクト",
       "createDesc": "白紙から始める",
       "importExisting": "インポート",
@@ -188,7 +247,23 @@
     "goTo": "脚本内で移動",
     "confirmRestore": "脚本内の一致するコンテンツが置き換えられます。",
     "restore": "復元",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "scenesEmpty": "まだシーンはありません",
+    "comments": "コメント",
+    "commentsEmpty": "アクティブなコメントはありません",
+    "shelfEmptySelection": "編集するシェルフのバージョンを選択してください",
+    "documents": "ドキュメント",
+    "documentsEmpty": "ドキュメントがありません",
+    "newFolder": "新しいフォルダ",
+    "newDocument": "新しいドキュメント",
+    "newBoard": "新しいボード",
+    "untitledFolder": "新しいフォルダ",
+    "untitledDocument": "無題",
+    "boardTitle": "ボード",
+    "rename": "名前を変更",
+    "delete": "削除",
+    "confirmDelete": "このドキュメントを削除しますか？",
+    "confirmDeleteFolder": "フォルダとその内容を削除しますか？"
   },
   "formatDropdown": {
     "elements": {
@@ -351,16 +426,17 @@
     "dangerZoneTitle": "危険ゾーン"
   },
   "contextMenu": {
+    "sendToOutline": "アウトラインに送る",
     "goToScene": "シーンへ移動",
     "edit": "編集",
     "copy": "コピー",
     "cut": "切り取り",
-    "selectInEditor": "エディタで選択",
+    "selectInEditor": "選択",
     "remove": "削除",
     "paste": "貼り付け",
     "highlight": "ハイライト",
     "addCharacter": "登場人物を追加",
-    "addComment": "コメントを追加",
+    "addComment": "コメント",
     "searchOnWeb": "ウェブ検索",
     "noSuggestions": "候補なし",
     "addToDictionary": "辞書に追加",
@@ -368,7 +444,12 @@
     "shelve": "保管する",
     "shelveScene": "シーンを保管する",
     "shelveDialogue": "セリフを保管する",
-    "shelveAction": "アクションを保管する"
+    "shelveAction": "アクションを保管する",
+    "omitScene": "シーンを省略",
+    "unomitScene": "シーンを復元",
+    "insertPageBreak": "改ページを挿入",
+    "removePageBreak": "改ページを削除",
+    "pageBreakHint": "改ページ"
   },
   "popup": {
     "character": {
@@ -392,6 +473,7 @@
       "warning": "現在のプロジェクトを <b>上書き</b> しますか？",
       "info": "必要に応じて事前にエクスポートを行ってください。",
       "yesImport": "はい、インポートする",
+      "importing": "インポート中…",
       "no": "いいえ"
     },
     "scene": {
@@ -401,20 +483,65 @@
       "synopsis": "あらすじ",
       "synopsisPlaceholder": "シーンの簡単な説明を入力...",
       "save": "保存"
+    },
+    "uploadToCloud": {
+      "title": "クラウドにアップロード",
+      "body": "このプロジェクトをクラウドにアップロードしますか？プロジェクトはバックアップされ、どのデバイスからでもアクセスでき、コラボレーターを招待できるようになります。",
+      "confirm": "アップロード",
+      "cancel": "キャンセル",
+      "uploading": "アップロード中...",
+      "failed": "アップロードに失敗しました。もう一度お試しください。"
     }
   },
   "board": {
+    "sendToOutline": "アウトラインに送る",
     "duplicate": "複製",
     "delete": "削除",
-    "hints": {
-      "pan": "ホイールクリックでドラッグ",
-      "select": "ドラッグでカードを選択",
-      "create": "ダブルクリックでカードを作成",
-      "move": "Shiftキーで自由移動"
-    },
+    "createCard": "カードを作成",
     "untitled": "無題",
     "titlePlaceholder": "タイトル",
-    "descriptionPlaceholder": "説明"
+    "descriptionPlaceholder": "説明",
+    "recordAudio": "音声を録音",
+    "stopRecording": "停止",
+    "audioUnsupported": "このブラウザは音声録音に対応していません。代わりに音声ファイルをドラッグしてください",
+    "audioHint": "ボイスメモ",
+    "play": "再生",
+    "pause": "一時停止",
+    "rename": "ダブルクリックで名前を変更",
+    "storageLimitReached": "ストレージの上限に達しました — このファイルを保存できませんでした"
+  },
+  "production": {
+    "title": "プロダクション",
+    "draftLocking": "ドラフトロック",
+    "draftLockingHint": "ドラフトをロックすると、現在のシーンとページが自動的にロックされ、次のリビジョンに切り替わります。手動で設定するには「詳細設定」セクションを開いてください。",
+    "advanced": "詳細設定",
+    "draftRelock": "再ロック",
+    "settings": "制作設定",
+    "unlockDraftTitle": "ドラフトのロック解除",
+    "unlockDraftWarning": "シーンとページの両方がロックされた番号を失い、それぞれの自然な番号に戻ります。",
+    "unlockDraft": "ドラフトのロック解除",
+    "sceneLocking": "シーンロック",
+    "pageLocking": "ページロック",
+    "revisions": "改訂",
+    "relock": "再ロック",
+    "provisionalTitle": "未ロックのシーン",
+    "unlockTitle": "シーン番号のロックを解除しますか？",
+    "unlockWarning": "<b>ロック済みおよび省略されたシーンの固定番号はすべて失われます。</b>",
+    "unlockInfo": "この操作はすべてのコラボレーターに影響します。脚本は位置ベースの番号に戻ります。OMITTED シーンは省略のまま残ります — 内容を復元したい場合は個別に省略を解除してください。",
+    "unlock": "ロック解除",
+    "pageRelock": "再ロック",
+    "pageProvisionalTitle": "未ロックのページ",
+    "unlockPagesTitle": "ページのロックを解除",
+    "unlockPagesWarning": "すべてのページのロック番号が失われ、自然なページ番号付けに戻ります。",
+    "unlockPages": "ページのロック解除",
+    "cancel": "キャンセル",
+    "numberingStyleTitle": "シーン番号",
+    "numberingStyleHelp": "ロック済みの2つのシーンの間に挿入された新しいシーンの番号付け方法を決定します。",
+    "suffixName": "サフィックス",
+    "prefixName": "プレフィックス",
+    "skippedLettersTitle": "スキップする文字",
+    "skippedLettersHelp": "シーン番号生成時に省略する文字。通常は混同を避けるために使用します。",
+    "skipLetterAriaLabel": "{letter} をスキップ"
   },
   "saves": {
     "title": "バージョン履歴",
@@ -429,9 +556,10 @@
     "confirmRestore": "全共同作業者の現在のドキュメントがこのバージョンで上書きされます。よろしいですか？",
     "confirmDelete": "この保存データを削除しますか？",
     "noSaves": "保存データはありません",
-    "proRequired": "Pro Required",
-    "proRequiredDesc": "Version history is a Pro feature. Upgrade to save and restore named versions of your screenplay.",
-    "upgradeBtn": "Upgrade to Pro"
+    "proRequired": "Pro が必要です",
+    "proRequiredDesc": "バージョン履歴は Pro の機能です。アップグレードすると、脚本の名前付きバージョンを保存・復元できます。",
+    "upgradeBtn": "Pro にアップグレード",
+    "signInAndUpgrade": "サインインしてアップグレード"
   },
   "auth": {
     "intro": "メールアドレスを入力してください。一度きりのサインインリンクをお送りします。パスワードは必要ありません。",

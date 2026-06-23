@@ -3,6 +3,7 @@ import { Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { ReplaceStep, Step } from "@tiptap/pm/transform";
 import { ScreenplayElement } from "../../utils/enums";
+import { generateNodeId } from "../nodes";
 
 const fountainInputRulesPluginKey = new PluginKey("fountainInputRules");
 
@@ -116,6 +117,7 @@ export const FountainExtension = Extension.create<FountainInputRulesOptions>({
                         // Change the node type to the new element type
                         tr.setNodeMarkup(nodeStart, targetNodeType, {
                             class: forcedElement,
+                            "data-id": generateNodeId(),
                         });
 
                         // Then remove the prefix character
@@ -138,6 +140,7 @@ export const FountainExtension = Extension.create<FountainInputRulesOptions>({
                         const tr = newState.tr;
                         tr.setNodeMarkup(nodeStart, targetNodeType, {
                             class: ScreenplayElement.Note,
+                            "data-id": generateNodeId(),
                         });
 
                         // Remove the [[ prefix
@@ -175,6 +178,7 @@ export const FountainExtension = Extension.create<FountainInputRulesOptions>({
                         const tr = newState.tr;
                         tr.setNodeMarkup(nodeStart, targetNodeType, {
                             class: ScreenplayElement.Character,
+                            "data-id": generateNodeId(),
                         });
 
                         return tr;

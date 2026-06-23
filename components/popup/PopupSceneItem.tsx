@@ -74,7 +74,7 @@ export const PopupSceneItem = ({ data: { scene } }: PopupData<PopupSceneData>) =
                             placeholder={t("synopsisPlaceholder")}
                         />
                     </div>
-                    <button className={join(form.btn, popup.confirm)} type="submit">
+                    <button className={popup.confirm} type="submit">
                         <Save size={18} />
                         {t("save")}
                     </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CookieUser, UserSettings } from "./types";
 import { editUserSettings } from "./requests";
@@ -13,6 +13,7 @@ import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProjectRole } from "../../generated/client/browser";
 import { isTauri } from "@tauri-apps/api/core";
+import { useTranslations } from "next-intl";
 
 interface Position {
     x: number;
@@ -343,7 +344,7 @@ const useProjectMembership = () => {
     // Fetch cloud membership only for authenticated users with non-local projects
     const shouldFetch = isAuthenticated && isLocalOnly === false && !!projectId;
 
-    const { data, isLoading, mutate } = useSWR<ProjectMembershipPayload>(
+    const { data, error, isLoading, mutate } = useSWR<ProjectMembershipPayload, { status?: number }>(
         shouldFetch ? `/api/projects/${projectId}` : null,
     );
 
@@ -353,13 +354,22 @@ const useProjectMembership = () => {
         }
     }, [data, isLoading, updateProject]);
 
-    // Treat as locally accessible: explicitly local-only, or any cached project when offline
-    const isLocalAccessible = isLocalOnly === true || (!isAuthenticated && !isUserLoading && isCachedLocally === true);
+    // The cloud copy is gone (e.g. owner lost Pro and the project was demoted server-side,
+    // or it was deleted from another device). Offline-first: if we still have it cached
+    // locally, fall back to that copy instead of redirecting away.
+    const cloudMissing = error?.status === 404 && isCachedLocally === true;
+
+    // Treat as locally accessible: explicitly local-only, any cached project when offline,
+    // or a cached project whose cloud copy disappeared.
+    const isLocalAccessible =
+        isLocalOnly === true ||
+        (!isAuthenticated && !isUserLoading && isCachedLocally === true) ||
+        cloudMissing;
 
     return {
         membership: data,
         isLocalOnly: isLocalAccessible,
-        isLoading: isUserLoading || isLocalOnly === null || isCachedLocally === null || (shouldFetch && isLoading),
+        isLoading: isUserLoading || isLocalOnly === null || isCachedLocally === null || (shouldFetch && isLoading && !error),
         mutate,
     };
 };
@@ -467,6 +477,60 @@ const useIsPro = () => {
     return { isPro, isLoading };
 };
 
+const useDesktopBridgeAuth = () => {
+    const { mutate } = useSWRConfig();
+    const pollAbortRef = useRef<AbortController | null>(null);
+
+    useEffect(() => {
+        return () => { pollAbortRef.current?.abort(); };
+    }, []);
+
+    const completeBridgeAuth = useCallback(async (nonce: string): Promise<"success" | "timeout" | "aborted"> => {
+        pollAbortRef.current?.abort();
+        const controller = new AbortController();
+        pollAbortRef.current = controller;
+
+        const { pollBridgeToken, setDesktopToken } = await import("@src/lib/desktop-auth");
+        const token = await pollBridgeToken(nonce, { signal: controller.signal });
+        if (!token) return controller.signal.aborted ? "aborted" : "timeout";
+
+        await setDesktopToken(token);
+        await mutate("/api/users/cookie");
+        await mutate("/api/users");
+        return "success";
+    }, [mutate]);
+
+    return { completeBridgeAuth };
+};
+
+const useFormatTimestamp = () => {
+    const t = useTranslations("dates");
+    return useCallback(
+        (ts: number | string | Date): string => {
+            const date = new Date(ts);
+            const now = new Date();
+            const diffMs = now.getTime() - date.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+
+            if (diffMins < 1) return t("justNow");
+            if (diffMins < 60) return t("minutesAgo", { mins: diffMins });
+
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return t("hoursAgo", { hours: diffHours });
+
+            const diffDays = Math.floor(diffHours / 24);
+            if (diffDays < 7) return t("daysAgo", { days: diffDays });
+
+            return date.toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+            });
+        },
+        [t],
+    );
+};
+
 export {
     useDraggable,
     useUser,
@@ -482,4 +546,6 @@ export {
     useCachedProjects,
     useCachedProjectInfo,
     useProjectIdFromUrl,
+    useDesktopBridgeAuth,
+    useFormatTimestamp,
 };
