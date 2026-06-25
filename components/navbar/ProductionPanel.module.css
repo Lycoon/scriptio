@@ -5,12 +5,15 @@
     left: 0;
     z-index: 100;
     width: 340px;
-    max-height: 480px;
     display: flex;
     flex-direction: column;
     border-radius: 16px;
-    /* Not `hidden`: the revision dropdown menu in the last section needs to
-       extend past the panel's bottom edge without being clipped. */
+    /* No height cap: the panel grows to fit its content so locked scene/page
+       lists never spill out over the editor below. The variable-height parts
+       (the provisional boxes) bound their own growth with an inner scroll, so
+       the panel stays a sensible size. Overflow stays `visible` — not `hidden`
+       or `auto` — so the revision dropdown menu in the last section can extend
+       past the panel's bottom edge without being clipped. */
     overflow: visible;
 }
 
@@ -145,60 +148,6 @@
     visibility: visible;
 }
 
-/* Draft locking section drops its own bottom border: the Advanced divider
-   below provides the separating line instead. */
-.section_flush {
-    border-bottom: none;
-}
-
-/* Advanced — a labeled, clickable divider. The flanking lines replace a plain
-   separator, with the toggle label resting on the line. */
-.advanced_divider {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 2px 16px 12px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: var(--secondary-text);
-}
-
-.advanced_divider::before,
-.advanced_divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background-color: var(--separator);
-}
-
-.advanced_divider_label {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-    transition: color 0.12s ease;
-}
-
-.advanced_divider:hover .advanced_divider_label {
-    color: var(--primary-text);
-}
-
-.advanced_chevron {
-    color: inherit;
-    flex-shrink: 0;
-    transition: transform 0.15s ease;
-}
-
-.advanced_chevron_open {
-    transform: rotate(180deg);
-}
-
 /* Provisional labels preview — boxed sub-section under the locking toggle. */
 .provisional_box {
     margin-top: 10px;
@@ -268,7 +217,6 @@
 
 /* Revision color dropdown */
 .revision_select {
-    margin-top: 10px;
     padding: 8px 12px;
     font-size: 0.85rem;
     background: var(--secondary);
@@ -277,15 +225,46 @@
     color: var(--primary-text);
 }
 
-.revision_option {
+/* A title on the left paired with its dropdown; the field is a fixed width so
+   both dropdowns line up at the same size regardless of their title length. */
+.revision_control {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-top: 10px;
+}
+
+/* The current-revision picker stays in place when neither stamping nor the
+   "show current" display mode is active, but has nothing to drive — grey it
+   out and make it inert rather than removing it from the layout. */
+.revision_control_disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.revision_control_label {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85rem;
+    color: var(--primary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.revision_control_field {
+    flex: 0 0 175px;
+}
+
+.revision_option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .revision_dot {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     border: 1px solid var(--separator);
     flex-shrink: 0;

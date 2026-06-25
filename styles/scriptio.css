@@ -104,6 +104,16 @@
         line-height: var(--line-height) !important;
     }
 
+    /* Keep the revision colour on text that also carries another inline span
+       (e.g. a spellcheck underline): the generic `> p span` rule above would
+       otherwise re-pin that nested child to --editor-text, blanking the colour
+       the revision mark sets via inline style on its parent span. (The display
+       mode — all/hidden/current — is applied by re-defining the per-index
+       `--rev-color-*` variables on the editor root, which these spans inherit.) */
+    span[data-revision] span {
+        color: inherit;
+    }
+
     .page-number,
     .page-number > * {
         color: var(--editor-text);
@@ -263,6 +273,49 @@
     .scene[data-scene-omitted="true"] .scene-label-left,
     .scene[data-scene-omitted="true"] .scene-label-right {
         color: var(--secondary-text);
+    }
+
+    /* ---- Production revisions ---- */
+    /* A single overlay layer mounted at the editor origin (a stable widget
+       decoration). It owns the absolutely-positioned stripe/asterisk elements
+       painted by the revisions extension's overlay renderer; their top/left/
+       size/colour are all set inline. Sits above the content background but
+       below the pagination chrome (z-index 10) at the page margins. */
+    .revision-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        z-index: 4;
+        pointer-events: none;
+    }
+
+    /* Full page-height change-bar in the LEFT gutter, just outside the page's
+       left edge (negative left → into the canvas, off the page background). */
+    .revision-overlay .revision-stripe {
+        position: absolute;
+        border-radius: 1px;
+    }
+
+    /* Endless-scroll mode has no discrete pages, so the per-page change-bars
+       (positioned by page arithmetic) have nothing meaningful to span — hide
+       them. The right-margin asterisks still mark the changed visual lines and
+       stay correct, so they remain. */
+    &.endless-scroll .revision-overlay .revision-stripe {
+        display: none;
+    }
+
+    /* Right-margin asterisk on a changed visual line, vertically centred on the
+       line via translateY(-50%). Colour is set inline from the line's own
+       revision so older revisions keep their colour. */
+    .revision-overlay .revision-asterisk {
+        position: absolute;
+        transform: translateY(-50%);
+        font-family: var(--font-screenplay);
+        font-size: var(--font-size);
+        font-weight: bold;
+        line-height: 1;
     }
 
     /* Normal weight scene headings (when bold disabled) */

@@ -8,6 +8,7 @@ import Text from "@tiptap/extension-text";
 import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline, generateNodeId } from "@src/lib/screenplay/nodes";
 import { Placeholder } from "./extensions/placeholder-extension";
 import { PAGE_SIZES, PageBreakAttribute } from "./extensions/pagination-extension";
+import { RevisionMark, RevisionAttribute } from "./extensions/revisions-extension";
 import { ContdExtension } from "./extensions/contd-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
 
@@ -150,6 +151,13 @@ export const BASE_EXTENSIONS = [
     // Manual page-break attribute (schema-level; logic lives in ScriptioPagination).
     // In BASE_EXTENSIONS so it survives full-project serialization via ScreenplaySchema.
     PageBreakAttribute,
+
+    // Production revision stamps (schema-level; logic lives in the revisions
+    // extension). In BASE_EXTENSIONS so they survive full-project serialization
+    // via ScreenplaySchema. The mark colours/locates changed text; the attribute
+    // flags empty changed lines (new blank lines, emptied nodes).
+    RevisionMark,
+    RevisionAttribute,
 
     // Mark extensions
     ScriptioBold,

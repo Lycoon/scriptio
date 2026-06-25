@@ -14,6 +14,7 @@ export function createShelfEditorConfig(nodeId: string, versionId: string): Docu
             searchHighlights: true,
             sceneBookmarks: false,
             sceneLocking: false,
+            revisions: false,
             nodeIdDedup: true,
             suggestions: false,
             orphanPrevention: false,

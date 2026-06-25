@@ -18,6 +18,7 @@ import type { CharacterItem } from "../screenplay/characters";
 import type { LocationItem } from "../screenplay/locations";
 import type { PersistentScene } from "../screenplay/scenes";
 import type { PersistentPage } from "../screenplay/page-locking";
+import type { RevisionDisplayMode } from "../screenplay/revisions";
 import type { Comment } from "../utils/types";
 
 // -------------------------------- //
@@ -134,6 +135,25 @@ export type ProductionData = {
      * content leaves an empty page slot in its place.
      */
     pageLocking?: boolean;
+    /**
+     * Revisions master switch. When true, edits stamp their top-level node with
+     * the current revision index, surfacing a right-margin asterisk on that line
+     * and a coloured stripe down the gutter of any page that has changed.
+     */
+    revisionsEnabled?: boolean;
+    /**
+     * Active revision index — into the shared `REVISION_COLORS` list
+     * (0 = White base draft, 1 = Blue, …). New edits are stamped with this
+     * value; advancing it never clears existing marks (revisions are
+     * cumulative). See `src/lib/screenplay/revisions.ts`.
+     */
+    currentRevision?: number;
+    /**
+     * How committed revision marks are displayed ("all" | "hidden" | "current").
+     * Independent of `revisionsEnabled`, which only gates whether new edits are
+     * stamped. See `RevisionDisplayMode` in `src/lib/screenplay/revisions.ts`.
+     */
+    revisionDisplayMode?: RevisionDisplayMode;
 };
 
 /** Letters skipped by default in newly-created projects. */

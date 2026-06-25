@@ -15,6 +15,7 @@ import {
     SceneToken,
 } from "@src/lib/screenplay/scene-locking";
 import { PAGE_COLLAPSE_META, PAGE_ONE_KEY, PersistentPageMap, SCENE_OMIT_META } from "@src/lib/screenplay/page-locking";
+import { REVISION_STAMP_META } from "@src/lib/screenplay/revisions";
 import { generateNodeId } from "@src/lib/screenplay/nodes";
 import { timeApply } from "./apply-timing";
 
@@ -505,15 +506,28 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
     divider.style.height = `${options.pageGap}px`;
 
     // Manual page break: hint the user that this boundary was forced from the
-    // context menu (vs a natural overflow break). A dashed line spans the gap
-    // with a centred "page break" pill; the label text comes from the
+    // context menu (vs a natural overflow break). Rather than a faint mark
+    // buried in the inter-page gap (easy to miss), the affordance is drawn at
+    // the very top of the new page — a line spanning the full page width with a
+    // subtle "Manual page break" caption right below it, sitting just above the
+    // first line of the node that begins the page. The overlay's bottom edge
+    // aligns with the page's content-top (the node's top), so anchoring the
+    // marker there (CSS bottom:0) places it exactly at the node's top. Absolute
+    // positioning keeps it out of the overlay's flex flow, so it never disturbs
+    // the footer/divider/header layout. The caption text comes from the
     // --page-break-label CSS variable (set per-locale by the editor panel),
     // matching how the (MORE)/(CONT'D) labels are localised.
     if (breakInfo.manual) {
         container.classList.add("pagination-manual-break");
         const marker = document.createElement("div");
-        marker.className = "pagination-manual-break-label";
-        divider.appendChild(marker);
+        marker.className = "pagination-manual-break-marker";
+        const line = document.createElement("div");
+        line.className = "pagination-manual-break-line";
+        const hint = document.createElement("div");
+        hint.className = "pagination-manual-break-hint";
+        marker.appendChild(line);
+        marker.appendChild(hint);
+        overlay.appendChild(marker);
     }
 
     // Header area of the new page (fixed size = marginTop)
@@ -1040,6 +1054,9 @@ const createPaginationPlugin = (extension: {
 
                 // UUID assignment by nodeIdDedup only changes data-id attrs — no layout impact
                 if (tr.getMeta("nodeDedupId")) return value;
+
+                // Revision stamping only writes the `revision` attr — no layout impact
+                if (tr.getMeta(REVISION_STAMP_META)) return value;
 
                 const fullRemeasure = forceUpdate || formatUpdate;
 
@@ -1749,6 +1766,11 @@ const createPaginationPlugin = (extension: {
             // page. See PAGE_COLLAPSE_META and the Backspace handler.
             if (tr.getMeta(PAGE_COLLAPSE_META)) return true;
 
+            // Revision stamping only adds marks / the revision attribute; it never
+            // removes a locked anchor's data-id, so it is exempt from the spill
+            // guard — and skipping the O(doc) scan keeps it off the hot path.
+            if (tr.getMeta(REVISION_STAMP_META)) return true;
+
             const opts = extension.options as PaginationOptions;
             if (!opts.getPageLocking?.()) return true;
 
@@ -2006,39 +2028,44 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                     transform: translateX(calc(100% + 8px));
                 }
 
-                /* Manual (context-menu) page break hint: a dashed line across the
-                   inter-page gap with a centred "page break" pill. Scoped to manual
-                   breaks so natural breaks keep their plain divider. The label text
-                   is supplied per-locale via --page-break-label (set by the editor
-                   panel), mirroring how (MORE)/(CONT'D) are localised. */
-                .pagination-manual-break .pagination-divider {
-                    position: relative;
-                }
-                .pagination-manual-break-label {
+                /* Manual (context-menu) page break hint. Instead of a faint mark
+                   buried in the inter-page gap, the affordance is drawn at the
+                   very top of the new page: a line across the full page width
+                   with a subtle "Manual page break" caption right below it,
+                   sitting just above the node that begins the page. The marker is
+                   anchored to the overlay's bottom edge, which aligns with the
+                   page's content-top (the node's top); absolute positioning keeps
+                   it out of the overlay's flex flow. The caption text is supplied
+                   per-locale via --page-break-label (set by the editor panel),
+                   mirroring how (MORE)/(CONT'D) are localised. */
+                .pagination-manual-break-marker {
                     position: absolute;
                     left: 0;
                     right: 0;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    border-top: 1px dashed var(--secondary-text);
-                    opacity: 0.55;
+                    bottom: 4px;
+                    z-index: 2;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                     pointer-events: none;
+                    user-select: none;
                 }
-                .pagination-manual-break-label::after {
-                    content: var(--page-break-label, "Page break");
-                    position: absolute;
-                    left: 50%;
-                    top: 50%;
-                    transform: translate(-50%, -50%);
-                    background: var(--main-bg);
+                .pagination-manual-break-line {
+                    align-self: stretch;
+                    border-top: 1px solid var(--secondary-text);
+                    opacity: 0.45;
+                }
+                .pagination-manual-break-hint {
+                    margin-top: 3px;
                     color: var(--secondary-text);
-                    padding: 1px 10px;
-                    border-radius: 999px;
-                    font-size: 0.68rem;
+                    font-size: 0.62rem;
                     font-weight: 600;
-                    letter-spacing: 0.06em;
+                    letter-spacing: 0.05em;
                     text-transform: uppercase;
-                    white-space: nowrap;
+                    opacity: 0.7;
+                }
+                .pagination-manual-break-hint::after {
+                    content: var(--page-break-label, "Manual page break");
                 }
             `;
 

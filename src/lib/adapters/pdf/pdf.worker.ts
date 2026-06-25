@@ -12,6 +12,11 @@ export interface TextRun {
     absolutePosition?: boolean;
     /** When true, x is the right edge — text expands leftward (right-aligned at x). */
     rightAlign?: boolean;
+    /** Revision index this run was changed under (>=1), or undefined. */
+    revision?: number;
+    /** Text colour as a hex string (e.g. "#2f74c0"); black when omitted. Set by
+     *  the adapter only for the "colored" revision export mode. */
+    color?: string;
 }
 
 /** A single visual line as laid out by the browser. */
@@ -19,6 +24,14 @@ export interface VisualLine {
     runs: TextRun[];
     y: number; // browser Y position in pixels (for line-spacing within a page)
     type?: string; // e.g. "dialogue", "character", "scene", "__page_break__"
+    /** Revision index this line was last changed under (>=1), or undefined for
+     *  unchanged lines. Set by the PDF adapter from the DOM revision marks/attrs
+     *  and used only for the "export revision pages" filter. */
+    revision?: number;
+    /** When set, this revised visual line gets a right-margin asterisk in this
+     *  hex colour ("#000000" for the black & white mode). Absent for unchanged
+     *  lines and whenever the revision export mode is "none". */
+    asteriskColor?: string;
     /** Header text for the page that begins AFTER this sentinel.
      *  Only set on `__page_break__` lines. Carries the user-visible page
      *  label ("4.", "4A.", a custom-templated string) read straight from
@@ -50,6 +63,9 @@ const PAGE_RIGHT = 72;
 
 /** Y position of the page number header (0.5 inch from top). */
 const HEADER_Y = 36;
+
+/** Inset (pt) of a revision asterisk into the right margin, past the text column. */
+const REVISION_ASTERISK_INSET = 8;
 
 /**
  * All font files to register with jsPDF.
@@ -261,6 +277,11 @@ async function renderLines(
     let currentY = PAGE_TOP;
     let previousBrowserY = -1;
     let currentPage = 1;
+    // False until the first content line is drawn. A `__page_break__` seen while
+    // still false is a LEADING sentinel — emitted by the revision-pages filter
+    // when the first kept page is not the original page 1. We draw that page's
+    // header in place instead of inserting a blank leading page.
+    let renderedContent = false;
 
     let lastCharacterName = "";
     let lastCharacterX = -1;
@@ -271,6 +292,11 @@ async function renderLines(
 
         // ── Explicit page break sentinel ────────────────────────────
         if (line.type === "__page_break__") {
+            if (!renderedContent) {
+                // Leading sentinel: label the first kept page without a page break.
+                if (showPageNumbers) drawHeaderLabel(doc, line.pageLabel ?? "", pageSize);
+                continue;
+            }
             const prevLine = findPrevContentLine(lines, li);
             const nextLine = findNextContentLine(lines, li);
             const isDialogueSplit = prevLine?.type === "dialogue" && nextLine?.type === "dialogue";
@@ -307,6 +333,8 @@ async function renderLines(
             previousBrowserY = -1;
             continue;
         }
+
+        renderedContent = true;
 
         // ── Line spacing within a page ──────────────────────────────
         if (previousBrowserY !== -1) {
@@ -360,7 +388,8 @@ async function renderLines(
                 isParenOpen = false;
             }
 
-            doc.setTextColor(0, 0, 0);
+            // Revision-coloured text (colored export mode); black otherwise.
+            doc.setTextColor(run.color ?? "#000000");
             doc.text(run.text, runX, currentY, { baseline: "top" });
 
             const textWidth = doc.getTextWidth(run.text);
@@ -369,10 +398,20 @@ async function renderLines(
 
             if (run.underline) {
                 const underlineY = currentY + FONT_SIZE * 0.95;
-                doc.setDrawColor(0, 0, 0);
+                doc.setDrawColor(run.color ?? "#000000");
                 doc.setLineWidth(0.5);
                 doc.line(runX, underlineY, runX + textWidth, underlineY);
             }
+        }
+
+        // Right-margin asterisk marking a revised visual line (colored / bw
+        // modes). Drawn in the right margin just past the text column, on the
+        // same baseline as the line's text.
+        if (line.asteriskColor) {
+            doc.setFont("CourierPrime", "normal");
+            doc.setFontSize(FONT_SIZE);
+            doc.setTextColor(line.asteriskColor);
+            doc.text("*", pageSize.width - PAGE_RIGHT + REVISION_ASTERISK_INSET, currentY, { baseline: "top" });
         }
     }
 
@@ -433,7 +472,12 @@ function drawPageHeader(
     // sequential "4." rendered by the default headerRight template. An empty
     // string means the editor's custom header is intentionally blank (e.g.
     // page 1's customHeader override) — honour that and skip drawing.
-    const text = label ?? `${pageNumber}.`;
+    drawHeaderLabel(doc, label ?? `${pageNumber}.`, pageSize);
+}
+
+/** Draw a page-number header at the standard top-right position. No-op for an
+ *  empty label (an intentionally blank custom header). */
+function drawHeaderLabel(doc: jsPDF, text: string, pageSize: { width: number; height: number }): void {
     if (!text) return;
     doc.setFont("CourierPrime", "normal");
     doc.setFontSize(FONT_SIZE);

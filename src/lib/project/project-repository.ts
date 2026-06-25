@@ -21,6 +21,7 @@ import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { computeSceneItems, PersistentScene, PersistentSceneMap, TransientScene } from "../screenplay/scenes";
 import { PersistentPage, PersistentPageMap } from "../screenplay/page-locking";
+import { RevisionDisplayMode } from "../screenplay/revisions";
 import { PageFormat } from "../utils/enums";
 import { generateNodeId } from "../screenplay/nodes";
 import { JSONContent } from "@tiptap/react";
@@ -400,6 +401,18 @@ export class ProjectRepository {
     setPageLocking(locked: boolean) {
         if (this.guardWrite("setPageLocking")) return;
         this.ydoc.production().set("pageLocking", locked);
+    }
+    setRevisionsEnabled(enabled: boolean) {
+        if (this.guardWrite("setRevisionsEnabled")) return;
+        this.ydoc.production().set("revisionsEnabled", enabled);
+    }
+    setCurrentRevision(index: number) {
+        if (this.guardWrite("setCurrentRevision")) return;
+        this.ydoc.production().set("currentRevision", index);
+    }
+    setRevisionDisplayMode(mode: RevisionDisplayMode) {
+        if (this.guardWrite("setRevisionDisplayMode")) return;
+        this.ydoc.production().set("revisionDisplayMode", mode);
     }
     setSceneNumberingStyle(style: "suffix" | "prefix") {
         if (this.guardWrite("setSceneNumberingStyle")) return;

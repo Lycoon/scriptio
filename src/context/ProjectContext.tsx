@@ -35,6 +35,7 @@ import {
 } from "@src/lib/project/project-state";
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
+import { RevisionDisplayMode, DEFAULT_REVISION_DISPLAY_MODE } from "@src/lib/screenplay/revisions";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 import { useAssetGc } from "@src/lib/assets/use-asset-gc";
 
@@ -125,6 +126,17 @@ export interface ProjectContextType {
      *  Keyed by `PAGE_ONE_KEY` for page 1, by the top-level node's data-id
      *  for subsequent pages. */
     persistentPages: PersistentPageMap;
+
+    /** Revisions master switch (production change-tracking). */
+    revisionsEnabled: boolean;
+    setRevisionsEnabled: (enabled: boolean) => void;
+    /** Active revision index (into REVISION_COLORS; 0 = White base draft). New
+     *  edits are stamped with this value. */
+    currentRevision: number;
+    setCurrentRevision: (index: number) => void;
+    /** How committed revision marks are displayed (independent of stamping). */
+    revisionDisplayMode: RevisionDisplayMode;
+    setRevisionDisplayMode: (mode: RevisionDisplayMode) => void;
 
     // Search state
     searchTerm: string;
@@ -228,6 +240,12 @@ const defaultContextValue: ProjectContextType = {
     pageLocking: false,
     setPageLocking: () => {},
     persistentPages: {},
+    revisionsEnabled: false,
+    setRevisionsEnabled: () => {},
+    currentRevision: 0,
+    setCurrentRevision: () => {},
+    revisionDisplayMode: DEFAULT_REVISION_DISPLAY_MODE,
+    setRevisionDisplayMode: () => {},
     characters: {},
     locations: {},
     scenes: [],
@@ -364,6 +382,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [persistentScenes, setPersistentScenesState] = useState<PersistentSceneMap>({});
     const [pageLocking, setPageLockingState] = useState<boolean>(false);
     const [persistentPages, setPersistentPagesState] = useState<PersistentPageMap>({});
+    const [revisionsEnabled, setRevisionsEnabledState] = useState<boolean>(false);
+    const [currentRevision, setCurrentRevisionState] = useState<number>(0);
+    const [revisionDisplayMode, setRevisionDisplayModeState] =
+        useState<RevisionDisplayMode>(DEFAULT_REVISION_DISPLAY_MODE);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
 
@@ -567,6 +589,15 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (initialProduction.pageLocking !== undefined) {
                 setPageLockingState(initialProduction.pageLocking);
             }
+            if (initialProduction.revisionsEnabled !== undefined) {
+                setRevisionsEnabledState(initialProduction.revisionsEnabled);
+            }
+            if (initialProduction.currentRevision !== undefined) {
+                setCurrentRevisionState(initialProduction.currentRevision);
+            }
+            if (initialProduction.revisionDisplayMode !== undefined) {
+                setRevisionDisplayModeState(initialProduction.revisionDisplayMode);
+            }
         }
 
         // Read initial persistent scenes & pages
@@ -626,6 +657,15 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             }
             if (production.pageLocking !== undefined) {
                 setPageLockingState(production.pageLocking);
+            }
+            if (production.revisionsEnabled !== undefined) {
+                setRevisionsEnabledState(production.revisionsEnabled);
+            }
+            if (production.currentRevision !== undefined) {
+                setCurrentRevisionState(production.currentRevision);
+            }
+            if (production.revisionDisplayMode !== undefined) {
+                setRevisionDisplayModeState(production.revisionDisplayMode);
             }
         });
 
@@ -863,6 +903,30 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    const setRevisionsEnabled = useCallback(
+        (enabled: boolean) => {
+            setRevisionsEnabledState(enabled);
+            repository?.setRevisionsEnabled(enabled);
+        },
+        [repository],
+    );
+
+    const setCurrentRevision = useCallback(
+        (index: number) => {
+            setCurrentRevisionState(index);
+            repository?.setCurrentRevision(index);
+        },
+        [repository],
+    );
+
+    const setRevisionDisplayMode = useCallback(
+        (mode: RevisionDisplayMode) => {
+            setRevisionDisplayModeState(mode);
+            repository?.setRevisionDisplayMode(mode);
+        },
+        [repository],
+    );
+
     const setSceneNumberingStyle = useCallback(
         (style: "suffix" | "prefix") => {
             setSceneNumberingStyleState(style);
@@ -985,6 +1049,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             pageLocking,
             setPageLocking,
             persistentPages,
+            revisionsEnabled,
+            setRevisionsEnabled,
+            currentRevision,
+            setCurrentRevision,
+            revisionDisplayMode,
+            setRevisionDisplayMode,
             screenplay,
             scenes,
             updateScenes,
@@ -1067,6 +1137,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             pageLocking,
             setPageLocking,
             persistentPages,
+            revisionsEnabled,
+            setRevisionsEnabled,
+            currentRevision,
+            setCurrentRevision,
+            revisionDisplayMode,
+            setRevisionDisplayMode,
             screenplay,
             scenes,
             updateScenes,

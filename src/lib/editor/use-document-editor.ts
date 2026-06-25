@@ -31,6 +31,10 @@ import {
     createSceneLockingExtension,
     refreshSceneLocking,
 } from "@src/lib/screenplay/extensions/scene-locking-extension";
+import {
+    createRevisionsExtension,
+    refreshRevisions,
+} from "@src/lib/screenplay/extensions/revisions-extension";
 import { computeAbsorbedPageTokens, SCENE_OMIT_UNDO_ORIGIN } from "@src/lib/screenplay/scene-locking";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
@@ -80,6 +84,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         persistentScenes,
         pageLocking,
         persistentPages,
+        revisionsEnabled,
+        currentRevision,
+        revisionDisplayMode,
     } = projectCtx;
 
     const projectState = repository?.getState();
@@ -183,6 +190,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
             persistentScenes,
             pageLocking,
             persistentPages,
+            revisionsEnabled,
+            currentRevision,
+            revisionDisplayMode,
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }),
         [],
@@ -205,6 +215,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     ext.persistentScenes = persistentScenes;
     ext.pageLocking = pageLocking;
     ext.persistentPages = persistentPages;
+    ext.revisionsEnabled = revisionsEnabled;
+    ext.currentRevision = currentRevision;
+    ext.revisionDisplayMode = revisionDisplayMode;
 
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
 
@@ -289,6 +302,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
               getScenes: () => ext.repository?.scenes ?? {},
               getNumberingStyle: () => ext.sceneNumberingStyle ?? "suffix",
               getSkippedLetters: () => ext.skippedSceneLetters ?? [],
+          })
+        : null;
+
+    const revisionsExtension = features.revisions
+        ? createRevisionsExtension({
+              getRevisionsEnabled: () => !!ext.revisionsEnabled,
+              getCurrentRevision: () => ext.currentRevision ?? 0,
+              getDisplayMode: () => ext.revisionDisplayMode ?? "all",
           })
         : null;
 
@@ -399,6 +420,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
                 ...(sceneLockingExtension ? [sceneLockingExtension] : []),
+                // After ScriptioPagination so its plugin reads fresh pagination
+                // state (page breaks) when grouping lines into pages.
+                ...(revisionsExtension ? [revisionsExtension] : []),
                 ...(nodeIdDedupExtension ? [nodeIdDedupExtension] : []),
                 ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
@@ -627,6 +651,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
             refreshSceneLocking(editor);
         }
     }, [editor, sceneLocking, sceneNumberingStyle, skippedSceneLetters, persistentScenes, features.sceneLocking]);
+
+    // Refresh revision decorations when the toggle flips or the current
+    // revision advances (colours/visibility change with no doc edit).
+    useEffect(() => {
+        if (editor && features.revisions) {
+            refreshRevisions(editor);
+        }
+    }, [editor, revisionsEnabled, currentRevision, revisionDisplayMode, features.revisions]);
 
     // Refresh pagination when page locking or the page-lock map changes.
     // Pagination only reads these via getter closures on its options, so
