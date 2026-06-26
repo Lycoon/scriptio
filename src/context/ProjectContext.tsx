@@ -102,6 +102,22 @@ export interface ProjectContextType {
     setContdLabel: (label: string) => void;
     moreLabel: string;
     setMoreLabel: (label: string) => void;
+    headerLeft: string;
+    setHeaderLeft: (template: string) => void;
+    headerMiddle: string;
+    setHeaderMiddle: (template: string) => void;
+    headerRight: string;
+    setHeaderRight: (template: string) => void;
+    showFirstPageHeader: boolean;
+    setShowFirstPageHeader: (show: boolean) => void;
+    footerLeft: string;
+    setFooterLeft: (template: string) => void;
+    footerMiddle: string;
+    setFooterMiddle: (template: string) => void;
+    footerRight: string;
+    setFooterRight: (template: string) => void;
+    showFirstPageFooter: boolean;
+    setShowFirstPageFooter: (show: boolean) => void;
     elementMargins: Record<string, { left: number; right: number }>;
     setElementMargins: (margins: Record<string, { left: number; right: number }>) => void;
     elementStyles: Record<string, ElementStyle>;
@@ -226,6 +242,22 @@ const defaultContextValue: ProjectContextType = {
     setContdLabel: () => {},
     moreLabel: "(MORE)",
     setMoreLabel: () => {},
+    headerLeft: "",
+    setHeaderLeft: () => {},
+    headerMiddle: "",
+    setHeaderMiddle: () => {},
+    headerRight: "#.",
+    setHeaderRight: () => {},
+    showFirstPageHeader: false,
+    setShowFirstPageHeader: () => {},
+    footerLeft: "",
+    setFooterLeft: () => {},
+    footerMiddle: "",
+    setFooterMiddle: () => {},
+    footerRight: "",
+    setFooterRight: () => {},
+    showFirstPageFooter: false,
+    setShowFirstPageFooter: () => {},
     elementMargins: {},
     setElementMargins: () => {},
     elementStyles: {},
@@ -370,6 +402,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [sceneNumberOnRight, setSceneNumberOnRightState] = useState<boolean>(false);
     const [contdLabel, setContdLabelState] = useState<string>("(CONT'D)");
     const [moreLabel, setMoreLabelState] = useState<string>("(MORE)");
+    const [headerLeft, setHeaderLeftState] = useState<string>("");
+    const [headerMiddle, setHeaderMiddleState] = useState<string>("");
+    const [headerRight, setHeaderRightState] = useState<string>("#.");
+    const [showFirstPageHeader, setShowFirstPageHeaderState] = useState<boolean>(false);
+    const [footerLeft, setFooterLeftState] = useState<string>("");
+    const [footerMiddle, setFooterMiddleState] = useState<string>("");
+    const [footerRight, setFooterRightState] = useState<string>("");
+    const [showFirstPageFooter, setShowFirstPageFooterState] = useState<boolean>(false);
     const [elementMargins, setElementMarginsState] = useState<
         Record<string, { left: number; right: number }>
     >({});
@@ -566,6 +606,30 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (initialLayout.moreLabel !== undefined) {
                 setMoreLabelState(initialLayout.moreLabel);
             }
+            if (initialLayout.headerLeft !== undefined) {
+                setHeaderLeftState(initialLayout.headerLeft);
+            }
+            if (initialLayout.headerMiddle !== undefined) {
+                setHeaderMiddleState(initialLayout.headerMiddle);
+            }
+            if (initialLayout.headerRight !== undefined) {
+                setHeaderRightState(initialLayout.headerRight);
+            }
+            if (initialLayout.showFirstPageHeader !== undefined) {
+                setShowFirstPageHeaderState(initialLayout.showFirstPageHeader);
+            }
+            if (initialLayout.footerLeft !== undefined) {
+                setFooterLeftState(initialLayout.footerLeft);
+            }
+            if (initialLayout.footerMiddle !== undefined) {
+                setFooterMiddleState(initialLayout.footerMiddle);
+            }
+            if (initialLayout.footerRight !== undefined) {
+                setFooterRightState(initialLayout.footerRight);
+            }
+            if (initialLayout.showFirstPageFooter !== undefined) {
+                setShowFirstPageFooterState(initialLayout.showFirstPageFooter);
+            }
             if (initialLayout.elementMargins !== undefined) {
                 setElementMarginsState(initialLayout.elementMargins);
             }
@@ -635,6 +699,30 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             }
             if (_moreLabel !== undefined) {
                 setMoreLabelState(_moreLabel);
+            }
+            if (layout.headerLeft !== undefined) {
+                setHeaderLeftState(layout.headerLeft);
+            }
+            if (layout.headerMiddle !== undefined) {
+                setHeaderMiddleState(layout.headerMiddle);
+            }
+            if (layout.headerRight !== undefined) {
+                setHeaderRightState(layout.headerRight);
+            }
+            if (layout.showFirstPageHeader !== undefined) {
+                setShowFirstPageHeaderState(layout.showFirstPageHeader);
+            }
+            if (layout.footerLeft !== undefined) {
+                setFooterLeftState(layout.footerLeft);
+            }
+            if (layout.footerMiddle !== undefined) {
+                setFooterMiddleState(layout.footerMiddle);
+            }
+            if (layout.footerRight !== undefined) {
+                setFooterRightState(layout.footerRight);
+            }
+            if (layout.showFirstPageFooter !== undefined) {
+                setShowFirstPageFooterState(layout.showFirstPageFooter);
             }
             if (layout.elementMargins !== undefined) {
                 setElementMarginsState(layout.elementMargins);
@@ -871,6 +959,70 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    const setHeaderLeft = useCallback(
+        (template: string) => {
+            setHeaderLeftState(template);
+            repository?.setHeaderLeft(template);
+        },
+        [repository],
+    );
+
+    const setHeaderMiddle = useCallback(
+        (template: string) => {
+            setHeaderMiddleState(template);
+            repository?.setHeaderMiddle(template);
+        },
+        [repository],
+    );
+
+    const setHeaderRight = useCallback(
+        (template: string) => {
+            setHeaderRightState(template);
+            repository?.setHeaderRight(template);
+        },
+        [repository],
+    );
+
+    const setShowFirstPageHeader = useCallback(
+        (show: boolean) => {
+            setShowFirstPageHeaderState(show);
+            repository?.setShowFirstPageHeader(show);
+        },
+        [repository],
+    );
+
+    const setFooterLeft = useCallback(
+        (template: string) => {
+            setFooterLeftState(template);
+            repository?.setFooterLeft(template);
+        },
+        [repository],
+    );
+
+    const setFooterMiddle = useCallback(
+        (template: string) => {
+            setFooterMiddleState(template);
+            repository?.setFooterMiddle(template);
+        },
+        [repository],
+    );
+
+    const setFooterRight = useCallback(
+        (template: string) => {
+            setFooterRightState(template);
+            repository?.setFooterRight(template);
+        },
+        [repository],
+    );
+
+    const setShowFirstPageFooter = useCallback(
+        (show: boolean) => {
+            setShowFirstPageFooterState(show);
+            repository?.setShowFirstPageFooter(show);
+        },
+        [repository],
+    );
+
     const setElementMargins = useCallback(
         (margins: Record<string, { left: number; right: number }>) => {
             setElementMarginsState(margins);
@@ -1035,6 +1187,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setContdLabel,
             moreLabel,
             setMoreLabel,
+            headerLeft,
+            setHeaderLeft,
+            headerMiddle,
+            setHeaderMiddle,
+            headerRight,
+            setHeaderRight,
+            showFirstPageHeader,
+            setShowFirstPageHeader,
+            footerLeft,
+            setFooterLeft,
+            footerMiddle,
+            setFooterMiddle,
+            footerRight,
+            setFooterRight,
+            showFirstPageFooter,
+            setShowFirstPageFooter,
             elementMargins,
             setElementMargins,
             elementStyles,
@@ -1123,6 +1291,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setContdLabel,
             moreLabel,
             setMoreLabel,
+            headerLeft,
+            setHeaderLeft,
+            headerMiddle,
+            setHeaderMiddle,
+            headerRight,
+            setHeaderRight,
+            showFirstPageHeader,
+            setShowFirstPageHeader,
+            footerLeft,
+            setFooterLeft,
+            footerMiddle,
+            setFooterMiddle,
+            footerRight,
+            setFooterRight,
+            showFirstPageFooter,
+            setShowFirstPageFooter,
             elementMargins,
             setElementMargins,
             elementStyles,

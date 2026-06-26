@@ -23,15 +23,6 @@
 
 /* --- Include section --- */
 
-/* Section header — just the title (Include, Pages to export, Security). */
-.sectionTitle {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--secondary-text);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
 /* Section header centred between hairlines on both sides (Import, Export). */
 .sectionSeparator {
     display: flex;

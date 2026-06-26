@@ -370,6 +370,38 @@ export class ProjectRepository {
         if (this.guardWrite("setMoreLabel")) return;
         this.ydoc.layout().set("moreLabel", label);
     }
+    setHeaderLeft(template: string) {
+        if (this.guardWrite("setHeaderLeft")) return;
+        this.ydoc.layout().set("headerLeft", template);
+    }
+    setHeaderMiddle(template: string) {
+        if (this.guardWrite("setHeaderMiddle")) return;
+        this.ydoc.layout().set("headerMiddle", template);
+    }
+    setHeaderRight(template: string) {
+        if (this.guardWrite("setHeaderRight")) return;
+        this.ydoc.layout().set("headerRight", template);
+    }
+    setShowFirstPageHeader(show: boolean) {
+        if (this.guardWrite("setShowFirstPageHeader")) return;
+        this.ydoc.layout().set("showFirstPageHeader", show);
+    }
+    setFooterLeft(template: string) {
+        if (this.guardWrite("setFooterLeft")) return;
+        this.ydoc.layout().set("footerLeft", template);
+    }
+    setFooterMiddle(template: string) {
+        if (this.guardWrite("setFooterMiddle")) return;
+        this.ydoc.layout().set("footerMiddle", template);
+    }
+    setFooterRight(template: string) {
+        if (this.guardWrite("setFooterRight")) return;
+        this.ydoc.layout().set("footerRight", template);
+    }
+    setShowFirstPageFooter(show: boolean) {
+        if (this.guardWrite("setShowFirstPageFooter")) return;
+        this.ydoc.layout().set("showFirstPageFooter", show);
+    }
     setElementMargins(margins: Record<string, { left: number; right: number }>) {
         if (this.guardWrite("setElementMargins")) return;
         this.ydoc.layout().set("elementMargins", margins);

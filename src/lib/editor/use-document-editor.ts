@@ -78,6 +78,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         activeSearchEditor,
         contdLabel,
         moreLabel,
+        headerLeft,
+        headerMiddle,
+        headerRight,
+        showFirstPageHeader,
+        footerLeft,
+        footerMiddle,
+        footerRight,
+        showFirstPageFooter,
         sceneLocking,
         sceneNumberingStyle,
         skippedSceneLetters,
@@ -380,14 +388,32 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                     config.features.paginationMode === "screenplay"
                         ? {
                               pageGap: 20,
-                              headerRight: `<p class="page-number">{page}.</p>`,
+                              headerLeft,
+                              headerMiddle,
+                              headerRight,
+                              // Page 1 is unnumbered by convention, so its header
+                              // is blanked unless "Show first page header" is on,
+                              // in which case it uses the same templates as the
+                              // rest. Live toggles flow through updateHeaderContent
+                              // (see DocumentEditorPanel).
                               customHeader: {
-                                  1: {
-                                      headerLeft: "",
-                                      headerRight: `<p class="page-number"></p>`,
-                                  },
+                                  1: showFirstPageHeader
+                                      ? { headerLeft, headerMiddle, headerRight }
+                                      : { headerLeft: "", headerMiddle: "", headerRight: "" },
                               },
-                              footerRight: "",
+                              footerLeft,
+                              footerMiddle,
+                              footerRight,
+                              // Page 1 is unnumbered by convention, so its footer
+                              // is blanked unless "Show first page footer" is on,
+                              // mirroring the header. Page 1's footer is rendered by
+                              // the first page-break widget (footer of pagenum-1),
+                              // so the page-1 override lives in customFooter.
+                              customFooter: {
+                                  1: showFirstPageFooter
+                                      ? { footerLeft, footerMiddle, footerRight }
+                                      : { footerLeft: "", footerMiddle: "", footerRight: "" },
+                              },
                               ...SCREENPLAY_FORMATS[pageSize],
                               getPageLocking: () => !!ext.pageLocking,
                               getPageLocks: () => ext.persistentPages ?? {},

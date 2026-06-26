@@ -462,36 +462,46 @@ const renderOverlay = (
 
     const pageMaxRev = new Map<number, number>();
     const asterisks: { top: number; index: number }[] = [];
-    let curPage = firstPage;
+    // Page a content offset (in editor coords) falls on. Used to attribute each
+    // asterisk/stripe to the page it actually lands on rather than to a node's
+    // start page — the same arithmetic the pending-edit preview below uses.
+    const pageOf = (top: number) => Math.max(0, Math.min(totalPages - 1, Math.floor(top / period)));
     let bp = firstPage; // index of the next break boundary to cross
 
     doc.nodesBetween(fromPos, Math.max(fromPos, toPos), (node, pos, parent) => {
         if (parent !== doc) return false; // top-level nodes only; don't descend
-        while (bp < breaks.length && breaks[bp].pos <= pos) {
-            curPage++;
-            bp++;
-        }
+        while (bp < breaks.length && breaks[bp].pos <= pos) bp++;
 
-        let lines = cache.map.get(node);
+        // A node whose own span contains the next break is split across two pages
+        // by a mid-node sentence-break widget. Its per-line offsets (measured
+        // relative to the node top) then include the inter-page gap, so a cache
+        // entry taken before it straddled would be stale — placing the far-side
+        // asterisk on the wrong page (or outside the content band, where it's
+        // dropped). Always measure such a node fresh and never cache it. They
+        // exist only at a page boundary and are measured only when actually
+        // carrying marks, so the hot path is unaffected.
+        const straddles = bp < breaks.length && breaks[bp].pos < pos + node.nodeSize;
+
+        let lines = straddles ? undefined : cache.map.get(node);
         if (lines === undefined) {
             const computed = computeNodeLines(view, node, pos, lineHeight);
             // null = marked node not laid out yet: skip this paint without
             // caching, so a later repaint (fonts-ready / scroll) re-measures it.
             if (computed === null) return false;
             lines = computed;
-            cache.map.set(node, lines);
+            if (!straddles) cache.map.set(node, lines);
         }
         if (lines.length === 0) return false;
 
         const nodeDom = view.nodeDOM(pos);
         const top0 = nodeDom instanceof HTMLElement ? nodeDom.getBoundingClientRect().top - pagRect.top : null;
-        let maxIdx = 0;
+        if (top0 === null) return false;
         for (const l of lines) {
             if (onlyRev && l.index !== onlyRev) continue; // "current" mode filter
-            if (l.index > maxIdx) maxIdx = l.index;
-            if (top0 !== null) asterisks.push({ top: top0 + l.offset, index: l.index });
+            // Stripe attribution is derived from each line's real landing page in
+            // the unified in-band pass below — not from the node's start page.
+            asterisks.push({ top: top0 + l.offset, index: l.index });
         }
-        if (maxIdx > (pageMaxRev.get(curPage) ?? 0)) pageMaxRev.set(curPage, maxIdx);
         return false;
     });
 
@@ -512,11 +522,7 @@ const renderOverlay = (
         if (rev >= 1) {
             const size = doc.content.size;
             const clampPos = (p: number) => Math.max(0, Math.min(p, size));
-            const addAt = (top: number) => {
-                asterisks.push({ top, index: rev });
-                const page = Math.max(0, Math.min(totalPages - 1, Math.floor(top / period)));
-                if (rev > (pageMaxRev.get(page) ?? 0)) pageMaxRev.set(page, rev);
-            };
+            const addAt = (top: number) => asterisks.push({ top, index: rev });
             // Deletions: one point per change → one asterisk on its visual line.
             for (const point of pending.del) {
                 if (point < fromPos || point > toPos) continue;
@@ -554,6 +560,35 @@ const renderOverlay = (
 
     const children: HTMLElement[] = [];
 
+    // An asterisk marks a changed *content* line, so it must sit inside a page's
+    // content area — never in the top/bottom margin or the inter-page gap. The
+    // pending-edit preview measures `getClientRects()` over the inserted range,
+    // and when an edit (e.g. Enter splitting a node) straddles a page break that
+    // range spans from one page's last line, across the break widget, to the
+    // next page's first line — yielding stray rects in the previous page's footer
+    // and the next page's header. Drop any asterisk whose offset within its page
+    // falls outside [marginTop, pageHeight - marginBottom].
+    const inContentBand = (top: number): boolean => {
+        const off = ((top % period) + period) % period;
+        return off >= marginTop && off <= pageHeight - marginBottom;
+    };
+
+    // Single pass over all collected asterisks (committed marks + pending
+    // preview): keep only those landing in a content band, de-duplicate per
+    // visual line (rounded Y), and attribute each page's stripe colour to the
+    // lines that actually land on it. Deriving the stripe from the in-band lines'
+    // real page — not a node's start page — is what makes a node split across a
+    // page break colour BOTH pages' stripes correctly.
+    const lineByY = new Map<number, { top: number; index: number }>();
+    for (const a of asterisks) {
+        if (!inContentBand(a.top)) continue;
+        const page = pageOf(a.top);
+        if (a.index > (pageMaxRev.get(page) ?? 0)) pageMaxRev.set(page, a.index);
+        const key = Math.round(a.top);
+        const existing = lineByY.get(key);
+        if (!existing || a.index > existing.index) lineByY.set(key, { top: a.top, index: a.index });
+    }
+
     // One full-height stripe per changed page (page colour = its max revision).
     for (const [p, maxRev] of pageMaxRev) {
         const color = revisionColor(maxRev);
@@ -568,28 +603,8 @@ const renderOverlay = (
         children.push(s);
     }
 
-    // An asterisk marks a changed *content* line, so it must sit inside a page's
-    // content area — never in the top/bottom margin or the inter-page gap. The
-    // pending-edit preview measures `getClientRects()` over the inserted range,
-    // and when an edit (e.g. Enter splitting a node) straddles a page break that
-    // range spans from one page's last line, across the break widget, to the
-    // next page's first line — yielding stray rects in the previous page's footer
-    // and the next page's header. Drop any asterisk whose offset within its page
-    // falls outside [marginTop, pageHeight - marginBottom].
-    const inContentBand = (top: number): boolean => {
-        const off = ((top % period) + period) % period;
-        return off >= marginTop && off <= pageHeight - marginBottom;
-    };
-
-    // Right-margin asterisks, de-duplicated per visual line (rounded Y).
+    // Right-margin asterisks.
     const asteriskLeft = pageWidth - marginRight + ASTERISK_INSET;
-    const lineByY = new Map<number, { top: number; index: number }>();
-    for (const a of asterisks) {
-        if (!inContentBand(a.top)) continue;
-        const key = Math.round(a.top);
-        const existing = lineByY.get(key);
-        if (!existing || a.index > existing.index) lineByY.set(key, { top: a.top, index: a.index });
-    }
     for (const { top, index } of lineByY.values()) {
         const color = revisionColor(index);
         if (!color) continue;

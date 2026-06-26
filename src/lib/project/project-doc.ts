@@ -101,6 +101,18 @@ export type LayoutData = {
     sceneNumberOnRight: boolean;
     contdLabel: string;
     moreLabel: string;
+    /** Page-header templates (left/middle/right) with `#`/`@`/`*` placeholders. */
+    headerLeft: string;
+    headerMiddle: string;
+    headerRight: string;
+    /** Whether the header is also shown on the (otherwise unnumbered) first page. */
+    showFirstPageHeader: boolean;
+    /** Page-footer templates (left/middle/right) with `#`/`@`/`*` placeholders. */
+    footerLeft: string;
+    footerMiddle: string;
+    footerRight: string;
+    /** Whether the footer is also shown on the (otherwise unnumbered) first page. */
+    showFirstPageFooter: boolean;
     elementMargins: Record<string, ElementMargin>;
     elementStyles: Record<string, ElementStyle>;
 };

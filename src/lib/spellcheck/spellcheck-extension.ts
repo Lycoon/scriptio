@@ -1,6 +1,6 @@
 import { Editor, Extension } from "@tiptap/core";
 import { Node } from "@tiptap/pm/model";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { EditorState, Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 import type { SpellWorkerRequest, SpellWorkerResponse } from "./spellcheck-types";
 import { ScreenplayElement } from "../utils/enums";
@@ -547,6 +547,32 @@ export const createSpellcheckExtension = (config: SpellcheckConfig) => {
             ];
         },
     });
+};
+
+/**
+ * Resolve the FULL misspelled word covering document position `pos`, or null if
+ * none. Read from the plugin's decoration set rather than the DOM: a spellcheck
+ * error is one inline decoration spanning the whole word, but when part of the
+ * word also carries another inline mark (e.g. a `revision` mark colouring an
+ * edited fragment) ProseMirror renders the decoration as several adjacent
+ * `.spellcheck-error` spans. A DOM lookup (`closest(".spellcheck-error")`) would
+ * then see only the clicked fragment — "This" or "sss" of "Thissss" — and offer
+ * suggestions / dictionary-add for that fragment. The decoration keeps the true
+ * word boundaries regardless of how the run is split into marks, and
+ * `textBetween` reassembles the whole word across them.
+ */
+export const getSpellErrorAt = (
+    state: EditorState,
+    pos: number,
+): { word: string; from: number; to: number } | null => {
+    const pluginState = spellcheckPluginKey.getState(state);
+    if (!pluginState) return null;
+    for (const { from, to } of pluginState.decorations.find(pos, pos)) {
+        if (from <= pos && pos <= to) {
+            return { word: state.doc.textBetween(from, to), from, to };
+        }
+    }
+    return null;
 };
 
 /**

@@ -235,7 +235,7 @@ const ExportProject = () => {
             {/* --- Import Section --- */}
             <div className={sharedStyles.formGroup}>
                 <div className={styles.sectionSeparator}>
-                    <span className={styles.sectionTitle}>{t("importLabel")}</span>
+                    <span className={sharedStyles.sectionTitle}>{t("importLabel")}</span>
                 </div>
 
                 {/* Hidden Input */}
@@ -277,7 +277,7 @@ const ExportProject = () => {
             {/* --- Export Format Selection --- */}
             <div className={sharedStyles.formGroup}>
                 <div className={styles.sectionSeparator}>
-                    <span className={styles.sectionTitle}>{t("exportLabel")}</span>
+                    <span className={sharedStyles.sectionTitle}>{t("exportLabel")}</span>
                 </div>
                 <Dropdown
                     value={format}
@@ -295,7 +295,7 @@ const ExportProject = () => {
 
             {/* --- Include Section --- */}
             <div className={sharedStyles.formGroup}>
-                <span className={styles.sectionTitle}>{t("includeLabel")}</span>
+                <span className={sharedStyles.sectionTitle}>{t("includeLabel")}</span>
 
                 <div className={styles.includeGrid}>
                     {/* Notes */}
@@ -327,7 +327,7 @@ const ExportProject = () => {
             {/* --- Pages to export (PDF only): mutually exclusive choice --- */}
             {format === ExportFormat.PDF && (
                 <div className={sharedStyles.formGroup}>
-                    <span className={styles.sectionTitle}>{t("pageSelectionLabel")}</span>
+                    <span className={sharedStyles.sectionTitle}>{t("pageSelectionLabel")}</span>
 
                     <div className={styles.radioGroup}>
                         {/* All pages */}
@@ -437,7 +437,7 @@ const ExportProject = () => {
             {/* --- Security (PDF only): watermark + password --- */}
             {format === ExportFormat.PDF && (
                 <div className={sharedStyles.formGroup}>
-                    <span className={styles.sectionTitle}>{t("securityLabel")}</span>
+                    <span className={sharedStyles.sectionTitle}>{t("securityLabel")}</span>
 
                     <div className={styles.options}>
                         {/* Watermark */}
@@ -500,7 +500,7 @@ const ExportProject = () => {
             {/* --- Revision rendering (PDF only): none / coloured / black & white. --- */}
             {format === ExportFormat.PDF && (
                 <div className={sharedStyles.formGroup}>
-                    <span className={styles.sectionTitle}>{t("revisionExportLabel")}</span>
+                    <span className={sharedStyles.sectionTitle}>{t("revisionExportLabel")}</span>
                     <Dropdown
                         value={revisionExport}
                         onChange={(value) => setRevisionExport(value as RevisionExportMode)}

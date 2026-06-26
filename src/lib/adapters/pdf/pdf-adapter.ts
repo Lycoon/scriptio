@@ -46,7 +46,7 @@ export type PageSelection =
  */
 export type RevisionExportMode = "none" | "colored" | "bw";
 
-import type { WorkerMessage, WorkerPayload, VisualLine } from "./pdf.worker";
+import type { WorkerMessage, WorkerPayload, VisualLine, PageHeader, PageFooter } from "./pdf.worker";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -130,21 +130,50 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         const titlePageLeftPx = titlePageEl ? this.getPageLeftPx(titlePageEl) : 0;
 
         let screenplayLines = this.collectLines(editorEl, options);
+        // Footer of the final page: it has no trailing page-break sentinel to
+        // carry it, so it is read from the dedicated last-page widget. Page
+        // filtering below re-derives it from the last surviving page.
+        const lastPageWidget = editorEl.querySelector(".pagination-last-page") as HTMLElement | null;
+        let screenplayLastFooter = lastPageWidget ? this.extractFooter(lastPageWidget) : undefined;
         // Page selection: keep only the chosen pages (by range or by revision).
         const sel = options.pageSelection;
         if (sel?.mode === "ranges" && sel.ranges.length > 0) {
-            screenplayLines = this.keepPages(screenplayLines, (_page, ordinal) =>
+            const kept = this.keepPages(screenplayLines, screenplayLastFooter, (_page, ordinal) =>
                 sel.ranges.some(([start, end]) => ordinal >= start && ordinal <= end),
             );
+            screenplayLines = kept.lines;
+            screenplayLastFooter = kept.lastFooter;
         } else if (sel?.mode === "revisions" && sel.revisions.length > 0) {
             const wanted = new Set(sel.revisions);
-            screenplayLines = this.keepPages(screenplayLines, (page) => {
+            const kept = this.keepPages(screenplayLines, screenplayLastFooter, (page) => {
                 for (const r of page.revisions) if (wanted.has(r)) return true;
                 return false;
             });
+            screenplayLines = kept.lines;
+            screenplayLastFooter = kept.lastFooter;
         }
         this.applyRevisionStyling(screenplayLines, options.revisionExport ?? "colored");
         const screenplayLeftPx = this.getPageLeftPx(editorEl);
+
+        // Header/footer columns are laid out within the configured page margins:
+        // the editor's `.pagination-header-area`/`.pagination-footer-area` are
+        // padded by --page-margin-left/right. Read those margins (px) off the
+        // editor DOM and convert to PDF points so the export reproduces the same
+        // horizontal bounds instead of a hard-coded 1-inch margin.
+        const editorStyle = getComputedStyle(editorEl);
+        const pxToPt = 72 / 96;
+        const readMarginPt = (name: string, fallbackPx: number): number => {
+            const px = parseFloat(editorStyle.getPropertyValue(name));
+            return (Number.isFinite(px) ? px : fallbackPx) * pxToPt;
+        };
+        const pageMarginLeft = readMarginPt("--page-margin-left", 96);
+        const pageMarginRight = readMarginPt("--page-margin-right", 96);
+
+        // Header of the (otherwise unnumbered) first page, read from the
+        // first-page pagination widget. Blank unless "Show first page header"
+        // is on, in which case its spans carry the expanded templates.
+        const firstPageWidget = editorEl.querySelector(".pagination-first-page") as HTMLElement | null;
+        const screenplayFirstHeader = firstPageWidget ? this.extractHeader(firstPageWidget) : undefined;
 
         return new Promise((resolve, reject) => {
             const worker = new Worker(new URL("./pdf.worker.ts", import.meta.url));
@@ -178,6 +207,10 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 titlePageLeftPx,
                 screenplayLines,
                 screenplayLeftPx,
+                screenplayFirstHeader,
+                screenplayLastFooter,
+                pageMarginLeft,
+                pageMarginRight,
                 contdLabel: options.contdLabel ?? "(CONT'D)",
                 moreLabel: options.moreLabel ?? "(MORE)",
             };
@@ -218,6 +251,8 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     y: 0,
                     type: "__page_break__",
                     pageLabel: this.extractPageLabel(el),
+                    header: this.extractHeader(el),
+                    footer: this.extractFooter(el),
                 });
                 continue;
             }
@@ -299,6 +334,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     y: 0,
                     type: "__page_break__",
                     pageLabel: this.extractPageLabel(splitWidget),
+                    header: this.extractHeader(splitWidget),
                 });
 
                 // Collect lines AFTER the split widget
@@ -681,6 +717,46 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         return right.textContent?.trim() ?? undefined;
     }
 
+    /**
+     * Read the page's three header columns (left / middle / right) out of a
+     * `.pagination-page-break` widget's header area. The editor has already
+     * expanded the `#`/`@`/`*` placeholders into these spans for this exact
+     * page, so the PDF reproduces the same header. Returns undefined when the
+     * widget has no header area (e.g. an entirely blank page-1 override).
+     */
+    private extractHeader(widget: HTMLElement): PageHeader | undefined {
+        const area = widget.querySelector(".pagination-header-area");
+        if (!area) return undefined;
+        const read = (cls: string) =>
+            (area.querySelector(`.${cls}`) as HTMLElement | null)?.textContent ?? "";
+        return {
+            left: read("pagination-header-left"),
+            middle: read("pagination-header-middle"),
+            right: read("pagination-header-right"),
+        };
+    }
+
+    /**
+     * Read the page's three footer columns (left / middle / right) out of a
+     * `.pagination-page-break` or `.pagination-last-page` widget's footer area.
+     * The editor has already expanded the `#`/`@`/`*` placeholders into these
+     * spans, so the PDF reproduces the same footer. On a page-break widget the
+     * footer belongs to the page ENDING before the break; on the last-page
+     * widget it belongs to the final page. Returns undefined when the widget
+     * has no footer area.
+     */
+    private extractFooter(widget: HTMLElement): PageFooter | undefined {
+        const area = widget.querySelector(".pagination-footer-area");
+        if (!area) return undefined;
+        const read = (cls: string) =>
+            (area.querySelector(`.${cls}`) as HTMLElement | null)?.textContent ?? "";
+        return {
+            left: read("pagination-footer-left"),
+            middle: read("pagination-footer-middle"),
+            right: read("pagination-footer-right"),
+        };
+    }
+
     // ── VisualLine[] → PDF ───────────────────────────────────────────────────
 
     /**
@@ -795,32 +871,58 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
      */
     private keepPages(
         lines: VisualLine[],
+        lastPageFooter: PageFooter | undefined,
         keep: (page: { lines: VisualLine[]; revisions: Set<number> }, ordinal: number) => boolean,
-    ): VisualLine[] {
-        type Page = { label?: string; lines: VisualLine[]; revisions: Set<number> };
+    ): { lines: VisualLine[]; lastFooter: PageFooter | undefined } {
+        type Page = {
+            label?: string;
+            header?: PageHeader;
+            footer?: PageFooter;
+            lines: VisualLine[];
+            revisions: Set<number>;
+        };
         const pages: Page[] = [{ lines: [], revisions: new Set() }];
         for (const line of lines) {
             if (line.type === "__page_break__") {
-                pages.push({ label: line.pageLabel, lines: [], revisions: new Set() });
+                // A break sentinel carries the footer of the page that just
+                // ended and the header of the page about to begin.
+                pages[pages.length - 1].footer = line.footer;
+                pages.push({ label: line.pageLabel, header: line.header, lines: [], revisions: new Set() });
                 continue;
             }
             const page = pages[pages.length - 1];
             page.lines.push(line);
             if (line.revision) page.revisions.add(line.revision);
         }
+        // The final page has no trailing sentinel; its footer comes from the
+        // dedicated last-page widget.
+        pages[pages.length - 1].footer = lastPageFooter;
 
         const out: VisualLine[] = [];
         let first = true;
+        // Footer of the previously kept page — the worker draws it at the bottom
+        // of that page just before the break that begins the current one.
+        let prevKeptFooter: PageFooter | undefined = undefined;
+        let lastFooter: PageFooter | undefined = undefined;
         pages.forEach((page, idx) => {
             if (!keep(page, idx + 1)) return;
             // A break sentinel before every kept page except an original-page-1
             // first page (it renders as page 1 with no header).
             if (!first || page.label !== undefined) {
-                out.push({ runs: [], y: 0, type: "__page_break__", pageLabel: page.label });
+                out.push({
+                    runs: [],
+                    y: 0,
+                    type: "__page_break__",
+                    pageLabel: page.label,
+                    header: page.header,
+                    footer: prevKeptFooter,
+                });
             }
             out.push(...page.lines);
+            prevKeptFooter = page.footer;
+            lastFooter = page.footer;
             first = false;
         });
-        return out;
+        return { lines: out, lastFooter };
     }
 }

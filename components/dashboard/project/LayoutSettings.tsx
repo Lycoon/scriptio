@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useState, useMemo } from "react";
+import { ReactNode, useContext, useEffect, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import {
@@ -26,15 +26,16 @@ import {
     ArrowDownToLine,
     ChevronUp,
     ChevronDown,
+    ChevronRight,
     Save,
     SeparatorHorizontal,
     RotateCcw,
 } from "lucide-react";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 
-import form from "./../../utils/Form.module.css";
 import sharedStyles from "./ProjectSettings.module.css";
 import styles from "./LayoutSettings.module.css";
+import optionCard from "./OptionCard.module.css";
 const MARGIN_ELEMENTS = [
     "scene",
     "action",
@@ -44,6 +45,46 @@ const MARGIN_ELEMENTS = [
     "transition",
     "section",
 ] as const;
+
+/**
+ * A collapsible settings section: a clickable heading (with an optional hint
+ * slot) that folds its body away. Defined at module scope so its open/closed
+ * state survives the parent's re-renders. The hint is rendered next to the
+ * title and stops click propagation so interacting with it doesn't toggle.
+ */
+const Section = ({
+    title,
+    defaultOpen = false,
+    children,
+}: {
+    title: string;
+    defaultOpen?: boolean;
+    children: ReactNode;
+}) => {
+    const [open, setOpen] = useState(defaultOpen);
+    const toggle = () => setOpen((prev) => !prev);
+    return (
+        <div className={sharedStyles.formGroup}>
+            <div
+                className={styles.sectionHeader}
+                role="button"
+                tabIndex={0}
+                aria-expanded={open}
+                onClick={toggle}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggle();
+                    }
+                }}
+            >
+                <span className={sharedStyles.sectionTitle}>{title}</span>
+                <ChevronRight size={16} className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`} />
+            </div>
+            {open && <div className={styles.sectionBody}>{children}</div>}
+        </div>
+    );
+};
 
 const LayoutSettings = () => {
     const t = useTranslations("layout");
@@ -64,6 +105,22 @@ const LayoutSettings = () => {
         setContdLabel,
         moreLabel,
         setMoreLabel,
+        headerLeft,
+        setHeaderLeft,
+        headerMiddle,
+        setHeaderMiddle,
+        headerRight,
+        setHeaderRight,
+        showFirstPageHeader,
+        setShowFirstPageHeader,
+        footerLeft,
+        setFooterLeft,
+        footerMiddle,
+        setFooterMiddle,
+        footerRight,
+        setFooterRight,
+        showFirstPageFooter,
+        setShowFirstPageFooter,
         elementMargins,
         setElementMargins,
         elementStyles,
@@ -82,6 +139,14 @@ const LayoutSettings = () => {
     const [localHeadingSpacing, setLocalHeadingSpacing] = useState(sceneHeadingSpacing);
     const [localContdLabel, setLocalContdLabel] = useState(() => stripParens(contdLabel));
     const [localMoreLabel, setLocalMoreLabel] = useState(() => stripParens(moreLabel));
+    const [localHeaderLeft, setLocalHeaderLeft] = useState(headerLeft);
+    const [localHeaderMiddle, setLocalHeaderMiddle] = useState(headerMiddle);
+    const [localHeaderRight, setLocalHeaderRight] = useState(headerRight);
+    const [localShowFirstPageHeader, setLocalShowFirstPageHeader] = useState(showFirstPageHeader);
+    const [localFooterLeft, setLocalFooterLeft] = useState(footerLeft);
+    const [localFooterMiddle, setLocalFooterMiddle] = useState(footerMiddle);
+    const [localFooterRight, setLocalFooterRight] = useState(footerRight);
+    const [localShowFirstPageFooter, setLocalShowFirstPageFooter] = useState(showFirstPageFooter);
 
     // Merge persisted margins with defaults
     const initialMargins = useMemo(() => {
@@ -116,6 +181,14 @@ const LayoutSettings = () => {
             setLocalHeadingSpacing(sceneHeadingSpacing);
             setLocalContdLabel(stripParens(contdLabel));
             setLocalMoreLabel(stripParens(moreLabel));
+            setLocalHeaderLeft(headerLeft);
+            setLocalHeaderMiddle(headerMiddle);
+            setLocalHeaderRight(headerRight);
+            setLocalShowFirstPageHeader(showFirstPageHeader);
+            setLocalFooterLeft(footerLeft);
+            setLocalFooterMiddle(footerMiddle);
+            setLocalFooterRight(footerRight);
+            setLocalShowFirstPageFooter(showFirstPageFooter);
             setLocalMargins(initialMargins);
             setLocalStyles(initialStyles);
         };
@@ -128,6 +201,14 @@ const LayoutSettings = () => {
         sceneHeadingSpacing,
         contdLabel,
         moreLabel,
+        headerLeft,
+        headerMiddle,
+        headerRight,
+        showFirstPageHeader,
+        footerLeft,
+        footerMiddle,
+        footerRight,
+        showFirstPageFooter,
         initialMargins,
         initialStyles,
     ]);
@@ -141,6 +222,14 @@ const LayoutSettings = () => {
             localHeadingSpacing !== sceneHeadingSpacing ||
             `(${localContdLabel})` !== contdLabel ||
             `(${localMoreLabel})` !== moreLabel ||
+            localHeaderLeft !== headerLeft ||
+            localHeaderMiddle !== headerMiddle ||
+            localHeaderRight !== headerRight ||
+            localShowFirstPageHeader !== showFirstPageHeader ||
+            localFooterLeft !== footerLeft ||
+            localFooterMiddle !== footerMiddle ||
+            localFooterRight !== footerRight ||
+            localShowFirstPageFooter !== showFirstPageFooter ||
             JSON.stringify(localMargins) !== JSON.stringify(initialMargins) ||
             JSON.stringify(localStyles) !== JSON.stringify(initialStyles)
         );
@@ -159,6 +248,22 @@ const LayoutSettings = () => {
         contdLabel,
         localMoreLabel,
         moreLabel,
+        localHeaderLeft,
+        headerLeft,
+        localHeaderMiddle,
+        headerMiddle,
+        localHeaderRight,
+        headerRight,
+        localShowFirstPageHeader,
+        showFirstPageHeader,
+        localFooterLeft,
+        footerLeft,
+        localFooterMiddle,
+        footerMiddle,
+        localFooterRight,
+        footerRight,
+        localShowFirstPageFooter,
+        showFirstPageFooter,
         localMargins,
         initialMargins,
         localStyles,
@@ -173,6 +278,14 @@ const LayoutSettings = () => {
         setLocalHeadingSpacing(1);
         setLocalContdLabel("CONT'D");
         setLocalMoreLabel("MORE");
+        setLocalHeaderLeft("");
+        setLocalHeaderMiddle("");
+        setLocalHeaderRight("#.");
+        setLocalShowFirstPageHeader(false);
+        setLocalFooterLeft("");
+        setLocalFooterMiddle("");
+        setLocalFooterRight("");
+        setLocalShowFirstPageFooter(false);
         const defaultMargins: Record<string, ElementMargin> = {};
         for (const key of MARGIN_ELEMENTS) {
             defaultMargins[key] = { ...DEFAULT_ELEMENT_MARGINS[key] };
@@ -193,6 +306,14 @@ const LayoutSettings = () => {
         setSceneHeadingSpacing(localHeadingSpacing);
         setContdLabel(`(${localContdLabel})`);
         setMoreLabel(`(${localMoreLabel})`);
+        setHeaderLeft(localHeaderLeft);
+        setHeaderMiddle(localHeaderMiddle);
+        setHeaderRight(localHeaderRight);
+        setShowFirstPageHeader(localShowFirstPageHeader);
+        setFooterLeft(localFooterLeft);
+        setFooterMiddle(localFooterMiddle);
+        setFooterRight(localFooterRight);
+        setShowFirstPageFooter(localShowFirstPageFooter);
         setElementMargins(localMargins);
         setElementStyles(localStyles);
     };
@@ -416,8 +537,7 @@ const LayoutSettings = () => {
 
     return (
         <div className={sharedStyles.settingsForm}>
-            <div className={sharedStyles.formGroup}>
-                <label className={form.label}>{t("pageFormat")}</label>
+            <Section title={t("pageFormat")}>
                 <Dropdown
                     value={localFormat}
                     onChange={(value) => setLocalFormat(value as PageFormat)}
@@ -428,10 +548,9 @@ const LayoutSettings = () => {
                     {localFormat === "LETTER" && t("pageFormatHelp.letter")}
                     {localFormat === "A4" && t("pageFormatHelp.a4")}
                 </p>
-            </div>
+            </Section>
 
-            <div className={sharedStyles.formGroup}>
-                <label className={form.label}>{t("pageMargins")}</label>
+            <Section title={t("pageMargins")}>
                 <div className={styles.marginsSection}>
                     <div className={styles.marginRow}>
                         <span className={styles.marginLabel}>{t("vertical")}</span>
@@ -556,12 +675,12 @@ const LayoutSettings = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </Section>
 
-            <div className={sharedStyles.formGroup}>
+            <Section title={t("continuedLabels")}>
                 <div className={styles.labelRow}>
                     <div className={styles.marginsSection}>
-                        <label className={form.label}>{t("contdTitle")}</label>
+                        <span className={styles.marginLabel}>{t("contdTitle")}</span>
                         <div className={styles.contdInputRow}>
                             <input
                                 type="text"
@@ -573,7 +692,7 @@ const LayoutSettings = () => {
                         </div>
                     </div>
                     <div className={styles.marginsSection}>
-                        <label className={form.label}>{t("moreTitle")}</label>
+                        <span className={styles.marginLabel}>{t("moreTitle")}</span>
                         <div className={styles.contdInputRow}>
                             <input
                                 type="text"
@@ -585,19 +704,119 @@ const LayoutSettings = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </Section>
 
-            <div className={sharedStyles.formGroup}>
-                <label className={form.label}>{t("elements")}</label>
+            <Section title={t("headerAndFooter")}>
+                <p className={sharedStyles.helpText}>{t("pageHeaderHint")}</p>
+
+                <div className={styles.hfGroup}>
+                    <span className={styles.hfTitle}>{t("header")}</span>
+                    <div className={styles.labelRow}>
+                        <div className={styles.marginsSection}>
+                            <span className={styles.marginLabel} style={{ textAlign: "left" }} title={t("headerLeft")}>
+                                <AlignLeft size={16} />
+                            </span>
+                            <input
+                                type="text"
+                                value={localHeaderLeft}
+                                onChange={(e) => setLocalHeaderLeft(e.target.value)}
+                                className={`${sharedStyles.input} ${styles.input}`}
+                            />
+                        </div>
+                        <div className={styles.marginsSection}>
+                            <span className={styles.marginLabel} style={{ textAlign: "center" }} title={t("headerMiddle")}>
+                                <AlignCenter size={16} />
+                            </span>
+                            <input
+                                type="text"
+                                value={localHeaderMiddle}
+                                onChange={(e) => setLocalHeaderMiddle(e.target.value)}
+                                className={`${sharedStyles.input} ${styles.input}`}
+                                style={{ textAlign: "center" }}
+                            />
+                        </div>
+                        <div className={styles.marginsSection}>
+                            <span className={styles.marginLabel} style={{ textAlign: "right" }} title={t("headerRight")}>
+                                <AlignRight size={16} />
+                            </span>
+                            <input
+                                type="text"
+                                value={localHeaderRight}
+                                onChange={(e) => setLocalHeaderRight(e.target.value)}
+                                className={`${sharedStyles.input} ${styles.input}`}
+                                style={{ textAlign: "right" }}
+                            />
+                        </div>
+                    </div>
+                    <div
+                        className={`${optionCard.optionCard} ${styles.hfToggle} ${localShowFirstPageHeader ? optionCard.active : ""}`}
+                        onClick={() => setLocalShowFirstPageHeader(!localShowFirstPageHeader)}
+                    >
+                        <div className={optionCard.checkbox}>
+                            {localShowFirstPageHeader && <div className={optionCard.checkInner} />}
+                        </div>
+                        <span className={optionCard.optionTitle}>{t("showFirstPageHeader")}</span>
+                    </div>
+                </div>
+
+                <div className={styles.hfGroup}>
+                    <span className={styles.hfTitle}>{t("footer")}</span>
+                    <div className={styles.labelRow}>
+                        <div className={styles.marginsSection}>
+                            <span className={styles.marginLabel} style={{ textAlign: "left" }} title={t("footerLeft")}>
+                                <AlignLeft size={16} />
+                            </span>
+                            <input
+                                type="text"
+                                value={localFooterLeft}
+                                onChange={(e) => setLocalFooterLeft(e.target.value)}
+                                className={`${sharedStyles.input} ${styles.input}`}
+                            />
+                        </div>
+                        <div className={styles.marginsSection}>
+                            <span className={styles.marginLabel} style={{ textAlign: "center" }} title={t("footerMiddle")}>
+                                <AlignCenter size={16} />
+                            </span>
+                            <input
+                                type="text"
+                                value={localFooterMiddle}
+                                onChange={(e) => setLocalFooterMiddle(e.target.value)}
+                                className={`${sharedStyles.input} ${styles.input}`}
+                                style={{ textAlign: "center" }}
+                            />
+                        </div>
+                        <div className={styles.marginsSection}>
+                            <span className={styles.marginLabel} style={{ textAlign: "right" }} title={t("footerRight")}>
+                                <AlignRight size={16} />
+                            </span>
+                            <input
+                                type="text"
+                                value={localFooterRight}
+                                onChange={(e) => setLocalFooterRight(e.target.value)}
+                                className={`${sharedStyles.input} ${styles.input}`}
+                                style={{ textAlign: "right" }}
+                            />
+                        </div>
+                    </div>
+                    <div
+                        className={`${optionCard.optionCard} ${styles.hfToggle} ${localShowFirstPageFooter ? optionCard.active : ""}`}
+                        onClick={() => setLocalShowFirstPageFooter(!localShowFirstPageFooter)}
+                    >
+                        <div className={optionCard.checkbox}>
+                            {localShowFirstPageFooter && <div className={optionCard.checkInner} />}
+                        </div>
+                        <span className={optionCard.optionTitle}>{t("showFirstPageFooter")}</span>
+                    </div>
+                </div>
+            </Section>
+
+            <Section title={t("elements")}>
                 <Dropdown
                     value={selectedElement}
                     onChange={(value) => setSelectedElement(value as (typeof MARGIN_ELEMENTS)[number])}
                     options={elementOptions}
                     className={`${sharedStyles.input} ${styles.input}`}
                 />
-            </div>
-
-            <div className={sharedStyles.formGroup}>
                 {selectedElement === "scene" && (
                     <div className={styles.marginsSection}>
                         <div className={styles.marginRow}>
@@ -660,7 +879,7 @@ const LayoutSettings = () => {
                 )}
 
                 {renderElementConfig(selectedElement)}
-            </div>
+            </Section>
 
             <div className={sharedStyles.formActions}>
                 <button className={sharedStyles.formBtn} onClick={handleReset}>

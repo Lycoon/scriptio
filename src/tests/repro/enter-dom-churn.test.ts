@@ -67,8 +67,8 @@ async function makeEditor(n: number) {
             ScriptioPagination.configure({
                 pageHeight: 200, pageWidth: 600, marginTop: 0, marginBottom: 0,
                 marginLeft: 0, marginRight: 0, pageGap: 10,
-                // The page-number header is an HTML template, not plain text.
-                headerRight: `<p class="page-number">{page}.</p>`,
+                // Plain-text header template; `#` expands to the page label.
+                headerRight: `#.`,
             }),
         ],
     });
@@ -156,20 +156,17 @@ describe("typing hot path: DOM churn and widget key stability", () => {
         expect(widget.style.getPropertyValue("contain-intrinsic-size")).toMatch(/none \d+(\.\d+)?px/);
     });
 
-    it("header/footer HTML templates are parsed as markup, not text", async () => {
+    it("header templates are inserted as plain text with placeholders expanded", async () => {
         const editor = await makeEditor(600);
         const dom = editor.view.dom as HTMLElement;
 
-        // The configured `<p class="page-number">{page}.</p>` header must
-        // produce a real <p> element, not a text node with literal angle
-        // brackets. Guards against the textContent regression.
+        // The configured `#.` header is a plain-text template: the content must
+        // be literal text (no markup parsing) with `#` substituted by the page
+        // label — e.g. "2.". Guards against an innerHTML regression.
         const headerRight = dom.querySelector(".pagination-header-right") as HTMLElement;
         expect(headerRight).toBeTruthy();
-        const pageNumberEl = headerRight.querySelector("p.page-number");
-        expect(pageNumberEl).toBeTruthy();
-        expect(headerRight.textContent).not.toContain("<p");
-        // {page} placeholder is substituted with the page label.
-        expect(pageNumberEl!.textContent).toMatch(/^\d+\.$/);
+        expect(headerRight.querySelector("*")).toBeNull(); // no child elements
+        expect(headerRight.textContent).toMatch(/^\d+\.$/);
     });
 
     it("tags the first node of each page with a margin-reset class", async () => {
