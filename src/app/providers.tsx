@@ -8,6 +8,7 @@ import { UserContextProvider } from "@src/context/UserContext";
 import { DashboardContextProvider } from "@src/context/DashboardContext";
 import { LocaleContextProvider, useLocale } from "@src/context/LocaleContext";
 import { SpellcheckProvider } from "@src/context/SpellcheckContext";
+import { ReadAloudProvider } from "@src/context/ReadAloudContext";
 import fetcher from "@src/lib/fetcher";
 
 /**
@@ -73,8 +74,10 @@ export function Providers({ children }: { children: ReactNode }) {
                                 enableColorScheme={false}
                             >
                                 <SpellcheckProvider>
-                                    <LocaleSync />
-                                    {children}
+                                    <ReadAloudProvider>
+                                        <LocaleSync />
+                                        {children}
+                                    </ReadAloudProvider>
                                 </SpellcheckProvider>
                             </ThemeProvider>
                         </IntlBridge>

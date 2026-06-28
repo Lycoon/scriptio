@@ -45,6 +45,126 @@
     animation: spin 1s linear infinite;
 }
 
+/* ── Read-aloud voice list ── */
+.voiceList {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.voiceRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--separator);
+    transition: background-color 0.15s ease;
+}
+
+.voiceRow:last-child {
+    border-bottom: none;
+}
+
+.voiceRow.voiceInstalled {
+    cursor: default;
+}
+
+.voiceRow:not(.voiceInstalled):hover {
+    background: var(--tertiary);
+}
+
+.voiceName {
+    font-size: 0.875rem;
+    color: var(--primary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.voiceRemove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--secondary-text);
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    opacity: 0.5;
+    transition: color 0.15s, opacity 0.15s;
+}
+
+.voiceRemove:hover {
+    color: var(--error);
+    opacity: 1;
+}
+
+.percent {
+    font-size: 0.72rem;
+    color: var(--secondary-text);
+    min-width: 34px;
+    text-align: right;
+}
+
+.voiceNameWrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.recommendedTag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--success);
+    border: 1px solid var(--success);
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.infoIcon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--secondary-text);
+    opacity: 0.7;
+    cursor: help;
+    flex-shrink: 0;
+}
+
+.activeTag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--success);
+    white-space: nowrap;
+}
+
+.activateTag {
+    font-size: 0.72rem;
+    color: var(--secondary-text);
+    white-space: nowrap;
+}
+
+/* Read Aloud GPU-only: missing-GPU state */
+.voiceDisabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.noGpuTag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--error);
+    white-space: nowrap;
+}
+
 @keyframes spin {
     to {
         transform: rotate(360deg);

@@ -530,6 +530,12 @@
         box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.8);
     }
 
+    /* Read-aloud: the line currently being spoken */
+    .read-aloud-current {
+        background-color: rgba(255, 251, 0, 0.2);
+        transition: background-color 0.2s ease;
+    }
+
     /* Spellcheck error highlighting */
     .spellcheck-error {
         position: relative;

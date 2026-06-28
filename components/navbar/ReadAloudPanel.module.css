@@ -1,0 +1,364 @@
+.container {
+    composes: panel from "./navbar-shared.module.css";
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 100;
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    /* Visible so the voice dropdown menus can extend past the panel edge. */
+    overflow: visible;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--separator);
+    flex-shrink: 0;
+}
+
+.title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+.header_actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.icon_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.icon_btn:hover {
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+}
+
+.section {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--separator);
+}
+
+.section:last-child {
+    border-bottom: none;
+}
+
+.section_label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--secondary-text);
+    opacity: 0.8;
+    margin-bottom: 10px;
+}
+
+/* Mirrors the 10px gap a bare .section_label leaves below other section titles,
+   so the "Voices" header lines up with the "Read" section above it. */
+.section_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.section_header .section_label {
+    margin-bottom: 0;
+}
+
+.select_all_btn {
+    padding: 2px 8px;
+    border: 1px solid var(--separator);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--secondary-text);
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.select_all_btn:hover {
+    color: var(--primary-text);
+    border-color: var(--secondary-text);
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 22px;
+}
+
+.row_main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.row_label {
+    font-size: 0.85rem;
+    color: var(--primary-text);
+}
+
+.options_list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ── Transport ── */
+.transport {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.play_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--primary-text);
+    color: var(--secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease;
+}
+
+.play_btn:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.play_btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.stop_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--separator);
+    background: transparent;
+    color: var(--secondary-text);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.stop_btn:hover:not(:disabled) {
+    color: var(--primary-text);
+    border-color: var(--secondary-text);
+}
+
+.stop_btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.transport_status {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.status_text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--secondary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.spinner {
+    flex-shrink: 0;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.now_line {
+    font-size: 0.8rem;
+    color: var(--primary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.now_char {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+/* ── Volume ── */
+.volume_row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.volume_slider {
+    flex: 1;
+    min-width: 0;
+    accent-color: var(--primary-text);
+    cursor: pointer;
+}
+
+/* ── Voice assignment ── */
+.assign_field {
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    color: var(--primary-text);
+}
+
+/* Voice option: flag + name with a clear gap between them. */
+.voice_option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.voice_flag {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.voice_gender {
+    flex-shrink: 0;
+    margin-left: 2px;
+}
+
+.character_list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Bounded + scrollable so the panel stays a reasonable size. The voice
+       dropdown menus render in a body portal, so this scroll doesn't clip them. */
+    max-height: 240px;
+    overflow-y: auto;
+    /* Breathing room between the voice dropdowns and the scrollbar. */
+    padding-right: 6px;
+}
+
+.character_row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.character_check {
+    flex: 0 0 auto;
+    width: 15px;
+    height: 15px;
+    accent-color: var(--primary-text);
+    cursor: pointer;
+}
+
+/* The narrator's checkbox is locked on — keep the checkmark legible, just
+   signal it isn't interactive. */
+.character_check:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.character_name {
+    flex: 0 0 92px;
+    min-width: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--primary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Unchecked characters read as dimmed so it's clear they're skipped. */
+.character_muted {
+    opacity: 0.45;
+}
+
+.character_field {
+    flex: 1;
+    min-width: 0;
+}
+
+.hint {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--secondary-text);
+}
+
+/* ── Empty state (no voices installed) ── */
+.empty {
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+}
+
+.empty_text {
+    font-size: 0.82rem;
+    color: var(--secondary-text);
+    line-height: 1.5;
+}
+
+.empty_btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--tertiary);
+    border-radius: 8px;
+    background: var(--secondary);
+    color: var(--primary-text);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.empty_btn:hover {
+    border-color: var(--secondary-text);
+}

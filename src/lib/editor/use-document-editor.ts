@@ -23,6 +23,7 @@ import {
     refreshSearchHighlights,
     SearchMatch,
 } from "@src/lib/screenplay/extensions/search-highlight-extension";
+import { createReadAloudHighlightExtension } from "@src/lib/screenplay/extensions/read-aloud-highlight-extension";
 import {
     createSceneBookmarkExtension,
     refreshSceneBookmarks,
@@ -444,6 +445,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
 
                 ...(characterHighlightExtension ? [characterHighlightExtension] : []),
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),
+                // Read-aloud "now reading" node highlight (screenplay editors only;
+                // controlled externally via transaction metas, so no config needed).
+                ...(config.type === "screenplay" ? [createReadAloudHighlightExtension()] : []),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
                 ...(sceneLockingExtension ? [sceneLockingExtension] : []),
                 // After ScriptioPagination so its plugin reads fresh pagination
