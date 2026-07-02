@@ -1,0 +1,11 @@
+{
+    "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+    "identifier": "app.scriptio",
+    "bundle": {
+        "category": "Productivity",
+        "iOS": {
+            "developmentTeam": "G93CJ6PWZH",
+            "minimumSystemVersion": "13.0"
+        }
+    }
+}
