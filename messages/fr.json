@@ -8,6 +8,14 @@
     "removeFromOutline": "Retirer du séquencier"
   },
   "navbar": {
+    "menu": "Menu",
+    "close": "Fermer",
+    "history": "Historique",
+    "production": "Production",
+    "readAloud": "Lecture à voix haute",
+    "analytics": "Analyses",
+    "settings": "Paramètres",
+    "back": "Retour aux projets",
     "outline": "Séquencier",
     "screenplay": "Scénario",
     "board": "Tableau",
@@ -215,6 +223,7 @@
     "deleting": "Suppression...",
     "deleteAccountBtn": "Supprimer mon compte",
     "subscription": {
+      "openWebsite": "Gérer sur scriptio.app",
       "title": "Abonnement",
       "proBadge": "Pro",
       "proTitle": "Plan Pro",

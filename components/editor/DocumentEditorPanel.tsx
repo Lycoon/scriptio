@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl";
 import { DUAL_DIALOGUE_COLUMN } from "@src/lib/screenplay/nodes/dual-dialogue-column-node";
 import { DEFAULT_ELEMENT_MARGINS, DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
 import { join } from "@src/lib/utils/misc";
-import { useGlobalKeybinds, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
+import { useGlobalKeybinds, useIsPhone, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { ContextMenuType } from "@components/editor/sidebar/ContextMenu";
@@ -92,9 +92,13 @@ const DocumentEditorPanel = ({
     const { settings } = useSettings();
     const { isEndlessScroll } = useViewContext();
     const { user } = useUser();
+    const isPhone = useIsPhone();
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    // Callback ref stored in state so the zoom effect re-runs when the scroll
+    // container actually mounts (it may render after a Loading fallback).
+    const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
 
     // Resolve the comments Y.Map for this document
     const projectState = repository?.getState();
@@ -165,6 +169,35 @@ const DocumentEditorPanel = ({
             return () => clearTimeout(timer);
         }
     }, [editor, isYjsReady]);
+
+    // ---- Fit-to-width auto-zoom (phone only) ----
+    // Screenplay pages have a fixed physical width; on a narrow phone screen we
+    // scale the page down so its whole width fits, avoiding horizontal scrolling.
+    // The ratio is published as --editor-zoom and consumed via `zoom` in the phone
+    // media query; recomputed on container resize (rotation, split-screen, etc.).
+    useEffect(() => {
+        const container = containerEl;
+        if (!container) return;
+
+        const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
+        if (!isPhone || !pageSize) {
+            container.style.removeProperty("--editor-zoom");
+            return;
+        }
+
+        const apply = () => {
+            const avail = container.clientWidth;
+            if (!avail) return;
+            // Never upscale past 100%; leave a small horizontal breathing margin.
+            const ratio = Math.min(1, (avail - 8) / pageSize.pageWidth);
+            container.style.setProperty("--editor-zoom", `${ratio}`);
+        };
+
+        apply();
+        const ro = new ResizeObserver(apply);
+        ro.observe(container);
+        return () => ro.disconnect();
+    }, [containerEl, isPhone, pageFormat]);
 
     // ---- Orphaned comment cleanup ----
     // Comments anchor to a node's data-id. When that node is deleted the comment
@@ -700,6 +733,7 @@ const DocumentEditorPanel = ({
     return (
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
             <div
+                ref={setContainerEl}
                 className={styles.container}
                 onScroll={onScroll}
                 onMouseDown={handleContainerMouseDown}

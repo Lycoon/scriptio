@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DocumentPanelKind, PanelType, SplitSide, useViewContext } from "@src/context/ViewContext";
 import { join } from "@src/lib/utils/misc";
+import { useIsPhone } from "@src/lib/utils/hooks";
 import { DOC_DND_MIME } from "@components/editor/sidebar/DocumentTreeItem";
 import EditorPanel from "@components/editor/EditorPanel";
 import TitlePagePanel from "@components/editor/TitlePagePanel";
@@ -83,6 +84,7 @@ const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey:
 
 const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; side: "primary" | "secondary" }) => {
     const t = useTranslations("navbar");
+    const isPhone = useIsPhone();
     const {
         setSidePanel,
         isSplit,
@@ -125,7 +127,7 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
 
     return (
         <div ref={ref} className={styles.panel_switcher_anchor}>
-            {side === "primary" && (
+            {side === "primary" && !isPhone && (
                 <button className={styles.panel_switcher_btn} onClick={() => setLeftSidebarOpen((prev) => !prev)}>
                     {leftSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
                 </button>
@@ -135,28 +137,33 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
             </button>
             {isOpen && (
                 <div className={dropdown.dropdown_menu} style={{ left: 0, transform: "none" }}>
-                    <button
-                        className={`${dropdown.dropdown_item} ${isSplit ? dropdown.dropdown_item_active : ""}`}
-                        onClick={() => {
-                            handleSplitToggle();
-                            setIsOpen(false);
-                        }}
-                    >
-                        {isSplit ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
-                        <span className={dropdown.item_label}>{isSplit ? t("unsplitPanel") : t("splitPanel")}</span>
-                    </button>
-                    <button
-                        className={dropdown.dropdown_item}
-                        onClick={() => {
-                            swapPanels();
-                            setIsOpen(false);
-                        }}
-                        disabled={!isSplit}
-                    >
-                        <ArrowLeftRight size={14} />
-                        <span className={dropdown.item_label}>{t("swapPanels")}</span>
-                    </button>
-                    <div className={styles.panel_switcher_separator} />
+                    {/* Split view is single-panel-only on phones. */}
+                    {!isPhone && (
+                        <>
+                            <button
+                                className={`${dropdown.dropdown_item} ${isSplit ? dropdown.dropdown_item_active : ""}`}
+                                onClick={() => {
+                                    handleSplitToggle();
+                                    setIsOpen(false);
+                                }}
+                            >
+                                {isSplit ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
+                                <span className={dropdown.item_label}>{isSplit ? t("unsplitPanel") : t("splitPanel")}</span>
+                            </button>
+                            <button
+                                className={dropdown.dropdown_item}
+                                onClick={() => {
+                                    swapPanels();
+                                    setIsOpen(false);
+                                }}
+                                disabled={!isSplit}
+                            >
+                                <ArrowLeftRight size={14} />
+                                <span className={dropdown.item_label}>{t("swapPanels")}</span>
+                            </button>
+                            <div className={styles.panel_switcher_separator} />
+                        </>
+                    )}
                     {SWITCHABLE_PANELS.map(({ type, icon: Icon, labelKey }) => (
                         <button
                             key={type}
@@ -209,6 +216,12 @@ const SplitPanelContainer = ({
         splitWithDocument,
     } = useViewContext();
 
+    const isPhone = useIsPhone();
+    // On phone only one panel is ever visible: collapse any active split down to
+    // the primary side (the split state is preserved, just not rendered).
+    const showSplit = isSplit && !isPhone;
+    const canSplit = !isSplit && !isPhone;
+
     // Where a document dragged from the sidebar would land: which side it is over
     // and which zone of that side ("center" replaces the panel; "left"/"right"
     // splits, opening the document on that edge).
@@ -222,10 +235,10 @@ const SplitPanelContainer = ({
             e.preventDefault();
             e.dataTransfer.dropEffect = "copy";
             // Edge zones only split when there is room for a second panel.
-            const zone = computeDropZone(e, !isSplit);
+            const zone = computeDropZone(e, canSplit);
             setDocDragOver((prev) => (prev?.side === side && prev.zone === zone ? prev : { side, zone }));
         },
-        [isSplit],
+        [canSplit],
     );
 
     const handleDocDrop = useCallback(
@@ -234,7 +247,7 @@ const SplitPanelContainer = ({
             if (!raw) return;
             e.preventDefault();
             e.stopPropagation();
-            const zone = computeDropZone(e, !isSplit);
+            const zone = computeDropZone(e, canSplit);
             setDocDragOver(null);
             let data: { id: string; type: "editor" | "board" };
             try {
@@ -249,11 +262,11 @@ const SplitPanelContainer = ({
                 splitWithDocument(data.id, kind, zone === "left" ? "primary" : "secondary");
             }
         },
-        [isSplit, setSideDocument, splitWithDocument],
+        [canSplit, setSideDocument, splitWithDocument],
     );
 
     const gridStyle = useMemo(() => {
-        if (!isSplit) {
+        if (!showSplit) {
             return { gridTemplateColumns: "1fr" };
         }
         // Use calc() with percentages instead of fractional fr units.
@@ -264,7 +277,7 @@ const SplitPanelContainer = ({
         return {
             gridTemplateColumns: `calc(${leftPct}% - ${splitRatio * 6}px) 6px calc(${rightPct}% - ${(1 - splitRatio) * 6}px)`,
         };
-    }, [isSplit, splitRatio]);
+    }, [showSplit, splitRatio]);
 
     // Shared wrapper for one slot: focus styling, document drop target, switcher.
     const renderShell = (opts: {
@@ -276,7 +289,7 @@ const SplitPanelContainer = ({
         content: React.ReactNode;
     }) => {
         const { keyId, panelKind, side, isPrimary, isVisible, content } = opts;
-        const isFocused = isSplit && isVisible && focusedSide === side;
+        const isFocused = showSplit && isVisible && focusedSide === side;
         const dropZone = isVisible && docDragOver?.side === side ? docDragOver.zone : null;
         const panelClass = !isVisible
             ? styles.panel_hidden
@@ -287,7 +300,7 @@ const SplitPanelContainer = ({
                 key={keyId}
                 className={panelClass}
                 style={isVisible ? { order: isPrimary ? 0 : 2, position: "relative" } : undefined}
-                onPointerDown={isVisible && isSplit ? () => setFocusedSide(side) : undefined}
+                onPointerDown={isVisible && showSplit ? () => setFocusedSide(side) : undefined}
                 onDragOverCapture={isVisible ? handleDocDragOver(side) : undefined}
                 onDropCapture={isVisible ? handleDocDrop(side) : undefined}
                 onDragLeave={
@@ -320,7 +333,8 @@ const SplitPanelContainer = ({
                 if (!mountedPanels.has(panel)) return null;
                 const isPrimary = panel === primaryPanel;
                 const isSecondary = panel === secondaryPanel;
-                const isVisible = isPrimary || isSecondary;
+                // Phone shows the primary side only, even if a split is active.
+                const isVisible = isPrimary || (isSecondary && !isPhone);
                 return renderShell({
                     keyId: panel,
                     panelKind: panel,
@@ -343,6 +357,8 @@ const SplitPanelContainer = ({
             {/* Document panels — one per side, each bound to its own docId so two
                 documents (e.g. two boards, or a board + an editor) can be open. */}
             {(["primary", "secondary"] as SplitSide[]).map((side) => {
+                // Phone shows the primary side only.
+                if (side === "secondary" && isPhone) return null;
                 const panelKind = side === "primary" ? primaryPanel : secondaryPanel;
                 if (panelKind !== "board" && panelKind !== "document") return null;
                 const docId = side === "primary" ? primaryDocId : secondaryDocId;
@@ -361,7 +377,7 @@ const SplitPanelContainer = ({
                 });
             })}
 
-            {isSplit && (
+            {showSplit && (
                 <div style={{ order: 1, height: "100%" }}>
                     <DragHandle />
                 </div>

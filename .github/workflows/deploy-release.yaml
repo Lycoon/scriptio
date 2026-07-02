@@ -92,6 +92,66 @@ jobs:
                   backend: "altool"
                   app-type: "macos"
 
+    publish-ios:
+        runs-on: macos-latest
+        needs: [prepare, deploy-web]
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Import Apple certificates
+              uses: apple-actions/import-codesign-certs@v6
+              with:
+                  p12-file-base64: ${{ secrets.APPLE_CERT_P12_COMBINED_BASE64 }}
+                  p12-password: ${{ secrets.APPLE_CERT_PASSWORD }}
+
+            - name: Download provisioning profile
+              uses: apple-actions/download-provisioning-profiles@v6
+              with:
+                  bundle-id: "app.scriptio"
+                  profile-type: "IOS_APP_STORE"
+                  issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+                  api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+                  api-private-key: ${{ secrets.APPSTORE_API_KEY_P8 }}
+
+            - name: Setup build toolchain
+              uses: ./.github/actions/setup-desktop-build
+              with:
+                  platform: ios
+
+            - name: Apply app version
+              uses: ./.github/actions/apply-version
+              with:
+                  version: ${{ needs.prepare.outputs.version }}
+                  ios: "true"
+
+            - name: Build signed .ipa with Tauri
+              run: npm run build:ios
+              env:
+                  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+                  NEXT_PUBLIC_API_URL: https://scriptio.app
+                  NEXT_PUBLIC_CLOUD_URL: https://cloud.scriptio.app
+                  NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+                  NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
+
+            - name: Locate built .ipa
+              run: |
+                  IPA=$(find src-tauri/gen/apple/build -name '*.ipa' 2>/dev/null | head -n 1)
+                  if [[ -z "$IPA" ]]; then
+                      echo "No .ipa produced by tauri ios build" >&2
+                      exit 1
+                  fi
+                  echo "IPA_PATH=$IPA" >> "$GITHUB_ENV"
+
+            - name: Upload to App Store Connect
+              uses: apple-actions/upload-testflight-build@v5
+              with:
+                  app-path: ${{ env.IPA_PATH }}
+                  issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+                  api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+                  api-private-key: ${{ secrets.APPSTORE_API_KEY_P8 }}
+                  backend: "altool"
+                  app-type: "ios"
+
     publish-windows:
         runs-on: windows-latest
         needs: [prepare, deploy-web]

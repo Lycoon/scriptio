@@ -8,6 +8,14 @@
     "removeFromOutline": "Usuń z konspektu"
   },
   "navbar": {
+    "menu": "Menu",
+    "close": "Zamknij",
+    "history": "Historia",
+    "production": "Produkcja",
+    "readAloud": "Czytaj na głos",
+    "analytics": "Analityka",
+    "settings": "Ustawienia",
+    "back": "Powrót do projektów",
     "outline": "Konspekt",
     "screenplay": "Scenariusz",
     "board": "Tablica",
@@ -214,6 +222,7 @@
     "deleting": "Usuwanie...",
     "deleteAccountBtn": "Usuń moje konto",
     "subscription": {
+      "openWebsite": "Zarządzaj na scriptio.app",
       "title": "Subskrypcja",
       "proBadge": "Pro",
       "proTitle": "Plan Pro",

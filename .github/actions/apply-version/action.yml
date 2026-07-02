@@ -9,6 +9,10 @@ inputs:
         description: When "true", sets window title to "Scriptio (Staging)".
         required: false
         default: "false"
+    ios:
+        description: When "true" (on a macOS runner), stamp product name, bundle id, and version into src-tauri/gen/apple.
+        required: false
+        default: "false"
 
 runs:
     using: composite
@@ -31,6 +35,7 @@ runs:
                   PRODUCT_NAME="Scriptio (Staging)"
                   WINDOW_TITLE="Scriptio (Staging)"
                   APPSTORE_IDENTIFIER="app.scriptio.staging"
+                  IOS_IDENTIFIER="app.scriptio.staging"
                   WINDOWS_IDENTIFIER="ArkoLogic.ScriptioStaging"
                   # MS Store reserves the 4th version field (must stay 0). Staging's
                   # build counter (REVISION) sits in that slot, so fold PATCH+REVISION
@@ -41,6 +46,7 @@ runs:
                   PRODUCT_NAME="Scriptio"
                   WINDOW_TITLE="Scriptio"
                   APPSTORE_IDENTIFIER="app.scriptio"
+                  IOS_IDENTIFIER="app.scriptio"
                   WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
                   # Release builds carry REVISION=0, so the app version is Store-legal as-is.
                   MSIX_VERSION="${MAJOR}.${MINOR}.${PATCH}.0"
@@ -54,6 +60,10 @@ runs:
               jq --arg id "$APPSTORE_IDENTIFIER" '.identifier = $id' \
                   src-tauri/tauri.appstore.conf.json > src-tauri/tauri.appstore.conf.json.tmp
               mv src-tauri/tauri.appstore.conf.json.tmp src-tauri/tauri.appstore.conf.json
+
+              jq --arg id "$IOS_IDENTIFIER" '.identifier = $id' \
+                  src-tauri/tauri.ios.conf.json > src-tauri/tauri.ios.conf.json.tmp
+              mv src-tauri/tauri.ios.conf.json.tmp src-tauri/tauri.ios.conf.json
 
               jq --arg id "$WINDOWS_IDENTIFIER" --arg v "$SEMVER" \
                   '.identifier = $id | .version = $v' \
@@ -89,3 +99,50 @@ runs:
               /usr/libexec/PlistBuddy -c "Set :com.apple.application-identifier ${TEAM_ID}.${APPSTORE_IDENTIFIER}" src-tauri/Entitlements.plist
 
               echo "Applied macOS settings (app-id: ${TEAM_ID}.${APPSTORE_IDENTIFIER})"
+
+        - name: Apply iOS settings
+          if: ${{ runner.os == 'macOS' && inputs.ios == 'true' }}
+          shell: bash
+          env:
+              INPUT_VERSION: ${{ inputs.version }}
+              INPUT_STAGING: ${{ inputs.staging }}
+          run: |
+              set -e
+
+              if [[ ! -f "src-tauri/gen/apple/project.yml" ]]; then
+                  echo "No src-tauri/gen/apple/project.yml found; run 'tauri ios init' and commit gen/apple." >&2
+                  exit 1
+              fi
+
+              SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
+
+              if [[ "$INPUT_STAGING" == "true" ]]; then
+                  PRODUCT_NAME="Scriptio (Staging)"
+                  IOS_IDENTIFIER="app.scriptio.staging"
+              else
+                  PRODUCT_NAME="Scriptio"
+                  IOS_IDENTIFIER="app.scriptio"
+              fi
+
+              # gen/apple is the committed source of truth for the Xcode build:
+              # xcodegen regenerates Info.plist from project.yml, so stamp version +
+              # identity there. CFBundleShortVersionString is the 3-part marketing
+              # version; CFBundleVersion uses the full 4-part string so it strictly
+              # increases across every staging push and release bump (TestFlight
+              # rejects duplicate/decreasing build numbers).
+              sed -i.bak \
+                  -e "s|^      PRODUCT_NAME:.*|      PRODUCT_NAME: ${PRODUCT_NAME}|" \
+                  -e "s|^      PRODUCT_BUNDLE_IDENTIFIER:.*|      PRODUCT_BUNDLE_IDENTIFIER: ${IOS_IDENTIFIER}|" \
+                  -e "s|^        CFBundleShortVersionString:.*|        CFBundleShortVersionString: ${SEMVER}|" \
+                  -e "s|^        CFBundleVersion:.*|        CFBundleVersion: \"${INPUT_VERSION}\"|" \
+                  src-tauri/gen/apple/project.yml
+              rm -f src-tauri/gen/apple/project.yml.bak
+
+              # Mirror into the generated Info.plist too, in case the build path skips
+              # xcodegen regeneration and consumes the committed plist directly.
+              for plist in src-tauri/gen/apple/*/Info.plist; do
+                  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${SEMVER}" "$plist" || true
+                  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${INPUT_VERSION}" "$plist" || true
+              done
+
+              echo "Applied iOS settings (name: '$PRODUCT_NAME', id: $IOS_IDENTIFIER, short: $SEMVER, build: $INPUT_VERSION)"

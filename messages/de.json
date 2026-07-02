@@ -8,6 +8,14 @@
     "removeFromOutline": "Aus Gliederung entfernen"
   },
   "navbar": {
+    "menu": "Menü",
+    "close": "Schließen",
+    "history": "Verlauf",
+    "production": "Produktion",
+    "readAloud": "Vorlesen",
+    "analytics": "Analysen",
+    "settings": "Einstellungen",
+    "back": "Zurück zu Projekten",
     "outline": "Gliederung",
     "screenplay": "Drehbuch",
     "board": "Board",
@@ -215,6 +223,7 @@
     "deleting": "Löschen...",
     "deleteAccountBtn": "Mein Konto löschen",
     "subscription": {
+      "openWebsite": "Auf scriptio.app verwalten",
       "title": "Abonnement",
       "proBadge": "Pro",
       "proTitle": "Pro-Plan",

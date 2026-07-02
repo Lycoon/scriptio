@@ -8,6 +8,14 @@
     "removeFromOutline": "アウトラインから削除"
   },
   "navbar": {
+    "menu": "メニュー",
+    "close": "閉じる",
+    "history": "履歴",
+    "production": "制作",
+    "readAloud": "読み上げ",
+    "analytics": "分析",
+    "settings": "設定",
+    "back": "プロジェクトに戻る",
     "outline": "アウトライン",
     "screenplay": "脚本",
     "board": "ボード",
@@ -214,6 +222,7 @@
     "deleting": "削除中...",
     "deleteAccountBtn": "自分のアカウントを削除",
     "subscription": {
+      "openWebsite": "scriptio.app で管理",
       "title": "サブスクリプション",
       "proBadge": "Pro",
       "proTitle": "Proプラン",

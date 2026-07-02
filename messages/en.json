@@ -8,6 +8,14 @@
     "removeFromOutline": "Remove from outline"
   },
   "navbar": {
+    "menu": "Menu",
+    "close": "Close",
+    "history": "History",
+    "production": "Production",
+    "readAloud": "Read Aloud",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "back": "Back to projects",
     "outline": "Outline",
     "screenplay": "Screenplay",
     "board": "Board",
@@ -214,6 +222,7 @@
     "deleting": "Deleting...",
     "deleteAccountBtn": "Delete my account",
     "subscription": {
+      "openWebsite": "Manage on scriptio.app",
       "title": "Subscription",
       "proBadge": "Pro",
       "proTitle": "Pro Plan",

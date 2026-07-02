@@ -26,6 +26,44 @@
     pointer-events: auto;
 }
 
+/* ==================== */
+/*     Phone navbar     */
+/* ==================== */
+
+.mobile_bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    gap: 8px;
+    padding-left: calc(10px + var(--safe-left));
+    padding-right: calc(10px + var(--safe-right));
+}
+
+.mobile_center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+    height: calc(100% - 12px);
+}
+
+.mobile_right {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+
+@media (max-width: 767px) {
+    .container {
+        padding-block: 0;
+    }
+}
+
 .navbar_island {
     display: flex;
     flex-direction: row;

@@ -8,6 +8,14 @@
     "removeFromOutline": "아웃라인에서 제거"
   },
   "navbar": {
+    "menu": "메뉴",
+    "close": "닫기",
+    "history": "기록",
+    "production": "프로덕션",
+    "readAloud": "소리내어 읽기",
+    "analytics": "분석",
+    "settings": "설정",
+    "back": "프로젝트로 돌아가기",
     "outline": "아웃라인",
     "screenplay": "시나리오",
     "board": "보드",
@@ -214,6 +222,7 @@
     "deleting": "삭제 중...",
     "deleteAccountBtn": "내 계정 삭제",
     "subscription": {
+      "openWebsite": "scriptio.app에서 관리",
       "title": "구독",
       "proBadge": "Pro",
       "proTitle": "Pro 플랜",

@@ -33,6 +33,42 @@
     box-shadow: var(--panel-shadow);
 }
 
+/* Phone: the format sidebar becomes a right overlay drawer, mirroring the
+ * navigation drawer on the left. */
+@media (max-width: 767px) {
+    .container {
+        position: fixed;
+        top: var(--navbar-height);
+        right: 0;
+        bottom: 0;
+        z-index: 60;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .sidebar_content {
+        width: var(--mobile-drawer-width);
+        height: 100%;
+        padding: 12px calc(12px + var(--safe-right)) calc(20px + var(--safe-bottom)) 12px;
+        background-color: var(--main-bg);
+        box-shadow: var(--panel-shadow);
+        transform: translateX(0);
+        transition: transform 0.25s ease;
+        pointer-events: auto;
+    }
+
+    .collapsed {
+        width: var(--mobile-drawer-width);
+        padding: 12px;
+        transform: translateX(100%);
+        pointer-events: none;
+    }
+
+    .collapsed .element {
+        visibility: visible;
+    }
+}
+
 .tabs {
     display: flex;
     flex-direction: column;
