@@ -108,7 +108,13 @@
     "readAction": "アクション",
     "readScene": "シーン見出し",
     "readTransition": "トランジション",
-    "readParenthetical": "カッコ"
+    "readParenthetical": "カッコ",
+    "previous": "前へ",
+    "next": "次へ",
+    "rehearse": "リハーサルモード",
+    "rehearseHint": "選択していないキャラクターのセリフの代わりに、その長さに応じた無音の間を空けて、自分の役をその場で演じられるようにします。",
+    "searchCharacters": "キャラクターを検索",
+    "noMatches": "一致するキャラクターがありません"
   },
   "language": {
     "ttsLabel": "読み上げ音声",

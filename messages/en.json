@@ -108,7 +108,13 @@
     "readAction": "Action",
     "readScene": "Scene headings",
     "readTransition": "Transitions",
-    "readParenthetical": "Parentheticals"
+    "readParenthetical": "Parentheticals",
+    "previous": "Previous",
+    "next": "Next",
+    "rehearse": "Rehearsal mode",
+    "rehearseHint": "Leaves a silent gap in place of each unselected character's line — sized to its length — so you can perform your part in time.",
+    "searchCharacters": "Search characters",
+    "noMatches": "No matching characters"
   },
   "language": {
     "ttsLabel": "Read Aloud Voices",

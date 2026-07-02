@@ -24,6 +24,16 @@
     z-index: 1;
 }
 
+/* Registered so the read-aloud focus mask (.read-aloud-active in .ProseMirror)
+   can transition its centre as a real <length>; unregistered custom properties
+   don't interpolate. Falls back to an instant jump where @property is
+   unsupported. */
+@property --ra-center {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
 .ProseMirror {
     --font-size: 12pt;
 
@@ -530,10 +540,59 @@
         box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.8);
     }
 
-    /* Read-aloud: the line currently being spoken */
-    .read-aloud-current {
-        background-color: rgba(255, 251, 0, 0.2);
-        transition: background-color 0.2s ease;
+    /* Read-aloud focus mode: while a session runs, .read-aloud-active is toggled
+       on the editor DOM by the highlight extension, which also sets --ra-center
+       to the current line's vertical position (in the editor's own coordinate
+       space, so it tracks the content, not the viewport).
+
+       Rather than dimming per node, a soft vertical mask lights the script
+       around --ra-center and fades everything else toward --ra-floor. The
+       falloff is therefore purely spatial: it grades continuously over the page
+       regardless of node boundaries — a tall paragraph fades across its own
+       height, a short one barely at all — instead of every neighbour getting a
+       flat opacity. --ra-center is a registered <length> (see @property above)
+       so the band glides smoothly as the highlight moves line to line. */
+    &.read-aloud-active {
+        --ra-center: 0px;
+        --ra-radius: 220px;
+        --ra-floor: 0.22;
+        transition: --ra-center 0.25s ease;
+        /* An eased (S-curve) falloff rather than a straight ramp: extra stops
+           round off the corners where the light core meets the ramp and where
+           the ramp meets the dim floor, so there's no visible hard edge / Mach
+           band. Kept symmetric above and below --ra-center. */
+        -webkit-mask-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, var(--ra-floor)) 0,
+            rgba(0, 0, 0, var(--ra-floor)) calc(var(--ra-center) - var(--ra-radius)),
+            rgba(0, 0, 0, 0.3) calc(var(--ra-center) - var(--ra-radius) * 0.72),
+            rgba(0, 0, 0, 0.48) calc(var(--ra-center) - var(--ra-radius) * 0.5),
+            rgba(0, 0, 0, 0.72) calc(var(--ra-center) - var(--ra-radius) * 0.28),
+            rgba(0, 0, 0, 0.92) calc(var(--ra-center) - var(--ra-radius) * 0.12),
+            rgba(0, 0, 0, 1) var(--ra-center),
+            rgba(0, 0, 0, 0.92) calc(var(--ra-center) + var(--ra-radius) * 0.12),
+            rgba(0, 0, 0, 0.72) calc(var(--ra-center) + var(--ra-radius) * 0.28),
+            rgba(0, 0, 0, 0.48) calc(var(--ra-center) + var(--ra-radius) * 0.5),
+            rgba(0, 0, 0, 0.3) calc(var(--ra-center) + var(--ra-radius) * 0.72),
+            rgba(0, 0, 0, var(--ra-floor)) calc(var(--ra-center) + var(--ra-radius)),
+            rgba(0, 0, 0, var(--ra-floor)) 100%
+        );
+        mask-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, var(--ra-floor)) 0,
+            rgba(0, 0, 0, var(--ra-floor)) calc(var(--ra-center) - var(--ra-radius)),
+            rgba(0, 0, 0, 0.3) calc(var(--ra-center) - var(--ra-radius) * 0.72),
+            rgba(0, 0, 0, 0.48) calc(var(--ra-center) - var(--ra-radius) * 0.5),
+            rgba(0, 0, 0, 0.72) calc(var(--ra-center) - var(--ra-radius) * 0.28),
+            rgba(0, 0, 0, 0.92) calc(var(--ra-center) - var(--ra-radius) * 0.12),
+            rgba(0, 0, 0, 1) var(--ra-center),
+            rgba(0, 0, 0, 0.92) calc(var(--ra-center) + var(--ra-radius) * 0.12),
+            rgba(0, 0, 0, 0.72) calc(var(--ra-center) + var(--ra-radius) * 0.28),
+            rgba(0, 0, 0, 0.48) calc(var(--ra-center) + var(--ra-radius) * 0.5),
+            rgba(0, 0, 0, 0.3) calc(var(--ra-center) + var(--ra-radius) * 0.72),
+            rgba(0, 0, 0, var(--ra-floor)) calc(var(--ra-center) + var(--ra-radius)),
+            rgba(0, 0, 0, var(--ra-floor)) 100%
+        );
     }
 
     /* Spellcheck error highlighting */

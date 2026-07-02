@@ -109,7 +109,13 @@
     "readAction": "Action",
     "readScene": "En-têtes de scène",
     "readTransition": "Transitions",
-    "readParenthetical": "Parenthèses"
+    "readParenthetical": "Parenthèses",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "rehearse": "Mode répétition",
+    "rehearseHint": "Laisse un silence à la place de chaque réplique des personnages non sélectionnés — proportionnel à sa longueur — pour que vous puissiez jouer votre rôle à temps.",
+    "searchCharacters": "Rechercher un personnage",
+    "noMatches": "Aucun personnage correspondant"
   },
   "language": {
     "ttsLabel": "Voix de lecture à voix haute",

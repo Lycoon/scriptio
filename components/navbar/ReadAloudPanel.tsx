@@ -1,14 +1,14 @@
 "use client";
 
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Download, Loader2, Mars, Pause, Play, Settings, Square, Venus, VenusAndMars, Volume2, X } from "lucide-react";
+import { Download, Info, Loader2, Mars, Pause, Play, Search, Settings, SkipBack, SkipForward, Square, Venus, VenusAndMars, Volume2, X } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { useReadAloud } from "@src/context/ReadAloudContext";
 import { CharacterGender, getCharacterNames } from "@src/lib/screenplay/characters";
-import { getVoiceInfo, voiceAccent, voiceLabel } from "@src/lib/tts/voice-catalog";
+import { defaultVoiceForCharacter, getVoiceInfo, voiceAccent, voiceLabel } from "@src/lib/tts/voice-catalog";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import Switch from "@components/utils/Switch";
 
@@ -39,13 +39,18 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
         setVolume,
         narrationOptions,
         setNarrationOption,
+        rehearsePauses,
+        setRehearsePauses,
         play,
         pause,
         resume,
         stop,
+        next,
+        prev,
     } = useReadAloud();
 
     const panelRef = useRef<HTMLDivElement>(null);
+    const [characterQuery, setCharacterQuery] = useState("");
 
     // Click outside to close (playback keeps running in the background).
     useEffect(() => {
@@ -64,6 +69,11 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
     }, [isOpen, onClose]);
 
     const characterNames = useMemo(() => getCharacterNames(screenplay), [screenplay]);
+
+    const filteredCharacterNames = useMemo(() => {
+        const q = characterQuery.trim().toUpperCase();
+        return q ? characterNames.filter((name) => name.toUpperCase().includes(q)) : characterNames;
+    }, [characterNames, characterQuery]);
 
     const allCharactersEnabled =
         characterNames.length > 0 && characterNames.every((name) => !excludedCharacters.has(name.toUpperCase()));
@@ -162,6 +172,15 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
                     <div className={styles.section}>
                         <div className={styles.transport}>
                             <button
+                                className={styles.stop_btn}
+                                onClick={prev}
+                                disabled={!isPlaying && !isPaused}
+                                aria-label={t("previous")}
+                                title={t("previous")}
+                            >
+                                <SkipBack size={14} color="var(--secondary-text)" fill="var(--secondary-text)" />
+                            </button>
+                            <button
                                 className={styles.play_btn}
                                 onClick={handlePlayPause}
                                 disabled={isReadOnly || characterNames.length === 0}
@@ -172,6 +191,15 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
                                 ) : (
                                     <Play size={18} color="var(--secondary)" fill="var(--secondary)" />
                                 )}
+                            </button>
+                            <button
+                                className={styles.stop_btn}
+                                onClick={next}
+                                disabled={!isPlaying && !isPaused}
+                                aria-label={t("next")}
+                                title={t("next")}
+                            >
+                                <SkipForward size={14} color="var(--secondary-text)" fill="var(--secondary-text)" />
                             </button>
                             <button
                                 className={styles.stop_btn}
@@ -245,6 +273,27 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
                         </div>
                     </div>
 
+                    {/* Rehearsal */}
+                    <div className={styles.section}>
+                        <div className={styles.row}>
+                            <div className={styles.row_main}>
+                                <span className={styles.row_label}>{t("rehearse")}</span>
+                                <span className={styles.hint} tabIndex={0}>
+                                    <Info size={14} className={styles.hint_icon} />
+                                    <span className={styles.hint_popover} role="tooltip">
+                                        {t("rehearseHint")}
+                                    </span>
+                                </span>
+                            </div>
+                            <Switch
+                                checked={rehearsePauses}
+                                onChange={setRehearsePauses}
+                                disabled={isActive}
+                                ariaLabel={t("rehearse")}
+                            />
+                        </div>
+                    </div>
+
                     {/* Voice assignment */}
                     <div className={styles.section}>
                         <div className={styles.section_header}>
@@ -258,6 +307,19 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
                                 </button>
                             )}
                         </div>
+                        {characterNames.length > 0 && (
+                            <div className={styles.search_wrap}>
+                                <Search size={14} className={styles.search_icon} />
+                                <input
+                                    type="text"
+                                    className={styles.search_input}
+                                    value={characterQuery}
+                                    onChange={(e) => setCharacterQuery(e.target.value)}
+                                    placeholder={t("searchCharacters")}
+                                    aria-label={t("searchCharacters")}
+                                />
+                            </div>
+                        )}
                         <div className={styles.character_list}>
                             <div className={styles.character_row}>
                                 {/* The narrator always reads (narration + unassigned lines),
@@ -284,8 +346,15 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
                                 </div>
                             </div>
 
-                            {characterNames.map((name) => {
+                            {filteredCharacterNames.map((name) => {
                                 const enabled = !excludedCharacters.has(name.toUpperCase());
+                                // A character's voice is their explicit pick or a stable
+                                // per-character default — never the narrator's voice, so
+                                // changing the narrator leaves characters untouched.
+                                const charVoice =
+                                    characterVoices[name] ??
+                                    defaultVoiceForCharacter(name, availableVoices) ??
+                                    defaultVoice;
                                 return (
                                     <div key={name} className={styles.character_row}>
                                         <input
@@ -304,7 +373,7 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
                                         </span>
                                         <div className={styles.character_field}>
                                             <Dropdown
-                                                value={characterVoices[name] ?? defaultVoice}
+                                                value={charVoice}
                                                 onChange={(v) => setCharacterVoice(name, v)}
                                                 options={voiceOptions}
                                                 className={styles.assign_field}
@@ -315,6 +384,9 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
                                     </div>
                                 );
                             })}
+                            {characterNames.length > 0 && filteredCharacterNames.length === 0 && (
+                                <p className={styles.no_matches}>{t("noMatches")}</p>
+                            )}
                         </div>
                     </div>
                 </>

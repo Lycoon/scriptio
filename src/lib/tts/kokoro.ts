@@ -134,6 +134,29 @@ function ensureLoaded(variant: ModelVariant, onProgress?: (loaded: number, total
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
+/**
+ * Ask the browser to make this origin's storage persistent. The voice model is
+ * a ~326 MB entry in the Cache API; under the default *best-effort* policy that
+ * write can hit `QuotaExceededError` (Transformers.js swallows it with a console
+ * warning, so the model loads for the session but is never persisted) or be
+ * evicted between sessions — either way the app offers to download it again on
+ * the next reload. Persistent storage raises the quota so the write succeeds and
+ * marks the data non-evictable. Idempotent; a no-op where unavailable or already
+ * granted. Chromium usually grants this silently based on site engagement;
+ * Firefox may prompt.
+ */
+export async function ensurePersistentStorage(): Promise<boolean> {
+    try {
+        if (typeof navigator === "undefined" || !navigator.storage?.persist) return false;
+        if (await navigator.storage.persisted()) return true;
+        const granted = await navigator.storage.persist();
+        console.info(`[TTS] persistent storage ${granted ? "granted" : "denied"} for cached models`);
+        return granted;
+    } catch {
+        return false;
+    }
+}
+
 /** Whether this model variant is already downloaded (cached locally). */
 export async function isModelInstalled(variant: ModelVariant): Promise<boolean> {
     if (typeof caches === "undefined") return false;

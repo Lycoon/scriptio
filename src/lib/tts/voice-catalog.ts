@@ -94,3 +94,16 @@ export const defaultVoiceForLanguage = (language: string, available: string[]): 
     const inLang = available.find((id) => getVoiceInfo(id)?.language === language);
     return inLang ?? available[0];
 };
+
+/**
+ * A stable default voice for a character, derived deterministically from its
+ * name so it stays constant across sessions and — crucially — is independent of
+ * the narrator voice. This keeps unassigned characters from all sharing (and
+ * re-changing with) the narrator's voice; each still gets a distinct one.
+ */
+export const defaultVoiceForCharacter = (name: string, available: string[]): string | undefined => {
+    if (available.length === 0) return undefined;
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+    return available[hash % available.length];
+};

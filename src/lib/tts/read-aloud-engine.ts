@@ -3,6 +3,10 @@
 import type { Node as PMNode } from "@tiptap/pm/model";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { synthesize } from "./kokoro";
+import { defaultVoiceForCharacter, VOICE_CATALOG } from "./voice-catalog";
+
+/** All synthesizable voice ids — the pool per-character defaults are drawn from. */
+const CATALOG_VOICE_IDS = VOICE_CATALOG.map((v) => v.voiceId);
 
 export type ReadAloudState = "idle" | "preparing" | "playing" | "paused" | "done";
 
@@ -21,6 +25,12 @@ export interface ReadAloudSegment {
     from: number;
     /** ProseMirror position just after the source node. */
     to: number;
+    /**
+     * When set, the segment is a silent gap of this many milliseconds rather
+     * than synthesised speech — left for the user to perform an unselected
+     * character's line themselves (rehearsal mode). `voiceId` is empty.
+     */
+    pauseMs?: number;
 }
 
 /** Which narration element types the narrator should read aloud. */
@@ -28,7 +38,7 @@ export interface NarrationOptions {
     action: boolean;
     scene: boolean;
     transition: boolean;
-    /** Spoken in the character's voice, alongside their dialogue. */
+    /** Read by the narrator alongside the character's dialogue (a stage direction). */
     parenthetical: boolean;
 }
 
@@ -41,7 +51,22 @@ export interface BuildOptions {
     narration: NarrationOptions;
     /** UPPERCASE names whose dialogue (and parentheticals) should be skipped. */
     excludedCharacters?: Set<string>;
+    /**
+     * Rehearsal mode: instead of skipping excluded characters' dialogue, leave a
+     * silent gap sized to the line so the reader can perform their part in time.
+     */
+    rehearsePauses?: boolean;
 }
+
+/**
+ * Rough spoken duration of a line, used to size the silent gap left for the
+ * reader to perform an unselected character's dialogue. ~150 wpm (≈400ms/word)
+ * with a short floor so even one-word cues get a beat.
+ */
+const estimateSpeechMs = (text: string): number => {
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(700, Math.round(words * 400));
+};
 
 /** Strip parenthetical extensions like "(V.O.)" and upper-case, matching getCharacterNames. */
 const cleanName = (raw: string): string =>
@@ -79,6 +104,30 @@ export function buildSegments(doc: PMNode, opts: BuildOptions, startFrom = 0): R
         segments.push({ index: segments.length, type, text: trimmed, voiceId, character, from, to: from + nodeSize });
     };
 
+    // A silent gap standing in for an unselected character's line (rehearsal).
+    const pushPause = (text: string, from: number, nodeSize: number, character?: string) => {
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        if (from + nodeSize <= startFrom) return;
+        segments.push({
+            index: segments.length,
+            type: ScreenplayElement.Dialogue,
+            text: trimmed,
+            voiceId: "",
+            character,
+            from,
+            to: from + nodeSize,
+            pauseMs: estimateSpeechMs(trimmed),
+        });
+    };
+
+    // A speaker's voice: their explicit assignment, else a stable per-character
+    // default (independent of the narrator), else the narrator as a last resort.
+    const resolveVoice = (speaker: string | null): string | null =>
+        (speaker && opts.characterVoices[speaker]) ||
+        (speaker && defaultVoiceForCharacter(speaker, CATALOG_VOICE_IDS)) ||
+        opts.narratorVoiceId;
+
     const walk = (node: PMNode, contentStart: number) => {
         node.forEach((child, offset) => {
             const from = contentStart + offset;
@@ -90,16 +139,22 @@ export function buildSegments(doc: PMNode, opts: BuildOptions, startFrom = 0): R
                     current = cleanName(text);
                     break;
                 case ScreenplayElement.Dialogue: {
-                    if (current && opts.excludedCharacters?.has(current)) break;
-                    const voice = (current && opts.characterVoices[current]) || opts.narratorVoiceId;
-                    push(type, text, voice, from, child.nodeSize, current ?? undefined);
+                    if (current && opts.excludedCharacters?.has(current)) {
+                        // Rehearsal mode leaves a timed silent gap for the reader
+                        // to speak; otherwise the line is skipped entirely.
+                        if (opts.rehearsePauses) pushPause(text, from, child.nodeSize, current ?? undefined);
+                        break;
+                    }
+                    push(type, text, resolveVoice(current), from, child.nodeSize, current ?? undefined);
                     break;
                 }
                 case ScreenplayElement.Parenthetical: {
                     if (!opts.narration.parenthetical) break;
                     if (current && opts.excludedCharacters?.has(current)) break;
-                    const voice = (current && opts.characterVoices[current]) || opts.narratorVoiceId;
-                    push(type, text, voice, from, child.nodeSize, current ?? undefined);
+                    // Parentheticals are stage directions, so the narrator reads
+                    // them rather than the character (whose voice speaks only the
+                    // dialogue itself). Still attributed to the speaker for display.
+                    push(type, text, opts.narratorVoiceId, from, child.nodeSize, current ?? undefined);
                     break;
                 }
                 case ScreenplayElement.Scene:
@@ -154,6 +209,11 @@ export class ReadAloudPlayer {
     // run is discarded instead of hijacking the current one.
     private runId = 0;
     private _volume = 1;
+    // Silent-gap (rehearsal) bookkeeping for the current segment.
+    private silenceTimer: ReturnType<typeof setTimeout> | null = null;
+    private silenceRemaining = 0;
+    private silenceStartedAt = 0;
+    private currentIsPause = false;
     state: ReadAloudState = "idle";
 
     constructor(private cb: PlayerCallbacks = {}) {
@@ -227,6 +287,12 @@ export class ReadAloudPlayer {
         return p;
     }
 
+    /** Synthesise a segment ahead of time, unless it's a silent gap. */
+    private prefetch(i: number): void {
+        const s = this.segments[i];
+        if (s && s.pauseMs == null) void this.clip(i).catch(() => {});
+    }
+
     private async playFrom(i: number, run: number): Promise<void> {
         if (run !== this.runId) return;
         if (i >= this.segments.length) {
@@ -234,6 +300,19 @@ export class ReadAloudPlayer {
             return;
         }
         this.cursor = i;
+
+        // A silent gap (rehearsal mode): highlight the line, then wait out its
+        // estimated duration before advancing. Real clips are prefetched during
+        // the gap so speech resumes seamlessly.
+        const seg = this.segments[i];
+        if (seg.pauseMs != null) {
+            this.currentIsPause = true;
+            this.setState("playing");
+            this.cb.onSegmentChange?.(i);
+            this.startSilence(seg.pauseMs, run);
+            return;
+        }
+        this.currentIsPause = false;
 
         const clip = this.clip(i);
         // Only surface a buffering state if the clip isn't already ready.
@@ -258,8 +337,8 @@ export class ReadAloudPlayer {
         // Prefetch the next couple of segments so they're ready when this one
         // ends (the worker serialises them). A deeper buffer smooths over short
         // lines whose audio is briefer than their synthesis time.
-        if (i + 1 < this.segments.length) void this.clip(i + 1).catch(() => {});
-        if (i + 2 < this.segments.length) void this.clip(i + 2).catch(() => {});
+        this.prefetch(i + 1);
+        this.prefetch(i + 2);
 
         if (this.url) URL.revokeObjectURL(this.url);
         this.url = URL.createObjectURL(blob);
@@ -285,16 +364,70 @@ export class ReadAloudPlayer {
             .catch((err) => console.error("[ReadAloud] audio playback failed (segment " + i + "):", err));
     }
 
+    /** Start (or restart with `ms` remaining) the silent gap for a rehearsal line. */
+    private startSilence(ms: number, run: number): void {
+        this.clearSilence();
+        this.silenceRemaining = ms;
+        this.silenceStartedAt = Date.now();
+        // Warm up the upcoming spoken clips while the reader performs this line.
+        this.prefetch(this.cursor + 1);
+        this.prefetch(this.cursor + 2);
+        this.silenceTimer = setTimeout(() => {
+            this.silenceTimer = null;
+            if (run !== this.runId) return;
+            void this.playFrom(this.cursor + 1, run);
+        }, ms);
+    }
+
+    private clearSilence(): void {
+        if (this.silenceTimer != null) {
+            clearTimeout(this.silenceTimer);
+            this.silenceTimer = null;
+        }
+    }
+
+    /** Skip to the next segment that read-aloud will process. */
+    next(): void {
+        this.jumpTo(this.cursor + 1);
+    }
+
+    /** Skip back to the previous segment. */
+    prev(): void {
+        this.jumpTo(this.cursor - 1);
+    }
+
+    /** Jump to a segment during an active session (same run), and play it. */
+    private jumpTo(i: number): void {
+        if (this.state !== "playing" && this.state !== "paused") return;
+        if (this.segments.length === 0) return;
+        const target = Math.max(0, Math.min(this.segments.length - 1, i));
+        // Cancel whatever is currently sounding/waiting; keep the run id so this
+        // stays the same session and stale async work is still gated correctly.
+        this.audio.pause?.();
+        this.clearSilence();
+        void this.playFrom(target, this.runId);
+    }
+
     pause(): void {
         if (this.state !== "playing") return;
-        this.audio.pause?.();
+        if (this.currentIsPause) {
+            // Freeze the silent gap, banking the time left to resume with.
+            this.silenceRemaining -= Date.now() - this.silenceStartedAt;
+            this.clearSilence();
+        } else {
+            this.audio.pause?.();
+        }
         this.setState("paused");
     }
 
     resume(): void {
         if (this.state !== "paused") return;
         this.setState("playing");
-        void this.audio.play?.().catch(() => {});
+        if (this.currentIsPause) {
+            this.startSilence(Math.max(0, this.silenceRemaining), this.runId);
+        } else {
+            void this.audio.play?.().catch(() => {});
+        }
     }
 
     stop(): void {
@@ -310,6 +443,8 @@ export class ReadAloudPlayer {
             this.url = null;
         }
         if (this.audio.removeAttribute) this.audio.removeAttribute("src");
+        this.clearSilence();
+        this.currentIsPause = false;
         this.segments = [];
         this.cache.clear();
         this.cursor = 0;

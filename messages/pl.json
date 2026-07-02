@@ -108,7 +108,13 @@
     "readAction": "Akcja",
     "readScene": "Nagłówki scen",
     "readTransition": "Przejścia",
-    "readParenthetical": "Wtrącenia"
+    "readParenthetical": "Wtrącenia",
+    "previous": "Poprzedni",
+    "next": "Następny",
+    "rehearse": "Tryb próby",
+    "rehearseHint": "Zostawia ciszę zamiast kwestii każdej niewybranej postaci — proporcjonalnie do jej długości — abyś mógł zagrać swoją rolę na czas.",
+    "searchCharacters": "Szukaj postaci",
+    "noMatches": "Brak pasujących postaci"
   },
   "language": {
     "ttsLabel": "Głosy czytania na głos",

@@ -108,7 +108,13 @@
     "readAction": "Acción",
     "readScene": "Encabezados de escena",
     "readTransition": "Transiciones",
-    "readParenthetical": "Paréntesis"
+    "readParenthetical": "Paréntesis",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "rehearse": "Modo ensayo",
+    "rehearseHint": "Deja un silencio en lugar de la línea de cada personaje no seleccionado —proporcional a su longitud— para que puedas interpretar tu papel a tiempo.",
+    "searchCharacters": "Buscar personajes",
+    "noMatches": "No hay personajes coincidentes"
   },
   "language": {
     "ttsLabel": "Voces de lectura en voz alta",

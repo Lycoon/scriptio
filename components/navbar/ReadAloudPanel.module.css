@@ -321,11 +321,95 @@
     min-width: 0;
 }
 
+/* Info hint — icon next to a label that reveals a small explanatory popover
+   on hover/focus (mirrors ProductionPanel's hint styling). */
 .hint {
-    margin-top: 8px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    outline: none;
+}
+
+.hint_icon {
+    color: var(--secondary-text);
+    cursor: help;
+    display: block;
+}
+
+.hint:hover .hint_icon,
+.hint:focus .hint_icon {
+    color: var(--primary-text);
+}
+
+.hint_popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 200;
+    width: 240px;
+    padding: 8px 10px;
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
     font-size: 0.72rem;
     line-height: 1.45;
     color: var(--secondary-text);
+    white-space: normal;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.12s ease;
+    pointer-events: none;
+}
+
+.hint:hover .hint_popover,
+.hint:focus .hint_popover {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ── Character search ── */
+.search_wrap {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.search_icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--secondary-text);
+    pointer-events: none;
+}
+
+.search_input {
+    width: 100%;
+    padding: 7px 10px 7px 30px;
+    font-size: 0.8rem;
+    background: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    color: var(--primary-text);
+    box-sizing: border-box;
+}
+
+.search_input::placeholder {
+    color: var(--secondary-text);
+}
+
+.search_input:focus {
+    outline: none;
+    border-color: var(--secondary-text);
+}
+
+.no_matches {
+    margin: 4px 0;
+    padding: 8px 4px;
+    font-size: 0.78rem;
+    color: var(--secondary-text);
+    text-align: center;
 }
 
 /* ── Empty state (no voices installed) ── */

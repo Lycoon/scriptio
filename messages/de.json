@@ -109,7 +109,13 @@
     "readAction": "Handlung",
     "readScene": "Szenenüberschriften",
     "readTransition": "Übergänge",
-    "readParenthetical": "Einschübe"
+    "readParenthetical": "Einschübe",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "rehearse": "Probemodus",
+    "rehearseHint": "Lässt anstelle jeder Zeile nicht ausgewählter Figuren eine Pause – passend zu ihrer Länge –, damit Sie Ihre Rolle rechtzeitig mitspielen können.",
+    "searchCharacters": "Figuren suchen",
+    "noMatches": "Keine passenden Figuren"
   },
   "language": {
     "ttsLabel": "Vorlesestimmen",

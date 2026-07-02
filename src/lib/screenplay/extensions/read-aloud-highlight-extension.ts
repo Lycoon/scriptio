@@ -61,12 +61,33 @@ export const createReadAloudHighlightExtension = () =>
 /** Highlight the node spanning [from, to] (node boundaries) as now-reading. */
 export const setReadAloudHighlight = (editor: Editor, from: number, to: number) => {
     if (!editor || editor.isDestroyed || !editor.view) return;
+    const dom = editor.view.dom as HTMLElement;
+    // Anchor the focus mask (scriptio.css) on the current node's vertical centre,
+    // measured in the editor's own coordinate space (difference of client rects,
+    // so it's scroll-independent) — the fade then grades by distance from the
+    // spoken line, continuously across nodes rather than per node.
+    try {
+        const { node } = editor.view.domAtPos(from + 1);
+        const el = node instanceof HTMLElement ? node : node.parentElement;
+        if (el) {
+            const nodeRect = el.getBoundingClientRect();
+            const domRect = dom.getBoundingClientRect();
+            const center = nodeRect.top - domRect.top + nodeRect.height / 2;
+            dom.style.setProperty("--ra-center", `${Math.round(center)}px`);
+        }
+    } catch {
+        /* position transiently invalid during edits — keep the previous centre */
+    }
+    // Turn on focus mode: while this class is set the mask above lights the area
+    // around --ra-center and fades the rest of the script.
+    dom.classList.add("read-aloud-active");
     editor.view.dispatch(editor.state.tr.setMeta(SET_META, { from, to }));
 };
 
 /** Remove the read-aloud highlight. */
 export const clearReadAloudHighlight = (editor: Editor) => {
     if (!editor || editor.isDestroyed || !editor.view) return;
+    editor.view.dom.classList.remove("read-aloud-active");
     editor.view.dispatch(editor.state.tr.setMeta(SET_META, null));
 };
 

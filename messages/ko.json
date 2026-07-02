@@ -108,7 +108,13 @@
     "readAction": "지문",
     "readScene": "장면 제목",
     "readTransition": "전환",
-    "readParenthetical": "괄호"
+    "readParenthetical": "괄호",
+    "previous": "이전",
+    "next": "다음",
+    "rehearse": "리허설 모드",
+    "rehearseHint": "선택하지 않은 캐릭터의 대사 자리에 대사 길이에 맞춘 무음 간격을 남겨 직접 연기할 수 있게 합니다.",
+    "searchCharacters": "캐릭터 검색",
+    "noMatches": "일치하는 캐릭터가 없습니다"
   },
   "language": {
     "ttsLabel": "읽어주기 음성",

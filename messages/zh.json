@@ -108,7 +108,13 @@
     "readAction": "动作",
     "readScene": "场景标题",
     "readTransition": "转场",
-    "readParenthetical": "插入语"
+    "readParenthetical": "插入语",
+    "previous": "上一段",
+    "next": "下一段",
+    "rehearse": "排练模式",
+    "rehearseHint": "在每个未选中角色的台词处留出与其长度相应的静音间隔，让你有时间演绎自己的角色。",
+    "searchCharacters": "搜索角色",
+    "noMatches": "没有匹配的角色"
   },
   "language": {
     "ttsLabel": "朗读语音",

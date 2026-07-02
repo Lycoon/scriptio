@@ -17,6 +17,7 @@ import {
 } from "@src/lib/screenplay/extensions/read-aloud-highlight-extension";
 import {
     disposeWorker,
+    ensurePersistentStorage,
     installModel as installKokoroModel,
     isModelInstalled,
     prepareModel,
@@ -38,6 +39,7 @@ const ASSIGN_KEY = "scriptio-tts-assignments";
 const NARRATOR_KEY = "scriptio-tts-narrator";
 const EXCLUDED_KEY = "scriptio-tts-excluded-characters";
 const NARRATION_KEY = "scriptio-tts-narration-options";
+const REHEARSE_KEY = "scriptio-tts-rehearse";
 const VOLUME_KEY = "scriptio-tts-volume";
 const ACTIVE_MODEL_KEY = "scriptio-tts-active-model";
 
@@ -95,11 +97,17 @@ interface ReadAloudContextValue {
     setVolume: (v: number) => void;
     narrationOptions: NarrationOptions;
     setNarrationOption: (key: keyof NarrationOptions, value: boolean) => void;
+    /** Rehearsal mode: leave a timed silent gap for each unselected character's line. */
+    rehearsePauses: boolean;
+    setRehearsePauses: (value: boolean) => void;
     /** Start a read-aloud session from the editor's cursor position. */
     play: (editor: Editor) => void;
     pause: () => void;
     resume: () => void;
     stop: () => void;
+    /** Skip to the next/previous segment during an active session. */
+    next: () => void;
+    prev: () => void;
 }
 
 const noop = () => {};
@@ -129,10 +137,14 @@ const ReadAloudContext = createContext<ReadAloudContextValue>({
     setVolume: noop,
     narrationOptions: DEFAULT_NARRATION,
     setNarrationOption: noop,
+    rehearsePauses: false,
+    setRehearsePauses: noop,
     play: noop,
     pause: noop,
     resume: noop,
     stop: noop,
+    next: noop,
+    prev: noop,
 });
 
 const readJSON = <T,>(key: string, fallback: T): T => {
@@ -182,6 +194,11 @@ export function ReadAloudProvider({ children }: { children: ReactNode }) {
         if (typeof window === "undefined") return 1;
         const stored = parseFloat(window.localStorage.getItem(VOLUME_KEY) ?? "");
         return Number.isFinite(stored) ? stored : 1;
+    });
+    // Rehearsal mode: play a silent gap in place of unselected characters' lines.
+    const [rehearsePauses, setRehearsePausesState] = useState<boolean>(() => {
+        if (typeof window === "undefined") return false;
+        return window.localStorage.getItem(REHEARSE_KEY) === "true";
     });
 
     const [playbackState, setPlaybackState] = useState<ReadAloudState>("idle");
@@ -240,6 +257,8 @@ export function ReadAloudProvider({ children }: { children: ReactNode }) {
         let cancelled = false;
         (async () => {
             try {
+                // Keep large cached models from being evicted between reloads.
+                void ensurePersistentStorage();
                 const [installedFlags, gpu] = await Promise.all([
                     Promise.all(MODEL_VARIANTS.map((v) => isModelInstalled(v))),
                     hasWebGPU(),
@@ -298,6 +317,10 @@ export function ReadAloudProvider({ children }: { children: ReactNode }) {
             setDownloadingModel(quality);
             setDownloadProgress({ loaded: 0, total: 0 });
             try {
+                // Request persistent storage before the ~326 MB write so it isn't
+                // rejected by a best-effort quota (which would leave the model
+                // unpersisted and prompt a re-download on the next reload).
+                await ensurePersistentStorage();
                 await installKokoroModel(HIGH_QUALITY_MODEL, (loaded, total) =>
                     setDownloadProgress({ loaded, total }),
                 );
@@ -400,6 +423,11 @@ export function ReadAloudProvider({ children }: { children: ReactNode }) {
         playerRef.current?.setVolume(clamped);
     }, []);
 
+    const setRehearsePauses = useCallback((value: boolean) => {
+        setRehearsePausesState(value);
+        window.localStorage.setItem(REHEARSE_KEY, String(value));
+    }, []);
+
     const setNarrationOption = useCallback((key: keyof NarrationOptions, value: boolean) => {
         setNarrationOptionsState((prev) => {
             const next = { ...prev, [key]: value };
@@ -457,6 +485,7 @@ export function ReadAloudProvider({ children }: { children: ReactNode }) {
                     narratorVoiceId: narrator,
                     narration: narrationOptions,
                     excludedCharacters,
+                    rehearsePauses,
                 },
                 cursor,
             );
@@ -471,6 +500,7 @@ export function ReadAloudProvider({ children }: { children: ReactNode }) {
             characterVoices,
             narrationOptions,
             excludedCharacters,
+            rehearsePauses,
             activeModel,
             installedModels,
             persistActiveModel,
@@ -481,6 +511,8 @@ export function ReadAloudProvider({ children }: { children: ReactNode }) {
     const pause = useCallback(() => playerRef.current?.pause(), []);
     const resume = useCallback(() => playerRef.current?.resume(), []);
     const stop = useCallback(() => playerRef.current?.stop(), []);
+    const next = useCallback(() => playerRef.current?.next(), []);
+    const prev = useCallback(() => playerRef.current?.prev(), []);
 
     const value = useMemo<ReadAloudContextValue>(
         () => ({
@@ -508,10 +540,14 @@ export function ReadAloudProvider({ children }: { children: ReactNode }) {
             setVolume,
             narrationOptions,
             setNarrationOption,
+            rehearsePauses,
+            setRehearsePauses,
             play,
             pause,
             resume,
             stop,
+            next,
+            prev,
         }),
         [
             modelInstalled,
@@ -538,10 +574,14 @@ export function ReadAloudProvider({ children }: { children: ReactNode }) {
             setVolume,
             narrationOptions,
             setNarrationOption,
+            rehearsePauses,
+            setRehearsePauses,
             play,
             pause,
             resume,
             stop,
+            next,
+            prev,
         ],
     );
 
