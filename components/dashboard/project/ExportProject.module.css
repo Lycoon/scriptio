@@ -20,3 +20,113 @@
     color: var(--primary-text);
     font-size: 0.95rem;
 }
+
+/* --- Include section --- */
+
+/* Section header centred between hairlines on both sides (Import, Export). */
+.sectionSeparator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sectionSeparator::before,
+.sectionSeparator::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--separator);
+}
+
+/* Two compact toggles per row. */
+.includeGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+/* Compact variant of the option card: just checkbox + title, no description. */
+.includeCard {
+    gap: 10px;
+    padding: 14px;
+    min-width: 0;
+}
+
+.includeCardDisabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* --- Pages to export (radio group) --- */
+
+.radioGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Circular radio indicator, matching the square checkbox in OptionCard. */
+.radio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--secondary-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.2s;
+}
+
+.radioActive {
+    border-color: var(--primary-text);
+}
+
+.radioDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary-text);
+}
+
+/* Multi-select revision colour chips, revealed under the "Revisions" radio. */
+.revisionChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.revisionChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--separator);
+    background: var(--tertiary);
+    color: var(--secondary-text);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.revisionChip:hover {
+    color: var(--primary-text);
+}
+
+/* Active chip: border colour is set inline to the revision colour. */
+.revisionChipActive {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary-text);
+    font-weight: 600;
+}
+
+.revisionDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid var(--separator);
+    flex-shrink: 0;
+}

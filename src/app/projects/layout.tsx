@@ -12,6 +12,7 @@ import { useLocale } from "@src/context/LocaleContext";
 import { useTheme } from "next-themes";
 import { ReactNode, Suspense, useEffect } from "react";
 import ProjectNavbar from "@components/navbar/ProjectNavbar";
+import ProjectNavbarSkeleton from "@components/navbar/ProjectNavbarSkeleton";
 import ApplyTimingPanel from "@components/debug/ApplyTimingPanel";
 import { isTauri } from "@tauri-apps/api/core";
 
@@ -45,6 +46,10 @@ function SettingsSync() {
 
     return null;
 }
+
+// Shared by the loading skeleton and the resolved layout so the navbar sits at
+// the exact same place across the transition — no vertical shift on load.
+const shellStyle = { display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" } as const;
 
 interface ProjectLayoutInnerProps {
     children: ReactNode;
@@ -86,14 +91,21 @@ const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
         return <ProjectUnavailableDialog />;
     }
     // Wait for local data and (for cloud projects) for membership to resolve;
-    // also hold here while the redirect effect navigates away.
+    // also hold here while the redirect effect navigates away. Render a navbar
+    // skeleton (not a bare spinner) so the bar stays put when the real navbar
+    // mounts, keeping the layout fixed through loading.
     if (isResolving || mustRedirect) {
-        return <Loading />;
+        return (
+            <div style={shellStyle}>
+                <ProjectNavbarSkeleton />
+                <Loading />
+            </div>
+        );
     }
 
     return (
         <ViewProvider>
-            <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+            <div style={shellStyle}>
                 <ProjectNavbar />
                 {children}
             </div>

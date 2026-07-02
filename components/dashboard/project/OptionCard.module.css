@@ -5,7 +5,7 @@
     align-items: center;
     gap: 12px;
     background: var(--secondary);
-    border: 1px solid var(--tertiary);
+    border: 2px solid var(--tertiary);
     padding: 16px;
     border-radius: 8px;
     cursor: pointer;
@@ -28,7 +28,6 @@
 }
 
 .optionCard.active {
-    background: rgba(var(--primary-rgb), 0.1);
     border-color: var(--secondary-text);
 }
 

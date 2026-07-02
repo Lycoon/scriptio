@@ -8,11 +8,21 @@
 
 .chevron {
     flex-shrink: 0;
+    margin-left: auto;
+    color: var(--secondary-text);
     transition: transform 0.2s ease;
 }
 
 .chevronOpen {
     transform: rotate(90deg);
+}
+
+/* Body of a collapsible section, revealed when the header is expanded. */
+.sectionBody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
 }
 
 .input {
@@ -82,6 +92,30 @@
 
 .labelRow > div {
     flex: 1;
+}
+
+/* A header/footer editor block: a left-hand title labelling the three
+   alignment inputs (left / middle / right), with the "show on first page"
+   toggle below. A two-column grid keeps the title column auto-sized to its
+   content and shared across both rows, so the inputs AND the toggle stay
+   aligned in the second column regardless of the (translated) title width. */
+.hfGroup {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 16px;
+    row-gap: 12px;
+}
+
+.hfTitle {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--primary-text);
+}
+
+/* The toggle lives in the content column (second), aligned with the inputs. */
+.hfToggle {
+    grid-column: 2;
 }
 
 .marginRow {

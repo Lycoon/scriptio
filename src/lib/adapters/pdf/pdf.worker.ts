@@ -12,6 +12,11 @@ export interface TextRun {
     absolutePosition?: boolean;
     /** When true, x is the right edge — text expands leftward (right-aligned at x). */
     rightAlign?: boolean;
+    /** Revision index this run was changed under (>=1), or undefined. */
+    revision?: number;
+    /** Text colour as a hex string (e.g. "#2f74c0"); black when omitted. Set by
+     *  the adapter only for the "colored" revision export mode. */
+    color?: string;
 }
 
 /** A single visual line as laid out by the browser. */
@@ -19,13 +24,39 @@ export interface VisualLine {
     runs: TextRun[];
     y: number; // browser Y position in pixels (for line-spacing within a page)
     type?: string; // e.g. "dialogue", "character", "scene", "__page_break__"
+    /** Revision index this line was last changed under (>=1), or undefined for
+     *  unchanged lines. Set by the PDF adapter from the DOM revision marks/attrs
+     *  and used only for the "export revision pages" filter. */
+    revision?: number;
+    /** When set, this revised visual line gets a right-margin asterisk in this
+     *  hex colour ("#000000" for the black & white mode). Absent for unchanged
+     *  lines and whenever the revision export mode is "none". */
+    asteriskColor?: string;
     /** Header text for the page that begins AFTER this sentinel.
      *  Only set on `__page_break__` lines. Carries the user-visible page
      *  label ("4.", "4A.", a custom-templated string) read straight from
      *  the pagination widget's DOM, so page-lock labels propagate to PDF
      *  exports unchanged. */
     pageLabel?: string;
+    /** Fully-expanded left/middle/right page-header text for the page that
+     *  begins AFTER this `__page_break__` sentinel, read from the pagination
+     *  widget's header area (placeholders already resolved by the editor). */
+    header?: PageHeader;
+    /** Fully-expanded left/middle/right page-footer text for the page that
+     *  ENDS BEFORE this `__page_break__` sentinel, read from the pagination
+     *  widget's footer area (placeholders already resolved by the editor). */
+    footer?: PageFooter;
 }
+
+/** A page's three header columns, already placeholder-expanded by the editor. */
+export interface PageHeader {
+    left: string;
+    middle: string;
+    right: string;
+}
+
+/** A page's three footer columns, already placeholder-expanded by the editor. */
+export type PageFooter = PageHeader;
 
 /** Font file descriptor for registration in jsPDF. */
 interface FontEntry {
@@ -50,6 +81,12 @@ const PAGE_RIGHT = 72;
 
 /** Y position of the page number header (0.5 inch from top). */
 const HEADER_Y = 36;
+
+/** Distance of the page footer baseline from the bottom edge (0.5 inch). */
+const FOOTER_BOTTOM_INSET = 36;
+
+/** Inset (pt) of a revision asterisk into the right margin, past the text column. */
+const REVISION_ASTERISK_INSET = 8;
 
 /**
  * All font files to register with jsPDF.
@@ -162,6 +199,15 @@ export interface WorkerPayload {
     titlePageLeftPx: number;
     screenplayLines: VisualLine[];
     screenplayLeftPx: number;
+    /** Header for the first screenplay page (blank unless first-page header is on). */
+    screenplayFirstHeader?: PageHeader;
+    /** Footer for the last screenplay page, which has no trailing page-break
+     *  sentinel to carry it (blank unless a footer is configured). */
+    screenplayLastFooter?: PageFooter;
+    /** Left page margin in PDF points — the left bound of the header/footer. */
+    pageMarginLeft: number;
+    /** Right page margin in PDF points — the right bound of the header/footer. */
+    pageMarginRight: number;
     contdLabel: string;
     moreLabel: string;
 }
@@ -223,7 +269,7 @@ async function generatePdf(payload: WorkerPayload): Promise<Blob> {
     }
 
     // ── Render screenplay lines ───────────────────────────────────────
-    await renderLines(doc, fontLoader, payload.screenplayLines, pageSize, payload, payload.screenplayLeftPx, true, reportProgress);
+    await renderLines(doc, fontLoader, payload.screenplayLines, pageSize, payload, payload.screenplayLeftPx, true, reportProgress, payload.screenplayFirstHeader, payload.screenplayLastFooter);
 
     self.postMessage({ type: "PROGRESS", progress: 100 });
 
@@ -255,15 +301,30 @@ async function renderLines(
     pageLeftPx: number,
     showPageNumbers: boolean,
     onLineRendered: () => void,
+    firstHeader?: PageHeader,
+    lastFooter?: PageFooter,
 ): Promise<void> {
     if (lines.length === 0) return;
 
     let currentY = PAGE_TOP;
     let previousBrowserY = -1;
     let currentPage = 1;
+    // False until the first content line is drawn. A `__page_break__` seen while
+    // still false is a LEADING sentinel — emitted by the revision-pages filter
+    // when the first kept page is not the original page 1. We draw that page's
+    // header in place instead of inserting a blank leading page.
+    let renderedContent = false;
 
     let lastCharacterName = "";
     let lastCharacterX = -1;
+
+    // First-page header: drawn only when page 1 is the first page actually
+    // rendered (i.e. not dropped by a page filter, which would emit a leading
+    // sentinel instead). Empty columns draw nothing, so this is a no-op when
+    // first-page header display is off.
+    if (showPageNumbers && firstHeader && lines[0]?.type !== "__page_break__") {
+        drawPageHeaderArea(doc, firstHeader, "", pageSize, payload.pageMarginLeft, payload.pageMarginRight);
+    }
 
     for (let li = 0; li < lines.length; li++) {
         const line = lines[li];
@@ -271,6 +332,12 @@ async function renderLines(
 
         // ── Explicit page break sentinel ────────────────────────────
         if (line.type === "__page_break__") {
+            if (!renderedContent) {
+                // Leading sentinel: label the first kept page without a page break.
+                if (showPageNumbers)
+                    drawPageHeaderArea(doc, line.header, line.pageLabel ?? "", pageSize, payload.pageMarginLeft, payload.pageMarginRight);
+                continue;
+            }
             const prevLine = findPrevContentLine(lines, li);
             const nextLine = findNextContentLine(lines, li);
             const isDialogueSplit = prevLine?.type === "dialogue" && nextLine?.type === "dialogue";
@@ -281,6 +348,10 @@ async function renderLines(
                 await drawMultiFontText(doc, fontLoader, payload.baseUrl, payload.moreLabel, lastCharacterX, moreY, "left");
             }
 
+            // Footer of the page we are leaving (left/middle/right, expanded).
+            if (showPageNumbers)
+                drawPageFooterArea(doc, line.footer, pageSize, payload.pageMarginLeft, payload.pageMarginRight);
+
             // Watermark on the page we are leaving
             if (payload.watermarkText) drawWatermark(doc, pageSize, payload.watermarkText);
 
@@ -288,9 +359,9 @@ async function renderLines(
             currentPage++;
             currentY = PAGE_TOP;
 
-            // Page number header on pages 2+
+            // Page header on pages 2+ (left/middle/right, placeholder-expanded).
             if (showPageNumbers) {
-                drawPageHeader(doc, currentPage, pageSize, line.pageLabel);
+                drawPageHeaderArea(doc, line.header, line.pageLabel ?? `${currentPage}.`, pageSize, payload.pageMarginLeft, payload.pageMarginRight);
             }
 
             // Draw Character Name (CONT'D) at the top of the new page
@@ -307,6 +378,8 @@ async function renderLines(
             previousBrowserY = -1;
             continue;
         }
+
+        renderedContent = true;
 
         // ── Line spacing within a page ──────────────────────────────
         if (previousBrowserY !== -1) {
@@ -360,7 +433,8 @@ async function renderLines(
                 isParenOpen = false;
             }
 
-            doc.setTextColor(0, 0, 0);
+            // Revision-coloured text (colored export mode); black otherwise.
+            doc.setTextColor(run.color ?? "#000000");
             doc.text(run.text, runX, currentY, { baseline: "top" });
 
             const textWidth = doc.getTextWidth(run.text);
@@ -369,12 +443,26 @@ async function renderLines(
 
             if (run.underline) {
                 const underlineY = currentY + FONT_SIZE * 0.95;
-                doc.setDrawColor(0, 0, 0);
+                doc.setDrawColor(run.color ?? "#000000");
                 doc.setLineWidth(0.5);
                 doc.line(runX, underlineY, runX + textWidth, underlineY);
             }
         }
+
+        // Right-margin asterisk marking a revised visual line (colored / bw
+        // modes). Drawn in the right margin just past the text column, on the
+        // same baseline as the line's text.
+        if (line.asteriskColor) {
+            doc.setFont("CourierPrime", "normal");
+            doc.setFontSize(FONT_SIZE);
+            doc.setTextColor(line.asteriskColor);
+            doc.text("*", pageSize.width - PAGE_RIGHT + REVISION_ASTERISK_INSET, currentY, { baseline: "top" });
+        }
     }
+
+    // Footer of the final page, which has no trailing page-break sentinel.
+    if (showPageNumbers && renderedContent)
+        drawPageFooterArea(doc, lastFooter, pageSize, payload.pageMarginLeft, payload.pageMarginRight);
 
     if (payload.watermarkText) drawWatermark(doc, pageSize, payload.watermarkText);
 }
@@ -421,27 +509,67 @@ async function drawMultiFontText(
     }
 }
 
-function drawPageHeader(
+/**
+ * Draw a page's header at the standard header line: left column at the left
+ * page margin, middle centred within the content area, right column at the
+ * right page margin — matching the editor, which lays the header out inside the
+ * configured page margins (not a fixed 1-inch inset). Each column is the
+ * already-expanded text the editor rendered (page number, date, revision name,
+ * or any literal text). Falls back to drawing `label` on the right when no
+ * structured header was captured (older payloads / safety). Empty columns are
+ * skipped, so an intentionally blank header draws nothing.
+ */
+function drawPageHeaderArea(
     doc: jsPDF,
-    pageNumber: number,
+    header: PageHeader | undefined,
+    label: string,
     pageSize: { width: number; height: number },
-    label?: string,
+    marginLeft: number,
+    marginRight: number,
 ): void {
-    if (pageNumber <= 1) return;
-    // Prefer the label captured from the pagination widget — under page
-    // locking this carries the frozen "4A." style label, otherwise it's the
-    // sequential "4." rendered by the default headerRight template. An empty
-    // string means the editor's custom header is intentionally blank (e.g.
-    // page 1's customHeader override) — honour that and skip drawing.
-    const text = label ?? `${pageNumber}.`;
-    if (!text) return;
+    const left = header?.left ?? "";
+    const middle = header?.middle ?? "";
+    const right = header?.right ?? (header ? "" : label);
+    if (!left && !middle && !right) return;
+
+    const rightEdge = pageSize.width - marginRight;
+    const center = (marginLeft + rightEdge) / 2;
     doc.setFont("CourierPrime", "normal");
     doc.setFontSize(FONT_SIZE);
     doc.setTextColor(0, 0, 0);
-    doc.text(text, pageSize.width - PAGE_RIGHT, HEADER_Y, {
-        align: "right",
-        baseline: "top",
-    });
+    if (left) doc.text(left, marginLeft, HEADER_Y, { align: "left", baseline: "top" });
+    if (middle) doc.text(middle, center, HEADER_Y, { align: "center", baseline: "top" });
+    if (right) doc.text(right, rightEdge, HEADER_Y, { align: "right", baseline: "top" });
+}
+
+/**
+ * Draw a page's footer near the bottom margin, mirroring `drawPageHeaderArea`:
+ * left column at the left page margin, middle centred within the content area,
+ * right column at the right page margin. Each column is the already-expanded
+ * text the editor rendered. Empty columns are skipped, so an intentionally
+ * blank footer draws nothing.
+ */
+function drawPageFooterArea(
+    doc: jsPDF,
+    footer: PageFooter | undefined,
+    pageSize: { width: number; height: number },
+    marginLeft: number,
+    marginRight: number,
+): void {
+    const left = footer?.left ?? "";
+    const middle = footer?.middle ?? "";
+    const right = footer?.right ?? "";
+    if (!left && !middle && !right) return;
+
+    const y = pageSize.height - FOOTER_BOTTOM_INSET;
+    const rightEdge = pageSize.width - marginRight;
+    const center = (marginLeft + rightEdge) / 2;
+    doc.setFont("CourierPrime", "normal");
+    doc.setFontSize(FONT_SIZE);
+    doc.setTextColor(0, 0, 0);
+    if (left) doc.text(left, marginLeft, y, { align: "left", baseline: "bottom" });
+    if (middle) doc.text(middle, center, y, { align: "center", baseline: "bottom" });
+    if (right) doc.text(right, rightEdge, y, { align: "right", baseline: "bottom" });
 }
 
 function drawWatermark(doc: jsPDF, pageSize: { width: number; height: number }, text: string): void {

@@ -1,14 +1,21 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { X, BookOpen, Clapperboard, PencilLine, Settings, Info, ChevronDown } from "lucide-react";
+import { X, Settings, Info } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
 import { computeSceneItems } from "@src/lib/screenplay/scenes";
+import {
+    REVISION_COLORS,
+    RevisionDisplayMode,
+    nextRevision,
+    clampRevision,
+    revisionColor,
+} from "@src/lib/screenplay/revisions";
 import { unlockDraftPopup, unlockPagesPopup, unlockScenesPopup } from "@src/lib/screenplay/popup";
 import { getPageAnchors, getPageAnchorInfo } from "@src/lib/screenplay/extensions/pagination-extension";
 import Switch from "@components/utils/Switch";
@@ -21,20 +28,6 @@ interface ProductionPanelProps {
     onClose: () => void;
 }
 
-// Standard production revision color order. Names stay in English on purpose —
-// they're surfaced verbatim in the printed page headers.
-const REVISION_COLORS: { name: string; value: string }[] = [
-    { name: "White", value: "#ffffff" },
-    { name: "Blue", value: "#bbdfff" },
-    { name: "Pink", value: "#ffb6c1" },
-    { name: "Yellow", value: "#ffea7a" },
-    { name: "Green", value: "#a5d6a7" },
-    { name: "Goldenrod", value: "#d4a017" },
-    { name: "Buff", value: "#e0c58b" },
-    { name: "Salmon", value: "#fa8072" },
-    { name: "Cherry", value: "#9b1c2a" },
-];
-
 const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     const t = useTranslations("production");
     const {
@@ -44,6 +37,12 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         persistentScenes,
         pageLocking,
         persistentPages,
+        revisionsEnabled,
+        currentRevision,
+        revisionDisplayMode,
+        setRevisionsEnabled,
+        setCurrentRevision,
+        setRevisionDisplayMode,
         scenes,
         screenplay,
         editor,
@@ -55,23 +54,44 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
 
     const panelRef = useRef<HTMLDivElement>(null);
 
-    // Revisions are inert in v1: this only tracks the previewed color locally
-    // until revision tracking is wired to the repository.
-    const [revisionColor, setRevisionColor] = useState(REVISION_COLORS[0].name);
-
-    // Scene/page/revision controls are tucked under a collapsed "Advanced"
-    // section — the draft toggle covers the common case on its own.
-    const [advancedOpen, setAdvancedOpen] = useState(false);
-
-    const revisionOptions: DropdownOption[] = REVISION_COLORS.map((c) => ({
+    // Each option is rendered in its own revision colour (CourierPrime), so the
+    // list reads like the page-header revision colours. White (the base, index 0)
+    // has no revision colour, so it falls back to the readable primary text.
+    const revisionOptions: DropdownOption[] = REVISION_COLORS.map((c, i) => ({
         value: c.name,
         label: (
-            <span className={styles.revision_option}>
+            <span className={styles.revision_option} style={{ color: revisionColor(i) ?? "var(--primary-text)" }}>
                 <span className={styles.revision_dot} style={{ backgroundColor: c.value }} />
                 {c.name}
             </span>
         ),
     }));
+
+    // The dropdown is keyed by colour name; the persisted value is the index.
+    const revisionColorName = REVISION_COLORS[clampRevision(currentRevision)].name;
+
+    // How committed revisions are shown — independent of the stamping toggle.
+    const displayModeOptions: DropdownOption[] = [
+        { value: "all", label: t("revisionDisplayAll") },
+        { value: "hidden", label: t("revisionDisplayHidden") },
+        { value: "current", label: t("revisionDisplayCurrent") },
+    ];
+
+    const handleDisplayModeChange = (mode: string) => {
+        if (!repository || isReadOnly) return;
+        setRevisionDisplayMode(mode as RevisionDisplayMode);
+    };
+
+    const handleRevisionsToggle = (next: boolean) => {
+        if (!repository || isReadOnly) return;
+        setRevisionsEnabled(next);
+    };
+
+    const handleRevisionColorChange = (name: string) => {
+        if (!repository || isReadOnly) return;
+        const index = REVISION_COLORS.findIndex((c) => c.name === name);
+        if (index >= 0) setCurrentRevision(index);
+    };
 
     const handleOpenSettings = () => {
         onClose();
@@ -261,6 +281,11 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
             repository.transact(() => {
                 lockScenesWrites();
                 lockPagesWrites();
+                // Locking a draft issues the next revision: enable tracking and
+                // advance to the next colour (see draftLockingHint). Existing
+                // marks are kept — revisions are cumulative.
+                repository.setRevisionsEnabled(true);
+                repository.setCurrentRevision(nextRevision(currentRevision));
             });
         } else {
             unlockDraftPopup(performDraftUnlock, userCtx);
@@ -272,6 +297,11 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         repository.transact(() => {
             if (sceneLocking) relockScenesWrites();
             if (pageLocking) relockPagesWrites();
+            // Relocking issues a new revision just like the initial draft lock
+            // (see draftLockingHint): enable tracking and advance to the next
+            // colour. Existing marks are kept — revisions are cumulative.
+            repository.setRevisionsEnabled(true);
+            repository.setCurrentRevision(nextRevision(currentRevision));
         });
     };
 
@@ -297,7 +327,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
             </div>
 
             {/* Draft Locking (scenes + pages together) */}
-            <div className={`${styles.section} ${styles.section_flush}`}>
+            <div className={styles.section}>
                 <div className={styles.row}>
                     <div className={styles.row_main}>
                         <span className={styles.row_label}>{t("draftLocking")}</span>
@@ -329,25 +359,6 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                 </div>
             </div>
 
-            {/* Advanced — a labeled separator that folds the scene/page/revision
-                controls. The label sits on the divider line under Draft locking. */}
-            <button
-                type="button"
-                className={styles.advanced_divider}
-                onClick={() => setAdvancedOpen((open) => !open)}
-                aria-expanded={advancedOpen}
-            >
-                <span className={styles.advanced_divider_label}>
-                    {t("advanced")}
-                    <ChevronDown
-                        size={13}
-                        className={`${styles.advanced_chevron} ${advancedOpen ? styles.advanced_chevron_open : ""}`}
-                    />
-                </span>
-            </button>
-
-            {advancedOpen && (
-                <>
             {/* Scene Locking */}
             <div className={styles.section}>
                 <div className={styles.row}>
@@ -428,23 +439,47 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                 )}
             </div>
 
-            {/* Revisions (inert in v1) */}
+            {/* Revision mode (stamping) + how revisions are displayed */}
             <div className={styles.section}>
                 <div className={styles.row}>
                     <div className={styles.row_main}>
                         <span className={styles.row_label}>{t("revisions")}</span>
                     </div>
-                    <Switch checked={false} onChange={() => {}} ariaLabel={t("revisions")} />
+                    <Switch
+                        checked={revisionsEnabled}
+                        onChange={handleRevisionsToggle}
+                        disabled={isReadOnly}
+                        ariaLabel={t("revisions")}
+                    />
                 </div>
-                <Dropdown
-                    value={revisionColor}
-                    onChange={setRevisionColor}
-                    options={revisionOptions}
-                    className={styles.revision_select}
-                />
+                <div className={styles.revision_control}>
+                    <span className={styles.revision_control_label}>{t("revisionShowLabel")}</span>
+                    <div className={styles.revision_control_field}>
+                        <Dropdown
+                            value={revisionDisplayMode}
+                            onChange={handleDisplayModeChange}
+                            options={displayModeOptions}
+                            className={styles.revision_select}
+                        />
+                    </div>
+                </div>
+                <div
+                    className={`${styles.revision_control} ${
+                        revisionsEnabled || revisionDisplayMode === "current" ? "" : styles.revision_control_disabled
+                    }`}
+                    aria-disabled={!(revisionsEnabled || revisionDisplayMode === "current")}
+                >
+                    <span className={styles.revision_control_label}>{t("revisionDisplayCurrent")}</span>
+                    <div className={styles.revision_control_field}>
+                        <Dropdown
+                            value={revisionColorName}
+                            onChange={handleRevisionColorChange}
+                            options={revisionOptions}
+                            className={styles.revision_select}
+                        />
+                    </div>
+                </div>
             </div>
-                </>
-            )}
         </div>
     );
 };

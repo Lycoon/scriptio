@@ -20,6 +20,7 @@ export function createDocumentTreeConfig(docId: string): DocumentEditorConfig {
             searchHighlights: true,
             sceneBookmarks: false,
             sceneLocking: false,
+            revisions: false,
             nodeIdDedup: true,
             suggestions: false,
             orphanPrevention: false,

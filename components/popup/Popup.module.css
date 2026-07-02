@@ -6,7 +6,7 @@
     background-color: var(--primary);
     border: 2px solid var(--separator);
     box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
-    border-radius: 12px;
+    border-radius: 38px;
     pointer-events: auto;
 }
 

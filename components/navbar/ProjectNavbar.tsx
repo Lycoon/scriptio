@@ -15,6 +15,7 @@ import { uploadToCloudPopup } from "@src/lib/screenplay/popup";
 import type { StorageUsage } from "@src/lib/assets/cloud-asset-sync";
 import { DashboardContext } from "@src/context/DashboardContext";
 import {
+    AudioLines,
     BarChart2,
     CircleArrowLeft,
     CircleCheckBig,
@@ -29,6 +30,7 @@ import {
 import AnalyticsModal from "@components/analytics/AnalyticsModal";
 import SavesPanel from "./SavesPanel";
 import ProductionPanel from "./ProductionPanel";
+import ReadAloudPanel from "./ReadAloudPanel";
 
 import navbar from "./ProjectNavbar.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
@@ -178,6 +180,7 @@ const ProjectNavbar = () => {
     const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
     const [isSavesOpen, setIsSavesOpen] = useState(false);
     const [isProductionOpen, setIsProductionOpen] = useState(false);
+    const [isReadAloudOpen, setIsReadAloudOpen] = useState(false);
     const [isLocalOnly, setIsLocalOnly] = useState<boolean | null>(null);
     const isLocalEdit = useRef(false);
 
@@ -346,6 +349,26 @@ const ProjectNavbar = () => {
                             <ProductionPanel
                                 isOpen={isProductionOpen}
                                 onClose={() => setIsProductionOpen(false)}
+                            />
+                        </div>
+                        <div
+                            style={{
+                                position: "relative",
+                                height: "100%",
+                                width: "fit-content",
+                                display: "flex",
+                                alignItems: "center",
+                            }}
+                        >
+                            <div
+                                className={`${navBtn.button} ${isReadAloudOpen ? navBtn.active : ""}`}
+                                onClick={() => setIsReadAloudOpen(!isReadAloudOpen)}
+                            >
+                                <AudioLines size={18} />
+                            </div>
+                            <ReadAloudPanel
+                                isOpen={isReadAloudOpen}
+                                onClose={() => setIsReadAloudOpen(false)}
                             />
                         </div>
                     </div>

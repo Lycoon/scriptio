@@ -23,6 +23,7 @@ import {
     refreshSearchHighlights,
     SearchMatch,
 } from "@src/lib/screenplay/extensions/search-highlight-extension";
+import { createReadAloudHighlightExtension } from "@src/lib/screenplay/extensions/read-aloud-highlight-extension";
 import {
     createSceneBookmarkExtension,
     refreshSceneBookmarks,
@@ -31,6 +32,10 @@ import {
     createSceneLockingExtension,
     refreshSceneLocking,
 } from "@src/lib/screenplay/extensions/scene-locking-extension";
+import {
+    createRevisionsExtension,
+    refreshRevisions,
+} from "@src/lib/screenplay/extensions/revisions-extension";
 import { computeAbsorbedPageTokens, SCENE_OMIT_UNDO_ORIGIN } from "@src/lib/screenplay/scene-locking";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
@@ -74,12 +79,23 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         activeSearchEditor,
         contdLabel,
         moreLabel,
+        headerLeft,
+        headerMiddle,
+        headerRight,
+        showFirstPageHeader,
+        footerLeft,
+        footerMiddle,
+        footerRight,
+        showFirstPageFooter,
         sceneLocking,
         sceneNumberingStyle,
         skippedSceneLetters,
         persistentScenes,
         pageLocking,
         persistentPages,
+        revisionsEnabled,
+        currentRevision,
+        revisionDisplayMode,
     } = projectCtx;
 
     const projectState = repository?.getState();
@@ -183,6 +199,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
             persistentScenes,
             pageLocking,
             persistentPages,
+            revisionsEnabled,
+            currentRevision,
+            revisionDisplayMode,
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }),
         [],
@@ -205,6 +224,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     ext.persistentScenes = persistentScenes;
     ext.pageLocking = pageLocking;
     ext.persistentPages = persistentPages;
+    ext.revisionsEnabled = revisionsEnabled;
+    ext.currentRevision = currentRevision;
+    ext.revisionDisplayMode = revisionDisplayMode;
 
     const lastReportedElementRef = useRef<ScreenplayElement | null>(null);
 
@@ -292,6 +314,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
           })
         : null;
 
+    const revisionsExtension = features.revisions
+        ? createRevisionsExtension({
+              getRevisionsEnabled: () => !!ext.revisionsEnabled,
+              getCurrentRevision: () => ext.currentRevision ?? 0,
+              getDisplayMode: () => ext.revisionDisplayMode ?? "all",
+          })
+        : null;
+
     const spellcheckExtension = features.spellcheck
         ? createSpellcheckExtension({
               getWorker: () => ext.spellWorker,
@@ -359,14 +389,32 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                     config.features.paginationMode === "screenplay"
                         ? {
                               pageGap: 20,
-                              headerRight: `<p class="page-number">{page}.</p>`,
+                              headerLeft,
+                              headerMiddle,
+                              headerRight,
+                              // Page 1 is unnumbered by convention, so its header
+                              // is blanked unless "Show first page header" is on,
+                              // in which case it uses the same templates as the
+                              // rest. Live toggles flow through updateHeaderContent
+                              // (see DocumentEditorPanel).
                               customHeader: {
-                                  1: {
-                                      headerLeft: "",
-                                      headerRight: `<p class="page-number"></p>`,
-                                  },
+                                  1: showFirstPageHeader
+                                      ? { headerLeft, headerMiddle, headerRight }
+                                      : { headerLeft: "", headerMiddle: "", headerRight: "" },
                               },
-                              footerRight: "",
+                              footerLeft,
+                              footerMiddle,
+                              footerRight,
+                              // Page 1 is unnumbered by convention, so its footer
+                              // is blanked unless "Show first page footer" is on,
+                              // mirroring the header. Page 1's footer is rendered by
+                              // the first page-break widget (footer of pagenum-1),
+                              // so the page-1 override lives in customFooter.
+                              customFooter: {
+                                  1: showFirstPageFooter
+                                      ? { footerLeft, footerMiddle, footerRight }
+                                      : { footerLeft: "", footerMiddle: "", footerRight: "" },
+                              },
                               ...SCREENPLAY_FORMATS[pageSize],
                               getPageLocking: () => !!ext.pageLocking,
                               getPageLocks: () => ext.persistentPages ?? {},
@@ -397,8 +445,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
 
                 ...(characterHighlightExtension ? [characterHighlightExtension] : []),
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),
+                // Read-aloud "now reading" node highlight (screenplay editors only;
+                // controlled externally via transaction metas, so no config needed).
+                ...(config.type === "screenplay" ? [createReadAloudHighlightExtension()] : []),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
                 ...(sceneLockingExtension ? [sceneLockingExtension] : []),
+                // After ScriptioPagination so its plugin reads fresh pagination
+                // state (page breaks) when grouping lines into pages.
+                ...(revisionsExtension ? [revisionsExtension] : []),
                 ...(nodeIdDedupExtension ? [nodeIdDedupExtension] : []),
                 ...(spellcheckExtension ? [spellcheckExtension] : []),
             ],
@@ -627,6 +681,14 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
             refreshSceneLocking(editor);
         }
     }, [editor, sceneLocking, sceneNumberingStyle, skippedSceneLetters, persistentScenes, features.sceneLocking]);
+
+    // Refresh revision decorations when the toggle flips or the current
+    // revision advances (colours/visibility change with no doc edit).
+    useEffect(() => {
+        if (editor && features.revisions) {
+            refreshRevisions(editor);
+        }
+    }, [editor, revisionsEnabled, currentRevision, revisionDisplayMode, features.revisions]);
 
     // Refresh pagination when page locking or the page-lock map changes.
     // Pagination only reads these via getter closures on its options, so

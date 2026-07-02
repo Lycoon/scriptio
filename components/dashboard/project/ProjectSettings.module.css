@@ -81,6 +81,20 @@
     line-height: 1.4;
 }
 
+/* Shared section heading for dashboard settings panels (e.g. Include, Security,
+   Page header). Factored here so every settings section reads identically.
+   font-family is set explicitly so the heading looks the same whether it is a
+   <span> (which globals.css styles via `p, span`) or a <label> (which would
+   otherwise fall back to the universal system font). */
+.sectionTitle {
+    font-family: var(--font-inter), sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .formActions {
     border-top: 1px solid var(--separator);
     padding-top: 24px;

@@ -20,6 +20,8 @@ export interface DocumentEditorFeatures {
     sceneBookmarks: boolean;
     /** Production-mode scene labels + OMITTED placeholders. */
     sceneLocking: boolean;
+    /** Production revisions: per-line change stamping + gutter stripe + margin asterisks. */
+    revisions: boolean;
     /** Prevent duplicate data-ids on paste. */
     nodeIdDedup: boolean;
     /** Character / location autocomplete menus. */
@@ -78,6 +80,7 @@ export const SCREENPLAY_EDITOR_CONFIG: DocumentEditorConfig = {
         searchHighlights: true,
         sceneBookmarks: true,
         sceneLocking: true,
+        revisions: true,
         nodeIdDedup: true,
         suggestions: true,
         orphanPrevention: true,
@@ -101,6 +104,7 @@ export const TITLEPAGE_EDITOR_CONFIG: DocumentEditorConfig = {
         searchHighlights: false,
         sceneBookmarks: false,
         sceneLocking: false,
+        revisions: false,
         nodeIdDedup: false,
         suggestions: false,
         orphanPrevention: false,

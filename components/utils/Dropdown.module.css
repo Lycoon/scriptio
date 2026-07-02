@@ -51,6 +51,19 @@
     overflow-y: auto;
 }
 
+/* Opt-in: size the menu to its widest option (kept at least as wide as the
+   trigger) and keep each option on a single line. Used where labels are long,
+   e.g. the read-aloud voice pickers. */
+.fit_content {
+    width: max-content;
+    min-width: 100%;
+    max-width: 420px;
+}
+
+.fit_content .dropdown_item {
+    white-space: nowrap;
+}
+
 .dropdown_item {
     display: flex;
     align-items: center;
@@ -78,4 +91,45 @@
     align-items: center;
     gap: 12px;
     width: 100%;
+}
+
+/* ── Submenus (categorised options, e.g. voices by accent) ── */
+
+/* A menu hosting category rows must not clip its flyouts. Its top level is short
+   (one row per category), so dropping the scroll is fine — the long voice lists
+   live inside each submenu, which scrolls on its own. */
+.has_submenus {
+    overflow: visible;
+    max-height: none;
+}
+
+.has_submenu {
+    position: relative;
+}
+
+/* Keep the open category highlighted while the pointer is in its submenu. */
+.submenu_parent_open {
+    background-color: var(--primary);
+}
+
+.submenu_arrow {
+    flex-shrink: 0;
+    color: var(--secondary-text);
+}
+
+.submenu {
+    position: absolute;
+    top: -7px; /* cancel the parent menu's 6px padding + 1px border */
+    left: 100%; /* flush against the row so the pointer never crosses a gap */
+    width: max-content;
+    min-width: 160px;
+    max-width: 240px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+/* Open to the left when there isn't room on the right. */
+.submenu_left {
+    left: auto;
+    right: 100%;
 }

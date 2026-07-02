@@ -35,6 +35,7 @@ import {
 } from "@src/lib/project/project-state";
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
+import { RevisionDisplayMode, DEFAULT_REVISION_DISPLAY_MODE } from "@src/lib/screenplay/revisions";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 import { useAssetGc } from "@src/lib/assets/use-asset-gc";
 
@@ -101,6 +102,22 @@ export interface ProjectContextType {
     setContdLabel: (label: string) => void;
     moreLabel: string;
     setMoreLabel: (label: string) => void;
+    headerLeft: string;
+    setHeaderLeft: (template: string) => void;
+    headerMiddle: string;
+    setHeaderMiddle: (template: string) => void;
+    headerRight: string;
+    setHeaderRight: (template: string) => void;
+    showFirstPageHeader: boolean;
+    setShowFirstPageHeader: (show: boolean) => void;
+    footerLeft: string;
+    setFooterLeft: (template: string) => void;
+    footerMiddle: string;
+    setFooterMiddle: (template: string) => void;
+    footerRight: string;
+    setFooterRight: (template: string) => void;
+    showFirstPageFooter: boolean;
+    setShowFirstPageFooter: (show: boolean) => void;
     elementMargins: Record<string, { left: number; right: number }>;
     setElementMargins: (margins: Record<string, { left: number; right: number }>) => void;
     elementStyles: Record<string, ElementStyle>;
@@ -125,6 +142,17 @@ export interface ProjectContextType {
      *  Keyed by `PAGE_ONE_KEY` for page 1, by the top-level node's data-id
      *  for subsequent pages. */
     persistentPages: PersistentPageMap;
+
+    /** Revisions master switch (production change-tracking). */
+    revisionsEnabled: boolean;
+    setRevisionsEnabled: (enabled: boolean) => void;
+    /** Active revision index (into REVISION_COLORS; 0 = White base draft). New
+     *  edits are stamped with this value. */
+    currentRevision: number;
+    setCurrentRevision: (index: number) => void;
+    /** How committed revision marks are displayed (independent of stamping). */
+    revisionDisplayMode: RevisionDisplayMode;
+    setRevisionDisplayMode: (mode: RevisionDisplayMode) => void;
 
     // Search state
     searchTerm: string;
@@ -214,6 +242,22 @@ const defaultContextValue: ProjectContextType = {
     setContdLabel: () => {},
     moreLabel: "(MORE)",
     setMoreLabel: () => {},
+    headerLeft: "",
+    setHeaderLeft: () => {},
+    headerMiddle: "",
+    setHeaderMiddle: () => {},
+    headerRight: "#.",
+    setHeaderRight: () => {},
+    showFirstPageHeader: false,
+    setShowFirstPageHeader: () => {},
+    footerLeft: "",
+    setFooterLeft: () => {},
+    footerMiddle: "",
+    setFooterMiddle: () => {},
+    footerRight: "",
+    setFooterRight: () => {},
+    showFirstPageFooter: false,
+    setShowFirstPageFooter: () => {},
     elementMargins: {},
     setElementMargins: () => {},
     elementStyles: {},
@@ -228,6 +272,12 @@ const defaultContextValue: ProjectContextType = {
     pageLocking: false,
     setPageLocking: () => {},
     persistentPages: {},
+    revisionsEnabled: false,
+    setRevisionsEnabled: () => {},
+    currentRevision: 0,
+    setCurrentRevision: () => {},
+    revisionDisplayMode: DEFAULT_REVISION_DISPLAY_MODE,
+    setRevisionDisplayMode: () => {},
     characters: {},
     locations: {},
     scenes: [],
@@ -352,6 +402,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [sceneNumberOnRight, setSceneNumberOnRightState] = useState<boolean>(false);
     const [contdLabel, setContdLabelState] = useState<string>("(CONT'D)");
     const [moreLabel, setMoreLabelState] = useState<string>("(MORE)");
+    const [headerLeft, setHeaderLeftState] = useState<string>("");
+    const [headerMiddle, setHeaderMiddleState] = useState<string>("");
+    const [headerRight, setHeaderRightState] = useState<string>("#.");
+    const [showFirstPageHeader, setShowFirstPageHeaderState] = useState<boolean>(false);
+    const [footerLeft, setFooterLeftState] = useState<string>("");
+    const [footerMiddle, setFooterMiddleState] = useState<string>("");
+    const [footerRight, setFooterRightState] = useState<string>("");
+    const [showFirstPageFooter, setShowFirstPageFooterState] = useState<boolean>(false);
     const [elementMargins, setElementMarginsState] = useState<
         Record<string, { left: number; right: number }>
     >({});
@@ -364,6 +422,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [persistentScenes, setPersistentScenesState] = useState<PersistentSceneMap>({});
     const [pageLocking, setPageLockingState] = useState<boolean>(false);
     const [persistentPages, setPersistentPagesState] = useState<PersistentPageMap>({});
+    const [revisionsEnabled, setRevisionsEnabledState] = useState<boolean>(false);
+    const [currentRevision, setCurrentRevisionState] = useState<number>(0);
+    const [revisionDisplayMode, setRevisionDisplayModeState] =
+        useState<RevisionDisplayMode>(DEFAULT_REVISION_DISPLAY_MODE);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
     const [users, setUsers] = useState<CollaboratorInfo[]>([]);
 
@@ -544,6 +606,30 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (initialLayout.moreLabel !== undefined) {
                 setMoreLabelState(initialLayout.moreLabel);
             }
+            if (initialLayout.headerLeft !== undefined) {
+                setHeaderLeftState(initialLayout.headerLeft);
+            }
+            if (initialLayout.headerMiddle !== undefined) {
+                setHeaderMiddleState(initialLayout.headerMiddle);
+            }
+            if (initialLayout.headerRight !== undefined) {
+                setHeaderRightState(initialLayout.headerRight);
+            }
+            if (initialLayout.showFirstPageHeader !== undefined) {
+                setShowFirstPageHeaderState(initialLayout.showFirstPageHeader);
+            }
+            if (initialLayout.footerLeft !== undefined) {
+                setFooterLeftState(initialLayout.footerLeft);
+            }
+            if (initialLayout.footerMiddle !== undefined) {
+                setFooterMiddleState(initialLayout.footerMiddle);
+            }
+            if (initialLayout.footerRight !== undefined) {
+                setFooterRightState(initialLayout.footerRight);
+            }
+            if (initialLayout.showFirstPageFooter !== undefined) {
+                setShowFirstPageFooterState(initialLayout.showFirstPageFooter);
+            }
             if (initialLayout.elementMargins !== undefined) {
                 setElementMarginsState(initialLayout.elementMargins);
             }
@@ -566,6 +652,15 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             }
             if (initialProduction.pageLocking !== undefined) {
                 setPageLockingState(initialProduction.pageLocking);
+            }
+            if (initialProduction.revisionsEnabled !== undefined) {
+                setRevisionsEnabledState(initialProduction.revisionsEnabled);
+            }
+            if (initialProduction.currentRevision !== undefined) {
+                setCurrentRevisionState(initialProduction.currentRevision);
+            }
+            if (initialProduction.revisionDisplayMode !== undefined) {
+                setRevisionDisplayModeState(initialProduction.revisionDisplayMode);
             }
         }
 
@@ -605,6 +700,30 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (_moreLabel !== undefined) {
                 setMoreLabelState(_moreLabel);
             }
+            if (layout.headerLeft !== undefined) {
+                setHeaderLeftState(layout.headerLeft);
+            }
+            if (layout.headerMiddle !== undefined) {
+                setHeaderMiddleState(layout.headerMiddle);
+            }
+            if (layout.headerRight !== undefined) {
+                setHeaderRightState(layout.headerRight);
+            }
+            if (layout.showFirstPageHeader !== undefined) {
+                setShowFirstPageHeaderState(layout.showFirstPageHeader);
+            }
+            if (layout.footerLeft !== undefined) {
+                setFooterLeftState(layout.footerLeft);
+            }
+            if (layout.footerMiddle !== undefined) {
+                setFooterMiddleState(layout.footerMiddle);
+            }
+            if (layout.footerRight !== undefined) {
+                setFooterRightState(layout.footerRight);
+            }
+            if (layout.showFirstPageFooter !== undefined) {
+                setShowFirstPageFooterState(layout.showFirstPageFooter);
+            }
             if (layout.elementMargins !== undefined) {
                 setElementMarginsState(layout.elementMargins);
             }
@@ -626,6 +745,15 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             }
             if (production.pageLocking !== undefined) {
                 setPageLockingState(production.pageLocking);
+            }
+            if (production.revisionsEnabled !== undefined) {
+                setRevisionsEnabledState(production.revisionsEnabled);
+            }
+            if (production.currentRevision !== undefined) {
+                setCurrentRevisionState(production.currentRevision);
+            }
+            if (production.revisionDisplayMode !== undefined) {
+                setRevisionDisplayModeState(production.revisionDisplayMode);
             }
         });
 
@@ -831,6 +959,70 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    const setHeaderLeft = useCallback(
+        (template: string) => {
+            setHeaderLeftState(template);
+            repository?.setHeaderLeft(template);
+        },
+        [repository],
+    );
+
+    const setHeaderMiddle = useCallback(
+        (template: string) => {
+            setHeaderMiddleState(template);
+            repository?.setHeaderMiddle(template);
+        },
+        [repository],
+    );
+
+    const setHeaderRight = useCallback(
+        (template: string) => {
+            setHeaderRightState(template);
+            repository?.setHeaderRight(template);
+        },
+        [repository],
+    );
+
+    const setShowFirstPageHeader = useCallback(
+        (show: boolean) => {
+            setShowFirstPageHeaderState(show);
+            repository?.setShowFirstPageHeader(show);
+        },
+        [repository],
+    );
+
+    const setFooterLeft = useCallback(
+        (template: string) => {
+            setFooterLeftState(template);
+            repository?.setFooterLeft(template);
+        },
+        [repository],
+    );
+
+    const setFooterMiddle = useCallback(
+        (template: string) => {
+            setFooterMiddleState(template);
+            repository?.setFooterMiddle(template);
+        },
+        [repository],
+    );
+
+    const setFooterRight = useCallback(
+        (template: string) => {
+            setFooterRightState(template);
+            repository?.setFooterRight(template);
+        },
+        [repository],
+    );
+
+    const setShowFirstPageFooter = useCallback(
+        (show: boolean) => {
+            setShowFirstPageFooterState(show);
+            repository?.setShowFirstPageFooter(show);
+        },
+        [repository],
+    );
+
     const setElementMargins = useCallback(
         (margins: Record<string, { left: number; right: number }>) => {
             setElementMarginsState(margins);
@@ -859,6 +1051,30 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         (locked: boolean) => {
             setPageLockingState(locked);
             repository?.setPageLocking(locked);
+        },
+        [repository],
+    );
+
+    const setRevisionsEnabled = useCallback(
+        (enabled: boolean) => {
+            setRevisionsEnabledState(enabled);
+            repository?.setRevisionsEnabled(enabled);
+        },
+        [repository],
+    );
+
+    const setCurrentRevision = useCallback(
+        (index: number) => {
+            setCurrentRevisionState(index);
+            repository?.setCurrentRevision(index);
+        },
+        [repository],
+    );
+
+    const setRevisionDisplayMode = useCallback(
+        (mode: RevisionDisplayMode) => {
+            setRevisionDisplayModeState(mode);
+            repository?.setRevisionDisplayMode(mode);
         },
         [repository],
     );
@@ -971,6 +1187,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setContdLabel,
             moreLabel,
             setMoreLabel,
+            headerLeft,
+            setHeaderLeft,
+            headerMiddle,
+            setHeaderMiddle,
+            headerRight,
+            setHeaderRight,
+            showFirstPageHeader,
+            setShowFirstPageHeader,
+            footerLeft,
+            setFooterLeft,
+            footerMiddle,
+            setFooterMiddle,
+            footerRight,
+            setFooterRight,
+            showFirstPageFooter,
+            setShowFirstPageFooter,
             elementMargins,
             setElementMargins,
             elementStyles,
@@ -985,6 +1217,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             pageLocking,
             setPageLocking,
             persistentPages,
+            revisionsEnabled,
+            setRevisionsEnabled,
+            currentRevision,
+            setCurrentRevision,
+            revisionDisplayMode,
+            setRevisionDisplayMode,
             screenplay,
             scenes,
             updateScenes,
@@ -1053,6 +1291,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setContdLabel,
             moreLabel,
             setMoreLabel,
+            headerLeft,
+            setHeaderLeft,
+            headerMiddle,
+            setHeaderMiddle,
+            headerRight,
+            setHeaderRight,
+            showFirstPageHeader,
+            setShowFirstPageHeader,
+            footerLeft,
+            setFooterLeft,
+            footerMiddle,
+            setFooterMiddle,
+            footerRight,
+            setFooterRight,
+            showFirstPageFooter,
+            setShowFirstPageFooter,
             elementMargins,
             setElementMargins,
             elementStyles,
@@ -1067,6 +1321,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             pageLocking,
             setPageLocking,
             persistentPages,
+            revisionsEnabled,
+            setRevisionsEnabled,
+            currentRevision,
+            setCurrentRevision,
+            revisionDisplayMode,
+            setRevisionDisplayMode,
             screenplay,
             scenes,
             updateScenes,

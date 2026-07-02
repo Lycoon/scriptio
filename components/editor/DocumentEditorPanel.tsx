@@ -26,6 +26,7 @@ import { DocumentEditorConfig } from "@src/lib/editor/document-editor-config";
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
 import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
+import { getSpellErrorAt } from "@src/lib/spellcheck/spellcheck-extension";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
 
 import styles from "./EditorPanel.module.css";
@@ -73,6 +74,14 @@ const DocumentEditorPanel = ({
         sceneNumberOnRight,
         contdLabel,
         moreLabel,
+        headerLeft,
+        headerMiddle,
+        headerRight,
+        showFirstPageHeader,
+        footerLeft,
+        footerMiddle,
+        footerRight,
+        showFirstPageFooter,
         elementMargins,
         elementStyles,
         sceneLocking,
@@ -83,10 +92,6 @@ const DocumentEditorPanel = ({
     const { settings } = useSettings();
     const { isEndlessScroll } = useViewContext();
     const { user } = useUser();
-    // Localised label for the manual page-break hint rendered in the page gap.
-    // Injected as a CSS variable so the plain-DOM pagination widget can show it,
-    // mirroring how the (MORE)/(CONT'D) labels are localised.
-    const pageBreakHint = useTranslations("contextMenu")("pageBreakHint");
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -242,7 +247,6 @@ const DocumentEditorPanel = ({
 
         editorElement.style.setProperty("--contd-label", `"${contdLabel}"`);
         editorElement.style.setProperty("--more-label", `"${moreLabel}"`);
-        editorElement.style.setProperty("--page-break-label", `"${pageBreakHint}"`);
 
         const elementKeys = [
             "action",
@@ -296,6 +300,24 @@ const DocumentEditorPanel = ({
                     left: pageMargins.left * 96,
                     right: pageMargins.right * 96,
                 })
+                .updateHeaderContent(headerLeft, headerMiddle, headerRight)
+                // Page 1 mirrors the global templates only when first-page header
+                // display is on; otherwise it stays blank (unnumbered first page).
+                .updateHeaderContent(
+                    showFirstPageHeader ? headerLeft : "",
+                    showFirstPageHeader ? headerMiddle : "",
+                    showFirstPageHeader ? headerRight : "",
+                    1,
+                )
+                .updateFooterContent(footerLeft, footerMiddle, footerRight)
+                // Page 1 mirrors the global templates only when first-page footer
+                // display is on; otherwise it stays blank (unnumbered first page).
+                .updateFooterContent(
+                    showFirstPageFooter ? footerLeft : "",
+                    showFirstPageFooter ? footerMiddle : "",
+                    showFirstPageFooter ? footerRight : "",
+                    1,
+                )
                 .run();
         }
 
@@ -313,7 +335,14 @@ const DocumentEditorPanel = ({
         sceneNumberOnRight,
         contdLabel,
         moreLabel,
-        pageBreakHint,
+        headerLeft,
+        headerMiddle,
+        headerRight,
+        showFirstPageHeader,
+        footerLeft,
+        footerMiddle,
+        footerRight,
+        showFirstPageFooter,
         elementMargins,
         elementStyles,
         sceneLocking,
@@ -551,14 +580,19 @@ const DocumentEditorPanel = ({
 
             const { from, to } = editor.state.selection;
 
-            // Check for spellcheck error under cursor
+            // Check for spellcheck error under cursor. Resolve the FULL word from
+            // the plugin's decoration set by document position — not from the DOM
+            // element's text — because a revision mark (or any inline mark) over
+            // part of the word splits the single error decoration into several
+            // `.spellcheck-error` spans, and `closest(...).textContent` would
+            // capture only the clicked fragment (e.g. "This" of "Thissss").
             const target = e.target as HTMLElement;
             const spellErrorEl = target.closest(".spellcheck-error") as HTMLElement | null;
             let spellError: { word: string; from: number; to: number } | undefined;
             if (spellErrorEl) {
-                const word = spellErrorEl.textContent || "";
-                const spellFrom = editor.view.posAtDOM(spellErrorEl, 0);
-                spellError = { word, from: spellFrom, to: spellFrom + word.length };
+                const coordPos = editor.view.posAtCoords({ left: e.clientX, top: e.clientY })?.pos;
+                const pos = coordPos ?? editor.view.posAtDOM(spellErrorEl, 0);
+                spellError = getSpellErrorAt(editor.state, pos) ?? undefined;
             }
 
             // Detect shelvable node at caret position

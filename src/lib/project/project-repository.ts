@@ -21,6 +21,7 @@ import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { computeSceneItems, PersistentScene, PersistentSceneMap, TransientScene } from "../screenplay/scenes";
 import { PersistentPage, PersistentPageMap } from "../screenplay/page-locking";
+import { RevisionDisplayMode } from "../screenplay/revisions";
 import { PageFormat } from "../utils/enums";
 import { generateNodeId } from "../screenplay/nodes";
 import { JSONContent } from "@tiptap/react";
@@ -369,6 +370,38 @@ export class ProjectRepository {
         if (this.guardWrite("setMoreLabel")) return;
         this.ydoc.layout().set("moreLabel", label);
     }
+    setHeaderLeft(template: string) {
+        if (this.guardWrite("setHeaderLeft")) return;
+        this.ydoc.layout().set("headerLeft", template);
+    }
+    setHeaderMiddle(template: string) {
+        if (this.guardWrite("setHeaderMiddle")) return;
+        this.ydoc.layout().set("headerMiddle", template);
+    }
+    setHeaderRight(template: string) {
+        if (this.guardWrite("setHeaderRight")) return;
+        this.ydoc.layout().set("headerRight", template);
+    }
+    setShowFirstPageHeader(show: boolean) {
+        if (this.guardWrite("setShowFirstPageHeader")) return;
+        this.ydoc.layout().set("showFirstPageHeader", show);
+    }
+    setFooterLeft(template: string) {
+        if (this.guardWrite("setFooterLeft")) return;
+        this.ydoc.layout().set("footerLeft", template);
+    }
+    setFooterMiddle(template: string) {
+        if (this.guardWrite("setFooterMiddle")) return;
+        this.ydoc.layout().set("footerMiddle", template);
+    }
+    setFooterRight(template: string) {
+        if (this.guardWrite("setFooterRight")) return;
+        this.ydoc.layout().set("footerRight", template);
+    }
+    setShowFirstPageFooter(show: boolean) {
+        if (this.guardWrite("setShowFirstPageFooter")) return;
+        this.ydoc.layout().set("showFirstPageFooter", show);
+    }
     setElementMargins(margins: Record<string, { left: number; right: number }>) {
         if (this.guardWrite("setElementMargins")) return;
         this.ydoc.layout().set("elementMargins", margins);
@@ -400,6 +433,18 @@ export class ProjectRepository {
     setPageLocking(locked: boolean) {
         if (this.guardWrite("setPageLocking")) return;
         this.ydoc.production().set("pageLocking", locked);
+    }
+    setRevisionsEnabled(enabled: boolean) {
+        if (this.guardWrite("setRevisionsEnabled")) return;
+        this.ydoc.production().set("revisionsEnabled", enabled);
+    }
+    setCurrentRevision(index: number) {
+        if (this.guardWrite("setCurrentRevision")) return;
+        this.ydoc.production().set("currentRevision", index);
+    }
+    setRevisionDisplayMode(mode: RevisionDisplayMode) {
+        if (this.guardWrite("setRevisionDisplayMode")) return;
+        this.ydoc.production().set("revisionDisplayMode", mode);
     }
     setSceneNumberingStyle(style: "suffix" | "prefix") {
         if (this.guardWrite("setSceneNumberingStyle")) return;
