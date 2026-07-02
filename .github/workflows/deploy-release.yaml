@@ -113,6 +113,38 @@ jobs:
                   api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
                   api-private-key: ${{ secrets.APPSTORE_API_KEY_P8 }}
 
+            # xcodebuild -exportArchive defaults to Apple's "Cloud managed
+            # signing" when no signing style is pinned, which asks the App
+            # Store Connect API to select/manage the profile itself — that
+            # needs an Admin-level API key and fails otherwise ("Cloud signing
+            # permission error"). Sidestep it entirely by pointing the export
+            # at the profile we already downloaded above (manual signing).
+            - name: Configure export signing
+              run: |
+                  PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision 2>/dev/null | head -n 1)
+                  if [[ -z "$PROFILE" ]]; then
+                      echo "No iOS provisioning profile was installed" >&2
+                      exit 1
+                  fi
+                  security cms -D -i "$PROFILE" -o "$RUNNER_TEMP/pp.plist"
+                  NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/pp.plist")
+                  echo "Using provisioning profile: $NAME"
+
+                  EXPORT_PLIST="src-tauri/gen/apple/ExportOptions.plist"
+                  PB="/usr/libexec/PlistBuddy"
+                  # Delete+Add pairs so re-running (or a pre-existing key) doesn't
+                  # abort the Add — each Delete is best-effort on its own.
+                  $PB -c "Delete :signingStyle" "$EXPORT_PLIST" 2>/dev/null || true
+                  $PB -c "Add :signingStyle string manual" "$EXPORT_PLIST"
+                  $PB -c "Delete :teamID" "$EXPORT_PLIST" 2>/dev/null || true
+                  $PB -c "Add :teamID string G93CJ6PWZH" "$EXPORT_PLIST"
+                  $PB -c "Delete :signingCertificate" "$EXPORT_PLIST" 2>/dev/null || true
+                  $PB -c "Add :signingCertificate string Apple Distribution" "$EXPORT_PLIST"
+                  $PB -c "Delete :provisioningProfiles" "$EXPORT_PLIST" 2>/dev/null || true
+                  $PB -c "Add :provisioningProfiles dict" "$EXPORT_PLIST"
+                  $PB -c "Add :provisioningProfiles:app.scriptio string $NAME" "$EXPORT_PLIST"
+                  cat "$EXPORT_PLIST"
+
             # Give xcodebuild an App Store Connect API key so its automatic
             # signing (-allowProvisioningUpdates, which Tauri passes) can
             # authenticate non-interactively. Without it, CI has no Apple account
