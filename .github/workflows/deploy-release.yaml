@@ -113,6 +113,31 @@ jobs:
                   api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
                   api-private-key: ${{ secrets.APPSTORE_API_KEY_P8 }}
 
+            # The generated Xcode project defaults to automatic signing, which on
+            # CI has no Apple account to auto-create a Development profile. Force
+            # manual signing with the App Store distribution profile we just
+            # installed via an xcconfig override — xcodebuild honours
+            # XCODE_XCCONFIG_FILE regardless of how Tauri invokes it, so we don't
+            # have to edit the generated project.
+            - name: Configure manual code signing
+              run: |
+                  PROFILE=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles/"*.mobileprovision 2>/dev/null | head -n 1)
+                  if [[ -z "$PROFILE" ]]; then
+                      echo "No iOS provisioning profile was installed" >&2
+                      exit 1
+                  fi
+                  security cms -D -i "$PROFILE" -o "$RUNNER_TEMP/pp.plist"
+                  NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/pp.plist")
+                  CFG="$RUNNER_TEMP/signing.xcconfig"
+                  {
+                      echo "CODE_SIGN_STYLE = Manual"
+                      echo "CODE_SIGN_IDENTITY = Apple Distribution"
+                      echo "DEVELOPMENT_TEAM = G93CJ6PWZH"
+                      echo "PROVISIONING_PROFILE_SPECIFIER = $NAME"
+                  } > "$CFG"
+                  echo "Using provisioning profile: $NAME"
+                  echo "XCODE_XCCONFIG_FILE=$CFG" >> "$GITHUB_ENV"
+
             - name: Setup build toolchain
               uses: ./.github/actions/setup-desktop-build
               with:
