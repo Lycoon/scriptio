@@ -34,6 +34,24 @@ body {
     --navigation-sidebar-width: 400px;
     --navbar-sidebar-width: 500px;
     --navbar-height: 90px;
+
+    /* Width the sidebar drawers take when open on phones (leaves a strip of the
+     * editor visible so the drawer is easy to dismiss). */
+    --mobile-drawer-width: 75vw;
+    /* Safe-area insets (notch / home indicator). 0 on platforms without them. */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* Phone layout: a shorter navbar makes room for the writing surface. The
+ * editor goes full-bleed and the sidebars become overlay drawers (see the
+ * component modules), so their inline widths no longer reserve space. */
+@media (max-width: 767px) {
+    * {
+        --navbar-height: 56px;
+    }
 }
 
 html {

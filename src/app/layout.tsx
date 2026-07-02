@@ -65,5 +65,11 @@ export const metadata: Metadata = {
 export const viewport = {
     width: "device-width",
     initialScale: 1,
+    // Fit-to-width auto-zoom handles page sizing on phones, so lock user scaling
+    // to stop iOS from auto-zooming when a text field is focused.
+    maximumScale: 1,
+    userScalable: false,
+    // Extend under the notch / home indicator; components pad with safe-area insets.
+    viewportFit: "cover" as const,
     themeColor: "#525252",
 };

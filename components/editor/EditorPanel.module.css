@@ -115,3 +115,25 @@
 .endless_scroll :global(.pagination-page-break) {
     display: none !important;
 }
+
+/* Phone: full-bleed editor with fit-to-width auto-zoom. --editor-zoom is set by
+ * DocumentEditorPanel from the measured container width vs. the page width, so
+ * the whole page fits without horizontal scrolling. */
+@media (max-width: 767px) {
+    .container {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .editor_wrapper {
+        max-width: none;
+        padding-bottom: 40%;
+    }
+
+    .editor_wrapper :global(.ProseMirror) {
+        zoom: var(--editor-zoom, 1);
+    }
+
+    .editor_shadow {
+        max-width: none;
+    }
+}

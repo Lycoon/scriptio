@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useViewContext } from "@src/context/ViewContext";
+import { useIsPhone } from "@src/lib/utils/hooks";
 import EditorSidebarNavigation from "@components/editor/sidebar/EditorSidebarNavigation";
 import EditorSidebarFormat from "@components/editor/sidebar/EditorSidebarFormat";
 import ContextMenu from "@components/editor/sidebar/ContextMenu";
@@ -13,7 +14,16 @@ import styles from "./ProjectWorkspace.module.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const ProjectWorkspace = () => {
-    const { rightSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const isPhone = useIsPhone();
+
+    // On phone the sidebars slide over the editor as drawers; a backdrop dims the
+    // editor and gives a tap-anywhere-to-close target.
+    const showBackdrop = isPhone && (leftSidebarOpen || rightSidebarOpen);
+    const closeSidebars = () => {
+        setLeftSidebarOpen(false);
+        setRightSidebarOpen(false);
+    };
 
     const [suggestions, updateSuggestions] = useState<string[]>([]);
     const [suggestionData, updateSuggestionData] = useState<SuggestionData>({
@@ -41,10 +51,13 @@ const ProjectWorkspace = () => {
                     updateSuggestionData={updateSuggestionData}
                 />
 
-                {/* Right sidebar toggle */}
+                {/* Right sidebar toggle (desktop/tablet only — phone uses the navbar arrow) */}
                 <div className={styles.right_sidebar_toggle} onClick={() => setRightSidebarOpen((prev) => !prev)}>
                     {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                 </div>
+
+                {/* Phone drawer backdrop */}
+                {showBackdrop && <div className={styles.sidebar_backdrop} onClick={closeSidebars} />}
 
                 {/* Floating page-count + view-mode bubbles */}
                 <EditorFooter />

@@ -36,3 +36,31 @@
     opacity: 1;
     background-color: var(--tertiary-hover);
 }
+
+/* Dim + tap-to-close layer behind the phone sidebar drawers. Sits above the
+ * editor but below the drawers (z-index 60). */
+.sidebar_backdrop {
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 55;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 767px) {
+    /* The navbar carries the sidebar arrows on phone. */
+    .right_sidebar_toggle {
+        display: none;
+    }
+}
+
+/* Touch devices (incl. iPad): enlarge the sidebar toggle to a comfortable tap
+ * target while keeping the desktop pointer size for mouse users. */
+@media (pointer: coarse) and (min-width: 768px) {
+    .right_sidebar_toggle {
+        width: 28px;
+        height: 44px;
+    }
+}

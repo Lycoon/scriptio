@@ -1,0 +1,120 @@
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 71;
+    width: var(--mobile-drawer-width);
+    max-width: 360px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: calc(12px + var(--safe-top)) calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom)) 16px;
+    overflow-y: auto;
+
+    background-color: var(--main-bg);
+    box-shadow: var(--panel-shadow);
+
+    transform: translateX(0);
+    transition: transform 0.25s ease;
+}
+
+.drawer_closed {
+    transform: translateX(100%);
+}
+
+.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.header_title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+.close_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--primary-text);
+    cursor: pointer;
+}
+
+.close_btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+/* One tappable row in the menu. Its position:relative anchors the dropdown panels
+ * (saves/production/read-aloud) that render inside it. */
+.item {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px 10px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--primary-text);
+    font-size: 0.95rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.item:hover,
+.item_active {
+    background-color: var(--secondary-hover);
+}
+
+/* Anchors the dropdown panels (saves/production/read-aloud) rendered as siblings
+ * of their trigger row. */
+.section {
+    position: relative;
+}
+
+.separator {
+    height: 1px;
+    background-color: var(--separator);
+    margin: 8px 0;
+}
+
+/* Editable title row at the top of the menu. */
+.title_row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px 12px;
+}
+
+.title_input {
+    flex: 1;
+    min-width: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background-color: var(--secondary);
+    color: var(--primary-text);
+}

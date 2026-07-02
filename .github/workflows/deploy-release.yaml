@@ -122,7 +122,7 @@ jobs:
               uses: ./.github/actions/apply-version
               with:
                   version: ${{ needs.prepare.outputs.version }}
-                  ios-build-number: ${{ needs.prepare.outputs.revision }}
+                  ios: "true"
 
             - name: Build signed .ipa with Tauri
               run: npm run build:ios

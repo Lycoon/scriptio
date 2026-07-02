@@ -9,10 +9,10 @@ inputs:
         description: When "true", sets window title to "Scriptio (Staging)".
         required: false
         default: "false"
-    ios-build-number:
-        description: iOS CFBundleVersion (build number) to stamp into the generated Xcode Info.plist. Only applied on macOS runners when gen/apple exists.
+    ios:
+        description: When "true" (on a macOS runner), stamp product name, bundle id, and version into src-tauri/gen/apple.
         required: false
-        default: ""
+        default: "false"
 
 runs:
     using: composite
@@ -100,25 +100,49 @@ runs:
 
               echo "Applied macOS settings (app-id: ${TEAM_ID}.${APPSTORE_IDENTIFIER})"
 
-        - name: Apply iOS build number
-          if: ${{ runner.os == 'macOS' && inputs.ios-build-number != '' }}
+        - name: Apply iOS settings
+          if: ${{ runner.os == 'macOS' && inputs.ios == 'true' }}
           shell: bash
           env:
-              INPUT_BUILD_NUMBER: ${{ inputs.ios-build-number }}
+              INPUT_VERSION: ${{ inputs.version }}
+              INPUT_STAGING: ${{ inputs.staging }}
           run: |
               set -e
 
-              # The generated Xcode project carries CFBundleVersion in its Info.plist.
-              # Bump it to the build counter so each TestFlight upload is unique. The
-              # product name contains spaces, so glob for the plist rather than hard-code it.
-              shopt -s nullglob
-              found=0
-              for plist in src-tauri/gen/apple/*/Info.plist; do
-                  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${INPUT_BUILD_NUMBER}" "$plist" \
-                      || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string ${INPUT_BUILD_NUMBER}" "$plist"
-                  echo "Set CFBundleVersion=${INPUT_BUILD_NUMBER} in $plist"
-                  found=1
-              done
-              if [[ "$found" == "0" ]]; then
-                  echo "No src-tauri/gen/apple/*/Info.plist found; skipping iOS build number (run 'tauri ios init' and commit gen/apple)."
+              if [[ ! -f "src-tauri/gen/apple/project.yml" ]]; then
+                  echo "No src-tauri/gen/apple/project.yml found; run 'tauri ios init' and commit gen/apple." >&2
+                  exit 1
               fi
+
+              SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
+
+              if [[ "$INPUT_STAGING" == "true" ]]; then
+                  PRODUCT_NAME="Scriptio (Staging)"
+                  IOS_IDENTIFIER="app.scriptio.staging"
+              else
+                  PRODUCT_NAME="Scriptio"
+                  IOS_IDENTIFIER="app.scriptio"
+              fi
+
+              # gen/apple is the committed source of truth for the Xcode build:
+              # xcodegen regenerates Info.plist from project.yml, so stamp version +
+              # identity there. CFBundleShortVersionString is the 3-part marketing
+              # version; CFBundleVersion uses the full 4-part string so it strictly
+              # increases across every staging push and release bump (TestFlight
+              # rejects duplicate/decreasing build numbers).
+              sed -i.bak \
+                  -e "s|^      PRODUCT_NAME:.*|      PRODUCT_NAME: ${PRODUCT_NAME}|" \
+                  -e "s|^      PRODUCT_BUNDLE_IDENTIFIER:.*|      PRODUCT_BUNDLE_IDENTIFIER: ${IOS_IDENTIFIER}|" \
+                  -e "s|^        CFBundleShortVersionString:.*|        CFBundleShortVersionString: ${SEMVER}|" \
+                  -e "s|^        CFBundleVersion:.*|        CFBundleVersion: \"${INPUT_VERSION}\"|" \
+                  src-tauri/gen/apple/project.yml
+              rm -f src-tauri/gen/apple/project.yml.bak
+
+              # Mirror into the generated Info.plist too, in case the build path skips
+              # xcodegen regeneration and consumes the committed plist directly.
+              for plist in src-tauri/gen/apple/*/Info.plist; do
+                  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${SEMVER}" "$plist" || true
+                  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${INPUT_VERSION}" "$plist" || true
+              done
+
+              echo "Applied iOS settings (name: '$PRODUCT_NAME', id: $IOS_IDENTIFIER, short: $SEMVER, build: $INPUT_VERSION)"

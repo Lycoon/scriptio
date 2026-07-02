@@ -8,6 +8,14 @@
     "removeFromOutline": "从大纲中移除"
   },
   "navbar": {
+    "menu": "菜单",
+    "close": "关闭",
+    "history": "历史",
+    "production": "制作",
+    "readAloud": "朗读",
+    "analytics": "分析",
+    "settings": "设置",
+    "back": "返回项目",
     "outline": "大纲",
     "screenplay": "剧本",
     "board": "剧本板",
@@ -214,6 +222,7 @@
     "deleting": "正在注销...",
     "deleteAccountBtn": "确认注销账户",
     "subscription": {
+      "openWebsite": "在 scriptio.app 上管理",
       "title": "订阅",
       "proBadge": "Pro",
       "proTitle": "Pro 计划",

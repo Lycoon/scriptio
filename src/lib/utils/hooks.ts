@@ -75,6 +75,33 @@ const useDesktop = (): boolean => {
     return isDesktop;
 };
 
+// Phone breakpoint: below this the editor switches to the single-panel drawer
+// layout. At or above it (iPad, resized desktop windows) the desktop layout is
+// kept. Keep in sync with the @media (max-width: 767px) blocks in the CSS.
+const PHONE_QUERY = "(max-width: 767px)";
+
+/**
+ * True on phone-sized viewports (< 768px). Drives the structural mobile forks
+ * that CSS alone can't express — overlay-drawer sidebars, disabled split view,
+ * the burger navbar. SSR-safe: starts false on the server and syncs on mount.
+ */
+const useIsPhone = (): boolean => {
+    const [isPhone, setIsPhone] = useState<boolean>(
+        () => typeof window !== "undefined" && window.matchMedia(PHONE_QUERY).matches,
+    );
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const mql = window.matchMedia(PHONE_QUERY);
+        const onChange = () => setIsPhone(mql.matches);
+        onChange();
+        mql.addEventListener("change", onChange);
+        return () => mql.removeEventListener("change", onChange);
+    }, []);
+
+    return isPhone;
+};
+
 
 const useProjectIdFromUrl = () => {
     const searchParams = useSearchParams();
@@ -543,6 +570,7 @@ export {
     useProjectCollaborators,
     usePage,
     useDesktop,
+    useIsPhone,
     useCachedProjects,
     useCachedProjectInfo,
     useProjectIdFromUrl,

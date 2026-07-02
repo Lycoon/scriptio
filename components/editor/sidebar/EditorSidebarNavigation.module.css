@@ -45,6 +45,44 @@
     gap: 10px;
 }
 
+/* Phone: the navigation sidebar becomes a left overlay drawer that slides over
+ * the editor instead of an inline column. position: fixed takes it out of the
+ * workspace flex row, so the editor fills the width; a translateX hides it when
+ * closed while keeping it mounted for the slide animation. */
+@media (max-width: 767px) {
+    .container {
+        position: fixed;
+        top: var(--navbar-height);
+        left: 0;
+        bottom: 0;
+        z-index: 60;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .sidebar_content {
+        width: var(--mobile-drawer-width);
+        height: 100%;
+        padding: 12px 12px calc(20px + var(--safe-bottom)) calc(12px + var(--safe-left));
+        background-color: var(--main-bg);
+        box-shadow: var(--panel-shadow);
+        transform: translateX(0);
+        transition: transform 0.25s ease;
+        pointer-events: auto;
+    }
+
+    .collapsed {
+        width: var(--mobile-drawer-width);
+        padding: 12px;
+        transform: translateX(-100%);
+        pointer-events: none;
+    }
+
+    .collapsed .element {
+        visibility: visible;
+    }
+}
+
 /* Scenes list */
 .list {
     display: flex;

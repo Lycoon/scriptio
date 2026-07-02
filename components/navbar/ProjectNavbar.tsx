@@ -3,11 +3,13 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ConnectionStatus } from "@src/lib/utils/enums";
-import { useCookieUser, useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
+import { useCookieUser, useIsPhone, useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import { redirectHome } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
+import { useViewContext } from "@src/context/ViewContext";
+import ProjectNavbarMobileMenu from "./ProjectNavbarMobileMenu";
 import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
@@ -22,7 +24,10 @@ import {
     CloudUpload,
     History,
     Lock,
+    Menu,
     Monitor,
+    PanelLeft,
+    PanelRight,
     Settings,
     WifiOff,
     WifiSync,
@@ -33,6 +38,7 @@ import ProductionPanel from "./ProductionPanel";
 import ReadAloudPanel from "./ReadAloudPanel";
 
 import navbar from "./ProjectNavbar.module.css";
+import mobileMenu from "./ProjectNavbarMobileMenu.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
 import ScreenplayFormatDropdown from "./ScreenplayFormatDropdown";
 import ScreenplaySearch from "./ScreenplaySearch";
@@ -181,8 +187,12 @@ const ProjectNavbar = () => {
     const [isSavesOpen, setIsSavesOpen] = useState(false);
     const [isProductionOpen, setIsProductionOpen] = useState(false);
     const [isReadAloudOpen, setIsReadAloudOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isLocalOnly, setIsLocalOnly] = useState<boolean | null>(null);
     const isLocalEdit = useRef(false);
+
+    const isPhone = useIsPhone();
+    const { setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
 
     const { isPro } = useIsPro();
     const { user } = useCookieUser();
@@ -256,6 +266,151 @@ const ProjectNavbar = () => {
             document.title = `${projectTitle}`;
         }
     }, [projectTitle, isInProject]);
+
+    if (isPhone) {
+        return (
+            <nav className={join(navbar.container)}>
+                <nav className={navbar.mobile_bar}>
+                    {isInProject && (
+                        <div className={navBtn.button} onClick={() => setLeftSidebarOpen((prev) => !prev)}>
+                            <PanelLeft size={18} />
+                        </div>
+                    )}
+                    {isInProject && projectId && (
+                        <div className={navbar.mobile_center}>
+                            <div className={navbar.navbar_island}>
+                                <ScreenplayFormatDropdown />
+                            </div>
+                        </div>
+                    )}
+                    <div className={navbar.mobile_right}>
+                        {isInProject && <ScreenplaySearch />}
+                        <div
+                            className={`${navBtn.button} ${isMobileMenuOpen ? navBtn.active : ""}`}
+                            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                        >
+                            <Menu size={18} />
+                        </div>
+                        {isInProject && (
+                            <div className={navBtn.button} onClick={() => setRightSidebarOpen((prev) => !prev)}>
+                                <PanelRight size={18} />
+                            </div>
+                        )}
+                    </div>
+                </nav>
+
+                {isInProject && projectId && (
+                    <ProjectNavbarMobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
+                        <div className={mobileMenu.title_row}>
+                            {membership ? (
+                                <StatusIndicator />
+                            ) : (
+                                <Monitor className={navbar.status_icon} style={{ color: "var(--secondary-text)" }} />
+                            )}
+                            <input
+                                type="text"
+                                className={mobileMenu.title_input}
+                                onChange={(e) => {
+                                    isLocalEdit.current = true;
+                                    setProjectTitle(e.target.value);
+                                    setContextTitle(e.target.value);
+                                    deferredTitleUpdate(projectId, e.target.value);
+                                }}
+                                onBlur={() => {
+                                    isLocalEdit.current = false;
+                                }}
+                                value={projectTitle}
+                            />
+                        </div>
+
+                        {canUploadToCloud && (
+                            <button
+                                className={mobileMenu.item}
+                                onClick={() => {
+                                    uploadToCloudPopup(projectId, userCtx);
+                                    setIsMobileMenuOpen(false);
+                                }}
+                            >
+                                <CloudUpload size={18} />
+                                <span>{t("uploadToCloud")}</span>
+                            </button>
+                        )}
+
+                        <div className={mobileMenu.separator} />
+
+                        <div className={mobileMenu.section}>
+                            <button
+                                className={`${mobileMenu.item} ${isSavesOpen ? mobileMenu.item_active : ""}`}
+                                onClick={() => setIsSavesOpen((prev) => !prev)}
+                            >
+                                <History size={18} />
+                                <span>{t("history")}</span>
+                            </button>
+                            <SavesPanel
+                                projectId={projectId}
+                                isOpen={isSavesOpen}
+                                onClose={() => setIsSavesOpen(false)}
+                                isPro={isPro}
+                            />
+                        </div>
+
+                        <div className={mobileMenu.section}>
+                            <button
+                                className={`${mobileMenu.item} ${isProductionOpen ? mobileMenu.item_active : ""}`}
+                                onClick={() => setIsProductionOpen((prev) => !prev)}
+                            >
+                                <Lock size={18} />
+                                <span>{t("production")}</span>
+                            </button>
+                            <ProductionPanel isOpen={isProductionOpen} onClose={() => setIsProductionOpen(false)} />
+                        </div>
+
+                        <div className={mobileMenu.section}>
+                            <button
+                                className={`${mobileMenu.item} ${isReadAloudOpen ? mobileMenu.item_active : ""}`}
+                                onClick={() => setIsReadAloudOpen((prev) => !prev)}
+                            >
+                                <AudioLines size={18} />
+                                <span>{t("readAloud")}</span>
+                            </button>
+                            <ReadAloudPanel isOpen={isReadAloudOpen} onClose={() => setIsReadAloudOpen(false)} />
+                        </div>
+
+                        <button
+                            className={mobileMenu.item}
+                            onClick={() => {
+                                setIsAnalyticsOpen(true);
+                                setIsMobileMenuOpen(false);
+                            }}
+                        >
+                            <BarChart2 size={18} />
+                            <span>{t("analytics")}</span>
+                        </button>
+
+                        <button
+                            className={mobileMenu.item}
+                            onClick={() => {
+                                openDashboard("General");
+                                setIsMobileMenuOpen(false);
+                            }}
+                        >
+                            <Settings size={18} />
+                            <span>{t("settings")}</span>
+                        </button>
+
+                        <div className={mobileMenu.separator} />
+
+                        <button className={mobileMenu.item} onClick={() => redirectHome()}>
+                            <CircleArrowLeft size={18} />
+                            <span>{t("back")}</span>
+                        </button>
+                    </ProjectNavbarMobileMenu>
+                )}
+
+                <AnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setIsAnalyticsOpen(false)} />
+            </nav>
+        );
+    }
 
     return (
         <nav className={join(navbar.container)}>
