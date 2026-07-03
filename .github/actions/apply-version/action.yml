@@ -81,6 +81,31 @@ runs:
 
               echo "Applied version $INPUT_VERSION (MSIX: $MSIX_VERSION, productName: '$PRODUCT_NAME', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
 
+        # macOS and Windows bundlers both read icons straight out of
+        # src-tauri/icons at build time (tauri.conf.json's bundle.icon list,
+        # and tauri-windows-bundle's hardcoded src-tauri/icons lookup), so
+        # swapping the staging icon set in here — before those bundlers run —
+        # is enough to make staging builds visually distinct from release on
+        # a device that has both installed. Only touches the checkout for
+        # this CI run, never committed.
+        - name: Select app icon set
+          shell: bash
+          env:
+              INPUT_STAGING: ${{ inputs.staging }}
+          run: |
+              set -e
+
+              if [[ "$INPUT_STAGING" == "true" && -d "src-tauri/icons-staging" ]]; then
+                  cp src-tauri/icons-staging/32x32.png src-tauri/icons-staging/64x64.png \
+                      src-tauri/icons-staging/128x128.png "src-tauri/icons-staging/128x128@2x.png" \
+                      src-tauri/icons-staging/icon.png src-tauri/icons-staging/icon.icns src-tauri/icons-staging/icon.ico \
+                      src-tauri/icons-staging/Square*.png src-tauri/icons-staging/StoreLogo.png \
+                      src-tauri/icons/
+                  echo "Using staging icon set (src-tauri/icons-staging)"
+              else
+                  echo "Using release icon set (src-tauri/icons)"
+              fi
+
         - name: Apply macOS-specific settings
           if: ${{ runner.os == 'macOS' }}
           shell: bash
@@ -117,9 +142,11 @@ runs:
               SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
 
               if [[ "$INPUT_STAGING" == "true" ]]; then
-                  PRODUCT_NAME="Scriptio (Staging)"
+                  DISPLAY_NAME="Scriptio (Staging)"
+                  PRODUCT_NAME="Scriptio_Staging"
                   IOS_IDENTIFIER="app.scriptio.staging"
               else
+                  DISPLAY_NAME="Scriptio"
                   PRODUCT_NAME="Scriptio"
                   IOS_IDENTIFIER="app.scriptio"
               fi
@@ -129,12 +156,17 @@ runs:
               # identity there. CFBundleShortVersionString is the 3-part marketing
               # version; CFBundleVersion uses the full 4-part string so it strictly
               # increases across every staging push and release bump (TestFlight
-              # rejects duplicate/decreasing build numbers).
+              # rejects duplicate/decreasing build numbers). PRODUCT_NAME drives the
+              # actual executable filename (CFBundleExecutable), which App Store
+              # Connect rejects if it contains parens/brackets/etc, so it must stay
+              # identifier-safe — the parenthesized name is only used for
+              # CFBundleDisplayName, the home-screen label.
               sed -i.bak \
                   -e "s|^      PRODUCT_NAME:.*|      PRODUCT_NAME: ${PRODUCT_NAME}|" \
                   -e "s|^      PRODUCT_BUNDLE_IDENTIFIER:.*|      PRODUCT_BUNDLE_IDENTIFIER: ${IOS_IDENTIFIER}|" \
                   -e "s|^        CFBundleShortVersionString:.*|        CFBundleShortVersionString: ${SEMVER}|" \
                   -e "s|^        CFBundleVersion:.*|        CFBundleVersion: \"${INPUT_VERSION}\"|" \
+                  -e "s|^        CFBundleDisplayName:.*|        CFBundleDisplayName: ${DISPLAY_NAME}|" \
                   src-tauri/gen/apple/project.yml
               rm -f src-tauri/gen/apple/project.yml.bak
 
@@ -143,6 +175,19 @@ runs:
               for plist in src-tauri/gen/apple/*/Info.plist; do
                   /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${SEMVER}" "$plist" || true
                   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${INPUT_VERSION}" "$plist" || true
+                  /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ${DISPLAY_NAME}" "$plist" || true
               done
 
-              echo "Applied iOS settings (name: '$PRODUCT_NAME', id: $IOS_IDENTIFIER, short: $SEMVER, build: $INPUT_VERSION)"
+              # src-tauri/icons/ios (or icons-staging/ios) is never read by the
+              # Xcode build directly — Assets.xcassets in gen/apple is a separate,
+              # committed copy that only xcodegen/xcodebuild actually see. Keep
+              # them in sync here so the right icon set (and any future icon
+              # regeneration) reaches the shipped binary.
+              IOS_ICON_SRC="src-tauri/icons/ios"
+              if [[ "$INPUT_STAGING" == "true" && -d "src-tauri/icons-staging/ios" ]]; then
+                  IOS_ICON_SRC="src-tauri/icons-staging/ios"
+              fi
+              cp "$IOS_ICON_SRC"/*.png src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
+              echo "Synced iOS app icons from $IOS_ICON_SRC"
+
+              echo "Applied iOS settings (name: '$PRODUCT_NAME', display: '$DISPLAY_NAME', id: $IOS_IDENTIFIER, short: $SEMVER, build: $INPUT_VERSION)"

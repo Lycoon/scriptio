@@ -10,7 +10,7 @@ configs:
 settingGroups:
   app:
     base:
-      PRODUCT_NAME: Scriptio (Staging)
+      PRODUCT_NAME: Scriptio_Staging
       PRODUCT_BUNDLE_IDENTIFIER: app.scriptio
       DEVELOPMENT_TEAM: G93CJ6PWZH
 targetTemplates:
@@ -54,6 +54,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         CFBundleShortVersionString: 2.1.0
         CFBundleVersion: "2.1.0"
+        CFBundleDisplayName: Scriptio (Staging)
     entitlements:
       path: Scriptio_iOS/Scriptio_iOS.entitlements
     scheme:
