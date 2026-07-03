@@ -57,6 +57,13 @@
     /* Prevent outline from appearing when focused on screenplay */
     outline: none;
 
+    /* iOS text autosizing inflates the font past the fixed 16px line box,
+       clipping page numbers and the first line of each page and making the
+       text look oversized. The html/body reset doesn't reliably reach this
+       zoomed subtree, so pin autosizing off on the editor itself. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
     /* Default screenplay paragraph attributes - direct children only
        Critical: block + width:100% ensures consistent sizing between empty 
        and non-empty nodes, preventing pagination flickering and infinite loops.
