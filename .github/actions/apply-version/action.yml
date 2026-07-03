@@ -36,6 +36,12 @@ runs:
                   WINDOW_TITLE="Scriptio (Staging)"
                   APPSTORE_IDENTIFIER="app.scriptio.staging"
                   IOS_IDENTIFIER="app.scriptio.staging"
+                  # tauri ios build writes this straight into pbxproj's PRODUCT_NAME
+                  # (see synchronize_project_config in tauri-cli), which becomes the
+                  # .app's actual executable filename — App Store Connect rejects
+                  # parens/brackets/etc there, so it must stay identifier-safe unlike
+                  # the desktop PRODUCT_NAME above.
+                  IOS_PRODUCT_NAME="Scriptio_Staging"
                   WINDOWS_IDENTIFIER="ArkoLogic.ScriptioStaging"
                   # MS Store reserves the 4th version field (must stay 0). Staging's
                   # build counter (REVISION) sits in that slot, so fold PATCH+REVISION
@@ -47,6 +53,7 @@ runs:
                   WINDOW_TITLE="Scriptio"
                   APPSTORE_IDENTIFIER="app.scriptio"
                   IOS_IDENTIFIER="app.scriptio"
+                  IOS_PRODUCT_NAME="Scriptio"
                   WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
                   # Release builds carry REVISION=0, so the app version is Store-legal as-is.
                   MSIX_VERSION="${MAJOR}.${MINOR}.${PATCH}.0"
@@ -61,7 +68,8 @@ runs:
                   src-tauri/tauri.appstore.conf.json > src-tauri/tauri.appstore.conf.json.tmp
               mv src-tauri/tauri.appstore.conf.json.tmp src-tauri/tauri.appstore.conf.json
 
-              jq --arg id "$IOS_IDENTIFIER" '.identifier = $id' \
+              jq --arg id "$IOS_IDENTIFIER" --arg n "$IOS_PRODUCT_NAME" \
+                  '.identifier = $id | .productName = $n' \
                   src-tauri/tauri.ios.conf.json > src-tauri/tauri.ios.conf.json.tmp
               mv src-tauri/tauri.ios.conf.json.tmp src-tauri/tauri.ios.conf.json
 
@@ -134,9 +142,9 @@ runs:
           run: |
               set -e
 
-              PBXPROJ="src-tauri/gen/apple/Scriptio.xcodeproj/project.pbxproj"
-              if [[ ! -f "$PBXPROJ" ]]; then
-                  echo "No $PBXPROJ found; run 'tauri ios init' and commit gen/apple." >&2
+              INFO_PLIST="src-tauri/gen/apple/Scriptio_iOS/Info.plist"
+              if [[ ! -f "$INFO_PLIST" ]]; then
+                  echo "No $INFO_PLIST found; run 'tauri ios init' and commit gen/apple." >&2
                   exit 1
               fi
 
@@ -144,31 +152,19 @@ runs:
 
               if [[ "$INPUT_STAGING" == "true" ]]; then
                   DISPLAY_NAME="Scriptio (Staging)"
-                  PRODUCT_NAME="Scriptio_Staging"
-                  IOS_IDENTIFIER="app.scriptio.staging"
               else
                   DISPLAY_NAME="Scriptio"
-                  PRODUCT_NAME="Scriptio"
-                  IOS_IDENTIFIER="app.scriptio"
               fi
 
-              # PRODUCT_NAME and PRODUCT_BUNDLE_IDENTIFIER are Xcode build settings
-              # baked directly into project.pbxproj (xcodebuild reads this file, not
-              # project.yml — xcodegen only regenerates it during `tauri ios init`,
-              # which CI never runs). Info.plist's CFBundleExecutable/CFBundleIdentifier
-              # are just "$(EXECUTABLE_NAME)"/"$(PRODUCT_BUNDLE_IDENTIFIER)" references
-              # that resolve from these same build settings — so patching pbxproj is
-              # both what makes the staging bundle ID (app.scriptio.staging) actually
-              # ship, and what keeps CFBundleExecutable free of the parenthesized
-              # display name (App Store Connect rejects "(", ")" etc there).
-              sed -i.bak \
-                  -e "s|PRODUCT_NAME = \"Scriptio (Staging)\";|PRODUCT_NAME = ${PRODUCT_NAME};|g" \
-                  -e "s|PRODUCT_NAME = Scriptio_Staging;|PRODUCT_NAME = ${PRODUCT_NAME};|g" \
-                  -e "s|PRODUCT_NAME = Scriptio;|PRODUCT_NAME = ${PRODUCT_NAME};|g" \
-                  -e "s|PRODUCT_BUNDLE_IDENTIFIER = app.scriptio.staging;|PRODUCT_BUNDLE_IDENTIFIER = ${IOS_IDENTIFIER};|g" \
-                  -e "s|PRODUCT_BUNDLE_IDENTIFIER = app.scriptio;|PRODUCT_BUNDLE_IDENTIFIER = ${IOS_IDENTIFIER};|g" \
-                  "$PBXPROJ"
-              rm -f "${PBXPROJ}.bak"
+              # PRODUCT_NAME and PRODUCT_BUNDLE_IDENTIFIER (which Info.plist's
+              # CFBundleExecutable/CFBundleIdentifier resolve from via
+              # "$(EXECUTABLE_NAME)"/"$(PRODUCT_BUNDLE_IDENTIFIER)") are NOT set here.
+              # `tauri ios build` overwrites both in project.pbxproj on every build,
+              # straight from the merged tauri.conf.json + tauri.ios.conf.json
+              # (synchronize_project_config in tauri-cli) — so those are set via
+              # tauri.ios.conf.json's identifier/productName fields, patched in the
+              # step above, not here. Editing pbxproj directly would just get
+              # clobbered by that same build step.
 
               # Mirror version + display name into the real, committed Info.plist
               # (the file xcodebuild actually embeds). CFBundleDisplayName may not
@@ -193,4 +189,4 @@ runs:
               cp "$IOS_ICON_SRC"/*.png src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
               echo "Synced iOS app icons from $IOS_ICON_SRC"
 
-              echo "Applied iOS settings (name: '$PRODUCT_NAME', display: '$DISPLAY_NAME', id: $IOS_IDENTIFIER, short: $SEMVER, build: $INPUT_VERSION)"
+              echo "Applied iOS settings (display: '$DISPLAY_NAME', short: $SEMVER, build: $INPUT_VERSION, icons: $IOS_ICON_SRC)"
