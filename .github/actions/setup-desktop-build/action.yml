@@ -24,7 +24,7 @@ runs:
           if: runner.os == 'macOS'
           uses: maxim-lobanov/setup-xcode@v1
           with:
-              xcode-version: "26.4.1"
+              xcode-version: "26.3.0"
 
         - name: Setup Node.js
           uses: actions/setup-node@v6
