@@ -9,11 +9,22 @@ inputs:
 runs:
     using: composite
     steps:
+        # macos-latest's default Xcode advances on its own schedule (we've seen
+        # it jump across major versions within days) — pin to a specific
+        # release so builds don't churn every time GitHub rolls the runner
+        # image forward. This isn't a workaround for a specific bug (the Swift
+        # back-deployment link error we hit was caused by our iOS deployment
+        # target being too old for the toolchain to back-deploy Concurrency
+        # to, fixed by raising it — see tauri.ios.conf.json / gen/apple) —
+        # it's purely for reproducibility. Bump deliberately (and re-test) if
+        # a newer Xcode is ever needed, e.g. for an App Store SDK requirement;
+        # check available versions in a failing run's log first — runner
+        # images only keep the last few Xcode releases installed.
         - name: Select Xcode
           if: runner.os == 'macOS'
           uses: maxim-lobanov/setup-xcode@v1
           with:
-              xcode-version: "16.2"
+              xcode-version: "26.4.1"
 
         - name: Setup Node.js
           uses: actions/setup-node@v6

@@ -2,7 +2,7 @@ name: Scriptio
 options:
   bundleIdPrefix: app.scriptio
   deploymentTarget:
-    iOS: 13.0
+    iOS: 16.0
 fileGroups: [../../src]
 configs:
   debug: debug

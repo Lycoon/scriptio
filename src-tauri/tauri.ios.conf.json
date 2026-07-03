@@ -5,7 +5,7 @@
         "category": "Productivity",
         "iOS": {
             "developmentTeam": "G93CJ6PWZH",
-            "minimumSystemVersion": "13.0"
+            "minimumSystemVersion": "16.0"
         }
     }
 }
