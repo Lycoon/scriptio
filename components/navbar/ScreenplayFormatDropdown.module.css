@@ -122,3 +122,13 @@
     background-color: var(--secondary-hover);
     font-weight: 600;
 }
+
+/* Narrow (phone) navbar: there isn't room for the styling + alignment toolbar
+ * alongside the element dropdown, so drop them and keep only the element
+ * dropdown. Inline styling stays available from the right-hand format sidebar. */
+@media (max-width: 767px) {
+    .style_btns,
+    .separator {
+        display: none;
+    }
+}

@@ -20,3 +20,15 @@
 .active {
     border-color: var(--tertiary);
 }
+
+/* Phone: the navbar is taller than these icon-only buttons are wide, so
+ * height: 100% turns them into tall pills. Pin a square size so they render as
+ * round circles instead. */
+@media (max-width: 767px) {
+    .button {
+        height: 40px;
+        width: 40px;
+        padding-inline: 0;
+        border-radius: 50%;
+    }
+}

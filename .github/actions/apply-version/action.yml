@@ -68,8 +68,14 @@ runs:
                   src-tauri/tauri.appstore.conf.json > src-tauri/tauri.appstore.conf.json.tmp
               mv src-tauri/tauri.appstore.conf.json.tmp src-tauri/tauri.appstore.conf.json
 
-              jq --arg id "$IOS_IDENTIFIER" --arg n "$IOS_PRODUCT_NAME" \
-                  '.identifier = $id | .productName = $n' \
+              # bundle.iOS.bundleVersion maps straight to CFBundleVersion (same as
+              # macOS's bundle.macOS.bundleVersion below) — tauri ios build writes
+              # Info.plist's CFBundleVersion from this config value directly, so a
+              # PlistBuddy edit after the fact would just get overwritten. Use
+              # REVISION alone (not the full dotted version) so it stays a small,
+              # strictly-increasing integer across pushes, same as macOS's build number.
+              jq --arg id "$IOS_IDENTIFIER" --arg n "$IOS_PRODUCT_NAME" --arg bv "$REVISION" \
+                  '.identifier = $id | .productName = $n | .bundle.iOS.bundleVersion = $bv' \
                   src-tauri/tauri.ios.conf.json > src-tauri/tauri.ios.conf.json.tmp
               mv src-tauri/tauri.ios.conf.json.tmp src-tauri/tauri.ios.conf.json
 
@@ -137,7 +143,6 @@ runs:
           if: ${{ runner.os == 'macOS' && inputs.ios == 'true' }}
           shell: bash
           env:
-              INPUT_VERSION: ${{ inputs.version }}
               INPUT_STAGING: ${{ inputs.staging }}
           run: |
               set -e
@@ -148,31 +153,26 @@ runs:
                   exit 1
               fi
 
-              SEMVER=$(echo "$INPUT_VERSION" | cut -d. -f1-3)
-
               if [[ "$INPUT_STAGING" == "true" ]]; then
                   DISPLAY_NAME="Scriptio (Staging)"
               else
                   DISPLAY_NAME="Scriptio"
               fi
 
-              # PRODUCT_NAME and PRODUCT_BUNDLE_IDENTIFIER (which Info.plist's
-              # CFBundleExecutable/CFBundleIdentifier resolve from via
-              # "$(EXECUTABLE_NAME)"/"$(PRODUCT_BUNDLE_IDENTIFIER)") are NOT set here.
-              # `tauri ios build` overwrites both in project.pbxproj on every build,
-              # straight from the merged tauri.conf.json + tauri.ios.conf.json
-              # (synchronize_project_config in tauri-cli) — so those are set via
-              # tauri.ios.conf.json's identifier/productName fields, patched in the
-              # step above, not here. Editing pbxproj directly would just get
-              # clobbered by that same build step.
-
-              # Mirror version + display name into the real, committed Info.plist
-              # (the file xcodebuild actually embeds). CFBundleDisplayName may not
-              # exist yet on a fresh checkout, so Add first (ignoring failure if it's
-              # already there) and Set to cover both cases.
+              # PRODUCT_NAME, PRODUCT_BUNDLE_IDENTIFIER, CFBundleShortVersionString and
+              # CFBundleVersion are NOT set here. `tauri ios build` overwrites all four
+              # in project.pbxproj/Info.plist on every build, straight from the merged
+              # tauri.conf.json + tauri.ios.conf.json (synchronize_project_config in
+              # tauri-cli: PRODUCT_NAME/PRODUCT_BUNDLE_IDENTIFIER from
+              # identifier/productName; CFBundleShortVersionString from the top-level
+              # version; CFBundleVersion from bundle.iOS.bundleVersion) — all patched
+              # into tauri.ios.conf.json in the step above. Setting them here would just
+              # get clobbered by that same build step, like PRODUCT_NAME was before.
+              # CFBundleDisplayName is the one field Tauri doesn't manage, so it's the
+              # only one still set directly on the real, committed Info.plist here. It
+              # may not exist yet on a fresh checkout, so Add first (ignoring failure if
+              # it's already there) and Set to cover both cases.
               for plist in src-tauri/gen/apple/*/Info.plist; do
-                  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${SEMVER}" "$plist" || true
-                  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${INPUT_VERSION}" "$plist" || true
                   /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string ${DISPLAY_NAME}" "$plist" 2>/dev/null || \
                       /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ${DISPLAY_NAME}" "$plist" || true
               done
@@ -189,4 +189,4 @@ runs:
               cp "$IOS_ICON_SRC"/*.png src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
               echo "Synced iOS app icons from $IOS_ICON_SRC"
 
-              echo "Applied iOS settings (display: '$DISPLAY_NAME', short: $SEMVER, build: $INPUT_VERSION, icons: $IOS_ICON_SRC)"
+              echo "Applied iOS settings (display: '$DISPLAY_NAME', icons: $IOS_ICON_SRC)"
