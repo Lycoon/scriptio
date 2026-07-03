@@ -134,8 +134,9 @@ runs:
           run: |
               set -e
 
-              if [[ ! -f "src-tauri/gen/apple/project.yml" ]]; then
-                  echo "No src-tauri/gen/apple/project.yml found; run 'tauri ios init' and commit gen/apple." >&2
+              PBXPROJ="src-tauri/gen/apple/Scriptio.xcodeproj/project.pbxproj"
+              if [[ ! -f "$PBXPROJ" ]]; then
+                  echo "No $PBXPROJ found; run 'tauri ios init' and commit gen/apple." >&2
                   exit 1
               fi
 
@@ -151,31 +152,33 @@ runs:
                   IOS_IDENTIFIER="app.scriptio"
               fi
 
-              # gen/apple is the committed source of truth for the Xcode build:
-              # xcodegen regenerates Info.plist from project.yml, so stamp version +
-              # identity there. CFBundleShortVersionString is the 3-part marketing
-              # version; CFBundleVersion uses the full 4-part string so it strictly
-              # increases across every staging push and release bump (TestFlight
-              # rejects duplicate/decreasing build numbers). PRODUCT_NAME drives the
-              # actual executable filename (CFBundleExecutable), which App Store
-              # Connect rejects if it contains parens/brackets/etc, so it must stay
-              # identifier-safe — the parenthesized name is only used for
-              # CFBundleDisplayName, the home-screen label.
+              # PRODUCT_NAME and PRODUCT_BUNDLE_IDENTIFIER are Xcode build settings
+              # baked directly into project.pbxproj (xcodebuild reads this file, not
+              # project.yml — xcodegen only regenerates it during `tauri ios init`,
+              # which CI never runs). Info.plist's CFBundleExecutable/CFBundleIdentifier
+              # are just "$(EXECUTABLE_NAME)"/"$(PRODUCT_BUNDLE_IDENTIFIER)" references
+              # that resolve from these same build settings — so patching pbxproj is
+              # both what makes the staging bundle ID (app.scriptio.staging) actually
+              # ship, and what keeps CFBundleExecutable free of the parenthesized
+              # display name (App Store Connect rejects "(", ")" etc there).
               sed -i.bak \
-                  -e "s|^      PRODUCT_NAME:.*|      PRODUCT_NAME: ${PRODUCT_NAME}|" \
-                  -e "s|^      PRODUCT_BUNDLE_IDENTIFIER:.*|      PRODUCT_BUNDLE_IDENTIFIER: ${IOS_IDENTIFIER}|" \
-                  -e "s|^        CFBundleShortVersionString:.*|        CFBundleShortVersionString: ${SEMVER}|" \
-                  -e "s|^        CFBundleVersion:.*|        CFBundleVersion: \"${INPUT_VERSION}\"|" \
-                  -e "s|^        CFBundleDisplayName:.*|        CFBundleDisplayName: ${DISPLAY_NAME}|" \
-                  src-tauri/gen/apple/project.yml
-              rm -f src-tauri/gen/apple/project.yml.bak
+                  -e "s|PRODUCT_NAME = \"Scriptio (Staging)\";|PRODUCT_NAME = ${PRODUCT_NAME};|g" \
+                  -e "s|PRODUCT_NAME = Scriptio_Staging;|PRODUCT_NAME = ${PRODUCT_NAME};|g" \
+                  -e "s|PRODUCT_NAME = Scriptio;|PRODUCT_NAME = ${PRODUCT_NAME};|g" \
+                  -e "s|PRODUCT_BUNDLE_IDENTIFIER = app.scriptio.staging;|PRODUCT_BUNDLE_IDENTIFIER = ${IOS_IDENTIFIER};|g" \
+                  -e "s|PRODUCT_BUNDLE_IDENTIFIER = app.scriptio;|PRODUCT_BUNDLE_IDENTIFIER = ${IOS_IDENTIFIER};|g" \
+                  "$PBXPROJ"
+              rm -f "${PBXPROJ}.bak"
 
-              # Mirror into the generated Info.plist too, in case the build path skips
-              # xcodegen regeneration and consumes the committed plist directly.
+              # Mirror version + display name into the real, committed Info.plist
+              # (the file xcodebuild actually embeds). CFBundleDisplayName may not
+              # exist yet on a fresh checkout, so Add first (ignoring failure if it's
+              # already there) and Set to cover both cases.
               for plist in src-tauri/gen/apple/*/Info.plist; do
                   /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${SEMVER}" "$plist" || true
                   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${INPUT_VERSION}" "$plist" || true
-                  /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ${DISPLAY_NAME}" "$plist" || true
+                  /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string ${DISPLAY_NAME}" "$plist" 2>/dev/null || \
+                      /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ${DISPLAY_NAME}" "$plist" || true
               done
 
               # src-tauri/icons/ios (or icons-staging/ios) is never read by the

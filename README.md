@@ -19,17 +19,22 @@
 - **Cloud Synchronization**
 - **Real-time Collaboration**
 - **Cross-platform** (Windows, MacOS, browser)
-- **Industry Formatting** (layout, page breaks, dual dialogue)
+- **Offline-first** (no account needed)
+- **Industry Formatting** (customizable layout, page breaks, dual dialogue)
 - **Compatibility Formats** (PDF, Fountain, Final Draft)
 - **Production Ready** (revisions, scene & page locking)
 - **Scene Management** (easy navigation, reordering)
 - **Character Management** (color highlighting, synopsis)
-- **Beat Board** (story cards, outlining)
+- **Beat Board** (story cards, outlining, voice notes)
+- **Document Hierarchy** (folders, drafts, boards)
 - **Smart Editor** (context aware auto-completion, spellchecker)
 - **Customization** (themes & custom keybinds)
-- **Statistics** (distribution, frequency)
+- **Statistics** (dialogue distribution, character frequency)
+- **Read Aloud** (based on TTS AI voice models)
+- **The Shelve** (store dialogue or action alternates)
 - **Search & Replace** (advanced filtering)
-- **Script Comments** (inline annotations)
+- **Script Comments** (inline discussion threads)
+- **Time Tracking** (timed writing sessions)
 - **Focus Mode** (distraction-free writing)
 
 # Core Values
