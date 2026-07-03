@@ -60,7 +60,10 @@
 
 @media (max-width: 767px) {
     .container {
+        /* Push the bar below the status bar / Dynamic Island. --navbar-height
+         * already reserves this space, so the content box stays 56px tall. */
         padding-block: 0;
+        padding-top: var(--safe-top);
     }
 }
 

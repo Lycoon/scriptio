@@ -6,6 +6,11 @@ body {
     height: 100%;
     width: 100%;
     overflow: clip;
+    /* Stop iOS from auto-inflating text ("text autosizing"): the screenplay
+     * paragraphs pin line-height to a fixed 16px, so inflating only the
+     * font-size crams the lines on top of each other in the editor. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 .app-layout {
@@ -50,7 +55,11 @@ body {
  * component modules), so their inline widths no longer reserve space. */
 @media (max-width: 767px) {
     * {
-        --navbar-height: 56px;
+        /* Include the top safe-area inset so the bar clears the status bar /
+         * Dynamic Island; the navbar pads its content down by the same amount
+         * (see ProjectNavbar.module.css). Sidebars/backdrop anchor to
+         * top: var(--navbar-height), so they stay flush with the bar. */
+        --navbar-height: calc(56px + var(--safe-top));
     }
 }
 
