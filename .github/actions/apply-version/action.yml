@@ -115,6 +115,13 @@ runs:
                       src-tauri/icons-staging/icon.png src-tauri/icons-staging/icon.icns src-tauri/icons-staging/icon.ico \
                       src-tauri/icons-staging/Square*.png src-tauri/icons-staging/StoreLogo.png \
                       src-tauri/icons/
+                  # icon.icon is the Icon Composer (Liquid Glass) source shared by
+                  # macOS and iOS: the macOS bundler compiles it to Assets.car via
+                  # actool (icon.icns stays as the pre-macOS-26 fallback), and the
+                  # iOS step below copies it into the asset catalog. It's a directory,
+                  # so replace it wholesale rather than cp-ing into the existing one.
+                  rm -rf src-tauri/icons/icon.icon
+                  cp -r src-tauri/icons-staging/icon.icon src-tauri/icons/icon.icon
                   echo "Using staging icon set (src-tauri/icons-staging)"
               else
                   echo "Using release icon set (src-tauri/icons)"
@@ -177,16 +184,16 @@ runs:
                       /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ${DISPLAY_NAME}" "$plist" || true
               done
 
-              # src-tauri/icons/ios (or icons-staging/ios) is never read by the
-              # Xcode build directly — Assets.xcassets in gen/apple is a separate,
-              # committed copy that only xcodegen/xcodebuild actually see. Keep
-              # them in sync here so the right icon set (and any future icon
-              # regeneration) reaches the shipped binary.
-              IOS_ICON_SRC="src-tauri/icons/ios"
-              if [[ "$INPUT_STAGING" == "true" && -d "src-tauri/icons-staging/ios" ]]; then
-                  IOS_ICON_SRC="src-tauri/icons-staging/ios"
-              fi
-              cp "$IOS_ICON_SRC"/*.png src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
-              echo "Synced iOS app icons from $IOS_ICON_SRC"
+              # gen/apple/Assets.xcassets is a separate, committed copy that only
+              # xcodebuild sees — it holds the committed (release) icon.icon. The
+              # "Select app icon set" step above already swapped src-tauri/icons/icon.icon
+              # to the staging Icon Composer source when staging, so sync whatever is
+              # there into the catalog. xcodebuild's actool compiles it into the app's
+              # Assets.car (Liquid Glass on iOS 26) and auto-generates the PNG raster
+              # fallbacks for older iOS. ASSETCATALOG_COMPILER_APPICON_NAME=icon
+              # (project.pbxproj) selects this entry.
+              rm -rf src-tauri/gen/apple/Assets.xcassets/icon.icon
+              cp -r src-tauri/icons/icon.icon src-tauri/gen/apple/Assets.xcassets/icon.icon
+              echo "Synced iOS app icon (icon.icon) into Assets.xcassets"
 
-              echo "Applied iOS settings (display: '$DISPLAY_NAME', icons: $IOS_ICON_SRC)"
+              echo "Applied iOS settings (display: '$DISPLAY_NAME')"
