@@ -60,9 +60,11 @@
     /* iOS text autosizing inflates the font past the fixed 16px line box,
        clipping page numbers and the first line of each page and making the
        text look oversized. The html/body reset doesn't reliably reach this
-       zoomed subtree, so pin autosizing off on the editor itself. */
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
+       zoomed subtree, so pin autosizing off on the editor itself. `none` is
+       required rather than 100% — iOS WebKit kept boosting the font inside
+       the zoomed subtree at 100%. Safe here since user scaling is disabled. */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
 
     /* Default screenplay paragraph attributes - direct children only
        Critical: block + width:100% ensures consistent sizing between empty 

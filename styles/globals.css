@@ -8,9 +8,11 @@ body {
     overflow: clip;
     /* Stop iOS from auto-inflating text ("text autosizing"): the screenplay
      * paragraphs pin line-height to a fixed 16px, so inflating only the
-     * font-size crams the lines on top of each other in the editor. */
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
+     * font-size crams the lines on top of each other in the editor. `none`
+     * (not 100%) is required — iOS WebKit still boosted the font at 100% —
+     * and it's safe because user scaling is disabled in the viewport meta. */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
 }
 
 .app-layout {
