@@ -11,6 +11,7 @@
 		3D7539C77E3E7B39D3773069 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A8413995900F72FAD7A3130 /* WebKit.framework */; };
 		6733D0DFCF58CE1D20CE0016 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1E3399965F93C0A48BEFE2C4 /* LaunchScreen.storyboard */; };
 		6A1D956C950B8B06708E767A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0667FF9D3F0DB024724F0BEA /* Assets.xcassets */; };
+		1C0BEEF0123456789ABCDEF0 /* icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 1C012345678901234567ABCD /* icon.icon */; };
 		7846971724947E89AFFDC51B /* assets in Resources */ = {isa = PBXBuildFile; fileRef = F5DAA82DE3DAD01B3E1C1C65 /* assets */; };
 		79C9B60DDE83BD0684D6BC99 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = D57601982FF7EC1800EEF60E /* main.mm */; };
 		B9300403511F50982F70659B /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21458003D850EB3F53C747A5 /* MetalKit.framework */; };
@@ -23,6 +24,7 @@
 
 /* Begin PBXFileReference section */
 		0667FF9D3F0DB024724F0BEA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1C012345678901234567ABCD /* icon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = icon.icon; sourceTree = "<group>"; };
 		1B4BDB9CCC6ACDA2FA3220A0 /* Scriptio_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Scriptio_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E3399965F93C0A48BEFE2C4 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1F8860DCD301847213FCA26D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -117,6 +119,7 @@
 			children = (
 				F5DAA82DE3DAD01B3E1C1C65 /* assets */,
 				0667FF9D3F0DB024724F0BEA /* Assets.xcassets */,
+				1C012345678901234567ABCD /* icon.icon */,
 				1E3399965F93C0A48BEFE2C4 /* LaunchScreen.storyboard */,
 				3BB4DB253825EB083CAE5A83 /* Externals */,
 				739C81ACF40CC5D14E65ECBC /* Scriptio_iOS */,
@@ -212,6 +215,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6A1D956C950B8B06708E767A /* Assets.xcassets in Resources */,
+				1C0BEEF0123456789ABCDEF0 /* icon.icon in Resources */,
 				6733D0DFCF58CE1D20CE0016 /* LaunchScreen.storyboard in Resources */,
 				7846971724947E89AFFDC51B /* assets in Resources */,
 			);
