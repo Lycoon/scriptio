@@ -1,6 +1,10 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
+
+/** Phone breakpoint — mirrors the `(max-width: 767px)` CSS blocks and useIsPhone. */
+const isPhoneViewport = () =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
 
 export type PanelType = "screenplay" | "board" | "statistics" | "title" | "draft" | "document" | "outline";
 export type SplitSide = "primary" | "secondary";
@@ -63,8 +67,33 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [focusedSide, setFocusedSideState] = useState<SplitSide>("primary");
     const [isEndlessScroll, setIsEndlessScroll] = useState<boolean>(false);
     const [showComments, setShowComments] = useState<boolean>(true);
-    const [leftSidebarOpen, setLeftSidebarOpen] = useState<boolean>(false);
-    const [rightSidebarOpen, setRightSidebarOpen] = useState<boolean>(false);
+    const [leftSidebarOpen, setLeftSidebarOpenState] = useState<boolean>(false);
+    const [rightSidebarOpen, setRightSidebarOpenState] = useState<boolean>(false);
+
+    // Mirror the live open-state in refs so the wrapped setters can resolve a
+    // functional update and enforce mutual exclusion without stale closures.
+    const leftOpenRef = useRef(leftSidebarOpen);
+    const rightOpenRef = useRef(rightSidebarOpen);
+    useEffect(() => {
+        leftOpenRef.current = leftSidebarOpen;
+    }, [leftSidebarOpen]);
+    useEffect(() => {
+        rightOpenRef.current = rightSidebarOpen;
+    }, [rightSidebarOpen]);
+
+    // On phone the sidebars are overlay drawers that would overlap each other and
+    // the editor, so only one may be open at a time — opening one closes the other.
+    // On desktop they're inline columns and both can stay open.
+    const setLeftSidebarOpen = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+        const next = typeof value === "function" ? value(leftOpenRef.current) : value;
+        setLeftSidebarOpenState(next);
+        if (next && isPhoneViewport()) setRightSidebarOpenState(false);
+    }, []);
+    const setRightSidebarOpen = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+        const next = typeof value === "function" ? value(rightOpenRef.current) : value;
+        setRightSidebarOpenState(next);
+        if (next && isPhoneViewport()) setLeftSidebarOpenState(false);
+    }, []);
 
     const isSplit = secondaryPanel !== null;
 
@@ -264,7 +293,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

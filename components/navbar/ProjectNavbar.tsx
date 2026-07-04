@@ -287,7 +287,18 @@ const ProjectNavbar = () => {
                         {isInProject && <ScreenplaySearch />}
                         <div
                             className={`${navBtn.button} ${isMobileMenuOpen ? navBtn.active : ""}`}
-                            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                            onClick={() =>
+                                setIsMobileMenuOpen((prev) => {
+                                    const next = !prev;
+                                    // The menu drawer opens on the right, same as the format
+                                    // sidebar; close both side drawers so it opens cleanly on top.
+                                    if (next) {
+                                        setLeftSidebarOpen(false);
+                                        setRightSidebarOpen(false);
+                                    }
+                                    return next;
+                                })
+                            }
                         >
                             <Menu size={18} />
                         </div>

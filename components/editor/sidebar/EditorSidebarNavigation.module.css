@@ -64,8 +64,8 @@
         width: var(--mobile-drawer-width);
         height: 100%;
         padding: 12px 12px calc(20px + var(--safe-bottom)) calc(12px + var(--safe-left));
-        background-color: var(--main-bg);
-        box-shadow: var(--panel-shadow);
+        /* No drawer background — only the rounded .element panel shows, floating
+         * over the (backdrop-dimmed) editor, matching the desktop look. */
         transform: translateX(0);
         transition: transform 0.25s ease;
         pointer-events: auto;

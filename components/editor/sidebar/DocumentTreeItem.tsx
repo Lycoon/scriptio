@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { DocumentNode, DocumentNodeType } from "@src/lib/project/project-state";
 import { join } from "@src/lib/utils/misc";
-import { ChevronRight, FileText, Folder, LayoutDashboard } from "lucide-react";
+import { ChevronRight, FileText, Folder, LayoutDashboard, MoreVertical } from "lucide-react";
 
 import styles from "./DocumentTreeItem.module.css";
 
@@ -93,6 +93,23 @@ const DocumentTreeItem = ({
     const commitRename = useCallback(() => {
         onRenameCommit(node.id, (renameInputRef.current?.value ?? "").trim());
     }, [node.id, onRenameCommit]);
+
+    // Touch equivalent of right-click: the ⋮ button (shown only on coarse
+    // pointers) opens the same node menu, anchored under the button.
+    const handleMenuButton = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            onContextMenu(node, {
+                preventDefault: () => {},
+                stopPropagation: () => {},
+                clientX: rect.left,
+                clientY: rect.bottom,
+            } as React.MouseEvent);
+        },
+        [node, onContextMenu],
+    );
 
     const handleDragOver = useCallback(
         (e: React.DragEvent) => {
@@ -199,6 +216,17 @@ const DocumentTreeItem = ({
                     </div>
                 ) : (
                     <span className={join(styles.title, "unselectable")}>{node.title}</span>
+                )}
+
+                {!busy && (
+                    <button
+                        className={styles.menu_btn}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={handleMenuButton}
+                        aria-label="Document options"
+                    >
+                        <MoreVertical size={14} />
+                    </button>
                 )}
             </div>
 

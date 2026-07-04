@@ -1,23 +1,28 @@
+/* Starts below the navbar so it lines up with the left/right sidebar drawers
+ * rather than covering the bar. Sits above them (z 60) so it overlays an
+ * already-open sidebar. */
 .backdrop {
     position: fixed;
-    inset: 0;
+    top: var(--navbar-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 70;
     background-color: rgba(0, 0, 0, 0.4);
 }
 
 .drawer {
     position: fixed;
-    top: 0;
+    top: var(--navbar-height);
     right: 0;
     bottom: 0;
     z-index: 71;
     width: var(--mobile-drawer-width);
-    max-width: 360px;
 
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: calc(12px + var(--safe-top)) calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom)) 16px;
+    padding: 12px calc(12px + var(--safe-right)) calc(20px + var(--safe-bottom)) 12px;
     overflow-y: auto;
 
     background-color: var(--main-bg);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, memo, useCallback, Ref } from "react";
+import { MoreVertical } from "lucide-react";
 import { ContextMenuType, SceneContextProps } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { join } from "@src/lib/utils/misc";
@@ -26,15 +27,35 @@ type SidebarSceneItemProps = SceneContextProps & {
 const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, label, isOmitted, scrollRef, onPointerDown, onDoubleClick }: SidebarSceneItemProps) => {
     const { updateContextMenu } = useContext(UserContext);
 
+    // Clamp so the menu never opens off the right/bottom edge (matters on touch,
+    // where it's triggered from the ⋮ button near the panel edge).
+    const openMenu = useCallback(
+        (x: number, y: number) => {
+            updateContextMenu({
+                type: ContextMenuType.SceneItem,
+                position: {
+                    x: Math.min(x, window.innerWidth - 230),
+                    y: Math.min(y, window.innerHeight - 220),
+                },
+                typeSpecificProps: { scene },
+            });
+        },
+        [updateContextMenu, scene],
+    );
+
     const handleDropdown = (e: React.MouseEvent) => {
         e.preventDefault();
-        updateContextMenu({
-            type: ContextMenuType.SceneItem,
-            position: { x: e.clientX, y: e.clientY },
-            typeSpecificProps: {
-                scene,
-            },
-        });
+        openMenu(e.clientX, e.clientY);
+    };
+
+    // Touch equivalent of right-click: the ⋮ button (shown only on coarse
+    // pointers). stopPropagation keeps it from starting a drag or, on click,
+    // bubbling to the context-menu host's close-on-click handler.
+    const handleMenuButton = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        openMenu(rect.left, rect.bottom);
     };
 
     const handleDoubleClick = useCallback(() => {
@@ -72,6 +93,14 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
                     </p>
                 </div>
                 <SceneLengthItem scene={scene} />
+                <button
+                    className={nav_item.menu_btn}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={handleMenuButton}
+                    aria-label="Scene options"
+                >
+                    <MoreVertical size={16} />
+                </button>
             </div>
             <p className={join(nav_item.preview, "unselectable")}>{displayText}</p>
         </div>
