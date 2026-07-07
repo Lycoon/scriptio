@@ -43,6 +43,12 @@
     box-sizing: border-box;
 }
 
+/* Passthrough wrapper around the editor content; carries the context-menu
+ * handler and has no visual styling of its own. */
+.page_shift {
+    display: block;
+}
+
 .editor_shadow {
     position: sticky;
     top: 0;
@@ -174,11 +180,20 @@
     display: none !important;
 }
 
-/* Phone: full-bleed editor zoomed to the text column. --editor-zoom and
- * --editor-shift are set by DocumentEditorPanel: the page is scaled so the
- * content (not the wide screenplay margins) fills the width, then shifted left
- * so it centres on its content. The page overflows the viewport; .container's
- * overflow-x: clip trims the margins to a small sliver each side. */
+/* Phone: reflow the screenplay into the viewport at full size instead of
+ * shrinking the whole page. The editor fills the screen width and the wide
+ * screenplay margins are compressed via --display-margin-scale (consumed by
+ * every element padding in scriptio.css), so text wraps to a narrow measure at
+ * real font size — much more readable than the old fit-to-page zoom.
+ *
+ * This is purely visual: the offscreen pagination measurement div
+ * (#pagination-test-div, appended to <body>) is not matched by the
+ * `.editor_wrapper` selector below, so it keeps --display-margin-scale: 1 and
+ * measures at the canonical page width. Page count, page numbers, scene
+ * numbering and PDF export are therefore unchanged from desktop. Phones also
+ * render continuous (endless-scroll) — see effectiveEndless in
+ * DocumentEditorPanel — because the reflowed text can't align to the fixed
+ * page rectangles. */
 @media (max-width: 767px) {
     .container {
         -webkit-overflow-scrolling: touch;
@@ -189,16 +204,71 @@
         padding-bottom: 40%;
     }
 
+    /* width:100% !important overrides the pagination extension's injected
+     * `.pagination { width: var(--page-width) !important }` (this two-class
+     * selector has higher specificity, so !important vs !important resolves in
+     * our favour). --display-margin-scale drives the compact reading margins. */
     .editor_wrapper :global(.ProseMirror) {
-        zoom: var(--editor-zoom, 1);
+        width: 100% !important;
+        --display-margin-scale: 0.3;
     }
 
-    /* Wraps the (zoomed) page but is itself un-zoomed, so this translate is a
-     * plain screen-pixel shift — reliable, unlike a negative margin on the
-     * zoomed page, which iOS WebKit leaves left-aligned. Slides the text column
-     * behind a small left margin; the overflow clips against .container. */
-    .page_shift {
-        transform: translateX(var(--editor-shift, 0px));
+    /* Render each page boundary as a footer + gap + header band that carries the
+     * configured headers/footers (page numbers, title, etc.) at full height, just
+     * like desktop but without the page-fill whitespace. Un-hide the widget (the
+     * base `.endless_scroll .pagination-page-break { display:none }` rule collapses
+     * it in endless mode) and reset content-visibility so an off-screen band
+     * doesn't reserve a full canonical page height. */
+    .editor_wrapper.endless_scroll :global(.pagination-page-break) {
+        display: block !important;
+        height: auto !important;
+        content-visibility: visible !important;
+        contain-intrinsic-size: auto !important;
+    }
+
+    /* Drop only the freespace: the spacer/overlay are `freespace + marginBottom +
+     * gap + marginTop`. Collapsing them to `marginBottom + gap + marginTop` keeps
+     * the footer of the ending page, the inter-page gap, and the header of the
+     * next page at full height — so headers/footers show — while removing the
+     * blank page fill. */
+    .editor_wrapper.endless_scroll :global(.pagination-page-break > .pagination-spacer),
+    .editor_wrapper.endless_scroll :global(.pagination-page-break > .pagination-overlay) {
+        height: calc(var(--page-margin-bottom) + var(--page-gap) + var(--page-margin-top)) !important;
+        /* Clip anything taller than the collapsed band — e.g. the orphan-locked
+         * "empty page" area, whose full page-height block would otherwise spill. */
+        overflow: hidden !important;
+    }
+
+    /* The last-page widget's spacer is `freespace + marginBottom`; collapse the
+     * freespace so the script ends with just its bottom margin (symmetric with the
+     * first page's top margin, no text stuck to the page's bottom edge). */
+    .editor_wrapper.endless_scroll :global(.pagination-last-page) {
+        content-visibility: visible !important;
+        contain-intrinsic-size: auto !important;
+    }
+
+    .editor_wrapper.endless_scroll :global(.pagination-last-page > .pagination-spacer),
+    .editor_wrapper.endless_scroll :global(.pagination-last-page > .pagination-overlay) {
+        height: var(--page-margin-bottom) !important;
+    }
+
+    /* Header/footer text is inset by the page margins, which are set in the
+     * injected pagination stylesheet at their canonical (full-page) size. Scale
+     * that inset by --display-margin-scale so the header/footer fits the viewport
+     * exactly the way the screenplay content margins do. Applies to first-page,
+     * last-page and inter-page widgets alike. */
+    .editor_wrapper.endless_scroll :global(.pagination-header-area),
+    .editor_wrapper.endless_scroll :global(.pagination-footer-area) {
+        padding-left: calc(var(--page-margin-left) * var(--display-margin-scale)) !important;
+        padding-right: calc(var(--page-margin-right) * var(--display-margin-scale)) !important;
+    }
+
+    /* (MORE) / (CONT'D) overlays are positioned against the canonical text column,
+     * so they'd sit at the wrong offset once the text reflows — hide them (the
+     * straddling dialogue reads continuously across the band instead). */
+    .editor_wrapper.endless_scroll :global(.page-more-overlay),
+    .editor_wrapper.endless_scroll :global(.page-contd-overlay) {
+        display: none !important;
     }
 
     .editor_shadow {

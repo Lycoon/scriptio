@@ -38,6 +38,11 @@
     gap: 12px;
 }
 
+/* Burger that opens the create/import drawer — phone only (see media query). */
+.mobile_menu_btn {
+    display: none;
+}
+
 .create_btn {
     font-weight: 600;
     padding-inline: 40px !important;
@@ -75,35 +80,23 @@
         width: 100%;
     }
 
-    /* Stack the title above the actions and let the two buttons share the row so
-     * their wide fixed padding no longer pushes the header off-screen. */
     .header {
         margin-top: 20px;
         padding-inline: 16px;
-    }
-
-    .header_info {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 14px;
     }
 
     .header_title {
         top: 0;
     }
 
+    /* The create/import buttons move into the burger drawer on phone, so the
+     * header keeps the title on the left and the burger on the right. */
     .header_btns {
-        width: 100%;
-        justify-content: stretch;
-        gap: 10px;
+        display: none;
     }
 
-    .import_btn,
-    .create_btn {
-        flex: 1;
-        min-width: 0;
-        padding-inline: 12px !important;
-        justify-content: center;
+    .mobile_menu_btn {
+        display: flex;
     }
 
     .gridScroll {

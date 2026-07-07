@@ -94,6 +94,13 @@ const DocumentEditorPanel = ({
     const { user } = useUser();
     const isPhone = useIsPhone();
 
+    // Phones always render continuous (no discrete page rectangles): the compact
+    // "reading margins" applied on phone (--display-margin-scale in the CSS) reflow
+    // text to a different width than the canonical page, so the fixed-height page
+    // spacers would misalign. Page COUNT and numbering stay canonical — they are
+    // measured off-screen at full page width — so this is purely a visual mode.
+    const effectiveEndless = isEndlessScroll || isPhone;
+
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     // Phone-only draggable scroll handle: a fixed-size grab handle (styled like
@@ -169,8 +176,8 @@ const DocumentEditorPanel = ({
     useEffect(() => {
         const el = editor?.view?.dom;
         if (!el) return;
-        el.classList.toggle("endless-scroll", isEndlessScroll);
-    }, [editor, isEndlessScroll]);
+        el.classList.toggle("endless-scroll", effectiveEndless);
+    }, [editor, effectiveEndless]);
 
     // Ready state
     useEffect(() => {
@@ -180,71 +187,14 @@ const DocumentEditorPanel = ({
         }
     }, [editor, isYjsReady]);
 
-    // ---- Fit-to-width auto-zoom (phone only) ----
-    // Screenplay pages have a fixed physical width, most of which is fixed margin
-    // whitespace. On a narrow phone that wastes the screen and shrinks the text,
-    // so instead of fitting the whole page we zoom to the *text column* (the
-    // widest element's margins = action) plus a little breathing margin. The page
-    // then overflows the viewport, but it is centred and `.container` clips the
-    // overflow (overflow-x: clip), so only a sliver of margin shows on each side.
-    // The ratio is published as --editor-zoom and consumed via `zoom` in the phone
-    // media query; recomputed on container resize (rotation, split-screen, etc.).
-    useEffect(() => {
-        const container = containerEl;
-        if (!container) return;
-
-        const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
-        if (!isPhone || !pageSize) {
-            container.style.removeProperty("--editor-zoom");
-            container.style.removeProperty("--editor-shift");
-            return;
-        }
-
-        const KEEP_MARGIN_PX = 0.15 * 96; // ~0.15in of page margin kept visible each side
-
-        const apply = () => {
-            const avail = container.clientWidth;
-            if (!avail) return;
-
-            // The action element carries the widest text column; its margins are
-            // set in inches (defaulting via CSS), so read + convert to px.
-            const pm = container.querySelector<HTMLElement>(".ProseMirror");
-            const readInchVar = (name: string, fallbackPx: number) => {
-                if (!pm) return fallbackPx;
-                const inches = parseFloat(getComputedStyle(pm).getPropertyValue(name));
-                return Number.isFinite(inches) ? inches * 96 : fallbackPx;
-            };
-            const actionLeft = readInchVar("--action-l-margin", 144);
-            const actionRight = readInchVar("--action-r-margin", 96);
-
-            const contentFit = pageSize.pageWidth - actionLeft - actionRight + 2 * KEEP_MARGIN_PX;
-            // Guard against unusual margin configs: only zoom to the content column
-            // when it's a sane fraction of the page; otherwise fall back to the
-            // whole page (which then fits and centres normally).
-            const zoomToContent = contentFit >= pageSize.pageWidth * 0.4 && contentFit < pageSize.pageWidth;
-            const fitWidth = zoomToContent ? contentFit : pageSize.pageWidth;
-
-            // Never upscale past 100%; leave a small horizontal breathing margin.
-            const ratio = Math.min(1, (avail - 8) / fitWidth);
-            container.style.setProperty("--editor-zoom", `${ratio}`);
-
-            // Zoomed to the content, the page is wider than the viewport. Auto
-            // margins DON'T centre an overflowing block — they collapse to 0 and
-            // left-align it, leaving the full left margin on screen. So translate
-            // the (un-zoomed) page layer left to slide the text column behind a
-            // small left margin; both margins then clip evenly. The shift is in
-            // *screen* px (already multiplied by the zoom ratio) so it's applied
-            // on the un-zoomed wrapper and doesn't depend on how the webview
-            // scales lengths inside a `zoom`ed subtree.
-            const shift = zoomToContent ? (KEEP_MARGIN_PX - actionLeft) * ratio : 0;
-            container.style.setProperty("--editor-shift", `${shift}px`);
-        };
-
-        apply();
-        const ro = new ResizeObserver(apply);
-        ro.observe(container);
-        return () => ro.disconnect();
-    }, [containerEl, isPhone, pageFormat]);
+    // ---- Phone reading layout ----
+    // Phones no longer scale the whole page down to fit (which shrank the text).
+    // Instead the CSS applies a compact --display-margin-scale to reflow text at
+    // full size into the viewport width (see the max-width:767px block in
+    // EditorPanel.module.css). Because that reflow uses a narrower measure than
+    // the canonical page, the discrete page rectangles can't line up, so phones
+    // render continuous (effectiveEndless above). Pagination itself is measured
+    // off-screen at full page width, so page count / numbering are unchanged.
 
     // ---- Orphaned comment cleanup ----
     // Comments anchor to a node's data-id. When that node is deleted the comment
@@ -874,7 +824,7 @@ const DocumentEditorPanel = ({
                 }
             >
                 <div
-                    className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}
+                    className={`${styles.editor_wrapper} ${effectiveEndless ? styles.endless_scroll : ""}`}
                     style={wrapperStyle}
                 >
                     <div

@@ -1,7 +1,6 @@
 "use client";
 
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ConnectionStatus } from "@src/lib/utils/enums";
 import { useCookieUser, useIsPhone, useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
@@ -13,6 +12,7 @@ import ProjectNavbarMobileMenu from "./ProjectNavbarMobileMenu";
 import debounce from "debounce";
 import { editProject } from "@src/lib/utils/requests";
 import { join } from "@src/lib/utils/misc";
+import { redirectHome } from "@src/lib/utils/redirects";
 import { uploadToCloudPopup } from "@src/lib/screenplay/popup";
 import type { StorageUsage } from "@src/lib/assets/cloud-asset-sync";
 import { DashboardContext } from "@src/context/DashboardContext";
@@ -193,14 +193,16 @@ const ProjectNavbar = () => {
     const isLocalEdit = useRef(false);
 
     const isPhone = useIsPhone();
-    const router = useRouter();
     const { setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
 
-    // Clear the ?projectId query to return to the projects list. Client-side
-    // (soft) navigation — a server redirect() throws NEXT_REDIRECT in an event
-    // handler and, in the iOS static export, a hard nav to /projects has no file
-    // to load (only projects.html; the dev-only rewrites don't apply).
-    const backToProjects = () => router.replace("/projects");
+    // Return to the projects list by clearing the ?projectId query. Use the same
+    // redirect() primitive that opens a project (ProjectItem → redirectScreenplay):
+    // in the Tauri static export a query-only router.replace("/projects") does not
+    // reliably re-render the layout back to the list (useSearchParams doesn't pick
+    // up the change), whereas redirect() — which successfully swaps projectId in the
+    // other direction — does. redirect() navigates cleanly from a client handler
+    // here (it's what ProjectItem relies on), so it works on web and native alike.
+    const backToProjects = () => redirectHome();
 
     const { isPro } = useIsPro();
     const { user } = useCookieUser();
