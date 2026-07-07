@@ -588,6 +588,7 @@
     "titlePlaceholder": "Titel",
     "descriptionPlaceholder": "Beschreibung",
     "recordAudio": "Audio aufnehmen",
+    "importImage": "Bild importieren",
     "stopRecording": "Stopp",
     "audioUnsupported": "Audioaufnahme wird in diesem Browser nicht unterstützt – ziehen Sie stattdessen eine Audiodatei hierher",
     "audioHint": "Sprachnotiz",

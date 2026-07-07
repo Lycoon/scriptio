@@ -588,6 +588,7 @@
     "titlePlaceholder": "Titre",
     "descriptionPlaceholder": "Description",
     "recordAudio": "Enregistrer un audio",
+    "importImage": "Importer une image",
     "stopRecording": "Arrêter",
     "audioUnsupported": "L'enregistrement audio n'est pas pris en charge par ce navigateur — glissez plutôt un fichier audio",
     "audioHint": "Note vocale",

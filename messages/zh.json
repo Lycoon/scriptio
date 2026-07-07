@@ -587,6 +587,7 @@
     "titlePlaceholder": "标题",
     "descriptionPlaceholder": "描述",
     "recordAudio": "录制音频",
+    "importImage": "导入图片",
     "stopRecording": "停止",
     "audioUnsupported": "此浏览器不支持录音，请改为拖入音频文件",
     "audioHint": "语音备注",

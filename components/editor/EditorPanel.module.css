@@ -111,14 +111,74 @@
     pointer-events: none;
 }
 
+/* Draggable scroll handle (phone). A fixed-size grab handle riding the right
+ * edge — styled like the sidebar edge toggles — that tracks scroll position and
+ * can be grabbed to move the page. Revealed while scrolling (or dragging) and
+ * faded out at rest so it never disrupts writing. Its offset is set inline by
+ * DocumentEditorPanel; keep .scroll_handle's height in sync with HANDLE_HEIGHT. */
+.scroll_track {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    /* Right offset matches .right_sidebar_toggle (ProjectWorkspace) so the handle
+     * lines up vertically with the sidebar edge toggle. */
+    right: 8px;
+    width: 28px;
+    z-index: 52;
+    pointer-events: none;
+
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s;
+}
+
+.scroll_track_visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.scroll_handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 28px;
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 16px;
+    background-color: var(--secondary);
+    color: var(--secondary-text);
+    box-shadow: var(--panel-shadow);
+
+    pointer-events: auto;
+    cursor: grab;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    /* Only background animates; the vertical offset is driven live via inline
+     * transform during scroll/drag, so it must not be transitioned. */
+    transition: background-color 0.15s ease;
+}
+
+.scroll_handle:active {
+    cursor: grabbing;
+    background-color: var(--secondary-hover);
+}
+
 /* Endless Scroll Mode Overrides */
 .endless_scroll :global(.pagination-page-break) {
     display: none !important;
 }
 
-/* Phone: full-bleed editor with fit-to-width auto-zoom. --editor-zoom is set by
- * DocumentEditorPanel from the measured container width vs. the page width, so
- * the whole page fits without horizontal scrolling. */
+/* Phone: full-bleed editor zoomed to the text column. --editor-zoom and
+ * --editor-shift are set by DocumentEditorPanel: the page is scaled so the
+ * content (not the wide screenplay margins) fills the width, then shifted left
+ * so it centres on its content. The page overflows the viewport; .container's
+ * overflow-x: clip trims the margins to a small sliver each side. */
 @media (max-width: 767px) {
     .container {
         -webkit-overflow-scrolling: touch;
@@ -131,6 +191,14 @@
 
     .editor_wrapper :global(.ProseMirror) {
         zoom: var(--editor-zoom, 1);
+    }
+
+    /* Wraps the (zoomed) page but is itself un-zoomed, so this translate is a
+     * plain screen-pixel shift — reliable, unlike a negative margin on the
+     * zoomed page, which iOS WebKit leaves left-aligned. Slides the text column
+     * behind a small left margin; the overflow clips against .container. */
+    .page_shift {
+        transform: translateX(var(--editor-shift, 0px));
     }
 
     .editor_shadow {

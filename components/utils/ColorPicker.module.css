@@ -38,6 +38,17 @@
     min-width: max-content;
 }
 
+/* Phone: the picker often sits at the right edge of a popup, where a centred
+ * dropdown overflows off-screen and gets clipped. Anchor it to the trigger's
+ * right edge so it opens inward (leftward) and stays within the popup. */
+@media (max-width: 767px) {
+    .dropdown {
+        left: auto;
+        right: 0;
+        transform: none;
+    }
+}
+
 .colors {
     display: flex;
     flex-wrap: wrap;

@@ -48,6 +48,21 @@ const config: NextConfig = {
         // Tauri needs unoptimized images; web can use Next.js optimization
         unoptimized: isTauriBuild,
     },
+    // The Tauri window entry is `projects.html` (a file in the static export).
+    // In dev, `next dev` serves that page as the route `/projects` (no `.html`)
+    // and its assets at `/_next`. On iOS the frontend is served through the
+    // `tauri://localhost` scheme and the webview may request the entry (and its
+    // assets) under a `/projects` path prefix; on desktop the window url resolves
+    // to `/projects.html` off the root devUrl. Map all of those back to the route
+    // so the simulator loads what desktop does. Ignored by `output: export`, so
+    // the bundled `out/` prod/staging frontend is unaffected.
+    async rewrites() {
+        return [
+            { source: "/projects.html", destination: "/projects" },
+            { source: "/projects/projects.html", destination: "/projects" },
+            { source: "/projects/_next/:path*", destination: "/_next/:path*" },
+        ];
+    },
     async headers() {
         return [
             {

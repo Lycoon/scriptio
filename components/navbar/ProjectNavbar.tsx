@@ -1,10 +1,10 @@
 "use client";
 
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ConnectionStatus } from "@src/lib/utils/enums";
 import { useCookieUser, useIsPhone, useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
-import { redirectHome } from "@src/lib/utils/redirects";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
@@ -23,16 +23,17 @@ import {
     CircleCheckBig,
     CloudUpload,
     History,
+    Info,
+    LogIn,
     Lock,
     Menu,
     Monitor,
-    PanelLeft,
-    PanelRight,
     Settings,
     WifiOff,
     WifiSync,
 } from "lucide-react";
 import AnalyticsModal from "@components/analytics/AnalyticsModal";
+import { useDashboardMenu } from "@components/dashboard/useDashboardMenu";
 import SavesPanel from "./SavesPanel";
 import ProductionPanel from "./ProductionPanel";
 import ReadAloudPanel from "./ReadAloudPanel";
@@ -192,13 +193,27 @@ const ProjectNavbar = () => {
     const isLocalEdit = useRef(false);
 
     const isPhone = useIsPhone();
+    const router = useRouter();
     const { setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
+
+    // Clear the ?projectId query to return to the projects list. Client-side
+    // (soft) navigation — a server redirect() throws NEXT_REDIRECT in an event
+    // handler and, in the iOS static export, a hard nav to /projects has no file
+    // to load (only projects.html; the dev-only rewrites don't apply).
+    const backToProjects = () => router.replace("/projects");
 
     const { isPro } = useIsPro();
     const { user } = useCookieUser();
     const projectId = useProjectIdFromUrl();
 
     const t = useTranslations("navbar");
+    const tModal = useTranslations("modal");
+    const tSidebar = useTranslations("sidebar");
+
+    // The dashboard's nav lives in this burger on phone (the modal drops its
+    // sidebar there), so the same grouped tabs are rendered below and open the
+    // dashboard directly on the chosen tab.
+    const { structure: dashboardMenu, isSignedIn } = useDashboardMenu();
 
     useEffect(() => {
         if (!projectId) {
@@ -271,11 +286,6 @@ const ProjectNavbar = () => {
         return (
             <nav className={join(navbar.container)}>
                 <nav className={navbar.mobile_bar}>
-                    {isInProject && (
-                        <div className={navBtn.button} onClick={() => setLeftSidebarOpen((prev) => !prev)}>
-                            <PanelLeft size={18} />
-                        </div>
-                    )}
                     {isInProject && projectId && (
                         <div className={navbar.mobile_center}>
                             <div className={navbar.navbar_island}>
@@ -283,6 +293,8 @@ const ProjectNavbar = () => {
                             </div>
                         </div>
                     )}
+                    {/* Left/right sidebars open via the editor edge chevrons (same as
+                        desktop); settings live in the burger menu below. */}
                     <div className={navbar.mobile_right}>
                         {isInProject && <ScreenplaySearch />}
                         <div
@@ -302,11 +314,6 @@ const ProjectNavbar = () => {
                         >
                             <Menu size={18} />
                         </div>
-                        {isInProject && (
-                            <div className={navBtn.button} onClick={() => setRightSidebarOpen((prev) => !prev)}>
-                                <PanelRight size={18} />
-                            </div>
-                        )}
                     </div>
                 </nav>
 
@@ -398,20 +405,57 @@ const ProjectNavbar = () => {
                             <span>{t("analytics")}</span>
                         </button>
 
+                        <div className={mobileMenu.separator} />
+
+                        {/* Dashboard settings — the modal drops its sidebar on phone, so
+                            its grouped tabs are navigated from here; each opens the
+                            dashboard directly on that tab. */}
+                        {dashboardMenu.map((section) => (
+                            <div key={section.group} className={mobileMenu.section}>
+                                <div className={mobileMenu.group_label}>{section.group}</div>
+                                {section.items.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        className={mobileMenu.item}
+                                        onClick={() => {
+                                            openDashboard(tab.id);
+                                            setIsMobileMenuOpen(false);
+                                        }}
+                                    >
+                                        {tab.icon}
+                                        <span>{tab.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        ))}
+
+                        {!isSignedIn && (
+                            <button
+                                className={mobileMenu.item}
+                                onClick={() => {
+                                    openDashboard("Auth");
+                                    setIsMobileMenuOpen(false);
+                                }}
+                            >
+                                <LogIn size={18} />
+                                <span>{tSidebar("auth")}</span>
+                            </button>
+                        )}
+
                         <button
                             className={mobileMenu.item}
                             onClick={() => {
-                                openDashboard("General");
+                                openDashboard("About");
                                 setIsMobileMenuOpen(false);
                             }}
                         >
-                            <Settings size={18} />
-                            <span>{t("settings")}</span>
+                            <Info size={18} />
+                            <span>{tModal("tabs.About")}</span>
                         </button>
 
                         <div className={mobileMenu.separator} />
 
-                        <button className={mobileMenu.item} onClick={() => redirectHome()}>
+                        <button className={mobileMenu.item} onClick={backToProjects}>
                             <CircleArrowLeft size={18} />
                             <span>{t("back")}</span>
                         </button>
@@ -428,7 +472,7 @@ const ProjectNavbar = () => {
             {/* Left side - Back button, title, split toggle */}
             <nav className={navbar.left_btns}>
                 {isInProject && (
-                    <div className={navbar.back_btn} onClick={() => redirectHome()}>
+                    <div className={navbar.back_btn} onClick={backToProjects}>
                         <CircleArrowLeft size={18} />
                     </div>
                 )}

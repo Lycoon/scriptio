@@ -134,6 +134,15 @@
     background-color: var(--secondary-hover);
 }
 
+/* Touch devices (phone + iPad): enlarge to a comfortable tap target, matching
+ * the right-sidebar edge toggle. */
+@media (pointer: coarse) {
+    .panel_switcher_btn {
+        width: 28px;
+        height: 44px;
+    }
+}
+
 .panel_switcher_separator {
     height: 1px;
     margin: 4px 8px;

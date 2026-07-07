@@ -587,6 +587,7 @@
     "titlePlaceholder": "Título",
     "descriptionPlaceholder": "Descripción",
     "recordAudio": "Grabar audio",
+    "importImage": "Importar imagen",
     "stopRecording": "Detener",
     "audioUnsupported": "La grabación de audio no es compatible con este navegador: arrastra un archivo de audio en su lugar",
     "audioHint": "Nota de voz",

@@ -6,7 +6,7 @@ import { EditorContent } from "@tiptap/react";
 
 import { applyElement, insertElement, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
 import { ScreenplayElement } from "@src/lib/utils/enums";
-import { Eye } from "lucide-react";
+import { Eye, GripVertical } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DUAL_DIALOGUE_COLUMN } from "@src/lib/screenplay/nodes/dual-dialogue-column-node";
 import { DEFAULT_ELEMENT_MARGINS, DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
@@ -96,6 +96,16 @@ const DocumentEditorPanel = ({
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    // Phone-only draggable scroll handle: a fixed-size grab handle (styled like
+    // the sidebar edge toggles) that rides the right edge tracking scroll
+    // position, so it's easy to grab and drag the page up/down. Shown while
+    // actively scrolling (or being dragged) and faded out shortly after, so it
+    // never sits on top of the writing while at rest.
+    const [showScrollThumb, setShowScrollThumb] = useState(false);
+    const [thumbTop, setThumbTop] = useState(0);
+    const [canScrollThumb, setCanScrollThumb] = useState(false);
+    const scrollIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isDraggingThumb = useRef(false);
     // Callback ref stored in state so the zoom effect re-runs when the scroll
     // container actually mounts (it may render after a Loading fallback).
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
@@ -171,8 +181,12 @@ const DocumentEditorPanel = ({
     }, [editor, isYjsReady]);
 
     // ---- Fit-to-width auto-zoom (phone only) ----
-    // Screenplay pages have a fixed physical width; on a narrow phone screen we
-    // scale the page down so its whole width fits, avoiding horizontal scrolling.
+    // Screenplay pages have a fixed physical width, most of which is fixed margin
+    // whitespace. On a narrow phone that wastes the screen and shrinks the text,
+    // so instead of fitting the whole page we zoom to the *text column* (the
+    // widest element's margins = action) plus a little breathing margin. The page
+    // then overflows the viewport, but it is centred and `.container` clips the
+    // overflow (overflow-x: clip), so only a sliver of margin shows on each side.
     // The ratio is published as --editor-zoom and consumed via `zoom` in the phone
     // media query; recomputed on container resize (rotation, split-screen, etc.).
     useEffect(() => {
@@ -182,15 +196,48 @@ const DocumentEditorPanel = ({
         const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
         if (!isPhone || !pageSize) {
             container.style.removeProperty("--editor-zoom");
+            container.style.removeProperty("--editor-shift");
             return;
         }
+
+        const KEEP_MARGIN_PX = 0.15 * 96; // ~0.15in of page margin kept visible each side
 
         const apply = () => {
             const avail = container.clientWidth;
             if (!avail) return;
+
+            // The action element carries the widest text column; its margins are
+            // set in inches (defaulting via CSS), so read + convert to px.
+            const pm = container.querySelector<HTMLElement>(".ProseMirror");
+            const readInchVar = (name: string, fallbackPx: number) => {
+                if (!pm) return fallbackPx;
+                const inches = parseFloat(getComputedStyle(pm).getPropertyValue(name));
+                return Number.isFinite(inches) ? inches * 96 : fallbackPx;
+            };
+            const actionLeft = readInchVar("--action-l-margin", 144);
+            const actionRight = readInchVar("--action-r-margin", 96);
+
+            const contentFit = pageSize.pageWidth - actionLeft - actionRight + 2 * KEEP_MARGIN_PX;
+            // Guard against unusual margin configs: only zoom to the content column
+            // when it's a sane fraction of the page; otherwise fall back to the
+            // whole page (which then fits and centres normally).
+            const zoomToContent = contentFit >= pageSize.pageWidth * 0.4 && contentFit < pageSize.pageWidth;
+            const fitWidth = zoomToContent ? contentFit : pageSize.pageWidth;
+
             // Never upscale past 100%; leave a small horizontal breathing margin.
-            const ratio = Math.min(1, (avail - 8) / pageSize.pageWidth);
+            const ratio = Math.min(1, (avail - 8) / fitWidth);
             container.style.setProperty("--editor-zoom", `${ratio}`);
+
+            // Zoomed to the content, the page is wider than the viewport. Auto
+            // margins DON'T centre an overflowing block — they collapse to 0 and
+            // left-align it, leaving the full left margin on screen. So translate
+            // the (un-zoomed) page layer left to slide the text column behind a
+            // small left margin; both margins then clip evenly. The shift is in
+            // *screen* px (already multiplied by the zoom ratio) so it's applied
+            // on the un-zoomed wrapper and doesn't depend on how the webview
+            // scales lengths inside a `zoom`ed subtree.
+            const shift = zoomToContent ? (KEEP_MARGIN_PX - actionLeft) * ratio : 0;
+            container.style.setProperty("--editor-shift", `${shift}px`);
         };
 
         apply();
@@ -709,11 +756,90 @@ const DocumentEditorPanel = ({
         commentOps.setActiveNodeId(null);
     }, [commentOps]);
 
+    // Fixed handle height and inset of the track from the panel's top/bottom.
+    // (Keep HANDLE_HEIGHT in sync with .scroll_handle's height in the CSS.)
+    const HANDLE_HEIGHT = 44;
+    const TRACK_PAD = 6;
+
+    // Recompute the handle's position from the container's scroll metrics: it's a
+    // fixed-size grab handle whose offset mirrors how far down we're scrolled.
+    const updateThumb = useCallback(() => {
+        const el = containerEl;
+        if (!el) return;
+        const { scrollTop, scrollHeight, clientHeight } = el;
+        const scrollable = scrollHeight - clientHeight;
+        if (scrollable <= 0) {
+            setCanScrollThumb(false);
+            return;
+        }
+        setCanScrollThumb(true);
+        const travel = Math.max(0, clientHeight - 2 * TRACK_PAD - HANDLE_HEIGHT);
+        setThumbTop((scrollTop / scrollable) * travel);
+    }, [containerEl]);
+
+    // Reveal the thumb and (re)arm the timer that hides it once scrolling has
+    // been idle for a beat. While dragging, keep it pinned open (no auto-hide).
+    const revealScrollThumb = useCallback(() => {
+        setShowScrollThumb(true);
+        if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
+        if (!isDraggingThumb.current) {
+            scrollIdleTimer.current = setTimeout(() => setShowScrollThumb(false), 1200);
+        }
+    }, []);
+
     const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
         if (suggestions.length > 0) updateSuggestions?.([]);
         const scrollTop = e.currentTarget.scrollTop;
         setIsScrolled(scrollTop > 0);
+        if (isPhone) {
+            updateThumb();
+            revealScrollThumb();
+        }
     };
+
+    // Drag the thumb to scroll: map vertical pointer movement onto scrollTop via
+    // the same track/scrollable ratio used to size the thumb.
+    const onThumbPointerDown = useCallback(
+        (e: React.PointerEvent<HTMLDivElement>) => {
+            const el = containerEl;
+            if (!el) return;
+            e.preventDefault();
+            e.stopPropagation();
+            (e.target as HTMLElement).setPointerCapture(e.pointerId);
+            isDraggingThumb.current = true;
+            revealScrollThumb();
+
+            const startY = e.clientY;
+            const startScrollTop = el.scrollTop;
+            const scrollable = el.scrollHeight - el.clientHeight;
+            const maxThumbTravel = el.clientHeight - 2 * TRACK_PAD - HANDLE_HEIGHT;
+
+            const onMove = (ev: PointerEvent) => {
+                if (maxThumbTravel <= 0) return;
+                const delta = ev.clientY - startY;
+                const ratio = (delta / maxThumbTravel) * scrollable;
+                el.scrollTop = Math.max(0, Math.min(scrollable, startScrollTop + ratio));
+            };
+            const onUp = () => {
+                isDraggingThumb.current = false;
+                revealScrollThumb(); // re-arm the auto-hide now that the drag is done
+                window.removeEventListener("pointermove", onMove);
+                window.removeEventListener("pointerup", onUp);
+                window.removeEventListener("pointercancel", onUp);
+            };
+            window.addEventListener("pointermove", onMove);
+            window.addEventListener("pointerup", onUp);
+            window.addEventListener("pointercancel", onUp);
+        },
+        [containerEl, revealScrollThumb],
+    );
+
+    // Clean up the idle timer on unmount.
+    useEffect(() => {
+        return () => {
+            if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
+        };
+    }, []);
 
     const focusType =
         focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
@@ -762,7 +888,7 @@ const DocumentEditorPanel = ({
                             </div>
                         </div>
                     )}
-                    <div onContextMenu={onEditorContextMenu}>
+                    <div className={styles.page_shift} onContextMenu={onEditorContextMenu}>
                         <EditorContent editor={editor} spellCheck={false} />
                     </div>
                 </div>
@@ -782,6 +908,22 @@ const DocumentEditorPanel = ({
                     />
                 )}
             </div>
+            {isPhone && canScrollThumb && (
+                <div
+                    className={join(
+                        styles.scroll_track,
+                        showScrollThumb ? styles.scroll_track_visible : "",
+                    )}
+                >
+                    <div
+                        className={styles.scroll_handle}
+                        style={{ transform: `translateY(${thumbTop}px)` }}
+                        onPointerDown={onThumbPointerDown}
+                    >
+                        <GripVertical size={16} />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

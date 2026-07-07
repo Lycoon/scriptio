@@ -51,7 +51,7 @@ const ProjectWorkspace = () => {
                     updateSuggestionData={updateSuggestionData}
                 />
 
-                {/* Right sidebar toggle (desktop/tablet only — phone uses the navbar arrow) */}
+                {/* Right sidebar toggle — an edge chevron on every platform */}
                 <div className={styles.right_sidebar_toggle} onClick={() => setRightSidebarOpen((prev) => !prev)}>
                     {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                 </div>
