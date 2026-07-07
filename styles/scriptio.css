@@ -37,6 +37,15 @@
 .ProseMirror {
     --font-size: 12pt;
 
+    /* Display-only multiplier applied to every horizontal element margin below.
+       Defaults to 1 (desktop / print / the offscreen pagination measurement div,
+       which is #pagination-test-div in <body> and never matched by the phone rule
+       in EditorPanel.module.css). On phones it is lowered to compress the wide
+       screenplay margins so text reflows larger — a purely visual change: the
+       offscreen measurement div keeps scale 1, so page count / breaks / PDF export
+       stay identical to desktop. */
+    --display-margin-scale: 1;
+
     --action-l-margin: 1.5in;
     --action-r-margin: 1in;
     --scene-l-margin: 1.5in;
@@ -57,15 +66,6 @@
     /* Prevent outline from appearing when focused on screenplay */
     outline: none;
 
-    /* iOS text autosizing inflates the font past the fixed 16px line box,
-       clipping page numbers and the first line of each page and making the
-       text look oversized. The html/body reset doesn't reliably reach this
-       zoomed subtree, so pin autosizing off on the editor itself. `none` is
-       required rather than 100% — iOS WebKit kept boosting the font inside
-       the zoomed subtree at 100%. Safe here since user scaling is disabled. */
-    -webkit-text-size-adjust: none;
-    text-size-adjust: none;
-
     /* Default screenplay paragraph attributes - direct children only
        Critical: block + width:100% ensures consistent sizing between empty 
        and non-empty nodes, preventing pagination flickering and infinite loops.
@@ -82,8 +82,8 @@
         margin-top: var(--line-height);
         margin-bottom: 0;
         min-height: 1lh;
-        padding-left: var(--action-l-margin);
-        padding-right: var(--action-r-margin);
+        padding-left: calc(var(--action-l-margin) * var(--display-margin-scale));
+        padding-right: calc(var(--action-r-margin) * var(--display-margin-scale));
         box-sizing: border-box;
     }
 
@@ -206,8 +206,8 @@
         text-decoration: var(--scene-decoration, none);
         text-align: var(--scene-align, left) !important;
         counter-increment: scenenumber;
-        padding-left: var(--scene-l-margin) !important;
-        padding-right: var(--scene-r-margin) !important;
+        padding-left: calc(var(--scene-l-margin) * var(--display-margin-scale)) !important;
+        padding-right: calc(var(--scene-r-margin) * var(--display-margin-scale)) !important;
     }
 
     /* Left scene number (CSS counter via ::before) */
@@ -358,8 +358,8 @@
         text-decoration: var(--dialogue-decoration, none);
         text-transform: var(--dialogue-transform, none);
         text-align: var(--dialogue-align, left) !important;
-        padding-left: var(--dialogue-l-margin) !important;
-        padding-right: var(--dialogue-r-margin) !important;
+        padding-left: calc(var(--dialogue-l-margin) * var(--display-margin-scale)) !important;
+        padding-right: calc(var(--dialogue-r-margin) * var(--display-margin-scale)) !important;
     }
 
     .character {
@@ -368,8 +368,8 @@
         text-decoration: var(--character-decoration, none);
         text-transform: var(--character-transform, uppercase);
         text-align: var(--character-align, left) !important;
-        padding-left: var(--character-l-margin) !important;
-        padding-right: var(--character-r-margin) !important;
+        padding-left: calc(var(--character-l-margin) * var(--display-margin-scale)) !important;
+        padding-right: calc(var(--character-r-margin) * var(--display-margin-scale)) !important;
     }
 
     .character::after {
@@ -389,8 +389,8 @@
         text-decoration: var(--parenthetical-decoration, none);
         text-transform: var(--parenthetical-transform, none);
         text-align: var(--parenthetical-align, left) !important;
-        padding-left: var(--parenthetical-l-margin) !important;
-        padding-right: var(--parenthetical-r-margin) !important;
+        padding-left: calc(var(--parenthetical-l-margin) * var(--display-margin-scale)) !important;
+        padding-right: calc(var(--parenthetical-r-margin) * var(--display-margin-scale)) !important;
     }
 
     .parenthetical::before {
@@ -399,7 +399,7 @@
         /* Shenanigans to have cursor between both parenthesis otherwise it appears before first */
         position: absolute;
         /*top: 0;*/
-        left: var(--parenthetical-l-margin);
+        left: calc(var(--parenthetical-l-margin) * var(--display-margin-scale));
         margin-left: calc(-1ch);
         pointer-events: none;
     }
@@ -431,8 +431,8 @@
         font-style: var(--transition-style, normal);
         text-decoration: var(--transition-decoration, none);
         text-align: var(--transition-align, right) !important;
-        padding-left: var(--transition-l-margin) !important;
-        padding-right: var(--transition-r-margin) !important;
+        padding-left: calc(var(--transition-l-margin) * var(--display-margin-scale)) !important;
+        padding-right: calc(var(--transition-r-margin) * var(--display-margin-scale)) !important;
     }
 
     .transition::after {
@@ -446,8 +446,8 @@
         font-weight: var(--section-weight, normal);
         font-style: var(--section-style, normal);
         text-decoration: var(--section-decoration, underline);
-        padding-left: var(--section-l-margin) !important;
-        padding-right: var(--section-r-margin) !important;
+        padding-left: calc(var(--section-l-margin) * var(--display-margin-scale)) !important;
+        padding-right: calc(var(--section-r-margin) * var(--display-margin-scale)) !important;
     }
 
     /* Note */
@@ -529,12 +529,12 @@
     .character-highlight {
         background: linear-gradient(
             to right,
-            transparent var(--page-margin-left),
-            var(--highlight-color) var(--page-margin-left),
-            var(--highlight-color) calc(var(--page-margin-left) + 3px),
-            var(--highlight-bg) calc(var(--page-margin-left) + 3px),
-            var(--highlight-bg) calc(100% - var(--page-margin-right)),
-            transparent calc(100% - var(--page-margin-right))
+            transparent calc(var(--page-margin-left) * var(--display-margin-scale)),
+            var(--highlight-color) calc(var(--page-margin-left) * var(--display-margin-scale)),
+            var(--highlight-color) calc(calc(var(--page-margin-left) * var(--display-margin-scale)) + 3px),
+            var(--highlight-bg) calc(calc(var(--page-margin-left) * var(--display-margin-scale)) + 3px),
+            var(--highlight-bg) calc(100% - calc(var(--page-margin-right) * var(--display-margin-scale))),
+            transparent calc(100% - calc(var(--page-margin-right) * var(--display-margin-scale)))
         );
     }
 
@@ -650,7 +650,7 @@
         bottom: calc(100% - 1lh);
         left: 0;
         width: 100%;
-        padding-left: var(--character-l-margin);
+        padding-left: calc(var(--character-l-margin) * var(--display-margin-scale));
     }
 
     .page-more-overlay::after {
@@ -661,7 +661,7 @@
         top: calc(100% - 1lh);
         left: 0;
         width: 100%;
-        padding-left: var(--character-l-margin);
+        padding-left: calc(var(--character-l-margin) * var(--display-margin-scale));
         text-transform: uppercase;
     }
 
@@ -676,7 +676,7 @@
     .dual_dialogue {
         display: flex;
         flex-direction: row;
-        padding: 0 var(--page-margin-right) 0 var(--page-margin-left);
+        padding: 0 calc(var(--page-margin-right) * var(--display-margin-scale)) 0 calc(var(--page-margin-left) * var(--display-margin-scale));
         gap: 8px;
     }
 

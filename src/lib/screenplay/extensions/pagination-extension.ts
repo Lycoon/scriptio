@@ -615,8 +615,12 @@ function createPageBreakWidget(breakInfo: PageBreakInfo, options: PaginationOpti
     // variables that define the node type's padding, restoring full-page coverage.
     if (breakInfo.splitNodeType !== null) {
         const [leftVar, rightVar] = getSplitPaddingVars(breakInfo.splitNodeType);
-        overlay.style.left = `calc(-1 * ${leftVar})`;
-        overlay.style.right = `calc(-1 * ${rightVar})`;
+        // Multiply by --display-margin-scale so the escape tracks the parent <p>'s
+        // padding, which is itself scaled (calc(var(--x-margin) * scale)). On desktop
+        // the scale is 1, so this is identical to negating the raw padding; on the
+        // phone reading layout it keeps the header/footer band aligned to the page.
+        overlay.style.left = `calc(-1 * ${leftVar} * var(--display-margin-scale))`;
+        overlay.style.right = `calc(-1 * ${rightVar} * var(--display-margin-scale))`;
     }
 
     // Labels for the surrounding pages. Defaults preserve legacy behavior
@@ -816,9 +820,16 @@ function buildDecorations(
     // "Recalculate Style" seen while typing). A plain class selector carries no
     // sibling dependency, so only the handful of nodes whose first-of-page
     // status actually changed get restyled.
-    const markPageStart = (pos: number, cls: string) => {
+    const markPageStart = (pos: number, cls: string, pageLabel?: string) => {
         const node = doc.resolve(pos).nodeAfter;
-        if (node) decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: cls }));
+        if (!node) return;
+        // pageLabel drives the phone-only slim "Page N" divider rendered via CSS
+        // ::before on the page's first node (see the max-width:767px block in
+        // scriptio.css). It is a plain DOM attribute on the node decoration, so it
+        // never reaches the offscreen measurement div — page counts stay canonical.
+        const attrs: Record<string, string> = { class: cls };
+        if (pageLabel != null) attrs["data-page-label"] = pageLabel;
+        decorations.push(Decoration.node(pos, pos + node.nodeSize, attrs));
     };
 
     // Mount the lock badge for a locked, whole-node page as its own standalone
@@ -856,7 +867,7 @@ function buildDecorations(
         // margin to reset — the old `> .pagination-page-break + p` rule didn't
         // match inside-<p> widgets either.
         if (b.splitNodeType === null) {
-            markPageStart(b.pos, "pagination-break-start");
+            markPageStart(b.pos, "pagination-break-start", b.label ?? String(b.pagenum));
             // Whole-node locked page → mount its badge on the new page's first
             // paragraph (split locked pages render it in the header area above).
             if (b.locked) pushPageLockBadge(b.pos);

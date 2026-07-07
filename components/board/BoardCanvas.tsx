@@ -12,12 +12,13 @@ import {
 } from "@components/utils/ContextMenu";
 import styles from "./BoardCanvas.module.css";
 import { v7 as uuidv7 } from "uuid";
-import { Trash2, Plus, Minus, Copy, ListTree, Mic, Square } from "lucide-react";
+import { Trash2, Plus, Minus, Copy, ListTree, Mic, Square, Image as ImageIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
 import { importImageFile, importAudioFile, syncAssetToCloud } from "@src/lib/assets/asset-store";
 import { CloudQuotaError } from "@src/lib/assets/cloud-asset-sync";
 import { scheduleAssetGc } from "@src/lib/assets/asset-gc";
+import { useIsPhone } from "@src/lib/utils/hooks";
 import { useAudioRecorder } from "./use-audio-recorder";
 
 const GRID_SIZE = 20;
@@ -82,6 +83,35 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     const panStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
     const selectionStart = useRef<{ x: number; y: number } | null>(null);
     const isSelecting = useRef(false);
+
+    // ── Touch (mobile) state ──────────────────────────────────────────────────
+    const isPhone = useIsPhone();
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const imageImportCoords = useRef({ x: 0, y: 0 });
+    const gesture = useRef<{
+        mode: "none" | "pan" | "pinch";
+        startX: number;
+        startY: number;
+        startOffset: { x: number; y: number };
+        startDist: number;
+        startScale: number;
+        pinchCanvasX: number;
+        pinchCanvasY: number;
+        moved: boolean;
+    }>({
+        mode: "none",
+        startX: 0,
+        startY: 0,
+        startOffset: { x: 0, y: 0 },
+        startDist: 0,
+        startScale: 1,
+        pinchCanvasX: 0,
+        pinchCanvasY: 0,
+        moved: false,
+    });
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastTap = useRef({ time: 0, x: 0, y: 0 });
+    const lastTouchPoint = useRef({ x: 0, y: 0 });
 
     // Center camera to fit all cards
     const centerCameraOnCards = useCallback((cardsToFit: BoardCardData[]) => {
@@ -710,34 +740,77 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         }
     }, [recorder, projectId, saveCards, syncCreatedAssets]);
 
-    // Right-clicking empty canvas opens a menu (create card / record audio).
-    // Cards and arrows have their own menus, so bail when the click landed on one.
-    const handleCanvasContextMenu = useCallback(
-        (e: React.MouseEvent) => {
-            if (isReadOnly) return;
-            const target = e.target as HTMLElement;
-            if (
-                target.closest(`.${styles.card}`) ||
-                target.closest(`.${styles.arrow_group}`) ||
-                target.closest("[data-context-menu]") ||
-                target.closest(`.${styles.zoom_controls}`)
-            )
-                return;
+    // Import an image file as a card at the given canvas-space coords. Shared by
+    // OS file drops and the "Import image" menu action (mobile has no drag-drop).
+    const addImageCard = useCallback(
+        async (file: File, x: number, y: number) => {
+            if (isReadOnly || !projectId) return;
+            try {
+                const { hash, width, height } = await importImageFile(projectId, file);
+                const fit = Math.min(1, MAX_IMAGE_CARD_SIZE / Math.max(width, height, 1));
+                const newCard: BoardCardData = {
+                    id: uuidv7(),
+                    type: "image",
+                    assetId: hash,
+                    title: "",
+                    description: "",
+                    color: "transparent",
+                    x,
+                    y,
+                    width: Math.max(60, Math.round(width * fit)),
+                    height: Math.max(60, Math.round(height * fit)),
+                };
+                const newCards = [...cardsRef.current, newCard];
+                setCards(newCards);
+                saveCards(newCards);
+                syncCreatedAssets([newCard], projectId);
+            } catch (err) {
+                console.error("[BoardCanvas] Failed to import image:", err);
+            }
+        },
+        [isReadOnly, projectId, saveCards, syncCreatedAssets],
+    );
 
+    const openImagePicker = useCallback((x: number, y: number) => {
+        imageImportCoords.current = { x, y };
+        imageInputRef.current?.click();
+    }, []);
+
+    const handleImageInputChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (file) {
+                const { x, y } = imageImportCoords.current;
+                void addImageCard(file, x, y);
+            }
+        },
+        [addImageCard],
+    );
+
+    // Build the empty-canvas menu (create card / import image / record audio) at
+    // the given *screen* coords, resolving the canvas-space drop point via refs.
+    const showCanvasMenu = useCallback(
+        (screenX: number, screenY: number) => {
+            if (isReadOnly) return;
             const container = containerRef.current;
             if (!container) return;
             const rect = container.getBoundingClientRect();
-            e.preventDefault();
-            const canvasX = (e.clientX - rect.left - offset.x) / scale;
-            const canvasY = (e.clientY - rect.top - offset.y) / scale;
+            const canvasX = (screenX - rect.left - offsetRef.current.x) / scaleRef.current;
+            const canvasY = (screenY - rect.top - offsetRef.current.y) / scaleRef.current;
             updateContextMenu({
-                position: { x: e.clientX, y: e.clientY },
+                position: { x: screenX, y: screenY },
                 content: (
                     <>
                         <ContextMenuItem
                             icon={Plus}
                             text={t("createCard")}
                             action={() => handleCreateCard(canvasX, canvasY)}
+                        />
+                        <ContextMenuItem
+                            icon={ImageIcon}
+                            text={t("importImage")}
+                            action={() => openImagePicker(canvasX, canvasY)}
                         />
                         <ContextMenuItem
                             icon={Mic}
@@ -750,7 +823,26 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                 ),
             });
         },
-        [isReadOnly, offset, scale, updateContextMenu, t, handleCreateCard, handleStartRecording, recorder.isSupported],
+        [isReadOnly, updateContextMenu, t, handleCreateCard, openImagePicker, handleStartRecording, recorder.isSupported],
+    );
+
+    // Right-clicking empty canvas opens the menu. Cards and arrows have their own
+    // menus, so bail when the click landed on one.
+    const handleCanvasContextMenu = useCallback(
+        (e: React.MouseEvent) => {
+            if (isReadOnly) return;
+            const target = e.target as HTMLElement;
+            if (
+                target.closest(`.${styles.card}`) ||
+                target.closest(`.${styles.arrow_group}`) ||
+                target.closest("[data-context-menu]") ||
+                target.closest(`.${styles.zoom_controls}`)
+            )
+                return;
+            e.preventDefault();
+            showCanvasMenu(e.clientX, e.clientY);
+        },
+        [isReadOnly, showCanvasMenu],
     );
 
     // Update card (with multi-drag support)
@@ -1049,17 +1141,180 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         setConnectingLine(null);
     }, []);
 
-    // Setup connection mouse events
+    // Setup connection mouse + touch events
     useEffect(() => {
-        if (connectingFrom) {
-            window.addEventListener("mousemove", handleConnectionMouseMove);
-            window.addEventListener("mouseup", handleConnectionMouseUp);
-            return () => {
-                window.removeEventListener("mousemove", handleConnectionMouseMove);
-                window.removeEventListener("mouseup", handleConnectionMouseUp);
+        if (!connectingFrom) return;
+        window.addEventListener("mousemove", handleConnectionMouseMove);
+        window.addEventListener("mouseup", handleConnectionMouseUp);
+
+        // Touch: track the finger to draw the pending line, and on release resolve
+        // the card under the finger via elementFromPoint to complete the link.
+        const onTouchMove = (e: TouchEvent) => {
+            const t = e.touches[0];
+            const container = containerRef.current;
+            if (!t || !container) return;
+            const rect = container.getBoundingClientRect();
+            lastTouchPoint.current = { x: t.clientX, y: t.clientY };
+            setConnectingLine({
+                x: (t.clientX - rect.left - offsetRef.current.x) / scaleRef.current,
+                y: (t.clientY - rect.top - offsetRef.current.y) / scaleRef.current,
+            });
+        };
+        const onTouchEnd = () => {
+            const p = lastTouchPoint.current;
+            const el = document.elementFromPoint(p.x, p.y) as HTMLElement | null;
+            const targetId = el?.closest("[data-card-id]")?.getAttribute("data-card-id");
+            if (targetId) handleCompleteConnection(targetId);
+            else handleConnectionMouseUp();
+        };
+        window.addEventListener("touchmove", onTouchMove, { passive: true });
+        window.addEventListener("touchend", onTouchEnd);
+
+        return () => {
+            window.removeEventListener("mousemove", handleConnectionMouseMove);
+            window.removeEventListener("mouseup", handleConnectionMouseUp);
+            window.removeEventListener("touchmove", onTouchMove);
+            window.removeEventListener("touchend", onTouchEnd);
+        };
+    }, [connectingFrom, handleConnectionMouseMove, handleConnectionMouseUp, handleCompleteConnection]);
+
+    // ── Container touch gestures (mobile) ─────────────────────────────────────
+    // One finger pans the canvas; two fingers pinch-zoom (centred on the pinch);
+    // a double-tap on empty canvas creates a card; a long-press opens the canvas
+    // menu. Cards/handles stop propagation, so their touches never reach here.
+    useEffect(
+        () => () => {
+            if (longPressTimer.current) clearTimeout(longPressTimer.current);
+        },
+        [],
+    );
+
+    const toCanvasPoint = (clientX: number, clientY: number) => {
+        const container = containerRef.current;
+        if (!container) return { x: 0, y: 0 };
+        const rect = container.getBoundingClientRect();
+        return {
+            x: (clientX - rect.left - offsetRef.current.x) / scaleRef.current,
+            y: (clientY - rect.top - offsetRef.current.y) / scaleRef.current,
+        };
+    };
+
+    const cancelLongPress = () => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    };
+
+    const isChromeTarget = (target: HTMLElement) =>
+        !!(
+            target.closest(`.${styles.card}`) ||
+            target.closest(`.${styles.zoom_controls}`) ||
+            target.closest(`.${styles.recording_indicator}`) ||
+            target.closest("[data-context-menu]")
+        );
+
+    const handleContainerTouchStart = (e: React.TouchEvent) => {
+        if (connectingFrom) return;
+        if (isChromeTarget(e.target as HTMLElement)) return;
+
+        if (e.touches.length === 1) {
+            const t = e.touches[0];
+            gesture.current = {
+                ...gesture.current,
+                mode: "pan",
+                startX: t.clientX,
+                startY: t.clientY,
+                startOffset: { ...offsetRef.current },
+                moved: false,
+            };
+            cancelLongPress();
+            const lpX = t.clientX;
+            const lpY = t.clientY;
+            longPressTimer.current = setTimeout(() => {
+                gesture.current.mode = "none";
+                showCanvasMenu(lpX, lpY);
+            }, 500);
+        } else if (e.touches.length === 2) {
+            cancelLongPress();
+            const a = e.touches[0];
+            const b = e.touches[1];
+            const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+            const mid = toCanvasPoint((a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2);
+            gesture.current = {
+                ...gesture.current,
+                mode: "pinch",
+                startDist: dist || 1,
+                startScale: scaleRef.current,
+                pinchCanvasX: mid.x,
+                pinchCanvasY: mid.y,
+                moved: true,
             };
         }
-    }, [connectingFrom, handleConnectionMouseMove, handleConnectionMouseUp]);
+    };
+
+    const handleContainerTouchMove = (e: React.TouchEvent) => {
+        const g = gesture.current;
+        if (g.mode === "pan" && e.touches.length === 1) {
+            const t = e.touches[0];
+            const dx = t.clientX - g.startX;
+            const dy = t.clientY - g.startY;
+            if (!g.moved && Math.hypot(dx, dy) > 8) {
+                g.moved = true;
+                cancelLongPress();
+            }
+            if (g.moved) setOffset({ x: g.startOffset.x + dx, y: g.startOffset.y + dy });
+        } else if (g.mode === "pinch" && e.touches.length >= 2) {
+            const container = containerRef.current;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const a = e.touches[0];
+            const b = e.touches[1];
+            const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+            const midX = (a.clientX + b.clientX) / 2;
+            const midY = (a.clientY + b.clientY) / 2;
+            const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, g.startScale * (dist / g.startDist)));
+            setScale(newScale);
+            setOffset({
+                x: midX - rect.left - g.pinchCanvasX * newScale,
+                y: midY - rect.top - g.pinchCanvasY * newScale,
+            });
+        }
+    };
+
+    const handleContainerTouchEnd = (e: React.TouchEvent) => {
+        cancelLongPress();
+        const g = gesture.current;
+        if (g.mode === "pan" && !g.moved && e.changedTouches.length > 0) {
+            const t = e.changedTouches[0];
+            const now = Date.now();
+            const isDoubleTap =
+                now - lastTap.current.time < 300 &&
+                Math.hypot(t.clientX - lastTap.current.x, t.clientY - lastTap.current.y) < 30;
+            if (isDoubleTap) {
+                const c = toCanvasPoint(t.clientX, t.clientY);
+                setSelectedCardIds(new Set());
+                handleCreateCard(c.x, c.y);
+                lastTap.current = { time: 0, x: 0, y: 0 };
+            } else {
+                lastTap.current = { time: now, x: t.clientX, y: t.clientY };
+            }
+        }
+        if (e.touches.length === 0) {
+            g.mode = "none";
+        } else if (e.touches.length === 1) {
+            // A finger lifted from a pinch — resume panning with the one that remains.
+            const t = e.touches[0];
+            gesture.current = {
+                ...g,
+                mode: "pan",
+                startX: t.clientX,
+                startY: t.clientY,
+                startOffset: { ...offsetRef.current },
+                moved: true,
+            };
+        }
+    };
 
     // Generate grid pattern
     const gridPattern = useMemo(() => {
@@ -1076,12 +1331,23 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     return (
         <div className={styles.board_wrapper}>
             <div className={styles.board_shadow} />
+            {/* Hidden picker for the mobile "Import image" menu action. */}
+            <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleImageInputChange}
+            />
             <div
                 ref={containerRef}
                 className={`${styles.container} ${isPanning ? styles.panning : ""} ${isDraggingFile ? styles.drag_over : ""}`}
-                onMouseDown={handleContainerMouseDown}
-                onDoubleClick={handleDoubleClick}
+                onMouseDown={isPhone ? undefined : handleContainerMouseDown}
+                onDoubleClick={isPhone ? undefined : handleDoubleClick}
                 onContextMenu={handleCanvasContextMenu}
+                onTouchStart={isPhone ? handleContainerTouchStart : undefined}
+                onTouchMove={isPhone ? handleContainerTouchMove : undefined}
+                onTouchEnd={isPhone ? handleContainerTouchEnd : undefined}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -1277,15 +1543,18 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                     </div>
                 )}
 
-                <div className={styles.zoom_controls}>
-                    <button className={styles.zoom_btn} onClick={() => zoomFromCenter(false)}>
-                        <Minus size={14} />
-                    </button>
-                    <span className={styles.zoom_level}>{Math.round(scale * 100)}%</span>
-                    <button className={styles.zoom_btn} onClick={() => zoomFromCenter(true)}>
-                        <Plus size={14} />
-                    </button>
-                </div>
+                {/* Zoom controls hidden on phone — pinch-to-zoom replaces them. */}
+                {!isPhone && (
+                    <div className={styles.zoom_controls}>
+                        <button className={styles.zoom_btn} onClick={() => zoomFromCenter(false)}>
+                            <Minus size={14} />
+                        </button>
+                        <span className={styles.zoom_level}>{Math.round(scale * 100)}%</span>
+                        <button className={styles.zoom_btn} onClick={() => zoomFromCenter(true)}>
+                            <Plus size={14} />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

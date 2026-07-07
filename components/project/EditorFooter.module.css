@@ -63,3 +63,14 @@
     color: var(--primary-text);
     background-color: var(--secondary-hover);
 }
+
+/* Phone: centre the island along the bottom — pinned to the right feels off on a
+ * narrow screen. Also lift it above the home-indicator safe area. */
+@media (max-width: 767px) {
+    .bubble_right {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        bottom: calc(16px + var(--safe-bottom));
+    }
+}

@@ -29,6 +29,7 @@
         "ios:init": "tauri ios init",
         "ios:dev": "tauri ios dev",
         "debug:ios": "npm run tauri ios build -- --debug --config src-tauri/tauri.ios.conf.json",
+        "debug:ios:sim": "npm run tauri ios build -- --debug --target aarch64-sim --open --config src-tauri/tauri.ios.conf.json",
         "build:ios": "npm run tauri ios build -- --export-method app-store-connect --config src-tauri/tauri.ios.conf.json",
         "lint": "eslint .",
         "bench": "vitest bench",

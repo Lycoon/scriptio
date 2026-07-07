@@ -5,7 +5,7 @@
     "version": "../package.json",
     "build": {
         "frontendDist": "../out",
-        "devUrl": "http://localhost:3000/projects",
+        "devUrl": "http://localhost:3000",
         "beforeDevCommand": "npm run dev",
         "beforeBuildCommand": "npm run build:tauri"
     },

@@ -6,7 +6,7 @@ import { EditorContent } from "@tiptap/react";
 
 import { applyElement, insertElement, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
 import { ScreenplayElement } from "@src/lib/utils/enums";
-import { Eye } from "lucide-react";
+import { Eye, GripVertical } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DUAL_DIALOGUE_COLUMN } from "@src/lib/screenplay/nodes/dual-dialogue-column-node";
 import { DEFAULT_ELEMENT_MARGINS, DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
@@ -94,8 +94,25 @@ const DocumentEditorPanel = ({
     const { user } = useUser();
     const isPhone = useIsPhone();
 
+    // Phones always render continuous (no discrete page rectangles): the compact
+    // "reading margins" applied on phone (--display-margin-scale in the CSS) reflow
+    // text to a different width than the canonical page, so the fixed-height page
+    // spacers would misalign. Page COUNT and numbering stay canonical — they are
+    // measured off-screen at full page width — so this is purely a visual mode.
+    const effectiveEndless = isEndlessScroll || isPhone;
+
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    // Phone-only draggable scroll handle: a fixed-size grab handle (styled like
+    // the sidebar edge toggles) that rides the right edge tracking scroll
+    // position, so it's easy to grab and drag the page up/down. Shown while
+    // actively scrolling (or being dragged) and faded out shortly after, so it
+    // never sits on top of the writing while at rest.
+    const [showScrollThumb, setShowScrollThumb] = useState(false);
+    const [thumbTop, setThumbTop] = useState(0);
+    const [canScrollThumb, setCanScrollThumb] = useState(false);
+    const scrollIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isDraggingThumb = useRef(false);
     // Callback ref stored in state so the zoom effect re-runs when the scroll
     // container actually mounts (it may render after a Loading fallback).
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
@@ -159,8 +176,8 @@ const DocumentEditorPanel = ({
     useEffect(() => {
         const el = editor?.view?.dom;
         if (!el) return;
-        el.classList.toggle("endless-scroll", isEndlessScroll);
-    }, [editor, isEndlessScroll]);
+        el.classList.toggle("endless-scroll", effectiveEndless);
+    }, [editor, effectiveEndless]);
 
     // Ready state
     useEffect(() => {
@@ -170,34 +187,14 @@ const DocumentEditorPanel = ({
         }
     }, [editor, isYjsReady]);
 
-    // ---- Fit-to-width auto-zoom (phone only) ----
-    // Screenplay pages have a fixed physical width; on a narrow phone screen we
-    // scale the page down so its whole width fits, avoiding horizontal scrolling.
-    // The ratio is published as --editor-zoom and consumed via `zoom` in the phone
-    // media query; recomputed on container resize (rotation, split-screen, etc.).
-    useEffect(() => {
-        const container = containerEl;
-        if (!container) return;
-
-        const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
-        if (!isPhone || !pageSize) {
-            container.style.removeProperty("--editor-zoom");
-            return;
-        }
-
-        const apply = () => {
-            const avail = container.clientWidth;
-            if (!avail) return;
-            // Never upscale past 100%; leave a small horizontal breathing margin.
-            const ratio = Math.min(1, (avail - 8) / pageSize.pageWidth);
-            container.style.setProperty("--editor-zoom", `${ratio}`);
-        };
-
-        apply();
-        const ro = new ResizeObserver(apply);
-        ro.observe(container);
-        return () => ro.disconnect();
-    }, [containerEl, isPhone, pageFormat]);
+    // ---- Phone reading layout ----
+    // Phones no longer scale the whole page down to fit (which shrank the text).
+    // Instead the CSS applies a compact --display-margin-scale to reflow text at
+    // full size into the viewport width (see the max-width:767px block in
+    // EditorPanel.module.css). Because that reflow uses a narrower measure than
+    // the canonical page, the discrete page rectangles can't line up, so phones
+    // render continuous (effectiveEndless above). Pagination itself is measured
+    // off-screen at full page width, so page count / numbering are unchanged.
 
     // ---- Orphaned comment cleanup ----
     // Comments anchor to a node's data-id. When that node is deleted the comment
@@ -709,11 +706,90 @@ const DocumentEditorPanel = ({
         commentOps.setActiveNodeId(null);
     }, [commentOps]);
 
+    // Fixed handle height and inset of the track from the panel's top/bottom.
+    // (Keep HANDLE_HEIGHT in sync with .scroll_handle's height in the CSS.)
+    const HANDLE_HEIGHT = 44;
+    const TRACK_PAD = 6;
+
+    // Recompute the handle's position from the container's scroll metrics: it's a
+    // fixed-size grab handle whose offset mirrors how far down we're scrolled.
+    const updateThumb = useCallback(() => {
+        const el = containerEl;
+        if (!el) return;
+        const { scrollTop, scrollHeight, clientHeight } = el;
+        const scrollable = scrollHeight - clientHeight;
+        if (scrollable <= 0) {
+            setCanScrollThumb(false);
+            return;
+        }
+        setCanScrollThumb(true);
+        const travel = Math.max(0, clientHeight - 2 * TRACK_PAD - HANDLE_HEIGHT);
+        setThumbTop((scrollTop / scrollable) * travel);
+    }, [containerEl]);
+
+    // Reveal the thumb and (re)arm the timer that hides it once scrolling has
+    // been idle for a beat. While dragging, keep it pinned open (no auto-hide).
+    const revealScrollThumb = useCallback(() => {
+        setShowScrollThumb(true);
+        if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
+        if (!isDraggingThumb.current) {
+            scrollIdleTimer.current = setTimeout(() => setShowScrollThumb(false), 1200);
+        }
+    }, []);
+
     const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
         if (suggestions.length > 0) updateSuggestions?.([]);
         const scrollTop = e.currentTarget.scrollTop;
         setIsScrolled(scrollTop > 0);
+        if (isPhone) {
+            updateThumb();
+            revealScrollThumb();
+        }
     };
+
+    // Drag the thumb to scroll: map vertical pointer movement onto scrollTop via
+    // the same track/scrollable ratio used to size the thumb.
+    const onThumbPointerDown = useCallback(
+        (e: React.PointerEvent<HTMLDivElement>) => {
+            const el = containerEl;
+            if (!el) return;
+            e.preventDefault();
+            e.stopPropagation();
+            (e.target as HTMLElement).setPointerCapture(e.pointerId);
+            isDraggingThumb.current = true;
+            revealScrollThumb();
+
+            const startY = e.clientY;
+            const startScrollTop = el.scrollTop;
+            const scrollable = el.scrollHeight - el.clientHeight;
+            const maxThumbTravel = el.clientHeight - 2 * TRACK_PAD - HANDLE_HEIGHT;
+
+            const onMove = (ev: PointerEvent) => {
+                if (maxThumbTravel <= 0) return;
+                const delta = ev.clientY - startY;
+                const ratio = (delta / maxThumbTravel) * scrollable;
+                el.scrollTop = Math.max(0, Math.min(scrollable, startScrollTop + ratio));
+            };
+            const onUp = () => {
+                isDraggingThumb.current = false;
+                revealScrollThumb(); // re-arm the auto-hide now that the drag is done
+                window.removeEventListener("pointermove", onMove);
+                window.removeEventListener("pointerup", onUp);
+                window.removeEventListener("pointercancel", onUp);
+            };
+            window.addEventListener("pointermove", onMove);
+            window.addEventListener("pointerup", onUp);
+            window.addEventListener("pointercancel", onUp);
+        },
+        [containerEl, revealScrollThumb],
+    );
+
+    // Clean up the idle timer on unmount.
+    useEffect(() => {
+        return () => {
+            if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
+        };
+    }, []);
 
     const focusType =
         focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
@@ -748,7 +824,7 @@ const DocumentEditorPanel = ({
                 }
             >
                 <div
-                    className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}
+                    className={`${styles.editor_wrapper} ${effectiveEndless ? styles.endless_scroll : ""}`}
                     style={wrapperStyle}
                 >
                     <div
@@ -762,7 +838,7 @@ const DocumentEditorPanel = ({
                             </div>
                         </div>
                     )}
-                    <div onContextMenu={onEditorContextMenu}>
+                    <div className={styles.page_shift} onContextMenu={onEditorContextMenu}>
                         <EditorContent editor={editor} spellCheck={false} />
                     </div>
                 </div>
@@ -782,6 +858,22 @@ const DocumentEditorPanel = ({
                     />
                 )}
             </div>
+            {isPhone && canScrollThumb && (
+                <div
+                    className={join(
+                        styles.scroll_track,
+                        showScrollThumb ? styles.scroll_track_visible : "",
+                    )}
+                >
+                    <div
+                        className={styles.scroll_handle}
+                        style={{ transform: `translateY(${thumbTop}px)` }}
+                        onPointerDown={onThumbPointerDown}
+                    >
+                        <GripVertical size={16} />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

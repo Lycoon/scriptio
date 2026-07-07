@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Play, Pause } from "lucide-react";
 import { BoardCardData } from "@src/lib/project/project-state";
 import { useAssetUrl } from "@src/lib/assets/use-asset-url";
+import { useIsPhone } from "@src/lib/utils/hooks";
 
 /** Join truthy class names (false/undefined are skipped). */
 const cx = (...parts: (string | false | undefined)[]) => parts.filter(Boolean).join(" ");
@@ -306,7 +307,12 @@ const BoardCard = ({
     isSelected,
 }: BoardCardProps) => {
     const kind = kindOf(card);
+    const isPhone = useIsPhone();
     const cardRef = useRef<HTMLDivElement>(null);
+    // Latest card data for touch handlers, which capture their closure at
+    // gesture start but must merge against the current card on each update.
+    const cardDataRef = useRef(card);
+    cardDataRef.current = card;
     const [isDragging, setIsDragging] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
@@ -360,32 +366,36 @@ const BoardCard = ({
         [isEditing, isEditingTitle, scale],
     );
 
+    // Shared drag/resize math, driven by either mouse or touch coordinates.
+    const applyDrag = useCallback(
+        (clientX: number, clientY: number) => {
+            const parent = cardRef.current?.parentElement;
+            if (!parent) return;
+            const parentRect = parent.getBoundingClientRect();
+            const newX = (clientX - parentRect.left) / scale - dragOffset.current.x;
+            const newY = (clientY - parentRect.top) / scale - dragOffset.current.y;
+            onUpdate({ ...cardDataRef.current, x: snapToGrid(newX), y: snapToGrid(newY) });
+        },
+        [scale, onUpdate, snapToGrid],
+    );
+
+    const applyResize = useCallback(
+        (clientX: number, clientY: number) => {
+            const dx = (clientX - resizeStart.current.x) / scale;
+            const dy = (clientY - resizeStart.current.y) / scale;
+            const newWidth = Math.max(150, resizeStart.current.width + dx);
+            const newHeight = Math.max(minHeightFor(kind), resizeStart.current.height + dy);
+            onUpdate({ ...cardDataRef.current, width: snapToGrid(newWidth), height: snapToGrid(newHeight) });
+        },
+        [scale, kind, onUpdate, snapToGrid],
+    );
+
     const handleMouseMove = useCallback(
         (e: MouseEvent) => {
-            if (!isDragging && !isResizing) return;
-
-            if (isDragging) {
-                const parent = cardRef.current?.parentElement;
-                if (!parent) return;
-
-                const parentRect = parent.getBoundingClientRect();
-                const newX = (e.clientX - parentRect.left) / scale - dragOffset.current.x;
-                const newY = (e.clientY - parentRect.top) / scale - dragOffset.current.y;
-
-                onUpdate({ ...card, x: snapToGrid(newX), y: snapToGrid(newY) });
-            }
-
-            if (isResizing) {
-                const dx = (e.clientX - resizeStart.current.x) / scale;
-                const dy = (e.clientY - resizeStart.current.y) / scale;
-
-                const newWidth = Math.max(150, resizeStart.current.width + dx);
-                const newHeight = Math.max(minHeightFor(kind), resizeStart.current.height + dy);
-
-                onUpdate({ ...card, width: snapToGrid(newWidth), height: snapToGrid(newHeight) });
-            }
+            if (isDragging) applyDrag(e.clientX, e.clientY);
+            if (isResizing) applyResize(e.clientX, e.clientY);
         },
-        [isDragging, isResizing, kind, card, onUpdate, scale, snapToGrid],
+        [isDragging, isResizing, applyDrag, applyResize],
     );
 
     const handleMouseUp = useCallback(() => {
@@ -418,6 +428,141 @@ const BoardCard = ({
             };
         }
     }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
+
+    // ── Touch (mobile) ───────────────────────────────────────────────────────
+    // One finger drags the card. A stationary long-press opens the card menu; a
+    // tap (no movement) completes a pending connection, or on a second tap enters
+    // edit mode. The resize / connection handles get their own touch starters.
+    const cardLongPress = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastCardTap = useRef(0);
+    const touchDrag = useRef<{ startX: number; startY: number; moved: boolean; suppressed: boolean } | null>(
+        null,
+    );
+
+    useEffect(
+        () => () => {
+            if (cardLongPress.current) clearTimeout(cardLongPress.current);
+        },
+        [],
+    );
+
+    const handleCardTouchStart = useCallback(
+        (e: React.TouchEvent) => {
+            if (isEditing || isEditingTitle) return;
+            const target = e.target as HTMLElement;
+            if (
+                target.closest(`.${styles.card_resize_handle}`) ||
+                target.closest(`.${styles.connection_handle}`) ||
+                target.closest("input,textarea,button,audio")
+            )
+                return;
+            const t = e.touches[0];
+            if (!t) return;
+            e.stopPropagation();
+
+            const rect = cardRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            dragOffset.current = { x: (t.clientX - rect.left) / scale, y: (t.clientY - rect.top) / scale };
+            touchDrag.current = { startX: t.clientX, startY: t.clientY, moved: false, suppressed: false };
+
+            if (cardLongPress.current) clearTimeout(cardLongPress.current);
+            const lpX = t.clientX;
+            const lpY = t.clientY;
+            cardLongPress.current = setTimeout(() => {
+                if (touchDrag.current) touchDrag.current.suppressed = true;
+                setIsDragging(false);
+                onContextMenu(
+                    {
+                        clientX: lpX,
+                        clientY: lpY,
+                        preventDefault() {},
+                        stopPropagation() {},
+                    } as unknown as React.MouseEvent,
+                    card,
+                );
+            }, 500);
+
+            const onMove = (ev: TouchEvent) => {
+                const tt = ev.touches[0];
+                const state = touchDrag.current;
+                if (!tt || !state) return;
+                const dx = tt.clientX - state.startX;
+                const dy = tt.clientY - state.startY;
+                if (!state.moved && Math.hypot(dx, dy) > 8) {
+                    state.moved = true;
+                    if (cardLongPress.current) {
+                        clearTimeout(cardLongPress.current);
+                        cardLongPress.current = null;
+                    }
+                    setIsDragging(true);
+                }
+                if (state.moved && !state.suppressed) applyDrag(tt.clientX, tt.clientY);
+            };
+            const onEnd = () => {
+                if (cardLongPress.current) {
+                    clearTimeout(cardLongPress.current);
+                    cardLongPress.current = null;
+                }
+                window.removeEventListener("touchmove", onMove);
+                window.removeEventListener("touchend", onEnd);
+                window.removeEventListener("touchcancel", onEnd);
+                setIsDragging(false);
+                const state = touchDrag.current;
+                touchDrag.current = null;
+                if (state && !state.moved && !state.suppressed) {
+                    if (isConnecting) {
+                        onCompleteConnection(card.id);
+                        return;
+                    }
+                    const now = Date.now();
+                    if (now - lastCardTap.current < 300) {
+                        lastCardTap.current = 0;
+                        if (kind === "text") setIsEditing(true);
+                        else if (kind === "audio") setIsEditingTitle(true);
+                    } else {
+                        lastCardTap.current = now;
+                    }
+                }
+            };
+            window.addEventListener("touchmove", onMove, { passive: true });
+            window.addEventListener("touchend", onEnd);
+            window.addEventListener("touchcancel", onEnd);
+        },
+        [isEditing, isEditingTitle, scale, card, kind, isConnecting, applyDrag, onContextMenu, onCompleteConnection],
+    );
+
+    const handleResizeTouchStart = useCallback(
+        (e: React.TouchEvent) => {
+            const t = e.touches[0];
+            if (!t) return;
+            e.stopPropagation();
+            resizeStart.current = { x: t.clientX, y: t.clientY, width: card.width, height: card.height };
+            setIsResizing(true);
+            const onMove = (ev: TouchEvent) => {
+                const tt = ev.touches[0];
+                if (tt) applyResize(tt.clientX, tt.clientY);
+            };
+            const onEnd = () => {
+                setIsResizing(false);
+                window.removeEventListener("touchmove", onMove);
+                window.removeEventListener("touchend", onEnd);
+                window.removeEventListener("touchcancel", onEnd);
+            };
+            window.addEventListener("touchmove", onMove, { passive: true });
+            window.addEventListener("touchend", onEnd);
+            window.addEventListener("touchcancel", onEnd);
+        },
+        [card.width, card.height, applyResize],
+    );
+
+    const handleConnectionTouchStart = useCallback(
+        (e: React.TouchEvent) => {
+            if (!e.touches[0]) return;
+            e.stopPropagation();
+            onStartConnection(card.id, "center", card.x + card.width / 2, card.y + card.height / 2);
+        },
+        [card.id, card.x, card.y, card.width, card.height, onStartConnection],
+    );
 
     const handleStartEditDescription = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -535,6 +680,7 @@ const BoardCard = ({
     return (
         <div
             ref={cardRef}
+            data-card-id={card.id}
             className={cx(
                 styles.card,
                 kind === "image" && styles.image_card,
@@ -550,17 +696,26 @@ const BoardCard = ({
                 height: card.height,
                 ...cardColorStyle(card),
             }}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleCardMouseUp}
-            onDoubleClick={kind === "text" ? handleStartEditDescription : undefined}
+            onMouseDown={isPhone ? undefined : handleMouseDown}
+            onMouseUp={isPhone ? undefined : handleCardMouseUp}
+            onTouchStart={isPhone ? handleCardTouchStart : undefined}
+            onDoubleClick={!isPhone && kind === "text" ? handleStartEditDescription : undefined}
             onContextMenu={handleRightClick}
         >
             {renderBody()}
 
-            <div className={styles.card_resize_handle} onMouseDown={handleResizeStart} />
+            <div
+                className={styles.card_resize_handle}
+                onMouseDown={isPhone ? undefined : handleResizeStart}
+                onTouchStart={isPhone ? handleResizeTouchStart : undefined}
+            />
 
             {/* Connection handle */}
-            <div className={styles.connection_handle} onMouseDown={handleConnectionHandleMouseDown} />
+            <div
+                className={styles.connection_handle}
+                onMouseDown={isPhone ? undefined : handleConnectionHandleMouseDown}
+                onTouchStart={isPhone ? handleConnectionTouchStart : undefined}
+            />
         </div>
     );
 };

@@ -614,3 +614,32 @@
         0 0 0 3px white,
         0 4px 16px rgba(0, 0, 0, 0.2);
 }
+
+/* ── Touch / mobile ─────────────────────────────────────────────────────────
+   The canvas owns all touch gestures (pan, pinch-zoom, card drag), so disable
+   the browser's native panning/zoom on it; text fields inside cards opt back in
+   so typing/caret placement still works. The drag/resize/connection handles have
+   no hover on touch, so surface them and enlarge them into comfortable targets. */
+@media (max-width: 767px) {
+    .container {
+        touch-action: none;
+    }
+
+    .card_description_input,
+    .card_header_title_input,
+    .audio_timeline {
+        touch-action: auto;
+    }
+
+    .card_resize_handle {
+        opacity: 1;
+        width: 28px;
+        height: 28px;
+    }
+
+    .connection_handle {
+        opacity: 1;
+        width: 28px;
+        height: 28px;
+    }
+}

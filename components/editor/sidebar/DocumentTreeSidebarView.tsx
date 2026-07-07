@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { useViewContext } from "@src/context/ViewContext";
+import { useIsPhone } from "@src/lib/utils/hooks";
 import { DocumentNode } from "@src/lib/project/project-state";
 import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
 import { join } from "@src/lib/utils/misc";
@@ -23,7 +24,9 @@ const DocumentTreeSidebarView = () => {
     const t = useTranslations("editorSidebar");
     const { documents, repository } = useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
-    const { setSideDocument, closeDocument, primaryDocId, secondaryDocId } = useViewContext();
+    const { setSideDocument, closeDocument, primaryDocId, secondaryDocId, setLeftSidebarOpen } =
+        useViewContext();
+    const isPhone = useIsPhone();
 
     // Documents currently open in a panel — highlighted in the tree.
     const openDocIds = useMemo(
@@ -69,10 +72,17 @@ const DocumentTreeSidebarView = () => {
 
     const openDocument = useCallback(
         (node: DocumentNode) => {
-            if (node.type === "board") setSideDocument("secondary", node.id, "board");
-            else if (node.type === "editor") setSideDocument("secondary", node.id, "document");
+            // On phone only the primary side is ever rendered, so open documents
+            // there (the secondary side would be invisible, leaving no way to edit
+            // a freshly-created board/document); larger screens use the split side.
+            const side = isPhone ? "primary" : "secondary";
+            if (node.type === "board") setSideDocument(side, node.id, "board");
+            else if (node.type === "editor") setSideDocument(side, node.id, "document");
+            else return;
+            // Close the tree drawer so the opened document is actually visible.
+            if (isPhone) setLeftSidebarOpen(false);
         },
-        [setSideDocument],
+        [setSideDocument, isPhone, setLeftSidebarOpen],
     );
 
     const createInside = useCallback(

@@ -153,3 +153,33 @@
 .close_btn:hover {
     color: var(--primary-text);
 }
+
+/* Phone: the sidebar nav lives in the burger menu, so the modal drops it and
+ * becomes a full-screen content pane. Tabs are switched from the burger, which
+ * re-opens the dashboard on the chosen tab. */
+@media (max-width: 767px) {
+    .overlay {
+        backdrop-filter: none;
+    }
+
+    .modal {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .content {
+        flex: 1;
+        padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
+    }
+
+    .scrollArea {
+        padding-right: 8px;
+    }
+}

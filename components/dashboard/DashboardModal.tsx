@@ -1,17 +1,16 @@
 "use client";
 
-import { useContext, useEffect, useMemo, useRef, useState, Suspense } from "react";
+import { useContext, useEffect, useRef, useState, Suspense } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { ProjectContext } from "@src/context/ProjectContext";
-import { useCookieUser } from "@src/lib/utils/hooks";
 
-import SidebarMenu, { MenuSection } from "./DashboardSidebar";
+import SidebarMenu from "./DashboardSidebar";
+import { useDashboardMenu } from "./useDashboardMenu";
 import ProjectSettings from "./project/ProjectSettings";
 import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { CreditCard, FileDown, Folder, Globe, HardDrive, Keyboard, Lock, Palette, PanelsTopLeft, User, Users, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
@@ -26,54 +25,19 @@ import AboutSettings from "./AboutSettings";
 
 const DashboardModal = () => {
     const { isOpen, closeDashboard, activeTab, setActiveTab } = useContext(DashboardContext);
-    const { project, isYjsReady } = useContext(ProjectContext);
-    const { user, isLoading: isUserLoading } = useCookieUser();
     const t = useTranslations("modal");
 
-    const PROJECT_MENU = useMemo<MenuSection>(() => ({
-        group: t("groups.project"),
-        items: [
-            { id: "General",       label: t("tabs.General"),       icon: <Folder size={18} /> },
-            { id: "Layout",        label: t("tabs.Layout"),        icon: <PanelsTopLeft size={18} /> },
-            { id: "Production",    label: t("tabs.Production"),    icon: <Lock size={18} /> },
-            { id: "Export",        label: t("tabs.Export"),        icon: <FileDown size={18} /> },
-            { id: "Storage",       label: t("tabs.Storage"),       icon: <HardDrive size={18} /> },
-            { id: "Collaborators", label: t("tabs.Collaborators"), icon: <Users size={18} /> },
-        ],
-    }), [t]);
+    const {
+        structure: menuStructure,
+        projectMenu: PROJECT_MENU,
+        preferencesMenu: PREFERENCES_MENU,
+        accountMenu: ACCOUNT_MENU,
+        isInProject,
+        isSignedIn,
+        isUserLoading,
+    } = useDashboardMenu();
 
-    const PREFERENCES_MENU = useMemo<MenuSection>(() => ({
-        group: t("groups.preferences"),
-        items: [
-            { id: "Keybinds",   label: t("tabs.Keybinds"),   icon: <Keyboard size={18} /> },
-            { id: "Appearance", label: t("tabs.Appearance"), icon: <Palette size={18} /> },
-            { id: "Language",   label: t("tabs.Language"),   icon: <Globe size={18} /> },
-        ],
-    }), [t]);
-
-    const ACCOUNT_MENU = useMemo<MenuSection>(() => ({
-        group: t("groups.account"),
-        items: [
-            { id: "Profile",      label: t("tabs.Profile"),      icon: <User size={18} /> },
-            { id: "Subscription", label: t("tabs.Subscription"), icon: <CreditCard size={18} /> },
-        ],
-    }), [t]);
-
-    // We're in a project if either:
-    // - We have API membership data (cloud project), OR
-    // - Yjs is ready (local project on desktop without auth)
-    const isInProject = project !== null || isYjsReady;
-    const isSignedIn = !!user;
     const [dangerOpen, setDangerOpen] = useState(false);
-
-    // Build menu structure based on whether we're in a project context and signed in
-    const menuStructure = useMemo<MenuSection[]>(() => {
-        const sections: MenuSection[] = [];
-        if (isInProject) sections.push(PROJECT_MENU);
-        sections.push(PREFERENCES_MENU);
-        if (isSignedIn) sections.push(ACCOUNT_MENU);
-        return sections;
-    }, [isInProject, isSignedIn, PROJECT_MENU, PREFERENCES_MENU, ACCOUNT_MENU]);
 
     // Auto-switch active tab when the surrounding context changes:
     //  - leave a project tab when there's no longer a project to talk about

@@ -587,6 +587,7 @@
     "titlePlaceholder": "タイトル",
     "descriptionPlaceholder": "説明",
     "recordAudio": "音声を録音",
+    "importImage": "画像をインポート",
     "stopRecording": "停止",
     "audioUnsupported": "このブラウザは音声録音に対応していません。代わりに音声ファイルをドラッグしてください",
     "audioHint": "ボイスメモ",

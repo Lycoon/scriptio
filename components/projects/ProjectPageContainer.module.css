@@ -38,6 +38,11 @@
     gap: 12px;
 }
 
+/* Burger that opens the create/import drawer — phone only (see media query). */
+.mobile_menu_btn {
+    display: none;
+}
+
 .create_btn {
     font-weight: 600;
     padding-inline: 40px !important;
@@ -70,9 +75,32 @@
     width: clamp(320px, 80%, 780px);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 767px) {
     .center {
         width: 100%;
+    }
+
+    .header {
+        margin-top: 20px;
+        padding-inline: 16px;
+    }
+
+    .header_title {
+        top: 0;
+    }
+
+    /* The create/import buttons move into the burger drawer on phone, so the
+     * header keeps the title on the left and the burger on the right. */
+    .header_btns {
+        display: none;
+    }
+
+    .mobile_menu_btn {
+        display: flex;
+    }
+
+    .gridScroll {
+        padding: 24px 16px 40px;
     }
 }
 

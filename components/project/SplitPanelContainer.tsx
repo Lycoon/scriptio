@@ -127,7 +127,7 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
 
     return (
         <div ref={ref} className={styles.panel_switcher_anchor}>
-            {side === "primary" && !isPhone && (
+            {side === "primary" && (
                 <button className={styles.panel_switcher_btn} onClick={() => setLeftSidebarOpen((prev) => !prev)}>
                     {leftSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
                 </button>

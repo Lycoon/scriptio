@@ -587,6 +587,7 @@
     "titlePlaceholder": "Tytuł",
     "descriptionPlaceholder": "Opis",
     "recordAudio": "Nagraj dźwięk",
+    "importImage": "Importuj obraz",
     "stopRecording": "Zatrzymaj",
     "audioUnsupported": "Nagrywanie dźwięku nie jest obsługiwane w tej przeglądarce — przeciągnij plik audio",
     "audioHint": "Notatka głosowa",

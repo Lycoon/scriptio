@@ -19,7 +19,7 @@
 .right_sidebar_toggle {
     position: absolute;
     top: 8px;
-    right: 30px;
+    right: 8px;
     z-index: 5;
     width: 20px;
     height: 36px;
@@ -49,16 +49,9 @@
     background-color: rgba(0, 0, 0, 0.4);
 }
 
-@media (max-width: 767px) {
-    /* The navbar carries the sidebar arrows on phone. */
-    .right_sidebar_toggle {
-        display: none;
-    }
-}
-
-/* Touch devices (incl. iPad): enlarge the sidebar toggle to a comfortable tap
+/* Touch devices (phone + iPad): enlarge the sidebar toggle to a comfortable tap
  * target while keeping the desktop pointer size for mouse users. */
-@media (pointer: coarse) and (min-width: 768px) {
+@media (pointer: coarse) {
     .right_sidebar_toggle {
         width: 28px;
         height: 44px;

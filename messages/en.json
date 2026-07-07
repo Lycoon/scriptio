@@ -587,6 +587,7 @@
     "titlePlaceholder": "Title",
     "descriptionPlaceholder": "Description",
     "recordAudio": "Record audio",
+    "importImage": "Import image",
     "stopRecording": "Stop",
     "audioUnsupported": "Audio recording isn't supported in this browser — drag in an audio file instead",
     "audioHint": "Voice note",

@@ -104,3 +104,33 @@
     opacity: 0.4;
     cursor: not-allowed;
 }
+
+/* Phone: the two 280px buttons can't sit side by side, so stack them and let
+ * each fill the width (capped) with a little breathing room from the edges. */
+@media (max-width: 767px) {
+    .container {
+        gap: 24px;
+        padding: 0 24px;
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .row {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        max-width: 360px;
+        gap: 20px;
+    }
+
+    .btnWrapper {
+        width: 100%;
+    }
+
+    .createBtn,
+    .importBtn {
+        width: 100%;
+    }
+}

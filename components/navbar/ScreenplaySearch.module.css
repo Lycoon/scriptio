@@ -79,14 +79,15 @@
 
 /* Phone: the search opens as a panel below the navbar with the input at the
  * top, instead of an inline field that would expand into (and crush) the
- * navbar's format dropdown. */
+ * navbar's format dropdown. Anchored to the right, under the navbar search
+ * button, at the same fixed width as on desktop. */
 @media (max-width: 767px) {
     .dropdown {
         position: fixed;
         top: calc(var(--navbar-height) + 4px);
-        left: calc(12px + var(--safe-left));
+        left: auto;
         right: calc(12px + var(--safe-right));
-        width: auto;
+        width: 220px;
     }
 }
 

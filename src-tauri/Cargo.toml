@@ -28,3 +28,9 @@ tauri-plugin-dialog = "2.6.0"
 tauri-plugin-fs = "2.4.5"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-opener = "2.5.3"
+
+# iOS: disable WKWebView text autosizing (see textAutosizing fix in lib.rs).
+# Versions pinned to what Tauri already resolves so no extra tree is pulled.
+[target.'cfg(target_os = "ios")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSString", "NSValue"] }

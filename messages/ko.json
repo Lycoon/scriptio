@@ -587,6 +587,7 @@
     "titlePlaceholder": "제목",
     "descriptionPlaceholder": "설명",
     "recordAudio": "오디오 녹음",
+    "importImage": "이미지 가져오기",
     "stopRecording": "정지",
     "audioUnsupported": "이 브라우저에서는 오디오 녹음을 지원하지 않습니다. 대신 오디오 파일을 끌어다 놓으세요",
     "audioHint": "음성 메모",
