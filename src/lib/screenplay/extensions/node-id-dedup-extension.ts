@@ -1,5 +1,6 @@
 import { Extension } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
+import { ReplaceAroundStep, ReplaceStep } from "@tiptap/pm/transform";
 import { generateNodeId } from "@src/lib/screenplay/nodes";
 import { ScreenplayElement } from "../../utils/enums";
 
@@ -20,6 +21,26 @@ type NodeIdDedupConfig = {
  * NOTE: production sceneLocks are intentionally NOT duplicated here — a pasted scene
  * should start unlocked/provisional, not inherit the source's frozen label.
  */
+/**
+ * Can this transaction have introduced a duplicate data-id? Only steps that
+ * insert BLOCK content can: paste/drop (copied blocks share the source's ids),
+ * Enter splits (ProseMirror copies attrs onto both halves), and node-wrapper
+ * replacements (setNodeMarkup). Plain text edits — the typing hot path —
+ * insert inline content only and can never duplicate an id, so the O(doc)
+ * dedup scan below is skipped for them. Unknown step types count as "maybe"
+ * to stay conservative.
+ */
+const mayIntroduceDuplicateIds = (tr: Transaction): boolean => {
+    for (const step of tr.steps) {
+        if (!(step instanceof ReplaceStep) && !(step instanceof ReplaceAroundStep)) return true;
+        const content = step.slice.content;
+        for (let i = 0; i < content.childCount; i++) {
+            if (content.child(i).isBlock) return true;
+        }
+    }
+    return false;
+};
+
 export const createNodeIdDedupExtension = (config: NodeIdDedupConfig) => {
     return Extension.create({
         name: "nodeIdDedup",
@@ -34,6 +55,7 @@ export const createNodeIdDedupExtension = (config: NodeIdDedupConfig) => {
                         if (!docChanged) return null;
 
                         const hasPaste = transactions.some((tr) => tr.getMeta("uiEvent") === "paste");
+                        if (!hasPaste && !transactions.some(mayIntroduceDuplicateIds)) return null;
 
                         const tr = newState.tr;
                         let modified = false;
