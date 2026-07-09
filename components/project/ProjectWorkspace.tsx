@@ -10,11 +10,13 @@ import SuggestionMenu, { SuggestionData } from "@components/editor/SuggestionMen
 import { Popup } from "@components/popup/Popup";
 import SplitPanelContainer from "./SplitPanelContainer";
 import EditorFooter from "./EditorFooter";
+import MobileFormatToolbar from "@components/editor/MobileFormatToolbar";
 import styles from "./ProjectWorkspace.module.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { join } from "@src/lib/utils/misc";
 
 const ProjectWorkspace = () => {
-    const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen, chromeHidden } = useViewContext();
     const isPhone = useIsPhone();
 
     // On phone the sidebars slide over the editor as drawers; a backdrop dims the
@@ -52,7 +54,10 @@ const ProjectWorkspace = () => {
                 />
 
                 {/* Right sidebar toggle — an edge chevron on every platform */}
-                <div className={styles.right_sidebar_toggle} onClick={() => setRightSidebarOpen((prev) => !prev)}>
+                <div
+                    className={join(styles.right_sidebar_toggle, chromeHidden ? styles.chrome_hidden : "")}
+                    onClick={() => setRightSidebarOpen((prev) => !prev)}
+                >
                     {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                 </div>
 
@@ -65,6 +70,9 @@ const ProjectWorkspace = () => {
 
             {/* Right sidebar */}
             <EditorSidebarFormat />
+
+            {/* Phone-only formatting bar above the on-screen keyboard */}
+            <MobileFormatToolbar />
         </div>
     );
 };

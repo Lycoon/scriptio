@@ -93,6 +93,7 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
         swapPanels,
         leftSidebarOpen,
         setLeftSidebarOpen,
+        chromeHidden,
     } = useViewContext();
 
     const handleSplitToggle = useCallback(() => {
@@ -126,7 +127,7 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
     );
 
     return (
-        <div ref={ref} className={styles.panel_switcher_anchor}>
+        <div ref={ref} className={join(styles.panel_switcher_anchor, chromeHidden ? styles.chrome_hidden : "")}>
             {side === "primary" && (
                 <button className={styles.panel_switcher_btn} onClick={() => setLeftSidebarOpen((prev) => !prev)}>
                     {leftSidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
