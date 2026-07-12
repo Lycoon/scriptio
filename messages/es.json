@@ -1,11 +1,30 @@
 {
-  "outline": {
-    "title": "Esquema",
-    "empty": "Envía escenas y tarjetas aquí para empezar a esquematizar tu historia.",
+  "timeline": {
+    "title": "Línea de tiempo",
+    "layer": "Pista",
+    "addLayer": "Añadir pista",
+    "deleteLayer": "Eliminar pista",
+    "renameLayer": "Renombrar capa",
+    "layerPlaceholder": "Nombre de la pista",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "close": "Cerrar",
+    "empty": "Envía escenas y tarjetas aquí para colocarlas en la línea de tiempo.",
     "untitled": "Sin título",
-    "unlinked": "Desvinculado",
-    "unlinkedHint": "La fuente de este bloque ya no existe.",
-    "removeFromOutline": "Quitar del esquema"
+    "unlinkedHint": "La fuente de este clip ya no existe.",
+    "removeClip": "Quitar de la línea de tiempo",
+    "featureLength": "Duración",
+    "unitMinutes": "Minutos",
+    "unitPages": "Páginas",
+    "unitMinutesShort": "min",
+    "switchUnit": "Cambiar unidades (minutos / páginas)",
+    "scale": "Escala",
+    "collapseLayer": "Contraer",
+    "expandLayer": "Expandir",
+    "indentLayer": "Anidar bajo la pista anterior",
+    "outdentLayer": "Desanidar pista",
+    "dragLayer": "Arrastrar para reordenar o anidar",
+    "scenes": "Escenas"
   },
   "navbar": {
     "menu": "Menú",
@@ -16,7 +35,7 @@
     "analytics": "Analíticas",
     "settings": "Ajustes",
     "back": "Volver a proyectos",
-    "outline": "Esquema",
+    "timeline": "Línea de tiempo",
     "screenplay": "Guión",
     "board": "Tablero",
     "titlePage": "Portada",
@@ -511,7 +530,7 @@
     "dangerZoneTitle": "Zona de peligro"
   },
   "contextMenu": {
-    "sendToOutline": "Enviar al esquema",
+    "sendToTimeline": "Enviar a la línea de tiempo",
     "goToScene": "Ir a la escena",
     "edit": "Editar",
     "copy": "Copiar",
@@ -579,7 +598,7 @@
     }
   },
   "board": {
-    "sendToOutline": "Enviar al esquema",
+    "sendToTimeline": "Enviar a la línea de tiempo",
     "duplicate": "Duplicar",
     "delete": "Eliminar",
     "createCard": "Crear tarjeta",

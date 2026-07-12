@@ -160,7 +160,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         setOffset({ x: newOffsetX, y: newOffsetY });
     }, []);
 
-    // Focus a specific card when navigated to from the Outline. Waits until the
+    // Focus a specific card when navigated to from the Timeline. Waits until the
     // board's cards have loaded and the target exists on this board, then centers
     // on it and clears the request so it fires once.
     useEffect(() => {
@@ -923,17 +923,16 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         [cards, saveCards],
     );
 
-    // Send card to the Outline view
-    const handleSendToOutline = useCallback(
+    // Send card to the Timeline
+    const handleSendToTimeline = useCallback(
         (card: BoardCardData) => {
-            repository?.addOutlineItem({
+            repository?.appendTimelineClip({
                 source: "card",
                 refDocId: docId,
                 refId: card.id,
                 title: card.title,
                 preview: card.description,
                 color: card.color,
-                parentId: null,
             });
         },
         [repository, docId],
@@ -975,8 +974,8 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                         {(card.type ?? "text") === "text" && (
                             <ContextMenuItem
                                 icon={ListTree}
-                                text={t("sendToOutline")}
-                                action={() => handleSendToOutline(card)}
+                                text={t("sendToTimeline")}
+                                action={() => handleSendToTimeline(card)}
                             />
                         )}
                         <ContextMenuItem
@@ -988,7 +987,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                 ),
             });
         },
-        [updateContextMenu, t, handleChangeCardColor, handleDuplicateCard, handleSendToOutline, handleDeleteCard],
+        [updateContextMenu, t, handleChangeCardColor, handleDuplicateCard, handleSendToTimeline, handleDeleteCard],
     );
 
     // Open the shared context-menu host for an arrow.

@@ -1,11 +1,30 @@
 {
-  "outline": {
-    "title": "Outline",
-    "empty": "Send scenes and cards here to start outlining your story.",
+  "timeline": {
+    "title": "Timeline",
+    "layer": "Layer",
+    "addLayer": "Add layer",
+    "deleteLayer": "Delete layer",
+    "renameLayer": "Rename layer",
+    "layerPlaceholder": "Layer name",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "close": "Close",
+    "empty": "Send scenes and cards here to place them on the timeline.",
     "untitled": "Untitled",
-    "unlinked": "Unlinked",
-    "unlinkedHint": "The source of this block no longer exists.",
-    "removeFromOutline": "Remove from outline"
+    "unlinkedHint": "The source of this clip no longer exists.",
+    "removeClip": "Remove from timeline",
+    "featureLength": "Feature length",
+    "unitMinutes": "Minutes",
+    "unitPages": "Pages",
+    "unitMinutesShort": "min",
+    "switchUnit": "Switch units (minutes / pages)",
+    "scale": "Scale",
+    "collapseLayer": "Collapse",
+    "expandLayer": "Expand",
+    "indentLayer": "Indent under previous layer",
+    "outdentLayer": "Outdent layer",
+    "dragLayer": "Drag to reorder or nest",
+    "scenes": "Scenes"
   },
   "navbar": {
     "menu": "Menu",
@@ -16,7 +35,7 @@
     "analytics": "Analytics",
     "settings": "Settings",
     "back": "Back to projects",
-    "outline": "Outline",
+    "timeline": "Timeline",
     "screenplay": "Screenplay",
     "board": "Board",
     "titlePage": "Title Page",
@@ -511,7 +530,7 @@
     "dangerZoneTitle": "Danger zone"
   },
   "contextMenu": {
-    "sendToOutline": "Send to outline",
+    "sendToTimeline": "Send to timeline",
     "goToScene": "Go to scene",
     "edit": "Edit",
     "copy": "Copy",
@@ -579,7 +598,7 @@
     }
   },
   "board": {
-    "sendToOutline": "Send to outline",
+    "sendToTimeline": "Send to timeline",
     "duplicate": "Duplicate",
     "delete": "Delete",
     "createCard": "Create card",

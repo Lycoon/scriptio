@@ -1,11 +1,30 @@
 {
-  "outline": {
-    "title": "Gliederung",
-    "empty": "Sende Szenen und Karten hierher, um deine Geschichte zu gliedern.",
+  "timeline": {
+    "title": "Zeitleiste",
+    "layer": "Spur",
+    "addLayer": "Spur hinzufügen",
+    "deleteLayer": "Spur löschen",
+    "renameLayer": "Ebene umbenennen",
+    "layerPlaceholder": "Spurname",
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "close": "Schließen",
+    "empty": "Sende Szenen und Karten hierher, um sie auf der Zeitleiste zu platzieren.",
     "untitled": "Ohne Titel",
-    "unlinked": "Getrennt",
-    "unlinkedHint": "Die Quelle dieses Blocks existiert nicht mehr.",
-    "removeFromOutline": "Aus Gliederung entfernen"
+    "unlinkedHint": "Die Quelle dieses Clips existiert nicht mehr.",
+    "removeClip": "Aus Zeitleiste entfernen",
+    "featureLength": "Filmlänge",
+    "unitMinutes": "Minuten",
+    "unitPages": "Seiten",
+    "unitMinutesShort": "Min.",
+    "switchUnit": "Einheit wechseln (Minuten / Seiten)",
+    "scale": "Skala",
+    "collapseLayer": "Einklappen",
+    "expandLayer": "Ausklappen",
+    "indentLayer": "Unter vorheriger Spur einrücken",
+    "outdentLayer": "Spur ausrücken",
+    "dragLayer": "Ziehen zum Umsortieren oder Verschachteln",
+    "scenes": "Szenen"
   },
   "navbar": {
     "menu": "Menü",
@@ -16,7 +35,7 @@
     "analytics": "Analysen",
     "settings": "Einstellungen",
     "back": "Zurück zu Projekten",
-    "outline": "Gliederung",
+    "timeline": "Zeitleiste",
     "screenplay": "Drehbuch",
     "board": "Board",
     "titlePage": "Titelseite",
@@ -512,7 +531,7 @@
     "dangerZoneTitle": "Gefahrenzone"
   },
   "contextMenu": {
-    "sendToOutline": "An Gliederung senden",
+    "sendToTimeline": "An Zeitleiste senden",
     "goToScene": "Zur Szene gehen",
     "edit": "Bearbeiten",
     "copy": "Kopieren",
@@ -580,7 +599,7 @@
     }
   },
   "board": {
-    "sendToOutline": "An Gliederung senden",
+    "sendToTimeline": "An Zeitleiste senden",
     "duplicate": "Duplizieren",
     "delete": "Löschen",
     "createCard": "Karte erstellen",

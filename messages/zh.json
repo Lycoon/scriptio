@@ -1,11 +1,30 @@
 {
-  "outline": {
-    "title": "大纲",
-    "empty": "将场景和卡片发送到这里，开始梳理你的故事大纲。",
+  "timeline": {
+    "title": "时间线",
+    "layer": "图层",
+    "addLayer": "添加图层",
+    "deleteLayer": "删除图层",
+    "renameLayer": "重命名图层",
+    "layerPlaceholder": "图层名称",
+    "zoomIn": "放大",
+    "zoomOut": "缩小",
+    "close": "关闭",
+    "empty": "将场景和卡片发送到此处即可放置在时间线上。",
     "untitled": "无标题",
-    "unlinked": "已断开",
-    "unlinkedHint": "此区块的来源已不存在。",
-    "removeFromOutline": "从大纲中移除"
+    "unlinkedHint": "该片段的来源已不存在。",
+    "removeClip": "从时间线移除",
+    "featureLength": "影片时长",
+    "unitMinutes": "分钟",
+    "unitPages": "页数",
+    "unitMinutesShort": "分",
+    "switchUnit": "切换单位（分钟／页数）",
+    "scale": "缩放",
+    "collapseLayer": "折叠",
+    "expandLayer": "展开",
+    "indentLayer": "嵌套到上一图层下",
+    "outdentLayer": "取消嵌套",
+    "dragLayer": "拖动以重新排序或嵌套",
+    "scenes": "场景"
   },
   "navbar": {
     "menu": "菜单",
@@ -16,7 +35,7 @@
     "analytics": "分析",
     "settings": "设置",
     "back": "返回项目",
-    "outline": "大纲",
+    "timeline": "时间线",
     "screenplay": "剧本",
     "board": "剧本板",
     "titlePage": "扉页",
@@ -511,7 +530,7 @@
     "dangerZoneTitle": "危险区域"
   },
   "contextMenu": {
-    "sendToOutline": "发送到大纲",
+    "sendToTimeline": "发送到时间线",
     "goToScene": "跳转到场景",
     "edit": "编辑",
     "copy": "复制",
@@ -579,7 +598,7 @@
     }
   },
   "board": {
-    "sendToOutline": "发送到大纲",
+    "sendToTimeline": "发送到时间线",
     "duplicate": "复制",
     "delete": "删除",
     "createCard": "创建卡片",

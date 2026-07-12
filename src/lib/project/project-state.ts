@@ -42,8 +42,9 @@ export type {
     BoardData,
     DocumentNode,
     DocumentNodeType,
-    OutlineItem,
-    OutlineItemSource,
+    TimelineLayer,
+    TimelineClip,
+    TimelineClipSource,
     ProjectData,
     TypedMap,
 } from "./project-doc";
@@ -195,7 +196,8 @@ export const projectDataOf = (ydoc: ProjectState): ProjectData => ({
     production: ydoc.production().toJSON(),
     comments: ydoc.comments().toJSON(),
     documents: ydoc.documents().toJSON(),
-    outline: ydoc.outline().toJSON(),
+    timelineLayers: ydoc.timelineLayers().toJSON(),
+    timelineClips: ydoc.timelineClips().toJSON(),
     shelf: ydoc.shelf().toJSON(),
     dictionary: ydoc.dictionary().toJSON(),
     documentContent: documentContentOf(ydoc),
@@ -243,7 +245,8 @@ export const applyProjectData = (ydoc: ProjectState, data: Partial<ProjectData>)
         fillMap(asMap(ydoc.production()), data.production);
         fillMap(asMap(ydoc.comments()), data.comments);
         fillMap(asMap(ydoc.documents()), data.documents);
-        fillMap(asMap(ydoc.outline()), data.outline);
+        fillMap(asMap(ydoc.timelineLayers()), data.timelineLayers);
+        fillMap(asMap(ydoc.timelineClips()), data.timelineClips);
         fillMap(asMap(ydoc.shelf()), data.shelf);
         fillMap(asMap(ydoc.dictionary()), data.dictionary);
 
@@ -315,7 +318,8 @@ export const clearProjectData = (ydoc: ProjectState): void => {
         ydoc.production().clear();
         ydoc.comments().clear();
         ydoc.documents().clear();
-        ydoc.outline().clear();
+        ydoc.timelineLayers().clear();
+        ydoc.timelineClips().clear();
         ydoc.shelf().clear();
         ydoc.dictionary().clear();
     });

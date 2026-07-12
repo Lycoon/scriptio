@@ -1,11 +1,30 @@
 {
-  "outline": {
-    "title": "アウトライン",
-    "empty": "シーンやカードをここに送って、ストーリーの構成を始めましょう。",
+  "timeline": {
+    "title": "タイムライン",
+    "layer": "レイヤー",
+    "addLayer": "レイヤーを追加",
+    "deleteLayer": "レイヤーを削除",
+    "renameLayer": "レイヤー名を変更",
+    "layerPlaceholder": "レイヤー名",
+    "zoomIn": "拡大",
+    "zoomOut": "縮小",
+    "close": "閉じる",
+    "empty": "シーンやカードをここに送るとタイムラインに配置できます。",
     "untitled": "無題",
-    "unlinked": "リンク解除",
-    "unlinkedHint": "このブロックの参照元は存在しなくなりました。",
-    "removeFromOutline": "アウトラインから削除"
+    "unlinkedHint": "このクリップの元データは存在しません。",
+    "removeClip": "タイムラインから削除",
+    "featureLength": "作品の長さ",
+    "unitMinutes": "分",
+    "unitPages": "ページ",
+    "unitMinutesShort": "分",
+    "switchUnit": "単位を切り替え（分／ページ）",
+    "scale": "スケール",
+    "collapseLayer": "折りたたむ",
+    "expandLayer": "展開",
+    "indentLayer": "前のレイヤーの下に入れる",
+    "outdentLayer": "レイヤーを外に出す",
+    "dragLayer": "ドラッグで並べ替え・入れ子",
+    "scenes": "シーン"
   },
   "navbar": {
     "menu": "メニュー",
@@ -16,7 +35,7 @@
     "analytics": "分析",
     "settings": "設定",
     "back": "プロジェクトに戻る",
-    "outline": "アウトライン",
+    "timeline": "タイムライン",
     "screenplay": "脚本",
     "board": "ボード",
     "titlePage": "タイトルページ",
@@ -511,7 +530,7 @@
     "dangerZoneTitle": "危険ゾーン"
   },
   "contextMenu": {
-    "sendToOutline": "アウトラインに送る",
+    "sendToTimeline": "タイムラインに送る",
     "goToScene": "シーンへ移動",
     "edit": "編集",
     "copy": "コピー",
@@ -579,7 +598,7 @@
     }
   },
   "board": {
-    "sendToOutline": "アウトラインに送る",
+    "sendToTimeline": "タイムラインに送る",
     "duplicate": "複製",
     "delete": "削除",
     "createCard": "カードを作成",

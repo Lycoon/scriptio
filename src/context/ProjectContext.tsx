@@ -30,7 +30,8 @@ import {
     DEFAULT_SKIPPED_SCENE_LETTERS,
     ShelfEntry,
     DocumentNode,
-    OutlineItem,
+    TimelineLayer,
+    TimelineClip,
     ProjectStatus,
 } from "@src/lib/project/project-state";
 import { Screenplay } from "@src/lib/utils/types";
@@ -197,10 +198,11 @@ export interface ProjectContextType {
     documentEditor: Editor | null;
     updateDocumentEditor: (editor: Editor | null) => void;
 
-    // Outline view (project-wide ordered list of scene/card references)
-    outline: Record<string, OutlineItem>;
+    // Timeline (horizontal, minute-scaled lanes of scene/card clips)
+    timelineLayers: Record<string, TimelineLayer>;
+    timelineClips: Record<string, TimelineClip>;
     /** A board card to focus next time its board canvas mounts/becomes visible
-     *  (set when navigating to a card from the Outline). Cleared by the canvas. */
+     *  (set when navigating to a card from the Timeline). Cleared by the canvas. */
     boardFocusCardId: string | null;
     setBoardFocusCardId: (cardId: string | null) => void;
 }
@@ -325,8 +327,9 @@ const defaultContextValue: ProjectContextType = {
     documents: {},
     documentEditor: null,
     updateDocumentEditor: () => {},
-    // Outline defaults
-    outline: {},
+    // Timeline defaults
+    timelineLayers: {},
+    timelineClips: {},
     boardFocusCardId: null,
     setBoardFocusCardId: () => {},
 };
@@ -476,8 +479,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [documentEditor, setDocumentEditor] = useState<Editor | null>(null);
     const updateDocumentEditor = useCallback((editor: Editor | null) => setDocumentEditor(editor), []);
 
-    // Outline state
-    const [outline, setOutline] = useState<Record<string, OutlineItem>>({});
+    // Timeline state
+    const [timelineLayers, setTimelineLayers] = useState<Record<string, TimelineLayer>>({});
+    const [timelineClips, setTimelineClips] = useState<Record<string, TimelineClip>>({});
     const [boardFocusCardId, setBoardFocusCardId] = useState<string | null>(null);
 
     // Create repository instance when ydoc is available (dynamically imported)
@@ -806,10 +810,14 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setDocuments(docs);
         });
 
-        // Observe outline changes
-        setOutline(repository.outlineItems);
-        const unsubscribeOutline = repository.observeOutline((items) => {
-            setOutline(items);
+        // Observe timeline changes
+        setTimelineLayers(repository.timelineLayers);
+        setTimelineClips(repository.timelineClips);
+        const unsubscribeTimelineLayers = repository.observeTimelineLayers((layers) => {
+            setTimelineLayers(layers);
+        });
+        const unsubscribeTimelineClips = repository.observeTimelineClips((clips) => {
+            setTimelineClips(clips);
         });
 
         return () => {
@@ -823,7 +831,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             unsubscribeMetadata();
             unsubscribeShelf();
             unsubscribeDocuments();
-            unsubscribeOutline();
+            unsubscribeTimelineLayers();
+            unsubscribeTimelineClips();
         };
     }, [repository, updateCharacters, updateLocations, updateScenes, updateScreenplay]);
 
@@ -1255,7 +1264,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             documents,
             documentEditor,
             updateDocumentEditor,
-            outline,
+            timelineLayers,
+            timelineClips,
             boardFocusCardId,
             setBoardFocusCardId,
         }),
@@ -1359,7 +1369,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             documents,
             documentEditor,
             updateDocumentEditor,
-            outline,
+            timelineLayers,
+            timelineClips,
             boardFocusCardId,
             setBoardFocusCardId,
         ],

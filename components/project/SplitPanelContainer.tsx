@@ -11,7 +11,6 @@ import TitlePagePanel from "@components/editor/TitlePagePanel";
 import DraftEditorPanel from "@components/editor/DraftEditorPanel";
 import TreeDocumentPanel from "@components/editor/TreeDocumentPanel";
 import BoardPanel from "@components/editor/BoardPanel";
-import OutlinePanel from "@components/editor/outline/OutlinePanel";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
@@ -21,7 +20,7 @@ import {
     ChevronRight,
     Clapperboard,
     FileText,
-    ListTree,
+    GanttChartSquare,
     Menu,
     PanelRight,
     PanelRightClose,
@@ -61,8 +60,6 @@ const PanelRenderer = ({
             return <TitlePagePanel isVisible={isVisible} />;
         case "draft":
             return <DraftEditorPanel isVisible={isVisible} />;
-        case "outline":
-            return <OutlinePanel isVisible={isVisible} />;
         default:
             // board/document are document panels, rendered per-side (not here).
             return null;
@@ -72,14 +69,13 @@ const PanelRenderer = ({
 // Singleton view panels are kept mounted and swapped in/out via CSS so heavy
 // editors don't reinitialise. Board/editor documents are rendered per-side
 // instead, so two documents can be open at once.
-const SINGLETON_PANELS: PanelType[] = ["screenplay", "statistics", "title", "draft", "outline"];
+const SINGLETON_PANELS: PanelType[] = ["screenplay", "statistics", "title", "draft"];
 
 // Boards and tree documents are opened from the document-tree sidebar (they are
 // per-document), so they are not listed here.
 const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey: string }[] = [
     { type: "screenplay", icon: Clapperboard, labelKey: "screenplay" },
     { type: "title", icon: FileText, labelKey: "titlePage" },
-    { type: "outline", icon: ListTree, labelKey: "outline" },
 ];
 
 const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; side: "primary" | "secondary" }) => {
@@ -94,6 +90,8 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
         leftSidebarOpen,
         setLeftSidebarOpen,
         chromeHidden,
+        timelineOpen,
+        setTimelineOpen,
     } = useViewContext();
 
     const handleSplitToggle = useCallback(() => {
@@ -138,6 +136,18 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
             </button>
             {isOpen && (
                 <div className={dropdown.dropdown_menu} style={{ left: 0, transform: "none" }}>
+                    {/* Timeline strip toggle — available on every platform. */}
+                    <button
+                        className={`${dropdown.dropdown_item} ${timelineOpen ? dropdown.dropdown_item_active : ""}`}
+                        onClick={() => {
+                            setTimelineOpen((prev) => !prev);
+                            setIsOpen(false);
+                        }}
+                    >
+                        <GanttChartSquare size={14} />
+                        <span className={dropdown.item_label}>{t("timeline")}</span>
+                    </button>
+                    <div className={styles.panel_switcher_separator} />
                     {/* Split view is single-panel-only on phones. */}
                     {!isPhone && (
                         <>

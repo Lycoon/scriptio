@@ -666,7 +666,7 @@ const DocumentEditorPanel = ({
                 }
             }
 
-            // Detect a scene heading at the caret to offer "Send to outline".
+            // Detect a scene heading at the caret to offer "Send to timeline".
             // Independent of `shelving` so it works in editor documents too.
             let outlineScene: { refDocId: string; refId: string; title: string } | undefined;
             if (config.documentId) {

@@ -1,0 +1,656 @@
+.timeline {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 45vh;
+    background-color: var(--main-bg);
+    border-bottom: 1px solid var(--separator);
+    box-sizing: border-box;
+    overflow: hidden;
+    flex-shrink: 0;
+    /* Chrome (ruler labels, clip titles + durations, etc.) is not selectable;
+     * the editable text inputs re-enable selection below. */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.timeline input {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+/* ---- Toolbar ---- */
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    flex-shrink: 0;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--separator);
+}
+
+.toolbar_title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+.toolbar_spacer {
+    flex: 1;
+}
+
+.tool_btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--secondary);
+    color: var(--secondary-text);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.tool_btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.tool_btn_label {
+    white-space: nowrap;
+}
+
+.zoom {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.icon_btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.icon_btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
+.icon_btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* Feature length */
+.length_anchor {
+    position: relative;
+    display: inline-flex;
+}
+
+.length_popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    background-color: var(--main-bg);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+}
+
+.length_label {
+    font-size: 11px;
+    color: var(--secondary-text);
+}
+
+.length_field {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.length_input {
+    width: 72px;
+    padding: 5px 8px;
+    border: 1px solid var(--separator);
+    border-radius: 6px;
+    background-color: var(--secondary);
+    color: var(--primary-text);
+    font-size: 13px;
+    outline: none;
+}
+
+.length_input:focus {
+    border-color: var(--tertiary);
+}
+
+.length_unit {
+    font-size: 12px;
+    color: var(--secondary-text);
+}
+
+/* Scale slider */
+.zoom_icon {
+    color: var(--secondary-text);
+    flex-shrink: 0;
+}
+
+.zoom_slider {
+    width: 96px;
+    cursor: pointer;
+    accent-color: var(--tertiary);
+}
+
+/* ---- Custom horizontal scrollbar ---- */
+
+/* A dedicated, always-present horizontal scrollbar sitting just above the
+ * tracks. Native macOS overlay scrollbars take no space and auto-hide, which
+ * left no reliable way to scroll a zoomed-in timeline — so we render our own. */
+.hscroll {
+    flex-shrink: 0;
+    height: 16px;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--separator);
+    background-color: var(--main-bg);
+}
+
+.hscroll_track {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background-color: var(--secondary);
+}
+
+.hscroll_thumb {
+    position: absolute;
+    top: 0;
+    height: 8px;
+    min-width: 28px;
+    border-radius: 4px;
+    background-color: var(--secondary-text);
+    cursor: grab;
+    touch-action: none;
+}
+
+.hscroll_thumb:hover {
+    background-color: var(--primary-text);
+}
+
+.hscroll_thumb:active {
+    cursor: grabbing;
+}
+
+/* ---- Scroll area ---- */
+
+/* Layer tracks — scrolls vertically (layers) and horizontally (time). The
+ * native horizontal scrollbar is hidden; the custom .hscroll above drives the
+ * horizontal position instead. */
+.tracks_scroll {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow-x: scroll;
+    overflow-y: auto;
+}
+
+.tracks_scroll::-webkit-scrollbar:horizontal {
+    height: 0;
+}
+
+.grid {
+    position: relative;
+    min-width: 100%;
+}
+
+.rows {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid var(--separator);
+}
+
+/* Drop indicator: highlight the whole hovered lane (track + its sticky label) so
+ * the drop target is obvious. A thin edge line additionally marks a reorder
+ * (before/after) vs a nest (into). Driven by the row's data-drop attribute
+ * (rendered from React state). Uses --secondary-text (a mid-tone in every
+ * theme) so the tint is clearly visible over the neutral background. */
+.row[data-drop],
+.row[data-drop] .label {
+    background-color: color-mix(in srgb, var(--secondary-text) 45%, var(--main-bg));
+}
+
+.row[data-drop="before"]::before,
+.row[data-drop="after"]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--secondary-text);
+    z-index: 4;
+    pointer-events: none;
+}
+
+.row[data-drop="before"]::before {
+    top: -1px;
+}
+
+.row[data-drop="after"]::after {
+    bottom: -1px;
+}
+
+/* Left name column — pinned while the tracks scroll horizontally. Doubles as the
+ * drag handle: pressing and moving it reorders/nests the lane. */
+.label {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    padding: 0 6px;
+    background-color: var(--main-bg);
+    border-right: 1px solid var(--separator);
+    box-sizing: border-box;
+    cursor: grab;
+    touch-action: none;
+}
+
+.label:active {
+    cursor: grabbing;
+}
+
+/* While renaming, the label is a text field, not a drag handle. */
+.label_editing,
+.label_editing:active {
+    cursor: default;
+    touch-action: auto;
+}
+
+.label_dragging {
+    opacity: 0.4;
+}
+
+/* Per-depth inset that nests child lanes under their parent. */
+.label_indent {
+    flex-shrink: 0;
+}
+
+/* Fold chevron (only present when a layer has children). */
+.fold_btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.fold_btn:hover {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+/* Keeps leaf lanes' names aligned with the ones that have a chevron. */
+.fold_spacer {
+    flex-shrink: 0;
+    width: 18px;
+}
+
+.label_input {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 6px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: none;
+    color: var(--primary-text);
+    font-size: 12px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.label_input:hover {
+    background-color: var(--secondary);
+}
+
+.label_input:focus {
+    border-color: var(--tertiary);
+    background-color: var(--secondary);
+}
+
+/* Read-only name display (swaps to .label_input on double-click / rename). */
+.label_name {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--primary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Track — clip container within a row. */
+.track {
+    position: relative;
+    flex-shrink: 0;
+}
+
+/* ---- Clip ---- */
+
+.clip {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    display: flex;
+    align-items: stretch;
+    box-sizing: border-box;
+    border-radius: 6px;
+    border-left: 3px solid var(--card-color);
+    background-color: color-mix(in srgb, var(--card-color) 26%, var(--main-bg));
+    cursor: grab;
+    overflow: hidden;
+    user-select: none;
+    touch-action: none;
+    transition: background-color 0.12s ease;
+}
+
+.clip:hover {
+    background-color: color-mix(in srgb, var(--card-color) 38%, var(--main-bg));
+}
+
+.clip:active {
+    cursor: grabbing;
+}
+
+.clip_missing {
+    opacity: 0.55;
+}
+
+.clip_body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 20px 0 10px;
+}
+
+.clip_icon {
+    flex-shrink: 0;
+    color: var(--secondary-text);
+}
+
+.clip_title {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-text);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+.clip_unlinked {
+    flex-shrink: 0;
+    color: var(--secondary-text);
+}
+
+.clip_duration {
+    flex-shrink: 0;
+    margin-left: auto;
+    padding-left: 6px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--secondary-text);
+    pointer-events: none;
+}
+
+/* Resize handles at each edge. */
+.handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    z-index: 2;
+    cursor: ew-resize;
+}
+
+.handle_l {
+    left: 0;
+}
+
+.handle_r {
+    right: 0;
+}
+
+.empty_hint {
+    position: absolute;
+    top: 14px;
+    z-index: 1;
+    font-size: 13px;
+    color: var(--secondary-text);
+    pointer-events: none;
+}
+
+/* Playhead — vertical marker across every lane at the selected time. Sits above
+ * clips but below the sticky label (z-index 2), so it hides under the label when
+ * scrolled off the left edge. */
+.playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    background-color: var(--tertiary);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ---- Scene overview line (read-only band above the tracks) ---- */
+
+.scene_row {
+    display: flex;
+    flex-direction: row;
+    flex-shrink: 0;
+    z-index: 3;
+    background-color: var(--main-bg);
+    border-top: 1px solid var(--separator);
+}
+
+.scene_corner {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    background-color: var(--main-bg);
+    border-right: 1px solid var(--separator);
+}
+
+.scene_unit {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary-text);
+}
+
+/* Clips the band and lets it slide horizontally with the tracks. */
+.scene_viewport {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.scene_line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    will-change: transform;
+}
+
+/* One scene block. Purely informative — no pointer affordances. */
+.scene_seg {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 0 6px;
+    border-radius: 4px;
+    border-left: 3px solid var(--scene-color);
+    background-color: color-mix(in srgb, var(--scene-color) 22%, var(--main-bg));
+    overflow: hidden;
+}
+
+.scene_seg_title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+/* Playhead marker across the scene band — extends the tracks' playhead over the
+ * scene overview so the cursor reads as one continuous line down the timeline. */
+.scene_playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    background-color: var(--tertiary);
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* ---- Ruler (fixed row below the tracks) ---- */
+
+.ruler_row {
+    display: flex;
+    flex-direction: row;
+    flex-shrink: 0;
+    z-index: 3;
+    background-color: var(--main-bg);
+    border-top: 1px solid var(--separator);
+}
+
+.ruler_corner {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    background-color: var(--main-bg);
+    border-right: 1px solid var(--separator);
+}
+
+.ruler_unit {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary-text);
+}
+
+/* Clips the ruler track and lets it slide horizontally with the tracks. */
+.ruler_viewport {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+/* Playhead marker on the ruler: a stem with a triangle head. */
+.ruler_playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    background-color: var(--tertiary);
+    pointer-events: none;
+}
+
+.ruler_playhead::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--tertiary);
+}
+
+.ruler {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    will-change: transform;
+}
+
+.tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-left: 1px solid var(--separator);
+}
+
+/* Faint eighth subdivisions between the labelled minute ticks. */
+.tick_eighth {
+    position: absolute;
+    bottom: 0;
+    height: 6px;
+    border-left: 1px solid color-mix(in srgb, var(--separator) 55%, transparent);
+}
+
+.tick_label {
+    position: absolute;
+    left: 4px;
+    top: 5px;
+    font-size: 10px;
+    color: var(--secondary-text);
+    white-space: nowrap;
+}

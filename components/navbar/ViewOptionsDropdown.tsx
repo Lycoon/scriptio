@@ -9,7 +9,7 @@ import {
     PanelRightClose,
     ArrowLeftRight,
     Eye,
-    ListTree,
+    GanttChartSquare,
 } from "lucide-react";
 
 import styles from "./ViewOptionsDropdown.module.css";
@@ -21,8 +21,8 @@ const ViewOptionsDropdown = () => {
         primaryPanel,
         setSecondaryPanel,
         swapPanels,
-        focusedPanel,
-        setFocusedPanel,
+        timelineOpen,
+        setTimelineOpen,
     } = useViewContext();
 
     const handleSplitToggle = useCallback(() => {
@@ -66,14 +66,14 @@ const ViewOptionsDropdown = () => {
             {isOpen && (
                 <div className={styles.dropdown_menu}>
                     <button
-                        className={`${styles.dropdown_item} ${focusedPanel === "outline" ? styles.dropdown_item_active : ""}`}
+                        className={`${styles.dropdown_item} ${timelineOpen ? styles.dropdown_item_active : ""}`}
                         onClick={() => {
-                            setFocusedPanel("outline");
+                            setTimelineOpen((prev) => !prev);
                             setIsOpen(false);
                         }}
                     >
-                        <ListTree size={16} />
-                        <span className={styles.item_label}>{t("outline")}</span>
+                        <GanttChartSquare size={16} />
+                        <span className={styles.item_label}>{t("timeline")}</span>
                     </button>
                     <button
                         className={`${styles.dropdown_item} ${isSplit ? styles.dropdown_item_active : ""}`}
