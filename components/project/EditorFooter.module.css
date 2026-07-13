@@ -73,4 +73,19 @@
         transform: translateX(-50%);
         bottom: calc(16px + var(--safe-bottom));
     }
+
+    /* Drop the page count on phone: it's redundant in the default endless-scroll
+     * reader and is the pill's widest element. Hiding it keeps the row a compact
+     * cluster of toggles that clears the bottom-left Edit (pen) button — without a
+     * width cap, which would clip the timer's live readout when it's running. */
+    .pages,
+    .divider {
+        display: none;
+    }
+
+    /* Roomier, thumb-friendly tap targets now that the row is short. */
+    .action {
+        width: 34px;
+        height: 32px;
+    }
 }

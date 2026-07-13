@@ -91,27 +91,6 @@
     background-color: var(--secondary-hover);
 }
 
-/* The "leave edit mode" checkmark: a filled pill that reads as the primary
- * action of the edit-mode island, standing apart from the ghost undo/redo icons
- * beside it via the inverted text colour. */
-.edit_done {
-    color: var(--main-bg);
-    background-color: var(--primary-text);
-}
-
-/* The global `svg { color: var(--primary-text) }` rule targets the icon element
- * directly, so it overrides the inverted `color` inherited from this pill and
- * paints the checkmark the same shade as the pill's background (invisible in
- * dark mode). Re-inherit the button's colour so the icon stays legible. */
-.edit_done svg {
-    color: inherit;
-}
-
-.edit_done:hover {
-    background-color: var(--primary-text);
-    opacity: 0.85;
-}
-
 @media (max-width: 767px) {
     .container {
         /* Push the bar below the status bar / Dynamic Island. --navbar-height

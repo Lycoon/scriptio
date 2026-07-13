@@ -97,7 +97,7 @@ const ProjectNavbarMobile = () => {
                     keeps the left side empty. */}
                 {isInProject && projectId && mobileEditMode && (
                     <div className={navbar.mobile_left}>
-                        <div className={`${navBtn.button} ${navbar.edit_done}`} onClick={exitEditMode}>
+                        <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={exitEditMode}>
                             <Check size={18} />
                         </div>
                         <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={() => runHistory("undo")}>
