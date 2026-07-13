@@ -1,4 +1,4 @@
-/* Phone-only formatting bar pinned just above the on-screen keyboard. `bottom`
+/* Phone-only formatting bar that floats just above the on-screen keyboard. `bottom`
  * is set inline from the tracked keyboard inset (see MobileFormatToolbar.tsx). */
 .toolbar {
     position: fixed;
@@ -6,18 +6,26 @@
     right: 0;
     z-index: 60;
 
+    /* Float as a rounded island rather than a full-width docked bar: inset from
+     * the screen edges and lifted off the keyboard's top edge (margins), with
+     * rounded corners of its own, so it echoes the iOS keyboard's rounded shape
+     * and reads as part of the same floating chrome instead of a hard-edged bar
+     * butted against it. `bottom: keyboardInset` (inline) pins it to the keyboard
+     * top; the bottom margin is the visible gap between the two. */
+    margin: 0 8px 8px;
+
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 8px;
 
-    padding: 6px 12px;
-    padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+    padding: 6px 8px;
 
     background-color: var(--secondary);
-    border-top: 1px solid var(--separator);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--separator);
+    border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
 
     user-select: none;
     -webkit-user-select: none;

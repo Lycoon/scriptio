@@ -47,9 +47,10 @@ export interface DocumentEditorPanelProps {
     focusedTypeOverride?: "screenplay" | "title" | "draft";
 }
 
-// Scroll distance (px) that fully hides the mobile chrome. Roughly the navbar
-// height so the bar slides away at content speed — a 1:1 feel with the scroll.
-const CHROME_HIDE_RANGE = 64;
+// Scroll distance (px) that fully hides the mobile chrome. Deliberately several
+// times the navbar height so the bar eases away gradually over a longer swipe
+// rather than snapping shut after a flick — matches the pace of a natural scroll.
+const CHROME_HIDE_RANGE = 220;
 
 const DocumentEditorPanel = ({
     config,
@@ -829,10 +830,16 @@ const DocumentEditorPanel = ({
             tapTimer.current = null;
             if (isReadOnly) return;
             setMobileEditMode(true);
-            // setEditable flips in an effect after this render, so defer the
-            // focus a tick until the editor is actually editable.
+            // Make the editor editable and focus it SYNCHRONOUSLY inside this tap
+            // gesture. iOS only raises the on-screen keyboard when focus() runs in
+            // the same user-gesture turn — deferring it (setTimeout) breaks that
+            // chain and the keyboard stays down. The mobileEditMode effect also
+            // flips setEditable(true), so this just gets there a tick earlier.
             const ed = editor;
-            if (ed) setTimeout(() => ed.commands.focus(), 0);
+            if (ed) {
+                ed.setEditable(true);
+                ed.commands.focus();
+            }
             return;
         }
 
@@ -846,17 +853,23 @@ const DocumentEditorPanel = ({
 
     const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
         if (suggestions.length > 0) updateSuggestions?.([]);
-        const scrollTop = e.currentTarget.scrollTop;
+        const el = e.currentTarget;
+        // Clamp to the real scroll range. iOS rubber-band overscroll reports a
+        // scrollTop below 0 (top) or beyond the maximum (bottom) and then springs
+        // back, which would otherwise feed spurious up/down deltas into the chrome
+        // hide and make the navbar flicker as the bounce settles. Clamping pins
+        // the delta to 0 while overscrolling, so the bounce leaves the bar alone.
+        const maxScroll = el.scrollHeight - el.clientHeight;
+        const scrollTop = Math.max(0, Math.min(el.scrollTop, maxScroll));
         setIsScrolled(scrollTop > 0);
         if (isPhone) {
             updateThumb();
             revealScrollThumb();
 
-            // Map scroll movement onto the hide progress 1:1 over CHROME_HIDE_RANGE
-            // px: scrolling down reveals more of the script by sliding the chrome
-            // away at content speed; scrolling up brings it straight back. Snap
-            // fully open at the very top. In edit mode the navbar carries the
-            // exit/undo/redo controls, so keep it pinned open there.
+            // Accumulate scroll movement into the hide progress over
+            // CHROME_HIDE_RANGE px: scrolling down slides the chrome away, scrolling
+            // up brings it back. Snap fully open at the very top. In edit mode the
+            // navbar carries the exit/undo/redo controls, so keep it pinned open.
             const delta = scrollTop - lastScrollTop.current;
             if (mobileEditMode || scrollTop <= 4) {
                 applyChromeHide(0);

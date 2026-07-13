@@ -56,6 +56,16 @@
     background-color: var(--secondary);
     border-radius: 999px;
     box-shadow: var(--panel-shadow);
+
+    /* Hide by sliding the pill straight up off the bar and fading in lockstep,
+     * both driven by --chrome-hide (0 shown → 1 hidden). The pill translates its
+     * FULL travel (a whole navbar height) so it keeps moving until it's gone,
+     * rather than collapsing in place and leaving a clipped sliver to fade out —
+     * translate and opacity now finish together. No transition: it tracks the
+     * scroll gesture directly (see applyChromeHide). On desktop these clusters
+     * don't render and --chrome-hide stays 0, so this is inert there. */
+    transform: translateY(calc(var(--chrome-hide, 0) * -1 * var(--navbar-height)));
+    opacity: calc(1 - var(--chrome-hide, 0));
 }
 
 /* Always hug the right edge — the only other cluster (edit-mode controls) is on
@@ -111,13 +121,15 @@
         padding-block: 0;
         padding-top: var(--safe-top);
         overflow: hidden;
-        /* Collapse continuously as the reader scrolls down: --chrome-hide runs
-         * 0 (shown) → 1 (hidden), driven straight from scrollTop in
-         * DocumentEditorPanel. Height reclaims the space (the workspace is a flex
-         * column, so this reflows cleanly) and there is intentionally no
-         * transition — the bar tracks the gesture rather than easing after it. */
+        /* Collapse the bar's height continuously as the reader scrolls down:
+         * --chrome-hide runs 0 (shown) → 1 (hidden), driven straight from
+         * scrollTop in DocumentEditorPanel. Height reclaims the space (the
+         * workspace is a flex column, so this reflows cleanly) and there is
+         * intentionally no transition — it tracks the gesture, not an ease. The
+         * fade lives on the pill clusters themselves (.mobile_left/.mobile_right)
+         * so it stays in lockstep with their slide-up rather than fading the
+         * whole row on a separate curve. */
         height: calc(var(--navbar-height) * (1 - var(--chrome-hide, 0)));
-        opacity: calc(1 - var(--chrome-hide, 0));
     }
 
     /* Fully hidden: drop hit-testing so the collapsed sliver can't catch taps. */

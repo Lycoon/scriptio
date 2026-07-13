@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode, useContext, useState } from "react";
-import { mutate } from "swr";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { Info, LogIn, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -9,8 +8,7 @@ import { useTranslations } from "next-intl";
 import styles from "./DashboardModal.module.css";
 import dangerStyles from "./project/DangerZone.module.css";
 import modal from "../utils/ModalBtn.module.css";
-import { signOut } from "next-auth/react";
-import { isTauri } from "@tauri-apps/api/core";
+import { signOutAccount } from "@src/lib/utils/auth-actions";
 import { useCookieUser } from "@src/lib/utils/hooks";
 
 export type Category =
@@ -54,15 +52,7 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
     const [showLogOutConfirm, setShowLogOutConfirm] = useState(false);
 
     const onLogOut = async () => {
-        if (isTauri()) {
-            // Desktop holds the bearer token locally; the server has no cookie to clear.
-            const { clearDesktopToken } = await import("@src/lib/desktop-auth");
-            await clearDesktopToken();
-        } else {
-            await signOut({ redirect: false });
-        }
-
-        await mutate("/api/users/cookie", undefined);
+        await signOutAccount();
         closeDashboard();
     };
 
