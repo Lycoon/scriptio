@@ -32,12 +32,17 @@ const ProjectWorkspace = () => {
     const activeEditor = useActiveEditor();
 
     // Enter edit mode and drop the caret into the reader's current editor so the
-    // keyboard comes up straight away. setEditable flips in a DocumentEditorPanel
-    // effect after this render, so defer the focus a tick until it's editable.
+    // keyboard comes up straight away. Focus must happen SYNCHRONOUSLY inside this
+    // tap gesture — iOS only raises the keyboard when focus() runs in the same
+    // user-gesture turn, so we flip setEditable(true) and focus right here rather
+    // than deferring to the mobileEditMode effect (which runs after this render).
     const enterEditMode = () => {
         setMobileEditMode(true);
         const editor = activeEditor;
-        if (editor) setTimeout(() => editor.commands.focus(), 0);
+        if (editor) {
+            editor.setEditable(true);
+            editor.commands.focus();
+        }
     };
 
     // The pen shows on phone in reader mode, only when there's an editable text

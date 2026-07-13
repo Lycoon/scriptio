@@ -97,7 +97,9 @@
  * clears the home indicator via the safe-area inset. */
 .edit_fab {
     position: fixed;
-    right: calc(20px + var(--safe-right));
+    /* Anchored bottom-LEFT: the right edge is the scroll drag-handle's travel
+     * path, so a right-side FAB would sit under the thumb. */
+    left: calc(20px + var(--safe-left));
     bottom: calc(20px + var(--safe-bottom));
     z-index: 55;
 
