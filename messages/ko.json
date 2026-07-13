@@ -1,11 +1,30 @@
 {
-  "outline": {
-    "title": "아웃라인",
-    "empty": "장면과 카드를 여기로 보내 이야기 구성을 시작하세요.",
+  "timeline": {
+    "title": "타임라인",
+    "layer": "레이어",
+    "addLayer": "레이어 추가",
+    "deleteLayer": "레이어 삭제",
+    "renameLayer": "레이어 이름 변경",
+    "layerPlaceholder": "레이어 이름",
+    "zoomIn": "확대",
+    "zoomOut": "축소",
+    "close": "닫기",
+    "empty": "장면과 카드를 여기로 보내 타임라인에 배치하세요.",
     "untitled": "제목 없음",
-    "unlinked": "연결 해제됨",
-    "unlinkedHint": "이 블록의 원본이 더 이상 존재하지 않습니다.",
-    "removeFromOutline": "아웃라인에서 제거"
+    "unlinkedHint": "이 클립의 원본이 더 이상 존재하지 않습니다.",
+    "removeClip": "타임라인에서 제거",
+    "featureLength": "작품 길이",
+    "unitMinutes": "분",
+    "unitPages": "페이지",
+    "unitMinutesShort": "분",
+    "switchUnit": "단위 전환 (분 / 페이지)",
+    "scale": "배율",
+    "collapseLayer": "접기",
+    "expandLayer": "펼치기",
+    "indentLayer": "이전 레이어 아래로 들여쓰기",
+    "outdentLayer": "레이어 내어쓰기",
+    "dragLayer": "드래그하여 순서 변경 또는 중첩",
+    "scenes": "장면"
   },
   "navbar": {
     "menu": "메뉴",
@@ -16,7 +35,7 @@
     "analytics": "분석",
     "settings": "설정",
     "back": "프로젝트로 돌아가기",
-    "outline": "아웃라인",
+    "timeline": "타임라인",
     "screenplay": "시나리오",
     "board": "보드",
     "titlePage": "타이틀 페이지",
@@ -511,7 +530,7 @@
     "dangerZoneTitle": "위험 구역"
   },
   "contextMenu": {
-    "sendToOutline": "아웃라인으로 보내기",
+    "sendToTimeline": "타임라인으로 보내기",
     "goToScene": "장면으로 이동",
     "edit": "편집",
     "copy": "복사",
@@ -579,7 +598,7 @@
     }
   },
   "board": {
-    "sendToOutline": "아웃라인으로 보내기",
+    "sendToTimeline": "타임라인으로 보내기",
     "duplicate": "복제",
     "delete": "삭제",
     "createCard": "카드 생성",

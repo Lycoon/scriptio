@@ -64,6 +64,19 @@
          * already reserves this space, so the content box stays 56px tall. */
         padding-block: 0;
         padding-top: var(--safe-top);
+        overflow: hidden;
+        transition:
+            height 0.25s ease,
+            opacity 0.25s ease;
+    }
+
+    /* Collapsed while the reader scrolls down (see chromeHidden in ViewContext).
+     * Height animates to 0 so the editor below reclaims the space; the workspace
+     * is a flex column, so this reflows cleanly without a fixed overlay. */
+    .container_hidden {
+        height: 0;
+        opacity: 0;
+        pointer-events: none;
     }
 }
 

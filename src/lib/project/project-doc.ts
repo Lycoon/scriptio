@@ -48,6 +48,8 @@ export type ProjectMetadata = {
     title: string;
     author: string;
     titlepageInitialized?: boolean;
+    /** Target feature length in minutes, used to size the Timeline extent. */
+    featureLength?: number;
 };
 
 // -------------------------------- //
@@ -240,15 +242,15 @@ export type DocumentNode = {
 };
 
 // -------------------------------- //
-//            OUTLINE               //
+//            TIMELINE              //
 // -------------------------------- //
 
 /**
- * Kind of source element an outline block references. Extensible — board cards
+ * Kind of source element a timeline clip references. Extensible — board cards
  * will later come in image/voice/link flavours, which become new source kinds
  * without a schema rewrite.
  */
-export type OutlineItemSource = "scene" | "card";
+export type TimelineClipSource = "scene" | "card";
 
 /**
  * Sentinel `refDocId` for scenes that live in the project's main screenplay
@@ -257,20 +259,38 @@ export type OutlineItemSource = "scene" | "card";
 export const MAIN_SCREENPLAY_REF = "screenplay";
 
 /**
- * A block in the project's Outline view. Like the document tree, the outline is
- * stored flat in the `outline` Y.Map keyed by `id`; hierarchy is reconstructed
- * from `parentId`, siblings ordered by ascending `order` (fractional float so
- * moves never rewrite neighbours). Any block can nest children.
- *
- * Each block references a live source element via (`source`, `refDocId`,
- * `refId`); `title`/`preview`/`color` are a cached snapshot kept in sync by the
- * Outline view's resolver and shown (greyed) when the source no longer exists.
+ * A horizontal lane in the project's Timeline. Layers stack top-to-bottom and
+ * are stored flat in the `timelineLayers` Y.Map keyed by `id`, ordered by
+ * ascending `order` (fractional float so inserts never rewrite neighbours).
  */
-export type OutlineItem = {
+export type TimelineLayer = {
     id: string;
-    parentId: string | null;
+    name: string;
     order: number;
-    source: OutlineItemSource;
+    /** Parent layer id for nesting; null/undefined = a root lane. Siblings are
+     *  ordered by ascending `order` (fractional float, like the document tree). */
+    parentId?: string | null;
+};
+
+/**
+ * A clip placed on the Timeline: a colored box on a single layer spanning a
+ * range of the minute-based ruler. Stored flat in the `timelineClips` Y.Map
+ * keyed by `id`.
+ *
+ * `start`/`duration` are measured in minutes. Each clip references a live source
+ * element via (`source`, `refDocId`, `refId`); `title`/`preview`/`color` are a
+ * cached snapshot kept fresh by the Timeline's resolver and shown (greyed) when
+ * the source no longer exists.
+ */
+export type TimelineClip = {
+    id: string;
+    /** Owning layer id. */
+    layerId: string;
+    /** Start offset from the timeline origin, in minutes. */
+    start: number;
+    /** Length of the clip, in minutes. */
+    duration: number;
+    source: TimelineClipSource;
     /** card: board docId · scene: MAIN_SCREENPLAY_REF or the editor doc id. */
     refDocId: string;
     /** card: card id · scene: scene heading `data-id`. */
@@ -293,7 +313,8 @@ export type ProjectData = {
     locations: Record<string, LocationItem>;
     metadata: ProjectMetadata;
     documents?: Record<string, DocumentNode>;
-    outline?: Record<string, OutlineItem>;
+    timelineLayers?: Record<string, TimelineLayer>;
+    timelineClips?: Record<string, TimelineClip>;
     layout: LayoutData;
     production: ProductionData;
     comments?: Record<string, Comment>;
@@ -338,7 +359,8 @@ export class ProjectState extends Y.Doc {
         LOCATIONS: "locations",
         METADATA: "metadata",
         DOCUMENTS: "documents",
-        OUTLINE: "outline",
+        TIMELINE_LAYERS: "timelineLayers",
+        TIMELINE_CLIPS: "timelineClips",
         LAYOUT: "layout",
         PRODUCTION: "production",
         COMMENTS: "comments",
@@ -389,9 +411,14 @@ export class ProjectState extends Y.Doc {
         return this.getMap(this.KEYS.DOCUMENTS);
     }
 
-    /** Outline blocks keyed by block id. */
-    outline(): Y.Map<OutlineItem> {
-        return this.getMap(this.KEYS.OUTLINE);
+    /** Timeline layers (lanes) keyed by layer id. */
+    timelineLayers(): Y.Map<TimelineLayer> {
+        return this.getMap(this.KEYS.TIMELINE_LAYERS);
+    }
+
+    /** Timeline clips (boxes) keyed by clip id. */
+    timelineClips(): Y.Map<TimelineClip> {
+        return this.getMap(this.KEYS.TIMELINE_CLIPS);
     }
 
     /** Content fragment for an `editor` document node. */

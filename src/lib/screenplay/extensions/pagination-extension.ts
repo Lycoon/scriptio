@@ -1,7 +1,7 @@
 import { DOMSerializer } from "@node_modules/prosemirror-model/dist";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { Editor, Extension } from "@tiptap/core";
-import { Node } from "@tiptap/pm/model";
+import { Node, Schema } from "@tiptap/pm/model";
 import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "@tiptap/y-tiptap";
@@ -17,7 +17,7 @@ import {
 import { PAGE_COLLAPSE_META, PAGE_ONE_KEY, PersistentPageMap, SCENE_OMIT_META } from "@src/lib/screenplay/page-locking";
 import { REVISION_COLORS, REVISION_STAMP_META } from "@src/lib/screenplay/revisions";
 import { generateNodeId } from "@src/lib/screenplay/nodes";
-import { timeApply } from "./apply-timing";
+import { recordTiming, timeApply } from "./apply-timing";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -892,6 +892,40 @@ function buildDecorations(
 
 const heightCache = new Map<string, number>();
 
+/**
+ * Bumped whenever previously measured geometry becomes invalid (page format /
+ * margin changes). Entries in `nodeHeightCache` stamped with an older
+ * generation are ignored.
+ */
+let measureGeneration = 0;
+
+/**
+ * First-level height cache keyed by node IDENTITY. ProseMirror shares the
+ * same immutable node objects for unchanged content across transactions, so a
+ * hit here means "this node is byte-identical to last pass" — skipping the
+ * `node.textContent` read and the full-text string key construction that
+ * `heightCache` needs. Without this, every keystroke re-walked the text of
+ * every top-level node in the document just to build cache keys (O(doc text)
+ * per keystroke on the typing hot path).
+ */
+const nodeHeightCache = new WeakMap<Node, { gen: number; height: number }>();
+
+/**
+ * DOMSerializer is derived from the (immutable) schema — build it once per
+ * schema instead of on every `apply` (fromSchema re-walks every node/mark
+ * spec, allocating a fresh serializer per keystroke).
+ */
+const serializerCache = new WeakMap<Schema, DOMSerializer>();
+
+function getSerializer(schema: Schema): DOMSerializer {
+    let s = serializerCache.get(schema);
+    if (!s) {
+        s = DOMSerializer.fromSchema(schema);
+        serializerCache.set(schema, s);
+    }
+    return s;
+}
+
 const getHTMLHeight = (
     domNode: HTMLElement,
     editorDom: HTMLElement,
@@ -907,11 +941,18 @@ const getHTMLHeight = (
         return heightCache.get(cacheKey)!;
     }
 
+    const t0 = performance.now();
     const testDiv = setupTestDiv(editorDom, options);
-    testDiv.innerHTML = domNode.outerHTML;
+    // Insert the (detached) element directly — serializing to an HTML string
+    // and re-parsing it via innerHTML did the same thing at ~3x the cost.
+    testDiv.replaceChildren(domNode);
 
     const rect = testDiv.getBoundingClientRect();
     const height = Math.round(rect.height);
+    // Dev-only stat (compiled out of production): the getBoundingClientRect
+    // above is the typing hot path's only forced layout — it flushes any
+    // pending document layout, so it's the number to watch in the debug panel.
+    recordTiming("pagination:measure", performance.now() - t0);
 
     if (heightCache.size > 10000) heightCache.clear();
     heightCache.set(cacheKey, height);
@@ -948,10 +989,23 @@ const ZERO_TOP_MARGIN_TYPES = new Set<ScreenplayElement>([
  */
 const nodeTopMargin = (nodeType: ScreenplayElement): number => (ZERO_TOP_MARGIN_TYPES.has(nodeType) ? 0 : LINE_HEIGHT);
 
+/**
+ * Memo for setupTestDiv: the last test div element and the editor signature
+ * (className + inline style attribute) it was synced against. The sync work —
+ * className assignment and copying every CSS variable — invalidates the test
+ * div's style and runs for EVERY height measurement otherwise (a straddling
+ * node's sentence split alone measures the node several times per keystroke).
+ * The signature covers everything the sync reads, so a memo hit is exact.
+ */
+let testDivSyncedTo: HTMLElement | null = null;
+let testDivSyncKey: string | null = null;
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const setupTestDiv = (editorDom: HTMLElement, _: PaginationOptions): HTMLElement => {
     let testDiv = document.getElementById("pagination-test-div");
     if (!testDiv) {
+        testDivSyncedTo = null;
+        testDivSyncKey = null;
         testDiv = document.createElement("div");
         testDiv.id = "pagination-test-div";
         testDiv.className = "ProseMirror pagination";
@@ -972,6 +1026,14 @@ const setupTestDiv = (editorDom: HTMLElement, _: PaginationOptions): HTMLElement
         testDiv.style.minHeight = "0";
 
         document.body.appendChild(testDiv);
+    }
+
+    // Skip the (invalidating) sync below when nothing it depends on changed
+    // since the last call — the common case for every measurement after the
+    // first in a pass, and for every pass while the page format is stable.
+    const syncKey = `${editorDom.className}|${editorDom.getAttribute("style") ?? ""}`;
+    if (testDiv === testDivSyncedTo && syncKey === testDivSyncKey) {
+        return testDiv;
     }
 
     // Sync classes and CSS variables that affect layout from editor to test div.
@@ -995,6 +1057,9 @@ const setupTestDiv = (editorDom: HTMLElement, _: PaginationOptions): HTMLElement
     // syncVars already wrote to editorDom (guaranteed current for this transaction).
     testDiv.classList.remove("pagination");
     testDiv.style.width = editorDom.style.getPropertyValue("--page-width");
+
+    testDivSyncedTo = testDiv;
+    testDivSyncKey = syncKey;
 
     return testDiv;
 };
@@ -1187,6 +1252,8 @@ const createPaginationPlugin = (extension: {
                 // layout but not node heights — the cached measurements stay valid.
                 if (formatUpdate) {
                     heightCache.clear();
+                    // Invalidate the node-identity cache too — same geometry change.
+                    measureGeneration++;
                 }
 
                 // Nothing pagination-related changed
@@ -1272,7 +1339,7 @@ const createPaginationPlugin = (extension: {
                     options.customFooter = f.customFooter;
                 }
 
-                const serializer = DOMSerializer.fromSchema(newState.schema);
+                const serializer = getSerializer(newState.schema);
 
                 // --- Page-lock setup ---
                 // Hot-path discipline: when locking is off (the common case),
@@ -1337,20 +1404,30 @@ const createPaginationPlugin = (extension: {
                     const nodeType = node.type.name as ScreenplayElement;
                     const logic = BREAK_LOGIC[nodeType];
 
-                    // Use the module-level heightCache (keyed by content) to avoid re-serializing
-                    // unchanged nodes. Cache misses (new/edited content) trigger serialization.
+                    // Two-level height cache. Level 1: node identity (WeakMap) —
+                    // unchanged nodes are the same object across transactions, so a
+                    // hit costs one map lookup and skips reading the node's text
+                    // entirely. Level 2: the content-keyed string cache, which
+                    // survives node-identity churn (undo/redo, remote sync, reload).
+                    // Only a miss on both levels serializes + measures.
                     // element is hoisted so the split block can reuse it without a second serialize.
-                    const textContent = node.textContent || "";
-                    const cacheKey = `${node.type.name}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${node.content.size}:${textContent}`;
-                    let height = heightCache.get(cacheKey) ?? null;
                     let element: HTMLElement | null = null;
+                    let height: number;
+                    const identityHit = nodeHeightCache.get(node);
+                    if (identityHit !== undefined && identityHit.gen === measureGeneration) {
+                        height = identityHit.height;
+                    } else {
+                        const textContent = node.textContent || "";
+                        const cacheKey = `${node.type.name}:${options.pageWidth}:${options.marginLeft}:${options.marginRight}:${node.content.size}:${textContent}`;
+                        let measured = heightCache.get(cacheKey) ?? null;
 
-                    if (height === null) {
-                        element = serializer.serializeNode(node) as HTMLElement;
-                        height = getHTMLHeight(element, editorDOM, node.type.name, options, node.content.size);
+                        if (measured === null) {
+                            element = serializer.serializeNode(node) as HTMLElement;
+                            measured = getHTMLHeight(element, editorDOM, node.type.name, options, node.content.size);
+                        }
+                        height = measured;
+                        nodeHeightCache.set(node, { gen: measureGeneration, height });
                     }
-
-                    if (height == null) continue;
 
                     // Track the most recent Character name for CONT'D labels.
                     if (nodeType === ScreenplayElement.Character) {
@@ -1956,6 +2033,20 @@ const createPaginationPlugin = (extension: {
 
             const pageLocks = opts.getPageLocks?.();
             if (!pageLocks) return true;
+
+            // Only a step that REMOVES content (or replaces a node wrapper —
+            // setNodeMarkup) can make a locked anchor's data-id disappear.
+            // Pure insertions — typing, Enter splits, mark changes — map every
+            // old range to itself (oldStart === oldEnd), so skip the two O(doc)
+            // before/after scans below on the common keystroke.
+            let removesContent = false;
+            for (const step of tr.steps) {
+                step.getMap().forEach((oldStart: number, oldEnd: number) => {
+                    if (oldEnd > oldStart) removesContent = true;
+                });
+                if (removesContent) break;
+            }
+            if (!removesContent) return true;
 
             // PAGE_ONE_KEY has no node to defend — page 1 can't lose its
             // lock through doc edits.

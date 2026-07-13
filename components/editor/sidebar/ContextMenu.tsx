@@ -125,16 +125,15 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
         unomitSceneByUuid(editor, repository, scene.id);
     };
 
-    const handleSendToOutline = () => {
+    const handleSendToTimeline = () => {
         if (!repository || !scene.id) return;
-        repository.addOutlineItem({
+        repository.appendTimelineClip({
             source: "scene",
             refDocId: MAIN_SCREENPLAY_REF,
             refId: scene.id,
             title: scene.title,
             preview: scene.synopsis || scene.preview,
             color: scene.color,
-            parentId: null,
         });
     };
 
@@ -154,9 +153,9 @@ const SceneItemMenu = ({ props }: SubMenuProps<SceneContextProps>) => {
                     <ContextMenuSeparator />
                     {scene.id && (
                         <ContextMenuItem
-                            text={t("sendToOutline")}
+                            text={t("sendToTimeline")}
                             icon={ListTree}
-                            action={handleSendToOutline}
+                            action={handleSendToTimeline}
                         />
                     )}
                     <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editScenePopup(scene, userCtx)} />
@@ -497,7 +496,7 @@ export type EditorContextMenuProps = {
     spellError?: { word: string; from: number; to: number };
     nodePos?: number;
     nodeClass?: string;
-    /** Present when the caret sits on a scene heading that can be sent to the Outline. */
+    /** Present when the caret sits on a scene heading that can be sent to the Timeline. */
     outlineScene?: { refDocId: string; refId: string; title: string };
     /** Present on paginated screenplay editors: the top-level block under the
      *  caret (`pos`) and whether it already forces a manual page break. */
@@ -515,15 +514,14 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
     const { editor, from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene, pageBreak } = props;
     const hasSelection = from !== to;
 
-    const handleSendToOutline = () => {
+    const handleSendToTimeline = () => {
         if (!repository || !outlineScene) return;
-        repository.addOutlineItem({
+        repository.appendTimelineClip({
             source: "scene",
             refDocId: outlineScene.refDocId,
             refId: outlineScene.refId,
             title: outlineScene.title,
             preview: "",
-            parentId: null,
         });
         updateContextMenu(undefined);
     };
@@ -745,11 +743,11 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
                 </>
             )}
 
-            {/* Send a scene heading to the Outline */}
+            {/* Send a scene heading to the Timeline */}
             {outlineScene && !isReadOnly && (
                 <>
                     <ContextMenuSeparator />
-                    <ContextMenuItem text={t("sendToOutline")} icon={ListTree} action={handleSendToOutline} />
+                    <ContextMenuItem text={t("sendToTimeline")} icon={ListTree} action={handleSendToTimeline} />
                 </>
             )}
 

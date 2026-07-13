@@ -1,11 +1,30 @@
 {
-  "outline": {
-    "title": "Konspekt",
-    "empty": "Wyślij tu sceny i karty, aby rozpocząć tworzenie konspektu historii.",
+  "timeline": {
+    "title": "Oś czasu",
+    "layer": "Ścieżka",
+    "addLayer": "Dodaj ścieżkę",
+    "deleteLayer": "Usuń ścieżkę",
+    "renameLayer": "Zmień nazwę warstwy",
+    "layerPlaceholder": "Nazwa ścieżki",
+    "zoomIn": "Powiększ",
+    "zoomOut": "Pomniejsz",
+    "close": "Zamknij",
+    "empty": "Wyślij tu sceny i karty, aby umieścić je na osi czasu.",
     "untitled": "Bez tytułu",
-    "unlinked": "Odłączony",
-    "unlinkedHint": "Źródło tego bloku już nie istnieje.",
-    "removeFromOutline": "Usuń z konspektu"
+    "unlinkedHint": "Źródło tego klipu już nie istnieje.",
+    "removeClip": "Usuń z osi czasu",
+    "featureLength": "Długość filmu",
+    "unitMinutes": "Minuty",
+    "unitPages": "Strony",
+    "unitMinutesShort": "min",
+    "switchUnit": "Zmień jednostki (minuty / strony)",
+    "scale": "Skala",
+    "collapseLayer": "Zwiń",
+    "expandLayer": "Rozwiń",
+    "indentLayer": "Zagnieźdź pod poprzednią ścieżką",
+    "outdentLayer": "Wysuń ścieżkę",
+    "dragLayer": "Przeciągnij, aby zmienić kolejność lub zagnieździć",
+    "scenes": "Sceny"
   },
   "navbar": {
     "menu": "Menu",
@@ -16,7 +35,7 @@
     "analytics": "Analityka",
     "settings": "Ustawienia",
     "back": "Powrót do projektów",
-    "outline": "Konspekt",
+    "timeline": "Oś czasu",
     "screenplay": "Scenariusz",
     "board": "Tablica",
     "titlePage": "Strona tytułowa",
@@ -511,7 +530,7 @@
     "dangerZoneTitle": "Strefa niebezpieczeństwa"
   },
   "contextMenu": {
-    "sendToOutline": "Wyślij do konspektu",
+    "sendToTimeline": "Wyślij do osi czasu",
     "goToScene": "Idź do sceny",
     "edit": "Edytuj",
     "copy": "Kopiuj",
@@ -579,7 +598,7 @@
     }
   },
   "board": {
-    "sendToOutline": "Wyślij do konspektu",
+    "sendToTimeline": "Wyślij do osi czasu",
     "duplicate": "Powiel",
     "delete": "Usuń",
     "createCard": "Utwórz kartę",

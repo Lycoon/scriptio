@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 const isPhoneViewport = () =>
     typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
 
-export type PanelType = "screenplay" | "board" | "statistics" | "title" | "draft" | "document" | "outline";
+export type PanelType = "screenplay" | "board" | "statistics" | "title" | "draft" | "document";
 export type SplitSide = "primary" | "secondary";
 
 /** Panel kinds that display a specific document, and so carry a docId per side. */
@@ -28,6 +28,16 @@ interface ViewContextType {
     showComments: boolean;
     leftSidebarOpen: boolean;
     rightSidebarOpen: boolean;
+    /** Whether the horizontal Timeline strip is open beneath the project navbar. */
+    timelineOpen: boolean;
+    setTimelineOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
+    /**
+     * Phone-only: hide the floating editor chrome (project navbar + sidebar edge
+     * handles) while the reader scrolls down through the script, so it doesn't
+     * cover the page. Reset to false on scroll-up or when the user types.
+     */
+    chromeHidden: boolean;
+    setChromeHidden: (value: boolean | ((prev: boolean) => boolean)) => void;
     setPrimaryPanel: (panel: PanelType) => void;
     setSecondaryPanel: (panel: PanelType | null) => void;
     setSplitRatio: (ratio: number) => void;
@@ -65,10 +75,15 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [splitRatio, setSplitRatio] = useState(0.5);
     const [mountedPanels, setMountedPanels] = useState<Set<PanelType>>(() => new Set(["screenplay", "title"]));
     const [focusedSide, setFocusedSideState] = useState<SplitSide>("primary");
-    const [isEndlessScroll, setIsEndlessScroll] = useState<boolean>(false);
+    // Default to endless (continuous, reflowed) on phones: it renders text at a
+    // readable size with no page rectangles to shift while writing. Desktop
+    // defaults to the paged view. Users can toggle either way (EditorFooter).
+    const [isEndlessScroll, setIsEndlessScroll] = useState<boolean>(isPhoneViewport);
     const [showComments, setShowComments] = useState<boolean>(true);
     const [leftSidebarOpen, setLeftSidebarOpenState] = useState<boolean>(false);
     const [rightSidebarOpen, setRightSidebarOpenState] = useState<boolean>(false);
+    const [timelineOpen, setTimelineOpen] = useState<boolean>(false);
+    const [chromeHidden, setChromeHidden] = useState<boolean>(false);
 
     // Mirror the live open-state in refs so the wrapped setters can resolve a
     // functional update and enforce mutual exclusion without stale closures.
@@ -278,6 +293,10 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             showComments,
             leftSidebarOpen,
             rightSidebarOpen,
+            timelineOpen,
+            setTimelineOpen,
+            chromeHidden,
+            setChromeHidden,
             setPrimaryPanel,
             setSecondaryPanel,
             setSplitRatio,
@@ -293,7 +312,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

@@ -10,11 +10,15 @@ import SuggestionMenu, { SuggestionData } from "@components/editor/SuggestionMen
 import { Popup } from "@components/popup/Popup";
 import SplitPanelContainer from "./SplitPanelContainer";
 import EditorFooter from "./EditorFooter";
+import TimelinePanel from "@components/editor/timeline/TimelinePanel";
+import MobileFormatToolbar from "@components/editor/MobileFormatToolbar";
 import styles from "./ProjectWorkspace.module.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { join } from "@src/lib/utils/misc";
 
 const ProjectWorkspace = () => {
-    const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen, chromeHidden, timelineOpen } =
+        useViewContext();
     const isPhone = useIsPhone();
 
     // On phone the sidebars slide over the editor as drawers; a backdrop dims the
@@ -42,29 +46,41 @@ const ProjectWorkspace = () => {
             {/* Left sidebar */}
             <EditorSidebarNavigation />
 
-            {/* Panel container */}
-            <div className={styles.panel_area}>
-                <SplitPanelContainer
-                    suggestions={suggestions}
-                    updateSuggestions={updateSuggestions}
-                    suggestionData={suggestionData}
-                    updateSuggestionData={updateSuggestionData}
-                />
+            {/* Center column: the Timeline strip sits above the split panels only,
+                so it never overlaps the left/right sidebars. */}
+            <div className={styles.center_column}>
+                {timelineOpen && <TimelinePanel />}
 
-                {/* Right sidebar toggle — an edge chevron on every platform */}
-                <div className={styles.right_sidebar_toggle} onClick={() => setRightSidebarOpen((prev) => !prev)}>
-                    {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                {/* Panel container */}
+                <div className={styles.panel_area}>
+                    <SplitPanelContainer
+                        suggestions={suggestions}
+                        updateSuggestions={updateSuggestions}
+                        suggestionData={suggestionData}
+                        updateSuggestionData={updateSuggestionData}
+                    />
+
+                    {/* Right sidebar toggle — an edge chevron on every platform */}
+                    <div
+                        className={join(styles.right_sidebar_toggle, chromeHidden ? styles.chrome_hidden : "")}
+                        onClick={() => setRightSidebarOpen((prev) => !prev)}
+                    >
+                        {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                    </div>
+
+                    {/* Phone drawer backdrop */}
+                    {showBackdrop && <div className={styles.sidebar_backdrop} onClick={closeSidebars} />}
+
+                    {/* Floating page-count + view-mode bubbles */}
+                    <EditorFooter />
                 </div>
-
-                {/* Phone drawer backdrop */}
-                {showBackdrop && <div className={styles.sidebar_backdrop} onClick={closeSidebars} />}
-
-                {/* Floating page-count + view-mode bubbles */}
-                <EditorFooter />
             </div>
 
             {/* Right sidebar */}
             <EditorSidebarFormat />
+
+            {/* Phone-only formatting bar above the on-screen keyboard */}
+            <MobileFormatToolbar />
         </div>
     );
 };

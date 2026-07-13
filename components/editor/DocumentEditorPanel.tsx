@@ -90,16 +90,9 @@ const DocumentEditorPanel = ({
         repository,
     } = projectCtx;
     const { settings } = useSettings();
-    const { isEndlessScroll } = useViewContext();
+    const { isEndlessScroll, setChromeHidden } = useViewContext();
     const { user } = useUser();
     const isPhone = useIsPhone();
-
-    // Phones always render continuous (no discrete page rectangles): the compact
-    // "reading margins" applied on phone (--display-margin-scale in the CSS) reflow
-    // text to a different width than the canonical page, so the fixed-height page
-    // spacers would misalign. Page COUNT and numbering stay canonical — they are
-    // measured off-screen at full page width — so this is purely a visual mode.
-    const effectiveEndless = isEndlessScroll || isPhone;
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -113,6 +106,9 @@ const DocumentEditorPanel = ({
     const [canScrollThumb, setCanScrollThumb] = useState(false);
     const scrollIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isDraggingThumb = useRef(false);
+    // Last scrollTop, to derive scroll direction for hiding/showing the mobile
+    // editor chrome (navbar + sidebar edge handles).
+    const lastScrollTop = useRef(0);
     // Callback ref stored in state so the zoom effect re-runs when the scroll
     // container actually mounts (it may render after a Loading fallback).
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
@@ -176,8 +172,8 @@ const DocumentEditorPanel = ({
     useEffect(() => {
         const el = editor?.view?.dom;
         if (!el) return;
-        el.classList.toggle("endless-scroll", effectiveEndless);
-    }, [editor, effectiveEndless]);
+        el.classList.toggle("endless-scroll", isEndlessScroll);
+    }, [editor, isEndlessScroll]);
 
     // Ready state
     useEffect(() => {
@@ -187,14 +183,41 @@ const DocumentEditorPanel = ({
         }
     }, [editor, isYjsReady]);
 
-    // ---- Phone reading layout ----
-    // Phones no longer scale the whole page down to fit (which shrank the text).
-    // Instead the CSS applies a compact --display-margin-scale to reflow text at
-    // full size into the viewport width (see the max-width:767px block in
-    // EditorPanel.module.css). Because that reflow uses a narrower measure than
-    // the canonical page, the discrete page rectangles can't line up, so phones
-    // render continuous (effectiveEndless above). Pagination itself is measured
-    // off-screen at full page width, so page count / numbering are unchanged.
+    // ---- Phone view modes ----
+    // Endless (default on phone): the CSS reflows text into the viewport at full
+    // size via a compact --display-margin-scale — no page rectangles, so nothing
+    // shifts while writing. Paged (endless off): render the real fixed-size page —
+    // page breaks, headers, footers, exactly like desktop — and scale the whole
+    // page down with `zoom` so it fits the viewport width. A fixed page rectangle
+    // means its boundaries never move as you type, so there are no layout shifts.
+    // `zoom` is a uniform visual scale and pagination is measured off-screen, so
+    // page count / numbering are unaffected either way.
+    useEffect(() => {
+        const container = containerEl;
+        if (!container) return;
+
+        const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
+        // Only the phone paged view is zoomed. Endless reflows (no zoom); desktop
+        // shows the page at 1:1.
+        if (!isPhone || isEndlessScroll || !pageSize) {
+            container.style.removeProperty("--editor-zoom");
+            return;
+        }
+
+        const apply = () => {
+            const avail = container.clientWidth;
+            if (!avail) return;
+            // Fit the full canonical page width into the viewport; never upscale.
+            // Leaves a small gutter so the page edges aren't flush with the screen.
+            const ratio = Math.min(1, (avail - 8) / pageSize.pageWidth);
+            container.style.setProperty("--editor-zoom", `${ratio}`);
+        };
+
+        apply();
+        const ro = new ResizeObserver(apply);
+        ro.observe(container);
+        return () => ro.disconnect();
+    }, [containerEl, isPhone, isEndlessScroll, pageFormat]);
 
     // ---- Orphaned comment cleanup ----
     // Comments anchor to a node's data-id. When that node is deleted the comment
@@ -643,7 +666,7 @@ const DocumentEditorPanel = ({
                 }
             }
 
-            // Detect a scene heading at the caret to offer "Send to outline".
+            // Detect a scene heading at the caret to offer "Send to timeline".
             // Independent of `shelving` so it works in editor documents too.
             let outlineScene: { refDocId: string; refId: string; title: string } | undefined;
             if (config.documentId) {
@@ -707,9 +730,13 @@ const DocumentEditorPanel = ({
     }, [commentOps]);
 
     // Fixed handle height and inset of the track from the panel's top/bottom.
-    // (Keep HANDLE_HEIGHT in sync with .scroll_handle's height in the CSS.)
+    // (Keep HANDLE_HEIGHT in sync with .scroll_handle's height, and the insets
+    // in sync with .scroll_track's top/bottom, in the CSS.) The top inset clears
+    // the right sidebar edge toggle so the handle can't overlap it, and the
+    // bottom inset keeps it off the very bottom of the screen.
     const HANDLE_HEIGHT = 44;
-    const TRACK_PAD = 6;
+    const TRACK_INSET_TOP = 60;
+    const TRACK_INSET_BOTTOM = 24;
 
     // Recompute the handle's position from the container's scroll metrics: it's a
     // fixed-size grab handle whose offset mirrors how far down we're scrolled.
@@ -723,7 +750,7 @@ const DocumentEditorPanel = ({
             return;
         }
         setCanScrollThumb(true);
-        const travel = Math.max(0, clientHeight - 2 * TRACK_PAD - HANDLE_HEIGHT);
+        const travel = Math.max(0, clientHeight - TRACK_INSET_TOP - TRACK_INSET_BOTTOM - HANDLE_HEIGHT);
         setThumbTop((scrollTop / scrollable) * travel);
     }, [containerEl]);
 
@@ -744,6 +771,20 @@ const DocumentEditorPanel = ({
         if (isPhone) {
             updateThumb();
             revealScrollThumb();
+
+            // Hide the floating chrome (navbar + sidebar edge handles) while
+            // scrolling down into the script so it doesn't cover the page; bring
+            // it back on scroll-up or when near the top. A small threshold keeps
+            // momentum jitter from flickering it.
+            const delta = scrollTop - lastScrollTop.current;
+            if (scrollTop <= 4) {
+                setChromeHidden(false);
+            } else if (delta > 6) {
+                setChromeHidden(true);
+            } else if (delta < -6) {
+                setChromeHidden(false);
+            }
+            lastScrollTop.current = scrollTop;
         }
     };
 
@@ -762,7 +803,7 @@ const DocumentEditorPanel = ({
             const startY = e.clientY;
             const startScrollTop = el.scrollTop;
             const scrollable = el.scrollHeight - el.clientHeight;
-            const maxThumbTravel = el.clientHeight - 2 * TRACK_PAD - HANDLE_HEIGHT;
+            const maxThumbTravel = el.clientHeight - TRACK_INSET_TOP - TRACK_INSET_BOTTOM - HANDLE_HEIGHT;
 
             const onMove = (ev: PointerEvent) => {
                 if (maxThumbTravel <= 0) return;
@@ -790,6 +831,22 @@ const DocumentEditorPanel = ({
             if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
         };
     }, []);
+
+    // Reveal the chrome again the moment the user starts writing. The native
+    // `input` event on the contenteditable fires only for real user edits — not
+    // for programmatic/collaboration changes or the pagination height updates —
+    // so it won't fight the scroll-hide. Off phone this is a no-op.
+    useEffect(() => {
+        if (!isPhone) {
+            setChromeHidden(false);
+            return;
+        }
+        const dom = editor?.view?.dom;
+        if (!dom) return;
+        const onInput = () => setChromeHidden(false);
+        dom.addEventListener("input", onInput);
+        return () => dom.removeEventListener("input", onInput);
+    }, [editor, isPhone, setChromeHidden]);
 
     const focusType =
         focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
@@ -824,7 +881,7 @@ const DocumentEditorPanel = ({
                 }
             >
                 <div
-                    className={`${styles.editor_wrapper} ${effectiveEndless ? styles.endless_scroll : ""}`}
+                    className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}
                     style={wrapperStyle}
                 >
                     <div

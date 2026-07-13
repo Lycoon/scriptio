@@ -22,7 +22,7 @@ const action = (id: string, text: string) => ({
  * Build a project that exercises every shared type the adapter must preserve:
  * screenplay + title-page fragments, all the metadata-ish maps, the document
  * tree (folder / editor / board), an editor doc's own content, a board's data,
- * the outline, a shelf entry with version content, and the custom dictionary.
+ * the timeline, a shelf entry with version content, and the custom dictionary.
  */
 function buildPopulatedProject(): ProjectState {
     const ydoc = new ProjectState();
@@ -66,9 +66,12 @@ function buildPopulatedProject(): ProjectState {
         ydoc.boardData(board).set("arrows", JSON.stringify([]));
     });
 
-    // Outline references the main screenplay
-    repo.addOutlineItem({
-        parentId: null,
+    // Timeline: a layer holding a clip that references the main screenplay
+    const layerId = repo.addTimelineLayer("Act 1");
+    repo.addTimelineClip({
+        layerId,
+        start: 0,
+        duration: 2,
         source: "scene",
         refDocId: "screenplay",
         refId: "s1",
@@ -104,7 +107,8 @@ function snapshot(data: ReturnType<typeof projectDataOf>) {
         production: data.production,
         comments: data.comments,
         documents: data.documents,
-        outline: data.outline,
+        timelineLayers: data.timelineLayers,
+        timelineClips: data.timelineClips,
         shelf: data.shelf,
         dictionary: data.dictionary,
         documentContent: data.documentContent,

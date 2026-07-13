@@ -9,6 +9,16 @@
     overflow: hidden;
 }
 
+/* Stacks the Timeline strip above the split panels, spanning only the width
+ * between the two sidebars. */
+.center_column {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
 .panel_area {
     flex: 1;
     position: relative;
@@ -19,6 +29,8 @@
 .right_sidebar_toggle {
     position: absolute;
     top: 8px;
+    /* Phone: near the edge (the native scrollbar is hidden there, so no overlap).
+     * Desktop offset is bumped below to clear the scrollbar gutter. */
     right: 8px;
     z-index: 5;
     width: 20px;
@@ -30,6 +42,16 @@
     color: var(--secondary-text);
     background-color: var(--secondary);
     border-radius: 16px;
+}
+
+/* Desktop/tablet: the editor scroll container reserves a scrollbar gutter
+ * (scrollbar-gutter: stable), so an 8px offset sits under the scrollbar. Pull the
+ * handle in to 30px so it clears the gutter and lines up with the same distance
+ * from the right border as the navbar's Settings button (.right_btns margin). */
+@media (min-width: 768px) {
+    .right_sidebar_toggle {
+        right: 30px;
+    }
 }
 
 .right_sidebar_toggle:hover {
@@ -55,5 +77,23 @@
     .right_sidebar_toggle {
         width: 28px;
         height: 44px;
+    }
+}
+
+.right_sidebar_toggle {
+    transition:
+        background-color 0.15s ease,
+        transform 0.25s ease,
+        opacity 0.25s ease;
+}
+
+/* Phone: slide the edge handle off to the right while the reader scrolls down
+ * (see chromeHidden in ViewContext). Translate rather than collapse so it
+ * animates back into place cleanly and never reflows the editor. */
+@media (max-width: 767px) {
+    .right_sidebar_toggle.chrome_hidden {
+        opacity: 0;
+        transform: translateX(calc(100% + 8px));
+        pointer-events: none;
     }
 }

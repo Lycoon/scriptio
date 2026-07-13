@@ -1,11 +1,30 @@
 {
-  "outline": {
-    "title": "Séquencier",
-    "empty": "Envoyez des scènes et des cartes ici pour commencer à structurer votre histoire.",
+  "timeline": {
+    "title": "Chronologie",
+    "layer": "Piste",
+    "addLayer": "Ajouter une piste",
+    "deleteLayer": "Supprimer la piste",
+    "renameLayer": "Renommer le calque",
+    "layerPlaceholder": "Nom de la piste",
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "close": "Fermer",
+    "empty": "Envoyez des scènes et des cartes ici pour les placer sur la chronologie.",
     "untitled": "Sans titre",
-    "unlinked": "Détaché",
-    "unlinkedHint": "La source de ce bloc n'existe plus.",
-    "removeFromOutline": "Retirer du séquencier"
+    "unlinkedHint": "La source de ce clip n'existe plus.",
+    "removeClip": "Retirer de la chronologie",
+    "featureLength": "Durée du film",
+    "unitMinutes": "Minutes",
+    "unitPages": "Pages",
+    "unitMinutesShort": "min",
+    "switchUnit": "Changer d'unité (minutes / pages)",
+    "scale": "Échelle",
+    "collapseLayer": "Réduire",
+    "expandLayer": "Développer",
+    "indentLayer": "Imbriquer sous la piste précédente",
+    "outdentLayer": "Désimbriquer la piste",
+    "dragLayer": "Glisser pour réordonner ou imbriquer",
+    "scenes": "Scènes"
   },
   "navbar": {
     "menu": "Menu",
@@ -16,7 +35,7 @@
     "analytics": "Analyses",
     "settings": "Paramètres",
     "back": "Retour aux projets",
-    "outline": "Séquencier",
+    "timeline": "Chronologie",
     "screenplay": "Scénario",
     "board": "Tableau",
     "titlePage": "Page de titre",
@@ -512,7 +531,7 @@
     "dangerZoneTitle": "Zone dangereuse"
   },
   "contextMenu": {
-    "sendToOutline": "Envoyer vers le séquencier",
+    "sendToTimeline": "Envoyer vers la chronologie",
     "goToScene": "Aller à la scène",
     "edit": "Modifier",
     "copy": "Copier",
@@ -580,7 +599,7 @@
     }
   },
   "board": {
-    "sendToOutline": "Envoyer vers le séquencier",
+    "sendToTimeline": "Envoyer vers la chronologie",
     "duplicate": "Dupliquer",
     "delete": "Supprimer",
     "createCard": "Créer une carte",

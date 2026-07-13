@@ -193,7 +193,7 @@ const ProjectNavbar = () => {
     const isLocalEdit = useRef(false);
 
     const isPhone = useIsPhone();
-    const { setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
+    const { setLeftSidebarOpen, setRightSidebarOpen, chromeHidden } = useViewContext();
 
     // Return to the projects list by clearing the ?projectId query. Use the same
     // redirect() primitive that opens a project (ProjectItem → redirectScreenplay):
@@ -286,7 +286,7 @@ const ProjectNavbar = () => {
 
     if (isPhone) {
         return (
-            <nav className={join(navbar.container)}>
+            <nav className={join(navbar.container, chromeHidden ? navbar.container_hidden : "")}>
                 <nav className={navbar.mobile_bar}>
                     {isInProject && projectId && (
                         <div className={navbar.mobile_center}>
