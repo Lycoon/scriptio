@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useViewContext } from "@src/context/ViewContext";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useActiveEditor } from "@src/lib/editor/use-active-editor";
@@ -30,6 +30,24 @@ const ProjectWorkspace = () => {
     const { isReadOnly } = useContext(ProjectContext);
     const isPhone = useIsPhone();
     const activeEditor = useActiveEditor();
+
+    // iOS WKWebView anchoring guard. The app shell is pinned to the viewport
+    // (100vh, overflow hidden) and only the inner editor container is meant to
+    // scroll. But with the on-screen keyboard up, a contenteditable edit — most
+    // reproducibly deleting/joining an empty node — can make WebKit scroll the
+    // *document itself* to chase the caret. That drags the whole shell up: the
+    // (relatively positioned) navbar slides off the top and the editor looks
+    // unanchored. Nothing at the window level is ever supposed to scroll here, so
+    // snap it straight back to the top. The listener is on window and
+    // non-capturing, so it never fires for the inner container's own scroll.
+    useEffect(() => {
+        if (!isPhone) return;
+        const anchor = () => {
+            if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0);
+        };
+        window.addEventListener("scroll", anchor, { passive: true });
+        return () => window.removeEventListener("scroll", anchor);
+    }, [isPhone]);
 
     // Enter edit mode and drop the caret into the reader's current editor so the
     // keyboard comes up straight away. Focus must happen SYNCHRONOUSLY inside this
