@@ -22,7 +22,7 @@ import Loading from "@components/utils/Loading";
 
 import { TextSelection, Transaction } from "@tiptap/pm/state";
 import { EditorView } from "@tiptap/pm/view";
-import { DocumentEditorConfig } from "@src/lib/editor/document-editor-config";
+import { DocumentEditorConfig, EDITOR_INPUT_ATTRIBUTES } from "@src/lib/editor/document-editor-config";
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
 import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
@@ -46,6 +46,10 @@ export interface DocumentEditorPanelProps {
     /** Override the focus type reported to ProjectContext on focus. */
     focusedTypeOverride?: "screenplay" | "title" | "draft";
 }
+
+// Scroll distance (px) that fully hides the mobile chrome. Roughly the navbar
+// height so the bar slides away at content speed — a 1:1 feel with the scroll.
+const CHROME_HIDE_RANGE = 64;
 
 const DocumentEditorPanel = ({
     config,
@@ -90,7 +94,7 @@ const DocumentEditorPanel = ({
         repository,
     } = projectCtx;
     const { settings } = useSettings();
-    const { isEndlessScroll, setChromeHidden } = useViewContext();
+    const { isEndlessScroll, setChromeHidden, mobileEditMode, setMobileEditMode } = useViewContext();
     const { user } = useUser();
     const isPhone = useIsPhone();
 
@@ -109,6 +113,13 @@ const DocumentEditorPanel = ({
     // Last scrollTop, to derive scroll direction for hiding/showing the mobile
     // editor chrome (navbar + sidebar edge handles).
     const lastScrollTop = useRef(0);
+    // Continuous 0→1 progress for hiding that chrome, tracked so it follows the
+    // scroll gesture linearly rather than snapping at a threshold (see
+    // applyChromeHide). Mirrored into the --chrome-hide CSS variable.
+    const chromeHideRef = useRef(0);
+    // Pending single-tap timer for the phone reader. A tap arms it; a second tap
+    // within the window cancels it and counts as a double tap (see handleReaderTap).
+    const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Callback ref stored in state so the zoom effect re-runs when the scroll
     // container actually mounts (it may render after a Loading fallback).
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
@@ -154,16 +165,24 @@ const DocumentEditorPanel = ({
         };
     }, [editor, onEditorCreated]);
 
-    // Read-only enforcement for VIEWER role.
+    // Editability gate.
     //
-    // The server already drops doc writes from viewers (see protocol.ts), but
-    // disabling tiptap locally avoids a confusing "I typed but nothing
-    // happened" experience: keystrokes are blocked at the editor level and
-    // collaboration carets/awareness still render normally.
+    // Read-only enforcement for VIEWER role: the server already drops doc writes
+    // from viewers (see protocol.ts), but disabling tiptap locally avoids a
+    // confusing "I typed but nothing happened" experience — keystrokes are
+    // blocked at the editor level and collaboration carets/awareness still render.
+    //
+    // Phone reader mode: on phone the editor stays non-editable until the user
+    // enters edit mode via the pen button, so the default experience is a
+    // keyboard-free reader. Off phone, mobileEditMode is ignored. Turning it off
+    // (contenteditable=false) also dismisses the on-screen keyboard; blur too so
+    // focus doesn't linger.
     useEffect(() => {
         if (!editor || editor.isDestroyed) return;
-        editor.setEditable(!isReadOnly);
-    }, [editor, isReadOnly]);
+        const editable = !isReadOnly && (!isPhone || mobileEditMode);
+        editor.setEditable(editable);
+        if (!editable && editor.isFocused) editor.commands.blur();
+    }, [editor, isReadOnly, isPhone, mobileEditMode]);
 
     // Marker class on the editor DOM so global CSS (scriptio.css) can drop the
     // first-of-page top-margin reset in endless-scroll mode. There the page-break
@@ -452,6 +471,10 @@ const DocumentEditorPanel = ({
 
         editor.setOptions({
             editorProps: {
+                // Re-apply the base contenteditable attributes: setOptions replaces
+                // editorProps wholesale, so without this the autocorrect/predictive
+                // suppression set at mount would be dropped for screenplay editors.
+                attributes: EDITOR_INPUT_ATTRIBUTES,
                 handleKeyDown(view: EditorView, event: KeyboardEvent) {
                     const selection = view.state.selection;
                     const node = selection.$anchor.parent;
@@ -764,6 +787,63 @@ const DocumentEditorPanel = ({
         }
     }, []);
 
+    // Drive the mobile chrome hide (navbar + sidebar edge handles + pen button)
+    // as a continuous 0→1 progress written straight to a CSS variable, so it
+    // tracks the scroll gesture linearly instead of snapping at a threshold and
+    // easing over a fixed duration. Written imperatively (no React state) to keep
+    // it frame-tight. `chromeHidden` is kept in sync only as a coarse flag for
+    // logic that needs a discrete "mostly hidden" state.
+    const applyChromeHide = useCallback(
+        (progress: number) => {
+            const clamped = progress < 0 ? 0 : progress > 1 ? 1 : progress;
+            if (clamped === chromeHideRef.current) return;
+            const wasHidden = chromeHideRef.current > 0.5;
+            chromeHideRef.current = clamped;
+            document.documentElement.style.setProperty("--chrome-hide", clamped.toFixed(4));
+            const isHidden = clamped > 0.5;
+            if (isHidden !== wasHidden) setChromeHidden(isHidden);
+        },
+        [setChromeHidden],
+    );
+
+    // Reset the chrome to fully shown whenever it can't/shouldn't be hidden:
+    // leaving phone layout, entering edit mode, or on unmount (so the next screen
+    // doesn't inherit a half-hidden bar).
+    useEffect(() => {
+        if (!isPhone || mobileEditMode) applyChromeHide(0);
+        return () => applyChromeHide(0);
+    }, [isPhone, mobileEditMode, applyChromeHide]);
+
+    // Phone reader taps. The reader is not editable, so taps don't place a caret
+    // and are free to drive chrome: a single tap brings back the chrome the user
+    // scrolled away; a double tap enters edit mode and focuses the editor (same
+    // as the pen button), bringing up the keyboard. Off phone, in edit mode, or
+    // for read-only viewers this is inert so normal caret/selection behaviour is
+    // untouched.
+    const handleReaderTap = useCallback(() => {
+        if (!isPhone || mobileEditMode) return;
+
+        if (tapTimer.current) {
+            // Second tap inside the window → double tap: enter edit mode.
+            clearTimeout(tapTimer.current);
+            tapTimer.current = null;
+            if (isReadOnly) return;
+            setMobileEditMode(true);
+            // setEditable flips in an effect after this render, so defer the
+            // focus a tick until the editor is actually editable.
+            const ed = editor;
+            if (ed) setTimeout(() => ed.commands.focus(), 0);
+            return;
+        }
+
+        // First tap: wait briefly to see if a second one follows. If not, treat
+        // it as a single tap and reveal the chrome (a no-op when already shown).
+        tapTimer.current = setTimeout(() => {
+            tapTimer.current = null;
+            applyChromeHide(0);
+        }, 280);
+    }, [isPhone, mobileEditMode, isReadOnly, editor, setMobileEditMode, applyChromeHide]);
+
     const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
         if (suggestions.length > 0) updateSuggestions?.([]);
         const scrollTop = e.currentTarget.scrollTop;
@@ -772,17 +852,16 @@ const DocumentEditorPanel = ({
             updateThumb();
             revealScrollThumb();
 
-            // Hide the floating chrome (navbar + sidebar edge handles) while
-            // scrolling down into the script so it doesn't cover the page; bring
-            // it back on scroll-up or when near the top. A small threshold keeps
-            // momentum jitter from flickering it.
+            // Map scroll movement onto the hide progress 1:1 over CHROME_HIDE_RANGE
+            // px: scrolling down reveals more of the script by sliding the chrome
+            // away at content speed; scrolling up brings it straight back. Snap
+            // fully open at the very top. In edit mode the navbar carries the
+            // exit/undo/redo controls, so keep it pinned open there.
             const delta = scrollTop - lastScrollTop.current;
-            if (scrollTop <= 4) {
-                setChromeHidden(false);
-            } else if (delta > 6) {
-                setChromeHidden(true);
-            } else if (delta < -6) {
-                setChromeHidden(false);
+            if (mobileEditMode || scrollTop <= 4) {
+                applyChromeHide(0);
+            } else {
+                applyChromeHide(chromeHideRef.current + delta / CHROME_HIDE_RANGE);
             }
             lastScrollTop.current = scrollTop;
         }
@@ -829,6 +908,7 @@ const DocumentEditorPanel = ({
     useEffect(() => {
         return () => {
             if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
+            if (tapTimer.current) clearTimeout(tapTimer.current);
         };
     }, []);
 
@@ -837,16 +917,13 @@ const DocumentEditorPanel = ({
     // for programmatic/collaboration changes or the pagination height updates —
     // so it won't fight the scroll-hide. Off phone this is a no-op.
     useEffect(() => {
-        if (!isPhone) {
-            setChromeHidden(false);
-            return;
-        }
+        if (!isPhone) return;
         const dom = editor?.view?.dom;
         if (!dom) return;
-        const onInput = () => setChromeHidden(false);
+        const onInput = () => applyChromeHide(0);
         dom.addEventListener("input", onInput);
         return () => dom.removeEventListener("input", onInput);
-    }, [editor, isPhone, setChromeHidden]);
+    }, [editor, isPhone, applyChromeHide]);
 
     const focusType =
         focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
@@ -869,6 +946,7 @@ const DocumentEditorPanel = ({
                 ref={setContainerEl}
                 className={styles.container}
                 onScroll={onScroll}
+                onClick={handleReaderTap}
                 onMouseDown={handleContainerMouseDown}
                 onFocus={() => setFocusedEditorType(focusType)}
                 onPasteCapture={

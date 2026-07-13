@@ -54,7 +54,7 @@ body {
          * Dynamic Island; the navbar pads its content down by the same amount
          * (see ProjectNavbar.module.css). Sidebars/backdrop anchor to
          * top: var(--navbar-height), so they stay flush with the bar. */
-        --navbar-height: calc(56px + var(--safe-top));
+        --navbar-height: calc(64px + var(--safe-top));
     }
 }
 

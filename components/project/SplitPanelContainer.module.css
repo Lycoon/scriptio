@@ -114,19 +114,11 @@
     display: flex;
     flex-direction: row;
     gap: 4px;
-    transition:
-        transform 0.25s ease,
-        opacity 0.25s ease;
-}
-
-/* Phone: slide the left edge handles off-screen while the reader scrolls down
- * (see chromeHidden in ViewContext). */
-@media (max-width: 767px) {
-    .panel_switcher_anchor.chrome_hidden {
-        opacity: 0;
-        transform: translateX(calc(-100% - 8px));
-        pointer-events: none;
-    }
+    /* Slide the left edge handles off-screen tracking the reader's scroll via
+     * --chrome-hide (0 shown → 1 off-screen left). No transition so it follows
+     * the gesture; the variable stays 0 on desktop, so this is a no-op there. */
+    transform: translateX(calc(var(--chrome-hide, 0) * (-100% - 8px)));
+    opacity: calc(1 - var(--chrome-hide, 0));
 }
 
 .panel_switcher_btn {

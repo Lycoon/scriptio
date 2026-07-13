@@ -41,7 +41,7 @@ import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-
 import { createSpellcheckExtension, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
 import { getActiveTitlePageElement } from "@src/lib/titlepage/editor";
-import { DocumentEditorConfig } from "./document-editor-config";
+import { DocumentEditorConfig, EDITOR_INPUT_ATTRIBUTES } from "./document-editor-config";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
 
 export interface DocumentEditorCallbacks {
@@ -346,6 +346,12 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     const editor = useEditor(
         {
             immediatelyRender: false,
+            // Suppress iOS's native autocorrect/predictive UI on the contenteditable
+            // (see EDITOR_INPUT_ATTRIBUTES). Screenplay editors re-set editorProps via
+            // setOptions in DocumentEditorPanel, which re-applies these attributes.
+            editorProps: {
+                attributes: EDITOR_INPUT_ATTRIBUTES,
+            },
             extensions: [
                 ...config.baseExtensions,
 

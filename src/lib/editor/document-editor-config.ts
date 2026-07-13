@@ -7,6 +7,26 @@ import { TITLEPAGE_BASE_EXTENSIONS } from "@src/lib/titlepage/editor";
 
 export type PaginationMode = "screenplay" | "titlepage";
 
+/**
+ * DOM attributes applied to every editor's ProseMirror contenteditable element.
+ *
+ * `autocorrect: "off"` maps to iOS `UITextInputTraits.autocorrectionType = .no`
+ * in the WKWebView, which suppresses the native QuickType predictive-suggestions
+ * bar that otherwise floats between our MobileFormatToolbar and the keyboard.
+ * `writingsuggestions: "false"` disables Apple Intelligence inline writing
+ * suggestions on newer iOS for the same reason. `spellcheck: "false"` turns off
+ * the browser's native red-squiggle spellcheck — we ship our own spellcheck
+ * engine (see SpellcheckContext), so the native one is redundant and its long-
+ * press menu adds more unwanted Apple UI. Autocapitalize is intentionally left
+ * at the default so sentence-case capitalization still works while typing.
+ */
+export const EDITOR_INPUT_ATTRIBUTES: Record<string, string> = {
+    autocorrect: "off",
+    autocomplete: "off",
+    spellcheck: "false",
+    writingsuggestions: "false",
+};
+
 export interface DocumentEditorFeatures {
     /** Whether comments are enabled (node-anchored comments + margin gutter). */
     comments: boolean;

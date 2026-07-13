@@ -80,20 +80,57 @@
     }
 }
 
+/* Slide the edge handle off to the right, tracking the reader's scroll via
+ * --chrome-hide (0 shown → 1 off-screen). Translate rather than collapse so it
+ * never reflows the editor; no transition on the hide so it follows the gesture
+ * (background-color still eases on hover). On desktop the variable stays 0, so
+ * this is a no-op there. */
 .right_sidebar_toggle {
-    transition:
-        background-color 0.15s ease,
-        transform 0.25s ease,
-        opacity 0.25s ease;
+    transform: translateX(calc(var(--chrome-hide, 0) * (100% + 8px)));
+    opacity: calc(1 - var(--chrome-hide, 0));
+    transition: background-color 0.15s ease;
 }
 
-/* Phone: slide the edge handle off to the right while the reader scrolls down
- * (see chromeHidden in ViewContext). Translate rather than collapse so it
- * animates back into place cleanly and never reflows the editor. */
-@media (max-width: 767px) {
-    .right_sidebar_toggle.chrome_hidden {
-        opacity: 0;
-        transform: translateX(calc(100% + 8px));
-        pointer-events: none;
-    }
+/* Phone-only pen button to enter edit mode from the reader. A clean, high-
+ * contrast circle in the bottom-right corner (the design system is monochrome,
+ * so the button borrows the text colour, inverted). Sits above the editor and
+ * clears the home indicator via the safe-area inset. */
+.edit_fab {
+    position: fixed;
+    right: calc(20px + var(--safe-right));
+    bottom: calc(20px + var(--safe-bottom));
+    z-index: 55;
+
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 50%;
+    background-color: var(--primary-text);
+    color: var(--main-bg);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    /* Slide down out of view as the reader scrolls into the script, tracking
+     * --chrome-hide 1:1 so only the scroll drag-handle stays visible. No
+     * transition — it follows the gesture rather than easing after it. */
+    opacity: calc(1 - var(--chrome-hide, 0));
+    transform: translateY(calc(var(--chrome-hide, 0) * (100% + 20px + var(--safe-bottom))));
+}
+
+/* The global `svg { color: var(--primary-text) }` rule targets the icon element
+ * directly and would otherwise override the inverted `color` set above, painting
+ * the pen the same shade as the button background (all white in dark mode).
+ * Re-inherit the button's colour so the icon stays legible. */
+.edit_fab svg {
+    color: inherit;
+}
+
+.edit_fab:active {
+    opacity: 1;
+    transform: scale(0.94);
 }
