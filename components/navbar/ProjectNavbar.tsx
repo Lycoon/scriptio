@@ -19,6 +19,7 @@ import { DashboardContext } from "@src/context/DashboardContext";
 import {
     AudioLines,
     BarChart2,
+    Check,
     CircleArrowLeft,
     CircleCheckBig,
     CloudUpload,
@@ -28,7 +29,9 @@ import {
     Lock,
     Menu,
     Monitor,
+    Redo2,
     Settings,
+    Undo2,
     WifiOff,
     WifiSync,
 } from "lucide-react";
@@ -43,6 +46,7 @@ import mobileMenu from "./ProjectNavbarMobileMenu.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
 import ScreenplayFormatDropdown from "./ScreenplayFormatDropdown";
 import ScreenplaySearch from "./ScreenplaySearch";
+import { useActiveEditor } from "@src/lib/editor/use-active-editor";
 
 /** Human-readable byte size, e.g. 1.4 GB. */
 const formatBytes = (bytes: number): string => {
@@ -193,7 +197,25 @@ const ProjectNavbar = () => {
     const isLocalEdit = useRef(false);
 
     const isPhone = useIsPhone();
-    const { setLeftSidebarOpen, setRightSidebarOpen, chromeHidden } = useViewContext();
+    const { setLeftSidebarOpen, setRightSidebarOpen, chromeHidden, mobileEditMode, setMobileEditMode } =
+        useViewContext();
+    const activeEditor = useActiveEditor();
+
+    // Undo/redo are backed by the collaboration UndoManager (registered by the
+    // Collaboration extension). Guard on the command existing so calling before
+    // Yjs is ready can't throw; an empty history no-ops harmlessly.
+    const runHistory = (action: "undo" | "redo") => {
+        if (activeEditor && typeof activeEditor.commands[action] === "function") {
+            activeEditor.chain().focus()[action]().run();
+        }
+    };
+
+    // Leave edit mode: drop focus so the keyboard dismisses (setEditable(false)
+    // in the panel also does this, but blur here makes it immediate).
+    const exitEditMode = () => {
+        activeEditor?.commands.blur();
+        setMobileEditMode(false);
+    };
 
     // Return to the projects list by clearing the ?projectId query. Use the same
     // redirect() primitive that opens a project (ProjectItem → redirectScreenplay):
@@ -288,19 +310,37 @@ const ProjectNavbar = () => {
         return (
             <nav className={join(navbar.container, chromeHidden ? navbar.container_hidden : "")}>
                 <nav className={navbar.mobile_bar}>
-                    {isInProject && projectId && (
-                        <div className={navbar.mobile_center}>
-                            <div className={navbar.navbar_island}>
-                                <ScreenplayFormatDropdown />
+                    {/* Edit-mode controls: leave edit mode + undo/redo. Reader mode
+                        keeps the left side empty. */}
+                    {isInProject && projectId && mobileEditMode && (
+                        <div className={navbar.mobile_left}>
+                            <div className={`${navBtn.button} ${navbar.edit_done}`} onClick={exitEditMode}>
+                                <Check size={18} />
+                            </div>
+                            <div
+                                className={`${navBtn.button} ${navbar.mobile_icon}`}
+                                onClick={() => runHistory("undo")}
+                            >
+                                <Undo2 size={18} />
+                            </div>
+                            <div
+                                className={`${navBtn.button} ${navbar.mobile_icon}`}
+                                onClick={() => runHistory("redo")}
+                            >
+                                <Redo2 size={18} />
                             </div>
                         </div>
                     )}
-                    {/* Left/right sidebars open via the editor edge chevrons (same as
+                    {/* The element-type selector now lives in the format bar above
+                        the keyboard (MobileFormatToolbar), within thumb reach while
+                        writing — so it's dropped from the navbar here.
+
+                        Left/right sidebars open via the editor edge chevrons (same as
                         desktop); settings live in the burger menu below. */}
                     <div className={navbar.mobile_right}>
                         {isInProject && <ScreenplaySearch />}
                         <div
-                            className={`${navBtn.button} ${isMobileMenuOpen ? navBtn.active : ""}`}
+                            className={`${navBtn.button} ${navbar.mobile_icon} ${isMobileMenuOpen ? navBtn.active : ""}`}
                             onClick={() =>
                                 setIsMobileMenuOpen((prev) => {
                                     const next = !prev;

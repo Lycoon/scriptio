@@ -32,12 +32,24 @@ interface ViewContextType {
     timelineOpen: boolean;
     setTimelineOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
     /**
-     * Phone-only: hide the floating editor chrome (project navbar + sidebar edge
-     * handles) while the reader scrolls down through the script, so it doesn't
-     * cover the page. Reset to false on scroll-up or when the user types.
+     * Phone-only, coarse "chrome is mostly hidden" flag (used e.g. to drop the
+     * navbar's hit-testing once it's collapsed). The *visual* hide is continuous:
+     * DocumentEditorPanel's scroll handler writes a 0→1 `--chrome-hide` CSS
+     * variable that the navbar + edge handles + pen button track linearly, so the
+     * chrome follows the scroll gesture rather than snapping. This boolean just
+     * flips once past the halfway point; both reset when the user types or the
+     * editor enters edit mode.
      */
     chromeHidden: boolean;
     setChromeHidden: (value: boolean | ((prev: boolean) => boolean)) => void;
+    /**
+     * Phone-only: the editor opens in a keyboard-free "reader" mode by default.
+     * Tapping the floating pen button flips this on, which makes the editors
+     * editable and brings up the keyboard; the navbar checkmark flips it back.
+     * Ignored on desktop, where editors are always editable (subject to role).
+     */
+    mobileEditMode: boolean;
+    setMobileEditMode: (value: boolean | ((prev: boolean) => boolean)) => void;
     setPrimaryPanel: (panel: PanelType) => void;
     setSecondaryPanel: (panel: PanelType | null) => void;
     setSplitRatio: (ratio: number) => void;
@@ -84,6 +96,8 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [rightSidebarOpen, setRightSidebarOpenState] = useState<boolean>(false);
     const [timelineOpen, setTimelineOpen] = useState<boolean>(false);
     const [chromeHidden, setChromeHidden] = useState<boolean>(false);
+    // Default to reader mode on phone (no keyboard until the user taps the pen).
+    const [mobileEditMode, setMobileEditMode] = useState<boolean>(false);
 
     // Mirror the live open-state in refs so the wrapped setters can resolve a
     // functional update and enforce mutual exclusion without stale closures.
@@ -297,6 +311,8 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setTimelineOpen,
             chromeHidden,
             setChromeHidden,
+            mobileEditMode,
+            setMobileEditMode,
             setPrimaryPanel,
             setSecondaryPanel,
             setSplitRatio,
@@ -312,7 +328,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, mobileEditMode, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

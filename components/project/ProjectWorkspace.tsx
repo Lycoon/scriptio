@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useViewContext } from "@src/context/ViewContext";
+import { ProjectContext } from "@src/context/ProjectContext";
+import { useActiveEditor } from "@src/lib/editor/use-active-editor";
 import { useIsPhone } from "@src/lib/utils/hooks";
 import EditorSidebarNavigation from "@components/editor/sidebar/EditorSidebarNavigation";
 import EditorSidebarFormat from "@components/editor/sidebar/EditorSidebarFormat";
@@ -13,13 +15,34 @@ import EditorFooter from "./EditorFooter";
 import TimelinePanel from "@components/editor/timeline/TimelinePanel";
 import MobileFormatToolbar from "@components/editor/MobileFormatToolbar";
 import styles from "./ProjectWorkspace.module.css";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { join } from "@src/lib/utils/misc";
+import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 
 const ProjectWorkspace = () => {
-    const { leftSidebarOpen, setLeftSidebarOpen, rightSidebarOpen, setRightSidebarOpen, chromeHidden, timelineOpen } =
-        useViewContext();
+    const {
+        leftSidebarOpen,
+        setLeftSidebarOpen,
+        rightSidebarOpen,
+        setRightSidebarOpen,
+        timelineOpen,
+        mobileEditMode,
+        setMobileEditMode,
+    } = useViewContext();
+    const { isReadOnly } = useContext(ProjectContext);
     const isPhone = useIsPhone();
+    const activeEditor = useActiveEditor();
+
+    // Enter edit mode and drop the caret into the reader's current editor so the
+    // keyboard comes up straight away. setEditable flips in a DocumentEditorPanel
+    // effect after this render, so defer the focus a tick until it's editable.
+    const enterEditMode = () => {
+        setMobileEditMode(true);
+        const editor = activeEditor;
+        if (editor) setTimeout(() => editor.commands.focus(), 0);
+    };
+
+    // The pen shows on phone in reader mode, only when there's an editable text
+    // editor to enter (not for viewers, not on board/statistics panels).
+    const showEditFab = isPhone && !mobileEditMode && !isReadOnly && !!activeEditor;
 
     // On phone the sidebars slide over the editor as drawers; a backdrop dims the
     // editor and gives a tap-anywhere-to-close target.
@@ -62,7 +85,7 @@ const ProjectWorkspace = () => {
 
                     {/* Right sidebar toggle — an edge chevron on every platform */}
                     <div
-                        className={join(styles.right_sidebar_toggle, chromeHidden ? styles.chrome_hidden : "")}
+                        className={styles.right_sidebar_toggle}
                         onClick={() => setRightSidebarOpen((prev) => !prev)}
                     >
                         {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -81,6 +104,19 @@ const ProjectWorkspace = () => {
 
             {/* Phone-only formatting bar above the on-screen keyboard */}
             <MobileFormatToolbar />
+
+            {/* Phone-only pen button: enters edit mode from the reader. Hides with
+                the rest of the chrome while scrolling down through the script. */}
+            {showEditFab && (
+                <button
+                    type="button"
+                    aria-label="Edit"
+                    className={styles.edit_fab}
+                    onClick={enterEditMode}
+                >
+                    <Pencil size={22} />
+                </button>
+            )}
         </div>
     );
 };

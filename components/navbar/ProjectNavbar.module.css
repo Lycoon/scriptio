@@ -42,40 +42,86 @@
     padding-right: calc(10px + var(--safe-right));
 }
 
-.mobile_center {
-    flex: 1;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    min-width: 0;
-    height: calc(100% - 12px);
-}
-
+/* Both navbar clusters render as floating rounded islands (same treatment as
+ * .navbar_island) so the phone navbar reads as detached, rounded chrome that
+ * matches the sidebar handles and keyboard bar. The container row keeps the
+ * page background; only these pills stand out. */
+.mobile_left,
 .mobile_right {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
+    padding: 4px;
+    background-color: var(--secondary);
+    border-radius: 999px;
+    box-shadow: var(--panel-shadow);
+}
+
+/* Always hug the right edge — the only other cluster (edit-mode controls) is on
+ * the left, and in reader mode this is the sole cluster, so it can't rely on a
+ * sibling to push it over. */
+.mobile_right {
+    margin-left: auto;
+}
+
+/* Icon buttons sit flush on the island (ghost fill), so the pill reads as one
+ * unit rather than buttons-within-a-button. Higher specificity than the shared
+ * NavbarIconButton .button rule so it wins regardless of stylesheet order. */
+.mobile_bar .mobile_icon {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.mobile_bar .mobile_icon:hover {
+    border-color: transparent;
+}
+
+.mobile_bar .mobile_icon:active {
+    background-color: var(--secondary-hover);
+}
+
+/* The "leave edit mode" checkmark: a filled pill that reads as the primary
+ * action of the edit-mode island, standing apart from the ghost undo/redo icons
+ * beside it via the inverted text colour. */
+.edit_done {
+    color: var(--main-bg);
+    background-color: var(--primary-text);
+}
+
+/* The global `svg { color: var(--primary-text) }` rule targets the icon element
+ * directly, so it overrides the inverted `color` inherited from this pill and
+ * paints the checkmark the same shade as the pill's background (invisible in
+ * dark mode). Re-inherit the button's colour so the icon stays legible. */
+.edit_done svg {
+    color: inherit;
+}
+
+.edit_done:hover {
+    background-color: var(--primary-text);
+    opacity: 0.85;
 }
 
 @media (max-width: 767px) {
     .container {
         /* Push the bar below the status bar / Dynamic Island. --navbar-height
-         * already reserves this space, so the content box stays 56px tall. */
+         * already reserves this space, so the content box stays 64px tall — the
+         * pill clusters (48px) then centre with an even ~8px above and below,
+         * clear of the bar's bottom edge. */
         padding-block: 0;
         padding-top: var(--safe-top);
         overflow: hidden;
-        transition:
-            height 0.25s ease,
-            opacity 0.25s ease;
+        /* Collapse continuously as the reader scrolls down: --chrome-hide runs
+         * 0 (shown) → 1 (hidden), driven straight from scrollTop in
+         * DocumentEditorPanel. Height reclaims the space (the workspace is a flex
+         * column, so this reflows cleanly) and there is intentionally no
+         * transition — the bar tracks the gesture rather than easing after it. */
+        height: calc(var(--navbar-height) * (1 - var(--chrome-hide, 0)));
+        opacity: calc(1 - var(--chrome-hide, 0));
     }
 
-    /* Collapsed while the reader scrolls down (see chromeHidden in ViewContext).
-     * Height animates to 0 so the editor below reclaims the space; the workspace
-     * is a flex column, so this reflows cleanly without a fixed overlay. */
+    /* Fully hidden: drop hit-testing so the collapsed sliver can't catch taps. */
     .container_hidden {
-        height: 0;
-        opacity: 0;
         pointer-events: none;
     }
 }
