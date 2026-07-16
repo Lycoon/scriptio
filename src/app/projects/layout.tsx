@@ -4,10 +4,11 @@ import Loading from "@components/utils/Loading";
 import DashboardModal from "@components/dashboard/DashboardModal";
 import ProjectUnavailableDialog from "@components/projects/ProjectUnavailableDialog";
 import ProjectMigrationErrorDialog from "@components/projects/ProjectMigrationErrorDialog";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ProjectProvider, useProjectReady } from "@src/context/ProjectContext";
 import { ViewProvider } from "@src/context/ViewContext";
 import { useProjectMembership, useSettings } from "@src/lib/utils/hooks";
+import { useAppNavigation } from "@src/lib/utils/navigation";
 import { useLocale } from "@src/context/LocaleContext";
 import { useTheme } from "next-themes";
 import { ReactNode, Suspense, useEffect } from "react";
@@ -56,7 +57,7 @@ interface ProjectLayoutInnerProps {
 }
 
 const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
-    const router = useRouter();
+    const { goToProjects } = useAppNavigation();
     const { status } = useProjectReady();
     const { membership, isLoading: isMembershipLoading, isLocalOnly: isBrowserLocalOnly } = useProjectMembership();
 
@@ -73,11 +74,11 @@ const ProjectLayoutInner = ({ children }: ProjectLayoutInnerProps) => {
     // NEXT_REDIRECT mid-render tore down the project session before the async
     // navigation committed; React then remounted this subtree (projectId is
     // still in the URL), re-fired /api/users + cloud-token, and threw again —
-    // an endless 401 loop in production. router.replace runs once, after the
+    // an endless 401 loop in production. goToProjects runs once, after the
     // session has mounted cleanly, and stops once projectId leaves the URL.
     useEffect(() => {
-        if (mustRedirect) router.replace("/projects");
-    }, [mustRedirect, router]);
+        if (mustRedirect) goToProjects();
+    }, [mustRedirect, goToProjects]);
 
     // Surface terminal error states first so the user always gets a clear message,
     // before any redirect or loading gating runs.

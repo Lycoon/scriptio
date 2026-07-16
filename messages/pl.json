@@ -284,8 +284,10 @@
     "untitled": "Bez tytułu",
     "newProject": "Nowy projekt",
     "pageTitle": "Projekty",
+    "noProjects": "Brak projektów",
     "importBtn": "Importuj...",
     "importing": "Importowanie...",
+    "importError": "Import nie powiódł się. Sprawdź plik i spróbuj ponownie.",
     "createBtn": "Utwórz",
     "empty": {
       "title": "Twoja Historia Zaczyna Się Tutaj",

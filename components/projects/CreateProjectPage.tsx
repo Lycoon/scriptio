@@ -4,7 +4,7 @@ import { useState } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { join } from "@src/lib/utils/misc";
 import { FormInfoType } from "../utils/FormInfo";
-import { redirectScreenplay } from "@src/lib/utils/redirects";
+import { useAppNavigation } from "@src/lib/utils/navigation";
 import { createProject } from "@src/lib/utils/requests";
 import { useCookieUser, useIsPro } from "@src/lib/utils/hooks";
 import FormHeader from "./FormHeader";
@@ -23,6 +23,7 @@ type Props = {
 const CreateProjectPage = ({ setIsCreating }: Props) => {
     const { user } = useCookieUser();
     const { isPro } = useIsPro();
+    const { goToProject } = useAppNavigation();
     const t = useTranslations("projects");
 
     const [formInfo, setFormInfo] = useState<FormInfoType | null>(null);
@@ -78,9 +79,8 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
                 console.log("Failed to create project:", error);
                 setFormInfo({ content: t("form.failedToCreate"), isError: true });
             }
-            // Redirect outside try-catch since Next.js redirect() throws NEXT_REDIRECT
             if (projectId) {
-                redirectScreenplay(projectId);
+                goToProject(projectId);
             }
             return;
         }
@@ -99,12 +99,12 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
             const { createCachedProjectWithId } =
                 await import("@src/lib/persistence/storage-provider/local-persistence");
             await createCachedProjectWithId(json.data.id, title, description, true);
-            redirectScreenplay(json.data.id);
+            goToProject(json.data.id);
         } else {
             // Unauthenticated or non-Pro: create local-only project (IndexedDB)
             const { createCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
             const cachedProject = await createCachedProject(title, description);
-            redirectScreenplay(cachedProject.id);
+            goToProject(cachedProject.id);
         }
     };
 

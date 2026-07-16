@@ -284,8 +284,10 @@
     "untitled": "제목 없음",
     "newProject": "새 프로젝트",
     "pageTitle": "프로젝트",
+    "noProjects": "아직 프로젝트가 없습니다",
     "importBtn": "가져오기...",
     "importing": "가져오는 중...",
+    "importError": "가져오기에 실패했습니다. 파일을 확인한 후 다시 시도해 주세요.",
     "createBtn": "생성",
     "empty": {
       "title": "당신의 이야기가 여기서 시작됩니다",

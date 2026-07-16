@@ -91,6 +91,23 @@
     background-color: var(--secondary-hover);
 }
 
+/* The home navbar reuses the pill clusters (.mobile_left/.mobile_right) but has
+ * no .mobile_bar wrapper, so re-apply the flush-icon treatment here, scoped to
+ * the home bar, so its burger/settings sit on the pill exactly like the project
+ * navbar's icons. */
+.home_container .mobile_icon {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.home_container .mobile_icon:hover {
+    border-color: transparent;
+}
+
+.home_container .mobile_icon:active {
+    background-color: var(--secondary-hover);
+}
+
 @media (max-width: 767px) {
     .container {
         /* Push the bar below the status bar / Dynamic Island. --navbar-height
@@ -453,11 +470,22 @@
  * Scoped to the home navbar so the editor navbar's clusters are untouched. */
 @media (max-width: 767px) {
     .home_container {
-        padding-inline: calc(16px + var(--safe-left)) calc(16px + var(--safe-right));
+        /* Match the editor navbar's phone edge padding (.mobile_bar) so the burger
+         * and settings buttons sit the same distance from the edges as the project
+         * navbar's icon clusters. */
+        padding-inline: calc(10px + var(--safe-left)) calc(10px + var(--safe-right));
     }
 
     .home_container .right_btns {
         width: auto;
         margin-right: 0;
+    }
+
+    /* Centre the pill clusters instead of letting them stretch to the full bar
+     * height (these wrappers default to align-items: stretch), so they render at
+     * their natural ~48px size — the same as the project navbar's .mobile_bar. */
+    .home_container .left_btns,
+    .home_container .right_btns {
+        align-items: center;
     }
 }

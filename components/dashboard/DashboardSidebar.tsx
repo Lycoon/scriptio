@@ -111,7 +111,7 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
                         </div>
                     ))}
                 </nav>
-                <div className={styles.navMenu} style={{ marginTop: "auto" }}>
+                <div className={`${styles.navMenu} ${styles.navMenuFooter}`}>
                     {/* While the user query is in flight, leave the slot empty rather than
                         rendering a "Sign in" button against an unknown auth state — clicking
                         it during loading races the SWR resolution and ends up on Profile. */}

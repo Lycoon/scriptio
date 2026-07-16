@@ -20,6 +20,9 @@ registeredAdapters.forEach((adapter) => {
     adapterMap.set(adapter.extension.toLowerCase(), adapter);
 });
 
+// `.txt` files commonly contain plain Fountain markup, so treat them as Fountain.
+adapterMap.set("txt", new FountainAdapter());
+
 export const getAdapterByFilename = (filename: string): ProjectAdapter | undefined => {
     const extension = filename.split(".").pop()?.toLowerCase();
     return getAdapterByExtension(extension);

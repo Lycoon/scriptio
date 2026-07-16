@@ -36,16 +36,20 @@ const HomeNavbar = ({ onOpenSidebar }: HomeNavbarProps) => {
     return (
         <nav className={join(navbar.container, navbar.home_container)}>
             {/* Left side: the logo on desktop; on phone the logo lives in the
-                sidebar drawer instead, so the bar shows the burger that opens it. */}
+                sidebar drawer instead, so the bar shows the burger that opens it.
+                On phone the button sits in the same rounded pill as the project
+                navbar's clusters so the two bars' icons read at the same size. */}
             <div className={navbar.left_btns}>
                 {isPhone ? (
-                    <button
-                        className={`${navBtn.button} ${navbar.home_burger}`}
-                        onClick={onOpenSidebar}
-                        aria-label={tNav("menu")}
-                    >
-                        <Menu size={20} />
-                    </button>
+                    <div className={navbar.mobile_left}>
+                        <button
+                            className={join(navBtn.button, navbar.mobile_icon, navbar.home_burger)}
+                            onClick={onOpenSidebar}
+                            aria-label={tNav("menu")}
+                        >
+                            <Menu size={18} />
+                        </button>
+                    </div>
                 ) : (
                     <Logo className={navbar.logo} />
                 )}
@@ -54,11 +58,19 @@ const HomeNavbar = ({ onOpenSidebar }: HomeNavbarProps) => {
             {/* Center - empty on home page */}
             <div></div>
 
-            {/* Right side - settings */}
+            {/* Right side - settings (same pill as the project navbar on phone). */}
             <div className={navbar.right_btns}>
-                <div className={navBtn.button} onClick={onOpen}>
-                    <Settings size={18} />
-                </div>
+                {isPhone ? (
+                    <div className={navbar.mobile_right}>
+                        <div className={join(navBtn.button, navbar.mobile_icon)} onClick={onOpen}>
+                            <Settings size={18} />
+                        </div>
+                    </div>
+                ) : (
+                    <div className={navBtn.button} onClick={onOpen}>
+                        <Settings size={18} />
+                    </div>
+                )}
             </div>
         </nav>
     );

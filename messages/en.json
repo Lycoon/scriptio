@@ -284,8 +284,10 @@
     "untitled": "Untitled",
     "newProject": "New Project",
     "pageTitle": "Projects",
+    "noProjects": "No projects yet",
     "importBtn": "Import...",
     "importing": "Importing...",
+    "importError": "Import failed. Please check the file and try again.",
     "createBtn": "Create",
     "empty": {
       "title": "Your Story Starts Here",

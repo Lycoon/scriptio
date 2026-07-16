@@ -137,9 +137,11 @@ const EditorFooter = () => {
             >
                 <SpellCheck size={14} />
             </button>
+            {/* Focus mode relies on the Fullscreen API and hiding desktop sidebar
+                chrome — neither meaningful on phone — so it's hidden there (CSS). */}
             <button
                 type="button"
-                className={join(styles.action, isZenMode ? styles.action_active : "")}
+                className={join(styles.action, styles.focus_action, isZenMode ? styles.action_active : "")}
                 onClick={isZenMode ? exitFocusMode : enterFocusMode}
                 title={t("focusMode")}
                 aria-label={t("focusMode")}

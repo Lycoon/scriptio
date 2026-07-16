@@ -2,7 +2,7 @@
 
 import { deleteProject } from "@src/lib/utils/requests";
 import { useProjectMembership } from "@src/lib/utils/hooks";
-import { redirectHome } from "@src/lib/utils/redirects";
+import { useAppNavigation } from "@src/lib/utils/navigation";
 import { useContext, useState } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
 import { Trash2 } from "lucide-react";
@@ -21,6 +21,7 @@ interface DangerZoneProps {
 const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
     const { membership } = useProjectMembership();
     const { closeDashboard } = useContext(DashboardContext);
+    const { goToProjects } = useAppNavigation();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [loading, setLoading] = useState(false);
     const t = useTranslations("dangerZone");
@@ -35,7 +36,7 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
                 const { deleteCachedProject } = await import("@src/lib/persistence/storage-provider/local-persistence");
                 await deleteCachedProject(projectId);
                 closeDashboard();
-                redirectHome();
+                goToProjects();
             } else if (membership) {
                 const res = await deleteProject(membership.project.id);
                 if (res.ok) {
@@ -44,7 +45,7 @@ const DangerZone = ({ projectId, isLocalOnly, isOpen }: DangerZoneProps) => {
                         await import("@src/lib/persistence/storage-provider/local-persistence");
                     await deleteCachedProject(projectId);
                     closeDashboard();
-                    redirectHome();
+                    goToProjects();
                 }
             }
         } finally {

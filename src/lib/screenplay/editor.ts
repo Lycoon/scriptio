@@ -12,10 +12,16 @@ import { RevisionMark, RevisionAttribute } from "./extensions/revisions-extensio
 import { ContdExtension } from "./extensions/contd-extension";
 import { FountainExtension } from "./extensions/fountain-extension";
 
-export const applyMarkToggle = (editor: Editor, style: Style) => {
-    if (style & Style.Bold) editor.chain().toggleBold().focus().run();
-    if (style & Style.Italic) editor.chain().toggleItalic().focus().run();
-    if (style & Style.Underline) editor.chain().toggleUnderline().focus().run();
+// `refocus` re-asserts editor focus after the toggle — needed on desktop where the
+// click that triggered it (a navbar dropdown button) blurred the editor. On mobile
+// the editor is already focused (the toolbar only shows while it is), and the extra
+// programmatic view.dom.focus() there disturbs iOS enough to dismiss the on-screen
+// keyboard on the mark-removal path — so mobile passes refocus: false.
+export const applyMarkToggle = (editor: Editor, style: Style, refocus = true) => {
+    const chain = () => (refocus ? editor.chain().focus() : editor.chain());
+    if (style & Style.Bold) chain().toggleBold().run();
+    if (style & Style.Italic) chain().toggleItalic().run();
+    if (style & Style.Underline) chain().toggleUnderline().run();
 };
 
 export const applyElement = (editor: Editor, element: ScreenplayElement) => {

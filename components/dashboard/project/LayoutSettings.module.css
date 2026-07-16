@@ -282,6 +282,19 @@
         gap: 12px;
     }
 
+    /* Header/footer: keep the three alignment inputs (left / middle / right) on one
+     * row even in the narrow drawer — stacking them into a column loses the
+     * left/center/right meaning. min-width:0 lets the inputs shrink to share the
+     * width instead of overflowing off-screen. */
+    .hfGroup .labelRow {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .hfGroup .labelRow > div {
+        min-width: 0;
+    }
+
     .hfGroup {
         grid-template-columns: 1fr;
         row-gap: 8px;

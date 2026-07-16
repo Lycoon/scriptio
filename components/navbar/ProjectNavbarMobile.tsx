@@ -249,6 +249,11 @@ const ProjectNavbarMobile = () => {
                         </div>
                     ))}
 
+                    {/* Set the sign in/out + About actions apart from the dashboard
+                        tab groups above, so they don't read as part of Preferences
+                        (mirrors the DashboardModal sidebar's footer separation). */}
+                    <div className={mobileMenu.separator} />
+
                     {isSignedIn ? (
                         <button
                             className={mobileMenu.item}

@@ -29,6 +29,7 @@ const DashboardModal = () => {
         useContext(DashboardContext);
     const t = useTranslations("modal");
     const tSidebar = useTranslations("sidebar");
+    const tNav = useTranslations("navbar");
     const isPhone = useIsPhone();
 
     // Phone: the drawer shows one screen at a time — the sections list (nav
@@ -145,7 +146,13 @@ const DashboardModal = () => {
                             )}
                             <h3>{t(`tabs.${activeTab}` as Parameters<typeof t>[0])}</h3>
                         </div>
-                        <X className={styles.close_btn} onClick={closeDashboard} />
+                        <button
+                            className={styles.close_btn}
+                            onClick={closeDashboard}
+                            aria-label={tNav("close")}
+                        >
+                            <X size={18} />
+                        </button>
                     </header>
 
                     <div className={`${styles.scrollArea} ${isScrolled ? styles.scrolled : ""}`} onScroll={handleScroll}>

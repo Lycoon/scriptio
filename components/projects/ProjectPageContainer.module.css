@@ -51,6 +51,16 @@
     height: auto;
 }
 
+/* Phone drawer title — mirrors the dashboard settings drawer header
+ * (DashboardModal.module.css .sidebarTitle) so the two drawers read the same. */
+.sidebar_title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+/* Matches the dashboard drawer's close button (DashboardModal .sidebarClose). */
 .sidebar_close {
     display: flex;
     align-items: center;
@@ -60,12 +70,13 @@
     border: none;
     border-radius: 10px;
     background: none;
-    color: var(--primary-text);
+    color: var(--secondary-text);
     cursor: pointer;
 }
 
 .sidebar_close:hover {
     background-color: var(--secondary-hover);
+    color: var(--primary-text);
 }
 
 .sidebar_actions {
@@ -111,6 +122,14 @@
 .action_btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.import_error {
+    margin: 2px 4px 0;
+    color: var(--error, #e5484d);
+    font-size: 0.8rem;
+    line-height: 1.3;
+    text-align: center;
 }
 
 .action_primary {
@@ -186,6 +205,17 @@
     padding-top: 8px;
 }
 
+/* Empty state: a quiet, centred note where the rows would be. Create/Import stay
+ * available in the sidebar, so this is just a placeholder, not a call to action. */
+.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+    color: var(--secondary-text);
+    font-size: 0.9rem;
+}
+
 /* ==================== */
 /*     Phone drawer     */
 /* ==================== */
@@ -203,11 +233,13 @@
      * backdrop starts at the same line so the bar stays tappable. */
     .sidebar {
         top: var(--navbar-height);
-        width: min(78vw, 320px);
-        padding: 12px calc(20px + var(--safe-right)) calc(20px + var(--safe-bottom))
-            calc(20px + var(--safe-left));
-        /* Drop the desktop column's border so the drawer edge matches the
-         * settings drawer, which is defined by the panel shadow alone. */
+        width: var(--mobile-drawer-width);
+        padding: 8px calc(8px + var(--safe-right)) calc(16px + var(--safe-bottom))
+            calc(8px + var(--safe-left));
+        /* Match the dashboard settings drawer: same flat drawer background
+         * (--main-bg, as the settings + burger drawers use on mobile) and a
+         * shadow-only edge, no border. */
+        background-color: var(--main-bg);
         border-right: none;
         box-shadow: var(--panel-shadow);
         transform: translateX(0);
@@ -223,14 +255,17 @@
     }
 
     /* In the drawer there's no navbar or list to align to, so drop the desktop
-     * spacing that reserved that height. */
+     * spacing that reserved that height and use the dashboard drawer's header
+     * padding (DashboardModal .sidebarHeader) so the titles sit identically. */
     .sidebar_top {
         height: auto;
-        padding-bottom: 16px;
+        padding: 4px 12px 8px;
     }
 
+    /* Left padding matches the header's 12px so the action pills line up under the
+     * drawer title instead of sitting further left. */
     .sidebar_actions {
-        padding-top: 8px;
+        padding: 8px 12px 0;
     }
 
     .main {
