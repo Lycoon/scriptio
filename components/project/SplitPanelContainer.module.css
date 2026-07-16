@@ -62,6 +62,22 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    /*
+     * Exclude the hidden panel's subtree from layout and paint entirely.
+     *
+     * Singleton panels (e.g. the screenplay editor) stay mounted when another
+     * panel is shown — with plain `visibility: hidden` the whole DOM stays in
+     * the layout tree. A 120-page screenplay is a very large ProseMirror DOM, so
+     * any forced reflow on the *visible* panel re-lays it out too. The board
+     * calls `getBoundingClientRect()` on every drag/pan frame while mutating its
+     * own DOM (which dirties layout), so each frame flushes a full-document
+     * relayout that includes the giant hidden editor — the source of the mobile
+     * lag. `content-visibility: hidden` skips the subtree's rendering and adds
+     * layout containment, isolating it from the visible panel's reflows while
+     * preserving its rendered state for an instant re-show. Falls back to plain
+     * `visibility: hidden` on browsers without support.
+     */
+    content-visibility: hidden;
 }
 
 /* Drag handle */

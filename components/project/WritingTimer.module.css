@@ -221,3 +221,19 @@
     opacity: 0.9;
     background-color: var(--tertiary-hover);
 }
+
+/* Phone: the footer pill is centred along the bottom, so the panel's desktop
+ * `right: 0` anchoring pushes its 220px off the left edge. Pin it to the viewport
+ * instead — centred horizontally, above the footer, and capped to the screen
+ * width — so it always fits. It stays a DOM child of the anchor, so the
+ * outside-click close still works. */
+@media (max-width: 767px) {
+    .panel {
+        position: fixed;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        bottom: calc(76px + var(--safe-bottom));
+        width: min(240px, calc(100vw - 24px));
+    }
+}

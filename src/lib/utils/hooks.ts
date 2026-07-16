@@ -86,9 +86,11 @@ const PHONE_QUERY = "(max-width: 767px)";
  * the burger navbar. SSR-safe: starts false on the server and syncs on mount.
  */
 const useIsPhone = (): boolean => {
-    const [isPhone, setIsPhone] = useState<boolean>(
-        () => typeof window !== "undefined" && window.matchMedia(PHONE_QUERY).matches,
-    );
+    // Start `false` so the server render and the client's first (hydration) render
+    // agree — reading window.matchMedia in the initializer would make the client's
+    // first render disagree with the SSR HTML and throw a hydration mismatch. The
+    // real value is resolved in the effect below, right after mount.
+    const [isPhone, setIsPhone] = useState<boolean>(false);
 
     useEffect(() => {
         if (typeof window === "undefined") return;

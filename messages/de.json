@@ -285,8 +285,10 @@
     "untitled": "Unbenannt",
     "newProject": "Neues Projekt",
     "pageTitle": "Projekte",
+    "noProjects": "Noch keine Projekte",
     "importBtn": "Importieren...",
     "importing": "Importieren...",
+    "importError": "Import fehlgeschlagen. Bitte überprüfe die Datei und versuche es erneut.",
     "createBtn": "Erstellen",
     "empty": {
       "title": "Deine Geschichte Beginnt Hier",

@@ -24,7 +24,9 @@
 
     background-color: var(--secondary);
     border: 1px solid var(--separator);
-    border-radius: 18px;
+    /* Fully rounded ends — the bar reads as a floating pill above the keyboard.
+     * ~half the bar height (40px controls + 6px padding) gives clean pill caps. */
+    border-radius: 26px;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
 
     user-select: none;
@@ -32,6 +34,16 @@
     /* Belt-and-braces with the pointer-down preventDefault: never let a tap here
      * steal focus / dismiss the keyboard. */
     -webkit-tap-highlight-color: transparent;
+}
+
+/* Transparent full-screen shield raised for a beat after an element pick. Sits
+ * under the toolbar (z 60) but over everything else, so the tap iOS synthesizes
+ * at touch-end lands here — never on the editor, where it would move the caret. */
+.tap_guard {
+    position: fixed;
+    inset: 0;
+    z-index: 59;
+    background: transparent;
 }
 
 .group {

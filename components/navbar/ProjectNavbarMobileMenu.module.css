@@ -43,6 +43,9 @@
     justify-content: space-between;
     gap: 8px;
     margin-bottom: 8px;
+    /* Match the left inset of the group labels / items / title row below (all
+     * padding-left: 10px) so the "Menu" title lines up with them. */
+    padding-left: 10px;
 }
 
 .header_title {
@@ -51,21 +54,25 @@
     color: var(--primary-text);
 }
 
+/* Shared drawer close-button look — kept identical to the dashboard drawer's
+ * .sidebarClose / .close_btn and the project sidebar's .sidebar_close so every
+ * drawer's close button reads the same. */
 .close_btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border: none;
     border-radius: 10px;
     background: none;
-    color: var(--primary-text);
+    color: var(--secondary-text);
     cursor: pointer;
 }
 
 .close_btn:hover {
     background-color: var(--secondary-hover);
+    color: var(--primary-text);
 }
 
 /* One tappable row in the menu. Its position:relative anchors the dropdown panels

@@ -284,8 +284,10 @@
     "untitled": "未命名",
     "newProject": "新项目",
     "pageTitle": "项目",
+    "noProjects": "暂无项目",
     "importBtn": "导入...",
     "importing": "正在导入...",
+    "importError": "导入失败。请检查文件后重试。",
     "createBtn": "创建",
     "empty": {
       "title": "你的故事从这里开始",

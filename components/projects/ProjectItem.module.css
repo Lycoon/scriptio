@@ -5,6 +5,8 @@
 /* A row in the project table. Columns mirror the header in
  * ProjectPageContainer via the shared --projects-grid custom property. */
 .container {
+    position: relative;
+    z-index: 0;
     cursor: pointer;
     width: 100%;
     padding: 14px 20px;
@@ -18,11 +20,21 @@
     border-bottom: 1px solid var(--separator);
     background: none;
     text-align: left;
+}
 
+/* Inset, rounded hover highlight — sits behind the row content so the
+ * full-width separator and grid layout are unaffected. */
+.container::before {
+    content: "";
+    position: absolute;
+    inset: 4px 0;
+    z-index: -1;
+    border-radius: 8px;
+    background-color: transparent;
     transition: background-color 0.15s ease;
 }
 
-.container:hover {
+.container:hover::before {
     background-color: var(--secondary-hover);
 }
 

@@ -10,11 +10,10 @@ import {
 } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
-import { redirectScreenplay } from "@src/lib/utils/redirects";
+import { useAppNavigation } from "@src/lib/utils/navigation";
 import { FileDown, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./CreateProjectPage";
 import ProjectItem from "./ProjectItem";
 import autoAnimate from "@formkit/auto-animate";
@@ -36,10 +35,12 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
     const isPhone = useIsPhone();
     const { isPro } = useIsPro();
     const { projects, isLoading, mutate } = useProjectMemberships();
+    const { goToProject } = useAppNavigation();
     const t = useTranslations("projects");
     const tNav = useTranslations("navbar");
     const [isCreating, setIsCreating] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
+    const [importError, setImportError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const parent = useRef(null);
 
@@ -55,6 +56,7 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
         const file = event.target.files?.[0];
         if (!file) return;
 
+        setImportError(null);
         setIsImporting(true);
 
         try {
@@ -65,13 +67,14 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
                 // Refresh the project list
                 await mutate();
                 // Redirect to the new project
-                redirectScreenplay(result.projectId);
+                goToProject(result.projectId);
             } else {
                 console.error("Import failed:", result.error);
-                // Could show a toast/notification here
+                setImportError(result.error || t("importError"));
             }
         } catch (error) {
             console.error("Import error:", error);
+            setImportError(error instanceof Error ? error.message : t("importError"));
         } finally {
             setIsImporting(false);
             // Reset input so the same file can be selected again
@@ -95,15 +98,6 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
         if (isCreating) {
             return <NewProjectPage setIsCreating={setIsCreating} />;
         }
-        if (projects.length === 0) {
-            return (
-                <EmptyProjectPage
-                    onCreate={startCreating}
-                    onImport={startImport}
-                    isImporting={isImporting}
-                />
-            );
-        }
         return (
             <div className={page.list}>
                 <div className={page.list_header}>
@@ -113,15 +107,19 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
                     <span className={page.col_storage}>{t("columns.storage")}</span>
                 </div>
                 <div className={page.list_scroll}>
-                    <div ref={parent} className={page.rows}>
-                        {projects.map((membership: ExtendedProjectMembershipPayload) => (
-                            <ProjectItem
-                                key={membership.project.id}
-                                project={membership.project}
-                                isLocalOnly={membership.isLocalOnly}
-                            />
-                        ))}
-                    </div>
+                    {projects.length === 0 ? (
+                        <div className={page.empty}>{t("noProjects")}</div>
+                    ) : (
+                        <div ref={parent} className={page.rows}>
+                            {projects.map((membership: ExtendedProjectMembershipPayload) => (
+                                <ProjectItem
+                                    key={membership.project.id}
+                                    project={membership.project}
+                                    isLocalOnly={membership.isLocalOnly}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -144,8 +142,15 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
             )}
 
             <aside className={join(page.sidebar, !sidebarOpen ? page.sidebar_closed : "")}>
+                {/* Desktop shows the branded logo in a navbar-height band. On phone this
+                    is a drawer matching the dashboard settings drawer, so it wears the
+                    same title + close header instead. */}
                 <div className={page.sidebar_top}>
-                    <Logo className={page.logo} />
+                    {isPhone ? (
+                        <h2 className={page.sidebar_title}>{t("pageTitle")}</h2>
+                    ) : (
+                        <Logo className={page.logo} />
+                    )}
                     {isPhone && (
                         <button
                             className={page.sidebar_close}
@@ -172,6 +177,11 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
                         <FileDown size={16} />
                         <span>{isImporting ? t("importing") : t("importBtn")}</span>
                     </button>
+                    {importError && (
+                        <p className={page.import_error} role="alert">
+                            {importError}
+                        </p>
+                    )}
                 </div>
             </aside>
 

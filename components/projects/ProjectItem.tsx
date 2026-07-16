@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 
 import item from "./ProjectItem.module.css";
-import { redirectScreenplay } from "@src/lib/utils/redirects";
+import { useAppNavigation } from "@src/lib/utils/navigation";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { CloudCheck, HardDrive } from "lucide-react";
 
@@ -16,6 +16,7 @@ type Props = {
 
 const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
     const t = useTranslations("projects");
+    const { goToProject } = useAppNavigation();
     const tDates = useTranslations("dates");
     const elapsedDays = getElapsedDaysFrom(project.updatedAt);
     const lastUpdated =
@@ -37,7 +38,7 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
     const StorageIcon = isLocalOnly ? HardDrive : CloudCheck;
 
     return (
-        <button className={item.container} onClick={() => redirectScreenplay(project.id)}>
+        <button className={item.container} onClick={() => goToProject(project.id)}>
             <Image
                 className={item.poster}
                 src={posterPath}

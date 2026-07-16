@@ -38,7 +38,8 @@
 
 .sidebarTitle {
     font-size: 1.2rem;
-    padding: 0 24;
+    font-weight: 600;
+    padding: 0 24px;
     margin-bottom: 18px;
     color: var(--primary-text);
 }
@@ -69,12 +70,19 @@
     color: var(--secondary-text);
     margin-bottom: 5px;
     margin-top: 14px;
-    padding: 0 12;
+    padding: 0 12px;
     opacity: 0.6;
 }
 
 .navMenu {
     padding: 0 12px;
+}
+
+/* Bottom cluster (Sign in / Log out + About). Pinned to the bottom of the sidebar
+ * on desktop; on phone it gets a separator + gap so it reads as a distinct group
+ * set apart from the section list above. */
+.navMenuFooter {
+    margin-top: auto;
 }
 
 .navItem {
@@ -196,14 +204,23 @@
     font-family: inherit;
 }
 
+/* Same look as the sections-list close (.sidebarClose) so the drawer's two close
+ * buttons don't differ (and matches the project sidebar + burger drawers). */
 .close_btn {
-    height: 22px;
-    width: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: none;
     color: var(--secondary-text);
     cursor: pointer;
 }
 
 .close_btn:hover {
+    background-color: var(--secondary-hover);
     color: var(--primary-text);
 }
 
@@ -251,17 +268,31 @@
     .sidebar {
         display: none;
         flex: 1;
-        padding: 8px 8px calc(16px + var(--safe-bottom));
+        padding: 8px calc(8px + var(--safe-right)) calc(16px + var(--safe-bottom)) 8px;
         border-right: none;
         overflow-y: auto;
+        /* On mobile the whole modal is one drawer, so the sections screen wears the
+         * same flat drawer background as the content screen (and the project menu +
+         * burger drawers) rather than the desktop two-tone sidebar colour. */
+        background: var(--main-bg);
     }
 
     .sidebarHeader {
         padding: 4px 12px 8px;
     }
 
+    /* Align the title with the section labels + item icons below. Their left edge is
+     * navMenu(12) + own padding(12); the header only carries 12, so the title needs
+     * its own 12 to reach the same line. */
     .sidebarTitle {
+        padding: 0 12px;
         margin-bottom: 0;
+    }
+
+    .navMenuFooter {
+        margin-top: 24px;
+        padding-top: 12px;
+        border-top: 1px solid var(--separator);
     }
 
     .sidebarClose {
@@ -278,7 +309,10 @@
 
     .content {
         flex: 1;
-        padding: 16px 12px calc(16px + var(--safe-bottom));
+        /* Symmetric horizontal padding + the right safe-area inset so the close
+         * button and settings panels (Keybinds, Layout, …) never crowd the screen
+         * edge. */
+        padding: 12px calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom)) 16px;
         /* Nudge inherited/em-based text down a touch for a denser, phone-friendly
          * scale; width-driven layouts reflow into the narrow drawer on their own. */
         font-size: 0.92rem;

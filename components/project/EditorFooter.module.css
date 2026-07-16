@@ -67,11 +67,18 @@
 /* Phone: centre the island along the bottom — pinned to the right feels off on a
  * narrow screen. Also lift it above the home-indicator safe area. */
 @media (max-width: 767px) {
+    /* A rounded island in the same chrome family as the Edit FAB and the navbar
+     * pills — bigger padding and radius than the desktop micro-pill so it reads as
+     * mobile chrome. It stays a compact cluster of secondary toggles, though, not a
+     * primary FAB, so it doesn't compete with the bottom-left Edit button. */
     .bubble_right {
         left: 50%;
         right: auto;
         transform: translateX(-50%);
         bottom: calc(16px + var(--safe-bottom));
+        gap: 4px;
+        padding: 5px 7px;
+        border-radius: 26px;
     }
 
     /* Drop the page count on phone: it's redundant in the default endless-scroll
@@ -85,7 +92,14 @@
 
     /* Roomier, thumb-friendly tap targets now that the row is short. */
     .action {
-        width: 34px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
+        border-radius: 20px;
+        opacity: 1;
+    }
+
+    /* Fullscreen focus mode has no purpose on phone (see EditorFooter.tsx). */
+    .focus_action {
+        display: none;
     }
 }

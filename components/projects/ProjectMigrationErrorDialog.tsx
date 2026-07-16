@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, RefreshCw, RotateCcw } from "lucide-react";
+
+import { useAppNavigation } from "@src/lib/utils/navigation";
 
 import type { ProjectMigrationOutcome } from "@src/lib/project/migrations/project-migration-runner";
 
@@ -16,14 +18,14 @@ interface Props {
 }
 
 const ProjectMigrationErrorDialog = ({ outcome }: Props) => {
-    const router = useRouter();
     const params = useSearchParams();
     const projectId = params.get("projectId");
     const [busy, setBusy] = useState(false);
+    const { goToProjects } = useAppNavigation();
 
     const goBack = useCallback(() => {
-        router.replace("/projects");
-    }, [router]);
+        goToProjects();
+    }, [goToProjects]);
 
     const handleRestore = useCallback(async () => {
         if (!projectId) return;

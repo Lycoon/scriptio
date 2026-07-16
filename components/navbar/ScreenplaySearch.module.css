@@ -88,6 +88,9 @@
         left: auto;
         right: calc(12px + var(--safe-right));
         width: 220px;
+        /* Portaled to <body> (see ScreenplaySearch), so it must out-rank the
+         * navbar (z-index 50) and page content on its own. */
+        z-index: 60;
     }
 }
 

@@ -9,7 +9,7 @@ import { DashboardContext } from "@src/context/DashboardContext";
 import { useCookieUser, useIsPro, useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import { useDashboardMenu } from "@components/dashboard/useDashboardMenu";
 import { editProject } from "@src/lib/utils/requests";
-import { redirectHome } from "@src/lib/utils/redirects";
+import { useAppNavigation } from "@src/lib/utils/navigation";
 import { signOutAccount } from "@src/lib/utils/auth-actions";
 
 /**
@@ -27,6 +27,7 @@ export const useProjectNavbar = () => {
     const { user } = useCookieUser();
     const projectId = useProjectIdFromUrl();
     const { structure: dashboardMenu, isSignedIn } = useDashboardMenu();
+    const { goToProjects } = useAppNavigation();
 
     const [projectTitle, setProjectTitle] = useState<string>("");
     const [isLocalOnly, setIsLocalOnly] = useState<boolean | null>(null);
@@ -110,15 +111,14 @@ export const useProjectNavbar = () => {
         isLocalEdit.current = false;
     };
 
-    // Return to the projects list. redirectHome() swaps out the ?projectId query
-    // the same way opening a project does, which the Tauri static export needs
-    // (a bare router.replace doesn't reliably re-render the layout back).
-    const backToProjects = () => redirectHome();
+    // Return to the projects list by dropping the ?projectId param. The projects
+    // page reads it via useSearchParams, so replacing the URL swaps the view back.
+    const backToProjects = () => goToProjects();
 
     // Sign out via the shared flow, then land on the home/landing screen.
     const onSignOut = async () => {
         await signOutAccount();
-        redirectHome();
+        goToProjects();
     };
 
     return {

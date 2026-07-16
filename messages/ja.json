@@ -284,8 +284,10 @@
     "untitled": "無題",
     "newProject": "新規プロジェクト",
     "pageTitle": "プロジェクト",
+    "noProjects": "プロジェクトがありません",
     "importBtn": "インポート...",
     "importing": "インポート中...",
+    "importError": "インポートに失敗しました。ファイルを確認して、もう一度お試しください。",
     "createBtn": "作成",
     "empty": {
       "title": "あなたの物語はここから始まる",

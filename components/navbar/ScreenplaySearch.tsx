@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useRef, useEffect, useCallback, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useIsPhone } from "@src/lib/utils/hooks";
@@ -56,6 +57,7 @@ const ScreenplaySearch = () => {
     const [replaceValue, setReplaceValue] = useState("");
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const replaceInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,10 +107,14 @@ const ScreenplaySearch = () => {
     useEffect(() => {
         if (!isOpen) return;
         const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                if (!inputRef.current?.value) {
-                    handleClose();
-                }
+            const target = e.target as Node;
+            // On phone the panel is portaled to <body>, so it's outside containerRef;
+            // check it explicitly or a tap on a filter/button would count as "outside".
+            if (containerRef.current?.contains(target) || dropdownRef.current?.contains(target)) {
+                return;
+            }
+            if (!inputRef.current?.value) {
+                handleClose();
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -249,94 +255,105 @@ const ScreenplaySearch = () => {
                 </div>
             </div>
 
-            {isOpen && (
-                <div className={styles.dropdown}>
-                    {isPhone && (
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            className={styles.panel_search_input}
-                            placeholder={t("placeholder")}
-                            defaultValue={searchTerm}
-                            onChange={handleSearchChange}
-                        />
-                    )}
+            {isOpen &&
+                (() => {
+                    const panel = (
+                        <div className={styles.dropdown} ref={dropdownRef}>
+                            {isPhone && (
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    className={styles.panel_search_input}
+                                    placeholder={t("placeholder")}
+                                    defaultValue={searchTerm}
+                                    onChange={handleSearchChange}
+                                />
+                            )}
 
-                    {/* Navigation section */}
-                    <div className={styles.navigation}>
-                        <button
-                            className={styles.nav_btn}
-                            onClick={goToPreviousMatch}
-                            disabled={searchMatches.length === 0}
-                        >
-                            <ChevronUp size={18} />
-                        </button>
-                        <span className={styles.match_count}>
-                            {searchMatches.length > 0
-                                ? t("matchCount", { current: currentSearchIndex + 1, total: searchMatches.length })
-                                : t("noMatches")}
-                        </span>
-                        <button
-                            className={styles.nav_btn}
-                            onClick={goToNextMatch}
-                            disabled={searchMatches.length === 0}
-                        >
-                            <ChevronDown size={18} />
-                        </button>
-                        <button className={styles.close_btn} onClick={handleClose}>
-                            <X size={16} />
-                        </button>
-                    </div>
+                            {/* Navigation section */}
+                            <div className={styles.navigation}>
+                                <button
+                                    className={styles.nav_btn}
+                                    onClick={goToPreviousMatch}
+                                    disabled={searchMatches.length === 0}
+                                >
+                                    <ChevronUp size={18} />
+                                </button>
+                                <span className={styles.match_count}>
+                                    {searchMatches.length > 0
+                                        ? t("matchCount", {
+                                              current: currentSearchIndex + 1,
+                                              total: searchMatches.length,
+                                          })
+                                        : t("noMatches")}
+                                </span>
+                                <button
+                                    className={styles.nav_btn}
+                                    onClick={goToNextMatch}
+                                    disabled={searchMatches.length === 0}
+                                >
+                                    <ChevronDown size={18} />
+                                </button>
+                                <button className={styles.close_btn} onClick={handleClose}>
+                                    <X size={16} />
+                                </button>
+                            </div>
 
-                    {/* Replace section */}
-                    <div className={styles.replace_section}>
-                        <input
-                            ref={replaceInputRef}
-                            type="text"
-                            className={styles.replace_input}
-                            placeholder={t("replacePlaceholder")}
-                            value={replaceValue}
-                            onChange={(e) => setReplaceValue(e.target.value)}
-                        />
-                        <div className={styles.replace_actions}>
-                            <button
-                                className={styles.replace_btn}
-                                onClick={handleReplace}
-                                disabled={searchMatches.length === 0}
-                                title={t("replace")}
-                            >
-                                <Replace size={16} />
-                            </button>
-                            <button
-                                className={styles.replace_btn}
-                                onClick={handleReplaceAll}
-                                disabled={searchMatches.length === 0}
-                                title={t("replaceAll")}
-                            >
-                                <ReplaceAll size={16} />
-                            </button>
+                            {/* Replace section */}
+                            <div className={styles.replace_section}>
+                                <input
+                                    ref={replaceInputRef}
+                                    type="text"
+                                    className={styles.replace_input}
+                                    placeholder={t("replacePlaceholder")}
+                                    value={replaceValue}
+                                    onChange={(e) => setReplaceValue(e.target.value)}
+                                />
+                                <div className={styles.replace_actions}>
+                                    <button
+                                        className={styles.replace_btn}
+                                        onClick={handleReplace}
+                                        disabled={searchMatches.length === 0}
+                                        title={t("replace")}
+                                    >
+                                        <Replace size={16} />
+                                    </button>
+                                    <button
+                                        className={styles.replace_btn}
+                                        onClick={handleReplaceAll}
+                                        disabled={searchMatches.length === 0}
+                                        title={t("replaceAll")}
+                                    >
+                                        <ReplaceAll size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Filters section */}
+                            <div className={styles.filters_section}>
+                                <span className={styles.filters_label}>{t("filterByElement")}</span>
+                                <div className={styles.filters_list}>
+                                    {FILTER_ORDER.map((element) => (
+                                        <label key={element} className={styles.filter_item}>
+                                            <input
+                                                type="checkbox"
+                                                checked={searchFilters.has(element)}
+                                                onChange={() => toggleFilter(element)}
+                                                className={styles.filter_checkbox}
+                                            />
+                                            <span className={styles.filter_label}>
+                                                {FILTER_LABELS[element]}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Filters section */}
-                    <div className={styles.filters_section}>
-                        <span className={styles.filters_label}>{t("filterByElement")}</span>
-                        <div className={styles.filters_list}>
-                            {FILTER_ORDER.map((element) => (
-                                <label key={element} className={styles.filter_item}>
-                                    <input
-                                        type="checkbox"
-                                        checked={searchFilters.has(element)}
-                                        onChange={() => toggleFilter(element)}
-                                        className={styles.filter_checkbox}
-                                    />
-                                    <span className={styles.filter_label}>{FILTER_LABELS[element]}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
+                    );
+                    // Phone: portal past the navbar, whose transform + overflow:hidden
+                    // would otherwise trap and clip this fixed-positioned panel.
+                    return isPhone ? createPortal(panel, document.body) : panel;
+                })()}
         </div>
     );
 };

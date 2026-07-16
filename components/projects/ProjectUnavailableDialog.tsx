@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useContext, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Save, Trash2 } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
+import { useAppNavigation } from "@src/lib/utils/navigation";
 import {
     discardCloudProjectData,
     getCachedProject,
@@ -14,7 +15,7 @@ import {
 import styles from "./ProjectUnavailableDialog.module.css";
 
 const ProjectUnavailableDialog = () => {
-    const router = useRouter();
+    const { goToProjects, goToProject } = useAppNavigation();
     const params = useSearchParams();
     const projectId = params.get("projectId");
     const { project, repository } = useContext(ProjectContext);
@@ -28,24 +29,24 @@ const ProjectUnavailableDialog = () => {
             const cached = await getCachedProject(projectId);
             const title = cached?.title || project?.project?.title || repository?.getTitle() || "Untitled Project";
             const newProject = await migrateToCachedProject(projectId, title, cached?.description ?? undefined);
-            router.replace(`/projects?projectId=${newProject.id}`);
+            goToProject(newProject.id);
         } catch (e) {
             console.error("[ProjectUnavailableDialog] Migration failed:", e);
             setLoading(false);
         }
-    }, [projectId, repository, router, project]);
+    }, [projectId, repository, goToProject, project]);
 
     const handleDiscard = useCallback(async () => {
         if (!projectId) return;
         setLoading(true);
         try {
             await discardCloudProjectData(projectId);
-            router.replace("/projects");
+            goToProjects();
         } catch (e) {
             console.error("[ProjectUnavailableDialog] Discard failed:", e);
             setLoading(false);
         }
-    }, [projectId, router]);
+    }, [projectId, goToProjects]);
 
     return (
         <div className={styles.overlay}>
