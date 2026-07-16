@@ -1,6 +1,6 @@
 "use client";
 
-import { getElapsedDaysFrom, join } from "@src/lib/utils/misc";
+import { getElapsedDaysFrom } from "@src/lib/utils/misc";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 
@@ -33,8 +33,11 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
     if (project.poster) posterPath = project.poster;
     else posterPath = "/images/default-poster.png";
 
+    const storageLabel = isLocalOnly ? t("item.localOnly") : t("item.syncedToCloud");
+    const StorageIcon = isLocalOnly ? HardDrive : CloudCheck;
+
     return (
-        <button className={join(item.container)} onClick={() => redirectScreenplay(project.id)}>
+        <button className={item.container} onClick={() => redirectScreenplay(project.id)}>
             <Image
                 className={item.poster}
                 src={posterPath}
@@ -42,24 +45,24 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
                 width={160}
                 height={220}
                 loading="eager"
-                style={{ width: "52px", height: "auto", aspectRatio: "0.675" }}
+                style={{ width: "34px", height: "auto", aspectRatio: "0.675" }}
             />
-            <div className={item.info}>
+
+            <div className={item.title_cell}>
                 <h2 className={item.title}>{project.title}</h2>
-                <div className={item.date}>
-                    <span
-                        className={item.sync_icon}
-                        title={isLocalOnly ? t("item.localOnly") : t("item.syncedToCloud")}
-                    >
-                        {isLocalOnly ? (
-                            <HardDrive className={item.icon} size={16} />
-                        ) : (
-                            <CloudCheck className={item.icon} size={16} />
-                        )}
-                    </span>
-                    <p className={item.date_text}>{lastUpdated}</p>
-                </div>
+                {/* Phone: the date/storage columns collapse, so surface them inline. */}
+                <span className={item.meta_inline}>
+                    <StorageIcon className={item.icon} size={14} />
+                    <span>{lastUpdated}</span>
+                </span>
             </div>
+
+            <span className={item.date_cell}>{lastUpdated}</span>
+
+            <span className={item.storage_cell} title={storageLabel}>
+                <StorageIcon className={item.icon} size={16} />
+                <span className={item.storage_label}>{storageLabel}</span>
+            </span>
         </button>
     );
 };

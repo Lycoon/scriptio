@@ -76,6 +76,7 @@
   },
   "sidebar": {
     "title": "Panel",
+    "back": "Wstecz",
     "logOut": "Wyloguj się",
     "auth": "Zaloguj się",
     "logOutConfirmTitle": "Wyloguj się",
@@ -308,6 +309,11 @@
       "optional": "opcjonalnie",
       "submitBtn": "Utwórz",
       "failedToCreate": "Nie udało się utworzyć projektu"
+    },
+    "columns": {
+      "title": "Tytuł",
+      "lastEdited": "Ostatnia edycja",
+      "storage": "Pamięć"
     }
   },
   "editorSidebar": {

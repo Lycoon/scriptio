@@ -440,3 +440,24 @@
     width: 90px;
     margin-left: 30px;
 }
+
+/* Phone-only burger in the home navbar (opens the projects sidebar drawer).
+ * It sits flush at the container's left padding so its gap from the edge matches
+ * the settings button's gap on the right (see .home_container below). */
+.home_burger {
+    margin-left: 0;
+}
+
+/* Home navbar on phone: symmetric edge padding so the burger sits the same
+ * distance from the left border as the settings button does from the right.
+ * Scoped to the home navbar so the editor navbar's clusters are untouched. */
+@media (max-width: 767px) {
+    .home_container {
+        padding-inline: calc(16px + var(--safe-left)) calc(16px + var(--safe-right));
+    }
+
+    .home_container .right_btns {
+        width: auto;
+        margin-right: 0;
+    }
+}

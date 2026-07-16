@@ -2,18 +2,26 @@
 
 import { useContext } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { Settings } from "lucide-react";
+import { Menu, Settings } from "lucide-react";
 import { join } from "@src/lib/utils/misc";
-import { useCookieUser } from "@src/lib/utils/hooks";
+import { useCookieUser, useIsPhone } from "@src/lib/utils/hooks";
+import { useTranslations } from "next-intl";
 
 import Logo from "@public/images/scriptio.svg"
 
 import navbar from "./ProjectNavbar.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
 
-const HomeNavbar = () => {
+interface HomeNavbarProps {
+    /** Phone only: opens the projects sidebar drawer (the burger lives here now). */
+    onOpenSidebar?: () => void;
+}
+
+const HomeNavbar = ({ onOpenSidebar }: HomeNavbarProps) => {
     const { openDashboard } = useContext(DashboardContext);
     const { user, isLoading } = useCookieUser();
+    const isPhone = useIsPhone();
+    const tNav = useTranslations("navbar");
 
     // Pick a tab the user can actually see: Profile only renders when signed in,
     // Auth only when signed out. Defaulting to "Profile" unconditionally would
@@ -26,10 +34,21 @@ const HomeNavbar = () => {
     };
 
     return (
-        <nav className={join(navbar.container)}>
-            {/* Left side - could add logo or app name */}
+        <nav className={join(navbar.container, navbar.home_container)}>
+            {/* Left side: the logo on desktop; on phone the logo lives in the
+                sidebar drawer instead, so the bar shows the burger that opens it. */}
             <div className={navbar.left_btns}>
-                <Logo className={navbar.logo} />
+                {isPhone ? (
+                    <button
+                        className={`${navBtn.button} ${navbar.home_burger}`}
+                        onClick={onOpenSidebar}
+                        aria-label={tNav("menu")}
+                    >
+                        <Menu size={20} />
+                    </button>
+                ) : (
+                    <Logo className={navbar.logo} />
+                )}
             </div>
 
             {/* Center - empty on home page */}

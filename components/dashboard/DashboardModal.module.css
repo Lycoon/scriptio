@@ -29,10 +29,36 @@
     flex-direction: column;
 }
 
+.sidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
 .sidebarTitle {
     font-size: 1.2rem;
     padding: 0 24;
     margin-bottom: 18px;
+    color: var(--primary-text);
+}
+
+/* Only shown on phone, where the sections list is a standalone drawer screen. */
+.sidebarClose {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+}
+
+.sidebarClose:hover {
+    background-color: var(--secondary-hover);
     color: var(--primary-text);
 }
 
@@ -105,6 +131,33 @@
     flex-shrink: 0;
 }
 
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* Back to the sections list; only rendered on phone (see DashboardModal). */
+.back_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    margin-left: -6px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--primary-text);
+    cursor: pointer;
+}
+
+.back_btn:hover {
+    background-color: var(--secondary-hover);
+}
+
 .scrollArea {
     overflow-y: auto;
     flex: 1;
@@ -154,32 +207,92 @@
     color: var(--primary-text);
 }
 
+/* Slide the drawer in from the right on phone so it reads as the same sidebar
+ * the burger menu opened from, rather than popping in place. */
+@keyframes dashboardDrawerIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
 /* Phone: the sidebar nav lives in the burger menu, so the modal drops it and
- * becomes a full-screen content pane. Tabs are switched from the burger, which
- * re-opens the dashboard on the chosen tab. */
+ * renders as a right-side drawer matching that menu (same width and position
+ * below the navbar) instead of a full-screen pane. Tabs are switched from the
+ * burger, which re-opens the dashboard on the chosen tab. Content is tightened
+ * and slightly scaled down so the settings sit comfortably in the narrow width. */
 @media (max-width: 767px) {
     .overlay {
+        /* Anchor below the navbar and push the drawer to the right edge, leaving
+         * a strip of the page visible to dismiss — same as the burger drawer. */
+        top: var(--navbar-height);
+        align-items: stretch;
+        justify-content: flex-end;
+        background: rgba(0, 0, 0, 0.4);
         backdrop-filter: none;
     }
 
     .modal {
-        width: 100vw;
-        max-width: 100vw;
-        height: 100dvh;
-        max-height: 100dvh;
+        width: var(--mobile-drawer-width);
+        max-width: var(--mobile-drawer-width);
+        height: 100%;
+        max-height: 100%;
         border-radius: 0;
+        box-shadow: var(--panel-shadow);
+        animation: dashboardDrawerIn 0.25s ease;
     }
 
+    /* The nav sidebar and the content share the drawer, one screen at a time.
+     * Default screen is content; .mobileSections flips to the sections list (used
+     * when the dashboard is opened without a burger menu behind it — e.g. the
+     * home Settings button). */
     .sidebar {
+        display: none;
+        flex: 1;
+        padding: 8px 8px calc(16px + var(--safe-bottom));
+        border-right: none;
+        overflow-y: auto;
+    }
+
+    .sidebarHeader {
+        padding: 4px 12px 8px;
+    }
+
+    .sidebarTitle {
+        margin-bottom: 0;
+    }
+
+    .sidebarClose {
+        display: flex;
+    }
+
+    .modal.mobileSections .sidebar {
+        display: flex;
+    }
+
+    .modal.mobileSections .content {
         display: none;
     }
 
     .content {
         flex: 1;
-        padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
+        padding: 16px 12px calc(16px + var(--safe-bottom));
+        /* Nudge inherited/em-based text down a touch for a denser, phone-friendly
+         * scale; width-driven layouts reflow into the narrow drawer on their own. */
+        font-size: 0.92rem;
+    }
+
+    .contentHeader {
+        margin-bottom: 14px;
+    }
+
+    .contentHeader h3 {
+        font-size: 1.1rem;
     }
 
     .scrollArea {
-        padding-right: 8px;
+        padding-right: 6px;
     }
 }

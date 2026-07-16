@@ -76,6 +76,7 @@
   },
   "sidebar": {
     "title": "대시보드",
+    "back": "뒤로",
     "logOut": "로그아웃",
     "auth": "로그인",
     "logOutConfirmTitle": "로그아웃",
@@ -308,6 +309,11 @@
       "optional": "선택 사항",
       "submitBtn": "생성",
       "failedToCreate": "프로젝트 생성 실패"
+    },
+    "columns": {
+      "title": "제목",
+      "lastEdited": "마지막 편집",
+      "storage": "저장 위치"
     }
   },
   "editorSidebar": {

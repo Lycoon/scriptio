@@ -256,3 +256,38 @@
     background: var(--tertiary);
     color: var(--primary-text);
 }
+
+/* Phone: these rows are sized for the wide desktop modal (a 100px label sitting
+ * beside two ~100px input pills, three header/footer inputs in a row). In the
+ * narrow dashboard drawer that overflows off-screen, so let the label + inputs
+ * wrap and stack the header/footer inputs vertically instead. */
+@media (max-width: 767px) {
+    .marginRow {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-left: 0;
+    }
+
+    .marginLabel {
+        min-width: 0;
+    }
+
+    .marginInputs {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .labelRow {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .hfGroup {
+        grid-template-columns: 1fr;
+        row-gap: 8px;
+    }
+
+    .hfToggle {
+        grid-column: 1;
+    }
+}

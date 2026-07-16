@@ -135,7 +135,7 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
 
     const openSettings = () => {
         onClose();
-        openDashboard("Language");
+        openDashboard("Language", { fromMenu: true });
     };
 
     const handlePlayPause = () => {

@@ -76,6 +76,7 @@
   },
   "sidebar": {
     "title": "Dashboard",
+    "back": "Back",
     "logOut": "Log Out",
     "auth": "Sign in",
     "logOutConfirmTitle": "Log out",
@@ -308,6 +309,11 @@
       "optional": "optional",
       "submitBtn": "Create",
       "failedToCreate": "Failed to create project"
+    },
+    "columns": {
+      "title": "Title",
+      "lastEdited": "Last edited",
+      "storage": "Storage"
     }
   },
   "editorSidebar": {

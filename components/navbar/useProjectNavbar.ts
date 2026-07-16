@@ -20,7 +20,7 @@ import { signOutAccount } from "@src/lib/utils/auth-actions";
  * two layouts free of duplicated effects and guarantees they stay in sync.
  */
 export const useProjectNavbar = () => {
-    const { openDashboard } = useContext(DashboardContext);
+    const { openDashboard, mobileMenuOpen, setMobileMenuOpen } = useContext(DashboardContext);
     const { project: membership, setProjectTitle: setContextTitle } = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
     const { isPro } = useIsPro();
@@ -123,6 +123,8 @@ export const useProjectNavbar = () => {
 
     return {
         openDashboard,
+        mobileMenuOpen,
+        setMobileMenuOpen,
         membership,
         userCtx,
         isPro,

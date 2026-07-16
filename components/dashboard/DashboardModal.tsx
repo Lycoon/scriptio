@@ -10,8 +10,9 @@ import CollaboratorsSettings from "./project/CollaboratorsSettings";
 
 import styles from "./DashboardModal.module.css";
 import ExportProject from "./project/ExportProject";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useIsPhone } from "@src/lib/utils/hooks";
 import KeybindsSettings from "./preferences/KeybindsSettings";
 import AppearanceSettings from "./preferences/AppearanceSettings";
 import LanguageSettings from "./preferences/LanguageSettings";
@@ -24,8 +25,28 @@ import DashboardAuth from "./account/DashboardAuth";
 import AboutSettings from "./AboutSettings";
 
 const DashboardModal = () => {
-    const { isOpen, closeDashboard, activeTab, setActiveTab } = useContext(DashboardContext);
+    const { isOpen, closeDashboard, activeTab, setActiveTab, openedFromMenu, setMobileMenuOpen } =
+        useContext(DashboardContext);
     const t = useTranslations("modal");
+    const tSidebar = useTranslations("sidebar");
+    const isPhone = useIsPhone();
+
+    // Phone: the drawer shows one screen at a time — the sections list (nav
+    // sidebar) or a section's content. When opened from the editor burger menu,
+    // that menu *is* the sections list, so we skip straight to content and the
+    // back arrow reopens the menu. When opened from the home Settings button
+    // (no burger menu behind it), the dashboard shows its own sections list first
+    // so preferences/account tabs are reachable, and the back arrow returns to it.
+    const [mobileShowSections, setMobileShowSections] = useState(false);
+
+    const handleBack = () => {
+        if (openedFromMenu) {
+            closeDashboard();
+            setMobileMenuOpen(true);
+        } else {
+            setMobileShowSections(true);
+        }
+    };
 
     const {
         structure: menuStructure,
@@ -72,6 +93,21 @@ const DashboardModal = () => {
         setIsScrolled(false);
     }
 
+    // On each open, pick the starting phone screen: content when launched from a
+    // menu (which already served as the list), otherwise the in-dashboard list.
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    if (prevIsOpen !== isOpen) {
+        setPrevIsOpen(isOpen);
+        if (isOpen) setMobileShowSections(!openedFromMenu);
+    }
+
+    // Picking a section from the phone list swaps to its content; desktop shows
+    // both at once, so this just changes the active tab.
+    const handleTabChange = (id: Parameters<typeof setActiveTab>[0]) => {
+        setActiveTab(id);
+        if (isPhone) setMobileShowSections(false);
+    };
+
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const scrolled = e.currentTarget.scrollTop > 0;
         setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
@@ -89,12 +125,26 @@ const DashboardModal = () => {
 
     return (
         <div className={styles.overlay} onClick={closeDashboard}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                <SidebarMenu structure={menuStructure} activeTab={activeTab} onTabChange={setActiveTab} />
+            <div
+                className={`${styles.modal} ${isPhone && mobileShowSections ? styles.mobileSections : ""}`}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <SidebarMenu structure={menuStructure} activeTab={activeTab} onTabChange={handleTabChange} />
 
                 <div className={styles.content}>
                     <header className={styles.contentHeader}>
-                        <h3>{t(`tabs.${activeTab}` as Parameters<typeof t>[0])}</h3>
+                        <div className={styles.headerLeft}>
+                            {isPhone && (
+                                <button
+                                    className={styles.back_btn}
+                                    onClick={handleBack}
+                                    aria-label={tSidebar("back")}
+                                >
+                                    <ArrowLeft size={20} />
+                                </button>
+                            )}
+                            <h3>{t(`tabs.${activeTab}` as Parameters<typeof t>[0])}</h3>
+                        </div>
                         <X className={styles.close_btn} onClick={closeDashboard} />
                     </header>
 

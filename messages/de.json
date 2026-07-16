@@ -77,6 +77,7 @@
   },
   "sidebar": {
     "title": "Dashboard",
+    "back": "Zurück",
     "logOut": "Abmelden",
     "auth": "Anmelden",
     "logOutConfirmTitle": "Abmelden",
@@ -309,6 +310,11 @@
       "optional": "optional",
       "submitBtn": "Erstellen",
       "failedToCreate": "Projekterstellung fehlgeschlagen"
+    },
+    "columns": {
+      "title": "Titel",
+      "lastEdited": "Zuletzt bearbeitet",
+      "storage": "Speicher"
     }
   },
   "editorSidebar": {
