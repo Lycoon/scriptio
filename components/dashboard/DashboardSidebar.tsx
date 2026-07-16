@@ -2,7 +2,7 @@
 
 import { ReactNode, useContext, useState } from "react";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { Info, LogIn, LogOut } from "lucide-react";
+import { Info, LogIn, LogOut, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import styles from "./DashboardModal.module.css";
@@ -49,6 +49,7 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
     const { user, isLoading: isUserLoading } = useCookieUser();
     const t = useTranslations("sidebar");
     const tModal = useTranslations("modal");
+    const tNav = useTranslations("navbar");
     const [showLogOutConfirm, setShowLogOutConfirm] = useState(false);
 
     const onLogOut = async () => {
@@ -81,7 +82,18 @@ const SidebarMenu = ({ structure, activeTab, onTabChange }: SidebarMenuProps) =>
                 </div>
             )}
             <aside className={styles.sidebar}>
-                <h2 className={styles.sidebarTitle}>{t("title")}</h2>
+                {/* The close button only shows on phone, where this list is a
+                    full-drawer screen with no content header to close from. */}
+                <div className={styles.sidebarHeader}>
+                    <h2 className={styles.sidebarTitle}>{t("title")}</h2>
+                    <button
+                        className={styles.sidebarClose}
+                        onClick={closeDashboard}
+                        aria-label={tNav("close")}
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
                 <nav className={styles.navMenu}>
                     {structure.map((section) => (
                         <div key={section.group}>

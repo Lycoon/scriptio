@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     useCookieUser,
     useIsPhone,
@@ -11,22 +11,27 @@ import {
 import { join } from "@src/lib/utils/misc";
 import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
 import { redirectScreenplay } from "@src/lib/utils/redirects";
-import { FileDown, Menu, Plus } from "lucide-react";
+import { FileDown, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import EmptyProjectPage from "./EmptyProjectPage";
 import NewProjectPage from "./CreateProjectPage";
 import ProjectItem from "./ProjectItem";
-import ProjectNavbarMobileMenu from "../navbar/ProjectNavbarMobileMenu";
 import autoAnimate from "@formkit/auto-animate";
 import Loading from "../utils/Loading";
 
-import page from "./ProjectPageContainer.module.css";
-import form from "../utils/Form.module.css";
-import mobileMenu from "../navbar/ProjectNavbarMobileMenu.module.css";
-import navBtn from "@components/utils/NavbarIconButton.module.css";
+import Logo from "@public/images/scriptio.svg";
 
-const ProjectPageContainer = () => {
+import page from "./ProjectPageContainer.module.css";
+
+interface ProjectPageContainerProps {
+    // Sidebar drawer state is owned by the page so the navbar burger can open it.
+    // Desktop: a permanent column (open). Phone: an overlay drawer toggled here.
+    sidebarOpen: boolean;
+    setSidebarOpen: (open: boolean) => void;
+}
+
+const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContainerProps) => {
     const { user } = useCookieUser();
     const isPhone = useIsPhone();
     const { isPro } = useIsPro();
@@ -35,29 +40,12 @@ const ProjectPageContainer = () => {
     const tNav = useTranslations("navbar");
     const [isCreating, setIsCreating] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
-    const [showShadow, setShowShadow] = useState(false);
-    const [menuOpen, setMenuOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const scrollRef = useRef<HTMLDivElement>(null);
     const parent = useRef(null);
 
     useEffect(() => {
         if (parent.current) autoAnimate(parent.current);
     }, [parent]);
-
-    const checkOverflow = useCallback(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        const canScroll = el.scrollHeight > el.clientHeight;
-        const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 10;
-        setShowShadow(canScroll && !isAtBottom);
-    }, []);
-
-    useEffect(() => {
-        checkOverflow();
-        window.addEventListener("resize", checkOverflow);
-        return () => window.removeEventListener("resize", checkOverflow);
-    }, [checkOverflow, projects]);
 
     const handleImportClick = () => {
         fileInputRef.current?.click();
@@ -91,106 +79,107 @@ const ProjectPageContainer = () => {
         }
     };
 
+    const startCreating = () => {
+        if (isPhone) setSidebarOpen(false);
+        setIsCreating(true);
+    };
+
+    const startImport = () => {
+        if (isPhone) setSidebarOpen(false);
+        handleImportClick();
+    };
+
     if (isLoading || !projects) return <Loading />;
 
-    if (isCreating) {
-        return <NewProjectPage setIsCreating={setIsCreating} />;
-    } else if (projects.length === 0) {
-        return <EmptyProjectPage setIsCreating={setIsCreating} />;
-    } else {
-        return (
-            <div className={page.container}>
-                {/* Hidden file input for import */}
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileImport}
-                    accept={getSupportedImportExtensions()}
-                    style={{ display: "none" }}
+    const renderMain = () => {
+        if (isCreating) {
+            return <NewProjectPage setIsCreating={setIsCreating} />;
+        }
+        if (projects.length === 0) {
+            return (
+                <EmptyProjectPage
+                    onCreate={startCreating}
+                    onImport={startImport}
+                    isImporting={isImporting}
                 />
-                {/* Phone: the create/import actions move into a slide-in drawer
-                    (the same one used inside a project), opened by the burger.
-                    Mounted on phone only — an always-present off-screen drawer can
-                    add a horizontal scrollbar on desktop. */}
-                {isPhone && (
-                    <ProjectNavbarMobileMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)}>
-                        <button
-                            className={mobileMenu.item}
-                            onClick={() => {
-                                setMenuOpen(false);
-                                setIsCreating(true);
-                            }}
-                        >
-                            <Plus size={18} />
-                            <span>{t("createBtn")}</span>
-                        </button>
-                        <button
-                            className={mobileMenu.item}
-                            onClick={() => {
-                                setMenuOpen(false);
-                                handleImportClick();
-                            }}
-                            disabled={isImporting}
-                        >
-                            <FileDown size={18} />
-                            <span>{isImporting ? t("importing") : t("importBtn")}</span>
-                        </button>
-                    </ProjectNavbarMobileMenu>
-                )}
-                <div className={page.center}>
-                    <div className={page.header}>
-                        <div className={page.header_info}>
-                            <h1 className={page.header_title}>{t("pageTitle")}</h1>
-                            <div className={page.header_btns}>
-                                <button
-                                    className={`${page.import_btn} ${form.btn}`}
-                                    onClick={handleImportClick}
-                                    disabled={isImporting}
-                                >
-                                    <FileDown size={18} />
-                                    {isImporting ? t("importing") : t("importBtn")}
-                                </button>
-                                <button
-                                    className={`${page.create_btn} ${form.btn}`}
-                                    onClick={() => setIsCreating(true)}
-                                >
-                                    {t("createBtn")}
-                                </button>
-                            </div>
-                            <div className={page.mobile_menu_btn}>
-                                <button
-                                    className={navBtn.button}
-                                    onClick={() => setMenuOpen(true)}
-                                    aria-label={tNav("menu")}
-                                >
-                                    <Menu size={18} />
-                                </button>
-                            </div>
-                        </div>
-                        <hr />
-                    </div>
-                    <div className={page.gridWrapper}>
-                        <div ref={scrollRef} className={page.gridScroll} onScroll={checkOverflow}>
-                            <div ref={parent} className={page.grid}>
-                                {projects.map((membership: ExtendedProjectMembershipPayload) => {
-                                    return (
-                                        <ProjectItem
-                                            key={membership.project.id}
-                                            project={membership.project}
-                                            isLocalOnly={membership.isLocalOnly}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </div>
-                        <div
-                            className={join(page.bottomShadow, showShadow ? page.showShadow : "")}
-                        />
+            );
+        }
+        return (
+            <div className={page.list}>
+                <div className={page.list_header}>
+                    <span className={page.col_poster} aria-hidden />
+                    <span className={page.col_title}>{t("columns.title")}</span>
+                    <span className={page.col_date}>{t("columns.lastEdited")}</span>
+                    <span className={page.col_storage}>{t("columns.storage")}</span>
+                </div>
+                <div className={page.list_scroll}>
+                    <div ref={parent} className={page.rows}>
+                        {projects.map((membership: ExtendedProjectMembershipPayload) => (
+                            <ProjectItem
+                                key={membership.project.id}
+                                project={membership.project}
+                                isLocalOnly={membership.isLocalOnly}
+                            />
+                        ))}
                     </div>
                 </div>
             </div>
         );
-    }
+    };
+
+    return (
+        <div className={page.layout}>
+            {/* Hidden file input for import — shared by the sidebar and empty state. */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileImport}
+                accept={getSupportedImportExtensions()}
+                style={{ display: "none" }}
+            />
+
+            {/* Phone: dim + dismiss layer behind the open drawer. */}
+            {isPhone && sidebarOpen && (
+                <div className={page.backdrop} onClick={() => setSidebarOpen(false)} />
+            )}
+
+            <aside className={join(page.sidebar, !sidebarOpen ? page.sidebar_closed : "")}>
+                <div className={page.sidebar_top}>
+                    <Logo className={page.logo} />
+                    {isPhone && (
+                        <button
+                            className={page.sidebar_close}
+                            onClick={() => setSidebarOpen(false)}
+                            aria-label={tNav("close")}
+                        >
+                            <X size={18} />
+                        </button>
+                    )}
+                </div>
+                <div className={page.sidebar_actions}>
+                    <button
+                        className={join(page.action_btn, page.action_primary)}
+                        onClick={startCreating}
+                    >
+                        <Plus size={16} />
+                        <span>{t("createBtn")}</span>
+                    </button>
+                    <button
+                        className={page.action_btn}
+                        onClick={startImport}
+                        disabled={isImporting}
+                    >
+                        <FileDown size={16} />
+                        <span>{isImporting ? t("importing") : t("importBtn")}</span>
+                    </button>
+                </div>
+            </aside>
+
+            <main className={page.main}>
+                {renderMain()}
+            </main>
+        </div>
+    );
 };
 
 export default ProjectPageContainer;

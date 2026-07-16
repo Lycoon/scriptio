@@ -2,25 +2,32 @@
 /*        Layout        */
 /* ==================== */
 
+/* A row in the project table. Columns mirror the header in
+ * ProjectPageContainer via the shared --projects-grid custom property. */
 .container {
     cursor: pointer;
     width: 100%;
-    padding: 24px;
+    padding: 14px 20px;
 
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: var(--projects-grid);
     align-items: center;
-    gap: 16px;
+    column-gap: 16px;
 
-    border-radius: 24px;
-    border: 2px solid var(--separator);
-    background-color: var(--project-item-bg);
+    border: none;
+    border-bottom: 1px solid var(--separator);
+    background: none;
+    text-align: left;
 
-    transition: transform 0.15s ease;
+    transition: background-color 0.15s ease;
+}
+
+.container:hover {
+    background-color: var(--secondary-hover);
 }
 
 .container:active {
-    transform: scale(0.98);
+    transform: scale(0.995);
     transition: transform 0.07s;
 }
 
@@ -29,17 +36,17 @@
 /* ==================== */
 
 .poster {
-    width: 52px;
+    width: 34px;
     aspect-ratio: 0.675;
-    border-radius: 5px;
+    border-radius: 4px;
     flex-shrink: 0;
     object-fit: cover;
 }
 
-.info {
+.title_cell {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
 }
 
@@ -47,7 +54,8 @@
     font-family: var(--font-inter), sans-serif;
     font-style: italic;
     font-weight: 400;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
+    color: var(--primary-text);
 
     white-space: nowrap;
     overflow: hidden;
@@ -55,28 +63,56 @@
     padding-right: 0.2em;
 }
 
-.date {
+.date_cell {
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+}
+
+.storage_cell {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    min-width: 0;
+    color: var(--secondary-text);
 }
 
-.sync_icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--secondary-text);
-    opacity: 0.7;
-    flex-shrink: 0;
+.storage_label {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .icon {
     color: var(--secondary-text);
+    flex-shrink: 0;
 }
 
-.date_text {
-    font-size: 0.85rem;
-    text-align: left;
+/* Inline date + storage shown under the title on phone, where the dedicated
+ * columns are hidden. */
+.meta_inline {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
     color: var(--secondary-text);
+}
+
+@media (max-width: 767px) {
+    .container {
+        grid-template-columns: 34px minmax(0, 1fr);
+        column-gap: 14px;
+        padding: 14px 4px;
+    }
+
+    .date_cell,
+    .storage_cell {
+        display: none;
+    }
+
+    .meta_inline {
+        display: flex;
+    }
 }

@@ -11,7 +11,7 @@ import FormHeader from "./FormHeader";
 import FormEnd from "./FormEnd";
 
 import form from "../utils/Form.module.css";
-import layout from "../utils/Layout.module.css";
+import styles from "./CreateProjectPage.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { CreateProjectBody } from "@src/lib/utils/api-bodies";
 import { useTranslations } from "next-intl";
@@ -109,8 +109,8 @@ const CreateProjectPage = ({ setIsCreating }: Props) => {
     };
 
     return (
-        <div className={layout.center_row}>
-            <form className={form.container} onSubmit={onSubmit}>
+        <div className={styles.wrapper}>
+            <form className={styles.formBox} onSubmit={onSubmit}>
                 <FormHeader title={t("form.formTitle")} formInfo={formInfo} />
 
                 <div className={form.elements}>

@@ -42,7 +42,7 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
 
     const handleUpgrade = () => {
         onClose();
-        openDashboard(isSignedIn ? "Subscription" : "Auth");
+        openDashboard(isSignedIn ? "Subscription" : "Auth", { fromMenu: true });
     };
 
     const [saves, setSaves] = useState<SaveEntry[]>([]);

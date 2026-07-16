@@ -76,6 +76,7 @@
   },
   "sidebar": {
     "title": "控制面板",
+    "back": "返回",
     "logOut": "退出登录",
     "auth": "登录",
     "logOutConfirmTitle": "退出登录",
@@ -308,6 +309,11 @@
       "optional": "可选",
       "submitBtn": "创建",
       "failedToCreate": "创建失败"
+    },
+    "columns": {
+      "title": "标题",
+      "lastEdited": "最后编辑",
+      "storage": "存储"
     }
   },
   "editorSidebar": {

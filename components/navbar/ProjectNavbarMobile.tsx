@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+    ArrowLeft,
     AudioLines,
     BarChart2,
     Check,
-    CircleArrowLeft,
     CloudUpload,
     History,
     Info,
@@ -50,6 +50,8 @@ const ProjectNavbarMobile = () => {
 
     const {
         openDashboard,
+        mobileMenuOpen,
+        setMobileMenuOpen,
         membership,
         userCtx,
         canUploadToCloud,
@@ -69,7 +71,6 @@ const ProjectNavbarMobile = () => {
         useViewContext();
     const activeEditor = useActiveEditor();
 
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSavesOpen, setIsSavesOpen] = useState(false);
     const [isProductionOpen, setIsProductionOpen] = useState(false);
     const [isReadAloudOpen, setIsReadAloudOpen] = useState(false);
@@ -93,40 +94,50 @@ const ProjectNavbarMobile = () => {
     return (
         <nav className={join(navbar.container, chromeHidden ? navbar.container_hidden : "")}>
             <nav className={navbar.mobile_bar}>
-                {/* Edit-mode controls: leave edit mode + undo/redo. Reader mode
-                    keeps the left side empty. */}
-                {isInProject && projectId && mobileEditMode && (
-                    <div className={navbar.mobile_left}>
-                        <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={exitEditMode}>
-                            <Check size={18} />
+                {/* Left cluster: edit-mode controls (leave edit mode + undo/redo)
+                    while editing; otherwise the back-to-projects arrow. */}
+                {isInProject &&
+                    projectId &&
+                    (mobileEditMode ? (
+                        <div className={navbar.mobile_left}>
+                            <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={exitEditMode}>
+                                <Check size={18} />
+                            </div>
+                            <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={() => runHistory("undo")}>
+                                <Undo2 size={18} />
+                            </div>
+                            <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={() => runHistory("redo")}>
+                                <Redo2 size={18} />
+                            </div>
                         </div>
-                        <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={() => runHistory("undo")}>
-                            <Undo2 size={18} />
+                    ) : (
+                        <div className={navbar.mobile_left}>
+                            <div
+                                className={`${navBtn.button} ${navbar.mobile_icon}`}
+                                onClick={backToProjects}
+                                aria-label={t("back")}
+                            >
+                                <ArrowLeft size={18} />
+                            </div>
                         </div>
-                        <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={() => runHistory("redo")}>
-                            <Redo2 size={18} />
-                        </div>
-                    </div>
-                )}
+                    ))}
                 {/* The element-type selector lives in the format bar above the
                     keyboard (MobileFormatToolbar); the sidebars open via the editor
                     edge chevrons; everything else is in the burger menu below. */}
                 <div className={navbar.mobile_right}>
                     {isInProject && <ScreenplaySearch />}
                     <div
-                        className={`${navBtn.button} ${navbar.mobile_icon} ${isMobileMenuOpen ? navBtn.active : ""}`}
-                        onClick={() =>
-                            setIsMobileMenuOpen((prev) => {
-                                const next = !prev;
-                                // The menu drawer opens on the right, same as the format
-                                // sidebar; close both side drawers so it opens cleanly on top.
-                                if (next) {
-                                    setLeftSidebarOpen(false);
-                                    setRightSidebarOpen(false);
-                                }
-                                return next;
-                            })
-                        }
+                        className={`${navBtn.button} ${navbar.mobile_icon} ${mobileMenuOpen ? navBtn.active : ""}`}
+                        onClick={() => {
+                            const next = !mobileMenuOpen;
+                            // The menu drawer opens on the right, same as the format
+                            // sidebar; close both side drawers so it opens cleanly on top.
+                            if (next) {
+                                setLeftSidebarOpen(false);
+                                setRightSidebarOpen(false);
+                            }
+                            setMobileMenuOpen(next);
+                        }}
                     >
                         <Menu size={18} />
                     </div>
@@ -134,7 +145,7 @@ const ProjectNavbarMobile = () => {
             </nav>
 
             {isInProject && projectId && (
-                <ProjectNavbarMobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
+                <ProjectNavbarMobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
                     <div className={mobileMenu.title_row}>
                         {membership ? (
                             <StatusIndicator />
@@ -155,7 +166,7 @@ const ProjectNavbarMobile = () => {
                             className={mobileMenu.item}
                             onClick={() => {
                                 uploadToCloudPopup(projectId, userCtx);
-                                setIsMobileMenuOpen(false);
+                                setMobileMenuOpen(false);
                             }}
                         >
                             <CloudUpload size={18} />
@@ -207,7 +218,7 @@ const ProjectNavbarMobile = () => {
                         className={mobileMenu.item}
                         onClick={() => {
                             setIsAnalyticsOpen(true);
-                            setIsMobileMenuOpen(false);
+                            setMobileMenuOpen(false);
                         }}
                     >
                         <BarChart2 size={18} />
@@ -227,8 +238,8 @@ const ProjectNavbarMobile = () => {
                                     key={tab.id}
                                     className={mobileMenu.item}
                                     onClick={() => {
-                                        openDashboard(tab.id);
-                                        setIsMobileMenuOpen(false);
+                                        openDashboard(tab.id, { fromMenu: true });
+                                        setMobileMenuOpen(false);
                                     }}
                                 >
                                     {tab.icon}
@@ -242,7 +253,7 @@ const ProjectNavbarMobile = () => {
                         <button
                             className={mobileMenu.item}
                             onClick={() => {
-                                setIsMobileMenuOpen(false);
+                                setMobileMenuOpen(false);
                                 onSignOut();
                             }}
                         >
@@ -253,8 +264,8 @@ const ProjectNavbarMobile = () => {
                         <button
                             className={mobileMenu.item}
                             onClick={() => {
-                                openDashboard("Auth");
-                                setIsMobileMenuOpen(false);
+                                openDashboard("Auth", { fromMenu: true });
+                                setMobileMenuOpen(false);
                             }}
                         >
                             <LogIn size={18} />
@@ -265,19 +276,12 @@ const ProjectNavbarMobile = () => {
                     <button
                         className={mobileMenu.item}
                         onClick={() => {
-                            openDashboard("About");
-                            setIsMobileMenuOpen(false);
+                            openDashboard("About", { fromMenu: true });
+                            setMobileMenuOpen(false);
                         }}
                     >
                         <Info size={18} />
                         <span>{tModal("tabs.About")}</span>
-                    </button>
-
-                    <div className={mobileMenu.separator} />
-
-                    <button className={mobileMenu.item} onClick={backToProjects}>
-                        <CircleArrowLeft size={18} />
-                        <span>{t("back")}</span>
                     </button>
                 </ProjectNavbarMobileMenu>
             )}

@@ -95,7 +95,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
 
     const handleOpenSettings = () => {
         onClose();
-        openDashboard("Production");
+        openDashboard("Production", { fromMenu: true });
     };
 
     // Click outside to close

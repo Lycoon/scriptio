@@ -76,6 +76,7 @@
   },
   "sidebar": {
     "title": "ダッシュボード",
+    "back": "戻る",
     "logOut": "ログアウト",
     "auth": "ログイン",
     "logOutConfirmTitle": "ログアウト",
@@ -308,6 +309,11 @@
       "optional": "任意",
       "submitBtn": "作成",
       "failedToCreate": "プロジェクトの作成に失敗しました"
+    },
+    "columns": {
+      "title": "タイトル",
+      "lastEdited": "最終編集",
+      "storage": "保存先"
     }
   },
   "editorSidebar": {

@@ -1,144 +1,256 @@
-.container {
+/* Width of the permanent left sidebar on desktop. The main content reserves this
+ * much space; the sidebar itself is fixed-positioned so it can rise over the
+ * navbar (which sits at z-index 50). */
+.layout {
+    --projects-sidebar-width: 260px;
+    /* Shared column template so the header row and every ProjectItem line up.
+     * Cascades into ProjectItem (a descendant) which reads the same var. */
+    --projects-grid: 44px minmax(0, 1fr) 160px 120px;
+
+    position: relative;
     display: flex;
     flex: 1;
-    flex-direction: row;
-    justify-content: center;
+    min-height: 0;
     background-color: var(--main-bg);
-    overflow-y: hidden;
 }
 
-.header {
+/* ==================== */
+/*        Sidebar       */
+/* ==================== */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 60; /* above the navbar (50) so it overlaps it */
+    width: var(--projects-sidebar-width);
+
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    padding: 0 20px;
 
-    margin-top: 50px;
-    padding-inline: 20px;
+    background-color: var(--main-bg);
+    border-right: 2px solid var(--separator);
+}
+
+/* Logo sits in a band the height of the navbar so it lines up with the navbar's
+ * own chrome; the buttons below then begin at the same Y as the list header. */
+.sidebar_top {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--navbar-height);
+    padding-inline: 8px;
+}
+
+.logo {
+    color: var(--primary-text);
+    width: 88px;
+    height: auto;
+}
+
+.sidebar_close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--primary-text);
+    cursor: pointer;
+}
+
+.sidebar_close:hover {
+    background-color: var(--secondary-hover);
+}
+
+.sidebar_actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Matches the list's top padding so the buttons and the list header line up. */
+    padding: 40px 4px 0;
+}
+
+/* Subtle, quiet pills — thin separator-coloured outline, muted text, light
+ * weight. The primary Create button gets a faint fill to set it apart. */
+.action_btn {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%;
+    padding: 9px 16px;
+
+    border: 1px solid var(--separator);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--secondary-text);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
-.header_title {
-    position: relative;
-    top: 0.8rem;
+.action_btn:hover {
+    border-color: var(--tertiary);
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
 }
 
-.header_info {
+.action_btn:active {
+    transform: scale(0.98);
+    transition: transform 0.07s;
+}
+
+.action_btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action_primary {
+    background-color: var(--secondary);
+    color: var(--primary-text);
+}
+
+/* ==================== */
+/*         Main         */
+/* ==================== */
+
+.main {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    margin-left: var(--projects-sidebar-width);
 }
 
-.header_btns {
+/* ==================== */
+/*      Project list    */
+/* ==================== */
+
+.list {
     display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    /* Cap the reading width so the table doesn't stretch edge-to-edge on wide
+     * screens; stays left-aligned within the main column. */
+    width: 100%;
+    max-width: 920px;
+    padding: 40px 48px 0;
 }
 
-/* Burger that opens the create/import drawer — phone only (see media query). */
-.mobile_menu_btn {
+.list_header {
+    display: grid;
+    grid-template-columns: var(--projects-grid);
+    align-items: center;
+    column-gap: 16px;
+
+    padding: 0 20px 12px;
+    border-bottom: 2px solid var(--separator);
+
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--secondary-text);
+}
+
+.col_date,
+.col_storage {
+    text-align: left;
+}
+
+.list_scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding-bottom: 40px;
+}
+
+.list_scroll::-webkit-scrollbar {
     display: none;
 }
 
-.create_btn {
-    font-weight: 600;
-    padding-inline: 40px !important;
-    border-width: 3px;
-}
-
-.import_btn {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    white-space: nowrap;
-
-    font-weight: 600;
-    padding-inline: 40px !important;
-    border-width: 3px;
-    background: none !important;
-}
-
-.import_btn:hover {
-    transition: border-color 0.2s;
-    border-color: var(--tertiary-hover) !important;
-}
-
-.center {
+.rows {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    height: 100%;
-    overflow: hidden;
-    width: clamp(320px, 80%, 780px);
+    padding-top: 8px;
+}
+
+/* ==================== */
+/*     Phone drawer     */
+/* ==================== */
+
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background-color: rgba(0, 0, 0, 0.45);
 }
 
 @media (max-width: 767px) {
-    .center {
-        width: 100%;
+    /* Sit below the navbar (not over it, like desktop) so the drawer matches the
+     * settings drawer and leaves the navbar's burger visible while open. The
+     * backdrop starts at the same line so the bar stays tappable. */
+    .sidebar {
+        top: var(--navbar-height);
+        width: min(78vw, 320px);
+        padding: 12px calc(20px + var(--safe-right)) calc(20px + var(--safe-bottom))
+            calc(20px + var(--safe-left));
+        /* Drop the desktop column's border so the drawer edge matches the
+         * settings drawer, which is defined by the panel shadow alone. */
+        border-right: none;
+        box-shadow: var(--panel-shadow);
+        transform: translateX(0);
+        transition: transform 0.25s ease;
     }
 
-    .header {
-        margin-top: 20px;
-        padding-inline: 16px;
+    .backdrop {
+        top: var(--navbar-height);
     }
 
-    .header_title {
-        top: 0;
+    .sidebar_closed {
+        transform: translateX(-100%);
     }
 
-    /* The create/import buttons move into the burger drawer on phone, so the
-     * header keeps the title on the left and the burger on the right. */
-    .header_btns {
+    /* In the drawer there's no navbar or list to align to, so drop the desktop
+     * spacing that reserved that height. */
+    .sidebar_top {
+        height: auto;
+        padding-bottom: 16px;
+    }
+
+    .sidebar_actions {
+        padding-top: 8px;
+    }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .list {
+        padding: 8px 16px 0;
+    }
+
+    .list_header {
+        /* Only the title column stays meaningful once the row collapses; the
+         * date/storage move inline under the title (see ProjectItem). */
+        grid-template-columns: 1fr;
+        padding: 0 4px 10px;
+    }
+
+    .col_poster,
+    .col_date,
+    .col_storage {
         display: none;
     }
-
-    .mobile_menu_btn {
-        display: flex;
-    }
-
-    .gridScroll {
-        padding: 24px 16px 40px;
-    }
-}
-
-.gridWrapper {
-    position: relative;
-    flex: 1;
-    overflow: hidden;
-}
-
-.gridScroll {
-    overflow-y: auto;
-    height: 100%;
-    padding: 50px 20px 40px;
-    scrollbar-width: none;
-}
-
-.gridScroll::-webkit-scrollbar {
-    display: none;
-}
-
-.grid {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.bottomShadow {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 40px;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0;
-    transition: opacity 0.7s ease;
-    background: linear-gradient(to top, var(--editor-shadow) 0%, transparent 100%);
-}
-
-.showShadow {
-    opacity: 1;
 }

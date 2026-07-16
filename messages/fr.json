@@ -77,6 +77,7 @@
   },
   "sidebar": {
     "title": "Tableau de bord",
+    "back": "Retour",
     "logOut": "Se déconnecter",
     "auth": "Se connecter",
     "logOutConfirmTitle": "Déconnexion",
@@ -309,6 +310,11 @@
       "optional": "facultatif",
       "submitBtn": "Créer",
       "failedToCreate": "Échec de la création du projet"
+    },
+    "columns": {
+      "title": "Titre",
+      "lastEdited": "Dernière modif.",
+      "storage": "Stockage"
     }
   },
   "editorSidebar": {
