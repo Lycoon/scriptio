@@ -123,12 +123,19 @@
 .element_trigger {
     display: flex;
     align-items: center;
+    /* Push the label to the left and pin the chevron to the right edge so the
+     * fixed width stays stable regardless of label length. */
+    justify-content: space-between;
     gap: 4px;
-    min-width: 0;
+    /* Fixed width so the bar's layout never reflows when the selected element
+     * (and thus its label length, "Scene" vs "Parenthetical") changes. */
+    width: 128px;
+    flex-shrink: 0;
     height: 40px;
-    padding: 0 10px;
+    padding: 0 12px;
     border: none;
-    border-radius: 8px;
+    /* Fully rounded pill, echoing the parent toolbar's rounded ends. */
+    border-radius: 20px;
     background-color: var(--secondary-hover);
     color: var(--primary-text);
     font-size: 14px;
@@ -138,6 +145,10 @@
 }
 
 .element_label {
+    /* Truncate rather than grow — the trigger width is fixed. */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 

@@ -123,13 +123,21 @@
  * faded out at rest so it never disrupts writing. Its offset is set inline by
  * DocumentEditorPanel; keep .scroll_handle's height in sync with HANDLE_HEIGHT. */
 .scroll_track {
-    position: absolute;
-    /* Top inset clears the right sidebar edge toggle (top:8px, up to 44px tall on
-     * touch) plus a small gap, so the handle starts just below it instead of
-     * overlapping. Bottom inset keeps it off the very bottom edge of the screen.
-     * Keep these in sync with TRACK_INSET_TOP / TRACK_INSET_BOTTOM in
-     * DocumentEditorPanel, which drive the handle's travel range. */
-    top: 60px;
+    /* Fixed to the viewport (not absolute inside .editor_panel) so the handle's
+     * position stays put regardless of the mobile navbar. The navbar collapses its
+     * height in the flex column as the reader scrolls (see ProjectNavbar), which
+     * would otherwise move .editor_panel's top edge up and drag an absolutely-
+     * positioned handle with it — a jarring shift right as scrolling begins. The
+     * static --navbar-height offset keeps the handle exactly where it sits while
+     * the navbar is shown, then holds that spot once the navbar is gone (same
+     * viewport-anchoring trick as .sidebar_backdrop in ProjectWorkspace). */
+    position: fixed;
+    /* --navbar-height positions the handle just below the (shown) navbar; the +60
+     * then clears the right sidebar edge toggle (top:8px, up to 44px tall on touch)
+     * plus a small gap. Bottom inset keeps it off the very bottom edge of the
+     * screen. Keep the +60 / bottom in sync with TRACK_INSET_TOP /
+     * TRACK_INSET_BOTTOM in DocumentEditorPanel (the travel-range fallback). */
+    top: calc(var(--navbar-height) + 60px);
     bottom: 24px;
     /* Right offset matches .right_sidebar_toggle (ProjectWorkspace) so the handle
      * lines up horizontally with the sidebar edge toggle. */

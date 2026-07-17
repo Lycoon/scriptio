@@ -111,6 +111,9 @@ const DocumentEditorPanel = ({
     const [canScrollThumb, setCanScrollThumb] = useState(false);
     const scrollIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isDraggingThumb = useRef(false);
+    // The draggable scroll track element, measured to derive the handle's travel
+    // range (see thumbTravel) independently of the container's changing height.
+    const scrollTrackRef = useRef<HTMLDivElement | null>(null);
     // Last scrollTop, to derive scroll direction for hiding/showing the mobile
     // editor chrome (navbar + sidebar edge handles).
     const lastScrollTop = useRef(0);
@@ -762,6 +765,20 @@ const DocumentEditorPanel = ({
     const TRACK_INSET_TOP = 60;
     const TRACK_INSET_BOTTOM = 24;
 
+    // How far the handle can travel down its track. Measured off the track element
+    // itself, which is fixed to the viewport (see .scroll_track) so the range stays
+    // constant regardless of the mobile navbar's collapse — driving it off the
+    // container's clientHeight instead would make the handle jump as the navbar
+    // hides and the container grows. Falls back to the container-derived estimate
+    // for the first frame before the track has mounted.
+    const thumbTravel = useCallback(() => {
+        const track = scrollTrackRef.current;
+        const trackHeight = track
+            ? track.clientHeight
+            : (containerEl?.clientHeight ?? 0) - TRACK_INSET_TOP - TRACK_INSET_BOTTOM;
+        return Math.max(0, trackHeight - HANDLE_HEIGHT);
+    }, [containerEl]);
+
     // Recompute the handle's position from the container's scroll metrics: it's a
     // fixed-size grab handle whose offset mirrors how far down we're scrolled.
     const updateThumb = useCallback(() => {
@@ -774,9 +791,8 @@ const DocumentEditorPanel = ({
             return;
         }
         setCanScrollThumb(true);
-        const travel = Math.max(0, clientHeight - TRACK_INSET_TOP - TRACK_INSET_BOTTOM - HANDLE_HEIGHT);
-        setThumbTop((scrollTop / scrollable) * travel);
-    }, [containerEl]);
+        setThumbTop((scrollTop / scrollable) * thumbTravel());
+    }, [containerEl, thumbTravel]);
 
     // Reveal the thumb and (re)arm the timer that hides it once scrolling has
     // been idle for a beat. While dragging, keep it pinned open (no auto-hide).
@@ -895,7 +911,7 @@ const DocumentEditorPanel = ({
             const startY = e.clientY;
             const startScrollTop = el.scrollTop;
             const scrollable = el.scrollHeight - el.clientHeight;
-            const maxThumbTravel = el.clientHeight - TRACK_INSET_TOP - TRACK_INSET_BOTTOM - HANDLE_HEIGHT;
+            const maxThumbTravel = thumbTravel();
 
             const onMove = (ev: PointerEvent) => {
                 if (maxThumbTravel <= 0) return;
@@ -914,7 +930,7 @@ const DocumentEditorPanel = ({
             window.addEventListener("pointerup", onUp);
             window.addEventListener("pointercancel", onUp);
         },
-        [containerEl, revealScrollThumb],
+        [containerEl, revealScrollThumb, thumbTravel],
     );
 
     // Clean up the idle timer on unmount.
@@ -1008,6 +1024,7 @@ const DocumentEditorPanel = ({
             </div>
             {isPhone && canScrollThumb && (
                 <div
+                    ref={scrollTrackRef}
                     className={join(
                         styles.scroll_track,
                         showScrollThumb ? styles.scroll_track_visible : "",
