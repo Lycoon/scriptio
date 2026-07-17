@@ -623,12 +623,24 @@
 @media (max-width: 767px) {
     .container {
         touch-action: none;
+        /* The canvas owns all touch gestures. Without this, a double-tap or
+           long-press on the board surface triggers iOS Safari's native text
+           selection across the whole board (it lacks the per-card
+           `user-select: none`), and that sticky selection makes every
+           subsequent interaction laggy until the selection is cleared. Suppress
+           native selection + the long-press callout on the whole subtree; the
+           editable text fields below opt back in so typing/caret still works. */
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
     }
 
     .card_description_input,
     .card_header_title_input,
     .audio_timeline {
         touch-action: auto;
+        -webkit-user-select: text;
+        user-select: text;
     }
 
     .card_resize_handle {

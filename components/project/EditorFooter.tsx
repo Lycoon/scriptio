@@ -11,6 +11,8 @@ import { useViewContext } from "@src/context/ViewContext";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
 import { paginationKey } from "@src/lib/screenplay/extensions/pagination-extension";
 import { join } from "@src/lib/utils/misc";
+import { useIsPhone } from "@src/lib/utils/hooks";
+import { useActiveEditor } from "@src/lib/editor/use-active-editor";
 import WritingTimer from "./WritingTimer";
 
 import styles from "./EditorFooter.module.css";
@@ -53,6 +55,10 @@ const EditorFooter = () => {
     const { isZenMode, updateIsZenMode } = useContext(UserContext);
     const { isEndlessScroll, setIsEndlessScroll, setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
     const { spellcheckLang, setSpellcheckLang } = useSpellcheck();
+    const isPhone = useIsPhone();
+    // The footer's toggles all act on the active text editor. Board/statistics
+    // panels have none, so on phone (single-panel) the footer is hidden there.
+    const activeEditor = useActiveEditor();
 
     const pageCount = useScreenplayPageCount(editor);
 
@@ -104,6 +110,10 @@ const EditorFooter = () => {
         document.addEventListener("fullscreenchange", onFullscreenChange);
         return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
     }, [isZenMode, exitFocusMode]);
+
+    // On phone the workspace is single-panel: hide the footer when the shown
+    // panel has no text editor (board, statistics) — its controls don't apply.
+    if (isPhone && !activeEditor) return null;
 
     return (
         <div className={styles.bubble_right}>

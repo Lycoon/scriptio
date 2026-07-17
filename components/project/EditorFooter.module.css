@@ -52,10 +52,16 @@
         color 0.15s ease;
 }
 
-.action:hover {
-    opacity: 1;
-    background-color: var(--secondary-hover);
-    color: var(--primary-text);
+/* Guard hover behind a hover-capable pointer. On touch, iOS keeps :hover applied
+   after a tap until the user touches elsewhere — and since the hover style is
+   identical to `.action_active`, a just-toggled-off button would keep looking
+   active. Restricting hover to real pointers avoids that misleading state. */
+@media (hover: hover) {
+    .action:hover {
+        opacity: 1;
+        background-color: var(--secondary-hover);
+        color: var(--primary-text);
+    }
 }
 
 .action_active {
