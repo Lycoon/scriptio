@@ -561,7 +561,10 @@
     "unomitScene": "恢复场景",
     "insertPageBreak": "插入分页符",
     "removePageBreak": "移除分页符",
-    "pageBreakHint": "手动分页符"
+    "pageBreakHint": "手动分页符",
+        "sceneOptions": "场景选项",
+        "characterOptions": "角色选项",
+        "locationOptions": "位置选项"
   },
   "popup": {
     "character": {

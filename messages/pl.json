@@ -561,7 +561,10 @@
     "unomitScene": "Przywróć scenę",
     "insertPageBreak": "Wstaw podział strony",
     "removePageBreak": "Usuń podział strony",
-    "pageBreakHint": "Ręczny podział strony"
+    "pageBreakHint": "Ręczny podział strony",
+        "sceneOptions": "Opcje sceny",
+        "characterOptions": "Opcje postaci",
+        "locationOptions": "Opcje lokalizacji"
   },
   "popup": {
     "character": {

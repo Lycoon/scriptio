@@ -5,6 +5,7 @@ import { MoreVertical } from "lucide-react";
 import { ContextMenuType, SceneContextProps } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
 import { join } from "@src/lib/utils/misc";
+import { useTranslations } from "next-intl";
 import { Scene } from "@src/lib/screenplay/scenes";
 import SceneLengthItem from "../sidebar/SceneLengthItem";
 
@@ -25,6 +26,7 @@ type SidebarSceneItemProps = SceneContextProps & {
 };
 
 const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, label, isOmitted, scrollRef, onPointerDown, onDoubleClick }: SidebarSceneItemProps) => {
+    const t = useTranslations("contextMenu");
     const { updateContextMenu } = useContext(UserContext);
 
     // Clamp so the menu never opens off the right/bottom edge (matters on touch,
@@ -97,7 +99,7 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
                     className={nav_item.menu_btn}
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={handleMenuButton}
-                    aria-label="Scene options"
+                    aria-label={t("sceneOptions")}
                 >
                     <MoreVertical size={16} />
                 </button>

@@ -6,6 +6,14 @@ body {
     height: 100%;
     width: 100%;
     overflow: clip;
+    /* Disable mobile text autosizing ("font boosting"). Without this, phone
+     * browsers inflate the editor's 16px screenplay font (~18.7px) while the
+     * offscreen pagination measurement div (#pagination-test-div, hidden) stays
+     * at 16px — so text wraps differently than measured and page breaks stutter
+     * while typing. It also crams the boosted glyphs into the fixed 16px
+     * --line-height. All font sizes here are deliberate; never auto-inflate. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 .app-layout {
