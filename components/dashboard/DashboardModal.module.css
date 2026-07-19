@@ -49,6 +49,7 @@
     display: none;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     width: 36px;
     height: 36px;
     border: none;
@@ -146,6 +147,14 @@
     min-width: 0;
 }
 
+/* Truncate rather than grow: a long tab title must not push the close button off
+   its gutter, so the button sits at the same spot on every tab. */
+.headerLeft h3 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Back to the sections list; only rendered on phone (see DashboardModal). */
 .back_btn {
     display: flex;
@@ -210,6 +219,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     width: 36px;
     height: 36px;
     border: none;
@@ -252,6 +262,11 @@
     }
 
     .modal {
+        /* Single horizontal gutter for both drawer screens (sections list and
+         * section content). Both use it for their outer edges so the close button
+         * and the panel content sit on the same lines whichever screen is up —
+         * switching screens must not shift the close button. */
+        --drawer-gutter: 16px;
         width: var(--mobile-drawer-width);
         max-width: var(--mobile-drawer-width);
         height: 100%;
@@ -268,7 +283,8 @@
     .sidebar {
         display: none;
         flex: 1;
-        padding: 8px calc(8px + var(--safe-right)) calc(16px + var(--safe-bottom)) 8px;
+        padding: 12px calc(var(--drawer-gutter) + var(--safe-right)) calc(16px + var(--safe-bottom))
+            var(--drawer-gutter);
         border-right: none;
         overflow-y: auto;
         /* On mobile the whole modal is one drawer, so the sections screen wears the
@@ -277,16 +293,21 @@
         background: var(--main-bg);
     }
 
+    /* No horizontal padding of its own: the close button must land on the drawer
+     * gutter, exactly where the content screen's close button sits. */
     .sidebarHeader {
-        padding: 4px 12px 8px;
+        padding: 4px 0 8px;
     }
 
-    /* Align the title with the section labels + item icons below. Their left edge is
-     * navMenu(12) + own padding(12); the header only carries 12, so the title needs
-     * its own 12 to reach the same line. */
+    /* Align the title with the section labels + item icons below, whose left edge
+     * is the gutter + navItem's own padding(12). */
     .sidebarTitle {
         padding: 0 12px;
         margin-bottom: 0;
+    }
+
+    .navMenu {
+        padding: 0;
     }
 
     .navMenuFooter {
@@ -309,10 +330,11 @@
 
     .content {
         flex: 1;
-        /* Symmetric horizontal padding + the right safe-area inset so the close
+        /* Symmetric horizontal gutter + the right safe-area inset so the close
          * button and settings panels (Keybinds, Layout, …) never crowd the screen
          * edge. */
-        padding: 12px calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom)) 16px;
+        padding: 12px calc(var(--drawer-gutter) + var(--safe-right)) calc(16px + var(--safe-bottom))
+            var(--drawer-gutter);
         /* Nudge inherited/em-based text down a touch for a denser, phone-friendly
          * scale; width-driven layouts reflow into the narrow drawer on their own. */
         font-size: 0.92rem;
@@ -326,7 +348,11 @@
         font-size: 1.1rem;
     }
 
+    /* The drawer gutter is the only horizontal padding on phone: no extra right
+     * padding and no reserved scrollbar gutter, so panel content lines up with the
+     * header on both edges instead of drifting left. */
     .scrollArea {
-        padding-right: 6px;
+        padding-right: 0;
+        scrollbar-gutter: auto;
     }
 }

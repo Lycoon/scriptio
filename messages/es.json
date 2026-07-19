@@ -561,7 +561,10 @@
     "unomitScene": "Restaurar escena",
     "insertPageBreak": "Insertar salto de página",
     "removePageBreak": "Quitar salto de página",
-    "pageBreakHint": "Salto de página manual"
+    "pageBreakHint": "Salto de página manual",
+        "sceneOptions": "Opciones de escena",
+        "characterOptions": "Opciones de personaje",
+        "locationOptions": "Opciones de localización"
   },
   "popup": {
     "character": {

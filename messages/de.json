@@ -562,7 +562,10 @@
     "unomitScene": "Szene wiederherstellen",
     "insertPageBreak": "Seitenumbruch einfügen",
     "removePageBreak": "Seitenumbruch entfernen",
-    "pageBreakHint": "Manueller Seitenumbruch"
+    "pageBreakHint": "Manueller Seitenumbruch",
+        "sceneOptions": "Szenenoptionen",
+        "characterOptions": "Charakteroptionen",
+        "locationOptions": "Ortsoptionen"
   },
   "popup": {
     "character": {

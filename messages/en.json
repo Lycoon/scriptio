@@ -561,7 +561,10 @@
     "unomitScene": "Unomit scene",
     "insertPageBreak": "Insert page break",
     "removePageBreak": "Remove page break",
-    "pageBreakHint": "Manual page break"
+    "pageBreakHint": "Manual page break",
+        "sceneOptions": "Scene options",
+        "characterOptions": "Character options",
+        "locationOptions": "Location options"
   },
   "popup": {
     "character": {

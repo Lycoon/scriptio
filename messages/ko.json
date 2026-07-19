@@ -561,7 +561,10 @@
     "unomitScene": "씬 복원",
     "insertPageBreak": "페이지 나누기 삽입",
     "removePageBreak": "페이지 나누기 제거",
-    "pageBreakHint": "수동 페이지 나누기"
+    "pageBreakHint": "수동 페이지 나누기",
+        "sceneOptions": "장면 옵션",
+        "characterOptions": "인물 옵션",
+        "locationOptions": "장소 옵션"
   },
   "popup": {
     "character": {
