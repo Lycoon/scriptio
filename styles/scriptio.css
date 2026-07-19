@@ -60,6 +60,28 @@
     --transition-r-margin: 1in;
     --line-height: 16px;
 
+    /* Hard-disable mobile text autosizing on the screenplay surface.
+     *
+     * Blink/WebKit inflate the font of any block wider than the viewport. In
+     * endless mode .ProseMirror is width:100%, so the multiplier is 1 and text
+     * renders at the real 12pt. In paged mode the element keeps its canonical
+     * --page-width (818px) and is scaled down with `zoom`, so the autosizer sees
+     * a block ~2x the viewport and boosts 12pt to ~14pt (16px -> ~18.7px). That
+     * breaks two invariants at once: the boosted glyphs are crammed into the
+     * fixed 16px --line-height, and the visible text wraps differently than
+     * #pagination-test-div measured it, so page breaks stutter while typing.
+     *
+     * `none` rather than `100%`: iOS keeps autosizing inside `zoom`ed subtrees
+     * under the advisory 100%. Desktop engines treat `none` as 100%, so this is
+     * a no-op there, and it costs no accessibility — the editor exposes its own
+     * font-size control, and browser page zoom is unaffected.
+     *
+     * #pagination-test-div carries `class="ProseMirror pagination"`, so it is
+     * matched by this rule too: measurement and display stay in lockstep, which
+     * is the invariant pagination-extension.ts depends on. */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+
     border: none !important;
     background-color: var(--editor-script-bg) !important;
 
