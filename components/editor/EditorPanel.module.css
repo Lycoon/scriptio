@@ -265,13 +265,41 @@
 
     /* PAGED mode (endless off): render exactly like desktop — real fixed-size
      * pages, page breaks, headers, footers — and scale the whole page down to fit
-     * the viewport with `zoom` (--editor-zoom is computed in DocumentEditorPanel).
-     * Because the page is a fixed rectangle, its boundaries never move while
-     * writing, so there are no layout shifts — the tradeoff being smaller text
-     * than endless mode's reflow. The page keeps its canonical width (from the
-     * injected `.pagination` rule) and stays centred as it scales. */
+     * the viewport with transform: scale() (--editor-zoom is computed in
+     * DocumentEditorPanel). Because the page is a fixed rectangle, its boundaries
+     * never move while writing, so there are no layout shifts — the tradeoff
+     * being smaller text than endless mode's reflow.
+     *
+     * transform, NOT `zoom`: WebKit multiplies computed font sizes by `zoom`
+     * (usedZoom) and then applies its "smart minimum font size"
+     * (minimumLogicalFontSize = 9, StyleFontSizeFunctions.cpp): any absolute
+     * font-size ≥ 9px whose zoomed result lands below 9px is clamped back up to
+     * a rendered 9px. On a phone (zoom ≈ 0.48) the 16px screenplay font came out
+     * as 9px rendered — reported as 9 / zoom ≈ 18.7px computed — cramming
+     * oversized glyphs into the fixed 16px line boxes and wrapping text
+     * differently than the offscreen pagination measurement. There is NO CSS
+     * opt-out (text-size-adjust and text autosizing are different code paths and
+     * do not participate). transform leaves computed font sizes at their
+     * canonical values — layout is pixel-identical to the measurement pass — and
+     * only scales at paint time, so the clamp never triggers.
+     *
+     * Unlike zoom, transform doesn't shrink the layout box, so two compensations
+     * are needed (both !important to beat the injected
+     * `.pagination { margin: 0 auto !important }`; this three-class selector
+     * then wins on specificity — same trick as the endless width override):
+     * - centring: equal negative side margins centre the canonical-width box in
+     *   the wrapper (margin auto would pin an overflowing box to the left);
+     *   transform-origin top center then scales it in place.
+     * - height: negative margin-bottom collapses the (1 − zoom) tail of the
+     *   unscaled layout height so the scroll extent matches what is visible.
+     *   --editor-layout-height (the editor's untransformed offsetHeight) is fed
+     *   by a ResizeObserver in DocumentEditorPanel. */
     .editor_wrapper:not(.endless_scroll) :global(.ProseMirror) {
-        zoom: var(--editor-zoom, 1);
+        transform: scale(var(--editor-zoom, 1));
+        transform-origin: top center;
+        margin-left: calc((100% - var(--page-width)) / 2) !important;
+        margin-right: calc((100% - var(--page-width)) / 2) !important;
+        margin-bottom: calc((var(--editor-zoom, 1) - 1) * var(--editor-layout-height, 0px)) !important;
     }
 
     .editor_shadow {

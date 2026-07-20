@@ -211,19 +211,22 @@ const DocumentEditorPanel = ({
     // size via a compact --display-margin-scale — no page rectangles, so nothing
     // shifts while writing. Paged (endless off): render the real fixed-size page —
     // page breaks, headers, footers, exactly like desktop — and scale the whole
-    // page down with `zoom` so it fits the viewport width. A fixed page rectangle
-    // means its boundaries never move as you type, so there are no layout shifts.
-    // `zoom` is a uniform visual scale and pagination is measured off-screen, so
-    // page count / numbering are unaffected either way.
+    // page down with transform: scale() so it fits the viewport width. A fixed
+    // page rectangle means its boundaries never move as you type, so there are no
+    // layout shifts. The scale is purely visual (NOT `zoom`: WebKit clamps
+    // zoom-shrunk fonts to a 9px rendered minimum, inflating the screenplay font
+    // — see the paged-mode rule in EditorPanel.module.css) and pagination is
+    // measured off-screen, so page count / numbering are unaffected either way.
     useEffect(() => {
         const container = containerEl;
         if (!container) return;
 
         const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
-        // Only the phone paged view is zoomed. Endless reflows (no zoom); desktop
+        // Only the phone paged view is scaled. Endless reflows (no scale); desktop
         // shows the page at 1:1.
         if (!isPhone || isEndlessScroll || !pageSize) {
             container.style.removeProperty("--editor-zoom");
+            container.style.removeProperty("--editor-layout-height");
             return;
         }
 
@@ -239,8 +242,28 @@ const DocumentEditorPanel = ({
         apply();
         const ro = new ResizeObserver(apply);
         ro.observe(container);
-        return () => ro.disconnect();
-    }, [containerEl, isPhone, isEndlessScroll, pageFormat]);
+
+        // transform: scale() doesn't shrink the layout box the way `zoom` did, so
+        // the CSS collapses the leftover (1 − scale) tail of the editor's layout
+        // height with a negative margin. Track the untransformed height here
+        // (offsetHeight ignores transforms) and expose it as a CSS var.
+        const editorDOM = editor?.view?.dom;
+        let heightObserver: ResizeObserver | undefined;
+        if (editorDOM) {
+            const applyHeight = () => {
+                container.style.setProperty("--editor-layout-height", `${editorDOM.offsetHeight}px`);
+            };
+            applyHeight();
+            heightObserver = new ResizeObserver(applyHeight);
+            heightObserver.observe(editorDOM);
+        }
+
+        return () => {
+            ro.disconnect();
+            heightObserver?.disconnect();
+            container.style.removeProperty("--editor-layout-height");
+        };
+    }, [containerEl, isPhone, isEndlessScroll, pageFormat, editor]);
 
     // ---- Orphaned comment cleanup ----
     // Comments anchor to a node's data-id. When that node is deleted the comment

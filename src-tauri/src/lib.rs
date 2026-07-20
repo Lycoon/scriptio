@@ -3,6 +3,14 @@ fn some_noop_command() {
     // This does nothing, used for a handshake check
 }
 
+// NOTE on the iOS "inflated font" bug (paged mode, 16px → ~18.7px): this was
+// WebKit's smart minimum font size (minimumLogicalFontSize = 9), which clamps
+// `specifiedSize × zoom` up to a rendered 9px whenever the specified size is
+// ≥ 9px — reported as 9 / zoom ≈ 18.7px. It is NOT text autosizing, so the
+// former native `_setTextAutosizingEnabled:` workaround here was a no-op (and
+// private API, an App Store risk). The real fix is CSS-side: the phone paged
+// view scales with transform: scale() instead of `zoom`, which never enters
+// the clamp's code path. See the paged-mode rule in EditorPanel.module.css.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -18,36 +26,6 @@ pub fn run() {
                         .level(log::LevelFilter::Info)
                         .build(),
                 )?;
-            }
-
-            // iOS WKWebView inflates ("text autosizing") the editor font: the
-            // screenplay page lays out at a fixed ~818px width and the phone CSS
-            // scales it down with `zoom`, but WKWebView then boosts the font by
-            // the column-width/viewport ratio (~2x) so 12pt renders at ~33px,
-            // overflowing the fixed 16px line box. CSS can't stop it here —
-            // `-webkit-text-size-adjust: none` is honoured in getComputedStyle
-            // yet ignored by the autosizer — so turn the feature off natively on
-            // WKPreferences via the private `textAutosizingEnabled` key (KVC).
-            #[cfg(target_os = "ios")]
-            {
-                use tauri::Manager;
-                if let Some(webview) = app.webview_windows().values().next().cloned() {
-                    let _ = webview.with_webview(|wv| unsafe {
-                        use objc2::msg_send;
-                        use objc2::runtime::AnyObject;
-                        use objc2_foundation::{NSNumber, NSString};
-
-                        let view: *mut AnyObject = wv.inner().cast();
-                        if view.is_null() {
-                            return;
-                        }
-                        let configuration: *mut AnyObject = msg_send![view, configuration];
-                        let preferences: *mut AnyObject = msg_send![configuration, preferences];
-                        let disabled = NSNumber::new_bool(false);
-                        let key = NSString::from_str("textAutosizingEnabled");
-                        let _: () = msg_send![preferences, setValue: &*disabled, forKey: &*key];
-                    });
-                }
             }
 
             Ok(())
