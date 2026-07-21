@@ -17,6 +17,12 @@ import DocumentTreeSidebarView from "./DocumentTreeSidebarView";
 import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
 
+// Touch reordering: a swipe scrolls the list, so a scene is only picked up after
+// the finger is held roughly still for this long. Moving farther than the cancel
+// threshold before then is read as a scroll and abandons the pending pick-up.
+const TOUCH_DRAG_HOLD_MS = 300;
+const TOUCH_DRAG_CANCEL_PX = 10;
+
 const EditorSidebarNavigation = () => {
     const t = useTranslations("editorSidebar");
     const {
@@ -66,6 +72,11 @@ const EditorSidebarNavigation = () => {
     const scenesRef = useRef(scenes);
     const suppressSceneScrollRef = useRef(false);
 
+    // Touch-drag bookkeeping. The long-press timer arms the pick-up; the abort
+    // controller tears down that gesture's window listeners in one shot.
+    const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const gestureAbortRef = useRef<AbortController | null>(null);
+
     // Keep scenesRef in sync so the editor callback can read the latest scenes
     useEffect(() => {
         scenesRef.current = scenes;
@@ -114,7 +125,16 @@ const EditorSidebarNavigation = () => {
         }
     }, [currentSceneIndex]);
 
+    // End any in-progress drag and clear its drop indicator.
+    const resetDrag = useCallback(() => {
+        setDragIndex(null);
+        setIndicatorIndex(null);
+    }, []);
+
+    // Desktop drag starts immediately on press; touch is handled by the
+    // long-press path below so a swipe can still scroll the list.
     const handlePointerDown = useCallback((index: number, e: React.PointerEvent) => {
+        if (e.pointerType === "touch") return;
         if (e.button !== 0) return;
         setDragIndex(index);
     }, []);
@@ -125,36 +145,41 @@ const EditorSidebarNavigation = () => {
         focusOnPosition(editor, scene.position);
     }, [editor]);
 
+    // Resolve the drop gap for a pointer Y. Rects are read live so mid-drag
+    // scrolling doesn't cause offset drift. Shared by the mouse and touch paths.
+    const updateIndicatorFromY = useCallback((clientY: number) => {
+        if (!listRef.current) return;
+
+        const children = listRef.current.children;
+        for (let i = 0; i < children.length; i++) {
+            const rect = children[i].getBoundingClientRect();
+            if (clientY >= rect.top && clientY < rect.bottom) {
+                setIndicatorIndex(clientY < rect.top + rect.height / 2 ? i : i + 1);
+                return;
+            }
+        }
+
+        if (children.length === 0) return;
+        // Above the first / below the last → drop at the corresponding end.
+        if (clientY < children[0].getBoundingClientRect().top) {
+            setIndicatorIndex(0);
+        } else if (clientY >= children[children.length - 1].getBoundingClientRect().bottom) {
+            setIndicatorIndex(children.length);
+        }
+    }, []);
+
     const handlePointerMove = useCallback(
         (e: React.PointerEvent) => {
-            if (dragIndex === null || !listRef.current) return;
-
-            // Read rects live so scrolling doesn't cause offset drift
-            const children = listRef.current.children;
-            for (let i = 0; i < children.length; i++) {
-                const rect = children[i].getBoundingClientRect();
-                if (e.clientY >= rect.top && e.clientY < rect.bottom) {
-                    const half = e.clientY < rect.top + rect.height / 2 ? "top" : "bottom";
-                    setIndicatorIndex(half === "top" ? i : i + 1);
-                    return;
-                }
-            }
-
-            // Below all items → drop after last
-            if (children.length > 0) {
-                const lastRect = children[children.length - 1].getBoundingClientRect();
-                if (e.clientY >= lastRect.bottom) {
-                    setIndicatorIndex(children.length);
-                }
-            }
+            if (e.pointerType === "touch") return; // touch tracks moves via its own listener
+            if (dragIndex === null) return;
+            updateIndicatorFromY(e.clientY);
         },
-        [dragIndex],
+        [dragIndex, updateIndicatorFromY],
     );
 
     const handleDrop = useCallback(() => {
         if (dragIndex === null || indicatorIndex === null || !editor) {
-            setDragIndex(null);
-            setIndicatorIndex(null);
+            resetDrag();
             return;
         }
 
@@ -162,8 +187,7 @@ const EditorSidebarNavigation = () => {
 
         // No-op if dropping in original position
         if (targetIndex === dragIndex || targetIndex === dragIndex + 1) {
-            setDragIndex(null);
-            setIndicatorIndex(null);
+            resetDrag();
             return;
         }
 
@@ -196,15 +220,93 @@ const EditorSidebarNavigation = () => {
         reordered.splice(insertIndex, 0, moved);
         updateScenes(reordered);
 
-        setDragIndex(null);
-        setIndicatorIndex(null);
-    }, [dragIndex, indicatorIndex, scenes, editor, updateScenes]);
+        resetDrag();
+    }, [dragIndex, indicatorIndex, scenes, editor, updateScenes, resetDrag]);
 
-    // Window-level pointerup so the drop works even if cursor leaves the list
+    // Keep a live handle on handleDrop so the touch listeners — attached once at
+    // the start of a gesture — drop with current state, not a stale closure.
+    const dropRef = useRef(handleDrop);
+    useEffect(() => {
+        dropRef.current = handleDrop;
+    }, [handleDrop]);
+
+    // Tear down a touch gesture: cancel its pending long-press and remove its
+    // window listeners. Shared by the scroll-cancel, the drop, and unmount.
+    const stopGesture = useCallback(() => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+        }
+        gestureAbortRef.current?.abort();
+        gestureAbortRef.current = null;
+    }, []);
+
+    // Touch reordering: hold a scene still to pick it up, then drag to a new
+    // position. A move before the hold fires scrolls the list instead. Runs off
+    // native touch events (not pointer events) so the active drag can
+    // preventDefault to stop the list from scrolling under the finger.
+    const handleTouchStart = useCallback(
+        (index: number, e: React.TouchEvent) => {
+            const touch = e.touches[0];
+            if (!touch) return;
+
+            stopGesture(); // abandon any gesture still in flight (e.g. a second finger)
+
+            const drag = { startX: touch.clientX, startY: touch.clientY, active: false };
+            const controller = new AbortController();
+            gestureAbortRef.current = controller;
+            const { signal } = controller;
+
+            longPressTimerRef.current = setTimeout(() => {
+                drag.active = true;
+                setDragIndex(index);
+            }, TOUCH_DRAG_HOLD_MS);
+
+            window.addEventListener(
+                "touchmove",
+                (ev) => {
+                    const t = ev.touches[0];
+                    if (!t) return;
+                    if (!drag.active) {
+                        // Long-press hasn't fired: a real move means the user is
+                        // scrolling, so drop the pending pick-up and let it scroll.
+                        if (Math.hypot(t.clientX - drag.startX, t.clientY - drag.startY) > TOUCH_DRAG_CANCEL_PX) {
+                            stopGesture();
+                        }
+                        return;
+                    }
+                    // Active drag: block the list scroll and track the drop gap.
+                    ev.preventDefault();
+                    updateIndicatorFromY(t.clientY);
+                },
+                { passive: false, signal },
+            );
+
+            const onEnd = () => {
+                const wasActive = drag.active;
+                stopGesture();
+                if (wasActive) dropRef.current();
+                else resetDrag();
+            };
+            window.addEventListener("touchend", onEnd, { signal });
+            window.addEventListener("touchcancel", onEnd, { signal });
+        },
+        [stopGesture, updateIndicatorFromY, resetDrag],
+    );
+
+    // Abandon any in-flight gesture if the panel unmounts mid-drag.
+    useEffect(() => stopGesture, [stopGesture]);
+
+    // Window-level pointerup so the drop works even if cursor leaves the list.
+    // Touch drops through its own touchend handler, so ignore touch here to
+    // avoid dropping twice (pointerup also fires for touch releases).
     useEffect(() => {
         if (dragIndex === null) return;
 
-        const onPointerUp = () => handleDrop();
+        const onPointerUp = (e: PointerEvent) => {
+            if (e.pointerType === "touch") return;
+            handleDrop();
+        };
         window.addEventListener("pointerup", onPointerUp);
         return () => window.removeEventListener("pointerup", onPointerUp);
     }, [dragIndex, handleDrop]);
@@ -245,6 +347,7 @@ const EditorSidebarNavigation = () => {
                                                 isDragging={dragIndex === index}
                                                 isCurrent={isCurrent}
                                                 onPointerDown={handlePointerDown}
+                                                onTouchStart={handleTouchStart}
                                                 onDoubleClick={handleDoubleClick}
                                             />
                                         );

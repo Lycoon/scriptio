@@ -111,7 +111,7 @@ const ProjectWorkspace = () => {
 
                     {/* Right sidebar toggle — an edge chevron on every platform */}
                     <div
-                        className={styles.right_sidebar_toggle}
+                        className={`${styles.right_sidebar_toggle} ${timelineOpen ? styles.timeline_open : ""}`}
                         onClick={() => setRightSidebarOpen((prev) => !prev)}
                     >
                         {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}

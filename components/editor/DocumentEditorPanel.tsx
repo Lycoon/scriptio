@@ -26,7 +26,7 @@ import { DocumentEditorConfig, EDITOR_INPUT_ATTRIBUTES } from "@src/lib/editor/d
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
 import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
-import { focusEditorInViewport } from "@src/lib/editor/focus-in-viewport";
+import { focusEditorAtCoords } from "@src/lib/editor/focus-in-viewport";
 import { getSpellErrorAt } from "@src/lib/spellcheck/spellcheck-extension";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
 
@@ -96,7 +96,7 @@ const DocumentEditorPanel = ({
         repository,
     } = projectCtx;
     const { settings } = useSettings();
-    const { isEndlessScroll, setChromeHidden, mobileEditMode, setMobileEditMode } = useViewContext();
+    const { isEndlessScroll, setChromeHidden, mobileEditMode, setMobileEditMode, timelineOpen } = useViewContext();
     const { user } = useUser();
     const isPhone = useIsPhone();
 
@@ -124,6 +124,19 @@ const DocumentEditorPanel = ({
     // Last scrollTop, to derive scroll direction for hiding/showing the mobile
     // editor chrome (navbar + sidebar edge handles).
     const lastScrollTop = useRef(0);
+    // Whether the scroll in flight was started by the user's finger (a touch on
+    // the reader, or a drag of the scroll handle), as opposed to a programmatic
+    // scroll — e.g. "Go to scene" from the sidebar, which calls scrollIntoView.
+    // Only finger-driven scrolls hide the mobile chrome: a programmatic jump
+    // must not slide the navbar (and the open sidebar's dimming backdrop) away
+    // under the user, which reads as an unnatural, un-dimmed flash. Kept alive
+    // through iOS momentum by an idle timer (see armUserScrollIdle) so a real
+    // flick still hides the chrome after the finger has lifted.
+    const isUserScrolling = useRef(false);
+    // True while a finger (or the handle drag) is actually down, so the idle
+    // timer never clears mid-drag when the user holds still for a beat.
+    const isFingerDown = useRef(false);
+    const userScrollIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Coalesces all scroll-driven work into a single update per animation frame
     // (see onScroll). A burst of scroll events then costs one layout, aligned to
     // the paint cycle, so the chrome stays glued to the scroll instead of lagging.
@@ -873,42 +886,72 @@ const DocumentEditorPanel = ({
 
     // Phone reader taps. The reader is not editable, so taps don't place a caret
     // and are free to drive chrome: a single tap brings back the chrome the user
-    // scrolled away; a double tap enters edit mode and focuses the editor (same
-    // as the pen button), bringing up the keyboard. Off phone, in edit mode, or
-    // for read-only viewers this is inert so normal caret/selection behaviour is
-    // untouched.
-    const handleReaderTap = useCallback(() => {
-        if (!isPhone || mobileEditMode) return;
+    // scrolled away; a double tap enters edit mode and focuses the editor, bringing
+    // up the keyboard. Off phone, in edit mode, or for read-only viewers this is
+    // inert so normal caret/selection behaviour is untouched.
+    const handleReaderTap = useCallback(
+        (e: React.MouseEvent) => {
+            if (!isPhone || mobileEditMode) return;
 
-        if (tapTimer.current) {
-            // Second tap inside the window → double tap: enter edit mode.
-            clearTimeout(tapTimer.current);
-            tapTimer.current = null;
-            if (isReadOnly) return;
-            setMobileEditMode(true);
-            // Make the editor editable and focus it SYNCHRONOUSLY inside this tap
-            // gesture. iOS only raises the on-screen keyboard when focus() runs in
-            // the same user-gesture turn — deferring it (setTimeout) breaks that
-            // chain and the keyboard stays down. The mobileEditMode effect also
-            // flips setEditable(true), so this just gets there a tick earlier.
-            const ed = editor;
-            if (ed) {
-                ed.setEditable(true);
-                // Drop the caret on a character that's currently on screen rather
-                // than at the old selection, so entering edit mode doesn't scroll
-                // the view away to wherever the caret last was.
-                focusEditorInViewport(ed);
+            if (tapTimer.current) {
+                // Second tap inside the window → double tap: enter edit mode.
+                clearTimeout(tapTimer.current);
+                tapTimer.current = null;
+                if (isReadOnly) return;
+                setMobileEditMode(true);
+                // Make the editor editable and focus it SYNCHRONOUSLY inside this
+                // tap gesture. iOS only raises the on-screen keyboard when focus()
+                // runs in the same user-gesture turn — deferring it (setTimeout)
+                // breaks that chain and the keyboard stays down. The mobileEditMode
+                // effect also flips setEditable(true), so this just gets there a
+                // tick earlier.
+                const ed = editor;
+                if (ed) {
+                    ed.setEditable(true);
+                    // Drop the caret exactly where the user double-tapped, so the
+                    // caret lands under their finger (like a native tap-to-edit).
+                    // The pen button, which has no tap point, aims at the viewport
+                    // instead (see focusEditorInViewport / ProjectWorkspace).
+                    focusEditorAtCoords(ed, e.clientX, e.clientY);
+                }
+                return;
             }
-            return;
-        }
 
-        // First tap: wait briefly to see if a second one follows. If not, treat
-        // it as a single tap and reveal the chrome (a no-op when already shown).
-        tapTimer.current = setTimeout(() => {
-            tapTimer.current = null;
-            applyChromeHide(0);
-        }, 280);
-    }, [isPhone, mobileEditMode, isReadOnly, editor, setMobileEditMode, applyChromeHide]);
+            // First tap: wait briefly to see if a second one follows. If not,
+            // treat it as a single tap and reveal the chrome (a no-op when already
+            // shown).
+            tapTimer.current = setTimeout(() => {
+                tapTimer.current = null;
+                applyChromeHide(0);
+            }, 280);
+        },
+        [isPhone, mobileEditMode, isReadOnly, editor, setMobileEditMode, applyChromeHide],
+    );
+
+    // Clear the finger-driven flag once scrolling has settled. Called after the
+    // finger lifts; iOS momentum keeps firing scroll events that push this out
+    // (see onScroll), so it only fires once the fling has actually stopped.
+    const armUserScrollIdle = useCallback(() => {
+        if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
+        userScrollIdleTimer.current = setTimeout(() => {
+            isUserScrolling.current = false;
+        }, 200);
+    }, []);
+
+    // Finger touches the reader: from here until the touch ends (plus any
+    // momentum) scrolls count as user-driven and may hide the chrome.
+    const onReaderTouchStart = useCallback(() => {
+        isFingerDown.current = true;
+        isUserScrolling.current = true;
+        if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
+    }, []);
+
+    // Finger lifts (or the touch is cancelled): let momentum keep the flag alive,
+    // then clear it once scrolling settles.
+    const onReaderTouchEnd = useCallback(() => {
+        isFingerDown.current = false;
+        armUserScrollIdle();
+    }, [armUserScrollIdle]);
 
     const onScroll = () => {
         if (suggestions.length > 0) updateSuggestions?.([]);
@@ -935,15 +978,23 @@ const DocumentEditorPanel = ({
             updateThumb();
             revealScrollThumb();
 
+            // Keep the finger-driven flag alive through iOS momentum: once the
+            // finger is up, each remaining scroll event pushes the idle-clear
+            // out, so it only lands when the fling settles.
+            if (isUserScrolling.current && !isFingerDown.current) armUserScrollIdle();
+
             // Accumulate scroll movement into the hide progress over
             // CHROME_HIDE_RANGE px: scrolling down slides the chrome away,
             // scrolling up brings it back (from anywhere in the doc). Snap fully
             // open at the very top. In edit mode the navbar carries the
-            // exit/undo/redo controls, so keep it pinned open.
+            // exit/undo/redo controls, so keep it pinned open. Only a
+            // finger-driven scroll moves the chrome — a programmatic scroll (e.g.
+            // "Go to scene") leaves isUserScrolling false, so the chrome and the
+            // sidebar's backdrop stay put under the jump.
             const delta = scrollTop - lastScrollTop.current;
             if (mobileEditMode || scrollTop <= 4) {
                 applyChromeHide(0);
-            } else {
+            } else if (isUserScrolling.current) {
                 applyChromeHide(chromeHideRef.current + delta / CHROME_HIDE_RANGE);
             }
             lastScrollTop.current = scrollTop;
@@ -960,6 +1011,11 @@ const DocumentEditorPanel = ({
             e.stopPropagation();
             (e.target as HTMLElement).setPointerCapture(e.pointerId);
             isDraggingThumb.current = true;
+            // Dragging the handle is a deliberate user scroll, so let it hide the
+            // chrome just like a finger swipe (kept true until the drag ends).
+            isFingerDown.current = true;
+            isUserScrolling.current = true;
+            if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
             revealScrollThumb();
 
             const startY = e.clientY;
@@ -975,6 +1031,8 @@ const DocumentEditorPanel = ({
             };
             const onUp = () => {
                 isDraggingThumb.current = false;
+                isFingerDown.current = false;
+                armUserScrollIdle(); // let the flag clear once the scroll settles
                 revealScrollThumb(); // re-arm the auto-hide now that the drag is done
                 window.removeEventListener("pointermove", onMove);
                 window.removeEventListener("pointerup", onUp);
@@ -984,7 +1042,7 @@ const DocumentEditorPanel = ({
             window.addEventListener("pointerup", onUp);
             window.addEventListener("pointercancel", onUp);
         },
-        [containerEl, revealScrollThumb, thumbTravel],
+        [containerEl, revealScrollThumb, thumbTravel, armUserScrollIdle],
     );
 
     // Clean up the idle timer on unmount.
@@ -993,6 +1051,7 @@ const DocumentEditorPanel = ({
             if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
             if (tapTimer.current) clearTimeout(tapTimer.current);
             if (scrollRafRef.current != null) cancelAnimationFrame(scrollRafRef.current);
+            if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
         };
     }, []);
 
@@ -1028,8 +1087,11 @@ const DocumentEditorPanel = ({
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
             <div
                 ref={setContainerEl}
-                className={styles.container}
+                className={join(styles.container, timelineOpen ? styles.timeline_open : "")}
                 onScroll={onScroll}
+                onTouchStart={onReaderTouchStart}
+                onTouchEnd={onReaderTouchEnd}
+                onTouchCancel={onReaderTouchEnd}
                 onClick={handleReaderTap}
                 onMouseDown={handleContainerMouseDown}
                 onFocus={() => setFocusedEditorType(focusType)}

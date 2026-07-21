@@ -116,6 +116,9 @@
 .dragging {
     opacity: 0.4;
     cursor: grabbing;
+    /* While a touch-drag is active the item owns the gesture, so the list must
+       not also try to scroll under the finger. */
+    touch-action: none;
 }
 
 /* Touch-only "⋮" affordance that opens the scene context menu (the desktop
@@ -141,5 +144,14 @@
 @media (pointer: coarse) {
     .menu_btn {
         display: flex;
+    }
+
+    /* Touch: a hold on a nav item should pick it up for reordering — never
+       trigger iOS's native text selection / callout on the background text,
+       which otherwise leaves a sticky selection that makes the panel laggy. */
+    .container {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
     }
 }
