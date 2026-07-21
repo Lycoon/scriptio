@@ -164,6 +164,16 @@
     }
 }
 
+/* Phone: the navbar is a fixed overlay (see ProjectNavbar), so the panel now
+ * starts at the very top under the bar. Drop the left edge handles below the bar
+ * so they aren't hidden behind it at rest (they still slide off-left as the
+ * reader scrolls via --chrome-hide). */
+@media (max-width: 767px) {
+    .panel_switcher_anchor {
+        top: calc(var(--navbar-height) + 8px);
+    }
+}
+
 .panel_switcher_separator {
     height: 1px;
     margin: 4px 8px;

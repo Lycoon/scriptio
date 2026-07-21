@@ -210,12 +210,15 @@
         padding-right: calc(var(--scene-r-margin) * var(--display-margin-scale)) !important;
     }
 
-    /* Left scene number (CSS counter via ::before) */
+    /* Left scene number (CSS counter via ::before). The offset scales with
+       --display-margin-scale so the number tracks the (scaled) left gutter
+       instead of landing over the heading text in endless mode, where the
+       gutter is compressed to 0.3 (see EditorPanel.module.css). */
     .scene::before {
         position: absolute;
         content: counter(scenenumber);
         right: 100%;
-        margin-right: -120px;
+        margin-right: calc(-120px * var(--display-margin-scale));
     }
 
     /* Right scene number (CSS counter via ::after, hidden by default) */
@@ -224,7 +227,7 @@
         content: counter(scenenumber);
         top: 0;
         left: 100%;
-        margin-left: -85px;
+        margin-left: calc(-85px * var(--display-margin-scale));
         user-select: none;
         pointer-events: none;
         display: none;
@@ -257,7 +260,7 @@
     .scene-label-left {
         position: absolute;
         right: 100%;
-        margin-right: -120px;
+        margin-right: calc(-120px * var(--display-margin-scale));
         user-select: none;
         pointer-events: none;
         text-transform: none !important;
@@ -268,7 +271,7 @@
         position: absolute;
         top: 0;
         left: 100%;
-        margin-left: -85px;
+        margin-left: calc(-85px * var(--display-margin-scale));
         user-select: none;
         pointer-events: none;
         display: none;

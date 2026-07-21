@@ -26,6 +26,7 @@ import { DocumentEditorConfig, EDITOR_INPUT_ATTRIBUTES } from "@src/lib/editor/d
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
 import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
+import { focusEditorInViewport } from "@src/lib/editor/focus-in-viewport";
 import { getSpellErrorAt } from "@src/lib/spellcheck/spellcheck-extension";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
 
@@ -107,8 +108,14 @@ const DocumentEditorPanel = ({
     // actively scrolling (or being dragged) and faded out shortly after, so it
     // never sits on top of the writing while at rest.
     const [showScrollThumb, setShowScrollThumb] = useState(false);
-    const [thumbTop, setThumbTop] = useState(0);
     const [canScrollThumb, setCanScrollThumb] = useState(false);
+    // The handle's position is written straight to the DOM (not React state) so
+    // tracking the scroll gesture never re-renders this (heavy) panel — that
+    // per-event re-render is what made the scroll-linked chrome-hide stutter
+    // against the finger. thumbTopRef seeds the transform when the handle
+    // (re)mounts; updateThumb writes it imperatively thereafter.
+    const scrollHandleRef = useRef<HTMLDivElement | null>(null);
+    const thumbTopRef = useRef(0);
     const scrollIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isDraggingThumb = useRef(false);
     // The draggable scroll track element, measured to derive the handle's travel
@@ -117,6 +124,10 @@ const DocumentEditorPanel = ({
     // Last scrollTop, to derive scroll direction for hiding/showing the mobile
     // editor chrome (navbar + sidebar edge handles).
     const lastScrollTop = useRef(0);
+    // Coalesces all scroll-driven work into a single update per animation frame
+    // (see onScroll). A burst of scroll events then costs one layout, aligned to
+    // the paint cycle, so the chrome stays glued to the scroll instead of lagging.
+    const scrollRafRef = useRef<number | null>(null);
     // Continuous 0→1 progress for hiding that chrome, tracked so it follows the
     // scroll gesture linearly rather than snapping at a threshold (see
     // applyChromeHide). Mirrored into the --chrome-hide CSS variable.
@@ -786,7 +797,10 @@ const DocumentEditorPanel = ({
     // bottom inset keeps it off the very bottom of the screen.
     const HANDLE_HEIGHT = 44;
     const TRACK_INSET_TOP = 60;
-    const TRACK_INSET_BOTTOM = 24;
+    // Base bottom gap only; the CSS adds --safe-bottom on top, which can't be read
+    // here. This is just the first-frame travel-range fallback before the track
+    // element mounts and is measured directly, so the missing inset is harmless.
+    const TRACK_INSET_BOTTOM = 8;
 
     // How far the handle can travel down its track. Measured off the track element
     // itself, which is fixed to the viewport (see .scroll_track) so the range stays
@@ -814,7 +828,10 @@ const DocumentEditorPanel = ({
             return;
         }
         setCanScrollThumb(true);
-        setThumbTop((scrollTop / scrollable) * thumbTravel());
+        const top = (scrollTop / scrollable) * thumbTravel();
+        thumbTopRef.current = top;
+        const handle = scrollHandleRef.current;
+        if (handle) handle.style.transform = `translateY(${top}px)`;
     }, [containerEl, thumbTravel]);
 
     // Reveal the thumb and (re)arm the timer that hides it once scrolling has
@@ -877,7 +894,10 @@ const DocumentEditorPanel = ({
             const ed = editor;
             if (ed) {
                 ed.setEditable(true);
-                ed.commands.focus();
+                // Drop the caret on a character that's currently on screen rather
+                // than at the old selection, so entering edit mode doesn't scroll
+                // the view away to wherever the caret last was.
+                focusEditorInViewport(ed);
             }
             return;
         }
@@ -890,25 +910,36 @@ const DocumentEditorPanel = ({
         }, 280);
     }, [isPhone, mobileEditMode, isReadOnly, editor, setMobileEditMode, applyChromeHide]);
 
-    const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const onScroll = () => {
         if (suggestions.length > 0) updateSuggestions?.([]);
-        const el = e.currentTarget;
-        // Clamp to the real scroll range. iOS rubber-band overscroll reports a
-        // scrollTop below 0 (top) or beyond the maximum (bottom) and then springs
-        // back, which would otherwise feed spurious up/down deltas into the chrome
-        // hide and make the navbar flicker as the bounce settles. Clamping pins
-        // the delta to 0 while overscrolling, so the bounce leaves the bar alone.
-        const maxScroll = el.scrollHeight - el.clientHeight;
-        const scrollTop = Math.max(0, Math.min(el.scrollTop, maxScroll));
-        setIsScrolled(scrollTop > 0);
-        if (isPhone) {
+        // Coalesce into one update per frame. iOS delivers scroll events on the
+        // main thread at an irregular cadence while the page scrolls on the
+        // compositor; doing the work per event (each a layout, plus a re-render)
+        // let the chrome drift behind the finger and stutter. Draining the latest
+        // scrollTop once per rAF keeps a single, paint-aligned update.
+        if (scrollRafRef.current != null) return;
+        scrollRafRef.current = requestAnimationFrame(() => {
+            scrollRafRef.current = null;
+            const el = containerEl;
+            if (!el) return;
+            // Clamp to the real scroll range. iOS rubber-band overscroll reports a
+            // scrollTop below 0 (top) or beyond the maximum (bottom) and then
+            // springs back, which would otherwise feed spurious up/down deltas
+            // into the chrome hide and make the navbar flicker as the bounce
+            // settles. Clamping pins the delta to 0 while overscrolling, so the
+            // bounce leaves the bar alone.
+            const maxScroll = el.scrollHeight - el.clientHeight;
+            const scrollTop = Math.max(0, Math.min(el.scrollTop, maxScroll));
+            setIsScrolled(scrollTop > 0);
+            if (!isPhone) return;
             updateThumb();
             revealScrollThumb();
 
             // Accumulate scroll movement into the hide progress over
-            // CHROME_HIDE_RANGE px: scrolling down slides the chrome away, scrolling
-            // up brings it back. Snap fully open at the very top. In edit mode the
-            // navbar carries the exit/undo/redo controls, so keep it pinned open.
+            // CHROME_HIDE_RANGE px: scrolling down slides the chrome away,
+            // scrolling up brings it back (from anywhere in the doc). Snap fully
+            // open at the very top. In edit mode the navbar carries the
+            // exit/undo/redo controls, so keep it pinned open.
             const delta = scrollTop - lastScrollTop.current;
             if (mobileEditMode || scrollTop <= 4) {
                 applyChromeHide(0);
@@ -916,7 +947,7 @@ const DocumentEditorPanel = ({
                 applyChromeHide(chromeHideRef.current + delta / CHROME_HIDE_RANGE);
             }
             lastScrollTop.current = scrollTop;
-        }
+        });
     };
 
     // Drag the thumb to scroll: map vertical pointer movement onto scrollTop via
@@ -961,6 +992,7 @@ const DocumentEditorPanel = ({
         return () => {
             if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
             if (tapTimer.current) clearTimeout(tapTimer.current);
+            if (scrollRafRef.current != null) cancelAnimationFrame(scrollRafRef.current);
         };
     }, []);
 
@@ -1054,8 +1086,9 @@ const DocumentEditorPanel = ({
                     )}
                 >
                     <div
+                        ref={scrollHandleRef}
                         className={styles.scroll_handle}
-                        style={{ transform: `translateY(${thumbTop}px)` }}
+                        style={{ transform: `translateY(${thumbTopRef.current}px)` }}
                         onPointerDown={onThumbPointerDown}
                     >
                         <GripVertical size={16} />

@@ -134,11 +134,14 @@
     position: fixed;
     /* --navbar-height positions the handle just below the (shown) navbar; the +60
      * then clears the right sidebar edge toggle (top:8px, up to 44px tall on touch)
-     * plus a small gap. Bottom inset keeps it off the very bottom edge of the
-     * screen. Keep the +60 / bottom in sync with TRACK_INSET_TOP /
-     * TRACK_INSET_BOTTOM in DocumentEditorPanel (the travel-range fallback). */
+     * plus a small gap. The bottom sits 8px above the safe-area inset, so the
+     * handle's lower end lines up with the MobileFormatToolbar (which floats 8px
+     * above the keyboard) and clears the home indicator instead of dipping into it.
+     * Keep the +60 / bottom base in sync with TRACK_INSET_TOP / TRACK_INSET_BOTTOM
+     * in DocumentEditorPanel (the travel-range fallback; the safe-area part is
+     * measured, not part of the constant). */
     top: calc(var(--navbar-height) + 60px);
-    bottom: 24px;
+    bottom: calc(var(--safe-bottom) + 8px);
     /* Right offset matches .right_sidebar_toggle (ProjectWorkspace) so the handle
      * lines up horizontally with the sidebar edge toggle. */
     right: 8px;
@@ -210,6 +213,13 @@
          * edge. Drop the reserved gutter too so the page uses the full width. */
         scrollbar-gutter: auto;
         scrollbar-width: none;
+        /* The mobile navbar is a fixed overlay pinned to the top (see ProjectNavbar
+         * .container:not(.home_container)), so this scroller fills the full height
+         * *behind* it. Pad the top by one navbar height so the first line clears the
+         * bar at rest, while the content still scrolls up UNDER the bar and is
+         * revealed as it slides away — the Google-Docs reclaim. The pad is constant,
+         * so the scroll viewport never resizes and content tracks the finger 1:1. */
+        padding-top: var(--navbar-height);
     }
 
     .container::-webkit-scrollbar {
@@ -304,5 +314,12 @@
 
     .editor_shadow {
         max-width: none;
+        /* Stick the top shadow to the navbar's current bottom edge. The scroller is
+         * padded by a full navbar height (see .container above), which is also the
+         * sticky baseline — so `top: 0` already parks the shadow right below the
+         * shown bar. As the fixed bar slides up (--chrome-hide 0 → 1), offset the
+         * sticky point up by that much so the shadow rides the bar to the very top
+         * instead of hanging a navbar height too low, below the edge toggles. */
+        top: calc(var(--navbar-height) * var(--chrome-hide, 0) * -1);
     }
 }

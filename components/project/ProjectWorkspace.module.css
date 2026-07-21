@@ -54,6 +54,16 @@
     }
 }
 
+/* Phone: the navbar is a fixed overlay (see ProjectNavbar), so panel_area now
+ * starts at the very top under the bar. Drop the edge toggle below the bar so it
+ * isn't hidden behind it at rest (it still slides off-right as the reader scrolls
+ * via --chrome-hide). */
+@media (max-width: 767px) {
+    .right_sidebar_toggle {
+        top: calc(var(--navbar-height) + 8px);
+    }
+}
+
 .right_sidebar_toggle:hover {
     opacity: 1;
     background-color: var(--tertiary-hover);
