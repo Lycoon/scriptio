@@ -17,6 +17,10 @@ import styles from "./MobileFormatToolbar.module.css";
 // open on-screen keyboard.
 const KEYBOARD_THRESHOLD = 120;
 
+// Movement (px) past which a pointer gesture on a toolbar button counts as a
+// scroll of the button row rather than a tap, so it toggles nothing (see endTap).
+const TAP_SLOP = 8;
+
 const SCREENPLAY_ELEMENTS_ORDER: ScreenplayElement[] = [
     ScreenplayElement.Scene,
     ScreenplayElement.Action,
@@ -107,6 +111,9 @@ const MobileFormatToolbar = () => {
     const tapGuardTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const toolbarRef = useRef<HTMLDivElement>(null);
+    // Down-point of an in-progress tap on a style/alignment button, used to tell a
+    // tap from a sideways scroll of the button row (see startTap / endTap).
+    const tapStart = useRef<{ x: number; y: number } | null>(null);
 
     const ELEMENT_LABELS: Record<string, string> = {
         [ScreenplayElement.Scene]: t("elements.scene"),
@@ -258,10 +265,35 @@ const MobileFormatToolbar = () => {
     // Fire on pointer-down and swallow the event so focus (and the on-screen
     // keyboard) stays on the editor — a normal click would blur it first. Stopping
     // propagation also keeps the tap from reaching the editor as a caret move.
+    // Used by the element trigger and menu items, which don't live in a scroller.
     const action = (fn: () => void) => (e: React.PointerEvent) => {
         e.preventDefault();
         e.stopPropagation();
         fn();
+    };
+
+    // The style/alignment buttons sit in a horizontally scrollable row, so they
+    // can't fire on pointer-down: a scroll that starts on a button would toggle it.
+    // Record the down point (startTap) and only act on pointer-up when the pointer
+    // barely moved (endTap); a drag past the slop — or the pointercancel iOS fires
+    // once it claims the gesture for scrolling (cancelTap) — toggles nothing. Focus
+    // is held by the toolbar's onMouseDown, not by acting on pointer-down.
+    const startTap = (e: React.PointerEvent) => {
+        tapStart.current = { x: e.clientX, y: e.clientY };
+    };
+    const endTap = (fn: () => void) => (e: React.PointerEvent) => {
+        const start = tapStart.current;
+        tapStart.current = null;
+        if (!start) return;
+        if (Math.abs(e.clientX - start.x) > TAP_SLOP || Math.abs(e.clientY - start.y) > TAP_SLOP) {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        fn();
+    };
+    const cancelTap = () => {
+        tapStart.current = null;
     };
 
     const styleBtn = (active: boolean) => join(styles.btn, active ? styles.active : "");
@@ -279,6 +311,15 @@ const MobileFormatToolbar = () => {
                 style={{ bottom: keyboardInset }}
                 role="toolbar"
                 ref={toolbarRef}
+                // Keep the editor focused for EVERY tap in the bar. After the pointer
+                // events iOS fires a compat mousedown whose default blurs the
+                // contenteditable; the per-control pointerdown preventDefault doesn't
+                // suppress it. Most controls run an editor command that re-asserts the
+                // DOM selection and masks the blur, but that reclaim is unreliable on
+                // the mark-removal path (and absent on the element trigger), randomly
+                // dropping the keyboard and tearing the bar down. Preventing the
+                // mousedown default here stops the blur at the source for all of them.
+                onMouseDown={(e) => e.preventDefault()}
             >
                 {/* Element-type selector — the primary control, opens a menu upward. */}
                 <div className={styles.element}>
@@ -323,7 +364,9 @@ const MobileFormatToolbar = () => {
                             aria-label="Bold"
                             aria-pressed={!!(selectedStyles & Style.Bold)}
                             className={styleBtn(!!(selectedStyles & Style.Bold))}
-                            onPointerDown={action(() => toggleStyle(Style.Bold))}
+                            onPointerDown={startTap}
+                            onPointerUp={endTap(() => toggleStyle(Style.Bold))}
+                            onPointerCancel={cancelTap}
                         >
                             <Bold size={18} strokeWidth={3} />
                         </button>
@@ -332,7 +375,9 @@ const MobileFormatToolbar = () => {
                             aria-label="Italic"
                             aria-pressed={!!(selectedStyles & Style.Italic)}
                             className={styleBtn(!!(selectedStyles & Style.Italic))}
-                            onPointerDown={action(() => toggleStyle(Style.Italic))}
+                            onPointerDown={startTap}
+                            onPointerUp={endTap(() => toggleStyle(Style.Italic))}
+                            onPointerCancel={cancelTap}
                         >
                             <Italic size={18} strokeWidth={2.5} />
                         </button>
@@ -341,7 +386,9 @@ const MobileFormatToolbar = () => {
                             aria-label="Underline"
                             aria-pressed={!!(selectedStyles & Style.Underline)}
                             className={styleBtn(!!(selectedStyles & Style.Underline))}
-                            onPointerDown={action(() => toggleStyle(Style.Underline))}
+                            onPointerDown={startTap}
+                            onPointerUp={endTap(() => toggleStyle(Style.Underline))}
+                            onPointerCancel={cancelTap}
                         >
                             <Underline size={18} strokeWidth={2.5} />
                         </button>
@@ -355,7 +402,9 @@ const MobileFormatToolbar = () => {
                             aria-label="Align left"
                             aria-pressed={selectedAlign === "left"}
                             className={styleBtn(selectedAlign === "left")}
-                            onPointerDown={action(() => setAlignment("left"))}
+                            onPointerDown={startTap}
+                            onPointerUp={endTap(() => setAlignment("left"))}
+                            onPointerCancel={cancelTap}
                         >
                             <AlignLeft size={18} />
                         </button>
@@ -364,7 +413,9 @@ const MobileFormatToolbar = () => {
                             aria-label="Align center"
                             aria-pressed={selectedAlign === "center"}
                             className={styleBtn(selectedAlign === "center")}
-                            onPointerDown={action(() => setAlignment("center"))}
+                            onPointerDown={startTap}
+                            onPointerUp={endTap(() => setAlignment("center"))}
+                            onPointerCancel={cancelTap}
                         >
                             <AlignCenter size={18} />
                         </button>
@@ -373,7 +424,9 @@ const MobileFormatToolbar = () => {
                             aria-label="Align right"
                             aria-pressed={selectedAlign === "right"}
                             className={styleBtn(selectedAlign === "right")}
-                            onPointerDown={action(() => setAlignment("right"))}
+                            onPointerDown={startTap}
+                            onPointerUp={endTap(() => setAlignment("right"))}
+                            onPointerCancel={cancelTap}
                         >
                             <AlignRight size={18} />
                         </button>

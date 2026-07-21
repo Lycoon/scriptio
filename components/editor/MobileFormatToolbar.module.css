@@ -145,6 +145,9 @@
 }
 
 .element_label {
+    /* Courier Prime, matching the menu items (.element_item) and the desktop
+     * dropdown, so the selected element reads in the screenplay font too. */
+    font-family: var(--font-courier);
     /* Truncate rather than grow — the trigger width is fixed. */
     min-width: 0;
     overflow: hidden;
@@ -192,6 +195,8 @@
     border-radius: 8px;
     background: transparent;
     color: var(--primary-text);
+    /* Courier Prime, matching the desktop element dropdown (.dropdown_item). */
+    font-family: var(--font-courier);
     font-size: 15px;
     text-align: left;
     cursor: pointer;

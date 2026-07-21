@@ -301,10 +301,24 @@ const useProjectMemberships = () => {
 
     // Merge remote and local projects, sorted by updatedAt
     const projects = useMemo(() => {
-        const remote: ExtendedProjectMembershipPayload[] = (remoteProjects || []).map((p) => ({
-            ...p,
-            isLocalOnly: false,
-        }));
+        // Local edits bump only the cached copy's updatedAt (content lives in the
+        // Yjs doc, not the Project row the API returns), so for a synced project take
+        // whichever "last edited" is newer — otherwise editing a cloud project never
+        // moves its date until the server row itself changes.
+        const localById = new Map(cachedProjects.map((p) => [p.project.id, p]));
+        const remote: ExtendedProjectMembershipPayload[] = (remoteProjects || []).map((p) => {
+            const cached = localById.get(p.project.id);
+            const cachedTime = cached ? new Date(cached.project.updatedAt).getTime() : 0;
+            const remoteTime = new Date(p.project.updatedAt).getTime();
+            return {
+                ...p,
+                isLocalOnly: false,
+                project:
+                    cachedTime > remoteTime
+                        ? { ...p.project, updatedAt: cached!.project.updatedAt }
+                        : p.project,
+            };
+        });
 
         // Filter out cached projects that might have been synced (same ID in remote)
         const remoteIds = new Set(remote.map((p) => p.project.id));

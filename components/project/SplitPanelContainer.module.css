@@ -172,6 +172,14 @@
     .panel_switcher_anchor {
         top: calc(var(--navbar-height) + 8px);
     }
+
+    /* Timeline open: the panel starts below the timeline strip, not behind the
+     * fixed bar, so the navbar-height clearance no longer applies — it would push
+     * the handles a bar height too far down. Pin them to the panel's own top edge,
+     * flush under the timeline. */
+    .panel_switcher_anchor.timeline_open {
+        top: 8px;
+    }
 }
 
 .panel_switcher_separator {

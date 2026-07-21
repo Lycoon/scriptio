@@ -222,6 +222,15 @@
         padding-top: var(--navbar-height);
     }
 
+    /* With the timeline strip open it sits between the fixed navbar and this
+     * scroller (the timeline carries its own navbar-height top margin), so the
+     * editor content is no longer behind the bar and needs no top pad to clear
+     * it. Drop the pad so the first line — and the sticky shadow below — sit flush
+     * under the timeline instead of a navbar height too low. */
+    .container.timeline_open {
+        padding-top: 0;
+    }
+
     .container::-webkit-scrollbar {
         display: none;
     }
@@ -314,12 +323,29 @@
 
     .editor_shadow {
         max-width: none;
-        /* Stick the top shadow to the navbar's current bottom edge. The scroller is
-         * padded by a full navbar height (see .container above), which is also the
-         * sticky baseline — so `top: 0` already parks the shadow right below the
-         * shown bar. As the fixed bar slides up (--chrome-hide 0 → 1), offset the
-         * sticky point up by that much so the shadow rides the bar to the very top
-         * instead of hanging a navbar height too low, below the edge toggles. */
-        top: calc(var(--navbar-height) * var(--chrome-hide, 0) * -1);
+        /* Park the shadow at the navbar's bottom edge, then ride it up as the bar
+         * hides. The scroller's navbar-height top pad (see .container above) is the
+         * sticky baseline, so a STATIC top:0 already sits right under the shown bar.
+         *
+         * The follow-the-bar motion is a transform, NOT an animated `top`: iOS
+         * WebKit doesn't re-run a sticky element's top-constraint when a custom
+         * property changes mid-scroll, so a --chrome-hide-driven `top` stayed frozen
+         * at its initial value and the shadow hung a navbar height too low the
+         * moment you scrolled and the bar slid away. transform is a compositor
+         * property that re-reads --chrome-hide every frame — the exact mechanism the
+         * navbar uses for its own slide (see ProjectNavbar .container) — so the
+         * shadow now tracks the bar 1:1 up to the very top. */
+        top: 0;
+        transform: translateY(calc(var(--navbar-height) * var(--chrome-hide, 0) * -1));
+        will-change: transform;
+    }
+
+    /* Timeline open: the scroller's top pad is dropped (see .timeline_open above),
+     * so top:0 already parks the shadow flush under the timeline. The bar sits
+     * above the timeline, not this scroller, so there's nothing to ride — hold the
+     * shadow still (no chrome-hide transform). */
+    .container.timeline_open .editor_shadow {
+        top: 0;
+        transform: none;
     }
 }

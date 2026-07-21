@@ -3,7 +3,6 @@
 import { useContext, memo, useCallback } from "react";
 import { CharacterContextProps, ContextMenuType } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
-import { pasteText } from "@src/lib/screenplay/editor";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { join } from "@src/lib/utils/misc";
@@ -20,8 +19,8 @@ type SidebarCharacterItemProps = CharacterContextProps & {
 
 const SidebarCharacterItem = memo(({ character, isHighlighted }: SidebarCharacterItemProps) => {
     const t = useTranslations("contextMenu");
-    const { updateContextMenu } = useContext(UserContext);
-    const { editor, isReadOnly } = useContext(ProjectContext);
+    const { contextMenu, updateContextMenu } = useContext(UserContext);
+    const { isReadOnly } = useContext(ProjectContext);
 
     const highlightColor = character.color || DEFAULT_HIGHLIGHT_COLOR;
 
@@ -51,21 +50,30 @@ const SidebarCharacterItem = memo(({ character, isHighlighted }: SidebarCharacte
 
     // Touch equivalent of right-click: the ⋮ button (shown only on coarse
     // pointers). stopPropagation keeps the click from bubbling to the
-    // context-menu host's close-on-click handler.
-    const handleMenuButton = useCallback((e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        openMenu(rect.left, rect.bottom);
-    }, [openMenu]);
-
-    const handleDoubleClick = useCallback(() => {
-        // paste character name on double click
-        if (editor) pasteText(editor, character.name);
-    }, [editor, character.name]);
+    // context-menu host's close-on-click handler — which is also why a second tap
+    // has to close the menu itself: if this item's menu is already open, toggle it
+    // shut instead of reopening it in place.
+    const handleMenuButton = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isOpenForThis =
+                !!contextMenu &&
+                "type" in contextMenu &&
+                contextMenu.type === ContextMenuType.CharacterItem &&
+                (contextMenu.typeSpecificProps as CharacterContextProps).character.name === character.name;
+            if (isOpenForThis) {
+                updateContextMenu(undefined);
+                return;
+            }
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            openMenu(rect.left, rect.bottom);
+        },
+        [contextMenu, updateContextMenu, openMenu, character.name],
+    );
 
     return (
-        <div onContextMenu={handleDropdown} onDoubleClick={handleDoubleClick} className={item.container}>
+        <div onContextMenu={handleDropdown} className={item.container}>
             <div className={item.data}>
                 <div className={item.title_row}>
                     {character.color && (

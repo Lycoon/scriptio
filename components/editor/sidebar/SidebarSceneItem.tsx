@@ -22,12 +22,13 @@ type SidebarSceneItemProps = SceneContextProps & {
     isOmitted: boolean;
     scrollRef?: Ref<HTMLDivElement>;
     onPointerDown: (index: number, e: React.PointerEvent) => void;
+    onTouchStart: (index: number, e: React.TouchEvent) => void;
     onDoubleClick: (scene: Scene) => void;
 };
 
-const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, label, isOmitted, scrollRef, onPointerDown, onDoubleClick }: SidebarSceneItemProps) => {
+const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, label, isOmitted, scrollRef, onPointerDown, onTouchStart, onDoubleClick }: SidebarSceneItemProps) => {
     const t = useTranslations("contextMenu");
-    const { updateContextMenu } = useContext(UserContext);
+    const { contextMenu, updateContextMenu } = useContext(UserContext);
 
     // Clamp so the menu never opens off the right/bottom edge (matters on touch,
     // where it's triggered from the ⋮ button near the panel edge).
@@ -52,10 +53,21 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
 
     // Touch equivalent of right-click: the ⋮ button (shown only on coarse
     // pointers). stopPropagation keeps it from starting a drag or, on click,
-    // bubbling to the context-menu host's close-on-click handler.
+    // bubbling to the context-menu host's close-on-click handler — which is also
+    // why a second tap has to close the menu itself: if this scene's menu is
+    // already open, toggle it shut instead of reopening it in place.
     const handleMenuButton = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        const isOpenForThis =
+            !!contextMenu &&
+            "type" in contextMenu &&
+            contextMenu.type === ContextMenuType.SceneItem &&
+            (contextMenu.typeSpecificProps as SceneContextProps).scene.position === scene.position;
+        if (isOpenForThis) {
+            updateContextMenu(undefined);
+            return;
+        }
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         openMenu(rect.left, rect.bottom);
     };
@@ -67,6 +79,10 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
     const handlePointerDown = useCallback((e: React.PointerEvent) => {
         onPointerDown(index, e);
     }, [onPointerDown, index]);
+
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        onTouchStart(index, e);
+    }, [onTouchStart, index]);
 
     // Show synopsis if available, otherwise show preview
     const displayText = scene.synopsis || scene.preview;
@@ -83,6 +99,7 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
         <div
             ref={scrollRef}
             onPointerDown={handlePointerDown}
+            onTouchStart={handleTouchStart}
             onContextMenu={handleDropdown}
             onDoubleClick={handleDoubleClick}
             className={containerClass}
@@ -98,6 +115,7 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
                 <button
                     className={nav_item.menu_btn}
                     onPointerDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
                     onClick={handleMenuButton}
                     aria-label={t("sceneOptions")}
                 >

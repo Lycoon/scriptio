@@ -3,7 +3,6 @@
 import { useContext, memo, useCallback } from "react";
 import { LocationContextProps, ContextMenuType } from "./ContextMenu";
 import { UserContext } from "@src/context/UserContext";
-import { pasteText } from "@src/lib/screenplay/editor";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { join } from "@src/lib/utils/misc";
 import { useTranslations } from "next-intl";
@@ -13,8 +12,8 @@ import item from "./SidebarItem.module.css";
 
 const SidebarLocationItem = memo(({ location }: LocationContextProps) => {
     const t = useTranslations("contextMenu");
-    const { updateContextMenu } = useContext(UserContext);
-    const { editor, isReadOnly } = useContext(ProjectContext);
+    const { contextMenu, updateContextMenu } = useContext(UserContext);
+    const { isReadOnly } = useContext(ProjectContext);
 
     // Clamp so the menu never opens off the right/bottom edge (matters on touch,
     // where it's triggered from the ⋮ button near the panel edge).
@@ -41,21 +40,30 @@ const SidebarLocationItem = memo(({ location }: LocationContextProps) => {
 
     // Touch equivalent of right-click: the ⋮ button (shown only on coarse
     // pointers). stopPropagation keeps the click from bubbling to the
-    // context-menu host's close-on-click handler.
-    const handleMenuButton = useCallback((e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        openMenu(rect.left, rect.bottom);
-    }, [openMenu]);
-
-    const handleDoubleClick = useCallback(() => {
-        // paste location name on double click
-        if (editor) pasteText(editor, location.name);
-    }, [editor, location.name]);
+    // context-menu host's close-on-click handler — which is also why a second tap
+    // has to close the menu itself: if this item's menu is already open, toggle it
+    // shut instead of reopening it in place.
+    const handleMenuButton = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isOpenForThis =
+                !!contextMenu &&
+                "type" in contextMenu &&
+                contextMenu.type === ContextMenuType.LocationItem &&
+                (contextMenu.typeSpecificProps as LocationContextProps).location.name === location.name;
+            if (isOpenForThis) {
+                updateContextMenu(undefined);
+                return;
+            }
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            openMenu(rect.left, rect.bottom);
+        },
+        [contextMenu, updateContextMenu, openMenu, location.name],
+    );
 
     return (
-        <div onContextMenu={handleDropdown} onDoubleClick={handleDoubleClick} className={item.container}>
+        <div onContextMenu={handleDropdown} className={item.container}>
             <div className={item.data}>
                 <div className={item.title_row}>
                     <p className={join(item.title, "unselectable")}>{location.name}</p>

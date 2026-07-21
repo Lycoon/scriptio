@@ -356,6 +356,9 @@ type SessionEntry = {
     refCount: number;
     disposeTimer: ReturnType<typeof setTimeout> | null;
     subscribers: Set<() => void>;
+    // Timestamp of the last cached-updatedAt bump, to throttle them (see the
+    // "update" observer in acquireSession).
+    lastLocalEditTouchAt: number;
 };
 
 const sessionCache = new Map<string, SessionEntry>();
@@ -369,6 +372,22 @@ const notifySubscribers = (entry: SessionEntry): void => {
  * of async init paths whose entry was disposed before they completed.
  */
 const isLive = (entry: SessionEntry): boolean => sessionCache.get(entry.projectId) === entry;
+
+// Minimum gap between cached-updatedAt bumps while editing. The screenplay content
+// lives in this Yjs doc, separate from the cached project metadata, so a local
+// edit is the only signal that "last edited" should move — but the projects list
+// renders that at day-level granularity, so a coarse throttle is plenty and avoids
+// an IndexedDB write per keystroke.
+const PROJECT_TOUCH_THROTTLE_MS = 30_000;
+
+const bumpProjectUpdatedAt = async (projectId: string): Promise<void> => {
+    try {
+        const { touchCachedProject } = await import("../persistence/storage-provider/local-persistence");
+        await touchCachedProject(projectId);
+    } catch (e) {
+        console.warn("[project-state] failed to bump project updatedAt:", e);
+    }
+};
 
 const initLocalProvider = async (entry: SessionEntry): Promise<void> => {
     const { createLocalYjsProvider } = await import("../persistence/y-local-provider");
@@ -569,8 +588,24 @@ const acquireSession = (projectId: string, userInfo: UserInfo): SessionEntry => 
         refCount: 1,
         disposeTimer: null,
         subscribers: new Set(),
+        lastLocalEditTouchAt: 0,
     };
     sessionCache.set(projectId, entry);
+
+    // Bump the project's cached "last edited" on local edits. The content is in
+    // this doc, not the cached project row, so nothing else moves updatedAt. Only
+    // local transactions count (tr.local ignores remote/collab sync and the initial
+    // IndexedDB load), and only once the doc is ready (isLocalReady ignores the
+    // load/migration writes that run before it flips). The doc's own destroy() on
+    // session dispose removes this observer.
+    entry.state.on("update", (_update: Uint8Array, _origin: unknown, _doc: Y.Doc, tr: Y.Transaction) => {
+        if (!tr.local || !entry.isLocalReady) return;
+        const now = Date.now();
+        if (now - entry.lastLocalEditTouchAt < PROJECT_TOUCH_THROTTLE_MS) return;
+        entry.lastLocalEditTouchAt = now;
+        void bumpProjectUpdatedAt(entry.projectId);
+    });
+
     void initLocalProvider(entry);
     return entry;
 };

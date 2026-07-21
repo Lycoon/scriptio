@@ -62,6 +62,14 @@
     .right_sidebar_toggle {
         top: calc(var(--navbar-height) + 8px);
     }
+
+    /* Timeline open: panel_area starts below the timeline strip rather than behind
+     * the fixed bar, so the navbar-height clearance would push the handle a bar
+     * height too far down. Pin it to panel_area's own top, flush under the
+     * timeline (matches the left edge handles and the editor shadow). */
+    .right_sidebar_toggle.timeline_open {
+        top: 8px;
+    }
 }
 
 .right_sidebar_toggle:hover {
