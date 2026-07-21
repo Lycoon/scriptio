@@ -53,6 +53,22 @@
     flex-shrink: 0;
 }
 
+/* Wrapper around a submenu parent item; anchors the flyout's mouse-leave area. */
+.submenu_wrap {
+    position: relative;
+}
+
+.submenu_chevron {
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--secondary-text);
+}
+
+/* Flyout panel — reuses .menu, but capped in height so long layer lists scroll. */
+.submenu_panel {
+    max-height: 320px;
+}
+
 .menu_separator {
     height: 1px;
     background-color: var(--separator);

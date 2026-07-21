@@ -610,7 +610,7 @@
     }
   },
   "board": {
-    "sendToTimeline": "Envoyer vers la chronologie",
+    "sendToTimeline": "Envoyer vers...",
     "duplicate": "Dupliquer",
     "delete": "Supprimer",
     "createCard": "Créer une carte",

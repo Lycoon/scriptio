@@ -610,7 +610,7 @@
     }
   },
   "board": {
-    "sendToTimeline": "An Zeitleiste senden",
+    "sendToTimeline": "Senden an...",
     "duplicate": "Duplizieren",
     "delete": "Löschen",
     "createCard": "Karte erstellen",

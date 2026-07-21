@@ -1062,20 +1062,27 @@ export class ProjectRepository {
 
     /**
      * "Send to timeline" helper: ensure the default lanes exist, then append a
-     * clip to the first layer just after its last clip. De-duplicates via
+     * clip to a layer just after its last clip. De-duplicates via
      * `addTimelineClip`, so sending the same source twice is a no-op.
+     *
+     * Targets `targetLayerId` when given (and still present); otherwise falls
+     * back to the first root lane.
      */
     appendTimelineClip(
         fields: Pick<TimelineClip, "source" | "refDocId" | "refId" | "title" | "preview" | "color">,
         durationMinutes = 2,
+        targetLayerId?: string,
     ): string {
         if (this.guardWrite("appendTimelineClip")) return "";
         let id = "";
         this.ydoc.transact(() => {
             const layers = this.ensureTimelineLayers(2, (i) => `Layer ${i + 1}`);
-            // Prefer the first root lane; fall back to the first layer overall.
+            // Use the requested lane when it exists; otherwise prefer the first
+            // root lane, falling back to the first layer overall.
             const roots = layers.filter((l) => (l.parentId ?? null) === null);
-            const layerId = (roots[0] ?? layers[0]).id;
+            const layerId =
+                (targetLayerId && layers.find((l) => l.id === targetLayerId)?.id) ||
+                (roots[0] ?? layers[0]).id;
             let end = 0;
             this.ydoc.timelineClips().forEach((c) => {
                 if (c.layerId === layerId) end = Math.max(end, c.start + c.duration);
