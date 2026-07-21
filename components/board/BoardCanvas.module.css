@@ -621,6 +621,15 @@
    so typing/caret placement still works. The drag/resize/connection handles have
    no hover on touch, so surface them and enlarge them into comfortable targets. */
 @media (max-width: 767px) {
+    /* The navbar is a fixed overlay pinned to the top (see ProjectNavbar). The
+     * board doesn't drive the scroll-hide, so the bar stays shown over it — push
+     * the whole canvas down by one bar height so its top strip isn't trapped
+     * behind the bar. The canvas measures its own rect for panning, so shifting
+     * the wrapper leaves the pan/zoom math correct. */
+    .board_wrapper {
+        padding-top: var(--navbar-height);
+    }
+
     .container {
         touch-action: none;
         /* The canvas owns all touch gestures. Without this, a double-tap or

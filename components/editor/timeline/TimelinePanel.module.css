@@ -19,6 +19,15 @@
     -webkit-user-select: text;
 }
 
+/* Phone: the navbar is a fixed overlay pinned to the top (see ProjectNavbar), so
+ * the timeline strip — first in the column — would otherwise sit behind it. Push
+ * it below the bar. */
+@media (max-width: 767px) {
+    .timeline {
+        margin-top: var(--navbar-height);
+    }
+}
+
 /* ---- Toolbar ---- */
 
 .toolbar {

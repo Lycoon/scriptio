@@ -130,6 +130,12 @@
     padding: 30px;
     background: var(--main-bg);
     min-height: 0;
+    /* Without this, a panel containing a child with a fixed minimum width wider
+     * than the narrow phone drawer (e.g. Keybinds' .keyArea, Layout's margin-input
+     * pills) forces .content past the modal's `overflow: hidden` edge, clipping the
+     * right gutter and the close button. min-width:0 pins .content to the drawer
+     * width so any overflow scrolls inside .scrollArea and the header stays aligned. */
+    min-width: 0;
 }
 
 .contentHeader {

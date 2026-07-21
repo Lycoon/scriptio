@@ -57,14 +57,12 @@
     border-radius: 999px;
     box-shadow: var(--panel-shadow);
 
-    /* Hide by sliding the pill straight up off the bar and fading in lockstep,
-     * both driven by --chrome-hide (0 shown → 1 hidden). The pill translates its
-     * FULL travel (a whole navbar height) so it keeps moving until it's gone,
-     * rather than collapsing in place and leaving a clipped sliver to fade out —
-     * translate and opacity now finish together. No transition: it tracks the
-     * scroll gesture directly (see applyChromeHide). On desktop these clusters
-     * don't render and --chrome-hide stays 0, so this is inert there. */
-    transform: translateY(calc(var(--chrome-hide, 0) * -1 * var(--navbar-height)));
+    /* Fade the pill out as the chrome hides. The whole bar (.container) now slides
+     * up as one unit, so the pill no longer translates on its own — it just fades,
+     * in lockstep with the bar's slide, driven by --chrome-hide (0 shown → 1
+     * hidden). No transition: it tracks the scroll gesture directly (see
+     * applyChromeHide). On desktop these clusters don't render and --chrome-hide
+     * stays 0, so this is inert there. */
     opacity: calc(1 - var(--chrome-hide, 0));
 }
 
@@ -116,19 +114,31 @@
          * clear of the bar's bottom edge. */
         padding-block: 0;
         padding-top: var(--safe-top);
-        overflow: hidden;
-        /* Collapse the bar's height continuously as the reader scrolls down:
-         * --chrome-hide runs 0 (shown) → 1 (hidden), driven straight from
-         * scrollTop in DocumentEditorPanel. Height reclaims the space (the
-         * workspace is a flex column, so this reflows cleanly) and there is
-         * intentionally no transition — it tracks the gesture, not an ease. The
-         * fade lives on the pill clusters themselves (.mobile_left/.mobile_right)
-         * so it stays in lockstep with their slide-up rather than fading the
-         * whole row on a separate curve. */
-        height: calc(var(--navbar-height) * (1 - var(--chrome-hide, 0)));
+        /* Hide the bar by sliding it straight up off the top as the reader scrolls
+         * down — a compositor-only transform, NOT a height collapse. --chrome-hide
+         * runs 0 (shown) → 1 (fully up), driven from scrollTop in
+         * DocumentEditorPanel; no transition so it tracks the gesture, not an ease. */
+        transform: translateY(calc(var(--chrome-hide, 0) * -1 * var(--navbar-height)));
+        will-change: transform;
     }
 
-    /* Fully hidden: drop hit-testing so the collapsed sliver can't catch taps. */
+    /* Project (reader) bar only — NOT the home bar (.home_container), which must
+     * stay in normal flow. Lift the bar OUT of the flex column into a fixed overlay
+     * pinned to the top. The editor scroll container then fills the full height
+     * behind it and pads its own top by --navbar-height (see EditorPanel
+     * .container), so the reader's content sits *under* the bar and is revealed as
+     * the bar slides away — the Google-Docs model. Because the bar no longer holds
+     * a slot in the column and the editor viewport never resizes, the content
+     * tracks the scroll 1:1 and the reclaimed space is filled by the content that
+     * was behind the bar, not by shifting the whole view. */
+    .container:not(.home_container) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+    }
+
+    /* Fully hidden: drop hit-testing so the off-screen bar can't catch taps. */
     .container_hidden {
         pointer-events: none;
     }

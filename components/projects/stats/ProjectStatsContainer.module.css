@@ -8,6 +8,16 @@
     overflow-y: auto;
 }
 
+/* Phone: the navbar is a fixed overlay pinned to the top (see ProjectNavbar) and
+ * stats don't drive the scroll-hide, so the bar stays shown over them. Pad the
+ * scroll root's top by one bar height so the content isn't trapped behind it.
+ * (Also the root for the no-stats empty state, which reuses this .container.) */
+@media (max-width: 767px) {
+    .container {
+        padding-top: var(--navbar-height);
+    }
+}
+
 .center_content {
     width: 100%;
     max-width: 1100px;
