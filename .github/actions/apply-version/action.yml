@@ -95,13 +95,13 @@ runs:
 
               echo "Applied version $INPUT_VERSION (MSIX: $MSIX_VERSION, productName: '$PRODUCT_NAME', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
 
-        # macOS and Windows bundlers both read icons straight out of
-        # src-tauri/icons at build time (tauri.conf.json's bundle.icon list,
-        # and tauri-windows-bundle's hardcoded src-tauri/icons lookup), so
-        # swapping the staging icon set in here — before those bundlers run —
-        # is enough to make staging builds visually distinct from release on
-        # a device that has both installed. Only touches the checkout for
-        # this CI run, never committed.
+        # Both bundlers resolve icons out of src-tauri/icons at build time:
+        # tauri.conf.json's bundle.icon list (macOS .app + Windows exe favicon),
+        # and our windows:assets script, which regenerates the whole Microsoft
+        # Store asset set from src-tauri/icons/icon.png. Swapping the staging
+        # icon set in here — before those run — is enough to make staging builds
+        # visually distinct from release on a device that has both installed.
+        # Only touches the checkout for this CI run, never committed.
         - name: Select app icon set
           shell: bash
           env:
@@ -117,11 +117,13 @@ runs:
                   # Icon Composer source, which xcodebuild's actool compiles itself
                   # (the iOS step below places it into gen/apple). Both derive from
                   # the same Icon Composer project.
-                  cp src-tauri/icons-staging/32x32.png src-tauri/icons-staging/64x64.png \
+                  # Only the icons actually consumed at build: the bundle.icon
+                  # PNGs, icon.png (Store asset source), icon.icns + Assets.car
+                  # (macOS), and icon.ico (Windows exe favicon).
+                  cp src-tauri/icons-staging/32x32.png \
                       src-tauri/icons-staging/128x128.png "src-tauri/icons-staging/128x128@2x.png" \
                       src-tauri/icons-staging/icon.png src-tauri/icons-staging/icon.icns src-tauri/icons-staging/icon.ico \
                       src-tauri/icons-staging/Assets.car \
-                      src-tauri/icons-staging/Square*.png src-tauri/icons-staging/StoreLogo.png \
                       src-tauri/icons/
                   # icon.icon is a directory — replace wholesale rather than cp into it.
                   rm -rf src-tauri/icons/icon.icon
