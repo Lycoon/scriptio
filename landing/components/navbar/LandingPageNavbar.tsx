@@ -1,13 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePage } from "@src/lib/utils/hooks";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 
 import styles from "./LandingPageNavbar.module.css";
+
+// The static landing only has three routes; derive the current one from the
+// pathname (mirrors the app's usePage() without pulling in the app's hooks).
+type LandingPage = "index" | "privacy" | "contact";
+
+function usePage(): LandingPage | undefined {
+    const pathname = usePathname();
+    if (!pathname) return undefined;
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length === 0) return "index";
+    const last = segments[segments.length - 1];
+    return last === "privacy" || last === "contact" ? last : "index";
+}
 
 export default function LandingPageNavbar() {
     const page = usePage();
@@ -50,7 +62,7 @@ export default function LandingPageNavbar() {
             {page !== "index" && (
                 <Link className={styles.logoWrapper} href="/">
                     <Image
-                        src="/images/scriptio.png"
+                        src="/_site/images/scriptio.png"
                         alt="Scriptio Logo"
                         width={90}
                         height={27}

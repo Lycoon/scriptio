@@ -1,0 +1,31 @@
+/*
+ * The homepage always renders dark — no theme switching, so these are the
+ * literal values (copied from the app's dark theme) rather than a class-scoped
+ * variant among several. Trimmed to only the custom properties the landing
+ * components actually reference.
+ */
+:root {
+    color-scheme: dark;
+
+    --primary: #1d1d1d;
+    --secondary: #272727;
+    --tertiary: #585858;
+
+    --secondary-hover: #363636;
+    --tertiary-hover: #464646;
+
+    --primary-text: #ffffff;
+    --secondary-text: #9b9b9b;
+
+    --separator: #414141;
+
+    --shadow-s: inset 0 1px 2px #ffffff30, 0 1px 2px #00000030, 0 2px 4px #00000015;
+
+    --success: #61b76b;
+    --error: #df3c3c;
+    --warning: #efa52f;
+
+    --editor-scroll-bg: var(--secondary);
+    --editor-scroll-btn: var(--tertiary);
+    --editor-scroll-btn-hover: var(--tertiary-hover);
+}

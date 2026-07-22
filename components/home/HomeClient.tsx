@@ -1,33 +1,27 @@
 "use client";
 
 import { useEffect } from "react";
-import HomePageContainer from "@components/home/HomePageContainer";
-import LandingPageNavbar from "@components/navbar/LandingPageNavbar";
 import { isTauri } from "@tauri-apps/api/core";
-import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 
+/**
+ * The public homepage now lives in the standalone `landing/` app (static, served
+ * by nginx). The main app keeps `/` only as a redirect hub for its own flows
+ * (the unauthenticated bounce in useCookieUser, logout, the admin "home" link):
+ *   - desktop (Tauri): there is no landing, go to the local workspace
+ *   - web (prod): hand off to the static landing — Traefik serves `/` from there
+ *   - web (dev): no landing runs locally, fall back to the workspace
+ */
 export default function HomeClient() {
-    const { setTheme } = useTheme();
     const router = useRouter();
 
     useEffect(() => {
-        if (isTauri()) {
+        if (isTauri() || process.env.NODE_ENV !== "production") {
             router.replace("/projects");
         } else {
-            setTheme("dark");
+            window.location.replace("/");
         }
-    }, [setTheme, router]);
+    }, [router]);
 
-    if (process.env.NEXT_PUBLIC_TAURI_BUILD === "true" || isTauri()) {
-        return null;
-    }
-
-    // Guest - show landing page with LandingPageNavbar
-    return (
-        <>
-            <LandingPageNavbar />
-            <HomePageContainer />
-        </>
-    );
+    return null;
 }

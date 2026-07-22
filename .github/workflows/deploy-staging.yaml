@@ -3,6 +3,10 @@ name: Deploy Staging
 on:
     push:
         branches: [staging]
+        # Homepage-only changes deploy via deploy-landing-staging.yaml and must
+        # not trigger the app image rebuild + desktop publish pipeline.
+        paths-ignore:
+            - "landing/**"
 
 permissions:
     contents: read

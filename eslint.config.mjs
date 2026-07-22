@@ -3,7 +3,8 @@ import typescript from "eslint-config-next/typescript";
 import prettier from "eslint-config-prettier";
 
 const config = [
-    { ignores: ["public/**", "out/**", "src-tauri/**", ".next/**"] },
+    // `landing/` is a standalone app with its own config — lint it there, not here.
+    { ignores: ["public/**", "out/**", "src-tauri/**", ".next/**", "landing/**"] },
     ...coreWebVitals,
     ...typescript,
     prettier,

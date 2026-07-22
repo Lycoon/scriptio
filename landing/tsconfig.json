@@ -21,12 +21,6 @@
     "plugins": [
       {
         "name": "next"
-      },
-      {
-        "name": "typescript-plugin-css-modules",
-        "options": {
-          "goToDefinition": true
-        }
       }
     ],
     "paths": {
@@ -39,15 +33,11 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "src/global.d.ts",
-    "pages/api/users/[userId]",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "out",
-    "src-tauri/target",
-    "landing"
+    "out"
   ]
 }

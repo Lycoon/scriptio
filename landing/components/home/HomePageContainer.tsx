@@ -18,6 +18,11 @@ import {
 import Footer from "./Footer";
 import Image from "next/image";
 
+// The app lives at the same origin in production (`/projects` is relative), but
+// at a different port in local dev. NEXT_PUBLIC_APP_ORIGIN is set to the app's
+// dev URL in .env.development and is empty in the production build.
+const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_ORIGIN ?? "";
+
 export default function HomePageContainer() {
     return (
         <div className={styles.wrapper}>
@@ -49,7 +54,7 @@ export default function HomePageContainer() {
                     {/* Layer 1.1: Preview Image (Behind Content, In Front of Stripes) */}
                     <div className={styles.heroBackgroundWrapper}>
                         <Image
-                            src="/images/preview.png"
+                            src="/_site/images/preview.png"
                             alt="Scriptio Interface Preview"
                             width={1920}
                             height={1080}
@@ -60,7 +65,7 @@ export default function HomePageContainer() {
 
                     {/* Layer 1.2: Branding (Logo) */}
                     <div className={styles.heroHeader}>
-                        <Image src="/images/scriptio_full.png" alt="Scriptio Logo" width={400} height={80} className={styles.heroLogo} />
+                        <Image src="/_site/images/scriptio_full.png" alt="Scriptio Logo" width={400} height={80} className={styles.heroLogo} />
                     </div>
 
                     {/* Layer 1.3: Platform CTAs */}
@@ -94,7 +99,7 @@ export default function HomePageContainer() {
                                 </div>
                             </a>
 
-                            <a href="/projects" className={styles.ctaPlatform}>
+                            <a href={`${APP_ORIGIN}/projects`} className={styles.ctaPlatform}>
                                 <Globe size={22} />
                                 <div className={styles.ctaPlatformText}>
                                     <span className={styles.ctaPlatformLabel}>Open in</span>
@@ -128,7 +133,7 @@ export default function HomePageContainer() {
                             </div>
                             <div className={styles.bentoImageWrapper}>
                                 <Image
-                                    src="/images/previews/auto-complete.png"
+                                    src="/_site/images/previews/auto-complete.png"
                                     alt="Auto-complete Preview"
                                     width={1280}
                                     height={720}
@@ -152,7 +157,7 @@ export default function HomePageContainer() {
                             </div>
                             <div className={styles.bentoImageWrapper}>
                                 <Image
-                                    src="/images/previews/auto-complete.png"
+                                    src="/_site/images/previews/auto-complete.png"
                                     alt="Auto-complete Preview"
                                     width={1280}
                                     height={720}
@@ -175,7 +180,7 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <Image
-                                src="/images/previews/formats.png"
+                                src="/_site/images/previews/formats.png"
                                 alt="Formats Preview"
                                 width={1280}
                                 height={720}
@@ -198,7 +203,7 @@ export default function HomePageContainer() {
                             </div>
                             <div className={styles.bentoImageWrapper}>
                                 <Image
-                                    src="/images/previews/search.png"
+                                    src="/_site/images/previews/search.png"
                                     alt="Search Preview"
                                     width={1280}
                                     height={720}
@@ -222,7 +227,7 @@ export default function HomePageContainer() {
                             </div>
                             <div className={styles.bentoImageWrapper}>
                                 <Image
-                                    src="/images/previews/search.png"
+                                    src="/_site/images/previews/search.png"
                                     alt="Search Preview"
                                     width={1280}
                                     height={720}
@@ -244,7 +249,7 @@ export default function HomePageContainer() {
                                     sessions. Your environment should inspire, not distract.
                                 </p>
                             </div>
-                            <Image src="/images/previews/themes.png" alt="Themes Preview" width={1280} height={720} className={styles.bentoImage} />
+                            <Image src="/_site/images/previews/themes.png" alt="Themes Preview" width={1280} height={720} className={styles.bentoImage} />
                         </div>
 
                         {/* Scene Navigation */}
@@ -261,7 +266,7 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <Image
-                                src="/images/previews/scene-navigation.png"
+                                src="/_site/images/previews/scene-navigation.png"
                                 alt="Scene Navigation Preview"
                                 width={1280}
                                 height={720}
@@ -283,7 +288,7 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <Image
-                                src="/images/previews/character-highlight.png"
+                                src="/_site/images/previews/character-highlight.png"
                                 alt="Character Highlight Preview"
                                 width={1280}
                                 height={720}
@@ -305,7 +310,7 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <Image
-                                src="/images/previews/auto-complete.png"
+                                src="/_site/images/previews/auto-complete.png"
                                 alt="Editor Preview"
                                 width={1280}
                                 height={720}
@@ -327,7 +332,7 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <Image
-                                src="/images/previews/auto-complete.png"
+                                src="/_site/images/previews/auto-complete.png"
                                 alt="Editor Preview"
                                 width={1280}
                                 height={720}
@@ -351,7 +356,7 @@ export default function HomePageContainer() {
                             </div>
                             <div className={styles.bentoImageWrapper}>
                                 <Image
-                                    src="/images/previews/auto-complete.png"
+                                    src="/_site/images/previews/auto-complete.png"
                                     alt="Editor Preview"
                                     width={1280}
                                     height={720}
@@ -375,7 +380,7 @@ export default function HomePageContainer() {
                                 </p>
                             </div>
                             <Image
-                                src="/images/previews/collaboration.png"
+                                src="/_site/images/previews/collaboration.png"
                                 alt="Collaboration Preview"
                                 width={1280}
                                 height={720}

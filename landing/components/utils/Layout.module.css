@@ -1,0 +1,45 @@
+.main {
+    flex: 1;
+    overflow: clip;
+    display: flex;
+
+    background-color: var(--primary);
+    transition: background-color 0.15s;
+}
+
+.center_col {
+    display: flex;
+    flex: 1;
+    height: 100%;
+
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.center_row {
+    display: flex;
+    flex: 1;
+    height: 100%;
+
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.center_middle {
+    display: flex;
+    flex: 1;
+    height: 100%;
+
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.center_content {
+    width: 50%;
+    max-width: 750px;
+    min-width: 250px;
+    margin-top: 70px;
+}
