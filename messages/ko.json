@@ -609,7 +609,7 @@
     }
   },
   "board": {
-    "sendToTimeline": "타임라인으로 보내기",
+    "sendToTimeline": "...(으)로 보내기",
     "duplicate": "복제",
     "delete": "삭제",
     "createCard": "카드 생성",

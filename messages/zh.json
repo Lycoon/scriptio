@@ -609,7 +609,7 @@
     }
   },
   "board": {
-    "sendToTimeline": "发送到时间线",
+    "sendToTimeline": "发送到...",
     "duplicate": "复制",
     "delete": "删除",
     "createCard": "创建卡片",

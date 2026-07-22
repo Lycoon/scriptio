@@ -609,7 +609,7 @@
     }
   },
   "board": {
-    "sendToTimeline": "タイムラインに送る",
+    "sendToTimeline": "...に送る",
     "duplicate": "複製",
     "delete": "削除",
     "createCard": "カードを作成",

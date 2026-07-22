@@ -3,16 +3,17 @@
 import { useContext, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
-import { BoardCardData, BoardArrowData } from "@src/lib/project/project-state";
+import { BoardCardData, BoardArrowData, TimelineLayer } from "@src/lib/project/project-state";
 import BoardCard from "./BoardCard";
 import {
     ContextMenuItem,
     ContextMenuSeparator,
     ContextMenuColorRow,
+    ContextMenuSubmenu,
 } from "@components/utils/ContextMenu";
 import styles from "./BoardCanvas.module.css";
 import { v7 as uuidv7 } from "uuid";
-import { Trash2, Plus, Minus, Copy, ListTree, Mic, Square, Image as ImageIcon } from "lucide-react";
+import { Trash2, Plus, Minus, Copy, ListTree, Layers, Mic, Square, Image as ImageIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
 import { importImageFile, importAudioFile, syncAssetToCloud } from "@src/lib/assets/asset-store";
@@ -43,7 +44,7 @@ function formatRecordingTime(seconds: number): string {
 }
 
 const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string }) => {
-    const { projectId, repository, isYjsReady, isReadOnly, boardFocusCardId, setBoardFocusCardId } =
+    const { projectId, repository, isYjsReady, isReadOnly, boardFocusCardId, setBoardFocusCardId, timelineLayers } =
         useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
     const t = useTranslations("board");
@@ -923,20 +924,43 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         [cards, saveCards],
     );
 
-    // Send card to the Timeline
+    // Send card to the Timeline — to a specific layer when `layerId` is given,
+    // otherwise to the default (first root) lane.
     const handleSendToTimeline = useCallback(
-        (card: BoardCardData) => {
-            repository?.appendTimelineClip({
-                source: "card",
-                refDocId: docId,
-                refId: card.id,
-                title: card.title,
-                preview: card.description,
-                color: card.color,
-            });
+        (card: BoardCardData, layerId?: string) => {
+            repository?.appendTimelineClip(
+                {
+                    source: "card",
+                    refDocId: docId,
+                    refId: card.id,
+                    title: card.title,
+                    preview: card.description,
+                    color: card.color,
+                },
+                undefined,
+                layerId,
+            );
         },
         [repository, docId],
     );
+
+    // Timeline layers flattened into display order (depth-annotated), mirroring
+    // the Timeline panel's tree so the "Send to timeline" submenu matches it.
+    const orderedLayers = useMemo(() => {
+        const out: { layer: TimelineLayer; depth: number }[] = [];
+        const childrenOf = (parentId: string | null) =>
+            Object.values(timelineLayers)
+                .filter((l) => (l.parentId ?? null) === parentId)
+                .sort((a, b) => a.order - b.order);
+        const walk = (parentId: string | null, depth: number) => {
+            for (const layer of childrenOf(parentId)) {
+                out.push({ layer, depth });
+                walk(layer.id, depth + 1);
+            }
+        };
+        walk(null, 0);
+        return out;
+    }, [timelineLayers]);
 
     // Delete arrow
     const handleDeleteArrow = useCallback(
@@ -971,13 +995,26 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                             text={t("duplicate")}
                             action={() => handleDuplicateCard(card)}
                         />
-                        {(card.type ?? "text") === "text" && (
-                            <ContextMenuItem
-                                icon={ListTree}
-                                text={t("sendToTimeline")}
-                                action={() => handleSendToTimeline(card)}
-                            />
-                        )}
+                        {(card.type ?? "text") === "text" &&
+                            (orderedLayers.length > 0 ? (
+                                <ContextMenuSubmenu icon={ListTree} text={t("sendToTimeline")}>
+                                    {orderedLayers.map(({ layer, depth }) => (
+                                        <ContextMenuItem
+                                            key={layer.id}
+                                            icon={Layers}
+                                            indent={depth * 14}
+                                            text={layer.name || t("untitled")}
+                                            action={() => handleSendToTimeline(card, layer.id)}
+                                        />
+                                    ))}
+                                </ContextMenuSubmenu>
+                            ) : (
+                                <ContextMenuItem
+                                    icon={ListTree}
+                                    text={t("sendToTimeline")}
+                                    action={() => handleSendToTimeline(card)}
+                                />
+                            ))}
                         <ContextMenuItem
                             icon={Trash2}
                             text={t("delete")}
@@ -987,7 +1024,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                 ),
             });
         },
-        [updateContextMenu, t, handleChangeCardColor, handleDuplicateCard, handleSendToTimeline, handleDeleteCard],
+        [updateContextMenu, t, handleChangeCardColor, handleDuplicateCard, handleSendToTimeline, handleDeleteCard, orderedLayers],
     );
 
     // Open the shared context-menu host for an arrow.

@@ -41,7 +41,7 @@ type ResolvedClip = {
 const TRACK_H = 46; // height of one layer lane, px
 const LABEL_W = 150; // width of the left name column, px
 const RULER_H = 26; // height of the bottom minute ruler, px
-const SCENE_LINE_H = 26; // height of the read-only scene overview band, px
+const SCENE_LINE_H = 52; // height of the read-only scene overview band, px
 const TOOLBAR_H = 44; // height of the top toolbar, px
 const SCROLLBAR_H = 16; // height of the custom horizontal scrollbar strip (.hscroll)
 const INDENT = 14; // left inset per nesting level in the label column, px
@@ -1066,6 +1066,7 @@ const TimelinePanel = () => {
                 auto-hide and take no space, so the timeline could not be scrolled
                 once zoomed past the container width). */}
             <div className={styles.hscroll}>
+                <div className={styles.hscroll_corner} style={{ width: LABEL_W }} />
                 <div ref={hTrackRef} className={styles.hscroll_track}>
                     <div
                         className={styles.hscroll_thumb}

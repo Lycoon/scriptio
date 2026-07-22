@@ -652,15 +652,43 @@
         user-select: text;
     }
 
+    /* Enlarge both drag targets into comfortable ~40px touch areas. The visible
+     * mark (resize chevron / connection dot) stays small in the corner; the rest
+     * of the box is a transparent, tappable margin extending into the card. */
     .card_resize_handle {
         opacity: 1;
-        width: 28px;
-        height: 28px;
+        width: 40px;
+        height: 40px;
     }
 
+    /* The whole 40px box is the touch target, but transparent — the big white
+     * radial-gradient that fills it on desktop is dropped here so it doesn't
+     * read as a white blob spilling over the card. The visible node is drawn by
+     * ::before, kept small and pinned to the box's top-right corner. */
     .connection_handle {
         opacity: 1;
-        width: 28px;
-        height: 28px;
+        width: 40px;
+        height: 40px;
+        background: none;
+    }
+
+    .connection_handle::before {
+        top: 4px;
+        right: 4px;
+        left: auto;
+        width: 18px;
+        height: 18px;
+        transform: none;
+        background: white;
+        border: 1.5px solid rgba(0, 0, 0, 0.25);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        opacity: 1;
+    }
+
+    /* No hover on touch — keep the node from scaling/relayering if a pointer
+     * hovers it (e.g. testing at mobile width on desktop). */
+    .connection_handle:hover {
+        transform: none;
+        background: none;
     }
 }

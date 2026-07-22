@@ -1,0 +1,126 @@
+/* ==================== */
+/*        Layout        */
+/* ==================== */
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.elements {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+
+    width: 25%;
+    min-width: 270px;
+    max-width: 450px;
+    margin-left: 10%;
+}
+
+.element {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.project {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10%;
+
+    width: 25%;
+    min-width: 270px;
+    max-width: 450px;
+}
+
+.home {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+
+    width: 320px;
+    min-height: 25vh;
+}
+
+.label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--secondary-text);
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
+}
+
+/* ==================== */
+/*        Buttons       */
+/* ==================== */
+
+.btn_flex {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1rem;
+    color: var(--primary-text);
+    background-color: var(--secondary);
+    cursor: pointer;
+    width: 100%;
+
+    /* Position */
+    text-align: center;
+    padding: 10px;
+
+    /* Border */
+    border-radius: 40px !important;
+    border-style: solid !important;
+    border-color: var(--tertiary) !important;
+}
+
+.btn:hover {
+    transition: border-color 0.2s;
+    border-color: var(--tertiary-hover) !important;
+}
+
+.btn:active {
+    transition: transform 0.25s;
+    transform: scale(0.98);
+}
+
+.btn:disabled {
+    color: var(--secondary-text);
+    background-color: var(--secondary);
+}
+
+/* ==================== */
+/*        Inputs        */
+/* ==================== */
+
+.input {
+    font-size: 1.15rem;
+    border-radius: 7px;
+    padding: 8px;
+    background-color: var(--secondary);
+}
+
+.input::placeholder {
+    font-size: 1rem;
+}
+
+.input_desc {
+    min-height: 100px;
+    max-height: 300px;
+    resize: vertical;
+}

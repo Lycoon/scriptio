@@ -1,0 +1,99 @@
+@import "./colors.css";
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+    overflow: clip;
+}
+
+.app-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: clip;
+}
+
+.app-layout > main {
+    flex: 1;
+    min-height: 0;
+    overflow: clip;
+    display: flex;
+    flex-direction: column;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+    color: var(--primary-text);
+    font-family: var(--font-josefin), sans-serif;
+    font-weight: bold;
+}
+
+p,
+span {
+    font-family: var(--font-inter), sans-serif;
+    color: var(--primary-text);
+}
+
+a {
+    color: var(--secondary-text);
+}
+
+a:hover {
+    color: var(--secondary-text-hover);
+}
+
+select {
+    width: 40%;
+    height: 25px;
+    padding-inline: 4px;
+    padding-block: 2px;
+    border: none;
+    border-radius: 5px;
+}
+
+select,
+textarea,
+input {
+    outline: none;
+    border: none;
+    background: var(--secondary);
+    color: var(--primary-text);
+}
+
+svg {
+    color: var(--primary-text);
+}
+
+/* ==================== */
+/*       Scrollbar      */
+/* ==================== */
+
+::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 8px;
+    background: var(--editor-scroll-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    height: 60px;
+    background: var(--editor-scroll-btn);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--editor-scroll-btn-hover);
+}

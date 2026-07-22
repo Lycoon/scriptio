@@ -609,7 +609,7 @@
     }
   },
   "board": {
-    "sendToTimeline": "Wyślij do osi czasu",
+    "sendToTimeline": "Wyślij do...",
     "duplicate": "Powiel",
     "delete": "Usuń",
     "createCard": "Utwórz kartę",

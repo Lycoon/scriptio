@@ -609,7 +609,7 @@
     }
   },
   "board": {
-    "sendToTimeline": "Send to timeline",
+    "sendToTimeline": "Send to...",
     "duplicate": "Duplicate",
     "delete": "Delete",
     "createCard": "Create card",

@@ -17,11 +17,15 @@ services:
         labels:
             - traefik.enable=true
             - traefik.docker.network=webproxy
-            # Public router: landing, /privacy, /contact and static assets
+            # Catch-all: the app owns everything the static landing does not claim
+            # (/_next, /images, /fonts, /dictionaries, /tts, /admin, /auth,
+            # /desktop-oauth, /favicon.ico, ...). Lowest priority so the landing
+            # and the auth routers below win for their paths.
             - traefik.http.routers.scriptio-app.rule=Host(`scriptio.app`)
             - traefik.http.routers.scriptio-app.entrypoints=secure
             - traefik.http.routers.scriptio-app.tls=true
             - traefik.http.routers.scriptio-app.tls.certresolver=letsencrypt
+            - traefik.http.routers.scriptio-app.priority=1
             # Restricted router: /projects and /api require basic auth
             - traefik.http.routers.scriptio-app-auth.rule=Host(`scriptio.app`) && (PathPrefix(`/projects`) || PathPrefix(`/api`))
             - traefik.http.routers.scriptio-app-auth.entrypoints=secure
@@ -36,6 +40,34 @@ services:
             - traefik.http.routers.scriptio-app-auth-options.tls=true
             - traefik.http.routers.scriptio-app-auth-options.tls.certresolver=letsencrypt
             - traefik.http.routers.scriptio-app-auth-options.priority=200
+            # Public contact form (from the static homepage) must reach the API
+            # without basic auth. Higher priority than the auth router, no
+            # middleware, so only /api/contact is exempt — the rest of /api stays gated.
+            - traefik.http.routers.scriptio-app-contact.rule=Host(`scriptio.app`) && Path(`/api/contact`)
+            - traefik.http.routers.scriptio-app-contact.entrypoints=secure
+            - traefik.http.routers.scriptio-app-contact.tls=true
+            - traefik.http.routers.scriptio-app-contact.tls.certresolver=letsencrypt
+            - traefik.http.routers.scriptio-app-contact.priority=300
+
+    # Public homepage: standalone static site (/, /privacy, /contact) served by
+    # nginx. No DB, no Node, no migrations. Deployed on its own cadence by the
+    # deploy-landing workflow, so app releases and failures never affect it.
+    landing-prod:
+        image: ghcr.io/lycoon/scriptio-landing:latest
+        container_name: scriptio-landing-prod
+        profiles: ["prod"]
+        restart: unless-stopped
+        networks:
+            - webproxy
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=webproxy
+            - traefik.http.routers.scriptio-landing.rule=Host(`scriptio.app`) && (Path(`/`) || PathPrefix(`/privacy`) || PathPrefix(`/contact`) || PathPrefix(`/_site`))
+            - traefik.http.routers.scriptio-landing.entrypoints=secure
+            - traefik.http.routers.scriptio-landing.tls=true
+            - traefik.http.routers.scriptio-landing.tls.certresolver=letsencrypt
+            - traefik.http.routers.scriptio-landing.priority=100
+            - traefik.http.services.scriptio-landing.loadbalancer.server.port=80
 
     app-staging:
         image: ghcr.io/lycoon/scriptio-app:staging
@@ -55,10 +87,30 @@ services:
         labels:
             - traefik.enable=true
             - traefik.docker.network=webproxy
+            # Catch-all (no basic auth on staging), mirrors the prod split.
             - traefik.http.routers.scriptio-staging.rule=Host(`staging.scriptio.app`)
             - traefik.http.routers.scriptio-staging.entrypoints=secure
             - traefik.http.routers.scriptio-staging.tls=true
             - traefik.http.routers.scriptio-staging.tls.certresolver=letsencrypt
+            - traefik.http.routers.scriptio-staging.priority=1
+
+    # Staging homepage: standalone static site, mirrors landing-prod.
+    landing-staging:
+        image: ghcr.io/lycoon/scriptio-landing:staging
+        container_name: scriptio-landing-staging
+        profiles: ["staging"]
+        restart: unless-stopped
+        networks:
+            - webproxy
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=webproxy
+            - traefik.http.routers.scriptio-landing-staging.rule=Host(`staging.scriptio.app`) && (Path(`/`) || PathPrefix(`/privacy`) || PathPrefix(`/contact`) || PathPrefix(`/_site`))
+            - traefik.http.routers.scriptio-landing-staging.entrypoints=secure
+            - traefik.http.routers.scriptio-landing-staging.tls=true
+            - traefik.http.routers.scriptio-landing-staging.tls.certresolver=letsencrypt
+            - traefik.http.routers.scriptio-landing-staging.priority=100
+            - traefik.http.services.scriptio-landing-staging.loadbalancer.server.port=80
 
     # Production Database
     db-prod:

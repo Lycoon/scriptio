@@ -3,6 +3,10 @@ name: Deploy Release
 on:
     push:
         branches: [release]
+        # Homepage-only changes deploy via deploy-landing-release.yaml and must
+        # not trigger the app image rebuild + desktop publish pipeline.
+        paths-ignore:
+            - "landing/**"
 
 permissions:
     contents: write

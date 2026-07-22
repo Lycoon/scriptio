@@ -309,6 +309,12 @@ const BoardCard = ({
     const kind = kindOf(card);
     const isPhone = useIsPhone();
     const cardRef = useRef<HTMLDivElement>(null);
+    // Timestamp of the last touch on this card. Touch devices fire a synthesized
+    // mousedown/mouseup after a touch; the handles wire *both* pointer types (so
+    // resize/link also work with a mouse at mobile widths), and this lets the
+    // mouse handlers ignore those synthetic echoes to avoid double-firing.
+    const lastTouch = useRef(0);
+    const isSyntheticMouse = () => Date.now() - lastTouch.current < 700;
     // Latest card data for touch handlers, which capture their closure at
     // gesture start but must merge against the current card on each update.
     const cardDataRef = useRef(card);
@@ -405,6 +411,7 @@ const BoardCard = ({
 
     const handleResizeStart = useCallback(
         (e: React.MouseEvent) => {
+            if (isSyntheticMouse()) return; // ignore the mouse echo of a touch
             e.stopPropagation();
             e.preventDefault();
             resizeStart.current = {
@@ -458,6 +465,7 @@ const BoardCard = ({
                 return;
             const t = e.touches[0];
             if (!t) return;
+            lastTouch.current = Date.now();
             e.stopPropagation();
 
             const rect = cardRef.current?.getBoundingClientRect();
@@ -535,6 +543,7 @@ const BoardCard = ({
         (e: React.TouchEvent) => {
             const t = e.touches[0];
             if (!t) return;
+            lastTouch.current = Date.now();
             e.stopPropagation();
             resizeStart.current = { x: t.clientX, y: t.clientY, width: card.width, height: card.height };
             setIsResizing(true);
@@ -558,6 +567,7 @@ const BoardCard = ({
     const handleConnectionTouchStart = useCallback(
         (e: React.TouchEvent) => {
             if (!e.touches[0]) return;
+            lastTouch.current = Date.now();
             e.stopPropagation();
             onStartConnection(card.id, "center", card.x + card.width / 2, card.y + card.height / 2);
         },
@@ -624,6 +634,7 @@ const BoardCard = ({
 
     const handleConnectionHandleMouseDown = useCallback(
         (e: React.MouseEvent) => {
+            if (isSyntheticMouse()) return; // ignore the mouse echo of a touch
             e.stopPropagation();
             e.preventDefault();
             // Pass the center of the card as initial position (in canvas coordinates)
@@ -636,6 +647,7 @@ const BoardCard = ({
 
     const handleCardMouseUp = useCallback(
         (e: React.MouseEvent) => {
+            if (isSyntheticMouse()) return; // ignore the mouse echo of a touch
             if (isConnecting) {
                 e.stopPropagation();
                 onCompleteConnection(card.id);
@@ -697,7 +709,7 @@ const BoardCard = ({
                 ...cardColorStyle(card),
             }}
             onMouseDown={isPhone ? undefined : handleMouseDown}
-            onMouseUp={isPhone ? undefined : handleCardMouseUp}
+            onMouseUp={handleCardMouseUp}
             onTouchStart={isPhone ? handleCardTouchStart : undefined}
             onDoubleClick={!isPhone && kind === "text" ? handleStartEditDescription : undefined}
             onContextMenu={handleRightClick}
@@ -706,14 +718,14 @@ const BoardCard = ({
 
             <div
                 className={styles.card_resize_handle}
-                onMouseDown={isPhone ? undefined : handleResizeStart}
+                onMouseDown={handleResizeStart}
                 onTouchStart={isPhone ? handleResizeTouchStart : undefined}
             />
 
             {/* Connection handle */}
             <div
                 className={styles.connection_handle}
-                onMouseDown={isPhone ? undefined : handleConnectionHandleMouseDown}
+                onMouseDown={handleConnectionHandleMouseDown}
                 onTouchStart={isPhone ? handleConnectionTouchStart : undefined}
             />
         </div>

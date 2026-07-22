@@ -9,6 +9,7 @@
         "start": "next start",
         "tts:assets": "tsx scripts/copy-tts-assets.ts",
         "dev": "docker compose --profile dev up -d --wait && npx prisma db push && npm run tts:assets && next dev",
+        "dev:landing": "npm --prefix landing install && npm --prefix landing run dev",
         "build": "npm run tts:assets && npx prisma generate && next build",
         "tauri": "tauri",
         "tauri:dev": "tauri dev",

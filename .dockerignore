@@ -7,3 +7,4 @@ Dockerfile
 docker-compose.yml
 node_modules/         # Installed inside container
 nginx/                # We'll create this directory soon
+landing/              # Standalone static homepage — built & deployed separately
