@@ -1,2 +1,6 @@
 # Generated files
 # Keep bundle.config.json and templates in git
+
+# Store assets are regenerated from src-tauri/icons by the windows:assets
+# script (a pre* hook on every windows build), so they are not committed.
+Assets/
