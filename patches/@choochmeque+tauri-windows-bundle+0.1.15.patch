@@ -1,7 +1,16 @@
 diff --git a/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js b/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js
-index 42b3955..439214b 100644
+index 42b3955..608a8d7 100644
 --- a/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js
 +++ b/node_modules/@choochmeque/tauri-windows-bundle/dist/cli.js
+@@ -6,7 +6,7 @@ import * as path from 'node:path';
+ import { Jimp } from 'jimp';
+ import { fileURLToPath } from 'node:url';
+ import { glob } from 'glob';
+-import { exec, spawn } from 'node:child_process';
++import { exec, execFileSync, spawn } from 'node:child_process';
+ import { promisify } from 'node:util';
+ import * as readline from 'node:readline';
+ 
 @@ -426,7 +426,7 @@ function generateManifest(config, arch, minVersion, windowsDir) {
          DISPLAY_NAME: config.displayName,
          PUBLISHER_DISPLAY_NAME: config.publisherDisplayName,
@@ -39,7 +48,58 @@ index 42b3955..439214b 100644
      const srcExe = path.join(buildDir, exeName);
      if (!fs.existsSync(srcExe)) {
          throw new Error(`Executable not found: ${srcExe}`);
-@@ -1016,7 +1016,7 @@ async function build(options) {
+@@ -735,8 +735,50 @@ function prepareAppxContent(projectRoot, arch, config, tauriConfig, minVersion,
+     }
+     // Copy bundled resources from tauri.conf.json
+     copyBundledResources(projectRoot, appxDir, tauriConfig);
++    // Index targetsize/altform-qualified assets (Assets/Square44x44Logo.targetsize-*.png)
++    // into resources.pri. Without this, Windows can't resolve the unplated taskbar/Start
++    // variants and falls back to the plain plated Square44x44Logo.png everywhere.
++    generateResourcesPri(appxDir, windowsDir);
+     return appxDir;
+ }
++function findMakePri() {
++    const kitsBinRoots = [
++        'C:\\Program Files (x86)\\Windows Kits\\10\\bin',
++        'C:\\Program Files\\Windows Kits\\10\\bin',
++    ];
++    const candidates = [];
++    for (const root of kitsBinRoots) {
++        if (!fs.existsSync(root))
++            continue;
++        for (const version of fs.readdirSync(root)) {
++            const exe = path.join(root, version, 'x64', 'makepri.exe');
++            if (fs.existsSync(exe))
++                candidates.push(exe);
++        }
++    }
++    candidates.sort();
++    return candidates.length > 0 ? candidates[candidates.length - 1] : null;
++}
++function generateResourcesPri(appxDir, windowsDir) {
++    const priConfig = path.join(windowsDir, 'priconfig.xml');
++    if (!fs.existsSync(priConfig)) {
++        console.warn(`  ${priConfig} not found; skipping resources.pri (taskbar/Start icons will show plated)`);
++        return;
++    }
++    const makepri = findMakePri();
++    if (!makepri) {
++        console.warn('  makepri.exe not found (requires Windows SDK); skipping resources.pri (taskbar/Start icons will show plated)');
++        return;
++    }
++    const priFile = path.join(appxDir, 'resources.pri');
++    if (fs.existsSync(priFile)) {
++        fs.rmSync(priFile);
++    }
++    execFileSync(makepri, ['new', '/pr', appxDir, '/cf', priConfig, '/o'], {
++        cwd: appxDir,
++        stdio: 'ignore',
++    });
++}
+ function copyBundledResources(projectRoot, appxDir, tauriConfig) {
+     const resources = tauriConfig.bundle?.resources;
+     if (!resources || resources.length === 0)
+@@ -1016,7 +1058,7 @@ async function build(options) {
          }
          // Prepare AppxContent directory
          console.log(`  Preparing AppxContent for ${arch}...`);

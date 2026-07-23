@@ -35,6 +35,7 @@ export const metadata: Metadata = {
     authors: [{ name: "Hugo 'Lycoon' Bois" }],
     keywords: ["movie", "script", "writing", "story", "screenwriting"],
     icons: { icon: "/favicon.ico" },
+    itunes: { appId: "6762051812", appArgument: URL },
 
     openGraph: {
         type: "website",
