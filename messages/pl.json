@@ -50,7 +50,7 @@
     "toggleComments": "Pokaż/ukryj komentarze",
     "toggleSpellcheck": "Włącz/wyłącz sprawdzanie pisowni",
     "focusMode": "Tryb skupienia",
-    "splitPanel": "Podziel panel",
+    "dictate": "Dyktowanie",    "splitPanel": "Podziel panel",
     "unsplitPanel": "Zamknij panel",
     "swapPanels": "Zamień panele",
     "draftEditor": "Edytor szkiców",
@@ -86,15 +86,6 @@
   },
   "appearance": {
     "theme": "Motyw",
-    "themeHelp": {
-      "dark": "Przytulny, ciemny motyw, idealny dla nocnych marków.",
-      "light": "Jasny i przejrzysty motyw, naturalny i wygodny w ciągu dnia.",
-      "latte": "Delikatny kremowy motyw, łączący ciepło z czytelnością.",
-      "wonka": "Aksamitny czekoladowy motyw, łączący luksus z komfortem wizualnym.",
-      "mint": "Świeży miętowy motyw, łączący spokój z równowagą wizualną.",
-      "blossom": "Delikatny kwiatowy motyw, łączący miękkość płatków z komfortem wizualnym.",
-      "midnight": "Głęboki, granatowy motyw stworzony do skupionej pracy pod rozgwieżdżonym niebem."
-    },
     "editor": "Edytor",
     "themedEditor": "Edytor z motywem",
     "themedEditorDesc": "Używaj kolorów motywu dla tła i tekstu w edytorze",
@@ -159,6 +150,8 @@
     "ttsRemove": "Usuń głos",
     "label": "Język wyświetlania",
     "helpText": "Wybierz język używany w całej aplikacji.",
+    "dictationLabel": "Dyktowanie",
+    "dictationHelpText": "Wybierz język używany podczas dyktowania mikrofonem w edytorze.",
     "spellcheckLabel": "Korekta pisowni",
     "spellcheckHelpText": "Pobierz słownik do sprawdzania pisowni w edytorze.",
     "spellcheckNone": "Wyłączone",

@@ -17,6 +17,25 @@
     overflow: visible;
 }
 
+/* Phone: render as a full-width sheet pinned below the navbar rather than a
+   narrow panel anchored to a bar icon. Portaled to <body> by the mobile navbar,
+   so fixed positioning is viewport-relative. Scrolls internally when the locking
+   sections grow; the revision dropdowns portal (see ProductionPanel), so this
+   scroll doesn't clip their menus. */
+@media (max-width: 767px) {
+    .container {
+        position: fixed;
+        top: calc(var(--navbar-height) + 4px);
+        left: calc(12px + var(--safe-left));
+        right: calc(12px + var(--safe-right));
+        width: auto;
+        max-width: none;
+        max-height: calc(100dvh - var(--navbar-height) - 16px - var(--safe-bottom));
+        overflow-y: auto;
+        z-index: 60;
+    }
+}
+
 .header {
     display: flex;
     align-items: center;

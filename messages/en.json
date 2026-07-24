@@ -50,7 +50,7 @@
     "toggleComments": "Toggle Comments",
     "toggleSpellcheck": "Toggle Spell Check",
     "focusMode": "Focus Mode",
-    "splitPanel": "Split Panel",
+    "dictate": "Dictate",    "splitPanel": "Split Panel",
     "unsplitPanel": "Unsplit Panel",
     "swapPanels": "Swap Panels",
     "draftEditor": "Draft Editor",
@@ -86,15 +86,6 @@
   },
   "appearance": {
     "theme": "Theme",
-    "themeHelp": {
-      "dark": "Cozy, low-glare theme made for night owls and late-hour focus.",
-      "light": "Crisp, airy theme that feels natural and comfortable during the day.",
-      "latte": "Soft, cream-based theme that blends warmth with readability.",
-      "wonka": "Velvety, cocoa-based theme that blends deep luxury with eye-resting focus.",
-      "mint": "Refreshing, mint-infused theme that blends botanical serenity with eye-resting balance.",
-      "blossom": "Gentle, petal-infused theme that blends floral warmth with eye-resting softness.",
-      "midnight": "Deep, midnight-blue theme crafted for focused work under a starlit sky."
-    },
     "editor": "Editor",
     "themedEditor": "Themed editor",
     "themedEditorDesc": "Use theme colors for the editor background and text",
@@ -159,6 +150,8 @@
     "ttsRemove": "Remove voice",
     "label": "Display Language",
     "helpText": "Choose the language used throughout the app.",
+    "dictationLabel": "Dictation",
+    "dictationHelpText": "Choose the language spoken when dictating with the microphone in the editor.",
     "spellcheckLabel": "Spell Check",
     "spellcheckHelpText": "Download a dictionary for in-editor spell checking.",
     "spellcheckNone": "Disabled",

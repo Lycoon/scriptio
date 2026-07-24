@@ -47,6 +47,7 @@
  * matches the sidebar handles and keyboard bar. The container row keeps the
  * page background; only these pills stand out. */
 .mobile_left,
+.mobile_tools,
 .mobile_right {
     display: flex;
     flex-direction: row;

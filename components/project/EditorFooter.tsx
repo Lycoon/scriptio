@@ -1,57 +1,26 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import type { Editor } from "@tiptap/react";
-import { FileText, Maximize, Minimize, Scroll, SpellCheck } from "lucide-react";
+import { Maximize, Mic, Minimize, Scroll, SpellCheck } from "lucide-react";
 
-import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
-import { paginationKey } from "@src/lib/screenplay/extensions/pagination-extension";
 import { join } from "@src/lib/utils/misc";
 import { useIsPhone } from "@src/lib/utils/hooks";
 import { useActiveEditor } from "@src/lib/editor/use-active-editor";
+import { getDictationLanguage, useDictation } from "@src/lib/editor/use-dictation";
 import WritingTimer from "./WritingTimer";
 
 import styles from "./EditorFooter.module.css";
 
 /**
- * Track the screenplay's page count by reading the pagination plugin state.
- * Page count = number of page breaks + 1. Recomputed on every transaction
- * (cheap field read), but state only changes when the count actually does, so
- * the footer re-renders rarely.
- */
-const useScreenplayPageCount = (editor: Editor | null): number | null => {
-    const [count, setCount] = useState<number | null>(null);
-
-    useEffect(() => {
-        // No editor yet: `count` starts null, and the footer unmounts alongside
-        // the editor, so no explicit reset is needed here.
-        if (!editor || editor.isDestroyed) return;
-        const read = () => {
-            const state = paginationKey.getState(editor.state) as { breaks?: unknown[] } | undefined;
-            const next = state?.breaks ? state.breaks.length + 1 : null;
-            setCount((prev) => (prev === next ? prev : next));
-        };
-        read();
-        editor.on("transaction", read);
-        return () => {
-            editor.off("transaction", read);
-        };
-    }, [editor]);
-
-    return count;
-};
-
-/**
- * Subtle status bar at the bottom of the panel area: the screenplay page count
- * plus icon toggles for the view modes (endless scroll, comments, focus mode).
+ * Subtle status bar at the bottom of the panel area: icon toggles for the view
+ * modes (endless scroll, comments, focus mode).
  */
 const EditorFooter = () => {
     const t = useTranslations("navbar");
-    const { editor } = useContext(ProjectContext);
     const { isZenMode, updateIsZenMode } = useContext(UserContext);
     const { isEndlessScroll, setIsEndlessScroll, setLeftSidebarOpen, setRightSidebarOpen } = useViewContext();
     const { spellcheckLang, setSpellcheckLang } = useSpellcheck();
@@ -60,7 +29,20 @@ const EditorFooter = () => {
     // panels have none, so on phone (single-panel) the footer is hidden there.
     const activeEditor = useActiveEditor();
 
-    const pageCount = useScreenplayPageCount(editor);
+    // Voice dictation into the active editor. The language is a device
+    // preference set in Language settings; read it fresh at start so a change
+    // there takes effect without remounting. Hidden where the browser lacks the
+    // Web Speech API (e.g. Firefox).
+    const dictation = useDictation(activeEditor, null);
+    const toggleDictation = useCallback(() => {
+        if (dictation.isListening) dictation.stop();
+        else dictation.start(getDictationLanguage());
+    }, [dictation]);
+    // Switching to a panel with no editor (desktop board/statistics) leaves
+    // nothing to dictate into — stop the mic so it isn't left listening.
+    useEffect(() => {
+        if (!activeEditor && dictation.isListening) dictation.stop();
+    }, [activeEditor, dictation.isListening, dictation.stop]);
 
     // Remember the last active language so the toggle can restore it after being turned
     // off; default to English when nothing has been selected yet.
@@ -117,17 +99,20 @@ const EditorFooter = () => {
 
     return (
         <div className={styles.bubble_right}>
-            {pageCount !== null && (
-                <>
-                    <span className={styles.pages}>
-                        <FileText size={13} />
-                        {t("pageCount", { count: pageCount })}
-                    </span>
-                    <span className={styles.divider} />
-                </>
-            )}
-
             <WritingTimer triggerClassName={styles.action} triggerActiveClassName={styles.action_active} />
+
+            {dictation.isSupported && activeEditor && (
+                <button
+                    type="button"
+                    className={join(styles.action, dictation.isListening ? styles.recording : "")}
+                    onClick={toggleDictation}
+                    title={t("dictate")}
+                    aria-label={t("dictate")}
+                    aria-pressed={dictation.isListening}
+                >
+                    <Mic size={18} />
+                </button>
+            )}
 
             <button
                 type="button"
@@ -136,7 +121,7 @@ const EditorFooter = () => {
                 title={t("endlessScroll")}
                 aria-label={t("endlessScroll")}
             >
-                <Scroll size={14} />
+                <Scroll size={18} />
             </button>
             <button
                 type="button"
@@ -145,7 +130,7 @@ const EditorFooter = () => {
                 title={t("toggleSpellcheck")}
                 aria-label={t("toggleSpellcheck")}
             >
-                <SpellCheck size={14} />
+                <SpellCheck size={18} />
             </button>
             {/* Focus mode relies on the Fullscreen API and hiding desktop sidebar
                 chrome — neither meaningful on phone — so it's hidden there (CSS). */}
@@ -156,7 +141,7 @@ const EditorFooter = () => {
                 title={t("focusMode")}
                 aria-label={t("focusMode")}
             >
-                {isZenMode ? <Minimize size={14} /> : <Maximize size={14} />}
+                {isZenMode ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
         </div>
     );

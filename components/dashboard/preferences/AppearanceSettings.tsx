@@ -144,7 +144,6 @@ const AppearanceSettings = () => {
                     options={themeOptions}
                     className={`${sharedStyles.input} ${styles.input}`}
                 />
-                <p className={sharedStyles.helpText}>{theme && t(`themeHelp.${theme}`)}</p>
             </div>
 
             {/* Editor Appearance */}

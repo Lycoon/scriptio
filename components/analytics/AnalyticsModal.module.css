@@ -210,3 +210,73 @@
 .comingSoon p {
     font-size: 0.95rem;
 }
+
+/* ── Phone ───────────────────────────────────────────────────
+   Side-by-side sidebar/content squeezes the content column too
+   narrow on a phone, cropping the stat cards. Fill the screen and
+   stack vertically: the sidebar collapses to a horizontal tab strip
+   above the (now full-width, scrollable) content. */
+@media (max-width: 767px) {
+    .overlay {
+        padding: 0;
+    }
+
+    .modal {
+        width: 100vw;
+        height: 100dvh;
+        max-width: none;
+        max-height: none;
+        border-radius: 0;
+        flex-direction: column;
+    }
+
+    .sidebar {
+        flex: 0 0 auto;
+        padding: calc(12px + var(--safe-top)) 12px 12px;
+        border-right: none;
+        border-bottom: 1px solid var(--separator);
+    }
+
+    .sidebarTitle {
+        padding: 0 4px;
+        margin-bottom: 12px;
+    }
+
+    /* Group sections and their items lay out inline as a single
+       horizontally-scrollable row of tabs. Group labels are dropped. */
+    .navMenu {
+        display: flex;
+        gap: 8px;
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    .navMenu > div {
+        display: flex;
+        gap: 8px;
+    }
+
+    .groupLabel {
+        display: none;
+    }
+
+    .navItem {
+        width: auto;
+        white-space: nowrap;
+    }
+
+    .content {
+        flex: 1;
+        min-height: 0;
+        padding: 20px 16px calc(20px + var(--safe-bottom));
+    }
+
+    .scrollArea {
+        padding-right: 0;
+    }
+
+    /* Single column: two-up grids can't fit a phone width. */
+    .statsGridWide {
+        grid-template-columns: 1fr;
+    }
+}

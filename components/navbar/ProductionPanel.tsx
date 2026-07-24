@@ -102,7 +102,11 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     useEffect(() => {
         if (!isOpen) return;
         const handleClickOutside = (e: MouseEvent) => {
-            if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+            const target = e.target as Element;
+            // Keep the panel open when interacting with a revision dropdown menu,
+            // which is rendered in a body portal outside the panel.
+            if (target.closest?.("[data-dropdown-portal]")) return;
+            if (panelRef.current && !panelRef.current.contains(target)) {
                 onClose();
             }
         };
@@ -460,6 +464,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                             onChange={handleDisplayModeChange}
                             options={displayModeOptions}
                             className={styles.revision_select}
+                            portal
                         />
                     </div>
                 </div>
@@ -476,6 +481,7 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
                             onChange={handleRevisionColorChange}
                             options={revisionOptions}
                             className={styles.revision_select}
+                            portal
                         />
                     </div>
                 </div>

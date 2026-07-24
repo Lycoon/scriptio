@@ -50,7 +50,7 @@
     "toggleComments": "Mostrar/ocultar comentarios",
     "toggleSpellcheck": "Activar/desactivar corrector ortográfico",
     "focusMode": "Modo concentración",
-    "splitPanel": "Dividir panel",
+    "dictate": "Dictar",    "splitPanel": "Dividir panel",
     "unsplitPanel": "Unir panel",
     "swapPanels": "Intercambiar paneles",
     "draftEditor": "Editor de borrador",
@@ -86,15 +86,6 @@
   },
   "appearance": {
     "theme": "Tema",
-    "themeHelp": {
-      "dark": "Tema acogedor y de bajo resplandor, perfecto para noctámbulos y noches de concentración.",
-      "light": "Tema nítido y aireado que se siente natural y cómodo durante el día.",
-      "latte": "Tema suave con base crema que combina calidez y legibilidad.",
-      "wonka": "Tema aterciopelado con base de cacao que combina lujo profundo y descanso visual.",
-      "mint": "Tema refrescante con esencia de menta que combina serenidad botánica y equilibrio visual.",
-      "blossom": "Tema delicado con esencia floral que combina calidez de pétalos y suavidad visual.",
-      "midnight": "Tema azul medianoche profundo, diseñado para el trabajo concentrado bajo un cielo estrellado."
-    },
     "editor": "Editor",
     "themedEditor": "Editor con tema",
     "themedEditorDesc": "Usar los colores del tema para el fondo y el texto del editor",
@@ -159,6 +150,8 @@
     "ttsRemove": "Eliminar voz",
     "label": "Idioma de la interfaz",
     "helpText": "Elige el idioma que se usa en toda la aplicación.",
+    "dictationLabel": "Dictado",
+    "dictationHelpText": "Elige el idioma que hablas al dictar con el micrófono en el editor.",
     "spellcheckLabel": "Corrector orthográfico",
     "spellcheckHelpText": "Descarga un diccionario para la corrección ortográfica en el editor.",
     "spellcheckNone": "Desactivado",

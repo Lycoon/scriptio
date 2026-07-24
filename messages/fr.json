@@ -51,7 +51,7 @@
     "toggleComments": "Afficher/masquer les commentaires",
     "toggleSpellcheck": "Activer/désactiver la correction orthographique",
     "focusMode": "Mode concentration",
-    "splitPanel": "Diviser le panneau",
+    "dictate": "Dicter",    "splitPanel": "Diviser le panneau",
     "unsplitPanel": "Fermer le panneau divisé",
     "swapPanels": "Inverser les panneaux",
     "draftEditor": "Éditeur de brouillon",
@@ -87,15 +87,6 @@
   },
   "appearance": {
     "theme": "Thème",
-    "themeHelp": {
-      "dark": "Thème sombre et doux, idéal pour les noctambules et les sessions tardives.",
-      "light": "Thème clair et aéré, naturel et agréable en pleine journée.",
-      "latte": "Thème doux aux tons crème, alliant chaleur et lisibilité.",
-      "wonka": "Thème velouté aux tons cacao, entre luxe profond et confort visuel.",
-      "mint": "Thème frais aux notes de menthe, alliant sérénité botanique et équilibre visuel.",
-      "blossom": "Thème délicat aux notes florales, alliant douceur pétale et confort visuel.",
-      "midnight": "Thème bleu nuit profond, conçu pour le travail concentré sous un ciel étoilé."
-    },
     "editor": "Éditeur",
     "themedEditor": "Éditeur thématisé",
     "themedEditorDesc": "Utiliser les couleurs du thème pour le fond et le texte de l'éditeur",
@@ -160,6 +151,8 @@
     "ttsRemove": "Supprimer la voix",
     "label": "Langue d'affichage",
     "helpText": "Choisissez la langue utilisée dans toute l'application.",
+    "dictationLabel": "Dictée vocale",
+    "dictationHelpText": "Choisissez la langue parlée lors de la dictée au microphone dans l'éditeur.",
     "spellcheckLabel": "Correcteur orthographique",
     "spellcheckHelpText": "Téléchargez un dictionnaire pour la vérification orthographique dans l'éditeur.",
     "spellcheckNone": "Désactivé",
