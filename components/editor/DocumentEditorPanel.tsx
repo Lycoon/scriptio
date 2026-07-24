@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 import { EditorContent } from "@tiptap/react";
 
@@ -53,6 +53,35 @@ export interface DocumentEditorPanelProps {
 // rather than snapping shut after a flick — matches the pace of a natural scroll.
 const CHROME_HIDE_RANGE = 220;
 
+// ---- Desktop editor zoom ----
+// Ctrl/⌘ +, Ctrl/⌘ -, Ctrl/⌘ 0 and Ctrl+wheel (also a trackpad pinch, which the
+// browser delivers as a ctrlKey wheel on both platforms) scale the page in the
+// view. Bounds are clamped; kept modest so text stays legible and the WebKit
+// minimum-font-size clamp isn't hit at the low end.
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 3;
+// Steps are multiplicative (a constant ratio), not additive: a fixed +0.2 would
+// be 20% at 1× but only ~7% at 3×, so zooming-in felt progressively slower. A
+// constant ratio makes every press feel the same size at any zoom level.
+const ZOOM_STEP_RATIO = 1.2;
+// Wheel/pinch scales exponentially with the delta for the same reason. A
+// mouse-wheel notch (deltaY ≈ ±100) lands near the keyboard's ~1.2× ratio;
+// trackpad pinches send small deltas for a smooth, fine-grained ramp.
+const ZOOM_WHEEL_RATE = 0.002;
+const ZOOM_STORAGE_KEY = "scriptio.editorZoom";
+
+const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+
+// useLayoutEffect on the server warns; fall back to useEffect there. The zoom
+// scroll-anchoring must run before paint, so it needs the layout variant.
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// macOS uses ⌘ for zoom shortcuts where Windows/Linux use Ctrl. The wheel gesture
+// uses ctrlKey on every platform (that's what a trackpad pinch reports), so this
+// only gates the keyboard shortcuts.
+const isMacPlatform = () =>
+    typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+
 const DocumentEditorPanel = ({
     config,
     isVisible,
@@ -102,6 +131,14 @@ const DocumentEditorPanel = ({
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    // Desktop editor zoom (see the zoom effects below). Seeded from the last value
+    // the user set so it survives reloads; only affects a CSS variable applied in
+    // an effect, so there's no SSR/hydration markup to mismatch.
+    const [zoom, setZoom] = useState<number>(() => {
+        if (typeof window === "undefined") return 1;
+        const stored = parseFloat(window.localStorage.getItem(ZOOM_STORAGE_KEY) ?? "");
+        return Number.isFinite(stored) ? clampZoom(stored) : 1;
+    });
     // Phone-only draggable scroll handle: a fixed-size grab handle (styled like
     // the sidebar edge toggles) that rides the right edge tracking scroll
     // position, so it's easy to grab and drag the page up/down. Shown while
@@ -155,8 +192,7 @@ const DocumentEditorPanel = ({
     // Resolve the comments Y.Map for this document
     const projectState = repository?.getState();
     const commentsMap = useMemo(
-        () =>
-            projectState && config.features.comments ? config.getCommentsMap(projectState) : null,
+        () => (projectState && config.features.comments ? config.getCommentsMap(projectState) : null),
         // Re-derive only when projectState identity changes (Yjs doc swap on project change)
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [projectState],
@@ -289,6 +325,116 @@ const DocumentEditorPanel = ({
         };
     }, [containerEl, isPhone, isEndlessScroll, pageFormat, editor]);
 
+    // ---- Desktop editor zoom ----
+    // Scale the zoom level by a ratio (>1 in, <1 out) so each step feels the same
+    // size at any level. Rounds to whole percents so repeated wheel/keys don't
+    // accumulate float drift, and clamps to [MIN_ZOOM, MAX_ZOOM].
+    const zoomBy = useCallback((factor: number) => {
+        setZoom((z) => clampZoom(Math.round(z * factor * 100) / 100));
+    }, []);
+
+    // Push the level into the CSS variable the ProseMirror `zoom` reads, and keep
+    // the page growing from the viewport centre rather than pinning to the left as
+    // it scales past the view width. Runs before paint so the reposition is not
+    // seen as a jump. Phone owns its own scaling (paged transform / endless
+    // reflow), so this stays desktop-only — clear the variable there.
+    const prevZoomRef = useRef(1);
+    const didInitZoomRef = useRef(false);
+    useIsoLayoutEffect(() => {
+        const container = containerEl;
+        if (!container || isPhone) {
+            container?.style.removeProperty("--editor-user-zoom");
+            return;
+        }
+        const prev = prevZoomRef.current;
+        // Capture the pre-zoom scroll BEFORE rescaling: applying the new zoom can
+        // clamp scrollLeft/Top (when zooming out shrinks the scrollable area),
+        // which would corrupt the centre we're trying to preserve.
+        const centreX = container.scrollLeft + container.clientWidth / 2;
+        const centreY = container.scrollTop + container.clientHeight / 2;
+        container.style.setProperty("--editor-user-zoom", `${zoom}`);
+
+        // First application (e.g. a zoom level restored from a previous session):
+        // centre horizontally without touching the vertical scroll, so the page
+        // opens at the top like normal.
+        if (!didInitZoomRef.current) {
+            didInitZoomRef.current = true;
+            prevZoomRef.current = zoom;
+            if (zoom !== 1) {
+                // Reading scrollWidth flushes the pending zoom reflow before we
+                // centre against the new (scaled) content width.
+                container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
+            }
+            return;
+        }
+
+        // Interactive change: keep whatever sat under the viewport centre put, so
+        // the page scales symmetrically around the middle of the view.
+        if (prev !== zoom) {
+            const factor = zoom / prev;
+            container.scrollLeft = centreX * factor - container.clientWidth / 2;
+            container.scrollTop = centreY * factor - container.clientHeight / 2;
+        }
+        prevZoomRef.current = zoom;
+    }, [containerEl, zoom, isPhone]);
+
+    // Persist the level and nudge resize-driven layout (e.g. the comment gutter,
+    // which only recomputes its icon coordinates on edits / resizes).
+    useEffect(() => {
+        if (isPhone) return;
+        try {
+            window.localStorage.setItem(ZOOM_STORAGE_KEY, `${zoom}`);
+        } catch {
+            // Ignore storage failures (private mode / quota); zoom still applies.
+        }
+        window.dispatchEvent(new Event("resize"));
+    }, [zoom, isPhone]);
+
+    // Wire the zoom gestures to the scroll container (not window) so that in split
+    // view each side zooms independently — the wheel fires on the container under
+    // the pointer, and keydown reaches the container the caret is focused in. The
+    // wheel listener must be non-passive to preventDefault the browser/webview's
+    // own page zoom, which React's synthetic onWheel can't guarantee.
+    useEffect(() => {
+        const container = containerEl;
+        if (!container || isPhone) return;
+        const mac = isMacPlatform();
+
+        const onWheel = (e: WheelEvent) => {
+            if (!e.ctrlKey) return;
+            e.preventDefault();
+            zoomBy(Math.exp(-e.deltaY * ZOOM_WHEEL_RATE));
+        };
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            const mod = mac ? e.metaKey : e.ctrlKey;
+            if (!mod) return;
+            switch (e.key) {
+                case "+":
+                case "=": // same physical key as '+' without Shift
+                    e.preventDefault();
+                    zoomBy(ZOOM_STEP_RATIO);
+                    break;
+                case "-":
+                case "_":
+                    e.preventDefault();
+                    zoomBy(1 / ZOOM_STEP_RATIO);
+                    break;
+                case "0":
+                    e.preventDefault();
+                    setZoom(1);
+                    break;
+            }
+        };
+
+        container.addEventListener("wheel", onWheel, { passive: false });
+        container.addEventListener("keydown", onKeyDown);
+        return () => {
+            container.removeEventListener("wheel", onWheel);
+            container.removeEventListener("keydown", onKeyDown);
+        };
+    }, [containerEl, isPhone, zoomBy]);
+
     // ---- Orphaned comment cleanup ----
     // Comments anchor to a node's data-id. When that node is deleted the comment
     // is orphaned (no gutter icon, unreachable), so prune it from the project.
@@ -391,14 +537,8 @@ const DocumentEditorPanel = ({
             editorElement.style.setProperty(`--${key}-align`, s.align ?? "left");
             editorElement.style.setProperty(`--${key}-weight`, s.bold ? "bold" : "normal");
             editorElement.style.setProperty(`--${key}-style`, s.italic ? "italic" : "normal");
-            editorElement.style.setProperty(
-                `--${key}-decoration`,
-                s.underline ? "underline" : "none",
-            );
-            editorElement.style.setProperty(
-                `--${key}-transform`,
-                s.uppercase ? "uppercase" : "none",
-            );
+            editorElement.style.setProperty(`--${key}-decoration`, s.underline ? "underline" : "none");
+            editorElement.style.setProperty(`--${key}-transform`, s.uppercase ? "uppercase" : "none");
         }
 
         // Compute startNewPage types from element styles
@@ -536,8 +676,7 @@ const DocumentEditorPanel = ({
                     if (event.key === "Backspace") {
                         // Inside a dual_dialogue_column: let the column node handle it.
                         for (let d = selection.$anchor.depth; d >= 1; d--) {
-                            if (selection.$anchor.node(d).type.name === DUAL_DIALOGUE_COLUMN)
-                                return false;
+                            if (selection.$anchor.node(d).type.name === DUAL_DIALOGUE_COLUMN) return false;
                         }
                         if (nodeSize === 1 && nodePos === 1) {
                             const tr = view.state.tr.delete(selection.from - 1, selection.from);
@@ -548,10 +687,7 @@ const DocumentEditorPanel = ({
                     }
 
                     if (event.code === "Space") {
-                        if (
-                            currNode === ScreenplayElement.Action &&
-                            node.textContent.match(/^\b(int|ext)\./gi)
-                        ) {
+                        if (currNode === ScreenplayElement.Action && node.textContent.match(/^\b(int|ext)\./gi)) {
                             setActiveElementRef.current(ScreenplayElement.Scene);
                         }
                         return false;
@@ -571,11 +707,7 @@ const DocumentEditorPanel = ({
                             if ($anchor.node(d).type.name === DUAL_DIALOGUE_COLUMN) return false;
                         }
 
-                        if (
-                            currNode === ScreenplayElement.Dialogue &&
-                            nodePos > 0 &&
-                            nodePos < nodeSize
-                        ) {
+                        if (currNode === ScreenplayElement.Dialogue && nodePos > 0 && nodePos < nodeSize) {
                             const doc = view.state.doc;
                             const $anchor = selection.$anchor;
 
@@ -610,9 +742,7 @@ const DocumentEditorPanel = ({
                             tr.delete($anchor.pos, $anchor.end(1));
                             const insertPos = tr.mapping.map($anchor.after(1));
                             tr.insert(insertPos, [charNode, newDialogue]);
-                            tr.setSelection(
-                                TextSelection.create(tr.doc, insertPos + charNode.nodeSize + 1),
-                            );
+                            tr.setSelection(TextSelection.create(tr.doc, insertPos + charNode.nodeSize + 1));
                             tr.scrollIntoView();
                             view.dispatch(tr);
                             return true;
@@ -703,6 +833,10 @@ const DocumentEditorPanel = ({
     const onEditorContextMenu = useCallback(
         (e: React.MouseEvent) => {
             if (!editor) return;
+            // .page_shift spans the full editor column, but the page (editor.view.dom)
+            // is narrower and centred — ignore right-clicks in the surrounding gutter.
+            if (!editor.view.dom.contains(e.target as Node)) return;
+
             e.preventDefault();
 
             const { from, to } = editor.state.selection;
@@ -774,9 +908,7 @@ const DocumentEditorPanel = ({
 
             // Comments anchor to the node under the caret, not a text range.
             const commentNodeId = getNodeIdAtPos(editor.state, from);
-            const onAddComment = commentNodeId
-                ? () => addCommentToNode(commentNodeId)
-                : undefined;
+            const onAddComment = commentNodeId ? () => addCommentToNode(commentNodeId) : undefined;
 
             updateContextMenu({
                 type: ContextMenuType.EditorContextMenu,
@@ -785,7 +917,17 @@ const DocumentEditorPanel = ({
                 // resolved against it, and ProjectContext.editor is always the
                 // MAIN screenplay editor — so secondary editors (tree document,
                 // draft, title page) must act on this instance, not that one.
-                typeSpecificProps: { editor, from, to, onAddComment, spellError, nodePos, nodeClass, outlineScene, pageBreak },
+                typeSpecificProps: {
+                    editor,
+                    from,
+                    to,
+                    onAddComment,
+                    spellError,
+                    nodePos,
+                    nodeClass,
+                    outlineScene,
+                    pageBreak,
+                },
             });
         },
         [
@@ -1068,8 +1210,7 @@ const DocumentEditorPanel = ({
         return () => dom.removeEventListener("input", onInput);
     }, [editor, isPhone, applyChromeHide]);
 
-    const focusType =
-        focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
+    const focusType = focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
 
     const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
     const wrapperStyle = pageSize
@@ -1087,7 +1228,11 @@ const DocumentEditorPanel = ({
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
             <div
                 ref={setContainerEl}
-                className={join(styles.container, timelineOpen ? styles.timeline_open : "")}
+                className={join(
+                    styles.container,
+                    timelineOpen ? styles.timeline_open : "",
+                    zoom > 1 && !isPhone ? styles.zoomed_x : "",
+                )}
                 onScroll={onScroll}
                 onTouchStart={onReaderTouchStart}
                 onTouchEnd={onReaderTouchEnd}
@@ -1108,9 +1253,7 @@ const DocumentEditorPanel = ({
                     className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}
                     style={wrapperStyle}
                 >
-                    <div
-                        className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")}
-                    />
+                    <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />
                     {isReadOnly && (
                         <div className={styles.viewOnlyBannerWrapper}>
                             <div className={styles.viewOnlyBanner} title={t("viewOnlyHint")}>
@@ -1142,10 +1285,7 @@ const DocumentEditorPanel = ({
             {isPhone && canScrollThumb && (
                 <div
                     ref={scrollTrackRef}
-                    className={join(
-                        styles.scroll_track,
-                        showScrollThumb ? styles.scroll_track_visible : "",
-                    )}
+                    className={join(styles.scroll_track, showScrollThumb ? styles.scroll_track_visible : "")}
                 >
                     <div
                         ref={scrollHandleRef}
