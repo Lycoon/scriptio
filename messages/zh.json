@@ -50,7 +50,7 @@
     "toggleComments": "切换显示评论",
     "toggleSpellcheck": "切换拼写检查",
     "focusMode": "聚焦模式",
-    "splitPanel": "分割面板",
+    "dictate": "语音输入",    "splitPanel": "分割面板",
     "unsplitPanel": "合并面板",
     "swapPanels": "交换面板",
     "draftEditor": "草稿编辑器",
@@ -86,15 +86,6 @@
   },
   "appearance": {
     "theme": "主题",
-    "themeHelp": {
-      "dark": "低光舒适，适合熬夜党。",
-      "light": "清晰明亮，适合日间。",
-      "latte": "温暖乳白，阅读舒适。",
-      "wonka": "丝滑可可，深沉奢华。",
-      "mint": "清新薄荷，视觉平衡。",
-      "blossom": "娇柔花卉，视觉温和。",
-      "midnight": "深邃午夜蓝，专为星空下的专注工作而设计。"
-    },
     "editor": "编辑器",
     "themedEditor": "主题编辑器",
     "themedEditorDesc": "编辑器使用主题颜色",
@@ -159,6 +150,8 @@
     "ttsRemove": "移除语音",
     "label": "界面语言",
     "helpText": "选择应用界面显示的语言。",
+    "dictationLabel": "语音输入",
+    "dictationHelpText": "选择在编辑器中使用麦克风语音输入时所说的语言。",
     "spellcheckLabel": "拼写检查",
     "spellcheckHelpText": "下载字典以在编辑器中进行拼写检查。",
     "spellcheckNone": "已禁用",

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import {
     ArrowLeft,
@@ -37,6 +38,10 @@ import navbar from "./ProjectNavbar.module.css";
 import mobileMenu from "./ProjectNavbarMobileMenu.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
 
+// Stable no-op subscribe for the mount gate below: the client/server snapshot is
+// fixed after hydration, so there is no external store to subscribe to.
+const emptySubscribe = () => () => {};
+
 /**
  * Phone project navbar: a slim two-cluster bar (edit-mode controls + search/burger)
  * whose burger opens the full menu that the desktop spreads across the bar and the
@@ -71,10 +76,44 @@ const ProjectNavbarMobile = () => {
         useViewContext();
     const activeEditor = useActiveEditor();
 
-    const [isSavesOpen, setIsSavesOpen] = useState(false);
-    const [isProductionOpen, setIsProductionOpen] = useState(false);
-    const [isReadAloudOpen, setIsReadAloudOpen] = useState(false);
+    // The screenplay tools (saves/production/read-aloud) open one at a time as a
+    // sheet below the bar; analytics is a full modal. Kept as a single value so
+    // tapping one tool icon replaces whatever sheet was open.
+    const [activePanel, setActivePanel] = useState<null | "saves" | "production" | "readAloud">(null);
     const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+
+    // The tool sheets are portaled to <body> (see below) — gate on mount so the
+    // server and first client render agree, as `document` is client-only. Uses
+    // useSyncExternalStore (server snapshot false, client true) rather than a
+    // setState-in-effect, so flipping to mounted doesn't trigger a cascading render.
+    const mounted = useSyncExternalStore(
+        emptySubscribe,
+        () => true,
+        () => false,
+    );
+
+    // Opening a tool sheet closes the side drawers and the burger menu so it
+    // surfaces cleanly on top; tapping the same icon again dismisses it. Reads
+    // the render-time value (not a functional updater) so a re-tap resolves to
+    // null even though the panel's own outside-click already fired on mousedown —
+    // mirrors the desktop bar's toggles.
+    const toggleTool = (panel: "saves" | "production" | "readAloud") => {
+        const next = activePanel === panel ? null : panel;
+        if (next) {
+            setLeftSidebarOpen(false);
+            setRightSidebarOpen(false);
+            setMobileMenuOpen(false);
+        }
+        setActivePanel(next);
+    };
+
+    const openAnalytics = () => {
+        setActivePanel(null);
+        setLeftSidebarOpen(false);
+        setRightSidebarOpen(false);
+        setMobileMenuOpen(false);
+        setIsAnalyticsOpen(true);
+    };
 
     // Undo/redo are backed by the collaboration UndoManager. Guard on the command
     // existing so calling before Yjs is ready can't throw.
@@ -121,6 +160,43 @@ const ProjectNavbarMobile = () => {
                             </div>
                         </div>
                     ))}
+                {/* Screenplay tools cluster: the saves/production/read-aloud/analytics
+                    entries that the desktop bar spreads across its left/right. Each opens
+                    a sheet (or the analytics modal) that fits the phone screen. Hidden
+                    while editing — the left cluster expands to the edit controls then, so
+                    the bar has no room, and these are review-time tools anyway. */}
+                {isInProject && projectId && !mobileEditMode && (
+                    <div className={navbar.mobile_tools}>
+                        <div
+                            className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "saves" ? navBtn.active : ""}`}
+                            onClick={() => toggleTool("saves")}
+                            aria-label={t("history")}
+                        >
+                            <History size={18} />
+                        </div>
+                        <div
+                            className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "production" ? navBtn.active : ""}`}
+                            onClick={() => toggleTool("production")}
+                            aria-label={t("production")}
+                        >
+                            <Lock size={18} />
+                        </div>
+                        <div
+                            className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "readAloud" ? navBtn.active : ""}`}
+                            onClick={() => toggleTool("readAloud")}
+                            aria-label={t("readAloud")}
+                        >
+                            <AudioLines size={18} />
+                        </div>
+                        <div
+                            className={`${navBtn.button} ${navbar.mobile_icon} ${isAnalyticsOpen ? navBtn.active : ""}`}
+                            onClick={openAnalytics}
+                            aria-label={t("analytics")}
+                        >
+                            <BarChart2 size={18} />
+                        </div>
+                    </div>
+                )}
                 {/* The element-type selector lives in the format bar above the
                     keyboard (MobileFormatToolbar); the sidebars open via the editor
                     edge chevrons; everything else is in the burger menu below. */}
@@ -173,57 +249,6 @@ const ProjectNavbarMobile = () => {
                             <span>{t("uploadToCloud")}</span>
                         </button>
                     )}
-
-                    <div className={mobileMenu.separator} />
-
-                    <div className={mobileMenu.section}>
-                        <button
-                            className={`${mobileMenu.item} ${isSavesOpen ? mobileMenu.item_active : ""}`}
-                            onClick={() => setIsSavesOpen((prev) => !prev)}
-                        >
-                            <History size={18} />
-                            <span>{t("history")}</span>
-                        </button>
-                        <SavesPanel
-                            projectId={projectId}
-                            isOpen={isSavesOpen}
-                            onClose={() => setIsSavesOpen(false)}
-                            isPro={isPro}
-                        />
-                    </div>
-
-                    <div className={mobileMenu.section}>
-                        <button
-                            className={`${mobileMenu.item} ${isProductionOpen ? mobileMenu.item_active : ""}`}
-                            onClick={() => setIsProductionOpen((prev) => !prev)}
-                        >
-                            <Lock size={18} />
-                            <span>{t("production")}</span>
-                        </button>
-                        <ProductionPanel isOpen={isProductionOpen} onClose={() => setIsProductionOpen(false)} />
-                    </div>
-
-                    <div className={mobileMenu.section}>
-                        <button
-                            className={`${mobileMenu.item} ${isReadAloudOpen ? mobileMenu.item_active : ""}`}
-                            onClick={() => setIsReadAloudOpen((prev) => !prev)}
-                        >
-                            <AudioLines size={18} />
-                            <span>{t("readAloud")}</span>
-                        </button>
-                        <ReadAloudPanel isOpen={isReadAloudOpen} onClose={() => setIsReadAloudOpen(false)} />
-                    </div>
-
-                    <button
-                        className={mobileMenu.item}
-                        onClick={() => {
-                            setIsAnalyticsOpen(true);
-                            setMobileMenuOpen(false);
-                        }}
-                    >
-                        <BarChart2 size={18} />
-                        <span>{t("analytics")}</span>
-                    </button>
 
                     <div className={mobileMenu.separator} />
 
@@ -290,6 +315,33 @@ const ProjectNavbarMobile = () => {
                     </button>
                 </ProjectNavbarMobileMenu>
             )}
+
+            {/* Tool sheets are portaled to <body> so their fixed positioning escapes
+                the navbar's transform + stacking context (which slides with the reader
+                scroll); on phone each panel's CSS renders it as a full-width sheet
+                pinned below the bar. */}
+            {mounted &&
+                isInProject &&
+                projectId &&
+                createPortal(
+                    <>
+                        <SavesPanel
+                            projectId={projectId}
+                            isOpen={activePanel === "saves"}
+                            onClose={() => setActivePanel(null)}
+                            isPro={isPro}
+                        />
+                        <ProductionPanel
+                            isOpen={activePanel === "production"}
+                            onClose={() => setActivePanel(null)}
+                        />
+                        <ReadAloudPanel
+                            isOpen={activePanel === "readAloud"}
+                            onClose={() => setActivePanel(null)}
+                        />
+                    </>,
+                    document.body,
+                )}
 
             <AnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setIsAnalyticsOpen(false)} />
         </nav>

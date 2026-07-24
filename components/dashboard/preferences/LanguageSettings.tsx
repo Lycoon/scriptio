@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Download, Loader2, Plus, SpellCheck, X } from "lucide-react";
+import { Check, ChevronDown, Download, Loader2, Mic, Plus, SpellCheck, X } from "lucide-react";
 import form from "./../../utils/Form.module.css";
 import sharedStyles from "../project/ProjectSettings.module.css";
 import styles from "./SpellcheckSettings.module.css";
@@ -18,6 +18,7 @@ import {
 } from "@src/lib/spellcheck/spellcheck-dictionaries";
 import { VOICE_CATALOG, formatVoiceSize } from "@src/lib/tts/voice-catalog";
 import { MODEL_VARIANTS, ModelQuality } from "@src/lib/tts/runtime";
+import { getDictationLanguage, isDictationSupported, setDictationLanguage } from "@src/lib/editor/use-dictation";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import { useTranslations } from "next-intl";
 
@@ -53,6 +54,30 @@ const LanguageSettings = () => {
     const [wordInput, setWordInput] = useState("");
     const [dictOpen, setDictOpen] = useState(false);
     const [customWords, setCustomWords] = useState<string[]>([]);
+
+    // Dictation (footer mic) language — a device preference read/written directly
+    // to localStorage. Only meaningful where the browser has speech recognition.
+    const dictationSupported = useMemo(() => isDictationSupported(), []);
+    const [dictationLang, setDictationLangState] = useState(() => getDictationLanguage());
+    const handleDictationChange = useCallback((value: string) => {
+        setDictationLangState(value);
+        setDictationLanguage(value);
+    }, []);
+
+    // Same shape as the spell-check options: a mic icon marks the trigger.
+    const dictationOptions: DropdownOption[] = useMemo(
+        () =>
+            LANGUAGE_OPTIONS.map((opt) => ({
+                ...opt,
+                triggerLabel: (
+                    <span className={styles.triggerLabel}>
+                        <Mic size={14} className={styles.triggerIcon} />
+                        {opt.label}
+                    </span>
+                ),
+            })),
+        [],
+    );
 
     const dictMap = useMemo(() => repository?.getState()?.dictionary() ?? null, [repository]);
 
@@ -174,6 +199,19 @@ const LanguageSettings = () => {
                     className={sharedStyles.input}
                 />
             </div>
+
+            {dictationSupported && (
+                <div className={sharedStyles.formGroup}>
+                    <label className={form.label}>{t("dictationLabel")}</label>
+                    <p className={sharedStyles.helpText}>{t("dictationHelpText")}</p>
+                    <Dropdown
+                        value={dictationLang}
+                        onChange={handleDictationChange}
+                        options={dictationOptions}
+                        className={sharedStyles.input}
+                    />
+                </div>
+            )}
 
             {spellcheckLang && dictMap && (
                 <div className={sharedStyles.formGroup}>

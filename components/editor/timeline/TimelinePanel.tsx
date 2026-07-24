@@ -7,6 +7,7 @@ import { UserContext } from "@src/context/UserContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { BoardCardData, MAIN_SCREENPLAY_REF, TimelineClip, TimelineLayer } from "@src/lib/project/project-state";
 import { TransientScene } from "@src/lib/screenplay/scenes";
+import { paginationKey } from "@src/lib/screenplay/extensions/pagination-extension";
 import { focusOnPosition } from "@src/lib/screenplay/editor";
 import { join } from "@src/lib/utils/misc";
 import { ContextMenuItem } from "@components/utils/ContextMenu";
@@ -419,6 +420,26 @@ const TimelinePanel = () => {
         }
     }, [repository, timelineClips, resolved]);
 
+    // Real length of the screenplay in running minutes, one page = one minute.
+    // Read straight from the pagination plugin's live page list (breaks.length + 1
+    // pages) — the actual paginated count, not an analytics estimate — and kept
+    // in sync as the script is edited. The scene overview and the timeline extent
+    // scale to this, so a 125-page script stays 125 minutes wide regardless of the
+    // *goal* feature length.
+    const [scriptMinutes, setScriptMinutes] = useState(1);
+    useEffect(() => {
+        if (!editor) return;
+        const read = () => {
+            const state = paginationKey.getState(editor.state) as { breaks?: unknown[] } | undefined;
+            setScriptMinutes(Math.max(1, (state?.breaks?.length ?? 0) + 1));
+        };
+        read();
+        editor.on("update", read);
+        return () => {
+            editor.off("update", read);
+        };
+    }, [editor]);
+
     // ---- Navigation ----
 
     // Latest screenplay editor, read lazily so a deferred focus (after the
@@ -444,27 +465,38 @@ const TimelinePanel = () => {
                     if (attempt < 12) window.setTimeout(() => focus(attempt + 1), 40);
                     return;
                 }
-                // Each page's first node carries a pagination start class, one per
-                // page in document order — so the Nth marks the top of page N.
-                const starts = ed.view.dom.querySelectorAll(
-                    ".pagination-doc-start, .pagination-break-start",
-                );
-                if (starts.length > 0) {
-                    const el = starts[Math.min(starts.length - 1, page - 1)];
-                    const pos = ed.view.posAtDOM(el, 0);
-                    if (pos >= 0) {
-                        focusOnPosition(ed, pos);
-                        return;
-                    }
+                // Resolve the target page from the pagination plugin's live break
+                // list — the SAME source that scriptMinutes counts, so every minute
+                // on the ruler maps to a real page. Page 1 starts at the document
+                // top; page k starts at breaks[k-2].pos. Unlike the DOM start
+                // markers, this includes mid-node sentence-split pages (which carry
+                // no marker), so navigation reaches the whole script instead of
+                // stalling at the last marker.
+                const state = paginationKey.getState(ed.state) as
+                    | { breaks?: { pos: number; splitNodeType: unknown }[] }
+                    | undefined;
+                if (state?.breaks) {
+                    // Turn each page start into a position *inside* that page's first
+                    // block. A whole-node break's `pos` is the boundary before the
+                    // block (offset 0 → +1 lands on the first character); a mid-node
+                    // split's `pos` already sits inside the straddling text node.
+                    // A boundary position would make focusOnPosition's domAtPos
+                    // resolve to the editor container and scroll nowhere useful.
+                    const pageStarts = [1, ...state.breaks.map((b) => (b.splitNodeType === null ? b.pos + 1 : b.pos))];
+                    const pos = pageStarts[Math.min(pageStarts.length - 1, page - 1)];
+                    const size = ed.state.doc.content.size;
+                    focusOnPosition(ed, Math.max(1, Math.min(size - 1, pos)));
+                    return;
                 }
-                // Fallback (pagination markers absent): proportional content scroll.
+                // Fallback (pagination state absent): proportional content scroll,
+                // scaled to the script's real runtime (not the feature-length goal).
                 const size = ed.state.doc.content.size;
-                const fraction = featureLength > 0 ? Math.min(1, Math.max(0, minutes / featureLength)) : 0;
+                const fraction = scriptMinutes > 0 ? Math.min(1, Math.max(0, minutes / scriptMinutes)) : 0;
                 focusOnPosition(ed, Math.max(1, Math.min(size - 1, Math.round(fraction * size))));
             };
             focus(0);
         },
-        [focusedSide, setSidePanel, setFocusedSide, featureLength],
+        [focusedSide, setSidePanel, setFocusedSide, scriptMinutes],
     );
 
     // ---- Timeline extent + ruler ----
@@ -481,11 +513,12 @@ const TimelinePanel = () => {
         return candidates.find((s) => s * pxPerMin >= 48) ?? 120;
     }, [pxPerMin]);
 
-    // Span the whole feature, but always keep every clip in view.
+    // Span the longer of the feature-length goal and the script's real runtime,
+    // but always keep every clip in view.
     const totalMinutes = useMemo(() => {
-        const min = Math.max(30, featureLength, Math.ceil(maxEnd) + 2);
+        const min = Math.max(30, featureLength, scriptMinutes, Math.ceil(maxEnd) + 2);
         return Math.ceil(min / tickStep) * tickStep;
-    }, [maxEnd, featureLength, tickStep]);
+    }, [maxEnd, featureLength, scriptMinutes, tickStep]);
 
     const trackWidth = totalMinutes * pxPerMin;
 
@@ -515,7 +548,11 @@ const TimelinePanel = () => {
         const origin = items[0].position;
         const total = items[items.length - 1].nextPosition - origin;
         if (total <= 0) return [];
-        const spanWidth = featureLength * pxPerMin;
+        // Lay the scenes out across the script's real runtime (1 page ≈ 1 min),
+        // not the feature-length goal — otherwise a 125-page script gets stretched
+        // to fill a 5h goal, and clicks no longer line up with the pages they
+        // navigate to.
+        const spanWidth = scriptMinutes * pxPerMin;
         return items.map((s, i) => {
             const left = ((s.position - origin) / total) * spanWidth;
             const right = ((s.nextPosition - origin) / total) * spanWidth;
@@ -529,7 +566,7 @@ const TimelinePanel = () => {
                 width: Math.max(2, right - left - 2),
             };
         });
-    }, [scenes, featureLength, pxPerMin, t]);
+    }, [scenes, scriptMinutes, pxPerMin, t]);
 
     // ---- Ruler sync ----
     // The ruler lives outside the vertically-scrolling tracks area so it stays

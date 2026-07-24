@@ -10,38 +10,24 @@
     gap: 2px;
     padding: 3px 5px;
     background-color: var(--secondary);
-    border-radius: 18px;
+    /* Full pill: half the bubble's height (40px action + 2×3px padding) so its
+       ends curve like the round buttons inside it. */
+    border-radius: 23px;
     box-shadow: var(--panel-shadow);
     color: var(--secondary-text);
     font-size: 11px;
     user-select: none;
 }
 
-/* Page-count readout, sitting left of the action icons. */
-.pages {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 0 8px 0 6px;
-    white-space: nowrap;
-}
-
-.divider {
-    width: 1px;
-    align-self: stretch;
-    margin: 4px 3px;
-    background-color: var(--separator);
-}
-
 .action {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 24px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border: none;
-    border-radius: 14px;
+    border-radius: 20px;
     background: transparent;
     color: var(--secondary-text);
     cursor: pointer;
@@ -70,6 +56,29 @@
     background-color: var(--secondary-hover);
 }
 
+/* Live dictation: blink the mic red so it's obviously recording. */
+.action.recording,
+.action.recording:hover {
+    background: transparent;
+    animation: recording-blink 1.1s ease-in-out infinite;
+}
+
+/* Override the global `svg { color: var(--primary-text) }` (styles/globals.css),
+   which sets the colour on the icon itself so it never inherits the button's. */
+.action.recording svg {
+    color: var(--error);
+}
+
+@keyframes recording-blink {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
+
 /* Phone: centre the island along the bottom — pinned to the right feels off on a
  * narrow screen. Also lift it above the home-indicator safe area. */
 @media (max-width: 767px) {
@@ -85,15 +94,6 @@
         gap: 4px;
         padding: 5px 7px;
         border-radius: 26px;
-    }
-
-    /* Drop the page count on phone: it's redundant in the default endless-scroll
-     * reader and is the pill's widest element. Hiding it keeps the row a compact
-     * cluster of toggles that clears the bottom-left Edit (pen) button — without a
-     * width cap, which would clip the timer's live readout when it's running. */
-    .pages,
-    .divider {
-        display: none;
     }
 
     /* Roomier, thumb-friendly tap targets now that the row is short. */

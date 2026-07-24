@@ -50,7 +50,7 @@
     "toggleComments": "コメントの表示/非表示",
     "toggleSpellcheck": "スペルチェックの切り替え",
     "focusMode": "集中モード",
-    "splitPanel": "パネルを分割",
+    "dictate": "音声入力",    "splitPanel": "パネルを分割",
     "unsplitPanel": "パネルを閉じる",
     "swapPanels": "パネルを入れ替え",
     "draftEditor": "下書きエディター",
@@ -86,15 +86,6 @@
   },
   "appearance": {
     "theme": "テーマ",
-    "themeHelp": {
-      "dark": "目に優しい低輝度テーマ。夜間の作業に最適です。",
-      "light": "明るく清潔感のあるテーマ。日中の作業に最適です。",
-      "latte": "温かみのあるクリームトーン。読みやすさと心地よさを両立します。",
-      "wonka": "深みのあるカカオトーン。高級感と視覚的な快適さを提供します。",
-      "mint": "爽やかなミントカラー。植物のような安らぎとバランスをもたらします。",
-      "blossom": "繊細なフローラルトーン。花びらのような柔らかさと快適さを提供します。",
-      "midnight": "深みのある深夜ブルー。星空の下で集中して作業するための落ち着いたテーマです。"
-    },
     "editor": "エディタ",
     "themedEditor": "テーマエディタ",
     "themedEditorDesc": "エディタの背景とテキストにテーマカラーを適用する",
@@ -159,6 +150,8 @@
     "ttsRemove": "音声を削除",
     "label": "表示言語",
     "helpText": "アプリケーション全体で使用する言語を選択してください。",
+    "dictationLabel": "音声入力",
+    "dictationHelpText": "エディターのマイクで音声入力する際に話す言語を選択します。",
     "spellcheckLabel": "スペルチェック",
     "spellcheckHelpText": "エディタでスペルチェックを行うための辞書をダウンロードしてください。",
     "spellcheckNone": "無効",

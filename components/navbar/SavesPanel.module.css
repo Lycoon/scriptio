@@ -12,6 +12,22 @@
     overflow: hidden;
 }
 
+/* Phone: render as a full-width sheet pinned below the navbar instead of a
+   narrow panel anchored to a tiny bar icon (which would overflow the edge). The
+   parent portals this to <body>, so fixed positioning is viewport-relative. */
+@media (max-width: 767px) {
+    .container {
+        position: fixed;
+        top: calc(var(--navbar-height) + 4px);
+        left: calc(12px + var(--safe-left));
+        right: calc(12px + var(--safe-right));
+        width: auto;
+        max-width: none;
+        max-height: calc(100dvh - var(--navbar-height) - 16px - var(--safe-bottom));
+        z-index: 60;
+    }
+}
+
 .header {
     display: flex;
     align-items: center;

@@ -183,7 +183,7 @@ const WritingTimer = ({ triggerClassName, triggerActiveClassName }: WritingTimer
                 title={t("title")}
                 aria-label={t("title")}
             >
-                <Timer size={14} />
+                <Timer size={18} />
             </button>
 
             {isActive && <span className={join(styles.time, completed ? styles.time_done : "")}>{clock}</span>}
