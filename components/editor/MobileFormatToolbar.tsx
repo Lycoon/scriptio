@@ -5,17 +5,13 @@ import { useTranslations } from "next-intl";
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronUp, Italic, Underline } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
-import { useIsPhone } from "@src/lib/utils/hooks";
+import { useIsPhone, useKeyboardInset } from "@src/lib/utils/hooks";
 import { applyElement, applyMarkToggle } from "@src/lib/screenplay/editor";
 import { applyTitlePageElement, applyTitlePageMarkToggle } from "@src/lib/titlepage/editor";
 import { ScreenplayElement, Style, TitlePageElement } from "@src/lib/utils/enums";
 import { join } from "@src/lib/utils/misc";
 
 import styles from "./MobileFormatToolbar.module.css";
-
-// Below this the visualViewport shrink is just browser chrome jitter, not an
-// open on-screen keyboard.
-const KEYBOARD_THRESHOLD = 120;
 
 // Movement (px) past which a pointer gesture on a toolbar button counts as a
 // scroll of the button row rather than a tap, so it toggles nothing (see endTap).
@@ -38,36 +34,6 @@ const TITLEPAGE_ELEMENTS_ORDER: TitlePageElement[] = [
     TitlePageElement.Date,
     TitlePageElement.None,
 ];
-
-/**
- * Distance in px the on-screen keyboard covers at the bottom of the layout
- * viewport, tracked via the VisualViewport API. 0 when no keyboard is up.
- */
-const useKeyboardInset = (enabled: boolean): number => {
-    const [inset, setInset] = useState(0);
-
-    useEffect(() => {
-        // When disabled the consumer is hidden anyway, so leaving a stale inset is
-        // harmless — just don't subscribe.
-        if (!enabled || typeof window === "undefined" || !window.visualViewport) return;
-        const vv = window.visualViewport;
-        const update = () => {
-            // Layout-viewport height minus the visible visual viewport (and any
-            // offset from a scrolled visual viewport) is what the keyboard hides.
-            const covered = window.innerHeight - vv.height - vv.offsetTop;
-            setInset(covered > KEYBOARD_THRESHOLD ? covered : 0);
-        };
-        update();
-        vv.addEventListener("resize", update);
-        vv.addEventListener("scroll", update);
-        return () => {
-            vv.removeEventListener("resize", update);
-            vv.removeEventListener("scroll", update);
-        };
-    }, [enabled]);
-
-    return inset;
-};
 
 /**
  * Phone-only formatting bar that rides just above the on-screen keyboard while a

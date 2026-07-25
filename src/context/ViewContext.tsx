@@ -68,6 +68,15 @@ interface ViewContextType {
     closeDocument: (docId: string) => void;
     swapPanels: () => void;
     setIsEndlessScroll: (value: boolean | ((prev: boolean) => boolean)) => void;
+    /**
+     * Subscribe to be called synchronously *just before* `isEndlessScroll`
+     * flips — i.e. while the outgoing layout is still on screen and measurable.
+     * Editor panels use it to record which block sits at the top of their
+     * viewport, because the two modes render the same document at very
+     * different heights and a raw scrollTop would land somewhere else entirely
+     * (see DocumentEditorPanel's scroll anchoring). Returns an unsubscribe.
+     */
+    onBeforeEndlessScrollChange: (callback: () => void) => () => void;
     setShowComments: (value: boolean | ((prev: boolean) => boolean)) => void;
     setLeftSidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
     setRightSidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
@@ -90,7 +99,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     // Default to endless (continuous, reflowed) on phones: it renders text at a
     // readable size with no page rectangles to shift while writing. Desktop
     // defaults to the paged view. Users can toggle either way (EditorFooter).
-    const [isEndlessScroll, setIsEndlessScroll] = useState<boolean>(isPhoneViewport);
+    const [isEndlessScroll, setIsEndlessScrollState] = useState<boolean>(isPhoneViewport);
     const [showComments, setShowComments] = useState<boolean>(true);
     const [leftSidebarOpen, setLeftSidebarOpenState] = useState<boolean>(false);
     const [rightSidebarOpen, setRightSidebarOpenState] = useState<boolean>(false);
@@ -122,6 +131,35 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
         const next = typeof value === "function" ? value(rightOpenRef.current) : value;
         setRightSidebarOpenState(next);
         if (next && isPhoneViewport()) setLeftSidebarOpenState(false);
+    }, []);
+
+    // Endless-scroll listeners fired before the flip (see onBeforeEndlessScrollChange).
+    // Same ref-mirroring trick as the sidebars: the setter resolves a functional
+    // update itself so the listeners can run *outside* the state updater — React
+    // may call an updater twice (StrictMode / re-render), and these callbacks
+    // measure the DOM, so they must fire exactly once per real change.
+    const beforeEndlessChangeRef = useRef(new Set<() => void>());
+    const endlessScrollRef = useRef(isEndlessScroll);
+    useEffect(() => {
+        endlessScrollRef.current = isEndlessScroll;
+    }, [isEndlessScroll]);
+
+    const onBeforeEndlessScrollChange = useCallback((callback: () => void) => {
+        const listeners = beforeEndlessChangeRef.current;
+        listeners.add(callback);
+        return () => {
+            listeners.delete(callback);
+        };
+    }, []);
+
+    const setIsEndlessScroll = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+        const next = typeof value === "function" ? value(endlessScrollRef.current) : value;
+        if (next === endlessScrollRef.current) return;
+        // Still the old layout at this point — the state update below is what
+        // swaps it — so subscribers can measure where the reader is looking.
+        for (const listener of beforeEndlessChangeRef.current) listener();
+        endlessScrollRef.current = next;
+        setIsEndlessScrollState(next);
     }, []);
 
     const isSplit = secondaryPanel !== null;
@@ -324,11 +362,12 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             closeDocument,
             swapPanels,
             setIsEndlessScroll,
+            onBeforeEndlessScrollChange,
             setShowComments,
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, mobileEditMode, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, mobileEditMode, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, onBeforeEndlessScrollChange, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

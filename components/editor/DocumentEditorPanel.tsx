@@ -26,7 +26,8 @@ import { DocumentEditorConfig, EDITOR_INPUT_ATTRIBUTES } from "@src/lib/editor/d
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
 import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
-import { focusEditorAtCoords } from "@src/lib/editor/focus-in-viewport";
+import { useViewModeScrollAnchor } from "@src/lib/editor/use-view-mode-scroll-anchor";
+import { centerCaretInView, focusEditorAtCoords } from "@src/lib/editor/focus-in-viewport";
 import { getSpellErrorAt } from "@src/lib/spellcheck/spellcheck-extension";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
 
@@ -125,7 +126,14 @@ const DocumentEditorPanel = ({
         repository,
     } = projectCtx;
     const { settings } = useSettings();
-    const { isEndlessScroll, setChromeHidden, mobileEditMode, setMobileEditMode, timelineOpen } = useViewContext();
+    const {
+        isEndlessScroll,
+        onBeforeEndlessScrollChange,
+        setChromeHidden,
+        mobileEditMode,
+        setMobileEditMode,
+        timelineOpen,
+    } = useViewContext();
     const { user } = useUser();
     const isPhone = useIsPhone();
 
@@ -252,7 +260,12 @@ const DocumentEditorPanel = ({
     // first-of-page top-margin reset in endless-scroll mode. There the page-break
     // widgets are hidden, so the reset would otherwise make each page's first
     // node stick to the previous page's content.
-    useEffect(() => {
+    //
+    // Layout effect, not a passive one: the wrapper's own mode class lands during
+    // the commit, so a passive toggle would leave one painted frame where the two
+    // disagree — and, more importantly, the scroll re-anchoring below has to
+    // measure the *finished* mode layout, not a half-applied one.
+    useIsoLayoutEffect(() => {
         const el = editor?.view?.dom;
         if (!el) return;
         el.classList.toggle("endless-scroll", isEndlessScroll);
@@ -277,7 +290,9 @@ const DocumentEditorPanel = ({
     // zoom-shrunk fonts to a 9px rendered minimum, inflating the screenplay font
     // — see the paged-mode rule in EditorPanel.module.css) and pagination is
     // measured off-screen, so page count / numbering are unaffected either way.
-    useEffect(() => {
+    // Layout effect so the paged scale is in place before the browser paints the
+    // new mode — and before the scroll re-anchoring below measures it.
+    useIsoLayoutEffect(() => {
         const container = containerEl;
         if (!container) return;
 
@@ -324,6 +339,18 @@ const DocumentEditorPanel = ({
             container.style.removeProperty("--editor-layout-height");
         };
     }, [containerEl, isPhone, isEndlessScroll, pageFormat, editor]);
+
+    // ---- Scroll anchoring across the endless-scroll toggle ----
+    // Endless and paged render the same document at very different heights, so a
+    // switch would otherwise leave the reader pages away from what they were
+    // looking at. Declared after the two layout effects above because it measures
+    // the finished mode layout — see the hook for the full rationale.
+    useViewModeScrollAnchor({
+        container: containerEl,
+        editor,
+        viewMode: isEndlessScroll,
+        onBeforeChange: onBeforeEndlessScrollChange,
+    });
 
     // ---- Desktop editor zoom ----
     // Scale the zoom level by a ratio (>1 in, <1 out) so each step feels the same
@@ -1055,6 +1082,10 @@ const DocumentEditorPanel = ({
                     // The pen button, which has no tap point, aims at the viewport
                     // instead (see focusEditorInViewport / ProjectWorkspace).
                     focusEditorAtCoords(ed, e.clientX, e.clientY);
+                    // Then scroll the tapped line to the middle of what's still
+                    // visible with the keyboard up — a tap low on the screen would
+                    // otherwise leave the caret hidden behind it.
+                    centerCaretInView(ed);
                 }
                 return;
             }

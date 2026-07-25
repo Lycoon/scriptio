@@ -13,6 +13,11 @@ import type { Editor } from "@tiptap/react";
  *
  * Must be called synchronously inside the entering-edit tap gesture: iOS only
  * raises the keyboard when `focus()` runs in the same user-gesture turn.
+ *
+ * Callers follow this with {@link centerCaretInView}, which then eases the caret
+ * to the middle of the area left visible by the keyboard — a short, smooth scroll
+ * from an on-screen position, not the page-length jump a plain focus() would have
+ * made from the stale selection.
  */
 export const focusEditorAtCoords = (editor: Editor, left: number, top: number) => {
     const coords = editor.view.posAtCoords({ left, top });
@@ -54,4 +59,95 @@ export const focusEditorInViewport = (editor: Editor) => {
     const top = (vv?.offsetTop ?? 0) + height * 0.25;
 
     focusEditorAtCoords(editor, left, top);
+};
+
+/** Quiet spell with no visual-viewport change that counts as "the keyboard is up". */
+const KEYBOARD_SETTLE_MS = 150;
+
+/** How long the scroll-padding below stays applied — past the smooth scroll's end. */
+const SCROLL_PADDING_MS = 1000;
+
+/** Nearest scrollable ancestor of the caret — the reader's scroll container. */
+const findScrollContainer = (from: HTMLElement): HTMLElement | null => {
+    for (let node = from.parentElement; node; node = node.parentElement) {
+        const overflowY = window.getComputedStyle(node).overflowY;
+        if (/(auto|scroll|overlay)/.test(overflowY) && node.scrollHeight > node.clientHeight + 1) {
+            return node;
+        }
+    }
+    return null;
+};
+
+/**
+ * Teach the scroller what's covering it, so `block: "center"` centers in the band
+ * the user can actually see rather than on the whole screen: the fixed navbar
+ * overlay at the top — exactly the scroller's own top padding, see
+ * EditorPanel.module.css .container — and the keyboard with its format toolbar at
+ * the bottom. Without the bottom one the caret lands behind the keyboard.
+ *
+ * Cleared again shortly after: the scene navigation and search highlight scroll
+ * this same container and must not inherit a keyboard-sized offset.
+ */
+const withVisibleBandPadding = (container: HTMLElement, scroll: () => void) => {
+    const vv = window.visualViewport;
+    const toolbar = document.querySelector<HTMLElement>('[role="toolbar"]');
+    const covered = toolbar
+        ? window.innerHeight - toolbar.getBoundingClientRect().top
+        : window.innerHeight - (vv ? vv.offsetTop + vv.height : window.innerHeight);
+
+    container.style.scrollPaddingTop = window.getComputedStyle(container).paddingTop;
+    container.style.scrollPaddingBottom = `${covered}px`;
+    scroll();
+    setTimeout(() => {
+        container.style.removeProperty("scroll-padding-top");
+        container.style.removeProperty("scroll-padding-bottom");
+    }, SCROLL_PADDING_MS);
+};
+
+/**
+ * Smoothly bring the caret to the vertical center of the visible area after
+ * entering edit mode on phone, so the user can see at a glance where the focus
+ * landed. Call it right after the focus, in the same gesture.
+ *
+ * It can't scroll straight away: the on-screen keyboard rises over the next few
+ * hundred ms and halves the visible area as it does, so centering now would aim at
+ * a band that's about to change — and iOS scrolls the container itself to chase the
+ * caret meanwhile, which would fight (and cancel) a smooth scroll in flight. So it
+ * waits for the viewport to hold still, then scrolls once.
+ *
+ * A touch cancels it: the user has taken over the scroll and must not be yanked
+ * back.
+ */
+export const centerCaretInView = (editor: Editor) => {
+    if (typeof window === "undefined") return;
+
+    const center = () => {
+        stop();
+        if (editor.isDestroyed) return;
+        const { node } = editor.view.domAtPos(editor.state.selection.head);
+        const element = node instanceof HTMLElement ? node : node.parentElement;
+        if (!element) return;
+        const scroll = () => element.scrollIntoView({ behavior: "smooth", block: "center" });
+        const container = findScrollContainer(element);
+        if (container) withVisibleBandPadding(container, scroll);
+        else scroll();
+    };
+
+    // Each viewport change (the keyboard growing frame by frame) pushes the scroll
+    // back; a quiet spell means it's fully up. With no keyboard at all — a hardware
+    // one, or the reader already in edit mode — no event fires and the initial timer
+    // is the one that runs.
+    let timer = setTimeout(center, KEYBOARD_SETTLE_MS);
+    const restart = () => {
+        clearTimeout(timer);
+        timer = setTimeout(center, KEYBOARD_SETTLE_MS);
+    };
+    const stop = () => {
+        clearTimeout(timer);
+        window.visualViewport?.removeEventListener("resize", restart);
+        window.removeEventListener("touchstart", stop);
+    };
+
+    window.visualViewport?.addEventListener("resize", restart);
+    window.addEventListener("touchstart", stop, { passive: true });
 };

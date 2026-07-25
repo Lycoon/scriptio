@@ -105,6 +105,40 @@ const useIsPhone = (): boolean => {
 };
 
 
+// Below this the visualViewport shrink is just browser chrome jitter, not an
+// open on-screen keyboard.
+const KEYBOARD_THRESHOLD = 120;
+
+/**
+ * Distance in px the on-screen keyboard covers at the bottom of the layout
+ * viewport, tracked via the VisualViewport API. 0 when no keyboard is up.
+ */
+const useKeyboardInset = (enabled: boolean): number => {
+    const [inset, setInset] = useState(0);
+
+    useEffect(() => {
+        // When disabled the consumer is hidden anyway, so leaving a stale inset is
+        // harmless — just don't subscribe.
+        if (!enabled || typeof window === "undefined" || !window.visualViewport) return;
+        const vv = window.visualViewport;
+        const update = () => {
+            // Layout-viewport height minus the visible visual viewport (and any
+            // offset from a scrolled visual viewport) is what the keyboard hides.
+            const covered = window.innerHeight - vv.height - vv.offsetTop;
+            setInset(covered > KEYBOARD_THRESHOLD ? covered : 0);
+        };
+        update();
+        vv.addEventListener("resize", update);
+        vv.addEventListener("scroll", update);
+        return () => {
+            vv.removeEventListener("resize", update);
+            vv.removeEventListener("scroll", update);
+        };
+    }, [enabled]);
+
+    return inset;
+};
+
 const useProjectIdFromUrl = () => {
     const searchParams = useSearchParams();
     return searchParams.get("projectId") ?? "";
@@ -587,6 +621,7 @@ export {
     usePage,
     useDesktop,
     useIsPhone,
+    useKeyboardInset,
     useCachedProjects,
     useCachedProjectInfo,
     useProjectIdFromUrl,
