@@ -88,6 +88,19 @@
         left: auto;
         right: calc(12px + var(--safe-right));
         width: 220px;
+        /* Never taller than the gap between the navbar and the top of the
+         * on-screen keyboard (--keyboard-inset, set inline by ScreenplaySearch;
+         * 0 when no keyboard is up). Left unclamped, the filter list runs under
+         * the keyboard and off the screen, and dragging the panel scrolls the
+         * document instead of the panel — which shoves the whole layout above
+         * the top of the screen. Scroll the filters inside the panel instead,
+         * and don't chain that scroll to anything behind it. */
+        max-height: calc(
+            100dvh - var(--navbar-height) - 16px - var(--safe-bottom) - var(--keyboard-inset, 0px)
+        );
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
         /* Portaled to <body> (see ScreenplaySearch), so it must out-rank the
          * navbar (z-index 50) and page content on its own. */
         z-index: 60;

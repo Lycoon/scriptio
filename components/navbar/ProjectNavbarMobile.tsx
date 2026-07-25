@@ -55,6 +55,8 @@ const ProjectNavbarMobile = () => {
 
     const {
         openDashboard,
+        closeDashboard,
+        isDashboardOpen,
         mobileMenuOpen,
         setMobileMenuOpen,
         membership,
@@ -203,8 +205,17 @@ const ProjectNavbarMobile = () => {
                 <div className={navbar.mobile_right}>
                     {isInProject && <ScreenplaySearch />}
                     <div
-                        className={`${navBtn.button} ${navbar.mobile_icon} ${mobileMenuOpen ? navBtn.active : ""}`}
+                        className={`${navBtn.button} ${navbar.mobile_icon} ${mobileMenuOpen || isDashboardOpen ? navBtn.active : ""}`}
                         onClick={() => {
+                            // The dashboard drawer sits below the navbar on phone, so the
+                            // burger stays tappable while it's up — and it was reached
+                            // *through* this menu. Tapping again dismisses that stack
+                            // rather than stacking another menu behind it.
+                            if (isDashboardOpen) {
+                                closeDashboard();
+                                setMobileMenuOpen(false);
+                                return;
+                            }
                             const next = !mobileMenuOpen;
                             // The menu drawer opens on the right, same as the format
                             // sidebar; close both side drawers so it opens cleanly on top.

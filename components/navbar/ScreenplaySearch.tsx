@@ -4,7 +4,7 @@ import { useContext, useRef, useEffect, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
-import { useIsPhone } from "@src/lib/utils/hooks";
+import { useIsPhone, useKeyboardInset } from "@src/lib/utils/hooks";
 import { ScreenplayElement } from "@src/lib/utils/enums";
 import { scrollToMatch, SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 import { Search, ChevronUp, ChevronDown, X, Replace, ReplaceAll } from "lucide-react";
@@ -54,6 +54,10 @@ const ScreenplaySearch = () => {
 
     const isPhone = useIsPhone();
     const [isOpen, setIsOpen] = useState(false);
+    // Opening the panel focuses its input, which raises the on-screen keyboard.
+    // The panel is clamped to the space left above it (see the CSS max-height)
+    // so it never extends under the keyboard.
+    const keyboardInset = useKeyboardInset(isPhone && isOpen);
     const [replaceValue, setReplaceValue] = useState("");
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -120,6 +124,25 @@ const ScreenplaySearch = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isOpen, handleClose]);
+
+    // iOS scrolls the whole document to bring a focused input into view when the
+    // keyboard opens. The app shell is pinned to the viewport (body is
+    // overflow: clip) so nothing scrolls the document legitimately — that scroll
+    // just drags the entire layout past the top of the screen and leaves it
+    // there, taking the navbar with it. Pin it back while the panel is open.
+    useEffect(() => {
+        if (!isOpen || !isPhone) return;
+        const pinToTop = () => {
+            if (window.scrollX !== 0 || window.scrollY !== 0) window.scrollTo(0, 0);
+        };
+        pinToTop();
+        window.addEventListener("scroll", pinToTop, { passive: true });
+        window.visualViewport?.addEventListener("resize", pinToTop);
+        return () => {
+            window.removeEventListener("scroll", pinToTop);
+            window.visualViewport?.removeEventListener("resize", pinToTop);
+        };
+    }, [isOpen, isPhone]);
 
     // Use uncontrolled input with debounced updates to context
     const handleSearchChange = useCallback(
@@ -258,7 +281,11 @@ const ScreenplaySearch = () => {
             {isOpen &&
                 (() => {
                     const panel = (
-                        <div className={styles.dropdown} ref={dropdownRef}>
+                        <div
+                            className={styles.dropdown}
+                            ref={dropdownRef}
+                            style={{ "--keyboard-inset": `${keyboardInset}px` } as React.CSSProperties}
+                        >
                             {isPhone && (
                                 <input
                                     ref={inputRef}

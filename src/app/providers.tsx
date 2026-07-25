@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { NextIntlClientProvider } from "next-intl";
+import { isTauri } from "@tauri-apps/api/core";
 import { SWRConfig } from "swr";
 import { UserContextProvider } from "@src/context/UserContext";
 import { DashboardContextProvider } from "@src/context/DashboardContext";
@@ -33,6 +34,23 @@ function LocaleSync() {
     useEffect(() => {
         document.documentElement.lang = locale;
     }, [locale]);
+    return null;
+}
+
+/**
+ * On the desktop app, suppress the native OS webview context menu so a stray
+ * right-click never breaks the immersive experience. Our own ContextMenu
+ * components call preventDefault() themselves and are unaffected; this only
+ * catches the right-clicks that would otherwise fall through to the webview.
+ * No-op on the web, where the browser's native menu is expected.
+ */
+function DesktopContextMenuGuard() {
+    useEffect(() => {
+        if (!isTauri()) return;
+        const suppress = (e: MouseEvent) => e.preventDefault();
+        document.addEventListener("contextmenu", suppress);
+        return () => document.removeEventListener("contextmenu", suppress);
+    }, []);
     return null;
 }
 
@@ -76,6 +94,7 @@ export function Providers({ children }: { children: ReactNode }) {
                                 <SpellcheckProvider>
                                     <ReadAloudProvider>
                                         <LocaleSync />
+                                        <DesktopContextMenuGuard />
                                         {children}
                                     </ReadAloudProvider>
                                 </SpellcheckProvider>

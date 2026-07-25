@@ -211,71 +211,116 @@
     font-size: 0.95rem;
 }
 
-/* ── Phone ───────────────────────────────────────────────────
-   Side-by-side sidebar/content squeezes the content column too
-   narrow on a phone, cropping the stat cards. Fill the screen and
-   stack vertically: the sidebar collapses to a horizontal tab strip
-   above the (now full-width, scrollable) content. */
+/* ── Phone ────────────────────────────────────────────────────
+   A dedicated layout (rendered via a JS fork on phone viewports — see
+   AnalyticsModal) that matches the other navbar tool sheets: a full-width
+   panel pinned below the navbar with a compact header, a section dropdown,
+   and a scrollable body. These classes are only mounted on phone, so no
+   media query is needed to gate them. */
+
+/* Transparent full-screen catcher for outside taps. Its z-index sits below
+   the portaled dropdown menu (.dropdown_menu, z-index 50) so the section
+   picker's menu renders above the sheet rather than behind it. */
+.mobileOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+}
+
+.mobilePanel {
+    position: fixed;
+    top: calc(var(--navbar-height) + 4px);
+    left: calc(12px + var(--safe-left));
+    right: calc(12px + var(--safe-right));
+    max-height: calc(100dvh - var(--navbar-height) - 16px - var(--safe-bottom));
+    display: flex;
+    flex-direction: column;
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+/* Header — mirrors the shared panel header (Production/Read-aloud/Saves). */
+.mobileHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--separator);
+    flex-shrink: 0;
+}
+
+.mobileTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+.mobileTitle svg {
+    color: var(--secondary-text);
+}
+
+.mobileIconBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.mobileIconBtn:hover {
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+}
+
+/* Section picker row. */
+.mobileToolbar {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--separator);
+    flex-shrink: 0;
+}
+
+/* Constrains the dropdown so it doesn't stretch the full panel width. */
+.mobileTabField {
+    width: 200px;
+    max-width: 100%;
+}
+
+.tabSelectTrigger {
+    padding: 8px 12px;
+    background: var(--primary);
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    color: var(--primary-text);
+    font-size: 0.9rem;
+}
+
+.tabOption {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Scrollable body — padded on the right so content clears the scrollbar. */
+.mobileScroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px 20px 16px 16px;
+}
+
+/* Single column: two-up grids can't fit a phone-width panel. */
 @media (max-width: 767px) {
-    .overlay {
-        padding: 0;
-    }
-
-    .modal {
-        width: 100vw;
-        height: 100dvh;
-        max-width: none;
-        max-height: none;
-        border-radius: 0;
-        flex-direction: column;
-    }
-
-    .sidebar {
-        flex: 0 0 auto;
-        padding: calc(12px + var(--safe-top)) 12px 12px;
-        border-right: none;
-        border-bottom: 1px solid var(--separator);
-    }
-
-    .sidebarTitle {
-        padding: 0 4px;
-        margin-bottom: 12px;
-    }
-
-    /* Group sections and their items lay out inline as a single
-       horizontally-scrollable row of tabs. Group labels are dropped. */
-    .navMenu {
-        display: flex;
-        gap: 8px;
-        padding: 0;
-        overflow-x: auto;
-    }
-
-    .navMenu > div {
-        display: flex;
-        gap: 8px;
-    }
-
-    .groupLabel {
-        display: none;
-    }
-
-    .navItem {
-        width: auto;
-        white-space: nowrap;
-    }
-
-    .content {
-        flex: 1;
-        min-height: 0;
-        padding: 20px 16px calc(20px + var(--safe-bottom));
-    }
-
-    .scrollArea {
-        padding-right: 0;
-    }
-
-    /* Single column: two-up grids can't fit a phone width. */
     .statsGridWide {
         grid-template-columns: 1fr;
     }

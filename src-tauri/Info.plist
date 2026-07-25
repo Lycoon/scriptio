@@ -4,5 +4,13 @@
 <dict>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <key>NSCameraUsageDescription</key>
+    <string>Scriptio uses the camera so you can photograph reference images and add them to your project boards.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Scriptio uses the microphone to record voice notes for your boards and to dictate text into your screenplay.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Scriptio uses speech recognition to transcribe your dictation into the screenplay editor.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Scriptio accesses your photo library so you can add existing images to your project boards.</string>
 </dict>
 </plist>

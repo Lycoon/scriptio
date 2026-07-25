@@ -4,7 +4,7 @@ import { useContext, useEffect, useState } from "react";
 import { useViewContext } from "@src/context/ViewContext";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useActiveEditor } from "@src/lib/editor/use-active-editor";
-import { focusEditorInViewport } from "@src/lib/editor/focus-in-viewport";
+import { centerCaretInView, focusEditorInViewport } from "@src/lib/editor/focus-in-viewport";
 import { useIsPhone } from "@src/lib/utils/hooks";
 import EditorSidebarNavigation from "@components/editor/sidebar/EditorSidebarNavigation";
 import EditorSidebarFormat from "@components/editor/sidebar/EditorSidebarFormat";
@@ -63,6 +63,9 @@ const ProjectWorkspace = () => {
             // Drop the caret on a character that's currently on screen rather than
             // at the old selection, so the view doesn't jump when the keyboard rises.
             focusEditorInViewport(editor);
+            // Then bring that caret to the middle of what stays visible once the
+            // keyboard is up, so the user can see where the focus landed.
+            centerCaretInView(editor);
         }
     };
 

@@ -55,6 +55,10 @@ targets:
         CFBundleShortVersionString: 2.1.0
         CFBundleVersion: "2.1.0"
         CFBundleDisplayName: Scriptio (Staging)
+        NSCameraUsageDescription: Scriptio uses the camera so you can photograph reference images and add them to your project boards.
+        NSMicrophoneUsageDescription: Scriptio uses the microphone to record voice notes for your boards and to dictate text into your screenplay.
+        NSSpeechRecognitionUsageDescription: Scriptio uses speech recognition to transcribe your dictation into the screenplay editor.
+        NSPhotoLibraryUsageDescription: Scriptio accesses your photo library so you can add existing images to your project boards.
     entitlements:
       path: Scriptio_iOS/Scriptio_iOS.entitlements
     scheme:

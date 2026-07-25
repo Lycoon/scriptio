@@ -137,7 +137,21 @@ export const useDictation = (editor: Editor | null, locale: string | null | unde
 
     const stop = useCallback(() => {
         wantListeningRef.current = false;
-        recognitionRef.current?.stop();
+        const recognition = recognitionRef.current;
+        if (!recognition) return;
+        // Clear state up front: iOS WKWebView often doesn't fire `onend` after a
+        // user-initiated stop, which would otherwise leave `isListening` stuck on
+        // (the mic could never be toggled off). Dropping the ref and flag here
+        // means the UI reflects "stopped" immediately regardless.
+        recognitionRef.current = null;
+        setIsListening(false);
+        try {
+            // `abort()` ends the session more reliably than `stop()` on iOS, which
+            // may otherwise keep the recogniser (and the mic) alive.
+            recognition.abort();
+        } catch {
+            // Already inactive — nothing to tear down.
+        }
     }, []);
 
     const start = useCallback((langOverride?: string | null) => {
