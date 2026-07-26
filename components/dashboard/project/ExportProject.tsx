@@ -11,17 +11,20 @@ import styles from "./ExportProject.module.css";
 import optionCard from "./OptionCard.module.css";
 import { importFilePopup } from "@src/lib/screenplay/popup";
 import { UserContext } from "@src/context/UserContext";
-import { getAdapterByExtension } from "@src/lib/adapters/registry";
+import { getExportAdapter } from "@src/lib/adapters/registry";
 import { BaseExportOptions } from "@src/lib/adapters/screenplay-adapter";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import { PDFExportOptions, RevisionExportMode } from "@src/lib/adapters/pdf/pdf-adapter";
 import { ScriptioExportOptions } from "@src/lib/adapters/scriptio/scriptio-adapter";
+import { TextExportOptions } from "@src/lib/adapters/text/text-adapter";
 import { importFileIntoProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
 
 export enum ExportFormat {
     PDF = "pdf",
     FOUNTAIN = "fountain",
     FDX = "fdx",
+    // Not "txt": that extension is claimed by Fountain on import.
+    TEXT = "text",
     SCRIPTIO = "scriptio",
 }
 
@@ -164,7 +167,7 @@ const ExportProject = () => {
             onProgress: (p) => { console.log("progress: ", p);setProgress(p) },
         };
 
-        const adapter = getAdapterByExtension(format);
+        const adapter = getExportAdapter(format);
         if (!adapter) {
             console.error("Unsupported file type");
             return;
@@ -202,6 +205,9 @@ const ExportProject = () => {
                 pageSelection,
             };
             await adapter.export(ydoc, pdfOptions as BaseExportOptions);
+        } else if (format === ExportFormat.TEXT) {
+            const textOptions: TextExportOptions = { ...baseOptions, includeTitlePage };
+            await adapter.export(ydoc, textOptions as BaseExportOptions);
         } else if (format === ExportFormat.SCRIPTIO) {
             const scriptioOptions: ScriptioExportOptions = {
                 ...baseOptions,
@@ -221,6 +227,7 @@ const ExportProject = () => {
         { value: ExportFormat.PDF, label: t("formatOptions.pdf") },
         { value: ExportFormat.FOUNTAIN, label: t("formatOptions.fountain") },
         { value: ExportFormat.FDX, label: t("formatOptions.fdx") },
+        { value: ExportFormat.TEXT, label: t("formatOptions.text") },
         { value: ExportFormat.SCRIPTIO, label: t("formatOptions.scriptio") },
     ];
 
@@ -289,6 +296,7 @@ const ExportProject = () => {
                     {format === ExportFormat.PDF && t("formatHelp.pdf")}
                     {format === ExportFormat.FOUNTAIN && t("formatHelp.fountain")}
                     {format === ExportFormat.FDX && t("formatHelp.fdx")}
+                    {format === ExportFormat.TEXT && t("formatHelp.text")}
                     {format === ExportFormat.SCRIPTIO && t("formatHelp.scriptio")}
                 </p>
             </div>
@@ -309,8 +317,8 @@ const ExportProject = () => {
                         <span className={optionCard.optionTitle}>{t("notes")}</span>
                     </div>
 
-                    {/* Title page is a PDF-only concept. */}
-                    {format === ExportFormat.PDF && (
+                    {/* Only the formats that lay out a title page of their own. */}
+                    {(format === ExportFormat.PDF || format === ExportFormat.TEXT) && (
                         <div
                             className={`${optionCard.optionCard} ${styles.includeCard} ${includeTitlePage ? optionCard.active : ""}`}
                             onClick={() => setIncludeTitlePage(!includeTitlePage)}

@@ -126,15 +126,50 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         // ── Collect all visual lines from the browser DOM ───────────────────
         const titlePageEl = options.titlePageElement;
 
-        const titlePageLines = titlePageEl ? this.collectLines(titlePageEl, options) : [];
-        const titlePageLeftPx = titlePageEl ? this.getPageLeftPx(titlePageEl) : 0;
+        // Every coordinate below comes from the live DOM, so the whole geometry
+        // pass runs with the editor's on-screen scaling pinned to 1× — see
+        // `withCanonicalScale`. Keeping it in a single closure means the layout
+        // is neutralised (and restored) exactly once per export.
+        const measured = this.withCanonicalScale([editorEl, titlePageEl], () => {
+            // Header/footer columns are laid out within the configured page
+            // margins: the editor's `.pagination-header-area` /
+            // `.pagination-footer-area` are padded by
+            // --page-margin-left/right. Read those margins (px) off the editor
+            // DOM and convert to PDF points so the export reproduces the same
+            // horizontal bounds instead of a hard-coded 1-inch margin.
+            const editorStyle = getComputedStyle(editorEl);
+            const readMarginPt = (name: string, fallbackPx: number): number => {
+                const px = parseFloat(editorStyle.getPropertyValue(name));
+                return (Number.isFinite(px) ? px : fallbackPx) * PX_TO_PT;
+            };
 
-        let screenplayLines = this.collectLines(editorEl, options);
-        // Footer of the final page: it has no trailing page-break sentinel to
-        // carry it, so it is read from the dedicated last-page widget. Page
-        // filtering below re-derives it from the last surviving page.
-        const lastPageWidget = editorEl.querySelector(".pagination-last-page") as HTMLElement | null;
-        let screenplayLastFooter = lastPageWidget ? this.extractFooter(lastPageWidget) : undefined;
+            // Footer of the final page: it has no trailing page-break sentinel
+            // to carry it, so it is read from the dedicated last-page widget.
+            // Page filtering below re-derives it from the last surviving page.
+            const lastPageWidget = editorEl.querySelector(".pagination-last-page") as HTMLElement | null;
+            // Header of the (otherwise unnumbered) first page, read from the
+            // first-page pagination widget. Blank unless "Show first page
+            // header" is on, in which case its spans carry the expanded
+            // templates.
+            const firstPageWidget = editorEl.querySelector(".pagination-first-page") as HTMLElement | null;
+
+            return {
+                titlePageLines: titlePageEl ? this.collectLines(titlePageEl, options) : [],
+                titlePageLeftPx: titlePageEl ? this.getPageLeftPx(titlePageEl) : 0,
+                screenplayLines: this.collectLines(editorEl, options),
+                screenplayLeftPx: this.getPageLeftPx(editorEl),
+                screenplayLastFooter: lastPageWidget ? this.extractFooter(lastPageWidget) : undefined,
+                screenplayFirstHeader: firstPageWidget ? this.extractHeader(firstPageWidget) : undefined,
+                pageMarginLeft: readMarginPt("--page-margin-left", 96),
+                pageMarginRight: readMarginPt("--page-margin-right", 96),
+            };
+        });
+
+        const { titlePageLines, titlePageLeftPx, screenplayLeftPx, screenplayFirstHeader, pageMarginLeft, pageMarginRight } =
+            measured;
+        let screenplayLines = measured.screenplayLines;
+        let screenplayLastFooter = measured.screenplayLastFooter;
+
         // Page selection: keep only the chosen pages (by range or by revision).
         const sel = options.pageSelection;
         if (sel?.mode === "ranges" && sel.ranges.length > 0) {
@@ -153,27 +188,6 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
             screenplayLastFooter = kept.lastFooter;
         }
         this.applyRevisionStyling(screenplayLines, options.revisionExport ?? "colored");
-        const screenplayLeftPx = this.getPageLeftPx(editorEl);
-
-        // Header/footer columns are laid out within the configured page margins:
-        // the editor's `.pagination-header-area`/`.pagination-footer-area` are
-        // padded by --page-margin-left/right. Read those margins (px) off the
-        // editor DOM and convert to PDF points so the export reproduces the same
-        // horizontal bounds instead of a hard-coded 1-inch margin.
-        const editorStyle = getComputedStyle(editorEl);
-        const pxToPt = 72 / 96;
-        const readMarginPt = (name: string, fallbackPx: number): number => {
-            const px = parseFloat(editorStyle.getPropertyValue(name));
-            return (Number.isFinite(px) ? px : fallbackPx) * pxToPt;
-        };
-        const pageMarginLeft = readMarginPt("--page-margin-left", 96);
-        const pageMarginRight = readMarginPt("--page-margin-right", 96);
-
-        // Header of the (otherwise unnumbered) first page, read from the
-        // first-page pagination widget. Blank unless "Show first page header"
-        // is on, in which case its spans carry the expanded templates.
-        const firstPageWidget = editorEl.querySelector(".pagination-first-page") as HTMLElement | null;
-        const screenplayFirstHeader = firstPageWidget ? this.extractHeader(firstPageWidget) : undefined;
 
         return new Promise((resolve, reject) => {
             const worker = new Worker(new URL("./pdf.worker.ts", import.meta.url));
@@ -222,6 +236,79 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     convertFrom(_: ArrayBuffer): Partial<ProjectData> {
         throw new Error("Method not implemented.");
+    }
+
+    // ── Canonical (unscaled) measurement ────────────────────────────────────
+
+    /**
+     * Run `measure` with the editors' display-only scaling pinned to 1×, so
+     * every DOM coordinate it reads is the canonical page geometry.
+     *
+     * The editor is scaled on screen by two independent mechanisms, both of
+     * which feed straight into `getBoundingClientRect()` /
+     * `Range.getClientRects()` — the only source of coordinates in this
+     * exporter:
+     *  - desktop user zoom: `zoom: var(--editor-user-zoom)`,
+     *  - phone paged fit-to-width: `transform: scale(var(--editor-zoom))`.
+     * Left in place, a 150% zoom stretches every X offset and line gap by 1.5
+     * while the PDF still draws a fixed 12pt font, so the exported layout would
+     * depend on how the user happened to be viewing the script.
+     *
+     * Pinning the layout is preferred over dividing the measurements by the
+     * scale factor: `zoom` actually re-lays the page out at scaled font sizes
+     * (a division cannot undo that), and engines disagree on whether
+     * `getComputedStyle` lengths are zoom-adjusted, which this pass also reads.
+     * Both overrides are set `!important` so no stylesheet rule can outvote
+     * them, and the original inline declarations are restored afterwards.
+     *
+     * Nothing here yields to the event loop, so the browser never paints the
+     * unscaled state — the export is invisible to the user. Only scroll offsets
+     * need explicit restoring: dropping `zoom` shrinks the layout box, which
+     * clamps the scroll position of every scrollable ancestor.
+     */
+    private withCanonicalScale<T>(elements: (HTMLElement | undefined)[], measure: () => T): T {
+        const targets = elements.filter((el): el is HTMLElement => !!el);
+        const savedStyles = targets.map((el) => ({
+            el,
+            zoom: el.style.getPropertyValue("zoom"),
+            zoomPriority: el.style.getPropertyPriority("zoom"),
+            transform: el.style.getPropertyValue("transform"),
+            transformPriority: el.style.getPropertyPriority("transform"),
+        }));
+
+        const savedScroll = new Map<Element, { top: number; left: number }>();
+        for (const el of targets) {
+            let node: Element | null = el;
+            while (node) {
+                if (!savedScroll.has(node)) savedScroll.set(node, { top: node.scrollTop, left: node.scrollLeft });
+                node = node.parentElement;
+            }
+        }
+
+        try {
+            for (const el of targets) {
+                el.style.setProperty("zoom", "1", "important");
+                el.style.setProperty("transform", "none", "important");
+            }
+            // No explicit reflow needed: the first geometry read inside
+            // `measure` flushes the pending layout for us.
+            return measure();
+        } finally {
+            for (const saved of savedStyles) {
+                const restore = (name: string, value: string, priority: string) => {
+                    if (value) saved.el.style.setProperty(name, value, priority);
+                    else saved.el.style.removeProperty(name);
+                };
+                restore("zoom", saved.zoom, saved.zoomPriority);
+                restore("transform", saved.transform, saved.transformPriority);
+            }
+            // Assigning scroll offsets flushes the restored layout first, so
+            // these land against the scaled extents they were taken from.
+            for (const [node, pos] of savedScroll) {
+                node.scrollTop = pos.top;
+                node.scrollLeft = pos.left;
+            }
+        }
     }
 
     // ── DOM → VisualLine[] ───────────────────────────────────────────────────

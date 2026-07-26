@@ -415,12 +415,14 @@
       "pdf": "PDF ドキュメント (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
+      "text": "整形テキスト (.txt)",
       "scriptio": "Scriptio (.scriptio)"
     },
     "formatHelp": {
       "pdf": "業界標準フォーマット。共有や印刷に最適です。",
       "fountain": "Markdownベースのテキスト形式。互換性に優れています。",
       "fdx": "プロ向けソフト Final Draft と互換性があります。",
+      "text": "脚本の標準的な余白で整形したプレーンテキスト。どこでも読めます。",
       "scriptio": "Scriptio 独自形式。ローカル保存に最適です。"
     },
     "includeNotes": "メモを含める",

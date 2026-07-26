@@ -27,6 +27,7 @@ import { useDocumentComments } from "@src/lib/editor/use-document-comments";
 import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
 import { useViewModeScrollAnchor } from "@src/lib/editor/use-view-mode-scroll-anchor";
+import { captureZoomAnchor, settleZoomAnchor } from "@src/lib/editor/zoom-scroll-anchor";
 import { centerCaretInView, focusEditorAtCoords } from "@src/lib/editor/focus-in-viewport";
 import { getSpellErrorAt } from "@src/lib/spellcheck/spellcheck-extension";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
@@ -57,9 +58,18 @@ const CHROME_HIDE_RANGE = 220;
 // ---- Desktop editor zoom ----
 // Ctrl/⌘ +, Ctrl/⌘ -, Ctrl/⌘ 0 and Ctrl+wheel (also a trackpad pinch, which the
 // browser delivers as a ctrlKey wheel on both platforms) scale the page in the
-// view. Bounds are clamped; kept modest so text stays legible and the WebKit
-// minimum-font-size clamp isn't hit at the low end.
-const MIN_ZOOM = 0.5;
+// view. Bounds are clamped so text stays legible.
+//
+// The floor also keeps WebKit's minimum-font-size clamp out of reach. WebKit
+// multiplies computed font sizes by `zoom` and then floors the result at a
+// rendered 9px (minimumLogicalFontSize; see the paged-mode rule in
+// EditorPanel.module.css). The screenplay body is 12pt = 16px, so anything below
+// 9/16 = 0.5625 gets floored — and a floored font wraps text differently from
+// the canonical layout the pagination is measured against, which would put the
+// page breaks shown on screen out of step with the document. 0.6 lands at 9.6px
+// rendered and clears it. Levels stored by an older build are re-clamped on
+// load, so a saved 0.5 comes back as 0.6.
+const MIN_ZOOM = 0.6;
 const MAX_ZOOM = 3;
 // Steps are multiplicative (a constant ratio), not additive: a fixed +0.2 would
 // be 20% at 1× but only ~7% at 3×, so zooming-in felt progressively slower. A
@@ -361,9 +371,10 @@ const DocumentEditorPanel = ({
     }, []);
 
     // Push the level into the CSS variable the ProseMirror `zoom` reads, and keep
-    // the page growing from the viewport centre rather than pinning to the left as
-    // it scales past the view width. Runs before paint so the reposition is not
-    // seen as a jump. Phone owns its own scaling (paged transform / endless
+    // the line the reader was on under the viewport centre as the page grows or
+    // shrinks around it (see zoom-scroll-anchor for why that is measured rather
+    // than computed from the zoom ratio). Runs before paint so the reposition is
+    // not seen as a jump. Phone owns its own scaling (paged transform / endless
     // reflow), so this stays desktop-only — clear the variable there.
     const prevZoomRef = useRef(1);
     const didInitZoomRef = useRef(false);
@@ -373,12 +384,16 @@ const DocumentEditorPanel = ({
             container?.style.removeProperty("--editor-user-zoom");
             return;
         }
-        const prev = prevZoomRef.current;
-        // Capture the pre-zoom scroll BEFORE rescaling: applying the new zoom can
-        // clamp scrollLeft/Top (when zooming out shrinks the scrollable area),
-        // which would corrupt the centre we're trying to preserve.
-        const centreX = container.scrollLeft + container.clientWidth / 2;
-        const centreY = container.scrollTop + container.clientHeight / 2;
+        // Record what the reader is looking at BEFORE rescaling, while the
+        // outgoing layout is still measurable — the rescale itself can also clamp
+        // scrollTop/Left (zooming out shrinks the scrollable area), which would
+        // corrupt any position captured afterwards. Nothing to preserve on the
+        // first application (the document opens at the top), nor when this effect
+        // re-runs for a reason other than the level changing.
+        const anchor =
+            didInitZoomRef.current && prevZoomRef.current !== zoom
+                ? captureZoomAnchor(container, editor?.view?.dom)
+                : null;
         container.style.setProperty("--editor-user-zoom", `${zoom}`);
 
         // First application (e.g. a zoom level restored from a previous session):
@@ -395,15 +410,12 @@ const DocumentEditorPanel = ({
             return;
         }
 
-        // Interactive change: keep whatever sat under the viewport centre put, so
-        // the page scales symmetrically around the middle of the view.
-        if (prev !== zoom) {
-            const factor = zoom / prev;
-            container.scrollLeft = centreX * factor - container.clientWidth / 2;
-            container.scrollTop = centreY * factor - container.clientHeight / 2;
-        }
         prevZoomRef.current = zoom;
-    }, [containerEl, zoom, isPhone]);
+        if (!anchor) return;
+        // Scroll the anchored line back under the viewport centre, re-checking for
+        // a few frames while the rescaled layout settles.
+        return settleZoomAnchor(container, editor?.view?.dom, anchor);
+    }, [containerEl, zoom, isPhone, editor]);
 
     // Persist the level and nudge resize-driven layout (e.g. the comment gutter,
     // which only recomputes its icon coordinates on edits / resizes).
