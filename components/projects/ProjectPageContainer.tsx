@@ -9,7 +9,8 @@ import {
     ExtendedProjectMembershipPayload,
 } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
-import { importFileAsProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
+import { importFileAsProject } from "@src/lib/import/import-project";
+import { getSupportedImportExtensions } from "@src/lib/adapters/registry";
 import { useAppNavigation } from "@src/lib/utils/navigation";
 import { FileDown, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";

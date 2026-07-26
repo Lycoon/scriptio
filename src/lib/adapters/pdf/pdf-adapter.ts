@@ -1,7 +1,7 @@
 
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
 import { ProjectData, ProjectState } from "@src/lib/project/project-state";
-import { PageFormat } from "@src/lib/utils/enums";
+import { ExportFormat, PageFormat } from "@src/lib/utils/enums";
 import { getFontForCodePoint, ScriptFont } from "./pdf-utils";
 import type { TextRun } from "./pdf.worker";
 import { BASE_URL } from "@src/lib/utils/constants";
@@ -109,7 +109,11 @@ const getMarksFromComputedStyle = (textNode: Text): { bold: boolean; italic: boo
 
 export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
     label = "PDF";
-    extension = "pdf";
+    exportTarget = { format: ExportFormat.PDF, extension: "pdf" };
+
+    // Export-only: a PDF carries no recoverable screenplay structure, so nothing
+    // routes `.pdf` files here (`convertFrom` throws).
+    importExtensions = [];
 
     async convertTo(_project: ProjectState, options: PDFExportOptions): Promise<Blob> {
         const editorEl = options.editorElement;

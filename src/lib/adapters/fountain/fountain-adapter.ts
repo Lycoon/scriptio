@@ -1,4 +1,5 @@
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
+import { ExportFormat } from "@src/lib/utils/enums";
 
 import fountain from "./fountain_parser";
 import { generateJSON, JSONContent } from "@tiptap/react";
@@ -8,7 +9,14 @@ import { ProjectData, ProjectState, screenplayOf, titlepageOf } from "@src/lib/p
 
 export class FountainAdapter extends ProjectAdapter {
     label = "Fountain Script";
-    extension = "fountain";
+    exportTarget = { format: ExportFormat.FOUNTAIN, extension: "fountain" };
+
+    // Fountain is plain text with light markup, and `.txt` is where it usually
+    // ends up — every writer's "screenplay.txt" is either Fountain or close
+    // enough that the parser's fallbacks read it sensibly. So this adapter owns
+    // both extensions on import. (Formatted-text export also writes `.txt`, but
+    // that is a rendering, not a source format — it exports under its own id.)
+    importExtensions = ["fountain", "txt"];
 
     /**
      * Resolve a title page format node to its Fountain key and display value.

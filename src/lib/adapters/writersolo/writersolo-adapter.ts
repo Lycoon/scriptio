@@ -266,7 +266,9 @@ function selectScreenplayBranch(branches: Record<string, unknown>): unknown {
 
 export class WriterSoloAdapter extends ProjectAdapter<BaseExportOptions> {
     label = "WriterSolo";
-    extension = "wdz";
+    // Import-only: `convertTo` below rejects, so the export UI never offers it.
+    exportTarget = null;
+    importExtensions = ["wdz"];
 
     convertTo(): Promise<Blob> {
         return Promise.reject(new Error("Export to WriterSolo is not supported"));

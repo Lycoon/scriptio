@@ -11,22 +11,14 @@ import styles from "./ExportProject.module.css";
 import optionCard from "./OptionCard.module.css";
 import { importFilePopup } from "@src/lib/screenplay/popup";
 import { UserContext } from "@src/context/UserContext";
-import { getExportAdapter } from "@src/lib/adapters/registry";
+import { getExportAdapter, getSupportedImportExtensions } from "@src/lib/adapters/registry";
+import { ExportFormat } from "@src/lib/utils/enums";
 import { BaseExportOptions } from "@src/lib/adapters/screenplay-adapter";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import { PDFExportOptions, RevisionExportMode } from "@src/lib/adapters/pdf/pdf-adapter";
 import { ScriptioExportOptions } from "@src/lib/adapters/scriptio/scriptio-adapter";
 import { TextExportOptions } from "@src/lib/adapters/text/text-adapter";
-import { importFileIntoProject, getSupportedImportExtensions } from "@src/lib/import/import-project";
-
-export enum ExportFormat {
-    PDF = "pdf",
-    FOUNTAIN = "fountain",
-    FDX = "fdx",
-    // Not "txt": that extension is claimed by Fountain on import.
-    TEXT = "text",
-    SCRIPTIO = "scriptio",
-}
+import { importFileIntoProject } from "@src/lib/import/import-project";
 
 /** Which pages the user wants to export — a mutually exclusive choice. */
 type PageMode = "all" | "ranges" | "revisions";

@@ -1,4 +1,5 @@
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
+import { ExportFormat } from "@src/lib/utils/enums";
 import { ProjectData, ProjectState, screenplayOf, titlepageOf } from "@src/lib/project/project-state";
 import type { JSONContent } from "@tiptap/core";
 
@@ -143,7 +144,12 @@ const padTo = (line: string, width: number): string =>
 
 export class FormattedTextAdapter extends ProjectAdapter<TextExportOptions> {
     label = "Formatted Text";
-    extension = "txt";
+    exportTarget = { format: ExportFormat.TEXT, extension: "txt" };
+
+    // Export-only. The file it writes is a rendering of the script, not a source
+    // format — the indentation is ambiguous enough that reading it back would be
+    // guesswork — so `.txt` on import belongs to Fountain instead.
+    importExtensions = [];
 
     convertTo(project: ProjectState, options: TextExportOptions): Promise<Blob> {
         const lines: string[] = [];
