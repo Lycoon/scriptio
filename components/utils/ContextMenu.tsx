@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useRef, useState } from "react";
+import { ReactNode, useCallback, useRef, useState } from "react";
 import { ChevronRight, LucideIcon } from "lucide-react";
 import { join } from "@src/lib/utils/misc";
 
@@ -19,6 +19,13 @@ interface ContextMenuProps {
     children: ReactNode;
 }
 
+/** Gap kept between a menu and the viewport edges. */
+const VIEWPORT_MARGIN = 8;
+
+/** Start offset that keeps an element of `size` inside `viewport` on one axis. */
+const clampToViewport = (start: number, size: number, viewport: number) =>
+    Math.max(VIEWPORT_MARGIN, Math.min(start, viewport - VIEWPORT_MARGIN - size));
+
 /**
  * Positioned context-menu surface. Renders a fixed panel at `position` and tags
  * it with `data-context-menu` so canvas / outside-click handlers can detect
@@ -28,17 +35,45 @@ interface ContextMenuProps {
  * (see editor/sidebar/ContextMenu), which owns the open state, so only one menu
  * is ever rendered.
  */
-export const ContextMenu = ({ position, className, children }: ContextMenuProps) => (
-    <div
-        data-context-menu
-        className={className ? `${styles.menu} ${className}` : styles.menu}
-        style={{ top: position.y, left: position.x }}
-        // Right-clicking within a menu shouldn't open the native browser menu.
-        onContextMenu={(e) => e.preventDefault()}
-    >
-        {children}
-    </div>
-);
+export const ContextMenu = ({ position, className, children }: ContextMenuProps) => {
+    // `position` is the pointer, which can sit anywhere — including close enough
+    // to the right/bottom edge that the menu would hang off-screen. Clamp from
+    // the measured box in a ref callback (before paint, so the menu is never
+    // painted overflowing), and keep watching: menus can grow after opening,
+    // e.g. when spellcheck suggestions arrive.
+    const place = useCallback(
+        (menu: HTMLDivElement | null) => {
+            if (!menu) return;
+            const apply = () => {
+                const { width, height } = menu.getBoundingClientRect();
+                menu.style.left = `${clampToViewport(position.x, width, window.innerWidth)}px`;
+                menu.style.top = `${clampToViewport(position.y, height, window.innerHeight)}px`;
+                menu.style.visibility = "visible";
+            };
+            apply();
+            const observer = new ResizeObserver(apply);
+            observer.observe(menu);
+            window.addEventListener("resize", apply);
+            return () => {
+                observer.disconnect();
+                window.removeEventListener("resize", apply);
+            };
+        },
+        [position.x, position.y],
+    );
+
+    return (
+        <div
+            ref={place}
+            data-context-menu
+            className={className ? `${styles.menu} ${className}` : styles.menu}
+            // Right-clicking within a menu shouldn't open the native browser menu.
+            onContextMenu={(e) => e.preventDefault()}
+        >
+            {children}
+        </div>
+    );
+};
 
 interface ContextMenuItemProps {
     text: string;
@@ -70,8 +105,9 @@ interface ContextMenuSubmenuProps {
     children: ReactNode;
 }
 
-/** Width the flyout is laid out at (matches `.menu`); used for edge-flip math. */
-const SUBMENU_WIDTH = 220;
+/** `.menu`'s vertical padding — offsets the flyout so its first item lines up
+ *  with the parent item rather than sitting a padding-height lower. */
+const MENU_PADDING = 6;
 
 /**
  * A menu item that reveals a nested flyout of items on hover. The flyout is a
@@ -82,31 +118,40 @@ const SUBMENU_WIDTH = 220;
  */
 export const ContextMenuSubmenu = ({ text, icon: Icon, children }: ContextMenuSubmenuProps) => {
     const itemRef = useRef<HTMLDivElement>(null);
-    const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+    const [open, setOpen] = useState(false);
 
-    const open = () => {
-        const el = itemRef.current;
-        if (!el) return;
-        const r = el.getBoundingClientRect();
-        const left = r.right + SUBMENU_WIDTH > window.innerWidth ? r.left - SUBMENU_WIDTH : r.right;
-        // Keep the flyout on-screen vertically when it opens near the bottom.
-        const top = Math.max(8, Math.min(r.top, window.innerHeight - 320));
-        setPos({ top, left });
-    };
+    // Place the flyout from its *measured* box — clamping against a hard-coded
+    // size instead made it drift away from the parent item whenever the guess
+    // was taller than the panel really is. Done in a ref callback so it runs
+    // once the panel is in the DOM but before paint: the panel starts
+    // `visibility: hidden` (see the stylesheet) and is revealed once placed.
+    const placePanel = useCallback((panel: HTMLDivElement | null) => {
+        const item = itemRef.current;
+        if (!panel || !item) return;
+        const anchor = item.getBoundingClientRect();
+        const { width, height } = panel.getBoundingClientRect();
+        // Open to the item's right, flipping to its left when that would run off
+        // the viewport; both sides are clamped so the flyout stays on-screen.
+        const preferredLeft =
+            anchor.right + width > window.innerWidth - VIEWPORT_MARGIN ? anchor.left - width : anchor.right;
+        panel.style.left = `${clampToViewport(preferredLeft, width, window.innerWidth)}px`;
+        panel.style.top = `${clampToViewport(anchor.top - MENU_PADDING, height, window.innerHeight)}px`;
+        panel.style.visibility = "visible";
+    }, []);
 
     return (
-        <div className={styles.submenu_wrap} onMouseEnter={open} onMouseLeave={() => setPos(null)}>
+        <div
+            className={styles.submenu_wrap}
+            onMouseEnter={() => setOpen(true)}
+            onMouseLeave={() => setOpen(false)}
+        >
             <div ref={itemRef} className={styles.menu_item}>
                 <span className={styles.menu_item_icon}>{Icon && <Icon size={16} />}</span>
                 <p className="unselectable">{text}</p>
                 <ChevronRight size={14} className={styles.submenu_chevron} />
             </div>
-            {pos && (
-                <div
-                    data-context-menu
-                    className={join(styles.menu, styles.submenu_panel)}
-                    style={{ top: pos.top, left: pos.left }}
-                >
+            {open && (
+                <div ref={placePanel} data-context-menu className={join(styles.menu, styles.submenu_panel)}>
                     {children}
                 </div>
             )}

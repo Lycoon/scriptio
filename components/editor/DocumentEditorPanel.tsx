@@ -702,8 +702,8 @@ const DocumentEditorPanel = ({
         editor.setOptions({
             editorProps: {
                 // Re-apply the base contenteditable attributes: setOptions replaces
-                // editorProps wholesale, so without this the autocorrect/predictive
-                // suppression set at mount would be dropped for screenplay editors.
+                // editorProps wholesale, so without this the text-input traits set at
+                // mount (autocorrect, spellcheck) would be dropped for screenplay editors.
                 attributes: EDITOR_INPUT_ATTRIBUTES,
                 handleKeyDown(view: EditorView, event: KeyboardEvent) {
                     const selection = view.state.selection;
