@@ -73,7 +73,7 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "loading": "Chargement...",
-    "resetDefaults": "Rétablir les valeurs par défaut"
+    "resetDefaults": "Réinitialiser"
   },
   "sidebar": {
     "title": "Tableau de bord",
@@ -101,7 +101,7 @@
     "defaultPrefix": "Par défaut : {combo}",
     "reset": "Réinitialiser",
     "resetTitle": "Effacer le raccourci personnalisé",
-    "resetDefaults": "Rétablir les valeurs par défaut",
+    "resetDefaults": "Réinitialiser",
     "save": "Enregistrer les modifications"
   },
   "readaloud": {

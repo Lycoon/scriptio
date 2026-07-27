@@ -44,14 +44,40 @@
     outline-offset: -8px;
 }
 
+/*
+ * The dot grid. Panned with a transform, never with `background-position`:
+ * background-position is a paint property, so shifting it re-rasterised a
+ * full-viewport radial-gradient tile pattern on every single frame of a pan —
+ * at phone DPR that is millions of pixels of gradient per frame. A transform on
+ * a promoted layer is compositor-only and costs nothing to move.
+ *
+ * `inset` is set inline to minus one tile so the element overhangs the viewport
+ * on every side; the transform only ever shifts it within one tile (the pan
+ * offset modulo the tile size), so no edge can come into view.
+ *
+ * Zoom is the one gesture the transform trick can't absorb the same way: the
+ * tile size has to track scale for the dot spacing to look right, and
+ * `background-size` is a paint property. The JS side (see gridPattern in
+ * BoardCanvas.tsx) quantizes the tile to a few px so a continuous pinch only
+ * repaints a handful of times across the whole gesture instead of every frame,
+ * rather than hiding the grid for the gesture's duration.
+ */
 .grid {
     position: absolute;
-    inset: 0;
     pointer-events: none;
     background-image: radial-gradient(circle, var(--secondary-text) 1px, transparent 1px);
     opacity: 0.5;
+    will-change: transform;
 }
 
+/*
+ * The card layer. Promoted so a pan is a compositor translate rather than a
+ * repaint of every card: without the hint WebKit re-rasterises this subtree each
+ * time the transform changes, which is what made frames run to 200ms once an
+ * overlay (a drawer, its backdrop) had forced the layer tree to be rebuilt.
+ * Zooming still re-rasterises — that is inherent to changing scale — but panning,
+ * the common gesture, no longer touches paint at all.
+ */
 .canvas {
     position: absolute;
     top: 0;
@@ -59,15 +85,26 @@
     transform-origin: 0 0;
     opacity: 1;
     transition: opacity 0.15s ease;
+    will-change: transform;
 }
 
 .canvas_hidden {
     opacity: 0;
 }
 
-/* Card styles */
+/* Card styles.
+ *
+ * Positioned with an inline `transform: translate3d(x, y, 0)` rather than
+ * left/top (which stay 0): left/top are layout properties, so a drag was
+ * running layout + repaint inside the canvas layer on every frame. A transform
+ * is not — and combined with the will-change below, the dragged card gets its
+ * own compositor layer for the duration of the drag, so following the finger
+ * repaints nothing at all. The final position is committed to Yjs once, at
+ * gesture end (see BoardCard). */
 .card {
     position: absolute;
+    top: 0;
+    left: 0;
     display: flex;
     flex-direction: column;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -76,14 +113,24 @@
     transition: box-shadow 0.15s ease;
 }
 
-.card:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+/* Hover affordances only where a pointer can actually hover. On touch, iOS
+ * emulates hover from the last tap point and re-resolves it as content moves —
+ * so cards sweeping under a stale point during a drag/pinch would otherwise
+ * toggle this transitioned box-shadow frame after frame, a repaint storm. */
+@media (hover: hover) {
+    .card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
 }
 
 .card.card_dragging {
     opacity: 0.9;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     z-index: 1000;
+    /* Own layer while moving — the per-frame translate is then compositor-only
+     * instead of a repaint of the card layer's dirty region. Scoped to the drag
+     * so idle cards don't each hold a backing store. */
+    will-change: transform;
 }
 
 /* Image resource card: bare image, no colored header/border chrome. */
@@ -609,17 +656,48 @@
     cursor: crosshair;
 }
 
-.card_connecting:hover {
-    box-shadow:
-        0 0 0 3px white,
-        0 4px 16px rgba(0, 0, 0, 0.2);
+/* Hover-capable pointers only — see the .card:hover comment. */
+@media (hover: hover) {
+    .card_connecting:hover {
+        box-shadow:
+            0 0 0 3px white,
+            0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* ── Touch selection ────────────────────────────────────────────────────────
+   The canvas owns all touch gestures. Without this, a double-tap or long-press
+   on the board surface triggers iOS Safari's native text selection across the
+   whole board (it lacks the per-card `user-select: none`), and that sticky
+   selection makes every subsequent interaction laggy until it is cleared —
+   tapping elsewhere is the only way out. Suppress native selection + the
+   long-press callout on the whole subtree; the editable text fields opt back in
+   so typing/caret still works.
+
+   Keyed on the pointer type, not the phone width query below: a phone held in
+   landscape reports a viewport wider than 767px, and there the board would
+   otherwise be left with no selection guard at all — on the device where the
+   native selection is hardest to get rid of. */
+@media (pointer: coarse) {
+    .container {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    .card_description_input,
+    .card_header_title_input,
+    .audio_timeline {
+        -webkit-user-select: text;
+        user-select: text;
+    }
 }
 
 /* ── Touch / mobile ─────────────────────────────────────────────────────────
    The canvas owns all touch gestures (pan, pinch-zoom, card drag), so disable
-   the browser's native panning/zoom on it; text fields inside cards opt back in
-   so typing/caret placement still works. The drag/resize/connection handles have
-   no hover on touch, so surface them and enlarge them into comfortable targets. */
+   the browser's native panning/zoom on it. The drag/resize/connection handles
+   have no hover on touch, so surface them and enlarge them into comfortable
+   targets. */
 @media (max-width: 767px) {
     /* The navbar is a fixed overlay pinned to the top (see ProjectNavbar). The
      * board doesn't drive the scroll-hide, so the bar stays shown over it — push
@@ -632,24 +710,12 @@
 
     .container {
         touch-action: none;
-        /* The canvas owns all touch gestures. Without this, a double-tap or
-           long-press on the board surface triggers iOS Safari's native text
-           selection across the whole board (it lacks the per-card
-           `user-select: none`), and that sticky selection makes every
-           subsequent interaction laggy until the selection is cleared. Suppress
-           native selection + the long-press callout on the whole subtree; the
-           editable text fields below opt back in so typing/caret still works. */
-        -webkit-user-select: none;
-        user-select: none;
-        -webkit-touch-callout: none;
     }
 
     .card_description_input,
     .card_header_title_input,
     .audio_timeline {
         touch-action: auto;
-        -webkit-user-select: text;
-        user-select: text;
     }
 
     /* Enlarge both drag targets into comfortable ~40px touch areas. The visible

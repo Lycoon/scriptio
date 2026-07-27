@@ -72,7 +72,7 @@
     "save": "변경사항 저장",
     "cancel": "취소",
     "loading": "로딩 중...",
-    "resetDefaults": "기본값으로 복원"
+    "resetDefaults": "초기화"
   },
   "sidebar": {
     "title": "대시보드",
@@ -100,7 +100,7 @@
     "defaultPrefix": "기본값: {combo}",
     "reset": "초기화",
     "resetTitle": "사용자 설정 삭제",
-    "resetDefaults": "기본값으로 복원",
+    "resetDefaults": "초기화",
     "save": "변경사항 저장"
   },
   "readaloud": {

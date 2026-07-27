@@ -25,6 +25,14 @@ import { useAudioRecorder } from "./use-audio-recorder";
 const GRID_SIZE = 20;
 const MIN_SCALE = 0.25;
 const MAX_SCALE = 2;
+/**
+ * Tile size (screen px) the grid's `background-size` is rounded to. Changing
+ * background-size is a paint op, so a continuous pinch would otherwise repaint
+ * a full-viewport gradient every frame; snapping to 4px steps means a full
+ * MIN_SCALE→MAX_SCALE sweep repaints under a dozen times total instead of once
+ * per frame, with no visible difference in dot spacing.
+ */
+const GRID_TILE_QUANTUM = 4;
 /** Largest edge (in canvas px) an image card is sized to on first drop. */
 const MAX_IMAGE_CARD_SIZE = 400;
 /** Default size (in canvas px) of an audio voice-note card. */
@@ -83,9 +91,29 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         endY: number;
     } | null>(null);
     const hasInitializedCamera = useRef(false);
+    /** Last `cards` payload this client wrote, to recognise the observer's echo. */
+    const lastSavedCards = useRef<string | null>(null);
     const panStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
     const selectionStart = useRef<{ x: number; y: number } | null>(null);
     const isSelecting = useRef(false);
+
+    /**
+     * The container's viewport rect, captured once when a gesture starts.
+     *
+     * Every move handler needs it to map a pointer to canvas space, but reading
+     * it per frame is a `getBoundingClientRect()` on a document the board has
+     * just dirtied — a forced synchronous layout of *everything* still on
+     * screen (the navigation drawer's scene list, the timeline strip, the
+     * parked screenplay editor) on every single move event. The panel itself
+     * cannot move mid-gesture, so the rect taken at gesture start stays correct
+     * and the whole per-frame relayout goes away.
+     */
+    const gestureRect = useRef<DOMRect | null>(null);
+    const captureGestureRect = useCallback(() => {
+        const rect = containerRef.current?.getBoundingClientRect() ?? null;
+        gestureRect.current = rect;
+        return rect;
+    }, []);
 
     // ── Touch (mobile) state ──────────────────────────────────────────────────
     const isPhone = useIsPhone();
@@ -182,7 +210,18 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
 
         const syncCards = () => {
             const cardsData = boardMap.get("cards");
-            if (cardsData) {
+            // Y.Map observers fire for local writes too, so our own save echoes
+            // straight back. Re-parsing it would rebuild every card object and
+            // re-render the whole board a second time for a state it is already
+            // in — pure waste, and paid on every committed drag. (Arrows below
+            // are still synced: a peer may have touched those and nothing else.)
+            const isOwnEcho =
+                hasInitializedCamera.current &&
+                typeof cardsData === "string" &&
+                cardsData === lastSavedCards.current;
+            if (isOwnEcho) {
+                // nothing to apply: local state already is this payload
+            } else if (cardsData) {
                 try {
                     const parsed =
                         typeof cardsData === "string" ? JSON.parse(cardsData) : cardsData;
@@ -238,7 +277,9 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         (newCards: BoardCardData[]) => {
             if (!projectState || !isYjsReady || isReadOnly) return;
             const boardMap = projectState.boardData(docId);
-            boardMap.set("cards", JSON.stringify(newCards));
+            const payload = JSON.stringify(newCards);
+            lastSavedCards.current = payload; // so the observer can skip its echo
+            boardMap.set("cards", payload);
         },
         [projectState, isYjsReady, isReadOnly, docId],
     );
@@ -306,10 +347,9 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
             if ((e.target as HTMLElement).closest("[data-context-menu]")) return;
 
-            const container = containerRef.current;
-            if (!container) return;
+            const rect = captureGestureRect();
+            if (!rect) return;
 
-            const rect = container.getBoundingClientRect();
             const canvasX = (e.clientX - rect.left - offset.x) / scale;
             const canvasY = (e.clientY - rect.top - offset.y) / scale;
 
@@ -318,7 +358,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             setSelectionRect({ startX: canvasX, startY: canvasY, endX: canvasX, endY: canvasY });
             setSelectedCardIds(new Set());
         },
-        [offset, scale],
+        [offset, scale, captureGestureRect],
     );
 
     const handleContainerMouseDown = useCallback(
@@ -382,10 +422,9 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         const onMouseMove = (e: MouseEvent) => {
             if (!isSelecting.current) return;
 
-            const container = containerRef.current;
-            if (!container) return;
+            const rect = gestureRect.current;
+            if (!rect) return;
 
-            const rect = container.getBoundingClientRect();
             const currentOffset = offsetRef.current;
             const currentScale = scaleRef.current;
             const canvasX = (e.clientX - rect.left - currentOffset.x) / currentScale;
@@ -398,6 +437,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             if (!isSelecting.current) {
                 isSelecting.current = false;
                 selectionStart.current = null;
+                gestureRect.current = null;
                 setSelectionRect(null);
                 return;
             }
@@ -439,6 +479,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
 
             isSelecting.current = false;
             selectionStart.current = null;
+            gestureRect.current = null;
         };
 
         window.addEventListener("mousemove", onMouseMove);
@@ -848,12 +889,31 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         [isReadOnly, showCanvasMenu],
     );
 
-    // Update card (with multi-drag support)
+    /**
+     * Update card (with multi-drag support).
+     *
+     * `transient` marks a frame of a live drag/resize. Those only move local
+     * state: writing to Yjs per frame stringifies the entire board, opens a
+     * transaction (which fans out to persistence and to every peer) and then
+     * echoes back through the observer — tens of times a second, for a position
+     * that is about to change again. The gesture's last update is sent without
+     * the flag and is what actually gets stored (see BoardCard's commit).
+     */
     const handleUpdateCard = useCallback(
-        (updatedCard: BoardCardData) => {
+        (updatedCard: BoardCardData, options?: { transient?: boolean }) => {
+            const persist = (next: BoardCardData[]) => {
+                setCards(next);
+                cardsRef.current = next; // gesture commits read this back
+                if (!options?.transient) saveCards(next);
+            };
+            // Read through the ref, not the `cards` state: a drag can emit
+            // several moves between two commits, and it also keeps this callback
+            // stable across frames (a new identity would re-render every card).
+            const current = cardsRef.current;
+
             if (selectedCardIds.has(updatedCard.id) && selectedCardIds.size > 1) {
                 // Multi-drag: apply same delta to all selected cards
-                const oldCard = cards.find((c) => c.id === updatedCard.id);
+                const oldCard = current.find((c) => c.id === updatedCard.id);
                 if (oldCard) {
                     const dx = updatedCard.x - oldCard.x;
                     const dy = updatedCard.y - oldCard.y;
@@ -863,33 +923,34 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                             updatedCard.width !== oldCard.width ||
                             updatedCard.height !== oldCard.height;
                         if (!isResize) {
-                            const newCards = cards.map((c) => {
-                                if (c.id === updatedCard.id) return updatedCard;
-                                if (selectedCardIds.has(c.id))
-                                    return { ...c, x: c.x + dx, y: c.y + dy };
-                                return c;
-                            });
-                            setCards(newCards);
-                            saveCards(newCards);
+                            persist(
+                                current.map((c) => {
+                                    if (c.id === updatedCard.id) return updatedCard;
+                                    if (selectedCardIds.has(c.id))
+                                        return { ...c, x: c.x + dx, y: c.y + dy };
+                                    return c;
+                                }),
+                            );
                             return;
                         }
                     }
                 }
             }
             // Single card update (existing logic)
-            const newCards = cards.map((c) => (c.id === updatedCard.id ? updatedCard : c));
-            setCards(newCards);
-            saveCards(newCards);
+            persist(current.map((c) => (c.id === updatedCard.id ? updatedCard : c)));
         },
-        [cards, selectedCardIds, saveCards],
+        [selectedCardIds, saveCards],
     );
+
+    // Card-menu actions below read through cardsRef rather than the `cards`
+    // state so their identity survives a drag's transient frames — BoardCard is
+    // memoised, and a fresh onContextMenu identity per frame would re-render
+    // every card on every frame of a drag.
 
     // Delete card (and connected arrows)
     const handleDeleteCard = useCallback(
         (id: string) => {
-            const newCards = cards.filter((c) => c.id !== id);
-            setCards(newCards);
-            saveCards(newCards);
+            removeCards(new Set([id]));
             // Also delete arrows connected to this card
             const newArrows = arrows.filter((a) => a.fromCardId !== id && a.toCardId !== id);
             setArrows(newArrows);
@@ -897,17 +958,18 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             // Deleting an image card may orphan its asset — reconcile (debounced).
             if (projectId && projectState) scheduleAssetGc(projectId, projectState);
         },
-        [cards, arrows, saveCards, saveArrows, projectId, projectState],
+        [removeCards, arrows, saveArrows, projectId, projectState],
     );
 
     // Change card color
     const handleChangeCardColor = useCallback(
         (id: string, color: string) => {
-            const newCards = cards.map((c) => (c.id === id ? { ...c, color } : c));
+            const newCards = cardsRef.current.map((c) => (c.id === id ? { ...c, color } : c));
+            cardsRef.current = newCards;
             setCards(newCards);
             saveCards(newCards);
         },
-        [cards, saveCards],
+        [saveCards],
     );
 
     // Duplicate card
@@ -919,11 +981,12 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                 x: card.x + 20,
                 y: card.y + 20,
             };
-            const newCards = [...cards, newCard];
+            const newCards = [...cardsRef.current, newCard];
+            cardsRef.current = newCards;
             setCards(newCards);
             saveCards(newCards);
         },
-        [cards, saveCards],
+        [saveCards],
     );
 
     // Send card to the Timeline — to a specific layer when `layerId` is given,
@@ -1135,18 +1198,19 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     // Handle starting a connection from a card
     const handleStartConnection = useCallback(
         (cardId: string, side: string, initialX: number, initialY: number) => {
+            captureGestureRect();
             setConnectingFrom({ cardId, side });
             setConnectingLine({ x: initialX, y: initialY });
         },
-        [],
+        [captureGestureRect],
     );
 
     // Handle mouse move while connecting
     const handleConnectionMouseMove = useCallback(
         (e: MouseEvent) => {
-            if (!connectingFrom || !containerRef.current) return;
+            const rect = gestureRect.current;
+            if (!connectingFrom || !rect) return;
 
-            const rect = containerRef.current.getBoundingClientRect();
             const x = (e.clientX - rect.left - offset.x) / scale;
             const y = (e.clientY - rect.top - offset.y) / scale;
 
@@ -1204,9 +1268,8 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         // the card under the finger via elementFromPoint to complete the link.
         const onTouchMove = (e: TouchEvent) => {
             const t = e.touches[0];
-            const container = containerRef.current;
-            if (!t || !container) return;
-            const rect = container.getBoundingClientRect();
+            const rect = gestureRect.current;
+            if (!t || !rect) return;
             lastTouchPoint.current = { x: t.clientX, y: t.clientY };
             setConnectingLine({
                 x: (t.clientX - rect.left - offsetRef.current.x) / scaleRef.current,
@@ -1228,6 +1291,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             window.removeEventListener("mouseup", handleConnectionMouseUp);
             window.removeEventListener("touchmove", onTouchMove);
             window.removeEventListener("touchend", onTouchEnd);
+            gestureRect.current = null;
         };
     }, [connectingFrom, handleConnectionMouseMove, handleConnectionMouseUp, handleCompleteConnection]);
 
@@ -1242,10 +1306,12 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         [],
     );
 
+    // Uses the gesture's captured rect when there is one (a live pan/pinch), and
+    // otherwise measures — the discrete taps that call this outside a gesture
+    // (double-tap to create, long-press menu) are cheap enough to measure fresh.
     const toCanvasPoint = (clientX: number, clientY: number) => {
-        const container = containerRef.current;
-        if (!container) return { x: 0, y: 0 };
-        const rect = container.getBoundingClientRect();
+        const rect = gestureRect.current ?? captureGestureRect();
+        if (!rect) return { x: 0, y: 0 };
         return {
             x: (clientX - rect.left - offsetRef.current.x) / scaleRef.current,
             y: (clientY - rect.top - offsetRef.current.y) / scaleRef.current,
@@ -1290,6 +1356,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             }, 500);
         } else if (e.touches.length === 2) {
             cancelLongPress();
+            captureGestureRect();
             const a = e.touches[0];
             const b = e.touches[1];
             const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
@@ -1318,9 +1385,8 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             }
             if (g.moved) setOffset({ x: g.startOffset.x + dx, y: g.startOffset.y + dy });
         } else if (g.mode === "pinch" && e.touches.length >= 2) {
-            const container = containerRef.current;
-            if (!container) return;
-            const rect = container.getBoundingClientRect();
+            const rect = gestureRect.current;
+            if (!rect) return;
             const a = e.touches[0];
             const b = e.touches[1];
             const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
@@ -1355,6 +1421,9 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         }
         if (e.touches.length === 0) {
             g.mode = "none";
+            // Gesture over: drop the captured rect so the next one measures fresh
+            // (the panel may have moved since — a drawer, a split resize).
+            gestureRect.current = null;
         } else if (e.touches.length === 1) {
             // A finger lifted from a pinch — resume panning with the one that remains.
             const t = e.touches[0];
@@ -1369,15 +1438,19 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         }
     };
 
-    // Generate grid pattern
+    // Grid placement. Pan is expressed purely as a transform, so a pan frame
+    // writes nothing but `transform` and the compositor does the rest; the tile
+    // size is quantized (see GRID_TILE_QUANTUM) so zoom only touches
+    // background-size a handful of times across a gesture, not every frame.
     const gridPattern = useMemo(() => {
-        const scaledGridSize = GRID_SIZE * scale;
-        const offsetX = offset.x % scaledGridSize;
-        const offsetY = offset.y % scaledGridSize;
-
+        const tile = Math.max(
+            GRID_TILE_QUANTUM,
+            Math.round((GRID_SIZE * scale) / GRID_TILE_QUANTUM) * GRID_TILE_QUANTUM,
+        );
         return {
-            backgroundSize: `${scaledGridSize}px ${scaledGridSize}px`,
-            backgroundPosition: `${offsetX}px ${offsetY}px`,
+            backgroundSize: `${tile}px ${tile}px`,
+            inset: `${-tile}px`,
+            transform: `translate3d(${offset.x % tile}px, ${offset.y % tile}px, 0)`,
         };
     }, [scale, offset]);
 

@@ -18,6 +18,13 @@ import MobileFormatToolbar from "@components/editor/MobileFormatToolbar";
 import styles from "./ProjectWorkspace.module.css";
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 
+/**
+ * Ceiling on how often the shell's anchoring guard may snap the document back
+ * to the top before it assumes it is fighting something and stands down. A
+ * genuine caret chase resets a handful of times; a fight resets every frame.
+ */
+const MAX_ANCHOR_RESETS_PER_SECOND = 12;
+
 const ProjectWorkspace = () => {
     const {
         leftSidebarOpen,
@@ -41,13 +48,46 @@ const ProjectWorkspace = () => {
     // unanchored. Nothing at the window level is ever supposed to scroll here, so
     // snap it straight back to the top. The listener is on window and
     // non-capturing, so it never fires for the inner container's own scroll.
+    //
+    // Coalesced to one reset per frame, with a breaker: resetting straight from
+    // the scroll handler re-enters (the reset is itself a scroll), and anything
+    // that keeps re-scrolling the document — a smooth scroll animation aimed at
+    // a target it can never reach, say — turns that into an unbounded fight that
+    // pins the main thread. Past a plausible rate the guard stands down for a
+    // beat: a drifted shell is a cosmetic problem, a locked-up app is not.
     useEffect(() => {
         if (!isPhone) return;
+
+        let frame: number | null = null;
+        let resets = 0;
+        let windowStart = 0;
+        let mutedUntil = 0;
+
         const anchor = () => {
-            if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0);
+            if (frame !== null) return;
+            frame = requestAnimationFrame(() => {
+                frame = null;
+                const now = performance.now();
+                if (now < mutedUntil) return;
+                if (window.scrollY === 0 && window.scrollX === 0) return;
+
+                if (now - windowStart > 1000) {
+                    windowStart = now;
+                    resets = 0;
+                }
+                if (++resets > MAX_ANCHOR_RESETS_PER_SECOND) {
+                    mutedUntil = now + 1000;
+                    return;
+                }
+                window.scrollTo(0, 0);
+            });
         };
+
         window.addEventListener("scroll", anchor, { passive: true });
-        return () => window.removeEventListener("scroll", anchor);
+        return () => {
+            if (frame !== null) cancelAnimationFrame(frame);
+            window.removeEventListener("scroll", anchor);
+        };
     }, [isPhone]);
 
     // Enter edit mode and drop the caret into the reader's current editor so the
@@ -75,7 +115,7 @@ const ProjectWorkspace = () => {
 
     // On phone the sidebars slide over the editor as drawers; a backdrop dims the
     // editor and gives a tap-anywhere-to-close target.
-    const showBackdrop = isPhone && (leftSidebarOpen || rightSidebarOpen);
+    const drawersOpen = leftSidebarOpen || rightSidebarOpen;
     const closeSidebars = () => {
         setLeftSidebarOpen(false);
         setRightSidebarOpen(false);
@@ -120,8 +160,24 @@ const ProjectWorkspace = () => {
                         {rightSidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                     </div>
 
-                    {/* Phone drawer backdrop */}
-                    {showBackdrop && <div className={styles.sidebar_backdrop} onClick={closeSidebars} />}
+                    {/* Phone drawer backdrop.
+                        Kept MOUNTED and faded, never conditionally rendered: on
+                        iOS, when the element under a tap is destroyed by its own
+                        click handler, WebKit re-resolves its remembered pointer
+                        position onto whatever now sits beneath the point — the
+                        board — and then re-runs that hit-test + hover chain on
+                        every subsequent layout/style change. Cards sweeping under
+                        the phantom point toggled `.card:hover`'s transitioned
+                        box-shadow frame after frame, freezing drags and pinches
+                        at ~8fps until a tap elsewhere moved the point away. A
+                        surviving backdrop keeps the hover pinned to an element
+                        that still exists, and is inert while hidden. */}
+                    {isPhone && (
+                        <div
+                            className={`${styles.sidebar_backdrop} ${drawersOpen ? "" : styles.sidebar_backdrop_hidden}`}
+                            onClick={drawersOpen ? closeSidebars : undefined}
+                        />
+                    )}
 
                     {/* Floating page-count + view-mode bubbles */}
                     <EditorFooter />

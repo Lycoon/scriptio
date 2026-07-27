@@ -24,6 +24,7 @@ import {
     SearchMatch,
 } from "@src/lib/screenplay/extensions/search-highlight-extension";
 import { createReadAloudHighlightExtension } from "@src/lib/screenplay/extensions/read-aloud-highlight-extension";
+import { createDictationPreviewExtension } from "./dictation-preview-extension";
 import {
     createSceneBookmarkExtension,
     refreshSceneBookmarks,
@@ -454,6 +455,10 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 // Read-aloud "now reading" node highlight (screenplay editors only;
                 // controlled externally via transaction metas, so no config needed).
                 ...(config.type === "screenplay" ? [createReadAloudHighlightExtension()] : []),
+                // Live preview of in-flight dictation at the caret. Every editor
+                // can be dictated into (the footer mic targets whichever panel is
+                // active), so this one isn't gated on the document type.
+                createDictationPreviewExtension(),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
                 ...(sceneLockingExtension ? [sceneLockingExtension] : []),
                 // After ScriptioPagination so its plugin reads fresh pagination

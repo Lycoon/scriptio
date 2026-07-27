@@ -63,10 +63,6 @@
         transform: translateX(100%);
         pointer-events: none;
     }
-
-    .collapsed .element {
-        visibility: visible;
-    }
 }
 
 .tabs {

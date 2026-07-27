@@ -616,6 +616,16 @@
         text-decoration-skip-ink: none;
     }
 
+    /* Words the speech recogniser is still revising (widget decoration inserted
+       by dictation-preview-extension). Dimmed to read as provisional; it sits in
+       the text flow so it inherits the element's font and casing, and is inert
+       so a tap near it still lands the caret in the real text. */
+    .dictation-preview {
+        opacity: 0.45;
+        pointer-events: none;
+        user-select: none;
+    }
+
     /* Scene bookmark marker (widget decoration inserted by scene-bookmark-extension) */
     .scene-bookmark-marker {
         position: absolute;

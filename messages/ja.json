@@ -72,7 +72,7 @@
     "save": "変更を保存",
     "cancel": "キャンセル",
     "loading": "読み込み中...",
-    "resetDefaults": "デフォルトに戻す"
+    "resetDefaults": "リセット"
   },
   "sidebar": {
     "title": "ダッシュボード",
@@ -100,7 +100,7 @@
     "defaultPrefix": "デフォルト: {combo}",
     "reset": "リセット",
     "resetTitle": "カスタム設定を削除",
-    "resetDefaults": "デフォルトに戻す",
+    "resetDefaults": "リセット",
     "save": "変更を保存"
   },
   "readaloud": {

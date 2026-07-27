@@ -114,16 +114,45 @@ const EditorSidebarNavigation = () => {
         };
     }, [editor]);
 
-    // Auto-scroll the current scene item into view (suppressed when user initiated navigation)
+    /**
+     * Auto-scroll the current scene item into view (suppressed when the user
+     * initiated the navigation themselves).
+     *
+     * Scrolls the list box directly rather than calling `scrollIntoView` on the
+     * item. `scrollIntoView` walks *every* scrollable ancestor and, when the
+     * inner ones can't bring the target into view, escalates to scrolling the
+     * document itself — and with `behavior: "smooth"` that is a running
+     * animation, not a one-shot.
+     *
+     * Both conditions were met here on phone. The drawer is `position: fixed`
+     * and, when shut, translated fully off-screen with its contents still
+     * rendered (see .collapsed in the stylesheet), so the target could never be
+     * revealed and the animation never converged — a scroll left running
+     * indefinitely against the shell's window-anchoring guard (see
+     * ProjectWorkspace) for no visible reason.
+     *
+     * Scrolling `listRef` itself cannot touch the document, and the shut-drawer
+     * case is skipped outright — there is nothing to reveal, and the effect
+     * re-runs when it opens.
+     */
     useEffect(() => {
         if (suppressSceneScrollRef.current) {
             suppressSceneScrollRef.current = false;
             return;
         }
-        if (currentSceneRef.current) {
-            currentSceneRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-    }, [currentSceneIndex]);
+        if (!leftSidebarOpen) return;
+
+        const list = listRef.current;
+        const item = currentSceneRef.current;
+        if (!list || !item) return;
+
+        // Rect-based, not offsetTop: the list establishes no containing block, so
+        // the item's offsetParent is some ancestor further up.
+        const itemRect = item.getBoundingClientRect();
+        const listRect = list.getBoundingClientRect();
+        const delta = itemRect.top - listRect.top - (list.clientHeight - itemRect.height) / 2;
+        list.scrollTo({ top: list.scrollTop + delta, behavior: "smooth" });
+    }, [currentSceneIndex, leftSidebarOpen]);
 
     // End any in-progress drag and clear its drop indicator.
     const resetDrag = useCallback(() => {

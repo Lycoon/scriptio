@@ -72,7 +72,7 @@
     "save": "Guardar cambios",
     "cancel": "Cancelar",
     "loading": "Cargando...",
-    "resetDefaults": "Restablecer predeterminados"
+    "resetDefaults": "Restablecer"
   },
   "sidebar": {
     "title": "Panel",
@@ -100,7 +100,7 @@
     "defaultPrefix": "Por defecto: {combo}",
     "reset": "Restablecer",
     "resetTitle": "Borrar asignación del usuario",
-    "resetDefaults": "Restablecer predeterminados",
+    "resetDefaults": "Restablecer",
     "save": "Guardar cambios"
   },
   "readaloud": {
