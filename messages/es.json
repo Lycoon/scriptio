@@ -415,12 +415,14 @@
       "pdf": "Documento PDF (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
+      "text": "Texto con formato (.txt)",
       "scriptio": "Scriptio (.scriptio)"
     },
     "formatHelp": {
       "pdf": "Formato estándar de la industria. Ideal para compartir e imprimir.",
       "fountain": "Formato de texto plano basado en Markdown, ideal para compatibilidad.",
       "fdx": "Compatible con el software de la industria Final Draft.",
+      "text": "Texto plano con los márgenes estándar de un guion, legible en cualquier parte.",
       "scriptio": "Formato propio de Scriptio, para mantener el proyecto en local"
     },
     "includeNotes": "Incluir notas",

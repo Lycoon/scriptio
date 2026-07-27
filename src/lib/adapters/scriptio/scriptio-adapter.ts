@@ -1,5 +1,6 @@
 import { ProjectData, ProjectState, applyProjectData, clearProjectData, projectDataOf } from "@src/lib/project/project-state";
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
+import { ExportFormat } from "@src/lib/utils/enums";
 import { replaceScreenplay } from "../../screenplay/editor";
 import { Editor } from "@tiptap/react";
 import { ProjectRepository } from "../../project/project-repository";
@@ -272,7 +273,8 @@ export async function restoreScriptioAssets(
 
 export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
     label = "Scriptio";
-    extension = "scriptio";
+    exportTarget = { format: ExportFormat.SCRIPTIO, extension: "scriptio" };
+    importExtensions = ["scriptio"];
 
     async convertTo(project: ProjectState, options: ScriptioExportOptions): Promise<Blob> {
         const readable = options.readable ?? false;

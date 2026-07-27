@@ -416,12 +416,14 @@
       "pdf": "Document PDF (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
+      "text": "Texte formaté (.txt)",
       "scriptio": "Scriptio (.scriptio)"
     },
     "formatHelp": {
       "pdf": "Format standard de l'industrie. Idéal pour le partage et l'impression.",
       "fountain": "Format texte brut basé sur Markdown, idéal pour la compatibilité.",
       "fdx": "Compatible avec le logiciel professionnel Final Draft.",
+      "text": "Texte brut mis en page avec les marges standard d'un scénario, lisible partout.",
       "scriptio": "Format natif de Scriptio, pour conserver votre projet en local"
     },
     "includeNotes": "Inclure les notes",

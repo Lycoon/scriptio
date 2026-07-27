@@ -131,7 +131,9 @@ function paragraphsToTitlePage(paras: OSFParagraph[]): JSONContent[] {
 
 export class FadeInAdapter extends ProjectAdapter<BaseExportOptions> {
     label = "FadeIn";
-    extension = "fadein";
+    // Import-only: `convertTo` below rejects, so the export UI never offers it.
+    exportTarget = null;
+    importExtensions = ["fadein"];
 
     convertTo(): Promise<Blob> {
         return Promise.reject(new Error("Export to FadeIn is not supported"));

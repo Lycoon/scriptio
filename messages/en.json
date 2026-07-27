@@ -415,12 +415,14 @@
       "pdf": "PDF Document (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
+      "text": "Formatted Text (.txt)",
       "scriptio": "Scriptio (.scriptio)"
     },
     "formatHelp": {
       "pdf": "Standard industry format. Best for sharing and printing.",
       "fountain": "Plain text format based on markdown, great for compatibility.",
       "fdx": "Compatible with Final Draft industry software.",
+      "text": "Plain text laid out with standard screenplay margins, readable anywhere.",
       "scriptio": "Scriptio own format, to keep your project local"
     },
     "includeNotes": "Include Notes",

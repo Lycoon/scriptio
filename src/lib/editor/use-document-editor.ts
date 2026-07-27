@@ -346,9 +346,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
     const editor = useEditor(
         {
             immediatelyRender: false,
-            // Suppress iOS's native autocorrect/predictive UI on the contenteditable
-            // (see EDITOR_INPUT_ATTRIBUTES). Screenplay editors re-set editorProps via
-            // setOptions in DocumentEditorPanel, which re-applies these attributes.
+            // Text-input traits for the contenteditable: native autocorrect on, native
+            // spellcheck off (see EDITOR_INPUT_ATTRIBUTES). Screenplay editors re-set
+            // editorProps via setOptions in DocumentEditorPanel, which re-applies these.
             editorProps: {
                 attributes: EDITOR_INPUT_ATTRIBUTES,
             },
@@ -473,9 +473,13 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
 
                     lastReportedElementRef.current = elementAnchor;
                     cb.setActiveElement?.(elementAnchor, false);
-                    if (anchor.nodeBefore) {
-                        cb.setSelectedStyles?.(getStylesFromMarks([...anchor.nodeBefore.marks]));
-                    }
+                    // $anchor.marks() is the set that applies *at the caret*: the
+                    // preceding text node's marks normally, but the following
+                    // node's at offset 0, where there is no nodeBefore. Reading
+                    // nodeBefore directly left the style buttons showing the
+                    // previous line's marks whenever the caret landed on a node's
+                    // first character (and none at all in an empty node).
+                    cb.setSelectedStyles?.(getStylesFromMarks([...anchor.marks()]));
                     if (!transaction.docChanged) {
                         setSuggestions([]);
                     }

@@ -1,4 +1,5 @@
 import { BaseExportOptions, ProjectAdapter } from "../screenplay-adapter";
+import { ExportFormat } from "@src/lib/utils/enums";
 import { XMLBuilder, XMLParser } from "@node_modules/fast-xml-parser/src/fxp";
 import { getNodeFlattenContent } from "@src/lib/screenplay/screenplay";
 import { ProjectData, ProjectState, screenplayOf } from "@src/lib/project/project-state";
@@ -46,7 +47,8 @@ const FDX_STYLE_REVERSE: Record<string, string> = Object.fromEntries(
 
 export class FinalDraftAdapter extends ProjectAdapter<BaseExportOptions> {
     label = "Final Draft";
-    extension = "fdx";
+    exportTarget = { format: ExportFormat.FDX, extension: "fdx" };
+    importExtensions = ["fdx"];
 
     convertTo(project: ProjectState, options: BaseExportOptions): Promise<Blob> {
         const paragraphNodes: FDXParagraphNode[] = [];

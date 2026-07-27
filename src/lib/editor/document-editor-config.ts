@@ -10,18 +10,26 @@ export type PaginationMode = "screenplay" | "titlepage";
 /**
  * DOM attributes applied to every editor's ProseMirror contenteditable element.
  *
- * `autocorrect: "off"` maps to iOS `UITextInputTraits.autocorrectionType = .no`
- * in the WKWebView, which suppresses the native QuickType predictive-suggestions
- * bar that otherwise floats between our MobileFormatToolbar and the keyboard.
+ * `autocorrect: "on"` maps to iOS `UITextInputTraits.autocorrectionType = .yes`
+ * in the WKWebView, giving writers the same automatic typo correction they get
+ * in every other editor on the platform. This was previously "off" to suppress
+ * the native QuickType bar, but that trait is all-or-nothing: turning off the
+ * bar also turns off correction itself. The bar is the accepted cost — it is
+ * included in the visual-viewport inset, so MobileFormatToolbar rides above it
+ * rather than being overlapped (see useKeyboardInset).
+ *
  * `writingsuggestions: "false"` disables Apple Intelligence inline writing
- * suggestions on newer iOS for the same reason. `spellcheck: "false"` turns off
- * the browser's native red-squiggle spellcheck — we ship our own spellcheck
- * engine (see SpellcheckContext), so the native one is redundant and its long-
- * press menu adds more unwanted Apple UI. Autocapitalize is intentionally left
- * at the default so sentence-case capitalization still works while typing.
+ * suggestions on newer iOS; that is a distinct trait from autocorrection and
+ * does not affect it. `spellcheck: "false"` turns off the browser's native
+ * red-squiggle spellcheck — we ship our own spellcheck engine (see
+ * SpellcheckContext), so the native one is redundant and its long-press menu
+ * adds more unwanted Apple UI. Spell checking and autocorrection are separate
+ * `UITextInputTraits`, so suppressing the squiggles keeps correction working.
+ * Autocapitalize is intentionally left at the default so sentence-case
+ * capitalization still works while typing.
  */
 export const EDITOR_INPUT_ATTRIBUTES: Record<string, string> = {
-    autocorrect: "off",
+    autocorrect: "on",
     autocomplete: "off",
     spellcheck: "false",
     writingsuggestions: "false",

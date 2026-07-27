@@ -415,12 +415,14 @@
       "pdf": "PDF 문서 (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
+      "text": "서식 있는 텍스트 (.txt)",
       "scriptio": "Scriptio (.scriptio)"
     },
     "formatHelp": {
       "pdf": "표준 형식. 공유 및 인쇄에 적합합니다.",
       "fountain": "Markdown 기반 텍스트 형식. 호환성이 좋습니다.",
       "fdx": "전문 소프트웨어인 Final Draft와 호환됩니다.",
+      "text": "표준 시나리오 여백으로 정렬한 일반 텍스트. 어디서나 읽을 수 있습니다.",
       "scriptio": "Scriptio 기본 형식. 로컬 보관용으로 적합합니다."
     },
     "includeNotes": "노트 포함",

@@ -269,7 +269,15 @@
 
     .editor_wrapper {
         max-width: none;
-        padding-bottom: 40%;
+        /* A fixed tail so the last page doesn't butt against the viewport edge,
+         * plus whatever the on-screen keyboard and the format toolbar riding on it
+         * currently cover (--keyboard-inset, set on the scroll container by
+         * useKeyboardCaretVisibility and inherited here; absent when no keyboard is
+         * up). Without that second term the end of the script has nothing below it
+         * to scroll up: the shell is pinned to the layout viewport, so the keyboard
+         * simply sits over the last lines and they can never be brought into view
+         * while writing them. */
+        padding-bottom: calc(40% + var(--keyboard-inset, 0px));
     }
 
     /* ENDLESS mode (default on phone): reflow the screenplay into the viewport at

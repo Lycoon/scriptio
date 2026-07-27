@@ -48,6 +48,8 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         useContext(ProjectContext);
     const { updateContextMenu } = useContext(UserContext);
     const t = useTranslations("board");
+    // Used only to name the default lanes when the board seeds them (below).
+    const tTimeline = useTranslations("timeline");
     const projectState = repository?.getState();
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -962,6 +964,20 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         return out;
     }, [timelineLayers]);
 
+    /**
+     * Lanes to offer in the "Send to timeline" submenu. The default lanes are
+     * otherwise only seeded when the Timeline panel is first opened, so a
+     * board-first user got an empty list (and a flat menu item) until they'd
+     * either opened the timeline or sent a card once — `appendTimelineClip`
+     * seeds too. Seeding here as well keeps the lanes listed on the very first
+     * right-click. Idempotent, and a no-op on a read-only project.
+     */
+    const resolveTimelineLayers = useCallback(() => {
+        if (orderedLayers.length > 0) return orderedLayers;
+        const seeded = repository?.ensureTimelineLayers(2, (i) => `${tTimeline("layer")} ${i + 1}`) ?? [];
+        return seeded.map((layer) => ({ layer, depth: 0 }));
+    }, [orderedLayers, repository, tTimeline]);
+
     // Delete arrow
     const handleDeleteArrow = useCallback(
         (id: string) => {
@@ -975,6 +991,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     // Open the shared context-menu host for a card.
     const handleCardContextMenu = useCallback(
         (e: React.MouseEvent, card: BoardCardData) => {
+            const layers = resolveTimelineLayers();
             updateContextMenu({
                 position: { x: e.clientX, y: e.clientY },
                 content: (
@@ -996,9 +1013,9 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                             action={() => handleDuplicateCard(card)}
                         />
                         {(card.type ?? "text") === "text" &&
-                            (orderedLayers.length > 0 ? (
+                            (layers.length > 0 ? (
                                 <ContextMenuSubmenu icon={ListTree} text={t("sendToTimeline")}>
-                                    {orderedLayers.map(({ layer, depth }) => (
+                                    {layers.map(({ layer, depth }) => (
                                         <ContextMenuItem
                                             key={layer.id}
                                             icon={Layers}
@@ -1024,7 +1041,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
                 ),
             });
         },
-        [updateContextMenu, t, handleChangeCardColor, handleDuplicateCard, handleSendToTimeline, handleDeleteCard, orderedLayers],
+        [updateContextMenu, t, handleChangeCardColor, handleDuplicateCard, handleSendToTimeline, handleDeleteCard, resolveTimelineLayers],
     );
 
     // Open the shared context-menu host for an arrow.

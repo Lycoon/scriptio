@@ -5,7 +5,7 @@
 
 import { ProjectData, ProjectState, applyProjectData } from "@src/lib/project/project-state";
 import { CURRENT_PROJECT_VERSION } from "@src/lib/project/migrations/project-migrations";
-import { getAdapterByFilename } from "@src/lib/adapters/registry";
+import { getImportAdapterByFilename } from "@src/lib/adapters/registry";
 import { restoreScriptioAssets } from "@src/lib/adapters/scriptio/scriptio-adapter";
 import { createCachedProject, createCachedProjectWithId } from "@src/lib/persistence/storage-provider/local-persistence";
 import { writeYjsDocumentLocally } from "@src/lib/persistence/y-local-provider";
@@ -27,7 +27,7 @@ export interface ImportResult {
  * Parse a file and extract project content.
  */
 function parseProjectData(filename: string, content: ArrayBuffer): ProjectData {
-    const adapter = getAdapterByFilename(filename);
+    const adapter = getImportAdapterByFilename(filename);
     if (!adapter) {
         throw new Error(`Unsupported file type: ${filename.split(".").pop()}`);
     }
@@ -55,7 +55,7 @@ export async function importFileIntoProject(
     titlePageEditor?: Editor | null,
     repository?: ProjectRepository | null,
 ): Promise<void> {
-    const adapter = getAdapterByFilename(file.name);
+    const adapter = getImportAdapterByFilename(file.name);
     if (!adapter) {
         throw new Error(`Unsupported file type: ${file.name.split(".").pop()}`);
     }
@@ -182,11 +182,4 @@ export async function importFileAsProject(
             error: error instanceof Error ? error.message : "Import failed",
         };
     }
-}
-
-/**
- * Get supported import file extensions.
- */
-export function getSupportedImportExtensions(): string {
-    return ".fountain,.txt,.fdx,.scriptio,.fadein,.wdz";
 }
