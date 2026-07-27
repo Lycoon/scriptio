@@ -27,6 +27,7 @@ import { useDocumentComments } from "@src/lib/editor/use-document-comments";
 import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
 import { useViewModeScrollAnchor } from "@src/lib/editor/use-view-mode-scroll-anchor";
+import { useKeyboardCaretVisibility } from "@src/lib/editor/use-keyboard-caret-visibility";
 import { captureZoomAnchor, settleZoomAnchor } from "@src/lib/editor/zoom-scroll-anchor";
 import { centerCaretInView, focusEditorAtCoords } from "@src/lib/editor/focus-in-viewport";
 import { getSpellErrorAt } from "@src/lib/spellcheck/spellcheck-extension";
@@ -360,6 +361,16 @@ const DocumentEditorPanel = ({
         editor,
         viewMode: isEndlessScroll,
         onBeforeChange: onBeforeEndlessScrollChange,
+    });
+
+    // ---- Keyboard-safe writing area (phone) ----
+    // Reserve scroll room for the on-screen keyboard + format toolbar and keep the
+    // caret above them, so writing at the very end of the script isn't done blind
+    // behind the keyboard — see the hook for why neither half is automatic.
+    useKeyboardCaretVisibility({
+        container: containerEl,
+        editor,
+        enabled: isPhone && mobileEditMode,
     });
 
     // ---- Desktop editor zoom ----

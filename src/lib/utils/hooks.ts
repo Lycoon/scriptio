@@ -14,6 +14,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProjectRole } from "../../generated/client/browser";
 import { isTauri } from "@tauri-apps/api/core";
 import { useTranslations } from "next-intl";
+import { keyboardInsetNow } from "@src/lib/editor/visible-band";
 
 interface Position {
     x: number;
@@ -105,10 +106,6 @@ const useIsPhone = (): boolean => {
 };
 
 
-// Below this the visualViewport shrink is just browser chrome jitter, not an
-// open on-screen keyboard.
-const KEYBOARD_THRESHOLD = 120;
-
 /**
  * Distance in px the on-screen keyboard covers at the bottom of the layout
  * viewport, tracked via the VisualViewport API. 0 when no keyboard is up.
@@ -121,12 +118,7 @@ const useKeyboardInset = (enabled: boolean): number => {
         // harmless — just don't subscribe.
         if (!enabled || typeof window === "undefined" || !window.visualViewport) return;
         const vv = window.visualViewport;
-        const update = () => {
-            // Layout-viewport height minus the visible visual viewport (and any
-            // offset from a scrolled visual viewport) is what the keyboard hides.
-            const covered = window.innerHeight - vv.height - vv.offsetTop;
-            setInset(covered > KEYBOARD_THRESHOLD ? covered : 0);
-        };
+        const update = () => setInset(keyboardInsetNow());
         update();
         vv.addEventListener("resize", update);
         vv.addEventListener("scroll", update);

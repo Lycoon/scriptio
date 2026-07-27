@@ -1,6 +1,8 @@
 import type { Editor } from "@tiptap/react";
 import { Selection } from "@tiptap/pm/state";
 
+import { coveredBottomBand } from "./visible-band";
+
 /** Vertical distance from a point to a rect's band; 0 when the point is inside it. */
 const verticalGap = (rect: DOMRect, top: number) => Math.max(rect.top - top, top - rect.bottom, 0);
 
@@ -195,11 +197,7 @@ const findScrollContainer = (from: HTMLElement): HTMLElement | null => {
  * this same container and must not inherit a keyboard-sized offset.
  */
 const withVisibleBandPadding = (container: HTMLElement, scroll: () => void) => {
-    const vv = window.visualViewport;
-    const toolbar = document.querySelector<HTMLElement>('[role="toolbar"]');
-    const covered = toolbar
-        ? window.innerHeight - toolbar.getBoundingClientRect().top
-        : window.innerHeight - (vv ? vv.offsetTop + vv.height : window.innerHeight);
+    const covered = coveredBottomBand();
 
     container.style.scrollPaddingTop = window.getComputedStyle(container).paddingTop;
     container.style.scrollPaddingBottom = `${covered}px`;
