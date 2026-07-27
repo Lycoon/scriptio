@@ -803,16 +803,16 @@ const renderContextMenu = (contextMenu: ContextMenuProps) => {
 const ContextMenu = () => {
     const { contextMenu, updateContextMenu } = useContext(UserContext);
 
-    const handleClick = () => {
-        if (contextMenu) updateContextMenu(undefined);
-    };
-
+    // Close on any click outside. Only bound while a menu is actually open: this
+    // effect had no dependency array at all, so it tore down and re-attached a
+    // window-level click listener on every render of a component that sits at
+    // the root of the workspace and re-renders with the whole user context.
     useEffect(() => {
-        addEventListener("click", handleClick, false);
-        return () => {
-            removeEventListener("click", handleClick, false);
-        };
-    });
+        if (!contextMenu) return;
+        const handleClick = () => updateContextMenu(undefined);
+        window.addEventListener("click", handleClick);
+        return () => window.removeEventListener("click", handleClick);
+    }, [contextMenu, updateContextMenu]);
 
     useEffect(() => {
         if (!contextMenu) return;

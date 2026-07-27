@@ -72,7 +72,7 @@
     "save": "保存",
     "cancel": "取消",
     "loading": "加载中...",
-    "resetDefaults": "重置为默认"
+    "resetDefaults": "重置"
   },
   "sidebar": {
     "title": "控制面板",
@@ -100,7 +100,7 @@
     "defaultPrefix": "默认: {combo}",
     "reset": "重置",
     "resetTitle": "清除自定义键位",
-    "resetDefaults": "重置为默认",
+    "resetDefaults": "重置",
     "save": "保存更改"
   },
   "readaloud": {

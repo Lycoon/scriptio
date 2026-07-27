@@ -72,7 +72,7 @@
     "save": "Zapisz zmiany",
     "cancel": "Anuluj",
     "loading": "Ładowanie...",
-    "resetDefaults": "Przywróć domyślne"
+    "resetDefaults": "Resetuj"
   },
   "sidebar": {
     "title": "Panel",
@@ -100,7 +100,7 @@
     "defaultPrefix": "Domyślnie: {combo}",
     "reset": "Resetuj",
     "resetTitle": "Wyczyść niestandardowe przypisanie",
-    "resetDefaults": "Przywróć domyślne",
+    "resetDefaults": "Resetuj",
     "save": "Zapisz zmiany"
   },
   "readaloud": {

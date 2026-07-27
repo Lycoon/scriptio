@@ -78,7 +78,11 @@
 }
 
 /* Dim + tap-to-close layer behind the phone sidebar drawers. Sits above the
- * editor but below the drawers (z-index 60). */
+ * editor but below the drawers (z-index 60). Always mounted on phone (see
+ * ProjectWorkspace for why it must never unmount under a tap) — it fades with
+ * the drawer slide and goes fully inert while hidden. A childless solid-color
+ * div at opacity 0 costs nothing to keep around: WebKit draws solid-color
+ * layers without a backing store. */
 .sidebar_backdrop {
     position: fixed;
     top: var(--navbar-height);
@@ -87,6 +91,13 @@
     bottom: 0;
     z-index: 55;
     background-color: rgba(0, 0, 0, 0.4);
+    /* Matches the drawers' 0.25s transform slide. */
+    transition: opacity 0.25s ease;
+}
+
+.sidebar_backdrop_hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* Touch devices (phone + iPad): enlarge the sidebar toggle to a comfortable tap

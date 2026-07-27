@@ -109,12 +109,21 @@ interface ContextMenuSubmenuProps {
  *  with the parent item rather than sitting a padding-height lower. */
 const MENU_PADDING = 6;
 
+/** Gap left between the parent item and a flyout stacked above/below it. */
+const SUBMENU_GAP = 4;
+
 /**
- * A menu item that reveals a nested flyout of items on hover. The flyout is a
+ * A menu item that reveals a nested flyout of items. The flyout is a
  * fixed-positioned sibling (tagged `data-context-menu` so canvas/outside-click
  * handlers treat it as part of the menu) — fixed positioning escapes the parent
  * menu's `overflow` clip. It opens to the item's right, flipping left near the
  * viewport edge, and closes when the pointer leaves the item *and* the flyout.
+ *
+ * The row is click-activated as well as hover-activated, and that is load-bearing
+ * on touch, not a convenience: WebKit's tap adjustment snaps a tap to the nearest
+ * node that *handles* clicks, so a hover-only row got its taps re-resolved onto
+ * the ordinary items above and below it — on the board card menu that fired
+ * Duplicate or Delete instead of opening the flyout.
  */
 export const ContextMenuSubmenu = ({ text, icon: Icon, children }: ContextMenuSubmenuProps) => {
     const itemRef = useRef<HTMLDivElement>(null);
@@ -132,10 +141,24 @@ export const ContextMenuSubmenu = ({ text, icon: Icon, children }: ContextMenuSu
         const { width, height } = panel.getBoundingClientRect();
         // Open to the item's right, flipping to its left when that would run off
         // the viewport; both sides are clamped so the flyout stays on-screen.
-        const preferredLeft =
-            anchor.right + width > window.innerWidth - VIEWPORT_MARGIN ? anchor.left - width : anchor.right;
-        panel.style.left = `${clampToViewport(preferredLeft, width, window.innerWidth)}px`;
-        panel.style.top = `${clampToViewport(anchor.top - MENU_PADDING, height, window.innerHeight)}px`;
+        const fitsRight = anchor.right + width <= window.innerWidth - VIEWPORT_MARGIN;
+        const fitsLeft = anchor.left - width >= VIEWPORT_MARGIN;
+
+        if (fitsRight || fitsLeft) {
+            const left = fitsRight ? anchor.right : anchor.left - width;
+            panel.style.left = `${clampToViewport(left, width, window.innerWidth)}px`;
+            panel.style.top = `${clampToViewport(anchor.top - MENU_PADDING, height, window.innerHeight)}px`;
+        } else {
+            // Phone widths: a 220px flyout fits on neither side, so the sideways
+            // placement collapsed onto the parent menu — landing the flyout's own
+            // first row exactly under the finger that had just tapped to open it.
+            // Stack it below the row instead (above when the bottom is short).
+            const below = anchor.bottom + SUBMENU_GAP;
+            const top =
+                below + height <= window.innerHeight - VIEWPORT_MARGIN ? below : anchor.top - SUBMENU_GAP - height;
+            panel.style.left = `${clampToViewport(anchor.left - MENU_PADDING, width, window.innerWidth)}px`;
+            panel.style.top = `${clampToViewport(top, height, window.innerHeight)}px`;
+        }
         panel.style.visibility = "visible";
     }, []);
 
@@ -145,7 +168,18 @@ export const ContextMenuSubmenu = ({ text, icon: Icon, children }: ContextMenuSu
             onMouseEnter={() => setOpen(true)}
             onMouseLeave={() => setOpen(false)}
         >
-            <div ref={itemRef} className={styles.menu_item}>
+            <div
+                ref={itemRef}
+                className={styles.menu_item}
+                // Open, never toggle: a tap fires WebKit's synthesized mouseenter
+                // *and* a click, and toggling would let the second undo the first.
+                // Stop the click there too, or the host's window-level listener
+                // closes the whole menu and takes the flyout with it.
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setOpen(true);
+                }}
+            >
                 <span className={styles.menu_item_icon}>{Icon && <Icon size={16} />}</span>
                 <p className="unselectable">{text}</p>
                 <ChevronRight size={14} className={styles.submenu_chevron} />

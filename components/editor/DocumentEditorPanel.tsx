@@ -267,6 +267,29 @@ const DocumentEditorPanel = ({
         if (!editable && editor.isFocused) editor.commands.blur();
     }, [editor, isReadOnly, isPhone, mobileEditMode]);
 
+    /**
+     * Let go of the DOM focus and the document selection when this panel is
+     * swapped out for another (a board, a tree document, the title page).
+     *
+     * The panel is not unmounted — it is parked behind `content-visibility:
+     * hidden` (see SplitPanelContainer .panel_hidden) so a 120-page ProseMirror
+     * DOM doesn't have to reinitialise on the way back. A parked editor left
+     * focused still keeps a document-level `selectionchange` listener live and
+     * WebKit still chasing its caret, which is needless upkeep for a panel the
+     * user can't see or type into — this drops both.
+     *
+     * Blur first, then drop the range: clearing the selection while the
+     * contenteditable still holds focus just makes ProseMirror put it back.
+     */
+    useEffect(() => {
+        if (isVisible || !editor || editor.isDestroyed) return;
+        const dom = editor.view?.dom;
+        if (!dom) return;
+        if (editor.isFocused) editor.commands.blur();
+        const selection = typeof window !== "undefined" ? window.getSelection() : null;
+        if (selection?.anchorNode && dom.contains(selection.anchorNode)) selection.removeAllRanges();
+    }, [isVisible, editor]);
+
     // Marker class on the editor DOM so global CSS (scriptio.css) can drop the
     // first-of-page top-margin reset in endless-scroll mode. There the page-break
     // widgets are hidden, so the reset would otherwise make each page's first

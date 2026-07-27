@@ -73,7 +73,7 @@
     "save": "Änderungen speichern",
     "cancel": "Abbrechen",
     "loading": "Laden...",
-    "resetDefaults": "Auf Standard zurücksetzen"
+    "resetDefaults": "Zurücksetzen"
   },
   "sidebar": {
     "title": "Dashboard",
@@ -101,7 +101,7 @@
     "defaultPrefix": "Standard: {combo}",
     "reset": "Zurücksetzen",
     "resetTitle": "Benutzerdefinierte Tastenbelegung löschen",
-    "resetDefaults": "Auf Standard zurücksetzen",
+    "resetDefaults": "Zurücksetzen",
     "save": "Änderungen speichern"
   },
   "readaloud": {

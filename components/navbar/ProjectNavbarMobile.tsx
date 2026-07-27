@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import {
@@ -15,6 +15,7 @@ import {
     LogOut,
     Lock,
     Menu,
+    Mic,
     Monitor,
     Redo2,
     Undo2,
@@ -22,6 +23,7 @@ import {
 
 import { useViewContext } from "@src/context/ViewContext";
 import { useActiveEditor } from "@src/lib/editor/use-active-editor";
+import { getDictationLanguage, useDictation } from "@src/lib/editor/use-dictation";
 import { uploadToCloudPopup } from "@src/lib/screenplay/popup";
 import { join } from "@src/lib/utils/misc";
 
@@ -125,6 +127,26 @@ const ProjectNavbarMobile = () => {
         }
     };
 
+    // Voice dictation into the editor being written in. On phone the mic lives
+    // HERE rather than in the editor footer, which sits behind the on-screen
+    // keyboard and so is out of reach exactly when one dictates; the footer's mic
+    // is desktop-only ([EditorFooter]). That split also keeps a single recogniser
+    // in play — two live `useDictation` sessions would fight over the transcript.
+    // The language is a device preference set in Language settings; read it fresh
+    // at start so a change there takes effect without remounting.
+    const dictation = useDictation(activeEditor, null);
+    const toggleDictation = () => {
+        if (dictation.isListening) dictation.stop();
+        else dictation.start(getDictationLanguage());
+    };
+
+    // The mic button only renders while editing, so stop listening whenever that
+    // ends (the ✓ below, but also the panel's own exits) — otherwise the mic would
+    // stay open with nothing on screen left to turn it off.
+    useEffect(() => {
+        if (dictation.isListening && (!mobileEditMode || !activeEditor)) dictation.stop();
+    }, [mobileEditMode, activeEditor, dictation.isListening, dictation.stop]);
+
     // Leave edit mode: blur so the keyboard dismisses immediately (the panel's
     // setEditable(false) also does this, but blur here makes it instant).
     const exitEditMode = () => {
@@ -162,6 +184,31 @@ const ProjectNavbarMobile = () => {
                             </div>
                         </div>
                     ))}
+                {/* Dictation, in the slot the tools cluster occupies in reader mode:
+                    its own pill so it reads as a mode toggle rather than another
+                    history control. Hidden where the browser lacks the Web Speech
+                    API (e.g. Firefox). */}
+                {isInProject && projectId && mobileEditMode && dictation.isSupported && activeEditor && (
+                    <div className={navbar.mobile_tools}>
+                        <div
+                            className={join(
+                                navBtn.button,
+                                navbar.mobile_icon,
+                                dictation.isListening ? navbar.recording : "",
+                            )}
+                            // Swallow the compat mousedown so the tap can't blur the
+                            // contenteditable: that would drop the keyboard (and the
+                            // format bar with it) the moment dictation starts. Same
+                            // guard the keyboard toolbar uses — see MobileFormatToolbar.
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={toggleDictation}
+                            aria-label={t("dictate")}
+                            aria-pressed={dictation.isListening}
+                        >
+                            <Mic size={18} />
+                        </div>
+                    </div>
+                )}
                 {/* Screenplay tools cluster: the saves/production/read-aloud/analytics
                     entries that the desktop bar spreads across its left/right. Each opens
                     a sheet (or the analytics modal) that fits the phone screen. Hidden

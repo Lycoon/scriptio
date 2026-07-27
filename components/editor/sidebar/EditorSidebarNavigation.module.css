@@ -78,6 +78,7 @@
         pointer-events: none;
     }
 
+    /* Defeat the desktop hide above so the slide-out is actually seen. */
     .collapsed .element {
         visibility: visible;
     }
@@ -138,12 +139,58 @@
     flex: 1;
 }
 
+/* Document tree list. A hold anywhere on it opens the tree menu on touch (see
+   DocumentTreeSidebarView), so iOS's native selection / callout must not claim
+   the gesture first — it otherwise starts selecting the text behind the drawer
+   and the hold never becomes a menu. The rename field opts back in so its caret
+   and text selection still work. */
+@media (pointer: coarse) {
+    .tree_list {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    .tree_list input {
+        -webkit-user-select: text;
+        user-select: text;
+    }
+}
+
 .list_header {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 8px;
     padding-left: 20px;
+}
+
+/* Touch-only "+" opening the list's create menu — the right-click on empty list
+   space has no touch equivalent, and a list long enough to fill the panel leaves
+   no empty space to long-press either. Hidden on fine pointers. */
+.header_btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: 12px;
+    padding: 4px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+}
+
+.header_btn:hover {
+    background-color: var(--editor-sidebar-hover);
+    color: var(--primary-text);
+}
+
+@media (pointer: coarse) {
+    .header_btn {
+        display: flex;
+    }
 }
 
 .list_title {

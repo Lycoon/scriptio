@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { memo, useRef, useState, useCallback, useEffect } from "react";
 import styles from "./BoardCanvas.module.css";
 import { useTranslations } from "next-intl";
 import { Play, Pause } from "lucide-react";
@@ -285,7 +285,13 @@ interface BoardCardProps {
     scale: number;
     isSnapping: boolean;
     gridSize: number;
-    onUpdate: (card: BoardCardData) => void;
+    /**
+     * Commit a card change. `transient` marks a frame of a live drag/resize:
+     * the board applies it locally but doesn't write it to Yjs (see
+     * BoardCanvas.handleUpdateCard). Every gesture ends with one non-transient
+     * update, which is the one that gets stored.
+     */
+    onUpdate: (card: BoardCardData, options?: { transient?: boolean }) => void;
     onContextMenu: (e: React.MouseEvent, card: BoardCardData) => void;
     onStartConnection: (cardId: string, side: string, initialX: number, initialY: number) => void;
     onCompleteConnection: (cardId: string) => void;
@@ -329,6 +335,29 @@ const BoardCard = ({
     const [prevDescription, setPrevDescription] = useState(card.description);
     const dragOffset = useRef({ x: 0, y: 0 });
     const resizeStart = useRef({ x: 0, y: 0, width: 0, height: 0 });
+    /**
+     * The canvas layer's viewport origin, measured once when a drag starts.
+     *
+     * Measuring it per move is a `getBoundingClientRect()` right after the card's
+     * own style was mutated, which forces a synchronous layout of the entire
+     * document — every open sidebar, the timeline, and the parked screenplay
+     * editor — on every move event. The canvas cannot pan or zoom while a card is
+     * being dragged, so the origin taken at the start holds for the gesture.
+     */
+    const canvasOrigin = useRef({ left: 0, top: 0 });
+    const captureCanvasOrigin = useCallback(() => {
+        const parent = cardRef.current?.parentElement;
+        if (!parent) return;
+        const rect = parent.getBoundingClientRect();
+        canvasOrigin.current = { left: rect.left, top: rect.top };
+    }, []);
+    /**
+     * The latest local-only (transient) geometry produced by the gesture in
+     * flight, held here rather than read back off the `card` prop so the commit
+     * can't miss a final move that hasn't been re-rendered yet. Null when there
+     * is nothing left to write.
+     */
+    const pendingCommit = useRef<BoardCardData | null>(null);
 
     if (prevTitle !== card.title) {
         setPrevTitle(card.title);
@@ -363,24 +392,25 @@ const BoardCard = ({
             const rect = cardRef.current?.getBoundingClientRect();
             if (!rect) return;
 
+            captureCanvasOrigin();
             dragOffset.current = {
                 x: (e.clientX - rect.left) / scale,
                 y: (e.clientY - rect.top) / scale,
             };
             setIsDragging(true);
         },
-        [isEditing, isEditingTitle, scale],
+        [isEditing, isEditingTitle, scale, captureCanvasOrigin],
     );
 
     // Shared drag/resize math, driven by either mouse or touch coordinates.
     const applyDrag = useCallback(
         (clientX: number, clientY: number) => {
-            const parent = cardRef.current?.parentElement;
-            if (!parent) return;
-            const parentRect = parent.getBoundingClientRect();
-            const newX = (clientX - parentRect.left) / scale - dragOffset.current.x;
-            const newY = (clientY - parentRect.top) / scale - dragOffset.current.y;
-            onUpdate({ ...cardDataRef.current, x: snapToGrid(newX), y: snapToGrid(newY) });
+            const { left, top } = canvasOrigin.current;
+            const newX = (clientX - left) / scale - dragOffset.current.x;
+            const newY = (clientY - top) / scale - dragOffset.current.y;
+            const next = { ...cardDataRef.current, x: snapToGrid(newX), y: snapToGrid(newY) };
+            pendingCommit.current = next;
+            onUpdate(next, { transient: true });
         },
         [scale, onUpdate, snapToGrid],
     );
@@ -391,10 +421,33 @@ const BoardCard = ({
             const dy = (clientY - resizeStart.current.y) / scale;
             const newWidth = Math.max(150, resizeStart.current.width + dx);
             const newHeight = Math.max(minHeightFor(kind), resizeStart.current.height + dy);
-            onUpdate({ ...cardDataRef.current, width: snapToGrid(newWidth), height: snapToGrid(newHeight) });
+            const next = {
+                ...cardDataRef.current,
+                width: snapToGrid(newWidth),
+                height: snapToGrid(newHeight),
+            };
+            pendingCommit.current = next;
+            onUpdate(next, { transient: true });
         },
         [scale, kind, onUpdate, snapToGrid],
     );
+
+    // End of a drag/resize: write the geometry the gesture landed on to Yjs.
+    const commitMove = useCallback(() => {
+        const pending = pendingCommit.current;
+        if (!pending) return;
+        pendingCommit.current = null;
+        onUpdate(pending);
+    }, [onUpdate]);
+
+    // Flush a gesture cut short by an unmount (the board closed, the document
+    // switched) so its last transient move isn't dropped. Goes through a ref so
+    // the cleanup runs on unmount only, never on a new `commitMove` identity.
+    const commitMoveRef = useRef(commitMove);
+    useEffect(() => {
+        commitMoveRef.current = commitMove;
+    }, [commitMove]);
+    useEffect(() => () => commitMoveRef.current(), []);
 
     const handleMouseMove = useCallback(
         (e: MouseEvent) => {
@@ -405,9 +458,10 @@ const BoardCard = ({
     );
 
     const handleMouseUp = useCallback(() => {
+        commitMove();
         setIsDragging(false);
         setIsResizing(false);
-    }, []);
+    }, [commitMove]);
 
     const handleResizeStart = useCallback(
         (e: React.MouseEvent) => {
@@ -470,6 +524,7 @@ const BoardCard = ({
 
             const rect = cardRef.current?.getBoundingClientRect();
             if (!rect) return;
+            captureCanvasOrigin();
             dragOffset.current = { x: (t.clientX - rect.left) / scale, y: (t.clientY - rect.top) / scale };
             touchDrag.current = { startX: t.clientX, startY: t.clientY, moved: false, suppressed: false };
 
@@ -514,6 +569,7 @@ const BoardCard = ({
                 window.removeEventListener("touchmove", onMove);
                 window.removeEventListener("touchend", onEnd);
                 window.removeEventListener("touchcancel", onEnd);
+                commitMove();
                 setIsDragging(false);
                 const state = touchDrag.current;
                 touchDrag.current = null;
@@ -536,7 +592,19 @@ const BoardCard = ({
             window.addEventListener("touchend", onEnd);
             window.addEventListener("touchcancel", onEnd);
         },
-        [isEditing, isEditingTitle, scale, card, kind, isConnecting, applyDrag, onContextMenu, onCompleteConnection],
+        [
+            isEditing,
+            isEditingTitle,
+            scale,
+            card,
+            kind,
+            isConnecting,
+            applyDrag,
+            commitMove,
+            captureCanvasOrigin,
+            onContextMenu,
+            onCompleteConnection,
+        ],
     );
 
     const handleResizeTouchStart = useCallback(
@@ -552,6 +620,7 @@ const BoardCard = ({
                 if (tt) applyResize(tt.clientX, tt.clientY);
             };
             const onEnd = () => {
+                commitMove();
                 setIsResizing(false);
                 window.removeEventListener("touchmove", onMove);
                 window.removeEventListener("touchend", onEnd);
@@ -561,7 +630,7 @@ const BoardCard = ({
             window.addEventListener("touchend", onEnd);
             window.addEventListener("touchcancel", onEnd);
         },
-        [card.width, card.height, applyResize],
+        [card.width, card.height, applyResize, commitMove],
     );
 
     const handleConnectionTouchStart = useCallback(
@@ -702,8 +771,10 @@ const BoardCard = ({
                 isSelected && styles.card_selected,
             )}
             style={{
-                left: card.x,
-                top: card.y,
+                // Position via transform, not left/top — a drag frame is then a
+                // compositor translate of this card's own layer instead of
+                // layout + repaint inside the canvas layer (see .card).
+                transform: `translate3d(${card.x}px, ${card.y}px, 0)`,
                 width: card.width,
                 height: card.height,
                 ...cardColorStyle(card),
@@ -732,4 +803,11 @@ const BoardCard = ({
     );
 };
 
-export default BoardCard;
+/**
+ * Memoised: a drag emits a transient board update per frame, and without this
+ * every card re-rendered on each of those frames. Only the dragged card's
+ * `card` prop changes identity, so with the canvas's callbacks kept stable
+ * (they read through cardsRef, not the cards state) a drag frame re-renders
+ * exactly one card.
+ */
+export default memo(BoardCard);

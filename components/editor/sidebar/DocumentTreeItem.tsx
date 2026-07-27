@@ -144,6 +144,9 @@ const DocumentTreeItem = ({
         <>
             <div
                 className={rowClass}
+                // Lets the list's touch long-press resolve the held row without
+                // depending on hashed CSS-module names (see DocumentTreeSidebarView).
+                data-doc-id={node.id}
                 style={{ paddingLeft: 12 + depth * INDENT, opacity: draggingId === node.id ? 0.4 : 1 }}
                 onClick={handleRowClick}
                 onContextMenu={(e) => {

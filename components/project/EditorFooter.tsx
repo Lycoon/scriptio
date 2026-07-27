@@ -32,7 +32,10 @@ const EditorFooter = () => {
     // Voice dictation into the active editor. The language is a device
     // preference set in Language settings; read it fresh at start so a change
     // there takes effect without remounting. Hidden where the browser lacks the
-    // Web Speech API (e.g. Firefox).
+    // Web Speech API (e.g. Firefox) — and on phone, where the footer disappears
+    // behind the on-screen keyboard: the mic lives in the navbar's edit-mode
+    // cluster there instead ([ProjectNavbarMobile]). Keep it to one surface per
+    // platform — two live sessions would both write into the same editor.
     const dictation = useDictation(activeEditor, null);
     const toggleDictation = useCallback(() => {
         if (dictation.isListening) dictation.stop();
@@ -101,7 +104,7 @@ const EditorFooter = () => {
         <div className={styles.bubble_right}>
             <WritingTimer triggerClassName={styles.action} triggerActiveClassName={styles.action_active} />
 
-            {dictation.isSupported && activeEditor && (
+            {dictation.isSupported && activeEditor && !isPhone && (
                 <button
                     type="button"
                     className={join(styles.action, dictation.isListening ? styles.recording : "")}

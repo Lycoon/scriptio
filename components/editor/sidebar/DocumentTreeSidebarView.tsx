@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
@@ -9,7 +9,7 @@ import { useIsPhone } from "@src/lib/utils/hooks";
 import { DocumentNode } from "@src/lib/project/project-state";
 import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
 import { join } from "@src/lib/utils/misc";
-import { FilePlus, FolderPlus, FolderTree, LayoutDashboard, Pencil, Trash2 } from "lucide-react";
+import { FilePlus, FolderPlus, FolderTree, LayoutDashboard, Pencil, Plus, Trash2 } from "lucide-react";
 import DocumentTreeItem, { DropPosition } from "./DocumentTreeItem";
 import {
     ContextMenuItem,
@@ -20,10 +20,33 @@ import {
 import form from "./../../utils/Form.module.css";
 import sidebar_nav from "./EditorSidebarNavigation.module.css";
 
+// Touch equivalent of the right-click: hold roughly still for this long to open
+// the tree menu. A move farther than the cancel threshold before it fires is a
+// scroll, and abandons the pending menu.
+const LONG_PRESS_MS = 500;
+const LONG_PRESS_CANCEL_PX = 10;
+
+/**
+ * Eat the click the browser synthesises when a finger lifts. Without this the
+ * release of a long-press would immediately close the menu it just opened (the
+ * context-menu host closes on any window click) and, on a row, also run the
+ * row's open/toggle handler.
+ */
+const swallowNextClick = () => {
+    const swallow = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+    window.addEventListener("click", swallow, { capture: true, once: true });
+    // Some engines consume the touch and never synthesise a click — drop the
+    // one-shot listener shortly after so it can't eat a later, unrelated tap.
+    setTimeout(() => window.removeEventListener("click", swallow, { capture: true }), 400);
+};
+
 const DocumentTreeSidebarView = () => {
     const t = useTranslations("editorSidebar");
     const { documents, repository } = useContext(ProjectContext);
-    const { updateContextMenu } = useContext(UserContext);
+    const { contextMenu, updateContextMenu } = useContext(UserContext);
     const { setSideDocument, closeDocument, primaryDocId, secondaryDocId, setLeftSidebarOpen } =
         useViewContext();
     const isPhone = useIsPhone();
@@ -134,13 +157,13 @@ const DocumentTreeSidebarView = () => {
         [repository, documents],
     );
 
-    // ---- Right-click menu ----
-    // Opens the shared single context-menu host with this node's actions.
-    const openMenu = useCallback(
-        (node: DocumentNode | null, e: React.MouseEvent) => {
-            e.preventDefault();
-            const left = Math.min(e.clientX, window.innerWidth - 230);
-            const top = Math.min(e.clientY, window.innerHeight - 220);
+    // ---- Context menu ----
+    // Opens the shared single context-menu host with this node's actions at the
+    // given viewport point (`node` null = the root, i.e. empty list space).
+    const openMenuAt = useCallback(
+        (node: DocumentNode | null, x: number, y: number) => {
+            const left = Math.min(x, window.innerWidth - 230);
+            const top = Math.min(y, window.innerHeight - 220);
             // Where create actions should put new nodes: inside a right-clicked
             // folder, otherwise at the root.
             const parentId = node?.type === "folder" ? node.id : null;
@@ -194,6 +217,103 @@ const DocumentTreeSidebarView = () => {
             });
         },
         [updateContextMenu, t, createInside, setColor],
+    );
+
+    const openMenu = useCallback(
+        (node: DocumentNode | null, e: React.MouseEvent) => {
+            e.preventDefault();
+            openMenuAt(node, e.clientX, e.clientY);
+        },
+        [openMenuAt],
+    );
+
+    // ---- Touch long-press ----
+    // iOS/WebKit never dispatches `contextmenu`, so the right-click above has no
+    // touch equivalent: a hold on the tree fell through to the native text
+    // selection (grabbing whatever sat behind the drawer) and no menu opened,
+    // leaving no way to create anything at the root on a phone. Hold still to
+    // open the same menu — on a row for that node, on empty space for the root.
+    const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const gestureAbortRef = useRef<AbortController | null>(null);
+
+    // Cancel a pending long-press and tear down that gesture's listeners.
+    const stopLongPress = useCallback(() => {
+        if (longPressRef.current) {
+            clearTimeout(longPressRef.current);
+            longPressRef.current = null;
+        }
+        gestureAbortRef.current?.abort();
+        gestureAbortRef.current = null;
+    }, []);
+
+    // Abandon any in-flight gesture if the tab/panel unmounts mid-press.
+    useEffect(() => stopLongPress, [stopLongPress]);
+
+    const handleTouchStart = useCallback(
+        (e: React.TouchEvent) => {
+            const touch = e.touches[0];
+            if (!touch) return;
+            const target = e.target as HTMLElement;
+            // The ⋮ button, the rename field and the delete-confirm buttons own
+            // their own taps.
+            if (target.closest("button, input")) return;
+
+            stopLongPress(); // abandon any gesture still in flight (e.g. a second finger)
+
+            const startX = touch.clientX;
+            const startY = touch.clientY;
+            const pressedId = target.closest<HTMLElement>("[data-doc-id]")?.dataset.docId;
+            const node = pressedId ? (documents[pressedId] ?? null) : null;
+
+            const controller = new AbortController();
+            gestureAbortRef.current = controller;
+            const { signal } = controller;
+            let fired = false;
+
+            longPressRef.current = setTimeout(() => {
+                fired = true;
+                openMenuAt(node, startX, startY);
+            }, LONG_PRESS_MS);
+
+            window.addEventListener(
+                "touchmove",
+                (ev) => {
+                    const move = ev.touches[0];
+                    if (!move) return;
+                    // A real move means the user is scrolling the list, not holding.
+                    if (Math.hypot(move.clientX - startX, move.clientY - startY) > LONG_PRESS_CANCEL_PX) {
+                        stopLongPress();
+                    }
+                },
+                { passive: true, signal },
+            );
+
+            const onEnd = () => {
+                const opened = fired;
+                stopLongPress();
+                if (opened) swallowNextClick();
+            };
+            window.addEventListener("touchend", onEnd, { signal });
+            window.addEventListener("touchcancel", onEnd, { signal });
+        },
+        [documents, openMenuAt, stopLongPress],
+    );
+
+    // Touch-only "+" in the header: with a long list there can be no empty space
+    // left to long-press, so the root create actions always stay reachable.
+    const handleHeaderMenu = useCallback(
+        (e: React.MouseEvent) => {
+            // Don't let this reach the host's close-on-click handler, which would
+            // shut the menu again right after it opens.
+            e.stopPropagation();
+            if (contextMenu) {
+                updateContextMenu(undefined);
+                return;
+            }
+            const rect = e.currentTarget.getBoundingClientRect();
+            openMenuAt(null, rect.left, rect.bottom);
+        },
+        [contextMenu, updateContextMenu, openMenuAt],
     );
 
     // ---- Drag & drop ----
@@ -250,10 +370,18 @@ const DocumentTreeSidebarView = () => {
             <div className={sidebar_nav.list_header}>
                 <FolderTree size={18} />
                 <p className={form.label}>{t("documents")}</p>
+                <button
+                    className={sidebar_nav.header_btn}
+                    onClick={handleHeaderMenu}
+                    aria-label={t("newDocument")}
+                >
+                    <Plus size={16} />
+                </button>
             </div>
             <div
-                className={join(sidebar_nav.list, sidebar_nav.scene_list)}
+                className={join(sidebar_nav.list, sidebar_nav.scene_list, sidebar_nav.tree_list)}
                 onContextMenu={(e) => openMenu(null, e)}
+                onTouchStart={handleTouchStart}
                 onDragOver={(e) => {
                     if (!draggingId) return;
                     // Over empty list space (not a row): clear the row indicator;
