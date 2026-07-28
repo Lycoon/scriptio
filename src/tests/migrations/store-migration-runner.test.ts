@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { runStoreMigrations } from "@src/lib/persistence/storage-provider/migrations/store-migration-runner";
 import {
+    CURRENT_STORE_VERSION,
     STORE_MIGRATIONS,
     STORE_NAMES,
     type StoreMigration,
@@ -66,7 +67,7 @@ afterEach(async () => {
 
 describe("runStoreMigrations", () => {
     it("applies the full registry on a fresh database", async () => {
-        const db = await openWithMigrations(dbName, 2, STORE_MIGRATIONS);
+        const db = await openWithMigrations(dbName, CURRENT_STORE_VERSION, STORE_MIGRATIONS);
         expect(Array.from(db.objectStoreNames).sort()).toEqual(
             [
                 STORE_NAMES.PROJECTS,

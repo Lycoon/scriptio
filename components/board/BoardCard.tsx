@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Play, Pause } from "lucide-react";
 import { BoardCardData } from "@src/lib/project/project-state";
 import { useAssetUrl } from "@src/lib/assets/use-asset-url";
-import { useIsPhone } from "@src/lib/utils/hooks";
+import { useIsTouch } from "@src/lib/utils/hooks";
 
 /** Join truthy class names (false/undefined are skipped). */
 const cx = (...parts: (string | false | undefined)[]) => parts.filter(Boolean).join(" ");
@@ -313,12 +313,16 @@ const BoardCard = ({
     isSelected,
 }: BoardCardProps) => {
     const kind = kindOf(card);
-    const isPhone = useIsPhone();
+    // Coarse pointer, not phone width: a tablet renders the desktop board but is
+    // still driven by a finger, so it needs the touch gestures too.
+    const isTouch = useIsTouch();
     const cardRef = useRef<HTMLDivElement>(null);
     // Timestamp of the last touch on this card. Touch devices fire a synthesized
-    // mousedown/mouseup after a touch; the handles wire *both* pointer types (so
-    // resize/link also work with a mouse at mobile widths), and this lets the
-    // mouse handlers ignore those synthetic echoes to avoid double-firing.
+    // mousedown/mouseup after a touch; every handler wires *both* pointer types
+    // (an iPad reports a coarse pointer even with a trackpad attached, so the
+    // mouse path can never be dropped), and this lets the mouse handlers ignore
+    // those synthetic echoes to avoid double-firing. Refreshed throughout a
+    // gesture, not only at touchstart, so a long drag can't age out of the window.
     const lastTouch = useRef(0);
     const isSyntheticMouse = () => Date.now() - lastTouch.current < 700;
     // Latest card data for touch handlers, which capture their closure at
@@ -380,6 +384,7 @@ const BoardCard = ({
 
     const handleMouseDown = useCallback(
         (e: React.MouseEvent) => {
+            if (isSyntheticMouse()) return; // ignore the mouse echo of a touch
             if (
                 isEditing ||
                 isEditingTitle ||
@@ -546,6 +551,7 @@ const BoardCard = ({
             }, 500);
 
             const onMove = (ev: TouchEvent) => {
+                lastTouch.current = Date.now();
                 const tt = ev.touches[0];
                 const state = touchDrag.current;
                 if (!tt || !state) return;
@@ -562,6 +568,7 @@ const BoardCard = ({
                 if (state.moved && !state.suppressed) applyDrag(tt.clientX, tt.clientY);
             };
             const onEnd = () => {
+                lastTouch.current = Date.now();
                 if (cardLongPress.current) {
                     clearTimeout(cardLongPress.current);
                     cardLongPress.current = null;
@@ -616,10 +623,12 @@ const BoardCard = ({
             resizeStart.current = { x: t.clientX, y: t.clientY, width: card.width, height: card.height };
             setIsResizing(true);
             const onMove = (ev: TouchEvent) => {
+                lastTouch.current = Date.now();
                 const tt = ev.touches[0];
                 if (tt) applyResize(tt.clientX, tt.clientY);
             };
             const onEnd = () => {
+                lastTouch.current = Date.now();
                 commitMove();
                 setIsResizing(false);
                 window.removeEventListener("touchmove", onMove);
@@ -644,6 +653,7 @@ const BoardCard = ({
     );
 
     const handleStartEditDescription = useCallback((e: React.MouseEvent) => {
+        if (isSyntheticMouse()) return; // double-tap to edit is handled by the touch path
         e.stopPropagation();
         setIsEditing(true);
     }, []);
@@ -779,10 +789,10 @@ const BoardCard = ({
                 height: card.height,
                 ...cardColorStyle(card),
             }}
-            onMouseDown={isPhone ? undefined : handleMouseDown}
+            onMouseDown={handleMouseDown}
             onMouseUp={handleCardMouseUp}
-            onTouchStart={isPhone ? handleCardTouchStart : undefined}
-            onDoubleClick={!isPhone && kind === "text" ? handleStartEditDescription : undefined}
+            onTouchStart={isTouch ? handleCardTouchStart : undefined}
+            onDoubleClick={kind === "text" ? handleStartEditDescription : undefined}
             onContextMenu={handleRightClick}
         >
             {renderBody()}
@@ -790,14 +800,14 @@ const BoardCard = ({
             <div
                 className={styles.card_resize_handle}
                 onMouseDown={handleResizeStart}
-                onTouchStart={isPhone ? handleResizeTouchStart : undefined}
+                onTouchStart={isTouch ? handleResizeTouchStart : undefined}
             />
 
             {/* Connection handle */}
             <div
                 className={styles.connection_handle}
                 onMouseDown={handleConnectionHandleMouseDown}
-                onTouchStart={isPhone ? handleConnectionTouchStart : undefined}
+                onTouchStart={isTouch ? handleConnectionTouchStart : undefined}
             />
         </div>
     );

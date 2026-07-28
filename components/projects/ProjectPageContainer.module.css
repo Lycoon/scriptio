@@ -43,6 +43,11 @@
     justify-content: space-between;
     height: var(--navbar-height);
     padding-inline: 8px;
+    /* The sidebar is fixed to top: 0, so on iOS (viewport-fit: cover) this band
+     * starts under the status bar. --navbar-height already reserves the inset;
+     * pad the logo row past it so it stays level with the navbar's own content,
+     * which does the same. 0 where there is no inset. */
+    padding-top: var(--safe-top);
 }
 
 .logo {

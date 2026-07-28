@@ -76,34 +76,64 @@ const useDesktop = (): boolean => {
     return isDesktop;
 };
 
+/**
+ * Subscribe to a CSS media query.
+ *
+ * Starts `false` so the server render and the client's first (hydration) render
+ * agree — reading window.matchMedia in the initializer would make the client's
+ * first render disagree with the SSR HTML and throw a hydration mismatch. The
+ * real value is resolved in the effect below, right after mount.
+ */
+const useMediaQuery = (query: string): boolean => {
+    const [matches, setMatches] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const mql = window.matchMedia(query);
+        const onChange = () => setMatches(mql.matches);
+        onChange();
+        mql.addEventListener("change", onChange);
+        return () => mql.removeEventListener("change", onChange);
+    }, [query]);
+
+    return matches;
+};
+
 // Phone breakpoint: below this the editor switches to the single-panel drawer
 // layout. At or above it (iPad, resized desktop windows) the desktop layout is
 // kept. Keep in sync with the @media (max-width: 767px) blocks in the CSS.
 const PHONE_QUERY = "(max-width: 767px)";
 
+// Coarse pointer: the primary input is a finger rather than a mouse — phones AND
+// tablets. Keep in sync with the @media (pointer: coarse) blocks in the CSS.
+const TOUCH_QUERY = "(pointer: coarse)";
+
 /**
  * True on phone-sized viewports (< 768px). Drives the structural mobile forks
  * that CSS alone can't express — overlay-drawer sidebars, disabled split view,
- * the burger navbar. SSR-safe: starts false on the server and syncs on mount.
+ * the burger navbar.
+ *
+ * This is about how much *room* the layout has, not how it is pointed at. An
+ * iPad is not a phone: it gets the desktop split layout. For the input-modality
+ * fork (touch gestures, long-press menus) use `useIsTouch` instead.
  */
-const useIsPhone = (): boolean => {
-    // Start `false` so the server render and the client's first (hydration) render
-    // agree — reading window.matchMedia in the initializer would make the client's
-    // first render disagree with the SSR HTML and throw a hydration mismatch. The
-    // real value is resolved in the effect below, right after mount.
-    const [isPhone, setIsPhone] = useState<boolean>(false);
+const useIsPhone = (): boolean => useMediaQuery(PHONE_QUERY);
 
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-        const mql = window.matchMedia(PHONE_QUERY);
-        const onChange = () => setIsPhone(mql.matches);
-        onChange();
-        mql.addEventListener("change", onChange);
-        return () => mql.removeEventListener("change", onChange);
-    }, []);
-
-    return isPhone;
-};
+/**
+ * True when the primary pointer is coarse — a finger. Covers phones *and*
+ * tablets, and is the JS counterpart of the `@media (pointer: coarse)` blocks in
+ * the CSS.
+ *
+ * Drives the interaction forks that a finger needs and a mouse doesn't: touch
+ * drag/pinch gestures, long-press context menus, the on-screen-keyboard toolbar.
+ * These are orthogonal to `useIsPhone` — an iPad shows the desktop layout but
+ * still has to be driven by touch.
+ *
+ * Note this stays true on an iPad with a trackpad attached (iPadOS keeps touch
+ * as the primary pointer), so touch handlers must be added *alongside* the mouse
+ * ones rather than replacing them.
+ */
+const useIsTouch = (): boolean => useMediaQuery(TOUCH_QUERY);
 
 
 /**
@@ -612,7 +642,9 @@ export {
     useProjectCollaborators,
     usePage,
     useDesktop,
+    useMediaQuery,
     useIsPhone,
+    useIsTouch,
     useKeyboardInset,
     useCachedProjects,
     useCachedProjectInfo,

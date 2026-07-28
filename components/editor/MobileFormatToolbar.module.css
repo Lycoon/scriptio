@@ -1,5 +1,6 @@
-/* Phone-only formatting bar that floats just above the on-screen keyboard. `bottom`
- * is set inline from the tracked keyboard inset (see MobileFormatToolbar.tsx). */
+/* Touch-only formatting bar that floats just above the on-screen keyboard.
+ * `bottom` is set inline from the tracked keyboard inset (see
+ * MobileFormatToolbar.tsx). */
 .toolbar {
     position: fixed;
     left: 0;
@@ -12,7 +13,14 @@
      * and reads as part of the same floating chrome instead of a hard-edged bar
      * butted against it. `bottom: keyboardInset` (inline) pins it to the keyboard
      * top; the bottom margin is the visible gap between the two. */
-    margin: 0 8px 8px;
+    margin: 0 auto 8px;
+    /* The 8px side gutter, expressed as a width rather than a margin so the cap
+     * below can centre the bar. Tablet: the bar only ever holds the element picker
+     * plus a short control row, so stretching it the full width of an iPad would
+     * leave it mostly empty with the controls flung out to the far edges — cap it
+     * and let the auto margins centre it. The cap never binds on a phone. */
+    width: calc(100% - 16px);
+    max-width: 620px;
 
     display: flex;
     flex-direction: row;
