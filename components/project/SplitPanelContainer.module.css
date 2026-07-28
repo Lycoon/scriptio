@@ -85,6 +85,10 @@
     width: 6px;
     height: 100%;
     cursor: col-resize;
+    /* The handle owns the horizontal drag (see DragHandle's pointer events).
+     * Without this the browser claims a finger drag as a scroll/pan of the panel
+     * underneath and swallows the pointermove stream before the resize starts. */
+    touch-action: none;
     background: var(--tertiary);
     box-shadow:
         inset 1px 0 0 rgba(0, 0, 0, 0.12),
@@ -109,6 +113,26 @@
     background: var(--secondary-text);
     opacity: 0.4;
     transition: opacity 0.15s ease;
+}
+
+/* Touch devices (tablets): a 6px divider is far below a finger-sized target, so
+ * extend the grabbable area sideways with a transparent overlay. It overflows the
+ * 6px grid column rather than widening it, so the panels either side keep their
+ * measured widths and the divider looks identical. */
+@media (pointer: coarse) {
+    .drag_handle::before {
+        content: "";
+        position: absolute;
+        /* Start below the panel-switcher row (top: 8px, up to 44px tall on touch),
+         * whose left-hand edge the overlay would otherwise clip. The visible 6px
+         * divider is still grabbable up there; only the widened margin stops
+         * short. */
+        top: 52px;
+        bottom: 0;
+        left: -11px;
+        right: -11px;
+        touch-action: none;
+    }
 }
 
 .drag_handle:hover,

@@ -1,7 +1,11 @@
 .container {
     z-index: 50;
     position: relative;
-    padding-block: 25px;
+    /* --navbar-height already reserves the top safe-area inset (globals.css), so
+     * pad the content down past it — otherwise the bar's controls render *under*
+     * the status bar on an iPad, which runs this layout full-bleed. The content
+     * box stays 40px tall on every other platform, where the inset is 0. */
+    padding-block: calc(25px + var(--safe-top)) 25px;
     width: 100%;
     height: var(--navbar-height);
     flex-shrink: 0;
@@ -16,13 +20,18 @@
 .center {
     position: absolute;
     left: 50%;
-    top: 50%;
+    /* Absolute positioning resolves against the container's padding box, which
+     * includes the top safe-area inset — so centring on it alone would ride up
+     * into the status bar on iOS. Offset by half the inset to land in the middle
+     * of the *content* row, and shrink by the full inset to match its height.
+     * Both terms are 0 wherever there is no inset. */
+    top: calc(50% + var(--safe-top) / 2);
     transform: translate(-50%, -50%);
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 8px;
-    height: calc(100% - 50px);
+    height: calc(100% - 50px - var(--safe-top));
     pointer-events: auto;
 }
 

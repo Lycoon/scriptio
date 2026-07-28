@@ -2,7 +2,10 @@
    inside the right sidebar). It overlays the content — no full-width bar. */
 .bubble_right {
     position: absolute;
-    bottom: 20px;
+    /* The panel area runs to the very bottom of the viewport, which is
+     * `viewport-fit: cover` on iOS — so on an iPad, running this layout, a flat
+     * 20px would drop the pill onto the home indicator. 0 elsewhere. */
+    bottom: calc(20px + var(--safe-bottom));
     right: 30px;
     z-index: 6;
     display: flex;

@@ -693,21 +693,30 @@
     }
 }
 
-/* ── Touch / mobile ─────────────────────────────────────────────────────────
-   The canvas owns all touch gestures (pan, pinch-zoom, card drag), so disable
-   the browser's native panning/zoom on it. The drag/resize/connection handles
-   have no hover on touch, so surface them and enlarge them into comfortable
-   targets. */
+/* Phone layout only: the navbar is a fixed overlay pinned to the top (see
+ * ProjectNavbar). The board doesn't drive the scroll-hide, so the bar stays
+ * shown over it — push the whole canvas down by one bar height so its top strip
+ * isn't trapped behind the bar. The canvas measures its own rect for panning, so
+ * shifting the wrapper leaves the pan/zoom math correct. On tablets and desktop
+ * the bar keeps its slot in the column, so no offset is needed. */
 @media (max-width: 767px) {
-    /* The navbar is a fixed overlay pinned to the top (see ProjectNavbar). The
-     * board doesn't drive the scroll-hide, so the bar stays shown over it — push
-     * the whole canvas down by one bar height so its top strip isn't trapped
-     * behind the bar. The canvas measures its own rect for panning, so shifting
-     * the wrapper leaves the pan/zoom math correct. */
     .board_wrapper {
         padding-top: var(--navbar-height);
     }
+}
 
+/* ── Touch gestures ─────────────────────────────────────────────────────────
+   The canvas owns all touch gestures (pan, pinch-zoom, card drag), so disable
+   the browser's native panning/zoom on it. The drag/resize/connection handles
+   have no hover on touch, so surface them and enlarge them into comfortable
+   targets.
+
+   Keyed on the pointer type rather than a width query, for the same reason as
+   the selection guard above: a tablet renders the desktop board but is still
+   driven by a finger, and a phone in landscape reports a viewport wider than
+   767px. Under a width query both were left with the browser's native
+   pan/zoom fighting the canvas's own gesture handling. */
+@media (pointer: coarse) {
     .container {
         touch-action: none;
     }

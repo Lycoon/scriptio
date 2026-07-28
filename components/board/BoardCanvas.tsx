@@ -19,7 +19,7 @@ import { DEFAULT_ITEM_COLORS } from "@src/lib/utils/colors";
 import { importImageFile, importAudioFile, syncAssetToCloud } from "@src/lib/assets/asset-store";
 import { CloudQuotaError } from "@src/lib/assets/cloud-asset-sync";
 import { scheduleAssetGc } from "@src/lib/assets/asset-gc";
-import { useIsPhone } from "@src/lib/utils/hooks";
+import { useIsPhone, useIsTouch } from "@src/lib/utils/hooks";
 import { useAudioRecorder } from "./use-audio-recorder";
 
 const GRID_SIZE = 20;
@@ -116,7 +116,11 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     }, []);
 
     // ── Touch (mobile) state ──────────────────────────────────────────────────
+    // isPhone gates *layout* (how much room the chrome has); isTouch gates the
+    // *gestures* (pan/pinch/long-press), which a tablet needs just as much as a
+    // phone even though it renders the desktop layout.
     const isPhone = useIsPhone();
+    const isTouch = useIsTouch();
     const imageInputRef = useRef<HTMLInputElement>(null);
     const imageImportCoords = useRef({ x: 0, y: 0 });
     const gesture = useRef<{
@@ -143,6 +147,18 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastTap = useRef({ time: 0, x: 0, y: 0 });
     const lastTouchPoint = useRef({ x: 0, y: 0 });
+
+    // Timestamp of the most recent touch activity, used to ignore the mouse
+    // events WebKit synthesizes at the end of a touch gesture.
+    //
+    // The mouse handlers stay attached even on touch devices, because an iPad
+    // reports `pointer: coarse` whether or not a trackpad is attached — dropping
+    // them would leave Magic Keyboard users unable to pan or drag. Without this
+    // guard a one-finger pan would also fire the synthesized mousedown and start
+    // a marquee selection on top of the pan. Refreshed on every touch event (not
+    // just touchstart) so a long drag doesn't age out of the window mid-gesture.
+    const lastTouch = useRef(0);
+    const isSyntheticMouse = () => Date.now() - lastTouch.current < 700;
 
     // Center camera to fit all cards
     const centerCameraOnCards = useCallback((cardsToFit: BoardCardData[]) => {
@@ -363,6 +379,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
 
     const handleContainerMouseDown = useCallback(
         (e: React.MouseEvent) => {
+            if (isSyntheticMouse()) return; // ignore the mouse echo of a touch gesture
             handlePanMouseDown(e);
             handleSelectionMouseDown(e);
         },
@@ -556,6 +573,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     // Create new card on double-click
     const handleDoubleClick = useCallback(
         (e: React.MouseEvent) => {
+            if (isSyntheticMouse()) return; // double-tap is handled in handleContainerTouchEnd
             e.preventDefault();
             if ((e.target as HTMLElement).closest(`.${styles.card}`)) return;
             if ((e.target as HTMLElement).closest(`.${styles.zoom_controls}`)) return;
@@ -1334,6 +1352,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
         );
 
     const handleContainerTouchStart = (e: React.TouchEvent) => {
+        lastTouch.current = Date.now();
         if (connectingFrom) return;
         if (isChromeTarget(e.target as HTMLElement)) return;
 
@@ -1374,6 +1393,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     };
 
     const handleContainerTouchMove = (e: React.TouchEvent) => {
+        lastTouch.current = Date.now();
         const g = gesture.current;
         if (g.mode === "pan" && e.touches.length === 1) {
             const t = e.touches[0];
@@ -1402,6 +1422,7 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
     };
 
     const handleContainerTouchEnd = (e: React.TouchEvent) => {
+        lastTouch.current = Date.now();
         cancelLongPress();
         const g = gesture.current;
         if (g.mode === "pan" && !g.moved && e.changedTouches.length > 0) {
@@ -1468,12 +1489,12 @@ const BoardCanvas =({ isVisible, docId }: { isVisible: boolean; docId: string })
             <div
                 ref={containerRef}
                 className={`${styles.container} ${isPanning ? styles.panning : ""} ${isDraggingFile ? styles.drag_over : ""}`}
-                onMouseDown={isPhone ? undefined : handleContainerMouseDown}
-                onDoubleClick={isPhone ? undefined : handleDoubleClick}
+                onMouseDown={handleContainerMouseDown}
+                onDoubleClick={handleDoubleClick}
                 onContextMenu={handleCanvasContextMenu}
-                onTouchStart={isPhone ? handleContainerTouchStart : undefined}
-                onTouchMove={isPhone ? handleContainerTouchMove : undefined}
-                onTouchEnd={isPhone ? handleContainerTouchEnd : undefined}
+                onTouchStart={isTouch ? handleContainerTouchStart : undefined}
+                onTouchMove={isTouch ? handleContainerTouchMove : undefined}
+                onTouchEnd={isTouch ? handleContainerTouchEnd : undefined}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}

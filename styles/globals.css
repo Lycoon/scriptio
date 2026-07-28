@@ -33,7 +33,12 @@ body {
     --format-sidebar-width: 250px;
     --navigation-sidebar-width: 400px;
     --navbar-sidebar-width: 500px;
-    --navbar-height: 90px;
+    /* Includes the top safe-area inset so the bar always reserves room for the
+     * status bar. The viewport is `viewport-fit: cover` (see layout.tsx), so on
+     * every iOS device — iPad included, which runs this desktop-width layout —
+     * the webview extends under the status bar. The navbar pads its content down
+     * by the same amount (see ProjectNavbar.module.css). 0 everywhere else. */
+    --navbar-height: calc(90px + var(--safe-top));
 
     /* Width the sidebar drawers take when open on phones (leaves a strip of the
      * editor visible so the drawer is easy to dismiss). */
@@ -50,10 +55,9 @@ body {
  * component modules), so their inline widths no longer reserve space. */
 @media (max-width: 767px) {
     * {
-        /* Include the top safe-area inset so the bar clears the status bar /
-         * Dynamic Island; the navbar pads its content down by the same amount
-         * (see ProjectNavbar.module.css). Sidebars/backdrop anchor to
-         * top: var(--navbar-height), so they stay flush with the bar. */
+        /* Shorter bar than the default, still with the safe-area inset folded in.
+         * Sidebars/backdrop anchor to top: var(--navbar-height), so they stay
+         * flush with the bar. */
         --navbar-height: calc(64px + var(--safe-top));
     }
 }

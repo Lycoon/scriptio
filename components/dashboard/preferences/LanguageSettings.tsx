@@ -198,23 +198,8 @@ const LanguageSettings = () => {
                     options={spellcheckOptions}
                     className={sharedStyles.input}
                 />
-            </div>
 
-            {dictationSupported && (
-                <div className={sharedStyles.formGroup}>
-                    <label className={form.label}>{t("dictationLabel")}</label>
-                    <p className={sharedStyles.helpText}>{t("dictationHelpText")}</p>
-                    <Dropdown
-                        value={dictationLang}
-                        onChange={handleDictationChange}
-                        options={dictationOptions}
-                        className={sharedStyles.input}
-                    />
-                </div>
-            )}
-
-            {spellcheckLang && dictMap && (
-                <div className={sharedStyles.formGroup}>
+                {spellcheckLang && dictMap && (
                     <div className={styles.dictCard}>
                         <div className={styles.dictCardHeader} onClick={() => setDictOpen((o) => !o)}>
                             <div className={styles.dictCardHeaderLeft}>
@@ -269,6 +254,19 @@ const LanguageSettings = () => {
                             </div>
                         )}
                     </div>
+                )}
+            </div>
+
+            {dictationSupported && (
+                <div className={sharedStyles.formGroup}>
+                    <label className={form.label}>{t("dictationLabel")}</label>
+                    <p className={sharedStyles.helpText}>{t("dictationHelpText")}</p>
+                    <Dropdown
+                        value={dictationLang}
+                        onChange={handleDictationChange}
+                        options={dictationOptions}
+                        className={sharedStyles.input}
+                    />
                 </div>
             )}
 

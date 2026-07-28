@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronUp, Italic, Underline } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
-import { useIsPhone, useKeyboardInset } from "@src/lib/utils/hooks";
+import { useIsTouch, useKeyboardInset } from "@src/lib/utils/hooks";
 import { applyElement, applyMarkToggle } from "@src/lib/screenplay/editor";
 import { applyTitlePageElement, applyTitlePageMarkToggle } from "@src/lib/titlepage/editor";
 import { ScreenplayElement, Style, TitlePageElement } from "@src/lib/utils/enums";
@@ -36,14 +36,19 @@ const TITLEPAGE_ELEMENTS_ORDER: TitlePageElement[] = [
 ];
 
 /**
- * Phone-only formatting bar that rides just above the on-screen keyboard while a
- * screenplay/title editor is focused. Surfaces the element-type selector (moved
+ * Touch-device formatting bar that rides just above the on-screen keyboard while
+ * a screenplay/title editor is focused. Surfaces the element-type selector (moved
  * here from the navbar so it's within thumb reach while writing) plus the inline
  * styling (bold, italic, underline) and alignment controls.
+ *
+ * Gated on the pointer type rather than the phone width so tablets get it too —
+ * an iPad writing with the on-screen keyboard needs the element picker in thumb
+ * reach just as much as a phone does. The keyboard-inset check below keeps it out
+ * of the way when a hardware keyboard is attached (no inset, so nothing renders).
  */
 const MobileFormatToolbar = () => {
     const t = useTranslations("formatDropdown");
-    const isPhone = useIsPhone();
+    const isTouch = useIsTouch();
     const {
         editor,
         draftEditor,
@@ -58,7 +63,7 @@ const MobileFormatToolbar = () => {
         isReadOnly,
     } = useContext(ProjectContext);
 
-    const keyboardInset = useKeyboardInset(isPhone);
+    const keyboardInset = useKeyboardInset(isTouch);
 
     const isTitleContext = focusedEditorType === "title";
     const isDraftContext = focusedEditorType === "draft";
@@ -221,11 +226,11 @@ const MobileFormatToolbar = () => {
         [activeEditor, isTitleContext, isReadOnly],
     );
 
-    // Only mount on phone, once the target editor itself is focused and the keyboard
-    // is up. editorFocused excludes the case where another field (e.g. search) holds
-    // focus while a stale focusedEditorType lingers.
+    // Only mount on a touch device, once the target editor itself is focused and the
+    // on-screen keyboard is up. editorFocused excludes the case where another field
+    // (e.g. search) holds focus while a stale focusedEditorType lingers.
     const isVisible =
-        isPhone && keyboardInset > 0 && !!activeEditor && focusedEditorType !== null && editorFocused;
+        isTouch && keyboardInset > 0 && !!activeEditor && focusedEditorType !== null && editorFocused;
     if (!isVisible) return null;
 
     // Fire on pointer-down and swallow the event so focus (and the on-screen
