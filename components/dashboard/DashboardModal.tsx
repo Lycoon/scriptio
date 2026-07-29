@@ -64,6 +64,8 @@ const DashboardModal = () => {
     // Auto-switch active tab when the surrounding context changes:
     //  - leave a project tab when there's no longer a project to talk about
     //  - leave an account tab when the user signs out
+    //  - leave Keybinds when the viewport narrows to phone, where the menu no
+    //    longer offers it (see [useDashboardMenu])
     //  - on a real signed-out → signed-in *transition* while on the Auth form,
     //    jump to Profile so the user lands somewhere meaningful after sign-in.
     //
@@ -76,7 +78,11 @@ const DashboardModal = () => {
         if (isUserLoading) return;
         const projectTabIds = PROJECT_MENU.items.map((item) => item.id);
         const accountTabIds = ACCOUNT_MENU.items.map((item) => item.id);
-        if ((!isInProject && projectTabIds.includes(activeTab)) || (!isSignedIn && accountTabIds.includes(activeTab))) {
+        if (
+            (!isInProject && projectTabIds.includes(activeTab)) ||
+            (!isSignedIn && accountTabIds.includes(activeTab)) ||
+            (isPhone && activeTab === "Keybinds")
+        ) {
             setActiveTab(PREFERENCES_MENU.items[0].id);
         }
         const justSignedIn = isSignedIn && !prevSignedInRef.current;
@@ -84,7 +90,7 @@ const DashboardModal = () => {
             setActiveTab("Profile");
         }
         prevSignedInRef.current = isSignedIn;
-    }, [isInProject, isSignedIn, isUserLoading, activeTab, setActiveTab, ACCOUNT_MENU, PREFERENCES_MENU, PROJECT_MENU]);
+    }, [isInProject, isSignedIn, isUserLoading, isPhone, activeTab, setActiveTab, ACCOUNT_MENU, PREFERENCES_MENU, PROJECT_MENU]);
 
     const [prevActiveTab, setPrevActiveTab] = useState(activeTab);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -164,7 +170,7 @@ const DashboardModal = () => {
                         {isInProject && activeTab === "Storage" && <StorageSettings />}
                         {isInProject && activeTab === "Collaborators" && <CollaboratorsSettings />}
                         {/* Preferences tabs */}
-                        {activeTab === "Keybinds" && <KeybindsSettings />}
+                        {!isPhone && activeTab === "Keybinds" && <KeybindsSettings />}
                         {activeTab === "Appearance" && <AppearanceSettings />}
                         {activeTab === "Language" && <LanguageSettings />}
                         {/* Account tabs - only when signed in */}

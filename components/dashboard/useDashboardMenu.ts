@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
-import { useCookieUser } from "@src/lib/utils/hooks";
+import { useCookieUser, useIsPhone } from "@src/lib/utils/hooks";
 import type { MenuSection } from "./DashboardSidebar";
 
 /**
@@ -30,6 +30,7 @@ export const useDashboardMenu = () => {
     const t = useTranslations("modal");
     const { project, isYjsReady } = useContext(ProjectContext);
     const { user, isLoading: isUserLoading } = useCookieUser();
+    const isPhone = useIsPhone();
 
     const projectMenu = useMemo<MenuSection>(
         () => ({
@@ -46,16 +47,22 @@ export const useDashboardMenu = () => {
         [t],
     );
 
+    // Keybinds is a hardware-keyboard rebinding UI — capture needs real modifier
+    // keys, and the combos only ever fire from a physical keyboard. Phones can't
+    // produce either, so the tab is hidden there. Tablets keep it: an iPad with a
+    // keyboard case is a normal target, and it already gets the desktop layout.
     const preferencesMenu = useMemo<MenuSection>(
         () => ({
             group: t("groups.preferences"),
             items: [
-                { id: "Keybinds", label: t("tabs.Keybinds"), icon: createElement(Keyboard, { size: 18 }) },
+                ...(isPhone
+                    ? []
+                    : [{ id: "Keybinds" as const, label: t("tabs.Keybinds"), icon: createElement(Keyboard, { size: 18 }) }]),
                 { id: "Appearance", label: t("tabs.Appearance"), icon: createElement(Palette, { size: 18 }) },
                 { id: "Language", label: t("tabs.Language"), icon: createElement(Globe, { size: 18 }) },
             ],
         }),
-        [t],
+        [t, isPhone],
     );
 
     const accountMenu = useMemo<MenuSection>(

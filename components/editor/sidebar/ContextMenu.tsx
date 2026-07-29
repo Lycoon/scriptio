@@ -39,7 +39,7 @@ import {
     Trash2,
     UserRound,
 } from "lucide-react";
-import { makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
+import { canMakeDualDialogue, makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
 import { extractShelveCandidate } from "@src/lib/shelf/shelf-utils";
 import { omitSceneByUuid, unomitSceneByUuid } from "@src/lib/screenplay/scene-locking";
 import { ScreenplayElement } from "@src/lib/utils/enums";
@@ -438,23 +438,8 @@ const ShelveNodeMenu = ({ props }: SubMenuProps<{ pos: number; nodeClass: string
     };
 
     // Check if dual dialogue is available (Character node followed by valid dialogue pattern)
-    const canDualDialogue = (() => {
-        if (nodeClass !== ScreenplayElement.Character || !editor) return false;
-        const doc = editor.state.doc;
-        const $pos = doc.resolve(pos);
-        const idx = $pos.index(0);
-        const count = doc.childCount;
-        let i = idx + 1;
-        while (i < count && doc.child(i).attrs.class === ScreenplayElement.Parenthetical) i++;
-        if (i >= count || doc.child(i).attrs.class !== ScreenplayElement.Dialogue) return false;
-        i++;
-        while (i < count) {
-            const cls = doc.child(i).attrs.class;
-            if (cls === ScreenplayElement.Parenthetical || cls === ScreenplayElement.Dialogue) i++;
-            else break;
-        }
-        return i < count && doc.child(i).attrs.class === ScreenplayElement.Character;
-    })();
+    const canDualDialogue =
+        nodeClass === ScreenplayElement.Character && !!editor && canMakeDualDialogue(editor, pos);
 
     const shelveLabel =
         nodeClass === ScreenplayElement.Scene
@@ -634,23 +619,11 @@ const EditorContextMenu = ({ props }: SubMenuProps<EditorContextMenuProps>) => {
         updateContextMenu(undefined);
     };
 
-    const canDualDialogue = (() => {
-        if (nodeClass !== ScreenplayElement.Character || !editor || nodePos === undefined) return false;
-        const doc = editor.state.doc;
-        const $pos = doc.resolve(nodePos);
-        const idx = $pos.index(0);
-        const count = doc.childCount;
-        let i = idx + 1;
-        while (i < count && doc.child(i).attrs.class === ScreenplayElement.Parenthetical) i++;
-        if (i >= count || doc.child(i).attrs.class !== ScreenplayElement.Dialogue) return false;
-        i++;
-        while (i < count) {
-            const cls = doc.child(i).attrs.class;
-            if (cls === ScreenplayElement.Parenthetical || cls === ScreenplayElement.Dialogue) i++;
-            else break;
-        }
-        return i < count && doc.child(i).attrs.class === ScreenplayElement.Character;
-    })();
+    const canDualDialogue =
+        nodeClass === ScreenplayElement.Character &&
+        !!editor &&
+        nodePos !== undefined &&
+        canMakeDualDialogue(editor, nodePos);
 
     const isShelvable =
         nodeClass === ScreenplayElement.Scene ||

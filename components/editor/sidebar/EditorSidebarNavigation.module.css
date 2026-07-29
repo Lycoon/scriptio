@@ -172,8 +172,11 @@
     display: none;
     align-items: center;
     justify-content: center;
-    margin-left: auto;
-    margin-right: 12px;
+    /* Padded box is taller than the header's icon and label, so the vertical
+       padding is pulled back out with negative margins: the tap target keeps its
+       size while the header stays the same height as the button-less ones, and
+       the list below it doesn't shift when switching tabs. */
+    margin: -4px 12px -4px auto;
     padding: 4px;
     border: none;
     border-radius: 6px;
