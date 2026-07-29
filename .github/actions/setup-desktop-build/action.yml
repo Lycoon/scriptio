@@ -1,9 +1,9 @@
 name: Setup Desktop Build Toolchain
-description: Installs Node.js, Rust with platform-appropriate targets, MSIX bundler on Windows, and runs npm ci.
+description: Installs Node.js, Rust with platform-appropriate targets, MSIX bundler on Windows, the JDK + Android SDK/NDK on Android, and runs npm ci.
 
 inputs:
     platform:
-        description: Target platform ("macos", "windows", or "ios").
+        description: Target platform ("macos", "windows", "ios", or "android").
         required: true
 
 runs:
@@ -50,6 +50,15 @@ runs:
           with:
               targets: aarch64-apple-ios, aarch64-apple-ios-sim, x86_64-apple-ios
 
+        # i686 is deliberately absent: it is 32-bit x86, which no shipping Android
+        # device uses. The three below cover every real phone/tablet (arm64 + the
+        # armv7 tail) plus Chromebooks and emulators (x86_64).
+        - name: Setup Rust (Android)
+          if: inputs.platform == 'android'
+          uses: dtolnay/rust-toolchain@stable
+          with:
+              targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
+
         - name: Setup Rust cache
           uses: swatinem/rust-cache@v2
           with:
@@ -59,6 +68,33 @@ runs:
           if: inputs.platform == 'windows'
           shell: bash
           run: cargo install msixbundle-cli
+
+        # AGP 8.11 (Tauri's generated Gradle project) needs JDK 17+; 21 is the
+        # current LTS it is tested against.
+        - name: Setup JDK (Android)
+          if: inputs.platform == 'android'
+          uses: actions/setup-java@v4
+          with:
+              distribution: temurin
+              java-version: "21"
+
+        # The runner image ships an Android SDK, but not necessarily the platform
+        # Tauri's template compiles against (compileSdk/targetSdk 36) nor an NDK
+        # new enough for it. Install both explicitly and pin the NDK for
+        # reproducibility, same reasoning as the Xcode pin above — bump
+        # deliberately, and keep it in step with what the template asks for.
+        - name: Setup Android SDK packages
+          if: inputs.platform == 'android'
+          shell: bash
+          env:
+              ANDROID_NDK_VERSION: "29.0.13846066"
+          run: |
+              set -e
+              SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+              yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+              "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0" "ndk;$ANDROID_NDK_VERSION"
+              # Tauri resolves the NDK through NDK_HOME.
+              echo "NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION" >> "$GITHUB_ENV"
 
         - name: Install dependencies
           shell: bash

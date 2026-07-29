@@ -13,6 +13,10 @@ inputs:
         description: When "true" (on a macOS runner), stamp product name, bundle id, and version into src-tauri/gen/apple.
         required: false
         default: "false"
+    android:
+        description: When "true", stamp the Play application ID and launcher label into src-tauri/gen/android.
+        required: false
+        default: "false"
 
 runs:
     using: composite
@@ -59,6 +63,19 @@ runs:
                   MSIX_VERSION="${MAJOR}.${MINOR}.${PATCH}.0"
               fi
 
+              # Play requires versionCode to strictly increase on every upload and
+              # caps it at 2,100,000,000. Tauri's default (major*1000000 +
+              # minor*1000 + patch) has no room for REVISION, so it would repeat
+              # across staging pushes between releases and Play would reject the
+              # second one. Widen every field and give REVISION its own, which
+              # keeps both channels monotonic (they are separate listings, so their
+              # counters are independent). Ceiling is MAJOR=200.
+              if [[ "$REVISION" -ge 1000 ]]; then
+                  echo "REVISION $REVISION overflows the 3 digits reserved for it in versionCode" >&2
+                  exit 1
+              fi
+              ANDROID_VERSION_CODE=$(( MAJOR * 10000000 + MINOR * 100000 + PATCH * 1000 + REVISION ))
+
               jq --arg v "$SEMVER" --arg t "$WINDOW_TITLE" --arg n "$PRODUCT_NAME" \
                   '.version = $v | .app.windows[0].title = $t | .productName = $n' \
                   src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
@@ -84,6 +101,16 @@ runs:
                   src-tauri/tauri.windows.conf.json > src-tauri/tauri.windows.conf.json.tmp
               mv src-tauri/tauri.windows.conf.json.tmp src-tauri/tauri.windows.conf.json
 
+              # Only the version code: the build regenerates app/tauri.properties
+              # from it (that file is gitignored). The channel's package name is
+              # applicationId in gen/android, patched in the Android step below —
+              # the config identifier has to keep matching the committed Kotlin
+              # package tree, since the build regenerates those sources from it.
+              jq --argjson vc "$ANDROID_VERSION_CODE" \
+                  '.bundle.android.versionCode = $vc' \
+                  src-tauri/tauri.android.conf.json > src-tauri/tauri.android.conf.json.tmp
+              mv src-tauri/tauri.android.conf.json.tmp src-tauri/tauri.android.conf.json
+
               if [[ -f "src-tauri/gen/windows/bundle.config.json" ]]; then
                   jq --arg v "$MSIX_VERSION" '.version = $v' \
                       src-tauri/gen/windows/bundle.config.json > src-tauri/gen/windows/bundle.config.json.tmp
@@ -93,14 +120,16 @@ runs:
               sed -i.bak "s/^version = \".*\"/version = \"$SEMVER\"/" src-tauri/Cargo.toml
               rm -f src-tauri/Cargo.toml.bak
 
-              echo "Applied version $INPUT_VERSION (MSIX: $MSIX_VERSION, productName: '$PRODUCT_NAME', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER)"
+              echo "Applied version $INPUT_VERSION (MSIX: $MSIX_VERSION, productName: '$PRODUCT_NAME', appstore: $APPSTORE_IDENTIFIER, windows: $WINDOWS_IDENTIFIER, android versionCode: $ANDROID_VERSION_CODE)"
 
-        # Both bundlers resolve icons out of src-tauri/icons at build time:
+        # All the bundlers resolve icons out of src-tauri/icons at build time:
         # tauri.conf.json's bundle.icon list (macOS .app + Windows exe favicon),
-        # and our windows:assets script, which regenerates the whole Microsoft
-        # Store asset set from src-tauri/icons/icon.png. Swapping the staging
-        # icon set in here — before those run — is enough to make staging builds
-        # visually distinct from release on a device that has both installed.
+        # our windows:assets script, which regenerates the whole Microsoft
+        # Store asset set from src-tauri/icons/icon.png, and our android:icons
+        # script, which regenerates the launcher mipmaps from app-icon.png.
+        # Swapping the staging icon set in here — before those run — is enough to
+        # make staging builds visually distinct from release on a device that has
+        # both installed.
         # Only touches the checkout for this CI run, never committed.
         - name: Select app icon set
           shell: bash
@@ -119,11 +148,12 @@ runs:
                   # the same Icon Composer project.
                   # Only the icons actually consumed at build: the bundle.icon
                   # PNGs, icon.png (Store asset source), icon.icns + Assets.car
-                  # (macOS), and icon.ico (Windows exe favicon).
+                  # (macOS), icon.ico (Windows exe favicon), and app-icon.png
+                  # (master square source the Android mipmaps are rendered from).
                   cp src-tauri/icons-staging/32x32.png \
                       src-tauri/icons-staging/128x128.png "src-tauri/icons-staging/128x128@2x.png" \
                       src-tauri/icons-staging/icon.png src-tauri/icons-staging/icon.icns src-tauri/icons-staging/icon.ico \
-                      src-tauri/icons-staging/Assets.car \
+                      src-tauri/icons-staging/Assets.car src-tauri/icons-staging/app-icon.png \
                       src-tauri/icons/
                   # icon.icon is a directory — replace wholesale rather than cp into it.
                   rm -rf src-tauri/icons/icon.icon
@@ -132,6 +162,33 @@ runs:
               else
                   echo "Using release icon set (src-tauri/icons)"
               fi
+
+        - name: Apply Android settings
+          if: ${{ inputs.android == 'true' }}
+          shell: bash
+          env:
+              INPUT_STAGING: ${{ inputs.staging }}
+          run: |
+              set -e
+
+              GRADLE="src-tauri/gen/android/app/build.gradle.kts"
+              if [[ ! -f "$GRADLE" ]]; then
+                  echo "No $GRADLE found; run 'tauri android init' and commit gen/android." >&2
+                  exit 1
+              fi
+
+              if [[ "$INPUT_STAGING" == "true" ]]; then
+                  CHANNEL="staging"
+              else
+                  CHANNEL="release"
+              fi
+
+              # scripts/apply-android-channel.ts owns the per-channel applicationId
+              # and launcher label, so local store builds (build:android:release)
+              # and CI can't drift apart. Needs npm ci to have run, which the
+              # toolchain setup step does before this action.
+              npm run android:channel -- "$CHANNEL"
+              grep -n "applicationId" "$GRADLE"
 
         - name: Apply macOS-specific settings
           if: ${{ runner.os == 'macOS' }}
