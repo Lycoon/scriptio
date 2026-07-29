@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { uploadToCloudPopup } from "@src/lib/screenplay/popup";
+import { useIsTouch } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 
 import { useProjectNavbar } from "./useProjectNavbar";
@@ -42,9 +43,17 @@ const panelAnchorStyle: React.CSSProperties = {
  * on the left, the format dropdown centred, collaborators/search/analytics/settings
  * on the right. The phone layout lives in [ProjectNavbarMobile]; both draw shared
  * project state from {@link useProjectNavbar}.
+ *
+ * Tablets land here too (they are wide enough for the desktop layout, see
+ * [ProjectNavbar]), but they get [MobileFormatToolbar] above the on-screen
+ * keyboard — which carries the same element/style/alignment controls — so the
+ * centred dropdown is dropped on touch to avoid offering both at once. With a
+ * hardware keyboard attached neither is shown, and the element shortcuts
+ * (see DEFAULT_KEYBINDS) cover it.
  */
 const ProjectNavbarDesktop = () => {
     const t = useTranslations("navbar");
+    const isTouch = useIsTouch();
 
     const {
         openDashboard,
@@ -151,9 +160,10 @@ const ProjectNavbarDesktop = () => {
                     </div>
                 )}
             </nav>
-            {/* Center - Format dropdown (always visible in a project, regardless
-                of which panel is open) */}
-            {isInProject && projectId && (
+            {/* Center - Format dropdown (visible in a project regardless of which
+                panel is open, but not on touch: the mobile toolbar owns these
+                controls there — see the component doc above) */}
+            {isInProject && projectId && !isTouch && (
                 <div className={navbar.center}>
                     <div className={navbar.navbar_island}>
                         <ScreenplayFormatDropdown />

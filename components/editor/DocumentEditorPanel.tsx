@@ -24,6 +24,7 @@ import { TextSelection, Transaction } from "@tiptap/pm/state";
 import { EditorView } from "@tiptap/pm/view";
 import { DocumentEditorConfig, EDITOR_INPUT_ATTRIBUTES } from "@src/lib/editor/document-editor-config";
 import { useDocumentComments } from "@src/lib/editor/use-document-comments";
+import { registerAddComment, unregisterAddComment } from "@src/lib/editor/comment-actions";
 import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comment-anchors";
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
 import { useViewModeScrollAnchor } from "@src/lib/editor/use-view-mode-scroll-anchor";
@@ -901,6 +902,14 @@ const DocumentEditorPanel = ({
         },
         [commentOps, user],
     );
+
+    // Publish it for MobileFormatToolbar, which offers the same action from the
+    // keyboard bar but lives outside this panel (see comment-actions).
+    useEffect(() => {
+        if (!editor || !config.features.comments) return;
+        registerAddComment(editor, addCommentToNode);
+        return () => unregisterAddComment(editor);
+    }, [editor, config.features.comments, addCommentToNode]);
 
     // ---- Context menu ----
     const onEditorContextMenu = useCallback(

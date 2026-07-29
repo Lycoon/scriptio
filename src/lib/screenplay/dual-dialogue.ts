@@ -49,6 +49,23 @@ const collectBlock = (
 };
 
 /**
+ * Whether `makeDualDialogue` would find its pattern at `pos` — i.e. the block at
+ * that position is a character→dialogue block immediately followed by another
+ * one. Shares `collectBlock` with the transform, so the affordance offering the
+ * action can never disagree with what the action actually does.
+ */
+export const canMakeDualDialogue = (editor: Editor, pos: number): boolean => {
+    const { doc } = editor.state;
+    if (doc.content.size === 0) return false;
+
+    const $pos = doc.resolve(Math.min(pos, doc.content.size - 1));
+    const left = collectBlock(doc, $pos.index(0));
+    if (!left) return false;
+
+    return collectBlock(doc, left.nextIndex) !== null;
+};
+
+/**
  * Convert two sequential character→dialogue blocks into a dual-dialogue node.
  * The `pos` argument is any document position inside (or at the start of) the
  * first character node of the pair.
