@@ -32,7 +32,7 @@ jobs:
 
     publish-macos:
         runs-on: macos-latest
-        needs: [prepare, deploy-app]
+        needs: [prepare, deploy-webapp]
         env:
             APP_PATH: src-tauri/target/universal-apple-darwin/release/bundle/macos/Scriptio.app
             PKG_PATH: Scriptio.pkg
@@ -98,7 +98,7 @@ jobs:
 
     publish-ios:
         runs-on: macos-latest
-        needs: [prepare, deploy-app]
+        needs: [prepare, deploy-webapp]
         steps:
             - uses: actions/checkout@v6
 
@@ -203,9 +203,80 @@ jobs:
                   backend: "appstore-api"
                   app-type: "ios"
 
+    publish-android:
+        runs-on: ubuntu-latest
+        needs: [prepare, deploy-webapp]
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup Android build toolchain
+              uses: ./.github/actions/setup-desktop-build
+              with:
+                  platform: android
+
+            - name: Apply app version
+              uses: ./.github/actions/apply-version
+              with:
+                  version: ${{ needs.prepare.outputs.version }}
+                  android: "true"
+
+            # Read by the signingConfig committed in gen/android/app/build.gradle.kts.
+            # Both fields use the store password: the schema has a single
+            # `password`, and PKCS12 keystores (what keytool now produces by
+            # default) require the key and store passwords to match anyway.
+            - name: Configure Android signing
+              env:
+                  GOOGLE_KEYSTORE_BASE64: ${{ secrets.GOOGLE_KEYSTORE_BASE64 }}
+                  GOOGLE_KEYSTORE_PASSWORD: ${{ secrets.GOOGLE_KEYSTORE_PASSWORD }}
+                  GOOGLE_KEY_ALIAS: ${{ secrets.GOOGLE_KEY_ALIAS }}
+              run: |
+                  set -e
+                  base64 -d <<< "$GOOGLE_KEYSTORE_BASE64" > "$RUNNER_TEMP/keystore.jks"
+                  {
+                      echo "keyAlias=$GOOGLE_KEY_ALIAS"
+                      echo "password=$GOOGLE_KEYSTORE_PASSWORD"
+                      echo "storeFile=$RUNNER_TEMP/keystore.jks"
+                  } > src-tauri/gen/android/keystore.properties
+
+            - name: Build AAB
+              run: npm run build:android
+              env:
+                  NEXT_PUBLIC_API_URL: https://scriptio.app
+                  NEXT_PUBLIC_CLOUD_URL: https://cloud.scriptio.app
+                  NEXT_PUBLIC_APP_VERSION: ${{ needs.prepare.outputs.version }}
+                  NEXT_PUBLIC_COMMIT_SHA: ${{ needs.prepare.outputs.commit_sha }}
+
+            - name: Locate built .aab
+              run: |
+                  set -e
+                  # Scoped to outputs/: Gradle also leaves an unsigned
+                  # intermediates/intermediary_bundle/**/intermediary-bundle.aab,
+                  # which a bare -name '*.aab' finds first.
+                  AAB=$(find src-tauri/gen/android/app/build/outputs/bundle -name '*.aab' 2>/dev/null | head -n 1)
+                  if [[ -z "$AAB" ]]; then
+                      echo "No .aab produced by tauri android build" >&2
+                      exit 1
+                  fi
+                  echo "AAB_PATH=$AAB" >> "$GITHUB_ENV"
+                  # R8 runs on the release profile, so upload the mapping with the
+                  # bundle to get readable stack traces in Play Console. Optional:
+                  # an empty value makes the upload action skip it.
+                  MAPPING=$(find src-tauri/gen/android/app/build/outputs/mapping -name 'mapping.txt' 2>/dev/null | head -n 1 || true)
+                  echo "MAPPING_PATH=$MAPPING" >> "$GITHUB_ENV"
+
+            - name: Publish to Google Play (closed testing)
+              uses: r0adkll/upload-google-play@v1
+              with:
+                  serviceAccountJsonPlainText: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+                  packageName: app.scriptio
+                  releaseFiles: ${{ env.AAB_PATH }}
+                  mappingFile: ${{ env.MAPPING_PATH }}
+                  track: alpha
+                  status: completed
+
     publish-windows:
         runs-on: windows-latest
-        needs: [prepare, deploy-app]
+        needs: [prepare, deploy-webapp]
         env:
             APP_PATH: src-tauri/target/msix/Scriptio.msixbundle
         steps:
@@ -264,7 +335,7 @@ jobs:
               env:
                   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-    deploy-app:
+    deploy-webapp:
         runs-on: ubuntu-latest
         needs: prepare
         env:
@@ -325,7 +396,7 @@ jobs:
 
     tag-release:
         runs-on: ubuntu-latest
-        needs: [prepare, deploy-app]
+        needs: [prepare, deploy-webapp]
         steps:
             - uses: actions/checkout@v6
               with:
