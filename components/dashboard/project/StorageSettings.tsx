@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Image as ImageIcon, Music, Trash2, X } from "lucide-react";
 
@@ -163,43 +163,57 @@ const StorageBar = ({ breakdown, isLocalOnly }: { breakdown: StorageBreakdown; i
 
 const StorageSettings = () => {
     const t = useTranslations("storage");
-    const { projectId, repository, isReadOnly } = useContext(ProjectContext);
-    const { isLocalOnly } = useProjectMembership();
+    const { projectId, repository, isReadOnly, isYjsReady } = useContext(ProjectContext);
+    const { isLocalOnly, isLoading: isMembershipLoading } = useProjectMembership();
     const [assets, setAssets] = useState<ProjectAssetInfo[] | null>(null);
     // Seed from the cache so the bar shows last-known figures immediately (and at a
     // stable size); fetched values refresh it in place without shifting layout.
     const [breakdown, setBreakdown] = useState<StorageBreakdown>(() =>
         cachedBreakdown?.projectId === projectId ? cachedBreakdown.breakdown : emptyBreakdown(),
     );
+    // Ticket for the newest load; an older pass that finishes late must not
+    // publish its (now stale) figures over it.
+    const loadSeq = useRef(0);
 
     const load = useCallback(async () => {
-        if (!projectId || !repository) {
-            setAssets([]);
-            setBreakdown(emptyBreakdown());
-            return;
-        }
+        // Reading the doc before its local content is restored would report an
+        // empty project, and nothing would re-run the pass once it loads.
+        if (!projectId || !repository || !isYjsReady) return;
+
+        const seq = ++loadSeq.current;
 
         const list = await listInUseAssets(projectId, repository.getState());
         list.sort((a, b) => b.size - a.size);
+        if (loadSeq.current !== seq) return;
         setAssets(list);
+
+        // `isLocalOnly` reads `false` until the local lookup resolves, so acting on
+        // it early would query the cloud for a local-only project (a 404) and let
+        // that empty answer race the real one. The assets above don't depend on it;
+        // this pass re-runs with the settled value.
+        if (isMembershipLoading) return;
+
+        const localTotal = list.reduce((sum, a) => sum + a.size, 0);
 
         const { fetchProjectStorage, fetchMyStorage } = await import("@src/lib/assets/cloud-asset-sync");
         let bd: StorageBreakdown;
         if (isLocalOnly) {
             // Not synced: this project's usage is local; "other" is the owner's
             // current cloud usage (this project would add on top once synced).
-            const localTotal = list.reduce((sum, a) => sum + a.size, 0);
             const my = await fetchMyStorage();
             bd = { thisUsed: localTotal, otherUsed: my?.used ?? 0, quota: my?.quota ?? USER_STORAGE_QUOTA_BYTES };
         } else {
             const s = await fetchProjectStorage(projectId);
+            // Unreachable server / failed read: report what this device knows
+            // rather than claiming the project is empty.
             bd = s
                 ? { thisUsed: s.projectUsed, otherUsed: Math.max(0, s.ownerTotalUsed - s.projectUsed), quota: s.quota }
-                : emptyBreakdown();
+                : { ...emptyBreakdown(), thisUsed: localTotal };
         }
+        if (loadSeq.current !== seq) return;
         cachedBreakdown = { projectId, breakdown: bd };
         setBreakdown(bd);
-    }, [projectId, repository, isLocalOnly]);
+    }, [projectId, repository, isYjsReady, isLocalOnly, isMembershipLoading]);
 
     useEffect(() => {
         void load();
