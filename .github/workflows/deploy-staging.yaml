@@ -275,14 +275,16 @@ jobs:
                   MAPPING=$(find src-tauri/gen/android/app/build/outputs/mapping -name 'mapping.txt' 2>/dev/null | head -n 1 || true)
                   echo "MAPPING_PATH=$MAPPING" >> "$GITHUB_ENV"
 
-            - name: Publish to Google Play (closed testing)
+            # `qa` is an internal-testing track: uploads there need no store
+            # listing, unlike the closed/open tracks the release workflow uses.
+            - name: Publish to Google Play (internal testing)
               uses: r0adkll/upload-google-play@v1
               with:
                   serviceAccountJsonPlainText: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
                   packageName: app.scriptio.staging
                   releaseFiles: ${{ env.AAB_PATH }}
                   mappingFile: ${{ env.MAPPING_PATH }}
-                  track: alpha
+                  tracks: qa
                   status: completed
 
     publish-windows:
