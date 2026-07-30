@@ -271,7 +271,7 @@ jobs:
                   packageName: app.scriptio
                   releaseFiles: ${{ env.AAB_PATH }}
                   mappingFile: ${{ env.MAPPING_PATH }}
-                  track: alpha
+                  tracks: alpha
                   status: completed
 
     publish-windows:
