@@ -17,13 +17,33 @@ import {
 } from "lucide-react";
 import Footer from "./Footer";
 import Image from "next/image";
+import { useState } from "react";
+import { AppleIcon, GooglePlayIcon, LinuxIcon, WindowsIcon } from "./PlatformIcons";
 
 // The app lives at the same origin in production (`/projects` is relative), but
 // at a different port in local dev. NEXT_PUBLIC_APP_ORIGIN is set to the app's
 // dev URL in .env.development and is empty in the production build.
 const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_ORIGIN ?? "";
 
+const APP_STORE_URL = "https://apps.apple.com/app/scriptio";
+const MICROSOFT_STORE_URL = "https://apps.microsoft.com/detail/9p4m1xphjks1";
+const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=app.scriptio";
+
+const DESKTOP_STORES: StoreLink[] = [
+    { href: APP_STORE_URL, name: "App Store", icon: <AppleIcon size={18} /> },
+    { href: MICROSOFT_STORE_URL, name: "Microsoft Store", icon: <WindowsIcon size={16} /> },
+];
+
+const MOBILE_STORES: StoreLink[] = [
+    { href: APP_STORE_URL, name: "App Store", icon: <AppleIcon size={18} /> },
+    { href: GOOGLE_PLAY_URL, name: "Google Play", icon: <GooglePlayIcon size={17} /> },
+];
+
 export default function HomePageContainer() {
+    // Which platform CTA has its store menu open (hover on pointer devices, tap
+    // on touch ones — CSS handles hover/focus, this handles the tap).
+    const [openMenu, setOpenMenu] = useState<"desktop" | "mobile" | null>(null);
+
     return (
         <div className={styles.wrapper}>
             <div className={styles.gradientBackground}></div>
@@ -71,36 +91,37 @@ export default function HomePageContainer() {
                     {/* Layer 1.3: Platform CTAs */}
                     <div className={styles.heroContent}>
                         <div className={styles.ctaRow}>
-                            <a
-                                href="https://apps.apple.com/app/scriptio"
-                                target="_blank"
-                                className={styles.ctaPlatform}
-                            >
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                                </svg>
-                                <div className={styles.ctaPlatformText}>
-                                    <span className={styles.ctaPlatformLabel}>Get it on</span>
-                                    <span className={styles.ctaPlatformName}>App Store</span>
-                                </div>
-                            </a>
+                            <PlatformMenuCta
+                                name="Desktop"
+                                icons={
+                                    <>
+                                        <AppleIcon size={20} />
+                                        <WindowsIcon size={17} />
+                                        <LinuxIcon size={20} />
+                                    </>
+                                }
+                                stores={DESKTOP_STORES}
+                                isOpen={openMenu === "desktop"}
+                                onToggle={(open) => setOpenMenu(open ? "desktop" : null)}
+                            />
 
-                            <a
-                                href="https://apps.microsoft.com/detail/9p4m1xphjks1"
-                                target="_blank"
-                                className={styles.ctaPlatform}
-                            >
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                    <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z" />
-                                </svg>
-                                <div className={styles.ctaPlatformText}>
-                                    <span className={styles.ctaPlatformLabel}>Get it on</span>
-                                    <span className={styles.ctaPlatformName}>Microsoft Store</span>
-                                </div>
-                            </a>
+                            <PlatformMenuCta
+                                name="Mobile"
+                                icons={
+                                    <>
+                                        <AppleIcon size={20} />
+                                        <GooglePlayIcon size={18} />
+                                    </>
+                                }
+                                stores={MOBILE_STORES}
+                                isOpen={openMenu === "mobile"}
+                                onToggle={(open) => setOpenMenu(open ? "mobile" : null)}
+                            />
 
                             <a href={`${APP_ORIGIN}/projects`} className={styles.ctaPlatform}>
-                                <Globe size={22} />
+                                <div className={styles.ctaPlatformIcons}>
+                                    <Globe size={20} />
+                                </div>
                                 <div className={styles.ctaPlatformText}>
                                     <span className={styles.ctaPlatformLabel}>Open in</span>
                                     <span className={styles.ctaPlatformName}>Browser</span>
@@ -458,6 +479,60 @@ export default function HomePageContainer() {
         </div>
     );
 }
+
+interface StoreLink {
+    href: string;
+    name: string;
+    icon: React.ReactNode;
+}
+
+interface PlatformMenuCtaProps {
+    name: string;
+    icons: React.ReactNode;
+    stores: StoreLink[];
+    isOpen: boolean;
+    onToggle: (open: boolean) => void;
+}
+
+const PlatformMenuCta: React.FC<PlatformMenuCtaProps> = ({ name, icons, stores, isOpen, onToggle }) => (
+    <div
+        className={`${styles.ctaMenu} ${isOpen ? styles.ctaMenuOpen : ""}`}
+        onMouseEnter={() => onToggle(true)}
+        onMouseLeave={() => onToggle(false)}
+        onKeyDown={(e) => e.key === "Escape" && onToggle(false)}
+    >
+        <button
+            type="button"
+            className={styles.ctaPlatform}
+            aria-haspopup="menu"
+            aria-expanded={isOpen}
+            onClick={() => onToggle(!isOpen)}
+        >
+            <div className={styles.ctaPlatformIcons}>{icons}</div>
+            <div className={styles.ctaPlatformText}>
+                <span className={styles.ctaPlatformLabel}>Download for</span>
+                <span className={styles.ctaPlatformName}>{name}</span>
+            </div>
+        </button>
+
+        <div className={styles.ctaDropdown} role="menu" aria-label={`${name} downloads`}>
+            <div className={styles.ctaDropdownPanel}>
+                {stores.map((store) => (
+                    <a
+                        key={store.name}
+                        href={store.href}
+                        target="_blank"
+                        role="menuitem"
+                        className={styles.ctaDropdownItem}
+                    >
+                        {store.icon}
+                        <span>{store.name}</span>
+                    </a>
+                ))}
+            </div>
+        </div>
+    </div>
+);
 
 interface ScriptStripeProps {
     children: React.ReactNode;

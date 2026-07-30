@@ -253,7 +253,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1.4rem;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 14px;
     background-color: rgba(255, 255, 255, 0.06);
@@ -261,16 +261,82 @@
     -webkit-backdrop-filter: blur(16px);
     color: var(--primary-text);
     text-decoration: none;
+    cursor: pointer;
     transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .ctaPlatform:hover {
-    transform: translateY(-2px);
     border-color: rgba(255, 255, 255, 0.35);
     background-color: rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     color: var(--primary-text);
+}
+
+/* Store menu (desktop & mobile CTAs) */
+.ctaMenu {
+    position: relative;
+    display: flex;
+}
+
+.ctaDropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    min-width: 100%;
+    padding-top: 0.6rem; /* keeps hover alive across the gap */
+    transform: translate(-50%, -6px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 3;
+}
+
+.ctaMenu:hover .ctaDropdown,
+.ctaMenu:focus-within .ctaDropdown,
+.ctaMenuOpen .ctaDropdown {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.ctaDropdownPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ctaDropdownItem {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    color: var(--primary-text);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.ctaDropdownItem:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: var(--primary-text);
+}
+
+.ctaPlatformIcons {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
 }
 
 .ctaPlatformText {
@@ -300,7 +366,7 @@
     }
 
     .ctaPlatform {
-        width: 220px;
+        width: 240px;
     }
 }
 
