@@ -181,10 +181,19 @@ const Dropdown = ({
         <div
             ref={menuRef}
             {...(portal ? { "data-dropdown-portal": "" } : {})}
-            className={`${styles.dropdown_menu} ${fitContent ? styles.fit_content : ""} ${hasSubmenus ? styles.has_submenus : ""}`}
+            className={`${styles.dropdown_menu} ${portal ? styles.portal_menu : ""} ${fitContent ? styles.fit_content : ""} ${hasSubmenus ? styles.has_submenus : ""}`}
             style={
                 portal && menuPos
-                    ? { position: "fixed", top: menuPos.top, left: menuPos.left, minWidth: menuPos.width }
+                    ? {
+                          position: "fixed",
+                          top: menuPos.top,
+                          left: menuPos.left,
+                          // Fixed positioning resolves the stylesheet's `width: 100%`
+                          // against the viewport, so the menu has to be sized from the
+                          // trigger box here: a hard width normally, a floor when
+                          // `fitContent` lets it grow to its widest option.
+                          ...(fitContent ? { minWidth: menuPos.width } : { width: menuPos.width }),
+                      }
                     : undefined
             }
             onMouseLeave={hasSubmenus ? () => setOpenSubmenu(null) : undefined}

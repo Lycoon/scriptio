@@ -219,7 +219,7 @@
    media query is needed to gate them. */
 
 /* Transparent full-screen catcher for outside taps. Its z-index sits below
-   the portaled dropdown menu (.dropdown_menu, z-index 50) so the section
+   the portaled dropdown menu (.portal_menu, z-index 300) so the section
    picker's menu renders above the sheet rather than behind it. */
 .mobileOverlay {
     position: fixed;

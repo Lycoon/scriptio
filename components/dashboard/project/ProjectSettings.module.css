@@ -95,10 +95,15 @@
     letter-spacing: 0.05em;
 }
 
+/* The row is right-aligned, so anything too wide for it spills over the panel's
+   LEFT edge. Translated labels are the usual cause (German "Änderungen
+   speichern", French "Réinitialiser"), so let the buttons drop onto their own
+   line instead of overflowing. */
 .formActions {
     border-top: 1px solid var(--separator);
     padding-top: 24px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 8px;
 }
@@ -108,14 +113,25 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 40px;
+    /* min-height + vertical padding rather than a fixed height: a label too long
+       for one line wraps and grows the button instead of spilling out of it.
+       Single-line buttons still measure exactly 40px. */
+    min-height: 40px;
+    max-width: 100%;
     background-color: var(--secondary);
     border: 2px solid var(--tertiary);
-    padding: 0 36px;
+    padding: 8px 36px;
     border-radius: 40px;
     font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
     cursor: pointer;
     transition: background-color 0.2s;
+}
+
+/* Keep the leading icon at full size when a wrapped label squeezes the row. */
+.formBtn > svg {
+    flex-shrink: 0;
 }
 
 .formBtn:hover {
@@ -129,4 +145,14 @@
 
 .formBtn.danger {
     background: var(--error);
+}
+
+/* Phone: the drawer is much narrower than the desktop panel, so two roomy pills
+ * rarely fit side by side. Trim the side padding and let them share the row —
+ * once wrapped, each takes the full width rather than sitting undersized. */
+@media (max-width: 767px) {
+    .formActions .formBtn {
+        flex: 1 1 auto;
+        padding: 8px 20px;
+    }
 }
