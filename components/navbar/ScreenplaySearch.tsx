@@ -75,6 +75,15 @@ const ScreenplaySearch = () => {
     }, []);
 
 
+    // The match highlights live in the editor, not here, so they outlive this
+    // component — clear the term if the field itself goes away mid-search (the
+    // phone bar drops search when a board canvas opens). Otherwise the highlights
+    // would still be there on returning to the text, with the panel that dismisses
+    // them gone. `setSearchTerm` is stable, so this only runs on unmount.
+    useEffect(() => {
+        return () => setSearchTerm("");
+    }, [setSearchTerm]);
+
     // Focus input when opening
     useEffect(() => {
         if (isOpen && inputRef.current) {

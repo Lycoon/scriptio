@@ -80,6 +80,13 @@ const ProjectNavbarMobile = () => {
         useViewContext();
     const activeEditor = useActiveEditor();
 
+    // Production, read-aloud and search all act on screenplay text, so they only
+    // belong on a panel that has a text editor behind it — not on a board canvas
+    // or the statistics view. Phone is single-panel, so the active editor being
+    // null is exactly "the open view has no text" (same test as the pen FAB in
+    // [ProjectWorkspace]). Saves and analytics stay: both are project-wide.
+    const isEditorView = !!activeEditor;
+
     // The screenplay tools (saves/production/read-aloud) open one at a time as a
     // sheet below the bar; analytics is a full modal. Kept as a single value so
     // tapping one tool icon replaces whatever sheet was open.
@@ -118,6 +125,15 @@ const ProjectNavbarMobile = () => {
         setMobileMenuOpen(false);
         setIsAnalyticsOpen(true);
     };
+
+    // Opening a board while one of the text-only sheets is up would leave it
+    // stranded — its trigger has just left the bar, so re-tapping to dismiss is no
+    // longer possible. Close it with the buttons.
+    useEffect(() => {
+        if (!isEditorView && (activePanel === "production" || activePanel === "readAloud")) {
+            setActivePanel(null);
+        }
+    }, [isEditorView, activePanel]);
 
     // Undo/redo are backed by the collaboration UndoManager. Guard on the command
     // existing so calling before Yjs is ready can't throw.
@@ -213,7 +229,8 @@ const ProjectNavbarMobile = () => {
                     entries that the desktop bar spreads across its left/right. Each opens
                     a sheet (or the analytics modal) that fits the phone screen. Hidden
                     while editing — the left cluster expands to the edit controls then, so
-                    the bar has no room, and these are review-time tools anyway. */}
+                    the bar has no room, and these are review-time tools anyway. The
+                    text-only two thin out further on a board canvas (see isEditorView). */}
                 {isInProject && projectId && !mobileEditMode && (
                     <div className={navbar.mobile_tools}>
                         <div
@@ -223,20 +240,24 @@ const ProjectNavbarMobile = () => {
                         >
                             <History size={18} />
                         </div>
-                        <div
-                            className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "production" ? navBtn.active : ""}`}
-                            onClick={() => toggleTool("production")}
-                            aria-label={t("production")}
-                        >
-                            <Lock size={18} />
-                        </div>
-                        <div
-                            className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "readAloud" ? navBtn.active : ""}`}
-                            onClick={() => toggleTool("readAloud")}
-                            aria-label={t("readAloud")}
-                        >
-                            <AudioLines size={18} />
-                        </div>
+                        {isEditorView && (
+                            <>
+                                <div
+                                    className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "production" ? navBtn.active : ""}`}
+                                    onClick={() => toggleTool("production")}
+                                    aria-label={t("production")}
+                                >
+                                    <Lock size={18} />
+                                </div>
+                                <div
+                                    className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "readAloud" ? navBtn.active : ""}`}
+                                    onClick={() => toggleTool("readAloud")}
+                                    aria-label={t("readAloud")}
+                                >
+                                    <AudioLines size={18} />
+                                </div>
+                            </>
+                        )}
                         <div
                             className={`${navBtn.button} ${navbar.mobile_icon} ${isAnalyticsOpen ? navBtn.active : ""}`}
                             onClick={openAnalytics}
@@ -250,7 +271,7 @@ const ProjectNavbarMobile = () => {
                     keyboard (MobileFormatToolbar); the sidebars open via the editor
                     edge chevrons; everything else is in the burger menu below. */}
                 <div className={navbar.mobile_right}>
-                    {isInProject && <ScreenplaySearch />}
+                    {isInProject && isEditorView && <ScreenplaySearch />}
                     <div
                         className={`${navBtn.button} ${navbar.mobile_icon} ${mobileMenuOpen || isDashboardOpen ? navBtn.active : ""}`}
                         onClick={() => {
