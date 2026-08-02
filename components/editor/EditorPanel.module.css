@@ -357,4 +357,29 @@
         top: 0;
         transform: none;
     }
+
+    /* The read-only pill hangs off the bar's bottom edge (hence the bottom-only
+     * rounding), so it has to travel with the bar rather than stay pinned to the
+     * top of the scroller while the bar slides out from above it. Same transform
+     * mechanism — and the same reason for not driving the sticky `top` — as
+     * .editor_shadow above.
+     *
+     * It travels a navbar height PLUS its own (the 100%), because it starts below
+     * the bar: at --chrome-hide 1 the bar's bottom edge is at y=0, so a bar-height
+     * slide alone would leave the pill sitting at the top of the screen — and,
+     * being invisible by then, silently eating taps in that strip. Fading in
+     * lockstep matches how the bar's own pill clusters go (see ProjectNavbar
+     * .mobile_left) and keeps the few px of overlap with the sliding bar unseen. */
+    .viewOnlyBanner {
+        transform: translateY(calc(var(--chrome-hide, 0) * -1 * (var(--navbar-height) + 100%)));
+        opacity: calc(1 - var(--chrome-hide, 0));
+        will-change: transform;
+    }
+
+    /* Timeline open: the bar sits above the timeline strip, not this scroller, so
+     * the pill has nothing to ride — hold it still (mirrors the shadow). */
+    .container.timeline_open .viewOnlyBanner {
+        transform: none;
+        opacity: 1;
+    }
 }

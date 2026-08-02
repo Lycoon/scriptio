@@ -36,9 +36,11 @@ interface ViewContextType {
      * navbar's hit-testing once it's collapsed). The *visual* hide is continuous:
      * DocumentEditorPanel's scroll handler writes a 0→1 `--chrome-hide` CSS
      * variable that the navbar + edge handles + pen button track linearly, so the
-     * chrome follows the scroll gesture rather than snapping. This boolean just
-     * flips once past the halfway point; both reset when the user types or the
-     * editor enters edit mode.
+     * chrome follows the scroll gesture instead of flipping between two states.
+     * Once that gesture is released the remaining travel is animated out — to 1
+     * if it got past halfway, back to 0 if not — so the chrome only ever comes to
+     * rest fully shown or fully hidden. This boolean flips at that same halfway
+     * point; both reset when the user types or the editor enters edit mode.
      */
     chromeHidden: boolean;
     setChromeHidden: (value: boolean | ((prev: boolean) => boolean)) => void;

@@ -56,6 +56,17 @@ export interface DocumentEditorPanelProps {
 // rather than snapping shut after a flick — matches the pace of a natural scroll.
 const CHROME_HIDE_RANGE = 220;
 
+// How far through that range the swipe got, measured only once it is over, decides
+// which way the chrome resolves: past this it finishes hiding, below it it comes
+// back. The chrome therefore only ever *rests* fully shown or fully hidden, never
+// stranded half-way up and half faded — Google Docs' toolbar settles the same way.
+// Deliberately not applied mid-gesture: while the finger is down (or its momentum
+// still running) the chrome tracks the scroll 1:1 and nothing snaps under it.
+const CHROME_SNAP_THRESHOLD = 0.5;
+// Duration (ms) of that run-out. Short enough to read as the tail of the swipe
+// rather than a separate animation playing after it.
+const CHROME_SNAP_MS = 180;
+
 // useLayoutEffect on the server warns; fall back to useEffect there. The view
 // mode scaling and its scroll re-anchoring must run before paint, so they need
 // the layout variant.
@@ -157,9 +168,13 @@ const DocumentEditorPanel = ({
     // the paint cycle, so the chrome stays glued to the scroll instead of lagging.
     const scrollRafRef = useRef<number | null>(null);
     // Continuous 0→1 progress for hiding that chrome, tracked so it follows the
-    // scroll gesture linearly rather than snapping at a threshold (see
+    // scroll gesture rather than jumping between shown and hidden (see
     // applyChromeHide). Mirrored into the --chrome-hide CSS variable.
     const chromeHideRef = useRef(0);
+    // Handle of the in-flight snap animation that runs the chrome out to a resting
+    // state once the gesture is released (see snapChromeHide). Non-null means a
+    // snap owns --chrome-hide right now, so scroll deltas leave it alone.
+    const chromeSnapRafRef = useRef<number | null>(null);
     // Pending single-tap timer for the phone reader. A tap arms it; a second tap
     // within the window cancels it and counts as a double tap (see handleReaderTap).
     const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -929,10 +944,12 @@ const DocumentEditorPanel = ({
 
     // Drive the mobile chrome hide (navbar + sidebar edge handles + pen button)
     // as a continuous 0→1 progress written straight to a CSS variable, so it
-    // tracks the scroll gesture linearly instead of snapping at a threshold and
-    // easing over a fixed duration. Written imperatively (no React state) to keep
-    // it frame-tight. `chromeHidden` is kept in sync only as a coarse flag for
-    // logic that needs a discrete "mostly hidden" state.
+    // tracks the scroll gesture rather than flipping between two states. The
+    // gesture drives it the whole way; only once the gesture is over does
+    // snapChromeHide run whatever travel is left, so the chrome never comes to
+    // *rest* half-way. Written imperatively (no React state) to keep it
+    // frame-tight. `chromeHidden` is kept in sync only as a coarse flag for logic
+    // that needs a discrete "mostly hidden" state.
     const applyChromeHide = useCallback(
         (progress: number) => {
             const clamped = progress < 0 ? 0 : progress > 1 ? 1 : progress;
@@ -946,13 +963,56 @@ const DocumentEditorPanel = ({
         [setChromeHidden],
     );
 
+    const cancelChromeSnap = useCallback(() => {
+        if (chromeSnapRafRef.current == null) return;
+        cancelAnimationFrame(chromeSnapRafRef.current);
+        chromeSnapRafRef.current = null;
+    }, []);
+
+    /**
+     * Ease the chrome to a resting state — fully shown (0) or fully hidden (1) —
+     * rather than leaving it stranded wherever the finger stopped. Only ever
+     * called once the gesture (and its momentum) is over; nothing snaps while the
+     * user is still scrolling.
+     *
+     * Driven by rAF and not a CSS transition, because --chrome-hide is also what
+     * the gesture writes and the CSS deliberately carries no transition on it so
+     * it can track the finger 1:1; a transition would smear every scroll frame
+     * instead. While this runs it owns the variable, and a new touch cancels it
+     * (see onReaderTouchStart) so the next gesture takes over mid-flight.
+     */
+    const snapChromeHide = useCallback(
+        (target: 0 | 1) => {
+            cancelChromeSnap();
+            const from = chromeHideRef.current;
+            if (from === target) return;
+            const startedAt = performance.now();
+            const step = (now: number) => {
+                const t = Math.min(1, (now - startedAt) / CHROME_SNAP_MS);
+                // easeOutCubic: leaves fast so it reads as a continuation of the
+                // swipe's momentum, then settles gently.
+                const eased = 1 - (1 - t) ** 3;
+                applyChromeHide(from + (target - from) * eased);
+                chromeSnapRafRef.current = t < 1 ? requestAnimationFrame(step) : null;
+            };
+            chromeSnapRafRef.current = requestAnimationFrame(step);
+        },
+        [applyChromeHide, cancelChromeSnap],
+    );
+
     // Reset the chrome to fully shown whenever it can't/shouldn't be hidden:
     // leaving phone layout, entering edit mode, or on unmount (so the next screen
     // doesn't inherit a half-hidden bar).
     useEffect(() => {
-        if (!isPhone || mobileEditMode) applyChromeHide(0);
-        return () => applyChromeHide(0);
-    }, [isPhone, mobileEditMode, applyChromeHide]);
+        if (!isPhone || mobileEditMode) {
+            cancelChromeSnap();
+            applyChromeHide(0);
+        }
+        return () => {
+            cancelChromeSnap();
+            applyChromeHide(0);
+        };
+    }, [isPhone, mobileEditMode, applyChromeHide, cancelChromeSnap]);
 
     // Phone reader taps. The reader is not editable, so taps don't place a caret
     // and are free to drive chrome: a single tap brings back the chrome the user
@@ -996,10 +1056,11 @@ const DocumentEditorPanel = ({
             // shown).
             tapTimer.current = setTimeout(() => {
                 tapTimer.current = null;
+                cancelChromeSnap();
                 applyChromeHide(0);
             }, 280);
         },
-        [isPhone, mobileEditMode, isReadOnly, editor, setMobileEditMode, applyChromeHide],
+        [isPhone, mobileEditMode, isReadOnly, editor, setMobileEditMode, applyChromeHide, cancelChromeSnap],
     );
 
     // Clear the finger-driven flag once scrolling has settled. Called after the
@@ -1009,16 +1070,27 @@ const DocumentEditorPanel = ({
         if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
         userScrollIdleTimer.current = setTimeout(() => {
             isUserScrolling.current = false;
+            // The gesture is genuinely over now — finger up and the momentum it
+            // threw has settled — so this is the one moment the chrome is allowed
+            // to resolve. Run it out to whichever end the swipe got closest to,
+            // rather than leaving the bar parked half off-screen and half faded.
+            const progress = chromeHideRef.current;
+            if (chromeSnapRafRef.current == null && progress > 0 && progress < 1) {
+                snapChromeHide(progress >= CHROME_SNAP_THRESHOLD ? 1 : 0);
+            }
         }, 200);
-    }, []);
+    }, [snapChromeHide]);
 
     // Finger touches the reader: from here until the touch ends (plus any
-    // momentum) scrolls count as user-driven and may hide the chrome.
+    // momentum) scrolls count as user-driven and may hide the chrome. Drop any
+    // run-out still playing from the previous gesture so this one picks the chrome
+    // up from wherever it got to, rather than being locked out until it lands.
     const onReaderTouchStart = useCallback(() => {
+        cancelChromeSnap();
         isFingerDown.current = true;
         isUserScrolling.current = true;
         if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
-    }, []);
+    }, [cancelChromeSnap]);
 
     // Finger lifts (or the touch is cancelled): let momentum keep the flag alive,
     // then clear it once scrolling settles.
@@ -1067,8 +1139,14 @@ const DocumentEditorPanel = ({
             // sidebar's backdrop stay put under the jump.
             const delta = scrollTop - lastScrollTop.current;
             if (mobileEditMode || scrollTop <= 4) {
+                cancelChromeSnap();
                 applyChromeHide(0);
-            } else if (isUserScrolling.current) {
+            } else if (isUserScrolling.current && chromeSnapRafRef.current == null) {
+                // Pure 1:1 tracking — the threshold is only consulted once the
+                // gesture is over (see armUserScrollIdle), so the bar never snaps
+                // out from under a finger that is still on the screen. Skipped
+                // while a run-out is in flight, so a stray scroll event can't
+                // fight it; a real new gesture cancels it on touch-down instead.
                 applyChromeHide(chromeHideRef.current + delta / CHROME_HIDE_RANGE);
             }
             lastScrollTop.current = scrollTop;
@@ -1086,7 +1164,9 @@ const DocumentEditorPanel = ({
             (e.target as HTMLElement).setPointerCapture(e.pointerId);
             isDraggingThumb.current = true;
             // Dragging the handle is a deliberate user scroll, so let it hide the
-            // chrome just like a finger swipe (kept true until the drag ends).
+            // chrome just like a finger swipe (kept true until the drag ends), and
+            // take the chrome back from any run-out still playing.
+            cancelChromeSnap();
             isFingerDown.current = true;
             isUserScrolling.current = true;
             if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
@@ -1116,7 +1196,7 @@ const DocumentEditorPanel = ({
             window.addEventListener("pointerup", onUp);
             window.addEventListener("pointercancel", onUp);
         },
-        [containerEl, revealScrollThumb, thumbTravel, armUserScrollIdle],
+        [containerEl, revealScrollThumb, thumbTravel, armUserScrollIdle, cancelChromeSnap],
     );
 
     // Clean up the idle timer on unmount.
@@ -1125,6 +1205,7 @@ const DocumentEditorPanel = ({
             if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
             if (tapTimer.current) clearTimeout(tapTimer.current);
             if (scrollRafRef.current != null) cancelAnimationFrame(scrollRafRef.current);
+            if (chromeSnapRafRef.current != null) cancelAnimationFrame(chromeSnapRafRef.current);
             if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
         };
     }, []);
@@ -1137,10 +1218,13 @@ const DocumentEditorPanel = ({
         if (!isPhone) return;
         const dom = editor?.view?.dom;
         if (!dom) return;
-        const onInput = () => applyChromeHide(0);
+        const onInput = () => {
+            cancelChromeSnap();
+            applyChromeHide(0);
+        };
         dom.addEventListener("input", onInput);
         return () => dom.removeEventListener("input", onInput);
-    }, [editor, isPhone, applyChromeHide]);
+    }, [editor, isPhone, applyChromeHide, cancelChromeSnap]);
 
     const focusType = focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
 
