@@ -135,7 +135,6 @@ const useIsPhone = (): boolean => useMediaQuery(PHONE_QUERY);
  */
 const useIsTouch = (): boolean => useMediaQuery(TOUCH_QUERY);
 
-
 /**
  * Distance in px the on-screen keyboard covers at the bottom of the layout
  * viewport, tracked via the VisualViewport API. 0 when no keyboard is up.

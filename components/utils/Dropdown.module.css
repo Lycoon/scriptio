@@ -51,6 +51,14 @@
     overflow-y: auto;
 }
 
+/* A portaled menu is a child of <body>, so it stacks against the panel that
+   opened it instead of inside it. The navbar tool sheets are portaled too and
+   sit at z-index 60–71 on phone, so the menu has to out-rank that whole layer;
+   it stays below the modal/dialog layer (1000+). */
+.portal_menu {
+    z-index: 300;
+}
+
 /* Opt-in: size the menu to its widest option (kept at least as wide as the
    trigger) and keep each option on a single line. Used where labels are long,
    e.g. the read-aloud voice pickers. */

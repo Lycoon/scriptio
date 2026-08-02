@@ -2,7 +2,7 @@
 
 import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { X, Settings, Info } from "lucide-react";
+import { X, Settings, Info, Eye } from "lucide-react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
@@ -71,10 +71,27 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
     const revisionColorName = REVISION_COLORS[clampRevision(currentRevision)].name;
 
     // How committed revisions are shown — independent of the stamping toggle.
+    // The eye icon only decorates the closed trigger (`triggerLabel`); the menu
+    // rows stay plain text.
+    const displayModeTrigger = (label: string) => (
+        <span className={styles.display_option}>
+            <Eye size={14} className={styles.display_option_icon} />
+            {label}
+        </span>
+    );
+
     const displayModeOptions: DropdownOption[] = [
-        { value: "all", label: t("revisionDisplayAll") },
-        { value: "hidden", label: t("revisionDisplayHidden") },
-        { value: "current", label: t("revisionDisplayCurrent") },
+        { value: "all", label: t("revisionDisplayAll"), triggerLabel: displayModeTrigger(t("revisionDisplayAll")) },
+        {
+            value: "hidden",
+            label: t("revisionDisplayHidden"),
+            triggerLabel: displayModeTrigger(t("revisionDisplayHidden")),
+        },
+        {
+            value: "current",
+            label: t("revisionDisplayCurrent"),
+            triggerLabel: displayModeTrigger(t("revisionDisplayCurrent")),
+        },
     ];
 
     const handleDisplayModeChange = (mode: string) => {

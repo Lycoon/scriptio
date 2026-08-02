@@ -281,6 +281,18 @@
     gap: 8px;
 }
 
+/* Revision display-mode trigger: eye icon on the left, label after it. */
+.display_option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.display_option_icon {
+    flex-shrink: 0;
+    color: var(--secondary-text);
+}
+
 .revision_dot {
     width: 12px;
     height: 12px;

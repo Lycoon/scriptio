@@ -285,6 +285,11 @@ const buildStampTransaction = (state: EditorState, pending: Pending, rev: number
 const STRIPE_LEFT = -22;
 /** Stripe width (px). */
 const STRIPE_WIDTH = 5;
+/** Fallback offset (px) of the stripe INSIDE the page's left margin, used when
+ *  the canvas has no room for the gutter placement (see the stripe geometry in
+ *  `renderOverlay`). Far short of the 1.5in text-column indent, so it lands on
+ *  empty page margin whatever the format. */
+const STRIPE_INSIDE_LEFT = 10;
 /** Asterisk inset (px) into the right page margin, just past the text column. */
 const ASTERISK_INSET = 12;
 
@@ -327,8 +332,18 @@ type LineCache = { map: WeakMap<PMNode, NodeLine[]>; width: number };
  * under `content-visibility`). The caller must NOT cache that, or the stable
  * node identity would pin the empty result forever and the stripe/asterisk
  * would never appear after a refresh (only a content edit would dislodge it).
+ *
+ * `zoom` is the editor's paint scale (see `renderOverlay`); measured rects are
+ * divided by it so the offsets stored here are in unscaled editor coordinates —
+ * which also makes them zoom-independent, so the cache survives a rescale.
  */
-const computeNodeLines = (view: EditorView, node: PMNode, nodePos: number, lineHeight: number): NodeLine[] | null => {
+const computeNodeLines = (
+    view: EditorView,
+    node: PMNode,
+    nodePos: number,
+    lineHeight: number,
+    zoom: number,
+): NodeLine[] | null => {
     let hasMark = false;
     node.descendants((child) => {
         if (hasMark) return false;
@@ -363,7 +378,7 @@ const computeNodeLines = (view: EditorView, node: PMNode, nodePos: number, lineH
         for (let i = 0; i < rects.length; i++) {
             const r = rects[i];
             if (r.height < 1 || r.width < 0.5) continue;
-            const key = Math.round(r.top - nodeTop + r.height / 2);
+            const key = Math.round((r.top - nodeTop + r.height / 2) / zoom);
             const cur = byLine.get(key);
             if (cur === undefined || index > cur) byLine.set(key, index);
         }
@@ -442,15 +457,40 @@ const renderOverlay = (
     // back to whole-window coords.
     const scroller = findScroller(dom);
     const pagRect = dom.getBoundingClientRect();
+
+    // The phone's paged view renders the editor through `transform: scale()`
+    // (EditorPanel.module.css) — but only at PAINT time. The overlay's children
+    // live inside that same transformed subtree, so their inline top/left are in
+    // the editor's UNSCALED coordinates: the very space the page arithmetic below
+    // (--page-height & co.) works in. Every rect measured off the DOM, by
+    // contrast, comes back already multiplied by the scale. Divide those back out
+    // so both sides agree — without this the two coordinate spaces compound, and
+    // on a phone the whole overlay drifts to roughly zoom² of its real position
+    // while the visible-page window below resolves to pages nowhere near what is
+    // actually on screen (so nothing paints at all past the first screenful).
+    // `offsetWidth` is a layout metric and ignores transforms, so the ratio is
+    // exactly the scale — and exactly 1 on desktop and in endless mode. Falls
+    // back to 1 for an unmeasurable editor (hidden panel), which keeps every
+    // division below finite; the paint is thrown away in that state anyway.
+    const measuredZoom = dom.offsetWidth > 0 ? pagRect.width / dom.offsetWidth : 1;
+    const zoom = measuredZoom > 0 ? measuredZoom : 1;
+    /** Viewport Y → unscaled editor-content Y. */
+    const toEditorY = (clientY: number) => (clientY - pagRect.top) / zoom;
+
+    // Left edge at which the canvas is clipped (the scroll container is
+    // `overflow-x: clip`), or the window edge when there is no scroller.
+    let clipLeft: number;
     let viewTop: number;
     let viewHeight: number;
     if (scroller) {
         const sRect = scroller.getBoundingClientRect();
-        viewTop = sRect.top - pagRect.top;
-        viewHeight = scroller.clientHeight;
+        clipLeft = sRect.left;
+        viewTop = toEditorY(sRect.top);
+        viewHeight = scroller.clientHeight / zoom;
     } else {
-        viewTop = -pagRect.top;
-        viewHeight = window.innerHeight;
+        clipLeft = 0;
+        viewTop = toEditorY(0);
+        viewHeight = window.innerHeight / zoom;
     }
     const visTop = viewTop - period;
     const visBottom = viewTop + viewHeight + period;
@@ -484,7 +524,7 @@ const renderOverlay = (
 
         let lines = straddles ? undefined : cache.map.get(node);
         if (lines === undefined) {
-            const computed = computeNodeLines(view, node, pos, lineHeight);
+            const computed = computeNodeLines(view, node, pos, lineHeight, zoom);
             // null = marked node not laid out yet: skip this paint without
             // caching, so a later repaint (fonts-ready / scroll) re-measures it.
             if (computed === null) return false;
@@ -494,7 +534,7 @@ const renderOverlay = (
         if (lines.length === 0) return false;
 
         const nodeDom = view.nodeDOM(pos);
-        const top0 = nodeDom instanceof HTMLElement ? nodeDom.getBoundingClientRect().top - pagRect.top : null;
+        const top0 = nodeDom instanceof HTMLElement ? toEditorY(nodeDom.getBoundingClientRect().top) : null;
         if (top0 === null) return false;
         for (const l of lines) {
             if (onlyRev && l.index !== onlyRev) continue; // "current" mode filter
@@ -528,7 +568,7 @@ const renderOverlay = (
                 if (point < fromPos || point > toPos) continue;
                 try {
                     const c = view.coordsAtPos(clampPos(point));
-                    addAt((c.top + c.bottom) / 2 - pagRect.top);
+                    addAt(toEditorY((c.top + c.bottom) / 2));
                 } catch {
                     /* position not laid out yet — skip, retried next paint */
                 }
@@ -549,7 +589,7 @@ const renderOverlay = (
                     for (let i = 0; i < rects.length; i++) {
                         const rr = rects[i];
                         if (rr.height < 1 || rr.width < 0.5) continue;
-                        addAt(rr.top + rr.height / 2 - pagRect.top);
+                        addAt(toEditorY(rr.top + rr.height / 2));
                     }
                 } catch {
                     /* not laid out yet — skip */
@@ -589,6 +629,20 @@ const renderOverlay = (
         if (!existing || a.index > existing.index) lineByY.set(key, { top: a.top, index: a.index });
     }
 
+    // Stripe geometry. The natural home is the canvas just left of the page, but
+    // that space is not always there to use: the phone's paged view fits the page
+    // to the viewport (a few px of gutter each side) and the scroller clips
+    // horizontally, so a gutter stripe is painted off-screen entirely and a
+    // revised page reads as unrevised. Narrow desktop windows pinch the same way.
+    // When the canvas can't fit it, tuck the stripe inside the page's own left
+    // margin instead — white space well short of the text column. The inside
+    // offsets are divided by the zoom so the stripe still paints at the same
+    // physical size as it does on desktop rather than shrinking with the page.
+    const gutter = (pagRect.left - clipLeft) / zoom;
+    const inGutter = gutter >= -STRIPE_LEFT;
+    const stripeLeft = inGutter ? STRIPE_LEFT : STRIPE_INSIDE_LEFT / zoom;
+    const stripeWidth = inGutter ? STRIPE_WIDTH : STRIPE_WIDTH / zoom;
+
     // One full-height stripe per changed page (page colour = its max revision).
     for (const [p, maxRev] of pageMaxRev) {
         const color = revisionColor(maxRev);
@@ -597,8 +651,8 @@ const renderOverlay = (
         s.className = "revision-stripe";
         s.style.top = `${p * period}px`;
         s.style.height = `${pageHeight}px`;
-        s.style.left = `${STRIPE_LEFT}px`;
-        s.style.width = `${STRIPE_WIDTH}px`;
+        s.style.left = `${stripeLeft}px`;
+        s.style.width = `${stripeWidth}px`;
         s.style.background = color;
         children.push(s);
     }

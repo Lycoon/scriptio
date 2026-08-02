@@ -313,8 +313,11 @@
         pointer-events: none;
     }
 
-    /* Full page-height change-bar in the LEFT gutter, just outside the page's
-       left edge (negative left → into the canvas, off the page background). */
+    /* Full page-height change-bar down the LEFT of the page. Its left/width are
+       set inline by the overlay renderer: normally a negative left that puts it
+       in the canvas just outside the page, but tucked inside the page's left
+       margin when the canvas is too narrow to show it (phone paged view, narrow
+       desktop windows) — see the stripe geometry in revisions-extension.ts. */
     .revision-overlay .revision-stripe {
         position: absolute;
         border-radius: 1px;

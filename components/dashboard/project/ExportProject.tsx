@@ -5,13 +5,14 @@ import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { REVISION_COLORS } from "@src/lib/screenplay/revisions";
 import { useCookieUser, useCachedProjectInfo, useProjectIdFromUrl, useProjectMembership } from "@src/lib/utils/hooks";
+import { useImportAccept } from "@src/lib/import/use-import-accept";
 
 import sharedStyles from "./ProjectSettings.module.css";
 import styles from "./ExportProject.module.css";
 import optionCard from "./OptionCard.module.css";
 import { importFilePopup } from "@src/lib/screenplay/popup";
 import { UserContext } from "@src/context/UserContext";
-import { getExportAdapter, getSupportedImportExtensions } from "@src/lib/adapters/registry";
+import { getExportAdapter } from "@src/lib/adapters/registry";
 import { ExportFormat } from "@src/lib/utils/enums";
 import { BaseExportOptions } from "@src/lib/adapters/screenplay-adapter";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
@@ -50,6 +51,7 @@ const parsePageRanges = (input: string): Array<[number, number]> => {
 const ExportProject = () => {
     const t = useTranslations("export");
     const { user } = useCookieUser();
+    const importAccept = useImportAccept();
     const {
         project: membership,
         repository,
@@ -242,7 +244,7 @@ const ExportProject = () => {
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileImport}
-                    accept={getSupportedImportExtensions()}
+                    accept={importAccept}
                     style={{ display: "none" }}
                 />
 
