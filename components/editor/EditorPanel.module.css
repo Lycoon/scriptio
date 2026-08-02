@@ -17,30 +17,6 @@
     z-index: 0;
 }
 
-/* When the user has zoomed the editor in past the wrapper width (Ctrl/⌘ +,
- * or Ctrl+wheel), the scaled page overflows horizontally — swap the clipped
- * x-overflow for a scrollbar so the page edges stay reachable. Only added while
- * zoomed in (see DocumentEditorPanel); at rest the default `clip` avoids stray
- * horizontal scrollbars from sub-pixel child overflow. */
-.container.zoomed_x {
-    overflow-x: auto;
-}
-
-/* While zoomed, shrink the wrapper to the scaled page and drop the 1000px cap so
- * it stays a symmetric block: `margin: 0 auto` centres it while it still fits,
- * and once it overflows it spans the scroll area cleanly from edge to edge (no
- * off-centre gap), which the JS centre-anchoring then keeps under the viewport
- * middle. Without this the page would pin to the wrapper's left and grow only
- * rightward. */
-.container.zoomed_x .editor_wrapper {
-    width: fit-content;
-    max-width: none;
-}
-
-.container.zoomed_x .editor_shadow {
-    max-width: none;
-}
-
 .editor_wrapper {
     width: 100%;
     max-width: 1000px;
@@ -65,14 +41,6 @@
     min-height: var(--page-height);
     margin: 0 auto;
     box-sizing: border-box;
-    /* User-controlled editor zoom (desktop). `zoom` (not transform) so the page's
-     * layout box actually resizes: the scroll extents, `margin: 0 auto` centring
-     * and horizontal scrollbar all follow for free — a transform only scales at
-     * paint time and would clip when zoomed in. Defaults to 1 (unset). Pagination
-     * is measured off-screen at the canonical size, so page count / numbering are
-     * unaffected. On phone --editor-user-zoom is never set, so the mobile
-     * transform rules below own scaling instead. */
-    zoom: var(--editor-user-zoom, 1);
 }
 
 /* Passthrough wrapper around the editor content; carries the context-menu
@@ -233,7 +201,8 @@
  *   - Endless: reflow text into the viewport at full size (compact margins), no
  *     page rectangles, so nothing shifts while writing.
  *   - Paged: the real desktop page (breaks/headers/footers) scaled to fit with
- *     `zoom` — a fixed rectangle, so its boundaries never move while writing.
+ *     transform: scale() — a fixed rectangle, so its boundaries never move while
+ *     writing.
  * Both are purely visual; pagination is measured off-screen at the canonical page
  * width, so page count / numbering / PDF export match desktop in either mode. */
 @media (max-width: 767px) {

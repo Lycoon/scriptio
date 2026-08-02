@@ -4,10 +4,11 @@ import { PDFAdapter, type PDFExportOptions } from "@src/lib/adapters/pdf/pdf-ada
 import type { VisualLine } from "@src/lib/adapters/pdf/pdf.worker";
 
 /**
- * The PDF exporter reads its geometry from the live editor DOM, which the user
- * can scale on screen (desktop `zoom`, phone paged `transform: scale`). These
- * tests mount a miniature editor, scale it, and assert the collected lines are
- * the same as at 1× — the PDF must not depend on the current zoom level.
+ * The PDF exporter reads its geometry from the live editor DOM, which is scaled
+ * on screen in phone paged mode (`transform: scale(var(--editor-zoom))`, the
+ * fit-to-width ratio). These tests mount a miniature editor, scale it, and
+ * assert the collected lines are the same as at 1× — the PDF must not depend on
+ * the viewport the script happens to be open on.
  *
  * Runs in real Chromium and WebKit (see vitest.config.ts): the whole point is
  * browser layout, which jsdom cannot provide.
@@ -37,7 +38,7 @@ afterEach(() => {
 
 /**
  * Mount a stand-in for the editor: a scroll container holding a page-width
- * `.ProseMirror` whose scale is driven by the same CSS variables the real
+ * `.ProseMirror` whose scale is driven by the same CSS variable the real
  * stylesheet uses, so pinning it exercises the production code path.
  */
 const mountEditor = () => {
@@ -51,7 +52,6 @@ const mountEditor = () => {
             line-height: 16px;
             --page-margin-left: 96px;
             --page-margin-right: 96px;
-            zoom: var(--editor-user-zoom, 1);
             transform: scale(var(--editor-zoom, 1));
             transform-origin: top center;
         }
@@ -99,26 +99,18 @@ const signature = (adapter: PDFAdapter, editor: HTMLElement): string[] => {
     });
 };
 
-describe("PDF export is invariant of the editor zoom level", () => {
-    // Desktop zoom (CSS `zoom`) and phone paged mode (`transform: scale`) are
-    // the two mechanisms in play; 0.5 also covers WebKit's minimum-font-size
-    // clamp, which changes line wrapping under `zoom` and cannot be undone by
-    // scaling the numbers afterwards.
-    const scales: Array<[string, string, number]> = [
-        ["desktop zoom in", "--editor-user-zoom", 1.75],
-        ["desktop zoom out", "--editor-user-zoom", 0.5],
-        ["phone paged transform", "--editor-zoom", 0.48],
-    ];
-
-    for (const [label, variable, value] of scales) {
-        it(`matches the 1x layout with ${label} (${value})`, () => {
+describe("PDF export is invariant of the editor's on-screen scale", () => {
+    // 0.48 is about what a phone-width viewport fits a US Letter page to; 0.8
+    // covers a roomier device so the assertion isn't tied to one ratio.
+    for (const scale of [0.48, 0.8]) {
+        it(`matches the 1x layout at a paged fit-to-width scale of ${scale}`, () => {
             const adapter = new PDFAdapter();
             const { editor } = mountEditor();
 
             const canonical = signature(adapter, editor);
             expect(canonical.length).toBeGreaterThan(6); // wrapped, not one line per <p>
 
-            editor.style.setProperty(variable, `${value}`);
+            editor.style.setProperty("--editor-zoom", `${scale}`);
 
             // Guard the test itself: the raw DOM measurements must actually be
             // contaminated by the scale, otherwise nothing is being proven.
@@ -132,30 +124,26 @@ describe("PDF export is invariant of the editor zoom level", () => {
     it("restores the on-screen scale and scroll position afterwards", () => {
         const adapter = new PDFAdapter();
         const { scroller, editor } = mountEditor();
-        editor.style.setProperty("--editor-user-zoom", "2.5");
+        editor.style.setProperty("--editor-zoom", "0.48");
         editor.style.setProperty("opacity", "0.9"); // an unrelated inline style must survive
 
         const scaledWidth = editor.getBoundingClientRect().width;
         scroller.scrollTop = scroller.scrollHeight - scroller.clientHeight;
-        scroller.scrollLeft = scroller.scrollWidth - scroller.clientWidth;
-        const { scrollTop, scrollLeft } = scroller;
+        const { scrollTop } = scroller;
         expect(scrollTop).toBeGreaterThan(0);
-        expect(scrollLeft).toBeGreaterThan(0);
 
         internals(adapter).withCanonicalScale([editor], () => signature(adapter, editor));
 
         expect(editor.getBoundingClientRect().width).toBeCloseTo(scaledWidth, 1);
-        expect(editor.style.zoom).toBe("");
         expect(editor.style.transform).toBe("");
         expect(editor.style.opacity).toBe("0.9");
         expect(scroller.scrollTop).toBe(scrollTop);
-        expect(scroller.scrollLeft).toBe(scrollLeft);
     });
 
     it("restores the scale even when the measurement throws", () => {
         const adapter = new PDFAdapter();
         const { editor } = mountEditor();
-        editor.style.setProperty("--editor-user-zoom", "2");
+        editor.style.setProperty("--editor-zoom", "0.48");
         const scaledWidth = editor.getBoundingClientRect().width;
 
         expect(() =>
@@ -170,11 +158,11 @@ describe("PDF export is invariant of the editor zoom level", () => {
     it("keeps an inline scale the editor itself set", () => {
         const adapter = new PDFAdapter();
         const { editor } = mountEditor();
-        editor.style.setProperty("zoom", "1.5", "important");
+        editor.style.setProperty("transform", "scale(0.5)", "important");
 
         internals(adapter).withCanonicalScale([editor], () => signature(adapter, editor));
 
-        expect(editor.style.zoom).toBe("1.5");
-        expect(editor.style.getPropertyPriority("zoom")).toBe("important");
+        expect(editor.style.transform).toBe("scale(0.5)");
+        expect(editor.style.getPropertyPriority("transform")).toBe("important");
     });
 });

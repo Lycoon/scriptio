@@ -29,7 +29,6 @@ import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comm
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
 import { useViewModeScrollAnchor } from "@src/lib/editor/use-view-mode-scroll-anchor";
 import { useKeyboardCaretVisibility } from "@src/lib/editor/use-keyboard-caret-visibility";
-import { captureZoomAnchor, settleZoomAnchor } from "@src/lib/editor/zoom-scroll-anchor";
 import { centerCaretInView, focusEditorAtCoords } from "@src/lib/editor/focus-in-viewport";
 import { getSpellErrorAt } from "@src/lib/spellcheck/spellcheck-extension";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
@@ -57,43 +56,10 @@ export interface DocumentEditorPanelProps {
 // rather than snapping shut after a flick — matches the pace of a natural scroll.
 const CHROME_HIDE_RANGE = 220;
 
-// ---- Desktop editor zoom ----
-// Ctrl/⌘ +, Ctrl/⌘ -, Ctrl/⌘ 0 and Ctrl+wheel (also a trackpad pinch, which the
-// browser delivers as a ctrlKey wheel on both platforms) scale the page in the
-// view. Bounds are clamped so text stays legible.
-//
-// The floor also keeps WebKit's minimum-font-size clamp out of reach. WebKit
-// multiplies computed font sizes by `zoom` and then floors the result at a
-// rendered 9px (minimumLogicalFontSize; see the paged-mode rule in
-// EditorPanel.module.css). The screenplay body is 12pt = 16px, so anything below
-// 9/16 = 0.5625 gets floored — and a floored font wraps text differently from
-// the canonical layout the pagination is measured against, which would put the
-// page breaks shown on screen out of step with the document. 0.6 lands at 9.6px
-// rendered and clears it. Levels stored by an older build are re-clamped on
-// load, so a saved 0.5 comes back as 0.6.
-const MIN_ZOOM = 0.6;
-const MAX_ZOOM = 3;
-// Steps are multiplicative (a constant ratio), not additive: a fixed +0.2 would
-// be 20% at 1× but only ~7% at 3×, so zooming-in felt progressively slower. A
-// constant ratio makes every press feel the same size at any zoom level.
-const ZOOM_STEP_RATIO = 1.2;
-// Wheel/pinch scales exponentially with the delta for the same reason. A
-// mouse-wheel notch (deltaY ≈ ±100) lands near the keyboard's ~1.2× ratio;
-// trackpad pinches send small deltas for a smooth, fine-grained ramp.
-const ZOOM_WHEEL_RATE = 0.002;
-const ZOOM_STORAGE_KEY = "scriptio.editorZoom";
-
-const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
-
-// useLayoutEffect on the server warns; fall back to useEffect there. The zoom
-// scroll-anchoring must run before paint, so it needs the layout variant.
+// useLayoutEffect on the server warns; fall back to useEffect there. The view
+// mode scaling and its scroll re-anchoring must run before paint, so they need
+// the layout variant.
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
-
-// macOS uses ⌘ for zoom shortcuts where Windows/Linux use Ctrl. The wheel gesture
-// uses ctrlKey on every platform (that's what a trackpad pinch reports), so this
-// only gates the keyboard shortcuts.
-const isMacPlatform = () =>
-    typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 
 const DocumentEditorPanel = ({
     config,
@@ -151,14 +117,6 @@ const DocumentEditorPanel = ({
 
     const [isEditorReady, setIsEditorReady] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    // Desktop editor zoom (see the zoom effects below). Seeded from the last value
-    // the user set so it survives reloads; only affects a CSS variable applied in
-    // an effect, so there's no SSR/hydration markup to mismatch.
-    const [zoom, setZoom] = useState<number>(() => {
-        if (typeof window === "undefined") return 1;
-        const stored = parseFloat(window.localStorage.getItem(ZOOM_STORAGE_KEY) ?? "");
-        return Number.isFinite(stored) ? clampZoom(stored) : 1;
-    });
     // Phone-only draggable scroll handle: a fixed-size grab handle (styled like
     // the sidebar edge toggles) that rides the right edge tracking scroll
     // position, so it's easy to grab and drag the page up/down. Shown while
@@ -205,7 +163,7 @@ const DocumentEditorPanel = ({
     // Pending single-tap timer for the phone reader. A tap arms it; a second tap
     // within the window cancels it and counts as a double tap (see handleReaderTap).
     const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    // Callback ref stored in state so the zoom effect re-runs when the scroll
+    // Callback ref stored in state so the effects below re-run when the scroll
     // container actually mounts (it may render after a Loading fallback).
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
 
@@ -396,118 +354,6 @@ const DocumentEditorPanel = ({
         editor,
         enabled: isPhone && mobileEditMode,
     });
-
-    // ---- Desktop editor zoom ----
-    // Scale the zoom level by a ratio (>1 in, <1 out) so each step feels the same
-    // size at any level. Rounds to whole percents so repeated wheel/keys don't
-    // accumulate float drift, and clamps to [MIN_ZOOM, MAX_ZOOM].
-    const zoomBy = useCallback((factor: number) => {
-        setZoom((z) => clampZoom(Math.round(z * factor * 100) / 100));
-    }, []);
-
-    // Push the level into the CSS variable the ProseMirror `zoom` reads, and keep
-    // the line the reader was on under the viewport centre as the page grows or
-    // shrinks around it (see zoom-scroll-anchor for why that is measured rather
-    // than computed from the zoom ratio). Runs before paint so the reposition is
-    // not seen as a jump. Phone owns its own scaling (paged transform / endless
-    // reflow), so this stays desktop-only — clear the variable there.
-    const prevZoomRef = useRef(1);
-    const didInitZoomRef = useRef(false);
-    useIsoLayoutEffect(() => {
-        const container = containerEl;
-        if (!container || isPhone) {
-            container?.style.removeProperty("--editor-user-zoom");
-            return;
-        }
-        // Record what the reader is looking at BEFORE rescaling, while the
-        // outgoing layout is still measurable — the rescale itself can also clamp
-        // scrollTop/Left (zooming out shrinks the scrollable area), which would
-        // corrupt any position captured afterwards. Nothing to preserve on the
-        // first application (the document opens at the top), nor when this effect
-        // re-runs for a reason other than the level changing.
-        const anchor =
-            didInitZoomRef.current && prevZoomRef.current !== zoom
-                ? captureZoomAnchor(container, editor?.view?.dom)
-                : null;
-        container.style.setProperty("--editor-user-zoom", `${zoom}`);
-
-        // First application (e.g. a zoom level restored from a previous session):
-        // centre horizontally without touching the vertical scroll, so the page
-        // opens at the top like normal.
-        if (!didInitZoomRef.current) {
-            didInitZoomRef.current = true;
-            prevZoomRef.current = zoom;
-            if (zoom !== 1) {
-                // Reading scrollWidth flushes the pending zoom reflow before we
-                // centre against the new (scaled) content width.
-                container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
-            }
-            return;
-        }
-
-        prevZoomRef.current = zoom;
-        if (!anchor) return;
-        // Scroll the anchored line back under the viewport centre, re-checking for
-        // a few frames while the rescaled layout settles.
-        return settleZoomAnchor(container, editor?.view?.dom, anchor);
-    }, [containerEl, zoom, isPhone, editor]);
-
-    // Persist the level and nudge resize-driven layout (e.g. the comment gutter,
-    // which only recomputes its icon coordinates on edits / resizes).
-    useEffect(() => {
-        if (isPhone) return;
-        try {
-            window.localStorage.setItem(ZOOM_STORAGE_KEY, `${zoom}`);
-        } catch {
-            // Ignore storage failures (private mode / quota); zoom still applies.
-        }
-        window.dispatchEvent(new Event("resize"));
-    }, [zoom, isPhone]);
-
-    // Wire the zoom gestures to the scroll container (not window) so that in split
-    // view each side zooms independently — the wheel fires on the container under
-    // the pointer, and keydown reaches the container the caret is focused in. The
-    // wheel listener must be non-passive to preventDefault the browser/webview's
-    // own page zoom, which React's synthetic onWheel can't guarantee.
-    useEffect(() => {
-        const container = containerEl;
-        if (!container || isPhone) return;
-        const mac = isMacPlatform();
-
-        const onWheel = (e: WheelEvent) => {
-            if (!e.ctrlKey) return;
-            e.preventDefault();
-            zoomBy(Math.exp(-e.deltaY * ZOOM_WHEEL_RATE));
-        };
-
-        const onKeyDown = (e: KeyboardEvent) => {
-            const mod = mac ? e.metaKey : e.ctrlKey;
-            if (!mod) return;
-            switch (e.key) {
-                case "+":
-                case "=": // same physical key as '+' without Shift
-                    e.preventDefault();
-                    zoomBy(ZOOM_STEP_RATIO);
-                    break;
-                case "-":
-                case "_":
-                    e.preventDefault();
-                    zoomBy(1 / ZOOM_STEP_RATIO);
-                    break;
-                case "0":
-                    e.preventDefault();
-                    setZoom(1);
-                    break;
-            }
-        };
-
-        container.addEventListener("wheel", onWheel, { passive: false });
-        container.addEventListener("keydown", onKeyDown);
-        return () => {
-            container.removeEventListener("wheel", onWheel);
-            container.removeEventListener("keydown", onKeyDown);
-        };
-    }, [containerEl, isPhone, zoomBy]);
 
     // ---- Orphaned comment cleanup ----
     // Comments anchor to a node's data-id. When that node is deleted the comment
@@ -1314,11 +1160,7 @@ const DocumentEditorPanel = ({
         <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
             <div
                 ref={setContainerEl}
-                className={join(
-                    styles.container,
-                    timelineOpen ? styles.timeline_open : "",
-                    zoom > 1 && !isPhone ? styles.zoomed_x : "",
-                )}
+                className={join(styles.container, timelineOpen ? styles.timeline_open : "")}
                 onScroll={onScroll}
                 onTouchStart={onReaderTouchStart}
                 onTouchEnd={onReaderTouchEnd}

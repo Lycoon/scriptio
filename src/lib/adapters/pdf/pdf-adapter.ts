@@ -248,34 +248,29 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
      * Run `measure` with the editors' display-only scaling pinned to 1×, so
      * every DOM coordinate it reads is the canonical page geometry.
      *
-     * The editor is scaled on screen by two independent mechanisms, both of
-     * which feed straight into `getBoundingClientRect()` /
-     * `Range.getClientRects()` — the only source of coordinates in this
-     * exporter:
-     *  - desktop user zoom: `zoom: var(--editor-user-zoom)`,
-     *  - phone paged fit-to-width: `transform: scale(var(--editor-zoom))`.
-     * Left in place, a 150% zoom stretches every X offset and line gap by 1.5
-     * while the PDF still draws a fixed 12pt font, so the exported layout would
-     * depend on how the user happened to be viewing the script.
+     * The editor is scaled on screen in phone paged mode — `transform:
+     * scale(var(--editor-zoom))`, the fit-to-width ratio — which feeds straight
+     * into `getBoundingClientRect()` / `Range.getClientRects()`, the only source
+     * of coordinates in this exporter. Left in place, a 0.48× fit shrinks every
+     * X offset and line gap by half while the PDF still draws a fixed 12pt font,
+     * so the exported layout would depend on the screen the user happened to be
+     * writing on.
      *
      * Pinning the layout is preferred over dividing the measurements by the
-     * scale factor: `zoom` actually re-lays the page out at scaled font sizes
-     * (a division cannot undo that), and engines disagree on whether
-     * `getComputedStyle` lengths are zoom-adjusted, which this pass also reads.
-     * Both overrides are set `!important` so no stylesheet rule can outvote
-     * them, and the original inline declarations are restored afterwards.
+     * scale factor: `getComputedStyle` lengths (which this pass also reads) do
+     * not follow the transform, so the two would need opposite corrections. The
+     * override is set `!important` so no stylesheet rule can outvote it, and the
+     * original inline declaration is restored afterwards.
      *
      * Nothing here yields to the event loop, so the browser never paints the
-     * unscaled state — the export is invisible to the user. Only scroll offsets
-     * need explicit restoring: dropping `zoom` shrinks the layout box, which
-     * clamps the scroll position of every scrollable ancestor.
+     * unscaled state — the export is invisible to the user. Scroll offsets are
+     * restored explicitly, since dropping the scale can change the layout box
+     * and clamp the scroll position of every scrollable ancestor.
      */
     private withCanonicalScale<T>(elements: (HTMLElement | undefined)[], measure: () => T): T {
         const targets = elements.filter((el): el is HTMLElement => !!el);
         const savedStyles = targets.map((el) => ({
             el,
-            zoom: el.style.getPropertyValue("zoom"),
-            zoomPriority: el.style.getPropertyPriority("zoom"),
             transform: el.style.getPropertyValue("transform"),
             transformPriority: el.style.getPropertyPriority("transform"),
         }));
@@ -291,7 +286,6 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
         try {
             for (const el of targets) {
-                el.style.setProperty("zoom", "1", "important");
                 el.style.setProperty("transform", "none", "important");
             }
             // No explicit reflow needed: the first geometry read inside
@@ -303,7 +297,6 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     if (value) saved.el.style.setProperty(name, value, priority);
                     else saved.el.style.removeProperty(name);
                 };
-                restore("zoom", saved.zoom, saved.zoomPriority);
                 restore("transform", saved.transform, saved.transformPriority);
             }
             // Assigning scroll offsets flushes the restored layout first, so
