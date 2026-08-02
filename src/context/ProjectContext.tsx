@@ -882,8 +882,9 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     }, [yjsUsers]);
 
     // Stable update functions
+    // The browser tab title is owned by [useProjectNavbar], which also restores
+    // the app default when the project closes.
     const updateProject = useCallback((newProject: ProjectMembershipPayload) => {
-        document.title = `${newProject.project.title}`;
         setProject(newProject);
     }, []);
 

@@ -4,8 +4,9 @@ import { playfair, inter, courier, josefin } from "@styles/fonts";
 import layout from "@components/utils/Layout.module.css";
 import { Providers } from "./providers";
 import { Metadata } from "next";
+import { APP_TITLE } from "@src/lib/utils/constants";
 
-const TITLE = "Scriptio | Screenwriting Software";
+const TITLE = APP_TITLE;
 const DESCRIPTION = "Modern, elegant and affordable screenwriting software. Screenwriters first.";
 const TITLE_IMG = "https://scriptio.app/images/banner.png";
 const URL = "https://scriptio.app/";

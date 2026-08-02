@@ -11,6 +11,7 @@ import { useDashboardMenu } from "@components/dashboard/useDashboardMenu";
 import { editProject } from "@src/lib/utils/requests";
 import { useAppNavigation } from "@src/lib/utils/navigation";
 import { signOutAccount } from "@src/lib/utils/auth-actions";
+import { APP_TITLE } from "@src/lib/utils/constants";
 
 /**
  * State and actions the desktop bar ([ProjectNavbar]) and the phone bar
@@ -99,11 +100,17 @@ export const useProjectNavbar = () => {
         }
     }, [membership, projectId]);
 
-    // Mirror the project title into the browser tab.
+    // Mirror the project title into the browser tab, and put the app title back
+    // when the project closes. Opening/leaving a project only rewrites the query
+    // string (see [useAppNavigation]), so Next never re-applies the route
+    // metadata and the tab would otherwise keep the last project's name on the
+    // projects list.
     useEffect(() => {
-        if (projectTitle && isInProject) {
-            document.title = `${projectTitle}`;
-        }
+        if (!projectTitle || !isInProject) return;
+        document.title = projectTitle;
+        return () => {
+            document.title = APP_TITLE;
+        };
     }, [projectTitle, isInProject]);
 
     const onTitleChange = (value: string) => {
