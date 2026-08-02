@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "ProjectRole" AS ENUM ('OWNER', 'ADMIN', 'EDITOR', 'VIEWER');
 
@@ -97,6 +100,20 @@ CREATE TABLE "Project" (
 );
 
 -- CreateTable
+CREATE TABLE "ProjectAsset" (
+    "id" TEXT NOT NULL,
+    "hash" TEXT NOT NULL,
+    "mime" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "width" INTEGER NOT NULL DEFAULT 0,
+    "height" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "projectId" TEXT NOT NULL,
+
+    CONSTRAINT "ProjectAsset_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "ProjectMember" (
     "id" SERIAL NOT NULL,
     "role" "ProjectRole" NOT NULL DEFAULT 'VIEWER',
@@ -145,6 +162,12 @@ CREATE UNIQUE INDEX "Transaction_transactionId_key" ON "Transaction"("transactio
 CREATE INDEX "Transaction_userId_idx" ON "Transaction"("userId");
 
 -- CreateIndex
+CREATE INDEX "ProjectAsset_projectId_idx" ON "ProjectAsset"("projectId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProjectAsset_projectId_hash_key" ON "ProjectAsset"("projectId", "hash");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "ProjectMember_userId_projectId_key" ON "ProjectMember"("userId", "projectId");
 
 -- CreateIndex
@@ -161,6 +184,9 @@ ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId"
 
 -- AddForeignKey
 ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProjectAsset" ADD CONSTRAINT "ProjectAsset_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ProjectMember" ADD CONSTRAINT "ProjectMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
