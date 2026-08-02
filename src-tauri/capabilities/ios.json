@@ -1,0 +1,8 @@
+{
+    "$schema": "../gen/schemas/mobile-schema.json",
+    "identifier": "ios",
+    "description": "iOS-only permissions. Exporting stages the file in the app's Documents directory before opening the document picker, because iOS can only export a file that already exists on disk — see `ProjectAdapter.exportIOS`.",
+    "platforms": ["iOS"],
+    "windows": ["main"],
+    "permissions": ["fs:scope-document"]
+}

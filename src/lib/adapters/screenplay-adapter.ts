@@ -1,5 +1,6 @@
 import FileSaver from "file-saver";
 import { isTauri } from "@tauri-apps/api/core";
+import { isIOS } from "../utils/platform";
 import { replaceScreenplay } from "../screenplay/editor";
 import { Editor } from "@tiptap/react";
 import { LayoutData, ProjectData, ProjectMetadata, ProjectState } from "../project/project-state";
@@ -62,7 +63,9 @@ export abstract class ProjectAdapter<TExportOptions extends BaseExportOptions = 
         try {
             const blob = await this.convertTo(project, options);
 
-            if (isTauri()) {
+            if (isTauri() && isIOS()) {
+                await this.exportIOS(blob, options, target);
+            } else if (isTauri()) {
                 await this.exportDesktop(blob, options, target);
             } else {
                 FileSaver.saveAs(blob, `${options.title}.${target.extension}`);
@@ -71,6 +74,48 @@ export abstract class ProjectAdapter<TExportOptions extends BaseExportOptions = 
             console.error(`Failed to export to ${this.label}`, error);
             throw new Error("Export failed");
         }
+    }
+
+    /**
+     * iOS has no "choose a path, then write to it" dialog. `UIDocumentPicker` in
+     * `.exportToService` mode only moves an *existing* file to a location the
+     * user picks, so tauri-plugin-dialog's `save()` fakes the cross-platform
+     * shape: it creates a placeholder at `<Documents>/<fileName>`, hands that to
+     * the picker, and returns where the user put it.
+     *
+     * The copy therefore happens when the user confirms — before we ever get the
+     * path back. Writing after `save()` resolves, the way desktop does, exports
+     * the empty placeholder and leaves a 0-byte file: the destination URL is
+     * outside our sandbox, so the later write lands nowhere the user can see.
+     *
+     * So stage the real bytes at exactly the path the plugin will use and let
+     * the picker export those. It only creates the placeholder
+     * (`if !fileManager.fileExists`) when nothing is there, so a pre-written file
+     * survives — this hooks that, rather than fighting it.
+     *
+     * The staged copy is left behind on purpose. The app declares neither
+     * `UIFileSharingEnabled` nor `LSSupportsOpeningDocumentsInPlace`, so
+     * `<Documents>` is invisible to the user, one file per title at most; and
+     * deleting it would race the picker's copy for cloud destinations.
+     */
+    private async exportIOS(blob: Blob, options: TExportOptions, target: ExportTarget): Promise<void> {
+        const { save } = await import("@tauri-apps/plugin-dialog");
+        const { writeFile, BaseDirectory } = await import("@tauri-apps/plugin-fs");
+
+        // The plugin derives its staging path with `PathBuf::file_name()`, which
+        // would drop everything before a separator in the title and stage under a
+        // name we never wrote. Keep the two in lockstep.
+        const fileName = `${options.title.replace(/[\\/:*?"<>|]/g, "-")}.${target.extension}`;
+
+        const buffer = new Uint8Array(await blob.arrayBuffer());
+        await writeFile(fileName, buffer, { baseDir: BaseDirectory.Document });
+
+        // Resolves to the chosen destination, or null if cancelled. Either way the
+        // export is already done — there is nothing left for us to write.
+        await save({
+            defaultPath: fileName,
+            filters: [{ name: this.label, extensions: [target.extension] }],
+        });
     }
 
     private async exportDesktop(blob: Blob, options: TExportOptions, target: ExportTarget): Promise<void> {

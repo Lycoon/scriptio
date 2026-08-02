@@ -10,7 +10,7 @@ import {
 } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 import { importFileAsProject } from "@src/lib/import/import-project";
-import { getSupportedImportExtensions } from "@src/lib/adapters/registry";
+import { useImportAccept } from "@src/lib/import/use-import-accept";
 import { useAppNavigation } from "@src/lib/utils/navigation";
 import { FileDown, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -37,6 +37,7 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
     const { isPro } = useIsPro();
     const { projects, isLoading, mutate } = useProjectMemberships();
     const { goToProject } = useAppNavigation();
+    const importAccept = useImportAccept();
     const t = useTranslations("projects");
     const tNav = useTranslations("navbar");
     const [isCreating, setIsCreating] = useState(false);
@@ -133,7 +134,7 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileImport}
-                accept={getSupportedImportExtensions()}
+                accept={importAccept}
                 style={{ display: "none" }}
             />
 
