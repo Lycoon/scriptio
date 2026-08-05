@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Editor } from "@tiptap/react";
 import { Transaction } from "@tiptap/pm/state";
+import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { MessageSquare, Plus, X } from "lucide-react";
 import { Comment } from "@src/lib/utils/types";
-import { getNodePositions } from "@src/lib/screenplay/comment-anchors";
+import { getNodePositions, NodePosition } from "@src/lib/screenplay/comment-anchors";
 import { useUser } from "@src/lib/utils/hooks";
 import { useViewContext } from "@src/context/ViewContext";
 import CommentCard from "./CommentCard";
@@ -48,12 +49,19 @@ const CommentGutter = ({
     onAddReply,
 }: CommentGutterProps) => {
     const { user } = useUser();
-    const { showComments } = useViewContext();
+    const { showComments, isEndlessScroll } = useViewContext();
     const [icons, setIcons] = useState<IconPos[]>([]);
 
-    // RAF handles to avoid layout thrashing on rapid transactions / resizes.
-    const txDebounceRef = useRef<number | null>(null);
-    const resizeThrottleRef = useRef<number | null>(null);
+    // One RAF handle shared by every recompute trigger (transactions, resizes),
+    // so a frame that carries both an edit and the re-layout it caused measures
+    // once instead of twice.
+    const rafRef = useRef<number | null>(null);
+
+    // Anchor scan cached against the doc it was built from. A resize re-measures
+    // every frame it lasts while the document itself is untouched, and the scan is
+    // the only part of a recompute that grows with the script: coordsAtPos runs
+    // once per comment, but the scan walks every node in the doc.
+    const anchorsRef = useRef<{ doc: ProseMirrorNode; positions: Map<string, NodePosition> } | null>(null);
 
     // Unresolved comments grouped by their anchor node, in document order is
     // applied later via the computed icon tops.
@@ -71,6 +79,14 @@ const CommentGutter = ({
     }, [comments]);
 
     const computePositions = useCallback(() => {
+        // Nothing to anchor: bail before touching the DOM or walking the doc, so
+        // a comment-free script pays nothing for the resize/transaction watchers
+        // below. Keeps the previous array identity so React skips the re-render.
+        if (commentsByNode.size === 0) {
+            setIcons((prev) => (prev.length === 0 ? prev : []));
+            return;
+        }
+
         if (!editor || editor.isDestroyed || !editor.view?.dom || !showComments) {
             setIcons([]);
             return;
@@ -84,7 +100,15 @@ const CommentGutter = ({
         const editorRect = editorDom.getBoundingClientRect();
         const left = editorRect.left - containerRect.left + GUTTER_INSET;
 
-        const nodePositions = getNodePositions(editor);
+        // Docs are immutable, so identity is an exact cache key: the same doc can
+        // only yield the same anchor positions.
+        const doc = editor.state.doc;
+        let nodePositions = anchorsRef.current?.doc === doc ? anchorsRef.current.positions : null;
+        if (!nodePositions) {
+            nodePositions = getNodePositions(editor);
+            anchorsRef.current = { doc, positions: nodePositions };
+        }
+
         const next: IconPos[] = [];
 
         for (const [nodeId, list] of commentsByNode) {
@@ -103,47 +127,56 @@ const CommentGutter = ({
         setIcons(next);
     }, [editor, commentsByNode, showComments]);
 
-    // Recompute on mount and whenever the comment set changes. Deferred to the
-    // next frame so the editor DOM is laid out before we measure positions.
+    // Recompute on mount and whenever the comment set changes — and on the phone's
+    // endless/paged toggle, which re-lays out every line (the page becomes a
+    // scaled fixed-size sheet) while leaving both the document and the scroll
+    // container untouched, so no trigger below would notice it. isEndlessScroll is
+    // not read by computePositions; it is here to invalidate its last measurement.
+    // Without it, switching to paged left every icon parked at the offset its line
+    // had in endless mode — usually far enough down to be off-screen, i.e. the
+    // icon simply vanished.
+    //
+    // Deferred to the next frame: the panel applies the paged scale in a layout
+    // effect, so by the time this runs the page is at its final geometry.
     useEffect(() => {
         const raf = requestAnimationFrame(computePositions);
         return () => cancelAnimationFrame(raf);
-    }, [computePositions]);
+    }, [computePositions, isEndlessScroll]);
 
     // Recompute on document edits and container/window resizes.
     useEffect(() => {
         if (!editor || editor.isDestroyed || !showComments) return;
 
-        const handleTransaction = ({ transaction }: { transaction: Transaction }) => {
-            if (!transaction.docChanged) return;
-            if (txDebounceRef.current !== null) cancelAnimationFrame(txDebounceRef.current);
-            txDebounceRef.current = requestAnimationFrame(() => {
-                txDebounceRef.current = null;
+        const schedule = () => {
+            if (rafRef.current !== null) return; // already measuring this frame
+            rafRef.current = requestAnimationFrame(() => {
+                rafRef.current = null;
                 computePositions();
             });
         };
+
+        const handleTransaction = ({ transaction }: { transaction: Transaction }) => {
+            if (!transaction.docChanged) return;
+            schedule();
+        };
         editor.on("transaction", handleTransaction);
-        window.addEventListener("resize", computePositions);
+        // Through the same scheduler as everything else: resize fires far faster
+        // than the screen repaints, and measuring inline would force a layout per
+        // event rather than one per frame.
+        window.addEventListener("resize", schedule);
 
         const scrollContainer = editor.view?.dom.closest("[class*='container']") as HTMLElement | null;
         let resizeObserver: ResizeObserver | undefined;
         if (scrollContainer) {
-            resizeObserver = new ResizeObserver(() => {
-                if (resizeThrottleRef.current !== null) return;
-                resizeThrottleRef.current = requestAnimationFrame(() => {
-                    resizeThrottleRef.current = null;
-                    computePositions();
-                });
-            });
+            resizeObserver = new ResizeObserver(schedule);
             resizeObserver.observe(scrollContainer);
         }
 
         return () => {
             editor.off("transaction", handleTransaction);
-            window.removeEventListener("resize", computePositions);
+            window.removeEventListener("resize", schedule);
             resizeObserver?.disconnect();
-            if (txDebounceRef.current !== null) cancelAnimationFrame(txDebounceRef.current);
-            if (resizeThrottleRef.current !== null) cancelAnimationFrame(resizeThrottleRef.current);
+            if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
         };
     }, [editor, computePositions, showComments]);
 

@@ -67,9 +67,15 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    /* Let the email shrink (and ellipsize) instead of pushing the row wider than
+     * the slot. */
+    min-width: 0;
 }
 
 .memberEmail {
+    /* nowrap is what makes the ellipsis apply: wrapped, a long email grows the
+     * row past the slot's fixed height instead of being truncated. */
+    white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 230px;
@@ -175,6 +181,9 @@
 
 .miniInput {
     flex: 1;
+    /* An input's intrinsic min width (~20 chars) would otherwise keep the row
+     * wider than the slot on a narrow screen. */
+    min-width: 0;
     background: transparent;
     border: none;
     padding: 0;
@@ -217,6 +226,7 @@
 }
 
 .pendingBadge {
+    flex-shrink: 0;
     font-size: 0.65rem;
     text-transform: uppercase;
     font-weight: 700;
@@ -263,4 +273,71 @@
     display: block;
     text-align: center;
     width: 100%;
+}
+
+/* Phone: a slot row is sized for the wide desktop modal — a 230px email beside a
+ * 180px role select + button — which is far wider than the dashboard drawer, so
+ * the list ran off-screen. Stack the email over its actions and let both stretch
+ * to the drawer width, with the slot growing to fit the two rows. */
+@media (max-width: 767px) {
+    .slotGrid {
+        gap: 12px;
+    }
+
+    .slot {
+        height: auto;
+        min-height: 56px;
+    }
+
+    .memberItem {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+
+    .memberEmail {
+        max-width: 100%;
+    }
+
+    .memberActions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    /* The role select takes the leftover width; the kick/cancel button keeps its
+     * own. */
+    .roleSelect {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .addBtn,
+    .kickBtn,
+    .cancelBtn {
+        flex-shrink: 0;
+    }
+
+    /* The empty slot stays a single row (input + Invite), so its action group must
+     * keep hugging the button rather than taking the full width. */
+    .inviteAction {
+        padding: 0 12px;
+        gap: 8px;
+    }
+
+    .inviteAction .memberActions {
+        width: auto;
+    }
+
+    /* Pinned to the drawer gutter by the component (max-content + nowrap would run
+     * off the right edge from the icon's position), so the text wraps here. */
+    .permissionsHint {
+        width: auto;
+        max-width: calc(100vw - 24px);
+        white-space: normal;
+    }
+
+    .hintItem {
+        align-items: flex-start;
+    }
 }
