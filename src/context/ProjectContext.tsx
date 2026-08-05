@@ -59,6 +59,10 @@ export interface ProjectContextType {
     repository: ProjectRepository | null;
     provider: ThrottledWebsocketProvider | null;
     isYjsReady: boolean;
+    /** True once the doc has loaded from the local cache *and* the cloud (or
+     *  the cloud doesn't apply). Anything that writes to the doc based on what
+     *  is missing from it must wait for this, not for `isYjsReady`. */
+    isYjsSynced: boolean;
 
     /** True when the current user has VIEWER role on a cloud project.
      *  All edit affordances must be hidden/disabled when this is true,
@@ -218,6 +222,7 @@ const defaultContextValue: ProjectContextType = {
     repository: null,
     provider: null,
     isYjsReady: false,
+    isYjsSynced: false,
     isReadOnly: false,
 
     connectionStatus: "disconnected",
@@ -370,6 +375,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         ydoc,
         provider,
         status,
+        isSynced: isYjsSynced,
         connectionStatus: yjsConnectionStatus,
         users: yjsUsers,
     } = useProjectYjs({
@@ -1172,6 +1178,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             repository,
             provider,
             isYjsReady,
+            isYjsSynced,
             isReadOnly,
             connectionStatus,
             users,
@@ -1277,6 +1284,7 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             repository,
             provider,
             isYjsReady,
+            isYjsSynced,
             isReadOnly,
             connectionStatus,
             users,

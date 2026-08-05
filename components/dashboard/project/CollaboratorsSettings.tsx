@@ -3,7 +3,13 @@
 import { useContext, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { useCookieUser, useProjectCollaborators, useProjectInvites, useProjectMembership } from "@src/lib/utils/hooks";
+import {
+    useCookieUser,
+    useIsPhone,
+    useProjectCollaborators,
+    useProjectInvites,
+    useProjectMembership,
+} from "@src/lib/utils/hooks";
 import { CookieUser } from "@src/lib/utils/types";
 import { ProjectRole } from "../../../src/generated/client/browser";
 import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
@@ -25,6 +31,7 @@ const CollaboratorsSettings = () => {
     const { invites, mutate: mutateInvites } = useProjectInvites(membership?.project.id);
     const { collaborators, mutate: mutateCollaborators } = useProjectCollaborators(membership?.project.id);
     const { user } = useCookieUser();
+    const isPhone = useIsPhone();
 
     const slots = useMemo(() => {
         if (!membership) return [];
@@ -92,7 +99,10 @@ const CollaboratorsSettings = () => {
                         onMouseEnter={() => {
                             if (!iconRef.current) return;
                             const rect = iconRef.current.getBoundingClientRect();
-                            setHintPos({ top: rect.bottom + 8, left: rect.left });
+                            // On phone the icon sits inside the right-hand drawer, so anchoring the
+                            // hint to it would push it off the right edge — pin it to the screen
+                            // gutter instead and let the CSS wrap the descriptions.
+                            setHintPos({ top: rect.bottom + 8, left: isPhone ? 12 : rect.left });
                         }}
                         onMouseLeave={() => setHintPos(null)}
                     >

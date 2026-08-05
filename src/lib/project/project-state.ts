@@ -87,6 +87,16 @@ export interface ProjectYjsState {
     ydoc: ProjectState | null;
     provider: ThrottledWebsocketProvider | null;
     status: ProjectStatus;
+    /**
+     * True once the doc holds everything it is going to get before the user
+     * touches it: the local cache has loaded *and* the cloud has synced (or is
+     * known not to apply — local-only project, no token, offline, init error).
+     *
+     * `status.kind === "ready"` only covers the local half, so anything that
+     * writes to the doc based on what is *missing* from it must wait for this
+     * instead; see `seedTitlePage`.
+     */
+    isSynced: boolean;
     connectionStatus: ConnectionStatus;
     users: CollaboratorInfo[];
 }
@@ -747,6 +757,7 @@ export const useProjectYjs = ({
         ydoc: entry?.state ?? null,
         provider: entry?.cloudProvider ?? null,
         status: computeStatus(entry),
+        isSynced: !!entry && entry.isLocalReady && entry.isCloudSynced,
         connectionStatus: entry?.connectionStatus ?? "disconnected",
         users: entry?.users ?? [],
         refreshAndReconnect,
