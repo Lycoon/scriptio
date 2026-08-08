@@ -2,14 +2,17 @@
 
 import { useContext, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CircleCheckBig, WifiOff, WifiSync } from "lucide-react";
+import { CircleCheckBig, Redo2, Undo2, WifiOff, WifiSync } from "lucide-react";
+import type { Editor } from "@tiptap/react";
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useProjectIdFromUrl } from "@src/lib/utils/hooks";
 import { ConnectionStatus } from "@src/lib/utils/enums";
+import { join } from "@src/lib/utils/misc";
 import type { StorageUsage } from "@src/lib/assets/cloud-asset-sync";
 
 import navbar from "./ProjectNavbar.module.css";
+import navBtn from "@components/utils/NavbarIconButton.module.css";
 
 /**
  * Presentational navbar pieces shared by the desktop bar ([ProjectNavbar]) and
@@ -118,6 +121,56 @@ export const StatusIndicator = () => {
                 </div>
             )}
         </div>
+    );
+};
+
+/**
+ * Undo/redo pair for the editor being written in.
+ *
+ * Rendered in the phone bar's edit-mode cluster, and — on any touch device — in
+ * the desktop bar too, because a tablet writing with the on-screen keyboard has
+ * no other way to reach them. iPadOS's own undo affordances (the keyboard
+ * shortcuts bar, the three-finger swipe) drive WebKit's undo stack, which this
+ * history is not on: it is backed by the collaboration UndoManager, so only these
+ * buttons and the Cmd+Z keybind reach it. A pointer device has that keybind and
+ * so is left with a bar free of them.
+ */
+export const HistoryControls = ({
+    editor,
+    className,
+}: {
+    editor: Editor | null;
+    className?: string;
+}) => {
+    const t = useTranslations("navbar");
+
+    // Guard on the command existing so calling before Yjs is ready can't throw.
+    const run = (action: "undo" | "redo") => {
+        if (editor && typeof editor.commands[action] === "function") {
+            editor.chain().focus()[action]().run();
+        }
+    };
+
+    const button = (action: "undo" | "redo") => (
+        <div
+            className={join(navBtn.button, className ?? "")}
+            // Swallow the compat mousedown so the tap can't blur the
+            // contenteditable: on touch that would drop the on-screen keyboard
+            // (and the format bar riding it) on every undo. Same guard the
+            // keyboard toolbar uses — see [MobileFormatToolbar].
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => run(action)}
+            aria-label={t(action)}
+        >
+            {action === "undo" ? <Undo2 size={18} /> : <Redo2 size={18} />}
+        </div>
+    );
+
+    return (
+        <>
+            {button("undo")}
+            {button("redo")}
+        </>
     );
 };
 

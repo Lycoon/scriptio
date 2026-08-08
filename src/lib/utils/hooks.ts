@@ -14,7 +14,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProjectRole } from "../../generated/client/browser";
 import { isTauri } from "@tauri-apps/api/core";
 import { useTranslations } from "next-intl";
-import { keyboardInsetNow } from "@src/lib/editor/visible-band";
+import { keyboardInsetNow, viewportBottomInset } from "@src/lib/editor/visible-band";
 
 interface Position {
     x: number;
@@ -108,6 +108,10 @@ const PHONE_QUERY = "(max-width: 767px)";
 // tablets. Keep in sync with the @media (pointer: coarse) blocks in the CSS.
 const TOUCH_QUERY = "(pointer: coarse)";
 
+// How long the visual viewport must hold still before the keyboard's slide counts
+// as finished (see useKeyboardInset). Comfortably past iOS's ~250ms animation.
+const KEYBOARD_SETTLE_MS = 400;
+
 /**
  * True on phone-sized viewports (< 768px). Drives the structural mobile forks
  * that CSS alone can't express — overlay-drawer sidebars, disabled split view,
@@ -136,10 +140,16 @@ const useIsPhone = (): boolean => useMediaQuery(PHONE_QUERY);
 const useIsTouch = (): boolean => useMediaQuery(TOUCH_QUERY);
 
 /**
- * Distance in px the on-screen keyboard covers at the bottom of the layout
- * viewport, tracked via the VisualViewport API. 0 when no keyboard is up.
+ * Track a visual-viewport measurement, re-reading it across the whole of any
+ * keyboard slide rather than only at the moments iOS chooses to fire an event:
+ * WebKit stops emitting partway through the animation, so a single reading — or
+ * one taken on a fixed delay — can land mid-flight and stick, leaving consumers
+ * offset by a keyboard that has already gone. Re-reads every frame until the
+ * viewport has been quiet for KEYBOARD_SETTLE_MS.
+ *
+ * `measure` must be a stable module-level function, not an inline closure.
  */
-const useKeyboardInset = (enabled: boolean): number => {
+const useViewportInset = (enabled: boolean, measure: () => number): number => {
     const [inset, setInset] = useState(0);
 
     useEffect(() => {
@@ -147,18 +157,57 @@ const useKeyboardInset = (enabled: boolean): number => {
         // harmless — just don't subscribe.
         if (!enabled || typeof window === "undefined" || !window.visualViewport) return;
         const vv = window.visualViewport;
-        const update = () => setInset(keyboardInsetNow());
-        update();
-        vv.addEventListener("resize", update);
-        vv.addEventListener("scroll", update);
-        return () => {
-            vv.removeEventListener("resize", update);
-            vv.removeEventListener("scroll", update);
+        let frame: number | null = null;
+        let settleUntil = 0;
+
+        const read = () => setInset(measure());
+
+        const settle = () => {
+            read();
+            if (performance.now() >= settleUntil) {
+                frame = null;
+                return;
+            }
+            frame = requestAnimationFrame(settle);
         };
-    }, [enabled]);
+        const bump = () => {
+            settleUntil = performance.now() + KEYBOARD_SETTLE_MS;
+            if (frame === null) frame = requestAnimationFrame(settle);
+        };
+
+        read();
+        vv.addEventListener("resize", bump);
+        vv.addEventListener("scroll", bump);
+        // Dismissing the keyboard can blur the field without WebKit firing a
+        // viewport event at all, so drive the same settle off focus changes too.
+        window.addEventListener("focusout", bump);
+        return () => {
+            if (frame !== null) cancelAnimationFrame(frame);
+            vv.removeEventListener("resize", bump);
+            vv.removeEventListener("scroll", bump);
+            window.removeEventListener("focusout", bump);
+        };
+    }, [enabled, measure]);
 
     return inset;
 };
+
+/**
+ * Distance in px the on-screen keyboard covers at the bottom of the layout
+ * viewport. 0 when no keyboard is up — `keyboardInsetNow` floors anything under
+ * KEYBOARD_THRESHOLD, so this is never a small non-zero number, it is 0 or a real
+ * keyboard. Use it to answer *is a keyboard up*; to place something against the
+ * bottom of the usable area, use `useViewportBottomInset` instead.
+ */
+const useKeyboardInset = (enabled: boolean): number => useViewportInset(enabled, keyboardInsetNow);
+
+/**
+ * Distance in px covered at the bottom of the layout viewport by anything at all
+ * — keyboard, iOS shortcuts bar, browser chrome — unfloored, so it can be
+ * followed continuously (see viewportBottomInset).
+ */
+const useViewportBottomInset = (enabled: boolean): number =>
+    useViewportInset(enabled, viewportBottomInset);
 
 const useProjectIdFromUrl = () => {
     const searchParams = useSearchParams();
@@ -645,6 +694,7 @@ export {
     useIsPhone,
     useIsTouch,
     useKeyboardInset,
+    useViewportBottomInset,
     useCachedProjects,
     useCachedProjectInfo,
     useProjectIdFromUrl,

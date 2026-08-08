@@ -30,6 +30,8 @@
     "menu": "菜单",
     "close": "关闭",
     "history": "历史",
+    "undo": "撤销",
+    "redo": "重做",
     "production": "制作",
     "readAloud": "朗读",
     "analytics": "分析",

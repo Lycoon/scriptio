@@ -30,6 +30,8 @@
     "menu": "Menü",
     "close": "Schließen",
     "history": "Verlauf",
+    "undo": "Rückgängig",
+    "redo": "Wiederholen",
     "production": "Produktion",
     "readAloud": "Vorlesen",
     "analytics": "Analysen",

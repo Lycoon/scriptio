@@ -30,6 +30,8 @@
     "menu": "メニュー",
     "close": "閉じる",
     "history": "履歴",
+    "undo": "元に戻す",
+    "redo": "やり直す",
     "production": "制作",
     "readAloud": "読み上げ",
     "analytics": "分析",

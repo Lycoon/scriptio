@@ -30,6 +30,8 @@
     "menu": "Menu",
     "close": "Zamknij",
     "history": "Historia",
+    "undo": "Cofnij",
+    "redo": "Ponów",
     "production": "Produkcja",
     "readAloud": "Czytaj na głos",
     "analytics": "Analityka",

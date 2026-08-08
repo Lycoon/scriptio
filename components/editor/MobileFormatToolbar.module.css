@@ -1,16 +1,22 @@
-/* Touch-only formatting bar that floats just above the on-screen keyboard.
- * `bottom` is set inline from the tracked keyboard inset (see
- * MobileFormatToolbar.tsx). */
+/* The format pill: one item in the bottom chrome row, which positions it (see
+ * EditorBottomBar.module.css). A rounded island rather than a full-width docked
+ * bar, so it echoes the iOS keyboard's rounded shape and reads as part of the
+ * same floating chrome instead of a hard-edged bar butted against it. */
 .toolbar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    z-index: 60;
+    /* Anchor for the spelling panel and the element menu, both of which hang off
+     * the pill's own edges — without this they would resolve against the row,
+     * which is the full width of the screen. */
+    position: relative;
+    /* The row is click-through so its gaps don't swallow taps meant for the
+     * script; each island opts back in for itself. */
+    pointer-events: auto;
 
     /* Metrics of the controls, kept here rather than inlined at each rule so the
-     * width cap below can be *derived* from them and stays true if a control is
+     * width below can be *derived* from them and stays true if a control is
      * resized. Consumed by .btn, .group, .separator, .element_trigger and
-     * .format_group. */
+     * .format_group — all inside this pill. The row's own islands deliberately do
+     * not read them: they are a separate stylesheet and match the 40px button size
+     * by hand rather than reaching across for a private custom property. */
     --tb-btn-size: 40px;
     --tb-btn-gap: 4px;
     --tb-group-gap: 6px;
@@ -32,26 +38,17 @@
             (2 * var(--tb-group-width)) + (2 * var(--tb-group-gap)) + var(--tb-separator-width)
     );
 
-    /* Float as a rounded island rather than a full-width docked bar: inset from
-     * the screen edges and lifted off the keyboard's top edge (margins), with
-     * rounded corners of its own, so it echoes the iOS keyboard's rounded shape
-     * and reads as part of the same floating chrome instead of a hard-edged bar
-     * butted against it. `bottom: keyboardInset` (inline) pins it to the keyboard
-     * top; the bottom margin is the visible gap between the two. */
-    margin: 0 auto 8px;
-    /* The 8px side gutter, expressed as a width rather than a margin so the cap
-     * below can centre the bar. On a tablet the gutter alone would leave the bar
-     * an iPad-wide pill around a control row that needs barely half of it — a
-     * third of it empty, with the controls flung to the far edges. Capping at
-     * --tb-base-width shrink-wraps it to the controls instead (auto margins then
-     * centre it) and, because that is the width of the *always-present* ones, the
-     * advanced actions land past the edge of .format_group and are reached by
+    /* Basis rather than a width: on a tablet the bar shrink-wraps to
+     * --tb-base-width, which is the width of the *always-present* controls, so
+     * the advanced actions land past the edge of .format_group and are reached by
      * scrolling the row rather than by widening the bar to hold them. Sizing off
      * the constant set also keeps the width from twitching as the caret moves in
-     * and out of the contexts those actions apply to. The cap never binds on a
-     * phone, where the gutter width is the smaller of the two. */
-    width: calc(100% - 16px);
-    max-width: var(--tb-base-width);
+     * and out of the contexts those actions apply to. On a phone the row is
+     * narrower than that basis, so the bar shrinks to the available width instead
+     * and the controls scroll — hence min-width: 0, without which a flex item
+     * refuses to shrink below its content. */
+    flex: 0 1 var(--tb-base-width);
+    min-width: 0;
 
     display: flex;
     flex-direction: row;

@@ -30,6 +30,8 @@
     "menu": "메뉴",
     "close": "닫기",
     "history": "기록",
+    "undo": "실행 취소",
+    "redo": "다시 실행",
     "production": "프로덕션",
     "readAloud": "소리내어 읽기",
     "analytics": "분석",
