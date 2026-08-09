@@ -297,6 +297,11 @@ interface BoardCardProps {
     onCompleteConnection: (cardId: string) => void;
     isConnecting: boolean;
     isSelected: boolean;
+    /** The board's link tool is armed: a tap on this card picks a link end. */
+    linkMode: boolean;
+    /** This card is the link already picked, waiting for its target. */
+    isLinkSource: boolean;
+    onLinkTap: (cardId: string) => void;
 }
 
 const BoardCard = ({
@@ -311,6 +316,9 @@ const BoardCard = ({
     onCompleteConnection,
     isConnecting,
     isSelected,
+    linkMode,
+    isLinkSource,
+    onLinkTap,
 }: BoardCardProps) => {
     const kind = kindOf(card);
     // Coarse pointer, not phone width: a tablet renders the desktop board but is
@@ -581,6 +589,14 @@ const BoardCard = ({
                 const state = touchDrag.current;
                 touchDrag.current = null;
                 if (state && !state.moved && !state.suppressed) {
+                    // The link tool takes the tap ahead of everything else: while
+                    // it is armed a tap means "this end of the link", not
+                    // double-tap-to-edit. Dragging the card is untouched — that
+                    // path needs movement, which rules a tap out.
+                    if (linkMode) {
+                        onLinkTap(card.id);
+                        return;
+                    }
                     if (isConnecting) {
                         onCompleteConnection(card.id);
                         return;
@@ -606,11 +622,13 @@ const BoardCard = ({
             card,
             kind,
             isConnecting,
+            linkMode,
             applyDrag,
             commitMove,
             captureCanvasOrigin,
             onContextMenu,
             onCompleteConnection,
+            onLinkTap,
         ],
     );
 
@@ -727,12 +745,22 @@ const BoardCard = ({
     const handleCardMouseUp = useCallback(
         (e: React.MouseEvent) => {
             if (isSyntheticMouse()) return; // ignore the mouse echo of a touch
+            // Trackpad counterpart of the link tap — an iPad reports a coarse
+            // pointer with a Magic Keyboard attached, so the tool has to answer to
+            // both. A pending commit means this mouseup ends a drag rather than a
+            // click, and dragging a card must not link it. (The window mouseup
+            // that clears it runs after this delegated handler.)
+            if (linkMode && !pendingCommit.current) {
+                e.stopPropagation();
+                onLinkTap(card.id);
+                return;
+            }
             if (isConnecting) {
                 e.stopPropagation();
                 onCompleteConnection(card.id);
             }
         },
-        [card.id, isConnecting, onCompleteConnection],
+        [card.id, isConnecting, linkMode, onCompleteConnection, onLinkTap],
     );
 
     const titleEditing: TitleEditing = {
@@ -777,8 +805,9 @@ const BoardCard = ({
                 kind === "image" && styles.image_card,
                 kind === "audio" && styles.audio_card,
                 isDragging && styles.card_dragging,
-                isConnecting && styles.card_connecting,
+                (isConnecting || linkMode) && styles.card_connecting,
                 isSelected && styles.card_selected,
+                isLinkSource && styles.card_link_source,
             )}
             style={{
                 // Position via transform, not left/top — a drag frame is then a

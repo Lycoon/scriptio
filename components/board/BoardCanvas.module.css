@@ -400,6 +400,76 @@
     opacity: 1;
 }
 
+/* ── Resize tool armed ──────────────────────────────────────────────────────
+   The corner stops being a mark you have to know about and becomes a button: an
+   88px round chip straddling the card's bottom-right corner, in the same surface
+   as the toolbar pill that armed it, wearing the same corner glyph the card
+   carries at rest, just scaled up.
+
+   Centred *on* the corner rather than tucked inside it. Half the button hanging
+   past the card is what makes it read as a grip on that corner rather than as
+   decoration in it, it keeps the card's own content clear, and it doubles the
+   room around the corner a finger can land in. Everything here is deliberately
+   larger than the rest of the board's chrome: at rest this is an 8px chevron a
+   mouse hovers into, and even at the invisible 40px box it grows to on a finger,
+   resizing on a tablet means aiming at something you cannot see. */
+.resize_mode .card {
+    /* Image and audio cards clip their content, which would cut the grip in half.
+       Safe to lift for the duration: the image is object-fit:contain at 100% and
+       cannot spill, and the audio row clips itself (.audio_content). */
+    overflow: visible;
+}
+
+.resize_mode .card_resize_handle {
+    opacity: 1;
+    width: 112px;
+    height: 112px;
+    /* Half the box past each edge, so its centre lands on the card's corner. */
+    bottom: -56px;
+    right: -56px;
+}
+
+/* The chip. On ::before so it paints under ::after, which draws the glyph — the
+   two pseudo-elements stack in that order on their own, no z-index needed.
+
+   Wears the same surface as the toolbar pill it was armed from (--secondary over
+   --separator), which is also what carries it across themes. The card underneath
+   is a colour of the user's choosing, so the chip has to be its own opaque
+   surface rather than tinting with what it sits on. */
+.resize_mode .card_resize_handle::before {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    background: var(--secondary);
+    border: 1.5px solid var(--separator);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* The corner glyph, at twice its resting size and in --primary-text so it reads
+   at full contrast on that surface (the resting mark is --secondary-text, which
+   is the right weight for something meant to stay quiet, and the wrong one here).
+   Offset 46px rather than the 40px that would centre its box: the two strokes sit
+   along the box's bottom and right edges, so the L's centre of mass is ~10px
+   nearer the corner than the box's own centre, and the box has to sit that much
+   further out for the mark to look centred in the circle. */
+.resize_mode .card_resize_handle::after {
+    bottom: 46px;
+    right: 46px;
+    width: 32px;
+    height: 32px;
+    border-right: 5px solid var(--primary-text);
+    border-bottom: 5px solid var(--primary-text);
+    border-bottom-right-radius: 6px;
+}
+
+/* The connect node is only in the way while resizing, and its own 40px box would
+   eat touches meant for the grip on a small card. */
+.resize_mode .connection_handle {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* Color picker - horizontal bar below header */
 .color_picker {
     display: flex;
@@ -551,6 +621,121 @@
     color: var(--secondary-text);
 }
 
+/* Link / cut tools, the third pill in the toolbar row. Rendered on a coarse
+   pointer only (see BoardCanvas.tsx), so unlike the zoom pill this is sized for a
+   finger from the start rather than growing into it in a media query.
+
+   Anchored here for the phone, where pinch replaces the zoom buttons and this
+   takes the slot they would have had — 4px right of the panel-switcher handles
+   (28px each + a 4px gap from left:8 = 68px). The tablet block below moves it
+   right of the zoom pill instead. */
+.tool_controls {
+    position: absolute;
+    top: 8px;
+    left: 72px;
+    z-index: 11;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 44px;
+    padding: 0 4px;
+    border-radius: 22px;
+    background-color: var(--secondary);
+    color: var(--secondary-text);
+    user-select: none;
+}
+
+.tool_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 18px;
+    background: transparent;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+/* Armed. Matches the panel menu's active row (PanelMenu.module.css) rather than the
+   accent colour, so a held-down tool reads as the same kind of state as every
+   other toggle in the app. */
+.tool_btn_active {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+/* ── Toolbar row geometry on a finger ───────────────────────────────────────
+   Everything above is anchored off the desktop panel-switcher handles: 20x36
+   each, so two of them plus a 4px gap from left:8 end at 52px. On a coarse
+   pointer those handles grow to 28x44 (SplitPanelContainer.module.css), which
+   pushes their right edge to 68px — over the top of the zoom pill's left:56px
+   anchor — and leaves every pill in the row 8px shorter than they are.
+
+   So re-derive the row from the touch sizes. Kept below the rules it overrides,
+   since a media query adds no specificity and source order is all that separates
+   them. */
+@media (pointer: coarse) {
+    /* Onto a second row, rather than further along the first: the tools pill
+       already runs to 192px on a phone and to 306px on a tablet, and a fourth
+       pill after that would hang off the right edge of a narrow split panel.
+       60px clears the 44px row above by 8px. */
+    .recording_indicator {
+        top: 60px;
+        left: 72px;
+        height: 44px;
+        border-radius: 22px;
+    }
+}
+
+@media (pointer: coarse) and (min-width: 768px) {
+    /* 4px right of the handles' new 68px edge, and squared off against them. */
+    .zoom_controls {
+        left: 72px;
+        height: 44px;
+        border-radius: 22px;
+    }
+
+    /* Grown with the pill, so the buttons stay finger-sized inside it rather
+       than floating in 8px of new dead space. */
+    .zoom_btn {
+        width: 30px;
+        height: 36px;
+        border-radius: 18px;
+    }
+
+    /* Right of the zoom pill, on the same 4px gap: the pill runs 72 → 182
+       (4 + 30 + 2 + 38 + 2 + 30 + 4). */
+    .tool_controls {
+        left: 186px;
+    }
+}
+
+/* The armed tool's instruction, along the bottom edge — the far side of the
+   board from the toolbar row that armed it, and a corner nothing else claims
+   (the editor's floating bottom bar doesn't render over a board at all, see
+   EditorBottomBar). */
+.tool_hint {
+    position: absolute;
+    bottom: calc(8px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 11;
+    max-width: 80%;
+    padding: 8px 14px;
+    border-radius: 16px;
+    background-color: var(--secondary);
+    color: var(--secondary-text);
+    font-size: 13px;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+}
+
 /* Arrows SVG layer */
 .arrows_svg {
     position: absolute;
@@ -589,6 +774,23 @@
 
 .arrow_line_connecting {
     pointer-events: none;
+}
+
+/* Cut tool armed: every link turns red and grows a far fatter hitbox. The stroke
+   is in canvas units, so it shrinks with the zoom just as the line does — 36
+   holds a fingertip down to roughly 50% zoom, and the tool is a tap *or* a slash
+   precisely because a stroke crosses links a tap has to be aimed at. */
+.arrow_group_cut .arrow_line {
+    stroke: var(--error);
+}
+
+.arrow_group_cut .arrow_head {
+    fill: var(--error);
+}
+
+.arrow_group_cut .arrow_hitbox {
+    stroke-width: 36;
+    cursor: crosshair;
 }
 
 /* Single connection handle on cards */
@@ -639,6 +841,15 @@
 .card_selected {
     box-shadow:
         0 0 0 3px var(--primary-text),
+        0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Link tool: the card tapped first, held until its target is picked. A ring
+   rather than the selection highlight, so a card that is both selected and the
+   pending link end still reads as the link end. */
+.card_link_source {
+    box-shadow:
+        0 0 0 3px var(--primary-hover),
         0 4px 16px rgba(0, 0, 0, 0.2);
 }
 

@@ -107,8 +107,4 @@
         opacity: 1;
     }
 
-    /* Fullscreen focus mode has no purpose on phone (see EditorFooter.tsx). */
-    .focus_action {
-        display: none;
-    }
 }

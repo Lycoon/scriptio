@@ -1,0 +1,139 @@
+/* Bottom chrome row: the format pill flanked, on a tablet, by the history island
+ * and the view-options burger. Owns the positioning for all three; the pill's own
+ * styling lives in MobileFormatToolbar.module.css.
+ *
+ * The row rides the on-screen keyboard when there is one and rests near the
+ * bottom edge when there is not, and both are the same rule: `--vv-inset` is the
+ * keyboard's height, measured live and already zeroed when what is down there is
+ * too short to be a keyboard (see EditorBottomBar.tsx), so the max() resolves to
+ * the resting height in that case. The bottom margin is the visible gap above
+ * whichever it lands on.
+ *
+ * 56px is that resting height: enough to clear iOS's shortcuts bar, which is what
+ * occupies the bottom edge whenever a hardware keyboard is attached and is the
+ * one thing down there this must not sit under. It is a constant because the bar
+ * cannot be measured — the region iOS reserves around it reads as ~173px of
+ * coverage, three times what it actually draws.
+ *
+ * pointer-events: none so the gaps *between* islands stay transparent to the
+ * script underneath — each island turns them back on for itself. */
+.bar_row {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: max(var(--vv-inset, 0px), calc(56px + var(--safe-bottom)));
+    z-index: 60;
+
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px;
+    /* Side gutter for the row as a whole — on a phone this is what keeps the lone
+     * format pill off the screen edges. */
+    padding-inline: 8px;
+    margin-bottom: 8px;
+    pointer-events: none;
+}
+
+/* Phone: the editor footer *does* still float at the bottom here, centred at
+ * `16px + safe-bottom` and 50px tall (see EditorFooter.module.css), and the row
+ * centres itself too — so resting level with it would drop one on the other. 66px
+ * clears it, and raising the floor is all that takes: an on-screen keyboard is far
+ * taller and still wins the max() whenever it is up. */
+@media (max-width: 767px) {
+    .bar_row {
+        bottom: max(var(--vv-inset, 0px), calc(66px + var(--safe-bottom)));
+    }
+}
+
+/* Tablet-only satellites either side of the format pill. Same rounded-island
+ * chrome as the pill, so the three read as one row of floating controls rather
+ * than as unrelated bits of furniture that happen to share a baseline. */
+.side_island {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    padding: 6px;
+    pointer-events: auto;
+
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    /* Matches the pill's radius so the row's three islands share one silhouette. */
+    border-radius: 26px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Flat square buttons, sized to match the pill's controls (--tb-btn-size, which
+ * is private to that stylesheet — keep the two in step by hand).
+ *
+ * The undo/redo pair arrives wearing the navbar's button chrome
+ * ([HistoryControls]), so this also has to strip that back, or the island reads as
+ * buttons-within-a-button. Two classes deep so it beats NavbarIconButton's
+ * single-class .button rule whatever the stylesheet order. */
+.side_island .island_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--secondary-text);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.side_island .island_btn:hover {
+    border-color: transparent;
+}
+
+.side_island .island_btn:active {
+    background-color: var(--secondary-hover);
+}
+
+/* View-mode toggles, opening upward off the burger. Always mounted and only
+ * revealed, never conditionally rendered: unmounting would tear down the dictation
+ * session it hosts ([EditorFooterActions]) the instant the menu was closed. */
+.footer_menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 26px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    pointer-events: none;
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease,
+        visibility 0.15s;
+}
+
+.footer_menu_open {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+}

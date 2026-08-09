@@ -30,6 +30,8 @@
     "menu": "Menu",
     "close": "Close",
     "history": "History",
+    "undo": "Undo",
+    "redo": "Redo",
     "production": "Production",
     "readAloud": "Read Aloud",
     "analytics": "Analytics",
@@ -50,7 +52,10 @@
     "toggleComments": "Toggle Comments",
     "toggleSpellcheck": "Toggle Spell Check",
     "focusMode": "Focus Mode",
-    "dictate": "Dictate",    "splitPanel": "Split Panel",
+    "dictate": "Dictate",
+    "viewScript": "Script View",
+    "viewIndexCards": "Index Cards View",
+    "splitPanel": "Split Panel",
     "unsplitPanel": "Unsplit Panel",
     "swapPanels": "Swap Panels",
     "draftEditor": "Draft Editor",
@@ -557,9 +562,9 @@
     "insertPageBreak": "Insert page break",
     "removePageBreak": "Remove page break",
     "pageBreakHint": "Manual page break",
-        "sceneOptions": "Scene options",
-        "characterOptions": "Character options",
-        "locationOptions": "Location options"
+    "sceneOptions": "Scene options",
+    "characterOptions": "Character options",
+    "locationOptions": "Location options"
   },
   "popup": {
     "character": {
@@ -619,7 +624,14 @@
     "play": "Play",
     "pause": "Pause",
     "rename": "Double-click to rename",
-    "storageLimitReached": "Storage limit reached — couldn't save this file"
+    "storageLimitReached": "Storage limit reached — couldn't save this file",
+    "linkCards": "Link cards",
+    "cutLinks": "Cut links",
+    "linkHintSource": "Tap a card to start a link",
+    "linkHintTarget": "Tap the card to link it to",
+    "cutHint": "Tap or drag across a link to cut it",
+    "resizeCards": "Resize cards",
+    "resizeHint": "Drag a card's corner to resize it"
   },
   "production": {
     "title": "Production",

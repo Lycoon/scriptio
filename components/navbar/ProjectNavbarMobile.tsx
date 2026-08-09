@@ -17,8 +17,6 @@ import {
     Menu,
     Mic,
     Monitor,
-    Redo2,
-    Undo2,
 } from "lucide-react";
 
 import { useViewContext } from "@src/context/ViewContext";
@@ -28,7 +26,7 @@ import { uploadToCloudPopup } from "@src/lib/screenplay/popup";
 import { join } from "@src/lib/utils/misc";
 
 import { useProjectNavbar } from "./useProjectNavbar";
-import { StatusIndicator } from "./ProjectNavbarShared";
+import { HistoryControls, StatusIndicator } from "./ProjectNavbarShared";
 import ProjectNavbarMobileMenu from "./ProjectNavbarMobileMenu";
 import SavesPanel from "./SavesPanel";
 import ProductionPanel from "./ProductionPanel";
@@ -135,14 +133,6 @@ const ProjectNavbarMobile = () => {
         }
     }, [isEditorView, activePanel]);
 
-    // Undo/redo are backed by the collaboration UndoManager. Guard on the command
-    // existing so calling before Yjs is ready can't throw.
-    const runHistory = (action: "undo" | "redo") => {
-        if (activeEditor && typeof activeEditor.commands[action] === "function") {
-            activeEditor.chain().focus()[action]().run();
-        }
-    };
-
     // Voice dictation into the editor being written in. On phone the mic lives
     // HERE rather than in the editor footer, which sits behind the on-screen
     // keyboard and so is out of reach exactly when one dictates; the footer's mic
@@ -182,12 +172,7 @@ const ProjectNavbarMobile = () => {
                             <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={exitEditMode}>
                                 <Check size={18} />
                             </div>
-                            <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={() => runHistory("undo")}>
-                                <Undo2 size={18} />
-                            </div>
-                            <div className={`${navBtn.button} ${navbar.mobile_icon}`} onClick={() => runHistory("redo")}>
-                                <Redo2 size={18} />
-                            </div>
+                            <HistoryControls editor={activeEditor} className={navbar.mobile_icon} />
                         </div>
                     ) : (
                         <div className={navbar.mobile_left}>

@@ -9,19 +9,28 @@
     z-index: 1000;
 }
 
+/* Sized off the viewport rather than to a fixed box, so the modal keeps roughly
+ * the same share of the screen through a rotation. The old `900px/max-width:90vw`
+ * pair read well in tablet portrait (834w → 90vw wins, filling the screen) but
+ * fell apart in landscape: past 1000w the 900px width takes over and stops
+ * growing while `80vh` simultaneously *takes away* height (834h → 667px), so the
+ * modal ended up both relatively narrower and absolutely shorter than the layout
+ * it had just rotated from. The min() pairs below scale on both axes instead. */
 .modal {
-    width: 900px;
-    max-width: 90vw;
-    height: 800px;
-    max-height: 80vh;
+    width: min(1100px, 92vw);
+    height: min(840px, 90vh);
     display: flex;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
+/* Fixed rather than `flex: 1`: the nav is a list of eight short labels, so a
+ * wider modal (landscape, desktop) has nothing to spend the extra width on here.
+ * Pinning it sends all of the growth to .content, which does. */
 .sidebar {
-    flex: 1;
+    width: 260px;
+    flex: none;
     background: var(--editor-sidebar);
     padding: 32px 0;
     border-right: 1px solid var(--separator);
@@ -288,6 +297,9 @@
      * home Settings button). */
     .sidebar {
         display: none;
+        /* Undo the desktop nav's fixed width: here it is a whole drawer screen,
+         * so it fills the drawer rather than sitting in a column of its own. */
+        width: auto;
         flex: 1;
         padding: 12px calc(var(--drawer-gutter) + var(--safe-right)) calc(16px + var(--safe-bottom))
             var(--drawer-gutter);

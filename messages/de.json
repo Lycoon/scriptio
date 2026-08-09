@@ -30,6 +30,8 @@
     "menu": "Menü",
     "close": "Schließen",
     "history": "Verlauf",
+    "undo": "Rückgängig",
+    "redo": "Wiederholen",
     "production": "Produktion",
     "readAloud": "Vorlesen",
     "analytics": "Analysen",
@@ -51,7 +53,10 @@
     "toggleComments": "Kommentare ein/aus",
     "toggleSpellcheck": "Rechtschreibprüfung ein/aus",
     "focusMode": "Fokus-Modus",
-    "dictate": "Diktieren",    "splitPanel": "Panel teilen",
+    "dictate": "Diktieren",
+    "viewScript": "Skriptansicht",
+    "viewIndexCards": "Karteikartenansicht",
+    "splitPanel": "Panel teilen",
     "unsplitPanel": "Panel schließen",
     "swapPanels": "Panels tauschen",
     "draftEditor": "Entwurfseditor",
@@ -558,9 +563,9 @@
     "insertPageBreak": "Seitenumbruch einfügen",
     "removePageBreak": "Seitenumbruch entfernen",
     "pageBreakHint": "Manueller Seitenumbruch",
-        "sceneOptions": "Szenenoptionen",
-        "characterOptions": "Charakteroptionen",
-        "locationOptions": "Ortsoptionen"
+    "sceneOptions": "Szenenoptionen",
+    "characterOptions": "Charakteroptionen",
+    "locationOptions": "Ortsoptionen"
   },
   "popup": {
     "character": {
@@ -620,7 +625,14 @@
     "play": "Abspielen",
     "pause": "Pause",
     "rename": "Zum Umbenennen doppelklicken",
-    "storageLimitReached": "Speicherlimit erreicht – diese Datei konnte nicht gespeichert werden"
+    "storageLimitReached": "Speicherlimit erreicht – diese Datei konnte nicht gespeichert werden",
+    "linkCards": "Karten verbinden",
+    "cutLinks": "Verbindungen trennen",
+    "linkHintSource": "Tippe auf eine Karte, um eine Verbindung zu beginnen",
+    "linkHintTarget": "Tippe auf die Karte, die verbunden werden soll",
+    "cutHint": "Tippe auf eine Verbindung oder streiche darüber, um sie zu trennen",
+    "resizeCards": "Kartengröße ändern",
+    "resizeHint": "Ziehe an der Ecke einer Karte, um ihre Größe zu ändern"
   },
   "production": {
     "title": "Produktion",

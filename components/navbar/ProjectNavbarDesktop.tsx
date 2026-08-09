@@ -47,9 +47,12 @@ const panelAnchorStyle: React.CSSProperties = {
  * Tablets land here too (they are wide enough for the desktop layout, see
  * [ProjectNavbar]), but they get [MobileFormatToolbar] above the on-screen
  * keyboard — which carries the same element/style/alignment controls — so the
- * centred dropdown is dropped on touch to avoid offering both at once. With a
- * hardware keyboard attached neither is shown, and the element shortcuts
- * (see DEFAULT_KEYBINDS) cover it.
+ * centred dropdown is dropped on touch to avoid offering both at once — that bar
+ * is shown whenever an editor is focused, docking at the bottom of the viewport
+ * when a hardware keyboard means there is no on-screen one to ride, so dropping
+ * the dropdown never leaves the controls unreachable. The bottom chrome a tablet
+ * does need — undo/redo, the view-mode toggles — rides that bar as flanking
+ * islands rather than crowding in here.
  */
 const ProjectNavbarDesktop = () => {
     const t = useTranslations("navbar");

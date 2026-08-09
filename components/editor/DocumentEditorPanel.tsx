@@ -1241,7 +1241,13 @@ const DocumentEditorPanel = ({
     if (!isLocalAccess && (!membership || isLoading)) return <Loading />;
 
     return (
-        <div className={`${styles.editor_panel} ${isEditorReady ? styles.visible : styles.hidden}`}>
+        <div
+            className={join(
+                styles.editor_panel,
+                isEditorReady ? styles.visible : styles.hidden,
+                isVisible ? "" : styles.parked,
+            )}
+        >
             <div
                 ref={setContainerEl}
                 className={join(styles.container, timelineOpen ? styles.timeline_open : "")}

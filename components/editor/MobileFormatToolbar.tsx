@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
     AlignCenter,
@@ -20,13 +20,14 @@ import {
 
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useSpellcheck } from "@src/context/SpellcheckContext";
-import { useIsTouch, useKeyboardInset } from "@src/lib/utils/hooks";
+import { useIsTouch } from "@src/lib/utils/hooks";
 import { applyElement, applyMarkToggle } from "@src/lib/screenplay/editor";
 import { applyTitlePageElement, applyTitlePageMarkToggle } from "@src/lib/titlepage/editor";
-import { canMakeDualDialogue, makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
-import { getNodeIdAtPos } from "@src/lib/screenplay/comment-anchors";
-import { getSpellErrorAt, refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
+import { makeDualDialogue } from "@src/lib/screenplay/dual-dialogue";
+import { refreshSpellcheck } from "@src/lib/spellcheck/spellcheck-extension";
 import { getAddComment } from "@src/lib/editor/comment-actions";
+import { useCaretState } from "@src/lib/editor/use-caret-state";
+import { useEditorFocused } from "@src/lib/editor/use-editor-focused";
 import { ScreenplayElement, Style, TitlePageElement } from "@src/lib/utils/enums";
 import { join } from "@src/lib/utils/misc";
 
@@ -55,63 +56,27 @@ const TITLEPAGE_ELEMENTS_ORDER: TitlePageElement[] = [
 ];
 
 /**
- * Everything about the caret's surroundings the bar renders from: the block's
- * alignment plus which of the advanced (right-click-only on desktop) actions
- * apply here. Recomputed on every transaction, so it is kept
- * as one value that is only replaced when something actually differs — see
- * sameCaretState — to keep typing from re-rendering the bar on every keystroke.
- */
-type CaretState = {
-    align: string;
-    /** Misspelling under the caret, if the editor has spellcheck decorations. */
-    spellError: { word: string; from: number; to: number } | null;
-    /** Node the caret sits in, when it can anchor a comment. */
-    commentNodeId: string | null;
-    /** Top-level block under the caret + whether it already forces a break. */
-    pageBreak: { pos: number; active: boolean } | null;
-    /**
-     * Start of a character block that can be merged with the one after it.
-     * The block's start rather than the caret, though makeDualDialogue accepts
-     * either: the caret moves with every keystroke inside the block, which would
-     * fail sameCaretState and re-render the bar for a value that never changed.
-     */
-    dualDialoguePos: number | null;
-};
-
-const EMPTY_CARET_STATE: CaretState = {
-    align: "left",
-    spellError: null,
-    commentNodeId: null,
-    pageBreak: null,
-    dualDialoguePos: null,
-};
-
-const sameCaretState = (a: CaretState, b: CaretState) =>
-    a.align === b.align &&
-    a.commentNodeId === b.commentNodeId &&
-    a.dualDialoguePos === b.dualDialoguePos &&
-    a.spellError?.word === b.spellError?.word &&
-    a.spellError?.from === b.spellError?.from &&
-    a.spellError?.to === b.spellError?.to &&
-    a.pageBreak?.pos === b.pageBreak?.pos &&
-    a.pageBreak?.active === b.pageBreak?.active;
-
-/**
- * Touch-device formatting bar that rides just above the on-screen keyboard while
- * a screenplay/title editor is focused. Surfaces the element-type selector (moved
- * here from the navbar so it's within thumb reach while writing) plus the inline
- * styling (bold, italic, underline) and alignment controls.
+ * Touch-device formatting bar shown while a screenplay/title editor is focused.
+ * Surfaces the element-type selector (moved here from the navbar so it's within
+ * thumb reach while writing) plus the inline styling (bold, italic, underline)
+ * and alignment controls.
  *
  * Gated on the pointer type rather than the phone width so tablets get it too —
  * an iPad writing with the on-screen keyboard needs the element picker in thumb
- * reach just as much as a phone does. The keyboard-inset check below keeps it out
- * of the way when a hardware keyboard is attached (no inset, so nothing renders).
+ * reach just as much as a phone does. On touch this is the *only* route to these
+ * controls, the desktop bar having dropped its format dropdown in its favour, so
+ * it shows whenever an editor is focused and never mind what the keyboard is
+ * doing.
  *
  * Past those, the scrollable row continues into the actions a touch device has no
  * other way to reach: they live behind a right-click on desktop, which has no
  * touch equivalent — comment, manual page break, dual dialogue, and spelling
- * suggestions. Each only appears where it applies (see CaretState), so scrolling
- * that far only ever turns up something usable.
+ * suggestions. Each only appears where it applies (see {@link useCaretState}), so
+ * scrolling that far only ever turns up something usable.
+ *
+ * Renders as one item in [EditorBottomBar], which owns where the row sits — over
+ * the keyboard, or resting near the bottom edge when there isn't one — and the
+ * islands that flank it. Nothing here should reach for the viewport.
  *
  * The bar is only as wide as the controls in that first group (see
  * --tb-base-width), so on a tablet it stays a compact centred pill instead of an
@@ -138,8 +103,6 @@ const MobileFormatToolbar = () => {
         isReadOnly,
     } = useContext(ProjectContext);
     const { worker } = useSpellcheck();
-
-    const keyboardInset = useKeyboardInset(isTouch);
 
     const isTitleContext = focusedEditorType === "title";
     const isDraftContext = focusedEditorType === "draft";
@@ -197,155 +160,37 @@ const MobileFormatToolbar = () => {
     const elementOrder = isTitleContext ? TITLEPAGE_ELEMENTS_ORDER : SCREENPLAY_ELEMENTS_ORDER;
     const currentElement = isTitleContext ? selectedTitlePageElement : selectedElement;
 
-    // Whether the target editor's contenteditable is actually focused. The keyboard
-    // being up isn't enough: opening the screenplay search focuses a plain <input>
-    // (its own keyboard), and focusedEditorType is never cleared on blur — without
-    // this the toolbar would wrongly ride the search keyboard too.
-    //
-    // Subscribed to as an external store rather than mirrored into state by an
-    // effect: the editor may already hold focus by the time we subscribe (a swap
-    // between the shelf draft and a tree document lands on one that is focused
-    // already, its focus event long gone), so the flag has to be seeded from
-    // `isFocused` — and a seeding setState in an effect body is a cascading render
-    // on every editor swap, which is what react-hooks/set-state-in-effect flags.
-    //
-    // Latched in a ref instead of read straight off `activeEditor.isFocused`
-    // because a blur is acted on 150ms late: an editor mutation (e.g. a mark
-    // toggle) can blur and immediately re-focus within a tick, and that transient
-    // must not tear the toolbar down. A real blur (tapping the search field,
-    // dismissing the keyboard) stays blurred past the window and then hides it.
-    // getSnapshot has to be pure and synchronous, so the delay lives in the
-    // subscription, which latches the settled value and notifies.
-    const focusedCache = useRef(false);
-    const editorFocused = useSyncExternalStore(
-        useCallback(
-            (callback: () => void) => {
-                // Nothing to track, and nothing to reset: the bar needs an editor
-                // to show at all, and re-subscribing seeds from the new one.
-                if (!activeEditor) return () => {};
-                let blurTimer: ReturnType<typeof setTimeout> | null = null;
-                const settle = (focused: boolean) => {
-                    if (focusedCache.current === focused) return;
-                    focusedCache.current = focused;
-                    callback();
-                };
-                const onFocus = () => {
-                    if (blurTimer) clearTimeout(blurTimer);
-                    settle(true);
-                };
-                const onBlur = () => {
-                    if (blurTimer) clearTimeout(blurTimer);
-                    blurTimer = setTimeout(() => settle(false), 150);
-                };
-                activeEditor.on("focus", onFocus);
-                activeEditor.on("blur", onBlur);
-                settle(activeEditor.isFocused);
-                return () => {
-                    if (blurTimer) clearTimeout(blurTimer);
-                    activeEditor.off("focus", onFocus);
-                    activeEditor.off("blur", onBlur);
-                };
-            },
-            [activeEditor],
-        ),
-        () => focusedCache.current,
-        () => false,
-    );
+    const editorFocused = useEditorFocused(activeEditor);
 
-    // Only mount on a touch device, once the target editor itself is focused and the
-    // on-screen keyboard is up. editorFocused excludes the case where another field
-    // (e.g. search) holds focus while a stale focusedEditorType lingers.
+    // Only mount on a touch device, once the target editor itself is focused.
+    // editorFocused excludes the case where another field (e.g. search) holds focus
+    // while a stale focusedEditorType lingers.
+    //
+    // Deliberately NOT gated on whether a keyboard is up. The desktop bar drops its
+    // format dropdown on touch precisely because this pill owns those controls
+    // ([ProjectNavbarDesktop]), so an iPad on a Magic Keyboard was left with
+    // neither, and no way at all to reach the element picker, comments, spelling or
+    // page breaks. Where the pill sits is [EditorBottomBar]'s problem; whether it
+    // exists is this.
+    //
     // Declared up here, above its first use rather than next to the render, because
     // the caret subscription below is scoped to it.
-    const isVisible =
-        isTouch && keyboardInset > 0 && !!activeEditor && focusedEditorType !== null && editorFocused;
+    const isVisible = isTouch && !!activeEditor && focusedEditorType !== null && editorFocused;
 
-    // Keep the alignment highlight and the advanced actions in sync with the
-    // caret. `transaction` rather than `selectionUpdate`: every dispatch emits it,
-    // selection-only ones included, so the pair would only run this twice per
-    // caret move — and half of what the bar reads changes under a *stationary*
-    // caret anyway (spellcheck decorations landing from the worker, a page-break
-    // attribute flipping, a collaborator's edit), which selectionUpdate misses.
-    // That does mean running on every keystroke, so the whole read is a handful
-    // of position lookups (all off ProseMirror's resolve cache) and the result is
-    // only committed when it differs (sameCaretState), leaving typing
-    // re-render-free.
+
+    // Keeps the alignment highlight and the advanced actions in sync with the
+    // caret. Scoped to isVisible so the per-transaction read costs nothing while
+    // the bar is hidden.
+    const caret = useCaretState(activeEditor, isVisible, isTitleContext);
+
+    // Close an open menu only when the pointer-down lands outside the whole pill.
+    // Taps on the style/alignment controls (which sit outside the element wrapper
+    // but inside the pill) must not dismiss the menu.
     //
-    // Scoped to isVisible rather than just to touch, so the read costs nothing in
-    // the cases where it would only ever be thrown away: a mouse device, an iPad
-    // driving the editor from a hardware keyboard (no inset, so the bar never
-    // comes up), or any moment the editor doesn't hold focus.
-    //
-    // An external store like the focus flag above, for the same reason: the read
-    // has to be seeded from the editor's current state on subscribe, and doing
-    // that through setState renders twice every time the bar comes up. Here
-    // sameCaretState doubles as the snapshot's stability check — getSnapshot must
-    // return the same reference until something actually changes, or React would
-    // see a new value on every render and loop.
-    const caretCache = useRef<CaretState>(EMPTY_CARET_STATE);
-    const caret = useSyncExternalStore(
-        useCallback(
-            (callback: () => void) => {
-                // A stale caret while there is nothing to track is harmless — the
-                // bar is hidden, and read() below re-seeds it as part of
-                // re-subscribing, before it can show again.
-                if (!isVisible || !activeEditor) return () => {};
-                const read = () => {
-                    const { state } = activeEditor;
-                    const { from, to } = state.selection;
-                    const next: CaretState = {
-                        ...EMPTY_CARET_STATE,
-                        align: state.selection.$anchor.parent.attrs.textAlign || "left",
-                    };
-
-                    // The advanced actions are all screenplay-shaped; the title
-                    // page has neither the nodes nor the pagination they act on.
-                    if (!isTitleContext) {
-                        next.spellError =
-                            getSpellErrorAt(state, from) ??
-                            (to !== from ? getSpellErrorAt(state, to) : null);
-                        next.commentNodeId = getNodeIdAtPos(state, from);
-
-                        const $pos = state.doc.resolve(from);
-                        if ($pos.depth >= 1) {
-                            const nodeStart = $pos.before(1);
-                            // Never the document's first block — nothing to break
-                            // before it.
-                            if (nodeStart > 0) {
-                                next.pageBreak = {
-                                    pos: nodeStart,
-                                    active: !!$pos.node(1).attrs.pageBreak,
-                                };
-                            }
-                            if (
-                                $pos.node(1).attrs.class === ScreenplayElement.Character &&
-                                canMakeDualDialogue(activeEditor, nodeStart)
-                            ) {
-                                next.dualDialoguePos = nodeStart;
-                            }
-                        }
-                    }
-
-                    if (sameCaretState(caretCache.current, next)) return;
-                    caretCache.current = next;
-                    callback();
-                };
-                activeEditor.on("transaction", read);
-                read();
-                return () => {
-                    activeEditor.off("transaction", read);
-                };
-            },
-            [activeEditor, isVisible, isTitleContext],
-        ),
-        () => caretCache.current,
-        () => EMPTY_CARET_STATE,
-    );
-
-    // Close an open menu only when the pointer-down lands outside the whole
-    // toolbar. Taps on the style/alignment controls (which sit outside the element
-    // wrapper but inside the bar) must not dismiss the menu. Scoping to the toolbar
-    // also means these taps never steal the editor focus / drop the keyboard.
+    // Capture phase, so a tap on one of the sibling islands ([EditorBottomBar])
+    // still dismisses these: every control in that row stops propagation to keep
+    // the tap off the editor, which a bubble-phase listener on document would
+    // never see.
     useEffect(() => {
         if (!elementMenuOpen && !spellMenuWord) return;
         const onDown = (e: PointerEvent) => {
@@ -354,8 +199,8 @@ const MobileFormatToolbar = () => {
                 setSpellMenuWord(null);
             }
         };
-        document.addEventListener("pointerdown", onDown);
-        return () => document.removeEventListener("pointerdown", onDown);
+        document.addEventListener("pointerdown", onDown, true);
+        return () => document.removeEventListener("pointerdown", onDown, true);
     }, [elementMenuOpen, spellMenuWord]);
 
     const spellWord = caret.spellError?.word ?? null;
@@ -597,21 +442,7 @@ const MobileFormatToolbar = () => {
             {tapGuard && (
                 <div className={styles.tap_guard} onPointerDown={(e) => e.preventDefault()} />
             )}
-            <div
-                className={styles.toolbar}
-                style={{ bottom: keyboardInset }}
-                role="toolbar"
-                ref={toolbarRef}
-                // Keep the editor focused for EVERY tap in the bar. After the pointer
-                // events iOS fires a compat mousedown whose default blurs the
-                // contenteditable; the per-control pointerdown preventDefault doesn't
-                // suppress it. Most controls run an editor command that re-asserts the
-                // DOM selection and masks the blur, but that reclaim is unreliable on
-                // the mark-removal path (and absent on the element trigger), randomly
-                // dropping the keyboard and tearing the bar down. Preventing the
-                // mousedown default here stops the blur at the source for all of them.
-                onMouseDown={(e) => e.preventDefault()}
-            >
+            <div className={styles.toolbar} role="toolbar" ref={toolbarRef}>
                 {/* Element-type selector — the primary control, opens a menu upward. */}
                 <div className={styles.element}>
                     {elementMenuOpen && (

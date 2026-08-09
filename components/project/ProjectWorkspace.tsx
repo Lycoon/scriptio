@@ -14,7 +14,7 @@ import { Popup } from "@components/popup/Popup";
 import SplitPanelContainer from "./SplitPanelContainer";
 import EditorFooter from "./EditorFooter";
 import TimelinePanel from "@components/editor/timeline/TimelinePanel";
-import MobileFormatToolbar from "@components/editor/MobileFormatToolbar";
+import EditorBottomBar from "@components/editor/EditorBottomBar";
 import styles from "./ProjectWorkspace.module.css";
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 
@@ -187,8 +187,9 @@ const ProjectWorkspace = () => {
             {/* Right sidebar */}
             <EditorSidebarFormat />
 
-            {/* Phone-only formatting bar above the on-screen keyboard */}
-            <MobileFormatToolbar />
+            {/* Touch-only bottom chrome: undo/redo, the format pill, and the
+                view-mode burger, riding the on-screen keyboard when there is one. */}
+            <EditorBottomBar />
 
             {/* Phone-only pen button: enters edit mode from the reader. Hides with
                 the rest of the chrome while scrolling down through the script. */}

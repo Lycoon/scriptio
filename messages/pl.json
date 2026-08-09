@@ -30,6 +30,8 @@
     "menu": "Menu",
     "close": "Zamknij",
     "history": "Historia",
+    "undo": "Cofnij",
+    "redo": "Ponów",
     "production": "Produkcja",
     "readAloud": "Czytaj na głos",
     "analytics": "Analityka",
@@ -50,7 +52,10 @@
     "toggleComments": "Pokaż/ukryj komentarze",
     "toggleSpellcheck": "Włącz/wyłącz sprawdzanie pisowni",
     "focusMode": "Tryb skupienia",
-    "dictate": "Dyktowanie",    "splitPanel": "Podziel panel",
+    "dictate": "Dyktowanie",
+    "viewScript": "Widok scenariusza",
+    "viewIndexCards": "Widok fiszek",
+    "splitPanel": "Podziel panel",
     "unsplitPanel": "Zamknij panel",
     "swapPanels": "Zamień panele",
     "draftEditor": "Edytor szkiców",
@@ -557,9 +562,9 @@
     "insertPageBreak": "Wstaw podział strony",
     "removePageBreak": "Usuń podział strony",
     "pageBreakHint": "Ręczny podział strony",
-        "sceneOptions": "Opcje sceny",
-        "characterOptions": "Opcje postaci",
-        "locationOptions": "Opcje lokalizacji"
+    "sceneOptions": "Opcje sceny",
+    "characterOptions": "Opcje postaci",
+    "locationOptions": "Opcje lokalizacji"
   },
   "popup": {
     "character": {
@@ -619,7 +624,14 @@
     "play": "Odtwórz",
     "pause": "Wstrzymaj",
     "rename": "Kliknij dwukrotnie, aby zmienić nazwę",
-    "storageLimitReached": "Osiągnięto limit pamięci — nie można zapisać tego pliku"
+    "storageLimitReached": "Osiągnięto limit pamięci — nie można zapisać tego pliku",
+    "linkCards": "Połącz karty",
+    "cutLinks": "Przetnij połączenia",
+    "linkHintSource": "Dotknij karty, aby zacząć połączenie",
+    "linkHintTarget": "Dotknij karty, z którą połączyć",
+    "cutHint": "Dotknij połączenia lub przeciągnij przez nie, aby je przeciąć",
+    "resizeCards": "Zmień rozmiar kart",
+    "resizeHint": "Przeciągnij róg karty, aby zmienić jej rozmiar"
   },
   "production": {
     "title": "Produkcja",

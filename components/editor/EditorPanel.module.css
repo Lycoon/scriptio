@@ -7,6 +7,26 @@
     background-color: var(--main-bg);
 }
 
+/*
+ * The editor is mounted but not being shown. Take its subtree out of layout and
+ * paint — the same treatment, and for the same reason, as .panel_hidden in
+ * SplitPanelContainer.module.css: a 120-page screenplay is an enormous
+ * ProseMirror DOM, and while it sits in the layout tree *every* forced reflow
+ * anywhere on screen re-lays it out too.
+ *
+ * .panel_hidden already covers the case where the whole panel is swapped away.
+ * This covers the one it can't see: a panel that is itself visible while its
+ * editor is parked behind an overlay — the index-card grid (SceneCardsPanel),
+ * which reads card rects on every frame of a drag and would otherwise flush a
+ * full-document relayout on each one.
+ *
+ * Layout containment only; the editor keeps its rendered state, so coming back
+ * to the script is instant rather than a re-initialisation.
+ */
+.parked {
+    content-visibility: hidden;
+}
+
 .container {
     position: relative;
     flex: 1;

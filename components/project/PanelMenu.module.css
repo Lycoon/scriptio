@@ -1,0 +1,96 @@
+/* The menu the panel switcher opens (SplitPanelContainer's PanelSwitcherMenu)
+   and the controls inside it. */
+
+.dropdown_menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 200px;
+    padding: 6px;
+    background-color: var(--secondary);
+    border: 1px solid var(--separator);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    z-index: 1;
+}
+
+.dropdown_item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-align: left;
+    cursor: pointer;
+    color: var(--secondary-text);
+    background-color: transparent;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.dropdown_item:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+.dropdown_item:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.dropdown_item_active {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+.item_label {
+    flex: 1;
+}
+
+/* Row of icon-only, mutually exclusive toggles (see ScreenplayViewSwitcher).
+   Left-aligned rather than stretched: the buttons are square and sit under the
+   icon column of the labelled items above and below them, so the menu keeps one
+   left edge. The 3px inset is what puts a 14px glyph centred in a 32px square at
+   the same 12px as a .dropdown_item's own icon. */
+.icon_row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 4px;
+    width: 100%;
+    padding: 2px 3px;
+}
+
+.icon_btn {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--secondary-text);
+    background-color: transparent;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.icon_btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+.icon_btn_active {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
