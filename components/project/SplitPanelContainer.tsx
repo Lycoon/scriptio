@@ -11,6 +11,8 @@ import TitlePagePanel from "@components/editor/TitlePagePanel";
 import DraftEditorPanel from "@components/editor/DraftEditorPanel";
 import TreeDocumentPanel from "@components/editor/TreeDocumentPanel";
 import BoardPanel from "@components/editor/BoardPanel";
+import SceneCardsPanel from "@components/editor/SceneCardsPanel";
+import ScreenplayViewSwitcher from "./ScreenplayViewSwitcher";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
 import { SuggestionData } from "@components/editor/SuggestionMenu";
@@ -26,7 +28,7 @@ import {
     PanelRightClose,
 } from "lucide-react";
 import styles from "./SplitPanelContainer.module.css";
-import dropdown from "@components/navbar/ViewOptionsDropdown.module.css";
+import dropdown from "./PanelMenu.module.css";
 
 interface SplitPanelContainerProps {
     suggestions: string[];
@@ -43,17 +45,30 @@ const PanelRenderer = ({
     suggestionData,
     updateSuggestionData,
 }: { panel: PanelType; isVisible: boolean } & SplitPanelContainerProps) => {
+    const { screenplayView } = useViewContext();
+
     switch (panel) {
-        case "screenplay":
+        case "screenplay": {
+            // The index-card grid covers the editor rather than replacing it:
+            // unmounting the screenplay editor would tear down its Yjs binding
+            // and null the handle ProjectContext hands to the sidebar, the
+            // search and the timeline. `isVisible` false while the cards are up
+            // also parks it properly — blurred, with no caret for WebKit to
+            // chase (see DocumentEditorPanel).
+            const cardsUp = isVisible && screenplayView === "cards";
             return (
-                <EditorPanel
-                    isVisible={isVisible}
-                    suggestions={suggestions}
-                    updateSuggestions={updateSuggestions}
-                    suggestionData={suggestionData}
-                    updateSuggestionData={updateSuggestionData}
-                />
+                <>
+                    <EditorPanel
+                        isVisible={isVisible && !cardsUp}
+                        suggestions={suggestions}
+                        updateSuggestions={updateSuggestions}
+                        suggestionData={suggestionData}
+                        updateSuggestionData={updateSuggestionData}
+                    />
+                    {cardsUp && <SceneCardsPanel />}
+                </>
             );
+        }
         case "statistics":
             return <StatisticsClientPage />;
         case "title":
@@ -135,18 +150,10 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
             </button>
             {isOpen && (
                 <div className={dropdown.dropdown_menu} style={{ left: 0, transform: "none" }}>
-                    {/* Timeline strip toggle — available on every platform. */}
-                    <button
-                        className={`${dropdown.dropdown_item} ${timelineOpen ? dropdown.dropdown_item_active : ""}`}
-                        onClick={() => {
-                            setTimelineOpen((prev) => !prev);
-                            setIsOpen(false);
-                        }}
-                    >
-                        <GanttChartSquare size={14} />
-                        <span className={dropdown.item_label}>{t("timeline")}</span>
-                    </button>
-                    <div className={styles.panel_switcher_separator} />
+                    {/* How the script is rendered — only over a screenplay. */}
+                    {currentPanel === "screenplay" && (
+                        <ScreenplayViewSwitcher size={14} onSelect={() => setIsOpen(false)} />
+                    )}
                     {/* Split view is single-panel-only on phones. */}
                     {!isPhone && (
                         <>
@@ -184,6 +191,20 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
                             <span className={dropdown.item_label}>{t(labelKey as Parameters<typeof t>[0])}</span>
                         </button>
                     ))}
+                    <div className={styles.panel_switcher_separator} />
+                    {/* Timeline strip toggle — available on every platform. It
+                        toggles a strip rather than choosing what the panel shows,
+                        so it sits below the panel list in its own section. */}
+                    <button
+                        className={`${dropdown.dropdown_item} ${timelineOpen ? dropdown.dropdown_item_active : ""}`}
+                        onClick={() => {
+                            setTimelineOpen((prev) => !prev);
+                            setIsOpen(false);
+                        }}
+                    >
+                        <GanttChartSquare size={14} />
+                        <span className={dropdown.item_label}>{t("timeline")}</span>
+                    </button>
                 </div>
             )}
         </div>

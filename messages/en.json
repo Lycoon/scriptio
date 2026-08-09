@@ -53,6 +53,8 @@
     "toggleSpellcheck": "Toggle Spell Check",
     "focusMode": "Focus Mode",
     "dictate": "Dictate",
+    "viewScript": "Script View",
+    "viewIndexCards": "Index Cards View",
     "splitPanel": "Split Panel",
     "unsplitPanel": "Unsplit Panel",
     "swapPanels": "Swap Panels",

@@ -12,6 +12,18 @@ export type SplitSide = "primary" | "secondary";
 /** Panel kinds that display a specific document, and so carry a docId per side. */
 export type DocumentPanelKind = "board" | "document";
 
+/**
+ * How a screenplay panel renders the script: as the editor itself, or as the
+ * grid of scene index cards. The screenplay is a singleton panel, so one value
+ * covers whichever side is showing it.
+ */
+export type ScreenplayViewMode = "editor" | "cards";
+
+/** Bounds for the index-card grid's columns-per-row (its zoom control). */
+export const SCENE_CARD_COLUMNS_MIN = 1;
+export const SCENE_CARD_COLUMNS_MAX = 5;
+export const SCENE_CARD_COLUMNS_DEFAULT = 3;
+
 interface ViewContextType {
     primaryPanel: PanelType;
     secondaryPanel: PanelType | null;
@@ -25,6 +37,16 @@ interface ViewContextType {
     focusedSide: SplitSide;
     focusedPanel: PanelType;
     isEndlessScroll: boolean;
+    /** How the screenplay panel renders — the editor, or the index-card grid. */
+    screenplayView: ScreenplayViewMode;
+    setScreenplayView: (mode: ScreenplayViewMode) => void;
+    /**
+     * Index cards per row, which is what the card view's zoom control actually
+     * changes — fewer columns means wider cards. Lives here rather than in the
+     * panel so it survives switching back to the script and returning.
+     */
+    sceneCardColumns: number;
+    setSceneCardColumns: (value: number | ((prev: number) => number)) => void;
     showComments: boolean;
     leftSidebarOpen: boolean;
     rightSidebarOpen: boolean;
@@ -102,6 +124,8 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     // readable size with no page rectangles to shift while writing. Desktop
     // defaults to the paged view. Users can toggle either way (EditorFooter).
     const [isEndlessScroll, setIsEndlessScrollState] = useState<boolean>(isPhoneViewport);
+    const [screenplayView, setScreenplayView] = useState<ScreenplayViewMode>("editor");
+    const [sceneCardColumns, setSceneCardColumns] = useState<number>(SCENE_CARD_COLUMNS_DEFAULT);
     const [showComments, setShowComments] = useState<boolean>(true);
     const [leftSidebarOpen, setLeftSidebarOpenState] = useState<boolean>(false);
     const [rightSidebarOpen, setRightSidebarOpenState] = useState<boolean>(false);
@@ -344,6 +368,10 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             focusedSide,
             focusedPanel,
             isEndlessScroll,
+            screenplayView,
+            setScreenplayView,
+            sceneCardColumns,
+            setSceneCardColumns,
             showComments,
             leftSidebarOpen,
             rightSidebarOpen,
@@ -369,7 +397,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, mobileEditMode, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, onBeforeEndlessScrollChange, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, screenplayView, sceneCardColumns, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, mobileEditMode, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, onBeforeEndlessScrollChange, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;

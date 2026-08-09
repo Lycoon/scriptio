@@ -53,6 +53,8 @@
     "toggleSpellcheck": "Włącz/wyłącz sprawdzanie pisowni",
     "focusMode": "Tryb skupienia",
     "dictate": "Dyktowanie",
+    "viewScript": "Widok scenariusza",
+    "viewIndexCards": "Widok fiszek",
     "splitPanel": "Podziel panel",
     "unsplitPanel": "Zamknij panel",
     "swapPanels": "Zamień panele",

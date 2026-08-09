@@ -53,6 +53,8 @@
     "toggleSpellcheck": "切换拼写检查",
     "focusMode": "聚焦模式",
     "dictate": "语音输入",
+    "viewScript": "剧本视图",
+    "viewIndexCards": "索引卡视图",
     "splitPanel": "分割面板",
     "unsplitPanel": "合并面板",
     "swapPanels": "交换面板",

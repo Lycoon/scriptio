@@ -53,6 +53,8 @@
     "toggleSpellcheck": "スペルチェックの切り替え",
     "focusMode": "集中モード",
     "dictate": "音声入力",
+    "viewScript": "脚本ビュー",
+    "viewIndexCards": "インデックスカードビュー",
     "splitPanel": "パネルを分割",
     "unsplitPanel": "パネルを閉じる",
     "swapPanels": "パネルを入れ替え",

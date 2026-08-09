@@ -53,6 +53,8 @@
     "toggleSpellcheck": "Activar/desactivar corrector ortográfico",
     "focusMode": "Modo concentración",
     "dictate": "Dictar",
+    "viewScript": "Vista de guion",
+    "viewIndexCards": "Vista de fichas",
     "splitPanel": "Dividir panel",
     "unsplitPanel": "Unir panel",
     "swapPanels": "Intercambiar paneles",

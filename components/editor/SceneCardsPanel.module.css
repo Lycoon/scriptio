@@ -1,0 +1,364 @@
+/* The card grid sits *over* the screenplay editor rather than replacing it: the
+   editor stays mounted behind (see PanelRenderer) so switching views never
+   reinitialises it or drops the ProjectContext editor handle. z-index 12 clears
+   the comment gutter, which floats at that level inside the editor beneath;
+   equal specificity plus later DOM order puts this on top. Still below the
+   panel switcher (13), which has to stay reachable to switch back. */
+.container {
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: var(--main-bg);
+}
+
+/* While a card is lifted, the cursor says so everywhere on the grid — including
+   over the gutters between cards, where there is no card to carry it. */
+.dragging {
+    cursor: grabbing;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cards-per-row, 3), minmax(0, 1fr));
+    gap: calc(16px * var(--card-zoom, 1));
+    /* Top clearance for the panel switcher and zoom pill, which float over this
+       corner. */
+    padding: 52px 20px 40px;
+}
+
+.empty_state {
+    padding: 60px 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+
+/* One grid cell. Exists so the drop bar has somewhere unclipped to live: the
+   card below clips its overflow, which would swallow a bar drawn in the gutter
+   beside it. Carries no visuals of its own. */
+.card_slot {
+    position: relative;
+    display: flex;
+    min-width: 0;
+}
+
+/* Deliberately the board card's shape — same header/body split, same shadow and
+   hover lift — so a scene reads the same whether it is on the corkboard or in
+   this grid. Geometry differs because these are laid out by the grid rather
+   than positioned on a canvas, and scale with the zoom (--card-zoom) so that
+   widening a card enlarges it instead of just stretching it. */
+.card {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(170px * var(--card-zoom, 1));
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: grab;
+    user-select: none;
+    transition:
+        box-shadow 0.15s ease,
+        opacity 0.15s ease,
+        transform 0.15s ease;
+}
+
+/* Hover affordances only where a pointer can actually hover — same reasoning as
+   the board's cards: iOS emulates hover from the last tap point and re-resolves
+   it as content moves, which turns a transitioned shadow into a repaint storm
+   while cards sweep under a stale point. */
+@media (hover: hover) {
+    .card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* The hole the lifted card came out of: flattened, faded, and outlined so the
+   space reads as reserved rather than as a card that has gone strange. */
+.card_source {
+    opacity: 0.25;
+    box-shadow: none;
+    outline: 2px dashed var(--secondary-text);
+    outline-offset: -2px;
+}
+
+/* The copy under the pointer. Its shadow is what sells the lift; the wrapper
+   (.drag_ghost) supplies the position, size, tilt and scale. */
+.card_ghost {
+    cursor: grabbing;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.32);
+}
+
+.drag_ghost {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 200;
+    pointer-events: none;
+    /* Flex so the slot inside stretches to the width/height captured from the
+       grabbed card, rather than the card falling back to its content height. */
+    display: flex;
+    /* Own compositor layer: each pointer frame is then a translate of this one
+       element rather than a repaint over the grid behind it. */
+    will-change: transform;
+}
+
+/* Drop indicator: a bar centred in the gutter on the side the scene would land.
+   Drawn on the neighbouring slot rather than inserted as an extra grid child,
+   which would push every following card into the wrong column for the length of
+   the drag. It grows out of the edge so the eye catches the bar *changing
+   position*, not merely the presence of a line somewhere. */
+.drop_before::before,
+.drop_after::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 4px;
+    border-radius: 4px;
+    background-color: var(--primary-text);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--primary-text) 45%, transparent);
+    animation: drop_bar_in 0.12s ease-out;
+    /* Above the neighbouring cards, so it reads as sitting between them rather
+       than tucked behind one. */
+    z-index: 1;
+}
+
+/* Half the gap (which is 16px × zoom) out from the edge, less half the bar. */
+.drop_before::before {
+    right: 100%;
+    margin-right: calc(8px * var(--card-zoom, 1) - 2px);
+}
+
+.drop_after::after {
+    left: 100%;
+    margin-left: calc(8px * var(--card-zoom, 1) - 2px);
+}
+
+@keyframes drop_bar_in {
+    from {
+        transform: scaleY(0.4);
+        opacity: 0;
+    }
+    to {
+        transform: scaleY(1);
+        opacity: 1;
+    }
+}
+
+.card_header {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: calc(8px * var(--card-zoom, 1)) calc(10px * var(--card-zoom, 1));
+}
+
+/* Holds the heading's box. The editor is absolutely positioned inside it, over
+   the text, so opening or closing an edit never changes the header's height —
+   the two boxes measure differently (the text wraps to two lines, an input
+   never does) and swapping one for the other made the card jump. */
+.card_title_slot {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.card_title {
+    font-family: var(--font-courier);
+    font-size: calc(0.9rem * var(--card-zoom, 1));
+    font-weight: bold;
+    line-height: 1.3;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.scene_number {
+    opacity: 0.75;
+    margin-right: 2px;
+}
+
+/* Editing a heading in place. Tinted rather than white so the field reads as
+   open on top of the header's own color, whatever that color is. */
+/* Hidden, not unmounted, while its editor is open: it is what holds the
+   header's height steady underneath. */
+.card_title_hidden {
+    visibility: hidden;
+}
+
+.card_title_input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    /* The card sets user-select:none so a drag can't smear a text selection
+       across the grid; an open editor has to opt back in or its own text can't
+       be selected. */
+    user-select: text;
+    font-family: var(--font-courier);
+    font-size: calc(0.9rem * var(--card-zoom, 1));
+    font-weight: bold;
+    line-height: 1.3;
+    color: white;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    border-radius: 4px;
+    padding: 0 4px;
+    margin: 0;
+    outline: none;
+}
+
+.card_title_input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Page count, in the header so the body stays pure synopsis. */
+.card_length {
+    flex-shrink: 0;
+    font-size: calc(11px * var(--card-zoom, 1));
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* The body is always a light tint of the scene color (mixed toward white by the
+   inline style), so black text reads on it in every theme. */
+.card_content {
+    flex: 1;
+    display: flex;
+    padding: calc(10px * var(--card-zoom, 1)) calc(12px * var(--card-zoom, 1));
+    overflow: hidden;
+}
+
+.card_synopsis {
+    flex: 1;
+    font-family: var(--font-courier);
+    font-size: calc(0.85rem * var(--card-zoom, 1));
+    line-height: 1.4;
+    color: black;
+    white-space: pre-wrap;
+    overflow: hidden;
+}
+
+.card_synopsis_empty {
+    color: rgba(0, 0, 0, 0.4);
+    font-style: italic;
+}
+
+.card_synopsis_input {
+    flex: 1;
+    min-width: 0;
+    user-select: text;
+    font-family: var(--font-courier);
+    font-size: calc(0.85rem * var(--card-zoom, 1));
+    line-height: 1.4;
+    color: black;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    resize: none;
+    outline: none;
+    white-space: pre-wrap;
+}
+
+.card_synopsis_input::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+    font-style: italic;
+}
+
+/* ── Zoom pill ────────────────────────────────────────────────────────────── */
+
+/* Same pill, same offsets as the board canvas's zoom control (see
+   BoardCanvas.module.css): both sit immediately right of the panel-switcher
+   handles, so the chrome lands in the same place whichever view is up. A
+   sibling of the scroll container rather than a child of it, so it stays put
+   while the cards scroll under it. */
+.zoom_controls {
+    position: absolute;
+    top: 8px;
+    left: 56px;
+    z-index: 13;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 36px;
+    padding: 0 4px;
+    border-radius: 16px;
+    background-color: var(--secondary);
+    color: var(--secondary-text);
+    user-select: none;
+}
+
+.zoom_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 28px;
+    border: none;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.zoom_btn:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
+.zoom_btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.zoom_level {
+    min-width: 38px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary-text);
+}
+
+/* Finger-sized on a touch device, matching the board pill's own coarse block. */
+@media (pointer: coarse) {
+    .zoom_controls {
+        left: 72px;
+        height: 44px;
+        border-radius: 22px;
+    }
+
+    .zoom_btn {
+        width: 30px;
+        height: 36px;
+        border-radius: 18px;
+    }
+}
+
+/* One card per row once there is no width for several side by side — which also
+   makes the zoom pill meaningless, so SceneCardsPanel drops it on phone.
+   The phone's navbar is a fixed overlay and the panel starts underneath it, so
+   the first row needs that clearance on top of the switcher's — unless the
+   timeline strip is open, in which case the panel already starts below the bar
+   (the same pair of cases .panel_switcher_anchor handles). */
+@media (max-width: 767px) {
+    .grid {
+        grid-template-columns: minmax(0, 1fr);
+        padding: calc(var(--navbar-height) + 52px) 16px 40px;
+    }
+
+    .timeline_open .grid {
+        padding-top: 52px;
+    }
+}

@@ -53,6 +53,8 @@
     "toggleSpellcheck": "맞춤법 검사 전환",
     "focusMode": "집중 모드",
     "dictate": "받아쓰기",
+    "viewScript": "대본 보기",
+    "viewIndexCards": "인덱스 카드 보기",
     "splitPanel": "패널 분할",
     "unsplitPanel": "패널 통합",
     "swapPanels": "패널 교체",

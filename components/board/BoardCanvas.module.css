@@ -661,7 +661,7 @@
         color 0.15s ease;
 }
 
-/* Armed. Matches the dropdown's active row (ViewOptionsDropdown) rather than the
+/* Armed. Matches the panel menu's active row (PanelMenu.module.css) rather than the
    accent colour, so a held-down tool reads as the same kind of state as every
    other toggle in the app. */
 .tool_btn_active {

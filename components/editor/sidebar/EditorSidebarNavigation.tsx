@@ -7,6 +7,7 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { Scene } from "@src/lib/screenplay/scenes";
 import { focusOnPosition } from "@src/lib/screenplay/editor";
+import { moveScene } from "@src/lib/screenplay/scene-reorder";
 import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
 import { Archive, Clapperboard, FolderTree, MessageSquare } from "lucide-react";
 import SidebarSceneItem from "./SidebarSceneItem";
@@ -212,42 +213,8 @@ const EditorSidebarNavigation = () => {
             return;
         }
 
-        const targetIndex = indicatorIndex;
-
-        // No-op if dropping in original position
-        if (targetIndex === dragIndex || targetIndex === dragIndex + 1) {
-            resetDrag();
-            return;
-        }
-
-        const dragScene = scenes[dragIndex];
-        const from = dragScene.position - 1;
-        const to = dragScene.nextPosition - 1;
-        const slice = editor.state.doc.slice(from, to);
-
-        const tr = editor.state.tr;
-        tr.delete(from, to);
-
-        let insertPos: number;
-        if (targetIndex <= dragIndex) {
-            insertPos = scenes[targetIndex].position - 1;
-        } else {
-            // targetIndex can be scenes.length (drop after last item)
-            const refPos =
-                targetIndex < scenes.length ? scenes[targetIndex].position - 1 : editor.state.doc.content.size;
-            insertPos = refPos - (to - from);
-        }
-
-        tr.insert(insertPos, slice.content);
-        editor.view.dispatch(tr);
-
-        // Optimistically reorder the scenes array so the sidebar updates immediately,
-        // before the debounced screenplay observer re-parses with accurate positions.
-        const reordered = [...scenes];
-        const [moved] = reordered.splice(dragIndex, 1);
-        const insertIndex = targetIndex > dragIndex ? targetIndex - 1 : targetIndex;
-        reordered.splice(insertIndex, 0, moved);
-        updateScenes(reordered);
+        const reordered = moveScene(editor, scenes, dragIndex, indicatorIndex);
+        if (reordered) updateScenes(reordered);
 
         resetDrag();
     }, [dragIndex, indicatorIndex, scenes, editor, updateScenes, resetDrag]);

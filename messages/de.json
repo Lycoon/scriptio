@@ -54,6 +54,8 @@
     "toggleSpellcheck": "Rechtschreibprüfung ein/aus",
     "focusMode": "Fokus-Modus",
     "dictate": "Diktieren",
+    "viewScript": "Skriptansicht",
+    "viewIndexCards": "Karteikartenansicht",
     "splitPanel": "Panel teilen",
     "unsplitPanel": "Panel schließen",
     "swapPanels": "Panels tauschen",
