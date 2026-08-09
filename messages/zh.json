@@ -52,7 +52,8 @@
     "toggleComments": "切换显示评论",
     "toggleSpellcheck": "切换拼写检查",
     "focusMode": "聚焦模式",
-    "dictate": "语音输入",    "splitPanel": "分割面板",
+    "dictate": "语音输入",
+    "splitPanel": "分割面板",
     "unsplitPanel": "合并面板",
     "swapPanels": "交换面板",
     "draftEditor": "草稿编辑器",
@@ -559,9 +560,9 @@
     "insertPageBreak": "插入分页符",
     "removePageBreak": "移除分页符",
     "pageBreakHint": "手动分页符",
-        "sceneOptions": "场景选项",
-        "characterOptions": "角色选项",
-        "locationOptions": "位置选项"
+    "sceneOptions": "场景选项",
+    "characterOptions": "角色选项",
+    "locationOptions": "位置选项"
   },
   "popup": {
     "character": {
@@ -621,7 +622,14 @@
     "play": "播放",
     "pause": "暂停",
     "rename": "双击重命名",
-    "storageLimitReached": "存储空间已满 — 无法保存此文件"
+    "storageLimitReached": "存储空间已满 — 无法保存此文件",
+    "linkCards": "连接卡片",
+    "cutLinks": "剪断连接",
+    "linkHintSource": "点按卡片开始连接",
+    "linkHintTarget": "点按要连接的卡片",
+    "cutHint": "点按连接或划过它即可剪断",
+    "resizeCards": "调整卡片大小",
+    "resizeHint": "拖动卡片的角来调整大小"
   },
   "production": {
     "title": "制作",

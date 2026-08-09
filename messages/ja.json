@@ -52,7 +52,8 @@
     "toggleComments": "コメントの表示/非表示",
     "toggleSpellcheck": "スペルチェックの切り替え",
     "focusMode": "集中モード",
-    "dictate": "音声入力",    "splitPanel": "パネルを分割",
+    "dictate": "音声入力",
+    "splitPanel": "パネルを分割",
     "unsplitPanel": "パネルを閉じる",
     "swapPanels": "パネルを入れ替え",
     "draftEditor": "下書きエディター",
@@ -559,9 +560,9 @@
     "insertPageBreak": "改ページを挿入",
     "removePageBreak": "改ページを削除",
     "pageBreakHint": "手動改ページ",
-        "sceneOptions": "シーンのオプション",
-        "characterOptions": "登場人物のオプション",
-        "locationOptions": "場所のオプション"
+    "sceneOptions": "シーンのオプション",
+    "characterOptions": "登場人物のオプション",
+    "locationOptions": "場所のオプション"
   },
   "popup": {
     "character": {
@@ -621,7 +622,14 @@
     "play": "再生",
     "pause": "一時停止",
     "rename": "ダブルクリックで名前を変更",
-    "storageLimitReached": "ストレージの上限に達しました — このファイルを保存できませんでした"
+    "storageLimitReached": "ストレージの上限に達しました — このファイルを保存できませんでした",
+    "linkCards": "カードを接続",
+    "cutLinks": "接続を切る",
+    "linkHintSource": "カードをタップして接続を開始",
+    "linkHintTarget": "接続先のカードをタップ",
+    "cutHint": "接続をタップまたはなぞって切ります",
+    "resizeCards": "カードのサイズ変更",
+    "resizeHint": "カードの角をドラッグしてサイズを変更します"
   },
   "production": {
     "title": "プロダクション",

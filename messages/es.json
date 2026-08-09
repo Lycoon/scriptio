@@ -52,7 +52,8 @@
     "toggleComments": "Mostrar/ocultar comentarios",
     "toggleSpellcheck": "Activar/desactivar corrector ortográfico",
     "focusMode": "Modo concentración",
-    "dictate": "Dictar",    "splitPanel": "Dividir panel",
+    "dictate": "Dictar",
+    "splitPanel": "Dividir panel",
     "unsplitPanel": "Unir panel",
     "swapPanels": "Intercambiar paneles",
     "draftEditor": "Editor de borrador",
@@ -559,9 +560,9 @@
     "insertPageBreak": "Insertar salto de página",
     "removePageBreak": "Quitar salto de página",
     "pageBreakHint": "Salto de página manual",
-        "sceneOptions": "Opciones de escena",
-        "characterOptions": "Opciones de personaje",
-        "locationOptions": "Opciones de localización"
+    "sceneOptions": "Opciones de escena",
+    "characterOptions": "Opciones de personaje",
+    "locationOptions": "Opciones de localización"
   },
   "popup": {
     "character": {
@@ -621,7 +622,14 @@
     "play": "Reproducir",
     "pause": "Pausar",
     "rename": "Doble clic para renombrar",
-    "storageLimitReached": "Límite de almacenamiento alcanzado: no se pudo guardar este archivo"
+    "storageLimitReached": "Límite de almacenamiento alcanzado: no se pudo guardar este archivo",
+    "linkCards": "Enlazar tarjetas",
+    "cutLinks": "Cortar enlaces",
+    "linkHintSource": "Toca una tarjeta para empezar un enlace",
+    "linkHintTarget": "Toca la tarjeta con la que enlazar",
+    "cutHint": "Toca un enlace o deslízate sobre él para cortarlo",
+    "resizeCards": "Redimensionar tarjetas",
+    "resizeHint": "Arrastra la esquina de una tarjeta para redimensionarla"
   },
   "production": {
     "title": "Producción",

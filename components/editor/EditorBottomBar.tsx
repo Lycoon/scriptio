@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Menu } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { useIsPhone, useIsTouch, useViewportBottomInset } from "@src/lib/utils/hooks";
 import { KEYBOARD_MIN_HEIGHT } from "@src/lib/editor/visible-band";
 import { useActiveEditor } from "@src/lib/editor/use-active-editor";
+import { useEditorFocused } from "@src/lib/editor/use-editor-focused";
 import { HistoryControls } from "@components/navbar/ProjectNavbarShared";
 import EditorFooterActions from "@components/project/EditorFooterActions";
 import MobileFormatToolbar from "./MobileFormatToolbar";
@@ -20,9 +21,11 @@ import styles from "./EditorBottomBar.module.css";
  * ([EditorFooter]); on a tablet that bubble would be a second floating island
  * stacked under this row, so they hide here instead.
  *
- * The menu is always mounted and only *revealed*: unmounting it would tear down
- * the dictation session it hosts ([EditorFooterActions]) the instant the menu was
- * closed.
+ * The menu is only *revealed* on open, never mounted then: unmounting it would
+ * tear down the dictation session it hosts ([EditorFooterActions]) the instant
+ * the menu was closed. It does go when the whole row goes — see [EditorBottomBar]
+ * for when that is — and takes any dictation with it, which is the right end for
+ * a session with no focused editor left to dictate into.
  */
 const ViewOptionsIsland = () => {
     const t = useTranslations("navbar");
@@ -57,35 +60,55 @@ const ViewOptionsIsland = () => {
                     setOpen((prev) => !prev);
                 }}
             >
-                <Menu size={18} />
+                {/* Points at what the tap does, not at what is behind the button:
+                    the menu opens upward out of this island, so up is "show me"
+                    and down is "put it away". A burger here read as one more of
+                    the format pill's alignment icons a few centimetres to the
+                    left. */}
+                {open ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
             </button>
         </div>
     );
 };
 
 /**
- * The row of floating chrome along the bottom of the editor on a touch device:
- * undo/redo on the left, the format pill ([MobileFormatToolbar]) in the middle,
- * the view-mode burger on the right.
+ * The row of floating chrome along the bottom of the screen while something is
+ * being written on a touch device: undo/redo on the left, the format pill
+ * ([MobileFormatToolbar]) in the middle, the view-mode burger on the right.
  *
  * Owns the positioning for all three. `--vv-inset` is how much an on-screen
  * keyboard covers, so the row rides its top edge; below KEYBOARD_MIN_HEIGHT it is
  * zeroed and the CSS floors the row at its resting height instead. See
  * .bar_row for why that cutoff is not simply "anything at all".
  *
- * Renders on any touch device but the flanking islands are tablet-only: a phone
- * has both elsewhere already — undo/redo in the navbar's edit-mode cluster, the
- * view toggles in the footer bubble — and no width to spare for three islands.
- * With no islands and no pill (nothing focused) the row is an empty, transparent,
- * click-through box, so it costs nothing to leave mounted.
+ * Present exactly while an editor holds focus, and nothing else. It used to stay
+ * mounted throughout and change shape underneath the reader: a lone burger over a
+ * board — where every control behind it acts on a text editor that isn't there —
+ * then undo/redo added once a panel with an editor was up, then the format pill
+ * added again on focus. Three shapes for chrome nobody had asked for yet. Now
+ * there is one shape and it means one thing. The price is that undo/redo and the
+ * view toggles, which have nowhere else to live on a tablet, want a tap into the
+ * script first.
+ *
+ * The flanking islands stay tablet-only: a phone has both elsewhere already —
+ * undo/redo in the navbar's edit-mode cluster, the view toggles in the footer
+ * bubble — and no width to spare for three islands.
  */
 const EditorBottomBar = () => {
     const isTouch = useIsTouch();
     const isPhone = useIsPhone();
-    // The editor undo/redo act on. Resolved from the *panel* rather than from
-    // focus, because the island stays up while nothing is focused — reading a
-    // script and undoing the last edit is a normal thing to do.
+    // The editor being written in, resolved from the *panel* so a split answers
+    // with the side holding focus rather than the one that happens to be primary.
     const historyEditor = useActiveEditor();
+    // Whether it actually holds focus — which is not the same question as "is the
+    // keyboard up": the screenplay search raises one over an <input> of its own,
+    // and none of this row applies to that.
+    const editorFocused = useEditorFocused(historyEditor);
+    // Handed null, that hook keeps reporting whatever it last latched — it has
+    // nothing to re-seed from and its consumers all need an editor anyway (see
+    // useEditorFocused). Switching to a board is exactly that case, so pair it
+    // with the editor still being there or the row survives the switch.
+    const isWriting = !!historyEditor && editorFocused;
 
     // How much is covered at the bottom of the viewport right now. Only a real
     // keyboard is worth riding: dismissing one on an iPad leaves ~173px still
@@ -97,7 +120,7 @@ const EditorBottomBar = () => {
 
     const hasIslands = isTouch && !isPhone;
 
-    if (!isTouch) return null;
+    if (!isTouch || !isWriting) return null;
 
     return (
         <div

@@ -52,7 +52,8 @@
     "toggleComments": "댓글 표시 전환",
     "toggleSpellcheck": "맞춤법 검사 전환",
     "focusMode": "집중 모드",
-    "dictate": "받아쓰기",    "splitPanel": "패널 분할",
+    "dictate": "받아쓰기",
+    "splitPanel": "패널 분할",
     "unsplitPanel": "패널 통합",
     "swapPanels": "패널 교체",
     "draftEditor": "초안 편집기",
@@ -559,9 +560,9 @@
     "insertPageBreak": "페이지 나누기 삽입",
     "removePageBreak": "페이지 나누기 제거",
     "pageBreakHint": "수동 페이지 나누기",
-        "sceneOptions": "장면 옵션",
-        "characterOptions": "인물 옵션",
-        "locationOptions": "장소 옵션"
+    "sceneOptions": "장면 옵션",
+    "characterOptions": "인물 옵션",
+    "locationOptions": "장소 옵션"
   },
   "popup": {
     "character": {
@@ -621,7 +622,14 @@
     "play": "재생",
     "pause": "일시정지",
     "rename": "더블클릭하여 이름 변경",
-    "storageLimitReached": "저장 용량 한도 초과 — 이 파일을 저장할 수 없습니다"
+    "storageLimitReached": "저장 용량 한도 초과 — 이 파일을 저장할 수 없습니다",
+    "linkCards": "카드 연결",
+    "cutLinks": "연결 끊기",
+    "linkHintSource": "카드를 탭해 연결을 시작하세요",
+    "linkHintTarget": "연결할 카드를 탭하세요",
+    "cutHint": "연결을 탭하거나 가로질러 끌어 끊으세요",
+    "resizeCards": "카드 크기 조절",
+    "resizeHint": "카드 모서리를 끌어 크기를 조절하세요"
   },
   "production": {
     "title": "프로덕션",
