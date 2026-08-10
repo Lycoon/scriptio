@@ -23,6 +23,7 @@ import { useViewContext } from "@src/context/ViewContext";
 import { useActiveEditor } from "@src/lib/editor/use-active-editor";
 import { getDictationLanguage, useDictation } from "@src/lib/editor/use-dictation";
 import { uploadToCloudPopup } from "@src/lib/screenplay/popup";
+import { usePagePanLock } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 
 import { useProjectNavbar } from "./useProjectNavbar";
@@ -160,8 +161,19 @@ const ProjectNavbarMobile = () => {
         setMobileEditMode(false);
     };
 
+    // The bar is a fixed overlay on phone, so a drag that lands on it and pans the
+    // page takes the bar off the top of the screen with it — most visibly while
+    // editing, when the keyboard gives WKWebView's scroll view the room to move.
+    // Refuse those pans here (see usePagePanLock). Everything that scrolls — the
+    // burger drawer, the search panel, the tool sheets — is portaled to <body> and
+    // so sits outside this subtree entirely.
+    const panLockRef = usePagePanLock<HTMLElement>();
+
     return (
-        <nav className={join(navbar.container, chromeHidden ? navbar.container_hidden : "")}>
+        <nav
+            ref={panLockRef}
+            className={join(navbar.container, chromeHidden ? navbar.container_hidden : "")}
+        >
             <nav className={navbar.mobile_bar}>
                 {/* Left cluster: edit-mode controls (leave edit mode + undo/redo)
                     while editing; otherwise the back-to-projects arrow. */}

@@ -209,6 +209,112 @@ const useKeyboardInset = (enabled: boolean): number => useViewportInset(enabled,
 const useViewportBottomInset = (enabled: boolean): number =>
     useViewportInset(enabled, viewportBottomInset);
 
+/** Movement (px) before a drag is committed to an axis — below this it's a tap. */
+const PAN_AXIS_THRESHOLD = 3;
+
+/**
+ * Nearest ancestor of `target`, up to and including `root`, that can actually
+ * scroll along `axis` — i.e. is a scroll container on that axis *and* has content
+ * overflowing it. Null when the drag has nothing inside the chrome to scroll, in
+ * which case the browser would hand it to the page.
+ */
+const scrollerForAxis = (target: EventTarget | null, root: HTMLElement, axis: "x" | "y"): HTMLElement | null => {
+    let el = target instanceof Element ? target : null;
+    while (el) {
+        if (el instanceof HTMLElement) {
+            const style = getComputedStyle(el);
+            const overflow = axis === "y" ? style.overflowY : style.overflowX;
+            const scrolls =
+                axis === "y" ? el.scrollHeight > el.clientHeight : el.scrollWidth > el.clientWidth;
+            if ((overflow === "auto" || overflow === "scroll") && scrolls) return el;
+        }
+        if (el === root) return null;
+        el = el.parentElement;
+    }
+    return null;
+};
+
+/**
+ * Keep a drag that lands on a piece of fixed chrome from panning the page behind
+ * it, and return the ref to hang on that chrome.
+ *
+ * The app shell is pinned to the viewport (html/body `overflow: clip`), but with
+ * the on-screen keyboard up WKWebView still gives its scroll view room to move —
+ * the keyboard is added as a bottom content inset — so a drag the page has no
+ * inner scroller for pans the whole document instead. Fixed chrome is positioned
+ * against the layout viewport, so that pan carries the navbar and the format bar
+ * clean off the screen, and they only come back when [ProjectWorkspace]'s anchor
+ * guard snaps the document back at the end of the gesture. Both must stay put for
+ * the whole gesture, so the pan has to be refused where it starts.
+ *
+ * Only pans with nowhere to go are refused. The axis is decided from the first
+ * few px of the drag and matched against the scrollers inside the chrome, so the
+ * format bar's sideways scroll and its upward menus keep working while a vertical
+ * drag across those same controls — the gesture that used to take the bar with it
+ * — is swallowed. Their own `overscroll-behavior: contain` covers the rest: once a
+ * scroller is at its end, the leftover must not chain out to the document.
+ *
+ * A native non-passive listener rather than React's `onTouchMove`, which is
+ * registered passively and so cannot preventDefault. Handed back as a *callback*
+ * ref so the listeners follow the node itself: both consumers come and go with the
+ * mode they belong to, and an effect keyed on mount would have run against a null
+ * ref and never re-run when the chrome finally appeared.
+ */
+const usePagePanLock = <T extends HTMLElement>(): ((node: T | null) => void) => {
+    const detachRef = useRef<(() => void) | null>(null);
+
+    return useCallback((node: T | null) => {
+        detachRef.current?.();
+        detachRef.current = null;
+        if (!node) return;
+
+        let start: { x: number; y: number } | null = null;
+        // null while the drag is still too small to have an axis; true once it has
+        // been resolved to one nothing here can absorb, and is refused for the rest
+        // of the gesture (the axis must not flip mid-drag).
+        let block: boolean | null = null;
+
+        const onTouchStart = (e: TouchEvent) => {
+            const touch = e.touches[0];
+            start = e.touches.length === 1 && touch ? { x: touch.clientX, y: touch.clientY } : null;
+            block = null;
+        };
+
+        const onTouchMove = (e: TouchEvent) => {
+            // A second finger means pinch-zoom, which is the browser's to handle.
+            if (!start || e.touches.length > 1) return;
+            const touch = e.touches[0];
+            if (!touch) return;
+
+            if (block === null) {
+                const dx = touch.clientX - start.x;
+                const dy = touch.clientY - start.y;
+                if (Math.abs(dx) < PAN_AXIS_THRESHOLD && Math.abs(dy) < PAN_AXIS_THRESHOLD) return;
+                const axis = Math.abs(dy) >= Math.abs(dx) ? "y" : "x";
+                block = !scrollerForAxis(e.target, node, axis);
+            }
+
+            if (block) e.preventDefault();
+        };
+
+        const onTouchEnd = () => {
+            start = null;
+            block = null;
+        };
+
+        node.addEventListener("touchstart", onTouchStart, { passive: true });
+        node.addEventListener("touchmove", onTouchMove, { passive: false });
+        node.addEventListener("touchend", onTouchEnd, { passive: true });
+        node.addEventListener("touchcancel", onTouchEnd, { passive: true });
+        detachRef.current = () => {
+            node.removeEventListener("touchstart", onTouchStart);
+            node.removeEventListener("touchmove", onTouchMove);
+            node.removeEventListener("touchend", onTouchEnd);
+            node.removeEventListener("touchcancel", onTouchEnd);
+        };
+    }, []);
+};
+
 const useProjectIdFromUrl = () => {
     const searchParams = useSearchParams();
     return searchParams.get("projectId") ?? "";
@@ -695,6 +801,7 @@ export {
     useIsTouch,
     useKeyboardInset,
     useViewportBottomInset,
+    usePagePanLock,
     useCachedProjects,
     useCachedProjectInfo,
     useProjectIdFromUrl,
