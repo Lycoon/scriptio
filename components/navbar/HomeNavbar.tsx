@@ -13,12 +13,16 @@ import navbar from "./ProjectNavbar.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";
 
 interface HomeNavbarProps {
-    /** Phone only: opens the projects sidebar drawer (the burger lives here now). */
-    onOpenSidebar?: () => void;
+    /**
+     * Phone only: toggles the projects sidebar drawer (the burger lives here now).
+     * Both phone drawers sit below the navbar, so their opener stays tappable while
+     * they're open and has to close them again — see [ProjectPageContainer.module.css].
+     */
+    onToggleSidebar?: () => void;
 }
 
-const HomeNavbar = ({ onOpenSidebar }: HomeNavbarProps) => {
-    const { openDashboard } = useContext(DashboardContext);
+const HomeNavbar = ({ onToggleSidebar }: HomeNavbarProps) => {
+    const { isOpen, openDashboard, closeDashboard } = useContext(DashboardContext);
     const { user, isLoading } = useCookieUser();
     const isPhone = useIsPhone();
     const tNav = useTranslations("navbar");
@@ -29,6 +33,8 @@ const HomeNavbar = ({ onOpenSidebar }: HomeNavbarProps) => {
     // While the auth state is still loading, omit the tab arg so the modal
     // opens on its current activeTab instead of guessing wrong.
     const onOpen = () => {
+        // Second tap on the Settings icon closes the drawer it opened.
+        if (isOpen) return closeDashboard();
         if (isLoading) openDashboard();
         else openDashboard(user ? "Profile" : "Auth");
     };
@@ -44,7 +50,7 @@ const HomeNavbar = ({ onOpenSidebar }: HomeNavbarProps) => {
                     <div className={navbar.mobile_left}>
                         <button
                             className={join(navBtn.button, navbar.mobile_icon, navbar.home_burger)}
-                            onClick={onOpenSidebar}
+                            onClick={onToggleSidebar}
                             aria-label={tNav("menu")}
                         >
                             <Menu size={18} />

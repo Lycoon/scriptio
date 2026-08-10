@@ -697,11 +697,11 @@ export const createRevisionsExtension = (config: RevisionsConfig) => {
         name: "revisions",
 
         addProseMirrorPlugins() {
-            // One stable container, mounted via a single widget decoration — but
-            // ONLY while revisions are enabled. When disabled the plugin adds no
-            // decoration, schedules no frames, and stamps nothing, so it costs a
-            // single boolean check per transaction (the editor hot path stays
-            // exactly as it was before the feature).
+            // One stable container, mounted via a single widget decoration. It is
+            // always mounted (see `decorations` below) but stays EMPTY while
+            // revisions are hidden: no children are built, no frames scheduled and
+            // nothing is stamped, so the feature costs a single boolean check per
+            // transaction (the editor hot path stays exactly as it was before it).
             const overlay = document.createElement("div");
             overlay.className = "revision-overlay";
             overlay.setAttribute("contenteditable", "false");
@@ -770,10 +770,27 @@ export const createRevisionsExtension = (config: RevisionsConfig) => {
                     },
 
                     props: {
-                        // No decoration at all when display is hidden → ProseMirror
-                        // does no extra reconciliation for this plugin on the hot path.
+                        // The overlay widget stays mounted in EVERY mode, including
+                        // "hidden" — there it is simply emptied (see the view's
+                        // update below), which costs nothing beyond the single stable
+                        // widget every other mode already carries.
+                        //
+                        // Dropping the decoration instead (returning null) detaches
+                        // the overlay with its stripes still inside, and WebKit does
+                        // not repaint the area an absolutely-positioned child covered
+                        // when the zero-sized parent that holds it is removed — the
+                        // stripes sit in the parent's visual overflow, which its own
+                        // repaint rect doesn't span. On Safari that left the stripes
+                        // painted over every page the viewport had already drawn when
+                        // "No revision" was picked, while pages that had never been
+                        // painted (the renderer is viewport-culled) correctly showed
+                        // none. Removing the stripe elements themselves while the
+                        // overlay is still in the document repaints each one normally
+                        // — the path scroll culling and the "current" filter already
+                        // take on every frame.
                         decorations(state) {
-                            if (getDisplayMode() === "hidden") return null;
+                            // Hidden: overlay only — no live colouring of pending text.
+                            if (getDisplayMode() === "hidden") return DecorationSet.create(state.doc, [overlayDeco]);
 
                             // Colour the still-pending (not-yet-flushed) inserted
                             // text live, via cheap inline decorations rebuilt from

@@ -36,7 +36,7 @@ function ProjectsPageContent() {
     if (!projectId) {
         return (
             <>
-                <HomeNavbar onOpenSidebar={() => setSidebarOpen(true)} />
+                <HomeNavbar onToggleSidebar={() => setSidebarOpen((open) => !open)} />
                 <ProjectPageContainer sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
                 <DashboardModal />
             </>

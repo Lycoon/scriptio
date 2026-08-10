@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-import { useIsPhone, useIsTouch, useViewportBottomInset } from "@src/lib/utils/hooks";
+import { useIsPhone, useIsTouch, usePagePanLock, useViewportBottomInset } from "@src/lib/utils/hooks";
 import { KEYBOARD_MIN_HEIGHT } from "@src/lib/editor/visible-band";
 import { useActiveEditor } from "@src/lib/editor/use-active-editor";
 import { useEditorFocused } from "@src/lib/editor/use-editor-focused";
@@ -120,10 +120,16 @@ const EditorBottomBar = () => {
 
     const hasIslands = isTouch && !isPhone;
 
+    // A drag across the row must never pan the page: this bar is fixed chrome, so
+    // the pan would carry it off the screen (see usePagePanLock). The pill's own
+    // sideways scroll and its upward menus are exempted there.
+    const panLockRef = usePagePanLock<HTMLDivElement>();
+
     if (!isTouch || !isWriting) return null;
 
     return (
         <div
+            ref={panLockRef}
             className={styles.bar_row}
             // Handed to CSS as a length rather than set as `bottom` outright, so
             // the rule can floor it against the resting height — see .bar_row.

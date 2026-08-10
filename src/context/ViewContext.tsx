@@ -95,8 +95,8 @@ interface ViewContextType {
     /**
      * Subscribe to be called synchronously *just before* `isEndlessScroll`
      * flips — i.e. while the outgoing layout is still on screen and measurable.
-     * Editor panels use it to record which block sits at the top of their
-     * viewport, because the two modes render the same document at very
+     * Editor panels use it to record which block the reader is looking at (and
+     * how far into it), because the two modes render the same document at very
      * different heights and a raw scrollTop would land somewhere else entirely
      * (see DocumentEditorPanel's scroll anchoring). Returns an unsubscribe.
      */
