@@ -4,11 +4,14 @@ import { PDFAdapter, type PDFExportOptions } from "@src/lib/adapters/pdf/pdf-ada
 import type { VisualLine } from "@src/lib/adapters/pdf/pdf.worker";
 
 /**
- * The PDF exporter reads its geometry from the live editor DOM, which is scaled
- * on screen in phone paged mode (`transform: scale(var(--editor-zoom))`, the
- * fit-to-width ratio). These tests mount a miniature editor, scale it, and
- * assert the collected lines are the same as at 1× — the PDF must not depend on
- * the viewport the script happens to be open on.
+ * The PDF exporter reads its geometry from the live editor DOM, which the two
+ * phone view modes deform: paged scales the page to fit the viewport
+ * (`transform: scale(var(--editor-zoom))`) and endless drops the page
+ * rectangle altogether, widening the editor to the viewport and compressing the
+ * screenplay margins (`--display-margin-scale`). These tests mount a miniature
+ * editor, deform it each way, and assert the collected lines still match the
+ * canonical page — the PDF must not depend on the viewport the script happens
+ * to be open on.
  *
  * Runs in real Chromium and WebKit (see vitest.config.ts): the whole point is
  * browser layout, which jsdom cannot provide.
@@ -18,7 +21,7 @@ import type { VisualLine } from "@src/lib/adapters/pdf/pdf.worker";
 // booting a worker + jsPDF to produce a blob.
 type AdapterInternals = {
     collectLines(el: HTMLElement, options: PDFExportOptions): VisualLine[];
-    withCanonicalScale<T>(elements: (HTMLElement | undefined)[], measure: () => T): T;
+    withCanonicalLayout<T>(elements: (HTMLElement | undefined)[], measure: () => T): T;
     getPageLeftPx(el: HTMLElement): number;
 };
 
@@ -38,15 +41,22 @@ afterEach(() => {
 
 /**
  * Mount a stand-in for the editor: a scroll container holding a page-width
- * `.ProseMirror` whose scale is driven by the same CSS variable the real
- * stylesheet uses, so pinning it exercises the production code path.
+ * `.ProseMirror` whose scale, width and margin compression are driven by the
+ * same CSS variables and `!important` overrides the real stylesheets use, so
+ * pinning them exercises the production code path.
+ *
+ * `.endless` on the scroller reproduces the phone endless-scroll mode from
+ * EditorPanel.module.css: a phone-narrow viewport, an editor widened to fill it
+ * instead of the page, and screenplay margins compressed to 0.3×.
  */
 const mountEditor = () => {
     const style = document.createElement("style");
     style.textContent = `
         .test-scroller { width: 600px; height: 300px; overflow: auto; }
         .test-pm {
-            width: 612px;
+            --page-width: 612px;
+            --display-margin-scale: 1;
+            width: var(--page-width) !important;
             box-sizing: border-box;
             font: 16px monospace;
             line-height: 16px;
@@ -55,9 +65,16 @@ const mountEditor = () => {
             transform: scale(var(--editor-zoom, 1));
             transform-origin: top center;
         }
-        .test-pm p { margin: 0 0 16px 0; padding: 0 96px; }
-        .test-pm p.dialogue { padding: 0 168px 0 240px; }
-        .test-pm p.character { padding: 0 0 0 336px; text-transform: uppercase; }
+        .test-pm p { margin: 0 0 16px 0; padding: 0 calc(96px * var(--display-margin-scale)); }
+        .test-pm p.dialogue {
+            padding: 0 calc(168px * var(--display-margin-scale)) 0 calc(240px * var(--display-margin-scale));
+        }
+        .test-pm p.character {
+            padding: 0 0 0 calc(336px * var(--display-margin-scale));
+            text-transform: uppercase;
+        }
+        .test-scroller.endless { width: 390px; }
+        .test-scroller.endless .test-pm { width: 100% !important; --display-margin-scale: 0.3; }
     `;
     document.head.appendChild(style);
 
@@ -99,7 +116,12 @@ const signature = (adapter: PDFAdapter, editor: HTMLElement): string[] => {
     });
 };
 
-describe("PDF export is invariant of the editor's on-screen scale", () => {
+/** Page-relative X of the first line of the given paragraph type, out of a
+ *  {@link signature} — its third field. */
+const firstX = (lines: string[], type: string): number =>
+    Number(lines.find((line) => line.startsWith(`${type}|`))!.split("|")[2]);
+
+describe("PDF export is invariant of the editor's on-screen layout", () => {
     // 0.48 is about what a phone-width viewport fits a US Letter page to; 0.8
     // covers a roomier device so the assertion isn't tied to one ratio.
     for (const scale of [0.48, 0.8]) {
@@ -116,38 +138,63 @@ describe("PDF export is invariant of the editor's on-screen scale", () => {
             // contaminated by the scale, otherwise nothing is being proven.
             expect(signature(adapter, editor)).not.toEqual(canonical);
 
-            const pinned = internals(adapter).withCanonicalScale([editor], () => signature(adapter, editor));
+            const pinned = internals(adapter).withCanonicalLayout([editor], () => signature(adapter, editor));
             expect(pinned).toEqual(canonical);
         });
     }
 
-    it("restores the on-screen scale and scroll position afterwards", () => {
+    it("matches the page layout in phone endless-scroll mode", () => {
         const adapter = new PDFAdapter();
         const { scroller, editor } = mountEditor();
-        editor.style.setProperty("--editor-zoom", "0.48");
+
+        const canonical = signature(adapter, editor);
+        expect(canonical.length).toBeGreaterThan(6);
+
+        scroller.classList.add("endless");
+
+        // Endless reflows the text into the viewport at 0.3× margins, so the
+        // raw measurements must actually be contaminated — the whole layout
+        // differs, and every left offset is compressed towards the page edge —
+        // otherwise the assertion below proves nothing. (Line *count* is no
+        // guard here: the compressed margins widen the dialogue column as much
+        // as they narrow the action one, so the totals can coincide.)
+        const reflowed = signature(adapter, editor);
+        expect(reflowed).not.toEqual(canonical);
+        expect(firstX(reflowed, "dialogue")).toBeLessThan(firstX(canonical, "dialogue"));
+
+        const pinned = internals(adapter).withCanonicalLayout([editor], () => signature(adapter, editor));
+        expect(pinned).toEqual(canonical);
+    });
+
+    it("restores the on-screen layout and scroll position afterwards", () => {
+        const adapter = new PDFAdapter();
+        const { scroller, editor } = mountEditor();
+        scroller.classList.add("endless");
         editor.style.setProperty("opacity", "0.9"); // an unrelated inline style must survive
 
-        const scaledWidth = editor.getBoundingClientRect().width;
+        const reflowedWidth = editor.getBoundingClientRect().width;
         scroller.scrollTop = scroller.scrollHeight - scroller.clientHeight;
         const { scrollTop } = scroller;
         expect(scrollTop).toBeGreaterThan(0);
 
-        internals(adapter).withCanonicalScale([editor], () => signature(adapter, editor));
+        internals(adapter).withCanonicalLayout([editor], () => signature(adapter, editor));
 
-        expect(editor.getBoundingClientRect().width).toBeCloseTo(scaledWidth, 1);
+        expect(editor.getBoundingClientRect().width).toBeCloseTo(reflowedWidth, 1);
         expect(editor.style.transform).toBe("");
+        expect(editor.style.width).toBe("");
+        expect(editor.style.getPropertyValue("--display-margin-scale")).toBe("");
         expect(editor.style.opacity).toBe("0.9");
         expect(scroller.scrollTop).toBe(scrollTop);
     });
 
-    it("restores the scale even when the measurement throws", () => {
+    it("restores the layout even when the measurement throws", () => {
         const adapter = new PDFAdapter();
         const { editor } = mountEditor();
         editor.style.setProperty("--editor-zoom", "0.48");
         const scaledWidth = editor.getBoundingClientRect().width;
 
         expect(() =>
-            internals(adapter).withCanonicalScale([editor], () => {
+            internals(adapter).withCanonicalLayout([editor], () => {
                 throw new Error("measurement failed");
             }),
         ).toThrow("measurement failed");
@@ -155,14 +202,16 @@ describe("PDF export is invariant of the editor's on-screen scale", () => {
         expect(editor.getBoundingClientRect().width).toBeCloseTo(scaledWidth, 1);
     });
 
-    it("keeps an inline scale the editor itself set", () => {
+    it("keeps inline display overrides the editor itself set", () => {
         const adapter = new PDFAdapter();
         const { editor } = mountEditor();
         editor.style.setProperty("transform", "scale(0.5)", "important");
+        editor.style.setProperty("--display-margin-scale", "0.3");
 
-        internals(adapter).withCanonicalScale([editor], () => signature(adapter, editor));
+        internals(adapter).withCanonicalLayout([editor], () => signature(adapter, editor));
 
         expect(editor.style.transform).toBe("scale(0.5)");
         expect(editor.style.getPropertyPriority("transform")).toBe("important");
+        expect(editor.style.getPropertyValue("--display-margin-scale")).toBe("0.3");
     });
 });

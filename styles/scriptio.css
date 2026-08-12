@@ -301,15 +301,32 @@
     /* A single overlay layer mounted at the editor origin (a stable widget
        decoration). It owns the absolutely-positioned stripe/asterisk elements
        painted by the revisions extension's overlay renderer; their top/left/
-       size/colour are all set inline. Sits above the content background but
-       below the pagination chrome (z-index 10) at the page margins. */
+       size/colour are all set inline.
+
+       z-index 11 paints it above .pagination-overlay (z-index: 10), same tier as
+       .spellcheck-error below and for the same reason. It only matters where the
+       stripe is tucked INSIDE the page's left margin instead of the canvas gutter
+       — the phone's paged view, and pinched desktop windows (see the stripe
+       geometry in revisions-extension.ts) — because there it shares x-range with
+       the page chrome, which paints an opaque page background across the full
+       page width.
+
+       Most break widgets are harmless at z-index 4: content-visibility: auto
+       (containOffscreen) implies paint containment, which makes the widget a
+       stacking context and confines its overlay to the widget's own z-index:auto
+       level. MID-NODE SENTENCE SPLITS are the exception — they are deliberately
+       exempt from that containment (it would clip the overlay escaping the
+       parent <p>'s padding), so their z-index:10 overlay competes directly here
+       and used to paint its footer/gap/header band straight over the stripe of a
+       node straddling the break. Asterisks are culled to the content band, so
+       raising the layer never puts one over a header or footer. */
     .revision-overlay {
         position: absolute;
         top: 0;
         left: 0;
         width: 0;
         height: 0;
-        z-index: 4;
+        z-index: 11;
         pointer-events: none;
     }
 
