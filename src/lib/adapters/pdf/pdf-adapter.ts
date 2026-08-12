@@ -59,6 +59,10 @@ const PDF_PAGE_SIZES: Record<PageFormat, { width: number; height: number }> = {
     A4: { width: PAGE_SIZES.A4.pageWidth * PX_TO_PT, height: PAGE_SIZES.A4.pageHeight * PX_TO_PT },
 };
 
+/** Display-only declarations the measurement pass overrides on each editor and
+ *  restores afterwards — see {@link PDFAdapter.withCanonicalLayout}. */
+const CANONICAL_PINNED_PROPERTIES = ["transform", "width", "--display-margin-scale"] as const;
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Map a `ScriptFont` value to the jsPDF font-family name. */
@@ -131,10 +135,10 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         const titlePageEl = options.titlePageElement;
 
         // Every coordinate below comes from the live DOM, so the whole geometry
-        // pass runs with the editor's on-screen scaling pinned to 1× — see
-        // `withCanonicalScale`. Keeping it in a single closure means the layout
-        // is neutralised (and restored) exactly once per export.
-        const measured = this.withCanonicalScale([editorEl, titlePageEl], () => {
+        // pass runs with the editor's display-only layout neutralised — see
+        // `withCanonicalLayout`. Keeping it in a single closure means the layout
+        // is pinned (and restored) exactly once per export.
+        const measured = this.withCanonicalLayout([editorEl, titlePageEl], () => {
             // Header/footer columns are laid out within the configured page
             // margins: the editor's `.pagination-header-area` /
             // `.pagination-footer-area` are padded by
@@ -242,37 +246,60 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
         throw new Error("Method not implemented.");
     }
 
-    // ── Canonical (unscaled) measurement ────────────────────────────────────
+    // ── Canonical (page-shaped) measurement ─────────────────────────────────
 
     /**
-     * Run `measure` with the editors' display-only scaling pinned to 1×, so
-     * every DOM coordinate it reads is the canonical page geometry.
+     * Run `measure` with the editors' display-only layout pinned to the
+     * canonical page, so every DOM coordinate it reads is the real page
+     * geometry rather than whatever the current screen renders.
      *
-     * The editor is scaled on screen in phone paged mode — `transform:
-     * scale(var(--editor-zoom))`, the fit-to-width ratio — which feeds straight
-     * into `getBoundingClientRect()` / `Range.getClientRects()`, the only source
-     * of coordinates in this exporter. Left in place, a 0.48× fit shrinks every
-     * X offset and line gap by half while the PDF still draws a fixed 12pt font,
-     * so the exported layout would depend on the screen the user happened to be
-     * writing on.
+     * Two phone view modes deform that geometry, and both feed straight into
+     * `getBoundingClientRect()` / `Range.getClientRects()`, the only source of
+     * coordinates in this exporter:
      *
-     * Pinning the layout is preferred over dividing the measurements by the
-     * scale factor: `getComputedStyle` lengths (which this pass also reads) do
-     * not follow the transform, so the two would need opposite corrections. The
-     * override is set `!important` so no stylesheet rule can outvote it, and the
-     * original inline declaration is restored afterwards.
+     *  - PAGED: the page is scaled to fit the viewport — `transform:
+     *    scale(var(--editor-zoom))`. Left in place, a 0.48× fit shrinks every X
+     *    offset and line gap by half while the PDF still draws a fixed 12pt
+     *    font.
+     *  - ENDLESS: there is no page rectangle at all — the editor is widened to
+     *    the viewport (`width: 100%`) and the screenplay margins are compressed
+     *    to `--display-margin-scale: 0.3` so text reflows large on a narrow
+     *    screen (see EditorPanel.module.css). Left in place, the export keeps
+     *    those compressed margins and the viewport's much earlier line wrapping
+     *    — the layout of the PDF is then the phone's, not the page's.
+     *
+     * So both are neutralised here: the scale is dropped, the margins go back
+     * to 1×, and the editor is widened back to `--page-width` (the same custom
+     * property the pagination stylesheet sizes the page from, left untouched by
+     * either mode; skipped if it isn't set, rather than collapsing the element
+     * to `width: auto`).
+     *
+     * Pinning the layout is preferred over correcting the measurements after
+     * the fact: `getComputedStyle` lengths (which this pass also reads) don't
+     * follow the transform, so scale and margins would need opposite
+     * corrections. Overrides are set `!important` so no stylesheet rule can
+     * outvote them, and the original inline declarations are restored
+     * afterwards.
+     *
+     * The hidden page-break widgets of endless mode need no such treatment:
+     * `collectLines` finds them by class whatever their `display`, and the
+     * worker resets its Y cursor to the top of the page on every break, so the
+     * gap those widgets would have occupied is never read.
      *
      * Nothing here yields to the event loop, so the browser never paints the
-     * unscaled state — the export is invisible to the user. Scroll offsets are
-     * restored explicitly, since dropping the scale can change the layout box
-     * and clamp the scroll position of every scrollable ancestor.
+     * pinned state — the export is invisible to the user. Scroll offsets are
+     * restored explicitly, since re-shaping the page changes the layout box and
+     * can clamp the scroll position of every scrollable ancestor.
      */
-    private withCanonicalScale<T>(elements: (HTMLElement | undefined)[], measure: () => T): T {
+    private withCanonicalLayout<T>(elements: (HTMLElement | undefined)[], measure: () => T): T {
         const targets = elements.filter((el): el is HTMLElement => !!el);
         const savedStyles = targets.map((el) => ({
             el,
-            transform: el.style.getPropertyValue("transform"),
-            transformPriority: el.style.getPropertyPriority("transform"),
+            declarations: CANONICAL_PINNED_PROPERTIES.map((name) => ({
+                name,
+                value: el.style.getPropertyValue(name),
+                priority: el.style.getPropertyPriority(name),
+            })),
         }));
 
         const savedScroll = new Map<Element, { top: number; left: number }>();
@@ -286,21 +313,34 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
         try {
             for (const el of targets) {
+                // Both writers of --page-width (the pagination extension's
+                // syncVars and the editor wrapper's inline style) emit px, so
+                // anything else is not a length to pin to — leave the width as
+                // it is rather than guess at it.
+                const rawPageWidth = getComputedStyle(el).getPropertyValue("--page-width").trim();
+                const pageWidthPx = rawPageWidth.endsWith("px") ? parseFloat(rawPageWidth) : NaN;
                 el.style.setProperty("transform", "none", "important");
+                el.style.setProperty("--display-margin-scale", "1", "important");
+                if (Number.isFinite(pageWidthPx) && pageWidthPx > 0) {
+                    el.style.setProperty("width", `${pageWidthPx}px`, "important");
+                }
             }
             // No explicit reflow needed: the first geometry read inside
             // `measure` flushes the pending layout for us.
             return measure();
         } finally {
             for (const saved of savedStyles) {
-                const restore = (name: string, value: string, priority: string) => {
+                for (const { name, value, priority } of saved.declarations) {
+                    // Always clear first: WebKit ignores a `setProperty` that
+                    // lowers a custom property's priority, so overwriting the
+                    // `!important` pin in place would leave the editor stuck at
+                    // the canonical value (a 1× margin scale on a phone).
+                    saved.el.style.removeProperty(name);
                     if (value) saved.el.style.setProperty(name, value, priority);
-                    else saved.el.style.removeProperty(name);
-                };
-                restore("transform", saved.transform, saved.transformPriority);
+                }
             }
             // Assigning scroll offsets flushes the restored layout first, so
-            // these land against the scaled extents they were taken from.
+            // these land against the on-screen extents they were taken from.
             for (const [node, pos] of savedScroll) {
                 node.scrollTop = pos.top;
                 node.scrollLeft = pos.left;

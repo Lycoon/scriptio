@@ -512,15 +512,30 @@ const renderOverlay = (
         if (parent !== doc) return false; // top-level nodes only; don't descend
         while (bp < breaks.length && breaks[bp].pos <= pos) bp++;
 
-        // A node whose own span contains the next break is split across two pages
-        // by a mid-node sentence-break widget. Its per-line offsets (measured
-        // relative to the node top) then include the inter-page gap, so a cache
-        // entry taken before it straddled would be stale — placing the far-side
-        // asterisk on the wrong page (or outside the content band, where it's
-        // dropped). Always measure such a node fresh and never cache it. They
-        // exist only at a page boundary and are measured only when actually
-        // carrying marks, so the hot path is unaffected.
-        const straddles = bp < breaks.length && breaks[bp].pos < pos + node.nodeSize;
+        // A node whose own span contains a break is split across two pages by a
+        // mid-node sentence-break widget. Its per-line offsets (measured relative
+        // to the node top) then include the inter-page gap, so a cache entry taken
+        // before it straddled would be stale — placing the far-side asterisk on
+        // the wrong page (or outside the content band, where it's dropped). Always
+        // measure such a node fresh and never cache it. They exist only at a page
+        // boundary and are measured only when actually carrying marks, so the hot
+        // path is unaffected.
+        //
+        // TWO breaks can fall inside the node, and both have to be tested. The
+        // obvious one is the next break ahead of it. The other only bites the
+        // FIRST node the walk visits: `bp` is seeded from the page arithmetic, so
+        // it already points *past* the break the visible window opens on — yet
+        // that break's position is `fromPos`, which is exactly what pulls a node
+        // straddling it into the walk. Testing `breaks[bp]` alone reads the node
+        // as unsplit, so it takes the cache path and stores gap-inclusive offsets;
+        // once the break later moves off the node those stale offsets are what get
+        // painted, throwing its asterisks a page out and leaving the page they
+        // belonged to with no stripe. `breaks[bp - 1]` can only sit after `pos`
+        // in that seeded case (the loop above advances past every break at or
+        // before `pos`), so the extra test costs one comparison and never
+        // false-positives.
+        const straddles =
+            (bp < breaks.length && breaks[bp].pos < pos + node.nodeSize) || (bp > 0 && breaks[bp - 1].pos > pos);
 
         let lines = straddles ? undefined : cache.map.get(node);
         if (lines === undefined) {
