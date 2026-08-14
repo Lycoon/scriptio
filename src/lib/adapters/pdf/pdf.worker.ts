@@ -24,9 +24,12 @@ export interface VisualLine {
     runs: TextRun[];
     y: number; // browser Y position in pixels (for line-spacing within a page)
     type?: string; // e.g. "dialogue", "character", "scene", "__page_break__"
-    /** Revision index this line was last changed under (>=1), or undefined for
-     *  unchanged lines. Set by the PDF adapter from the DOM revision marks/attrs
-     *  and used only for the "export revision pages" filter. */
+    /** Revision index this VISUAL line was last changed under (>=1), or
+     *  undefined for unchanged lines. Set by the PDF adapter from the DOM
+     *  revision marks/attrs on the characters this line actually holds — a
+     *  wrapped paragraph where one word changed marks only the line that word
+     *  wrapped onto, as the editor overlay does. Drives both the right-margin
+     *  asterisk and the "export revision pages" filter. */
     revision?: number;
     /** When set, this revised visual line gets a right-margin asterisk in this
      *  hex colour ("#000000" for the black & white mode). Absent for unchanged
