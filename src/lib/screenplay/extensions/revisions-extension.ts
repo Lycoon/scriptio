@@ -8,7 +8,9 @@ import { ScreenplayElement } from "../../utils/enums";
 import { REVISION_COLORS, REVISION_STAMP_META, RevisionDisplayMode, revisionColor } from "../revisions";
 import { paginationKey } from "./pagination-extension";
 
-const revisionsPluginKey = new PluginKey<Pending>("revisions");
+/** Key of the revisions plugin; its state is the {@link Pending} edit set.
+ *  Exported so tests can assert that a flush consumed it. */
+export const revisionsPluginKey = new PluginKey<Pending>("revisions");
 const REFRESH_META = "revisionsRefresh";
 /** Mark type name; the inline mark that stamps changed text with its revision index. */
 const REVISION_MARK = "revision";
@@ -203,6 +205,10 @@ const forEachChange = (tr: Transaction, cb: (from: number, to: number) => void):
  *    attribute, since they have no character to anchor.
  * Tagged `REVISION_STAMP_META` so pagination skips it and the plugin clears
  * pending when it lands.
+ *
+ * Returning null means "nothing to write" — NOT "nothing happened". Several
+ * pending edits legitimately produce no change (see the `continue`s below), and
+ * the caller must still consume the pending set in that case; see `flush`.
  */
 const buildStampTransaction = (state: EditorState, pending: Pending, rev: number): Transaction | null => {
     const markType = state.schema.marks[REVISION_MARK];
@@ -581,8 +587,26 @@ const renderOverlay = (
             // Deletions: one point per change → one asterisk on its visual line.
             for (const point of pending.del) {
                 if (point < fromPos || point > toPos) continue;
+                const at = clampPos(point);
+                // Only a point INSIDE a textblock has a line of its own to mark
+                // — the same test the stamp makes. A point BETWEEN blocks (a
+                // whole node deleted) has none, and `coordsAtPos` there doesn't
+                // fail: it flattens to the neighbouring block's full rect, so
+                // previewing it drops an asterisk on that block's vertical
+                // centre — a different line from the one the stamp settles on
+                // (the emptied neighbour's node attribute, half a line up).
+                // Skipping keeps preview and committed paint on the same line.
+                //
+                // The resolve is on the rAF paint path, never the keypress, and
+                // only inside this block — which is gated on there being pending
+                // edits at all, i.e. the ~220ms after an edit. Measured on a
+                // feature-length doc: 6µs cold / 0.07µs warm, against the 13.5µs
+                // `coordsAtPos` below that it gates (and skips outright when it
+                // returns false) and the 11µs `nodesBetween` this paint already
+                // spends walking the visible window.
+                if (!doc.resolve(at).parent.isTextblock) continue;
                 try {
-                    const c = view.coordsAtPos(clampPos(point));
+                    const c = view.coordsAtPos(at);
                     addAt(toEditorY((c.top + c.bottom) / 2));
                 } catch {
                     /* position not laid out yet — skip, retried next paint */
@@ -870,8 +894,22 @@ export const createRevisionsExtension = (config: RevisionsConfig) => {
                             if (rev < 1) return;
                             const pending = revisionsPluginKey.getState(view.state);
                             if (!pending || !pending.dirty) return;
-                            const tr = buildStampTransaction(view.state, pending, rev);
-                            if (tr) view.dispatch(tr);
+                            // A flush ALWAYS consumes the pending set — hence the
+                            // empty fallback transaction, which carries nothing but
+                            // the meta flag that resets the plugin state. Pending
+                            // edits with nothing to write are routine: a deletion
+                            // whose surviving neighbour is already marked, or one
+                            // that empties a line already stamped at this revision
+                            // (both `continue` in buildStampTransaction). Dropping
+                            // the dispatch there stranded those points in pending
+                            // for the rest of the session: mapped forward through
+                            // every later transaction, and painted on every frame by
+                            // the debounce-bridging preview below — a second,
+                            // permanent asterisk beside the committed one on that
+                            // line, which cleared only once some later edit on it
+                            // finally produced a stampable change.
+                            const tr = buildStampTransaction(view.state, pending, rev) ?? view.state.tr;
+                            view.dispatch(tr.setMeta(REVISION_STAMP_META, true));
                         };
                         const scheduleFlush = () => {
                             if (flushTimer) clearTimeout(flushTimer);
@@ -909,7 +947,28 @@ export const createRevisionsExtension = (config: RevisionsConfig) => {
                                 // Repaint so existing marks track shifting content.
                                 // Viewport-culled and node-cached, on a coalesced rAF
                                 // — never synchronously on the keypress.
-                                if (docChanged || pagChanged || rev !== lastRev || mode !== lastMode) {
+                                //
+                                // The pending test comes LAST on purpose: it is only
+                                // reached by an update that changed nothing else, so
+                                // the typing path (docChanged) short-circuits before
+                                // it and pays literally nothing. The overlay previews
+                                // the not-yet-flushed pending edits, so it must
+                                // repaint when that set changes with no doc change —
+                                // a flush that consumes pending without writing
+                                // anything (see `flush`) is exactly that case, and
+                                // its preview asterisks would otherwise linger until
+                                // the next edit or scroll. `prevState` is always set
+                                // here (docChanged covers the initial call), and
+                                // `getState` is a plain property read on the state.
+                                if (
+                                    docChanged ||
+                                    pagChanged ||
+                                    rev !== lastRev ||
+                                    mode !== lastMode ||
+                                    (!!prevState &&
+                                        revisionsPluginKey.getState(v.state) !==
+                                            revisionsPluginKey.getState(prevState))
+                                ) {
                                     lastRev = rev;
                                     schedule();
                                 }
