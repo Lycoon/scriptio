@@ -383,8 +383,10 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
             // ── Dual dialogue container ──
             if (el.classList.contains("dual_dialogue")) {
+                // Each column paragraph stamps its own revised lines; the
+                // container only carries the fallback attribute.
                 const ddLines = this.collectDualDialogueLines(el, options, yOffset);
-                this.stampRevision(ddLines, this.getParagraphRevision(el));
+                this.stampNodeRevision(el, [ddLines]);
                 allLines.push(...ddLines);
                 continue;
             }
@@ -436,10 +438,6 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
             // compareDocumentPosition which works correctly at any nesting depth.
             const splitWidget = el.querySelector(".pagination-page-break") as HTMLElement | null;
 
-            // Revision the node was last changed under — stamped on every line it
-            // produces so the revised-pages filter can tell which pages changed.
-            const paragraphRevision = this.getParagraphRevision(el);
-
             if (splitWidget) {
                 // Collect lines BEFORE the split widget
                 const beforeLines = this.collectParagraphLines(el, nodeType, splitWidget, "before");
@@ -448,7 +446,6 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                         for (const line of beforeLines) line.y -= yOffset;
                     }
                     this.injectPseudoContent(el, beforeLines, options, sceneInfo);
-                    this.stampRevision(beforeLines, paragraphRevision);
                     allLines.push(...beforeLines);
                 }
 
@@ -467,9 +464,13 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     if (yOffset > 0) {
                         for (const line of afterLines) line.y -= yOffset;
                     }
-                    this.stampRevision(afterLines, paragraphRevision);
                     allLines.push(...afterLines);
                 }
+
+                // Both halves are already in `allLines`, but they are the same
+                // objects — the attribute fallback can still stamp the node's
+                // first line whichever side of the break it fell on.
+                this.stampNodeRevision(el, [beforeLines, afterLines]);
             } else {
                 const paragraphLines = this.collectParagraphLines(el, nodeType);
 
@@ -480,7 +481,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     }
                     // ── Pseudo-element content (not captured by TreeWalker) ──
                     this.injectPseudoContent(el, paragraphLines, options, sceneInfo);
-                    this.stampRevision(paragraphLines, paragraphRevision);
+                    this.stampNodeRevision(el, [paragraphLines]);
                     allLines.push(...paragraphLines);
                 } else {
                     // Empty paragraph — no text nodes, so collectParagraphLines
@@ -490,12 +491,9 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                     // misinterpret the accumulated gap as a page break.
                     const rect = el.getBoundingClientRect();
                     if (rect.height > 0) {
-                        allLines.push({
-                            runs: [],
-                            y: rect.top - yOffset,
-                            type: nodeType,
-                            revision: paragraphRevision >= 1 ? paragraphRevision : undefined,
-                        });
+                        const emptyLine: VisualLine = { runs: [], y: rect.top - yOffset, type: nodeType };
+                        this.stampNodeRevision(el, [[emptyLine]]);
+                        allLines.push(emptyLine);
                     }
                 }
             }
@@ -542,12 +540,15 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                         for (const line of paragraphLines) line.y -= yOffset;
                     }
                     this.injectPseudoContent(p, paragraphLines, options);
+                    this.stampNodeRevision(p, [paragraphLines]);
                     columnLines.push(...paragraphLines);
                 } else {
                     // Empty paragraph — emit a spacer line so Y advances correctly.
                     const rect = p.getBoundingClientRect();
                     if (rect.height > 0) {
-                        columnLines.push({ runs: [], y: rect.top - yOffset, type: nodeType });
+                        const emptyLine: VisualLine = { runs: [], y: rect.top - yOffset, type: nodeType };
+                        this.stampNodeRevision(p, [[emptyLine]]);
+                        columnLines.push(emptyLine);
                     }
                 }
             }
@@ -614,10 +615,15 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
 
             // Resolve marks once per text node (they don't change mid-node)
             const marks = getMarksFromComputedStyle(textNode);
-            // Revision index colouring this run, if any — read straight from the
-            // `revision` mark span so it's independent of the editor's current
-            // display mode (which only tints, it never removes the attribute).
-            const revision = this.getTextNodeRevision(textNode, el);
+            // Revision mark covering this text node, if any — read straight from
+            // the `revision` mark span so it's independent of the editor's
+            // current display mode (which only tints, it never removes the
+            // attribute). `lineRevision` marks the visual line the characters
+            // land on (asterisk); `revision` additionally tints the run, so a
+            // deletion anchor — an invisible marker riding a surviving
+            // character — is excluded from it.
+            const { index: lineRevision, isDel } = this.readRevisionMark(textNode, el);
+            const revision = isDel ? 0 : lineRevision;
 
             for (let ci = 0; ci < text.length; ci++) {
                 const rawChar = text[ci];
@@ -693,6 +699,16 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 // Start a fresh line if needed
                 if (!currentLine) {
                     currentLine = { runs: [], y: rect.top, type };
+                }
+
+                // Asterisk stamping: only the visual lines a revision mark
+                // actually lands on are revised — matching the editor overlay,
+                // which measures the marked range's client rects line by line.
+                // Zero-height chars (trailing wrapped spaces) never get here, so
+                // they can't stamp the line they were laid out on, exactly as
+                // the overlay skips their empty rects.
+                if (lineRevision >= 1 && lineRevision > (currentLine.revision ?? 0)) {
+                    currentLine.revision = lineRevision;
                 }
 
                 // ── Update or start run ──────────────────────────────────
@@ -909,55 +925,58 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
     // ── Revision filtering ───────────────────────────────────────────────────
 
     /**
-     * Highest revision index a top-level node was changed under, read from the
-     * DOM the revisions extension renders: the inline `data-revision` marks
-     * (changed text, both "ins" and "del" anchors) and the `data-revision-line`
-     * node attribute (empty/deleted lines). Returns 0 when the node carries no
-     * revision (the common case). Display mode is irrelevant — these attributes
-     * are always present, only their colour varies.
+     * Stamp a top-level node's collected lines, mirroring the editor overlay
+     * (`computeNodeLines` in revisions-extension) so the PDF's asterisks land on
+     * exactly the lines the screenplay shows them on:
+     *  - when the node's text carries inline `revision` marks, only the visual
+     *    lines those marks actually land on are revised. `collectParagraphLines`
+     *    has already stamped them character by character, so there is nothing
+     *    left to do — stamping the whole node here would print a column of
+     *    asterisks down a paragraph where a single word changed.
+     *  - otherwise the node-level `data-revision-line` attribute (an empty or
+     *    emptied line, which has no character to anchor a mark on) stamps the
+     *    node's FIRST line, like the overlay's single entry at `lineHeight / 2`.
+     *
+     * `lineGroups` are the node's line runs in document order — more than one
+     * only when a page break splits the node, in which case the attribute
+     * belongs to the first half that produced any line.
      */
-    private getParagraphRevision(el: HTMLElement): number {
-        let max = 0;
-        const lineAttr = el.getAttribute("data-revision-line");
-        if (lineAttr) {
-            const v = parseInt(lineAttr, 10);
-            if (v >= 1) max = v;
+    private stampNodeRevision(el: HTMLElement, lineGroups: VisualLine[][]): void {
+        if (el.querySelector("[data-revision]")) return;
+        const attr = parseInt(el.getAttribute("data-revision-line") || "", 10);
+        if (!(attr >= 1)) return;
+        for (const lines of lineGroups) {
+            if (lines.length > 0) {
+                lines[0].revision = attr;
+                return;
+            }
         }
-        const marks = el.querySelectorAll("[data-revision]");
-        for (let i = 0; i < marks.length; i++) {
-            const v = parseInt(marks[i].getAttribute("data-revision") || "", 10);
-            if (v >= 1 && v > max) max = v;
-        }
-        return max;
-    }
-
-    /** Tag every line with `rev` when it is a real revision (>=1); a no-op otherwise. */
-    private stampRevision(lines: VisualLine[], rev: number): void {
-        if (rev < 1) return;
-        for (const line of lines) line.revision = rev;
     }
 
     /**
-     * Revision index colouring a single text node, or 0 when it carries none.
-     * Walks up to the paragraph looking for the inline `revision` mark span
-     * (`data-revision`). A "del" anchor (`data-revision-kind="del"`) is an
-     * invisible position marker — it must NOT tint its surviving character — so
-     * it returns 0. Reading the attribute (not the computed colour) keeps the
-     * export independent of the editor's current revision display mode.
+     * The inline `revision` mark covering a text node, or index 0 when it
+     * carries none. Walks up to the paragraph looking for the mark span
+     * (`data-revision`); reading the attribute rather than the computed colour
+     * keeps the export independent of the editor's current display mode.
+     *
+     * `isDel` flags a deletion anchor (`data-revision-kind="del"`): an invisible
+     * marker pinned to a character that SURVIVED the deletion, so the asterisk
+     * lands on the line the text was removed from. It marks the line but must
+     * never tint the character it rides on.
      */
-    private getTextNodeRevision(textNode: Text, stopEl: HTMLElement): number {
+    private readRevisionMark(textNode: Text, stopEl: HTMLElement): { index: number; isDel: boolean } {
         let node = textNode.parentElement;
         while (node && node !== stopEl.parentElement) {
             const raw = node.getAttribute("data-revision");
             if (raw !== null) {
-                if (node.getAttribute("data-revision-kind") === "del") return 0;
                 const v = parseInt(raw, 10);
-                return v >= 1 ? v : 0;
+                if (!(v >= 1)) return { index: 0, isDel: false };
+                return { index: v, isDel: node.getAttribute("data-revision-kind") === "del" };
             }
             if (node === stopEl) break;
             node = node.parentElement;
         }
-        return 0;
+        return { index: 0, isDel: false };
     }
 
     /**
