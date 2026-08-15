@@ -22,7 +22,7 @@ import { CharacterMap } from "../screenplay/characters";
 import { LocationMap } from "../screenplay/locations";
 import { computeSceneItems, PersistentScene, PersistentSceneMap, TransientScene } from "../screenplay/scenes";
 import { PersistentPage, PersistentPageMap } from "../screenplay/page-locking";
-import { RevisionDisplayMode } from "../screenplay/revisions";
+import { RevisionBaseEntry, RevisionBaseline, RevisionDisplayMode } from "../screenplay/revisions";
 import { PageFormat } from "../utils/enums";
 import { generateNodeId } from "../screenplay/nodes";
 import { JSONContent } from "@tiptap/react";
@@ -456,6 +456,34 @@ export class ProjectRepository {
     setRevisionDisplayMode(mode: RevisionDisplayMode) {
         if (this.guardWrite("setRevisionDisplayMode")) return;
         this.ydoc.production().set("revisionDisplayMode", mode);
+    }
+
+    /**
+     * Replace the per-line revision baseline and tag it with the revision it was
+     * captured for. One transaction so a peer never observes a half-written
+     * baseline — an intermediate state would let the flush clear marks against a
+     * partially-populated map, where an absent line reads as "new".
+     */
+    captureRevisionBase(index: number, entries: Map<string, RevisionBaseEntry>) {
+        if (this.guardWrite("captureRevisionBase")) return;
+        const map = this.ydoc.revisionBase();
+        this.ydoc.transact(() => {
+            map.clear();
+            entries.forEach((text, id) => map.set(id, text));
+            this.ydoc.production().set("revisionBaseIndex", index);
+        });
+    }
+
+    /**
+     * Baseline lookup for the revision it was captured for, or null when there is
+     * none — which puts revision stamping back on the event-based path. Reads are
+     * O(1) Y.Map lookups, so the flush can call `get` per touched line.
+     */
+    getRevisionBaseline(): RevisionBaseline | null {
+        const index = this.ydoc.production().get("revisionBaseIndex");
+        if (typeof index !== "number") return null;
+        const map = this.ydoc.revisionBase();
+        return { index, get: (dataId: string) => map.get(dataId) };
     }
     setSceneNumberingStyle(style: "suffix" | "prefix") {
         if (this.guardWrite("setSceneNumberingStyle")) return;

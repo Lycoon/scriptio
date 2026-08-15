@@ -36,7 +36,11 @@ import {
 } from "@src/lib/project/project-state";
 import { Screenplay } from "@src/lib/utils/types";
 import { ScreenplayElement, TitlePageElement, Style, PageFormat } from "@src/lib/utils/enums";
-import { RevisionDisplayMode, DEFAULT_REVISION_DISPLAY_MODE } from "@src/lib/screenplay/revisions";
+import {
+    RevisionDisplayMode,
+    DEFAULT_REVISION_DISPLAY_MODE,
+    captureRevisionBaseline,
+} from "@src/lib/screenplay/revisions";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 import { useAssetGc } from "@src/lib/assets/use-asset-gc";
 
@@ -1071,20 +1075,71 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         [repository],
     );
 
+    /**
+     * Snapshot every line's current text as the baseline for revision `index` —
+     * the draft that revision's asterisks will be measured against, so a line
+     * edited and then restored can drop its mark again.
+     *
+     * Needs the mounted screenplay editor for the document. When there is none
+     * (the revision was changed from a view that has no editor) nothing is
+     * written, and stamping stays on the event-based path until the next advance
+     * captures one — which over-marks rather than mis-clears.
+     */
+    const captureRevisionBase = useCallback(
+        (index: number) => {
+            if (!repository || !editor) return;
+            repository.captureRevisionBase(index, captureRevisionBaseline(editor.state.doc, index));
+        },
+        [repository, editor],
+    );
+
+    /**
+     * Adopt a baseline for a revision that has none, so revision marks start being
+     * derived rather than accumulated.
+     *
+     * Without this a project whose revision opened before baselines existed — or
+     * one advanced while no editor was mounted to snapshot it — stays on the
+     * event-based path indefinitely, since nothing short of an advance captures
+     * one. Taking it mid-revision is safe: `captureRevisionBaseline` records
+     * `self` for every line already marked at this revision, so those keep their
+     * marks unconditionally and only lines edited from here on are judged by
+     * comparison.
+     *
+     * Gated on the Yjs sync, and on the editor having actually bound to a
+     * populated document: freezing an empty screenplay as the baseline would make
+     * every real line read as new the moment it was touched.
+     */
+    useEffect(() => {
+        if (!isYjsSynced || !editor || !repository) return;
+        if (!revisionsEnabled || currentRevision < 1) return;
+        if (repository.getRevisionBaseline()?.index === currentRevision) return;
+        if (editor.state.doc.content.size === 0 && (repository.getState()?.screenplayFragment().length ?? 0) > 0)
+            return;
+        captureRevisionBase(currentRevision);
+    }, [isYjsSynced, editor, repository, revisionsEnabled, currentRevision, captureRevisionBase]);
+
     const setRevisionsEnabled = useCallback(
         (enabled: boolean) => {
             setRevisionsEnabledState(enabled);
             repository?.setRevisionsEnabled(enabled);
+            // Switching stamping on is where the current revision starts measuring
+            // from, so take a baseline if this revision hasn't got one yet.
+            if (enabled && currentRevision >= 1 && repository?.getRevisionBaseline()?.index !== currentRevision) {
+                captureRevisionBase(currentRevision);
+            }
         },
-        [repository],
+        [repository, currentRevision, captureRevisionBase],
     );
 
     const setCurrentRevision = useCallback(
         (index: number) => {
             setCurrentRevisionState(index);
             repository?.setCurrentRevision(index);
+            // A revision opens: the document as it stands right now is the draft
+            // this revision's marks will be compared against.
+            if (index >= 1) captureRevisionBase(index);
         },
-        [repository],
+        [repository, captureRevisionBase],
     );
 
     const setRevisionDisplayMode = useCallback(

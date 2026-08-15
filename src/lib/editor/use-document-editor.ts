@@ -320,6 +320,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
               getRevisionsEnabled: () => !!ext.revisionsEnabled,
               getCurrentRevision: () => ext.currentRevision ?? 0,
               getDisplayMode: () => ext.revisionDisplayMode ?? "all",
+              getBaseline: () => ext.repository?.getRevisionBaseline() ?? null,
           })
         : null;
 

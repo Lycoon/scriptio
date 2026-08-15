@@ -18,7 +18,7 @@ import type { CharacterItem } from "../screenplay/characters";
 import type { LocationItem } from "../screenplay/locations";
 import type { PersistentScene } from "../screenplay/scenes";
 import type { PersistentPage } from "../screenplay/page-locking";
-import type { RevisionDisplayMode } from "../screenplay/revisions";
+import type { RevisionBaseEntry, RevisionDisplayMode } from "../screenplay/revisions";
 import type { Comment } from "../utils/types";
 
 // -------------------------------- //
@@ -162,6 +162,14 @@ export type ProductionData = {
      * cumulative). See `src/lib/screenplay/revisions.ts`.
      */
     currentRevision?: number;
+    /**
+     * Revision index the `revisionBase` map was captured for. Stamping only takes
+     * the baseline-derived path while this equals `currentRevision`; when it is
+     * absent or stale (a project that predates the feature, or a revision advanced
+     * with no editor open to snapshot it) marks fall back to being stamped from
+     * edit events, which is conservative — it can over-mark, never wrongly clear.
+     */
+    revisionBaseIndex?: number;
     /**
      * How committed revision marks are displayed ("all" | "hidden" | "current").
      * Independent of `revisionsEnabled`, which only gates whether new edits are
@@ -366,6 +374,7 @@ export class ProjectState extends Y.Doc {
         COMMENTS: "comments",
         DICTIONARY: "dictionary",
         SHELF: "shelf",
+        REVISION_BASE: "revisionBase",
     } as const;
 
     private _readOnly: boolean = false;
@@ -456,6 +465,21 @@ export class ProjectState extends Y.Doc {
     /** Get the Y.XmlFragment for a specific shelf version's content. */
     shelfFragment(nodeId: string, versionId: string): Y.XmlFragment {
         return this.getXmlFragment(`shelf_${nodeId}_${versionId}`);
+    }
+
+    /**
+     * Per-line text as of the moment the current revision opened, keyed by the
+     * line's stable `data-id`. Read on the debounced revision flush to decide
+     * whether an edited line still differs from the draft it is being compared
+     * to — a line restored to its baseline loses this revision's marks. Replaced
+     * wholesale whenever the revision advances, so it holds one draft's worth of
+     * text and never grows with the number of revisions. See
+     * `RevisionBaseEntry` in `src/lib/screenplay/revisions.ts` for the meaning of
+     * a `null` value, and `revisionBaseIndex` in {@link ProductionData} for the
+     * revision it belongs to.
+     */
+    revisionBase(): Y.Map<RevisionBaseEntry> {
+        return this.getMap(this.KEYS.REVISION_BASE);
     }
 }
 
