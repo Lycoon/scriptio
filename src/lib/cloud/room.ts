@@ -107,24 +107,7 @@ export class ProjectRoom extends DurableObject {
         this.awareness.on("update", this.handleAwarenessUpdate);
 
         // Initialize database
-        this.ctx.storage.sql.exec(`
-            CREATE TABLE IF NOT EXISTS project (
-                id INTEGER PRIMARY KEY CHECK (id = 1),
-                data BLOB
-            );
-            CREATE TABLE IF NOT EXISTS blacklist (
-                user_id TEXT PRIMARY KEY
-            );
-            CREATE TABLE IF NOT EXISTS config (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            );
-            CREATE TABLE IF NOT EXISTS snapshot_assets (
-                snapshot_key TEXT,
-                hash TEXT
-            );
-            CREATE INDEX IF NOT EXISTS idx_snapshot_assets_key ON snapshot_assets(snapshot_key);
-        `);
+        this.ensureSchema();
 
         // Restore project state from SQLite. Attach the update handler AFTER
         // the restore so that re-loading persisted bytes on every DO wake-up
@@ -194,6 +177,32 @@ export class ProjectRoom extends DurableObject {
         }
 
         console.log(JSON.stringify({ event: "room_initialized" }));
+    }
+
+    /**
+     * Create the SQLite schema. Idempotent — run on every construction, and
+     * again after a purge wipes the tables, so the room stays usable rather
+     * than throwing on the next statement.
+     */
+    private ensureSchema(): void {
+        this.ctx.storage.sql.exec(`
+            CREATE TABLE IF NOT EXISTS project (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                data BLOB
+            );
+            CREATE TABLE IF NOT EXISTS blacklist (
+                user_id TEXT PRIMARY KEY
+            );
+            CREATE TABLE IF NOT EXISTS config (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            );
+            CREATE TABLE IF NOT EXISTS snapshot_assets (
+                snapshot_key TEXT,
+                hash TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_snapshot_assets_key ON snapshot_assets(snapshot_key);
+        `);
     }
 
     /**
@@ -529,6 +538,11 @@ export class ProjectRoom extends DurableObject {
                 return new Response("Missing key or name", { status: 400 });
             }
             return this.handleRename(key, name);
+        }
+
+        // POST /purge — wipe the room (project or owner account deleted)
+        if (request.method === "POST" && url.pathname === "/purge") {
+            return this.handlePurge();
         }
 
         // DELETE /saves — delete a save
@@ -1003,6 +1017,93 @@ export class ProjectRoom extends DurableObject {
 
         console.log(JSON.stringify({ event: "save_renamed", key, name }));
         return new Response("Renamed", { status: 200 });
+    }
+
+    /**
+     * Wipe the room for good: every R2 snapshot under the project prefix, all
+     * Durable Object storage (live doc, blacklist, config, snapshot index,
+     * pending alarm) and every live connection.
+     *
+     * A DO is addressed by name, so nothing ever reclaims it on its own — the
+     * project's SQLite and its snapshots would outlive the project (and its
+     * owner's account) forever without this.
+     */
+    private async handlePurge(): Promise<Response> {
+        // Drop connected clients first: an in-flight edit landing after the
+        // wipe would repopulate the doc we are about to delete. 4003 is the
+        // kick code — clients stop reconnecting and surface the
+        // project-unavailable dialog instead of retrying against a dead room.
+        for (const [socket] of this.sessions) {
+            try {
+                if (socket.readyState === 1) socket.close(4003, "Project deleted");
+            } catch {
+                // Socket might already be closed
+            }
+        }
+        this.sessions.clear();
+        this.userConnections.clear();
+
+        // Cancel pending save/snapshot work so nothing writes storage back.
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        this.isDirty = false;
+
+        const deletedSnapshots = await this.deleteAllSnapshots();
+
+        await this.ctx.storage.deleteAlarm();
+        await this.ctx.storage.deleteAll();
+        this.alarmScheduled = false;
+        this.blacklist.clear();
+        this.projectId = null;
+
+        // deleteAll drops the SQL tables; recreate them and swap in an empty
+        // doc so a late reconnect (an unexpired cloud token) meets a blank
+        // room rather than a broken one — or our still-in-memory screenplay.
+        this.ensureSchema();
+        this.resetDoc();
+
+        console.log(JSON.stringify({ event: "room_purged", deletedSnapshots }));
+        return Response.json({ deletedSnapshots }, { status: 200 });
+    }
+
+    /** Delete every snapshot stored for this project. Returns the count. */
+    private async deleteAllSnapshots(): Promise<number> {
+        if (!this.projectId) return 0;
+
+        const bucket = (this.env as Env).SNAPSHOTS;
+        const prefix = `${this.projectId}/`;
+        let deleted = 0;
+
+        // Re-list from the start on each pass rather than paginating with a
+        // cursor: everything listed is deleted before the next call, so the
+        // next page is always what's left.
+        for (;;) {
+            const listed = await bucket.list({ prefix, limit: 1000 });
+            if (listed.objects.length === 0) break;
+
+            await bucket.delete(listed.objects.map((o) => o.key));
+            deleted += listed.objects.length;
+
+            if (!listed.truncated) break;
+        }
+
+        return deleted;
+    }
+
+    /** Replace the live doc (and its awareness) with an empty one. */
+    private resetDoc(): void {
+        this.doc.off("update", this.handleDocUpdate);
+        this.doc.destroy();
+        this.awareness.destroy();
+
+        this.doc = new ProjectState();
+        this.awareness = new awarenessProtocol.Awareness(this.doc);
+        clearInterval((this.awareness as unknown as { _checkInterval: ReturnType<typeof setInterval> })._checkInterval);
+        this.awareness.setLocalState(null);
+        this.awareness.on("update", this.handleAwarenessUpdate);
+        this.doc.on("update", this.handleDocUpdate);
     }
 
     private async handleDeleteSave(key: string): Promise<Response> {

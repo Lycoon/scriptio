@@ -34,6 +34,11 @@ export const UpdateRoleSchema = z.object({
 });
 export type UpdateRoleBody = z.infer<typeof UpdateRoleSchema>;
 
+export const TransferOwnershipSchema = z.object({
+    userId: z.string().min(1),
+});
+export type TransferOwnershipBody = z.infer<typeof TransferOwnershipSchema>;
+
 const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 export const UpdateUserBodySchema = z.object({
     username: z.string().optional(),

@@ -147,7 +147,7 @@ model ProjectMember {
   id                  Int         @id @default(autoincrement())
   role                ProjectRole @default(VIEWER)
 
-  user                User        @relation(fields: [userId], references: [id])
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId              String
   project             Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId           String

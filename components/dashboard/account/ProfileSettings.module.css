@@ -119,6 +119,27 @@
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+/* Shown in the delete-account dialog when a live subscription is at stake */
+.subscriptionWarning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    background: rgba(234, 179, 8, 0.1);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--primary-text);
+}
+
+.subscriptionWarningIcon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #eab308;
+}
+
 .proStatus {
     display: flex;
     flex-direction: column;

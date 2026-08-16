@@ -5,6 +5,7 @@ import {
     UpdateProjectBody,
     UpdateRoleBody,
     RequestMagicLinkBody,
+    TransferOwnershipBody,
     UpdateUserBody,
 } from "./api-bodies";
 import { apiFetch } from "@src/lib/api-client";
@@ -104,6 +105,10 @@ export const deleteInvite = async (projectId: string, email: string) => {
 
 export const updateMemberRole = async (projectId: string, userId: string, body: UpdateRoleBody) => {
     return request(`/api/projects/${projectId}/members/${userId}`, "PATCH", body);
+};
+
+export const transferProjectOwnership = async (projectId: string, userId: string) => {
+    return request(`/api/projects/${projectId}/transfer-ownership`, "POST", { userId } satisfies TransferOwnershipBody);
 };
 
 /* Users */

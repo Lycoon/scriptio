@@ -948,7 +948,8 @@ export class ThrottledWebsocketProvider extends WebsocketProvider {
     }
 }
 
-export const allowOnWebsocket = async (userId: string, projectId: string) => {
+/** POST a privileged action to a project's room, signed with an admin-action JWT. */
+const adminAction = async (projectId: string, path: string, body?: unknown): Promise<Response> => {
     const payload = {
         type: "admin-action",
         projectId,
@@ -956,48 +957,43 @@ export const allowOnWebsocket = async (userId: string, projectId: string) => {
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
     const token = await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setExpirationTime("1m").sign(secret);
-    await fetch(`${process.env.NEXT_PUBLIC_CLOUD_URL}/${projectId}/allow`, {
+    return fetch(`${process.env.NEXT_PUBLIC_CLOUD_URL}/${projectId}${path}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId }),
+        ...(body !== undefined && { body: JSON.stringify(body) }),
     });
+};
+
+export const allowOnWebsocket = async (userId: string, projectId: string) => {
+    await adminAction(projectId, "/allow", { userId });
 };
 
 export const blacklistFromWebsocket = async (userId: string, projectId: string) => {
-    const payload = {
-        type: "admin-action",
-        projectId,
-    };
-
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-    const token = await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setExpirationTime("1m").sign(secret);
-    await fetch(`${process.env.NEXT_PUBLIC_CLOUD_URL}/${projectId}/blacklist`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userId }),
-    });
+    await adminAction(projectId, "/blacklist", { userId });
 };
 
 export const notifyRoleChange = async (userId: string, projectId: string, role: string) => {
-    const payload = {
-        type: "admin-action",
-        projectId,
-    };
+    await adminAction(projectId, "/role-update", { userId, role });
+};
 
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-    const token = await new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setExpirationTime("1m").sign(secret);
-    await fetch(`${process.env.NEXT_PUBLIC_CLOUD_URL}/${projectId}/role-update`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userId, role }),
-    });
+/**
+ * Wipe a project's Durable Object storage and every R2 snapshot it holds.
+ * Best-effort: a Worker outage must not block the DB-side deletion, so this
+ * reports failure instead of throwing (the caller logs and carries on).
+ */
+export const purgeProjectRoom = async (projectId: string): Promise<boolean> => {
+    try {
+        const res = await adminAction(projectId, "/purge");
+        if (!res.ok) {
+            console.error(`[cloud] Failed to purge room for project ${projectId}: ${res.status} ${await res.text()}`);
+            return false;
+        }
+        return true;
+    } catch (e) {
+        console.error(`[cloud] Failed to purge room for project ${projectId}:`, e);
+        return false;
+    }
 };

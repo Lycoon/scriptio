@@ -60,6 +60,11 @@ export class UserRepository {
         });
     }
 
+    /** Auth.js sign-in tokens, keyed by email rather than by a FK to User. */
+    deleteVerificationTokens(email: string) {
+        return prisma.verificationToken.deleteMany({ where: { identifier: email } });
+    }
+
     fetchUser(idOrEmail: idOrEmailType) {
         return prisma.user.findUnique({
             where: idOrEmail,

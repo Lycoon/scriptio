@@ -2,6 +2,7 @@ import {
     DeleteObjectCommand,
     DeleteObjectsCommand,
     GetObjectCommand,
+    ListObjectsV2Command,
     PutObjectCommand,
     S3Client,
 } from "@aws-sdk/client-s3";
@@ -97,6 +98,56 @@ export const putObject = async (
         return true;
     } catch (e) {
         console.error("An error occurred while uploading object to S3: ", e);
+        return false;
+    }
+};
+
+/**
+ * Delete every object under a prefix (best-effort).
+ *
+ * Authoritative where `destroyMany` is not: it deletes what the bucket actually
+ * holds rather than what the database remembers, so objects whose tracking row
+ * was lost still get reclaimed.
+ *
+ * The prefix must end with "/" — a bare prefix would also match sibling keys
+ * that merely start with the same characters, and an empty one would target
+ * the whole bucket.
+ */
+export const destroyPrefix = async (prefix: string): Promise<boolean> => {
+    if (!prefix.endsWith("/")) {
+        console.error(`Refusing to destroy S3 prefix "${prefix}": must end with "/"`);
+        return false;
+    }
+
+    try {
+        let continuationToken: string | undefined;
+
+        do {
+            const listed = await client.send(
+                new ListObjectsV2Command({
+                    Bucket: env.S3_BUCKET,
+                    Prefix: prefix,
+                    ContinuationToken: continuationToken,
+                }),
+            );
+
+            // ListObjectsV2 pages at 1000 keys, the same cap DeleteObjects takes.
+            const keys = listed.Contents?.flatMap((o) => (o.Key ? [{ Key: o.Key }] : [])) ?? [];
+            if (keys.length > 0) {
+                await client.send(
+                    new DeleteObjectsCommand({
+                        Bucket: env.S3_BUCKET,
+                        Delete: { Objects: keys },
+                    }),
+                );
+            }
+
+            continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+        } while (continuationToken);
+
+        return true;
+    } catch (e) {
+        console.error("An error occurred while destroying an S3 prefix: ", e);
         return false;
     }
 };
