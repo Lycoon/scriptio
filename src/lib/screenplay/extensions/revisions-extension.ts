@@ -5,6 +5,7 @@ import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "@tiptap/y-tiptap";
 
 import {
+    DiffRun,
     REVISION_COLORS,
     REVISION_MARK,
     REVISION_STAMP_META,
@@ -217,6 +218,30 @@ const textRevisions = (node: PMNode, rev: number): { self: boolean; prior?: numb
         return false;
     });
     return { self, prior };
+};
+
+/**
+ * Text spans of a node already carrying revision `rev`'s "ins" mark, in line-local
+ * offsets, touching spans merged.
+ *
+ * What earlier stamping on this line concluded had been added — kept as alignment
+ * evidence for the rewrite that is about to drop it, since it covers the
+ * keystrokes that have already left `pending` (see {@link diffRuns}).
+ */
+const markedInsRuns = (node: PMNode, rev: number): DiffRun[] => {
+    const out: DiffRun[] = [];
+    node.descendants((child, off) => {
+        if (!child.isText) return true;
+        const marked = child.marks.some(
+            (m) => m.type.name === REVISION_MARK && m.attrs.index === rev && m.attrs.kind === "ins",
+        );
+        if (!marked) return false;
+        const last = out[out.length - 1];
+        if (last && last.to === off) last.to = off + child.nodeSize;
+        else out.push({ from: off, to: off + child.nodeSize });
+        return false;
+    });
+    return out;
 };
 
 /** Stable `data-id`s of the top-level lines overlapping [from, to] in `doc`. */
@@ -477,26 +502,30 @@ const buildDerivedStampTransaction = (
             return false;
         }
 
-        // Where the user's caret actually put text in this line, as a line-local
-        // offset. Comparing against the baseline says WHAT changed but cannot say
-        // which of several identical alignments the user meant; this is the other
-        // half of that answer, and it is already sitting in the pending set. Only
-        // covers edits from the current window — a line edited in an earlier flush
-        // falls back to the diff's own leftmost alignment, which is stable because
-        // an unambiguous run has only one alignment to choose from.
-        let anchor = -1;
+        // New line, or one already revised when the baseline was captured: the whole
+        // thing is this revision's, with no alignment to resolve. Otherwise, exactly
+        // the runs that differ — which is where `added` earns its keep.
         const nodeEnd = start + node.content.size;
-        for (const r of pending.ins) {
-            if (r.from >= start && r.from <= nodeEnd) {
-                anchor = r.from - start;
-                break;
+        let runs: DiffRun[];
+        if (base === undefined || base.self) {
+            runs = [{ from: 0, to: text.length }];
+        } else {
+            // Which of this line's characters are known to be this revision's, in the
+            // line's own offsets. Comparing against the baseline says WHAT changed but
+            // cannot say which of several identical alignments the user meant; this is
+            // the other half of that answer (see the note on `slideRun`), and it comes
+            // from both directions in time: the caret's own insertions, still sitting
+            // in the pending set, and the runs earlier flushes already marked — the
+            // keystrokes pending no longer remembers, which ProseMirror has been
+            // mapping forward for us and the rewrite below is about to drop.
+            const added = markedInsRuns(node, rev);
+            for (const r of pending.ins) {
+                const from = Math.max(r.from - start, 0);
+                const to = Math.min(r.to - start, text.length);
+                if (to > from) added.push({ from, to });
             }
+            runs = diffRuns(base.text, text, added);
         }
-
-        // New line, or one already revised when the baseline was captured: the
-        // whole thing is this revision's. Otherwise, exactly the runs that differ.
-        const runs =
-            base === undefined || base.self ? [{ from: 0, to: text.length }] : diffRuns(base.text, text, anchor);
         if (runs.length === 0) return false;
 
         // RECOMPUTE rather than accumulate: drop whatever an earlier flush wrote at

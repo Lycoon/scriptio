@@ -181,15 +181,33 @@ const DIFF_LIMIT = 400;
  * ambiguity is what smears a run off its word boundary, marking the "s" of "sits"
  * in "He [tands and s]its" instead of the "stands and " that was really typed.
  *
- * `anchor` is where the user's caret actually inserted, in the same offsets as
- * `next`, which resolves it exactly — the diff supplies what changed, the edit
- * supplies where. With no anchor available, the leftmost equivalent alignment is
- * the conventional choice (the same "shift the hunk up" rule diff tools use) and
- * keeps runs on word boundaries far more often than the trim's rightmost.
+ * `added` resolves it: spans of `next` (in `next`'s own offsets) already known to
+ * hold characters this revision introduced — the caret's own insertions from the
+ * edits being stamped, plus what earlier stamping already marked on the line. The
+ * diff supplies what changed, these supply where. The run has to COVER them, and
+ * that containment is what makes the answer hold up over a word typed in several
+ * bursts: the diff then reports the whole word while the caret only accounts for
+ * its tail, so pinning the run's START to the caret would shunt it right by
+ * however much was typed earlier — colouring "[arrassemb]arrass" and leaving the
+ * "emb" the user typed reading as original text. Earlier marks close that gap
+ * from the left; ProseMirror has been mapping them forward all along.
+ *
+ * Where containment is impossible — the known-added span is wider than the run,
+ * because the same burst also deleted characters — the alignment with the most
+ * overlap is taken instead, which is the same answer for every case where it is
+ * possible. With nothing known, the leftmost equivalent alignment is the
+ * conventional choice (the same "shift the hunk up" rule diff tools use) and keeps
+ * runs on word boundaries far more often than the trim's rightmost.
  *
  * `leftBound`/`rightBound` keep a run from sliding into its neighbours.
  */
-const slideRun = (next: string, run: DiffRun, leftBound: number, rightBound: number, anchor: number): DiffRun => {
+const slideRun = (
+    next: string,
+    run: DiffRun,
+    leftBound: number,
+    rightBound: number,
+    added: readonly DiffRun[],
+): DiffRun => {
     const len = run.to - run.from;
     // Slide left while the character before the run repeats its last character,
     // and right while the character after it repeats its first — the two moves
@@ -198,7 +216,24 @@ const slideRun = (next: string, run: DiffRun, leftBound: number, rightBound: num
     while (lo > leftBound && next.charCodeAt(lo - 1) === next.charCodeAt(lo + len - 1)) lo--;
     let hi = run.from;
     while (hi + len < rightBound && next.charCodeAt(hi + len) === next.charCodeAt(hi)) hi++;
-    const at = anchor < 0 ? lo : Math.max(lo, Math.min(anchor, hi));
+    if (lo === hi) return { from: lo, to: lo + len };
+
+    // Union of the known-added spans this run could possibly reach. Spans outside
+    // [lo, hi + len] belong to another run and must not drag this one.
+    let from = Infinity;
+    let to = -Infinity;
+    for (const span of added) {
+        if (span.to <= lo || span.from >= hi + len) continue;
+        if (span.from < from) from = span.from;
+        if (span.to > to) to = span.to;
+    }
+    if (from === Infinity) return { from: lo, to: lo + len };
+
+    // Cover that union: `at <= from` and `at + len >= to`. Both bounds are the
+    // same point whenever the union is the run (the normal case, so the alignment
+    // is exact); otherwise the lower is the leftmost maximum-overlap alignment,
+    // and clamping into [lo, hi] keeps the best one still reachable.
+    const at = Math.min(Math.max(Math.min(to - len, from), lo), hi);
     return { from: at, to: at + len };
 };
 
@@ -218,8 +253,12 @@ const slideRun = (next: string, run: DiffRun, leftBound: number, rightBound: num
  * trimmed middle for the handful of short lines an edit touched, on the already
  * debounced flush — the common case never reaches it, because one edit leaves one
  * side of the trim empty.
+ *
+ * `added` is the alignment evidence described on {@link slideRun} — omit it and the
+ * runs still land somewhere that reconstructs `next`, just not necessarily on the
+ * copy of a repeated word the user really typed.
  */
-export const diffRuns = (prev: string, next: string, anchor = -1): DiffRun[] => {
+export const diffRuns = (prev: string, next: string, added: readonly DiffRun[] = []): DiffRun[] => {
     if (prev === next) return [];
 
     const max = Math.min(prev.length, next.length);
@@ -237,7 +276,7 @@ export const diffRuns = (prev: string, next: string, anchor = -1): DiffRun[] => 
     // the limit → treat the whole region as rewritten.
     if (n === 0 || m === 0 || n > DIFF_LIMIT || m > DIFF_LIMIT) {
         const run = { from: p, to: p + m };
-        return m > 0 ? [slideRun(next, run, 0, next.length, anchor)] : [run];
+        return m > 0 ? [slideRun(next, run, 0, next.length, added)] : [run];
     }
 
     // lcs[i][j] = length of the longest common subsequence of a[i..] and b[j..].
@@ -298,7 +337,7 @@ export const diffRuns = (prev: string, next: string, anchor = -1): DiffRun[] => 
         if (!r.pure || r.to === r.from) return { from: r.from, to: r.to };
         const leftBound = k > 0 ? runs[k - 1].to : 0;
         const rightBound = k + 1 < runs.length ? runs[k + 1].from : next.length;
-        return slideRun(next, r, leftBound, rightBound, anchor);
+        return slideRun(next, r, leftBound, rightBound, added);
     });
 };
 
