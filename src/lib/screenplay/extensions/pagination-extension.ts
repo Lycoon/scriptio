@@ -129,6 +129,10 @@ export interface PaginationOptions {
     customFooter: Record<PageNumber, FooterOptions>;
     /** Element types that force a page break before them. */
     startNewPageTypes: Set<string>;
+    /** Draw (MORE) / CHARACTER (CONT'D) around dialogue split by a page break.
+     *  Off suppresses the overlays only — the break itself is unaffected, since
+     *  they are absolutely positioned and never consume content space. */
+    showContdPageBreak: boolean;
     /**
      * Production page-lock getters. When the editor is wired with page
      * locking, these expose the live toggle and lock map. Optional so test
@@ -191,6 +195,7 @@ declare module "@tiptap/core" {
             updateFooterContent: (left: string, middle: string, right: string, pageNumber?: PageNumber) => ReturnType;
             updatePageBreakBackground: (color: string) => ReturnType;
             updateStartNewPageTypes: (types: Set<string>) => ReturnType;
+            updateShowContdPageBreak: (show: boolean) => ReturnType;
             refreshPagination: () => ReturnType;
             /** Toggle the manual page-break flag on the top-level node at `pos`.
              *  When set, pagination forces a new page that begins with that node. */
@@ -223,6 +228,7 @@ const defaultOptions: PaginationOptions = {
     customHeader: {},
     customFooter: {},
     startNewPageTypes: new Set<string>(),
+    showContdPageBreak: true,
 };
 
 // ---------------------------------------------------------------------------
@@ -1312,6 +1318,8 @@ const createPaginationPlugin = (extension: {
                 if (_mr) options.marginRight = parseFloat(_mr);
                 const _snp = editorDOM.dataset.startNewPageTypes;
                 if (_snp) options.startNewPageTypes = new Set(JSON.parse(_snp));
+                const _scpb = editorDOM.dataset.showContdPageBreak;
+                if (_scpb) options.showContdPageBreak = _scpb === "true";
                 // Header/footer templates are bridged through the DOM (see
                 // syncHeaderFooterData) because `options` here can lag the
                 // command's mutations — without this, saved header/footer edits
@@ -1510,7 +1518,7 @@ const createPaginationPlugin = (extension: {
                                 pagenum: ++pagenum,
                                 // + pageStartMargin: the ending page's first node was margin-stripped.
                                 freespace: Math.max(0, freespace + pageStartMargin),
-                                contdName: logic?.showMoreContd ? lastCharName : "",
+                                contdName: options.showContdPageBreak && logic?.showMoreContd ? lastCharName : "",
                                 splitNodeType: nodeType,
                                 anchorId: dataId,
                                 splitOffset,
@@ -1602,7 +1610,7 @@ const createPaginationPlugin = (extension: {
                                     // + pageStartMargin: the ending page's first node was margin-stripped.
                                     freespace: Math.max(0, freespaceBeforeNode - split.topHeight + pageStartMargin),
                                     // contdName non-empty for dialogue: triggers (MORE)/(CONT'D) labels.
-                                    contdName: logic.showMoreContd ? lastCharName : "",
+                                    contdName: options.showContdPageBreak && logic.showMoreContd ? lastCharName : "",
                                     // splitNodeType drives the overlay padding-escape in createPageBreakWidget.
                                     splitNodeType: nodeType,
                                     // Anchor for page locking: the node being split owns both halves.
@@ -1676,6 +1684,7 @@ const createPaginationPlugin = (extension: {
                         // double-orphan), the whole block starts fresh — no labels needed.
                         const firstMovingType = firstMovingNode?.type;
                         const isDialogueSplit =
+                            options.showContdPageBreak &&
                             lastCharName !== "" &&
                             (firstMovingType === ScreenplayElement.Dialogue ||
                                 firstMovingType === ScreenplayElement.Parenthetical);
@@ -2642,6 +2651,14 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 ({ tr }) => {
                     this.options.startNewPageTypes = types;
                     this.editor.view.dom.dataset.startNewPageTypes = JSON.stringify([...types]);
+                    tr.setMeta("forcePaginationUpdate", true);
+                    return true;
+                },
+            updateShowContdPageBreak:
+                (show) =>
+                ({ tr }) => {
+                    this.options.showContdPageBreak = show;
+                    this.editor.view.dom.dataset.showContdPageBreak = show ? "true" : "false";
                     tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },

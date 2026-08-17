@@ -63,6 +63,8 @@ const ExportProject = () => {
         sceneNumberOnRight,
         contdLabel,
         moreLabel,
+        showContdDialogue,
+        showContdPageBreak,
     } = useContext(ProjectContext);
     const ydoc = repository?.getState();
     const userContext = useContext(UserContext);
@@ -192,6 +194,8 @@ const ExportProject = () => {
                 sceneNumberOnRight,
                 contdLabel,
                 moreLabel,
+                showContdDialogue,
+                showContdPageBreak,
                 editorElement: editor?.view?.dom,
                 // Title page is omitted entirely when its toggle is off.
                 titlePageElement: includeTitlePage ? titlePageEditor?.view?.dom : undefined,

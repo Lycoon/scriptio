@@ -381,6 +381,14 @@ export class ProjectRepository {
         if (this.guardWrite("setMoreLabel")) return;
         this.ydoc.layout().set("moreLabel", label);
     }
+    setShowContdDialogue(show: boolean) {
+        if (this.guardWrite("setShowContdDialogue")) return;
+        this.ydoc.layout().set("showContdDialogue", show);
+    }
+    setShowContdPageBreak(show: boolean) {
+        if (this.guardWrite("setShowContdPageBreak")) return;
+        this.ydoc.layout().set("showContdPageBreak", show);
+    }
     setHeaderLeft(template: string) {
         if (this.guardWrite("setHeaderLeft")) return;
         this.ydoc.layout().set("headerLeft", template);

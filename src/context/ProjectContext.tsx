@@ -111,6 +111,10 @@ export interface ProjectContextType {
     setContdLabel: (label: string) => void;
     moreLabel: string;
     setMoreLabel: (label: string) => void;
+    showContdDialogue: boolean;
+    setShowContdDialogue: (show: boolean) => void;
+    showContdPageBreak: boolean;
+    setShowContdPageBreak: (show: boolean) => void;
     headerLeft: string;
     setHeaderLeft: (template: string) => void;
     headerMiddle: string;
@@ -253,6 +257,10 @@ const defaultContextValue: ProjectContextType = {
     setContdLabel: () => {},
     moreLabel: "(MORE)",
     setMoreLabel: () => {},
+    showContdDialogue: true,
+    setShowContdDialogue: () => {},
+    showContdPageBreak: true,
+    setShowContdPageBreak: () => {},
     headerLeft: "",
     setHeaderLeft: () => {},
     headerMiddle: "",
@@ -415,6 +423,8 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
     const [sceneNumberOnRight, setSceneNumberOnRightState] = useState<boolean>(false);
     const [contdLabel, setContdLabelState] = useState<string>("(CONT'D)");
     const [moreLabel, setMoreLabelState] = useState<string>("(MORE)");
+    const [showContdDialogue, setShowContdDialogueState] = useState<boolean>(true);
+    const [showContdPageBreak, setShowContdPageBreakState] = useState<boolean>(true);
     const [headerLeft, setHeaderLeftState] = useState<string>("");
     const [headerMiddle, setHeaderMiddleState] = useState<string>("");
     const [headerRight, setHeaderRightState] = useState<string>("#.");
@@ -620,6 +630,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             if (initialLayout.moreLabel !== undefined) {
                 setMoreLabelState(initialLayout.moreLabel);
             }
+            if (initialLayout.showContdDialogue !== undefined) {
+                setShowContdDialogueState(initialLayout.showContdDialogue);
+            }
+            if (initialLayout.showContdPageBreak !== undefined) {
+                setShowContdPageBreakState(initialLayout.showContdPageBreak);
+            }
             if (initialLayout.headerLeft !== undefined) {
                 setHeaderLeftState(initialLayout.headerLeft);
             }
@@ -713,6 +729,12 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             }
             if (_moreLabel !== undefined) {
                 setMoreLabelState(_moreLabel);
+            }
+            if (layout.showContdDialogue !== undefined) {
+                setShowContdDialogueState(layout.showContdDialogue);
+            }
+            if (layout.showContdPageBreak !== undefined) {
+                setShowContdPageBreakState(layout.showContdPageBreak);
             }
             if (layout.headerLeft !== undefined) {
                 setHeaderLeftState(layout.headerLeft);
@@ -975,6 +997,22 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
         (label: string) => {
             setMoreLabelState(label);
             repository?.setMoreLabel(label);
+        },
+        [repository],
+    );
+
+    const setShowContdDialogue = useCallback(
+        (show: boolean) => {
+            setShowContdDialogueState(show);
+            repository?.setShowContdDialogue(show);
+        },
+        [repository],
+    );
+
+    const setShowContdPageBreak = useCallback(
+        (show: boolean) => {
+            setShowContdPageBreakState(show);
+            repository?.setShowContdPageBreak(show);
         },
         [repository],
     );
@@ -1259,6 +1297,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setContdLabel,
             moreLabel,
             setMoreLabel,
+            showContdDialogue,
+            setShowContdDialogue,
+            showContdPageBreak,
+            setShowContdPageBreak,
             headerLeft,
             setHeaderLeft,
             headerMiddle,
@@ -1365,6 +1407,10 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
             setContdLabel,
             moreLabel,
             setMoreLabel,
+            showContdDialogue,
+            setShowContdDialogue,
+            showContdPageBreak,
+            setShowContdPageBreak,
             headerLeft,
             setHeaderLeft,
             headerMiddle,

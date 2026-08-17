@@ -403,6 +403,13 @@
         content: " " var(--contd-label, "(CONT'D)");
     }
 
+    /* CONT'D on resumed dialogue turned off in the layout settings. The
+       decoration class stays on the node (the PDF exporter gates on the same
+       setting); only the rendered suffix goes away. */
+    &.hide-contd-dialogue .character.contd::after {
+        content: none;
+    }
+
     /* Parenthetical */
     .parenthetical {
         position: relative;

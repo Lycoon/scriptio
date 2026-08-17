@@ -17,12 +17,16 @@
     transform: rotate(90deg);
 }
 
-/* Body of a collapsible section, revealed when the header is expanded. */
+/* Body of a collapsible section, revealed when the header is expanded. The
+   indent and left rule tie the content to the heading above it, so an open
+   section reads as one block instead of running into the next heading. */
 .sectionBody {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-top: 12px;
+    margin-top: 10px;
+    padding-left: 14px;
+    border-left: 2px solid var(--separator);
 }
 
 .input {
@@ -77,6 +81,16 @@
 .contdConfirmBtnActive:hover {
     background: rgba(var(--primary-rgb), 0.1);
     border-color: var(--primary);
+}
+
+/* A label input whose continuation case is switched off: still readable, but
+   visibly inert (the input itself is `disabled`). */
+.labelDisabled {
+    opacity: 0.5;
+}
+
+.labelDisabled .input {
+    cursor: not-allowed;
 }
 
 .marginsSection {
@@ -262,6 +276,12 @@
  * narrow dashboard drawer that overflows off-screen, so let the label + inputs
  * wrap and stack the header/footer inputs vertically instead. */
 @media (max-width: 767px) {
+    /* Narrower indent in the drawer — the rule still marks the section, but
+       every inner row keeps its width. */
+    .sectionBody {
+        padding-left: 10px;
+    }
+
     .marginRow {
         flex-wrap: wrap;
         gap: 8px;

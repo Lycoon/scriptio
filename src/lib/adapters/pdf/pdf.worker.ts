@@ -213,6 +213,8 @@ export interface WorkerPayload {
     pageMarginRight: number;
     contdLabel: string;
     moreLabel: string;
+    /** Draw the MORE / CONT'D pair around dialogue split by a page break. */
+    showContdPageBreak: boolean;
 }
 
 self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
@@ -343,7 +345,11 @@ async function renderLines(
             }
             const prevLine = findPrevContentLine(lines, li);
             const nextLine = findNextContentLine(lines, li);
-            const isDialogueSplit = prevLine?.type === "dialogue" && nextLine?.type === "dialogue";
+            // Gating on the setting here suppresses the whole pair at once: the
+            // (MORE) below, the CHARACTER (CONT'D) above, and the line of space
+            // the latter would have taken from the new page.
+            const isDialogueSplit =
+                payload.showContdPageBreak && prevLine?.type === "dialogue" && nextLine?.type === "dialogue";
 
             // If a dialogue block spans across the page break, draw (MORE) on this page
             if (isDialogueSplit && lastCharacterName) {
