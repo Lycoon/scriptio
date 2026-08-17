@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { editUserInfo, deleteUser } from "@src/lib/utils/requests";
+import { editUserInfo, deleteUser, requestDataExport } from "@src/lib/utils/requests";
 import { signOut } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Trash2, Save, TriangleAlert } from "lucide-react";
+import { ArrowRight, Download, Trash2, Save, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import form from "./../../utils/Form.module.css";
@@ -59,6 +59,10 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
     const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [exportLoading, setExportLoading] = useState(false);
+    const [exportMessage, setExportMessage] = useState<{ type: "success" | "error"; text: string } | null>(
+        null,
+    );
 
     // Sync state when settings load
     useEffect(() => {
@@ -79,6 +83,28 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         setColor(newColor);
         setDirty(true);
         setMessage(null);
+    };
+
+    // GDPR data-access request: the server bundles everything in the background
+    // and emails a download link, so the only feedback here is "check your inbox".
+    const handleRequestExport = async () => {
+        if (exportLoading) return;
+        setExportLoading(true);
+        setExportMessage(null);
+        try {
+            const res = await requestDataExport();
+            if (res.ok) {
+                setExportMessage({ type: "success", text: t("exportRequested") });
+            } else if (res.status === 409) {
+                setExportMessage({ type: "error", text: t("exportPending") });
+            } else {
+                setExportMessage({ type: "error", text: t("exportFailed") });
+            }
+        } catch {
+            setExportMessage({ type: "error", text: t("exportFailed") });
+        } finally {
+            setExportLoading(false);
+        }
     };
 
     const handleDeleteAccount = async () => {
@@ -135,6 +161,30 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
     if (dangerOpen) {
         return (
             <>
+                <div className={styles.exportSection}>
+                    <div className={styles.exportContainer}>
+                        <div className={dangerStyles.dangerItem}>
+                            <div>
+                                <p className={form.label}>{t("exportData")}</p>
+                                <p className={dangerStyles.dangerDescription}>{t("exportDataDesc")}</p>
+                            </div>
+                            <button
+                                className={styles.exportBtn}
+                                onClick={handleRequestExport}
+                                disabled={exportLoading}
+                            >
+                                <Download size={16} />
+                                {exportLoading ? t("exportRequesting") : t("exportBtn")}
+                            </button>
+                        </div>
+                    </div>
+                    {exportMessage && (
+                        <div className={`${styles.message} ${styles[exportMessage.type]}`}>
+                            {exportMessage.text}
+                        </div>
+                    )}
+                </div>
+
                 <div className={dangerStyles.dangerContainer}>
                     <div className={dangerStyles.dangerItem}>
                         <div>

@@ -23,6 +23,7 @@
 import Stripe from "stripe";
 
 import * as CollabUtils from "@src/lib/cloud/utils";
+import * as S3 from "@src/lib/s3";
 import * as MagicLinkService from "@src/server/service/magic-link-service";
 import * as ProjectService from "@src/server/service/project-service";
 import * as UserService from "@src/server/service/user-service";
@@ -77,6 +78,8 @@ export async function deleteAccount(userId: string): Promise<boolean> {
         MagicLinkService.deleteForEmail(user.email),
         UserService.deleteVerificationTokens(user.email),
         ProjectService.deleteInvitesByEmail(user.email),
+        // Any GDPR export zip still sitting in R2 (best-effort, logged inside).
+        S3.destroyPrefix(`gdpr-exports/${userId}/`),
     ]);
 
     await UserService.deleteUserFromId(userId);

@@ -59,8 +59,11 @@ export default function PrivacyContent() {
                     <h2 className={styles.pageSectionTitle}>Information we collect</h2>
                     <p className={styles.pageText}>
                         We limit collection to the minimum required to deliver the service, including <b>account</b> and
-                        <b> project</b> information. When you create an account (required for browser use and optional
-                        for desktop sync) we collect your e-mail address and a password.
+                        <b> project</b> information. Scriptio® is passwordless — we do not store passwords or any other
+                        credentials. Signing in is entirely optional, on desktop, mobile and in the browser alike, and
+                        is only needed to enable cloud synchronization and collaboration features. The only sign-in
+                        methods available are a magic-link sent to your e-mail address and OAuth sign-in with Apple or
+                        Google.
                     </p>
                     <p className={styles.pageText}>
                         Screenplays, user preferences, boards, notes and other creative content you create or edit in
@@ -105,9 +108,10 @@ export default function PrivacyContent() {
                         We apply reasonable technical and organizational measures to protect your personal data and
                         project content from unauthorized access, alteration, disclosure or destruction. These measures
                         include industry-standard protections such as encrypted communications (TLS) for data in transit
-                        and secure storage practices for data at rest. Passwords are stored using strong hashing
-                        algorithms. In the unlikely event of a security breach affecting personal data, we will follow
-                        applicable law and promptly notify affected users and authorities where required.
+                        and secure storage practices for data at rest. As Scriptio® is passwordless, we never store
+                        passwords or other credentials that could be compromised. In the unlikely event of a security
+                        breach affecting personal data, we will follow applicable law and promptly notify affected
+                        users and authorities where required.
                     </p>
                 </section>
 
@@ -119,6 +123,12 @@ export default function PrivacyContent() {
                         limited period after account deletion to comply with legal obligations or to prevent fraud.
                         Project content stored in the cloud will be deleted upon request, subject to any backup or legal
                         hold obligations. Feel free to reach out to us through our contact form
+                    </p>
+                    <p className={styles.pageText}>
+                        When an invited user uploads assets to a shared project, those assets become part of the
+                        project owner workspace storage quota. Deleting your personal user account will erase
+                        your personal profile and account credentials, but assets uploaded to shared projects will
+                        remain part of the project workspace to prevent breaking collaborative work.
                     </p>
                 </section>
 
@@ -133,7 +143,9 @@ export default function PrivacyContent() {
                         on consent.
                     </p>
                     <p className={styles.pageText}>
-                        To exercise these rights or for account deletion/export requests, please contact us at:
+                        Once authenticated, you can reclaim a copy of your personal data or delete your account
+                        directly from your profile section within the app. If you are unable to access your account,
+                        you may request access to or deletion of your personal data by contacting us at:
                         contact@scriptio.app. We will respond within the timeframe required by applicable law.
                     </p>
                 </section>

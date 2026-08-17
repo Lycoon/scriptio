@@ -20,7 +20,10 @@ const client = new S3Client({
     },
 });
 
-export const getSignedDownloadUrl = async (name: string): Promise<string | null> => {
+/** SigV4 caps presigned-URL validity at 7 days. */
+export const MAX_SIGNED_URL_TTL_SECONDS = 7 * 24 * 3600;
+
+export const getSignedDownloadUrl = async (name: string, expiresIn = 900): Promise<string | null> => {
     const params = {
         Bucket: env.S3_BUCKET,
         Key: name,
@@ -28,7 +31,7 @@ export const getSignedDownloadUrl = async (name: string): Promise<string | null>
 
     try {
         const command = new GetObjectCommand(params);
-        return await getSignedUrl(client, command, { expiresIn: 900 });
+        return await getSignedUrl(client, command, { expiresIn });
     } catch (e) {
         console.error("An error occurred while getting signed download URL from S3: ", e);
         return null;

@@ -280,6 +280,28 @@ export class ProjectRepository {
         return prisma.projectInvitation.deleteMany({ where: { email } });
     }
 
+    /** Memberships with raw project metadata — GDPR export (unlike
+     *  fetchProjectMemberships, no poster URL signing or hydration). */
+    listMembershipsWithProject(userId: string) {
+        return prisma.projectMember.findMany({
+            where: { userId },
+            select: {
+                role: true,
+                project: {
+                    select: {
+                        id: true,
+                        title: true,
+                        description: true,
+                        author: true,
+                        createdAt: true,
+                        updatedAt: true,
+                    },
+                },
+            },
+            orderBy: { project: { createdAt: "asc" } },
+        });
+    }
+
     fetchProjectById(projectId: string) {
         return prisma.project.findUnique({
             where: { id: projectId },

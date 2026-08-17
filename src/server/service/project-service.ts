@@ -81,6 +81,10 @@ export async function getMembershipsForTeardown(userId: string) {
     return repository.listMembershipsForTeardown(userId);
 }
 
+export async function getMembershipsWithProject(userId: string) {
+    return repository.listMembershipsWithProject(userId);
+}
+
 export async function deleteInvitesByEmail(email: string) {
     return repository.deleteInvitesByEmail(email);
 }

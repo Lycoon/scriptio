@@ -4,7 +4,9 @@ const isTauriBuild = process.env.TAURI_BUILD === "true";
 
 const config: NextConfig = {
     reactStrictMode: true,
-    serverExternalPackages: ["@prisma/client", "prisma"],
+    // fflate must stay unbundled server-side: its async zip API spawns
+    // worker_threads from stringified module code, which bundling would break.
+    serverExternalPackages: ["@prisma/client", "prisma", "fflate"],
     turbopack: {
         rules: {
             "*.svg": {

@@ -21,6 +21,12 @@ export const sendProjectInviteEmail = async (email: string, projectTitle: string
     sendFormattedEmail(email, "Project Invitation", "Project Invitation", content, "Join project", link);
 };
 
+export const sendDataExportEmail = async (email: string, link: string) => {
+    const content = `Your personal data export is ready. Click the button below to download the archive containing your account information and project memberships. The link expires in 7 days.`;
+
+    sendFormattedEmail(email, "Your data export", "Your data export is ready", content, "Download my data", link);
+};
+
 export const sendMagicLinkEmail = async (email: string, token: string) => {
     const link = `${BASE_URL}/auth/magic-link?token=${token}`;
     const content = `Click the button below to sign in to your Scriptio account. This link will expire in 10 minutes and can only be used once. If you didn't request this, you can safely ignore this email.`;

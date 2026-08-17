@@ -125,6 +125,10 @@ export const deleteUser = () => {
     return request(`/api/users`, "DELETE");
 };
 
+export const requestDataExport = () => {
+    return request(`/api/users/export`, "POST");
+};
+
 /* Auth */
 
 export const requestMagicLink = (body: RequestMagicLinkBody) => {

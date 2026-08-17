@@ -119,6 +119,47 @@
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+/* GDPR data export — sits above the danger zone with the same row geometry,
+   but neutral colors: requesting a copy of your data is not a danger action. */
+.exportSection {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.exportContainer {
+    border: 2px dashed var(--separator);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.exportBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: var(--primary-text);
+    color: var(--main-bg);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 40px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.2s;
+    min-width: 110px;
+    margin-left: 30px;
+}
+
+.exportBtn:hover {
+    opacity: 0.85;
+}
+
+.exportBtn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
 /* Shown in the delete-account dialog when a live subscription is at stake */
 .subscriptionWarning {
     display: flex;
