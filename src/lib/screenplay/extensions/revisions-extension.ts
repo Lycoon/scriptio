@@ -1,6 +1,7 @@
 import { Editor, Extension, Mark, mergeAttributes } from "@tiptap/core";
 import { Node as PMNode } from "@tiptap/pm/model";
 import { EditorState, Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
+import { Mapping } from "@tiptap/pm/transform";
 import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "@tiptap/y-tiptap";
 
@@ -282,13 +283,23 @@ const goneIds = (tr: Transaction, oldDoc: PMNode, newDoc: PMNode, lo: number, hi
     // the join landed in and misses the line that was taken out, which is the only
     // one being looked for. Each step's own map reports what it removed in its
     // INPUT coordinates, so rebase those onto the original doc.
+    //
+    // The rebase is built from a COPY of the preceding maps rather than from
+    // `tr.mapping.slice(0, i)`: a sliced Mapping only honours its bounds in `map`,
+    // while `invert()` walks the whole underlying array (it delegates to
+    // `appendMappingInverted`, which ignores `from`/`to`). So the sliced-and-
+    // inverted mapping ran this step's own inverse too, and at i = 0 — a plain
+    // one-step Backspace — `back` was that inverse instead of the identity. Every
+    // reported span then came out shifted by the size of the cut, sweeping the
+    // untouched line just past it into `before` and reporting it as removed.
+    const maps = tr.mapping.maps;
     let oLo = Infinity;
     let oHi = -Infinity;
-    tr.mapping.maps.forEach((map, i) => {
-        const back = tr.mapping.slice(0, i).invert();
+    maps.forEach((map, i) => {
+        const back = i === 0 ? null : new Mapping(maps.slice(0, i)).invert();
         map.forEach((os: number, oe: number) => {
-            const a = back.map(os, -1);
-            const b = back.map(oe, 1);
+            const a = back ? back.map(os, -1) : os;
+            const b = back ? back.map(oe, 1) : oe;
             if (a < oLo) oLo = a;
             if (b > oHi) oHi = b;
         });
