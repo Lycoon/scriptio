@@ -17,6 +17,7 @@ import {
     revisionColor,
 } from "../revisions";
 import { paginationKey } from "./pagination-extension";
+import { timeApply } from "./apply-timing";
 
 /** Key of the revisions plugin; its state is the {@link Pending} edit set.
  *  Exported so tests can assert that a flush consumed it. */
@@ -1169,7 +1170,7 @@ export const createRevisionsExtension = (config: RevisionsConfig) => {
                     // debounce (see the view below), keeping the key event free.
                     state: {
                         init: () => EMPTY_PENDING,
-                        apply(tr, value, oldState, newState) {
+                        apply: timeApply("revisions", (tr, value, oldState, newState) => {
                             // Our debounced flush landed → pending is now applied.
                             if (tr.getMeta(REVISION_STAMP_META)) return EMPTY_PENDING;
                             if (!getRevisionsEnabled() || getCurrentRevision() < 1) {
@@ -1218,7 +1219,7 @@ export const createRevisionsExtension = (config: RevisionsConfig) => {
                                 gone,
                                 dirty: true,
                             };
-                        },
+                        }),
                     },
 
                     props: {

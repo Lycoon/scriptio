@@ -252,27 +252,24 @@ function syncVars(dom: HTMLElement, o: PaginationOptions) {
 }
 
 /**
- * Bridge the header/footer templates through the editor DOM, the same way
- * syncVars bridges page geometry. The plugin's `apply` reads `extension.options`,
- * which can lag behind the synchronous mutations a command makes to
- * `this.options` (Tiptap options-object identity issue). Writing the live values
- * onto the DOM in the command and reading them back in `apply` guarantees the
- * recompute sees the just-saved templates — without this, header/footer edits
- * only appear after a full editor rebuild (page refresh).
+ * Per-editor clone backing `storage.live` — the mutable options object shared by
+ * the commands, the plugin and the lifecycle hooks.
+ *
+ * Do NOT swap this back to `this.options`: tiptap's `options` is a getter that
+ * returns a fresh shallow clone on every access, so a command's mutation is
+ * invisible to the clone the plugin captured. `storage` is cloned once per
+ * editor, which makes it the only shared channel between them.
+ *
+ * The nested containers are cloned too — tiptap's shallow spread shares them
+ * with the module-level `defaultOptions`, and so with every other editor.
  */
-function syncHeaderFooterData(dom: HTMLElement, o: PaginationOptions) {
-    dom.dataset.paginationHeader = JSON.stringify({
-        headerLeft: o.headerLeft,
-        headerMiddle: o.headerMiddle,
-        headerRight: o.headerRight,
-        customHeader: o.customHeader,
-    });
-    dom.dataset.paginationFooter = JSON.stringify({
-        footerLeft: o.footerLeft,
-        footerMiddle: o.footerMiddle,
-        footerRight: o.footerRight,
-        customFooter: o.customFooter,
-    });
+function cloneLiveOptions(o: PaginationOptions): PaginationOptions {
+    return {
+        ...o,
+        startNewPageTypes: new Set(o.startNewPageTypes),
+        customHeader: { ...o.customHeader },
+        customFooter: { ...o.customFooter },
+    };
 }
 
 // ---------------------------------------------------------------------------
@@ -1047,10 +1044,9 @@ const setupTestDiv = (editorDom: HTMLElement, _: PaginationOptions): HTMLElement
     testDiv.className = editorDom.className;
 
     // Copy all CSS variables from the live editor DOM to the test div. This includes
-    // both element margin/style vars (set by DocumentEditorPanel) and page dimension
-    // vars (set by syncVars inside each command before the transaction is dispatched).
-    // Reading from editorDom rather than from options avoids the stale-options problem:
-    // extension.options in apply() may lag behind the mutation done by the command.
+    // both element margin/style vars (set by DocumentEditorPanel, which exist ONLY
+    // on the DOM — they are not pagination options) and page dimension vars (set by
+    // syncVars inside each command before the transaction is dispatched).
     for (let i = 0; i < editorDom.style.length; i++) {
         const prop = editorDom.style[i];
         if (prop.startsWith("--")) {
@@ -1224,9 +1220,8 @@ function computePageLabels(
 }
 
 const createPaginationPlugin = (extension: {
-    options: PaginationOptions;
     editor: Editor;
-    storage: { fontsReady: boolean };
+    storage: { fontsReady: boolean; live: PaginationOptions };
 }) =>
     new Plugin({
         key: paginationKey,
@@ -1248,7 +1243,10 @@ const createPaginationPlugin = (extension: {
                 // what eventually pulls us past this guard.
                 if (!extension.storage.fontsReady) return value;
 
-                const options = extension.options as PaginationOptions;
+                // storage.live is the per-editor mutable options object every
+                // command writes to synchronously before dispatch — see
+                // cloneLiveOptions for why extension.options can't be used.
+                const options = extension.storage.live;
                 const formatUpdate = tr.getMeta("pageFormatUpdate");
                 const forceUpdate = tr.getMeta("forcePaginationUpdate");
 
@@ -1299,53 +1297,6 @@ const createPaginationPlugin = (extension: {
                 if (!editor.isInitialized || !extension.editor.view?.dom) return value;
 
                 const editorDOM = extension.editor.view.dom as HTMLElement;
-
-                // extension.options may lag behind the synchronous mutations done by the
-                // commands (Tiptap options-object identity issue). editorDOM's inline style
-                // is always current because syncVars writes to it inside every command,
-                // before the transaction is dispatched. Override the stale option fields.
-                const _ph = editorDOM.style.getPropertyValue("--page-height");
-                const _pw = editorDOM.style.getPropertyValue("--page-width");
-                const _mt = editorDOM.style.getPropertyValue("--page-margin-top");
-                const _mb = editorDOM.style.getPropertyValue("--page-margin-bottom");
-                const _ml = editorDOM.style.getPropertyValue("--page-margin-left");
-                const _mr = editorDOM.style.getPropertyValue("--page-margin-right");
-                if (_ph) options.pageHeight = parseFloat(_ph);
-                if (_pw) options.pageWidth = parseFloat(_pw);
-                if (_mt) options.marginTop = parseFloat(_mt);
-                if (_mb) options.marginBottom = parseFloat(_mb);
-                if (_ml) options.marginLeft = parseFloat(_ml);
-                if (_mr) options.marginRight = parseFloat(_mr);
-                const _snp = editorDOM.dataset.startNewPageTypes;
-                if (_snp) options.startNewPageTypes = new Set(JSON.parse(_snp));
-                const _scpb = editorDOM.dataset.showContdPageBreak;
-                if (_scpb) options.showContdPageBreak = _scpb === "true";
-                // Header/footer templates are bridged through the DOM (see
-                // syncHeaderFooterData) because `options` here can lag the
-                // command's mutations — without this, saved header/footer edits
-                // wouldn't appear until a refresh.
-                const _hdr = editorDOM.dataset.paginationHeader;
-                if (_hdr) {
-                    const h = JSON.parse(_hdr) as Pick<
-                        PaginationOptions,
-                        "headerLeft" | "headerMiddle" | "headerRight" | "customHeader"
-                    >;
-                    options.headerLeft = h.headerLeft;
-                    options.headerMiddle = h.headerMiddle;
-                    options.headerRight = h.headerRight;
-                    options.customHeader = h.customHeader;
-                }
-                const _ftr = editorDOM.dataset.paginationFooter;
-                if (_ftr) {
-                    const f = JSON.parse(_ftr) as Pick<
-                        PaginationOptions,
-                        "footerLeft" | "footerMiddle" | "footerRight" | "customFooter"
-                    >;
-                    options.footerLeft = f.footerLeft;
-                    options.footerMiddle = f.footerMiddle;
-                    options.footerRight = f.footerRight;
-                    options.customFooter = f.customFooter;
-                }
 
                 const serializer = getSerializer(newState.schema);
 
@@ -2037,7 +1988,7 @@ const createPaginationPlugin = (extension: {
             // guard — and skipping the O(doc) scan keeps it off the hot path.
             if (tr.getMeta(REVISION_STAMP_META)) return true;
 
-            const opts = extension.options as PaginationOptions;
+            const opts = extension.storage.live;
             if (!opts.getPageLocking?.()) return true;
 
             const pageLocks = opts.getPageLocks?.();
@@ -2178,6 +2129,11 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
              *  with a fallback monospace font (Consolas etc.) that produces a
              *  different line-wrap from CourierPrime. */
             fontsReady: false,
+            /** The per-editor mutable options object. Commands write here (and
+             *  mirror geometry to CSS vars via syncVars for rendering); the
+             *  plugin's `apply` reads from here. See cloneLiveOptions for why
+             *  `extension.options` cannot carry live mutations. */
+            live: cloneLiveOptions(this.options),
         };
     },
 
@@ -2185,8 +2141,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
         const editorDOM = this.editor.view.dom;
 
         editorDOM.classList.add("pagination");
-        syncVars(editorDOM, this.options);
-        syncHeaderFooterData(editorDOM, this.options);
+        syncVars(editorDOM, this.storage.live);
 
         let style = document.getElementById("pagination-style");
         if (!style) {
@@ -2356,7 +2311,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 }
             `;
 
-        setupTestDiv(editorDOM, this.options);
+        setupTestDiv(editorDOM, this.storage.live);
 
         // The screenplay @font-face fonts (CourierPrime + fallbacks) load
         // asynchronously. Until the real font is applied, the test div lays
@@ -2460,7 +2415,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 const { $from, empty } = state.selection;
                 if (!empty || $from.parentOffset !== 0) return false;
 
-                const opts = this.options as PaginationOptions;
+                const opts = this.storage.live;
                 if (!opts.getPageLocking?.()) return false;
                 const pageLocks = opts.getPageLocks?.();
                 if (!pageLocks) return false;
@@ -2546,7 +2501,7 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
                 if (!empty || $from.parentOffset !== 0) return false;
                 if ($from.parent.textContent.length === 0) return false; // nothing to push down
 
-                const opts = this.options as PaginationOptions;
+                const opts = this.storage.live;
                 if (!opts.getPageLocking?.()) return false;
                 const pageLocks = opts.getPageLocks?.();
                 if (!pageLocks) return false;
@@ -2568,97 +2523,100 @@ export const ScriptioPagination = Extension.create<PaginationOptions>({
     },
 
     addCommands() {
+        // Every command mutates `this.storage.live` — the per-editor shared
+        // options object the plugin's `apply` reads — never `this.options`,
+        // whose mutations are invisible outside this context (see
+        // cloneLiveOptions). Geometry changes are mirrored to CSS vars with
+        // syncVars because the stylesheet consumes them.
         return {
             updatePageSize:
                 (size) =>
                 ({ tr }) => {
-                    Object.assign(this.options, size);
-                    syncVars(this.editor.view.dom, this.options);
+                    Object.assign(this.storage.live, size);
+                    syncVars(this.editor.view.dom, this.storage.live);
                     tr.setMeta("pageFormatUpdate", true);
                     return true;
                 },
             updatePageHeight:
                 (h) =>
                 ({ tr }) => {
-                    this.options.pageHeight = h;
-                    syncVars(this.editor.view.dom, this.options);
+                    this.storage.live.pageHeight = h;
+                    syncVars(this.editor.view.dom, this.storage.live);
                     tr.setMeta("pageFormatUpdate", true);
                     return true;
                 },
             updatePageWidth:
                 (w) =>
                 ({ tr }) => {
-                    this.options.pageWidth = w;
-                    syncVars(this.editor.view.dom, this.options);
+                    this.storage.live.pageWidth = w;
+                    syncVars(this.editor.view.dom, this.storage.live);
                     tr.setMeta("pageFormatUpdate", true);
                     return true;
                 },
             updatePageGap:
                 (g) =>
                 ({ tr }) => {
-                    this.options.pageGap = g;
+                    this.storage.live.pageGap = g;
                     tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
             updateMargins:
                 (m) =>
                 ({ tr }) => {
-                    Object.assign(this.options, {
+                    Object.assign(this.storage.live, {
                         marginTop: m.top,
                         marginBottom: m.bottom,
                         marginLeft: m.left,
                         marginRight: m.right,
                     });
-                    syncVars(this.editor.view.dom, this.options);
+                    syncVars(this.editor.view.dom, this.storage.live);
                     tr.setMeta("pageFormatUpdate", true);
                     return true;
                 },
             updateHeaderContent:
                 (l, m, r, p) =>
                 ({ tr }) => {
-                    if (p !== undefined) this.options.customHeader[p] = { headerLeft: l, headerMiddle: m, headerRight: r };
+                    const live = this.storage.live;
+                    if (p !== undefined) live.customHeader[p] = { headerLeft: l, headerMiddle: m, headerRight: r };
                     else {
-                        this.options.headerLeft = l;
-                        this.options.headerMiddle = m;
-                        this.options.headerRight = r;
+                        live.headerLeft = l;
+                        live.headerMiddle = m;
+                        live.headerRight = r;
                     }
-                    syncHeaderFooterData(this.editor.view.dom, this.options);
                     tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
             updateFooterContent:
                 (l, m, r, p) =>
                 ({ tr }) => {
-                    if (p !== undefined) this.options.customFooter[p] = { footerLeft: l, footerMiddle: m, footerRight: r };
+                    const live = this.storage.live;
+                    if (p !== undefined) live.customFooter[p] = { footerLeft: l, footerMiddle: m, footerRight: r };
                     else {
-                        this.options.footerLeft = l;
-                        this.options.footerMiddle = m;
-                        this.options.footerRight = r;
+                        live.footerLeft = l;
+                        live.footerMiddle = m;
+                        live.footerRight = r;
                     }
-                    syncHeaderFooterData(this.editor.view.dom, this.options);
                     tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
             updatePageBreakBackground:
                 (c) =>
                 ({ tr }) => {
-                    this.options.pageBreakBackground = c;
+                    this.storage.live.pageBreakBackground = c;
                     tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
             updateStartNewPageTypes:
                 (types) =>
                 ({ tr }) => {
-                    this.options.startNewPageTypes = types;
-                    this.editor.view.dom.dataset.startNewPageTypes = JSON.stringify([...types]);
+                    this.storage.live.startNewPageTypes = types;
                     tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
             updateShowContdPageBreak:
                 (show) =>
                 ({ tr }) => {
-                    this.options.showContdPageBreak = show;
-                    this.editor.view.dom.dataset.showContdPageBreak = show ? "true" : "false";
+                    this.storage.live.showContdPageBreak = show;
                     tr.setMeta("forcePaginationUpdate", true);
                     return true;
                 },
