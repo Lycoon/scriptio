@@ -17,7 +17,6 @@
 .navbarScrolled {
     background-color: color-mix(in srgb, var(--secondary) 75%, transparent);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border-bottom-color: var(--separator);
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
 }

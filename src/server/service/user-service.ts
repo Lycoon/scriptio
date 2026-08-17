@@ -18,6 +18,10 @@ export const deleteUserFromId = async (userId: string) => {
     return repository.deleteUser({ id: userId });
 };
 
+export const deleteVerificationTokens = async (email: string) => {
+    return repository.deleteVerificationTokens(email);
+};
+
 export const getUserFromId = async (userId: string) => {
     return repository.fetchUser({ id: userId });
 };

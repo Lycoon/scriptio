@@ -35,4 +35,8 @@ export class MagicLinkRepository {
     deleteByHash(tokenHash: string) {
         return prisma.magicLinkToken.deleteMany({ where: { tokenHash } });
     }
+
+    deleteByEmail(email: string) {
+        return prisma.magicLinkToken.deleteMany({ where: { email } });
+    }
 }

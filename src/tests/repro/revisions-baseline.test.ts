@@ -108,6 +108,16 @@ const markedTextOf = (editor: Editor, index: number): string => {
     return out;
 };
 
+/** Line-local offset where child `index`'s first "ins" mark starts, or -1. */
+const markStartOf = (editor: Editor, index: number): number => {
+    let start = -1;
+    editor.state.doc.child(index).descendants((child, off) => {
+        if (!child.isText || start >= 0) return;
+        if (child.marks.some((m) => m.type.name === "revision" && m.attrs.kind === "ins")) start = off;
+    });
+    return start;
+};
+
 const textOf = (editor: Editor, index: number): string => editor.state.doc.child(index).textContent;
 
 const deleteIn = (editor: Editor, index: number, from: number, to: number) => {
@@ -171,12 +181,24 @@ describe("diffRuns", () => {
 
     it("marks the copy the caret actually inserted, not an identical neighbour", () => {
         // "Hey, it's you" + "it's " typed at offset 5. A prefix trim lands on the
-        // SECOND "it's"; the anchor puts it back on the one that was typed.
+        // SECOND "it's"; the known-added span puts it back on the one typed.
         const prev = "Hey, it's you";
         const next = "Hey, it's it's you";
-        expect(diffRuns(prev, next, 5)).toEqual([{ from: 5, to: 10 }]);
+        expect(diffRuns(prev, next, [{ from: 5, to: 10 }])).toEqual([{ from: 5, to: 10 }]);
         // Typed AFTER the existing one instead — same text, different intent.
-        expect(diffRuns(prev, next, 10)).toEqual([{ from: 10, to: 15 }]);
+        expect(diffRuns(prev, next, [{ from: 10, to: 15 }])).toEqual([{ from: 10, to: 15 }]);
+    });
+
+    it("covers a known-added span narrower than the run it belongs to", () => {
+        // The word was typed in bursts, so only its tail is still accounted for.
+        // Pinning the run's start to that tail shunts it right by the "emb" typed
+        // earlier, colouring "arrassemb" — the run has to COVER the span, not
+        // start at it.
+        const prev = "Sorry to embarrass you.";
+        const next = "Sorry to embarrassembarrass you.";
+        expect(diffRuns(prev, next, [{ from: 12, to: 18 }])).toEqual([{ from: 9, to: 18 }]);
+        // ...and the same tail belonging to the second copy pins it there instead.
+        expect(diffRuns(prev, next, [{ from: 21, to: 27 }])).toEqual([{ from: 18, to: 27 }]);
     });
 
     it("keeps an inserted run on its word boundary", () => {
@@ -184,17 +206,39 @@ describe("diffRuns", () => {
         // claiming the "s" of "sits".
         const prev = "He sits";
         const next = "He stands and sits";
-        expect(diffRuns(prev, next, 3)).toEqual([{ from: 3, to: 14 }]);
+        expect(diffRuns(prev, next, [{ from: 3, to: 14 }])).toEqual([{ from: 3, to: 14 }]);
         expect(next.slice(3, 14)).toBe("stands and ");
+        // Two bursts, "very " typed in front of an earlier "stands and ". Knowing
+        // only the second burst, the run covers it but keeps a character of slack —
+        // which of the two spaces is the new one is genuinely undecidable here...
+        const two = "He very stands and sits";
+        expect(diffRuns(prev, two, [{ from: 3, to: 8 }])).toEqual([{ from: 2, to: 18 }]);
+        // ...and the first burst's own marked span settles it: exactly what was typed.
+        expect(
+            diffRuns(prev, two, [
+                { from: 3, to: 8 },
+                { from: 8, to: 19 },
+            ]),
+        ).toEqual([{ from: 3, to: 19 }]);
+        expect(two.slice(3, 19)).toBe("very stands and ");
     });
 
-    it("without an anchor, prefers the leftmost equivalent alignment", () => {
+    it("with nothing known added, prefers the leftmost equivalent alignment", () => {
         expect(diffRuns("He sits", "He stands and sits")).toEqual([{ from: 2, to: 13 }]);
+    });
+
+    it("ignores a known-added span belonging to another run", () => {
+        // Two edits, and only the second one's span is known — it must not drag the
+        // first run away from where the diff put it.
+        expect(diffRuns("aXbYc", "aQbRc", [{ from: 3, to: 4 }])).toEqual([
+            { from: 1, to: 2 },
+            { from: 3, to: 4 },
+        ]);
     });
 
     it("does not slide a run that replaced text rather than only adding", () => {
         // "cat" → "dog" is pinned by what it replaced; nothing to disambiguate.
-        expect(diffRuns("the cat sat", "the dog sat", 4)).toEqual([{ from: 4, to: 7 }]);
+        expect(diffRuns("the cat sat", "the dog sat", [{ from: 4, to: 7 }])).toEqual([{ from: 4, to: 7 }]);
     });
 
     it("falls back to one coarse run when the changed region is a rewrite", () => {
@@ -310,6 +354,65 @@ describe("revisions: marks are derived from the revision's baseline", () => {
             }
         });
         expect(markStart).toBe(5);
+    });
+
+    it("colours the typed copy when the duplicate word spans two flush windows", async () => {
+        const { editor, rev, capture } = makeEditor([LINES[0], "Sorry to embarrass you."]);
+        rev.enabled = true;
+        rev.current = 1;
+        capture(1);
+
+        // A pause mid-word splits the typing across two flushes, so the second one
+        // sees a run (the whole word) far wider than the keystrokes still sitting
+        // in `pending` — and every alignment of it rebuilds the same sentence.
+        insertIn(editor, 1, 9, "emb");
+        await settle();
+        expect(markedTextOf(editor, 1)).toBe("emb");
+
+        insertIn(editor, 1, 12, "arrass");
+        await settle();
+
+        expect(textOf(editor, 1)).toBe("Sorry to embarrassembarrass you.");
+        // The word the caret typed, whole — not "arrassemb", which leaves the "emb"
+        // it started with reading as original text.
+        expect(markedTextOf(editor, 1)).toBe("embarrass");
+        expect(markStartOf(editor, 1)).toBe(9);
+    });
+
+    it("colours the typed copy when the duplicate word is typed AFTER the original", async () => {
+        const { editor, rev, capture } = makeEditor([LINES[0], "Sorry to embarrass you."]);
+        rev.enabled = true;
+        rev.current = 1;
+        capture(1);
+
+        // Same final sentence, opposite intent: the second copy is the new one.
+        insertIn(editor, 1, 18, "emb");
+        await settle();
+        insertIn(editor, 1, 21, "arrass");
+        await settle();
+
+        expect(textOf(editor, 1)).toBe("Sorry to embarrassembarrass you.");
+        expect(markedTextOf(editor, 1)).toBe("embarrass");
+        expect(markStartOf(editor, 1)).toBe(18);
+    });
+
+    it("keeps a phrase typed in front of an earlier one on its word boundary", async () => {
+        const { editor, rev, capture } = makeEditor([LINES[0], "He sits"]);
+        rev.enabled = true;
+        rev.current = 1;
+        capture(1);
+
+        // "stands and " first, then "very " typed in front of it in a later flush:
+        // the accumulated run reaches one character further left than the words
+        // that were actually typed.
+        insertIn(editor, 1, 3, "stands and ");
+        await settle();
+        insertIn(editor, 1, 3, "very ");
+        await settle();
+
+        expect(textOf(editor, 1)).toBe("He very stands and sits");
+        expect(markedTextOf(editor, 1)).toBe("very stands and ");
+        expect(markStartOf(editor, 1)).toBe(3);
     });
 
     it("keeps a typed phrase on its word boundary", async () => {

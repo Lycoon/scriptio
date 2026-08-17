@@ -36,6 +36,15 @@ export async function upsertMember(projectId: string, userId: string, role: Proj
     return repository.setProjectMember(projectId, userId, role);
 }
 
+export async function transferOwnership(
+    projectId: string,
+    currentOwnerId: string,
+    newOwnerId: string,
+    previousOwnerRole: ProjectRole = ProjectRole.EDITOR,
+) {
+    return repository.transferOwnership(projectId, currentOwnerId, newOwnerId, previousOwnerRole);
+}
+
 export async function createInvite(projectId: string, email: string, token: string) {
     return repository.createInvite(projectId, email, token);
 }
@@ -66,6 +75,18 @@ export async function countProjects() {
 
 export async function countMembershipsByUser(userId: string) {
     return repository.countMembershipsByUser(userId);
+}
+
+export async function getMembershipsForTeardown(userId: string) {
+    return repository.listMembershipsForTeardown(userId);
+}
+
+export async function getMembershipsWithProject(userId: string) {
+    return repository.listMembershipsWithProject(userId);
+}
+
+export async function deleteInvitesByEmail(email: string) {
+    return repository.deleteInvitesByEmail(email);
 }
 
 export async function searchProjects(term: string, limit: number, cursor?: number) {

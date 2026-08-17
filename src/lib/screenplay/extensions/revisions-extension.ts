@@ -1,10 +1,12 @@
 import { Editor, Extension, Mark, mergeAttributes } from "@tiptap/core";
 import { Node as PMNode } from "@tiptap/pm/model";
 import { EditorState, Plugin, PluginKey, Transaction } from "@tiptap/pm/state";
+import { Mapping } from "@tiptap/pm/transform";
 import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "@tiptap/y-tiptap";
 
 import {
+    DiffRun,
     REVISION_COLORS,
     REVISION_MARK,
     REVISION_STAMP_META,
@@ -15,6 +17,7 @@ import {
     revisionColor,
 } from "../revisions";
 import { paginationKey } from "./pagination-extension";
+import { timeApply } from "./apply-timing";
 
 /** Key of the revisions plugin; its state is the {@link Pending} edit set.
  *  Exported so tests can assert that a flush consumed it. */
@@ -219,6 +222,30 @@ const textRevisions = (node: PMNode, rev: number): { self: boolean; prior?: numb
     return { self, prior };
 };
 
+/**
+ * Text spans of a node already carrying revision `rev`'s "ins" mark, in line-local
+ * offsets, touching spans merged.
+ *
+ * What earlier stamping on this line concluded had been added — kept as alignment
+ * evidence for the rewrite that is about to drop it, since it covers the
+ * keystrokes that have already left `pending` (see {@link diffRuns}).
+ */
+const markedInsRuns = (node: PMNode, rev: number): DiffRun[] => {
+    const out: DiffRun[] = [];
+    node.descendants((child, off) => {
+        if (!child.isText) return true;
+        const marked = child.marks.some(
+            (m) => m.type.name === REVISION_MARK && m.attrs.index === rev && m.attrs.kind === "ins",
+        );
+        if (!marked) return false;
+        const last = out[out.length - 1];
+        if (last && last.to === off) last.to = off + child.nodeSize;
+        else out.push({ from: off, to: off + child.nodeSize });
+        return false;
+    });
+    return out;
+};
+
 /** Stable `data-id`s of the top-level lines overlapping [from, to] in `doc`. */
 const idsInSpan = (doc: PMNode, from: number, to: number): string[] => {
     const size = doc.content.size;
@@ -257,13 +284,23 @@ const goneIds = (tr: Transaction, oldDoc: PMNode, newDoc: PMNode, lo: number, hi
     // the join landed in and misses the line that was taken out, which is the only
     // one being looked for. Each step's own map reports what it removed in its
     // INPUT coordinates, so rebase those onto the original doc.
+    //
+    // The rebase is built from a COPY of the preceding maps rather than from
+    // `tr.mapping.slice(0, i)`: a sliced Mapping only honours its bounds in `map`,
+    // while `invert()` walks the whole underlying array (it delegates to
+    // `appendMappingInverted`, which ignores `from`/`to`). So the sliced-and-
+    // inverted mapping ran this step's own inverse too, and at i = 0 — a plain
+    // one-step Backspace — `back` was that inverse instead of the identity. Every
+    // reported span then came out shifted by the size of the cut, sweeping the
+    // untouched line just past it into `before` and reporting it as removed.
+    const maps = tr.mapping.maps;
     let oLo = Infinity;
     let oHi = -Infinity;
-    tr.mapping.maps.forEach((map, i) => {
-        const back = tr.mapping.slice(0, i).invert();
+    maps.forEach((map, i) => {
+        const back = i === 0 ? null : new Mapping(maps.slice(0, i)).invert();
         map.forEach((os: number, oe: number) => {
-            const a = back.map(os, -1);
-            const b = back.map(oe, 1);
+            const a = back ? back.map(os, -1) : os;
+            const b = back ? back.map(oe, 1) : oe;
             if (a < oLo) oLo = a;
             if (b > oHi) oHi = b;
         });
@@ -477,26 +514,30 @@ const buildDerivedStampTransaction = (
             return false;
         }
 
-        // Where the user's caret actually put text in this line, as a line-local
-        // offset. Comparing against the baseline says WHAT changed but cannot say
-        // which of several identical alignments the user meant; this is the other
-        // half of that answer, and it is already sitting in the pending set. Only
-        // covers edits from the current window — a line edited in an earlier flush
-        // falls back to the diff's own leftmost alignment, which is stable because
-        // an unambiguous run has only one alignment to choose from.
-        let anchor = -1;
+        // New line, or one already revised when the baseline was captured: the whole
+        // thing is this revision's, with no alignment to resolve. Otherwise, exactly
+        // the runs that differ — which is where `added` earns its keep.
         const nodeEnd = start + node.content.size;
-        for (const r of pending.ins) {
-            if (r.from >= start && r.from <= nodeEnd) {
-                anchor = r.from - start;
-                break;
+        let runs: DiffRun[];
+        if (base === undefined || base.self) {
+            runs = [{ from: 0, to: text.length }];
+        } else {
+            // Which of this line's characters are known to be this revision's, in the
+            // line's own offsets. Comparing against the baseline says WHAT changed but
+            // cannot say which of several identical alignments the user meant; this is
+            // the other half of that answer (see the note on `slideRun`), and it comes
+            // from both directions in time: the caret's own insertions, still sitting
+            // in the pending set, and the runs earlier flushes already marked — the
+            // keystrokes pending no longer remembers, which ProseMirror has been
+            // mapping forward for us and the rewrite below is about to drop.
+            const added = markedInsRuns(node, rev);
+            for (const r of pending.ins) {
+                const from = Math.max(r.from - start, 0);
+                const to = Math.min(r.to - start, text.length);
+                if (to > from) added.push({ from, to });
             }
+            runs = diffRuns(base.text, text, added);
         }
-
-        // New line, or one already revised when the baseline was captured: the
-        // whole thing is this revision's. Otherwise, exactly the runs that differ.
-        const runs =
-            base === undefined || base.self ? [{ from: 0, to: text.length }] : diffRuns(base.text, text, anchor);
         if (runs.length === 0) return false;
 
         // RECOMPUTE rather than accumulate: drop whatever an earlier flush wrote at
@@ -1129,7 +1170,7 @@ export const createRevisionsExtension = (config: RevisionsConfig) => {
                     // debounce (see the view below), keeping the key event free.
                     state: {
                         init: () => EMPTY_PENDING,
-                        apply(tr, value, oldState, newState) {
+                        apply: timeApply("revisions", (tr, value, oldState, newState) => {
                             // Our debounced flush landed → pending is now applied.
                             if (tr.getMeta(REVISION_STAMP_META)) return EMPTY_PENDING;
                             if (!getRevisionsEnabled() || getCurrentRevision() < 1) {
@@ -1178,7 +1219,7 @@ export const createRevisionsExtension = (config: RevisionsConfig) => {
                                 gone,
                                 dirty: true,
                             };
-                        },
+                        }),
                     },
 
                     props: {

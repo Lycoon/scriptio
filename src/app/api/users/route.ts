@@ -1,5 +1,6 @@
 import { FAILED_USER_DELETION } from "@src/lib/messages";
-import { deleteUserFromId, getUserFromId } from "@src/server/service/user-service";
+import { getUserFromId } from "@src/server/service/user-service";
+import { deleteAccount } from "@src/server/service/account-deletion-service";
 import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 
 import * as UserService from "@src/server/service/user-service";
@@ -45,10 +46,12 @@ async function updateUser(req: NextRequest, { user }: AuthApiContext) {
 /**
  * DELETE `/users`
  *
- * Deletes authenticated user
+ * Deletes the authenticated user along with everything attached to the account:
+ * owned cloud projects (DB rows, R2 assets and snapshots, Durable Object
+ * storage), collaborations, and email-keyed tokens. See account-deletion-service.
  */
 async function deleteUser(req: NextRequest, { user }: AuthApiContext) {
-    const deleted = await deleteUserFromId(user.id);
+    const deleted = await deleteAccount(user.id);
     if (!deleted) {
         throw new InternalServerError(FAILED_USER_DELETION);
     }

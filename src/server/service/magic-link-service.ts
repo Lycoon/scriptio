@@ -12,3 +12,5 @@ export const issue = (data: MagicLinkTokenCreation) => repository.create(data);
 export const findByHash = (tokenHash: string) => repository.findByHash(tokenHash);
 
 export const consumeByHash = (tokenHash: string) => repository.deleteByHash(tokenHash);
+
+export const deleteForEmail = (email: string) => repository.deleteByEmail(email);

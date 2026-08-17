@@ -105,6 +105,10 @@ const LayoutSettings = () => {
         setContdLabel,
         moreLabel,
         setMoreLabel,
+        showContdDialogue,
+        setShowContdDialogue,
+        showContdPageBreak,
+        setShowContdPageBreak,
         headerLeft,
         setHeaderLeft,
         headerMiddle,
@@ -139,6 +143,8 @@ const LayoutSettings = () => {
     const [localHeadingSpacing, setLocalHeadingSpacing] = useState(sceneHeadingSpacing);
     const [localContdLabel, setLocalContdLabel] = useState(() => stripParens(contdLabel));
     const [localMoreLabel, setLocalMoreLabel] = useState(() => stripParens(moreLabel));
+    const [localShowContdDialogue, setLocalShowContdDialogue] = useState(showContdDialogue);
+    const [localShowContdPageBreak, setLocalShowContdPageBreak] = useState(showContdPageBreak);
     const [localHeaderLeft, setLocalHeaderLeft] = useState(headerLeft);
     const [localHeaderMiddle, setLocalHeaderMiddle] = useState(headerMiddle);
     const [localHeaderRight, setLocalHeaderRight] = useState(headerRight);
@@ -181,6 +187,8 @@ const LayoutSettings = () => {
             setLocalHeadingSpacing(sceneHeadingSpacing);
             setLocalContdLabel(stripParens(contdLabel));
             setLocalMoreLabel(stripParens(moreLabel));
+            setLocalShowContdDialogue(showContdDialogue);
+            setLocalShowContdPageBreak(showContdPageBreak);
             setLocalHeaderLeft(headerLeft);
             setLocalHeaderMiddle(headerMiddle);
             setLocalHeaderRight(headerRight);
@@ -201,6 +209,8 @@ const LayoutSettings = () => {
         sceneHeadingSpacing,
         contdLabel,
         moreLabel,
+        showContdDialogue,
+        showContdPageBreak,
         headerLeft,
         headerMiddle,
         headerRight,
@@ -222,6 +232,8 @@ const LayoutSettings = () => {
             localHeadingSpacing !== sceneHeadingSpacing ||
             `(${localContdLabel})` !== contdLabel ||
             `(${localMoreLabel})` !== moreLabel ||
+            localShowContdDialogue !== showContdDialogue ||
+            localShowContdPageBreak !== showContdPageBreak ||
             localHeaderLeft !== headerLeft ||
             localHeaderMiddle !== headerMiddle ||
             localHeaderRight !== headerRight ||
@@ -248,6 +260,10 @@ const LayoutSettings = () => {
         contdLabel,
         localMoreLabel,
         moreLabel,
+        localShowContdDialogue,
+        showContdDialogue,
+        localShowContdPageBreak,
+        showContdPageBreak,
         localHeaderLeft,
         headerLeft,
         localHeaderMiddle,
@@ -278,6 +294,8 @@ const LayoutSettings = () => {
         setLocalHeadingSpacing(1);
         setLocalContdLabel("CONT'D");
         setLocalMoreLabel("MORE");
+        setLocalShowContdDialogue(true);
+        setLocalShowContdPageBreak(true);
         setLocalHeaderLeft("");
         setLocalHeaderMiddle("");
         setLocalHeaderRight("#.");
@@ -306,6 +324,8 @@ const LayoutSettings = () => {
         setSceneHeadingSpacing(localHeadingSpacing);
         setContdLabel(`(${localContdLabel})`);
         setMoreLabel(`(${localMoreLabel})`);
+        setShowContdDialogue(localShowContdDialogue);
+        setShowContdPageBreak(localShowContdPageBreak);
         setHeaderLeft(localHeaderLeft);
         setHeaderMiddle(localHeaderMiddle);
         setHeaderRight(localHeaderRight);
@@ -530,6 +550,10 @@ const LayoutSettings = () => {
         );
     };
 
+    // The CONT'D label serves both continuation cases, so it stays editable as
+    // long as either one of them still renders it.
+    const contdLabelUsed = localShowContdDialogue || localShowContdPageBreak;
+
     const pageFormatOptions: DropdownOption[] = [
         { value: "LETTER", label: 'US Letter (8.5" x 11")' },
         { value: "A4", label: "A4 (210mm x 297mm)" },
@@ -678,8 +702,36 @@ const LayoutSettings = () => {
             </Section>
 
             <Section title={t("continuedLabels")}>
+                <div
+                    className={`${optionCard.optionCard} ${localShowContdDialogue ? optionCard.active : ""}`}
+                    onClick={() => setLocalShowContdDialogue(!localShowContdDialogue)}
+                >
+                    <div className={optionCard.checkbox}>
+                        {localShowContdDialogue && <div className={optionCard.checkInner} />}
+                    </div>
+                    <div className={optionCard.optionInfo}>
+                        <span className={optionCard.optionTitle}>{t("contdOnDialogue")}</span>
+                        <span className={optionCard.optionDesc}>{t("contdOnDialogueDesc")}</span>
+                    </div>
+                </div>
+
+                <div
+                    className={`${optionCard.optionCard} ${localShowContdPageBreak ? optionCard.active : ""}`}
+                    onClick={() => setLocalShowContdPageBreak(!localShowContdPageBreak)}
+                >
+                    <div className={optionCard.checkbox}>
+                        {localShowContdPageBreak && <div className={optionCard.checkInner} />}
+                    </div>
+                    <div className={optionCard.optionInfo}>
+                        <span className={optionCard.optionTitle}>{t("contdOnPageBreak")}</span>
+                        <span className={optionCard.optionDesc}>{t("contdOnPageBreakDesc")}</span>
+                    </div>
+                </div>
+
+                {/* The labels themselves are only reachable through the toggles
+                    above, so each input dims once nothing renders it. */}
                 <div className={styles.labelRow}>
-                    <div className={styles.marginsSection}>
+                    <div className={`${styles.marginsSection} ${contdLabelUsed ? "" : styles.labelDisabled}`}>
                         <span className={styles.marginLabel}>{t("contdTitle")}</span>
                         <div className={styles.contdInputRow}>
                             <input
@@ -688,10 +740,11 @@ const LayoutSettings = () => {
                                 onChange={(e) => setLocalContdLabel(e.target.value)}
                                 className={`${sharedStyles.input} ${styles.input}`}
                                 placeholder="CONT'D"
+                                disabled={!contdLabelUsed}
                             />
                         </div>
                     </div>
-                    <div className={styles.marginsSection}>
+                    <div className={`${styles.marginsSection} ${localShowContdPageBreak ? "" : styles.labelDisabled}`}>
                         <span className={styles.marginLabel}>{t("moreTitle")}</span>
                         <div className={styles.contdInputRow}>
                             <input
@@ -700,6 +753,7 @@ const LayoutSettings = () => {
                                 onChange={(e) => setLocalMoreLabel(e.target.value)}
                                 className={`${sharedStyles.input} ${styles.input}`}
                                 placeholder="MORE"
+                                disabled={!localShowContdPageBreak}
                             />
                         </div>
                     </div>

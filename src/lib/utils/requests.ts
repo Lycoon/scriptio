@@ -5,6 +5,7 @@ import {
     UpdateProjectBody,
     UpdateRoleBody,
     RequestMagicLinkBody,
+    TransferOwnershipBody,
     UpdateUserBody,
 } from "./api-bodies";
 import { apiFetch } from "@src/lib/api-client";
@@ -106,6 +107,10 @@ export const updateMemberRole = async (projectId: string, userId: string, body: 
     return request(`/api/projects/${projectId}/members/${userId}`, "PATCH", body);
 };
 
+export const transferProjectOwnership = async (projectId: string, userId: string) => {
+    return request(`/api/projects/${projectId}/transfer-ownership`, "POST", { userId } satisfies TransferOwnershipBody);
+};
+
 /* Users */
 
 export const editUserSettings = (body: Partial<UserSettings>) => {
@@ -118,6 +123,10 @@ export const editUserInfo = (body: UpdateUserBody) => {
 
 export const deleteUser = () => {
     return request(`/api/users`, "DELETE");
+};
+
+export const requestDataExport = () => {
+    return request(`/api/users/export`, "POST");
 };
 
 /* Auth */

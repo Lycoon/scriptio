@@ -3,6 +3,7 @@ import { ProjectRole } from "../../../../generated/client/client";
 import * as S3 from "@src/lib/s3";
 import * as ProjectService from "@src/server/service/project-service";
 import * as Roles from "@src/lib/utils/roles";
+import { destroyProjectCompletely } from "@src/server/service/project-teardown-service";
 import { apiHandler, AuthApiContext } from "@src/lib/utils/api-handler";
 import {
     ForbiddenError,
@@ -106,21 +107,7 @@ async function deleteProject(req: NextRequest, { routeParams, user }: AuthApiCon
         throw new ForbiddenError();
     }
 
-    // Reclaim the project's R2 assets before the cascade drops their tracking
-    // rows (afterwards we'd no longer know which objects to delete).
-    const assets = await ProjectService.listAssetHashes(projectId);
-    if (assets.length > 0) {
-        await S3.destroyMany(assets.map((a) => `assets/${projectId}/${a.hash}`));
-    }
-
-    const deleted = await ProjectService.destroy(projectId);
-    if (!deleted) {
-        throw new InternalServerError();
-    }
-
-    if (member.project.poster) {
-        S3.destroy(projectId);
-    }
+    await destroyProjectCompletely(projectId);
 
     return SuccessNoContent();
 }

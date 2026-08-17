@@ -103,6 +103,10 @@ export type LayoutData = {
     sceneNumberOnRight: boolean;
     contdLabel: string;
     moreLabel: string;
+    /** Append `(CONT'D)` to a character cue resuming after an interruption. */
+    showContdDialogue: boolean;
+    /** Draw `(MORE)` / `(CONT'D)` around dialogue split by a page break. */
+    showContdPageBreak: boolean;
     /** Page-header templates (left/middle/right) with `#`/`@`/`*` placeholders. */
     headerLeft: string;
     headerMiddle: string;

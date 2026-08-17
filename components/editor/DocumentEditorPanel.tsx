@@ -99,6 +99,8 @@ const DocumentEditorPanel = ({
         sceneNumberOnRight,
         contdLabel,
         moreLabel,
+        showContdDialogue,
+        showContdPageBreak,
         headerLeft,
         headerMiddle,
         headerRight,
@@ -449,6 +451,12 @@ const DocumentEditorPanel = ({
             editorElement.classList.remove("production-locked");
         }
 
+        if (showContdDialogue) {
+            editorElement.classList.remove("hide-contd-dialogue");
+        } else {
+            editorElement.classList.add("hide-contd-dialogue");
+        }
+
         editorElement.style.setProperty("--contd-label", `"${contdLabel}"`);
         editorElement.style.setProperty("--more-label", `"${moreLabel}"`);
 
@@ -491,6 +499,7 @@ const DocumentEditorPanel = ({
             editor
                 .chain()
                 .updateStartNewPageTypes(startNewPageTypes)
+                .updateShowContdPageBreak(showContdPageBreak)
                 .updatePageSize(pageSize)
                 .updateMargins({
                     top: pageMargins.top * 96,
@@ -533,6 +542,8 @@ const DocumentEditorPanel = ({
         sceneNumberOnRight,
         contdLabel,
         moreLabel,
+        showContdDialogue,
+        showContdPageBreak,
         headerLeft,
         headerMiddle,
         headerRight,

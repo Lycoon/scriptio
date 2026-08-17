@@ -110,6 +110,22 @@
     margin-bottom: 8px;
 }
 
+/* The role select is 32px tall inside a collaborator row; in the modal it is a
+   primary control, so it gets the same footprint as .modalInput. */
+.modalSelect {
+    height: 40px;
+    font-size: 0.9rem;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.modalError {
+    font-size: 0.85rem;
+    color: var(--error);
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+}
+
 .modalActions {
     display: flex;
     flex-direction: column;

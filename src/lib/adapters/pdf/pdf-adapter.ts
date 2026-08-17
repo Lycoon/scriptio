@@ -20,6 +20,12 @@ export type PDFExportOptions = BaseExportOptions & {
     sceneNumberOnRight?: boolean;
     contdLabel?: string;
     moreLabel?: string;
+    /** Append the CONT'D label to a character cue resuming after an
+     *  interruption. Defaults to on when omitted. */
+    showContdDialogue?: boolean;
+    /** Draw the MORE / CONT'D pair around dialogue split by a page break.
+     *  Defaults to on when omitted. */
+    showContdPageBreak?: boolean;
     editorElement?: HTMLElement;
     titlePageElement?: HTMLElement;
     /** How production revisions are rendered into the PDF (see {@link RevisionExportMode}). */
@@ -235,6 +241,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
                 pageMarginRight,
                 contdLabel: options.contdLabel ?? "(CONT'D)",
                 moreLabel: options.moreLabel ?? "(MORE)",
+                showContdPageBreak: options.showContdPageBreak !== false,
             };
 
             worker.postMessage({ type: "START", payload });
@@ -830,7 +837,7 @@ export class PDFAdapter extends ProjectAdapter<PDFExportOptions> {
             }
         }
 
-        if (el.classList.contains("contd")) {
+        if (el.classList.contains("contd") && options.showContdDialogue !== false) {
             const label = options.contdLabel ?? "(CONT'D)";
             if (lastLine.runs.length > 0) {
                 const tailRun = lastLine.runs[lastLine.runs.length - 1];

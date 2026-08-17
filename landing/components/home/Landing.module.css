@@ -258,7 +258,6 @@
     border-radius: 14px;
     background-color: rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     color: var(--primary-text);
     text-decoration: none;
     cursor: pointer;
@@ -285,23 +284,21 @@
     left: 50%;
     min-width: 100%;
     padding-top: 0.6rem; /* keeps hover alive across the gap */
-    transform: translate(-50%, -6px);
-    opacity: 0;
-    visibility: hidden;
+    transform: translateX(-50%);
     pointer-events: none;
-    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     z-index: 3;
 }
 
 .ctaMenu:hover .ctaDropdown,
 .ctaMenu:focus-within .ctaDropdown,
 .ctaMenuOpen .ctaDropdown {
-    transform: translate(-50%, 0);
-    opacity: 1;
-    visibility: visible;
     pointer-events: auto;
 }
 
+/* The opacity/transform transition lives on the SAME element as backdrop-filter
+   (not a parent) — Chrome/WebKit only keep re-sampling a blur while its own
+   element is what's animating; on a static child under an animating ancestor
+   the blur freezes as a cached bitmap until the transition settles. */
 .ctaDropdownPanel {
     display: flex;
     flex-direction: column;
@@ -311,8 +308,18 @@
     border-radius: 12px;
     background-color: rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateY(-6px);
+    will-change: opacity, transform, backdrop-filter;
+    transition: opacity 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.ctaMenu:hover .ctaDropdownPanel,
+.ctaMenu:focus-within .ctaDropdownPanel,
+.ctaMenuOpen .ctaDropdownPanel {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .ctaDropdownItem {
@@ -549,7 +556,6 @@
     transition: box-shadow 0.3s ease;
     background-color: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
 }
 
 .glassCard::before {
@@ -698,7 +704,6 @@
     border-radius: 1rem;
     background-color: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     box-shadow: var(--shadow-s);
     overflow: hidden;
 }

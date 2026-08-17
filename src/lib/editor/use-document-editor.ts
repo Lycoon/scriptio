@@ -88,6 +88,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         footerMiddle,
         footerRight,
         showFirstPageFooter,
+        showContdPageBreak,
         sceneLocking,
         sceneNumberingStyle,
         skippedSceneLetters,
@@ -424,6 +425,9 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                                       : { footerLeft: "", footerMiddle: "", footerRight: "" },
                               },
                               ...SCREENPLAY_FORMATS[pageSize],
+                              // Initial mount only; live toggles flow through
+                              // updateShowContdPageBreak (see DocumentEditorPanel).
+                              showContdPageBreak,
                               getPageLocking: () => !!ext.pageLocking,
                               getPageLocks: () => ext.persistentPages ?? {},
                               getSkippedLetters: () => ext.skippedSceneLetters ?? [],

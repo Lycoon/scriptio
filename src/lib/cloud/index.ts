@@ -37,12 +37,13 @@ const worker = {
         // segments: [projectId, ...rest]
         const doPath = "/" + segments.slice(1).join("/");
 
-        // Authenticated API endpoints (saves, blacklist, allow, role-update)
+        // Authenticated API endpoints (saves, blacklist, allow, role-update, purge)
         const isAuthEndpoint =
             url.pathname.includes("/saves") ||
             url.pathname.endsWith("/blacklist") ||
             url.pathname.endsWith("/allow") ||
-            url.pathname.endsWith("/role-update");
+            url.pathname.endsWith("/role-update") ||
+            url.pathname.endsWith("/purge");
 
         if (isAuthEndpoint && request.method !== "GET") {
             const authHeader = request.headers.get("Authorization");

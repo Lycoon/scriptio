@@ -27,6 +27,12 @@ enum SubscriptionProvider {
   APPLE
 }
 
+enum DataExportStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 model User {
   id                  String      @id @default(uuid(7))
   createdAt           DateTime    @default(now())
@@ -46,6 +52,7 @@ model User {
   sessions            Session[]
   projects            ProjectMember[]
   transactions        Transaction[]
+  dataExports         DataExport[]
 }
 
 model Account {
@@ -143,11 +150,27 @@ model ProjectAsset {
   @@index([projectId])
 }
 
+// One GDPR data-access request. The zip lives in R2 at `key` until `expiresAt`
+// (7 days); a PENDING row younger than an hour blocks duplicate requests.
+model DataExport {
+  id                  String            @id @default(uuid(7))
+  status              DataExportStatus  @default(PENDING)
+  key                 String?
+  createdAt           DateTime          @default(now())
+  completedAt         DateTime?
+  expiresAt           DateTime?
+
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              String
+
+  @@index([userId])
+}
+
 model ProjectMember {
   id                  Int         @id @default(autoincrement())
   role                ProjectRole @default(VIEWER)
 
-  user                User        @relation(fields: [userId], references: [id])
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId              String
   project             Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId           String

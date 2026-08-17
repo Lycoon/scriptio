@@ -14,6 +14,7 @@ import {
     RETENTION_DAY_MS,
     RETENTION_HOUR_MS,
     RETENTION_INTERVAL_30MIN_MS,
+    PURGE_TOMBSTONE_GRACE_MS,
     SessionInfo,
     SaveEntry,
 } from "./types";
@@ -35,6 +36,13 @@ export class ProjectRoom extends DurableObject {
     private alarmScheduled: boolean = false;
     private projectId: string | null = null;
     private lastAwarenessCleanup: number = 0;
+
+    /**
+     * When this room was purged, or null while it is live. A purged room is a
+     * tombstone: it keeps its name alive only to refuse the connections that
+     * outlive the project, and does nothing else until it self-destructs.
+     */
+    private purgedAt: number | null = null;
 
     /** Project schema version of the in-memory doc; the gatekeeper compares
      *  client-advertised versions against this on connect. */
@@ -106,25 +114,20 @@ export class ProjectRoom extends DurableObject {
         // Track client IDs when awareness updates come from a WebSocket
         this.awareness.on("update", this.handleAwarenessUpdate);
 
+        // Read the tombstone before anything else touches storage. A purged
+        // room must not recreate its schema: `CREATE TABLE IF NOT EXISTS` is a
+        // write, and a Durable Object that holds storage never goes away — so
+        // rebuilding it on every wake-up would keep the room alive forever and
+        // defeat the self-destruct alarm. Everything below is skipped: the room
+        // has no doc, no sessions and no work to do, only connections to refuse.
+        this.purgedAt = this.readTombstone();
+        if (this.purgedAt !== null) {
+            console.log(JSON.stringify({ event: "room_tombstone_loaded", purgedAt: this.purgedAt }));
+            return;
+        }
+
         // Initialize database
-        this.ctx.storage.sql.exec(`
-            CREATE TABLE IF NOT EXISTS project (
-                id INTEGER PRIMARY KEY CHECK (id = 1),
-                data BLOB
-            );
-            CREATE TABLE IF NOT EXISTS blacklist (
-                user_id TEXT PRIMARY KEY
-            );
-            CREATE TABLE IF NOT EXISTS config (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            );
-            CREATE TABLE IF NOT EXISTS snapshot_assets (
-                snapshot_key TEXT,
-                hash TEXT
-            );
-            CREATE INDEX IF NOT EXISTS idx_snapshot_assets_key ON snapshot_assets(snapshot_key);
-        `);
+        this.ensureSchema();
 
         // Restore project state from SQLite. Attach the update handler AFTER
         // the restore so that re-loading persisted bytes on every DO wake-up
@@ -197,6 +200,51 @@ export class ProjectRoom extends DurableObject {
     }
 
     /**
+     * The purge timestamp if this room has been torn down, null otherwise.
+     *
+     * Reads without creating anything: a missing `config` table just means the
+     * room has never been opened, and the tombstoned case must leave storage
+     * exactly as the purge left it so the self-destruct alarm can empty it.
+     */
+    private readTombstone(): number | null {
+        try {
+            const rows = this.ctx.storage.sql.exec("SELECT value FROM config WHERE key = 'purgedAt';").toArray();
+            if (rows.length === 0) return null;
+            const purgedAt = Number(rows[0].value);
+            return Number.isFinite(purgedAt) ? purgedAt : null;
+        } catch {
+            // No `config` table — a room that was never initialized.
+            return null;
+        }
+    }
+
+    /**
+     * Create the SQLite schema. Idempotent — run on every construction of a
+     * live room, so a fresh Durable Object is usable rather than throwing on
+     * the next statement. Never run on a tombstoned room.
+     */
+    private ensureSchema(): void {
+        this.ctx.storage.sql.exec(`
+            CREATE TABLE IF NOT EXISTS project (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                data BLOB
+            );
+            CREATE TABLE IF NOT EXISTS blacklist (
+                user_id TEXT PRIMARY KEY
+            );
+            CREATE TABLE IF NOT EXISTS config (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            );
+            CREATE TABLE IF NOT EXISTS snapshot_assets (
+                snapshot_key TEXT,
+                hash TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_snapshot_assets_key ON snapshot_assets(snapshot_key);
+        `);
+    }
+
+    /**
      * Persist the current session state on the WebSocket so it survives
      * Cloudflare DO hibernation. Called whenever clientIds, userId, or role
      * changes for a session.
@@ -262,6 +310,7 @@ export class ProjectRoom extends DurableObject {
      * Mark the document as dirty and schedule an R2 snapshot alarm.
      */
     markDirty(): void {
+        if (this.purgedAt !== null) return;
         this.isDirty = true;
         this.scheduleSnapshotAlarm();
     }
@@ -270,6 +319,9 @@ export class ProjectRoom extends DurableObject {
      * Schedule a Cloudflare Alarm for R2 snapshot if not already pending.
      */
     private async scheduleSnapshotAlarm(): Promise<void> {
+        // Never overwrite the self-destruct alarm with a snapshot alarm — that
+        // would postpone the teardown indefinitely and re-snapshot a dead room.
+        if (this.purgedAt !== null) return;
         if (this.alarmScheduled) return;
         const currentAlarm = await this.ctx.storage.getAlarm();
         if (currentAlarm) {
@@ -285,6 +337,22 @@ export class ProjectRoom extends DurableObject {
      */
     async alarm(): Promise<void> {
         this.alarmScheduled = false;
+
+        // Self-destruct. The tombstone has now outlived every cloud token that
+        // could still have reached this room, so there is nothing left to
+        // refuse. Delete the last of the storage and write nothing back: a
+        // Durable Object that holds no storage stops existing, which is the
+        // only way a room addressed by name is ever reclaimed.
+        //
+        // `purgedAt` deliberately stays set. Storage is empty but this instance
+        // never ran `ensureSchema`, so it must keep refusing until it is
+        // evicted; a later incarnation of the same name reads no tombstone and
+        // starts clean.
+        if (this.purgedAt !== null) {
+            await this.ctx.storage.deleteAll();
+            console.log(JSON.stringify({ event: "room_self_destructed", purgedAt: this.purgedAt }));
+            return;
+        }
 
         if (!this.isDirty) return;
         this.isDirty = false;
@@ -486,6 +554,22 @@ export class ProjectRoom extends DurableObject {
     async fetch(request: Request): Promise<Response> {
         const url = new URL(request.url);
 
+        // A tombstoned room refuses everything, before any code below can write
+        // to storage (`persistProjectId` would). This is the whole point of the
+        // tombstone: cloud tokens stay valid for an hour after the project row
+        // is deleted, and the WebSocket gate only checks the token — so a client
+        // that happened to be idle-disconnected during the purge would otherwise
+        // reconnect, find a blank room, and re-upload its local copy of the
+        // project into storage that nothing can ever reach or reclaim again.
+        if (this.purgedAt !== null) {
+            // A retried teardown must not re-arm the self-destruct clock, so
+            // answer purges idempotently instead of rejecting them.
+            if (request.method === "POST" && url.pathname === "/purge") {
+                return Response.json({ deletedSnapshots: 0, alreadyPurged: true }, { status: 200 });
+            }
+            return new Response("Project deleted", { status: 410 });
+        }
+
         // Persist projectId from header (set by the outer worker fetch)
         const headerProjectId = request.headers.get("X-Project-Id");
         if (headerProjectId) {
@@ -529,6 +613,11 @@ export class ProjectRoom extends DurableObject {
                 return new Response("Missing key or name", { status: 400 });
             }
             return this.handleRename(key, name);
+        }
+
+        // POST /purge — wipe the room (project or owner account deleted)
+        if (request.method === "POST" && url.pathname === "/purge") {
+            return this.handlePurge();
         }
 
         // DELETE /saves — delete a save
@@ -1005,6 +1094,120 @@ export class ProjectRoom extends DurableObject {
         return new Response("Renamed", { status: 200 });
     }
 
+    /**
+     * Wipe the room for good: every R2 snapshot under the project prefix, all
+     * Durable Object storage (live doc, blacklist, config, snapshot index,
+     * pending alarm) and every live connection.
+     *
+     * A DO is addressed by name, so nothing ever reclaims it on its own — the
+     * project's SQLite and its snapshots would outlive the project (and its
+     * owner's account) forever without this.
+     *
+     * What survives is a tombstone and an alarm. Closing the live sockets only
+     * reaches clients that happen to be connected, and the client disconnects
+     * itself after 30s idle while its cloud token stays valid for an hour, so
+     * for that hour a reconnect could still land here and re-upload the project
+     * we just deleted. The tombstone refuses those; the alarm then deletes the
+     * tombstone once no valid token can exist anymore, leaving nothing behind.
+     */
+    private async handlePurge(): Promise<Response> {
+        // Drop connected clients first: an in-flight edit landing after the
+        // wipe would repopulate the doc we are about to delete. 4003 is the
+        // kick code — clients stop reconnecting and surface the
+        // project-unavailable dialog instead of retrying against a dead room.
+        for (const [socket] of this.sessions) {
+            try {
+                if (socket.readyState === 1) socket.close(4003, "Project deleted");
+            } catch {
+                // Socket might already be closed
+            }
+        }
+        this.sessions.clear();
+        this.userConnections.clear();
+
+        // Cancel pending save/snapshot work so nothing writes storage back.
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        this.isDirty = false;
+
+        const deletedSnapshots = await this.deleteAllSnapshots();
+
+        await this.ctx.storage.deleteAlarm();
+        await this.ctx.storage.deleteAll();
+        this.alarmScheduled = false;
+        this.blacklist.clear();
+        this.projectId = null;
+
+        const purgedAt = Date.now();
+        this.purgedAt = purgedAt;
+
+        // Drop the screenplay from memory as well — otherwise the doc outlives
+        // the storage it was wiped from, still attached to the save pipeline.
+        this.resetDoc();
+
+        // Leave a tombstone. deleteAll dropped the schema, so recreate only the
+        // table it lives in: a purged room is not meant to be usable again,
+        // just to answer "gone" to the clients whose cloud tokens outlive the
+        // project. Once the last of those has expired the alarm deletes this
+        // final row, and the room — which nothing else would ever reclaim —
+        // ceases to exist.
+        this.ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT);");
+        this.ctx.storage.sql.exec(
+            "INSERT OR REPLACE INTO config (key, value) VALUES ('purgedAt', ?);",
+            String(purgedAt),
+        );
+        await this.ctx.storage.setAlarm(purgedAt + PURGE_TOMBSTONE_GRACE_MS);
+
+        console.log(
+            JSON.stringify({
+                event: "room_purged",
+                deletedSnapshots,
+                selfDestructAt: new Date(purgedAt + PURGE_TOMBSTONE_GRACE_MS).toISOString(),
+            }),
+        );
+        return Response.json({ deletedSnapshots }, { status: 200 });
+    }
+
+    /** Delete every snapshot stored for this project. Returns the count. */
+    private async deleteAllSnapshots(): Promise<number> {
+        if (!this.projectId) return 0;
+
+        const bucket = (this.env as Env).SNAPSHOTS;
+        const prefix = `${this.projectId}/`;
+        let deleted = 0;
+
+        // Re-list from the start on each pass rather than paginating with a
+        // cursor: everything listed is deleted before the next call, so the
+        // next page is always what's left.
+        for (;;) {
+            const listed = await bucket.list({ prefix, limit: 1000 });
+            if (listed.objects.length === 0) break;
+
+            await bucket.delete(listed.objects.map((o) => o.key));
+            deleted += listed.objects.length;
+
+            if (!listed.truncated) break;
+        }
+
+        return deleted;
+    }
+
+    /** Replace the live doc (and its awareness) with an empty one. */
+    private resetDoc(): void {
+        this.doc.off("update", this.handleDocUpdate);
+        this.doc.destroy();
+        this.awareness.destroy();
+
+        this.doc = new ProjectState();
+        this.awareness = new awarenessProtocol.Awareness(this.doc);
+        clearInterval((this.awareness as unknown as { _checkInterval: ReturnType<typeof setInterval> })._checkInterval);
+        this.awareness.setLocalState(null);
+        this.awareness.on("update", this.handleAwarenessUpdate);
+        this.doc.on("update", this.handleDocUpdate);
+    }
+
     private async handleDeleteSave(key: string): Promise<Response> {
         // Validate key belongs to this project
         if (this.projectId && !key.startsWith(this.projectId + "/")) {
@@ -1022,6 +1225,19 @@ export class ProjectRoom extends DurableObject {
     // ---- WebSocket handlers ----
 
     async webSocketMessage(ws: WebSocket, message: ArrayBuffer | string): Promise<void> {
+        // A socket that survived the purge (hibernated, so it was never in
+        // `sessions` to be closed) must not be answered: with no session to
+        // check a role against, the protocol would treat it as a writer and
+        // apply its doc updates.
+        if (this.purgedAt !== null) {
+            try {
+                if (ws.readyState === 1) ws.close(4003, "Project deleted");
+            } catch {
+                // Socket might already be closed
+            }
+            return;
+        }
+
         if (!(message instanceof ArrayBuffer)) return;
 
         const fullMessage = new Uint8Array(message);
@@ -1032,6 +1248,7 @@ export class ProjectRoom extends DurableObject {
     }
 
     scheduleSave(): void {
+        if (this.purgedAt !== null) return;
         if (this.saveTimeout) {
             clearTimeout(this.saveTimeout);
         }
@@ -1039,6 +1256,8 @@ export class ProjectRoom extends DurableObject {
     }
 
     async saveToDisk(): Promise<void> {
+        // The schema is gone after a purge; writing would resurrect it.
+        if (this.purgedAt !== null) return;
         try {
             const fullDocState = Y.encodeStateAsUpdate(this.doc);
             this.ctx.storage.sql.exec("INSERT OR REPLACE INTO project (id, data) VALUES (1, ?);", fullDocState);

@@ -231,6 +231,22 @@ export class ProjectRepository {
         });
     }
 
+    /** Hands the OWNER role to another member and demotes the current owner in
+     *  one transaction — a half-applied swap would leave the project with two
+     *  owners (or none), and the owner is the quota holder for every asset. */
+    transferOwnership(projectId: string, currentOwnerId: string, newOwnerId: string, previousOwnerRole: ProjectRole) {
+        return prisma.$transaction([
+            prisma.projectMember.update({
+                where: { userId_projectId: { projectId, userId: currentOwnerId } },
+                data: { role: previousOwnerRole },
+            }),
+            prisma.projectMember.update({
+                where: { userId_projectId: { projectId, userId: newOwnerId } },
+                data: { role: ProjectRole.OWNER },
+            }),
+        ]);
+    }
+
     deleteProjectMember(projectId: string, userId: string) {
         return prisma.projectMember.delete({
             where: {
@@ -248,6 +264,42 @@ export class ProjectRepository {
 
     countMembershipsByUser(userId: string) {
         return prisma.projectMember.count({ where: { userId } });
+    }
+
+    /** Every membership of a user, with just what account deletion needs to
+     *  tear each project down (no poster signing — unlike fetchProjectMemberships). */
+    listMembershipsForTeardown(userId: string) {
+        return prisma.projectMember.findMany({
+            where: { userId },
+            select: { role: true, projectId: true },
+        });
+    }
+
+    /** Pending invitations addressed to an email, across every project. */
+    deleteInvitesByEmail(email: string) {
+        return prisma.projectInvitation.deleteMany({ where: { email } });
+    }
+
+    /** Memberships with raw project metadata — GDPR export (unlike
+     *  fetchProjectMemberships, no poster URL signing or hydration). */
+    listMembershipsWithProject(userId: string) {
+        return prisma.projectMember.findMany({
+            where: { userId },
+            select: {
+                role: true,
+                project: {
+                    select: {
+                        id: true,
+                        title: true,
+                        description: true,
+                        author: true,
+                        createdAt: true,
+                        updatedAt: true,
+                    },
+                },
+            },
+            orderBy: { project: { createdAt: "asc" } },
+        });
     }
 
     fetchProjectById(projectId: string) {
