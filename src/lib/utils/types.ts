@@ -32,6 +32,22 @@ export type ProjectUpdate = {
     hasPoster?: boolean;
 };
 
+/**
+ * What the account settings show about the user's GDPR data export.
+ *
+ * `NONE` covers "never asked" and "the last attempt failed" alike — both leave
+ * the user with nothing to download and nothing to wait for.
+ */
+export type DataExportState = {
+    /** Id to download, present only while `status` is READY. */
+    id: string | null;
+    status: "NONE" | "PENDING" | "READY" | "EXPIRED";
+    /** When the READY archive stops being downloadable (ISO). */
+    expiresAt: string | null;
+    /** When a new export may be requested (ISO), or null if one may be now. */
+    canRequestAt: string | null;
+};
+
 /* User Settings */
 export interface UserSettings {
     keybinds: Record<string, string>;

@@ -151,7 +151,7 @@ model ProjectAsset {
 }
 
 // One GDPR data-access request. The zip lives in R2 at `key` until `expiresAt`
-// (7 days); a PENDING row younger than an hour blocks duplicate requests.
+// (7 days); any non-FAILED row younger than an hour blocks a new request.
 model DataExport {
   id                  String            @id @default(uuid(7))
   status              DataExportStatus  @default(PENDING)

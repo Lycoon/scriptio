@@ -20,9 +20,6 @@ const client = new S3Client({
     },
 });
 
-/** SigV4 caps presigned-URL validity at 7 days. */
-export const MAX_SIGNED_URL_TTL_SECONDS = 7 * 24 * 3600;
-
 export const getSignedDownloadUrl = async (name: string, expiresIn = 900): Promise<string | null> => {
     const params = {
         Bucket: env.S3_BUCKET,

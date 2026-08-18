@@ -21,10 +21,16 @@ export const sendProjectInviteEmail = async (email: string, projectTitle: string
     sendFormattedEmail(email, "Project Invitation", "Project Invitation", content, "Join project", link);
 };
 
-export const sendDataExportEmail = async (email: string, link: string) => {
-    const content = `Your personal data export is ready. Click the button below to download the archive containing your account information and project memberships. The link expires in 7 days.`;
+/**
+ * Notification only — deliberately carries no download link. The archive is
+ * fetched from the account settings by the signed-in user, so this mail is
+ * worth nothing to anyone who intercepts it, and it lets the account holder
+ * spot an export they never asked for.
+ */
+export const sendDataExportEmail = async (email: string) => {
+    const content = `Your personal data export is ready. Open Scriptio and go to Settings → Account → Profile to download the archive containing your account information and project memberships. You have 7 days to download it. If you did not request this export, someone may have access to your account — change how you sign in and contact us.`;
 
-    sendFormattedEmail(email, "Your data export", "Your data export is ready", content, "Download my data", link);
+    sendFormattedEmail(email, "Your data export", "Your data export is ready", content, "Open Scriptio", BASE_URL);
 };
 
 export const sendMagicLinkEmail = async (email: string, token: string) => {
