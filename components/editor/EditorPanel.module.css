@@ -69,6 +69,22 @@
     display: block;
 }
 
+@media (pointer: coarse) {
+    .container,
+    .editor_wrapper,
+    .page_shift {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    .container :global(.ProseMirror) {
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
+    }
+}
+
 .editor_shadow {
     position: sticky;
     top: 0;

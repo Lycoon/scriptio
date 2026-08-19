@@ -181,9 +181,11 @@
     border: none;
 }
 
-.panel_switcher_btn:hover {
-    opacity: 1;
-    background-color: var(--secondary-hover);
+@media (hover: hover) {
+    .panel_switcher_btn:hover {
+        opacity: 1;
+        background-color: var(--secondary-hover);
+    }
 }
 
 /* Touch devices (phone + iPad): enlarge to a comfortable tap target, matching
