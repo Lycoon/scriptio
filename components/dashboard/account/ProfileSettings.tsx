@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { editUserInfo, deleteUser, requestDataExport } from "@src/lib/utils/requests";
+import { editUserInfo, deleteUser, requestDataExport, downloadDataExport } from "@src/lib/utils/requests";
 import { signOut } from "next-auth/react";
 import { isTauri } from "@tauri-apps/api/core";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,8 @@ import styles from "./ProfileSettings.module.css";
 import dangerStyles from "../project/DangerZone.module.css";
 import modal from "../../utils/ModalBtn.module.css";
 import { ApiResponse } from "@src/lib/utils/api-utils";
-import { useUser } from "@src/lib/utils/hooks";
+import { useDataExport, useUser } from "@src/lib/utils/hooks";
+import { saveBlob } from "@src/lib/utils/save-file";
 import { useLocale } from "@src/context/LocaleContext";
 
 const PRESET_COLORS = [
@@ -30,6 +31,7 @@ const PRESET_COLORS = [
 
 const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; onDangerToggle: () => void }) => {
     const { user, mutate } = useUser();
+    const { dataExport, mutate: mutateExport } = useDataExport();
     const router = useRouter();
     const t = useTranslations("profile");
     const tCommon = useTranslations("common");
@@ -60,9 +62,22 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [exportLoading, setExportLoading] = useState(false);
+    const [exportRequested, setExportRequested] = useState(false);
+    const [downloadLoading, setDownloadLoading] = useState(false);
     const [exportMessage, setExportMessage] = useState<{ type: "success" | "error"; text: string } | null>(
         null,
     );
+
+    // The server is the authority on whether another export is allowed — a reload
+    // must not hand back a button the API would only answer with 429. `exportRequested`
+    // just covers the blink between the request landing and the state refetching.
+    const isExportBlocked =
+        exportLoading || exportRequested || !!dataExport?.canRequestAt || dataExport?.status === "PENDING";
+    const exportExpiryDate = dataExport?.expiresAt
+        ? new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(
+              new Date(dataExport.expiresAt),
+          )
+        : "";
 
     // Sync state when settings load
     useEffect(() => {
@@ -85,18 +100,22 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
         setMessage(null);
     };
 
-    // GDPR data-access request: the server bundles everything in the background
-    // and emails a download link, so the only feedback here is "check your inbox".
+    // GDPR data-access request. The server bundles the zip in the background and
+    // keeps it for 7 days; the panel below polls until it is ready to download,
+    // and the email that goes out is only a notification.
     const handleRequestExport = async () => {
-        if (exportLoading) return;
+        if (isExportBlocked) return;
         setExportLoading(true);
         setExportMessage(null);
         try {
             const res = await requestDataExport();
             if (res.ok) {
+                setExportRequested(true);
                 setExportMessage({ type: "success", text: t("exportRequested") });
             } else if (res.status === 409) {
                 setExportMessage({ type: "error", text: t("exportPending") });
+            } else if (res.status === 429) {
+                setExportMessage({ type: "error", text: t("exportThrottled") });
             } else {
                 setExportMessage({ type: "error", text: t("exportFailed") });
             }
@@ -104,6 +123,31 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
             setExportMessage({ type: "error", text: t("exportFailed") });
         } finally {
             setExportLoading(false);
+            mutateExport();
+        }
+    };
+
+    // Streamed through the API rather than linked to, so the archive is only ever
+    // handed to a request carrying this user's session.
+    const handleDownloadExport = async () => {
+        if (!dataExport?.id || downloadLoading) return;
+        setDownloadLoading(true);
+        setExportMessage(null);
+        try {
+            const res = await downloadDataExport(dataExport.id);
+            if (!res.ok) throw new Error("Download failed");
+
+            await saveBlob(await res.blob(), "scriptio-data-export.zip", {
+                label: t("exportArchive"),
+                extension: "zip",
+            });
+        } catch {
+            // Most likely the archive lapsed while the panel was open — refetch so
+            // the state stops offering a download that no longer exists.
+            setExportMessage({ type: "error", text: t("exportDownloadFailed") });
+            mutateExport();
+        } finally {
+            setDownloadLoading(false);
         }
     };
 
@@ -171,12 +215,31 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                             <button
                                 className={styles.exportBtn}
                                 onClick={handleRequestExport}
-                                disabled={exportLoading}
+                                disabled={isExportBlocked}
                             >
-                                <Download size={16} />
                                 {exportLoading ? t("exportRequesting") : t("exportBtn")}
                             </button>
                         </div>
+                        {dataExport && dataExport.status !== "NONE" && (
+                            <div className={styles.exportStatus}>
+                                <span className={styles.exportStatusText}>
+                                    {dataExport.status === "PENDING" && t("exportStatePreparing")}
+                                    {dataExport.status === "READY" &&
+                                        t("exportStateReady", { date: exportExpiryDate })}
+                                    {dataExport.status === "EXPIRED" && t("exportStateExpired")}
+                                </span>
+                                {dataExport.status === "READY" && (
+                                    <button
+                                        className={styles.exportDownloadBtn}
+                                        onClick={handleDownloadExport}
+                                        disabled={downloadLoading}
+                                    >
+                                        <Download size={16} />
+                                        {downloadLoading ? t("exportDownloading") : t("exportDownload")}
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                     {exportMessage && (
                         <div className={`${styles.message} ${styles[exportMessage.type]}`}>

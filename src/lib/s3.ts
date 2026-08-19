@@ -20,9 +20,6 @@ const client = new S3Client({
     },
 });
 
-/** SigV4 caps presigned-URL validity at 7 days. */
-export const MAX_SIGNED_URL_TTL_SECONDS = 7 * 24 * 3600;
-
 export const getSignedDownloadUrl = async (name: string, expiresIn = 900): Promise<string | null> => {
     const params = {
         Bucket: env.S3_BUCKET,
@@ -35,23 +32,6 @@ export const getSignedDownloadUrl = async (name: string, expiresIn = 900): Promi
     } catch (e) {
         console.error("An error occurred while getting signed download URL from S3: ", e);
         return null;
-    }
-};
-
-export const upload = async (name: string, data: string): Promise<boolean> => {
-    const params = {
-        Bucket: env.S3_BUCKET,
-        Key: name,
-        Body: Buffer.from(data.substring("data:image/jpeg;base64,".length), "base64"),
-        ContentType: "image/jpeg",
-    };
-
-    try {
-        await client.send(new PutObjectCommand(params));
-        return true;
-    } catch (e) {
-        console.error("An error occurred while uploading object to S3: ", e);
-        return false;
     }
 };
 

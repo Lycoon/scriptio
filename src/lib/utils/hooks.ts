@@ -2,7 +2,7 @@
 
 import useSWR, { useSWRConfig } from "swr";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { CookieUser, UserSettings } from "./types";
+import { CookieUser, DataExportState, UserSettings } from "./types";
 import { editUserSettings } from "./requests";
 import { readLocalSettings, writeLocalSettings, DEFAULT_LOCAL_SETTINGS } from "./local-settings";
 import { ProjectContext } from "@src/context/ProjectContext";
@@ -325,6 +325,20 @@ const useUser = () => {
     return { user, isLoading, mutate };
 };
 
+/**
+ * State of the user's GDPR data export, as the account settings render it.
+ *
+ * The zip is built in the background straight after the request, so poll while
+ * it is being prepared — the panel then flips to "ready" on its own instead of
+ * making the user reload to find out.
+ */
+const useDataExport = () => {
+    const { data, isLoading, mutate } = useSWR<DataExportState>("/api/users/export", {
+        refreshInterval: (latest) => (latest?.status === "PENDING" ? 5000 : 0),
+    });
+    return { dataExport: data, isLoading, mutate };
+};
+
 const useCookieUser = (redirect: boolean = false) => {
     const { data: user, isLoading, error } = useSWR<CookieUser>("/api/users/cookie");
     const [localUser, setLocalUser] = useState<CookieUser | undefined>(undefined);
@@ -454,7 +468,6 @@ const useCachedProjects = () => {
                     description: p.description,
                     author: p.author,
                     hasPoster: false,
-                    poster: null,
                     createdAt: p.createdAt,
                     updatedAt: p.updatedAt,
                 },
@@ -787,6 +800,7 @@ const useFormatTimestamp = () => {
 export {
     useDraggable,
     useUser,
+    useDataExport,
     useCookieUser,
     useSettings,
     useIsPro,

@@ -5,6 +5,7 @@
 
 import type { UserSettings } from "@src/lib/utils/types";
 import { getStorageProvider, type CachedProject, type ProjectEntryInput } from "./storage-provider";
+import { pushPendingPoster } from "@src/lib/posters/poster-store";
 import { yjsDbKey } from "../y-local-provider";
 
 export type { CachedProject };
@@ -60,9 +61,11 @@ export async function touchCachedProject(id: string): Promise<void> {
 export async function deleteCachedProject(id: string): Promise<void> {
     const provider = await getStorageProvider();
     await provider.delete(id);
-    // Reclaim the project's binary assets (board images). This is the chokepoint
-    // every deletion flow funnels through (DangerZone + discardCloudProjectData).
+    // Reclaim the project's binary assets (board images) and its poster. This is
+    // the chokepoint every deletion flow funnels through (DangerZone +
+    // discardCloudProjectData).
     await provider.deleteProjectAssets(id);
+    await provider.deletePoster(id);
 }
 
 export async function isCachedProject(projectId: string): Promise<boolean> {
@@ -138,7 +141,14 @@ export async function migrateToCachedProject(
 
     // 3b. Copy the project's binary assets to the new id (they are keyed by
     // projectId, so the copied board cards would otherwise reference nothing).
-    await (await getStorageProvider()).copyProjectAssets(oldProjectId, newProject.id);
+    const provider = await getStorageProvider();
+    await provider.copyProjectAssets(oldProjectId, newProject.id);
+
+    // 3c. Carry the poster over too, flagged as pending: the copy lives only on
+    // this device now, so a later promotion to the cloud has to upload it.
+    await provider.copyPoster(oldProjectId, newProject.id);
+    const copiedPoster = await provider.getPoster(newProject.id);
+    if (copiedPoster) await provider.putPoster({ ...copiedPoster, pendingUpload: true });
 
     // 4. Clean up old project data
     await discardCloudProjectData(oldProjectId);
@@ -199,6 +209,10 @@ export async function promoteLocalProjectToCloud(projectId: string): Promise<voi
             console.warn("[assets] failed to upload asset on cloud promotion:", e);
         }
     }
+
+    // The poster the project already had locally now belongs in the cloud too.
+    // Best-effort: it stays flagged pending and is retried on the next open.
+    await pushPendingPoster(projectId);
 }
 
 /**

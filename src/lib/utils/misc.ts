@@ -34,7 +34,12 @@ export function hasExpired(date: Date | string | number, duration: number, unit:
     return now - dateMs > timeLimitMs;
 }
 
-export const cropImageBase64 = async (file: File, width: number, height: number) => {
+/**
+ * Re-encode a user-picked image to a `width`x`height` JPEG, scaled to fit on a
+ * white background. Returns the bytes as a Blob so callers can store them in
+ * IndexedDB and upload them as-is (no base64 round trip).
+ */
+export const cropImageToJpegBlob = async (file: File, width: number, height: number): Promise<Blob> => {
     const img = await createImageBitmap(file);
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -42,16 +47,22 @@ export const cropImageBase64 = async (file: File, width: number, height: number)
 
     const ctx = canvas.getContext("2d");
     if (!ctx) {
-        return "data:,";
+        throw new Error("Canvas 2D context unavailable");
     }
 
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, width, height);
 
     const ratio = Math.min(width / img.width, height / img.height);
-    ctx?.drawImage(img, 0, 0, img.width * ratio, img.height * ratio);
+    ctx.drawImage(img, 0, 0, img.width * ratio, img.height * ratio);
+    img.close();
 
-    return ctx.canvas.toDataURL("image/jpeg") || "data:,";
+    return new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+            (blob) => (blob ? resolve(blob) : reject(new Error("Failed to encode image"))),
+            "image/jpeg",
+        );
+    });
 };
 
 export const _MS_PER_DAY = 1000 * 60 * 60 * 24;

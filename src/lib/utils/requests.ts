@@ -129,6 +129,10 @@ export const requestDataExport = () => {
     return request(`/api/users/export`, "POST");
 };
 
+export const downloadDataExport = (id: string) => {
+    return request(`/api/users/export/download?id=${encodeURIComponent(id)}`, "GET");
+};
+
 /* Auth */
 
 export const requestMagicLink = (body: RequestMagicLinkBody) => {

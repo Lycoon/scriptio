@@ -2,7 +2,6 @@ import { ProjectCreation, ProjectUpdate } from "../../lib/utils/types";
 import { Prisma, ProjectRole } from "../../generated/client/client";
 import prisma from "../db";
 
-import * as S3 from "@src/lib/s3";
 import { ConflictError } from "@src/lib/utils/api-utils";
 
 const projectMembershipSelect = {
@@ -44,37 +43,19 @@ type RawProject = Prisma.ProjectGetPayload<{
     select: typeof projectMembershipSelect.project.select;
 }>;
 
-type RawMembership = {
-    role: ProjectRole;
-    project: RawProject;
-};
+/**
+ * Project metadata as the client sees it. The poster image itself is *not* part
+ * of this payload: it is fetched (and cached offline) through
+ * `/projects/[projectId]/poster`, so `hasPoster` is only a hint that one exists.
+ */
+export type Project = RawProject;
 
-export type Project = Omit<RawProject, "poster"> & {
-    poster: string | null;
-};
 export interface ProjectMembershipPayload {
     role: ProjectRole;
     project: Project;
 }
 
 export class ProjectRepository {
-    private async hydrateMembership(membership: RawMembership): Promise<ProjectMembershipPayload> {
-        let posterUrl: string | null = null;
-
-        if (membership.project.hasPoster) {
-            const key = `poster-${membership.project.id}`;
-            posterUrl = await S3.getSignedDownloadUrl(key);
-        }
-
-        return {
-            ...membership,
-            project: {
-                ...membership.project,
-                poster: posterUrl,
-            },
-        };
-    }
-
     async fetchProjectMemberships(userId: string) {
         const user = await prisma.user.findUnique({
             where: { id: userId },
@@ -92,7 +73,7 @@ export class ProjectRepository {
 
         if (!user) return [];
 
-        return Promise.all(user.projects.map((m) => this.hydrateMembership(m)));
+        return user.projects;
     }
 
     async fetchProjectMembership(projectId: string, userId: string) {
@@ -106,9 +87,7 @@ export class ProjectRepository {
             select: projectMembershipSelect,
         });
 
-        if (!membership) return null;
-
-        return this.hydrateMembership(membership);
+        return membership;
     }
 
     fetchProjectTitle(projectId: string) {

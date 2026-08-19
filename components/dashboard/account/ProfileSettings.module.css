@@ -160,6 +160,49 @@
     cursor: default;
 }
 
+/* Where the export currently stands: preparing, ready to download, or lapsed.
+   Sits under the request row, inside the same dashed container. */
+.exportStatus {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--separator);
+    background-color: var(--secondary);
+}
+
+.exportStatusText {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.exportDownloadBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+    background-color: transparent;
+    color: var(--primary-text);
+    border: 1px solid var(--primary-text);
+    padding: 6px 14px;
+    border-radius: 40px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: opacity 0.2s;
+}
+
+.exportDownloadBtn:hover {
+    opacity: 0.7;
+}
+
+.exportDownloadBtn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
 /* Shown in the delete-account dialog when a live subscription is at stake */
 .subscriptionWarning {
     display: flex;

@@ -21,9 +21,9 @@ export async function destroyProjectCompletely(projectId: string): Promise<void>
     await S3.destroyPrefix(`assets/${projectId}/`);
 
     // The poster lives outside that folder, under its own key. Deleted
-    // unconditionally: S3 deletes are idempotent, and `hasPoster` is not
-    // trustworthy enough to gate on (any PATCH without a poster resets the
-    // flag to false while the object stays in the bucket).
+    // unconditionally: S3 deletes are idempotent, and a `hasPoster` that drifted
+    // false (older builds reset it on any project edit) would otherwise leave
+    // the object behind forever.
     await S3.destroy(`poster-${projectId}`);
 
     // Cascades ProjectMember, ProjectInvitation and ProjectAsset rows.

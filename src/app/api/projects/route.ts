@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import * as S3 from "@src/lib/s3";
 import * as ProjectService from "@src/server/service/project-service";
 import {
     InternalServerError,
@@ -38,7 +37,7 @@ async function createProject(req: NextRequest, { user }: AuthApiContext) {
     await requirePro(user.id);
 
     const body = await req.json();
-    const { title, description, author, poster } = validate(CreateProjectBodySchema, body);
+    const { title, description, author } = validate(CreateProjectBodySchema, body);
 
     if (title.length < 1 || title.length > 256) {
         throw new BodyFieldError("Title must be between 1 and 256 characters");
@@ -55,14 +54,11 @@ async function createProject(req: NextRequest, { user }: AuthApiContext) {
         description,
         author,
         userId: user.id,
-        hasPoster: poster !== undefined,
+        hasPoster: false,
     });
 
     if (!newProject) {
         throw new InternalServerError();
-    }
-    if (poster) {
-        await S3.upload(`poster-${newProject.id}`, poster);
     }
 
     return SuccessCreated(newProject);
