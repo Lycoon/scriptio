@@ -75,6 +75,7 @@ describe("runStoreMigrations", () => {
                 STORE_NAMES.DICTIONARIES,
                 STORE_NAMES.MIGRATION_BACKUPS,
                 STORE_NAMES.ASSETS,
+                STORE_NAMES.POSTERS,
             ].sort(),
         );
         db.close();

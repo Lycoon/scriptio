@@ -48,6 +48,28 @@ export interface StoredAsset {
     createdAt: number;
 }
 
+/**
+ * A project's poster image, stored locally so it survives offline and exists at
+ * all for local-only projects. One per project (replaced in place, not
+ * content-addressed), which is why the project id is the key.
+ */
+export interface StoredPoster {
+    /** Primary key: the owning project id. */
+    projectId: string;
+    mime: string;
+    /** Raw image bytes. ArrayBuffer (not Blob) for WebKit IndexedDB
+     *  compatibility, matching the assets/dictionaries stores. */
+    data: ArrayBuffer;
+    /** SHA-256 hex of `data`, used to skip no-op writes when revalidating
+     *  against the cloud copy. */
+    hash: string;
+    /** True while these bytes exist only on this device — either the project is
+     *  local-only, or it is cloud-synced but the upload hasn't landed yet
+     *  (offline edit). Cleared once the cloud holds the same bytes. */
+    pendingUpload: boolean;
+    updatedAt: number;
+}
+
 export interface StorageProvider {
     // Project CRUD
     createProject(id: string, title: string, description?: string, synced?: boolean, author?: string): Promise<void>;
@@ -89,6 +111,13 @@ export interface StorageProvider {
     deleteProjectAssets(projectId: string): Promise<void>;
     /** Duplicate every asset of `fromProjectId` under `toProjectId` (id-changing copy). */
     copyProjectAssets(fromProjectId: string, toProjectId: string): Promise<void>;
+
+    // Posters: one image per project, stored locally for offline / local-only use.
+    putPoster(poster: StoredPoster): Promise<void>;
+    getPoster(projectId: string): Promise<StoredPoster | null>;
+    deletePoster(projectId: string): Promise<void>;
+    /** Duplicate the poster of `fromProjectId` under `toProjectId` (id-changing copy). */
+    copyPoster(fromProjectId: string, toProjectId: string): Promise<void>;
 }
 
 // Singleton cache

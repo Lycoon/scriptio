@@ -43,6 +43,7 @@ import {
 } from "@src/lib/screenplay/revisions";
 import { SearchMatch } from "@src/lib/screenplay/extensions/search-highlight-extension";
 import { useAssetGc } from "@src/lib/assets/use-asset-gc";
+import { pushPendingPoster } from "@src/lib/posters/poster-store";
 
 // Import types only - these don't cause module loading
 import type { ThrottledWebsocketProvider } from "@src/lib/cloud/utils";
@@ -533,6 +534,13 @@ export const ProjectProvider = ({ children, projectId }: ProjectProviderProps) =
 
     // Keep IndexedDB image assets reconciled with the document (orphan sweep).
     useAssetGc(projectId, repository, isYjsReady);
+
+    // Re-upload a poster set while offline (no-op for local-only projects and
+    // once the cloud already holds these bytes).
+    useEffect(() => {
+        if (!projectId) return;
+        void pushPendingPoster(projectId);
+    }, [projectId]);
 
     // The DO pushes a role-changed message whenever an admin updates this
     // user's role. Mirror it into local state so isReadOnly flips and the

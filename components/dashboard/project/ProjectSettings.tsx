@@ -1,11 +1,12 @@
 "use client";
 
-import { cropImageBase64 } from "@src/lib/utils/misc";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { editProject } from "@src/lib/utils/requests";
 import { useContext, useEffect, useState } from "react";
 import { useProjectMembership, useCachedProjectInfo, useProjectIdFromUrl } from "@src/lib/utils/hooks";
+import { savePosterFromFile } from "@src/lib/posters/poster-store";
+import { usePosterUrl } from "@src/lib/posters/use-poster-url";
 import { ProjectContext } from "@src/context/ProjectContext";
 import UploadButton from "@components/projects/UploadButton";
 import DangerZone from "./DangerZone";
@@ -28,8 +29,13 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
 
     const [isDirty, setDirty] = useState<boolean>(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(membership?.project.poster || null);
+    const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // The saved poster comes from the local store (works offline and for
+    // local-only projects); a freshly picked file previews over it until saved.
+    const savedPosterUrl = usePosterUrl(projectId);
+    const previewUrl = filePreviewUrl ?? savedPosterUrl;
 
     // Get project data from membership or local info
     const projectTitle = membership?.project.title || localTitle;
@@ -37,10 +43,13 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
     const projectAuthor = membership?.project.author || localAuthor;
 
     useEffect(() => {
-        if (!selectedFile) return;
+        if (!selectedFile) {
+            setFilePreviewUrl(null);
+            return;
+        }
         const objectUrl = URL.createObjectURL(selectedFile);
         setDirty(true);
-        setPreviewUrl(objectUrl);
+        setFilePreviewUrl(objectUrl);
         return () => URL.revokeObjectURL(objectUrl);
     }, [selectedFile]);
 
@@ -68,19 +77,24 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
             console.error("[ProjectSettings] Failed to save local project:", error);
         }
 
+        // The poster is stored locally first and mirrored to the cloud from
+        // there, so this works the same for local-only, cloud and offline projects.
+        if (selectedFile) {
+            try {
+                await savePosterFromFile(projectId, selectedFile);
+                setSelectedFile(null);
+            } catch (error) {
+                console.error("[ProjectSettings] Failed to save poster:", error);
+            }
+        }
+
         if (!isLocalOnly && membership) {
             // Also save to remote API
-            const body: { title: string; description: string; author: string; poster?: string } = {
+            await editProject(membership.project.id, {
                 title: newTitle,
                 description: newDescription,
                 author: newAuthor,
-            };
-
-            if (selectedFile) {
-                body.poster = await cropImageBase64(selectedFile, 600, 900);
-            }
-
-            await editProject(membership.project.id, body);
+            });
         }
 
         // Sync title/author to Yjs metadata (updates title page editor)
@@ -140,25 +154,23 @@ const ProjectSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                 />
             </div>
 
-            {/* Poster - only show for remote projects */}
-            {!isLocalOnly && (
-                <div className={styles.formGroup}>
-                    <label className={form.label}>{t("posterLabel")}</label>
-                    <div className={styles.posterUploadArea}>
-                        <div className={styles.posterPreview}>
-                            {previewUrl ? (
-                                <Image src={previewUrl} alt="Preview" width={120} height={180} />
-                            ) : (
-                                <div className={styles.posterPlaceholder}>{t("noPoster")}</div>
-                            )}
-                        </div>
-                        <div className={styles.uploadControls}>
-                            <p className={styles.helpText}>{t("posterHelp")}</p>
-                            <UploadButton setSelectedFile={setSelectedFile} selectedFile={selectedFile} />
-                        </div>
+            {/* Poster */}
+            <div className={styles.formGroup}>
+                <label className={form.label}>{t("posterLabel")}</label>
+                <div className={styles.posterUploadArea}>
+                    <div className={styles.posterPreview}>
+                        {previewUrl ? (
+                            <Image src={previewUrl} alt="Preview" width={120} height={180} />
+                        ) : (
+                            <div className={styles.posterPlaceholder}>{t("noPoster")}</div>
+                        )}
+                    </div>
+                    <div className={styles.uploadControls}>
+                        <p className={styles.helpText}>{t("posterHelp")}</p>
+                        <UploadButton setSelectedFile={setSelectedFile} selectedFile={selectedFile} />
                     </div>
                 </div>
-            )}
+            </div>
 
             <div className={styles.formActions}>
                 <button type="submit" className={`${styles.formBtn}`} disabled={loading || !isDirty}>

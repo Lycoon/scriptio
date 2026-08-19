@@ -7,7 +7,7 @@
  */
 
 import type { InstalledDictionary, UserSettings } from "@src/lib/utils/types";
-import { CachedProject, ProjectEntryInput, StorageProvider, StoredAsset } from "./storage-provider";
+import { CachedProject, ProjectEntryInput, StorageProvider, StoredAsset, StoredPoster } from "./storage-provider";
 import {
     ASSETS_BY_PROJECT_INDEX,
     CURRENT_STORE_VERSION,
@@ -22,6 +22,7 @@ const SETTINGS_STORE = STORE_NAMES.SETTINGS;
 const DICTIONARIES_STORE = STORE_NAMES.DICTIONARIES;
 const MIGRATION_BACKUPS_STORE = STORE_NAMES.MIGRATION_BACKUPS;
 const ASSETS_STORE = STORE_NAMES.ASSETS;
+const POSTERS_STORE = STORE_NAMES.POSTERS;
 const SETTINGS_KEY = "global";
 
 /** Primary key for an asset record: `${projectId}/${hash}`. */
@@ -456,5 +457,42 @@ export class IndexedDBStorageProvider implements StorageProvider {
             tx.oncomplete = () => resolve();
             tx.onerror = () => reject(tx.error);
         });
+    }
+
+    // ── Posters ───────────────────────────────────────────────────────────────
+
+    async putPoster(poster: StoredPoster): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(POSTERS_STORE, "readwrite");
+            tx.objectStore(POSTERS_STORE).put(poster);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async getPoster(projectId: string): Promise<StoredPoster | null> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const req = db.transaction(POSTERS_STORE, "readonly").objectStore(POSTERS_STORE).get(projectId);
+            req.onsuccess = () => resolve((req.result as StoredPoster | undefined) ?? null);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async deletePoster(projectId: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(POSTERS_STORE, "readwrite");
+            tx.objectStore(POSTERS_STORE).delete(projectId);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async copyPoster(fromProjectId: string, toProjectId: string): Promise<void> {
+        const source = await this.getPoster(fromProjectId);
+        if (!source) return;
+        await this.putPoster({ ...source, projectId: toProjectId });
     }
 }

@@ -26,6 +26,7 @@ export const STORE_NAMES = {
     DICTIONARIES: "dictionaries",
     MIGRATION_BACKUPS: "migration_backups",
     ASSETS: "assets",
+    POSTERS: "posters",
 } as const;
 
 /** Index on the `assets` store used to list/delete every asset of a project. */
@@ -75,9 +76,27 @@ const addMigrationBackupsStore: StoreMigration = {
     },
 };
 
+/**
+ * v2 → v3: add a `posters` store. A project's poster is kept locally (keyed by
+ * projectId, one per project) so local-only projects can have one at all and
+ * cloud projects still render theirs offline. Not content-addressed like
+ * `assets`: a poster is replaced in place, so the project id is the key.
+ */
+const addPostersStore: StoreMigration = {
+    from: 2,
+    to: 3,
+    description: "Add posters store for local-first project posters",
+    run: (db) => {
+        if (!db.objectStoreNames.contains(STORE_NAMES.POSTERS)) {
+            db.createObjectStore(STORE_NAMES.POSTERS, { keyPath: "projectId" });
+        }
+    },
+};
+
 export const STORE_MIGRATIONS: StoreMigration[] = [
     baselineV1,
     addMigrationBackupsStore,
+    addPostersStore,
 ];
 
 export const CURRENT_STORE_VERSION =

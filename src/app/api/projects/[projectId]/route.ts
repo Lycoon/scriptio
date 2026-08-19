@@ -1,6 +1,5 @@
 import { ProjectRole } from "../../../../generated/client/client";
 
-import * as S3 from "@src/lib/s3";
 import * as ProjectService from "@src/server/service/project-service";
 import * as Roles from "@src/lib/utils/roles";
 import { destroyProjectCompletely } from "@src/server/service/project-teardown-service";
@@ -54,7 +53,7 @@ async function updateProject(req: NextRequest, { routeParams, user }: AuthApiCon
     }
 
     const body = await req.json();
-    const { title, description, author, poster } = validate(UpdateProjectBodySchema, body);
+    const { title, description, author } = validate(UpdateProjectBodySchema, body);
 
     if (title && (title.length < 1 || title.length > 256)) {
         throw new BodyFieldError("Title must be between 1 and 256 characters");
@@ -70,17 +69,14 @@ async function updateProject(req: NextRequest, { routeParams, user }: AuthApiCon
         throw new ForbiddenError();
     }
 
-    let hasPoster = false;
-    if (poster) {
-        hasPoster = await S3.upload(`poster-${projectId}`, poster);
-    }
-
+    // `hasPoster` is deliberately left alone: the poster is owned by
+    // `PUT /projects/[projectId]/poster`, and folding it in here used to reset
+    // the flag to false on every unrelated edit.
     const updated = await ProjectService.update({
         projectId,
         title,
         description,
         author,
-        hasPoster,
     });
 
     if (!updated) {

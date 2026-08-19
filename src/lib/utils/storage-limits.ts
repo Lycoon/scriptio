@@ -14,6 +14,13 @@ export const USER_STORAGE_QUOTA_BYTES = 5 * 1024 ** 3; // 5 GB
 export const MAX_ASSET_SIZE_BYTES = 50 * 1024 ** 2; // 50 MB
 
 /**
+ * Hard cap on a project poster upload. Posters are re-encoded client-side to a
+ * 600x900 JPEG, so this only bounds a malformed or hostile request. They are one
+ * small object per project and are not metered against the owner's quota.
+ */
+export const MAX_POSTER_SIZE_BYTES = 4 * 1024 ** 2; // 4 MB
+
+/**
  * Grace window before a cloud orphan is eligible for GC. Protects an asset a
  * collaborator just added whose referencing card hasn't yet synced to the client
  * that runs the sweep.

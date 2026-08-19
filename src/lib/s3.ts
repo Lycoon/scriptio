@@ -35,23 +35,6 @@ export const getSignedDownloadUrl = async (name: string, expiresIn = 900): Promi
     }
 };
 
-export const upload = async (name: string, data: string): Promise<boolean> => {
-    const params = {
-        Bucket: env.S3_BUCKET,
-        Key: name,
-        Body: Buffer.from(data.substring("data:image/jpeg;base64,".length), "base64"),
-        ContentType: "image/jpeg",
-    };
-
-    try {
-        await client.send(new PutObjectCommand(params));
-        return true;
-    } catch (e) {
-        console.error("An error occurred while uploading object to S3: ", e);
-        return false;
-    }
-};
-
 export const destroy = async (name: string): Promise<boolean> => {
     const params = {
         Bucket: env.S3_BUCKET,

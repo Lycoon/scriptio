@@ -7,6 +7,7 @@ import Image from "next/image";
 import item from "./ProjectItem.module.css";
 import { useAppNavigation } from "@src/lib/utils/navigation";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
+import { usePosterUrl } from "@src/lib/posters/use-poster-url";
 import { CloudCheck, HardDrive } from "lucide-react";
 
 type Props = {
@@ -18,6 +19,9 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
     const t = useTranslations("projects");
     const { goToProject } = useAppNavigation();
     const tDates = useTranslations("dates");
+    // Resolved from the local poster store, so local-only projects show a poster
+    // and cloud ones keep showing theirs offline.
+    const posterUrl = usePosterUrl(project.id, !isLocalOnly);
     const elapsedDays = getElapsedDaysFrom(project.updatedAt);
     const lastUpdated =
         elapsedDays === 0
@@ -30,9 +34,7 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
                   ? tDates("monthsAgo", { months: Math.round(elapsedDays / 30) })
                   : tDates("moreThanYearAgo");
 
-    let posterPath;
-    if (project.poster) posterPath = project.poster;
-    else posterPath = "/images/default-poster.png";
+    const posterPath = posterUrl ?? "/images/default-poster.png";
 
     const storageLabel = isLocalOnly ? t("item.localOnly") : t("item.syncedToCloud");
     const StorageIcon = isLocalOnly ? HardDrive : CloudCheck;
