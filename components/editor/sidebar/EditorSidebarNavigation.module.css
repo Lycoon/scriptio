@@ -7,6 +7,9 @@
 }
 
 .sidebar_content {
+    /* Containing block for the marker gutter, which is positioned into the right
+       padding below. */
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -139,6 +142,30 @@
     flex: 1;
 }
 
+/* One tick per scene the filter keeps, placed at its share of the list's height
+   — a density read-out of where the matches fall in the screenplay.
+   Sits in the sidebar's own right padding, outside the rounded panel (which
+   clips its overflow), so the scene titles keep the full panel width. `top` and
+   `height` are measured onto the scene list in EditorSidebarNavigation, since
+   nothing here lays the two out together. Mounted only while a filter is on, and
+   inert so it can't swallow a drag or a scroll aimed at the list. */
+.marker_gutter {
+    position: absolute;
+    right: 3px;
+    width: 6px;
+    pointer-events: none;
+}
+
+.marker {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 2px;
+    transform: translateY(-50%);
+    opacity: 0.8;
+}
+
 /* Document tree list. A hold anywhere on it opens the tree menu on touch (see
    DocumentTreeSidebarView), so iOS's native selection / callout must not claim
    the gesture first — it otherwise starts selecting the text behind the drawer
@@ -194,6 +221,55 @@
     .header_btn {
         display: flex;
     }
+}
+
+/* Scene filter trigger, pinned to the right end of the header — inset to line up
+   with the right edge of the scene items below it. Like .header_btn its vertical
+   padding is pulled back out with negative margins so the tap target stays
+   comfortable without making this header taller than the others. */
+.filter_btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: -4px 20px -4px auto;
+    padding: 4px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+/* The icon keeps its secondary tint throughout; hover and the active filter
+   state read from the background and the badge instead. Set on the svg itself,
+   not inherited from the button: globals.css paints every `svg` with
+   --primary-text, which outranks anything the parent passes down. */
+.filter_btn svg {
+    color: var(--secondary-text);
+}
+
+.filter_btn:hover,
+.filter_btn_active {
+    background-color: var(--editor-sidebar-hover);
+}
+
+/* Count of active filters, tucked into the button's top-right corner. */
+.filter_badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 13px;
+    height: 13px;
+    padding: 0 3px;
+    border-radius: 7px;
+    background-color: var(--primary-text);
+    color: var(--editor-sidebar);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 13px;
+    text-align: center;
 }
 
 .list_title {

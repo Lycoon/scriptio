@@ -122,20 +122,32 @@ export const getLocation = (name: string, projectCtx: ProjectContextType): Locat
 // -------------------------------- //
 
 /**
+ * Interior / exterior prefix of a scene heading, longest form first so the
+ * combined spellings win over the bare "INT"/"EXT" they start with. Exported
+ * because the location starts where this prefix ends.
+ */
+export const SCENE_TYPE_PATTERN = /^\s*(I\/E|E\/I|INT\.?\s*\/\s*EXT|EXT\.?\s*\/\s*INT|INT|EXT)\b\.?/i;
+
+/**
  * Extract location from a scene heading.
- * Takes everything between the first dot and the last hyphen.
+ * Takes everything between the INT./EXT. prefix and the last hyphen.
  * Example: "INT. KITCHEN - DAY" -> "KITCHEN"
  * Example: "EXT. JOHN'S HOUSE - BACKYARD - NIGHT" -> "JOHN'S HOUSE - BACKYARD"
+ * Example: "INT./EXT. CAR - NIGHT" -> "CAR"
  */
 export const extractLocationFromSceneHeading = (sceneHeading: string): string | null => {
-    const firstDotIndex = sceneHeading.indexOf(".");
     const lastHyphenIndex = sceneHeading.lastIndexOf("-");
+    if (lastHyphenIndex === -1) return null;
 
-    if (firstDotIndex === -1 || lastHyphenIndex === -1 || firstDotIndex >= lastHyphenIndex) {
-        return null;
-    }
+    // Skip the whole prefix rather than stopping at the first dot: a combined
+    // "INT./EXT." slugline would otherwise leave its "/EXT." in the location.
+    // Headings with no prefix at all keep the original first-dot behaviour.
+    const prefix = sceneHeading.match(SCENE_TYPE_PATTERN);
+    const start = prefix ? prefix[0].length : sceneHeading.indexOf(".") + 1;
 
-    const location = sceneHeading.substring(firstDotIndex + 1, lastHyphenIndex).trim();
+    if (start === 0 || start >= lastHyphenIndex) return null;
+
+    const location = sceneHeading.substring(start, lastHyphenIndex).trim();
     return location.length > 0 ? location.toUpperCase() : null;
 };
 

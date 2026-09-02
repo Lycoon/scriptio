@@ -58,7 +58,14 @@ const ProjectNavbarSkeleton = () => {
                         <div className={join(skeleton.circle, skeleton.pulse)} />
                         <div className={join(skeleton.title, skeleton.pulse)} />
                     </div>
-                    {["saves", "production", "readaloud"].map(iconBtn)}
+                    {/* The screenplay tools are folded behind a chevron on their own
+                        island in [ProjectNavbarDesktop], so the skeleton reserves that
+                        folded island rather than the three buttons it hides. */}
+                    <div className={navbar.tools_island}>
+                        <div className={join(navBtn.button, navbar.tools_icon)}>
+                            <div className={join(skeleton.icon, skeleton.pulse)} />
+                        </div>
+                    </div>
                 </div>
             </nav>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { join } from "@src/lib/utils/misc";
-import { useContext, useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useContext, useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useViewContext } from "@src/context/ViewContext";
@@ -9,8 +9,18 @@ import { Scene } from "@src/lib/screenplay/scenes";
 import { focusOnPosition } from "@src/lib/screenplay/editor";
 import { moveScene } from "@src/lib/screenplay/scene-reorder";
 import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
-import { Archive, Clapperboard, FolderTree, MessageSquare } from "lucide-react";
+import { Archive, Clapperboard, FolderTree, ListFilter, MessageSquare } from "lucide-react";
+import {
+    EMPTY_SCENE_FILTER,
+    SceneFilter,
+    collectFacetOptions,
+    computeSceneFacets,
+    countSceneFilters,
+    isSceneFilterActive,
+    sceneMatchesFilter,
+} from "@src/lib/screenplay/scene-filters";
 import SidebarSceneItem from "./SidebarSceneItem";
+import SceneFilterPanel from "./SceneFilterPanel";
 import ShelfSidebarView from "./ShelfSidebarView";
 import CommentSidebarView from "./CommentSidebarView";
 import DocumentTreeSidebarView from "./DocumentTreeSidebarView";
@@ -24,12 +34,18 @@ import sidebar_nav from "./EditorSidebarNavigation.module.css";
 const TOUCH_DRAG_HOLD_MS = 300;
 const TOUCH_DRAG_CANCEL_PX = 10;
 
+// useLayoutEffect warns on the server; fall back to useEffect there. Aligning
+// the marker gutter has to happen before paint, or its ticks flash at the top
+// of the sidebar before landing on the list.
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 const EditorSidebarNavigation = () => {
     const t = useTranslations("editorSidebar");
     const {
         scenes,
         updateScenes,
         editor,
+        screenplay,
         sceneLocking,
         sceneNumberingStyle,
         skippedSceneLetters,
@@ -38,6 +54,39 @@ const EditorSidebarNavigation = () => {
     const { leftSidebarOpen } = useViewContext();
 
     const [activeTab, setActiveTab] = useState<"scenes" | "shelf" | "comments" | "documents">("scenes");
+
+    // Scene filter (characters / locations / times of day), cumulative across
+    // the three dimensions. Kept here so the dimming survives the panel closing.
+    const [filter, setFilter] = useState<SceneFilter>(EMPTY_SCENE_FILTER);
+    const [filterOpen, setFilterOpen] = useState(false);
+    const filterBtnRef = useRef<HTMLButtonElement>(null);
+    const filterActive = isSceneFilterActive(filter);
+
+    // Facets are re-derived on every screenplay change, so only pay for them
+    // when something actually consumes them — the panel being open, or a filter
+    // dimming the list.
+    const facets = useMemo(
+        () => (filterOpen || filterActive ? computeSceneFacets(screenplay) : []),
+        [screenplay, filterOpen, filterActive],
+    );
+
+    // Keyed by scene heading position rather than by index: an optimistic drag
+    // reorder moves the scenes before the screenplay is re-parsed, and position
+    // keeps each scene matched to its own facets in the meantime.
+    const facetsByPosition = useMemo(() => new Map(facets.map((f) => [f.position, f])), [facets]);
+    const facetOptions = useMemo(() => collectFacetOptions(facets), [facets]);
+
+    // Which scenes the filter excludes, in list order. Drives both the greyed
+    // out items and the marker gutter beside the list.
+    const filteredOut = useMemo(
+        () =>
+            scenes.map(
+                (scene) => filterActive && !sceneMatchesFilter(facetsByPosition.get(scene.position), filter),
+            ),
+        [scenes, filterActive, facetsByPosition, filter],
+    );
+
+    const showMarkerGutter = activeTab === "scenes" && filterActive;
 
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     // indicatorIndex represents the gap where the item will be inserted.
@@ -69,6 +118,8 @@ const EditorSidebarNavigation = () => {
     }, [scenes, sceneLocking, sceneNumberingStyle, skippedSceneLetters, persistentScenes]);
 
     const listRef = useRef<HTMLDivElement>(null);
+    const sidebarContentRef = useRef<HTMLDivElement>(null);
+    const gutterRef = useRef<HTMLDivElement>(null);
     const currentSceneRef = useRef<HTMLDivElement>(null);
     const scenesRef = useRef(scenes);
     const suppressSceneScrollRef = useRef(false);
@@ -154,6 +205,39 @@ const EditorSidebarNavigation = () => {
         const delta = itemRect.top - listRect.top - (list.clientHeight - itemRect.height) / 2;
         list.scrollTo({ top: list.scrollTop + delta, behavior: "smooth" });
     }, [currentSceneIndex, leftSidebarOpen]);
+
+    // The marker gutter is drawn beside the panel, not in it, so nothing lays it
+    // out against the scene list — it is measured onto it instead. Written
+    // straight to the node: a state round-trip would re-render the whole list on
+    // every resize.
+    useIsoLayoutEffect(() => {
+        const list = listRef.current;
+        const gutter = gutterRef.current;
+        const content = sidebarContentRef.current;
+        if (!list || !gutter || !content) return;
+
+        const align = () => {
+            const listRect = list.getBoundingClientRect();
+            const contentRect = content.getBoundingClientRect();
+            gutter.style.top = `${listRect.top - contentRect.top}px`;
+            gutter.style.height = `${listRect.height}px`;
+        };
+
+        align();
+        // Follows the list through sidebar open/close, window resizes and the
+        // timeline strip opening above the workspace.
+        const observer = new ResizeObserver(align);
+        observer.observe(list);
+        observer.observe(content);
+        return () => observer.disconnect();
+    }, [showMarkerGutter]);
+
+    // The filter popover belongs to the scenes tab: leaving it shuts the panel,
+    // while the filter itself is kept so coming back restores the same view.
+    const selectTab = useCallback((tab: "scenes" | "shelf" | "comments" | "documents") => {
+        setActiveTab(tab);
+        setFilterOpen(false);
+    }, []);
 
     // End any in-progress drag and clear its drop indicator.
     const resetDrag = useCallback(() => {
@@ -309,14 +393,45 @@ const EditorSidebarNavigation = () => {
 
     return (
         <div className={sidebar_nav.container}>
-            <div className={join(sidebar_nav.sidebar_content, !leftSidebarOpen ? sidebar_nav.collapsed : "")}>
+            <div
+                ref={sidebarContentRef}
+                className={join(sidebar_nav.sidebar_content, !leftSidebarOpen ? sidebar_nav.collapsed : "")}
+            >
                 <div className={sidebar_nav.element}>
                     {activeTab === "scenes" ? (
                         <>
                             <div className={sidebar_nav.list_header}>
                                 <Clapperboard size={18} />
                                 <p className={form.label}>{t("scenes")}</p>
+                                <button
+                                    ref={filterBtnRef}
+                                    className={join(
+                                        sidebar_nav.filter_btn,
+                                        filterActive ? sidebar_nav.filter_btn_active : "",
+                                    )}
+                                    onClick={() => setFilterOpen((open) => !open)}
+                                    aria-label={t("filterScenes")}
+                                >
+                                    <ListFilter size={16} />
+                                    {filterActive && (
+                                        <span className={sidebar_nav.filter_badge}>{countSceneFilters(filter)}</span>
+                                    )}
+                                </button>
                             </div>
+                            {/* Portaled to <body>, so it must not stay up over the
+                                editor once the sidebar it hangs off is shut — a
+                                collapsed column on desktop, a slid-out drawer on
+                                phone. Reopening the sidebar brings it back. */}
+                            {filterOpen && leftSidebarOpen && (
+                                <SceneFilterPanel
+                                    anchorRef={filterBtnRef}
+                                    filter={filter}
+                                    onChange={setFilter}
+                                    onClear={() => setFilter(EMPTY_SCENE_FILTER)}
+                                    onClose={() => setFilterOpen(false)}
+                                    options={facetOptions}
+                                />
+                            )}
                             <div
                                 ref={listRef}
                                 className={join(sidebar_nav.list, sidebar_nav.scene_list)}
@@ -339,6 +454,7 @@ const EditorSidebarNavigation = () => {
                                                 index={index}
                                                 label={display?.label ?? `${index + 1}`}
                                                 isOmitted={display?.isOmitted ?? false}
+                                                isFilteredOut={filteredOut[index]}
                                                 showDropIndicator={showIndicator}
                                                 isDragging={dragIndex === index}
                                                 isCurrent={isCurrent}
@@ -364,30 +480,51 @@ const EditorSidebarNavigation = () => {
                     <div className={sidebar_nav.tab_bar}>
                         <button
                             className={join(sidebar_nav.tab_btn, activeTab === "scenes" ? sidebar_nav.tab_btn_active : "")}
-                            onClick={() => setActiveTab("scenes")}
+                            onClick={() => selectTab("scenes")}
                         >
                             <Clapperboard size={16} />
                         </button>
                         <button
                             className={join(sidebar_nav.tab_btn, activeTab === "documents" ? sidebar_nav.tab_btn_active : "")}
-                            onClick={() => setActiveTab("documents")}
+                            onClick={() => selectTab("documents")}
                         >
                             <FolderTree size={16} />
                         </button>
                         <button
                             className={join(sidebar_nav.tab_btn, activeTab === "comments" ? sidebar_nav.tab_btn_active : "")}
-                            onClick={() => setActiveTab("comments")}
+                            onClick={() => selectTab("comments")}
                         >
                             <MessageSquare size={16} />
                         </button>
                         <button
                             className={join(sidebar_nav.tab_btn, activeTab === "shelf" ? sidebar_nav.tab_btn_active : "")}
-                            onClick={() => setActiveTab("shelf")}
+                            onClick={() => selectTab("shelf")}
                         >
                             <Archive size={16} />
                         </button>
                     </div>
                 </div>
+                {/* Overview strip: one tick per scene the filter keeps, placed at its
+                    share of the list's height, so it is obvious at a glance whether
+                    the matches cluster or run through the whole screenplay. It sits
+                    in the sidebar's own right padding, beside the panel rather than
+                    inside it, so the scene titles keep the full panel width. */}
+                {showMarkerGutter && (
+                    <div ref={gutterRef} className={sidebar_nav.marker_gutter}>
+                        {scenes.map((scene: Scene, index: number) =>
+                            filteredOut[index] ? null : (
+                                <span
+                                    key={scene.position}
+                                    className={sidebar_nav.marker}
+                                    style={{
+                                        top: `${((index + 0.5) / scenes.length) * 100}%`,
+                                        backgroundColor: scene.color || "var(--primary-text)",
+                                    }}
+                                />
+                            ),
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
