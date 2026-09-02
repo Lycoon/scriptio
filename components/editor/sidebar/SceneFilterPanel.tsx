@@ -3,7 +3,7 @@
 import { RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { Check, ChevronDown, Clock, Compass, MapPin, Users, X } from "lucide-react";
+import { Check, ChevronDown, Clock, Compass, FilterX, MapPin, Users, X } from "lucide-react";
 import { join } from "@src/lib/utils/misc";
 import {
     FacetOption,
@@ -265,8 +265,10 @@ const SceneFilterPanel = ({ anchorRef, filter, onChange, onClear, onClose, optio
                         className={styles.clear_btn}
                         onClick={onClear}
                         disabled={!isSceneFilterActive(filter)}
+                        aria-label={t("filterClear")}
+                        title={t("filterClear")}
                     >
-                        {t("filterClear")}
+                        <FilterX size={14} />
                     </button>
                     <button className={styles.close_btn} onClick={onClose} aria-label="Close">
                         <X size={14} />

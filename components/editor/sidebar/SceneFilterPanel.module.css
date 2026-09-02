@@ -35,30 +35,8 @@
     gap: 4px;
 }
 
-.clear_btn {
-    padding: 3px 8px;
-    border: none;
-    border-radius: 6px;
-    background: none;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--secondary-text);
-    cursor: pointer;
-    transition:
-        background-color 0.15s ease,
-        color 0.15s ease;
-}
-
-.clear_btn:hover:not(:disabled) {
-    background-color: var(--tertiary);
-    color: var(--primary-text);
-}
-
-.clear_btn:disabled {
-    opacity: 0.4;
-    cursor: default;
-}
-
+/* Both header actions are icon-only glyphs, so they share one look. */
+.clear_btn,
 .close_btn {
     display: flex;
     align-items: center;
@@ -71,9 +49,17 @@
     border-radius: 4px;
 }
 
+.clear_btn:hover:not(:disabled),
 .close_btn:hover {
     background-color: var(--tertiary);
     color: var(--primary-text);
+}
+
+/* No filter set: nothing to clear. Dimming the whole button carries the icon
+   with it, whatever colour globals.css paints the glyph. */
+.clear_btn:disabled {
+    opacity: 0.4;
+    cursor: default;
 }
 
 .body {

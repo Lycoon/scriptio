@@ -2,8 +2,9 @@
    editor stays mounted behind (see PanelRenderer) so switching views never
    reinitialises it or drops the ProjectContext editor handle. z-index 12 clears
    the comment gutter, which floats at that level inside the editor beneath;
-   equal specificity plus later DOM order puts this on top. Still below the
-   panel switcher (13), which has to stay reachable to switch back. */
+   equal specificity plus later DOM order puts this on top. Still below the edge
+   handles (13) — the panel switcher and the right-sidebar toggle — which have to
+   stay reachable while the cards are up. */
 .container {
     position: absolute;
     inset: 0;

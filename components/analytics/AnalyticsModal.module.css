@@ -10,70 +10,96 @@
     z-index: 1000;
 }
 
-/* ── Modal shell ─────────────────────────────────────────── */
+/* ── Modal shell ─────────────────────────────────────────────
+   Same box as the dashboard modal (see DashboardModal.module.css): sized off the
+   viewport on both axes so the two modals keep the same footprint through a
+   rotation and read as one family. */
 .modal {
-    width: calc(100vw - 80px);
-    max-width: 1200px;
-    height: calc(100vh - 80px);
-    max-height: 900px;
+    width: min(1100px, 92vw);
+    height: min(840px, 90vh);
     display: flex;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-/* ── Sidebar ─────────────────────────────────────────────── */
-.sidebar {
+/* ── Content area ────────────────────────────────────────────
+   The single pane: there is no nav sidebar, every section is stacked in the
+   scroll area below the header. */
+.content {
     flex: 1;
-    background: var(--editor-sidebar);
-    padding: 32px 0;
-    border-right: 1px solid var(--separator);
     display: flex;
     flex-direction: column;
+    padding: 30px;
+    background: var(--main-bg);
+    min-height: 0;
+    min-width: 0;
 }
 
-.sidebarTitle {
-    font-size: 1.2rem;
-    padding: 0 24px;
-    margin-bottom: 18px;
-    color: var(--primary-text);
+.contentHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
 }
 
-.groupLabel {
-    font-family: var(--font-inter);
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    color: var(--secondary-text);
-    margin-bottom: 5px;
-    margin-top: 14px;
-    padding: 0 12px;
-    opacity: 0.6;
-}
-
-.navMenu {
-    padding: 0 12px;
-}
-
-.navItem {
+.title {
     display: flex;
     align-items: center;
-    width: 100%;
-    padding: 8px 12px;
-    gap: 12px;
-
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    color: var(--secondary-text);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    gap: 8px;
+    color: var(--primary-text);
 }
 
-.navItem.active {
-    background: var(--editor-tab-active);
+.title svg {
+    color: var(--secondary-text);
+}
+
+.scrollArea {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    scrollbar-gutter: stable;
+    padding-right: 20px;
+}
+
+/* Same size/hover as the dashboard's close button. */
+.close_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+}
+
+.close_btn:hover {
+    background-color: var(--secondary-hover);
     color: var(--primary-text);
+}
+
+/* ── Sections ────────────────────────────────────────────────
+   All the analytics coexist in one scroll; the title is the only separator, with
+   a rule between consecutive sections to group each title with its own cards. */
+.section + .section {
+    margin-top: 32px;
+    padding-top: 28px;
+    border-top: 1px solid var(--separator);
+}
+
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 1rem;
     font-weight: 600;
+    color: var(--primary-text);
 }
 
 .iconWrapper {
@@ -82,46 +108,8 @@
     justify-content: center;
 }
 
-.iconWrapper.active svg {
-    color: var(--primary-text);
-}
-
 .iconWrapper svg {
     color: var(--secondary-text);
-}
-
-/* Content Area (2/3 Width) */
-.content {
-    flex: 2;
-    display: flex;
-    flex-direction: column;
-    padding: 30px;
-    background: var(--main-bg);
-}
-
-.contentHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.scrollArea {
-    overflow-y: auto;
-    flex: 1;
-    scrollbar-gutter: stable;
-    padding-right: 20px;
-}
-
-.close_btn {
-    height: 22px;
-    width: 22px;
-    color: var(--secondary-text);
-    cursor: pointer;
-}
-
-.close_btn:hover {
-    color: var(--primary-text);
 }
 
 /* ── Stats page layout ───────────────────────────────────── */
@@ -190,13 +178,15 @@
     padding: 40px 0;
 }
 
-/* ── Reports placeholder ────────────────────────────────── */
+/* ── Reports placeholder ────────────────────────────────────
+   Padded rather than `height: 100%`: it is now one block in a stacked scroll,
+   not a pane filling the modal on its own. */
 .comingSoon {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
+    padding: 40px 0;
     gap: 12px;
     color: var(--secondary-text);
     opacity: 0.5;
@@ -214,13 +204,11 @@
 /* ── Phone ────────────────────────────────────────────────────
    A dedicated layout (rendered via a JS fork on phone viewports — see
    AnalyticsModal) that matches the other navbar tool sheets: a full-width
-   panel pinned below the navbar with a compact header, a section dropdown,
-   and a scrollable body. These classes are only mounted on phone, so no
-   media query is needed to gate them. */
+   panel pinned below the navbar with a compact header and a scrollable body.
+   These classes are only mounted on phone, so no media query is needed to gate
+   them. */
 
-/* Transparent full-screen catcher for outside taps. Its z-index sits below
-   the portaled dropdown menu (.portal_menu, z-index 300) so the section
-   picker's menu renders above the sheet rather than behind it. */
+/* Transparent full-screen catcher for outside taps. */
 .mobileOverlay {
     position: fixed;
     inset: 0;
@@ -281,34 +269,6 @@
 .mobileIconBtn:hover {
     background-color: var(--tertiary);
     color: var(--primary-text);
-}
-
-/* Section picker row. */
-.mobileToolbar {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--separator);
-    flex-shrink: 0;
-}
-
-/* Constrains the dropdown so it doesn't stretch the full panel width. */
-.mobileTabField {
-    width: 200px;
-    max-width: 100%;
-}
-
-.tabSelectTrigger {
-    padding: 8px 12px;
-    background: var(--primary);
-    border: 1px solid var(--separator);
-    border-radius: 8px;
-    color: var(--primary-text);
-    font-size: 0.9rem;
-}
-
-.tabOption {
-    display: flex;
-    align-items: center;
-    gap: 12px;
 }
 
 /* Scrollable body — padded on the right so content clears the scrollbar. */
