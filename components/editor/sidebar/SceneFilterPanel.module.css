@@ -1,0 +1,221 @@
+/* Scene filter popover. Rendered in a body portal (the sidebar panel clips its
+   overflow) and positioned from the header button, hence `position: fixed` with
+   the offsets set inline. */
+.container {
+    composes: panel from "../../navbar/navbar-shared.module.css";
+    position: fixed;
+    z-index: 100;
+    width: 280px;
+    max-height: min(460px, calc(100dvh - 120px));
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--separator);
+    flex-shrink: 0;
+}
+
+.title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-text);
+}
+
+.header_actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Both header actions are icon-only glyphs, so they share one look. */
+.clear_btn,
+.close_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: var(--secondary-text);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.clear_btn:hover:not(:disabled),
+.close_btn:hover {
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+}
+
+/* No filter set: nothing to clear. Dimming the whole button carries the icon
+   with it, whatever colour globals.css paints the glyph. */
+.clear_btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Closed dropdown: dimension name on the left, current selection on the right.
+   The menu below is laid out in flow rather than floating, so a long list can
+   scroll inside the panel instead of being clipped by it. */
+.trigger {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    background-color: var(--secondary);
+    font-size: 0.8rem;
+    text-align: left;
+    color: var(--primary-text);
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.trigger:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
+.trigger:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.trigger_active {
+    border-color: var(--primary-text);
+}
+
+/* Set on the glyph, not the wrapper: globals.css paints every `svg` with
+   --primary-text, which outranks an inherited colour. */
+.trigger_icon svg {
+    display: block;
+    color: var(--secondary-text);
+}
+
+.trigger_icon {
+    display: flex;
+    flex-shrink: 0;
+}
+
+.trigger_label {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* Fills the gap between the label and the chevron, so the selection sits hard
+   against the chevron however long the dimension name is. */
+.trigger_value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--secondary-text);
+}
+
+.chevron {
+    flex-shrink: 0;
+    color: var(--secondary-text);
+    transition: transform 0.2s ease;
+}
+
+.chevron_open {
+    transform: rotate(180deg);
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+    padding: 4px;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    background-color: var(--primary);
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.option {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    font-size: 0.8rem;
+    text-align: left;
+    color: var(--secondary-text);
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+/* Typing inside an open menu walks to the matching row, which is shown as
+   though the pointer were on it. */
+.option:hover,
+.option_highlighted {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+.option_selected {
+    color: var(--primary-text);
+}
+
+.option_label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.option_count {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--secondary-text);
+    opacity: 0.7;
+}
+
+/* Always laid out, checked or not, so rows don't shift as they are picked. */
+.option_check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 12px;
+}

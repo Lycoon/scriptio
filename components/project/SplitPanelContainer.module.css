@@ -181,6 +181,12 @@
     border: none;
 }
 
+/* globals.css paints every `svg` with --primary-text, which outranks the colour
+   inherited from the button — so the chevron/menu glyphs are tinted directly. */
+.panel_switcher_btn svg {
+    color: var(--secondary-text);
+}
+
 @media (hover: hover) {
     .panel_switcher_btn:hover {
         opacity: 1;

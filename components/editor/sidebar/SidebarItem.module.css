@@ -109,6 +109,16 @@
     background-color: var(--editor-sidebar-hover);
 }
 
+/* Scene excluded by the sidebar's scene filter. Greyed out rather than removed,
+   so the list keeps its shape and the scene stays navigable. */
+.filtered_out {
+    opacity: 0.35;
+}
+
+.filtered_out:hover {
+    opacity: 0.6;
+}
+
 .drop_indicator_top {
     box-shadow: inset 0 2px 0 0 var(--tertiary-hover);
 }

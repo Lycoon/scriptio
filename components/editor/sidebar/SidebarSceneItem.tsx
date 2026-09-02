@@ -20,13 +20,16 @@ type SidebarSceneItemProps = SceneContextProps & {
     label: string;
     /** True when this scene is a locked OMITTED placeholder. */
     isOmitted: boolean;
+    /** True when an active sidebar filter excludes this scene — the item is
+     *  greyed out but stays in place and fully interactive. */
+    isFilteredOut: boolean;
     scrollRef?: Ref<HTMLDivElement>;
     onPointerDown: (index: number, e: React.PointerEvent) => void;
     onTouchStart: (index: number, e: React.TouchEvent) => void;
     onDoubleClick: (scene: Scene) => void;
 };
 
-const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, label, isOmitted, scrollRef, onPointerDown, onTouchStart, onDoubleClick }: SidebarSceneItemProps) => {
+const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, isCurrent, label, isOmitted, isFilteredOut, scrollRef, onPointerDown, onTouchStart, onDoubleClick }: SidebarSceneItemProps) => {
     const t = useTranslations("contextMenu");
     const { contextMenu, updateContextMenu } = useContext(UserContext);
 
@@ -93,6 +96,7 @@ const SidebarSceneItem = memo(({ scene, index, showDropIndicator, isDragging, is
         showDropIndicator ? nav_item.drop_indicator_top : "",
         isDragging ? nav_item.dragging : "",
         isCurrent ? nav_item.current : "",
+        isFilteredOut ? nav_item.filtered_out : "",
     );
 
     return (

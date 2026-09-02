@@ -217,6 +217,140 @@
     height: 100%;
 }
 
+/* ============================== */
+/*  Folded screenplay tools       */
+/*  (desktop, next to the title)  */
+/* ============================== */
+
+/* The fold toggle takes its circle and ghost fill from .tools_icon, like the
+ * tools it reveals — it sits on the same island, so it is one of them. */
+.tools_chevron {
+    transition: transform 0.25s ease;
+}
+
+/* Expanded: point the chevron back at the title island, so it reads as "fold
+ * these away again" rather than "there is more to open". */
+.tools_toggle_open .tools_chevron {
+    transform: rotate(180deg);
+}
+
+/* Reveal wrapper. Grows its single grid column from 0fr to 1fr, so the island
+ * animates open against the group's natural width — no hard-coded pixel width to
+ * drift as buttons are added or removed. The left margin is the chevron's gap,
+ * and has to animate with the column: as a fixed gap on .tools_island it would
+ * leave 4px of dead space inside the folded pill. */
+.tools_reveal {
+    display: grid;
+    grid-template-columns: 0fr;
+    height: 100%;
+    margin-left: 0;
+    opacity: 0;
+    transition:
+        grid-template-columns 0.28s ease,
+        margin-left 0.28s ease,
+        opacity 0.2s ease;
+}
+
+.tools_reveal_open {
+    grid-template-columns: 1fr;
+    margin-left: 4px;
+    opacity: 1;
+}
+
+/* One shared island for the whole cluster — the same single-unit idea the phone
+ * bar's .mobile_tools uses, though it has to be built differently (see the
+ * padding note below). The fold chevron lives on this pill too, so folded it is
+ * just the chevron and expanding grows it rightwards; the chevron is never a
+ * separate control sitting beside the island. */
+.tools_island {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 100%;
+    /* Same flat fill as a NavbarIconButton, and deliberately no --panel-shadow:
+     * folded, this is button-sized, and that shadow is an 8px blur in every
+     * direction — a halo that size reads as a chip noticeably larger than the
+     * flat buttons beside it. The title island can carry one because it is big
+     * enough that the halo stays proportionate. Since the fill matches the
+     * buttons', the pill still reads as a merged group of them either way. */
+    background-color: var(--secondary);
+
+    /* Padded like the editor's footer bubble (EditorFooter .bubble_right), which
+     * is the look this mirrors: a little air around the buttons instead of them
+     * running flush into the pill's ends.
+     *
+     * The radii have to stay concentric or the ends visibly disagree — outer =
+     * inner + the padding between them. That bubble floats, so it pads 3px and
+     * grows to 46px around full-size 40px buttons. This one can't: it sits in
+     * the navbar's 40px row and everything is border-box, so the padding eats
+     * inward and the buttons come out as 34px circles (radius 17) — so the
+     * pill's radius must be 17 + 3 = 20.
+     *
+     * In short: 20 = 17 + 3. Changing the block padding or the island's height
+     * means recomputing the radius, or the caps stop matching.
+     *
+     * The inline 4px is picked so the folded pill (4 + 34 + 4) is exactly the
+     * 42px of a NavbarIconButton — folded, this sits in a row of them and must
+     * not read as the odd one out. */
+    border-radius: 20px;
+    padding: 3px 4px;
+}
+
+/* The three tools inside the reveal. Carries the clipping rather than the island
+ * doing it, since the island holds the chevron and must stay visible: min-width: 0
+ * lets the grid column above collapse this to nothing, and overflow: hidden clips
+ * the buttons as it does — which also drops their hit-testing, so the folded
+ * cluster can't catch clicks. */
+.tools_group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    /* Wider than the footer bubble's 2px: these circles are smaller, so their
+     * edges curve away from each other and a hairline gap reads as cramped.
+     * Matches that bubble's phone sizing, which opens up for the same reason. */
+    gap: 4px;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* A panel is open: it drops below the bar and must not be clipped by the group. */
+.tools_group_overflow {
+    overflow: visible;
+}
+
+/* Icon buttons sit flush on the island (ghost fill), so the pill reads as one
+ * unit rather than buttons-within-a-button — mirrors .mobile_icon.
+ *
+ * Circles, like the footer bubble's .action. The shared .button is a stadium
+ * sized by its inline padding, which at the 34px height the island leaves would
+ * render these 42x34 — visibly wider than tall. Drop that padding and square
+ * them off aspect-ratio instead, so the width follows the island's content box
+ * rather than a hard-coded size. 34px circles carry a 17px radius, which is the
+ * inner half of the island's concentric 20 (see .tools_island). */
+.navBtns .tools_icon {
+    aspect-ratio: 1;
+    padding-inline: 0;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.navBtns .tools_icon:hover {
+    background-color: var(--secondary-hover);
+    border-color: transparent;
+}
+
+/* Open tool. The flush rule above zeroes the shared .button border that
+ * normally marks the active state, so fill the button and ring it. Compounded
+ * so it outranks the :hover rule above — hovering the open tool must not strip
+ * the ring that says which panel is up. */
+.navBtns .tools_icon.tools_icon_active {
+    background-color: var(--secondary-hover);
+    border-color: var(--tertiary);
+}
+
 .back_btn {
     display: flex;
     flex-direction: row;

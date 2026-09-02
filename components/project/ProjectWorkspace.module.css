@@ -32,7 +32,10 @@
     /* Phone: near the edge (the native scrollbar is hidden there, so no overlap).
      * Desktop offset is bumped below to clear the scrollbar gutter. */
     right: 8px;
-    z-index: 5;
+    /* Same level as the left edge handles (SplitPanelContainer's panel switcher):
+       above the scene-cards grid (12), which covers the panel opaquely — the
+       toggle has to stay reachable while the cards are up. */
+    z-index: 13;
     width: 20px;
     height: 36px;
     display: flex;
@@ -42,6 +45,12 @@
     color: var(--secondary-text);
     background-color: var(--secondary);
     border-radius: 16px;
+}
+
+/* globals.css paints every `svg` with --primary-text, which outranks the colour
+   inherited from the button — so the chevron glyph is tinted directly. */
+.right_sidebar_toggle svg {
+    color: var(--secondary-text);
 }
 
 /* Desktop/tablet: the editor scroll container reserves a scrollbar gutter

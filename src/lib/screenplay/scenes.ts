@@ -30,7 +30,7 @@ import { compileSceneLabel } from "./scene-locking";
  * For leaf nodes (text): text.length + 2 (opening + closing token).
  * For branch nodes: 2 + sum of children sizes.
  */
-const getJSONNodeSize = (node: JSONContent): number => {
+export const getJSONNodeSize = (node: JSONContent): number => {
     if (node.text !== undefined) return node.text?.length ?? 0;
     const childrenSize = (node.content ?? []).reduce((acc, child) => acc + getJSONNodeSize(child), 0);
     return 2 + childrenSize;
