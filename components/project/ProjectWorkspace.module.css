@@ -81,19 +81,15 @@
     }
 }
 
-@media (hover: hover) {
-    .right_sidebar_toggle:hover {
-        opacity: 1;
-        background-color: var(--tertiary-hover);
-    }
+.right_sidebar_toggle:hover {
+    opacity: 1;
+    background-color: var(--tertiary-hover);
 }
 
 /* Dim + tap-to-close layer behind the phone sidebar drawers. Sits above the
- * editor but below the drawers (z-index 60). Always mounted on phone (see
- * ProjectWorkspace for why it must never unmount under a tap) — it fades with
- * the drawer slide and goes fully inert while hidden. A childless solid-color
- * div at opacity 0 costs nothing to keep around: WebKit draws solid-color
- * layers without a backing store. */
+ * editor but below the drawers (z-index 60). Stays mounted on phone so the fade
+ * has something to run on, and goes fully inert — and unrendered — once it has
+ * finished fading out. */
 .sidebar_backdrop {
     position: fixed;
     top: var(--navbar-height);
@@ -102,13 +98,30 @@
     bottom: 0;
     z-index: 55;
     background-color: rgba(0, 0, 0, 0.4);
-    /* Matches the drawers' 0.25s transform slide. */
-    transition: opacity 0.25s ease;
+    /* Matches the drawers' 0.25s transform slide. No delay on the way in: it has
+     * to be rendered before it can fade up. */
+    transition:
+        opacity 0.25s ease,
+        visibility 0s;
 }
 
+/* An opacity-0 element is still a rendered element, and having transitioned that
+ * opacity is what gets this one composited: a full-viewport `position: fixed`
+ * layer parked over the panel area for the rest of the session, which every
+ * board pan and editor scroll then has to composite against. Take it out of
+ * rendering after the fade — same delayed-visibility idiom as the drawer itself
+ * (see EditorSidebarNavigation.module.css, which carries the full reasoning).
+ *
+ * Nothing is lost by doing so: `pointer-events: none` already made it invisible
+ * to hit-testing the moment the drawers closed, so keeping it rendered was
+ * buying nothing that hiding it takes away. */
 .sidebar_backdrop_hidden {
     opacity: 0;
     pointer-events: none;
+    visibility: hidden;
+    transition:
+        opacity 0.25s ease,
+        visibility 0s linear 0.25s;
 }
 
 /* Touch devices (phone + iPad): enlarge the sidebar toggle to a comfortable tap

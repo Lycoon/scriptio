@@ -16,21 +16,17 @@
     overflow: hidden;
 }
 
-.collapsed .element {
-    visibility: hidden;
-}
-
+/* NB: this module has no `.element` rule of its own on purpose. EditorSidebarFormat
+ * renders the *navigation* module's `.element` inside this module's
+ * `.sidebar_content`, and CSS Modules scope the two independently — so a
+ * `.collapsed .element` selector written here could never match the panel it was
+ * aimed at, and this drawer went on rendering its full contents while shut.
+ * `visibility` inherits, so hiding the drawer itself covers whatever panel the
+ * markup puts inside it. */
 .collapsed {
     width: 0;
     padding: 0;
-}
-
-.element {
-    background-color: var(--editor-sidebar);
-    padding-top: 10px;
-    padding-bottom: 38px;
-    border-radius: 35px;
-    box-shadow: var(--panel-shadow);
+    visibility: hidden;
 }
 
 /* Phone: the format sidebar becomes a right overlay drawer, mirroring the
@@ -53,7 +49,11 @@
         /* No drawer background — only the rounded .element panel shows, floating
          * over the (backdrop-dimmed) editor, matching the desktop look. */
         transform: translateX(0);
-        transition: transform 0.25s ease;
+        /* No delay on the visibility flip coming back in: the drawer has to be
+         * rendered before it can slide into view. */
+        transition:
+            transform 0.25s ease,
+            visibility 0s;
         pointer-events: auto;
     }
 
@@ -62,6 +62,13 @@
         padding: 12px;
         transform: translateX(100%);
         pointer-events: none;
+        /* Hold the hide until the slide-out has played, then stop rendering the
+         * drawer entirely — see the matching block in
+         * EditorSidebarNavigation.module.css for why an off-screen translate is
+         * not enough on its own. */
+        transition:
+            transform 0.25s ease,
+            visibility 0s linear 0.25s;
     }
 }
 

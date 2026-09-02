@@ -22,7 +22,11 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 12px calc(12px + var(--safe-right)) calc(20px + var(--safe-bottom)) 12px;
+    /* Same horizontal gutter as the dashboard drawer's --drawer-gutter: picking a
+     * section swaps that drawer in for this one in place, so the close button and
+     * the row labels must land on the same lines on both screens or they visibly
+     * jump across the swap. */
+    padding: 12px calc(16px + var(--safe-right)) calc(20px + var(--safe-bottom)) 16px;
     overflow-y: auto;
 
     background-color: var(--main-bg);
@@ -36,6 +40,14 @@
     transform: translateX(100%);
 }
 
+/* Handing over to (or taking back from) the dashboard drawer, which covers this
+ * exact rect: sliding out would only animate something nobody can see, and would
+ * drag this drawer's shadow across the strip beside it. Snap instead, so the two
+ * read as one drawer replacing its content. See [DashboardContext].drawerSwap. */
+.drawer_instant {
+    transition: none;
+}
+
 .header {
     display: flex;
     flex-direction: row;
@@ -44,8 +56,8 @@
     gap: 8px;
     margin-bottom: 8px;
     /* Match the left inset of the group labels / items / title row below (all
-     * padding-left: 10px) so the "Menu" title lines up with them. */
-    padding-left: 10px;
+     * padding-left: 12px) so the "Menu" title lines up with them. */
+    padding-left: 12px;
 }
 
 .header_title {
@@ -84,7 +96,7 @@
     align-items: center;
     gap: 14px;
     width: 100%;
-    padding: 9px 10px;
+    padding: 9px 12px;
     border: none;
     border-radius: 10px;
     background: none;
@@ -101,7 +113,7 @@
 
 /* Group heading above a run of dashboard tabs (Project / Preferences / Account). */
 .group_label {
-    padding: 10px 10px 2px;
+    padding: 10px 12px 2px;
     font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -128,7 +140,7 @@
     flex-direction: row;
     align-items: center;
     gap: 10px;
-    padding: 6px 10px 12px;
+    padding: 6px 12px 12px;
 }
 
 .title_input {

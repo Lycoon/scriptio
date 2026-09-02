@@ -25,7 +25,7 @@ import DashboardAuth from "./account/DashboardAuth";
 import AboutSettings from "./AboutSettings";
 
 const DashboardModal = () => {
-    const { isOpen, closeDashboard, activeTab, setActiveTab, openedFromMenu, setMobileMenuOpen } =
+    const { isOpen, closeDashboard, activeTab, setActiveTab, openedFromMenu, swapDrawerScreen, drawerSwap } =
         useContext(DashboardContext);
     const t = useTranslations("modal");
     const tSidebar = useTranslations("sidebar");
@@ -40,10 +40,13 @@ const DashboardModal = () => {
     // so preferences/account tabs are reachable, and the back arrow returns to it.
     const [mobileShowSections, setMobileShowSections] = useState(false);
 
+    // Either way this is the same gesture — step back to the list of sections —
+    // so it looks the same either way: the drawer's content is replaced, with no
+    // slide. Only the list itself differs (the burger menu in a project, this
+    // modal's own sidebar elsewhere).
     const handleBack = () => {
         if (openedFromMenu) {
-            closeDashboard();
-            setMobileMenuOpen(true);
+            swapDrawerScreen("menu");
         } else {
             setMobileShowSections(true);
         }
@@ -133,7 +136,7 @@ const DashboardModal = () => {
     return (
         <div className={styles.overlay} onClick={closeDashboard}>
             <div
-                className={`${styles.modal} ${isPhone && mobileShowSections ? styles.mobileSections : ""}`}
+                className={`${styles.modal} ${isPhone && mobileShowSections ? styles.mobileSections : ""} ${drawerSwap ? styles.instant : ""}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 <SidebarMenu structure={menuStructure} activeTab={activeTab} onTabChange={handleTabChange} />
