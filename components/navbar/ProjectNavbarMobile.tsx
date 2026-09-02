@@ -55,11 +55,12 @@ const ProjectNavbarMobile = () => {
     const tSidebar = useTranslations("sidebar");
 
     const {
-        openDashboard,
         closeDashboard,
         isDashboardOpen,
         mobileMenuOpen,
         setMobileMenuOpen,
+        swapDrawerScreen,
+        drawerSwap,
         membership,
         userCtx,
         canUploadToCloud,
@@ -297,7 +298,11 @@ const ProjectNavbarMobile = () => {
             </nav>
 
             {isInProject && projectId && (
-                <ProjectNavbarMobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
+                <ProjectNavbarMobileMenu
+                    isOpen={mobileMenuOpen}
+                    instant={drawerSwap}
+                    onClose={() => setMobileMenuOpen(false)}
+                >
                     <div className={mobileMenu.title_row}>
                         {membership ? (
                             <StatusIndicator />
@@ -329,8 +334,10 @@ const ProjectNavbarMobile = () => {
                     <div className={mobileMenu.separator} />
 
                     {/* Dashboard settings — the modal drops its sidebar on phone, so
-                        its grouped tabs are navigated from here; each opens the
-                        dashboard directly on that tab. */}
+                        this menu *is* its sections list; each row swaps the dashboard
+                        drawer in for this one on that tab, in place and without a
+                        slide, the way the home dashboard swaps its own list for a
+                        section (see [DashboardContext].swapDrawerScreen). */}
                     {dashboardMenu.map((section) => (
                         <div key={section.group} className={mobileMenu.section}>
                             <div className={mobileMenu.group_label}>{section.group}</div>
@@ -338,10 +345,7 @@ const ProjectNavbarMobile = () => {
                                 <button
                                     key={tab.id}
                                     className={mobileMenu.item}
-                                    onClick={() => {
-                                        openDashboard(tab.id, { fromMenu: true });
-                                        setMobileMenuOpen(false);
-                                    }}
+                                    onClick={() => swapDrawerScreen("dashboard", tab.id)}
                                 >
                                     {tab.icon}
                                     <span>{tab.label}</span>
@@ -369,10 +373,7 @@ const ProjectNavbarMobile = () => {
                     ) : (
                         <button
                             className={mobileMenu.item}
-                            onClick={() => {
-                                openDashboard("Auth", { fromMenu: true });
-                                setMobileMenuOpen(false);
-                            }}
+                            onClick={() => swapDrawerScreen("dashboard", "Auth")}
                         >
                             <LogIn size={18} />
                             <span>{tSidebar("auth")}</span>
@@ -381,10 +382,7 @@ const ProjectNavbarMobile = () => {
 
                     <button
                         className={mobileMenu.item}
-                        onClick={() => {
-                            openDashboard("About", { fromMenu: true });
-                            setMobileMenuOpen(false);
-                        }}
+                        onClick={() => swapDrawerScreen("dashboard", "About")}
                     >
                         <Info size={18} />
                         <span>{tModal("tabs.About")}</span>

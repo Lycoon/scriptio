@@ -249,8 +249,8 @@
     color: var(--primary-text);
 }
 
-/* Slide the drawer in from the right on phone so it reads as the same sidebar
- * the burger menu opened from, rather than popping in place. */
+/* Slide the drawer in from the right on phone when it genuinely opens (the home
+ * Settings button, a tool sheet's link) rather than popping in place. */
 @keyframes dashboardDrawerIn {
     from {
         transform: translateX(100%);
@@ -260,10 +260,10 @@
     }
 }
 
-/* Phone: the sidebar nav lives in the burger menu, so the modal drops it and
- * renders as a right-side drawer matching that menu (same width and position
- * below the navbar) instead of a full-screen pane. Tabs are switched from the
- * burger, which re-opens the dashboard on the chosen tab. Content is tightened
+/* Phone: on a project the sidebar nav lives in the burger menu, so the modal
+ * drops it and renders as a right-side drawer matching that menu (same width and
+ * position below the navbar) instead of a full-screen pane. Tabs are switched from
+ * the burger, which swaps this drawer in for it on the chosen tab. Content is tightened
  * and slightly scaled down so the settings sit comfortably in the narrow width. */
 @media (max-width: 767px) {
     .overlay {
@@ -289,6 +289,14 @@
         border-radius: 0;
         box-shadow: var(--panel-shadow);
         animation: dashboardDrawerIn 0.25s ease;
+    }
+
+    /* Swapped in for the burger menu, which sits in this exact rect: the drawer
+     * is already on screen, so it must not slide in again — only its content
+     * changes. Same in-place replacement the sections list ⇄ section switch does
+     * below (see [DashboardContext].drawerSwap). */
+    .modal.instant {
+        animation: none;
     }
 
     /* The nav sidebar and the content share the drawer, one screen at a time.

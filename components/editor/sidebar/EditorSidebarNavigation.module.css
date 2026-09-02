@@ -70,7 +70,11 @@
         /* No drawer background — only the rounded .element panel shows, floating
          * over the (backdrop-dimmed) editor, matching the desktop look. */
         transform: translateX(0);
-        transition: transform 0.25s ease;
+        /* visibility flips back with no delay on the way in: the drawer has to be
+         * rendered before it can slide into view. */
+        transition:
+            transform 0.25s ease,
+            visibility 0s;
         pointer-events: auto;
     }
 
@@ -79,11 +83,41 @@
         padding: 12px;
         transform: translateX(-100%);
         pointer-events: none;
+        /*
+         * Stop rendering the drawer once it has finished sliding out.
+         *
+         * Translating it off-screen is not enough on iOS. Running the transform
+         * transition promotes this fixed, full-height element to its own
+         * compositing layer with a real backing store (the panel, its text, its
+         * box-shadow), and WebKit keeps that layer after the transition ends —
+         * a `position: fixed` element with a non-identity transform and a
+         * declared transition is exactly what it holds on to. From then on the
+         * layer sits permanently over the panel area at z-index 60, so every
+         * pan of the board and every scroll of the editor has to recomposite
+         * against it: smooth until the drawer is first opened, unusable after.
+         *
+         * `visibility: hidden` drops it out of rendering entirely and the layer
+         * with it, while leaving the subtree laid out — the marker gutter is
+         * measured against the scene list with getBoundingClientRect (see
+         * EditorSidebarNavigation), which `display: none` would zero.
+         *
+         * The 0.25s delay is what lets the slide-out still be seen: visibility
+         * is not interpolated, so it simply holds `visible` for the length of the
+         * transform and then flips. The format drawer on the right needs the same
+         * treatment and now carries it (EditorSidebar.module.css).
+         */
+        visibility: hidden;
+        transition:
+            transform 0.25s ease,
+            visibility 0s linear 0.25s;
     }
 
-    /* Defeat the desktop hide above so the slide-out is actually seen. */
+    /* Follow the drawer's own delayed visibility rather than the desktop rule's
+     * immediate hide, so the slide-out is actually seen. Must be `inherit` and
+     * not `visible`: an explicit `visible` here would keep the panel rendered
+     * after the drawer above it has gone hidden, which is the whole problem. */
     .collapsed .element {
-        visibility: visible;
+        visibility: inherit;
     }
 }
 

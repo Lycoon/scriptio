@@ -50,6 +50,11 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
         if (parent.current) autoAnimate(parent.current);
     }, [parent]);
 
+    // Unlike `startCreating`, this leaves the phone drawer open. The file picker
+    // covers the screen on its own, so closing behind it buys nothing and costs
+    // twice: cancelling the picker drops the user back on the list with the
+    // drawer gone, and `importError` — which renders inside the sidebar — would
+    // never be seen.
     const handleImportClick = () => {
         fileInputRef.current?.click();
     };
@@ -87,11 +92,6 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
     const startCreating = () => {
         if (isPhone) setSidebarOpen(false);
         setIsCreating(true);
-    };
-
-    const startImport = () => {
-        if (isPhone) setSidebarOpen(false);
-        handleImportClick();
     };
 
     if (isLoading || !projects) return <Loading />;
@@ -173,7 +173,7 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
                     </button>
                     <button
                         className={page.action_btn}
-                        onClick={startImport}
+                        onClick={handleImportClick}
                         disabled={isImporting}
                     >
                         <FileDown size={16} />
