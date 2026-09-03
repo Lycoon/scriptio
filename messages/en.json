@@ -78,7 +78,8 @@
     "save": "Save",
     "cancel": "Cancel",
     "loading": "Loading...",
-    "resetDefaults": "Reset"
+    "resetDefaults": "Reset",
+    "back": "Back"
   },
   "sidebar": {
     "title": "Dashboard",

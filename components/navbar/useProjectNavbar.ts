@@ -28,7 +28,6 @@ export const useProjectNavbar = () => {
         mobileMenuOpen,
         setMobileMenuOpen,
         swapDrawerScreen,
-        drawerSwap,
     } = useContext(DashboardContext);
     const { project: membership, setProjectTitle: setContextTitle } = useContext(ProjectContext);
     const userCtx = useContext(UserContext);
@@ -143,7 +142,6 @@ export const useProjectNavbar = () => {
         mobileMenuOpen,
         setMobileMenuOpen,
         swapDrawerScreen,
-        drawerSwap,
         membership,
         userCtx,
         isPro,

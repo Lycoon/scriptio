@@ -60,7 +60,6 @@ const ProjectNavbarMobile = () => {
         mobileMenuOpen,
         setMobileMenuOpen,
         swapDrawerScreen,
-        drawerSwap,
         membership,
         userCtx,
         canUploadToCloud,
@@ -298,11 +297,7 @@ const ProjectNavbarMobile = () => {
             </nav>
 
             {isInProject && projectId && (
-                <ProjectNavbarMobileMenu
-                    isOpen={mobileMenuOpen}
-                    instant={drawerSwap}
-                    onClose={() => setMobileMenuOpen(false)}
-                >
+                <ProjectNavbarMobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
                     <div className={mobileMenu.title_row}>
                         {membership ? (
                             <StatusIndicator />
@@ -335,9 +330,9 @@ const ProjectNavbarMobile = () => {
 
                     {/* Dashboard settings — the modal drops its sidebar on phone, so
                         this menu *is* its sections list; each row swaps the dashboard
-                        drawer in for this one on that tab, in place and without a
-                        slide, the way the home dashboard swaps its own list for a
-                        section (see [DashboardContext].swapDrawerScreen). */}
+                        drawer in for this one on that tab, this drawer sliding out as
+                        that one slides in, the way the home dashboard slides between
+                        its own list and a section (see [DashboardContext].swapDrawerScreen). */}
                     {dashboardMenu.map((section) => (
                         <div key={section.group} className={mobileMenu.section}>
                             <div className={mobileMenu.group_label}>{section.group}</div>

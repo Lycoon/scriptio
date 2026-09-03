@@ -249,8 +249,11 @@
     color: var(--primary-text);
 }
 
-/* Slide the drawer in from the right on phone when it genuinely opens (the home
- * Settings button, a tool sheet's link) rather than popping in place. */
+/* Slide the drawer in from the right on phone: on every open, and again on each
+ * screen change inside it (the modal is keyed on its screen — see [DashboardModal]),
+ * so picking a section reads as the drawer closing and coming back rather than its
+ * content being swapped out under it. That is what the burger menu ⇄ dashboard swap
+ * does in a project, where the two screens are two separate drawers. */
 @keyframes dashboardDrawerIn {
     from {
         transform: translateX(100%);
@@ -263,8 +266,9 @@
 /* Phone: on a project the sidebar nav lives in the burger menu, so the modal
  * drops it and renders as a right-side drawer matching that menu (same width and
  * position below the navbar) instead of a full-screen pane. Tabs are switched from
- * the burger, which swaps this drawer in for it on the chosen tab. Content is tightened
- * and slightly scaled down so the settings sit comfortably in the narrow width. */
+ * the burger, whose drawer slides out as this one slides in on the chosen tab.
+ * Content is tightened and slightly scaled down so the settings sit comfortably in
+ * the narrow width. */
 @media (max-width: 767px) {
     .overlay {
         /* Anchor below the navbar and push the drawer to the right edge, leaving
@@ -289,14 +293,6 @@
         border-radius: 0;
         box-shadow: var(--panel-shadow);
         animation: dashboardDrawerIn 0.25s ease;
-    }
-
-    /* Swapped in for the burger menu, which sits in this exact rect: the drawer
-     * is already on screen, so it must not slide in again — only its content
-     * changes. Same in-place replacement the sections list ⇄ section switch does
-     * below (see [DashboardContext].drawerSwap). */
-    .modal.instant {
-        animation: none;
     }
 
     /* The nav sidebar and the content share the drawer, one screen at a time.

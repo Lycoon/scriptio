@@ -78,7 +78,8 @@
     "save": "Guardar cambios",
     "cancel": "Cancelar",
     "loading": "Cargando...",
-    "resetDefaults": "Restablecer"
+    "resetDefaults": "Restablecer",
+    "back": "Atrás"
   },
   "sidebar": {
     "title": "Panel",

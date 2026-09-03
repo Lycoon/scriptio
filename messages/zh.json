@@ -78,7 +78,8 @@
     "save": "保存",
     "cancel": "取消",
     "loading": "加载中...",
-    "resetDefaults": "重置"
+    "resetDefaults": "重置",
+    "back": "返回"
   },
   "sidebar": {
     "title": "控制面板",

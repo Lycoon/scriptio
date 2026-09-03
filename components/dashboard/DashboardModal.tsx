@@ -25,7 +25,7 @@ import DashboardAuth from "./account/DashboardAuth";
 import AboutSettings from "./AboutSettings";
 
 const DashboardModal = () => {
-    const { isOpen, closeDashboard, activeTab, setActiveTab, openedFromMenu, swapDrawerScreen, drawerSwap } =
+    const { isOpen, closeDashboard, activeTab, setActiveTab, openedFromMenu, swapDrawerScreen } =
         useContext(DashboardContext);
     const t = useTranslations("modal");
     const tSidebar = useTranslations("sidebar");
@@ -41,9 +41,8 @@ const DashboardModal = () => {
     const [mobileShowSections, setMobileShowSections] = useState(false);
 
     // Either way this is the same gesture — step back to the list of sections —
-    // so it looks the same either way: the drawer's content is replaced, with no
-    // slide. Only the list itself differs (the burger menu in a project, this
-    // modal's own sidebar elsewhere).
+    // and it plays the same slide either way. Only the list itself differs: the
+    // burger menu in a project, this modal's own sidebar elsewhere.
     const handleBack = () => {
         if (openedFromMenu) {
             swapDrawerScreen("menu");
@@ -133,10 +132,24 @@ const DashboardModal = () => {
 
     if (!isOpen) return null;
 
+    // Phone: which of the drawer's two screens is up — the sections list, or one
+    // section's content. In a project those two screens are two separate drawers
+    // (the burger menu and this one), so switching sections visibly slides one out
+    // and the other in. Here both screens live in this single element, so toggling
+    // between them would otherwise just swap the content underneath a drawer that
+    // is already parked. Keying the element on the screen remounts it, which
+    // replays .modal's slide-in with the new screen and makes the two match.
+    //
+    // Desktop keeps one stable key: there the sidebar and the content are shown
+    // side by side, so changing tab is not a screen change and must not remount
+    // (nor animate) the modal.
+    const drawerScreen = isPhone ? (mobileShowSections ? "sections" : activeTab) : "modal";
+
     return (
         <div className={styles.overlay} onClick={closeDashboard}>
             <div
-                className={`${styles.modal} ${isPhone && mobileShowSections ? styles.mobileSections : ""} ${drawerSwap ? styles.instant : ""}`}
+                key={drawerScreen}
+                className={`${styles.modal} ${isPhone && mobileShowSections ? styles.mobileSections : ""}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 <SidebarMenu structure={menuStructure} activeTab={activeTab} onTabChange={handleTabChange} />

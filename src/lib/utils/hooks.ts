@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR, { useSWRConfig } from "swr";
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { CookieUser, DataExportState, UserSettings } from "./types";
 import { editUserSettings } from "./requests";
 import { readLocalSettings, writeLocalSettings, DEFAULT_LOCAL_SETTINGS } from "./local-settings";
@@ -76,27 +76,45 @@ const useDesktop = (): boolean => {
     return isDesktop;
 };
 
+// One MediaQueryList per query, shared by every hook instance. The snapshot
+// getter below runs on each render and matchMedia() allocates a live list object
+// on every call, so cache them rather than churning one per render.
+const mediaQueryLists = new Map<string, MediaQueryList>();
+const getMediaQueryList = (query: string): MediaQueryList => {
+    let mql = mediaQueryLists.get(query);
+    if (!mql) {
+        mql = window.matchMedia(query);
+        mediaQueryLists.set(query, mql);
+    }
+    return mql;
+};
+
 /**
  * Subscribe to a CSS media query.
  *
- * Starts `false` so the server render and the client's first (hydration) render
- * agree — reading window.matchMedia in the initializer would make the client's
- * first render disagree with the SSR HTML and throw a hydration mismatch. The
- * real value is resolved in the effect below, right after mount.
+ * Read through useSyncExternalStore rather than state-plus-effect so a component
+ * mounting *after* hydration gets the real value on its very first render. The
+ * old shape started `false` and only corrected itself in an effect, so on a phone
+ * every fresh mount painted one frame of the desktop branch first — visible as a
+ * flash of the desktop navbar when opening a project (see [ProjectNavbar], which
+ * picks its layout from `useIsPhone`).
+ *
+ * The server snapshot stays `false` so the SSR markup and the client's hydration
+ * render still agree; React re-renders with the client snapshot immediately after
+ * hydrating, which is the one case a mismatch would otherwise throw.
  */
 const useMediaQuery = (query: string): boolean => {
-    const [matches, setMatches] = useState<boolean>(false);
+    const subscribe = useCallback(
+        (onStoreChange: () => void) => {
+            const mql = getMediaQueryList(query);
+            mql.addEventListener("change", onStoreChange);
+            return () => mql.removeEventListener("change", onStoreChange);
+        },
+        [query],
+    );
+    const getSnapshot = useCallback(() => getMediaQueryList(query).matches, [query]);
 
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-        const mql = window.matchMedia(query);
-        const onChange = () => setMatches(mql.matches);
-        onChange();
-        mql.addEventListener("change", onChange);
-        return () => mql.removeEventListener("change", onChange);
-    }, [query]);
-
-    return matches;
+    return useSyncExternalStore(subscribe, getSnapshot, () => false);
 };
 
 // Phone breakpoint: below this the editor switches to the single-panel drawer

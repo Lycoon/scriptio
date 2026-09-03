@@ -78,7 +78,8 @@
     "save": "변경사항 저장",
     "cancel": "취소",
     "loading": "로딩 중...",
-    "resetDefaults": "초기화"
+    "resetDefaults": "초기화",
+    "back": "뒤로"
   },
   "sidebar": {
     "title": "대시보드",

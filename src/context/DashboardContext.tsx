@@ -24,20 +24,14 @@ export type DashboardContextType = {
     setMobileMenuOpen: (value: boolean) => void;
     /**
      * Phone: on a project the burger menu *is* the dashboard's sections list, and
-     * it occupies the exact same drawer rect as the dashboard itself. Swapping one
-     * for the other is therefore a screen change inside a single drawer, not two
-     * drawers opening and closing — this action performs both halves at once so
-     * neither plays its slide (see {@link drawerSwap}), matching the home
-     * dashboard, where the sections list and a section swap in place.
+     * it occupies the exact same drawer rect as the dashboard itself. Picking a
+     * section closes the one and opens the other, and doing both halves in a single
+     * action puts them in the same commit — so the outgoing drawer's slide-out and
+     * the incoming one's slide-in play together as one swipe instead of in
+     * sequence. The home dashboard replays the same slide on its own screen change
+     * (see [DashboardModal]), so switching sections looks the same in both places.
      */
     swapDrawerScreen: (to: "dashboard" | "menu", tab?: Category) => void;
-    /**
-     * True while the burger menu and the dashboard are mid-swap, i.e. the drawer
-     * on screen is changing its content rather than opening or closing. Both
-     * drawers suppress their slide animation while it's set. Any other way of
-     * opening or closing either one clears it, so a plain burger tap still slides.
-     */
-    drawerSwap: boolean;
 };
 
 const contextDefaults: DashboardContextType = {
@@ -50,50 +44,36 @@ const contextDefaults: DashboardContextType = {
     mobileMenuOpen: false,
     setMobileMenuOpen: () => {},
     swapDrawerScreen: () => {},
-    drawerSwap: false,
 };
 
 export function DashboardContextProvider({ children }: { children: ReactNode }) {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<Category>("General");
     const [openedFromMenu, setOpenedFromMenu] = useState<boolean>(false);
-    const [mobileMenuOpen, setMobileMenuOpenState] = useState<boolean>(false);
-    const [drawerSwap, setDrawerSwap] = useState<boolean>(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
     const openDashboard = useCallback((tab?: Category, opts?: { fromMenu?: boolean }) => {
         if (tab) {
             setActiveTab(tab);
         }
         setOpenedFromMenu(!!opts?.fromMenu);
-        setDrawerSwap(false);
         setIsOpen(true);
     }, []);
 
-    const closeDashboard = useCallback(() => {
-        setDrawerSwap(false);
-        setIsOpen(false);
-    }, []);
+    const closeDashboard = useCallback(() => setIsOpen(false), []);
 
-    // Opening or closing the menu on its own (burger tap, close button, backdrop)
-    // is a real drawer transition, so it clears the swap flag and slides.
-    const setMobileMenuOpen = useCallback((value: boolean) => {
-        setDrawerSwap(false);
-        setMobileMenuOpenState(value);
-    }, []);
-
-    // Both halves of the swap in one action, so the flag can't be clobbered by the
-    // ordering of two separate calls: the drawer that leaves and the one that
-    // arrives are committed together, with drawerSwap set for that same render.
+    // Both halves of the swap in one action so they land in the same commit: the
+    // drawer that leaves starts sliding out on the very frame the one that arrives
+    // starts sliding in, which is what makes the pair read as a single swipe.
     const swapDrawerScreen = useCallback((to: "dashboard" | "menu", tab?: Category) => {
-        setDrawerSwap(true);
         if (to === "dashboard") {
             if (tab) setActiveTab(tab);
             setOpenedFromMenu(true);
-            setMobileMenuOpenState(false);
+            setMobileMenuOpen(false);
             setIsOpen(true);
         } else {
             setIsOpen(false);
-            setMobileMenuOpenState(true);
+            setMobileMenuOpen(true);
         }
     }, []);
 
@@ -108,7 +88,6 @@ export function DashboardContextProvider({ children }: { children: ReactNode }) 
             mobileMenuOpen,
             setMobileMenuOpen,
             swapDrawerScreen,
-            drawerSwap,
         }),
         [
             isOpen,
@@ -117,9 +96,7 @@ export function DashboardContextProvider({ children }: { children: ReactNode }) 
             closeDashboard,
             openedFromMenu,
             mobileMenuOpen,
-            setMobileMenuOpen,
             swapDrawerScreen,
-            drawerSwap,
         ]
     );
 

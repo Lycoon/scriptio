@@ -79,7 +79,8 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "loading": "Chargement...",
-    "resetDefaults": "Réinitialiser"
+    "resetDefaults": "Réinitialiser",
+    "back": "Retour"
   },
   "sidebar": {
     "title": "Tableau de bord",
