@@ -109,3 +109,17 @@
 .active_style {
     background-color: var(--editor-style-bg-hover);
 }
+
+/* Phone drawer: no caret may be parked in it by a tap — see the matching block in
+ * EditorSidebarNavigation.module.css for the reasoning. */
+@media (max-width: 767px) {
+    .sidebar_content {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .sidebar_content :is(input, textarea) {
+        -webkit-user-select: text;
+        user-select: text;
+    }
+}

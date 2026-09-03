@@ -355,3 +355,19 @@
 .tab_btn_active:hover {
     color: var(--primary-text);
 }
+
+/* Phone drawer: a tap on any gap in the panel must not park a caret in it — the
+ * same rule, and the same reason, as .sidebar_backdrop in
+ * ProjectWorkspace.module.css. Fields inside the drawer (rename, replies) opt
+ * back in so their own caret and selection keep working. */
+@media (max-width: 767px) {
+    .sidebar_content {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .sidebar_content :is(input, textarea) {
+        -webkit-user-select: text;
+        user-select: text;
+    }
+}

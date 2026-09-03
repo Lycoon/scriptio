@@ -161,13 +161,21 @@ const ProjectWorkspace = () => {
                     </div>
 
                     {/* Phone drawer backdrop.
-                        Kept mounted and faded rather than conditionally rendered,
-                        so the dim eases in and out with the drawer slide instead
-                        of popping. It is not left *rendered* while hidden, though
-                        — the stylesheet drops it out of rendering once the fade
-                        is done, which is what keeps its full-viewport fixed layer
-                        from being composited over the panel area for the rest of
-                        the session (see .sidebar_backdrop_hidden). */}
+                        Kept MOUNTED and faded, never conditionally rendered: on
+                        iOS, when the element under a tap stops being rendered by
+                        its own click handler, WebKit re-resolves its remembered
+                        pointer position onto whatever now sits beneath the point
+                        — the board — and then re-runs that hit-test + hover chain
+                        on every subsequent layout/style change. Cards sweeping
+                        under the phantom point toggled `.card:hover`'s
+                        transitioned box-shadow frame after frame, freezing drags
+                        and pinches at ~8fps until a tap elsewhere moved the point
+                        away. A surviving backdrop keeps the point pinned to an
+                        element that still exists, and is inert while hidden.
+
+                        Unmounting is not the only way to lose that: the
+                        stylesheet must not hide it either — see
+                        .sidebar_backdrop_hidden. */}
                     {isPhone && (
                         <div
                             className={`${styles.sidebar_backdrop} ${drawersOpen ? "" : styles.sidebar_backdrop_hidden}`}
