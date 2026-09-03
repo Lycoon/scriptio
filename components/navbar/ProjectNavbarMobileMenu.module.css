@@ -36,16 +36,12 @@
     transition: transform 0.25s ease;
 }
 
+/* Also how this drawer hands over to (or takes it back from) the dashboard drawer,
+ * which covers this exact rect: this one slides out on the same frame that one
+ * slides in, so the pair reads as a single swipe closing the screen the user is on
+ * and opening the next. See [DashboardContext].swapDrawerScreen. */
 .drawer_closed {
     transform: translateX(100%);
-}
-
-/* Handing over to (or taking back from) the dashboard drawer, which covers this
- * exact rect: sliding out would only animate something nobody can see, and would
- * drag this drawer's shadow across the strip beside it. Snap instead, so the two
- * read as one drawer replacing its content. See [DashboardContext].drawerSwap. */
-.drawer_instant {
-    transition: none;
 }
 
 .header {

@@ -228,7 +228,9 @@
 
 /* Touch-only "+" opening the list's create menu — the right-click on empty list
    space has no touch equivalent, and a list long enough to fill the panel leaves
-   no empty space to long-press either. Hidden on fine pointers. */
+   no empty space to long-press either. Hidden on fine pointers.
+   Same 20px inset as .filter_btn, so both list headers end at the right edge of
+   the rows below them. */
 .header_btn {
     display: none;
     align-items: center;
@@ -237,7 +239,7 @@
        padding is pulled back out with negative margins: the tap target keeps its
        size while the header stays the same height as the button-less ones, and
        the list below it doesn't shift when switching tabs. */
-    margin: -4px 12px -4px auto;
+    margin: -4px 20px -4px auto;
     padding: 4px;
     border: none;
     border-radius: 6px;
@@ -246,9 +248,15 @@
     cursor: pointer;
 }
 
+/* Secondary tint throughout, hover reading from the background alone — as on
+   .filter_btn, and set on the svg for the same reason (globals.css paints every
+   `svg` with --primary-text, which outranks anything the parent passes down). */
+.header_btn svg {
+    color: var(--secondary-text);
+}
+
 .header_btn:hover {
     background-color: var(--editor-sidebar-hover);
-    color: var(--primary-text);
 }
 
 @media (pointer: coarse) {
@@ -354,4 +362,20 @@
 
 .tab_btn_active:hover {
     color: var(--primary-text);
+}
+
+/* Phone drawer: a tap on any gap in the panel must not park a caret in it — the
+ * same rule, and the same reason, as .sidebar_backdrop in
+ * ProjectWorkspace.module.css. Fields inside the drawer (rename, replies) opt
+ * back in so their own caret and selection keep working. */
+@media (max-width: 767px) {
+    .sidebar_content {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .sidebar_content :is(input, textarea) {
+        -webkit-user-select: text;
+        user-select: text;
+    }
 }

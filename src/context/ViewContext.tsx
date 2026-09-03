@@ -2,6 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 
+import { dropChromeSelection } from "@src/lib/utils/selection";
+
 /** Phone breakpoint — mirrors the `(max-width: 767px)` CSS blocks and useIsPhone. */
 const isPhoneViewport = () =>
     typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
@@ -148,15 +150,28 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     // On phone the sidebars are overlay drawers that would overlap each other and
     // the editor, so only one may be open at a time — opening one closes the other.
     // On desktop they're inline columns and both can stay open.
+    //
+    // Every drawer open/close on phone comes through here, from whichever control
+    // asked for it, and every one of those controls was just tapped. The tap's
+    // mouse-down default may have parked a caret in the chrome, which on iOS is
+    // what turned an empty document into a stall on every following scroll (see
+    // dropChromeSelection). The chrome is user-select: none now, so this is the
+    // safety net for any control that is not.
     const setLeftSidebarOpen = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
         const next = typeof value === "function" ? value(leftOpenRef.current) : value;
         setLeftSidebarOpenState(next);
-        if (next && isPhoneViewport()) setRightSidebarOpenState(false);
+        if (isPhoneViewport()) {
+            if (next) setRightSidebarOpenState(false);
+            dropChromeSelection();
+        }
     }, []);
     const setRightSidebarOpen = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
         const next = typeof value === "function" ? value(rightOpenRef.current) : value;
         setRightSidebarOpenState(next);
-        if (next && isPhoneViewport()) setLeftSidebarOpenState(false);
+        if (isPhoneViewport()) {
+            if (next) setLeftSidebarOpenState(false);
+            dropChromeSelection();
+        }
     }, []);
 
     // Endless-scroll listeners fired before the flip (see onBeforeEndlessScrollChange).

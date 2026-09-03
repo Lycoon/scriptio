@@ -757,9 +757,16 @@
 }
 
 /* User settings */
-.highlight-on-hover .ProseMirror > p:hover {
-    background-color: color-mix(in srgb, var(--editor-script-bg) 95%, var(--editor-text) 5%);
-    background-clip: content-box;
+/* Hover-capable pointers only — same guard, and the same reason, as .card:hover
+ * on the board (see BoardCanvas.module.css). This one sits directly on the
+ * editor's paragraphs, which is where iOS parks its emulated hover point after a
+ * tap in the script, and it recomputes a color-mix() on every re-resolution. A
+ * finger cannot hover, so on touch the rule is pure cost. */
+@media (hover: hover) {
+    .highlight-on-hover .ProseMirror > p:hover {
+        background-color: color-mix(in srgb, var(--editor-script-bg) 95%, var(--editor-text) 5%);
+        background-clip: content-box;
+    }
 }
 
 .scene-background .scene {

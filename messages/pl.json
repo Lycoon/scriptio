@@ -78,7 +78,8 @@
     "save": "Zapisz zmiany",
     "cancel": "Anuluj",
     "loading": "Ładowanie...",
-    "resetDefaults": "Resetuj"
+    "resetDefaults": "Resetuj",
+    "back": "Wstecz"
   },
   "sidebar": {
     "title": "Panel",

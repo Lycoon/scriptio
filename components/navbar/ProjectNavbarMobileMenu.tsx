@@ -11,12 +11,6 @@ import menu from "./ProjectNavbarMobileMenu.module.css";
 interface ProjectNavbarMobileMenuProps {
     isOpen: boolean;
     onClose: () => void;
-    /**
-     * Skip the slide when the dashboard drawer is taking this drawer's place (or
-     * handing it back): the two share the same rect, so the swap has to read as one
-     * drawer changing screens — see [DashboardContext].drawerSwap.
-     */
-    instant?: boolean;
     children: ReactNode;
 }
 
@@ -31,7 +25,7 @@ interface ProjectNavbarMobileMenuProps {
  * above the editor's floating chrome (scroll drag-handle, edit FAB) no matter its
  * z-index. At the body level its z-index applies against the whole page instead.
  */
-const ProjectNavbarMobileMenu = ({ isOpen, onClose, instant, children }: ProjectNavbarMobileMenuProps) => {
+const ProjectNavbarMobileMenu = ({ isOpen, onClose, children }: ProjectNavbarMobileMenuProps) => {
     const t = useTranslations("navbar");
 
     // Portals need `document`, which doesn't exist during SSR — render nothing
@@ -44,13 +38,7 @@ const ProjectNavbarMobileMenu = ({ isOpen, onClose, instant, children }: Project
     return createPortal(
         <>
             {isOpen && <div className={menu.backdrop} onClick={onClose} />}
-            <div
-                className={join(
-                    menu.drawer,
-                    !isOpen ? menu.drawer_closed : "",
-                    instant ? menu.drawer_instant : "",
-                )}
-            >
+            <div className={join(menu.drawer, !isOpen ? menu.drawer_closed : "")}>
                 <div className={menu.header}>
                     <span className={menu.header_title}>{t("menu")}</span>
                     <button className={menu.close_btn} onClick={onClose} aria-label={t("close")}>

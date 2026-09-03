@@ -79,7 +79,8 @@
     "save": "Änderungen speichern",
     "cancel": "Abbrechen",
     "loading": "Laden...",
-    "resetDefaults": "Zurücksetzen"
+    "resetDefaults": "Zurücksetzen",
+    "back": "Zurück"
   },
   "sidebar": {
     "title": "Dashboard",

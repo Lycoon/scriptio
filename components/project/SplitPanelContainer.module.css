@@ -166,6 +166,10 @@
      * the gesture; the variable stays 0 on desktop, so this is a no-op there. */
     transform: translateX(calc(var(--chrome-hide, 0) * (-100% - 8px)));
     opacity: calc(1 - var(--chrome-hide, 0));
+    /* Promoted for the same reason as the right-hand toggle: --chrome-hide is
+     * rewritten on every frame of a reader scroll, and without the hint WebKit
+     * repaints these handles per frame rather than moving a composited layer. */
+    will-change: transform;
 }
 
 .panel_switcher_btn {
@@ -187,9 +191,17 @@
     color: var(--secondary-text);
 }
 
-.panel_switcher_btn:hover {
-    opacity: 1;
-    background-color: var(--secondary-hover);
+/* Hover affordances only where a pointer can actually hover — the same guard,
+ * and the same reason, as .card:hover on the board (see BoardCanvas.module.css).
+ * This is the button the left drawer is driven from, so on touch it is precisely
+ * where iOS parks its emulated hover point after every toggle, and the point is
+ * then re-resolved against this rule on each following style change — restyling
+ * the handle for as long as anything on screen is moving. */
+@media (hover: hover) {
+    .panel_switcher_btn:hover {
+        opacity: 1;
+        background-color: var(--secondary-hover);
+    }
 }
 
 /* Touch devices (phone + iPad): enlarge to a comfortable tap target, matching
@@ -231,4 +243,15 @@
     inset: 0;
     z-index: 9999;
     cursor: col-resize;
+}
+
+/* A tap on the left-edge handles must not park a caret in the chrome — the same
+ * rule, and the same reason, as .sidebar_backdrop in ProjectWorkspace.module.css:
+ * on iOS a caret left in inert chrome makes every later scroll of an empty
+ * document recompute editor state across the whole page. */
+.panel_switcher_anchor,
+.panel_switcher_btn {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
