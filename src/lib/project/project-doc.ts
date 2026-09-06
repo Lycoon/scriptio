@@ -47,6 +47,36 @@ export type ProjectMetadata = {
     id: string;
     title: string;
     author: string;
+    /**
+     * Which original document this content descends from — the identity that
+     * makes a Yjs merge safe.
+     *
+     * Yjs ops are addressed by `(clientID, clock)`, so two docs converge only
+     * when the ops carrying the same content carry the same ids, i.e. when both
+     * were built by *applying updates* that trace back to one creation. Two docs
+     * independently rebuilt from the same JSON read identically and share not a
+     * single op id; merging them duplicates every paragraph. `lineageId` is the
+     * flag that says "these two are replicas", and it is the only thing a merge
+     * is allowed to key on.
+     *
+     * Written once, at doc creation, and never rewritten — it rides inside the
+     * metadata map, so it travels through `Y.encodeStateAsUpdate` into every
+     * `.scriptio` export and back out into every doc rebuilt from one, with no
+     * code copying it by hand. Guarded in `ProjectRepository.ensureLineageId`,
+     * because a Y.Map key is itself mergeable and two different values would
+     * resolve last-writer-wins into a doc whose lineage lies.
+     *
+     * Deliberately NOT `metadata.id`: that names a library slot / cloud room and
+     * legitimately changes on `migrateToCachedProject` (same ops, new id), while
+     * `fillMap` copies it into every doc rebuilt from a readable export (same id,
+     * unrelated ops). Both directions break, so the two ids stay separate.
+     *
+     * The inversion to keep in mind: lineage names *op ancestry*, not content
+     * ancestry. A readable (`document.json`) export carries this key like any
+     * other metadata field, so anything rebuilt through `applyProjectData` must
+     * overwrite it with a fresh one — same text is not the same history.
+     */
+    lineageId: string;
     titlepageInitialized?: boolean;
     /** Target feature length in minutes, used to size the Timeline extent. */
     featureLength?: number;

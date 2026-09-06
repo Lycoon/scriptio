@@ -45,7 +45,6 @@
     "synced": "클라우드에 동기화됨",
     "noConnection": "연결 없음",
     "reconnecting": "재연결 중...",
-    "localProject": "로컬 프로젝트",
     "uploadToCloud": "클라우드에 업로드",
     "storageProject": "이 프로젝트",
     "storageTotal": "총 사용량",
@@ -62,7 +61,30 @@
     "draftEditor": "초안 편집기",
     "viewOnly": "보기 전용",
     "viewOnlyHint": "뷰어 권한이 있습니다. 편집이 비활성화되었습니다.",
-    "pageCount": "{count}페이지"
+    "pageCount": "{count}페이지",
+    "targetLocal": "앱 내",
+    "targetLocalSaved": "저장됨",
+    "targetCloud": "클라우드",
+    "targetFile": "파일",
+    "fileUnbound": "연결된 파일 없음",
+    "fileSaving": "저장 중…",
+    "fileNeedsAttention": "확인 필요",
+    "fileMissing": "파일이 이동되었거나 삭제되었습니다.",
+    "fileError": "이 파일에 저장하지 못했습니다.",
+    "fileForeign": "이 위치에 다른 프로젝트의 파일이 있습니다.",
+    "fileLocate": "위치 지정…",
+    "fileOpen": "열기…",
+    "fileSaveAs": "다른 이름으로 저장…",
+    "fileReveal": "폴더에서 보기",
+    "fileStopSaving": "이 파일에 저장 중지",
+    "fileReclaimable": "이 프로젝트 파일을 {percent}% 줄일 수 있습니다.",
+    "fileCompact": "파일 압축",
+    "savedToFile": "{file}에 저장했습니다",
+    "fileNoAccess": "이 파일에 접근할 권한이 없습니다. ‘위치 지정…’으로 다시 선택하세요.",
+    "targetCloudOff": "동기화 안 됨",
+    "cloudUpgrade": "Pro로 업그레이드",
+    "cloudSignInUpgrade": "로그인 후 업그레이드",
+    "fileUseExisting": "기존 파일 사용…"
   },
   "timer": {
     "title": "글쓰기 세션",
@@ -644,6 +666,38 @@
       "cancel": "취소",
       "uploading": "업로드 중...",
       "failed": "업로드에 실패했습니다. 다시 시도해 주세요."
+    },
+    "scriptioOpen": {
+      "title": "{file} 열기",
+      "untitledProject": "제목 없음",
+      "alreadyCurrent": "내 사본에 이 파일의 내용이 모두 들어 있습니다.",
+      "fastForward": "이 파일이 더 최신입니다. {project}을(를) 업데이트할까요?",
+      "diverged": "공유 이후 양쪽 사본이 모두 변경되었습니다. 병합하면 {project}에 두 편집이 모두 남습니다.",
+      "divergedSnapshot": "병합 전에 현재 버전의 스냅샷을 저장하므로 되돌릴 수 있습니다.",
+      "noLineage": "이 파일은 읽기 쉬운 형식의 내보내기라 기존 프로젝트에 병합할 수 없습니다.",
+      "ambiguous": "같은 문서에서 나온 프로젝트가 여러 개 있습니다. 업데이트할 항목을 고르거나 새 프로젝트를 만드세요.",
+      "update": "업데이트",
+      "updateNamed": "{project} 업데이트",
+      "merge": "병합",
+      "openAsNew": "새 프로젝트로 열기",
+      "ok": "확인",
+      "cancel": "취소"
+    },
+    "saveToFile": {
+      "title": "파일로 저장",
+      "reassurance": "작업은 이미 자동으로 저장됩니다 — 이 기기에, 그리고 동기화된 프로젝트라면 클라우드에도.",
+      "offer": "파일로 저장하면 직접 소유하고 공유할 수 있는 사본이 생깁니다. 이후에는 Scriptio가 그 파일을 알아서 최신 상태로 유지합니다.",
+      "confirm": "위치 선택…",
+      "cancel": "나중에"
+    },
+    "fileBind": {
+      "title": "이 파일에 저장할까요?",
+      "pathTaken": "{project}이(가) 이미 이 파일에 저장하고 있습니다. 두 프로젝트가 한 파일을 공유할 수 없습니다. 다른 위치를 선택하세요.",
+      "replacesForeignFile": "이 위치에는 다른 Scriptio 프로젝트가 저장되어 있습니다. 여기에 저장하면 그 파일을 대체하며, 해당 프로젝트는 더 이상 디스크에서 최신 상태로 유지되지 않습니다.",
+      "notWritable": "이 위치에 쓸 수 없습니다({message}). 다른 위치를 선택하세요.",
+      "replaceAnyway": "대체",
+      "cancel": "취소",
+      "ok": "확인"
     }
   },
   "board": {

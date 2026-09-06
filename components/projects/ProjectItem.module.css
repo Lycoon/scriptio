@@ -89,6 +89,19 @@
     color: var(--secondary-text);
 }
 
+/* The bound file's path, under the title. No font-family of its own, which is
+   how the save panel's `.file_path` renders one too — both inherit the app's
+   sans stack, so a path reads the same wherever it is shown. Quiet: it is a
+   location, not a name, and it must not compete with the title above it. One
+   line only — a path broken mid-segment across two lines reads as a typo. */
+.file_path {
+    font-size: 0.78rem;
+    color: var(--secondary-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .storage_label {
     font-size: 0.9rem;
     white-space: nowrap;

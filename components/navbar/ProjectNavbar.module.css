@@ -275,24 +275,28 @@
      * buttons', the pill still reads as a merged group of them either way. */
     background-color: var(--secondary);
 
+    /* The size of the buttons on this pill, stated here because the pill's own
+     * radius is derived from it below. The island sits in the navbar's 40px row
+     * and everything is border-box, so the 3px block padding eats inward and
+     * leaves exactly this: 40 - 3 - 3 = 34. It is spelled out as a length
+     * rather than taken off that height with aspect-ratio — see .tools_icon. */
+    --tools-btn-size: 34px;
+
     /* Padded like the editor's footer bubble (EditorFooter .bubble_right), which
      * is the look this mirrors: a little air around the buttons instead of them
      * running flush into the pill's ends.
      *
      * The radii have to stay concentric or the ends visibly disagree — outer =
      * inner + the padding between them. That bubble floats, so it pads 3px and
-     * grows to 46px around full-size 40px buttons. This one can't: it sits in
-     * the navbar's 40px row and everything is border-box, so the padding eats
-     * inward and the buttons come out as 34px circles (radius 17) — so the
-     * pill's radius must be 17 + 3 = 20.
-     *
-     * In short: 20 = 17 + 3. Changing the block padding or the island's height
-     * means recomputing the radius, or the caps stop matching.
+     * grows to 46px around full-size 40px buttons. This one can't, so its
+     * buttons are 34px circles (radius 17) and the pill's radius must be 17 + 3
+     * = 20 — which is what the calc says, so changing --tools-btn-size or the
+     * block padding keeps the caps matching instead of silently breaking them.
      *
      * The inline 4px is picked so the folded pill (4 + 34 + 4) is exactly the
      * 42px of a NavbarIconButton — folded, this sits in a row of them and must
      * not read as the odd one out. */
-    border-radius: 20px;
+    border-radius: calc(var(--tools-btn-size) / 2 + 3px);
     padding: 3px 4px;
 }
 
@@ -325,11 +329,22 @@
  * Circles, like the footer bubble's .action. The shared .button is a stadium
  * sized by its inline padding, which at the 34px height the island leaves would
  * render these 42x34 — visibly wider than tall. Drop that padding and square
- * them off aspect-ratio instead, so the width follows the island's content box
- * rather than a hard-coded size. 34px circles carry a 17px radius, which is the
- * inner half of the island's concentric 20 (see .tools_island). */
+ * them off --tools-btn-size instead. 34px circles carry a 17px radius, which is
+ * the inner half of the island's concentric 20 (see .tools_island).
+ *
+ * The width is that length and not `aspect-ratio: 1` off the inherited height,
+ * which is what it used to be: WebKit — so Safari and the Tauri webview, i.e.
+ * the desktop and iPad apps — will not resolve an aspect-ratio width whose
+ * height is a percentage while it measures an ancestor's intrinsic width. Each
+ * button was therefore measured as its 18px glyph, and .tools_reveal's 1fr
+ * column (and the pill sized by it) came out 12px short per button: the circles
+ * overlapped their neighbours, so the row lost its 4px gaps, and the last one
+ * spilled past the pill's right padding into .tools_group's clip. Chromium does
+ * resolve it and laid the same markup out correctly, which is why this only
+ * showed up in the app. */
 .navBtns .tools_icon {
-    aspect-ratio: 1;
+    width: var(--tools-btn-size);
+    height: var(--tools-btn-size);
     padding-inline: 0;
     border-radius: 50%;
     flex-shrink: 0;
@@ -438,11 +453,18 @@
     align-items: center;
 }
 
+/* Fixed width, not min-width: the panel's contents change with the file's state
+   — the path line appears only once a file is bound, and the actions under it
+   swap — so a shrink-to-fit box resized every time the user bound, moved or
+   unbound a file, and jumped again on the long German labels. The reader is
+   looking at the same readout each time and it should be the same shape each
+   time. Wide enough for the action pills at their longest; the path line
+   ellipsises into it (its full value stays in the row's title). */
 .storage_panel {
     position: absolute;
     top: 40px;
     left: 0;
-    min-width: 220px;
+    width: 300px;
     background-color: var(--secondary);
     color: var(--primary-text);
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
@@ -455,8 +477,204 @@
     gap: 6px;
 }
 
-.storage_status {
+/* Brief acknowledgement after an explicit save, anchored where the panel would
+   open. Not shown while the panel itself is open — it already says as much. */
+.save_flash {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    white-space: nowrap;
+    background-color: var(--secondary);
+    color: var(--primary-text);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* The island's save indicator: one glyph summarising all three targets, opening
+   the panel that breaks them down. Same footprint as the connection dot it
+   replaced, so the island's geometry is unchanged. */
+.save_targets {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Invisible bridge down to the panel.
+   The panel hangs 40px below a wrapper only as tall as its 20px icons, so the
+   band between them belongs to neither box: the pointer leaves the subtree
+   mid-journey, mouseleave fires, and the panel unmounts before it can be
+   reached. That was harmless while the panel only had readouts in it; not now
+   that it carries buttons. Hung off the trigger rather than the panel so it is
+   exactly as wide as the glyphs — a bridge spanning the panel's full width
+   would also cover the lower half of the title input beside it and eat clicks
+   meant for the field. */
+.save_targets::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: 22px;
+}
+
+/* One save target in the panel: glyph, name, state. The glyph repeats the one
+   in the island so the panel reads as those three icons expanded, rather than a
+   separate list to map back onto them. */
+.target_row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.target_row_icon {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.target_label {
+    flex: 1;
+    color: var(--primary-text);
+}
+
+.target_value {
+    color: var(--secondary-text);
+    text-align: right;
+}
+
+/* The state, not the name, carries the colour: the row still reads normally at a
+   glance and only its right-hand side signals. */
+.target_row_ok .target_value {
+    color: var(--success);
+}
+
+.target_row_busy .target_value,
+.target_row_warn .target_value {
+    color: var(--warning);
+}
+
+.target_row_idle .target_value {
+    color: var(--secondary-text);
+}
+
+/* A file target that needs attention, pulsing so it is noticed in chrome the
+   user otherwise reads straight past. Applied to the glyph wrapper so the icon
+   and its warning badge breathe together rather than beating out of step. */
+.target_alert {
+    animation: target_alert_pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes target_alert_pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.25;
+    }
+}
+
+/* Motion is the attention-getter, not the message — the warning colour and the
+   badge say the same thing standing still. */
+@media (prefers-reduced-motion: reduce) {
+    .target_alert {
+        animation: none;
+    }
+}
+
+/* Wrapper for one target's glyph, so a warning badge can be pinned to it. */
+.target_glyph {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+
+/* Small affix on a target that needs attention — a file that moved, or a write
+   that failed. Deliberately tiny: it draws the eye to the right glyph without
+   turning the title island into an alert. */
+.target_affix {
+    position: absolute;
+    right: -3px;
+    bottom: -2px;
+    color: var(--warning);
+    background-color: var(--secondary);
+    border-radius: 50%;
+}
+
+/* The bound file's path. Strictly one line: a path that wraps breaks mid-segment
+   and reads as a typo. `shortenPath` drops the front so the filename survives,
+   and this catches whatever still overflows in a narrow panel. */
+.file_path {
+    font-size: 11px;
+    color: var(--secondary-text);
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file_problem {
+    color: var(--warning);
+    line-height: 1.4;
+}
+
+/* Actions for one target, stacked under the row they act on and spanning the
+   panel's full width — at this size a half-width control reads as a label with
+   a border, not as something to press. */
+.target_actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 2px 0 4px;
+}
+
+/* The same pill the Saves panel's upgrade button uses, so every call to action
+   across the navbar's panels is visibly the same kind of thing. */
+.target_action {
+    width: 100%;
+    padding: 6px 18px;
+    border: none;
+    border-radius: 20px;
+    background-color: var(--tertiary);
+    color: var(--primary-text);
+    font-family: inherit;
+    font-size: 0.82rem;
     font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.target_action:hover {
+    background-color: var(--tertiary-hover);
+}
+
+/* The compaction offer: a quiet aside inside the file target, not a warning.
+   Nothing is wrong — the file simply holds space it no longer needs, and this
+   says so and offers to fix it. Bordered rather than filled so it reads as a
+   note attached to the row above, not as a third save target. */
+.reclaim_card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 2px 0 6px;
+    padding: 10px;
+    border: 1px solid var(--separator);
+    border-radius: 8px;
+    /* Deliberately unfilled. The button inside is a `.target_action`, which is
+       filled with `--tertiary` like every other call to action in these panels
+       — so giving the card that same fill would hide the button inside it. The
+       border alone is enough to group the note with its action. */
+    background-color: transparent;
+}
+
+.reclaim_text {
+    color: var(--secondary-text);
+    line-height: 1.4;
 }
 
 .storage_separator {

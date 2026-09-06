@@ -9,13 +9,19 @@ import { useAppNavigation } from "@src/lib/utils/navigation";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { usePosterUrl } from "@src/lib/posters/use-poster-url";
 import { CloudCheck, HardDrive } from "lucide-react";
+import { shortenPath } from "@src/lib/persistence/file-binding";
+
+/** Roughly what the title column holds before the date column starts. */
+const PATH_MAX_CHARS = 52;
 
 type Props = {
     project: ProjectMembershipPayload["project"];
     isLocalOnly?: boolean;
+    /** Set when this project also writes itself to a file on this machine. */
+    filePath?: string;
 };
 
-const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
+const ProjectItem = ({ project, isLocalOnly = false, filePath }: Props) => {
     const t = useTranslations("projects");
     const { goToProject } = useAppNavigation();
     const tDates = useTranslations("dates");
@@ -39,6 +45,15 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
     const storageLabel = isLocalOnly ? t("item.localOnly") : t("item.syncedToCloud");
     const StorageIcon = isLocalOnly ? HardDrive : CloudCheck;
 
+    /* The path itself, not a glyph: a row that merely hints "there is a file"
+       leaves the user to open the project to find out which one, and the whole
+       point of showing it here is telling several projects' files apart at a
+       glance. Under the title rather than in the storage column, which is 120px
+       and could never carry one. The front is dropped when it is too long — the
+       filename and its folder are the part worth keeping — and the full path
+       stays on the tooltip. */
+    const boundPath = filePath ? shortenPath(filePath, PATH_MAX_CHARS) : null;
+
     return (
         <button className={item.container} onClick={() => goToProject(project.id)}>
             <Image
@@ -58,6 +73,11 @@ const ProjectItem = ({ project, isLocalOnly = false }: Props) => {
                     <StorageIcon className={item.icon} size={14} />
                     <span>{lastUpdated}</span>
                 </span>
+                {boundPath && (
+                    <span className={item.file_path} title={filePath}>
+                        {boundPath}
+                    </span>
+                )}
             </div>
 
             <span className={item.date_cell}>{lastUpdated}</span>

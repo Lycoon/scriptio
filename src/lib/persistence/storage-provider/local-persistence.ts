@@ -4,11 +4,16 @@
  */
 
 import type { UserSettings } from "@src/lib/utils/types";
-import { getStorageProvider, type CachedProject, type ProjectEntryInput } from "./storage-provider";
+import {
+    getStorageProvider,
+    type CachedProject,
+    type FileFingerprint,
+    type ProjectEntryInput,
+} from "./storage-provider";
 import { pushPendingPoster } from "@src/lib/posters/poster-store";
 import { yjsDbKey } from "../y-local-provider";
 
-export type { CachedProject };
+export type { CachedProject, FileFingerprint };
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -91,6 +96,35 @@ export async function cachedProjectExists(id: string): Promise<boolean> {
 export async function ensureCachedEntries(projects: ProjectEntryInput[]): Promise<void> {
     if (projects.length === 0) return;
     return (await getStorageProvider()).ensureEntries(projects);
+}
+
+// ── File binding (desktop only) ───────────────────────────────────────────────
+//
+// Thin pass-throughs so UI code never reaches for the StorageProvider directly.
+// The policy around these calls — when a write is safe, what to do when the file
+// changed underneath us — lives in `src/lib/persistence/file-binding.ts`.
+
+/** Bind a project to a `.scriptio` file that Scriptio will keep up to date. */
+export async function bindProjectFile(
+    id: string,
+    path: string,
+    fingerprint?: FileFingerprint,
+): Promise<void> {
+    return (await getStorageProvider()).bindProjectFile(id, path, fingerprint);
+}
+
+/** Stop keeping a project's file up to date, and forget the path. */
+export async function unbindProjectFile(id: string): Promise<void> {
+    return (await getStorageProvider()).unbindProjectFile(id);
+}
+
+/** Note a successful write, so the next one can be skipped or checked against it. */
+export async function recordFileWrite(
+    id: string,
+    sv: Uint8Array,
+    fingerprint?: FileFingerprint,
+): Promise<void> {
+    return (await getStorageProvider()).recordFileWrite(id, sv, fingerprint);
 }
 
 // ── Settings persistence ──────────────────────────────────────────────────────

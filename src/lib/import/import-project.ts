@@ -15,7 +15,7 @@ import { CreateProjectBody } from "@src/lib/utils/api-bodies";
 import { ApiResponse } from "@src/lib/utils/api-utils";
 import { CookieUser } from "@src/lib/utils/types";
 import { isTauri } from "@tauri-apps/api/core";
-import { ProjectRepository } from "../project/project-repository";
+import { ProjectRepository, createProjectRepository } from "../project/project-repository";
 
 export interface ImportResult {
     success: boolean;
@@ -66,14 +66,28 @@ export async function importFileIntoProject(
     if (repository?.getState().isReadOnly) return;
 
     const content = await file.arrayBuffer();
-    adapter.import(content, editor, titlePageEditor, repository);
-    // Restore any bundled board image assets (no-op for non-Scriptio files).
-    await restoreScriptioAssets(projectId, content);
+
+    // `.scriptio` goes through the Scriptio flow rather than the adapter, because
+    // the extension covers two containers — the ZIP export and a bound project's
+    // own working file — and only that flow knows how to tell them apart. The
+    // adapter reads ZIPs alone, so importing your own working file would
+    // otherwise fail on a file the app itself had written.
+    if (file.name.toLowerCase().endsWith(".scriptio")) {
+        const { importScriptioIntoProject } = await import("@src/lib/adapters/scriptio/scriptio-open");
+        await importScriptioIntoProject(content, projectId, editor, titlePageEditor, repository);
+    } else {
+        adapter.import(content, editor, titlePageEditor, repository);
+    }
+
     if (editor) editor.commands.focus();
 }
 
 /**
  * Create a Yjs document with project content and save to local persistence.
+ *
+ * This is the *flat* path: every shared type is rebuilt from JSON, so the doc
+ * that comes out is a brand-new CRDT that happens to read the same as its
+ * source. See the lineage handling below for why that distinction has teeth.
  */
 async function createLocalYjsDocument(projectId: string, projectData: ProjectData): Promise<void> {
     const ydoc = new ProjectState();
@@ -90,6 +104,19 @@ async function createLocalYjsDocument(projectId: string, projectData: ProjectDat
     if (metadataMap.get("version") === undefined) {
         ydoc.transact(() => metadataMap.set("version", CURRENT_PROJECT_VERSION));
     }
+
+    // Mint a lineage, *overwriting* anything the source data carried.
+    //
+    // A readable `.scriptio` export serializes the whole metadata map, lineage
+    // included, and `applyProjectData` copies it in like any other key — so
+    // without this the doc would claim to be a replica of the project that
+    // produced the JSON while holding not one op in common with it. Merging that
+    // into the real thing later would duplicate the entire screenplay. Same text
+    // is not the same history: a rebuild is a new document and gets a new
+    // lineage, which is exactly why a readable archive can never be merged back
+    // into the project it came from.
+    metadataMap.delete("lineageId");
+    createProjectRepository(ydoc)!.ensureLineageId();
 
     await writeYjsDocumentLocally(projectId, ydoc);
     ydoc.destroy();
@@ -115,6 +142,48 @@ async function createRemoteProject(userId: string, title: string, description?: 
 }
 
 /**
+ * Create the empty project the imported content will be written into: a cloud
+ * project where the user can have one, a local-only cached row otherwise, and
+ * always a local cached row so the project exists offline.
+ *
+ * Split out of {@link importFileAsProject} so the merge-capable `.scriptio` open
+ * flow (`createProjectFromScriptio`) lands its new projects in exactly the same
+ * place — the difference between the two paths is how the *document* is built,
+ * never where the project lives.
+ */
+export async function createProjectShell(
+    title: string,
+    user: CookieUser | null | undefined,
+    isPro?: boolean,
+): Promise<string> {
+    let projectId: string | null = null;
+
+    if (isTauri()) {
+        // Desktop: offline-first - try cloud to get ID if Pro, always create locally
+        if (user && user.id && isPro) {
+            try {
+                projectId = await createRemoteProject(user.id, title);
+            } catch {
+                // Server unreachable - will generate a local ID below
+            }
+        }
+        if (projectId) {
+            await createCachedProjectWithId(projectId, title, undefined, true);
+            return projectId;
+        }
+        return (await createCachedProject(title)).id;
+    }
+
+    if (user && user.id && isPro) {
+        // Web: create remote project (Pro users only)
+        return createRemoteProject(user.id, title);
+    }
+
+    // Web without auth or not Pro: create local-only project (IndexedDB)
+    return (await createCachedProject(title)).id;
+}
+
+/**
  * Import a file and create a new project with its content.
  * Creates a remote project if user is logged in, otherwise creates a local-only project.
  *
@@ -133,36 +202,32 @@ export async function importFileAsProject(
         // Parse the file content (kept as a buffer so bundled assets can be
         // restored after the new project id is known).
         const content = await file.arrayBuffer();
-        const projectData = parseProjectData(file.name, content);
 
         // Create project title from filename if not provided
         const projectTitle = title || file.name.replace(/\.[^/.]+$/, "");
 
-        let projectId: string | null = null;
-
-        if (isTauri()) {
-            // Desktop: offline-first - try cloud to get ID if Pro, always create locally
-            if (user && user.id && isPro) {
-                try {
-                    projectId = await createRemoteProject(user.id, projectTitle);
-                } catch {
-                    // Server unreachable - will generate a local ID below
-                }
-            }
-            if (projectId) {
-                await createCachedProjectWithId(projectId, projectTitle, undefined, true);
-            } else {
-                const cachedProject = await createCachedProject(projectTitle);
-                projectId = cachedProject.id;
-            }
-        } else if (user && user.id && isPro) {
-            // Web: create remote project (Pro users only)
-            projectId = await createRemoteProject(user.id, projectTitle);
-        } else {
-            // Web without auth or not Pro: create local-only project (IndexedDB)
-            const cachedProject = await createCachedProject(projectTitle);
-            projectId = cachedProject.id;
+        // A binary `.scriptio` is the one import that arrives as a CRDT, and it
+        // has to stay one: the flat path below would rebuild identical text out
+        // of entirely fresh operation ids, so the new project could never merge
+        // with the file it came from — or with anything its sender exports next.
+        // `fork: false` because this is a plain receipt: the user is becoming a
+        // peer of whoever sent the file, not splitting off a separate document.
+        // Dynamic so the two modules can reference each other (that module needs
+        // `createProjectShell` from this one).
+        if (file.name.toLowerCase().endsWith(".scriptio")) {
+            const { createProjectFromScriptio } = await import("@src/lib/adapters/scriptio/scriptio-open");
+            const projectId = await createProjectFromScriptio(content, {
+                fork: false,
+                title: projectTitle,
+                user,
+                isPro,
+            });
+            return { success: true, projectId };
         }
+
+        const projectData = parseProjectData(file.name, content);
+
+        const projectId = await createProjectShell(projectTitle, user, isPro);
 
         // Create Yjs document with the project content
         await createLocalYjsDocument(projectId, projectData);

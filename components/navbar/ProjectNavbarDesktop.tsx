@@ -7,10 +7,8 @@ import {
     BarChart2,
     ChevronRight,
     CircleArrowLeft,
-    CloudUpload,
     History,
     Lock,
-    Monitor,
     Settings,
 } from "lucide-react";
 
@@ -19,7 +17,7 @@ import { useIsTouch } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 
 import { useProjectNavbar } from "./useProjectNavbar";
-import { StatusIndicator, CollaboratorsDisplay } from "./ProjectNavbarShared";
+import { SaveTargets, CollaboratorsDisplay } from "./ProjectNavbarShared";
 import SavesPanel from "./SavesPanel";
 import ProductionPanel from "./ProductionPanel";
 import ReadAloudPanel from "./ReadAloudPanel";
@@ -115,28 +113,14 @@ const ProjectNavbarDesktop = () => {
                 {isInProject && projectId && (
                     <div className={navbar.navBtns}>
                         <div className={navbar.navbar_island}>
-                            {membership ? (
-                                <StatusIndicator />
-                            ) : canUploadToCloud ? (
-                                <div
-                                    className={navbar.tooltip}
-                                    data-hint={t("uploadToCloud")}
-                                    onClick={() => uploadToCloudPopup(projectId, userCtx)}
-                                    style={{ cursor: "pointer" }}
-                                >
-                                    <CloudUpload
-                                        style={{ color: "var(--primary-text)" }}
-                                        className={navbar.status_icon}
-                                    />
-                                </div>
-                            ) : (
-                                <div className={navbar.tooltip} data-hint={t("localProject")}>
-                                    <Monitor
-                                        style={{ color: "var(--secondary-text)" }}
-                                        className={navbar.status_icon}
-                                    />
-                                </div>
-                            )}
+                            {/* Where this project is saved: device, file, cloud —
+                                and, for a local-only project, the invitation to
+                                add the third. */}
+                            <SaveTargets
+                                hasCloud={!!membership}
+                                canUploadToCloud={canUploadToCloud}
+                                onUploadToCloud={() => uploadToCloudPopup(projectId, userCtx)}
+                            />
                             <div className={navbar.title_wrapper} data-value={projectTitle}>
                                 <input
                                     type="text"

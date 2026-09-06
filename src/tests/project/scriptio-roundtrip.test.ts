@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import * as Y from "yjs";
 import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
 import * as fflate from "fflate";
 
@@ -186,6 +187,30 @@ describe("scriptio adapter full round trip", () => {
         );
 
         project.destroy();
+    });
+
+    it("carries lineageId through an export and back", async () => {
+        const original = buildPopulatedProject();
+        const lineageId = createProjectRepository(original)!.ensureLineageId();
+        expect(lineageId).toBeTruthy();
+
+        // Binary: the metadata op itself travels, so a doc built by applying the
+        // update is a genuine replica and reports the same lineage.
+        const replica = new ProjectState();
+        const adapter = new ScriptioAdapter();
+        const update = adapter.extractYjsUpdate(await exportBuffer(original, false));
+        expect(update).not.toBeNull();
+        Y.applyUpdate(replica, update!);
+        expect(replica.metadata().get("lineageId")).toBe(lineageId);
+
+        // Readable: the *value* round-trips like any other metadata key — which
+        // is exactly why every rebuild path has to overwrite it. Same text is
+        // not the same history; see `createLocalYjsDocument`.
+        const parsed = adapter.convertFrom(await exportBuffer(original, true));
+        expect(parsed.metadata.lineageId).toBe(lineageId);
+
+        original.destroy();
+        replica.destroy();
     });
 
     it("clearProjectData wipes maps and dynamic fragments before a replace", () => {

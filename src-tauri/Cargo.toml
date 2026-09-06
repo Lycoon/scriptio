@@ -26,5 +26,18 @@ tauri-plugin-log = "2.8.0"
 tauri-plugin-store = "2.4.2"
 tauri-plugin-dialog = "2.6.0"
 tauri-plugin-fs = "2.4.5"
+# Already in the tree via tauri; declared so the raw-body IPC below can decode
+# the path header, which is percent-encoded to survive non-ASCII filenames.
+percent-encoding = "2.3"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-opener = "2.5.3"
+
+# Desktop only: a second launch (double-clicking another `.scriptio`) must reach
+# the running window rather than start a rival instance with its own copy of the
+# project. Meaningless on mobile, where the OS runs one instance anyway.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = "2"
+# Runtime fs-scope grants (what the save/open dialog hands out for the file the
+# user picked) live only for the session. A file-backed project has to survive a
+# restart, so they are persisted and restored on launch.
+tauri-plugin-persisted-scope = "2"

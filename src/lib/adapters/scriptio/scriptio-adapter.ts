@@ -131,6 +131,9 @@ function unzipDocument(data: Uint8Array): fflate.Unzipped {
     });
 }
 
+const documentUpdateOf = (unzipped: fflate.Unzipped): Uint8Array | null =>
+    unzipped[ZIP_DOCUMENT_YDOC] ?? null;
+
 /** Read a Yjs update into a throwaway doc and serialize it to ProjectData. */
 function projectDataFromYjsUpdate(update: Uint8Array): ProjectData {
     const tmpDoc = new ProjectState();
@@ -154,7 +157,7 @@ function parseZipDocument(unzipped: fflate.Unzipped): ProjectData {
         }
     }
 
-    const ydoc = unzipped[ZIP_DOCUMENT_YDOC];
+    const ydoc = documentUpdateOf(unzipped);
     if (ydoc) {
         try {
             return projectDataFromYjsUpdate(ydoc);
@@ -315,6 +318,29 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
         return parseZipDocument(unzipDocument(new Uint8Array(rawContent)));
     }
 
+    /**
+     * The archive's raw Yjs update, or `null` when it holds a readable
+     * (`document.json`) export instead.
+     *
+     * This exists so the open flow can stop laundering a CRDT through JSON.
+     * `convertFrom` has to return `ProjectData` — it is the one shape every
+     * format shares — and producing it from a binary archive means applying the
+     * update to a throwaway doc and flattening it away again. Whoever rebuilds a
+     * doc from that flattened data gets identical *text* built from entirely
+     * fresh op ids, so it can never merge with the file it came from: the
+     * duplicate-every-paragraph case {@link ProjectMetadata.lineageId} exists to
+     * prevent.
+     *
+     * A capability on this adapter rather than a new `convertFrom` signature
+     * across all six formats, because only this one has a CRDT to hand back.
+     * Callers prefer it when present and fall back to `convertFrom` otherwise —
+     * which is still correct for readable archives, where flattening loses
+     * nothing that was ever there.
+     */
+    extractYjsUpdate(rawContent: ArrayBuffer): Uint8Array | null {
+        return documentUpdateOf(unzipDocument(new Uint8Array(rawContent)));
+    }
+
     public import(
         rawContent: ArrayBuffer,
         editor?: Editor | null,
@@ -330,7 +356,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
                 // fragment first so the import never merges with prior data.
                 clearProjectData(ydoc);
 
-                const ydocUpdate = unzipped[ZIP_DOCUMENT_YDOC];
+                const ydocUpdate = documentUpdateOf(unzipped);
                 if (ydocUpdate) {
                     // Applying the raw Yjs update preserves the full CRDT state,
                     // including any collaboration history baked into the file.

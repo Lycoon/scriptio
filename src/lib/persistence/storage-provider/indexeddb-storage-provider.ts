@@ -7,7 +7,14 @@
  */
 
 import type { InstalledDictionary, UserSettings } from "@src/lib/utils/types";
-import { CachedProject, ProjectEntryInput, StorageProvider, StoredAsset, StoredPoster } from "./storage-provider";
+import {
+    CachedProject,
+    FileFingerprint,
+    ProjectEntryInput,
+    StorageProvider,
+    StoredAsset,
+    StoredPoster,
+} from "./storage-provider";
 import {
     ASSETS_BY_PROJECT_INDEX,
     CURRENT_STORE_VERSION,
@@ -36,6 +43,16 @@ interface BrowserStoredProject {
     createdAt: number;
     updatedAt: number;
     is_synced: number; // 0 = local-only, 1 = cloud-synced
+
+    // File binding (desktop only). Object stores are schemaless and none of
+    // these needs an index, so they were added without a store migration —
+    // rows written before the feature simply have them absent, which reads as
+    // "unbound", which is what they are.
+    file_path?: string;
+    file_bound_at?: number;
+    file_last_write_at?: number;
+    file_last_write_sv?: Uint8Array;
+    file_fingerprint?: FileFingerprint;
 }
 
 interface MigrationBackupRecord {
@@ -150,6 +167,11 @@ function toCachedProject(p: BrowserStoredProject): CachedProject {
         createdAt: new Date(p.createdAt),
         updatedAt: new Date(p.updatedAt),
         isLocalOnly: p.is_synced === 0,
+        filePath: p.file_path,
+        fileBoundAt: p.file_bound_at,
+        fileLastWriteAt: p.file_last_write_at,
+        fileLastWriteSv: p.file_last_write_sv,
+        fileFingerprint: p.file_fingerprint,
     };
 }
 
@@ -215,6 +237,50 @@ export class IndexedDBStorageProvider implements StorageProvider {
 
     async exists(id: string): Promise<boolean> {
         return (await idbGet(id)) !== null;
+    }
+
+    // ── File binding ──────────────────────────────────────────────────────────
+
+    async bindProjectFile(id: string, path: string, fingerprint?: FileFingerprint): Promise<void> {
+        const existing = await idbGet(id);
+        if (!existing) return;
+        // The write record describes a *file*, so nothing about the old one
+        // carries over: a stale state vector would let the very first write to
+        // the new path be skipped as redundant. The fingerprint is the one
+        // exception, seeded by the caller when it has already looked at what is
+        // sitting at this path.
+        await idbPut({
+            ...existing,
+            file_path: path,
+            file_bound_at: Date.now(),
+            file_last_write_at: undefined,
+            file_last_write_sv: undefined,
+            file_fingerprint: fingerprint,
+        });
+    }
+
+    async unbindProjectFile(id: string): Promise<void> {
+        const existing = await idbGet(id);
+        if (!existing) return;
+        await idbPut({
+            ...existing,
+            file_path: undefined,
+            file_bound_at: undefined,
+            file_last_write_at: undefined,
+            file_last_write_sv: undefined,
+            file_fingerprint: undefined,
+        });
+    }
+
+    async recordFileWrite(id: string, sv: Uint8Array, fingerprint?: FileFingerprint): Promise<void> {
+        const existing = await idbGet(id);
+        if (!existing) return;
+        await idbPut({
+            ...existing,
+            file_last_write_at: Date.now(),
+            file_last_write_sv: sv,
+            file_fingerprint: fingerprint,
+        });
     }
 
     async ensureEntries(projects: ProjectEntryInput[]): Promise<void> {

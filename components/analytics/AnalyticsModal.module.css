@@ -11,16 +11,25 @@
 }
 
 /* ── Modal shell ─────────────────────────────────────────────
-   Same box as the dashboard modal (see DashboardModal.module.css): sized off the
-   viewport on both axes so the two modals keep the same footprint through a
-   rotation and read as one family. */
+   Same box as the dashboard modal (see DashboardModal.module.css, which carries
+   the reasoning): a tight desktop width, a viewport-relative height, and the
+   looser tablet width below. The two modals must stay in step so they keep the
+   same footprint through a rotation and read as one family. */
 .modal {
-    width: min(1100px, 92vw);
+    width: min(900px, 92vw);
     height: min(840px, 90vh);
     display: flex;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Tablet: fills the screen in portrait and keeps growing in landscape rather than
+   stalling at the desktop cap. Mirrors the dashboard's tablet block. */
+@media (pointer: coarse) and (min-width: 768px) {
+    .modal {
+        width: min(1100px, 92vw);
+    }
 }
 
 /* ── Content area ────────────────────────────────────────────

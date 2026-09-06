@@ -463,6 +463,15 @@ const useSettings = () => {
  */
 export interface ExtendedProjectMembershipPayload extends ProjectMembershipPayload {
     isLocalOnly: boolean;
+    /**
+     * Where this project also writes itself on disk, when it is bound to a file.
+     *
+     * Independent of `isLocalOnly`: a project synced to the cloud can be bound
+     * too, and the two say different things. Only ever set on desktop, and only
+     * from this machine's own bookkeeping — a binding is not something the cloud
+     * knows about or another device inherits.
+     */
+    filePath?: string;
 }
 
 /**
@@ -480,6 +489,7 @@ const useCachedProjects = () => {
             const memberships: ExtendedProjectMembershipPayload[] = projects.map((p) => ({
                 role: ProjectRole.OWNER,
                 isLocalOnly: true,
+                filePath: p.filePath,
                 project: {
                     id: p.id,
                     title: p.title,
@@ -554,6 +564,9 @@ const useProjectMemberships = () => {
             return {
                 ...p,
                 isLocalOnly: false,
+                // Carried over from the cached row: a binding is local bookkeeping,
+                // so the API knows nothing about it and would drop it here.
+                filePath: cached?.filePath,
                 project:
                     cachedTime > remoteTime
                         ? { ...p.project, updatedAt: cached!.project.updatedAt }
