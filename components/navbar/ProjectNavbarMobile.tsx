@@ -8,7 +8,6 @@ import {
     AudioLines,
     BarChart2,
     Check,
-    CloudUpload,
     History,
     Info,
     LogIn,
@@ -16,7 +15,6 @@ import {
     Lock,
     Menu,
     Mic,
-    Monitor,
 } from "lucide-react";
 
 import { useViewContext } from "@src/context/ViewContext";
@@ -27,7 +25,7 @@ import { usePagePanLock } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 
 import { useProjectNavbar } from "./useProjectNavbar";
-import { HistoryControls, StatusIndicator } from "./ProjectNavbarShared";
+import { HistoryControls, MobileSaveTargets, SaveTargets } from "./ProjectNavbarShared";
 import ProjectNavbarMobileMenu from "./ProjectNavbarMobileMenu";
 import SavesPanel from "./SavesPanel";
 import ProductionPanel from "./ProductionPanel";
@@ -299,11 +297,7 @@ const ProjectNavbarMobile = () => {
             {isInProject && projectId && (
                 <ProjectNavbarMobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
                     <div className={mobileMenu.title_row}>
-                        {membership ? (
-                            <StatusIndicator />
-                        ) : (
-                            <Monitor className={navbar.status_icon} style={{ color: "var(--secondary-text)" }} />
-                        )}
+                        <SaveTargets hasCloud={!!membership} />
                         <input
                             type="text"
                             className={mobileMenu.title_input}
@@ -313,18 +307,18 @@ const ProjectNavbarMobile = () => {
                         />
                     </div>
 
-                    {canUploadToCloud && (
-                        <button
-                            className={mobileMenu.item}
-                            onClick={() => {
-                                uploadToCloudPopup(projectId, userCtx);
-                                setMobileMenuOpen(false);
-                            }}
-                        >
-                            <CloudUpload size={18} />
-                            <span>{t("uploadToCloud")}</span>
-                        </button>
-                    )}
+                    {/* The bar has no room for the readout and no pointer to hover
+                        it with, so the detail lives here as plain rows. */}
+                    {/* Upload-to-cloud lives on the cloud row inside here now,
+                        beside the state it changes, rather than as a loose menu
+                        item several rows away from it. */}
+                    <MobileSaveTargets
+                        projectId={projectId}
+                        hasCloud={!!membership}
+                        canUploadToCloud={canUploadToCloud}
+                        onUploadToCloud={() => uploadToCloudPopup(projectId, userCtx)}
+                        onAction={() => setMobileMenuOpen(false)}
+                    />
 
                     <div className={mobileMenu.separator} />
 

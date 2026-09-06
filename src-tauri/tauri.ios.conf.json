@@ -4,6 +4,7 @@
     "productName": "Scriptio",
     "bundle": {
         "category": "Productivity",
+        "fileAssociations": [],
         "iOS": {
             "developmentTeam": "G93CJ6PWZH",
             "minimumSystemVersion": "16.0"

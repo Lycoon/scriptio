@@ -2,6 +2,7 @@
     "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
     "identifier": "app.scriptio.staging",
     "bundle": {
-        "category": "Productivity"
+        "category": "Productivity",
+        "fileAssociations": []
     }
 }

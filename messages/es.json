@@ -45,7 +45,6 @@
     "synced": "Sincronizado en la nube",
     "noConnection": "Sin conexión",
     "reconnecting": "Reconectando...",
-    "localProject": "Proyecto local",
     "uploadToCloud": "Subir a la nube",
     "storageProject": "Este proyecto",
     "storageTotal": "Total usado",
@@ -62,7 +61,30 @@
     "draftEditor": "Editor de borrador",
     "viewOnly": "Solo lectura",
     "viewOnlyHint": "Tienes acceso de solo visualización. La edición está desactivada.",
-    "pageCount": "{count, plural, one {# página} other {# páginas}}"
+    "pageCount": "{count, plural, one {# página} other {# páginas}}",
+    "targetLocal": "En la app",
+    "targetLocalSaved": "Guardado",
+    "targetCloud": "Nube",
+    "targetFile": "Archivo",
+    "fileUnbound": "Sin archivo vinculado",
+    "fileSaving": "Guardando…",
+    "fileNeedsAttention": "Requiere atención",
+    "fileMissing": "El archivo se ha movido o eliminado.",
+    "fileError": "Scriptio no pudo guardar en este archivo.",
+    "fileForeign": "En esta ubicación hay el archivo de otro proyecto.",
+    "fileLocate": "Localizar…",
+    "fileOpen": "Abrir…",
+    "fileSaveAs": "Guardar como…",
+    "fileReveal": "Mostrar en la carpeta",
+    "fileStopSaving": "Dejar de guardar en este archivo",
+    "fileReclaimable": "Este archivo de proyecto se puede reducir un {percent} %.",
+    "fileCompact": "Compactar archivo",
+    "savedToFile": "Guardado en {file}",
+    "fileNoAccess": "Scriptio ya no tiene permiso para abrir este archivo. Usa Localizar… para volver a señalarlo.",
+    "targetCloudOff": "Sin sincronizar",
+    "cloudUpgrade": "Cambiar a Pro",
+    "cloudSignInUpgrade": "Inicia sesión y mejora",
+    "fileUseExisting": "Usar un archivo existente…"
   },
   "timer": {
     "title": "Sesión de escritura",
@@ -644,6 +666,38 @@
       "cancel": "Cancelar",
       "uploading": "Subiendo a la nube...",
       "failed": "Error al subir. Por favor, inténtalo de nuevo."
+    },
+    "scriptioOpen": {
+      "title": "Abrir {file}",
+      "untitledProject": "Sin título",
+      "alreadyCurrent": "Tu copia ya está al día con este archivo.",
+      "fastForward": "Este archivo es más reciente. ¿Actualizar {project}?",
+      "diverged": "Ambas copias han cambiado desde que se compartieron. La combinación conserva las dos ediciones en {project}.",
+      "divergedSnapshot": "Antes se guarda una instantánea de tu versión actual, por si quieres volver atrás.",
+      "noLineage": "Este archivo es una exportación legible y no puede combinarse con un proyecto existente.",
+      "ambiguous": "Varios de tus proyectos provienen de este mismo documento. Elige cuál actualizar o crea un proyecto nuevo.",
+      "update": "Actualizar",
+      "updateNamed": "Actualizar {project}",
+      "merge": "Combinar",
+      "openAsNew": "Abrir como proyecto nuevo",
+      "ok": "Aceptar",
+      "cancel": "Cancelar"
+    },
+    "saveToFile": {
+      "title": "Guardar en un archivo",
+      "reassurance": "Tu trabajo ya se guarda automáticamente: en este dispositivo y en la nube si el proyecto está sincronizado.",
+      "offer": "Guardar en un archivo te da una copia propia que puedes compartir; a partir de ahí, Scriptio mantiene ese archivo al día por su cuenta.",
+      "confirm": "Elegir una ubicación…",
+      "cancel": "Ahora no"
+    },
+    "fileBind": {
+      "title": "¿Guardar en este archivo?",
+      "pathTaken": "{project} ya guarda en este archivo. Dos proyectos no pueden compartir un archivo: elige otra ubicación.",
+      "replacesForeignFile": "En esta ubicación hay guardado otro proyecto de Scriptio. Guardar aquí reemplaza su archivo, y ese proyecto dejará de mantenerse al día en el disco.",
+      "notWritable": "Scriptio no puede escribir en esta ubicación ({message}). Elige otra.",
+      "replaceAnyway": "Reemplazar",
+      "cancel": "Cancelar",
+      "ok": "Aceptar"
     }
   },
   "board": {

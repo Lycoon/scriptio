@@ -159,6 +159,42 @@ export class ProjectRepository {
         this.ydoc.metadata().set("featureLength", minutes);
     }
 
+    /**
+     * The doc's lineage stamp, or `undefined` on a doc that was never stamped
+     * (a read-only replica whose owner predates the stamp, or a doc rebuilt from
+     * a flat format before `ensureLineageId` ran). Callers must treat absence as
+     * "not mergeable", never as "matches".
+     */
+    getLineageId(): string | undefined {
+        return this.ydoc.metadata().get("lineageId");
+    }
+
+    /**
+     * Stamp this doc's lineage — the single write path for {@link ProjectMetadata.lineageId}.
+     *
+     * Write-once by construction: an existing value is returned untouched and
+     * never replaced. That guard is the whole point of routing through here.
+     * `lineageId` is an ordinary Y.Map key, so two clients setting different
+     * values would merge last-writer-wins and leave a doc claiming a history it
+     * does not have — which is worse than no lineage at all, because the merge
+     * planner would then happily duplicate a screenplay into itself.
+     *
+     * Pass `lineageId` to adopt a lineage the caller already knows (a replica
+     * built from someone else's binary export, where preserving it is what makes
+     * the next file from that sender merge). Omit it to mint a fresh one, which
+     * is what a genuinely new document — including one rebuilt from a flat
+     * format — must get.
+     */
+    ensureLineageId(lineageId?: string): string | undefined {
+        const existing = this.getLineageId();
+        if (existing) return existing;
+        if (this.guardWrite("ensureLineageId")) return undefined;
+
+        const next = lineageId ?? uuidv7();
+        this.ydoc.metadata().set("lineageId", next);
+        return next;
+    }
+
     observeMetadata(callback: (metadata: Partial<ProjectMetadata>) => void): () => void {
         const map = this.ydoc.metadata();
         const observer = () => callback(map.toJSON() as Partial<ProjectMetadata>);

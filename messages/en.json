@@ -45,7 +45,6 @@
     "synced": "Synced to cloud",
     "noConnection": "No connection",
     "reconnecting": "Reconnecting...",
-    "localProject": "Local project",
     "uploadToCloud": "Upload to cloud",
     "storageProject": "This project",
     "storageTotal": "Total used",
@@ -62,7 +61,30 @@
     "draftEditor": "Draft Editor",
     "viewOnly": "View only",
     "viewOnlyHint": "You have viewer access. Editing is disabled.",
-    "pageCount": "{count, plural, one {# page} other {# pages}}"
+    "pageCount": "{count, plural, one {# page} other {# pages}}",
+    "targetLocal": "In-app",
+    "targetLocalSaved": "Saved",
+    "targetCloud": "Cloud",
+    "targetFile": "File",
+    "fileUnbound": "Not saved to a file",
+    "fileSaving": "Saving…",
+    "fileNeedsAttention": "Needs attention",
+    "fileMissing": "The file has been moved or deleted.",
+    "fileError": "Scriptio couldn't save to this file.",
+    "fileForeign": "A different project's file is at this location.",
+    "fileLocate": "Locate…",
+    "fileOpen": "Open…",
+    "fileSaveAs": "Save as…",
+    "fileReveal": "Show in folder",
+    "fileStopSaving": "Stop saving to this file",
+    "fileReclaimable": "This project file can be reduced by {percent}%.",
+    "fileCompact": "Compact file",
+    "savedToFile": "Saved to {file}",
+    "fileNoAccess": "Scriptio no longer has permission to open this file. Use Locate… to point at it again.",
+    "targetCloudOff": "Not synced",
+    "cloudUpgrade": "Upgrade to Pro",
+    "cloudSignInUpgrade": "Sign in and Upgrade",
+    "fileUseExisting": "Use an existing file…"
   },
   "timer": {
     "title": "Writing session",
@@ -644,6 +666,38 @@
       "cancel": "Cancel",
       "uploading": "Uploading...",
       "failed": "Upload failed. Please try again."
+    },
+    "scriptioOpen": {
+      "title": "Open {file}",
+      "untitledProject": "Untitled",
+      "alreadyCurrent": "Your copy is already up to date with this file.",
+      "fastForward": "This file is newer. Update {project}?",
+      "diverged": "Both copies changed since they were shared. Merging keeps both sets of edits in {project}.",
+      "divergedSnapshot": "A snapshot of your current version is saved first, so you can roll back.",
+      "noLineage": "This file is a readable export and can't be merged into an existing project.",
+      "ambiguous": "Several of your projects come from this same document. Choose which one to update, or make a new project.",
+      "update": "Update",
+      "updateNamed": "Update {project}",
+      "merge": "Merge",
+      "openAsNew": "Open as a new project",
+      "ok": "OK",
+      "cancel": "Cancel"
+    },
+    "saveToFile": {
+      "title": "Save to a file",
+      "reassurance": "Your work is already saved automatically — on this device, and to the cloud if the project is synced.",
+      "offer": "Saving to a file gives you a copy you own and can share; once saved, Scriptio keeps that file up to date on its own.",
+      "confirm": "Choose a location…",
+      "cancel": "Not now"
+    },
+    "fileBind": {
+      "title": "Save to this file?",
+      "pathTaken": "{project} already saves to this file. Two projects can't share one file — choose another location.",
+      "replacesForeignFile": "A different Scriptio project is saved at this location. Saving here replaces its file, and that project will no longer be kept up to date on disk.",
+      "notWritable": "Scriptio can't write to this location ({message}). Choose another one.",
+      "replaceAnyway": "Replace it",
+      "cancel": "Cancel",
+      "ok": "OK"
     }
   },
   "board": {

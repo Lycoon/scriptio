@@ -12,7 +12,8 @@ import { join } from "@src/lib/utils/misc";
 import { importFileAsProject } from "@src/lib/import/import-project";
 import { useImportAccept } from "@src/lib/import/use-import-accept";
 import { useAppNavigation } from "@src/lib/utils/navigation";
-import { FileDown, Plus, X } from "lucide-react";
+import { isFileBindingSupported } from "@src/lib/persistence/file-binding";
+import { FileDown, FolderOpen, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import NewProjectPage from "./CreateProjectPage";
@@ -57,6 +58,25 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
     // never be seen.
     const handleImportClick = () => {
         fileInputRef.current?.click();
+    };
+
+    /**
+     * Open a `.scriptio` from disk through the merge-aware flow.
+     *
+     * Distinct from Import above, which always makes a new project. This asks
+     * what the file means for the library first — a project you already have
+     * gets updated rather than duplicated — and binds the opened project to the
+     * file so later edits flow back to it.
+     */
+    const handleOpenFile = async () => {
+        setImportError(null);
+        try {
+            const { pickAndOfferScriptioFile } = await import("@src/lib/import/scriptio-file-open");
+            await pickAndOfferScriptioFile();
+        } catch (error) {
+            console.error("[Projects] Could not open the file:", error);
+            setImportError(error instanceof Error ? error.message : t("importError"));
+        }
     };
 
     const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,6 +138,7 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
                                     key={membership.project.id}
                                     project={membership.project}
                                     isLocalOnly={membership.isLocalOnly}
+                                    filePath={membership.filePath}
                                 />
                             ))}
                         </div>
@@ -179,6 +200,18 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
                         <FileDown size={16} />
                         <span>{isImporting ? t("importing") : t("importBtn")}</span>
                     </button>
+                    {/* Opening a `.scriptio` belongs on the library, not inside a
+                        project: the file may well be a *different* project, and
+                        the answer can be "update the copy you already have" —
+                        neither of which makes sense as an action taken from the
+                        middle of the script you are writing. Desktop only; it
+                        needs a real path to bind the project to afterwards. */}
+                    {isFileBindingSupported() && (
+                        <button className={page.action_btn} onClick={handleOpenFile}>
+                            <FolderOpen size={16} />
+                            <span>{tNav("fileOpen")}</span>
+                        </button>
+                    )}
                     {importError && (
                         <p className={page.import_error} role="alert">
                             {importError}

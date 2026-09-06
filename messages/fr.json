@@ -45,7 +45,6 @@
     "synced": "Synchronisé dans le cloud",
     "noConnection": "Pas de connexion",
     "reconnecting": "Reconnexion...",
-    "localProject": "Projet local",
     "uploadToCloud": "Téléverser dans le cloud",
     "storageProject": "Ce projet",
     "storageTotal": "Total utilisé",
@@ -63,7 +62,30 @@
     "draftEditor": "Éditeur de brouillon",
     "viewOnly": "Vue seule",
     "viewOnlyHint": "Vous avez un accès visiteur. La modification est désactivée.",
-    "pageCount": "{count, plural, one {# page} other {# pages}}"
+    "pageCount": "{count, plural, one {# page} other {# pages}}",
+    "targetLocal": "Dans l'app",
+    "targetLocalSaved": "Enregistré",
+    "targetCloud": "Cloud",
+    "targetFile": "Fichier",
+    "fileUnbound": "Aucun fichier associé",
+    "fileSaving": "Enregistrement…",
+    "fileNeedsAttention": "À vérifier",
+    "fileMissing": "Le fichier a été déplacé ou supprimé.",
+    "fileError": "Scriptio n'a pas pu écrire dans ce fichier.",
+    "fileForeign": "Le fichier d'un autre projet se trouve à cet emplacement.",
+    "fileLocate": "Localiser…",
+    "fileOpen": "Ouvrir…",
+    "fileSaveAs": "Enregistrer sous…",
+    "fileReveal": "Afficher dans le dossier",
+    "fileStopSaving": "Ne plus enregistrer dans ce fichier",
+    "fileReclaimable": "Ce fichier de projet peut être réduit de {percent} %.",
+    "fileCompact": "Compacter le fichier",
+    "savedToFile": "Enregistré dans {file}",
+    "fileNoAccess": "Scriptio n'a plus l'autorisation d'ouvrir ce fichier. Utilisez Localiser… pour le désigner à nouveau.",
+    "targetCloudOff": "Non synchronisé",
+    "cloudUpgrade": "Passer à Pro",
+    "cloudSignInUpgrade": "Se connecter et passer à Pro",
+    "fileUseExisting": "Utiliser un fichier existant…"
   },
   "timer": {
     "title": "Session d'écriture",
@@ -645,6 +667,38 @@
       "cancel": "Annuler",
       "uploading": "Téléversement en cours...",
       "failed": "Échec du téléversement. Veuillez réessayer."
+    },
+    "scriptioOpen": {
+      "title": "Ouvrir {file}",
+      "untitledProject": "Sans titre",
+      "alreadyCurrent": "Votre copie est déjà à jour par rapport à ce fichier.",
+      "fastForward": "Ce fichier est plus récent. Mettre à jour {project} ?",
+      "diverged": "Les deux copies ont changé depuis leur partage. La fusion conserve les modifications des deux côtés dans {project}.",
+      "divergedSnapshot": "Une sauvegarde de votre version actuelle est créée avant la fusion, pour pouvoir revenir en arrière.",
+      "noLineage": "Ce fichier est un export lisible et ne peut pas être fusionné avec un projet existant.",
+      "ambiguous": "Plusieurs de vos projets proviennent de ce même document. Choisissez lequel mettre à jour, ou créez un nouveau projet.",
+      "update": "Mettre à jour",
+      "updateNamed": "Mettre à jour {project}",
+      "merge": "Fusionner",
+      "openAsNew": "Ouvrir comme nouveau projet",
+      "ok": "OK",
+      "cancel": "Annuler"
+    },
+    "saveToFile": {
+      "title": "Enregistrer dans un fichier",
+      "reassurance": "Votre travail est déjà enregistré automatiquement — sur cet appareil, et dans le cloud si le projet est synchronisé.",
+      "offer": "Enregistrer dans un fichier vous donne une copie qui vous appartient et que vous pouvez partager ; ensuite, Scriptio maintient ce fichier à jour tout seul.",
+      "confirm": "Choisir un emplacement…",
+      "cancel": "Pas maintenant"
+    },
+    "fileBind": {
+      "title": "Enregistrer dans ce fichier ?",
+      "pathTaken": "{project} enregistre déjà dans ce fichier. Deux projets ne peuvent pas partager un même fichier — choisissez un autre emplacement.",
+      "replacesForeignFile": "Un autre projet Scriptio est enregistré à cet emplacement. Enregistrer ici remplace son fichier, et ce projet ne sera plus tenu à jour sur le disque.",
+      "notWritable": "Scriptio ne peut pas écrire à cet emplacement ({message}). Choisissez-en un autre.",
+      "replaceAnyway": "Remplacer",
+      "cancel": "Annuler",
+      "ok": "OK"
     }
   },
   "board": {

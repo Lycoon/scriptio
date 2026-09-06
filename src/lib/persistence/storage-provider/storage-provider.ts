@@ -5,6 +5,22 @@
 
 import type { InstalledDictionary, UserSettings } from "@src/lib/utils/types";
 
+/**
+ * Fingerprint of a bound `.scriptio` file as we last left it.
+ *
+ * Recorded so the writer can tell "nobody has touched this since I wrote it"
+ * from "something else wrote here" — a sync client, a second app instance, a
+ * restored backup. A whole-archive rewrite is not a merge, so writing blindly
+ * over the second case discards whatever the other side put there while the
+ * local project goes on looking perfectly healthy. See `file-binding.ts`.
+ */
+export interface FileFingerprint {
+    /** Modification time reported by the filesystem, epoch ms. */
+    mtimeMs: number;
+    /** Size in bytes. Cheap second opinion where mtime granularity is coarse. */
+    size: number;
+}
+
 export interface CachedProject {
     id: string;
     title: string;
@@ -14,6 +30,25 @@ export interface CachedProject {
     updatedAt: Date;
     /** True if the project is device-local only (never synced to cloud). */
     isLocalOnly: boolean;
+
+    // ── File binding (desktop only) ──────────────────────────────────────────
+    // A project may additionally be bound to a `.scriptio` file on disk, which
+    // Scriptio keeps up to date on its own. Absent on every unbound project,
+    // which is all of them on web and mobile.
+
+    /** Absolute path of the bound file; absent when unbound. */
+    filePath?: string;
+    /** Epoch ms the binding was created. */
+    fileBoundAt?: number;
+    /** Epoch ms of the last successful write to that file. */
+    fileLastWriteAt?: number;
+    /**
+     * Yjs state vector as of that write. The skip check: if the document has not
+     * moved past this, re-emitting the whole archive would produce the same file.
+     */
+    fileLastWriteSv?: Uint8Array;
+    /** What the file looked like on disk once we finished writing it. */
+    fileFingerprint?: FileFingerprint;
 }
 
 export interface ProjectEntryInput {
@@ -83,6 +118,19 @@ export interface StorageProvider {
 
     /** Upsert cloud project metadata locally (cache for offline access). */
     ensureEntries(projects: ProjectEntryInput[]): Promise<void>;
+
+    // File binding (desktop only) — see the fields on CachedProject.
+    /**
+     * Bind a project to a `.scriptio` file, clearing any previous write record.
+     * `fingerprint` seeds "how the file looked when we took it over" for a path
+     * that already exists, so the first write can tell it apart from one another
+     * program has since touched.
+     */
+    bindProjectFile(id: string, path: string, fingerprint?: FileFingerprint): Promise<void>;
+    /** Forget a project's file binding entirely. */
+    unbindProjectFile(id: string): Promise<void>;
+    /** Record a successful write: the state vector written, and how the file now looks. */
+    recordFileWrite(id: string, sv: Uint8Array, fingerprint?: FileFingerprint): Promise<void>;
 
     // Settings
     getSettings(): Promise<Partial<UserSettings>>;

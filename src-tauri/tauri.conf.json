@@ -29,6 +29,15 @@
         "active": true,
         "targets": "all",
         "publisher": "Arko Logic",
+        "fileAssociations": [
+            {
+                "ext": ["scriptio"],
+                "name": "Scriptio Project",
+                "description": "Scriptio screenplay project",
+                "mimeType": "application/vnd.scriptio+zip",
+                "role": "Editor"
+            }
+        ],
         "macOS": {
             "minimumSystemVersion": "13.0"
         },

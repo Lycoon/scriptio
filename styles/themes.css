@@ -1,6 +1,17 @@
 html {
     --editor-script-bg: white;
     --editor-text: black;
+
+    /* The raised "this one is selected" surface: the active editor tab, the
+       active dashboard nav item, and a dialog's primary button. Declared here
+       rather than per theme because it is the same role in every one of them,
+       and `--tertiary` is already each theme's filled-control colour — the
+       same one `.target_action` and the Saves panel use. Every theme sets
+       `--tertiary` on `html`, so this resolves to the active theme's value.
+
+       It was previously referenced by three stylesheets and defined by none,
+       which left those elements with no background at all. */
+    --editor-tab-active: var(--tertiary);
 }
 
 html.light {

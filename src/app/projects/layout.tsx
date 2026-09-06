@@ -4,6 +4,7 @@ import Loading from "@components/utils/Loading";
 import DashboardModal from "@components/dashboard/DashboardModal";
 import ProjectUnavailableDialog from "@components/projects/ProjectUnavailableDialog";
 import ProjectMigrationErrorDialog from "@components/projects/ProjectMigrationErrorDialog";
+import ScriptioOpenDialog from "@components/projects/ScriptioOpenDialog";
 import { useSearchParams } from "next/navigation";
 import { ProjectProvider, useProjectReady } from "@src/context/ProjectContext";
 import { ViewProvider } from "@src/context/ViewContext";
@@ -15,6 +16,7 @@ import { ReactNode, Suspense, useEffect } from "react";
 import ProjectNavbar from "@components/navbar/ProjectNavbar";
 import ProjectNavbarSkeleton from "@components/navbar/ProjectNavbarSkeleton";
 import ApplyTimingPanel from "@components/debug/ApplyTimingPanel";
+import { useOsFileOpen } from "@src/lib/import/use-os-file-open";
 import { isTauri } from "@tauri-apps/api/core";
 
 /**
@@ -132,10 +134,21 @@ function ProjectLayoutContent({ children }: { children: ReactNode }) {
     );
 }
 
+/**
+ * Hosts the `.scriptio` open flow above both the project listing and an open
+ * project, because a file can arrive from the OS at either — a double-click with
+ * the app already showing a script has to be answerable without leaving it.
+ */
+function ScriptioFileOpenHost() {
+    useOsFileOpen();
+    return <ScriptioOpenDialog />;
+}
+
 export default function ProjectLayout({ children }: { children: ReactNode }) {
     return (
         <Suspense fallback={<Loading />}>
             <SettingsSync />
+            <ScriptioFileOpenHost />
             <ProjectLayoutContent>{children}</ProjectLayoutContent>
         </Suspense>
     );

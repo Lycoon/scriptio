@@ -45,7 +45,6 @@
     "synced": "クラウドに同期済み",
     "noConnection": "接続なし",
     "reconnecting": "再接続中...",
-    "localProject": "ローカルプロジェクト",
     "uploadToCloud": "クラウドにアップロード",
     "storageProject": "このプロジェクト",
     "storageTotal": "合計使用量",
@@ -62,7 +61,30 @@
     "draftEditor": "下書きエディター",
     "viewOnly": "閲覧のみ",
     "viewOnlyHint": "閲覧者アクセスです。編集は無効になっています。",
-    "pageCount": "{count}ページ"
+    "pageCount": "{count}ページ",
+    "targetLocal": "アプリ内",
+    "targetLocalSaved": "保存済み",
+    "targetCloud": "クラウド",
+    "targetFile": "ファイル",
+    "fileUnbound": "ファイル未設定",
+    "fileSaving": "保存中…",
+    "fileNeedsAttention": "確認が必要です",
+    "fileMissing": "ファイルが移動または削除されました。",
+    "fileError": "このファイルに保存できませんでした。",
+    "fileForeign": "この場所には別のプロジェクトのファイルがあります。",
+    "fileLocate": "場所を指定…",
+    "fileOpen": "開く…",
+    "fileSaveAs": "名前を付けて保存…",
+    "fileReveal": "フォルダに表示",
+    "fileStopSaving": "このファイルへの保存を停止",
+    "fileReclaimable": "このプロジェクトファイルは {percent}% 縮小できます。",
+    "fileCompact": "ファイルを圧縮",
+    "savedToFile": "{file} に保存しました",
+    "fileNoAccess": "このファイルを開く権限がなくなりました。「場所を指定…」でもう一度選んでください。",
+    "targetCloudOff": "未同期",
+    "cloudUpgrade": "Pro にアップグレード",
+    "cloudSignInUpgrade": "サインインしてアップグレード",
+    "fileUseExisting": "既存のファイルを使う…"
   },
   "timer": {
     "title": "執筆セッション",
@@ -644,6 +666,38 @@
       "cancel": "キャンセル",
       "uploading": "アップロード中...",
       "failed": "アップロードに失敗しました。もう一度お試しください。"
+    },
+    "scriptioOpen": {
+      "title": "{file} を開く",
+      "untitledProject": "無題",
+      "alreadyCurrent": "お使いのコピーはこのファイルの内容をすべて含んでいます。",
+      "fastForward": "このファイルの方が新しいです。{project} を更新しますか？",
+      "diverged": "共有後に両方のコピーが変更されました。結合すると {project} に両方の編集が残ります。",
+      "divergedSnapshot": "結合の前に現在のバージョンのスナップショットを保存するので、元に戻せます。",
+      "noLineage": "このファイルは可読形式の書き出しのため、既存のプロジェクトに結合できません。",
+      "ambiguous": "同じ文書に由来するプロジェクトが複数あります。更新するものを選ぶか、新しいプロジェクトを作成してください。",
+      "update": "更新",
+      "updateNamed": "{project} を更新",
+      "merge": "結合",
+      "openAsNew": "新しいプロジェクトとして開く",
+      "ok": "OK",
+      "cancel": "キャンセル"
+    },
+    "saveToFile": {
+      "title": "ファイルに保存",
+      "reassurance": "作業内容はすでに自動保存されています — このデバイスに、そして同期されたプロジェクトならクラウドにも。",
+      "offer": "ファイルに保存すると、自分のものとして共有できるコピーが手に入ります。保存後は Scriptio がそのファイルを自動で最新に保ちます。",
+      "confirm": "保存先を選択…",
+      "cancel": "あとで"
+    },
+    "fileBind": {
+      "title": "このファイルに保存しますか？",
+      "pathTaken": "{project} がすでにこのファイルに保存しています。1 つのファイルを 2 つのプロジェクトで共有することはできません。別の場所を選んでください。",
+      "replacesForeignFile": "この場所には別の Scriptio プロジェクトが保存されています。ここに保存するとそのファイルは置き換えられ、そのプロジェクトはディスク上で更新されなくなります。",
+      "notWritable": "この場所には書き込めません（{message}）。別の場所を選んでください。",
+      "replaceAnyway": "置き換える",
+      "cancel": "キャンセル",
+      "ok": "OK"
     }
   },
   "board": {

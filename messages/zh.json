@@ -45,7 +45,6 @@
     "synced": "已同步到云端",
     "noConnection": "无连接",
     "reconnecting": "正在重新连接...",
-    "localProject": "本地项目",
     "uploadToCloud": "上传到云端",
     "storageProject": "本项目",
     "storageTotal": "已用总量",
@@ -62,7 +61,30 @@
     "draftEditor": "草稿编辑器",
     "viewOnly": "仅查看",
     "viewOnlyHint": "您拥有访客权限，编辑功能已禁用。",
-    "pageCount": "{count} 页"
+    "pageCount": "{count} 页",
+    "targetLocal": "应用内",
+    "targetLocalSaved": "已保存",
+    "targetCloud": "云端",
+    "targetFile": "文件",
+    "fileUnbound": "未关联文件",
+    "fileSaving": "正在保存…",
+    "fileNeedsAttention": "需要处理",
+    "fileMissing": "文件已被移动或删除。",
+    "fileError": "Scriptio 无法保存到此文件。",
+    "fileForeign": "此位置是另一个项目的文件。",
+    "fileLocate": "定位…",
+    "fileOpen": "打开…",
+    "fileSaveAs": "另存为…",
+    "fileReveal": "在文件夹中显示",
+    "fileStopSaving": "停止保存到此文件",
+    "fileReclaimable": "此项目文件可缩小 {percent}%。",
+    "fileCompact": "压缩文件",
+    "savedToFile": "已保存到 {file}",
+    "fileNoAccess": "Scriptio 已无权访问此文件。请用“定位…”重新指定它。",
+    "targetCloudOff": "未同步",
+    "cloudUpgrade": "升级到 Pro",
+    "cloudSignInUpgrade": "登录并升级",
+    "fileUseExisting": "使用已有文件…"
   },
   "timer": {
     "title": "写作计时",
@@ -644,6 +666,38 @@
       "cancel": "取消",
       "uploading": "正在上传...",
       "failed": "上传失败。请重试。"
+    },
+    "scriptioOpen": {
+      "title": "打开 {file}",
+      "untitledProject": "未命名",
+      "alreadyCurrent": "你的副本已包含此文件的全部内容。",
+      "fastForward": "此文件更新。要更新 {project} 吗？",
+      "diverged": "分享之后两份副本都有改动。合并会在 {project} 中保留两边的修改。",
+      "divergedSnapshot": "合并前会先保存当前版本的快照，可随时回滚。",
+      "noLineage": "此文件是可读格式的导出，无法合并到已有项目中。",
+      "ambiguous": "你有多个项目源自同一份文档。请选择要更新哪一个，或新建一个项目。",
+      "update": "更新",
+      "updateNamed": "更新 {project}",
+      "merge": "合并",
+      "openAsNew": "作为新项目打开",
+      "ok": "确定",
+      "cancel": "取消"
+    },
+    "saveToFile": {
+      "title": "保存到文件",
+      "reassurance": "你的作品已经在自动保存 —— 保存在本设备上，若项目已同步还会保存到云端。",
+      "offer": "保存到文件会给你一份可自行保管和分享的副本；保存之后，Scriptio 会自动让该文件保持最新。",
+      "confirm": "选择位置…",
+      "cancel": "暂不"
+    },
+    "fileBind": {
+      "title": "保存到此文件？",
+      "pathTaken": "{project} 已在保存到此文件。两个项目不能共用一个文件 —— 请另选位置。",
+      "replacesForeignFile": "此位置保存着另一个 Scriptio 项目。保存到这里会替换它的文件，那个项目将不再在磁盘上保持最新。",
+      "notWritable": "Scriptio 无法写入此位置（{message}）。请另选一个。",
+      "replaceAnyway": "替换",
+      "cancel": "取消",
+      "ok": "确定"
     }
   },
   "board": {
