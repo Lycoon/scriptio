@@ -199,6 +199,11 @@ fn queue_open_file(app: &tauri::AppHandle, path: String) {
 
 /// Bring the existing window forward — a second launch should surface the app
 /// the user already has open, not sit invisibly behind it.
+///
+/// Desktop only: `unminimize` sits in a `#[cfg(desktop)]` impl block, so leaving
+/// this compiled on mobile breaks the iOS build even though nothing calls it
+/// there (both call sites are already desktop-gated).
+#[cfg(desktop)]
 fn focus_main_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.unminimize();
