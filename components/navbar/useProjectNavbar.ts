@@ -127,7 +127,20 @@ export const useProjectNavbar = () => {
 
     // Return to the projects list by dropping the ?projectId param. The projects
     // page reads it via useSearchParams, so replacing the URL swaps the view back.
-    const backToProjects = () => goToProjects();
+    //
+    // Close the phone drawers on the way out — both sit *below* the navbar (see
+    // [ProjectNavbarMobileMenu.module.css] and the dashboard's phone block), so
+    // the back arrow stays tappable while one of them is open, and neither
+    // survives the swap cleanly. The dashboard is rendered again by the projects
+    // list from this same context, so it simply stays on screen, now settings for
+    // a project that is no longer open; the burger menu unmounts with this navbar
+    // but keeps its open flag, which would reopen it on the next project. Closing
+    // before navigating is what the other exits already do (see [DangerZone]).
+    const backToProjects = () => {
+        closeDashboard();
+        setMobileMenuOpen(false);
+        goToProjects();
+    };
 
     // Sign out via the shared flow, then land on the home/landing screen.
     const onSignOut = async () => {

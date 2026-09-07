@@ -30,7 +30,11 @@
     overflow-y: auto;
 
     background-color: var(--main-bg);
-    box-shadow: var(--panel-shadow);
+    /* No shadow. Its top edge butts against the navbar, and any blurred shadow
+     * bleeds up over the bar (the drawer sits above it in z-order) as a visible
+     * seam — negative spread only shrinks that bleed, it can't cancel the blur's
+     * tail. Nothing is lost: the drawer always opens over a dimmed backdrop, so a
+     * side shadow against a 40%-black scrim was invisible anyway. */
 
     transform: translateX(0);
     transition: transform 0.25s ease;
@@ -56,8 +60,13 @@
     padding-left: 12px;
 }
 
+/* Same type as the other phone drawer titles (DashboardModal .sidebarTitle,
+ * ProjectPageContainer .sidebar_title) — the drawers swap in for each other in
+ * place, so their headers must read as one. The element carries the face: like
+ * those two this is an <h2>, which is what globals.css gives Josefin. Weight
+ * stays 600 here rather than the heading rule's bold. */
 .header_title {
-    font-size: 1.05rem;
+    font-size: 1.2rem;
     font-weight: 600;
     color: var(--primary-text);
 }
@@ -130,12 +139,14 @@
     margin: 8px 0;
 }
 
-/* Editable title row at the top of the menu. */
+/* Editable title row at the top of the menu. The field is the row's only child —
+ * the desktop's save glyph beside it would only summarise the target rows sitting
+ * right below it here — so it takes the full width, on the same 12px inset as the
+ * items and group labels under it. */
 .title_row {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
     padding: 6px 12px 12px;
 }
 

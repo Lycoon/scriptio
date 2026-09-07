@@ -14,14 +14,14 @@ const URL = "https://scriptio.app/";
 // or next-themes: the class is fixed at build time, not toggled client-side.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="en" className="dark">
+        // Font variables sit on <html> here too, matching the app layout.
+        <html
+            lang="en"
+            className={`dark ${courier.variable} ${inter.variable} ${playfair.variable} ${josefin.variable}`}
+        >
             <body>
                 <div className="app-layout">
-                    <main
-                        className={`${layout.main} ${courier.variable} ${inter.variable} ${playfair.variable} ${josefin.variable}`}
-                    >
-                        {children}
-                    </main>
+                    <main className={layout.main}>{children}</main>
                 </div>
             </body>
         </html>

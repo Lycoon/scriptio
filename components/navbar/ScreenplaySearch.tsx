@@ -23,7 +23,17 @@ const FILTER_ORDER: ScreenplayElement[] = [
     ScreenplayElement.Note,
 ];
 
-const ScreenplaySearch = () => {
+interface ScreenplaySearchProps {
+    /**
+     * Fired when the panel is opened. The phone bar uses it to close the side
+     * drawers and the burger menu first: the panel is an overlay on that screen,
+     * so anything still open sits stranded underneath it. Desktop has room for
+     * both and passes nothing.
+     */
+    onOpen?: () => void;
+}
+
+const ScreenplaySearch = ({ onOpen }: ScreenplaySearchProps) => {
     const t = useTranslations("search");
 
     const FILTER_LABELS: Record<ScreenplayElement, string> = {
@@ -98,8 +108,9 @@ const ScreenplaySearch = () => {
     }, [editor, setCurrentSearchIndex]);
 
     const handleOpen = useCallback(() => {
+        onOpen?.();
         setIsOpen(true);
-    }, []);
+    }, [onOpen]);
 
     const handleClose = useCallback(() => {
         if (debounceRef.current) {

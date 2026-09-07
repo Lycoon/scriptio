@@ -83,7 +83,7 @@
     "fileNoAccess": "Scriptio ya no tiene permiso para abrir este archivo. Usa Localizar… para volver a señalarlo.",
     "targetCloudOff": "Sin sincronizar",
     "cloudUpgrade": "Cambiar a Pro",
-    "cloudSignInUpgrade": "Inicia sesión y mejora",
+    "cloudSignInUpgrade": "Sincronizar en la nube",
     "fileUseExisting": "Usar un archivo existente…"
   },
   "timer": {
@@ -605,6 +605,7 @@
     "cut": "Cortar",
     "selectInEditor": "Seleccionar",
     "remove": "Eliminar",
+    "removeUnsavedHint": "Detectado automáticamente en el guion: no hay nada que eliminar",
     "paste": "Pegar",
     "highlight": "Resaltar",
     "addCharacter": "Añadir personaje",

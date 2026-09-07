@@ -166,9 +166,11 @@
 
 /* ---- Custom horizontal scrollbar ---- */
 
-/* A dedicated, always-present horizontal scrollbar sitting just above the
- * tracks. Native macOS overlay scrollbars take no space and auto-hide, which
- * left no reliable way to scroll a zoomed-in timeline — so we render our own. */
+/* A dedicated, always-present horizontal scrollbar, last in the column below the
+ * ruler. Native macOS overlay scrollbars take no space and auto-hide, which left
+ * no reliable way to scroll a zoomed-in timeline — so we render our own.
+ * border-top like the scene and ruler bands above it: every band in this stack
+ * is separated from the one before it, not the one after. */
 .hscroll {
     flex-shrink: 0;
     display: flex;
@@ -176,7 +178,7 @@
     align-items: center;
     height: 16px;
     box-sizing: border-box;
-    border-bottom: 1px solid var(--separator);
+    border-top: 1px solid var(--separator);
     background-color: var(--main-bg);
 }
 

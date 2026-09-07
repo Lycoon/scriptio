@@ -477,6 +477,20 @@
     gap: 6px;
 }
 
+/* The same readout in the phone menu drawer, which has no panel around it. Every
+   other row in that drawer — the title row, the group labels, the items — sits on
+   a 12px inset inside the drawer's own gutter, so the targets take that inset too:
+   flush against the gutter they hung out to the left of everything above and below
+   them, and each target glyph missed the save glyph in the title row it is the
+   expansion of. The gap stands in for the drawer's flex gap, which stops reaching
+   these rows once they are wrapped. */
+.mobile_targets {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-inline: 12px;
+}
+
 /* Brief acknowledgement after an explicit save, anchored where the panel would
    open. Not shown while the panel itself is open — it already says as much. */
 .save_flash {

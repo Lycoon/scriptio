@@ -5,7 +5,9 @@
     --projects-sidebar-width: 260px;
     /* Shared column template so the header row and every ProjectItem line up.
      * Cascades into ProjectItem (a descendant) which reads the same var. */
-    --projects-grid: 44px minmax(0, 1fr) 160px 120px;
+    /* The storage column carries its label plus, on a shared project, the
+     * collaborator count — 120px fitted the label alone with nothing to spare. */
+    --projects-grid: 44px minmax(0, 1fr) 160px 156px;
 
     position: relative;
     display: flex;
@@ -242,11 +244,11 @@
         padding: 8px calc(8px + var(--safe-right)) calc(16px + var(--safe-bottom))
             calc(8px + var(--safe-left));
         /* Match the dashboard settings drawer: same flat drawer background
-         * (--main-bg, as the settings + burger drawers use on mobile) and a
-         * shadow-only edge, no border. */
+         * (--main-bg, as the settings + burger drawers use on mobile) and no
+         * edge at all — the dimmed backdrop separates it from the page. */
         background-color: var(--main-bg);
         border-right: none;
-        box-shadow: var(--panel-shadow);
+        /* No shadow — see ProjectNavbarMobileMenu .drawer. */
         transform: translateX(0);
         transition: transform 0.25s ease;
     }

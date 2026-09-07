@@ -50,5 +50,30 @@
 	<string>Scriptio uses speech recognition to transcribe your dictation into the screenplay editor.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Scriptio accesses your photo library so you can add existing images to your project boards.</string>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>app.scriptio.project</string>
+			<key>UTTypeDescription</key>
+			<string>Scriptio Project</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.zip-archive</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>scriptio</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/vnd.scriptio+zip</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

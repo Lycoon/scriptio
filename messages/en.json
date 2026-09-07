@@ -83,7 +83,7 @@
     "fileNoAccess": "Scriptio no longer has permission to open this file. Use Locate… to point at it again.",
     "targetCloudOff": "Not synced",
     "cloudUpgrade": "Upgrade to Pro",
-    "cloudSignInUpgrade": "Sign in and Upgrade",
+    "cloudSignInUpgrade": "Sync to cloud",
     "fileUseExisting": "Use an existing file…"
   },
   "timer": {
@@ -605,6 +605,7 @@
     "cut": "Cut",
     "selectInEditor": "Select",
     "remove": "Remove",
+    "removeUnsavedHint": "Auto-detected from the script — nothing to remove",
     "paste": "Paste",
     "highlight": "Highlight",
     "addCharacter": "Add character",

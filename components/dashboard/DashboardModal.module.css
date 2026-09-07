@@ -307,7 +307,7 @@
         height: 100%;
         max-height: 100%;
         border-radius: 0;
-        box-shadow: var(--panel-shadow);
+        /* No shadow — see ProjectNavbarMobileMenu .drawer. */
         animation: dashboardDrawerIn 0.25s ease;
     }
 

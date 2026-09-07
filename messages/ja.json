@@ -83,7 +83,7 @@
     "fileNoAccess": "このファイルを開く権限がなくなりました。「場所を指定…」でもう一度選んでください。",
     "targetCloudOff": "未同期",
     "cloudUpgrade": "Pro にアップグレード",
-    "cloudSignInUpgrade": "サインインしてアップグレード",
+    "cloudSignInUpgrade": "クラウドに同期",
     "fileUseExisting": "既存のファイルを使う…"
   },
   "timer": {
@@ -605,6 +605,7 @@
     "cut": "切り取り",
     "selectInEditor": "選択",
     "remove": "削除",
+    "removeUnsavedHint": "脚本から自動検出されているため、削除するものがありません",
     "paste": "貼り付け",
     "highlight": "ハイライト",
     "addCharacter": "登場人物を追加",

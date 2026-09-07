@@ -83,7 +83,7 @@
     "fileNoAccess": "Scriptio 已无权访问此文件。请用“定位…”重新指定它。",
     "targetCloudOff": "未同步",
     "cloudUpgrade": "升级到 Pro",
-    "cloudSignInUpgrade": "登录并升级",
+    "cloudSignInUpgrade": "同步到云端",
     "fileUseExisting": "使用已有文件…"
   },
   "timer": {
@@ -605,6 +605,7 @@
     "cut": "剪切",
     "selectInEditor": "选择",
     "remove": "移除",
+    "removeUnsavedHint": "根据剧本自动检测，无内容可移除",
     "paste": "粘贴",
     "highlight": "高亮",
     "addCharacter": "添加角色",

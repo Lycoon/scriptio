@@ -8,7 +8,7 @@ import item from "./ProjectItem.module.css";
 import { useAppNavigation } from "@src/lib/utils/navigation";
 import { ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { usePosterUrl } from "@src/lib/posters/use-poster-url";
-import { CloudCheck, HardDrive } from "lucide-react";
+import { CloudCheck, HardDrive, Users } from "lucide-react";
 import { shortenPath } from "@src/lib/persistence/file-binding";
 
 /** Roughly what the title column holds before the date column starts. */
@@ -45,6 +45,19 @@ const ProjectItem = ({ project, isLocalOnly = false, filePath }: Props) => {
     const storageLabel = isLocalOnly ? t("item.localOnly") : t("item.syncedToCloud");
     const StorageIcon = isLocalOnly ? HardDrive : CloudCheck;
 
+    /* Only worth a glyph once the project is actually shared: every cloud project
+       has at least its owner, so a "1" next to the cloud icon would sit on every
+       row and tell the user nothing. Undefined for a project read back from the
+       local cache — the count is the cloud's to know. */
+    const collaborators = project.collaboratorCount;
+    const isShared = !isLocalOnly && collaborators !== undefined && collaborators > 1;
+    const collaboratorsBadge = isShared && (
+        <span className={item.collaborators}>
+            <Users className={item.icon} size={14} />
+            <span>{collaborators}</span>
+        </span>
+    );
+
     /* The path itself, not a glyph: a row that merely hints "there is a file"
        leaves the user to open the project to find out which one, and the whole
        point of showing it here is telling several projects' files apart at a
@@ -72,6 +85,7 @@ const ProjectItem = ({ project, isLocalOnly = false, filePath }: Props) => {
                 <span className={item.meta_inline}>
                     <StorageIcon className={item.icon} size={14} />
                     <span>{lastUpdated}</span>
+                    {collaboratorsBadge}
                 </span>
                 {boundPath && (
                     <span className={item.file_path} title={filePath}>
@@ -85,6 +99,7 @@ const ProjectItem = ({ project, isLocalOnly = false, filePath }: Props) => {
             <span className={item.storage_cell} title={storageLabel}>
                 <StorageIcon className={item.icon} size={16} />
                 <span className={item.storage_label}>{storageLabel}</span>
+                {collaboratorsBadge}
             </span>
         </button>
     );

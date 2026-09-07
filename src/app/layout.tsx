@@ -13,15 +13,20 @@ const URL = "https://scriptio.app/";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="en" suppressHydrationWarning>
+        // Font variables live on <html>, not on <main>: the phone drawers render
+        // through a portal to document.body, which is outside <main>, so a
+        // var(--font-inter) there resolved to nothing and the whole drawer fell
+        // back to the OS font. next-themes only swaps its own theme class here,
+        // so these survive a theme change.
+        <html
+            lang="en"
+            suppressHydrationWarning
+            className={`${courier.variable} ${inter.variable} ${playfair.variable} ${josefin.variable}`}
+        >
             <body>
                 <Providers>
                     <div className="app-layout">
-                        <main
-                            className={`${layout.main} ${courier.variable} ${inter.variable} ${playfair.variable} ${josefin.variable}`}
-                        >
-                            {children}
-                        </main>
+                        <main className={layout.main}>{children}</main>
                     </div>
                 </Providers>
             </body>

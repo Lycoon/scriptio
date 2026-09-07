@@ -96,6 +96,29 @@ span {
     color: var(--primary-text);
 }
 
+/* Form controls are reached by neither the rule above nor inheritance: the UA
+ * stylesheet gives them its own font and colour, which wins over what they would
+ * otherwise inherit. So a label sitting directly inside <button> renders in the
+ * system font — and in the system tint on iOS, which is where blue buttons came
+ * from — while a label a button happens to wrap in a <span> renders in Inter.
+ * Stated once here rather than per button: roughly fifty button classes across
+ * the app carry a bare text label, and the next one written would need the fix
+ * again. A button that wants a different face or colour still overrides it, and
+ * on desktop this was invisible because `color-scheme` makes the UA's button
+ * colour follow the theme. */
+button,
+input,
+select,
+textarea {
+    font-family: var(--font-inter), sans-serif;
+}
+
+/* Inputs get their colour from the `select, textarea, input` rule further down;
+ * buttons have none of their own, so name it here. */
+button {
+    color: var(--primary-text);
+}
+
 a {
     color: var(--secondary-text);
 }
