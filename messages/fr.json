@@ -123,7 +123,12 @@
     "highlightOnHoverDesc": "Surligne légèrement la ligne survolée dans l'éditeur"
   },
   "keybinds": {
-    "screenplayElements": "Éléments de scénario",
+    "groups": {
+      "global": "Général",
+      "view": "Affichage",
+      "screenplay": "Éléments de scénario",
+      "style": "Style"
+    },
     "typing": "Saisir… (Échap pour annuler)",
     "notSet": "Non défini",
     "modifiersOnly": "Modificateurs uniquement — appuyez sur une touche normale",
@@ -131,7 +136,29 @@
     "reset": "Réinitialiser",
     "resetTitle": "Effacer le raccourci personnalisé",
     "resetDefaults": "Réinitialiser",
-    "save": "Enregistrer les modifications"
+    "save": "Enregistrer les modifications",
+    "labels": {
+      "save_project": "Enregistrer le projet",
+      "toggle_focus_mode": "Mode focus",
+      "view_screenplay": "Scénario",
+      "view_title_page": "Page de titre",
+      "view_scene_cards": "Vue fiches",
+      "view_split": "Diviser le panneau",
+      "view_timeline": "Chronologie",
+      "view_left_sidebar": "Barre latérale gauche",
+      "view_right_sidebar": "Barre latérale droite",
+      "style_bold": "Gras",
+      "style_italic": "Italique",
+      "style_underline": "Souligné",
+      "screenplay_scene": "Basculer en en-tête de scène",
+      "screenplay_action": "Basculer en action",
+      "screenplay_character": "Basculer en personnage",
+      "screenplay_dialogue": "Basculer en dialogue",
+      "screenplay_parenthetical": "Basculer en parenthèse",
+      "screenplay_transition": "Basculer en transition",
+      "screenplay_section": "Basculer en section",
+      "screenplay_note": "Basculer en note"
+    }
   },
   "readaloud": {
     "title": "Lecture à voix haute",
@@ -691,6 +718,12 @@
       "offer": "Enregistrer dans un fichier vous donne une copie qui vous appartient et que vous pouvez partager ; ensuite, Scriptio maintient ce fichier à jour tout seul.",
       "confirm": "Choisir un emplacement…",
       "cancel": "Pas maintenant"
+    },
+    "autoSave": {
+      "title": "L'enregistrement automatique est actif",
+      "body": "{file} est maintenu à jour tout seul — Scriptio y écrit vos modifications au fil de votre travail, il n'y a donc rien à enregistrer à la main.",
+      "hint": "Votre travail est aussi enregistré sur cet appareil, et dans le cloud si le projet est synchronisé.",
+      "ok": "J'ai compris"
     },
     "fileBind": {
       "title": "Enregistrer dans ce fichier ?",

@@ -122,7 +122,12 @@
     "highlightOnHoverDesc": "在编辑器中轻微高亮鼠标悬停的行"
   },
   "keybinds": {
-    "screenplayElements": "剧本元素",
+    "groups": {
+      "global": "全局",
+      "view": "视图",
+      "screenplay": "剧本元素",
+      "style": "样式"
+    },
     "typing": "正在输入… (Esc 取消)",
     "notSet": "未设置",
     "modifiersOnly": "仅修饰键 — 请按普通键",
@@ -130,7 +135,29 @@
     "reset": "重置",
     "resetTitle": "清除自定义键位",
     "resetDefaults": "重置",
-    "save": "保存更改"
+    "save": "保存更改",
+    "labels": {
+      "save_project": "保存项目",
+      "toggle_focus_mode": "专注模式",
+      "view_screenplay": "剧本",
+      "view_title_page": "扉页",
+      "view_scene_cards": "索引卡视图",
+      "view_split": "分割面板",
+      "view_timeline": "时间线",
+      "view_left_sidebar": "左侧栏",
+      "view_right_sidebar": "右侧栏",
+      "style_bold": "加粗",
+      "style_italic": "斜体",
+      "style_underline": "下划线",
+      "screenplay_scene": "切换为场景标题",
+      "screenplay_action": "切换为动作",
+      "screenplay_character": "切换为角色",
+      "screenplay_dialogue": "切换为对话",
+      "screenplay_parenthetical": "切换为插入语",
+      "screenplay_transition": "切换为转场",
+      "screenplay_section": "切换为章节",
+      "screenplay_note": "切换为备注"
+    }
   },
   "readaloud": {
     "title": "朗读",
@@ -690,6 +717,12 @@
       "offer": "保存到文件会给你一份可自行保管和分享的副本；保存之后，Scriptio 会自动让该文件保持最新。",
       "confirm": "选择位置…",
       "cancel": "暂不"
+    },
+    "autoSave": {
+      "title": "自动保存已开启",
+      "body": "{file} 会自动保持最新——你工作时 Scriptio 会把改动写入其中，无需手动保存。",
+      "hint": "你的作品也会保存在本设备上，若项目已同步还会保存到云端。",
+      "ok": "知道了"
     },
     "fileBind": {
       "title": "保存到此文件？",

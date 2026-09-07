@@ -123,7 +123,12 @@
     "highlightOnHoverDesc": "Hebt die Zeile unter dem Mauszeiger im Editor leicht hervor"
   },
   "keybinds": {
-    "screenplayElements": "Drehbuchelemente",
+    "groups": {
+      "global": "Allgemein",
+      "view": "Ansicht",
+      "screenplay": "Drehbuchelemente",
+      "style": "Stil"
+    },
     "typing": "Tippen… (Esc zum Abbrechen)",
     "notSet": "Nicht festgelegt",
     "modifiersOnly": "Nur Modifikatoren — drücke eine normale Taste",
@@ -131,7 +136,29 @@
     "reset": "Zurücksetzen",
     "resetTitle": "Benutzerdefinierte Tastenbelegung löschen",
     "resetDefaults": "Zurücksetzen",
-    "save": "Änderungen speichern"
+    "save": "Änderungen speichern",
+    "labels": {
+      "save_project": "Projekt speichern",
+      "toggle_focus_mode": "Fokusmodus",
+      "view_screenplay": "Drehbuch",
+      "view_title_page": "Titelseite",
+      "view_scene_cards": "Karteikartenansicht",
+      "view_split": "Panel teilen",
+      "view_timeline": "Zeitleiste",
+      "view_left_sidebar": "Linke Seitenleiste",
+      "view_right_sidebar": "Rechte Seitenleiste",
+      "style_bold": "Fett",
+      "style_italic": "Kursiv",
+      "style_underline": "Unterstrichen",
+      "screenplay_scene": "Zu Szenenüberschrift wechseln",
+      "screenplay_action": "Zu Handlung wechseln",
+      "screenplay_character": "Zu Charakter wechseln",
+      "screenplay_dialogue": "Zu Dialog wechseln",
+      "screenplay_parenthetical": "Zu Einschub wechseln",
+      "screenplay_transition": "Zu Übergang wechseln",
+      "screenplay_section": "Zu Abschnitt wechseln",
+      "screenplay_note": "Zu Notiz wechseln"
+    }
   },
   "readaloud": {
     "title": "Vorlesen",
@@ -691,6 +718,12 @@
       "offer": "Eine Datei gibt Ihnen eine eigene Kopie zum Weitergeben; danach hält Scriptio diese Datei von selbst aktuell.",
       "confirm": "Ort wählen…",
       "cancel": "Jetzt nicht"
+    },
+    "autoSave": {
+      "title": "Automatisches Speichern ist aktiv",
+      "body": "{file} wird von selbst aktuell gehalten — Scriptio schreibt Ihre Änderungen während der Arbeit hinein, es gibt also nichts von Hand zu speichern.",
+      "hint": "Ihre Arbeit wird außerdem auf diesem Gerät gespeichert und, wenn das Projekt synchronisiert ist, in der Cloud.",
+      "ok": "Verstanden"
     },
     "fileBind": {
       "title": "In diese Datei speichern?",

@@ -98,6 +98,40 @@
     letter-spacing: 0.05em;
 }
 
+/* Collapsible section (see SettingsSection.tsx): a .sectionTitle heading that
+   folds its body away. Here rather than in one panel's stylesheet so every
+   panel that folds looks the same. */
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.chevron {
+    flex-shrink: 0;
+    margin-left: auto;
+    color: var(--secondary-text);
+    transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+    transform: rotate(90deg);
+}
+
+/* Body of a collapsible section, revealed when the header is expanded. The
+   indent and left rule tie the content to the heading above it, so an open
+   section reads as one block instead of running into the next heading. */
+.sectionBody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+    padding-left: 14px;
+    border-left: 2px solid var(--separator);
+}
+
 /* The row is right-aligned, so anything too wide for it spills over the panel's
    LEFT edge. Translated labels are the usual cause (German "Änderungen
    speichern", French "Réinitialiser"), so let the buttons drop onto their own
@@ -157,6 +191,12 @@
     .formActions .formBtn {
         flex: 1 1 auto;
         padding: 8px 20px;
+    }
+
+    /* Narrower indent in the drawer — the rule still marks the section, but
+       every inner row keeps its width. */
+    .sectionBody {
+        padding-left: 10px;
     }
 
     /* The settings drawer is ~75vw, so the row left barely 110px beside the

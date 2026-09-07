@@ -122,7 +122,12 @@
     "highlightOnHoverDesc": "Slightly highlight the hovered line in the editor"
   },
   "keybinds": {
-    "screenplayElements": "Screenplay Elements",
+    "groups": {
+      "global": "Global",
+      "view": "View",
+      "screenplay": "Screenplay Elements",
+      "style": "Style"
+    },
     "typing": "Type… (Esc to cancel)",
     "notSet": "Not set",
     "modifiersOnly": "Modifiers only — press a regular key",
@@ -130,7 +135,29 @@
     "reset": "Reset",
     "resetTitle": "Clear user binding",
     "resetDefaults": "Reset",
-    "save": "Save"
+    "save": "Save",
+    "labels": {
+      "save_project": "Save Project",
+      "toggle_focus_mode": "Focus Mode",
+      "view_screenplay": "Screenplay",
+      "view_title_page": "Title Page",
+      "view_scene_cards": "Index Cards",
+      "view_split": "Split Panel",
+      "view_timeline": "Timeline",
+      "view_left_sidebar": "Left Sidebar",
+      "view_right_sidebar": "Right Sidebar",
+      "style_bold": "Bold",
+      "style_italic": "Italic",
+      "style_underline": "Underline",
+      "screenplay_scene": "Toggle Scene",
+      "screenplay_action": "Toggle Action",
+      "screenplay_character": "Toggle Character",
+      "screenplay_dialogue": "Toggle Dialogue",
+      "screenplay_parenthetical": "Toggle Parenthetical",
+      "screenplay_transition": "Toggle Transition",
+      "screenplay_section": "Toggle Section",
+      "screenplay_note": "Toggle Note"
+    }
   },
   "readaloud": {
     "title": "Read Aloud",
@@ -690,6 +717,12 @@
       "offer": "Saving to a file gives you a copy you own and can share; once saved, Scriptio keeps that file up to date on its own.",
       "confirm": "Choose a location…",
       "cancel": "Not now"
+    },
+    "autoSave": {
+      "title": "Auto save is on",
+      "body": "{file} is kept up to date on its own — Scriptio writes your changes to it as you work, so there is nothing to save by hand.",
+      "hint": "Your work is also saved on this device, and to the cloud if the project is synced.",
+      "ok": "Got it"
     },
     "fileBind": {
       "title": "Save to this file?",

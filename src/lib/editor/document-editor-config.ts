@@ -56,8 +56,6 @@ export interface DocumentEditorFeatures {
     suggestions: boolean;
     /** CONT'D / MORE orphan prevention. */
     orphanPrevention: boolean;
-    /** User-configurable keybind actions. */
-    keybinds: boolean;
     /** Fountain auto-format extension. */
     fountain: boolean;
     /** CONT'D extension. */
@@ -112,7 +110,6 @@ export const SCREENPLAY_EDITOR_CONFIG: DocumentEditorConfig = {
         nodeIdDedup: true,
         suggestions: true,
         orphanPrevention: true,
-        keybinds: true,
         fountain: true,
         contd: true,
         spellcheck: true,
@@ -136,7 +133,6 @@ export const TITLEPAGE_EDITOR_CONFIG: DocumentEditorConfig = {
         nodeIdDedup: false,
         suggestions: false,
         orphanPrevention: false,
-        keybinds: false,
         fountain: false,
         contd: false,
         spellcheck: false,

@@ -122,7 +122,12 @@
     "highlightOnHoverDesc": "Resalta ligeramente la línea sobre la que se pasa el cursor en el editor"
   },
   "keybinds": {
-    "screenplayElements": "Elementos de guión",
+    "groups": {
+      "global": "General",
+      "view": "Vista",
+      "screenplay": "Elementos de guión",
+      "style": "Estilo"
+    },
     "typing": "Escribir… (Esc para cancelar)",
     "notSet": "No asignado",
     "modifiersOnly": "Solo modificadores — presiona una tecla normal",
@@ -130,7 +135,29 @@
     "reset": "Restablecer",
     "resetTitle": "Borrar asignación del usuario",
     "resetDefaults": "Restablecer",
-    "save": "Guardar cambios"
+    "save": "Guardar cambios",
+    "labels": {
+      "save_project": "Guardar proyecto",
+      "toggle_focus_mode": "Modo concentración",
+      "view_screenplay": "Guión",
+      "view_title_page": "Portada",
+      "view_scene_cards": "Vista de fichas",
+      "view_split": "Dividir panel",
+      "view_timeline": "Línea de tiempo",
+      "view_left_sidebar": "Barra lateral izquierda",
+      "view_right_sidebar": "Barra lateral derecha",
+      "style_bold": "Negrita",
+      "style_italic": "Cursiva",
+      "style_underline": "Subrayado",
+      "screenplay_scene": "Cambiar a encabezado de escena",
+      "screenplay_action": "Cambiar a acción",
+      "screenplay_character": "Cambiar a personaje",
+      "screenplay_dialogue": "Cambiar a diálogo",
+      "screenplay_parenthetical": "Cambiar a paréntesis",
+      "screenplay_transition": "Cambiar a transición",
+      "screenplay_section": "Cambiar a sección",
+      "screenplay_note": "Cambiar a nota"
+    }
   },
   "readaloud": {
     "title": "Lectura en voz alta",
@@ -690,6 +717,12 @@
       "offer": "Guardar en un archivo te da una copia propia que puedes compartir; a partir de ahí, Scriptio mantiene ese archivo al día por su cuenta.",
       "confirm": "Elegir una ubicación…",
       "cancel": "Ahora no"
+    },
+    "autoSave": {
+      "title": "El guardado automático está activado",
+      "body": "{file} se mantiene al día por su cuenta: Scriptio escribe tus cambios mientras trabajas, así que no hay nada que guardar a mano.",
+      "hint": "Tu trabajo también se guarda en este dispositivo y en la nube si el proyecto está sincronizado.",
+      "ok": "Entendido"
     },
     "fileBind": {
       "title": "¿Guardar en este archivo?",

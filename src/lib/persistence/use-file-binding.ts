@@ -3,7 +3,7 @@
 import { useCallback, useContext, useMemo, useSyncExternalStore } from "react";
 
 import { UserContext } from "@src/context/UserContext";
-import { confirmFileBindPopup, saveToFilePopup } from "@src/lib/screenplay/popup";
+import { autoSavePopup, confirmFileBindPopup, saveToFilePopup } from "@src/lib/screenplay/popup";
 import { SCRIPTIO_FILE_FILTER } from "@src/lib/import/scriptio-file-open";
 
 import {
@@ -125,10 +125,20 @@ export function useFileActions(projectId: string | null, projectTitle: string): 
         // callback a new identity on every status change — twice per autosave,
         // "saving" then "saved" — and EditorPanel keys its global keybinds off
         // it, so the editor would tear down and rebind them on the save cadence.
-        //
+        const current = getFileBindingStatus(projectId);
+
         // Bound: just write. Re-opening a save dialog every time would make ⌘S
         // hostile in exactly the workflow this feature is for.
-        if (getFileBindingStatus(projectId).state !== "unbound") {
+        //
+        // The write still happens — the keystroke should never be a no-op — but
+        // it is the *reason* for pressing it that needs answering, so say that
+        // the file keeps itself current. Only where that is true: `missing` and
+        // `error` mean autosave is stopped, and the save panel is already saying
+        // so; promising it here would be a lie told over a real problem.
+        if (current.state !== "unbound") {
+            if (current.state === "saved" || current.state === "saving") {
+                autoSavePopup(userCtx, current.path);
+            }
             await flushNow(projectId);
             markManualSave(projectId);
             return;

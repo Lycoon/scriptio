@@ -122,7 +122,12 @@
     "highlightOnHoverDesc": "Lekko podświetla wiersz pod kursorem w edytorze"
   },
   "keybinds": {
-    "screenplayElements": "Elementy scenariusza",
+    "groups": {
+      "global": "Ogólne",
+      "view": "Widok",
+      "screenplay": "Elementy scenariusza",
+      "style": "Styl"
+    },
     "typing": "Wpisz… (Esc, aby anulować)",
     "notSet": "Nie ustawiono",
     "modifiersOnly": "Tylko modyfikatory — naciśnij zwykły klawisz",
@@ -130,7 +135,29 @@
     "reset": "Resetuj",
     "resetTitle": "Wyczyść niestandardowe przypisanie",
     "resetDefaults": "Resetuj",
-    "save": "Zapisz zmiany"
+    "save": "Zapisz zmiany",
+    "labels": {
+      "save_project": "Zapisz projekt",
+      "toggle_focus_mode": "Tryb skupienia",
+      "view_screenplay": "Scenariusz",
+      "view_title_page": "Strona tytułowa",
+      "view_scene_cards": "Widok fiszek",
+      "view_split": "Podziel panel",
+      "view_timeline": "Oś czasu",
+      "view_left_sidebar": "Lewy panel boczny",
+      "view_right_sidebar": "Prawy panel boczny",
+      "style_bold": "Pogrubienie",
+      "style_italic": "Kursywa",
+      "style_underline": "Podkreślenie",
+      "screenplay_scene": "Przełącz na nagłówek sceny",
+      "screenplay_action": "Przełącz na akcję",
+      "screenplay_character": "Przełącz na postać",
+      "screenplay_dialogue": "Przełącz na dialog",
+      "screenplay_parenthetical": "Przełącz na wtrącenie",
+      "screenplay_transition": "Przełącz na przejście",
+      "screenplay_section": "Przełącz na sekcję",
+      "screenplay_note": "Przełącz na notatkę"
+    }
   },
   "readaloud": {
     "title": "Czytanie na głos",
@@ -690,6 +717,12 @@
       "offer": "Zapis do pliku daje Ci własną kopię, którą możesz udostępniać; potem Scriptio samo utrzymuje ten plik w aktualnym stanie.",
       "confirm": "Wybierz lokalizację…",
       "cancel": "Nie teraz"
+    },
+    "autoSave": {
+      "title": "Autozapis jest włączony",
+      "body": "Plik {file} sam pozostaje aktualny — Scriptio zapisuje w nim zmiany w trakcie pracy, więc nie musisz zapisywać ręcznie.",
+      "hint": "Twoja praca jest też zapisywana na tym urządzeniu, a przy synchronizacji także w chmurze.",
+      "ok": "Rozumiem"
     },
     "fileBind": {
       "title": "Zapisywać do tego pliku?",

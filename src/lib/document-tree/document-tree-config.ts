@@ -24,7 +24,6 @@ export function createDocumentTreeConfig(docId: string): DocumentEditorConfig {
             nodeIdDedup: true,
             suggestions: false,
             orphanPrevention: false,
-            keybinds: false,
             fountain: false,
             contd: false,
             spellcheck: false,

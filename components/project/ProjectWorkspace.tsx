@@ -1,11 +1,13 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
-import { useViewContext } from "@src/context/ViewContext";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { PanelType, useViewContext } from "@src/context/ViewContext";
 import { ProjectContext } from "@src/context/ProjectContext";
+import { UserContext } from "@src/context/UserContext";
 import { useActiveEditor } from "@src/lib/editor/use-active-editor";
 import { centerCaretInView, focusEditorInViewport } from "@src/lib/editor/focus-in-viewport";
-import { useIsPhone } from "@src/lib/utils/hooks";
+import { useGlobalKeybinds, useIsPhone, useSettings } from "@src/lib/utils/hooks";
+import { useSaveProject } from "@src/lib/persistence/use-save-project";
 import EditorSidebarNavigation from "@components/editor/sidebar/EditorSidebarNavigation";
 import EditorSidebarFormat from "@components/editor/sidebar/EditorSidebarFormat";
 import ContextMenu from "@components/editor/sidebar/ContextMenu";
@@ -32,12 +34,76 @@ const ProjectWorkspace = () => {
         rightSidebarOpen,
         setRightSidebarOpen,
         timelineOpen,
+        setTimelineOpen,
         mobileEditMode,
         setMobileEditMode,
+        isSplit,
+        primaryPanel,
+        setSecondaryPanel,
+        setFocusedPanel,
+        setScreenplayView,
     } = useViewContext();
     const { isReadOnly } = useContext(ProjectContext);
+    const { updateIsZenMode } = useContext(UserContext);
     const isPhone = useIsPhone();
     const activeEditor = useActiveEditor();
+
+    // ---- Global keybinds ----
+    //
+    // Registered here, once, for the whole project: these act on the project and
+    // on the workspace, not on the document under the caret, so they must answer
+    // from whichever panel is up — including the ones that hold no editor at all.
+    const { settings } = useSettings();
+    const saveProject = useSaveProject();
+
+    const globalActions = useMemo(
+        () => ({
+            toggleFocusMode: () => updateIsZenMode((prev: boolean) => !prev),
+            saveProject: () => void saveProject(),
+            view: {
+                // Mirrors the panel menu, which offers the split on desktop only:
+                // the phone shows one panel at a time.
+                toggleSplit: () => {
+                    if (isPhone) return;
+                    if (isSplit) {
+                        setSecondaryPanel(null);
+                        return;
+                    }
+                    // The new side defaults to a singleton view — a document
+                    // needs a docId, which only the sidebar can supply.
+                    const other: PanelType = primaryPanel === "screenplay" ? "title" : "screenplay";
+                    setSecondaryPanel(other);
+                },
+                showScreenplay: () => setFocusedPanel("screenplay"),
+                showTitlePage: () => setFocusedPanel("title"),
+                // The card grid covers a screenplay panel rather than being one
+                // of its own, so bring the screenplay up before flipping — the
+                // shortcut would otherwise do nothing visible from the title page.
+                toggleSceneCards: () => {
+                    setFocusedPanel("screenplay");
+                    setScreenplayView((prev) => (prev === "cards" ? "editor" : "cards"));
+                },
+                toggleTimeline: () => setTimelineOpen((prev) => !prev),
+                toggleLeftSidebar: () => setLeftSidebarOpen((prev) => !prev),
+                toggleRightSidebar: () => setRightSidebarOpen((prev) => !prev),
+            },
+        }),
+        [
+            updateIsZenMode,
+            saveProject,
+            isPhone,
+            isSplit,
+            primaryPanel,
+            setSecondaryPanel,
+            setFocusedPanel,
+            setScreenplayView,
+            setTimelineOpen,
+            setLeftSidebarOpen,
+            setRightSidebarOpen,
+        ],
+    );
+
+    useGlobalKeybinds(settings?.keybinds, globalActions);
 
     // iOS WKWebView anchoring guard. The app shell is pinned to the viewport
     // (100vh, overflow hidden) and only the inner editor container is meant to

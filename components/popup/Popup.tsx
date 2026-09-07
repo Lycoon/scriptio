@@ -2,6 +2,7 @@
 
 import { UserContext } from "@src/context/UserContext";
 import {
+    PopupAutoSaveData,
     PopupCharacterData,
     PopupConfirmFileBindData,
     PopupData,
@@ -23,6 +24,7 @@ import PopupUnlockPages from "./PopupUnlockPages";
 import PopupUnlockScenes from "./PopupUnlockScenes";
 import PopupUploadToCloud from "./PopupUploadToCloud";
 import PopupSaveToFile from "./PopupSaveToFile";
+import PopupAutoSave from "./PopupAutoSave";
 import PopupConfirmFileBind from "./PopupConfirmFileBind";
 
 export const Popup = () => {
@@ -48,6 +50,8 @@ export const Popup = () => {
             return <PopupUnlockDraft {...(popup as PopupData<PopupUnlockDraftData>)} />;
         case PopupType.SaveToFile:
             return <PopupSaveToFile {...(popup as PopupData<PopupSaveToFileData>)} />;
+        case PopupType.AutoSave:
+            return <PopupAutoSave {...(popup as PopupData<PopupAutoSaveData>)} />;
         case PopupType.ConfirmFileBind:
             return <PopupConfirmFileBind {...(popup as PopupData<PopupConfirmFileBindData>)} />;
         default:

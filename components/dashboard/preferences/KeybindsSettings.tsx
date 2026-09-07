@@ -2,18 +2,35 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import form from "./../../utils/Form.module.css";
 import sharedStyles from "./../project/ProjectSettings.module.css";
 import styles from "./KeybindsSettings.module.css";
 
 import { useSettings } from "@src/lib/utils/hooks";
 import { tinykeys } from "@node_modules/tinykeys/dist/tinykeys";
-import { DEFAULT_KEYBINDS, DefaultKeyBind, prettyPrintKeybind, UserKeybindsMap } from "@src/lib/utils/keybinds";
+import {
+    DEFAULT_KEYBINDS,
+    DefaultKeyBind,
+    KeybindGroup,
+    KeybindId,
+    prettyPrintKeybind,
+    UserKeybindsMap,
+} from "@src/lib/utils/keybinds";
 import { useTranslations } from "next-intl";
 import { RotateCcw, Save } from "lucide-react";
+import Section from "@components/dashboard/SettingsSection";
+
+/** Section order in the panel: what works everywhere, then the two editor sets. */
+const GROUP_ORDER: KeybindGroup[] = ["global", "view", "screenplay", "style"];
+
+const GROUPED_KEYBINDS = GROUP_ORDER.map((group) => ({
+    group,
+    binds: (Object.entries(DEFAULT_KEYBINDS) as [KeybindId, DefaultKeyBind][]).filter(
+        ([, kb]) => kb.group === group,
+    ),
+}));
 
 export type KeybindElementProps = {
-    id: string;
+    id: KeybindId;
     kb: DefaultKeyBind;
     startListening: (id: string) => void;
     resetBinding: (id: string) => void;
@@ -37,7 +54,7 @@ const KeybindElement = ({
     return (
         <div key={id} className={styles.optionCard}>
             <div className={styles.optionInfo}>
-                <span className={styles.optionTitle}>{kb.label}</span>
+                <span className={styles.optionTitle}>{t(`labels.${id}`)}</span>
                 <span className={styles.optionDesc}>{t("defaultPrefix", { combo: prettyPrintKeybind(kb.defaultCombo) })}</span>
             </div>
 
@@ -131,18 +148,23 @@ const KeybindsSettings = () => {
     const formatComboFromEvent = (e: KeyboardEvent) => {
         const parts: string[] = [];
 
+        // Capitalised, because a global combo is resolved through
+        // `event.getModifierState(name)` and the DOM only recognises these exact
+        // names — a lowercase "alt" matches nothing, silently.
         const hasMod = e.ctrlKey || e.metaKey;
         if (hasMod) parts.push("$mod");
-        if (e.altKey) parts.push("alt");
-        if (e.shiftKey) parts.push("shift");
+        if (e.altKey) parts.push("Alt");
+        if (e.shiftKey) parts.push("Shift");
 
-        let key = e.key || "";
-        const lower = key.toLowerCase();
+        const lower = (e.key || "").toLowerCase();
+        if (["shift", "ctrl", "control", "meta", "alt"].includes(lower)) return null;
 
-        if (lower === " ") key = "space";
-        const main = key.length === 1 ? key.toLowerCase() : lower;
-
-        if (["shift", "ctrl", "control", "meta", "alt"].includes(main)) return null;
+        // Record the key the user pressed, not the character it produced. With
+        // Alt or Shift down those differ — Option+F is "ƒ", Shift+1 is "!" — and
+        // a combo stored as the character is one the handlers cannot match back
+        // (see `physicalKey`). Everything else keeps its DOM name, in the casing
+        // ProseMirror expects: "Enter", "ArrowLeft", "F5".
+        const main = /^(Key[A-Z]|Digit[0-9]|Space)$/.test(e.code) ? e.code : e.key.length === 1 ? lower : e.key;
 
         parts.push(main);
         return parts.join("+");
@@ -218,29 +240,24 @@ const KeybindsSettings = () => {
 
     return (
         <div className={sharedStyles.settingsForm}>
-            <div className={sharedStyles.formGroup}>
-                <label className={form.label}>{t("screenplayElements")}</label>
-            </div>
-
-            <div className={styles.options}>
-                {Object.entries(DEFAULT_KEYBINDS).map(([id, kb]) => {
-                    const userOverride = userKeybinds[id];
-                    const isListening = listeningFor === id;
-
-                    return (
-                        <KeybindElement
-                            key={id}
-                            id={id}
-                            kb={kb}
-                            resetBinding={resetBinding}
-                            tempCombo={tempCombo}
-                            current={userOverride}
-                            isListening={isListening}
-                            startListening={startListening}
-                        />
-                    );
-                })}
-            </div>
+            {GROUPED_KEYBINDS.map(({ group, binds }) => (
+                <Section key={group} title={t(`groups.${group}`)}>
+                    <div className={styles.options}>
+                        {binds.map(([id, kb]) => (
+                            <KeybindElement
+                                key={id}
+                                id={id}
+                                kb={kb}
+                                resetBinding={resetBinding}
+                                tempCombo={tempCombo}
+                                current={userKeybinds[id]}
+                                isListening={listeningFor === id}
+                                startListening={startListening}
+                            />
+                        ))}
+                    </div>
+                </Section>
+            ))}
 
             <div className={sharedStyles.formActions}>
                 <button className={sharedStyles.formBtn} onClick={resetDefaults}>
