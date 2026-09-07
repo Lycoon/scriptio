@@ -41,7 +41,10 @@
     background: var(--secondary);
     padding: 20px;
     border-radius: 12px;
-    height: 200px;
+    /* min-height, not height: the controls column is a wrapping help line plus a
+       dropzone, so a locked height cannot contain it once either grows — a long
+       translation is enough to push the dropzone out of the panel. */
+    min-height: 200px;
 }
 
 .posterPreview {
@@ -154,5 +157,21 @@
     .formActions .formBtn {
         flex: 1 1 auto;
         padding: 8px 20px;
+    }
+
+    /* The settings drawer is ~75vw, so the row left barely 110px beside the
+       100px-wide preview: the help text wrapped to a half-dozen lines and the
+       dropzone under it ran well past the area's height. Stack the two instead,
+       so each gets the drawer's full width. */
+    .posterUploadArea {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    /* Centred now that it sits on its own row above the controls. */
+    .posterPreview {
+        align-self: center;
     }
 }

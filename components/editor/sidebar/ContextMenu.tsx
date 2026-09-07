@@ -200,7 +200,16 @@ const CharacterItemMenu = ({ props }: SubMenuProps<CharacterContextProps>) => {
             {!isReadOnly && (
                 <>
                     <ContextMenuItem text={t("edit")} icon={Pencil} action={() => editCharacterPopup(character, userCtx)} />
-                    <ContextMenuItem text={t("remove")} action={() => deleteCharacter(character.name, projectCtx)} />
+                    {/* Only characters saved in the project's character map can be
+                     * removed. An auto-detected one only exists as cues in the
+                     * script, so deleting it is a no-op — greyed out rather than
+                     * hidden, so the row keeps its place and can say why. */}
+                    <ContextMenuItem
+                        text={t("remove")}
+                        action={() => deleteCharacter(character.name, projectCtx)}
+                        disabled={!character.persistent}
+                        title={character.persistent ? undefined : t("removeUnsavedHint")}
+                    />
                     <ContextMenuItem
                         text={t("paste")}
                         action={() => pasteText(projectCtx.editor!, character.name)}

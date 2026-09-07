@@ -84,7 +84,7 @@
     "fileNoAccess": "Scriptio hat keine Berechtigung mehr für diese Datei. Wählen Sie sie über Suchen… erneut aus.",
     "targetCloudOff": "Nicht synchronisiert",
     "cloudUpgrade": "Auf Pro upgraden",
-    "cloudSignInUpgrade": "Anmelden und upgraden",
+    "cloudSignInUpgrade": "Mit der Cloud synchronisieren",
     "fileUseExisting": "Vorhandene Datei verwenden…"
   },
   "timer": {
@@ -606,6 +606,7 @@
     "cut": "Ausschneiden",
     "selectInEditor": "Auswählen",
     "remove": "Entfernen",
+    "removeUnsavedHint": "Automatisch aus dem Skript erkannt – nichts zu entfernen",
     "paste": "Einfügen",
     "highlight": "Hervorheben",
     "addCharacter": "Charakter hinzufügen",

@@ -14,10 +14,16 @@ const projectMembershipSelect = {
             author: true,
             createdAt: true,
             updatedAt: true,
+            // Counted on the join table rather than fetched as rows: the library
+            // only needs "how many people share this", and the members
+            // themselves are a separate call the settings panel makes.
+            _count: {
+                select: { members: true },
+            },
         },
     },
     role: true,
-};
+} satisfies Prisma.ProjectMemberSelect;
 
 const collaboratorSelect = {
     user: {
@@ -48,12 +54,34 @@ type RawProject = Prisma.ProjectGetPayload<{
  * of this payload: it is fetched (and cached offline) through
  * `/projects/[projectId]/poster`, so `hasPoster` is only a hint that one exists.
  */
-export type Project = RawProject;
+export type Project = Omit<RawProject, "_count"> & {
+    /**
+     * How many people are members of this project, its owner included — the same
+     * population the collaborators panel lists.
+     *
+     * Optional because only the cloud knows it: a project read back from the
+     * local cache (local-only, or any project while offline) leaves it unset
+     * rather than claiming a number it cannot have.
+     */
+    collaboratorCount?: number;
+};
 
 export interface ProjectMembershipPayload {
     role: ProjectRole;
     project: Project;
 }
+
+/** Flattens Prisma's `_count` into the `collaboratorCount` the client reads. */
+const toMembershipPayload = ({
+    role,
+    project: { _count, ...project },
+}: {
+    role: ProjectRole;
+    project: RawProject;
+}): ProjectMembershipPayload => ({
+    role,
+    project: { ...project, collaboratorCount: _count.members },
+});
 
 export class ProjectRepository {
     async fetchProjectMemberships(userId: string) {
@@ -73,7 +101,7 @@ export class ProjectRepository {
 
         if (!user) return [];
 
-        return user.projects;
+        return user.projects.map(toMembershipPayload);
     }
 
     async fetchProjectMembership(projectId: string, userId: string) {
@@ -87,7 +115,7 @@ export class ProjectRepository {
             select: projectMembershipSelect,
         });
 
-        return membership;
+        return membership && toMembershipPayload(membership);
     }
 
     fetchProjectTitle(projectId: string) {

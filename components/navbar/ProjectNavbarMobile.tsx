@@ -25,7 +25,7 @@ import { usePagePanLock } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 
 import { useProjectNavbar } from "./useProjectNavbar";
-import { HistoryControls, MobileSaveTargets, SaveTargets } from "./ProjectNavbarShared";
+import { HistoryControls, MobileSaveTargets } from "./ProjectNavbarShared";
 import ProjectNavbarMobileMenu from "./ProjectNavbarMobileMenu";
 import SavesPanel from "./SavesPanel";
 import ProductionPanel from "./ProductionPanel";
@@ -113,6 +113,14 @@ const ProjectNavbarMobile = () => {
             setMobileMenuOpen(false);
         }
         setActivePanel(next);
+    };
+
+    // Search is an overlay panel like the tool sheets, so it dismisses the same
+    // things they do — a drawer left open behind it can't be reached or closed.
+    const closeDrawersForOverlay = () => {
+        setLeftSidebarOpen(false);
+        setRightSidebarOpen(false);
+        setMobileMenuOpen(false);
     };
 
     const openAnalytics = () => {
@@ -266,7 +274,9 @@ const ProjectNavbarMobile = () => {
                     keyboard (MobileFormatToolbar); the sidebars open via the editor
                     edge chevrons; everything else is in the burger menu below. */}
                 <div className={navbar.mobile_right}>
-                    {isInProject && isEditorView && <ScreenplaySearch />}
+                    {isInProject && isEditorView && (
+                        <ScreenplaySearch onOpen={closeDrawersForOverlay} />
+                    )}
                     <div
                         className={`${navBtn.button} ${navbar.mobile_icon} ${mobileMenuOpen || isDashboardOpen ? navBtn.active : ""}`}
                         onClick={() => {
@@ -296,8 +306,13 @@ const ProjectNavbarMobile = () => {
 
             {isInProject && projectId && (
                 <ProjectNavbarMobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
+                    {/* No save glyph beside the field, unlike the desktop title
+                        island: that glyph is a *summary* of the three targets,
+                        opened for the breakdown — and here the breakdown is
+                        already on screen, three rows below it. The width it took
+                        goes to the title instead, which on a 75vw drawer is the
+                        one thing short of room. */}
                     <div className={mobileMenu.title_row}>
-                        <SaveTargets hasCloud={!!membership} />
                         <input
                             type="text"
                             className={mobileMenu.title_input}
@@ -308,7 +323,8 @@ const ProjectNavbarMobile = () => {
                     </div>
 
                     {/* The bar has no room for the readout and no pointer to hover
-                        it with, so the detail lives here as plain rows. */}
+                        it with, so the detail lives here as plain rows — the only
+                        place the phone states where the project is saved. */}
                     {/* Upload-to-cloud lives on the cloud row inside here now,
                         beside the state it changes, rather than as a loose menu
                         item several rows away from it. */}

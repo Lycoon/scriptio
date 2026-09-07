@@ -54,17 +54,19 @@
 }
 
 /* Row of icon-only, mutually exclusive toggles (see ScreenplayViewSwitcher).
-   Left-aligned rather than stretched: the buttons are square and sit under the
-   icon column of the labelled items above and below them, so the menu keeps one
-   left edge. The 3px inset is what puts a 14px glyph centred in a 32px square at
-   the same 12px as a .dropdown_item's own icon. */
+   Left-aligned rather than stretched, so the menu keeps one left edge: the row
+   is flush with the labelled items (no inset of its own), and each button is
+   38x32 — .dropdown_item's 12px inset plus a 14px glyph, centred — so the glyph
+   lands in the same icon column while the button's hover/active box starts on
+   the same left edge as a labelled item's. A 32px square would centre the glyph
+   3px short of that column, which is why the width isn't the row height. */
 .icon_row {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     gap: 4px;
     width: 100%;
-    padding: 2px 3px;
+    padding: 0;
 }
 
 .icon_btn {
@@ -72,7 +74,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
+    width: 38px;
     height: 32px;
     padding: 0;
     border: none;

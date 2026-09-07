@@ -109,6 +109,25 @@
     text-overflow: ellipsis;
 }
 
+/* How many people share this project, owner included — rendered next to the
+   storage glyph and only once there is actually someone to share with, so it
+   reads as something true of this row rather than an always-empty column. */
+.collaborators {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    color: var(--secondary-text);
+    font-variant-numeric: tabular-nums;
+}
+
+/* On phone it sits in the inline meta line, which sets its own smaller size. */
+.meta_inline .collaborators {
+    font-size: inherit;
+}
+
 .icon {
     color: var(--secondary-text);
     flex-shrink: 0;

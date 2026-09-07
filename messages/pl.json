@@ -83,7 +83,7 @@
     "fileNoAccess": "Scriptio nie ma już uprawnień do tego pliku. Użyj opcji Znajdź…, aby wskazać go ponownie.",
     "targetCloudOff": "Niezsynchronizowany",
     "cloudUpgrade": "Przejdź na Pro",
-    "cloudSignInUpgrade": "Zaloguj się i przejdź na Pro",
+    "cloudSignInUpgrade": "Synchronizuj z chmurą",
     "fileUseExisting": "Użyj istniejącego pliku…"
   },
   "timer": {
@@ -605,6 +605,7 @@
     "cut": "Wytnij",
     "selectInEditor": "Zaznacz",
     "remove": "Usuń",
+    "removeUnsavedHint": "Wykryto automatycznie w scenariuszu — nie ma czego usunąć",
     "paste": "Wklej",
     "highlight": "Wyróżnij",
     "addCharacter": "Dodaj postać",

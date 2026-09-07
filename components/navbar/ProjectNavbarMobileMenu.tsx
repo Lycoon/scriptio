@@ -27,6 +27,7 @@ interface ProjectNavbarMobileMenuProps {
  */
 const ProjectNavbarMobileMenu = ({ isOpen, onClose, children }: ProjectNavbarMobileMenuProps) => {
     const t = useTranslations("navbar");
+    const tSidebar = useTranslations("sidebar");
 
     // Portals need `document`, which doesn't exist during SSR — render nothing
     // until mounted so the server and first client render agree.
@@ -40,7 +41,7 @@ const ProjectNavbarMobileMenu = ({ isOpen, onClose, children }: ProjectNavbarMob
             {isOpen && <div className={menu.backdrop} onClick={onClose} />}
             <div className={join(menu.drawer, !isOpen ? menu.drawer_closed : "")}>
                 <div className={menu.header}>
-                    <span className={menu.header_title}>{t("menu")}</span>
+                    <h2 className={menu.header_title}>{tSidebar("title")}</h2>
                     <button className={menu.close_btn} onClick={onClose} aria-label={t("close")}>
                         <X size={18} />
                     </button>

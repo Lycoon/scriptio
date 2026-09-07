@@ -1099,20 +1099,6 @@ const TimelinePanel = () => {
                 </button>
             </div>
 
-            {/* Custom, always-present horizontal scrollbar (native overlay bars
-                auto-hide and take no space, so the timeline could not be scrolled
-                once zoomed past the container width). */}
-            <div className={styles.hscroll}>
-                <div className={styles.hscroll_corner} style={{ width: LABEL_W }} />
-                <div ref={hTrackRef} className={styles.hscroll_track}>
-                    <div
-                        className={styles.hscroll_thumb}
-                        style={{ left: `${hbar.left * 100}%`, width: `${hbar.ratio * 100}%` }}
-                        onPointerDown={onHThumbPointerDown}
-                    />
-                </div>
-            </div>
-
             {/* Layer tracks: scroll vertically (layers) and horizontally (time). */}
             <div ref={tracksScrollRef} className={styles.tracks_scroll} onScroll={syncRuler}>
                 <div className={styles.grid} style={{ width: LABEL_W + trackWidth }}>
@@ -1310,6 +1296,21 @@ const TimelinePanel = () => {
                             <div className={styles.ruler_playhead} style={{ left: playhead * pxPerMin }} />
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* Custom, always-present horizontal scrollbar (native overlay bars
+                auto-hide and take no space, so the timeline could not be scrolled
+                once zoomed past the container width). Last in the column, under
+                the ruler, where a horizontal scrollbar is looked for. */}
+            <div className={styles.hscroll}>
+                <div className={styles.hscroll_corner} style={{ width: LABEL_W }} />
+                <div ref={hTrackRef} className={styles.hscroll_track}>
+                    <div
+                        className={styles.hscroll_thumb}
+                        style={{ left: `${hbar.left * 100}%`, width: `${hbar.ratio * 100}%` }}
+                        onPointerDown={onHThumbPointerDown}
+                    />
                 </div>
             </div>
         </div>

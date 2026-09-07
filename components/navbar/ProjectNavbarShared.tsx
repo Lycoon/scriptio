@@ -577,13 +577,15 @@ export const MobileSaveTargets = ({
     /** Closes the drawer once an action has been taken. */
     onAction: () => void;
 }) => (
-    <SaveTargetsBody
-        projectId={projectId}
-        hasCloud={hasCloud}
-        canUploadToCloud={canUploadToCloud}
-        onUploadToCloud={onUploadToCloud}
-        onAction={onAction}
-    />
+    <div className={navbar.mobile_targets}>
+        <SaveTargetsBody
+            projectId={projectId}
+            hasCloud={hasCloud}
+            canUploadToCloud={canUploadToCloud}
+            onUploadToCloud={onUploadToCloud}
+            onAction={onAction}
+        />
+    </div>
 );
 
 /**

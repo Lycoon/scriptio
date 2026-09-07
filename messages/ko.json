@@ -83,7 +83,7 @@
     "fileNoAccess": "이 파일에 접근할 권한이 없습니다. ‘위치 지정…’으로 다시 선택하세요.",
     "targetCloudOff": "동기화 안 됨",
     "cloudUpgrade": "Pro로 업그레이드",
-    "cloudSignInUpgrade": "로그인 후 업그레이드",
+    "cloudSignInUpgrade": "클라우드에 동기화",
     "fileUseExisting": "기존 파일 사용…"
   },
   "timer": {
@@ -605,6 +605,7 @@
     "cut": "잘라내기",
     "selectInEditor": "선택",
     "remove": "삭제",
+    "removeUnsavedHint": "대본에서 자동으로 감지됨 — 삭제할 항목이 없습니다",
     "paste": "붙여넣기",
     "highlight": "하이라이트",
     "addCharacter": "인물 추가",

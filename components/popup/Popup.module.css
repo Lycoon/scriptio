@@ -40,7 +40,7 @@
     font-size: 1.4rem;
     font-weight: bold;
     color: var(--primary-text);
-    font-family: var(--font-josef);
+    font-family: var(--font-josefin), sans-serif;
     text-transform: uppercase;
 }
 
