@@ -5,6 +5,7 @@ import { importImageFile, importAudioFile, loadAssetObjectUrl } from "@src/lib/a
 import { collectReferencedHashes, gcProjectAssets } from "@src/lib/assets/asset-gc";
 import {
     getStorageProvider,
+    type SnapshotMeta,
     type StoredAsset,
 } from "@src/lib/persistence/storage-provider/storage-provider";
 import { ProjectState } from "@src/lib/project/project-state";
@@ -177,6 +178,92 @@ describe("asset GC (reconcile from doc)", () => {
         );
         await gcProjectAssets(p, ydoc);
         expect(await provider.listAssetHashes(p)).toEqual(["B"]);
+
+        await provider.deleteProjectAssets(p);
+        ydoc.destroy();
+    });
+});
+
+describe("asset GC (snapshots keep their assets alive)", () => {
+    /** Record a history entry referencing `hashes`. Bytes are irrelevant here —
+     *  GC reads the recorded index, never the snapshot itself. */
+    async function putSnapshotReferencing(
+        projectId: string,
+        key: string,
+        hashes: string[],
+        extra: Partial<SnapshotMeta> = {},
+    ): Promise<void> {
+        const provider = await getStorageProvider();
+        await provider.putSnapshot(
+            {
+                key,
+                projectId,
+                type: "auto",
+                createdAt: Date.now(),
+                size: 1,
+                contentHash: key,
+                assetHashes: hashes,
+                ...extra,
+            },
+            new Uint8Array([1]).buffer as ArrayBuffer,
+        );
+    }
+
+    /** A doc with one board referencing exactly `hashes`. */
+    function docReferencing(hashes: string[]): ProjectState {
+        const ydoc = new ProjectState();
+        const repo = createProjectRepository(ydoc)!;
+        const board = repo.createBoardDocument("B1");
+        ydoc.boardData(board).set(
+            "cards",
+            JSON.stringify(hashes.map((assetId, i) => ({ id: `c${i}`, type: "image", assetId, ...cardBase }))),
+        );
+        return ydoc;
+    }
+
+    it("keeps an asset the live doc dropped while a snapshot still references it", async () => {
+        const provider = await getStorageProvider();
+        const p = pid();
+
+        await putDummyAsset(p, "A");
+        await putDummyAsset(p, "B");
+        // The version the user could still restore holds a card using A.
+        await putSnapshotReferencing(p, `${p}/auto/1`, ["A", "B"]);
+
+        // A is gone from the live document, but restoring that snapshot without
+        // its image would restore a broken board.
+        const ydoc = docReferencing(["B"]);
+        await gcProjectAssets(p, ydoc);
+        expect((await provider.listAssetHashes(p)).sort()).toEqual(["A", "B"]);
+
+        // Once the snapshot goes, nothing references A and it is collected.
+        await provider.deleteSnapshots([`${p}/auto/1`]);
+        await gcProjectAssets(p, ydoc);
+        expect(await provider.listAssetHashes(p)).toEqual(["B"]);
+
+        await provider.deleteProjectAssets(p);
+        await provider.deleteProjectSnapshots(p);
+        ydoc.destroy();
+    });
+
+    it("deletes nothing at all when a snapshot's references are unreadable", async () => {
+        const provider = await getStorageProvider();
+        const p = pid();
+
+        await putDummyAsset(p, "A");
+        await putDummyAsset(p, "orphan");
+        // A snapshot whose board cards wouldn't parse when it was written: its
+        // reference list is unknown, so no asset can be proven unreferenced.
+        await putSnapshotReferencing(p, `${p}/auto/1`, [], { assetsUnparsed: true });
+
+        const ydoc = docReferencing(["A"]);
+        await gcProjectAssets(p, ydoc);
+        expect((await provider.listAssetHashes(p)).sort()).toEqual(["A", "orphan"]);
+
+        // With that snapshot gone the sweep is trustworthy again.
+        await provider.deleteProjectSnapshots(p);
+        await gcProjectAssets(p, ydoc);
+        expect(await provider.listAssetHashes(p)).toEqual(["A"]);
 
         await provider.deleteProjectAssets(p);
         ydoc.destroy();

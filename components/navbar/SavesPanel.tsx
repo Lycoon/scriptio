@@ -15,14 +15,8 @@ import {
     Loader2,
     Lock,
 } from "lucide-react";
-import {
-    listSaves,
-    createManualSave,
-    restoreSave,
-    renameManualSave,
-    deleteSave,
-    SaveEntry,
-} from "@src/lib/utils/requests";
+import type { SavesProvider } from "@src/lib/saves/saves-provider";
+import type { SaveEntry } from "@src/lib/saves/types";
 
 import styles from "./SavesPanel.module.css";
 
@@ -32,6 +26,17 @@ interface SavesPanelProps {
     onClose: () => void;
     isPro: boolean;
 }
+
+/**
+ * Which history this project has, once we've looked.
+ *
+ * Resolved from the project's storage target rather than from the `isPro` /
+ * membership props the navbar already holds: those describe the *user*, and the
+ * question here is where the versions are kept. A local-only project's history
+ * lives on this device, costs nothing to keep, and is free; a cloud project's
+ * lives in R2 and stays behind the Pro gate.
+ */
+type SavesMode = "loading" | "cloud" | "local";
 
 const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
     const t = useTranslations("saves");
@@ -45,6 +50,8 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
         openDashboard(isSignedIn ? "Subscription" : "Auth", { fromMenu: true });
     };
 
+    const [mode, setMode] = useState<SavesMode>("loading");
+    const [provider, setProvider] = useState<SavesProvider | null>(null);
     const [saves, setSaves] = useState<SaveEntry[]>([]);
     const [loading, setLoading] = useState(false);
     const [saveName, setSaveName] = useState("");
@@ -73,16 +80,42 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
         }
     }
 
+    // Resolve the storage target before rendering anything that depends on it —
+    // the panel would otherwise flash the upgrade gate at a local project while
+    // the lookup is in flight.
     useEffect(() => {
-        if (!isOpen) return;
+        let cancelled = false;
+        (async () => {
+            const [{ isCloudSyncedProject }, { getSavesProvider }] = await Promise.all([
+                import("@src/lib/persistence/storage-provider/local-persistence"),
+                import("@src/lib/saves/saves-provider"),
+            ]);
+            const isCloud = await isCloudSyncedProject(projectId);
+            const resolved = await getSavesProvider(projectId);
+            if (cancelled) return;
+            setMode(isCloud ? "cloud" : "local");
+            setProvider(resolved);
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [projectId]);
+
+    useEffect(() => {
+        if (!isOpen || !provider) return;
+        let cancelled = false;
         const fetchSaves = async () => {
             setLoading(true);
-            const data = await listSaves(projectId);
+            const data = await provider.list(projectId);
+            if (cancelled) return;
             setSaves(data);
             setLoading(false);
         };
         fetchSaves();
-    }, [isOpen, projectId]);
+        return () => {
+            cancelled = true;
+        };
+    }, [isOpen, projectId, provider]);
 
     // Focus name input when shown
     useEffect(() => {
@@ -115,9 +148,9 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
 
     // Create manual save
     const handleCreate = async () => {
-        if (!saveName.trim()) return;
+        if (!saveName.trim() || !provider) return;
         setIsCreating(true);
-        const entry = await createManualSave(projectId, saveName.trim());
+        const entry = await provider.createManual(projectId, saveName.trim());
         if (entry) {
             setSaves((prev) => [entry, ...prev]);
         }
@@ -126,16 +159,18 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
         setIsCreating(false);
     };
 
-    // Restore
+    // Restore. Both sides reload the page from here — the cloud by closing every
+    // client socket, the local one on its own — so there is no list to update.
     const handleRestore = async (key: string) => {
-        await restoreSave(projectId, key);
+        if (!provider) return;
+        await provider.restore(projectId, key);
         setConfirmRestoreKey(null);
     };
 
     // Rename
     const handleRename = async (key: string) => {
-        if (!editName.trim()) return;
-        await renameManualSave(projectId, key, editName.trim());
+        if (!editName.trim() || !provider) return;
+        await provider.renameManual(projectId, key, editName.trim());
         setSaves((prev) =>
             prev.map((s) => (s.key === key ? { ...s, name: editName.trim() } : s))
         );
@@ -145,10 +180,15 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
 
     // Delete
     const handleDelete = async (key: string) => {
-        await deleteSave(projectId, key);
+        if (!provider) return;
+        await provider.remove(projectId, key);
         setSaves((prev) => prev.filter((s) => s.key !== key));
         setConfirmDeleteKey(null);
     };
+
+    // "for all collaborators" is a promise a device-local history cannot make and
+    // does not need to: nobody else can see this project.
+    const confirmRestoreText = mode === "local" ? t("confirmRestoreLocal") : t("confirmRestore");
 
     const formatFullDate = (iso: string) => {
         return new Date(iso).toLocaleString(undefined, {
@@ -162,7 +202,7 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
 
     if (!isOpen) return null;
 
-    if (!isPro) {
+    if (mode === "cloud" && !isPro) {
         return (
             <div className={styles.container} ref={panelRef}>
                 <div className={styles.header}>
@@ -222,16 +262,18 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
                     <button
                         className={styles.create_btn}
                         onClick={() => setShowNameInput(true)}
+                        disabled={!provider}
                     >
                         <Save size={14} />
                         {t("saveCurrentVersion")}
                     </button>
                 )}
+                {mode === "local" && <p className={styles.device_hint}>{t("deviceOnlyHint")}</p>}
             </div>
 
             {/* Saves list */}
             <div className={styles.list}>
-                {loading ? (
+                {loading || mode === "loading" ? (
                     <div className={styles.loading}>
                         <Loader2 size={20} className={styles.spinner} />
                     </div>
@@ -263,7 +305,7 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
                                             </div>
                                         ) : confirmRestoreKey === save.key ? (
                                             <div className={styles.confirm_row}>
-                                                <span className={styles.confirm_text}>{t("confirmRestore")}</span>
+                                                <span className={styles.confirm_text}>{confirmRestoreText}</span>
                                                 <div className={styles.confirm_btns}>
                                                     <button
                                                         className={styles.confirm_yes}
@@ -346,7 +388,7 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
                                     <div key={save.key} className={styles.item}>
                                         {confirmRestoreKey === save.key ? (
                                             <div className={styles.confirm_row}>
-                                                <span className={styles.confirm_text}>{t("confirmRestore")}</span>
+                                                <span className={styles.confirm_text}>{confirmRestoreText}</span>
                                                 <div className={styles.confirm_btns}>
                                                     <button
                                                         className={styles.confirm_yes}

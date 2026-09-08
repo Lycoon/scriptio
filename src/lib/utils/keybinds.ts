@@ -40,10 +40,19 @@ export const prettyPrintKeybind = (keybind: string): string => {
         (token) =>
             ({
                 $mod: isMac ? "⌘" : "Ctrl",
-                alt: "Alt",
+                // ⌘ and ⌥ are how the keys are labelled on a Mac keyboard. ⇧ is
+                // too, but it draws far smaller than the other two and reads as
+                // a speck at this size, so Shift stays a word everywhere.
+                alt: isMac ? "⌥" : "Alt",
                 shift: "Shift",
                 space: "Space",
-            })[token] ?? physicalKey(token),
+            })[token] ??
+            physicalKey(token) ??
+            // A combo's key can also be stored as the character it types
+            // ("$mod+s"), which should print like the code form does. Anything
+            // longer is a DOM key name — "Enter", "ArrowLeft", "F5" — and keeps
+            // the spelling it was stored with.
+            (token.length === 1 ? token.toUpperCase() : undefined),
         "+",
     );
 };

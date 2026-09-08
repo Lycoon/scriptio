@@ -10,14 +10,11 @@ import {
     SNAPSHOT_INTERVAL_MS,
     STALE_AWARENESS_TIMEOUT_MS,
     AWARENESS_CLEANUP_INTERVAL_MS,
-    RETENTION_30_DAYS_MS,
-    RETENTION_DAY_MS,
-    RETENTION_HOUR_MS,
-    RETENTION_INTERVAL_30MIN_MS,
     PURGE_TOMBSTONE_GRACE_MS,
     SessionInfo,
-    SaveEntry,
 } from "./types";
+import { selectExpiredAutoSaves } from "../saves/retention";
+import type { SaveEntry } from "../saves/types";
 import { handleProtocolMessage } from "./protocol";
 import { ProjectState } from "../project/project-doc";
 import { collectReferencedHashes } from "../assets/asset-refs";
@@ -384,11 +381,10 @@ export class ProjectRoom extends DurableObject {
     }
 
     /**
-     * Tiered retention cleanup for auto-saves.
-     * - 0–1 hour: keep all (~1 min granularity)
-     * - 1–24 hours: keep one per 30-min window
-     * - 1–30 days: keep one per day
-     * - 30+ days: delete
+     * Tiered retention cleanup for auto-saves. The tiering itself is shared with
+     * the device-local history (`src/lib/saves/retention.ts`); all this does is
+     * present R2's listing in the terms it expects. No byte budget here — R2 is
+     * not a resource the user's browser can run out of.
      */
     private async cleanupAutoSaves(): Promise<void> {
         if (!this.projectId) return;
@@ -397,51 +393,14 @@ export class ProjectRoom extends DurableObject {
         const listed = await (this.env as Env).SNAPSHOTS.list({ prefix, limit: 1000 });
         if (listed.objects.length === 0) return;
 
-        const now = Date.now();
-        const toDelete: string[] = [];
-
-        // Group saves by time windows for each retention tier
-        const tier30min = new Map<number, R2Object[]>(); // 1h–24h: 30-min windows
-        const tierDaily = new Map<number, R2Object[]>(); // 1d–30d: daily windows
-
-        for (const obj of listed.objects) {
-            const age = now - obj.uploaded.getTime();
-
-            if (age > RETENTION_30_DAYS_MS) {
-                // Older than 30 days: delete
-                toDelete.push(obj.key);
-            } else if (age > RETENTION_DAY_MS) {
-                // 1–30 days: keep one per day
-                const dayWindow = Math.floor(obj.uploaded.getTime() / RETENTION_DAY_MS);
-                if (!tierDaily.has(dayWindow)) tierDaily.set(dayWindow, []);
-                tierDaily.get(dayWindow)!.push(obj);
-            } else if (age > RETENTION_HOUR_MS) {
-                // 1–24 hours: keep one per 30-min window
-                const window30 = Math.floor(obj.uploaded.getTime() / RETENTION_INTERVAL_30MIN_MS);
-                if (!tier30min.has(window30)) tier30min.set(window30, []);
-                tier30min.get(window30)!.push(obj);
-            }
-            // 0–1 hour: keep all (no action)
-        }
-
-        // For each window, keep the latest, delete the rest
-        for (const [, objects] of tier30min) {
-            if (objects.length > 1) {
-                objects.sort((a, b) => b.uploaded.getTime() - a.uploaded.getTime());
-                for (let i = 1; i < objects.length; i++) {
-                    toDelete.push(objects[i].key);
-                }
-            }
-        }
-
-        for (const [, objects] of tierDaily) {
-            if (objects.length > 1) {
-                objects.sort((a, b) => b.uploaded.getTime() - a.uploaded.getTime());
-                for (let i = 1; i < objects.length; i++) {
-                    toDelete.push(objects[i].key);
-                }
-            }
-        }
+        const toDelete = selectExpiredAutoSaves(
+            listed.objects.map((obj) => ({
+                key: obj.key,
+                createdAt: obj.uploaded.getTime(),
+                size: obj.size,
+            })),
+            Date.now(),
+        );
 
         // Batch delete (R2 supports up to 1000 keys per delete)
         if (toDelete.length > 0) {

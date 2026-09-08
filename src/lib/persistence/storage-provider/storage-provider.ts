@@ -105,6 +105,42 @@ export interface StoredPoster {
     updatedAt: number;
 }
 
+/**
+ * One entry in a project's device-local version history: everything the panel
+ * and the asset reconciler need, with the Yjs update itself kept in a sibling
+ * store (see the baseline migration).
+ */
+export interface SnapshotMeta {
+    /** Primary key, shared with the `snapshot_data` row holding the bytes:
+     *  `${projectId}/${type}/${new Date().toISOString()}`. */
+    key: string;
+    /** Owning project id (indexed, for per-project list/delete). */
+    projectId: string;
+    type: "auto" | "manual";
+    /** Manual saves only. A real field, not a suffix on the key: only R2's
+     *  metadata-less `list()` ever forced the cloud into that trick. */
+    name?: string;
+    /** Epoch ms. */
+    createdAt: number;
+    /** Byte length of the stored update, for the history's storage budget. */
+    size: number;
+    /** SHA-256 of the stored update, so an auto-snapshot can tell that the
+     *  document has not moved since the last one and skip writing a copy. */
+    contentHash: string;
+    /**
+     * The asset hashes this snapshot's boards reference, recorded at write time
+     * while the document is already in memory — the local mirror of the
+     * DurableObject's `snapshot_assets` index. Asset GC unions these with the
+     * live document's, which is what keeps a restorable version's images alive
+     * after the cards using them are gone.
+     */
+    assetHashes: string[];
+    /** Set when a board's cards blob wouldn't parse at write time, so this
+     *  snapshot's references are unknown. GC then deletes nothing at all, the
+     *  same fail-safe as the Worker's `__unparsed__` marker. */
+    assetsUnparsed?: boolean;
+}
+
 export interface StorageProvider {
     // Project CRUD
     createProject(id: string, title: string, description?: string, synced?: boolean, author?: string): Promise<void>;
@@ -159,6 +195,21 @@ export interface StorageProvider {
     deleteProjectAssets(projectId: string): Promise<void>;
     /** Duplicate every asset of `fromProjectId` under `toProjectId` (id-changing copy). */
     copyProjectAssets(fromProjectId: string, toProjectId: string): Promise<void>;
+
+    // Snapshots: device-local version history (local-only projects; cloud
+    // projects keep their history in R2). Metadata and bytes are separate
+    // stores, so listing a history never decodes it.
+    putSnapshot(meta: SnapshotMeta, data: ArrayBuffer): Promise<void>;
+    /** Every snapshot of a project, metadata only, newest first. */
+    listSnapshots(projectId: string): Promise<SnapshotMeta[]>;
+    /** The stored Yjs update for one snapshot, or null if it's gone. */
+    getSnapshotData(key: string): Promise<ArrayBuffer | null>;
+    /** Rename a manual save. A plain field update — unlike R2, nothing re-keys. */
+    renameSnapshot(key: string, name: string): Promise<void>;
+    /** Delete snapshots by key, metadata and bytes together. */
+    deleteSnapshots(keys: string[]): Promise<void>;
+    /** Remove a project's entire history (called on project deletion). */
+    deleteProjectSnapshots(projectId: string): Promise<void>;
 
     // Posters: one image per project, stored locally for offline / local-only use.
     putPoster(poster: StoredPoster): Promise<void>;

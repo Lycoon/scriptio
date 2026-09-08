@@ -9,6 +9,7 @@ import {
     UpdateUserBody,
 } from "./api-bodies";
 import { apiFetch } from "@src/lib/api-client";
+import type { SaveEntry } from "@src/lib/saves/types";
 
 type RESTMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -50,14 +51,6 @@ export const uploadProjectToCloud = (
 };
 
 /* Saves / Version History */
-
-export interface SaveEntry {
-    key: string;
-    type: "auto" | "manual";
-    name?: string;
-    date: string;
-    size: number;
-}
 
 export const listSaves = async (projectId: string): Promise<SaveEntry[]> => {
     const res = await request(`/api/projects/${projectId}/saves`, "GET");

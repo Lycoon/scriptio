@@ -33,11 +33,8 @@ export const CLOUD_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
  */
 export const PURGE_TOMBSTONE_GRACE_MS = CLOUD_TOKEN_TTL_MS + 60 * 60 * 1000;
 
-// Retention thresholds
-export const RETENTION_HOUR_MS = 60 * 60 * 1000;
-export const RETENTION_DAY_MS = 24 * RETENTION_HOUR_MS;
-export const RETENTION_30_DAYS_MS = 30 * RETENTION_DAY_MS;
-export const RETENTION_INTERVAL_30MIN_MS = 30 * 60 * 1000;
+// Retention thresholds and the tiering that uses them live in
+// `src/lib/saves/retention.ts`, shared with the device-local history.
 
 export interface SessionInfo {
     clientIds: Set<number>;
@@ -45,12 +42,4 @@ export interface SessionInfo {
     /** Project role from the JWT — used to gate doc writes (VIEWER is read-only). */
     role: string;
     lastActivity: number;
-}
-
-export interface SaveEntry {
-    key: string;
-    type: "auto" | "manual";
-    name?: string;
-    date: string;
-    size: number;
 }

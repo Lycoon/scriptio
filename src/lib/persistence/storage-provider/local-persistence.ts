@@ -66,11 +66,12 @@ export async function touchCachedProject(id: string): Promise<void> {
 export async function deleteCachedProject(id: string): Promise<void> {
     const provider = await getStorageProvider();
     await provider.delete(id);
-    // Reclaim the project's binary assets (board images) and its poster. This is
-    // the chokepoint every deletion flow funnels through (DangerZone +
-    // discardCloudProjectData).
+    // Reclaim the project's binary assets (board images), its poster and its
+    // local version history. This is the chokepoint every deletion flow funnels
+    // through (DangerZone + discardCloudProjectData).
     await provider.deleteProjectAssets(id);
     await provider.deletePoster(id);
+    await provider.deleteProjectSnapshots(id);
 }
 
 export async function isCachedProject(projectId: string): Promise<boolean> {
@@ -230,6 +231,16 @@ export async function promoteLocalProjectToCloud(projectId: string): Promise<voi
         throw new Error(json.message ?? `Upload failed (${res.status})`);
     }
     await markCachedProjectAsSynced(projectId);
+
+    // The cloud owns this project's versions from this line on, so the local
+    // history is discarded here rather than at the end of the function.
+    // Everything below can throw — a quota error aborts the asset upload — and
+    // snapshots left behind by a half-finished promotion are unreachable: the
+    // panel resolves to the cloud provider, and the local pruner only ever runs
+    // for local-only projects, so nothing would collect them or release the
+    // assets their `assetHashes` pin.
+    const { discardLocalSnapshots } = await import("@src/lib/saves/local-snapshots");
+    await discardLocalSnapshots(projectId);
 
     // Push existing board assets to R2 now that the cloud project exists. A quota
     // error aborts (pre-check should make this rare); other per-asset failures are

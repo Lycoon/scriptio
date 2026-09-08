@@ -11,6 +11,7 @@ import {
     CachedProject,
     FileFingerprint,
     ProjectEntryInput,
+    SnapshotMeta,
     StorageProvider,
     StoredAsset,
     StoredPoster,
@@ -18,6 +19,7 @@ import {
 import {
     ASSETS_BY_PROJECT_INDEX,
     CURRENT_STORE_VERSION,
+    SNAPSHOTS_BY_PROJECT_INDEX,
     STORE_NAMES,
 } from "./migrations/store-migrations";
 import { runStoreMigrations } from "./migrations/store-migration-runner";
@@ -30,6 +32,8 @@ const DICTIONARIES_STORE = STORE_NAMES.DICTIONARIES;
 const MIGRATION_BACKUPS_STORE = STORE_NAMES.MIGRATION_BACKUPS;
 const ASSETS_STORE = STORE_NAMES.ASSETS;
 const POSTERS_STORE = STORE_NAMES.POSTERS;
+const SNAPSHOTS_STORE = STORE_NAMES.SNAPSHOTS;
+const SNAPSHOT_DATA_STORE = STORE_NAMES.SNAPSHOT_DATA;
 const SETTINGS_KEY = "global";
 
 /** Primary key for an asset record: `${projectId}/${hash}`. */
@@ -53,6 +57,12 @@ interface BrowserStoredProject {
     file_last_write_at?: number;
     file_last_write_sv?: Uint8Array;
     file_fingerprint?: FileFingerprint;
+}
+
+/** The `snapshot_data` row — bytes only, keyed the same as its metadata row. */
+interface SnapshotDataRecord {
+    key: string;
+    data: ArrayBuffer;
 }
 
 interface MigrationBackupRecord {
@@ -517,6 +527,107 @@ export class IndexedDBStorageProvider implements StorageProvider {
                         key: assetKey(toProjectId, src.hash),
                         projectId: toProjectId,
                     });
+                    cursor.continue();
+                }
+            };
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    // ── Snapshots ─────────────────────────────────────────────────────────────
+
+    async putSnapshot(meta: SnapshotMeta, data: ArrayBuffer): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            // One transaction over both stores: metadata without its bytes would
+            // be a history entry that cannot be restored, and bytes without
+            // metadata would never be listed, never pruned, and never freed.
+            const tx = db.transaction([SNAPSHOTS_STORE, SNAPSHOT_DATA_STORE], "readwrite");
+            tx.objectStore(SNAPSHOTS_STORE).put(meta);
+            tx.objectStore(SNAPSHOT_DATA_STORE).put({ key: meta.key, data } satisfies SnapshotDataRecord);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async listSnapshots(projectId: string): Promise<SnapshotMeta[]> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const rows: SnapshotMeta[] = [];
+            const index = db
+                .transaction(SNAPSHOTS_STORE, "readonly")
+                .objectStore(SNAPSHOTS_STORE)
+                .index(SNAPSHOTS_BY_PROJECT_INDEX);
+            const req = index.openCursor(IDBKeyRange.only(projectId));
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) {
+                    rows.push(cursor.value as SnapshotMeta);
+                    cursor.continue();
+                } else {
+                    rows.sort((a, b) => b.createdAt - a.createdAt);
+                    resolve(rows);
+                }
+            };
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async getSnapshotData(key: string): Promise<ArrayBuffer | null> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const req = db.transaction(SNAPSHOT_DATA_STORE, "readonly").objectStore(SNAPSHOT_DATA_STORE).get(key);
+            req.onsuccess = () => resolve((req.result as SnapshotDataRecord | undefined)?.data ?? null);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async renameSnapshot(key: string, name: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(SNAPSHOTS_STORE, "readwrite");
+            const store = tx.objectStore(SNAPSHOTS_STORE);
+            const req = store.get(key);
+            req.onsuccess = () => {
+                const existing = req.result as SnapshotMeta | undefined;
+                if (existing) store.put({ ...existing, name });
+            };
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async deleteSnapshots(keys: string[]): Promise<void> {
+        if (keys.length === 0) return;
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction([SNAPSHOTS_STORE, SNAPSHOT_DATA_STORE], "readwrite");
+            const meta = tx.objectStore(SNAPSHOTS_STORE);
+            const data = tx.objectStore(SNAPSHOT_DATA_STORE);
+            for (const key of keys) {
+                meta.delete(key);
+                data.delete(key);
+            }
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async deleteProjectSnapshots(projectId: string): Promise<void> {
+        const db = await getBrowserDb();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction([SNAPSHOTS_STORE, SNAPSHOT_DATA_STORE], "readwrite");
+            const data = tx.objectStore(SNAPSHOT_DATA_STORE);
+            const req = tx
+                .objectStore(SNAPSHOTS_STORE)
+                .index(SNAPSHOTS_BY_PROJECT_INDEX)
+                .openCursor(IDBKeyRange.only(projectId));
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) {
+                    data.delete((cursor.value as SnapshotMeta).key);
+                    cursor.delete();
                     cursor.continue();
                 }
             };

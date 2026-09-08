@@ -27,22 +27,34 @@ export const STORE_NAMES = {
     MIGRATION_BACKUPS: "migration_backups",
     ASSETS: "assets",
     POSTERS: "posters",
+    SNAPSHOTS: "snapshots",
+    SNAPSHOT_DATA: "snapshot_data",
 } as const;
 
 /** Index on the `assets` store used to list/delete every asset of a project. */
 export const ASSETS_BY_PROJECT_INDEX = "byProject";
 
+/** Index on the `snapshots` store used to list/delete a project's history. */
+export const SNAPSHOTS_BY_PROJECT_INDEX = "byProject";
+
 /**
  * v0 → v1: baseline. Creates the original stores, including the binary
  * `assets` store (board image resources, content-addressed by SHA-256, keyed
- * `${projectId}/${hash}` with a `byProject` index). The app isn't released
- * yet, so this is folded into the baseline rather than a separate migration
- * step — existing local databases should just be reset.
+ * `${projectId}/${hash}` with a `byProject` index) and the two snapshot stores
+ * behind device-local version history. The app isn't released yet, so these are
+ * folded into the baseline rather than separate migration steps — existing local
+ * databases should just be reset.
+ *
+ * Snapshot metadata and snapshot bytes are separate stores on purpose. Listing
+ * the history and reconciling assets against it both read every row's metadata,
+ * and IndexedDB structured-clones a whole record on read — with the update
+ * buffer in the same row those passes would decode the entire history to answer
+ * a question about its index.
  */
 const baselineV1: StoreMigration = {
     from: 0,
     to: 1,
-    description: "Baseline: create cached_projects, settings, dictionaries, assets",
+    description: "Baseline: create cached_projects, settings, dictionaries, assets, snapshots",
     run: (db) => {
         if (!db.objectStoreNames.contains(STORE_NAMES.PROJECTS)) {
             db.createObjectStore(STORE_NAMES.PROJECTS, { keyPath: "id" });
@@ -56,6 +68,13 @@ const baselineV1: StoreMigration = {
         if (!db.objectStoreNames.contains(STORE_NAMES.ASSETS)) {
             const assets = db.createObjectStore(STORE_NAMES.ASSETS, { keyPath: "key" });
             assets.createIndex(ASSETS_BY_PROJECT_INDEX, "projectId", { unique: false });
+        }
+        if (!db.objectStoreNames.contains(STORE_NAMES.SNAPSHOTS)) {
+            const snapshots = db.createObjectStore(STORE_NAMES.SNAPSHOTS, { keyPath: "key" });
+            snapshots.createIndex(SNAPSHOTS_BY_PROJECT_INDEX, "projectId", { unique: false });
+        }
+        if (!db.objectStoreNames.contains(STORE_NAMES.SNAPSHOT_DATA)) {
+            db.createObjectStore(STORE_NAMES.SNAPSHOT_DATA, { keyPath: "key" });
         }
     },
 };

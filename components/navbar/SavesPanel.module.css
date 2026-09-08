@@ -88,6 +88,20 @@
     border-color: var(--secondary-text);
 }
 
+/* Device-only history note, under the create button on local projects. */
+.device_hint {
+    margin: 8px 2px 0;
+    font-size: 0.7rem;
+    line-height: 1.35;
+    color: var(--secondary-text);
+    opacity: 0.8;
+}
+
+.create_btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
 .name_input_row {
     display: flex;
     align-items: center;
