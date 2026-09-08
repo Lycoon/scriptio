@@ -52,7 +52,6 @@ export interface DocumentEditorCallbacks {
     updateSuggestions?: (suggestions: string[]) => void;
     updateSuggestionsData?: (data: SuggestionData) => void;
     userKeybinds?: Record<string, string>;
-    globalContext?: { toggleFocusMode: () => void; saveProject: () => void };
     // Title-type callbacks
     setSelectedTitlePageElement?: (element: TitlePageElement) => void;
 }
@@ -261,17 +260,12 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
         cb(data);
     }, []);
 
+    // Only ever called for editor-scope actions — elements and styles, which need
+    // nothing but the editor. The global ones are the workspace's, registered on
+    // the window by ProjectWorkspace, and never reach this keymap.
     const onKeybindAction = useCallback(
-        (id: KeybindId, editorInstance: Editor) => {
-            const gc = callbacks.globalContext;
-            if (!gc) return;
-            executeKeybindAction(id, {
-                editor: editorInstance,
-                toggleFocusMode: gc.toggleFocusMode,
-                saveProject: gc.saveProject,
-            });
-        },
-        [callbacks.globalContext],
+        (id: KeybindId, editorInstance: Editor) => executeKeybindAction(id, { editor: editorInstance }),
+        [],
     );
 
     // ---- Dynamic extensions (created once, read from ext container) ----
@@ -445,15 +439,13 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                           },
                 ),
 
-                // Screenplay-only extensions
-                ...(features.keybinds && callbacks.userKeybinds !== undefined
-                    ? [
-                          KeybindsExtension.configure({
-                              userKeybinds: callbacks.userKeybinds || {},
-                              onAction: onKeybindAction,
-                          }),
-                      ]
-                    : []),
+                // Every editor: a shortcut the user configured should work in
+                // whichever document they are typing in, and the extension
+                // itself skips the actions a given schema cannot perform.
+                KeybindsExtension.configure({
+                    getUserKeybinds: () => callbacksRef.current.userKeybinds ?? {},
+                    onAction: onKeybindAction,
+                }),
 
                 ...(characterHighlightExtension ? [characterHighlightExtension] : []),
                 ...(searchHighlightExtension ? [searchHighlightExtension] : []),

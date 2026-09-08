@@ -1,34 +1,3 @@
-.sectionHeader {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.chevron {
-    flex-shrink: 0;
-    margin-left: auto;
-    color: var(--secondary-text);
-    transition: transform 0.2s ease;
-}
-
-.chevronOpen {
-    transform: rotate(90deg);
-}
-
-/* Body of a collapsible section, revealed when the header is expanded. The
-   indent and left rule tie the content to the heading above it, so an open
-   section reads as one block instead of running into the next heading. */
-.sectionBody {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 10px;
-    padding-left: 14px;
-    border-left: 2px solid var(--separator);
-}
-
 .input {
     width: 100%;
     height: 100%;
@@ -276,12 +245,6 @@
  * narrow dashboard drawer that overflows off-screen, so let the label + inputs
  * wrap and stack the header/footer inputs vertically instead. */
 @media (max-width: 767px) {
-    /* Narrower indent in the drawer — the rule still marks the section, but
-       every inner row keeps its width. */
-    .sectionBody {
-        padding-left: 10px;
-    }
-
     .marginRow {
         flex-wrap: wrap;
         gap: 8px;

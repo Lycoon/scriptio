@@ -41,7 +41,7 @@ interface ViewContextType {
     isEndlessScroll: boolean;
     /** How the screenplay panel renders — the editor, or the index-card grid. */
     screenplayView: ScreenplayViewMode;
-    setScreenplayView: (mode: ScreenplayViewMode) => void;
+    setScreenplayView: (value: ScreenplayViewMode | ((prev: ScreenplayViewMode) => ScreenplayViewMode)) => void;
     /**
      * Index cards per row, which is what the card view's zoom control actually
      * changes — fewer columns means wider cards. Lives here rather than in the

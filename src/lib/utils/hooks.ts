@@ -9,7 +9,7 @@ import { ProjectContext } from "@src/context/ProjectContext";
 import { isPage, Page } from "./enums";
 import { Collaborator, ProjectInvite, ProjectMembershipPayload } from "@src/server/repository/project-repository";
 import { KeyBindingMap, tinykeys } from "tinykeys";
-import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId } from "./keybinds";
+import { DEFAULT_KEYBINDS, executeKeybindAction, KeybindId, ViewActions } from "./keybinds";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProjectRole } from "../../generated/client/browser";
 import { isTauri } from "@tauri-apps/api/core";
@@ -700,9 +700,16 @@ export const useEffectiveKeybinds = (userShortcuts: Record<string, string> | und
     }, [userShortcuts]);
 };
 
+/**
+ * Register the global-scope shortcuts on the window.
+ *
+ * Called from the project shell, once — these actions are the workspace's, not
+ * any one editor's, so they keep working whichever panel is on screen (and
+ * whether or not an editor has focus at all).
+ */
 export const useGlobalKeybinds = (
     userKeybinds: Record<string, string> | undefined,
-    context: { toggleFocusMode: () => void; saveProject: () => void },
+    context: { toggleFocusMode: () => void; saveProject: () => void; view: ViewActions },
 ) => {
     const effectiveKeybinds = useEffectiveKeybinds(userKeybinds);
 
@@ -723,6 +730,7 @@ export const useGlobalKeybinds = (
                     editor: null,
                     toggleFocusMode: context.toggleFocusMode,
                     saveProject: context.saveProject,
+                    view: context.view,
                 });
             };
         });

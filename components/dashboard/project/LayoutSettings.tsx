@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useContext, useEffect, useState, useMemo } from "react";
+import { useContext, useEffect, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { ProjectContext } from "@src/context/ProjectContext";
 import {
@@ -26,12 +26,12 @@ import {
     ArrowDownToLine,
     ChevronUp,
     ChevronDown,
-    ChevronRight,
     Save,
     SeparatorHorizontal,
     RotateCcw,
 } from "lucide-react";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
+import Section from "@components/dashboard/SettingsSection";
 
 import sharedStyles from "./ProjectSettings.module.css";
 import styles from "./LayoutSettings.module.css";
@@ -45,46 +45,6 @@ const MARGIN_ELEMENTS = [
     "transition",
     "section",
 ] as const;
-
-/**
- * A collapsible settings section: a clickable heading (with an optional hint
- * slot) that folds its body away. Defined at module scope so its open/closed
- * state survives the parent's re-renders. The hint is rendered next to the
- * title and stops click propagation so interacting with it doesn't toggle.
- */
-const Section = ({
-    title,
-    defaultOpen = false,
-    children,
-}: {
-    title: string;
-    defaultOpen?: boolean;
-    children: ReactNode;
-}) => {
-    const [open, setOpen] = useState(defaultOpen);
-    const toggle = () => setOpen((prev) => !prev);
-    return (
-        <div className={sharedStyles.formGroup}>
-            <div
-                className={styles.sectionHeader}
-                role="button"
-                tabIndex={0}
-                aria-expanded={open}
-                onClick={toggle}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        toggle();
-                    }
-                }}
-            >
-                <span className={sharedStyles.sectionTitle}>{title}</span>
-                <ChevronRight size={16} className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`} />
-            </div>
-            {open && <div className={styles.sectionBody}>{children}</div>}
-        </div>
-    );
-};
 
 const LayoutSettings = () => {
     const t = useTranslations("layout");

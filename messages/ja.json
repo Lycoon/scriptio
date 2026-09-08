@@ -122,7 +122,12 @@
     "highlightOnHoverDesc": "エディタでカーソルを合わせた行を軽くハイライトする"
   },
   "keybinds": {
-    "screenplayElements": "脚本要素",
+    "groups": {
+      "global": "全体",
+      "view": "表示",
+      "screenplay": "脚本要素",
+      "style": "スタイル"
+    },
     "typing": "入力中… (Escでキャンセル)",
     "notSet": "未設定",
     "modifiersOnly": "修飾キーのみ — 通常のキーを押してください",
@@ -130,7 +135,29 @@
     "reset": "リセット",
     "resetTitle": "カスタム設定を削除",
     "resetDefaults": "リセット",
-    "save": "変更を保存"
+    "save": "変更を保存",
+    "labels": {
+      "save_project": "プロジェクトを保存",
+      "toggle_focus_mode": "集中モード",
+      "view_screenplay": "脚本",
+      "view_title_page": "タイトルページ",
+      "view_scene_cards": "インデックスカードビュー",
+      "view_split": "パネルを分割",
+      "view_timeline": "タイムライン",
+      "view_left_sidebar": "左サイドバー",
+      "view_right_sidebar": "右サイドバー",
+      "style_bold": "太字",
+      "style_italic": "斜体",
+      "style_underline": "下線",
+      "screenplay_scene": "シーン見出しに切り替え",
+      "screenplay_action": "ト書きに切り替え",
+      "screenplay_character": "登場人物に切り替え",
+      "screenplay_dialogue": "セリフに切り替え",
+      "screenplay_parenthetical": "カッコに切り替え",
+      "screenplay_transition": "柱書きに切り替え",
+      "screenplay_section": "セクションに切り替え",
+      "screenplay_note": "メモに切り替え"
+    }
   },
   "readaloud": {
     "title": "読み上げ",
@@ -690,6 +717,12 @@
       "offer": "ファイルに保存すると、自分のものとして共有できるコピーが手に入ります。保存後は Scriptio がそのファイルを自動で最新に保ちます。",
       "confirm": "保存先を選択…",
       "cancel": "あとで"
+    },
+    "autoSave": {
+      "title": "自動保存は有効です",
+      "body": "{file} は自動で最新に保たれます。作業中の変更は Scriptio が書き込むので、手動で保存する必要はありません。",
+      "hint": "作業内容はこのデバイスにも、同期されたプロジェクトならクラウドにも保存されます。",
+      "ok": "了解"
     },
     "fileBind": {
       "title": "このファイルに保存しますか？",

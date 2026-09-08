@@ -49,6 +49,11 @@ export type PopupSaveToFileData = {
     confirmSave: () => void;
 };
 
+/** ⌘S on a project already bound to a file: say that the file keeps itself current. */
+export type PopupAutoSaveData = {
+    path: string;
+};
+
 // ------------------------------ //
 //         GENERIC POPUP          //
 // ------------------------------ //
@@ -61,7 +66,8 @@ export type PopupUnionData =
     | PopupUnlockPagesData
     | PopupUnlockDraftData
     | PopupConfirmFileBindData
-    | PopupSaveToFileData;
+    | PopupSaveToFileData
+    | PopupAutoSaveData;
 
 export enum PopupType {
     NewCharacter,
@@ -74,6 +80,7 @@ export enum PopupType {
     UnlockDraft,
     ConfirmFileBind,
     SaveToFile,
+    AutoSave,
 }
 
 export type PopupData<DataType extends PopupUnionData> = {
@@ -160,5 +167,12 @@ export const saveToFilePopup = (userCtx: UserContextType, confirmSave: () => voi
     userCtx.updatePopup({
         type: PopupType.SaveToFile,
         data: { confirmSave },
+    });
+};
+
+export const autoSavePopup = (userCtx: UserContextType, path: string) => {
+    userCtx.updatePopup({
+        type: PopupType.AutoSave,
+        data: { path },
     });
 };

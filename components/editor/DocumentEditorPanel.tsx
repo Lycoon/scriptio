@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl";
 import { DUAL_DIALOGUE_COLUMN } from "@src/lib/screenplay/nodes/dual-dialogue-column-node";
 import { DEFAULT_ELEMENT_MARGINS, DEFAULT_ELEMENT_STYLES } from "@src/lib/project/project-state";
 import { join } from "@src/lib/utils/misc";
-import { useGlobalKeybinds, useIsPhone, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
+import { useIsPhone, useProjectMembership, useSettings } from "@src/lib/utils/hooks";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { useViewContext } from "@src/context/ViewContext";
 import { ContextMenuType } from "@components/editor/sidebar/ContextMenu";
@@ -46,7 +46,6 @@ export interface DocumentEditorPanelProps {
     suggestionData?: SuggestionData;
     updateSuggestionData?: (data: SuggestionData) => void;
     userKeybinds?: Record<string, string>;
-    globalContext?: { toggleFocusMode: () => void; saveProject: () => void };
     /** Override the focus type reported to ProjectContext on focus. */
     focusedTypeOverride?: "screenplay" | "title" | "draft";
 }
@@ -80,7 +79,6 @@ const DocumentEditorPanel = ({
     updateSuggestions,
     updateSuggestionData,
     userKeybinds,
-    globalContext,
     focusedTypeOverride,
 }: DocumentEditorPanelProps) => {
     const { membership, isLoading, isLocalOnly } = useProjectMembership();
@@ -212,7 +210,6 @@ const DocumentEditorPanel = ({
         updateSuggestions,
         updateSuggestionsData: updateSuggestionData,
         userKeybinds: keybinds,
-        globalContext,
         setSelectedTitlePageElement,
     });
 
@@ -714,12 +711,10 @@ const DocumentEditorPanel = ({
         });
     }, [editor, config.type, suggestions.length]);
 
-    // ---- Global keybinds (screenplay only) ----
-    const globalActions = useMemo(
-        () => globalContext ?? { toggleFocusMode: () => {}, saveProject: () => {} },
-        [globalContext],
-    );
-    useGlobalKeybinds(config.type === "screenplay" ? keybinds : undefined, globalActions);
+    // Global-scope shortcuts are registered once, by ProjectWorkspace: they act
+    // on the project and the workspace rather than on this document, and one
+    // window listener per mounted panel meant whichever panels happened to be up
+    // each answering the same keystroke.
 
     // ---- Tab / Escape keyboard listener (screenplay only) ----
     useEffect(() => {
