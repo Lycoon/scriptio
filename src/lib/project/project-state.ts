@@ -472,6 +472,60 @@ const notifyFileBindingEdit = (projectId: string): void => {
     fileBindingModule?.scheduleFileWrite(projectId);
 };
 
+/**
+ * Device-local version history, reached the same way and for the same reasons:
+ * the module pulls in the storage provider and the retention machinery, and the
+ * edit hook below runs on every keystroke — so the handle is cached and the
+ * notify is synchronous.
+ */
+let localSnapshotsModule: typeof import("../saves/local-snapshots") | null = null;
+
+const getLocalSnapshots = async (): Promise<typeof import("../saves/local-snapshots")> => {
+    if (!localSnapshotsModule) localSnapshotsModule = await import("../saves/local-snapshots");
+    return localSnapshotsModule;
+};
+
+/** Same rule as {@link notifyFileBindingEdit}: no await on the typing path. The
+ *  scheduler is started on `synced`, before any edit can reach this, and a
+ *  project it never started for is one this is a no-op for anyway. */
+const notifyLocalSnapshotEdit = (projectId: string): void => {
+    localSnapshotsModule?.notifyLocalSnapshotEdit(projectId);
+};
+
+/**
+ * Start snapshotting — local-only projects only, since a cloud project's history
+ * is the DurableObject's to keep.
+ *
+ * A cloud project is not simply skipped: it may still be carrying snapshots from
+ * before it was promoted, and this is the one moment anything looks. See
+ * `discardLocalSnapshots` for how they get stranded and why nothing else would
+ * ever collect them. Same shape as the cloud asset reconcile — a sweep on open,
+ * not on every edit.
+ */
+const startLocalSnapshotsFor = async (projectId: string): Promise<void> => {
+    try {
+        const { isLocalOnlyProject } = await import("../persistence/storage-provider/local-persistence");
+        const snapshots = await getLocalSnapshots();
+        if (await isLocalOnlyProject(projectId)) snapshots.startLocalSnapshots(projectId);
+        else await snapshots.discardLocalSnapshots(projectId);
+    } catch (e) {
+        console.warn("[project-state] failed to start local snapshots:", e);
+    }
+};
+
+/** Last chance to capture the final minute of work before the session goes. */
+const releaseLocalSnapshotsFor = async (projectId: string): Promise<void> => {
+    // Nothing was ever scheduled if the module never loaded, so don't load it
+    // now just to tear down state that doesn't exist.
+    if (!localSnapshotsModule) return;
+    try {
+        await localSnapshotsModule.flushLocalSnapshots(projectId);
+        localSnapshotsModule.releaseLocalSnapshots(projectId);
+    } catch (e) {
+        console.warn("[project-state] failed to flush local snapshots:", e);
+    }
+};
+
 const loadFileBindingFor = async (projectId: string): Promise<void> => {
     try {
         await (await getFileBinding()).loadFileBinding(projectId);
@@ -564,6 +618,7 @@ const initLocalProvider = async (entry: SessionEntry): Promise<void> => {
         entry.isLocalReady = true;
         notifySubscribers(entry);
         void loadFileBindingFor(entry.projectId);
+        void startLocalSnapshotsFor(entry.projectId);
         void initCloudProvider(entry);
     });
 };
@@ -767,6 +822,7 @@ const acquireSession = (projectId: string, userInfo: UserInfo): SessionEntry => 
         // the updatedAt bump below: this only resets a timer, and throttling it
         // would let a burst of typing start a write mid-burst.
         notifyFileBindingEdit(entry.projectId);
+        notifyLocalSnapshotEdit(entry.projectId);
 
         const now = Date.now();
         if (now - entry.lastLocalEditTouchAt < PROJECT_TOUCH_THROTTLE_MS) return;
@@ -800,12 +856,78 @@ const releaseSession = (projectId: string): void => {
         // Before the doc goes: the debounce may still be pending, and closing a
         // project is exactly when the file must be current.
         await releaseFileBindingFor(projectId);
+        await releaseLocalSnapshotsFor(projectId);
 
         entry.localProvider?.destroy();
         entry.state.destroy();
         sessionCache.delete(projectId);
     }, 0);
 };
+
+/**
+ * Tear a session down now, regardless of who is still holding it.
+ *
+ * Only for the restore below, where the live doc has become a liability: it
+ * holds the pre-restore content, and Yjs is additive, so there is no way to walk
+ * it back. Leaving it in the cache would make it the answer `withProjectDoc`
+ * gives every out-of-band writer that runs before the reload — which is exactly
+ * how the restored document would get written back over the bound file.
+ */
+const discardSession = (projectId: string): void => {
+    const entry = sessionCache.get(projectId);
+    if (!entry) return;
+    sessionCache.delete(projectId);
+    if (entry.disposeTimer) {
+        clearTimeout(entry.disposeTimer);
+        entry.disposeTimer = null;
+    }
+    entry.cloudProvider?.destroy();
+    entry.localProvider?.destroy();
+    entry.state.destroy();
+};
+
+/**
+ * Replace a local project's document with a stored version.
+ *
+ * The local twin of the `document-restored` handler above, and it works the same
+ * way, because it has to: a CRDT only ever grows, so "restore" cannot mean
+ * applying an old update to the current doc — it means throwing the current doc
+ * away and rebuilding from the snapshot. Hence clearing IndexedDB rather than
+ * writing over it, and a reload (the caller's) rather than a re-render.
+ *
+ * The restored bytes may be from any past version of the schema; nothing here
+ * migrates them, because the reload's `synced` handler runs `migrateProjectDoc`
+ * on whatever it loads — the same job the Worker does inline after its restore,
+ * where there is no reload to do it.
+ *
+ * Does not reload the page itself: the caller has a bound file to rewrite from
+ * the restored document first, and navigation would take the page away
+ * mid-write. See `restoreLocalSnapshot`.
+ */
+export async function restoreLocalDocument(projectId: string, update: Uint8Array): Promise<void> {
+    const entry = sessionCache.get(projectId);
+    try {
+        if (entry?.localProvider?.clearData) {
+            await entry.localProvider.clearData();
+            // clearData destroys the provider on its way out; forget it here so
+            // the teardown below doesn't destroy it a second time.
+            entry.localProvider = null;
+        } else {
+            const { clearYjsData } = await import("../persistence/storage-provider/local-persistence");
+            await clearYjsData(projectId);
+        }
+    } catch (e) {
+        console.warn("[project-state] failed to clear local cache before restore:", e);
+    }
+
+    const restored = new ProjectState();
+    Y.applyUpdate(restored, update);
+    const { writeYjsDocumentLocally } = await import("../persistence/y-local-provider");
+    await writeYjsDocumentLocally(projectId, restored);
+    restored.destroy();
+
+    discardSession(projectId);
+}
 
 // -------------------------------- //
 //          MAIN HOOK               //

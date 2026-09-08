@@ -77,17 +77,15 @@
     flex: 1;
 }
 
-/* A header/footer editor block: a left-hand title labelling the three
-   alignment inputs (left / middle / right), with the "show on first page"
-   toggle below. A two-column grid keeps the title column auto-sized to its
-   content and shared across both rows, so the inputs AND the toggle stay
-   aligned in the second column regardless of the (translated) title width. */
+/* A header/footer editor block: a title above the three alignment inputs
+   (left / middle / right), with the "show on first page" toggle below them.
+   The title sits on its own row rather than beside the inputs so a longer
+   translation can't shift the inputs out of alignment between the header and
+   footer blocks. */
 .hfGroup {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    column-gap: 16px;
-    row-gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .hfTitle {
@@ -96,9 +94,8 @@
     color: var(--primary-text);
 }
 
-/* The toggle lives in the content column (second), aligned with the inputs. */
 .hfToggle {
-    grid-column: 2;
+    margin-top: 4px;
 }
 
 .marginRow {
@@ -276,14 +273,5 @@
 
     .hfGroup .labelRow > div {
         min-width: 0;
-    }
-
-    .hfGroup {
-        grid-template-columns: 1fr;
-        row-gap: 8px;
-    }
-
-    .hfToggle {
-        grid-column: 1;
     }
 }

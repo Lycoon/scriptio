@@ -2,15 +2,23 @@
  * Asset garbage collection (reconcile-from-doc / mark-sweep).
  *
  * Image/audio bytes live in IndexedDB, decoupled from Yjs; the board cards only
- * carry the `assetId` (SHA-256). The set of assetIds referenced across every
- * board is the source of truth for what is still in use. Local GC computes that
- * set from the live doc and deletes any stored blob not in it — robust against
- * collaboration and crashes, with no persisted reference counter to drift.
+ * carry the `assetId` (SHA-256). What is still in use is derived, every time,
+ * from the documents that could reference it — robust against collaboration and
+ * crashes, with no persisted reference counter to drift.
  *
- * Cloud GC ({@link gcCloudProjectAssets}) is separate and server-authoritative:
- * the Worker reconciles against the live doc *and every retained snapshot* (so a
- * restorable version never loses its assets), and it's run sparingly — on project
- * open, not on every edit — because it scans snapshots.
+ * "The documents that could reference it" is the live doc *plus every retained
+ * snapshot*, because a version history is a promise that a past version can be
+ * restored, and a version whose images have been collected is not restorable.
+ * The two sides answer that question from the same kind of index, recorded when
+ * the snapshot was written and the document was already in memory: the Worker
+ * from its `snapshot_assets` SQLite table, this file from each snapshot row's
+ * `assetHashes`. And both fail the same way — if any snapshot's references
+ * couldn't be read, nothing is deleted at all, since a sweep working from an
+ * incomplete reference set deletes exactly the assets it failed to see.
+ *
+ * Cloud GC ({@link gcCloudProjectAssets}) remains separate and
+ * server-authoritative, and is run sparingly — on project open, not on every
+ * edit — because it scans snapshots server-side.
  */
 
 import type { ProjectState } from "../project/project-state";
@@ -20,9 +28,14 @@ import { collectReferencedHashes, SkipGcError } from "./asset-refs";
 export { collectReferencedHashes };
 
 /**
- * Delete every locally-stored asset of `projectId` whose hash is not referenced
- * by any board card in `ydoc`. No-ops safely if a board's cards blob can't be
- * parsed. Local only — cloud assets are reconciled by {@link gcCloudProjectAssets}.
+ * Delete every locally-stored asset of `projectId` that neither `ydoc` nor any
+ * of the project's local snapshots references. No-ops safely if any of those
+ * reference sets is unreadable. Local only — cloud assets are reconciled by
+ * {@link gcCloudProjectAssets}.
+ *
+ * The snapshot half is unconditional rather than gated on the project being
+ * local-only: a cloud project has no local snapshots, so it lists none and this
+ * costs it one empty index read.
  */
 export async function gcProjectAssets(projectId: string, ydoc: ProjectState): Promise<void> {
     let referenced: Set<string>;
@@ -34,6 +47,17 @@ export async function gcProjectAssets(projectId: string, ydoc: ProjectState): Pr
     }
 
     const provider = await getStorageProvider();
+
+    // Metadata only — the snapshots' bytes stay in their sibling store, so this
+    // never decodes a history to find out what it holds.
+    for (const snapshot of await provider.listSnapshots(projectId)) {
+        // One snapshot we can't read for is enough to make the whole sweep
+        // unsafe: we would be deciding an asset is unreferenced on the strength
+        // of a reference list we know to be short.
+        if (snapshot.assetsUnparsed) return;
+        for (const hash of snapshot.assetHashes) referenced.add(hash);
+    }
+
     const stored = await provider.listAssetHashes(projectId);
     const orphans = stored.filter((hash) => !referenced.has(hash));
     await Promise.all(orphans.map((hash) => provider.deleteAsset(projectId, hash)));

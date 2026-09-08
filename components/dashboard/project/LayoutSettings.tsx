@@ -31,7 +31,7 @@ import {
     RotateCcw,
 } from "lucide-react";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
-import Section from "@components/dashboard/SettingsSection";
+import Section, { SettingsSectionGroup as SectionGroup } from "@components/dashboard/SettingsSection";
 
 import sharedStyles from "./ProjectSettings.module.css";
 import styles from "./LayoutSettings.module.css";
@@ -520,7 +520,7 @@ const LayoutSettings = () => {
     ];
 
     return (
-        <div className={sharedStyles.settingsForm}>
+        <SectionGroup className={sharedStyles.settingsForm}>
             <Section title={t("pageFormat")}>
                 <Dropdown
                     value={localFormat}
@@ -905,7 +905,7 @@ const LayoutSettings = () => {
                     {tCommon("save")}
                 </button>
             </div>
-        </div>
+        </SectionGroup>
     );
 };
 

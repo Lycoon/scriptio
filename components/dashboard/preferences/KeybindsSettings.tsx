@@ -17,7 +17,7 @@ import {
 } from "@src/lib/utils/keybinds";
 import { useTranslations } from "next-intl";
 import { RotateCcw, Save } from "lucide-react";
-import Section from "@components/dashboard/SettingsSection";
+import Section, { SettingsSectionGroup as SectionGroup } from "@components/dashboard/SettingsSection";
 
 /** Section order in the panel: what works everywhere, then the two editor sets. */
 const GROUP_ORDER: KeybindGroup[] = ["global", "view", "screenplay", "style"];
@@ -239,7 +239,7 @@ const KeybindsSettings = () => {
     };
 
     return (
-        <div className={sharedStyles.settingsForm}>
+        <SectionGroup className={sharedStyles.settingsForm}>
             {GROUPED_KEYBINDS.map(({ group, binds }) => (
                 <Section key={group} title={t(`groups.${group}`)}>
                     <div className={styles.options}>
@@ -269,7 +269,7 @@ const KeybindsSettings = () => {
                     {tCommon("save")}
                 </button>
             </div>
-        </div>
+        </SectionGroup>
     );
 };
 
