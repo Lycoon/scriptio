@@ -101,6 +101,11 @@
 /* Collapsible section (see SettingsSection.tsx): a .sectionTitle heading that
    folds its body away. Here rather than in one panel's stylesheet so every
    panel that folds looks the same. */
+.section {
+    display: flex;
+    flex-direction: column;
+}
+
 .sectionHeader {
     display: flex;
     align-items: center;
@@ -120,16 +125,59 @@
     transform: rotate(90deg);
 }
 
+/* The fold itself. Animating the body's grid row from 0fr to 1fr grows it to
+   exactly its own height without anyone having to measure it, so a section that
+   opens or closes slides instead of jumping. */
+.sectionFold {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.2s ease;
+}
+
+.sectionFoldOpen {
+    grid-template-rows: 1fr;
+}
+
+/* Hides the part of the body the row has not made room for yet. Dropped once an
+   open section has settled (see SettingsSection.tsx) so content that overflows
+   on purpose — an open dropdown menu — is not cut off. */
+.sectionClip {
+    overflow: hidden;
+    min-height: 0;
+}
+
+.sectionClipOff {
+    overflow: visible;
+}
+
 /* Body of a collapsible section, revealed when the header is expanded. The
    indent and left rule tie the content to the heading above it, so an open
-   section reads as one block instead of running into the next heading. */
+   section reads as one block instead of running into the next heading. The top
+   margin spaces it off the heading; it sits inside the clip, so it collapses
+   with the rest of the body. */
 .sectionBody {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-top: 10px;
+    margin-top: 18px;
     padding-left: 14px;
     border-left: 2px solid var(--separator);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.sectionFoldOpen .sectionBody {
+    opacity: 1;
+}
+
+/* The fold is a nicety, not information: hand it over instantly when the user
+   has asked for less motion. */
+@media (prefers-reduced-motion: reduce) {
+    .sectionFold,
+    .sectionBody,
+    .chevron {
+        transition: none;
+    }
 }
 
 /* The row is right-aligned, so anything too wide for it spills over the panel's

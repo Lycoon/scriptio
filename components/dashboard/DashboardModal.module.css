@@ -206,12 +206,21 @@
     background-color: var(--secondary-hover);
 }
 
+/* `scroll` rather than `auto` + `scrollbar-gutter: stable`: WebKit claims to
+   support the gutter (CSS.supports says yes) but does not reserve it, so a
+   section unfolding past the bottom of the panel shifted every row 16px left the
+   moment the scrollbar appeared. Keeping the bar there from the start reserves
+   the same strip in every engine; the track below is transparent, so an
+   unscrollable panel shows nothing but the gutter it already had. */
 .scrollArea {
-    overflow-y: auto;
+    overflow-y: scroll;
     flex: 1;
     min-height: 0;
-    scrollbar-gutter: stable;
     padding-right: 20px;
+}
+
+.scrollArea::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .scrollArea::before {
@@ -388,9 +397,11 @@
 
     /* The drawer gutter is the only horizontal padding on phone: no extra right
      * padding and no reserved scrollbar gutter, so panel content lines up with the
-     * header on both edges instead of drifting left. */
+     * header on both edges instead of drifting left. The phone's scrollbars are
+     * overlays that take no room, so `auto` costs nothing here and keeps the
+     * narrow drawer from spending 16px on a permanent gutter. */
     .scrollArea {
         padding-right: 0;
-        scrollbar-gutter: auto;
+        overflow-y: auto;
     }
 }
