@@ -183,6 +183,9 @@
     background-color: var(--secondary);
     border-radius: 16px;
     border: none;
+    /* Same edge shadow the sidebars carry (EditorSidebarNavigation's .element),
+       so these handles read as the same floating chrome. */
+    box-shadow: var(--panel-shadow);
 }
 
 /* globals.css paints every `svg` with --primary-text, which outranks the colour

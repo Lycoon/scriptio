@@ -2,7 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { DocumentPanelKind, PanelType, SplitSide, useViewContext } from "@src/context/ViewContext";
+import {
+    DocumentPanelKind,
+    EDITOR_ZOOM_DEFAULT,
+    EDITOR_ZOOM_MAX,
+    EDITOR_ZOOM_MIN,
+    EDITOR_ZOOM_STEP,
+    PanelType,
+    SplitSide,
+    useViewContext,
+} from "@src/context/ViewContext";
 import { join } from "@src/lib/utils/misc";
 import { useIsPhone } from "@src/lib/utils/hooks";
 import { DOC_DND_MIME } from "@components/editor/sidebar/DocumentTreeItem";
@@ -24,8 +33,11 @@ import {
     FileText,
     GanttChartSquare,
     Menu,
+    Minus,
     PanelRight,
     PanelRightClose,
+    Plus,
+    Search,
 } from "lucide-react";
 import styles from "./SplitPanelContainer.module.css";
 import dropdown from "./PanelMenu.module.css";
@@ -106,7 +118,30 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
         setLeftSidebarOpen,
         timelineOpen,
         setTimelineOpen,
+        isEndlessScroll,
+        screenplayView,
+        zoomLevel,
+        setZoomLevel,
     } = useViewContext();
+
+    // The display zoom acts on the editor page, so it is only offered over a
+    // panel that draws one: not a board or the statistics view (nothing to
+    // scale), not the index-card grid (its own control is the column count), and
+    // not endless scroll, which reflows the text to the viewport instead of
+    // drawing a page there is any sense in scaling.
+    //
+    // Nor on phone, where the two view modes are already the zoom control:
+    // endless reflows the text to the viewport at full size and paged fits the
+    // whole page to the screen, which is every size a phone has room for. The
+    // panel gates the scale itself the same way, so this only hides a control
+    // that would do nothing.
+    const showZoom =
+        !isPhone &&
+        !isEndlessScroll &&
+        (currentPanel === "title" ||
+            currentPanel === "draft" ||
+            currentPanel === "document" ||
+            (currentPanel === "screenplay" && screenplayView === "editor"));
 
     const handleSplitToggle = useCallback(() => {
         if (isSplit) {
@@ -205,6 +240,50 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
                         <GanttChartSquare size={14} />
                         <span className={dropdown.item_label}>{t("timeline")}</span>
                     </button>
+                    {/* Display zoom. A stepper rather than a menu item because it
+                        has a value, not an on/off state — and one that is worth
+                        adjusting a couple of times in a row, so none of these
+                        buttons closes the menu the way the items above do. */}
+                    {showZoom && (
+                        <>
+                            <div className={styles.panel_switcher_separator} />
+                            <div className={dropdown.zoom_row}>
+                                <Search size={14} />
+                                <span className={dropdown.item_label}>{t("zoom")}</span>
+                                <div className={dropdown.zoom_stepper}>
+                                    <button
+                                        type="button"
+                                        className={dropdown.zoom_btn}
+                                        onClick={() => setZoomLevel((prev) => prev - EDITOR_ZOOM_STEP)}
+                                        disabled={zoomLevel <= EDITOR_ZOOM_MIN}
+                                        title={t("zoomOut")}
+                                        aria-label={t("zoomOut")}
+                                    >
+                                        <Minus size={13} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={dropdown.zoom_value}
+                                        onClick={() => setZoomLevel(EDITOR_ZOOM_DEFAULT)}
+                                        title={t("resetZoom")}
+                                        aria-label={t("resetZoom")}
+                                    >
+                                        {zoomLevel}%
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={dropdown.zoom_btn}
+                                        onClick={() => setZoomLevel((prev) => prev + EDITOR_ZOOM_STEP)}
+                                        disabled={zoomLevel >= EDITOR_ZOOM_MAX}
+                                        title={t("zoomIn")}
+                                        aria-label={t("zoomIn")}
+                                    >
+                                        <Plus size={13} />
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>

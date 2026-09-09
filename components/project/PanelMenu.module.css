@@ -53,20 +53,90 @@
     flex: 1;
 }
 
+/* The display-zoom stepper. Laid out on .dropdown_item's grid — same padding,
+   same icon-then-label columns — so its icon and text line up with the toggles
+   above it; it just carries a value on the right instead of being clickable
+   itself. Not a button: only the three controls inside it are. */
+.zoom_row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    color: var(--secondary-text);
+}
+
+.zoom_stepper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    /* Pulled into the row's right padding so the + button's hover box ends flush
+       with the menu's inner edge, the way a full-width item's does. */
+    margin-right: -6px;
+}
+
+.zoom_btn,
+.zoom_value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background-color: transparent;
+    color: var(--secondary-text);
+    font-family: inherit;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.zoom_btn {
+    width: 24px;
+}
+
+.zoom_value {
+    /* Fixed width + tabular figures so stepping 75 → 100 → 125 doesn't jog the
+       − and + buttons sideways as the digit count changes. */
+    width: 46px;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.zoom_btn:hover:not(:disabled),
+.zoom_value:hover {
+    background-color: var(--secondary-hover);
+    color: var(--primary-text);
+}
+
+/* At either end of the range the button stays in place but stops responding —
+   removing it would shuffle the stepper sideways under the pointer that is
+   repeatedly clicking it. */
+.zoom_btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
 /* Row of icon-only, mutually exclusive toggles (see ScreenplayViewSwitcher).
-   Left-aligned rather than stretched, so the menu keeps one left edge: the row
-   is flush with the labelled items (no inset of its own), and each button is
-   38x32 — .dropdown_item's 12px inset plus a 14px glyph, centred — so the glyph
-   lands in the same icon column while the button's hover/active box starts on
-   the same left edge as a labelled item's. A 32px square would centre the glyph
-   3px short of that column, which is why the width isn't the row height. */
+   Left-aligned rather than stretched, so the menu keeps one left edge. The
+   buttons are square, and the row carries a 3px left inset so a 32px square
+   still centres its 14px glyph on .dropdown_item's icon column (12px inset +
+   half the glyph); without it the glyphs would sit 3px left of the labelled
+   items' icons. The bottom margin keeps the row off the item below it. */
 .icon_row {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     gap: 4px;
     width: 100%;
-    padding: 0;
+    padding: 0 0 0 3px;
+    margin-bottom: 6px;
 }
 
 .icon_btn {
@@ -74,7 +144,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
+    width: 32px;
     height: 32px;
     padding: 0;
     border: none;

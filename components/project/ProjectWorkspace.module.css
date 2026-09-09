@@ -45,6 +45,9 @@
     color: var(--secondary-text);
     background-color: var(--secondary);
     border-radius: 16px;
+    /* Same edge shadow the sidebars carry (EditorSidebarNavigation's .element),
+       so this handle reads as the same floating chrome. */
+    box-shadow: var(--panel-shadow);
     /* A tap here must not park a caret in the chrome — see .sidebar_backdrop. */
     -webkit-user-select: none;
     user-select: none;

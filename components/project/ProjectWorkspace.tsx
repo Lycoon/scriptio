@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext, useEffect, useMemo, useState } from "react";
-import { PanelType, useViewContext } from "@src/context/ViewContext";
+import { EDITOR_ZOOM_STEP, PanelType, useViewContext } from "@src/context/ViewContext";
 import { ProjectContext } from "@src/context/ProjectContext";
 import { UserContext } from "@src/context/UserContext";
 import { useActiveEditor } from "@src/lib/editor/use-active-editor";
@@ -42,6 +42,8 @@ const ProjectWorkspace = () => {
         setSecondaryPanel,
         setFocusedPanel,
         setScreenplayView,
+        isEndlessScroll,
+        setZoomLevel,
     } = useViewContext();
     const { isReadOnly } = useContext(ProjectContext);
     const { updateIsZenMode } = useContext(UserContext);
@@ -86,6 +88,19 @@ const ProjectWorkspace = () => {
                 toggleTimeline: () => setTimelineOpen((prev) => !prev),
                 toggleLeftSidebar: () => setLeftSidebarOpen((prev) => !prev),
                 toggleRightSidebar: () => setRightSidebarOpen((prev) => !prev),
+                // Gated exactly like the panel menu's stepper: the phone's two
+                // view modes already are its zoom control, and endless scroll
+                // reflows rather than scaling. Refusing here rather than letting
+                // the level drift means the shortcut cannot leave a zoom stored
+                // that nothing on screen reflects.
+                zoomIn: () => {
+                    if (isPhone || isEndlessScroll) return;
+                    setZoomLevel((prev) => prev + EDITOR_ZOOM_STEP);
+                },
+                zoomOut: () => {
+                    if (isPhone || isEndlessScroll) return;
+                    setZoomLevel((prev) => prev - EDITOR_ZOOM_STEP);
+                },
             },
         }),
         [
@@ -100,6 +115,8 @@ const ProjectWorkspace = () => {
             setTimelineOpen,
             setLeftSidebarOpen,
             setRightSidebarOpen,
+            isEndlessScroll,
+            setZoomLevel,
         ],
     );
 

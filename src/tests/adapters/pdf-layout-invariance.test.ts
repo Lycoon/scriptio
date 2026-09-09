@@ -63,7 +63,7 @@ const mountEditor = () => {
             --page-margin-left: 96px;
             --page-margin-right: 96px;
             transform: scale(var(--editor-zoom, 1));
-            transform-origin: top center;
+            transform-origin: top left;
         }
         .test-pm p { margin: 0 0 16px 0; padding: 0 calc(96px * var(--display-margin-scale)); }
         .test-pm p.dialogue {
@@ -123,9 +123,11 @@ const firstX = (lines: string[], type: string): number =>
 
 describe("PDF export is invariant of the editor's on-screen layout", () => {
     // 0.48 is about what a phone-width viewport fits a US Letter page to; 0.8
-    // covers a roomier device so the assertion isn't tied to one ratio.
-    for (const scale of [0.48, 0.8]) {
-        it(`matches the 1x layout at a paged fit-to-width scale of ${scale}`, () => {
+    // covers a roomier device so the assertion isn't tied to one ratio. 1.5 and
+    // 2 are the writer's own zoom (EDITOR_ZOOM_MAX), which scales the same
+    // variable the other way — an export taken zoomed in must be identical too.
+    for (const scale of [0.48, 0.8, 1.5, 2]) {
+        it(`matches the 1x layout at a display scale of ${scale}`, () => {
             const adapter = new PDFAdapter();
             const { editor } = mountEditor();
 
