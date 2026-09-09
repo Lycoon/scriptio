@@ -29,6 +29,7 @@ import { getNodeIdAtPos, transactionDeletesNode } from "@src/lib/screenplay/comm
 import { useDocumentEditor } from "@src/lib/editor/use-document-editor";
 import { useViewModeScrollAnchor } from "@src/lib/editor/use-view-mode-scroll-anchor";
 import { useKeyboardCaretVisibility } from "@src/lib/editor/use-keyboard-caret-visibility";
+import { useChromeHide } from "@src/lib/editor/use-chrome-hide";
 import { centerCaretInView, focusEditorAtCoords } from "@src/lib/editor/focus-in-viewport";
 import { getSpellErrorAt } from "@src/lib/spellcheck/spellcheck-extension";
 import type { SuggestionData } from "@components/editor/SuggestionMenu";
@@ -49,22 +50,6 @@ export interface DocumentEditorPanelProps {
     /** Override the focus type reported to ProjectContext on focus. */
     focusedTypeOverride?: "screenplay" | "title" | "draft";
 }
-
-// Scroll distance (px) that fully hides the mobile chrome. Deliberately several
-// times the navbar height so the bar eases away gradually over a longer swipe
-// rather than snapping shut after a flick — matches the pace of a natural scroll.
-const CHROME_HIDE_RANGE = 220;
-
-// How far through that range the swipe got, measured only once it is over, decides
-// which way the chrome resolves: past this it finishes hiding, below it it comes
-// back. The chrome therefore only ever *rests* fully shown or fully hidden, never
-// stranded half-way up and half faded — Google Docs' toolbar settles the same way.
-// Deliberately not applied mid-gesture: while the finger is down (or its momentum
-// still running) the chrome tracks the scroll 1:1 and nothing snaps under it.
-const CHROME_SNAP_THRESHOLD = 0.5;
-// Duration (ms) of that run-out. Short enough to read as the tail of the swipe
-// rather than a separate animation playing after it.
-const CHROME_SNAP_MS = 180;
 
 // useLayoutEffect on the server warns; fall back to useEffect there. The view
 // mode scaling and its scroll re-anchoring must run before paint, so they need
@@ -122,6 +107,7 @@ const DocumentEditorPanel = ({
         mobileEditMode,
         setMobileEditMode,
         timelineOpen,
+        zoomLevel,
     } = useViewContext();
     const { user } = useUser();
     const isPhone = useIsPhone();
@@ -147,34 +133,10 @@ const DocumentEditorPanel = ({
     // The draggable scroll track element, measured to derive the handle's travel
     // range (see thumbTravel) independently of the container's changing height.
     const scrollTrackRef = useRef<HTMLDivElement | null>(null);
-    // Last scrollTop, to derive scroll direction for hiding/showing the mobile
-    // editor chrome (navbar + sidebar edge handles).
-    const lastScrollTop = useRef(0);
-    // Whether the scroll in flight was started by the user's finger (a touch on
-    // the reader, or a drag of the scroll handle), as opposed to a programmatic
-    // scroll — e.g. "Go to scene" from the sidebar, which calls scrollIntoView.
-    // Only finger-driven scrolls hide the mobile chrome: a programmatic jump
-    // must not slide the navbar (and the open sidebar's dimming backdrop) away
-    // under the user, which reads as an unnatural, un-dimmed flash. Kept alive
-    // through iOS momentum by an idle timer (see armUserScrollIdle) so a real
-    // flick still hides the chrome after the finger has lifted.
-    const isUserScrolling = useRef(false);
-    // True while a finger (or the handle drag) is actually down, so the idle
-    // timer never clears mid-drag when the user holds still for a beat.
-    const isFingerDown = useRef(false);
-    const userScrollIdleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Coalesces all scroll-driven work into a single update per animation frame
     // (see onScroll). A burst of scroll events then costs one layout, aligned to
     // the paint cycle, so the chrome stays glued to the scroll instead of lagging.
     const scrollRafRef = useRef<number | null>(null);
-    // Continuous 0→1 progress for hiding that chrome, tracked so it follows the
-    // scroll gesture rather than jumping between shown and hidden (see
-    // applyChromeHide). Mirrored into the --chrome-hide CSS variable.
-    const chromeHideRef = useRef(0);
-    // Handle of the in-flight snap animation that runs the chrome out to a resting
-    // state once the gesture is released (see snapChromeHide). Non-null means a
-    // snap owns --chrome-hide right now, so scroll deltas leave it alone.
-    const chromeSnapRafRef = useRef<number | null>(null);
     // Pending single-tap timer for the phone reader. A tap arms it; a second tap
     // within the window cancels it and counts as a double tap (see handleReaderTap).
     const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -182,7 +144,6 @@ const DocumentEditorPanel = ({
     // container actually mounts (it may render after a Loading fallback).
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
 
-    // Resolve the comments Y.Map for this document
     const projectState = repository?.getState();
     const commentsMap = useMemo(
         () => (projectState && config.features.comments ? config.getCommentsMap(projectState) : null),
@@ -191,10 +152,8 @@ const DocumentEditorPanel = ({
         [projectState],
     );
 
-    // Per-document comment state
     const commentOps = useDocumentComments(commentsMap, repository);
 
-    // Build the editor
     const keybinds = userKeybinds ?? settings?.keybinds;
 
     const updateActiveElement = useCallback(
@@ -213,7 +172,6 @@ const DocumentEditorPanel = ({
         setSelectedTitlePageElement,
     });
 
-    // Register the editor instance with the parent wrapper
     useEffect(() => {
         onEditorCreated?.(editor);
         return () => {
@@ -278,7 +236,7 @@ const DocumentEditorPanel = ({
         el.classList.toggle("endless-scroll", isEndlessScroll);
     }, [editor, isEndlessScroll]);
 
-    // Ready state
+    // Delay the reveal so the first pagination pass lands before the panel fades in.
     useEffect(() => {
         if (editor && isYjsReady) {
             const timer = setTimeout(() => setIsEditorReady(true), 500);
@@ -286,49 +244,93 @@ const DocumentEditorPanel = ({
         }
     }, [editor, isYjsReady]);
 
-    // ---- Phone view modes ----
-    // Endless (default on phone): the CSS reflows text into the viewport at full
-    // size via a compact --display-margin-scale — no page rectangles, so nothing
-    // shifts while writing. Paged (endless off): render the real fixed-size page —
-    // page breaks, headers, footers, exactly like desktop — and scale the whole
-    // page down with transform: scale() so it fits the viewport width. A fixed
-    // page rectangle means its boundaries never move as you type, so there are no
-    // layout shifts. The scale is purely visual (NOT `zoom`: WebKit clamps
+    const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
+    // Whether the phone's automatic fit-to-width applies (paged view only — see
+    // the effect below). Desktop always shows the page at its canonical width.
+    const isPagedFit = isPhone && !isEndlessScroll && !!pageSize;
+    // The writer's own zoom, or 1 where it does not apply — a neutral factor
+    // rather than a special case, so every formula below stays the same shape.
+    // It does not apply:
+    //  - on phone, where the two view modes already are the zoom control:
+    //    endless reflows the text to the viewport at full size, and paged fits
+    //    the whole page to the screen. A third scale on top of those has nothing
+    //    left to offer, and would only give a phone-sized screen a page too wide
+    //    or too small to read.
+    //  - in endless scroll, which reflows instead of drawing a page to scale.
+    const userZoom = isPhone || isEndlessScroll ? 1 : zoomLevel / 100;
+    // Anything to scale at all. Drives the `zoomed` class, and with it whether a
+    // transform is applied to the editor at all. Gated on a known page size
+    // because the class's margins are expressed in --page-width: without one they
+    // would fail to substitute, computing to 0 and left-aligning the page.
+    const zoomActive = !!pageSize && (isPagedFit || userZoom !== 1);
+
+    // ---- Display scale (phone fit + user zoom) ----
+    // The rendered page scale is the product of two independent factors, kept as
+    // separate CSS variables and multiplied in CSS (see the `.zoomed` rule in
+    // EditorPanel.module.css):
+    //
+    //  --editor-fit       automatic, phone paged view only: shrink the canonical
+    //                     page so its full width fits the viewport. Measured, so
+    //                     it is maintained here rather than in React state — it
+    //                     changes on every resize and rotation.
+    //  --editor-user-zoom the writer's own zoom level, applied on every device
+    //                     (set inline from `zoomLevel` further down). Phone
+    //                     therefore zooms relative to the fitted page: 100% means
+    //                     "the whole page, as wide as the screen", which is the
+    //                     only sensible baseline there.
+    //
+    // Both are purely visual. The scale is a transform, NOT `zoom` (WebKit clamps
     // zoom-shrunk fonts to a 9px rendered minimum, inflating the screenplay font
-    // — see the paged-mode rule in EditorPanel.module.css) and pagination is
-    // measured off-screen, so page count / numbering are unaffected either way.
-    // Layout effect so the paged scale is in place before the browser paints the
-    // new mode — and before the scroll re-anchoring below measures it.
+    // — see the `.zoomed` rule for the full account), pagination is measured
+    // off-screen at the canonical width, and PDF export pins `transform: none`
+    // while it measures (CANONICAL_PINNED_PROPERTIES in pdf-adapter). So page
+    // count, numbering, page breaks and every export are identical at every zoom.
+    //
+    // Endless scroll (phone) takes no scale at all: it already reflows the text
+    // to the viewport at full size, and there is no fixed page rectangle to
+    // scale — hence `userZoom` collapsing to 1 there.
+    //
+    // Layout effect so the scale is in place before the browser paints — and
+    // before the scroll compensation and re-anchoring below measure it.
     useIsoLayoutEffect(() => {
         const container = containerEl;
         if (!container) return;
 
         const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
-        // Only the phone paged view is scaled. Endless reflows (no scale); desktop
-        // shows the page at 1:1.
-        if (!isPhone || isEndlessScroll || !pageSize) {
-            container.style.removeProperty("--editor-zoom");
+        // Nothing is scaled: drop both variables so the editor renders at 1:1 with
+        // no transform at all. Leaving an identity scale(1) behind would not be
+        // free — a transformed contenteditable loses its caret in WebKit, and
+        // scale(1) is enough to trigger it — which is why the CSS keys the whole
+        // transform off the `zoomed` class instead of a neutral value.
+        if (!zoomActive || !pageSize) {
+            container.style.removeProperty("--editor-fit");
             container.style.removeProperty("--editor-layout-height");
             return;
         }
 
-        const apply = () => {
-            const avail = container.clientWidth;
-            if (!avail) return;
-            // Fit the full canonical page width into the viewport; never upscale.
-            // Leaves a small gutter so the page edges aren't flush with the screen.
-            const ratio = Math.min(1, (avail - 8) / pageSize.pageWidth);
-            container.style.setProperty("--editor-zoom", `${ratio}`);
-        };
+        let ro: ResizeObserver | undefined;
+        if (isPagedFit) {
+            const apply = () => {
+                const avail = container.clientWidth;
+                if (!avail) return;
+                // Fit the full canonical page width into the viewport; never upscale.
+                // Leaves a small gutter so the page edges aren't flush with the screen.
+                const ratio = Math.min(1, (avail - 8) / pageSize.pageWidth);
+                container.style.setProperty("--editor-fit", `${ratio}`);
+            };
+            apply();
+            ro = new ResizeObserver(apply);
+            ro.observe(container);
+        } else {
+            container.style.removeProperty("--editor-fit");
+        }
 
-        apply();
-        const ro = new ResizeObserver(apply);
-        ro.observe(container);
-
-        // transform: scale() doesn't shrink the layout box the way `zoom` did, so
-        // the CSS collapses the leftover (1 − scale) tail of the editor's layout
-        // height with a negative margin. Track the untransformed height here
-        // (offsetHeight ignores transforms) and expose it as a CSS var.
+        // transform: scale() doesn't shrink (or grow) the layout box the way `zoom`
+        // did, so the CSS corrects the leftover (scale − 1) tail of the editor's
+        // layout height with a margin — negative when zoomed out, positive when
+        // zoomed in — so the scroll extent matches what is actually visible. Track
+        // the untransformed height here (offsetHeight ignores transforms) and
+        // expose it as a CSS var.
         const editorDOM = editor?.view?.dom;
         let heightObserver: ResizeObserver | undefined;
         if (editorDOM) {
@@ -341,11 +343,53 @@ const DocumentEditorPanel = ({
         }
 
         return () => {
-            ro.disconnect();
+            ro?.disconnect();
             heightObserver?.disconnect();
             container.style.removeProperty("--editor-layout-height");
         };
-    }, [containerEl, isPhone, isEndlessScroll, pageFormat, editor]);
+    }, [containerEl, isPagedFit, zoomActive, pageFormat, editor]);
+
+    // ---- Keep the reading position across a zoom change ----
+    // Unlike the endless/paged switch below — a genuine reflow, which needs the
+    // content-anchored correction in useViewModeScrollAnchor — a zoom step scales
+    // the whole document uniformly from its top edge (transform-origin: top left).
+    // Every offset therefore moves by exactly the same ratio, so scaling scrollTop
+    // by it is not an approximation but the exact answer, and the line under the
+    // reader's eye stays there.
+    //
+    // Declared after the effect above so the new scale is already applied: writing
+    // scrollTop flushes layout, and against the old (shorter) scroll extent a
+    // zoom-in would simply clamp and land short.
+    const prevZoomRef = useRef(zoomLevel);
+    useIsoLayoutEffect(() => {
+        const previous = prevZoomRef.current;
+        prevZoomRef.current = zoomLevel;
+        const container = containerEl;
+        if (!container || previous === zoomLevel) return;
+        if (container.scrollTop > 0) container.scrollTop = (container.scrollTop * zoomLevel) / previous;
+
+        // Tell the viewport-culled overlays (the revision stripes and asterisks)
+        // that what is on screen has changed. They repaint on scroll and on a
+        // resize of the editor box, and a zoom step is neither: a transform leaves
+        // the layout box alone, and scrolling to the same place — or being at the
+        // top already — fires nothing. Their *painted* geometry stays correct
+        // regardless (its coordinates are unscaled, inside the same transformed
+        // subtree), but the window they cull against is in screen pixels, so
+        // without this a zoom-out leaves the newly-revealed pages unpainted until
+        // the next scroll. A synthetic scroll event reaches them through the
+        // capture-phase window listener they already use.
+        container.dispatchEvent(new Event("scroll"));
+    }, [zoomLevel, containerEl]);
+
+    // Deliberately no ⌘/Ctrl + wheel zoom here. Catching it needs a NON-PASSIVE
+    // wheel listener (a passive one cannot preventDefault, so the browser would
+    // zoom the whole app instead), and the browser cannot know in advance whether
+    // such a handler will prevent the default — so it must route EVERY wheel
+    // event over this container through the main thread before scrolling, even
+    // the ordinary ones with no modifier held. That takes the editor's scrolling
+    // off the compositor's fast path, and a plain scroll then stutters whenever
+    // the main thread is mid-pagination. The zoom is on ⌘/Ctrl +/− and in the
+    // panel menu instead; scrolling stays untouched.
 
     // ---- Scroll anchoring across the endless-scroll toggle ----
     // Endless and paged render the same document at very different heights, so a
@@ -637,7 +681,8 @@ const DocumentEditorPanel = ({
                     }
 
                     if (event.key === "Enter") {
-                        // suggestions.length check: read from ref to avoid stale closure
+                        // Kept fresh by re-registering on `suggestions.length`
+                        // (see this effect's deps), not by a ref.
                         if (suggestions.length > 0) {
                             event.preventDefault();
                             return true;
@@ -948,77 +993,12 @@ const DocumentEditorPanel = ({
         }
     }, []);
 
-    // Drive the mobile chrome hide (navbar + sidebar edge handles + pen button)
-    // as a continuous 0→1 progress written straight to a CSS variable, so it
-    // tracks the scroll gesture rather than flipping between two states. The
-    // gesture drives it the whole way; only once the gesture is over does
-    // snapChromeHide run whatever travel is left, so the chrome never comes to
-    // *rest* half-way. Written imperatively (no React state) to keep it
-    // frame-tight. `chromeHidden` is kept in sync only as a coarse flag for logic
-    // that needs a discrete "mostly hidden" state.
-    const applyChromeHide = useCallback(
-        (progress: number) => {
-            const clamped = progress < 0 ? 0 : progress > 1 ? 1 : progress;
-            if (clamped === chromeHideRef.current) return;
-            const wasHidden = chromeHideRef.current > 0.5;
-            chromeHideRef.current = clamped;
-            document.documentElement.style.setProperty("--chrome-hide", clamped.toFixed(4));
-            const isHidden = clamped > 0.5;
-            if (isHidden !== wasHidden) setChromeHidden(isHidden);
-        },
-        [setChromeHidden],
-    );
-
-    const cancelChromeSnap = useCallback(() => {
-        if (chromeSnapRafRef.current == null) return;
-        cancelAnimationFrame(chromeSnapRafRef.current);
-        chromeSnapRafRef.current = null;
-    }, []);
-
-    /**
-     * Ease the chrome to a resting state — fully shown (0) or fully hidden (1) —
-     * rather than leaving it stranded wherever the finger stopped. Only ever
-     * called once the gesture (and its momentum) is over; nothing snaps while the
-     * user is still scrolling.
-     *
-     * Driven by rAF and not a CSS transition, because --chrome-hide is also what
-     * the gesture writes and the CSS deliberately carries no transition on it so
-     * it can track the finger 1:1; a transition would smear every scroll frame
-     * instead. While this runs it owns the variable, and a new touch cancels it
-     * (see onReaderTouchStart) so the next gesture takes over mid-flight.
-     */
-    const snapChromeHide = useCallback(
-        (target: 0 | 1) => {
-            cancelChromeSnap();
-            const from = chromeHideRef.current;
-            if (from === target) return;
-            const startedAt = performance.now();
-            const step = (now: number) => {
-                const t = Math.min(1, (now - startedAt) / CHROME_SNAP_MS);
-                // easeOutCubic: leaves fast so it reads as a continuation of the
-                // swipe's momentum, then settles gently.
-                const eased = 1 - (1 - t) ** 3;
-                applyChromeHide(from + (target - from) * eased);
-                chromeSnapRafRef.current = t < 1 ? requestAnimationFrame(step) : null;
-            };
-            chromeSnapRafRef.current = requestAnimationFrame(step);
-        },
-        [applyChromeHide, cancelChromeSnap],
-    );
-
-    // Reset the chrome to fully shown whenever it can't/shouldn't be hidden:
-    // leaving phone layout, entering edit mode, or on unmount (so the next screen
-    // doesn't inherit a half-hidden bar).
-    useEffect(() => {
-        if (!isPhone || mobileEditMode) {
-            cancelChromeSnap();
-            applyChromeHide(0);
-        }
-        return () => {
-            cancelChromeSnap();
-            applyChromeHide(0);
-        };
-    }, [isPhone, mobileEditMode, applyChromeHide, cancelChromeSnap]);
+    const chromeHide = useChromeHide({
+        enabled: isPhone,
+        pinned: mobileEditMode,
+        editor,
+        setChromeHidden,
+    });
 
     // Phone reader taps. The reader is not editable, so taps don't place a caret
     // and are free to drive chrome: a single tap brings back the chrome the user
@@ -1062,48 +1042,11 @@ const DocumentEditorPanel = ({
             // shown).
             tapTimer.current = setTimeout(() => {
                 tapTimer.current = null;
-                cancelChromeSnap();
-                applyChromeHide(0);
+                chromeHide.reveal();
             }, 280);
         },
-        [isPhone, mobileEditMode, isReadOnly, editor, setMobileEditMode, applyChromeHide, cancelChromeSnap],
+        [isPhone, mobileEditMode, isReadOnly, editor, setMobileEditMode, chromeHide],
     );
-
-    // Clear the finger-driven flag once scrolling has settled. Called after the
-    // finger lifts; iOS momentum keeps firing scroll events that push this out
-    // (see onScroll), so it only fires once the fling has actually stopped.
-    const armUserScrollIdle = useCallback(() => {
-        if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
-        userScrollIdleTimer.current = setTimeout(() => {
-            isUserScrolling.current = false;
-            // The gesture is genuinely over now — finger up and the momentum it
-            // threw has settled — so this is the one moment the chrome is allowed
-            // to resolve. Run it out to whichever end the swipe got closest to,
-            // rather than leaving the bar parked half off-screen and half faded.
-            const progress = chromeHideRef.current;
-            if (chromeSnapRafRef.current == null && progress > 0 && progress < 1) {
-                snapChromeHide(progress >= CHROME_SNAP_THRESHOLD ? 1 : 0);
-            }
-        }, 200);
-    }, [snapChromeHide]);
-
-    // Finger touches the reader: from here until the touch ends (plus any
-    // momentum) scrolls count as user-driven and may hide the chrome. Drop any
-    // run-out still playing from the previous gesture so this one picks the chrome
-    // up from wherever it got to, rather than being locked out until it lands.
-    const onReaderTouchStart = useCallback(() => {
-        cancelChromeSnap();
-        isFingerDown.current = true;
-        isUserScrolling.current = true;
-        if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
-    }, [cancelChromeSnap]);
-
-    // Finger lifts (or the touch is cancelled): let momentum keep the flag alive,
-    // then clear it once scrolling settles.
-    const onReaderTouchEnd = useCallback(() => {
-        isFingerDown.current = false;
-        armUserScrollIdle();
-    }, [armUserScrollIdle]);
 
     const onScroll = () => {
         if (suggestions.length > 0) updateSuggestions?.([]);
@@ -1126,36 +1069,10 @@ const DocumentEditorPanel = ({
             const maxScroll = el.scrollHeight - el.clientHeight;
             const scrollTop = Math.max(0, Math.min(el.scrollTop, maxScroll));
             setIsScrolled(scrollTop > 0);
+            chromeHide.onScrollTick(scrollTop);
             if (!isPhone) return;
             updateThumb();
             revealScrollThumb();
-
-            // Keep the finger-driven flag alive through iOS momentum: once the
-            // finger is up, each remaining scroll event pushes the idle-clear
-            // out, so it only lands when the fling settles.
-            if (isUserScrolling.current && !isFingerDown.current) armUserScrollIdle();
-
-            // Accumulate scroll movement into the hide progress over
-            // CHROME_HIDE_RANGE px: scrolling down slides the chrome away,
-            // scrolling up brings it back (from anywhere in the doc). Snap fully
-            // open at the very top. In edit mode the navbar carries the
-            // exit/undo/redo controls, so keep it pinned open. Only a
-            // finger-driven scroll moves the chrome — a programmatic scroll (e.g.
-            // "Go to scene") leaves isUserScrolling false, so the chrome and the
-            // sidebar's backdrop stay put under the jump.
-            const delta = scrollTop - lastScrollTop.current;
-            if (mobileEditMode || scrollTop <= 4) {
-                cancelChromeSnap();
-                applyChromeHide(0);
-            } else if (isUserScrolling.current && chromeSnapRafRef.current == null) {
-                // Pure 1:1 tracking — the threshold is only consulted once the
-                // gesture is over (see armUserScrollIdle), so the bar never snaps
-                // out from under a finger that is still on the screen. Skipped
-                // while a run-out is in flight, so a stray scroll event can't
-                // fight it; a real new gesture cancels it on touch-down instead.
-                applyChromeHide(chromeHideRef.current + delta / CHROME_HIDE_RANGE);
-            }
-            lastScrollTop.current = scrollTop;
         });
     };
 
@@ -1170,12 +1087,8 @@ const DocumentEditorPanel = ({
             (e.target as HTMLElement).setPointerCapture(e.pointerId);
             isDraggingThumb.current = true;
             // Dragging the handle is a deliberate user scroll, so let it hide the
-            // chrome just like a finger swipe (kept true until the drag ends), and
-            // take the chrome back from any run-out still playing.
-            cancelChromeSnap();
-            isFingerDown.current = true;
-            isUserScrolling.current = true;
-            if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
+            // chrome just like a finger swipe.
+            chromeHide.beginUserScroll();
             revealScrollThumb();
 
             const startY = e.clientY;
@@ -1191,8 +1104,7 @@ const DocumentEditorPanel = ({
             };
             const onUp = () => {
                 isDraggingThumb.current = false;
-                isFingerDown.current = false;
-                armUserScrollIdle(); // let the flag clear once the scroll settles
+                chromeHide.endUserScroll();
                 revealScrollThumb(); // re-arm the auto-hide now that the drag is done
                 window.removeEventListener("pointermove", onMove);
                 window.removeEventListener("pointerup", onUp);
@@ -1202,43 +1114,28 @@ const DocumentEditorPanel = ({
             window.addEventListener("pointerup", onUp);
             window.addEventListener("pointercancel", onUp);
         },
-        [containerEl, revealScrollThumb, thumbTravel, armUserScrollIdle, cancelChromeSnap],
+        [containerEl, revealScrollThumb, thumbTravel, chromeHide],
     );
 
-    // Clean up the idle timer on unmount.
+    // Timers and frames owned by this panel (the chrome-hide ones clean themselves
+    // up — see useChromeHide).
     useEffect(() => {
         return () => {
             if (scrollIdleTimer.current) clearTimeout(scrollIdleTimer.current);
             if (tapTimer.current) clearTimeout(tapTimer.current);
             if (scrollRafRef.current != null) cancelAnimationFrame(scrollRafRef.current);
-            if (chromeSnapRafRef.current != null) cancelAnimationFrame(chromeSnapRafRef.current);
-            if (userScrollIdleTimer.current) clearTimeout(userScrollIdleTimer.current);
         };
     }, []);
 
-    // Reveal the chrome again the moment the user starts writing. The native
-    // `input` event on the contenteditable fires only for real user edits — not
-    // for programmatic/collaboration changes or the pagination height updates —
-    // so it won't fight the scroll-hide. Off phone this is a no-op.
-    useEffect(() => {
-        if (!isPhone) return;
-        const dom = editor?.view?.dom;
-        if (!dom) return;
-        const onInput = () => {
-            cancelChromeSnap();
-            applyChromeHide(0);
-        };
-        dom.addEventListener("input", onInput);
-        return () => dom.removeEventListener("input", onInput);
-    }, [editor, isPhone, applyChromeHide, cancelChromeSnap]);
-
     const focusType = focusedTypeOverride ?? (config.type === "screenplay" ? "screenplay" : "title");
 
-    const pageSize = SCREENPLAY_FORMATS[pageFormat as keyof typeof SCREENPLAY_FORMATS];
     const wrapperStyle = pageSize
         ? ({
               "--page-width": `${pageSize.pageWidth}px`,
               "--page-height": `${pageSize.pageHeight}px`,
+              // The writer's zoom. Multiplied with --editor-fit in CSS rather than
+              // here, because the fit half is measured and lives on the container.
+              "--editor-user-zoom": `${userZoom}`,
           } as React.CSSProperties)
         : undefined;
 
@@ -1256,11 +1153,18 @@ const DocumentEditorPanel = ({
         >
             <div
                 ref={setContainerEl}
-                className={join(styles.container, timelineOpen ? styles.timeline_open : "")}
+                className={join(
+                    styles.container,
+                    timelineOpen ? styles.timeline_open : "",
+                    // Zoomed past 1:1 the page is wider than the column that holds
+                    // it, so the container has to allow panning to it — its default
+                    // `overflow-x: clip` would simply cut the right margin off.
+                    userZoom > 1 ? styles.zoom_pan : "",
+                )}
                 onScroll={onScroll}
-                onTouchStart={onReaderTouchStart}
-                onTouchEnd={onReaderTouchEnd}
-                onTouchCancel={onReaderTouchEnd}
+                onTouchStart={chromeHide.beginUserScroll}
+                onTouchEnd={chromeHide.endUserScroll}
+                onTouchCancel={chromeHide.endUserScroll}
                 onClick={handleReaderTap}
                 onMouseDown={handleContainerMouseDown}
                 onFocus={() => setFocusedEditorType(focusType)}
@@ -1274,7 +1178,11 @@ const DocumentEditorPanel = ({
                 }
             >
                 <div
-                    className={`${styles.editor_wrapper} ${isEndlessScroll ? styles.endless_scroll : ""}`}
+                    className={join(
+                        styles.editor_wrapper,
+                        isEndlessScroll ? styles.endless_scroll : "",
+                        zoomActive ? styles.zoomed : "",
+                    )}
                     style={wrapperStyle}
                 >
                     <div className={join(styles.editor_shadow, isScrolled ? styles.show_shadow : "")} />

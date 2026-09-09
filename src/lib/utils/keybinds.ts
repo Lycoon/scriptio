@@ -15,7 +15,13 @@ import { Editor } from "@tiptap/react";
  */
 const physicalKey = (part: string): string | undefined => {
     const match = /^key([a-z])$/i.exec(part) ?? /^digit([0-9])$/i.exec(part);
-    return match ? match[1].toUpperCase() : undefined;
+    if (match) return match[1].toUpperCase();
+    // Codes whose name is nothing like the symbol on the key. Printing "Equal"
+    // in the shortcut list would be unreadable, and the symbol these two carry
+    // is the whole reason they are bound (the zoom pair). "+" rather than "="
+    // for Equal because that is the half of the keycap this shortcut means, and
+    // what every other app calls it.
+    return { equal: "+", minus: "-" }[part.toLowerCase()];
 };
 
 /**
@@ -82,6 +88,8 @@ export type KeybindId =
     | "view_timeline"
     | "view_left_sidebar"
     | "view_right_sidebar"
+    | "view_zoom_in"
+    | "view_zoom_out"
     | "style_bold"
     | "style_italic"
     | "style_underline"
@@ -190,6 +198,27 @@ export const DEFAULT_KEYBINDS: DefaultKeybindsMap = {
         group: "view",
     },
 
+    // Display zoom. ⌘/Ctrl +/− rather than the Alt family above, because this is
+    // the one view shortcut every other app already binds there, and a writer
+    // reaching for it is reaching by habit.
+    //
+    // Written as codes: these two keys are exactly where a character-form combo
+    // falls apart. "+" cannot be stored at all (combos are split on "+", so
+    // "$mod++" parses as an empty key), and on the layouts where + and − need
+    // Shift or AltGr, `event.key` is whatever that produced rather than the
+    // symbol on the keycap. Equal/Minus name the physical keys, which is what a
+    // zoom shortcut means — the same pair the browser's own zoom uses.
+    view_zoom_in: {
+        defaultCombo: "$mod+Equal",
+        scope: "global",
+        group: "view",
+    },
+    view_zoom_out: {
+        defaultCombo: "$mod+Minus",
+        scope: "global",
+        group: "view",
+    },
+
     // Text styling (editor-scoped, and taken over from Tiptap's own marks)
     style_bold: {
         defaultCombo: "$mod+b",
@@ -278,6 +307,11 @@ export type ViewActions = {
     toggleTimeline: () => void;
     toggleLeftSidebar: () => void;
     toggleRightSidebar: () => void;
+    /** Step the editor's display zoom. Visual only — see EDITOR_ZOOM_* in
+     *  ViewContext. Both are no-ops where zoom does not apply (phone, endless
+     *  scroll), so the shortcut is inert rather than wrong there. */
+    zoomIn: () => void;
+    zoomOut: () => void;
 };
 
 /**
@@ -340,6 +374,10 @@ export const executeKeybindAction = (keybindId: KeybindId, context: ActionContex
             return runView((v) => v.toggleLeftSidebar());
         case "view_right_sidebar":
             return runView((v) => v.toggleRightSidebar());
+        case "view_zoom_in":
+            return runView((v) => v.zoomIn());
+        case "view_zoom_out":
+            return runView((v) => v.zoomOut());
 
         // Text styling
         case "style_bold":

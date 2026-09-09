@@ -461,15 +461,14 @@
    time. Wide enough for the action pills at their longest; the path line
    ellipsises into it (its full value stays in the row's title). */
 .storage_panel {
+    composes: panel from "./navbar-shared.module.css";
     position: absolute;
     top: 40px;
     left: 0;
     width: 300px;
-    background-color: var(--secondary);
     color: var(--primary-text);
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: 16px;
     font-size: 12px;
     z-index: 100;
     display: flex;

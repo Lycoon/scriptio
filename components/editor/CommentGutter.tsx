@@ -49,7 +49,7 @@ const CommentGutter = ({
     onAddReply,
 }: CommentGutterProps) => {
     const { user } = useUser();
-    const { showComments, isEndlessScroll } = useViewContext();
+    const { showComments, isEndlessScroll, zoomLevel } = useViewContext();
     const [icons, setIcons] = useState<IconPos[]>([]);
 
     // One RAF handle shared by every recompute trigger (transactions, resizes),
@@ -127,21 +127,23 @@ const CommentGutter = ({
         setIcons(next);
     }, [editor, commentsByNode, showComments]);
 
-    // Recompute on mount and whenever the comment set changes — and on the phone's
-    // endless/paged toggle, which re-lays out every line (the page becomes a
-    // scaled fixed-size sheet) while leaving both the document and the scroll
-    // container untouched, so no trigger below would notice it. isEndlessScroll is
-    // not read by computePositions; it is here to invalidate its last measurement.
-    // Without it, switching to paged left every icon parked at the offset its line
-    // had in endless mode — usually far enough down to be off-screen, i.e. the
-    // icon simply vanished.
+    // Recompute on mount and whenever the comment set changes — and on the two
+    // things that re-lay out every line while leaving both the document and the
+    // scroll container untouched, so no trigger below would notice them:
+    //  - the phone's endless/paged toggle (the page becomes a scaled fixed-size
+    //    sheet). Without this, switching to paged left every icon parked at the
+    //    offset its line had in endless mode — usually far enough down to be
+    //    off-screen, i.e. the icon simply vanished.
+    //  - a zoom step, which scales every line's position by the same ratio.
+    // Neither is read by computePositions; both are here to invalidate its last
+    // measurement.
     //
-    // Deferred to the next frame: the panel applies the paged scale in a layout
-    // effect, so by the time this runs the page is at its final geometry.
+    // Deferred to the next frame: the panel applies the scale in a layout effect,
+    // so by the time this runs the page is at its final geometry.
     useEffect(() => {
         const raf = requestAnimationFrame(computePositions);
         return () => cancelAnimationFrame(raf);
-    }, [computePositions, isEndlessScroll]);
+    }, [computePositions, isEndlessScroll, zoomLevel]);
 
     // Recompute on document edits and container/window resizes.
     useEffect(() => {

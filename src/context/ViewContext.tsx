@@ -1,6 +1,16 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    useSyncExternalStore,
+    ReactNode,
+} from "react";
 
 import { dropChromeSelection } from "@src/lib/utils/selection";
 
@@ -26,6 +36,75 @@ export const SCENE_CARD_COLUMNS_MIN = 1;
 export const SCENE_CARD_COLUMNS_MAX = 5;
 export const SCENE_CARD_COLUMNS_DEFAULT = 3;
 
+/**
+ * Bounds for the editor's display zoom, in percent. Purely a rendering scale:
+ * the page keeps its canonical pixel dimensions and only the paint is scaled,
+ * so pagination, page count and PDF export are identical at every level (see
+ * the `.zoomed` rule in EditorPanel.module.css).
+ */
+export const EDITOR_ZOOM_MIN = 50;
+export const EDITOR_ZOOM_MAX = 200;
+// Wide enough that a press is unmistakably a different size. The ladder it makes
+// — 50 / 75 / 100 / 125 / 150 / 175 / 200 — divides the range into seven levels,
+// which is about as many as anyone wants to step through to find their reading
+// size.
+export const EDITOR_ZOOM_STEP = 25;
+export const EDITOR_ZOOM_DEFAULT = 100;
+
+/** Snap to the step grid and clamp, so no control can produce an off-grid level. */
+export const clampZoom = (level: number) =>
+    Math.min(EDITOR_ZOOM_MAX, Math.max(EDITOR_ZOOM_MIN, Math.round(level / EDITOR_ZOOM_STEP) * EDITOR_ZOOM_STEP));
+
+/** localStorage key for the zoom level. A device display preference, deliberately
+ *  not part of the synced user settings: the right zoom on a laptop is the wrong
+ *  one on an external monitor, so carrying it between machines would be a bug. */
+const ZOOM_STORAGE_KEY = "scriptio:editor-zoom";
+
+/**
+ * The stored zoom, held as an external store rather than React state.
+ *
+ * It has to be read from localStorage, which the server cannot see: initialising
+ * component state from it would render one number on the server and another on
+ * the client — a hydration mismatch on every load for anyone who has ever
+ * touched the zoom — and adopting it in an effect instead just trades that for a
+ * cascading render. useSyncExternalStore is the shape React provides for exactly
+ * this: the server (and the hydration pass) get the default, and the stored
+ * value is picked up immediately afterwards.
+ */
+let zoomSnapshot: number | null = null;
+const zoomListeners = new Set<() => void>();
+
+/** Cached, because getSnapshot must return a stable value between real changes —
+ *  re-reading localStorage on every render would also be needless work. */
+const getZoomSnapshot = (): number => {
+    if (zoomSnapshot !== null) return zoomSnapshot;
+    let value = EDITOR_ZOOM_DEFAULT;
+    try {
+        const stored = window.localStorage.getItem(ZOOM_STORAGE_KEY);
+        const parsed = stored === null ? NaN : Number(stored);
+        // A level that is out of range, or not a number at all — a hand-edited or
+        // half-written entry — falls back to 100 rather than scaling the editor
+        // to something unusable. `> 0` and not just `isFinite`, because an empty
+        // string parses to 0, which would otherwise clamp to the 50% minimum
+        // rather than being recognised as the junk it is.
+        if (Number.isFinite(parsed) && parsed > 0) value = clampZoom(parsed);
+    } catch {
+        /* localStorage unavailable (private mode, blocked cookies) — stay at 100. */
+    }
+    zoomSnapshot = value;
+    return value;
+};
+
+/** What the server renders, and what the client hydrates against. */
+const getServerZoomSnapshot = () => EDITOR_ZOOM_DEFAULT;
+
+const subscribeZoom = (listener: () => void) => {
+    zoomListeners.add(listener);
+    return () => {
+        zoomListeners.delete(listener);
+    };
+};
+
 interface ViewContextType {
     primaryPanel: PanelType;
     secondaryPanel: PanelType | null;
@@ -49,6 +128,14 @@ interface ViewContextType {
      */
     sceneCardColumns: number;
     setSceneCardColumns: (value: number | ((prev: number) => number)) => void;
+    /**
+     * Display zoom for the editor page, in percent (100 = the canonical page at
+     * 1:1). Visual only — the document, its pagination and every export are
+     * measured at the canonical size regardless, so this can never change what
+     * a script *is*, only how large it is drawn.
+     */
+    zoomLevel: number;
+    setZoomLevel: (value: number | ((prev: number) => number)) => void;
     showComments: boolean;
     leftSidebarOpen: boolean;
     rightSidebarOpen: boolean;
@@ -128,6 +215,9 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [isEndlessScroll, setIsEndlessScrollState] = useState<boolean>(isPhoneViewport);
     const [screenplayView, setScreenplayView] = useState<ScreenplayViewMode>("editor");
     const [sceneCardColumns, setSceneCardColumns] = useState<number>(SCENE_CARD_COLUMNS_DEFAULT);
+    // Read from the module-level store above, not from component state — see
+    // getZoomSnapshot for why localStorage cannot seed a useState here.
+    const zoomLevel = useSyncExternalStore(subscribeZoom, getZoomSnapshot, getServerZoomSnapshot);
     const [showComments, setShowComments] = useState<boolean>(true);
     const [leftSidebarOpen, setLeftSidebarOpenState] = useState<boolean>(false);
     const [rightSidebarOpen, setRightSidebarOpenState] = useState<boolean>(false);
@@ -191,6 +281,21 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
         return () => {
             listeners.delete(callback);
         };
+    }, []);
+
+    // Clamped and persisted here rather than at each call site, so every control
+    // — the footer stepper, ⌘-scroll — lands on the same grid and is remembered.
+    const setZoomLevel = useCallback((value: number | ((prev: number) => number)) => {
+        const current = getZoomSnapshot();
+        const next = clampZoom(typeof value === "function" ? value(current) : value);
+        if (next === current) return;
+        zoomSnapshot = next;
+        try {
+            window.localStorage.setItem(ZOOM_STORAGE_KEY, String(next));
+        } catch {
+            /* Not persisting is survivable; the level still applies for this session. */
+        }
+        for (const listener of zoomListeners) listener();
     }, []);
 
     const setIsEndlessScroll = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
@@ -387,6 +492,8 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setScreenplayView,
             sceneCardColumns,
             setSceneCardColumns,
+            zoomLevel,
+            setZoomLevel,
             showComments,
             leftSidebarOpen,
             rightSidebarOpen,
@@ -412,7 +519,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, screenplayView, sceneCardColumns, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, mobileEditMode, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, onBeforeEndlessScrollChange, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, screenplayView, sceneCardColumns, zoomLevel, setZoomLevel, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, mobileEditMode, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, onBeforeEndlessScrollChange, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;
