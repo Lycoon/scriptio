@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
     AudioLines,
@@ -43,14 +43,20 @@ const panelAnchorStyle: React.CSSProperties = {
 
 /**
  * Desktop/web project navbar: back button + title + the folded history/production/
- * read-aloud cluster on the left, the format dropdown centred, collaborators/
- * search/analytics/settings on the right. The phone layout lives in
+ * read-aloud/analytics cluster on the left, the format dropdown centred,
+ * collaborators/search/settings on the right. The phone layout lives in
  * [ProjectNavbarMobile]; both draw shared project state from
  * {@link useProjectNavbar}.
  *
- * The three screenplay tools sit behind a round chevron next to the title island
+ * The four screenplay tools sit behind a round chevron next to the title island
  * rather than loose in the bar, and expand onto one shared pill — the same
  * single-island treatment the phone bar gives them (.mobile_tools).
+ *
+ * Analytics folds in with them rather than sitting out in the right-hand cluster:
+ * it is a review-time reading of the script like the other three, not a bar-level
+ * command like search or settings, and keeping it here matches the phone. Safe to
+ * move inside the isInProject guard — this navbar only mounts under a projectId
+ * (see [ProjectLayoutContent]), so that guard was never actually false.
  *
  * Tablets land here too (they are wide enough for the desktop layout, see
  * [ProjectNavbar]), but they get [MobileFormatToolbar] above the on-screen
@@ -79,6 +85,13 @@ const ProjectNavbarDesktop = () => {
         onTitleBlur,
         backToProjects,
     } = useProjectNavbar();
+
+    // Each panel's trigger, handed to the panel so its outside-press dismissal
+    // treats it as part of itself (see useDismissOnOutsidePress) — otherwise the
+    // click that closes it here re-opens it through the toggle below.
+    const savesBtnRef = useRef<HTMLDivElement>(null);
+    const productionBtnRef = useRef<HTMLDivElement>(null);
+    const readAloudBtnRef = useRef<HTMLDivElement>(null);
 
     const [isSavesOpen, setIsSavesOpen] = useState(false);
     const [isProductionOpen, setIsProductionOpen] = useState(false);
@@ -171,6 +184,7 @@ const ProjectNavbarDesktop = () => {
                                 >
                                     <div style={panelAnchorStyle}>
                                         <div
+                                            ref={savesBtnRef}
                                             className={join(
                                                 navBtn.button,
                                                 navbar.tools_icon,
@@ -186,10 +200,12 @@ const ProjectNavbarDesktop = () => {
                                             isOpen={isSavesOpen}
                                             onClose={() => setIsSavesOpen(false)}
                                             isPro={isPro}
+                                            triggerRef={savesBtnRef}
                                         />
                                     </div>
                                     <div style={panelAnchorStyle}>
                                         <div
+                                            ref={productionBtnRef}
                                             className={join(
                                                 navBtn.button,
                                                 navbar.tools_icon,
@@ -203,10 +219,12 @@ const ProjectNavbarDesktop = () => {
                                         <ProductionPanel
                                             isOpen={isProductionOpen}
                                             onClose={() => setIsProductionOpen(false)}
+                                            triggerRef={productionBtnRef}
                                         />
                                     </div>
                                     <div style={panelAnchorStyle}>
                                         <div
+                                            ref={readAloudBtnRef}
                                             className={join(
                                                 navBtn.button,
                                                 navbar.tools_icon,
@@ -220,7 +238,23 @@ const ProjectNavbarDesktop = () => {
                                         <ReadAloudPanel
                                             isOpen={isReadAloudOpen}
                                             onClose={() => setIsReadAloudOpen(false)}
+                                            triggerRef={readAloudBtnRef}
                                         />
+                                    </div>
+                                    {/* No panel anchor: analytics is a full modal
+                                        rendered outside this subtree, not a dropdown
+                                        hung off its trigger — so it neither needs the
+                                        wrapper nor counts towards anyPanelOpen. */}
+                                    <div
+                                        className={join(
+                                            navBtn.button,
+                                            navbar.tools_icon,
+                                            isAnalyticsOpen ? navbar.tools_icon_active : "",
+                                        )}
+                                        onClick={() => setIsAnalyticsOpen(true)}
+                                        aria-label={t("analytics")}
+                                    >
+                                        <BarChart2 size={18} />
                                     </div>
                                 </div>
                             </div>
@@ -240,16 +274,11 @@ const ProjectNavbarDesktop = () => {
             )}
             <AnalyticsModal isOpen={isAnalyticsOpen} onClose={() => setIsAnalyticsOpen(false)} />
 
-            {/* Right side - Collaborators + Search + Analytics + Settings */}
+            {/* Right side - Collaborators + Search + Settings. Analytics used to sit
+                here; it folds away with the other screenplay tools now (see above). */}
             <div className={navbar.right_btns}>
                 {isInProject && <CollaboratorsDisplay />}
                 {isInProject && <ScreenplaySearch />}
-                <div
-                    className={`${navBtn.button} ${isAnalyticsOpen ? navBtn.active : ""}`}
-                    onClick={() => setIsAnalyticsOpen(true)}
-                >
-                    <BarChart2 size={18} />
-                </div>
                 <div className={navBtn.button} onClick={() => openDashboard("General")}>
                     <Settings size={18} />
                 </div>

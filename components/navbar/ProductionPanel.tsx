@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
+import { RefObject, useCallback, useContext, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { X, Settings, Info, Eye } from "lucide-react";
 
@@ -18,6 +18,7 @@ import {
 } from "@src/lib/screenplay/revisions";
 import { unlockDraftPopup, unlockPagesPopup, unlockScenesPopup } from "@src/lib/screenplay/popup";
 import { getPageAnchors, getPageAnchorInfo } from "@src/lib/screenplay/extensions/pagination-extension";
+import { useDismissOnOutsidePress } from "@src/lib/utils/hooks";
 import Switch from "@components/utils/Switch";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 
@@ -26,9 +27,11 @@ import styles from "./ProductionPanel.module.css";
 interface ProductionPanelProps {
     isOpen: boolean;
     onClose: () => void;
+    /** The navbar button that toggles this panel — see useDismissOnOutsidePress. */
+    triggerRef?: RefObject<HTMLElement | null>;
 }
 
-const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
+const ProductionPanel = ({ isOpen, onClose, triggerRef }: ProductionPanelProps) => {
     const t = useTranslations("production");
     const {
         sceneLocking,
@@ -115,21 +118,9 @@ const ProductionPanel = ({ isOpen, onClose }: ProductionPanelProps) => {
         openDashboard("Production", { fromMenu: true });
     };
 
-    // Click outside to close
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleClickOutside = (e: MouseEvent) => {
-            const target = e.target as Element;
-            // Keep the panel open when interacting with a revision dropdown menu,
-            // which is rendered in a body portal outside the panel.
-            if (target.closest?.("[data-dropdown-portal]")) return;
-            if (panelRef.current && !panelRef.current.contains(target)) {
-                onClose();
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen, onClose]);
+    // Click outside to close — the navbar trigger excepted, so re-tapping it
+    // dismisses the panel instead of closing and re-opening it.
+    useDismissOnOutsidePress(isOpen, onClose, panelRef, triggerRef);
 
     const sceneUuids = useMemo(() => scenes.map((s) => s.id).filter((id): id is string => !!id), [scenes]);
 

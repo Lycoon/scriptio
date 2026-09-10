@@ -149,7 +149,12 @@
 .panel_switcher_anchor {
     position: absolute;
     top: 8px;
-    left: 8px;
+    /* Distance from the panel's left edge, in one place because the off-screen
+     * slide below has to travel exactly this far plus the row's own width.
+     * Phone hugs the edge like the right-hand toggle does (ProjectWorkspace's
+     * .right_sidebar_toggle); desktop is widened below to meet the content. */
+    --switcher-inset: 8px;
+    left: var(--switcher-inset);
     /* Above every piece of chrome a panel can float, so the menu this opens is
      * never covered by it. The panel shell is `position: relative` with no
      * z-index of its own, so a panel's own floating chrome competes here rather
@@ -164,7 +169,7 @@
     /* Slide the left edge handles off-screen tracking the reader's scroll via
      * --chrome-hide (0 shown → 1 off-screen left). No transition so it follows
      * the gesture; the variable stays 0 on desktop, so this is a no-op there. */
-    transform: translateX(calc(var(--chrome-hide, 0) * (-100% - 8px)));
+    transform: translateX(calc(var(--chrome-hide, 0) * (-100% - var(--switcher-inset))));
     opacity: calc(1 - var(--chrome-hide, 0));
     /* Promoted for the same reason as the right-hand toggle: --chrome-hide is
      * rewritten on every frame of a reader scroll, and without the hint WebKit
@@ -213,6 +218,18 @@
     .panel_switcher_btn {
         width: 28px;
         height: 44px;
+    }
+}
+
+/* Desktop/tablet: at the phone's 8px the handle straddles the left edge of what
+ * the panel is showing — the index-card and page-overview grids start their
+ * content at 20px (.grid padding in SceneCardsPanel/PageOverviewPanel), leaving
+ * over half the pill hanging outside it. Line the row's left edge up with that
+ * content edge, the way the right-hand toggle lines up with the navbar's
+ * Settings button (ProjectWorkspace's .right_sidebar_toggle). */
+@media (min-width: 768px) {
+    .panel_switcher_anchor {
+        --switcher-inset: 20px;
     }
 }
 

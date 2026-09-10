@@ -8,7 +8,15 @@ import {
     EDITOR_ZOOM_MAX,
     EDITOR_ZOOM_MIN,
     EDITOR_ZOOM_STEP,
+    PAGE_GRID_COLUMNS_DEFAULT,
+    PAGE_GRID_COLUMNS_MAX,
+    PAGE_GRID_COLUMNS_MIN,
+    pageGridZoom,
     PanelType,
+    SCENE_CARD_COLUMNS_DEFAULT,
+    SCENE_CARD_COLUMNS_MAX,
+    SCENE_CARD_COLUMNS_MIN,
+    sceneCardZoom,
     SplitSide,
     useViewContext,
 } from "@src/context/ViewContext";
@@ -21,6 +29,7 @@ import DraftEditorPanel from "@components/editor/DraftEditorPanel";
 import TreeDocumentPanel from "@components/editor/TreeDocumentPanel";
 import BoardPanel from "@components/editor/BoardPanel";
 import SceneCardsPanel from "@components/editor/SceneCardsPanel";
+import PageOverviewPanel from "@components/editor/PageOverviewPanel";
 import ScreenplayViewSwitcher from "./ScreenplayViewSwitcher";
 import StatisticsClientPage from "@components/projects/stats/StatisticsClientPage";
 import DragHandle from "./DragHandle";
@@ -61,23 +70,25 @@ const PanelRenderer = ({
 
     switch (panel) {
         case "screenplay": {
-            // The index-card grid covers the editor rather than replacing it:
+            // The alternative views cover the editor rather than replacing it:
             // unmounting the screenplay editor would tear down its Yjs binding
             // and null the handle ProjectContext hands to the sidebar, the
-            // search and the timeline. `isVisible` false while the cards are up
-            // also parks it properly — blurred, with no caret for WebKit to
-            // chase (see DocumentEditorPanel).
-            const cardsUp = isVisible && screenplayView === "cards";
+            // search and the timeline. `isVisible` false while one is up also
+            // parks it properly — blurred, with no caret for WebKit to chase
+            // (see DocumentEditorPanel). Both overlays read the document from
+            // the editor's state, which parking leaves untouched.
+            const overlay = isVisible && screenplayView !== "editor" ? screenplayView : null;
             return (
                 <>
                     <EditorPanel
-                        isVisible={isVisible && !cardsUp}
+                        isVisible={isVisible && !overlay}
                         suggestions={suggestions}
                         updateSuggestions={updateSuggestions}
                         suggestionData={suggestionData}
                         updateSuggestionData={updateSuggestionData}
                     />
-                    {cardsUp && <SceneCardsPanel />}
+                    {overlay === "cards" && <SceneCardsPanel />}
+                    {overlay === "pages" && <PageOverviewPanel />}
                 </>
             );
         }
@@ -105,6 +116,75 @@ const SWITCHABLE_PANELS: { type: PanelType; icon: typeof Clapperboard; labelKey:
     { type: "title", icon: FileText, labelKey: "titlePage" },
 ];
 
+/**
+ * What the menu's zoom row is driving. All three are a scale on what the panel
+ * draws, which is why they share one control: the editor scales the page it
+ * renders, while the two grids scale their cells by fitting fewer of them
+ * across. Only the arithmetic behind the percentage differs.
+ */
+type ZoomTarget = {
+    /** Scale to show, as a percentage — 100 is each view's resting size. */
+    percent: number;
+    /** False at the end of the range, which greys out that end's button. */
+    canZoomIn: boolean;
+    canZoomOut: boolean;
+    zoomIn: () => void;
+    zoomOut: () => void;
+    /** Back to the resting size; the percentage itself is the button. */
+    reset: () => void;
+};
+
+/**
+ * Display zoom, as a stepper rather than a menu item because it has a value,
+ * not an on/off state — and one that is worth adjusting a couple of times in a
+ * row, so none of these buttons closes the menu the way the items above do.
+ *
+ * It lives in the panel menu for every view that has something to scale, so the
+ * control stays in one place (and inside the panel) as the view changes,
+ * instead of each grid floating a pill of its own over its top-left corner.
+ */
+const PanelZoomRow = ({ zoom }: { zoom: ZoomTarget }) => {
+    const t = useTranslations("navbar");
+
+    return (
+        <div className={dropdown.zoom_row}>
+            <Search size={14} />
+            <span className={dropdown.item_label}>{t("zoom")}</span>
+            <div className={dropdown.zoom_stepper}>
+                <button
+                    type="button"
+                    className={dropdown.zoom_btn}
+                    onClick={zoom.zoomOut}
+                    disabled={!zoom.canZoomOut}
+                    title={t("zoomOut")}
+                    aria-label={t("zoomOut")}
+                >
+                    <Minus size={13} />
+                </button>
+                <button
+                    type="button"
+                    className={dropdown.zoom_value}
+                    onClick={zoom.reset}
+                    title={t("resetZoom")}
+                    aria-label={t("resetZoom")}
+                >
+                    {zoom.percent}%
+                </button>
+                <button
+                    type="button"
+                    className={dropdown.zoom_btn}
+                    onClick={zoom.zoomIn}
+                    disabled={!zoom.canZoomIn}
+                    title={t("zoomIn")}
+                    aria-label={t("zoomIn")}
+                >
+                    <Plus size={13} />
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; side: "primary" | "secondary" }) => {
     const t = useTranslations("navbar");
     const isPhone = useIsPhone();
@@ -122,26 +202,79 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
         screenplayView,
         zoomLevel,
         setZoomLevel,
+        sceneCardColumns,
+        setSceneCardColumns,
+        pageGridColumns,
+        setPageGridColumns,
     } = useViewContext();
 
-    // The display zoom acts on the editor page, so it is only offered over a
-    // panel that draws one: not a board or the statistics view (nothing to
-    // scale), not the index-card grid (its own control is the column count), and
-    // not endless scroll, which reflows the text to the viewport instead of
-    // drawing a page there is any sense in scaling.
+    // Which scale the zoom row drives, or null where there is nothing to scale.
     //
-    // Nor on phone, where the two view modes are already the zoom control:
-    // endless reflows the text to the viewport at full size and paged fits the
-    // whole page to the screen, which is every size a phone has room for. The
-    // panel gates the scale itself the same way, so this only hides a control
-    // that would do nothing.
-    const showZoom =
-        !isPhone &&
-        !isEndlessScroll &&
-        (currentPanel === "title" ||
+    // Never on phone. There the two editor view modes are already the zoom
+    // control — endless reflows the text to the viewport at full size and paged
+    // fits the whole page to the screen, which is every size a phone has room
+    // for — and both grids pin themselves to a fixed number of cells across,
+    // one being all a phone has width for in the cards' case and two in the
+    // pages'. Each panel enforces that itself, so this only hides a control
+    // that would have nothing left to change.
+    const zoomTarget = useMemo<ZoomTarget | null>(() => {
+        if (isPhone) return null;
+
+        // The grids scale by fitting fewer cells across, so zooming *in* lowers
+        // the column count — which is why the steppers below look inverted.
+        if (currentPanel === "screenplay" && screenplayView === "cards") {
+            return {
+                percent: Math.round(sceneCardZoom(sceneCardColumns) * 100),
+                canZoomIn: sceneCardColumns > SCENE_CARD_COLUMNS_MIN,
+                canZoomOut: sceneCardColumns < SCENE_CARD_COLUMNS_MAX,
+                zoomIn: () => setSceneCardColumns((prev) => Math.max(SCENE_CARD_COLUMNS_MIN, prev - 1)),
+                zoomOut: () => setSceneCardColumns((prev) => Math.min(SCENE_CARD_COLUMNS_MAX, prev + 1)),
+                reset: () => setSceneCardColumns(SCENE_CARD_COLUMNS_DEFAULT),
+            };
+        }
+
+        if (currentPanel === "screenplay" && screenplayView === "pages") {
+            return {
+                percent: Math.round(pageGridZoom(pageGridColumns) * 100),
+                canZoomIn: pageGridColumns > PAGE_GRID_COLUMNS_MIN,
+                canZoomOut: pageGridColumns < PAGE_GRID_COLUMNS_MAX,
+                zoomIn: () => setPageGridColumns((prev) => Math.max(PAGE_GRID_COLUMNS_MIN, prev - 1)),
+                zoomOut: () => setPageGridColumns((prev) => Math.min(PAGE_GRID_COLUMNS_MAX, prev + 1)),
+                reset: () => setPageGridColumns(PAGE_GRID_COLUMNS_DEFAULT),
+            };
+        }
+
+        // The display zoom acts on the editor page, so it is only offered over a
+        // panel that draws one: not a board or the statistics view (nothing to
+        // scale), and not endless scroll, which reflows the text to the viewport
+        // instead of drawing a page there is any sense in scaling.
+        const drawsAPage =
+            currentPanel === "title" ||
             currentPanel === "draft" ||
             currentPanel === "document" ||
-            (currentPanel === "screenplay" && screenplayView === "editor"));
+            (currentPanel === "screenplay" && screenplayView === "editor");
+        if (isEndlessScroll || !drawsAPage) return null;
+
+        return {
+            percent: zoomLevel,
+            canZoomIn: zoomLevel < EDITOR_ZOOM_MAX,
+            canZoomOut: zoomLevel > EDITOR_ZOOM_MIN,
+            zoomIn: () => setZoomLevel((prev) => prev + EDITOR_ZOOM_STEP),
+            zoomOut: () => setZoomLevel((prev) => prev - EDITOR_ZOOM_STEP),
+            reset: () => setZoomLevel(EDITOR_ZOOM_DEFAULT),
+        };
+    }, [
+        isPhone,
+        isEndlessScroll,
+        currentPanel,
+        screenplayView,
+        zoomLevel,
+        setZoomLevel,
+        sceneCardColumns,
+        setSceneCardColumns,
+        pageGridColumns,
+        setPageGridColumns,
+    ]);
 
     const handleSplitToggle = useCallback(() => {
         if (isSplit) {
@@ -240,48 +373,10 @@ const PanelSwitcherMenu = ({ currentPanel, side }: { currentPanel: PanelType; si
                         <GanttChartSquare size={14} />
                         <span className={dropdown.item_label}>{t("timeline")}</span>
                     </button>
-                    {/* Display zoom. A stepper rather than a menu item because it
-                        has a value, not an on/off state — and one that is worth
-                        adjusting a couple of times in a row, so none of these
-                        buttons closes the menu the way the items above do. */}
-                    {showZoom && (
+                    {zoomTarget && (
                         <>
                             <div className={styles.panel_switcher_separator} />
-                            <div className={dropdown.zoom_row}>
-                                <Search size={14} />
-                                <span className={dropdown.item_label}>{t("zoom")}</span>
-                                <div className={dropdown.zoom_stepper}>
-                                    <button
-                                        type="button"
-                                        className={dropdown.zoom_btn}
-                                        onClick={() => setZoomLevel((prev) => prev - EDITOR_ZOOM_STEP)}
-                                        disabled={zoomLevel <= EDITOR_ZOOM_MIN}
-                                        title={t("zoomOut")}
-                                        aria-label={t("zoomOut")}
-                                    >
-                                        <Minus size={13} />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={dropdown.zoom_value}
-                                        onClick={() => setZoomLevel(EDITOR_ZOOM_DEFAULT)}
-                                        title={t("resetZoom")}
-                                        aria-label={t("resetZoom")}
-                                    >
-                                        {zoomLevel}%
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={dropdown.zoom_btn}
-                                        onClick={() => setZoomLevel((prev) => prev + EDITOR_ZOOM_STEP)}
-                                        disabled={zoomLevel >= EDITOR_ZOOM_MAX}
-                                        title={t("zoomIn")}
-                                        aria-label={t("zoomIn")}
-                                    >
-                                        <Plus size={13} />
-                                    </button>
-                                </div>
-                            </div>
+                            <PanelZoomRow zoom={zoomTarget} />
                         </>
                     )}
                 </div>

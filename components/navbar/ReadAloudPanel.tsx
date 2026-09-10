@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { RefObject, useContext, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Download, Info, Loader2, Mars, Pause, Play, Search, Settings, SkipBack, SkipForward, Square, Venus, VenusAndMars, Volume2, X } from "lucide-react";
 
@@ -11,15 +11,18 @@ import { CharacterGender, getCharacterNames } from "@src/lib/screenplay/characte
 import { defaultVoiceForCharacter, getVoiceInfo, voiceAccent, voiceLabel } from "@src/lib/tts/voice-catalog";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import Switch from "@components/utils/Switch";
+import { useDismissOnOutsidePress } from "@src/lib/utils/hooks";
 
 import styles from "./ReadAloudPanel.module.css";
 
 interface ReadAloudPanelProps {
     isOpen: boolean;
     onClose: () => void;
+    /** The navbar button that toggles this panel — see useDismissOnOutsidePress. */
+    triggerRef?: RefObject<HTMLElement | null>;
 }
 
-const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
+const ReadAloudPanel = ({ isOpen, onClose, triggerRef }: ReadAloudPanelProps) => {
     const t = useTranslations("readaloud");
     const { screenplay, editor, isReadOnly } = useContext(ProjectContext);
     const { openDashboard } = useContext(DashboardContext);
@@ -52,21 +55,9 @@ const ReadAloudPanel = ({ isOpen, onClose }: ReadAloudPanelProps) => {
     const panelRef = useRef<HTMLDivElement>(null);
     const [characterQuery, setCharacterQuery] = useState("");
 
-    // Click outside to close (playback keeps running in the background).
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleClickOutside = (e: MouseEvent) => {
-            const target = e.target as Element;
-            // Keep the panel open when interacting with a voice dropdown menu,
-            // which is rendered in a body portal outside the panel.
-            if (target.closest?.("[data-dropdown-portal]")) return;
-            if (panelRef.current && !panelRef.current.contains(target)) {
-                onClose();
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen, onClose]);
+    // Click outside to close (playback keeps running in the background) — the
+    // navbar trigger excepted, so re-tapping it dismisses the panel.
+    useDismissOnOutsidePress(isOpen, onClose, panelRef, triggerRef);
 
     const characterNames = useMemo(() => getCharacterNames(screenplay), [screenplay]);
 

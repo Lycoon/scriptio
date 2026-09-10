@@ -24,8 +24,7 @@
     display: grid;
     grid-template-columns: repeat(var(--cards-per-row, 3), minmax(0, 1fr));
     gap: calc(16px * var(--card-zoom, 1));
-    /* Top clearance for the panel switcher and zoom pill, which float over this
-       corner. */
+    /* Top clearance for the panel switcher, which floats over this corner. */
     padding: 52px 20px 40px;
 }
 
@@ -278,77 +277,9 @@
     font-style: italic;
 }
 
-/* ── Zoom pill ────────────────────────────────────────────────────────────── */
-
-/* Same pill, same offsets as the board canvas's zoom control (see
-   BoardCanvas.module.css): both sit immediately right of the panel-switcher
-   handles, so the chrome lands in the same place whichever view is up. A
-   sibling of the scroll container rather than a child of it, so it stays put
-   while the cards scroll under it. */
-.zoom_controls {
-    position: absolute;
-    top: 8px;
-    left: 56px;
-    z-index: 13;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    height: 36px;
-    padding: 0 4px;
-    border-radius: 16px;
-    background-color: var(--secondary);
-    color: var(--secondary-text);
-    user-select: none;
-}
-
-.zoom_btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 28px;
-    border: none;
-    border-radius: 14px;
-    background: transparent;
-    color: var(--secondary-text);
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-}
-
-.zoom_btn:hover:not(:disabled) {
-    background-color: var(--secondary-hover);
-}
-
-.zoom_btn:disabled {
-    opacity: 0.35;
-    cursor: default;
-}
-
-.zoom_level {
-    min-width: 38px;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--secondary-text);
-}
-
-/* Finger-sized on a touch device, matching the board pill's own coarse block. */
-@media (pointer: coarse) {
-    .zoom_controls {
-        left: 72px;
-        height: 44px;
-        border-radius: 22px;
-    }
-
-    .zoom_btn {
-        width: 30px;
-        height: 36px;
-        border-radius: 18px;
-    }
-}
-
 /* One card per row once there is no width for several side by side — which also
-   makes the zoom pill meaningless, so SceneCardsPanel drops it on phone.
+   leaves nothing for the panel menu's zoom row to change, so it is hidden on
+   phone (see PanelSwitcherMenu).
    The phone's navbar is a fixed overlay and the panel starts underneath it, so
    the first row needs that clearance on top of the switcher's — unless the
    timeline strip is open, in which case the panel already starts below the bar

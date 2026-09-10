@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR, { useSWRConfig } from "swr";
-import { useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { RefObject, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { CookieUser, DataExportState, UserSettings } from "./types";
 import { editUserSettings } from "./requests";
 import { readLocalSettings, writeLocalSettings, DEFAULT_LOCAL_SETTINGS } from "./local-settings";
@@ -331,6 +331,43 @@ const usePagePanLock = <T extends HTMLElement>(): ((node: T | null) => void) => 
             node.removeEventListener("touchcancel", onTouchEnd);
         };
     }, []);
+};
+
+/**
+ * Dismiss an overlay when a press lands outside it, with the control that opened
+ * it counting as *inside*.
+ *
+ * That exception is the whole point of the hook. The listener is on `mousedown`,
+ * which on every platform (and on iOS, in the synthesised burst a tap produces)
+ * runs before the trigger's own `click` — and React flushes the close it causes
+ * synchronously, being a discrete event. So without the exception the press that
+ * was meant to dismiss the panel closes it here first, and the click that follows
+ * reads an already-closed panel and re-opens it: a second tap on the trigger
+ * could never put a panel away. Excluding the trigger leaves the toggle to it,
+ * which is where the open/close decision belongs.
+ *
+ * Dropdown menus are excluded too: they are portaled to <body> for stacking, so
+ * they sit outside the panel in the DOM while plainly belonging to it.
+ */
+const useDismissOnOutsidePress = <P extends HTMLElement, T extends HTMLElement>(
+    isOpen: boolean,
+    onClose: () => void,
+    panelRef: RefObject<P | null>,
+    triggerRef?: RefObject<T | null>,
+) => {
+    useEffect(() => {
+        if (!isOpen) return;
+        const onPress = (e: MouseEvent) => {
+            const target = e.target as Element | null;
+            if (!target) return;
+            if (target.closest?.("[data-dropdown-portal]")) return;
+            if (panelRef.current?.contains(target)) return;
+            if (triggerRef?.current?.contains(target)) return;
+            onClose();
+        };
+        document.addEventListener("mousedown", onPress);
+        return () => document.removeEventListener("mousedown", onPress);
+    }, [isOpen, onClose, panelRef, triggerRef]);
 };
 
 const useProjectIdFromUrl = () => {
@@ -855,6 +892,7 @@ export {
     useKeyboardInset,
     useViewportBottomInset,
     usePagePanLock,
+    useDismissOnOutsidePress,
     useCachedProjects,
     useCachedProjectInfo,
     useProjectIdFromUrl,

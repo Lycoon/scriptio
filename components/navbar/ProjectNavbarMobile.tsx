@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import {
@@ -8,6 +8,7 @@ import {
     AudioLines,
     BarChart2,
     Check,
+    ChevronRight,
     History,
     Info,
     LogIn,
@@ -90,6 +91,21 @@ const ProjectNavbarMobile = () => {
     const [activePanel, setActivePanel] = useState<null | "saves" | "production" | "readAloud">(null);
     const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
+    // The cluster is folded away behind a chevron by default, as on the desktop
+    // bar — in reader mode it is four review-time icons sitting permanently over
+    // the page, and the phone bar is the one that can least afford them.
+    const [isToolsOpen, setIsToolsOpen] = useState(false);
+
+    // Folding closes whatever sheet is up: its trigger is about to be clipped
+    // away, so re-tapping to dismiss would no longer be possible (the same
+    // stranding the board-canvas cleanup below avoids). The panels' own
+    // outside-click has usually beaten us to it on mousedown, but that is their
+    // behaviour to have, not a guarantee this fold should rest on.
+    const toggleTools = () => {
+        if (isToolsOpen) setActivePanel(null);
+        setIsToolsOpen(!isToolsOpen);
+    };
+
     // The tool sheets are portaled to <body> (see below) — gate on mount so the
     // server and first client render agree, as `document` is client-only. Uses
     // useSyncExternalStore (server snapshot false, client true) rather than a
@@ -100,11 +116,18 @@ const ProjectNavbarMobile = () => {
         () => false,
     );
 
+    // Each sheet's trigger, handed to the sheet so its outside-press dismissal
+    // treats it as part of the panel (see useDismissOnOutsidePress). Without that
+    // the tap meant to close a sheet closed it on mousedown and the click below
+    // re-opened it, so a sheet could only ever be dismissed by tapping elsewhere.
+    const savesBtnRef = useRef<HTMLDivElement>(null);
+    const productionBtnRef = useRef<HTMLDivElement>(null);
+    const readAloudBtnRef = useRef<HTMLDivElement>(null);
+
     // Opening a tool sheet closes the side drawers and the burger menu so it
-    // surfaces cleanly on top; tapping the same icon again dismisses it. Reads
-    // the render-time value (not a functional updater) so a re-tap resolves to
-    // null even though the panel's own outside-click already fired on mousedown —
-    // mirrors the desktop bar's toggles.
+    // surfaces cleanly on top; tapping the same icon again dismisses it — this
+    // toggle is now the only thing that decides that, the sheet's own dismissal
+    // having stepped aside for its trigger. Mirrors the desktop bar's toggles.
     const toggleTool = (panel: "saves" | "production" | "readAloud") => {
         const next = activePanel === panel ? null : panel;
         if (next) {
@@ -233,40 +256,77 @@ const ProjectNavbarMobile = () => {
                     a sheet (or the analytics modal) that fits the phone screen. Hidden
                     while editing — the left cluster expands to the edit controls then, so
                     the bar has no room, and these are review-time tools anyway. The
-                    text-only two thin out further on a board canvas (see isEditorView). */}
+                    text-only two thin out further on a board canvas (see isEditorView).
+
+                    Folded behind a chevron on the cluster's own pill, exactly as the
+                    desktop bar folds its tools island: folded this is a single chevron,
+                    and expanding grows it rightwards into the row. Analytics folds away
+                    with the rest here, where the desktop leaves it out in its right-hand
+                    cluster — on the phone it is *in* this pill, and a chevron that
+                    revealed buttons in the middle of its own pill would read as broken.
+                    Folding is the whole point of the change anyway: reader mode is when
+                    one is reading, not reviewing. */}
                 {isInProject && projectId && !mobileEditMode && (
-                    <div className={navbar.mobile_tools}>
+                    <div className={join(navbar.mobile_tools, navbar.mobile_tools_fold)}>
                         <div
-                            className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "saves" ? navBtn.active : ""}`}
-                            onClick={() => toggleTool("saves")}
-                            aria-label={t("history")}
+                            className={join(
+                                navBtn.button,
+                                navbar.mobile_icon,
+                                isToolsOpen ? navbar.tools_toggle_open : "",
+                            )}
+                            onClick={toggleTools}
+                            aria-label={t("tools")}
+                            aria-expanded={isToolsOpen}
                         >
-                            <History size={18} />
+                            <ChevronRight size={18} className={navbar.tools_chevron} />
                         </div>
-                        {isEditorView && (
-                            <>
-                                <div
-                                    className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "production" ? navBtn.active : ""}`}
-                                    onClick={() => toggleTool("production")}
-                                    aria-label={t("production")}
-                                >
-                                    <Lock size={18} />
-                                </div>
-                                <div
-                                    className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "readAloud" ? navBtn.active : ""}`}
-                                    onClick={() => toggleTool("readAloud")}
-                                    aria-label={t("readAloud")}
-                                >
-                                    <AudioLines size={18} />
-                                </div>
-                            </>
-                        )}
+                        {/* Folded, this collapses to zero width and its group clips, so
+                            the buttons inside are unreachable as well as invisible — they
+                            stay mounted only so the reveal can animate. */}
                         <div
-                            className={`${navBtn.button} ${navbar.mobile_icon} ${isAnalyticsOpen ? navBtn.active : ""}`}
-                            onClick={openAnalytics}
-                            aria-label={t("analytics")}
+                            className={join(
+                                navbar.mobile_tools_reveal,
+                                isToolsOpen ? navbar.mobile_tools_reveal_open : "",
+                            )}
+                            aria-hidden={!isToolsOpen}
                         >
-                            <BarChart2 size={18} />
+                            <div className={navbar.mobile_tools_group}>
+                                <div
+                                    ref={savesBtnRef}
+                                    className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "saves" ? navBtn.active : ""}`}
+                                    onClick={() => toggleTool("saves")}
+                                    aria-label={t("history")}
+                                >
+                                    <History size={18} />
+                                </div>
+                                {isEditorView && (
+                                    <>
+                                        <div
+                                            ref={productionBtnRef}
+                                            className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "production" ? navBtn.active : ""}`}
+                                            onClick={() => toggleTool("production")}
+                                            aria-label={t("production")}
+                                        >
+                                            <Lock size={18} />
+                                        </div>
+                                        <div
+                                            ref={readAloudBtnRef}
+                                            className={`${navBtn.button} ${navbar.mobile_icon} ${activePanel === "readAloud" ? navBtn.active : ""}`}
+                                            onClick={() => toggleTool("readAloud")}
+                                            aria-label={t("readAloud")}
+                                        >
+                                            <AudioLines size={18} />
+                                        </div>
+                                    </>
+                                )}
+                                <div
+                                    className={`${navBtn.button} ${navbar.mobile_icon} ${isAnalyticsOpen ? navBtn.active : ""}`}
+                                    onClick={openAnalytics}
+                                    aria-label={t("analytics")}
+                                >
+                                    <BarChart2 size={18} />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -409,14 +469,17 @@ const ProjectNavbarMobile = () => {
                             isOpen={activePanel === "saves"}
                             onClose={() => setActivePanel(null)}
                             isPro={isPro}
+                            triggerRef={savesBtnRef}
                         />
                         <ProductionPanel
                             isOpen={activePanel === "production"}
                             onClose={() => setActivePanel(null)}
+                            triggerRef={productionBtnRef}
                         />
                         <ReadAloudPanel
                             isOpen={activePanel === "readAloud"}
                             onClose={() => setActivePanel(null)}
+                            triggerRef={readAloudBtnRef}
                         />
                     </>,
                     document.body,

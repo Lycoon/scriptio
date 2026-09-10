@@ -1,0 +1,150 @@
+/* The page wall sits *over* the screenplay editor rather than replacing it, on
+   the same terms as the index-card grid (see SceneCardsPanel.module.css): the
+   editor stays mounted behind so switching views never reinitialises it or drops
+   the ProjectContext editor handle. z-index 12 clears the comment gutter and
+   stays below the edge handles (13), which have to remain reachable. */
+.container {
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Reserve the scrollbar's width whether or not one is showing, as the
+       editor's own container does. With the grid on `1fr` tracks this no longer
+       affects where the pages sit — CSS reflows them either way — but it keeps
+       the measured width stable, so the drawn content never has to be rescaled
+       just because a scrollbar arrived. (Measured: on overlay scrollbars, which
+       is the common case, clientWidth does not change at all here.) */
+    scrollbar-gutter: stable;
+    background-color: var(--main-bg);
+}
+
+/* Plain `1fr` tracks, so the grid's geometry is settled by CSS alone before any
+   measuring happens. The page rectangles therefore cannot move in response to a
+   measurement — a measured scale only decides how large the *content* is drawn
+   inside a frame whose position and size are already fixed. Sizing the tracks
+   from the measured scale instead (the obvious approach) makes every page's box
+   wait on JS, and anything that changes the reading afterwards drags the whole
+   grid with it. */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(var(--pages-per-row, 4), minmax(0, 1fr));
+    gap: 28px 24px;
+    /* Top clearance for the panel switcher, which floats over this corner. */
+    padding: 52px 20px 40px;
+}
+
+.empty_state {
+    padding: 60px 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--secondary-text);
+}
+
+/* ── One page ─────────────────────────────────────────────────────────────── */
+
+.cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* The window onto the page: sized to the *scaled* page, so the grid track and
+   the visible sheet are the same rectangle. Clips whatever a page's last block
+   would push past its bottom margin. */
+.sheet_frame {
+    position: relative;
+    width: 100%;
+    /* The page's proportions, held by CSS rather than by a computed height, so
+       the frame is the right shape from its first layout. */
+    aspect-ratio: var(--page-ratio);
+    overflow: hidden;
+    /* Deliberately NOT content-visibility: auto. It looks like the right tool —
+       125 mounted pages, most of them off-screen — but it defers a page's layout
+       to the moment it becomes visible, which is exactly when the scroll needs
+       the frame budget. Measured on this grid, it moved WebKit's cost per scroll
+       step from ~0ms to ~1ms typical and 1ms to 4ms worst, in exchange for
+       filling a page more cheaply. The thumbnails are filled a full viewport
+       ahead precisely so that work lands before it is needed; skipping it until
+       the page is on screen throws that runway away. */
+    border-radius: 2px;
+    background-color: var(--editor-script-bg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    transition: box-shadow 0.15s ease;
+}
+
+/* Hover affordances only where a pointer can actually hover — same reasoning as
+   the index cards and the board's: iOS emulates hover from the last tap point
+   and re-resolves it as content moves, which turns a transitioned shadow into a
+   repaint storm while pages sweep under a stale point. */
+@media (hover: hover) {
+    .sheet_frame:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+    }
+}
+
+.sheet_frame:focus-visible {
+    outline: 2px solid var(--secondary-text);
+    outline-offset: 2px;
+}
+
+/* The page at its canonical size, shrunk to fit the frame. Scaling rather than
+   re-measuring at thumbnail size is the whole point: the text wraps exactly as
+   it does in the editor, so the page's shape is the real one. */
+.sheet {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--page-width);
+    height: var(--page-height);
+    transform: scale(var(--page-scale));
+    transform-origin: top left;
+    /* The frame owns the click; nothing inside is interactive. */
+    pointer-events: none;
+}
+
+/* The serialized page content, standing in for the editor's own .ProseMirror.
+   Its custom properties (page geometry, per-element margins and styles) are
+   copied from the live editor element by PageOverviewPanel, so the only thing
+   left to state here is the page box the editor gets from the .pagination class
+   — which a thumbnail deliberately doesn't wear, to keep that rule's
+   !important width and min-height out of this box. */
+.page_body {
+    width: var(--page-width);
+    height: var(--page-height);
+    box-sizing: border-box;
+    /* The margins are the header and footer areas; pagination guarantees the
+       page's content fits between them. */
+    padding-top: var(--page-margin-top, 96px);
+    padding-bottom: var(--page-margin-bottom, 96px);
+    overflow: hidden;
+    /* A page is a still image here — no caret, no selection to drag out of it. */
+    user-select: none;
+}
+
+.page_label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--secondary-text);
+    user-select: none;
+}
+
+/* The phone's navbar is a fixed overlay and the panel starts underneath it, so
+   the first row needs that clearance on top of the switcher's — unless the
+   timeline strip is open, in which case the panel already starts below the bar
+   (the same pair of cases .panel_switcher_anchor handles). The side padding is
+   NOT reduced here the way the index cards' is: it is one half of the fit
+   PageOverviewPanel computes --page-scale from, and a value the panel doesn't
+   know about would leave every page the wrong size. */
+@media (max-width: 767px) {
+    .grid {
+        padding-top: calc(var(--navbar-height) + 52px);
+    }
+
+    .timeline_open .grid {
+        padding-top: 52px;
+    }
+}
