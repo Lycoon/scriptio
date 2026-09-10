@@ -122,6 +122,70 @@
     }
 }
 
+/* ------------------------------------ */
+/*  Folded screenplay tools (phone)     */
+/* ------------------------------------ */
+
+/* The same fold the desktop bar gives this cluster (.tools_island): the chevron
+ * sits on the tools pill itself, so folded the pill is just the chevron and
+ * expanding grows it rightwards — one control rather than a button parked beside
+ * a pill. Written separately from the desktop rules because the pill is already
+ * the right shape here: a phone NavbarIconButton is a 40px circle, so the 4px of
+ * cluster padding either side lands on exactly the 48px a single-icon cluster
+ * (.mobile_right, holding just the burger) measures — none of the concentric
+ * radius arithmetic .tools_island needs to reach that.
+ *
+ * The cluster's own 2px gap moves onto the reveal's margin, which animates with
+ * the column: left as a gap it would hold 2px of dead space inside the folded
+ * pill, and against a 40px circle that reads as an off-centre glyph. */
+.mobile_tools_fold {
+    gap: 0;
+}
+
+/* Grows its single grid column from 0fr to 1fr, so the pill animates open
+ * against the group's natural width — no hard-coded width to drift as the row
+ * changes length, which it does: the text-only tools drop out over a board. */
+.mobile_tools_reveal {
+    display: grid;
+    grid-template-columns: 0fr;
+    margin-left: 0;
+    opacity: 0;
+    transition:
+        grid-template-columns 0.28s ease,
+        margin-left 0.28s ease,
+        opacity 0.2s ease;
+}
+
+.mobile_tools_reveal_open {
+    grid-template-columns: 1fr;
+    margin-left: 2px;
+    opacity: 1;
+}
+
+/* min-width: 0 lets the grid column above collapse this to nothing, and
+ * overflow: hidden clips the buttons as it does — which also drops their
+ * hit-testing, so the folded cluster can't catch taps on top of the page.
+ *
+ * No overflow exception like the desktop's .tools_group_overflow: the phone's
+ * tool sheets are portaled to <body> ([ProjectNavbarMobile]), so nothing opened
+ * from here is a descendant for this to clip. */
+.mobile_tools_group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* The buttons must be clipped by the collapsing column, not squashed by it —
+ * they are flex children of a box being taken to zero width, so without this
+ * they would shrink off their 40px and the fold would deflate the circles
+ * instead of sliding them away. */
+.mobile_tools_group .mobile_icon {
+    flex-shrink: 0;
+}
+
 /* The home navbar reuses the pill clusters (.mobile_left/.mobile_right) but has
  * no .mobile_bar wrapper, so re-apply the flush-icon treatment here, scoped to
  * the home bar, so its burger/settings sit on the pill exactly like the project

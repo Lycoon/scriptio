@@ -11,18 +11,11 @@ import {
     useState,
 } from "react";
 import { useTranslations } from "next-intl";
-import { Minus, Plus } from "lucide-react";
 import { ProjectContext } from "@src/context/ProjectContext";
-import {
-    SCENE_CARD_COLUMNS_MAX,
-    SCENE_CARD_COLUMNS_MIN,
-    SCENE_CARD_COLUMNS_DEFAULT,
-    useViewContext,
-} from "@src/context/ViewContext";
+import { SCENE_CARD_COLUMNS_MAX, SCENE_CARD_COLUMNS_MIN, sceneCardZoom, useViewContext } from "@src/context/ViewContext";
 import { Scene } from "@src/lib/screenplay/scenes";
 import { computeSceneLabels } from "@src/lib/screenplay/scene-locking";
 import { moveScene } from "@src/lib/screenplay/scene-reorder";
-import { useIsPhone } from "@src/lib/utils/hooks";
 import { join } from "@src/lib/utils/misc";
 
 import styles from "./SceneCardsPanel.module.css";
@@ -43,15 +36,6 @@ const TOUCH_DRAG_CANCEL_PX = 10;
  * flashing the lifted card and a drop indicator on its way through.
  */
 const MOUSE_DRAG_START_PX = 4;
-
-/**
- * Card scale for a given column count, relative to the 3-per-row default. It is
- * this factor the zoom readout reports, and it drives the card's type and
- * height so that widening a card actually enlarges it rather than just
- * stretching it. Clamped because 1 column across a wide panel is a poster and 5
- * across a narrow one is unreadable.
- */
-const cardZoom = (columns: number) => Math.min(2, Math.max(0.6, SCENE_CARD_COLUMNS_DEFAULT / columns));
 
 /** Page count in eighths, matching the sidebar's SceneLengthItem. */
 const sceneLength = (scene: Scene) => {
@@ -225,39 +209,9 @@ const SceneCard = memo(
 
 SceneCard.displayName = "SceneCard";
 
-/** Zoom pill, mirroring the board canvas's — see BoardZoomControls. */
-const CardZoomControls = ({
-    columns,
-    onZoom,
-    label,
-}: {
-    columns: number;
-    onZoom: (zoomIn: boolean) => void;
-    label: string;
-}) => (
-    <div className={styles.zoom_controls} aria-label={label}>
-        {/* Zooming out fits more cards across, so minus *raises* the column count. */}
-        <button
-            className={styles.zoom_btn}
-            onClick={() => onZoom(false)}
-            disabled={columns >= SCENE_CARD_COLUMNS_MAX}
-        >
-            <Minus size={14} />
-        </button>
-        <span className={styles.zoom_level}>{Math.round(cardZoom(columns) * 100)}%</span>
-        <button
-            className={styles.zoom_btn}
-            onClick={() => onZoom(true)}
-            disabled={columns <= SCENE_CARD_COLUMNS_MIN}
-        >
-            <Plus size={14} />
-        </button>
-    </div>
-);
-
 /**
  * The screenplay as a wall of scene index cards — heading, synopsis, length and
- * color, in document order, as many to a row as the zoom pill is set to.
+ * color, in document order, as many to a row as the panel menu's zoom is set to.
  *
  * Dragging a card reorders the *screenplay itself* through the same document
  * transaction the navigation sidebar's drag uses ([moveScene]), so the two
@@ -267,7 +221,6 @@ const CardZoomControls = ({
  */
 const SceneCardsPanel = () => {
     const t = useTranslations("editorSidebar");
-    const tNav = useTranslations("navbar");
     const {
         scenes,
         updateScenes,
@@ -279,8 +232,7 @@ const SceneCardsPanel = () => {
         skippedSceneLetters,
         persistentScenes,
     } = useContext(ProjectContext);
-    const { timelineOpen, sceneCardColumns, setSceneCardColumns } = useViewContext();
-    const isPhone = useIsPhone();
+    const { timelineOpen, sceneCardColumns } = useViewContext();
 
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     /**
@@ -321,7 +273,7 @@ const SceneCardsPanel = () => {
 
     const canEdit = !isReadOnly;
     const columns = Math.min(SCENE_CARD_COLUMNS_MAX, Math.max(SCENE_CARD_COLUMNS_MIN, sceneCardColumns));
-    const zoom = cardZoom(columns);
+    const zoom = sceneCardZoom(columns);
 
     // Display labels and omitted flags, resolved exactly as the sidebar does so
     // a scene carries the same number in both views. Without production locking
@@ -639,16 +591,6 @@ const SceneCardsPanel = () => {
         };
     }, [dragIndex, isLifted, handleDrop, resetDrag, positionGhost, measureCards, updateIndicatorFromPoint]);
 
-    const handleZoom = useCallback(
-        (zoomIn: boolean) => {
-            // Zooming in enlarges the cards, which means fitting fewer per row.
-            setSceneCardColumns((prev) =>
-                Math.min(SCENE_CARD_COLUMNS_MAX, Math.max(SCENE_CARD_COLUMNS_MIN, prev + (zoomIn ? -1 : 1))),
-            );
-        },
-        [setSceneCardColumns],
-    );
-
     // Handed to every card, so it has to keep its identity across renders or the
     // cards' memo() is worthless — a change of drop gap would re-render every
     // card in the screenplay instead of only the two whose bar moved. Its
@@ -749,12 +691,6 @@ const SceneCardsPanel = () => {
                 </div>
             )}
 
-            {/* Phones get one card per row regardless (three across 390px is
-                unreadable), so there is nothing for the pill to change there —
-                the board hides its own on phone for the same reason. */}
-            {!isPhone && (
-                <CardZoomControls columns={columns} onZoom={handleZoom} label={tNav("viewIndexCards")} />
-            )}
         </>
     );
 };

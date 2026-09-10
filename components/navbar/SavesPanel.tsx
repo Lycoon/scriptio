@@ -1,9 +1,9 @@
 "use client";
 
-import { useContext, useEffect, useRef, useState } from "react";
+import { RefObject, useContext, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DashboardContext } from "@src/context/DashboardContext";
-import { useCookieUser, useFormatTimestamp } from "@src/lib/utils/hooks";
+import { useCookieUser, useDismissOnOutsidePress, useFormatTimestamp } from "@src/lib/utils/hooks";
 import {
     X,
     Save,
@@ -25,6 +25,8 @@ interface SavesPanelProps {
     isOpen: boolean;
     onClose: () => void;
     isPro: boolean;
+    /** The navbar button that toggles this panel — see useDismissOnOutsidePress. */
+    triggerRef?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -38,7 +40,7 @@ interface SavesPanelProps {
  */
 type SavesMode = "loading" | "cloud" | "local";
 
-const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
+const SavesPanel = ({ projectId, isOpen, onClose, isPro, triggerRef }: SavesPanelProps) => {
     const t = useTranslations("saves");
     const { openDashboard } = useContext(DashboardContext);
     const { user } = useCookieUser();
@@ -132,19 +134,9 @@ const SavesPanel = ({ projectId, isOpen, onClose, isPro }: SavesPanelProps) => {
         }
     }, [editingKey]);
 
-    // Click outside to close panel
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handleClickOutside = (e: MouseEvent) => {
-            if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-                onClose();
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen, onClose]);
+    // Click outside to close — the navbar trigger excepted, so re-tapping it
+    // dismisses the panel instead of closing and re-opening it.
+    useDismissOnOutsidePress(isOpen, onClose, panelRef, triggerRef);
 
     // Create manual save
     const handleCreate = async () => {

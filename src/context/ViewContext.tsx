@@ -25,16 +25,46 @@ export type SplitSide = "primary" | "secondary";
 export type DocumentPanelKind = "board" | "document";
 
 /**
- * How a screenplay panel renders the script: as the editor itself, or as the
- * grid of scene index cards. The screenplay is a singleton panel, so one value
- * covers whichever side is showing it.
+ * How a screenplay panel renders the script: as the editor itself, as the grid
+ * of scene index cards, or as a wall of page thumbnails. The screenplay is a
+ * singleton panel, so one value covers whichever side is showing it.
  */
-export type ScreenplayViewMode = "editor" | "cards";
+export type ScreenplayViewMode = "editor" | "cards" | "pages";
 
 /** Bounds for the index-card grid's columns-per-row (its zoom control). */
 export const SCENE_CARD_COLUMNS_MIN = 1;
 export const SCENE_CARD_COLUMNS_MAX = 5;
 export const SCENE_CARD_COLUMNS_DEFAULT = 3;
+
+/**
+ * Card scale for a given column count, relative to the 3-per-row default. It is
+ * this factor the panel menu's zoom row reports, and it drives the card's type
+ * and height so that widening a card actually enlarges it rather than just
+ * stretching it. Clamped because 1 column across a wide panel is a poster and 5
+ * across a narrow one is unreadable.
+ */
+export const sceneCardZoom = (columns: number) =>
+    Math.min(2, Math.max(0.6, SCENE_CARD_COLUMNS_DEFAULT / columns));
+
+/**
+ * Bounds for the page-overview grid's pages-per-row (its zoom control).
+ *
+ * Starts at 2 rather than 1: a single page across the panel is the editor with
+ * none of the editing, which the script view already is. The default of 4 fits
+ * a page's slug lines and dialogue blocks at a size where the *shape* of the
+ * page still reads, which is what the overview is for.
+ */
+export const PAGE_GRID_COLUMNS_MIN = 2;
+export const PAGE_GRID_COLUMNS_MAX = 8;
+export const PAGE_GRID_COLUMNS_DEFAULT = 4;
+
+/**
+ * Thumbnail scale for a given column count, relative to the 4-per-row default —
+ * the counterpart of sceneCardZoom, and what the panel menu's zoom row reports.
+ * The bounds above were chosen so this spans exactly the editor's own 50%–200%
+ * range, which is what lets one control read the same in all three views.
+ */
+export const pageGridZoom = (columns: number) => PAGE_GRID_COLUMNS_DEFAULT / columns;
 
 /**
  * Bounds for the editor's display zoom, in percent. Purely a rendering scale:
@@ -118,7 +148,8 @@ interface ViewContextType {
     focusedSide: SplitSide;
     focusedPanel: PanelType;
     isEndlessScroll: boolean;
-    /** How the screenplay panel renders — the editor, or the index-card grid. */
+    /** How the screenplay panel renders — the editor, the index-card grid, or
+     *  the page overview. */
     screenplayView: ScreenplayViewMode;
     setScreenplayView: (value: ScreenplayViewMode | ((prev: ScreenplayViewMode) => ScreenplayViewMode)) => void;
     /**
@@ -128,6 +159,12 @@ interface ViewContextType {
      */
     sceneCardColumns: number;
     setSceneCardColumns: (value: number | ((prev: number) => number)) => void;
+    /**
+     * Page thumbnails per row in the page-overview grid — its zoom control, in
+     * the same shape and for the same reason as sceneCardColumns above.
+     */
+    pageGridColumns: number;
+    setPageGridColumns: (value: number | ((prev: number) => number)) => void;
     /**
      * Display zoom for the editor page, in percent (100 = the canonical page at
      * 1:1). Visual only — the document, its pagination and every export are
@@ -215,6 +252,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     const [isEndlessScroll, setIsEndlessScrollState] = useState<boolean>(isPhoneViewport);
     const [screenplayView, setScreenplayView] = useState<ScreenplayViewMode>("editor");
     const [sceneCardColumns, setSceneCardColumns] = useState<number>(SCENE_CARD_COLUMNS_DEFAULT);
+    const [pageGridColumns, setPageGridColumns] = useState<number>(PAGE_GRID_COLUMNS_DEFAULT);
     // Read from the module-level store above, not from component state — see
     // getZoomSnapshot for why localStorage cannot seed a useState here.
     const zoomLevel = useSyncExternalStore(subscribeZoom, getZoomSnapshot, getServerZoomSnapshot);
@@ -492,6 +530,8 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setScreenplayView,
             sceneCardColumns,
             setSceneCardColumns,
+            pageGridColumns,
+            setPageGridColumns,
             zoomLevel,
             setZoomLevel,
             showComments,
@@ -519,7 +559,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
             setLeftSidebarOpen,
             setRightSidebarOpen,
         }),
-        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, screenplayView, sceneCardColumns, zoomLevel, setZoomLevel, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, mobileEditMode, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, onBeforeEndlessScrollChange, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
+        [primaryPanel, secondaryPanel, primaryDocId, secondaryDocId, splitRatio, isSplit, visiblePanels, mountedPanels, focusedSide, focusedPanel, isEndlessScroll, screenplayView, sceneCardColumns, pageGridColumns, zoomLevel, setZoomLevel, showComments, leftSidebarOpen, rightSidebarOpen, timelineOpen, chromeHidden, mobileEditMode, setPrimaryPanel, setSecondaryPanel, setFocusedSide, setFocusedPanel, setSidePanel, setSideDocument, splitWithDocument, closeDocument, swapPanels, setIsEndlessScroll, onBeforeEndlessScrollChange, setShowComments, setLeftSidebarOpen, setRightSidebarOpen],
     );
 
     return <ViewContext.Provider value={value}>{children}</ViewContext.Provider>;
