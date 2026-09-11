@@ -249,6 +249,19 @@
     .panel_switcher_anchor.timeline_open {
         top: 8px;
     }
+
+    /* Phone: the handles float over the script page itself, which fills the
+     * width here, rather than the --main-bg gutter they sit in on desktop. Same
+     * fill and glyph colour as the right-hand toggle, for the same reason — see
+     * ProjectWorkspace's .right_sidebar_toggle phone rule. */
+    .panel_switcher_btn,
+    .panel_switcher_btn svg {
+        color: var(--primary-text);
+    }
+
+    .panel_switcher_btn {
+        background-color: var(--main-bg);
+    }
 }
 
 .panel_switcher_separator {

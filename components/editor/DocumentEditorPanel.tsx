@@ -221,6 +221,52 @@ const DocumentEditorPanel = ({
         if (selection?.anchorNode && dom.contains(selection.anchorNode)) selection.removeAllRanges();
     }, [isVisible, editor]);
 
+    /**
+     * Rebuild the editor's rendering when it comes back from being parked.
+     *
+     * Parking leaves the DOM in place under `content-visibility: hidden`, and
+     * anything that changes it meanwhile — the endless/paged toggle in the
+     * footer, a layout setting, a collaborator's edit — lands on a subtree the
+     * engine is not rendering. WebKit does not reliably catch up when that
+     * subtree is shown again: on iOS the paged screenplay came back from the
+     * page overview with stale paint from before it was parked — endless-mode
+     * margins, text rasterised at the wrong scale — over part of the page, and
+     * Safari 26's release notes list a run of content-visibility fixes (repaint,
+     * geometry, layout marking) that earlier iOS does not have.
+     *
+     * Toggling `display` across a forced layout is the one thing every engine
+     * treats as a fresh mount — renderers and compositing layers are torn down
+     * and built again — which is the path the first render takes and the one
+     * known to be right. It costs a layout of the document on the way back, once
+     * per view switch; nothing is re-initialised. The scroll offset is put back
+     * because the momentarily empty container clamps it to 0.
+     *
+     * Layout effect, so the rebuild lands before the browser paints the return,
+     * and before the effect below re-focuses the editor.
+     */
+    const wasParkedRef = useRef(false);
+    useIsoLayoutEffect(() => {
+        if (!isVisible) {
+            wasParkedRef.current = true;
+            return;
+        }
+        if (!wasParkedRef.current) return;
+        wasParkedRef.current = false;
+
+        const dom = editor?.view?.dom;
+        const container = containerEl;
+        if (!dom || !container || editor.isDestroyed) return;
+
+        const { scrollTop, scrollLeft } = container;
+        dom.style.display = "none";
+        // Flush: the editor's renderers are torn down here.
+        void dom.offsetHeight;
+        dom.style.removeProperty("display");
+        // Assigning the offsets flushes again, against the rebuilt layout.
+        container.scrollTop = scrollTop;
+        container.scrollLeft = scrollLeft;
+    }, [isVisible, editor, containerEl]);
+
     // Marker class on the editor DOM so global CSS (scriptio.css) can drop the
     // first-of-page top-margin reset in endless-scroll mode. There the page-break
     // widgets are hidden, so the reset would otherwise make each page's first

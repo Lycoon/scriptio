@@ -86,6 +86,28 @@
     .right_sidebar_toggle.timeline_open {
         top: 8px;
     }
+
+    /* Phone: the handle floats over the script page itself — the page fills the
+     * width here (see EditorPanel's phone rules) — not the --main-bg gutter it
+     * sits in on desktop. --secondary is white, or a hair off it, in every light
+     * theme, and the page is white, so the pill vanished into it with only the 6%
+     * panel shadow to mark it (the themed editor is no better: its page IS
+     * --secondary). Paint it the project navbar's own colour instead (ProjectNavbar
+     * .container is --main-bg): a shade under the page in every light theme, and
+     * the same surface the bar right above it already shows, so the handle reads
+     * as a piece of that chrome. --tertiary was tried first and was too heavy.
+     * The glyph follows the bar's icons (--primary-text, via the global svg
+     * rule) rather than --secondary-text, which sits under 2.5:1 on the latte and
+     * mint tints. Mirrored by the left edge handles (SplitPanelContainer's
+     * .panel_switcher_btn). */
+    .right_sidebar_toggle,
+    .right_sidebar_toggle svg {
+        color: var(--primary-text);
+    }
+
+    .right_sidebar_toggle {
+        background-color: var(--main-bg);
+    }
 }
 
 /* Hover affordances only where a pointer can actually hover — same guard and
@@ -100,7 +122,7 @@
 @media (hover: hover) {
     .right_sidebar_toggle:hover {
         opacity: 1;
-        background-color: var(--tertiary-hover);
+        background-color: var(--secondary-hover);
     }
 }
 
