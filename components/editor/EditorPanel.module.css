@@ -20,8 +20,12 @@
  * which reads card rects on every frame of a drag and would otherwise flush a
  * full-document relayout on each one.
  *
- * Layout containment only; the editor keeps its rendered state, so coming back
- * to the script is instant rather than a re-initialisation.
+ * Layout containment only; the editor keeps its DOM and its state, so coming
+ * back to the script is a relayout rather than a re-initialisation. The
+ * relayout is deliberate: WebKit does not reliably restyle and repaint a subtree
+ * that changed while it was skipped (a view-mode toggle, a setting, an edit),
+ * so DocumentEditorPanel rebuilds the editor's rendering on the way back — see
+ * the parked → visible layout effect there.
  */
 .parked {
     content-visibility: hidden;
@@ -272,7 +276,12 @@
     justify-content: center;
 
     border-radius: 16px;
-    background-color: var(--secondary);
+    /* The project navbar's own colour (ProjectNavbar .container is --main-bg),
+     * the same fill the edge toggles take on the phone — see ProjectWorkspace's
+     * .right_sidebar_toggle phone rule. This rides over the script page, which
+     * fills the width here and is white in every light theme, so a --secondary
+     * fill (white, or a hair off it) blended straight into it. */
+    background-color: var(--main-bg);
     color: var(--secondary-text);
     box-shadow: var(--panel-shadow);
 
@@ -287,7 +296,7 @@
 
 .scroll_handle:active {
     cursor: grabbing;
-    background-color: var(--secondary-hover);
+    background-color: var(--primary-hover);
 }
 
 /* Endless Scroll Mode Overrides */
