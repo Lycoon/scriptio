@@ -8,7 +8,7 @@ type MetricsBundle = {
 };
 
 declare global {
-    var __scriptio_metrics__: MetricsBundle | undefined;
+    var __scenarly_metrics__: MetricsBundle | undefined;
 }
 
 const buildMetrics = (): MetricsBundle => {
@@ -30,7 +30,7 @@ const buildMetrics = (): MetricsBundle => {
     });
 
     const dbSizeBytes = new Gauge({
-        name: "scriptio_db_size_bytes",
+        name: "scenarly_db_size_bytes",
         help: "Current size of the application database in bytes.",
         registers: [registry],
     });
@@ -38,8 +38,8 @@ const buildMetrics = (): MetricsBundle => {
     return { registry, httpRequestsTotal, httpRequestDurationSeconds, dbSizeBytes };
 };
 
-const metrics = globalThis.__scriptio_metrics__ ?? buildMetrics();
+const metrics = globalThis.__scenarly_metrics__ ?? buildMetrics();
 
-if (process.env.NODE_ENV !== "production") globalThis.__scriptio_metrics__ = metrics;
+if (process.env.NODE_ENV !== "production") globalThis.__scenarly_metrics__ = metrics;
 
 export const { registry, httpRequestsTotal, httpRequestDurationSeconds, dbSizeBytes } = metrics;

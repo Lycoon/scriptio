@@ -15,7 +15,7 @@ const PERKS = ["perkProjects", "perkSaves", "perkCollaborators", "perkAutoSave"]
 // Where the macOS App Store build sends users to manage billing. Pro is sold
 // exclusively through the website (Stripe), so the App Store app never handles
 // payments itself — this avoids Apple's in-app-purchase fee.
-const WEBSITE_URL = process.env.NEXT_PUBLIC_API_URL || "https://scriptio.app";
+const WEBSITE_URL = process.env.NEXT_PUBLIC_API_URL || "https://scenarly.com";
 
 // The macOS Tauri build ships through the App Store, so it must not sell or
 // manage subscriptions in-app; it links out to the website instead. The Windows

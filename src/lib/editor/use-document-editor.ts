@@ -11,7 +11,7 @@ import { ScreenplayElement, Style, TitlePageElement } from "@src/lib/utils/enums
 import { getRandomColor } from "@src/lib/utils/misc";
 import { useUser } from "@src/lib/utils/hooks";
 import { getStylesFromMarks, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
-import { ScriptioPagination, refreshPageLocking } from "@src/lib/screenplay/extensions/pagination-extension";
+import { ScenarlyPagination, refreshPageLocking } from "@src/lib/screenplay/extensions/pagination-extension";
 import { KeybindsExtension } from "@src/lib/screenplay/extensions/keybinds-extension";
 import { executeKeybindAction, KeybindId } from "@src/lib/utils/keybinds";
 import {
@@ -57,7 +57,7 @@ export interface DocumentEditorCallbacks {
 }
 
 /**
- * Unified editor hook that replaces both useScriptioEditor and useTitlePageEditor.
+ * Unified editor hook that replaces both useScenarlyEditor and useTitlePageEditor.
  * Builds a Tiptap editor instance bound to the Y.XmlFragment specified in config.
  */
 export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: DocumentEditorCallbacks): Editor | null => {
@@ -370,7 +370,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                               user: userInfo,
                               render: (user: { color: string; name: string }) => {
                                   // Render with no DOM children. The username label is rendered
-                                  // via a ::before pseudo-element (see styles/scriptio.css),
+                                  // via a ::before pseudo-element (see styles/scenarly.css),
                                   // so there is no text node Firefox can place the local HTML
                                   // caret into when the user clicks an empty node containing
                                   // this remote caret.
@@ -388,7 +388,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                     : []),
 
                 // Pagination
-                ScriptioPagination.configure(
+                ScenarlyPagination.configure(
                     config.features.paginationMode === "screenplay"
                         ? {
                               pageGap: 20,
@@ -458,7 +458,7 @@ export const useDocumentEditor = (config: DocumentEditorConfig, callbacks: Docum
                 createDictationPreviewExtension(),
                 ...(sceneBookmarkExtension ? [sceneBookmarkExtension] : []),
                 ...(sceneLockingExtension ? [sceneLockingExtension] : []),
-                // After ScriptioPagination so its plugin reads fresh pagination
+                // After ScenarlyPagination so its plugin reads fresh pagination
                 // state (page breaks) when grouping lines into pages.
                 ...(revisionsExtension ? [revisionsExtension] : []),
                 ...(nodeIdDedupExtension ? [nodeIdDedupExtension] : []),

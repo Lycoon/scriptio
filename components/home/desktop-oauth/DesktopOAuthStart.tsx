@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 
-import ScriptioLogo from "@public/images/scriptio.svg";
+import ScenarlyLogo from "@public/images/scenarly.svg";
 import layout from "../../utils/Layout.module.css";
 import auth from "../auth/AuthPage.module.css";
 import form from "../../utils/Form.module.css";
@@ -44,14 +44,14 @@ const DesktopOAuthStart = () => {
     return (
         <div className={layout.center_middle}>
             <div className={auth.authPage}>
-                <ScriptioLogo className={auth.authLogo} />
+                <ScenarlyLogo className={auth.authLogo} />
                 <div className={form.home}>
                     <div className={form.header}>
                         <h1>Sign in</h1>
                         <hr />
                         <p className={`${auth.info} segoe`}>
                             {invalid
-                                ? "This page should be opened from the Scriptio desktop app."
+                                ? "This page should be opened from the Scenarly desktop app."
                                 : "Redirecting you to your provider…"}
                         </p>
                     </div>

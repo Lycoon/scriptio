@@ -21,7 +21,7 @@ import ProjectItem from "./ProjectItem";
 import autoAnimate from "@formkit/auto-animate";
 import Loading from "../utils/Loading";
 
-import Logo from "@public/images/scriptio.svg";
+import Logo from "@public/images/scenarly.svg";
 
 import page from "./ProjectPageContainer.module.css";
 
@@ -61,7 +61,7 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
     };
 
     /**
-     * Open a `.scriptio` from disk through the merge-aware flow.
+     * Open a `.scenarly` from disk through the merge-aware flow.
      *
      * Distinct from Import above, which always makes a new project. This asks
      * what the file means for the library first — a project you already have
@@ -71,8 +71,8 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
     const handleOpenFile = async () => {
         setImportError(null);
         try {
-            const { pickAndOfferScriptioFile } = await import("@src/lib/import/scriptio-file-open");
-            await pickAndOfferScriptioFile();
+            const { pickAndOfferScenarlyFile } = await import("@src/lib/import/scenarly-file-open");
+            await pickAndOfferScenarlyFile();
         } catch (error) {
             console.error("[Projects] Could not open the file:", error);
             setImportError(error instanceof Error ? error.message : t("importError"));
@@ -200,7 +200,7 @@ const ProjectPageContainer = ({ sidebarOpen, setSidebarOpen }: ProjectPageContai
                         <FileDown size={16} />
                         <span>{isImporting ? t("importing") : t("importBtn")}</span>
                     </button>
-                    {/* Opening a `.scriptio` belongs on the library, not inside a
+                    {/* Opening a `.scenarly` belongs on the library, not inside a
                         project: the file may well be a *different* project, and
                         the answer can be "update the copy you already have" —
                         neither of which makes sense as an action taken from the

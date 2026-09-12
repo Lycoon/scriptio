@@ -1,5 +1,5 @@
 # Global configuration
-name = "scriptio-cloud"
+name = "scenarly-cloud"
 main = "index.ts"
 compatibility_date = "2025-12-08"
 compatibility_flags = ["nodejs_compat"]
@@ -22,7 +22,7 @@ class_name = "ProjectRoom"
 
 [[r2_buckets]]
 binding = "SNAPSHOTS"
-bucket_name = "scriptio-snapshots-local"
+bucket_name = "scenarly-snapshots-local"
 
 [vars]
 # Base URL of the Next.js app for the asset-GC callback (local dev).
@@ -30,13 +30,13 @@ API_URL = "http://127.0.0.1:3000"
 
 # --- Production ---
 [env.production]
-name = "scriptio-cloud"
+name = "scenarly-prod-cloud"
 routes = [
-  { pattern = "cloud.scriptio.app", custom_domain = true }
+  { pattern = "cloud.scenarly.com", custom_domain = true }
 ]
 
 [env.production.vars]
-API_URL = "https://scriptio.app"
+API_URL = "https://scenarly.com"
 
 [[env.production.durable_objects.bindings]]
 name = "PROJECT_ROOM"
@@ -44,13 +44,14 @@ class_name = "ProjectRoom"
 
 [[env.production.r2_buckets]]
 binding = "SNAPSHOTS"
-bucket_name = "scriptio-snapshots"
+bucket_name = "scenarly-prod-snapshots"
+jurisdiction = "eu"
 
 # --- Staging ---
 [env.staging]
-name = "scriptio-cloud-staging"
+name = "scenarly-staging-cloud"
 routes = [
-  { pattern = "cloud.staging.scriptio.app", custom_domain = true }
+  { pattern = "cloud.staging.scenarly.com", custom_domain = true }
 ]
 
 [[env.staging.durable_objects.bindings]]
@@ -59,8 +60,9 @@ class_name = "ProjectRoom"
 
 [[env.staging.r2_buckets]]
 binding = "SNAPSHOTS"
-bucket_name = "scriptio-snapshots-staging"
+bucket_name = "scenarly-staging-snapshots"
+jurisdiction = "eu"
 
 [env.staging.vars]
 # Verify this matches the staging app domain.
-API_URL = "https://staging.scriptio.app"
+API_URL = "https://staging.scenarly.com"

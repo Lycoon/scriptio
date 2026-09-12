@@ -1,5 +1,5 @@
 /**
- * Registry of IndexedDB schema migrations for the app-wide `scriptio-local` database.
+ * Registry of IndexedDB schema migrations for the app-wide `scenarly-local` database.
  *
  * Each entry is `{ from, to, run }`. `run` executes inside the IndexedDB
  * `versionchange` transaction, so it must be synchronous and only use IDB

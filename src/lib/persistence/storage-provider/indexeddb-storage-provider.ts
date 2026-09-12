@@ -25,7 +25,7 @@ import {
 import { runStoreMigrations } from "./migrations/store-migration-runner";
 import { StoreVersionTooNewError } from "./migrations/errors";
 
-const BROWSER_DB_NAME = "scriptio-local";
+const BROWSER_DB_NAME = "scenarly-local";
 const PROJECTS_STORE = STORE_NAMES.PROJECTS;
 const SETTINGS_STORE = STORE_NAMES.SETTINGS;
 const DICTIONARIES_STORE = STORE_NAMES.DICTIONARIES;

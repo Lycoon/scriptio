@@ -360,7 +360,7 @@
     /* ENDLESS mode (default on phone): reflow the screenplay into the viewport at
      * full size instead of shrinking the page. The editor fills the width and the
      * wide screenplay margins compress via --display-margin-scale (consumed by
-     * every element padding in scriptio.css), so text wraps to a narrow measure at
+     * every element padding in scenarly.css), so text wraps to a narrow measure at
      * real font size. Continuous — inter-page breaks are hidden by the
      * `.endless_scroll .pagination-page-break { display:none }` rule above — so
      * there are no page rectangles to shift while writing.

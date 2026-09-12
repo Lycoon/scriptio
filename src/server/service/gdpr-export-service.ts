@@ -125,7 +125,7 @@ export async function getExportArchive(
     const bytes = await S3.getObjectBytes(record.key);
     if (!bytes) throw unavailable;
 
-    return { bytes, filename: record.key.split("/").pop() ?? "scriptio-data-export.zip" };
+    return { bytes, filename: record.key.split("/").pop() ?? "scenarly-data-export.zip" };
 }
 
 /** Delete the R2 objects of exports whose download link has already lapsed. */
@@ -153,7 +153,7 @@ export async function runDataExport(exportId: string, userId: string): Promise<v
         await purgeExpiredExports(userId);
 
         const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        const key = `gdpr-exports/${userId}/scriptio-data-export-${timestamp}.zip`;
+        const key = `gdpr-exports/${userId}/scenarly-data-export-${timestamp}.zip`;
 
         const archive = await zipAsync({
             "user.json": strToU8(JSON.stringify(user, null, 2)),

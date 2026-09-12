@@ -8,7 +8,7 @@ CREATE TYPE "ProjectRole" AS ENUM ('OWNER', 'ADMIN', 'EDITOR', 'VIEWER');
 CREATE TYPE "UserRole" AS ENUM ('USER', 'ADMIN');
 
 -- CreateEnum
-CREATE TYPE "SubscriptionProvider" AS ENUM ('STRIPE', 'APPLE');
+CREATE TYPE "DataExportStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -21,7 +21,8 @@ CREATE TABLE "User" (
     "role" "UserRole" NOT NULL DEFAULT 'USER',
     "isProUntil" TIMESTAMP(3),
     "isSubscriptionCancelled" BOOLEAN NOT NULL DEFAULT false,
-    "subscriptionProvider" "SubscriptionProvider",
+    "stripeCustomerId" TEXT,
+    "stripeSubscriptionId" TEXT,
     "settings" JSONB,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
@@ -76,17 +77,6 @@ CREATE TABLE "MagicLinkToken" (
 );
 
 -- CreateTable
-CREATE TABLE "Transaction" (
-    "id" SERIAL NOT NULL,
-    "userId" TEXT NOT NULL,
-    "provider" "SubscriptionProvider" NOT NULL,
-    "transactionId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Project" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -114,6 +104,19 @@ CREATE TABLE "ProjectAsset" (
 );
 
 -- CreateTable
+CREATE TABLE "DataExport" (
+    "id" TEXT NOT NULL,
+    "status" "DataExportStatus" NOT NULL DEFAULT 'PENDING',
+    "key" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "expiresAt" TIMESTAMP(3),
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "DataExport_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "ProjectMember" (
     "id" SERIAL NOT NULL,
     "role" "ProjectRole" NOT NULL DEFAULT 'VIEWER',
@@ -138,6 +141,12 @@ CREATE TABLE "ProjectInvitation" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_stripeCustomerId_key" ON "User"("stripeCustomerId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_stripeSubscriptionId_key" ON "User"("stripeSubscriptionId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
 
 -- CreateIndex
@@ -156,16 +165,13 @@ CREATE UNIQUE INDEX "MagicLinkToken_tokenHash_key" ON "MagicLinkToken"("tokenHas
 CREATE INDEX "MagicLinkToken_email_createdAt_idx" ON "MagicLinkToken"("email", "createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Transaction_transactionId_key" ON "Transaction"("transactionId");
-
--- CreateIndex
-CREATE INDEX "Transaction_userId_idx" ON "Transaction"("userId");
-
--- CreateIndex
 CREATE INDEX "ProjectAsset_projectId_idx" ON "ProjectAsset"("projectId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ProjectAsset_projectId_hash_key" ON "ProjectAsset"("projectId", "hash");
+
+-- CreateIndex
+CREATE INDEX "DataExport_userId_idx" ON "DataExport"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ProjectMember_userId_projectId_key" ON "ProjectMember"("userId", "projectId");
@@ -183,13 +189,13 @@ ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "ProjectAsset" ADD CONSTRAINT "ProjectAsset_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProjectMember" ADD CONSTRAINT "ProjectMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DataExport" ADD CONSTRAINT "DataExport_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProjectMember" ADD CONSTRAINT "ProjectMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ProjectMember" ADD CONSTRAINT "ProjectMember_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;

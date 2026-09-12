@@ -4,7 +4,7 @@ import { Editor } from "@tiptap/core";
 import { BASE_EXTENSIONS, applyElement } from "@src/lib/screenplay/editor";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import {
-    ScriptioPagination,
+    ScenarlyPagination,
     getPageAnchorInfo,
     paginationKey,
 } from "@src/lib/screenplay/extensions/pagination-extension";
@@ -54,7 +54,7 @@ async function makeEditor(n: number) {
         extensions: [
             ...BASE_EXTENSIONS,
             createNodeIdDedupExtension({ duplicatePersistentScene: () => {} }),
-            ScriptioPagination.configure({
+            ScenarlyPagination.configure({
                 pageHeight: 200, pageWidth: 600, marginTop: 0, marginBottom: 0,
                 marginLeft: 0, marginRight: 0, pageGap: 10,
                 getPageLocking: () => lockState.locking,

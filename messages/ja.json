@@ -318,14 +318,13 @@
     "deleteModalTitle": "アカウントを削除",
     "deleteModalDesc": "アカウントとすべての関連データを完全に削除します。この操作は取り消せません。",
     "deleteSubscriptionWarning": "Proサブスクリプションは{date}まで有効です。アカウントを削除すると直ちに解約され、残りの期間は失われ、返金されません。",
-    "deleteSubscriptionWarningApple": "ProサブスクリプションはApp Store経由で課金され、{date}まで有効です。アカウントを削除するとProへのアクセスは終了しますが、課金は停止しません。App Storeの設定でもサブスクリプションを解約してください。",
     "deleteConfirmPhrase": "アカウントの削除を承認します",
     "deleteConfirmLabel": "削除を確認するために以下のテキストを入力してください：",
     "deleting": "削除中...",
     "deleteAccountBtn": "自分のアカウントを削除",
     "deleteFailed": "アカウントを削除できませんでした。もう一度お試しください。",
     "subscription": {
-      "openWebsite": "scriptio.app で管理",
+      "openWebsite": "scenarly.com で管理",
       "title": "サブスクリプション",
       "proBadge": "Pro",
       "proTitle": "Proプラン",
@@ -352,15 +351,15 @@
       "manageApple": "App Storeを開く",
       "alreadyBoundTo": "このサブスクリプションは既に {email} に関連付けられています。",
       "alreadyBoundUnknown": "このサブスクリプションは既に別のアカウントに関連付けられています。",
-      "welcomePro": "Scriptio Pro にご登録いただきました。ようこそ！",
+      "welcomePro": "Scenarly Pro にご登録いただきました。ようこそ！",
       "resubscribe": "サブスクリプションを再開する",
       "restorePurchases": "購入を復元",
       "transferConfirm": "App Storeアカウントには {email} に関連付けられた有効なサブスクリプションがあります。復元するとProがこのアカウントに移行し、{email} はProアクセスを失います。Appleは引き続き同じApple IDに請求します。続けますか？",
-      "transferConfirmUnknown": "App Storeアカウントには別のScriptioアカウントに関連付けられた有効なサブスクリプションがあります。復元するとProがこのアカウントに移行し、もう一方のアカウントはProアクセスを失います。Appleは引き続き同じApple IDに請求します。続けますか？",
+      "transferConfirmUnknown": "App Storeアカウントには別のScenarlyアカウントに関連付けられた有効なサブスクリプションがあります。復元するとProがこのアカウントに移行し、もう一方のアカウントはProアクセスを失います。Appleは引き続き同じApple IDに請求します。続けますか？",
       "transferYes": "はい、移行する",
       "transferring": "移行中...",
       "appleStoreFreeInfo": "Pro機能は当社のウェブサイトでアップグレードされたアカウントでご利用いただけます。",
-      "appleStoreProInfo": "お支払い方法の更新やキャンセルは、scriptio.app のプロフィール設定からお手続きください。"
+      "appleStoreProInfo": "お支払い方法の更新やキャンセルは、scenarly.com のプロフィール設定からお手続きください。"
     }
   },
   "projects": {
@@ -506,21 +505,21 @@
   "export": {
     "importLabel": "インポート",
     "selectFile": "ファイルを選択",
-    "selectFileDesc": ".fountain, .fdx, .scriptio, .txt ファイル",
+    "selectFileDesc": ".fountain, .fdx, .scenarly, .txt ファイル",
     "exportLabel": "エクスポート",
     "formatOptions": {
       "pdf": "PDF ドキュメント (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
       "text": "整形テキスト (.txt)",
-      "scriptio": "Scriptio (.scriptio)"
+      "scenarly": "Scenarly (.scenarly)"
     },
     "formatHelp": {
       "pdf": "業界標準フォーマット。共有や印刷に最適です。",
       "fountain": "Markdownベースのテキスト形式。互換性に優れています。",
       "fdx": "プロ向けソフト Final Draft と互換性があります。",
       "text": "脚本の標準的な余白で整形したプレーンテキスト。どこでも読めます。",
-      "scriptio": "Scriptio 独自形式。ローカル保存に最適です。"
+      "scenarly": "Scenarly 独自形式。ローカル保存に最適です。"
     },
     "includeNotes": "メモを含める",
     "includeNotesDesc": "挿入されたメモをエクスポートします。",
@@ -704,7 +703,7 @@
       "uploading": "アップロード中...",
       "failed": "アップロードに失敗しました。もう一度お試しください。"
     },
-    "scriptioOpen": {
+    "scenarlyOpen": {
       "title": "{file} を開く",
       "untitledProject": "無題",
       "alreadyCurrent": "お使いのコピーはこのファイルの内容をすべて含んでいます。",
@@ -723,20 +722,20 @@
     "saveToFile": {
       "title": "ファイルに保存",
       "reassurance": "作業内容はすでに自動保存されています — このデバイスに、そして同期されたプロジェクトならクラウドにも。",
-      "offer": "ファイルに保存すると、自分のものとして共有できるコピーが手に入ります。保存後は Scriptio がそのファイルを自動で最新に保ちます。",
+      "offer": "ファイルに保存すると、自分のものとして共有できるコピーが手に入ります。保存後は Scenarly がそのファイルを自動で最新に保ちます。",
       "confirm": "保存先を選択…",
       "cancel": "あとで"
     },
     "autoSave": {
       "title": "自動保存は有効です",
-      "body": "{file} は自動で最新に保たれます。作業中の変更は Scriptio が書き込むので、手動で保存する必要はありません。",
+      "body": "{file} は自動で最新に保たれます。作業中の変更は Scenarly が書き込むので、手動で保存する必要はありません。",
       "hint": "作業内容はこのデバイスにも、同期されたプロジェクトならクラウドにも保存されます。",
       "ok": "了解"
     },
     "fileBind": {
       "title": "このファイルに保存しますか？",
       "pathTaken": "{project} がすでにこのファイルに保存しています。1 つのファイルを 2 つのプロジェクトで共有することはできません。別の場所を選んでください。",
-      "replacesForeignFile": "この場所には別の Scriptio プロジェクトが保存されています。ここに保存するとそのファイルは置き換えられ、そのプロジェクトはディスク上で更新されなくなります。",
+      "replacesForeignFile": "この場所には別の Scenarly プロジェクトが保存されています。ここに保存するとそのファイルは置き換えられ、そのプロジェクトはディスク上で更新されなくなります。",
       "notWritable": "この場所には書き込めません（{message}）。別の場所を選んでください。",
       "replaceAnyway": "置き換える",
       "cancel": "キャンセル",

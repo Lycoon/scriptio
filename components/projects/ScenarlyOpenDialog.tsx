@@ -5,12 +5,12 @@ import { useTranslations } from "next-intl";
 import { FilePlus2, GitMerge, Check, X } from "lucide-react";
 
 import {
-    acceptScriptioAsNewProject,
-    acceptScriptioMerge,
-    dismissScriptioOpen,
-    getPendingScriptioOpen,
-    subscribeScriptioOpen,
-} from "@src/lib/import/scriptio-file-open";
+    acceptScenarlyAsNewProject,
+    acceptScenarlyMerge,
+    dismissScenarlyOpen,
+    getPendingScenarlyOpen,
+    subscribeScenarlyOpen,
+} from "@src/lib/import/scenarly-file-open";
 import { CURRENT_PROJECT_VERSION } from "@src/lib/project/migrations/project-migrations";
 import { getCachedProject } from "@src/lib/persistence/storage-provider/local-persistence";
 import { useCookieUser, useIsPro } from "@src/lib/utils/hooks";
@@ -20,7 +20,7 @@ import ProjectMigrationErrorDialog from "./ProjectMigrationErrorDialog";
 import styles from "./ProjectMigrationErrorDialog.module.css";
 
 /**
- * Asks what to do with a `.scriptio` the user just opened.
+ * Asks what to do with a `.scenarly` the user just opened.
  *
  * The plan behind it was computed before anything was written, so each case gets
  * copy that names the actual situation rather than a generic "import?" — which
@@ -32,9 +32,9 @@ import styles from "./ProjectMigrationErrorDialog.module.css";
  * reconcile against, opening a file just means opening it, and a dialog would be
  * a question with one answer.
  */
-const ScriptioOpenDialog = () => {
+const ScenarlyOpenDialog = () => {
     const t = useTranslations("popup");
-    const pending = useSyncExternalStore(subscribeScriptioOpen, getPendingScriptioOpen, () => null);
+    const pending = useSyncExternalStore(subscribeScenarlyOpen, getPendingScenarlyOpen, () => null);
     const { user } = useCookieUser();
     const { isPro } = useIsPro();
     const { goToProject } = useAppNavigation();
@@ -79,7 +79,7 @@ const ScriptioOpenDialog = () => {
             const projectId = await action();
             goToProject(projectId);
         } catch (e) {
-            console.error("[ScriptioOpenDialog] action failed:", e);
+            console.error("[ScenarlyOpenDialog] action failed:", e);
             setError(e instanceof Error ? e.message : String(e));
             setBusy(false);
         }
@@ -100,12 +100,12 @@ const ScriptioOpenDialog = () => {
         autoCreatedRef.current = pending.bytes;
 
         let cancelled = false;
-        acceptScriptioAsNewProject(false, user, isPro)
+        acceptScenarlyAsNewProject(false, user, isPro)
             .then((projectId) => {
                 if (!cancelled) goToProject(projectId);
             })
             .catch((e) => {
-                console.error("[ScriptioOpenDialog] could not open the file:", e);
+                console.error("[ScenarlyOpenDialog] could not open the file:", e);
                 if (!cancelled) setError(e instanceof Error ? e.message : String(e));
             });
         return () => {
@@ -127,8 +127,8 @@ const ScriptioOpenDialog = () => {
         );
     }
 
-    const titleOf = (id: string) => titles[id] ?? t("scriptioOpen.untitledProject");
-    const openAsNew = (fork: boolean) => run(() => acceptScriptioAsNewProject(fork, user, isPro));
+    const titleOf = (id: string) => titles[id] ?? t("scenarlyOpen.untitledProject");
+    const openAsNew = (fork: boolean) => run(() => acceptScenarlyAsNewProject(fork, user, isPro));
 
     const newProjectButton = (fork: boolean) => (
         <button
@@ -137,14 +137,14 @@ const ScriptioOpenDialog = () => {
             disabled={busy}
         >
             <FilePlus2 size={16} />
-            {t("scriptioOpen.openAsNew")}
+            {t("scenarlyOpen.openAsNew")}
         </button>
     );
 
     const cancelButton = (
-        <button className={`${styles.btn} ${styles.secondaryBtn}`} onClick={dismissScriptioOpen} disabled={busy}>
+        <button className={`${styles.btn} ${styles.secondaryBtn}`} onClick={dismissScenarlyOpen} disabled={busy}>
             <X size={16} />
-            {t("scriptioOpen.cancel")}
+            {t("scenarlyOpen.cancel")}
         </button>
     );
 
@@ -152,29 +152,29 @@ const ScriptioOpenDialog = () => {
         switch (plan.kind) {
             case "already-current":
                 return {
-                    description: t("scriptioOpen.alreadyCurrent"),
+                    description: t("scenarlyOpen.alreadyCurrent"),
                     actions: (
                         <button
                             className={`${styles.btn} ${styles.primaryBtn}`}
-                            onClick={dismissScriptioOpen}
+                            onClick={dismissScenarlyOpen}
                         >
                             <Check size={16} />
-                            {t("scriptioOpen.ok")}
+                            {t("scenarlyOpen.ok")}
                         </button>
                     ),
                 };
             case "fast-forward":
                 return {
-                    description: t("scriptioOpen.fastForward", { project: titleOf(plan.projectId) }),
+                    description: t("scenarlyOpen.fastForward", { project: titleOf(plan.projectId) }),
                     actions: (
                         <>
                             <button
                                 className={`${styles.btn} ${styles.primaryBtn}`}
-                                onClick={() => run(() => acceptScriptioMerge(plan.projectId))}
+                                onClick={() => run(() => acceptScenarlyMerge(plan.projectId))}
                                 disabled={busy}
                             >
                                 <GitMerge size={16} />
-                                {t("scriptioOpen.update")}
+                                {t("scenarlyOpen.update")}
                             </button>
                             {newProjectButton(true)}
                             {cancelButton}
@@ -183,17 +183,17 @@ const ScriptioOpenDialog = () => {
                 };
             case "diverged":
                 return {
-                    description: t("scriptioOpen.diverged", { project: titleOf(plan.projectId) }),
-                    note: t("scriptioOpen.divergedSnapshot"),
+                    description: t("scenarlyOpen.diverged", { project: titleOf(plan.projectId) }),
+                    note: t("scenarlyOpen.divergedSnapshot"),
                     actions: (
                         <>
                             <button
                                 className={`${styles.btn} ${styles.primaryBtn}`}
-                                onClick={() => run(() => acceptScriptioMerge(plan.projectId))}
+                                onClick={() => run(() => acceptScenarlyMerge(plan.projectId))}
                                 disabled={busy}
                             >
                                 <GitMerge size={16} />
-                                {t("scriptioOpen.merge")}
+                                {t("scenarlyOpen.merge")}
                             </button>
                             {newProjectButton(true)}
                             {cancelButton}
@@ -202,7 +202,7 @@ const ScriptioOpenDialog = () => {
                 };
             case "no-lineage":
                 return {
-                    description: t("scriptioOpen.noLineage"),
+                    description: t("scenarlyOpen.noLineage"),
                     actions: (
                         <>
                             {newProjectButton(false)}
@@ -212,18 +212,18 @@ const ScriptioOpenDialog = () => {
                 };
             case "ambiguous":
                 return {
-                    description: t("scriptioOpen.ambiguous"),
+                    description: t("scenarlyOpen.ambiguous"),
                     actions: (
                         <>
                             {plan.projectIds.map((id) => (
                                 <button
                                     key={id}
                                     className={`${styles.btn} ${styles.primaryBtn}`}
-                                    onClick={() => run(() => acceptScriptioMerge(id))}
+                                    onClick={() => run(() => acceptScenarlyMerge(id))}
                                     disabled={busy}
                                 >
                                     <GitMerge size={16} />
-                                    {t("scriptioOpen.updateNamed", { project: titleOf(id) })}
+                                    {t("scenarlyOpen.updateNamed", { project: titleOf(id) })}
                                 </button>
                             ))}
                             {newProjectButton(true)}
@@ -245,7 +245,7 @@ const ScriptioOpenDialog = () => {
     return (
         <div className={styles.overlay}>
             <div className={styles.modal}>
-                <h2 className={styles.title}>{t("scriptioOpen.title", { file: pending.fileName })}</h2>
+                <h2 className={styles.title}>{t("scenarlyOpen.title", { file: pending.fileName })}</h2>
                 <p className={styles.description}>{description}</p>
                 {note && <p className={styles.versionDetails}>{note}</p>}
                 {error && <p className={styles.versionDetails}>{error}</p>}
@@ -255,4 +255,4 @@ const ScriptioOpenDialog = () => {
     );
 };
 
-export default ScriptioOpenDialog;
+export default ScenarlyOpenDialog;

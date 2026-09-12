@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { UserRole, SubscriptionProvider } from "../../src/generated/client/browser";
+import { UserRole } from "../../src/generated/client/browser";
 import styles from "./UserSearch.module.css";
 
 type SearchResult = {
@@ -13,7 +13,6 @@ type SearchResult = {
     createdAt: string;
     role: UserRole;
     isProUntil: string | null;
-    subscriptionProvider: SubscriptionProvider | null;
 };
 
 type SearchResponse = {

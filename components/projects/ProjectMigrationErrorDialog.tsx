@@ -52,7 +52,7 @@ const ProjectMigrationErrorDialog = ({ outcome }: Props) => {
                 <div className={styles.modal}>
                     <h2 className={styles.title}>Project from a newer version</h2>
                     <p className={styles.description}>
-                        This project was created or last edited in a newer version of Scriptio. Update the
+                        This project was created or last edited in a newer version of Scenarly. Update the
                         app to open it safely.
                     </p>
                     <p className={styles.versionDetails}>
@@ -73,7 +73,7 @@ const ProjectMigrationErrorDialog = ({ outcome }: Props) => {
         return (
             <div className={styles.overlay}>
                 <div className={styles.modal}>
-                    <h2 className={styles.title}>Update Scriptio to open this project</h2>
+                    <h2 className={styles.title}>Update Scenarly to open this project</h2>
                     <p className={styles.description}>
                         The cloud copy of this project is at a newer schema version than your app
                         knows. Reload to fetch the latest version, or update the desktop app.
@@ -101,7 +101,7 @@ const ProjectMigrationErrorDialog = ({ outcome }: Props) => {
             <div className={styles.modal}>
                 <h2 className={styles.title}>Could not upgrade this project</h2>
                 <p className={styles.description}>
-                    Scriptio tried to upgrade this project to the latest version but a step failed. Your
+                    Scenarly tried to upgrade this project to the latest version but a step failed. Your
                     original data is safe — restore from the pre-upgrade backup, or open another project.
                 </p>
                 <p className={styles.versionDetails}>

@@ -14,16 +14,16 @@ export default function PrivacyContent() {
                     <p className={styles.pageText}>
                         We are committed to protecting the privacy and security of the people who use our screenwriting
                         software. This Privacy Policy explains what information we collect, how we use and store it, the
-                        choices available to you, and the safeguards we put in place — whether you use Scriptio® offline
-                        on desktop, sign in to synchronize with the cloud, or use Scriptio® in a web browser. Please
-                        read this policy carefully. By using Scriptio® you accept the practices described below.
+                        choices available to you, and the safeguards we put in place — whether you use Scenarly® offline
+                        on desktop, sign in to synchronize with the cloud, or use Scenarly® in a web browser. Please
+                        read this policy carefully. By using Scenarly® you accept the practices described below.
                     </p>
                 </section>
 
                 <section>
                     <h2 className={styles.pageSectionTitle}>Transparency</h2>
                     <p className={styles.pageText}>
-                        At Scriptio®, we believe that trust is earned through radical transparency, not vague promises.
+                        At Scenarly®, we believe that trust is earned through radical transparency, not vague promises.
                         We understand that your creative work is your most valuable asset, and you deserve to know
                         exactly how it is handled, stored, and protected. To honor this commitment, we have made the
                         choice to be a source-available platform.
@@ -59,7 +59,7 @@ export default function PrivacyContent() {
                     <h2 className={styles.pageSectionTitle}>Information we collect</h2>
                     <p className={styles.pageText}>
                         We limit collection to the minimum required to deliver the service, including <b>account</b> and
-                        <b> project</b> information. Scriptio® is passwordless — we do not store passwords or any other
+                        <b> project</b> information. Scenarly® is passwordless — we do not store passwords or any other
                         credentials. Signing in is entirely optional, on desktop, mobile and in the browser alike, and
                         is only needed to enable cloud synchronization and collaboration features. The only sign-in
                         methods available are a magic-link sent to your e-mail address and OAuth sign-in with Apple or
@@ -67,7 +67,7 @@ export default function PrivacyContent() {
                     </p>
                     <p className={styles.pageText}>
                         Screenplays, user preferences, boards, notes and other creative content you create or edit in
-                        Scriptio® whenever your project is synced to cloud.
+                        Scenarly® whenever your project is synced to cloud.
                     </p>
                     <p className={styles.pageText}>
                         Technical and diagnostic data: minimal technical information necessary to operate, secure and
@@ -81,9 +81,9 @@ export default function PrivacyContent() {
                     <h2 className={styles.pageSectionTitle}>How we use your information</h2>
                     <p className={styles.pageText}>
                         We use the information we collect for the following purposes and only to the extent necessary:
-                        To create and manage your Scriptio® account and to authenticate you. To provide cloud
+                        To create and manage your Scenarly® account and to authenticate you. To provide cloud
                         synchronization between devices when you sign in. To enable collaboration features, but only
-                        where you explicitly authorize sharing. To operate, maintain and improve Scriptio®, including
+                        where you explicitly authorize sharing. To operate, maintain and improve Scenarly®, including
                         diagnosing and fixing errors and securing the service. To respond to your requests, support
                         inquiries and legal obligations. We do not sell your personal data to third parties under any
                         circumstances.
@@ -97,7 +97,7 @@ export default function PrivacyContent() {
                         and screenplay content are never shared with other users unless the project owner explicitly
                         grants access. Project content is not transferred to external third parties for commercial or
                         marketing purposes. We may disclose information if required by law, governmental request, or to
-                        protect the rights, property or safety of Scriptio®, our users, or others — only to the extent
+                        protect the rights, property or safety of Scenarly®, our users, or others — only to the extent
                         required.
                     </p>
                 </section>
@@ -108,7 +108,7 @@ export default function PrivacyContent() {
                         We apply reasonable technical and organizational measures to protect your personal data and
                         project content from unauthorized access, alteration, disclosure or destruction. These measures
                         include industry-standard protections such as encrypted communications (TLS) for data in transit
-                        and secure storage practices for data at rest. As Scriptio® is passwordless, we never store
+                        and secure storage practices for data at rest. As Scenarly® is passwordless, we never store
                         passwords or other credentials that could be compromised. In the unlikely event of a security
                         breach affecting personal data, we will follow applicable law and promptly notify affected
                         users and authorities where required.
@@ -118,7 +118,7 @@ export default function PrivacyContent() {
                 <section>
                     <h2 className={styles.pageSectionTitle}>Data retention</h2>
                     <p className={styles.pageText}>
-                        We retain personal data for as long as necessary to provide Scriptio® services and as required
+                        We retain personal data for as long as necessary to provide Scenarly® services and as required
                         by law. In general: Account information is retained while your account is active and for a
                         limited period after account deletion to comply with legal obligations or to prevent fraud.
                         Project content stored in the cloud will be deleted upon request, subject to any backup or legal
@@ -146,7 +146,7 @@ export default function PrivacyContent() {
                         Once authenticated, you can reclaim a copy of your personal data or delete your account
                         directly from your profile section within the app. If you are unable to access your account,
                         you may request access to or deletion of your personal data by contacting us at:
-                        contact@scriptio.app. We will respond within the timeframe required by applicable law.
+                        contact@scenarly.com. We will respond within the timeframe required by applicable law.
                     </p>
                 </section>
 

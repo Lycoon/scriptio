@@ -70,6 +70,16 @@
     font-size: 13px;
 }
 
+.externalLink {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    width: fit-content;
+}
+
+.externalLink:hover {
+    color: var(--secondary-text);
+}
+
 .badge {
     display: inline-flex;
     align-items: center;

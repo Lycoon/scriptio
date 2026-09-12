@@ -2,9 +2,9 @@ use std::sync::Mutex;
 
 use tauri::{Emitter, Manager};
 
-/// Event carrying a `.scriptio` path the OS asked us to open. The frontend
+/// Event carrying a `.scenarly` path the OS asked us to open. The frontend
 /// listens for it and routes the path into the merge-aware open flow.
-const OPEN_FILE_EVENT: &str = "scriptio://open-file";
+const OPEN_FILE_EVENT: &str = "scenarly://open-file";
 
 /// Paths handed to us before the webview was listening.
 ///
@@ -33,11 +33,11 @@ fn take_pending_open_files(state: tauri::State<'_, PendingOpens>) -> Vec<String>
 /// Grant the frontend permission to write this file's scratch sibling, and say
 /// where it is.
 ///
-/// Saving a `.scriptio` re-emits the whole archive, so it is written beside the
+/// Saving a `.scenarly` re-emits the whole archive, so it is written beside the
 /// target and renamed over it — a rename is atomic, a truncated archive is not
 /// recoverable. But the file dialog grants scope for exactly the one path the
 /// user picked, and the scratch file is not that path, so the write is refused
-/// ("forbidden path: …scriptio.part").
+/// ("forbidden path: …scenarly.part").
 ///
 /// Granting it here rather than widening the capability keeps the rule intact:
 /// the scratch sibling is allowed only for a target the user has *already*
@@ -55,7 +55,7 @@ fn allow_scratch_file(app: tauri::AppHandle, path: String) -> Result<String, Str
         return Err(format!("path was not granted by the user: {path}"));
     }
 
-    // `<name>.scriptio` → `<name>.scriptio.part`, kept as a sibling so the
+    // `<name>.scenarly` → `<name>.scenarly.part`, kept as a sibling so the
     // rename stays on one filesystem (a cross-device rename is a copy, and
     // loses the atomicity this exists for).
     let mut scratch = target.into_os_string();
@@ -181,7 +181,7 @@ fn write_file_at(app: tauri::AppHandle, request: tauri::ipc::Request<'_>) -> Res
 }
 
 fn is_project_file(path: &str) -> bool {
-    path.to_lowercase().ends_with(".scriptio")
+    path.to_lowercase().ends_with(".scenarly")
 }
 
 /// Queue a path and tell the frontend about it.
@@ -215,7 +215,7 @@ fn focus_main_window(app: &tauri::AppHandle) {
 pub fn run() {
     let builder = tauri::Builder::default();
 
-    // Without this, double-clicking a second `.scriptio` on Windows and Linux
+    // Without this, double-clicking a second `.scenarly` on Windows and Linux
     // starts a whole new instance with its own IndexedDB-backed session, and two
     // copies of the same project would then write over each other's file. The
     // second process forwards its argv here and exits.

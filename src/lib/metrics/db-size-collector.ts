@@ -4,7 +4,7 @@ import { dbSizeBytes } from "./registry";
 const POLL_INTERVAL_MS = 30_000;
 
 declare global {
-    var __scriptio_db_size_timer__: NodeJS.Timeout | undefined;
+    var __scenarly_db_size_timer__: NodeJS.Timeout | undefined;
 }
 
 const refreshDbSize = async () => {
@@ -20,7 +20,7 @@ const refreshDbSize = async () => {
 };
 
 export const startDbSizeCollector = () => {
-    if (globalThis.__scriptio_db_size_timer__) return;
+    if (globalThis.__scenarly_db_size_timer__) return;
     void refreshDbSize();
-    globalThis.__scriptio_db_size_timer__ = setInterval(refreshDbSize, POLL_INTERVAL_MS);
+    globalThis.__scenarly_db_size_timer__ = setInterval(refreshDbSize, POLL_INTERVAL_MS);
 };

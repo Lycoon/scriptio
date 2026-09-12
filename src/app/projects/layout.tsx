@@ -4,7 +4,7 @@ import Loading from "@components/utils/Loading";
 import DashboardModal from "@components/dashboard/DashboardModal";
 import ProjectUnavailableDialog from "@components/projects/ProjectUnavailableDialog";
 import ProjectMigrationErrorDialog from "@components/projects/ProjectMigrationErrorDialog";
-import ScriptioOpenDialog from "@components/projects/ScriptioOpenDialog";
+import ScenarlyOpenDialog from "@components/projects/ScenarlyOpenDialog";
 import { useSearchParams } from "next/navigation";
 import { ProjectProvider, useProjectReady } from "@src/context/ProjectContext";
 import { ViewProvider } from "@src/context/ViewContext";
@@ -135,20 +135,20 @@ function ProjectLayoutContent({ children }: { children: ReactNode }) {
 }
 
 /**
- * Hosts the `.scriptio` open flow above both the project listing and an open
+ * Hosts the `.scenarly` open flow above both the project listing and an open
  * project, because a file can arrive from the OS at either — a double-click with
  * the app already showing a script has to be answerable without leaving it.
  */
-function ScriptioFileOpenHost() {
+function ScenarlyFileOpenHost() {
     useOsFileOpen();
-    return <ScriptioOpenDialog />;
+    return <ScenarlyOpenDialog />;
 }
 
 export default function ProjectLayout({ children }: { children: ReactNode }) {
     return (
         <Suspense fallback={<Loading />}>
             <SettingsSync />
-            <ScriptioFileOpenHost />
+            <ScenarlyFileOpenHost />
             <ProjectLayoutContent>{children}</ProjectLayoutContent>
         </Suspense>
     );

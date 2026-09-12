@@ -267,7 +267,7 @@ const DocumentEditorPanel = ({
         container.scrollLeft = scrollLeft;
     }, [isVisible, editor, containerEl]);
 
-    // Marker class on the editor DOM so global CSS (scriptio.css) can drop the
+    // Marker class on the editor DOM so global CSS (scenarly.css) can drop the
     // first-of-page top-margin reset in endless-scroll mode. There the page-break
     // widgets are hidden, so the reset would otherwise make each page's first
     // node stick to the previous page's content.

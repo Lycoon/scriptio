@@ -1,7 +1,7 @@
 {
     "$schema": "../gen/schemas/desktop-schema.json",
     "identifier": "default",
-    "description": "Default desktop permissions. The fs read/exists/stat/rename/remove set exists for file-backed projects: a save re-emits the whole .scriptio archive, so it is written to a sibling scratch file and renamed over the target (atomic swap instead of a truncated archive if the app dies mid-write), and every save first stats and re-reads the target to notice changes another program made to it. dialog:allow-open backs the in-app Open... and the Locate... recovery when a bound file has moved.",
+    "description": "Default desktop permissions. The fs read/exists/stat/rename/remove set exists for file-backed projects: a save re-emits the whole .scenarly archive, so it is written to a sibling scratch file and renamed over the target (atomic swap instead of a truncated archive if the app dies mid-write), and every save first stats and re-reads the target to notice changes another program made to it. dialog:allow-open backs the in-app Open... and the Locate... recovery when a bound file has moved.",
     "windows": ["main"],
     "permissions": [
         "core:default",

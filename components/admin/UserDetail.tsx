@@ -3,7 +3,7 @@
 import Link from "next/link";
 import useSWR from "swr";
 import { ArrowLeft } from "lucide-react";
-import { UserRole, SubscriptionProvider, ProjectRole } from "../../src/generated/client/browser";
+import { UserRole, ProjectRole } from "../../src/generated/client/browser";
 import styles from "./UserDetail.module.css";
 
 type UserDetailPayload = {
@@ -16,10 +16,10 @@ type UserDetailPayload = {
         role: UserRole;
         isProUntil: string | null;
         isSubscriptionCancelled: boolean;
-        subscriptionProvider: SubscriptionProvider | null;
+        stripeCustomerId: string | null;
+        stripeCustomerUrl: string | null;
     };
     projectCount: number;
-    transactionCount: number;
 };
 
 type Membership = {
@@ -30,13 +30,6 @@ type Membership = {
         createdAt: string;
         updatedAt: string;
     };
-};
-
-type Transaction = {
-    id: number;
-    provider: SubscriptionProvider;
-    transactionId: string;
-    createdAt: string;
 };
 
 function formatDateTime(iso: string | null) {
@@ -63,9 +56,6 @@ export default function UserDetail({ userId }: Props) {
     );
     const { data: memberships } = useSWR<Membership[]>(
         `/api/admin/users/${userId}/projects`,
-    );
-    const { data: transactions } = useSWR<Transaction[]>(
-        `/api/admin/users/${userId}/transactions`,
     );
 
     return (
@@ -149,12 +139,6 @@ export default function UserDetail({ userId }: Props) {
                                 </span>
                             </div>
                             <div className={styles.field}>
-                                <span className={styles.fieldLabel}>Provider</span>
-                                <span className={styles.fieldValue}>
-                                    {data.user.subscriptionProvider ?? "—"}
-                                </span>
-                            </div>
-                            <div className={styles.field}>
                                 <span className={styles.fieldLabel}>Cancelled</span>
                                 <span
                                     className={`${styles.badge} ${
@@ -165,6 +149,21 @@ export default function UserDetail({ userId }: Props) {
                                 >
                                     {data.user.isSubscriptionCancelled ? "Yes" : "No"}
                                 </span>
+                            </div>
+                            <div className={styles.field}>
+                                <span className={styles.fieldLabel}>Stripe customer</span>
+                                {data.user.stripeCustomerUrl ? (
+                                    <a
+                                        href={data.user.stripeCustomerUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className={`${styles.fieldValue} ${styles.idValue} ${styles.externalLink}`}
+                                    >
+                                        {data.user.stripeCustomerId}
+                                    </a>
+                                ) : (
+                                    <span className={styles.fieldValue}>—</span>
+                                )}
                             </div>
                         </div>
                     </section>
@@ -199,39 +198,6 @@ export default function UserDetail({ userId }: Props) {
                                         {formatDateTime(m.project.updatedAt)}
                                     </span>
                                 </Link>
-                            ))}
-                        </div>
-                    </section>
-
-                    <section className={styles.card}>
-                        <h2 className={styles.cardTitle}>
-                            Transactions ({data.transactionCount})
-                        </h2>
-                        <div className={styles.table}>
-                            <div className={`${styles.tableRow} ${styles.tableHeader}`}>
-                                <span>Transaction ID</span>
-                                <span>Provider</span>
-                                <span>Created</span>
-                            </div>
-                            {!transactions && (
-                                <div className={styles.emptyRow}>Loading…</div>
-                            )}
-                            {transactions && transactions.length === 0 && (
-                                <div className={styles.emptyRow}>No transactions.</div>
-                            )}
-                            {transactions?.map((t) => (
-                                <div key={t.id} className={styles.tableRow}>
-                                    <span
-                                        className={styles.tableCellMono}
-                                        title={t.transactionId}
-                                    >
-                                        {t.transactionId}
-                                    </span>
-                                    <span className={styles.tableCellMuted}>{t.provider}</span>
-                                    <span className={styles.tableCellMuted}>
-                                        {formatDateTime(t.createdAt)}
-                                    </span>
-                                </div>
                             ))}
                         </div>
                     </section>

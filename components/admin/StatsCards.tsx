@@ -7,7 +7,6 @@ type Stats = {
     userCount: number;
     activeProCount: number;
     projectCount: number;
-    transactionsThisMonth: number;
 };
 
 export default function StatsCards() {
@@ -20,11 +19,6 @@ export default function StatsCards() {
         { label: "Users", value: data.userCount, hint: "All-time registrations" },
         { label: "Active Pro", value: data.activeProCount, hint: "isProUntil > now" },
         { label: "Projects", value: data.projectCount, hint: "All projects" },
-        {
-            label: "Transactions (this month)",
-            value: data.transactionsThisMonth,
-            hint: "Since the 1st",
-        },
     ];
 
     return (

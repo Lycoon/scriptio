@@ -11,8 +11,8 @@ COPY ./ ./
 
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
-ARG NEXT_PUBLIC_API_URL=https://scriptio.app
-ARG NEXT_PUBLIC_CLOUD_URL=https://cloud.scriptio.app
+ARG NEXT_PUBLIC_API_URL=https://scenarly.com
+ARG NEXT_PUBLIC_CLOUD_URL=https://cloud.scenarly.com
 ARG NEXT_PUBLIC_COMMIT_SHA
 ARG NEXT_PUBLIC_APP_VERSION
 

@@ -318,14 +318,13 @@
     "deleteModalTitle": "계정 삭제",
     "deleteModalDesc": "계정과 모든 데이터를 영구적으로 삭제합니다. 이 작업은 취소할 수 없습니다.",
     "deleteSubscriptionWarning": "Pro 구독이 {date}까지 유효합니다. 계정을 삭제하면 구독이 즉시 해지되며, 남은 기간은 사라지고 환불되지 않습니다.",
-    "deleteSubscriptionWarningApple": "Pro 구독은 App Store를 통해 청구되며 {date}까지 유효합니다. 계정을 삭제하면 Pro 이용은 종료되지만 청구는 중단되지 않습니다. App Store 설정에서도 구독을 해지하세요.",
     "deleteConfirmPhrase": "계정 삭제를 확인합니다",
     "deleteConfirmLabel": "삭제를 확인하려면 아래 텍스트를 입력하세요:",
     "deleting": "삭제 중...",
     "deleteAccountBtn": "내 계정 삭제",
     "deleteFailed": "계정을 삭제하지 못했습니다. 다시 시도해 주세요.",
     "subscription": {
-      "openWebsite": "scriptio.app에서 관리",
+      "openWebsite": "scenarly.com에서 관리",
       "title": "구독",
       "proBadge": "Pro",
       "proTitle": "Pro 플랜",
@@ -352,15 +351,15 @@
       "manageApple": "App Store 열기",
       "alreadyBoundTo": "이 구독은 이미 {email}에 연결되어 있습니다.",
       "alreadyBoundUnknown": "이 구독은 이미 다른 계정에 연결되어 있습니다.",
-      "welcomePro": "Scriptio Pro를 구독하셨습니다. 환영합니다!",
+      "welcomePro": "Scenarly Pro를 구독하셨습니다. 환영합니다!",
       "resubscribe": "구독 재활성화",
       "restorePurchases": "구매 복원",
       "transferConfirm": "App Store 계정에 {email}에 연결된 활성 구독이 있습니다. 복원하면 Pro가 이 계정으로 이전되며 {email}은(는) Pro 액세스를 잃게 됩니다. Apple은 계속해서 동일한 Apple ID에 청구합니다. 계속하시겠습니까?",
-      "transferConfirmUnknown": "App Store 계정에 다른 Scriptio 계정에 연결된 활성 구독이 있습니다. 복원하면 Pro가 이 계정으로 이전되며 다른 계정은 Pro 액세스를 잃게 됩니다. Apple은 계속해서 동일한 Apple ID에 청구합니다. 계속하시겠습니까?",
+      "transferConfirmUnknown": "App Store 계정에 다른 Scenarly 계정에 연결된 활성 구독이 있습니다. 복원하면 Pro가 이 계정으로 이전되며 다른 계정은 Pro 액세스를 잃게 됩니다. Apple은 계속해서 동일한 Apple ID에 청구합니다. 계속하시겠습니까?",
       "transferYes": "예, 이전",
       "transferring": "이전 중...",
       "appleStoreFreeInfo": "Pro 기능은 웹사이트를 통해 업그레이드된 계정에서 이용할 수 있습니다.",
-      "appleStoreProInfo": "결제 수단을 업데이트하거나 취소하려면 scriptio.app의 프로필 설정을 방문하세요."
+      "appleStoreProInfo": "결제 수단을 업데이트하거나 취소하려면 scenarly.com의 프로필 설정을 방문하세요."
     }
   },
   "projects": {
@@ -506,21 +505,21 @@
   "export": {
     "importLabel": "가져오기",
     "selectFile": "파일 선택",
-    "selectFileDesc": ".fountain, .fdx, .scriptio, .txt 파일",
+    "selectFileDesc": ".fountain, .fdx, .scenarly, .txt 파일",
     "exportLabel": "내보내기",
     "formatOptions": {
       "pdf": "PDF 문서 (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
       "text": "서식 있는 텍스트 (.txt)",
-      "scriptio": "Scriptio (.scriptio)"
+      "scenarly": "Scenarly (.scenarly)"
     },
     "formatHelp": {
       "pdf": "표준 형식. 공유 및 인쇄에 적합합니다.",
       "fountain": "Markdown 기반 텍스트 형식. 호환성이 좋습니다.",
       "fdx": "전문 소프트웨어인 Final Draft와 호환됩니다.",
       "text": "표준 시나리오 여백으로 정렬한 일반 텍스트. 어디서나 읽을 수 있습니다.",
-      "scriptio": "Scriptio 기본 형식. 로컬 보관용으로 적합합니다."
+      "scenarly": "Scenarly 기본 형식. 로컬 보관용으로 적합합니다."
     },
     "includeNotes": "노트 포함",
     "includeNotesDesc": "포함된 노트를 내보냅니다.",
@@ -704,7 +703,7 @@
       "uploading": "업로드 중...",
       "failed": "업로드에 실패했습니다. 다시 시도해 주세요."
     },
-    "scriptioOpen": {
+    "scenarlyOpen": {
       "title": "{file} 열기",
       "untitledProject": "제목 없음",
       "alreadyCurrent": "내 사본에 이 파일의 내용이 모두 들어 있습니다.",
@@ -723,20 +722,20 @@
     "saveToFile": {
       "title": "파일로 저장",
       "reassurance": "작업은 이미 자동으로 저장됩니다 — 이 기기에, 그리고 동기화된 프로젝트라면 클라우드에도.",
-      "offer": "파일로 저장하면 직접 소유하고 공유할 수 있는 사본이 생깁니다. 이후에는 Scriptio가 그 파일을 알아서 최신 상태로 유지합니다.",
+      "offer": "파일로 저장하면 직접 소유하고 공유할 수 있는 사본이 생깁니다. 이후에는 Scenarly가 그 파일을 알아서 최신 상태로 유지합니다.",
       "confirm": "위치 선택…",
       "cancel": "나중에"
     },
     "autoSave": {
       "title": "자동 저장이 켜져 있습니다",
-      "body": "{file}은(는) 알아서 최신 상태로 유지됩니다. 작업하는 동안 Scriptio가 변경 사항을 기록하므로 직접 저장할 필요가 없습니다.",
+      "body": "{file}은(는) 알아서 최신 상태로 유지됩니다. 작업하는 동안 Scenarly가 변경 사항을 기록하므로 직접 저장할 필요가 없습니다.",
       "hint": "작업은 이 기기에도 저장되며, 동기화된 프로젝트라면 클라우드에도 저장됩니다.",
       "ok": "확인"
     },
     "fileBind": {
       "title": "이 파일에 저장할까요?",
       "pathTaken": "{project}이(가) 이미 이 파일에 저장하고 있습니다. 두 프로젝트가 한 파일을 공유할 수 없습니다. 다른 위치를 선택하세요.",
-      "replacesForeignFile": "이 위치에는 다른 Scriptio 프로젝트가 저장되어 있습니다. 여기에 저장하면 그 파일을 대체하며, 해당 프로젝트는 더 이상 디스크에서 최신 상태로 유지되지 않습니다.",
+      "replacesForeignFile": "이 위치에는 다른 Scenarly 프로젝트가 저장되어 있습니다. 여기에 저장하면 그 파일을 대체하며, 해당 프로젝트는 더 이상 디스크에서 최신 상태로 유지되지 않습니다.",
       "notWritable": "이 위치에 쓸 수 없습니다({message}). 다른 위치를 선택하세요.",
       "replaceAnyway": "대체",
       "cancel": "취소",

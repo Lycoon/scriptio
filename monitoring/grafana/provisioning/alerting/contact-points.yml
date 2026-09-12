@@ -2,9 +2,9 @@ apiVersion: 1
 
 contactPoints:
     - orgId: 1
-      name: scriptio-email
+      name: scenarly-email
       receivers:
-          - uid: scriptio-email
+          - uid: scenarly-email
             type: email
             settings:
                 addresses: hugo.bois@hotmail.fr

@@ -8,8 +8,8 @@ import { APP_TITLE } from "@src/lib/utils/constants";
 
 const TITLE = APP_TITLE;
 const DESCRIPTION = "Modern, elegant and affordable screenwriting software. Screenwriters first.";
-const TITLE_IMG = "https://scriptio.app/images/banner.png";
-const URL = "https://scriptio.app/";
+const TITLE_IMG = "https://scenarly.com/images/banner.png";
+const URL = "https://scenarly.com/";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
-    applicationName: "Scriptio",
+    applicationName: "Scenarly",
     authors: [{ name: "Hugo 'Lycoon' Bois" }],
     keywords: ["movie", "script", "writing", "story", "screenwriting"],
     icons: { icon: "/favicon.ico" },
@@ -53,10 +53,10 @@ export const metadata: Metadata = {
                 url: TITLE_IMG,
                 width: 1200,
                 height: 630,
-                alt: "Scriptio Banner",
+                alt: "Scenarly Banner",
             },
         ],
-        siteName: "Scriptio",
+        siteName: "Scenarly",
     },
 
     twitter: {

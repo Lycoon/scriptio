@@ -4,7 +4,7 @@ import { DOMSerializer } from "@tiptap/pm/model";
 
 import { BASE_EXTENSIONS, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
-import { ScriptioPagination, paginationKey } from "@src/lib/screenplay/extensions/pagination-extension";
+import { ScenarlyPagination, paginationKey } from "@src/lib/screenplay/extensions/pagination-extension";
 import { readScriptPages } from "@src/lib/screenplay/page-overview";
 import { largeDoc } from "../fixtures/screenplay-fixture";
 
@@ -41,7 +41,7 @@ const mount = async () => {
         extensions: [
             ...BASE_EXTENSIONS,
             createNodeIdDedupExtension({ duplicatePersistentScene: () => {} }),
-            ScriptioPagination.configure({ ...SCREENPLAY_FORMATS.LETTER, pageGap: 20 }),
+            ScenarlyPagination.configure({ ...SCREENPLAY_FORMATS.LETTER, pageGap: 20 }),
         ],
     });
     teardown.push(() => {

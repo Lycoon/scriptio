@@ -78,7 +78,7 @@
     "fileSaving": "Enregistrement…",
     "fileNeedsAttention": "À vérifier",
     "fileMissing": "Le fichier a été déplacé ou supprimé.",
-    "fileError": "Scriptio n'a pas pu écrire dans ce fichier.",
+    "fileError": "Scenarly n'a pas pu écrire dans ce fichier.",
     "fileForeign": "Le fichier d'un autre projet se trouve à cet emplacement.",
     "fileLocate": "Localiser…",
     "fileOpen": "Ouvrir…",
@@ -88,7 +88,7 @@
     "fileReclaimable": "Ce fichier de projet peut être réduit de {percent} %.",
     "fileCompact": "Compacter le fichier",
     "savedToFile": "Enregistré dans {file}",
-    "fileNoAccess": "Scriptio n'a plus l'autorisation d'ouvrir ce fichier. Utilisez Localiser… pour le désigner à nouveau.",
+    "fileNoAccess": "Scenarly n'a plus l'autorisation d'ouvrir ce fichier. Utilisez Localiser… pour le désigner à nouveau.",
     "targetCloudOff": "Non synchronisé",
     "cloudUpgrade": "Passer à Pro",
     "cloudSignInUpgrade": "Synchroniser sur le cloud",
@@ -319,14 +319,13 @@
     "deleteModalTitle": "Supprimer le compte",
     "deleteModalDesc": "Cela supprimera définitivement votre compte et toutes les données associées. Cette action ne peut pas être annulée.",
     "deleteSubscriptionWarning": "Votre abonnement Pro est actif jusqu'au {date}. La suppression de votre compte l'annule immédiatement : le temps restant est perdu et ne sera pas remboursé.",
-    "deleteSubscriptionWarningApple": "Votre abonnement Pro est facturé via l'App Store et reste actif jusqu'au {date}. La suppression de votre compte met fin à votre accès Pro, mais n'arrête pas la facturation : annulez aussi l'abonnement dans les réglages de l'App Store.",
     "deleteConfirmPhrase": "Je confirme la suppression de mon compte",
     "deleteConfirmLabel": "Écrivez le texte suivant pour confirmer la suppression :",
     "deleting": "Suppression...",
     "deleteAccountBtn": "Supprimer mon compte",
     "deleteFailed": "Échec de la suppression de votre compte. Veuillez réessayer.",
     "subscription": {
-      "openWebsite": "Gérer sur scriptio.app",
+      "openWebsite": "Gérer sur scenarly.com",
       "title": "Abonnement",
       "proBadge": "Pro",
       "proTitle": "Plan Pro",
@@ -353,15 +352,15 @@
       "manageApple": "Ouvrir l'App Store",
       "alreadyBoundTo": "Cet abonnement est déjà associé à {email}.",
       "alreadyBoundUnknown": "Cet abonnement est déjà associé à un autre compte.",
-      "welcomePro": "Vous êtes maintenant abonné à Scriptio Pro. Bienvenue !",
+      "welcomePro": "Vous êtes maintenant abonné à Scenarly Pro. Bienvenue !",
       "resubscribe": "Réactiver l'abonnement",
       "restorePurchases": "Restaurer les achats",
       "transferConfirm": "Votre compte App Store dispose d'un abonnement actif associé à {email}. La restauration transférera Pro à ce compte, et {email} perdra l'accès Pro. Apple continuera à facturer le même identifiant Apple. Continuer ?",
-      "transferConfirmUnknown": "Votre compte App Store dispose d'un abonnement actif associé à un autre compte Scriptio. La restauration transférera Pro à ce compte, et l'autre compte perdra l'accès Pro. Apple continuera à facturer le même identifiant Apple. Continuer ?",
+      "transferConfirmUnknown": "Votre compte App Store dispose d'un abonnement actif associé à un autre compte Scenarly. La restauration transférera Pro à ce compte, et l'autre compte perdra l'accès Pro. Apple continuera à facturer le même identifiant Apple. Continuer ?",
       "transferYes": "Oui, transférer",
       "transferring": "Transfert en cours...",
       "appleStoreFreeInfo": "Les fonctionnalités Pro sont disponibles pour les comptes abonnés via notre site web.",
-      "appleStoreProInfo": "Pour modifier votre méthode de paiement ou annuler, veuillez consulter les paramètres de votre profil sur scriptio.app."
+      "appleStoreProInfo": "Pour modifier votre méthode de paiement ou annuler, veuillez consulter les paramètres de votre profil sur scenarly.com."
     }
   },
   "projects": {
@@ -507,21 +506,21 @@
   "export": {
     "importLabel": "Importer",
     "selectFile": "Sélectionner un fichier",
-    "selectFileDesc": "Importer .fountain, .fdx, .scriptio ou .txt",
+    "selectFileDesc": "Importer .fountain, .fdx, .scenarly ou .txt",
     "exportLabel": "Exporter",
     "formatOptions": {
       "pdf": "Document PDF (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
       "text": "Texte formaté (.txt)",
-      "scriptio": "Scriptio (.scriptio)"
+      "scenarly": "Scenarly (.scenarly)"
     },
     "formatHelp": {
       "pdf": "Format standard de l'industrie. Idéal pour le partage et l'impression.",
       "fountain": "Format texte brut basé sur Markdown, idéal pour la compatibilité.",
       "fdx": "Compatible avec le logiciel professionnel Final Draft.",
       "text": "Texte brut mis en page avec les marges standard d'un scénario, lisible partout.",
-      "scriptio": "Format natif de Scriptio, pour conserver votre projet en local"
+      "scenarly": "Format natif de Scenarly, pour conserver votre projet en local"
     },
     "includeNotes": "Inclure les notes",
     "includeNotesDesc": "Exporter les notes intégrées.",
@@ -705,7 +704,7 @@
       "uploading": "Téléversement en cours...",
       "failed": "Échec du téléversement. Veuillez réessayer."
     },
-    "scriptioOpen": {
+    "scenarlyOpen": {
       "title": "Ouvrir {file}",
       "untitledProject": "Sans titre",
       "alreadyCurrent": "Votre copie est déjà à jour par rapport à ce fichier.",
@@ -724,21 +723,21 @@
     "saveToFile": {
       "title": "Enregistrer dans un fichier",
       "reassurance": "Votre travail est déjà enregistré automatiquement — sur cet appareil, et dans le cloud si le projet est synchronisé.",
-      "offer": "Enregistrer dans un fichier vous donne une copie qui vous appartient et que vous pouvez partager ; ensuite, Scriptio maintient ce fichier à jour tout seul.",
+      "offer": "Enregistrer dans un fichier vous donne une copie qui vous appartient et que vous pouvez partager ; ensuite, Scenarly maintient ce fichier à jour tout seul.",
       "confirm": "Choisir un emplacement…",
       "cancel": "Pas maintenant"
     },
     "autoSave": {
       "title": "L'enregistrement automatique est actif",
-      "body": "{file} est maintenu à jour tout seul — Scriptio y écrit vos modifications au fil de votre travail, il n'y a donc rien à enregistrer à la main.",
+      "body": "{file} est maintenu à jour tout seul — Scenarly y écrit vos modifications au fil de votre travail, il n'y a donc rien à enregistrer à la main.",
       "hint": "Votre travail est aussi enregistré sur cet appareil, et dans le cloud si le projet est synchronisé.",
       "ok": "J'ai compris"
     },
     "fileBind": {
       "title": "Enregistrer dans ce fichier ?",
       "pathTaken": "{project} enregistre déjà dans ce fichier. Deux projets ne peuvent pas partager un même fichier — choisissez un autre emplacement.",
-      "replacesForeignFile": "Un autre projet Scriptio est enregistré à cet emplacement. Enregistrer ici remplace son fichier, et ce projet ne sera plus tenu à jour sur le disque.",
-      "notWritable": "Scriptio ne peut pas écrire à cet emplacement ({message}). Choisissez-en un autre.",
+      "replacesForeignFile": "Un autre projet Scenarly est enregistré à cet emplacement. Enregistrer ici remplace son fichier, et ce projet ne sera plus tenu à jour sur le disque.",
+      "notWritable": "Scenarly ne peut pas écrire à cet emplacement ({message}). Choisissez-en un autre.",
       "replaceAnyway": "Remplacer",
       "cancel": "Annuler",
       "ok": "OK"

@@ -378,7 +378,7 @@ const sessionCache = new Map<string, SessionEntry>();
  * The Y.Doc the editor session is holding for `projectId`, or null when the
  * project isn't open.
  *
- * Exposed so out-of-band writers (the `.scriptio` merge, the file-binding
+ * Exposed so out-of-band writers (the `.scenarly` merge, the file-binding
  * write-back) act on the document the user is actually looking at rather than
  * on a second replica loaded beside it. Both would converge through IndexedDB
  * eventually, but only this one shows up on screen without a reload.
@@ -393,7 +393,7 @@ export const getLiveProjectDoc = (projectId: string): ProjectState | null =>
  * The rule this encodes is {@link getLiveProjectDoc}'s: act on the document the
  * user is looking at, and only load a second replica when there is no session.
  * It lives here, beside the cache it consults, because both out-of-band callers
- * need it — the `.scriptio` merge and the file-binding writer — and a second
+ * need it — the `.scenarly` merge and the file-binding writer — and a second
  * copy of the rule is a second thing to keep in step.
  *
  * `flushMs` is for callers whose `fn` *writes*: a replica's provider is torn
@@ -442,7 +442,7 @@ const PROJECT_TOUCH_THROTTLE_MS = 30_000;
 /**
  * File-binding hooks, reached through dynamic imports.
  *
- * That module imports the `.scriptio` open flow, which imports this one, so a
+ * That module imports the `.scenarly` open flow, which imports this one, so a
  * static import here would close a cycle. Deferring also keeps the Tauri fs
  * plugin out of the initial graph on web, where no project is ever file-backed.
  *

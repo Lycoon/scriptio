@@ -6,7 +6,7 @@ import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 
 import { TitlePageExtensions } from "./nodes";
-import { ScriptioBold, ScriptioItalic, ScriptioUnderline } from "../screenplay/nodes";
+import { ScenarlyBold, ScenarlyItalic, ScenarlyUnderline } from "../screenplay/nodes";
 import { Placeholder } from "../screenplay/extensions/placeholder-extension";
 
 const TitlePageMetadata = Extension.create({
@@ -137,9 +137,9 @@ export const TITLEPAGE_BASE_EXTENSIONS = [
     ...TitlePageExtensions,
 
     // Reuse mark extensions from screenplay
-    ScriptioBold,
-    ScriptioItalic,
-    ScriptioUnderline,
+    ScenarlyBold,
+    ScenarlyItalic,
+    ScenarlyUnderline,
 
     Placeholder.configure({
         placeholder: "",

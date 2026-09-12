@@ -8,7 +8,7 @@ export default function Footer() {
         <footer className={styles.footer}>
             <div className={styles.footerContent}>
                 <div>
-                    <p>© 2026 Scriptio by ArkoLogic</p>
+                    <p>© 2026 Scenarly by ArkoLogic</p>
                 </div>
                 <div className={styles.footerLinks}>
                     <a href="/privacy" className={navbar.navLink}>
@@ -17,7 +17,7 @@ export default function Footer() {
                     <a href="/contact" className={navbar.navLink}>
                         Contact
                     </a>
-                    <a href="https://github.com/Lycoon/scriptio" target="_blank" className={navbar.navLink}>
+                    <a href="https://github.com/Lycoon/scenarly" target="_blank" className={navbar.navLink}>
                         GitHub
                     </a>
                 </div>

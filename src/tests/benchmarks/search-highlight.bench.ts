@@ -1,6 +1,6 @@
 import type { JSONContent } from "@tiptap/core";
 import { BASE_EXTENSIONS, SCREENPLAY_FORMATS } from "@src/lib/screenplay/editor";
-import { ScriptioPagination } from "@src/lib/screenplay/extensions/pagination-extension";
+import { ScenarlyPagination } from "@src/lib/screenplay/extensions/pagination-extension";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import {
     createSearchHighlightExtension,
@@ -15,7 +15,7 @@ function makeEditorNoSearch(content: JSONContent[]) {
     return createTestEditor(
         [
             ...BASE_EXTENSIONS,
-            ScriptioPagination.configure({
+            ScenarlyPagination.configure({
                 pageGap: 20,
                 headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
                 customHeader: {
@@ -43,7 +43,7 @@ function makeEditorActiveSearch(content: JSONContent[]) {
     return createTestEditor(
         [
             ...BASE_EXTENSIONS,
-            ScriptioPagination.configure({
+            ScenarlyPagination.configure({
                 pageGap: 20,
                 headerRight: `<p class="page-number" style="margin-top: 50px;">{page}.</p>`,
                 customHeader: {

@@ -6,7 +6,7 @@
 import { ProjectData, ProjectState, applyProjectData } from "@src/lib/project/project-state";
 import { CURRENT_PROJECT_VERSION } from "@src/lib/project/migrations/project-migrations";
 import { getImportAdapterByFilename } from "@src/lib/adapters/registry";
-import { restoreScriptioAssets } from "@src/lib/adapters/scriptio/scriptio-adapter";
+import { restoreScenarlyAssets } from "@src/lib/adapters/scenarly/scenarly-adapter";
 import { createCachedProject, createCachedProjectWithId } from "@src/lib/persistence/storage-provider/local-persistence";
 import { writeYjsDocumentLocally } from "@src/lib/persistence/y-local-provider";
 import { Editor } from "@tiptap/react";
@@ -67,14 +67,14 @@ export async function importFileIntoProject(
 
     const content = await file.arrayBuffer();
 
-    // `.scriptio` goes through the Scriptio flow rather than the adapter, because
+    // `.scenarly` goes through the Scenarly flow rather than the adapter, because
     // the extension covers two containers — the ZIP export and a bound project's
     // own working file — and only that flow knows how to tell them apart. The
     // adapter reads ZIPs alone, so importing your own working file would
     // otherwise fail on a file the app itself had written.
-    if (file.name.toLowerCase().endsWith(".scriptio")) {
-        const { importScriptioIntoProject } = await import("@src/lib/adapters/scriptio/scriptio-open");
-        await importScriptioIntoProject(content, projectId, editor, titlePageEditor, repository);
+    if (file.name.toLowerCase().endsWith(".scenarly")) {
+        const { importScenarlyIntoProject } = await import("@src/lib/adapters/scenarly/scenarly-open");
+        await importScenarlyIntoProject(content, projectId, editor, titlePageEditor, repository);
     } else {
         adapter.import(content, editor, titlePageEditor, repository);
     }
@@ -107,7 +107,7 @@ async function createLocalYjsDocument(projectId: string, projectData: ProjectDat
 
     // Mint a lineage, *overwriting* anything the source data carried.
     //
-    // A readable `.scriptio` export serializes the whole metadata map, lineage
+    // A readable `.scenarly` export serializes the whole metadata map, lineage
     // included, and `applyProjectData` copies it in like any other key — so
     // without this the doc would claim to be a replica of the project that
     // produced the JSON while holding not one op in common with it. Merging that
@@ -146,8 +146,8 @@ async function createRemoteProject(userId: string, title: string, description?: 
  * project where the user can have one, a local-only cached row otherwise, and
  * always a local cached row so the project exists offline.
  *
- * Split out of {@link importFileAsProject} so the merge-capable `.scriptio` open
- * flow (`createProjectFromScriptio`) lands its new projects in exactly the same
+ * Split out of {@link importFileAsProject} so the merge-capable `.scenarly` open
+ * flow (`createProjectFromScenarly`) lands its new projects in exactly the same
  * place — the difference between the two paths is how the *document* is built,
  * never where the project lives.
  */
@@ -206,7 +206,7 @@ export async function importFileAsProject(
         // Create project title from filename if not provided
         const projectTitle = title || file.name.replace(/\.[^/.]+$/, "");
 
-        // A binary `.scriptio` is the one import that arrives as a CRDT, and it
+        // A binary `.scenarly` is the one import that arrives as a CRDT, and it
         // has to stay one: the flat path below would rebuild identical text out
         // of entirely fresh operation ids, so the new project could never merge
         // with the file it came from — or with anything its sender exports next.
@@ -214,9 +214,9 @@ export async function importFileAsProject(
         // peer of whoever sent the file, not splitting off a separate document.
         // Dynamic so the two modules can reference each other (that module needs
         // `createProjectShell` from this one).
-        if (file.name.toLowerCase().endsWith(".scriptio")) {
-            const { createProjectFromScriptio } = await import("@src/lib/adapters/scriptio/scriptio-open");
-            const projectId = await createProjectFromScriptio(content, {
+        if (file.name.toLowerCase().endsWith(".scenarly")) {
+            const { createProjectFromScenarly } = await import("@src/lib/adapters/scenarly/scenarly-open");
+            const projectId = await createProjectFromScenarly(content, {
                 fork: false,
                 title: projectTitle,
                 user,
@@ -233,8 +233,8 @@ export async function importFileAsProject(
         await createLocalYjsDocument(projectId, projectData);
 
         // Restore any bundled board image assets under the new project id
-        // (no-op for non-Scriptio files).
-        await restoreScriptioAssets(projectId, content);
+        // (no-op for non-Scenarly files).
+        await restoreScenarlyAssets(projectId, content);
 
         return {
             success: true,

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { submitDesktopToken } from "@src/lib/utils/requests";
 
-import ScriptioLogo from "@public/images/scriptio.svg";
+import ScenarlyLogo from "@public/images/scenarly.svg";
 import layout from "../../utils/Layout.module.css";
 import auth from "../auth/AuthPage.module.css";
 import form from "../../utils/Form.module.css";
@@ -49,13 +49,13 @@ const DesktopOAuthComplete = () => {
         status === "working"
             ? "Finishing sign-in…"
             : status === "done"
-              ? "You're signed in. You can return to the Scriptio desktop app."
+              ? "You're signed in. You can return to the Scenarly desktop app."
               : "Sign-in could not be completed. Please retry from the desktop app.";
 
     return (
         <div className={layout.center_middle}>
             <div className={auth.authPage}>
-                <ScriptioLogo className={auth.authLogo} />
+                <ScenarlyLogo className={auth.authLogo} />
                 <div className={form.home}>
                     <div className={form.header}>
                         <h1>Sign in</h1>

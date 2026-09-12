@@ -9,4 +9,4 @@ export const BASE_URL =
  * it goes away, since the app swaps views by rewriting the query string and
  * Next never re-applies the route metadata.
  */
-export const APP_TITLE = "Scriptio | Screenwriting Software";
+export const APP_TITLE = "Scenarly | Screenwriting Software";

@@ -105,7 +105,7 @@ export async function ensureCachedEntries(projects: ProjectEntryInput[]): Promis
 // The policy around these calls — when a write is safe, what to do when the file
 // changed underneath us — lives in `src/lib/persistence/file-binding.ts`.
 
-/** Bind a project to a `.scriptio` file that Scriptio will keep up to date. */
+/** Bind a project to a `.scenarly` file that Scenarly will keep up to date. */
 export async function bindProjectFile(
     id: string,
     path: string,
@@ -143,7 +143,7 @@ export async function persistSettings(updates: Partial<UserSettings>): Promise<v
 /**
  * Migrate a cloud project to a new local-only project.
  * Creates a new cached entry and copies the Yjs document from the old
- * IndexedDB database (`scriptio-<oldId>`) to a new one (`scriptio-<newId>`).
+ * IndexedDB database (`scenarly-<oldId>`) to a new one (`scenarly-<newId>`).
  */
 export async function migrateToCachedProject(
     oldProjectId: string,
@@ -194,7 +194,7 @@ export async function migrateToCachedProject(
 /**
  * Promote a local-only cached project to a cloud project, reusing the same id.
  * Creates a cloud project record + membership, then flips the local cache flag.
- * The Y.js doc at `scriptio-{projectId}` is unchanged — the cloud provider in
+ * The Y.js doc at `scenarly-{projectId}` is unchanged — the cloud provider in
  * `useProjectYjs` will push it to the empty server doc on next mount via the
  * standard CRDT handshake.
  */

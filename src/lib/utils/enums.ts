@@ -49,7 +49,7 @@ export enum ExportFormat {
     FOUNTAIN = "fountain",
     FDX = "fdx",
     TEXT = "text",
-    SCRIPTIO = "scriptio",
+    SCENARLY = "scenarly",
 }
 
 export enum Style {
@@ -59,7 +59,7 @@ export enum Style {
     Underline = 4,
 }
 
-// String values must match the class names in the /public/scriptio.css file
+// String values must match the class names in the /public/scenarly.css file
 export enum ScreenplayElement {
     Scene = "scene",
     Action = "action",

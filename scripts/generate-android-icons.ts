@@ -19,7 +19,7 @@ const BACKGROUND_COLOR = "#000000";
 const source = process.argv[2] ?? join("src-tauri", "icons", "app-icon.png");
 const resDir = join("src-tauri", "gen", "android", "app", "src", "main", "res");
 
-const tmp = mkdtempSync(join(tmpdir(), "scriptio-android-icons-"));
+const tmp = mkdtempSync(join(tmpdir(), "scenarly-android-icons-"));
 try {
     execSync(`npx tauri icon "${source}" -o "${tmp}"`, { stdio: "inherit" });
 

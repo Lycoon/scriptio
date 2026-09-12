@@ -25,7 +25,7 @@ import { AppleIcon, GooglePlayIcon, LinuxIcon, WindowsIcon } from "./PlatformIco
 // dev URL in .env.development and is empty in the production build.
 const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_ORIGIN ?? "";
 
-const APP_STORE_URL = "https://apps.apple.com/app/scriptio";
+const APP_STORE_URL = "https://apps.apple.com/app/scenarly";
 const MICROSOFT_STORE_URL = "https://apps.microsoft.com/detail/9p4m1xphjks1";
 const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=app.scriptio";
 
@@ -75,7 +75,7 @@ export default function HomePageContainer() {
                     <div className={styles.heroBackgroundWrapper}>
                         <Image
                             src="/_site/images/preview.png"
-                            alt="Scriptio Interface Preview"
+                            alt="Scenarly Interface Preview"
                             width={1920}
                             height={1080}
                             loading="eager"
@@ -85,7 +85,7 @@ export default function HomePageContainer() {
 
                     {/* Layer 1.2: Branding (Logo) */}
                     <div className={styles.heroHeader}>
-                        <Image src="/_site/images/scriptio_full.png" alt="Scriptio Logo" width={400} height={80} className={styles.heroLogo} />
+                        <Image src="/_site/images/scenarly_full.png" alt="Scenarly Logo" width={400} height={80} className={styles.heroLogo} />
                     </div>
 
                     {/* Layer 1.3: Platform CTAs */}
@@ -327,7 +327,7 @@ export default function HomePageContainer() {
                                 <p className={styles.pillarText}>
                                     No internet? No problem. Keep writing without any friction or interruption. Your
                                     work is saved locally and synced back to the cloud the moment you reconnect.
-                                    Scriptio works fully offline, no account required.
+                                    Scenarly works fully offline, no account required.
                                 </p>
                             </div>
                             <Image
@@ -419,9 +419,9 @@ export default function HomePageContainer() {
 
                     <div className={styles.faqList}>
                         <details className={styles.faqItem}>
-                            <summary className={styles.faqQuestion}>Is Scriptio free to use?</summary>
+                            <summary className={styles.faqQuestion}>Is Scenarly free to use?</summary>
                             <p className={styles.faqAnswer}>
-                                Scriptio is free to use for most of its features. No project limitation, no forced
+                                Scenarly is free to use for most of its features. No project limitation, no forced
                                 watermark on PDF generation. Only advanced features such as real-time collaboration and
                                 report generation are part of our Pro plan, which is available for a reasonable monthly
                                 fee.
@@ -429,7 +429,7 @@ export default function HomePageContainer() {
                         </details>
 
                         <details className={styles.faqItem}>
-                            <summary className={styles.faqQuestion}>Can I use Scriptio offline?</summary>
+                            <summary className={styles.faqQuestion}>Can I use Scenarly offline?</summary>
                             <p className={styles.faqAnswer}>
                                 Absolutely. The desktop app works fully offline. When you sign in and reconnect, your
                                 changes sync automatically to the cloud.
@@ -462,10 +462,10 @@ export default function HomePageContainer() {
                         </details>
 
                         <details className={styles.faqItem}>
-                            <summary className={styles.faqQuestion}>Is Scriptio open source?</summary>
+                            <summary className={styles.faqQuestion}>Is Scenarly open source?</summary>
                             <p className={styles.faqAnswer}>
-                                Scriptio is source-available. You can inspect the full codebase on{" "}
-                                <a href="https://github.com/Lycoon/scriptio" target="_blank">
+                                Scenarly is source-available. You can inspect the full codebase on{" "}
+                                <a href="https://github.com/Lycoon/scenarly" target="_blank">
                                     GitHub
                                 </a>
                                 .

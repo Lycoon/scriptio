@@ -1,13 +1,13 @@
 # Uncomment the next line to define a global platform for your project
 
-target 'Scriptio_iOS' do
+target 'Scenarly_iOS' do
 platform :ios, '16.0'
-  # Pods for Scriptio_iOS
+  # Pods for Scenarly_iOS
 end
 
-target 'Scriptio_macOS' do
+target 'Scenarly_macOS' do
 platform :osx, '11.0'
-  # Pods for Scriptio_macOS
+  # Pods for Scenarly_macOS
 end
 
 # Delete the deployment target for iOS and macOS, causing it to be inherited from the Podfile

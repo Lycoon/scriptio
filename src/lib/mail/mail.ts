@@ -28,16 +28,16 @@ export const sendProjectInviteEmail = async (email: string, projectTitle: string
  * spot an export they never asked for.
  */
 export const sendDataExportEmail = async (email: string) => {
-    const content = `Your personal data export is ready. Open Scriptio and go to Settings → Account → Profile to download the archive containing your account information and project memberships. You have 7 days to download it. If you did not request this export, someone may have access to your account — change how you sign in and contact us.`;
+    const content = `Your personal data export is ready. Open Scenarly and go to Settings → Account → Profile to download the archive containing your account information and project memberships. You have 7 days to download it. If you did not request this export, someone may have access to your account — change how you sign in and contact us.`;
 
-    sendFormattedEmail(email, "Your data export", "Your data export is ready", content, "Open Scriptio", BASE_URL);
+    sendFormattedEmail(email, "Your data export", "Your data export is ready", content, "Open Scenarly", BASE_URL);
 };
 
 export const sendMagicLinkEmail = async (email: string, token: string) => {
     const link = `${BASE_URL}/auth/magic-link?token=${token}`;
-    const content = `Click the button below to sign in to your Scriptio account. This link will expire in 10 minutes and can only be used once. If you didn't request this, you can safely ignore this email.`;
+    const content = `Click the button below to sign in to your Scenarly account. This link will expire in 10 minutes and can only be used once. If you didn't request this, you can safely ignore this email.`;
 
-    sendFormattedEmail(email, "Sign in to Scriptio", "Your sign-in link", content, "Sign in", link);
+    sendFormattedEmail(email, "Sign in to Scenarly", "Your sign-in link", content, "Sign in", link);
 };
 
 const sendFormattedEmail = async (
@@ -72,9 +72,9 @@ export const sendContactEmail = async (email: string, reason: string, message: s
     `;
     const text = `From: ${email}\nReason: ${reason}\nMessage:\n${message}`;
     transporter.sendMail({
-        from: "Scriptio Form <no-reply@scriptio.app>",
+        from: "Scenarly Form <no-reply@scenarly.com>",
         replyTo: email,
-        to: "contact@scriptio.app",
+        to: "contact@scenarly.com",
         subject: `[Contact] ${reason}`,
         html,
         text,
@@ -83,7 +83,7 @@ export const sendContactEmail = async (email: string, reason: string, message: s
 
 const sendEmail = async (to: string, subject: string, html: string, text: string) => {
     transporter.sendMail({
-        from: "Scriptio <no-reply@scriptio.app>",
+        from: "Scenarly <no-reply@scenarly.com>",
         to,
         subject,
         html: html,

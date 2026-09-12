@@ -191,7 +191,7 @@ vi.mock("@tauri-apps/plugin-fs", () => ({
     },
 }));
 
-const PATH = "/Users/test/Screenplays/project.scriptio";
+const PATH = "/Users/test/Screenplays/project.scenarly";
 
 /** The document a bound file holds, read the way the app reads it. */
 async function docOnDisk(bytes: Uint8Array): Promise<ProjectState> {

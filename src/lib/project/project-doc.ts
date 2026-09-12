@@ -1,5 +1,5 @@
 /**
- * Worker-safe Y.Doc subclass for Scriptio projects.
+ * Worker-safe Y.Doc subclass for Scenarly projects.
  *
  * This file deliberately avoids React, tiptap, and any prosemirror imports
  * so it can be loaded inside the Cloudflare DurableObject. The browser-only
@@ -61,7 +61,7 @@ export type ProjectMetadata = {
      *
      * Written once, at doc creation, and never rewritten — it rides inside the
      * metadata map, so it travels through `Y.encodeStateAsUpdate` into every
-     * `.scriptio` export and back out into every doc rebuilt from one, with no
+     * `.scenarly` export and back out into every doc rebuilt from one, with no
      * code copying it by hand. Guarded in `ProjectRepository.ensureLineageId`,
      * because a Y.Map key is itself mergeable and two different values would
      * resolve last-writer-wins into a doc whose lineage lies.
@@ -386,7 +386,7 @@ export interface TypedMap<T extends Record<string, unknown>>
 // -------------------------------- //
 
 /**
- * Y.Doc subclass with typed accessors for Scriptio's schema. All accessors
+ * Y.Doc subclass with typed accessors for Scenarly's schema. All accessors
  * are pure Y.js operations — no ProseMirror, no React. Safe to instantiate
  * in the DurableObject. Browser-only ProseMirror conversion lives in
  * `project-state.ts` as standalone helpers.

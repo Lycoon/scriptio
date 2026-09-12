@@ -1,5 +1,5 @@
 /**
- * The `.scriptio` bound-file format: an append-only log of blocks.
+ * The `.scenarly` bound-file format: an append-only log of blocks.
  *
  * A bound project is saved every few idle seconds, forever, and may hold
  * gigabytes of board images. So the format has one job above all others: **a
@@ -14,7 +14,7 @@
  *   128  blocks…                appended, never rewritten, never moved
  *
  *   IDENTITY
- *     0   char[8]  "SCRIPTIO" — sniffed by the open flow; the extension is
+ *     0   char[8]  "SCENARLY" — sniffed by the open flow; the extension is
  *                  shared with the ZIP export and proves nothing
  *     8   u16      format version
  *     10  u16      flags, reserved
@@ -74,7 +74,7 @@
  * what gets shared and what any machine can open with ordinary tools.
  */
 
-export const FILE_MAGIC = new Uint8Array([0x53, 0x43, 0x52, 0x49, 0x50, 0x54, 0x49, 0x4f]); // "SCRIPTIO"
+export const FILE_MAGIC = new Uint8Array([0x53, 0x43, 0x45, 0x4e, 0x41, 0x52, 0x4c, 0x59]); // "SCENARLY"
 export const FORMAT_VERSION = 1;
 
 /** Written once, at creation. Padded so a later version can grow into it. */

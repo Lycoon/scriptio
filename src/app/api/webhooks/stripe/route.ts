@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import * as UserService from "@src/server/service/user-service";
-import * as TransactionService from "@src/server/service/transaction-service";
 
 export async function POST(req: NextRequest) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -29,18 +28,18 @@ export async function POST(req: NextRequest) {
             await UserService.updateUserFromId(userId, {
                 isProUntil: periodEnd ? new Date(periodEnd * 1000) : null,
                 isSubscriptionCancelled: false,
-                subscriptionProvider: "STRIPE",
+                stripeCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id,
+                stripeSubscriptionId: subscriptionId,
             });
-            await TransactionService.createTransactionIfNotExists(userId, "STRIPE", subscriptionId);
         }
     }
 
     if (event.type === "customer.subscription.updated") {
         const subscription = event.data.object as Stripe.Subscription;
-        const row = await UserService.getUserByStripeSubscriptionId(subscription.id);
-        if (row) {
+        const userId = await UserService.getUserIdByStripeSubscriptionId(subscription.id);
+        if (userId) {
             const periodEnd = subscription.items.data[0]?.current_period_end;
-            await UserService.updateUserFromId(row.userId, {
+            await UserService.updateUserFromId(userId, {
                 isProUntil: periodEnd ? new Date(periodEnd * 1000) : null,
                 isSubscriptionCancelled: subscription.cancel_at_period_end,
             });
@@ -49,12 +48,13 @@ export async function POST(req: NextRequest) {
 
     if (event.type === "customer.subscription.deleted") {
         const subscription = event.data.object as Stripe.Subscription;
-        const row = await UserService.getUserByStripeSubscriptionId(subscription.id);
-        if (row) {
-            await UserService.updateUserFromId(row.userId, {
+        const userId = await UserService.getUserIdByStripeSubscriptionId(subscription.id);
+        if (userId) {
+            // The customer id stays so a later checkout reuses the same Stripe customer.
+            await UserService.updateUserFromId(userId, {
                 isProUntil: null,
                 isSubscriptionCancelled: false,
-                subscriptionProvider: null,
+                stripeSubscriptionId: null,
             });
         }
     }

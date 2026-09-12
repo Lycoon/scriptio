@@ -23,7 +23,7 @@ import { recordTiming, timeApply } from "./apply-timing";
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Matches --line-height in scriptio.css. Used for split thresholds. */
+/** Matches --line-height in scenarly.css. Used for split thresholds. */
 const LINE_HEIGHT = 16; // px
 
 /** Minimum freespace (in px) on the current page to even attempt a sentence split.
@@ -828,7 +828,7 @@ function buildDecorations(
         if (!node) return;
         // pageLabel drives the phone-only slim "Page N" divider rendered via CSS
         // ::before on the page's first node (see the max-width:767px block in
-        // scriptio.css). It is a plain DOM attribute on the node decoration, so it
+        // scenarly.css). It is a plain DOM attribute on the node decoration, so it
         // never reaches the offscreen measurement div — page counts stay canonical.
         const attrs: Record<string, string> = { class: cls };
         if (pageLabel != null) attrs["data-page-label"] = pageLabel;
@@ -988,7 +988,7 @@ const ZERO_TOP_MARGIN_TYPES = new Set<ScreenplayElement>([
  * `scene-heading-spacing-*` multipliers live only in the print CSS and are never
  * applied to the editor DOM, so there is no per-instance variation to measure —
  * a constant keeps this off the layout path entirely, the same way LINE_HEIGHT
- * mirrors --line-height. Keep in sync with the margin-top rules in scriptio.css.
+ * mirrors --line-height. Keep in sync with the margin-top rules in scenarly.css.
  */
 const nodeTopMargin = (nodeType: ScreenplayElement): number => (ZERO_TOP_MARGIN_TYPES.has(nodeType) ? 0 : LINE_HEIGHT);
 
@@ -2071,12 +2071,12 @@ const createPaginationPlugin = (extension: {
 /**
  * Declares the `pageBreak` block attribute that drives manual page breaks.
  *
- * Kept SEPARATE from ScriptioPagination on purpose: this extension is part of
+ * Kept SEPARATE from ScenarlyPagination on purpose: this extension is part of
  * BASE_EXTENSIONS, so the attribute lives in ScreenplaySchema and survives the
- * full-project `.scriptio` (de)serialization paths (screenplayOf /
+ * full-project `.scenarly` (de)serialization paths (screenplayOf /
  * applyProjectData), which build nodes from BASE_EXTENSIONS alone — without the
  * pagination plugin. The pagination *logic*, the toggle command, and the visual
- * hint stay in ScriptioPagination; only the schema-level attribute lives here.
+ * hint stay in ScenarlyPagination; only the schema-level attribute lives here.
  *
  * Only meaningful on top-level blocks (the pagination loop walks doc children),
  * so it is limited to those types — off text/marks and the inner dual-dialogue
@@ -2113,7 +2113,7 @@ export const PageBreakAttribute = Extension.create({
     },
 });
 
-export const ScriptioPagination = Extension.create<PaginationOptions>({
+export const ScenarlyPagination = Extension.create<PaginationOptions>({
     name: "Pagination",
 
     addOptions() {

@@ -1,12 +1,12 @@
 /**
  * Shared factory for local Yjs persistence providers.
- * Uses y-indexeddb on both browser and desktop (one DB per project, keyed as "scriptio-<projectId>").
+ * Uses y-indexeddb on both browser and desktop (one DB per project, keyed as "scenarly-<projectId>").
  */
 
 import type * as Y from "yjs";
 
 /** The IndexedDB database name used for a project's Yjs document. */
-export const yjsDbKey = (projectId: string) => `scriptio-${projectId}`;
+export const yjsDbKey = (projectId: string) => `scenarly-${projectId}`;
 
 export interface YjsLocalProvider {
     on(event: "synced", callback: (provider: YjsLocalProvider) => void): void;

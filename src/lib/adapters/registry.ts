@@ -3,7 +3,7 @@ import { FinalDraftAdapter } from "./fdx/finaldraft-adapter";
 import { FountainAdapter } from "./fountain/fountain-adapter";
 import { PDFAdapter } from "./pdf/pdf-adapter";
 import { ProjectAdapter } from "./screenplay-adapter";
-import { ScriptioAdapter } from "./scriptio/scriptio-adapter";
+import { ScenarlyAdapter } from "./scenarly/scenarly-adapter";
 import { FormattedTextAdapter } from "./text/text-adapter";
 import { WriterSoloAdapter } from "./writersolo/writersolo-adapter";
 import { ExportFormat } from "@src/lib/utils/enums";
@@ -19,7 +19,7 @@ import { ExportFormat } from "@src/lib/utils/enums";
 const adapters: ProjectAdapter[] = [
     new FountainAdapter(),
     new FinalDraftAdapter(),
-    new ScriptioAdapter(),
+    new ScenarlyAdapter(),
     new FadeInAdapter(),
     new WriterSoloAdapter(),
     new PDFAdapter(),

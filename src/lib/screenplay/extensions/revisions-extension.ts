@@ -37,7 +37,7 @@ const FLUSH_DELAY = 220;
  * paragraph. It also colours the changed text in the revision colour.
  *
  * Placed in BASE_EXTENSIONS (like the other marks) so it lives in
- * `ScreenplaySchema` and survives full-project `.scriptio` (de)serialization.
+ * `ScreenplaySchema` and survives full-project `.scenarly` (de)serialization.
  * `inclusive: false` so typing at a mark boundary doesn't auto-extend an older
  * revision — new text is always stamped explicitly by the plugin below.
  */

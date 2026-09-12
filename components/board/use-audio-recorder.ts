@@ -4,7 +4,7 @@
  * Minimal microphone recorder for board voice notes.
  *
  * Recording is gated to MP4/AAC (`audio/mp4`) so every captured clip plays in
- * any browser and survives `.scriptio` export/import. Browsers whose
+ * any browser and survives `.scenarly` export/import. Browsers whose
  * `MediaRecorder` can't produce MP4 (e.g. Firefox) report `isSupported: false`;
  * the UI then hides the record action and the user drags in an audio file
  * instead. Dropped files keep their original format.

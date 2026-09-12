@@ -6,7 +6,7 @@
 import type { InstalledDictionary, UserSettings } from "@src/lib/utils/types";
 
 /**
- * Fingerprint of a bound `.scriptio` file as we last left it.
+ * Fingerprint of a bound `.scenarly` file as we last left it.
  *
  * Recorded so the writer can tell "nobody has touched this since I wrote it"
  * from "something else wrote here" — a sync client, a second app instance, a
@@ -32,8 +32,8 @@ export interface CachedProject {
     isLocalOnly: boolean;
 
     // ── File binding (desktop only) ──────────────────────────────────────────
-    // A project may additionally be bound to a `.scriptio` file on disk, which
-    // Scriptio keeps up to date on its own. Absent on every unbound project,
+    // A project may additionally be bound to a `.scenarly` file on disk, which
+    // Scenarly keeps up to date on its own. Absent on every unbound project,
     // which is all of them on web and mobile.
 
     /** Absolute path of the bound file; absent when unbound. */
@@ -157,7 +157,7 @@ export interface StorageProvider {
 
     // File binding (desktop only) — see the fields on CachedProject.
     /**
-     * Bind a project to a `.scriptio` file, clearing any previous write record.
+     * Bind a project to a `.scenarly` file, clearing any previous write record.
      * `fingerprint` seeds "how the file looked when we took it over" for a path
      * that already exists, so the first write can tell it apart from one another
      * program has since touched.

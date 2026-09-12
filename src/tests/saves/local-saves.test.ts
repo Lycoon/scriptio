@@ -22,11 +22,11 @@ import { writeYjsDocumentLocally, yjsDbKey } from "@src/lib/persistence/y-local-
 const pid = () => `test-${Math.random().toString(36).slice(2)}`;
 
 // The snapshot stores are part of the baseline schema (no version bump — the app
-// is unreleased), so a profile carrying an older `scriptio-local` would lack
+// is unreleased), so a profile carrying an older `scenarly-local` would lack
 // them entirely. Reset it, exactly as the assets suite does.
 beforeAll(async () => {
     await new Promise<void>((resolve) => {
-        const req = indexedDB.deleteDatabase("scriptio-local");
+        const req = indexedDB.deleteDatabase("scenarly-local");
         req.onsuccess = () => resolve();
         req.onerror = () => resolve();
         req.onblocked = () => resolve();

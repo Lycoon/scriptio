@@ -5,7 +5,7 @@ import { BASE_EXTENSIONS } from "@src/lib/screenplay/editor";
 import { createNodeIdDedupExtension } from "@src/lib/screenplay/extensions/node-id-dedup-extension";
 import { createSceneLockingExtension } from "@src/lib/screenplay/extensions/scene-locking-extension";
 import {
-    ScriptioPagination,
+    ScenarlyPagination,
     getPageAnchorInfo,
     paginationKey,
 } from "@src/lib/screenplay/extensions/pagination-extension";
@@ -94,7 +94,7 @@ async function makeEditor(content: object[]) {
                 getNumberingStyle: () => "suffix",
                 getSkippedLetters: () => [],
             }),
-            ScriptioPagination.configure({
+            ScenarlyPagination.configure({
                 pageHeight: 200, pageWidth: 600, marginTop: 0, marginBottom: 0,
                 marginLeft: 0, marginRight: 0, pageGap: 10,
                 getPageLocking: () => repo.pageLocking,

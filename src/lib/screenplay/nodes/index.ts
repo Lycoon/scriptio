@@ -12,7 +12,7 @@ export { NoteNode } from "./note-node";
 export { DualDialogueNode } from "./dual-dialogue-node";
 export { DualDialogueColumnNode, DUAL_DIALOGUE_COLUMN } from "./dual-dialogue-column-node";
 
-export { ScriptioBold, ScriptioItalic, ScriptioUnderline } from "./marks-node";
+export { ScenarlyBold, ScenarlyItalic, ScenarlyUnderline } from "./marks-node";
 
 export type { SceneNodeOptions } from "./scene-node";
 export type { ActionNodeOptions } from "./action-node";
