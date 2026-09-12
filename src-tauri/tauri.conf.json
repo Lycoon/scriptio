@@ -1,7 +1,7 @@
 {
     "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-    "productName": "Scriptio (Staging)",
-    "identifier": "ArkoLogic.ScriptioStaging",
+    "productName": "Scenarly (Staging)",
+    "identifier": "ArkoLogic.ScenarlyStaging",
     "version": "../package.json",
     "build": {
         "frontendDist": "../out",
@@ -16,7 +16,7 @@
         "windows": [
             {
                 "url": "projects.html",
-                "title": "Scriptio",
+                "title": "Scenarly",
                 "width": 1350,
                 "height": 900,
                 "resizable": true,
@@ -31,10 +31,10 @@
         "publisher": "Arko Logic",
         "fileAssociations": [
             {
-                "ext": ["scriptio"],
-                "name": "Scriptio Project",
-                "description": "Scriptio screenplay project",
-                "mimeType": "application/vnd.scriptio+zip",
+                "ext": ["scenarly"],
+                "name": "Scenarly Project",
+                "description": "Scenarly screenplay project",
+                "mimeType": "application/vnd.scenarly+zip",
                 "role": "Editor"
             }
         ],

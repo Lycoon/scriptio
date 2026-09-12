@@ -25,7 +25,7 @@
 /* Begin PBXFileReference section */
 		0667FF9D3F0DB024724F0BEA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1C012345678901234567ABCD /* icon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = icon.icon; sourceTree = "<group>"; };
-		1B4BDB9CCC6ACDA2FA3220A0 /* Scriptio_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Scriptio_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1B4BDB9CCC6ACDA2FA3220A0 /* Scenarly_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Scenarly_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E3399965F93C0A48BEFE2C4 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		1F8860DCD301847213FCA26D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		21458003D850EB3F53C747A5 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
@@ -38,7 +38,7 @@
 		9719FC4164F59AB97CDB7B2A /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		A8096DDF9F9A63A6A9FF1789 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		C9EF21B008AB749A4F478C3B /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		D2412B5AFFF6B818EA4CBD07 /* Scriptio_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Scriptio_iOS.entitlements; sourceTree = "<group>"; };
+		D2412B5AFFF6B818EA4CBD07 /* Scenarly_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Scenarly_iOS.entitlements; sourceTree = "<group>"; };
 		D57601982FF7EC1800EEF60E /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		D7BCC47C3221A0CD0AEBDD9A /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
 		F5DAA82DE3DAD01B3E1C1C65 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
@@ -70,22 +70,22 @@
 			path = Externals;
 			sourceTree = "<group>";
 		};
-		4AA16D25D2338250A24647FA /* Scriptio */ = {
+		4AA16D25D2338250A24647FA /* Scenarly */ = {
 			isa = PBXGroup;
 			children = (
 				D57601982FF7EC1800EEF60E /* main.mm */,
 				91BFBC74D5FE0DB7BC141867 /* bindings */,
 			);
-			path = Scriptio;
+			path = Scenarly;
 			sourceTree = "<group>";
 		};
-		739C81ACF40CC5D14E65ECBC /* Scriptio_iOS */ = {
+		739C81ACF40CC5D14E65ECBC /* Scenarly_iOS */ = {
 			isa = PBXGroup;
 			children = (
 				4AAE754513690C4DA4B267BA /* Info.plist */,
-				D2412B5AFFF6B818EA4CBD07 /* Scriptio_iOS.entitlements */,
+				D2412B5AFFF6B818EA4CBD07 /* Scenarly_iOS.entitlements */,
 			);
-			path = Scriptio_iOS;
+			path = Scenarly_iOS;
 			sourceTree = "<group>";
 		};
 		79A3C673758B3246CAD7C722 /* src */ = {
@@ -109,7 +109,7 @@
 		9E547DD67B285E19390ACE04 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				4AA16D25D2338250A24647FA /* Scriptio */,
+				4AA16D25D2338250A24647FA /* Scenarly */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -122,7 +122,7 @@
 				1C012345678901234567ABCD /* icon.icon */,
 				1E3399965F93C0A48BEFE2C4 /* LaunchScreen.storyboard */,
 				3BB4DB253825EB083CAE5A83 /* Externals */,
-				739C81ACF40CC5D14E65ECBC /* Scriptio_iOS */,
+				739C81ACF40CC5D14E65ECBC /* Scenarly_iOS */,
 				9E547DD67B285E19390ACE04 /* Sources */,
 				79A3C673758B3246CAD7C722 /* src */,
 				D8A43556C5A023C2472DDFC7 /* Frameworks */,
@@ -133,7 +133,7 @@
 		B5C0E98D0F040730845A43A0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1B4BDB9CCC6ACDA2FA3220A0 /* Scriptio_iOS.app */,
+				1B4BDB9CCC6ACDA2FA3220A0 /* Scenarly_iOS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -156,9 +156,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		D502AAB9ADFFD4B8261EFF69 /* Scriptio_iOS */ = {
+		D502AAB9ADFFD4B8261EFF69 /* Scenarly_iOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F7E224FEF65A68C7FA08EEC7 /* Build configuration list for PBXNativeTarget "Scriptio_iOS" */;
+			buildConfigurationList = F7E224FEF65A68C7FA08EEC7 /* Build configuration list for PBXNativeTarget "Scenarly_iOS" */;
 			buildPhases = (
 				B840F1F2BC109B65ADD850BA /* Build Rust Code */,
 				6E0DF0B73A1CEB0430604C75 /* Sources */,
@@ -169,11 +169,11 @@
 			);
 			dependencies = (
 			);
-			name = Scriptio_iOS;
+			name = Scenarly_iOS;
 			packageProductDependencies = (
 			);
-			productName = Scriptio_iOS;
-			productReference = 1B4BDB9CCC6ACDA2FA3220A0 /* Scriptio_iOS.app */;
+			productName = Scenarly_iOS;
+			productReference = 1B4BDB9CCC6ACDA2FA3220A0 /* Scenarly_iOS.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -190,7 +190,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 566E643672ADAE3E6324B46E /* Build configuration list for PBXProject "Scriptio" */;
+			buildConfigurationList = 566E643672ADAE3E6324B46E /* Build configuration list for PBXProject "Scenarly" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -204,7 +204,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				D502AAB9ADFFD4B8261EFF69 /* Scriptio_iOS */,
+				D502AAB9ADFFD4B8261EFF69 /* Scenarly_iOS */,
 			);
 		};
 /* End PBXProject section */
@@ -267,7 +267,7 @@
 					arm64,
 				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = icon;
-				CODE_SIGN_ENTITLEMENTS = Scriptio_iOS/Scriptio_iOS.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Scenarly_iOS/Scenarly_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = "G93CJ6PWZH";
 				ENABLE_BITCODE = NO;
@@ -276,15 +276,15 @@
 					"$(inherited)",
 					"\".\"",
 				);
-				INFOPLIST_FILE = Scriptio_iOS/Info.plist;
+				INFOPLIST_FILE = Scenarly_iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				PRODUCT_BUNDLE_IDENTIFIER = app.scriptio;
-				PRODUCT_NAME = "Scriptio";
+				PRODUCT_BUNDLE_IDENTIFIER = com.scenarly;
+				PRODUCT_NAME = "Scenarly";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
@@ -418,7 +418,7 @@
 					arm64,
 				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = icon;
-				CODE_SIGN_ENTITLEMENTS = Scriptio_iOS/Scriptio_iOS.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Scenarly_iOS/Scenarly_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = "G93CJ6PWZH";
 				ENABLE_BITCODE = NO;
@@ -427,15 +427,15 @@
 					"$(inherited)",
 					"\".\"",
 				);
-				INFOPLIST_FILE = Scriptio_iOS/Info.plist;
+				INFOPLIST_FILE = Scenarly_iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
 				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(TOOLCHAIN_DIR)/usr/lib/swift/$(PLATFORM_NAME) $(TOOLCHAIN_DIR)/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				PRODUCT_BUNDLE_IDENTIFIER = app.scriptio;
-				PRODUCT_NAME = "Scriptio";
+				PRODUCT_BUNDLE_IDENTIFIER = com.scenarly;
+				PRODUCT_NAME = "Scenarly";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
@@ -445,7 +445,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		566E643672ADAE3E6324B46E /* Build configuration list for PBXProject "Scriptio" */ = {
+		566E643672ADAE3E6324B46E /* Build configuration list for PBXProject "Scenarly" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5AC576CF6C1916F63E4ABA3A /* debug */,
@@ -454,7 +454,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = debug;
 		};
-		F7E224FEF65A68C7FA08EEC7 /* Build configuration list for PBXNativeTarget "Scriptio_iOS" */ = {
+		F7E224FEF65A68C7FA08EEC7 /* Build configuration list for PBXNativeTarget "Scenarly_iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84F22794440B30B64877F29D /* debug */,

@@ -35,13 +35,13 @@ import { useLocale } from "@src/context/LocaleContext";
 /** Quality variants in preferred order (best first). */
 const QUALITY_ORDER: ModelQuality[] = ["high"];
 
-const ASSIGN_KEY = "scriptio-tts-assignments";
-const NARRATOR_KEY = "scriptio-tts-narrator";
-const EXCLUDED_KEY = "scriptio-tts-excluded-characters";
-const NARRATION_KEY = "scriptio-tts-narration-options";
-const REHEARSE_KEY = "scriptio-tts-rehearse";
-const VOLUME_KEY = "scriptio-tts-volume";
-const ACTIVE_MODEL_KEY = "scriptio-tts-active-model";
+const ASSIGN_KEY = "scenarly-tts-assignments";
+const NARRATOR_KEY = "scenarly-tts-narrator";
+const EXCLUDED_KEY = "scenarly-tts-excluded-characters";
+const NARRATION_KEY = "scenarly-tts-narration-options";
+const REHEARSE_KEY = "scenarly-tts-rehearse";
+const VOLUME_KEY = "scenarly-tts-volume";
+const ACTIVE_MODEL_KEY = "scenarly-tts-active-model";
 
 export type InstalledModels = Record<ModelQuality, boolean>;
 

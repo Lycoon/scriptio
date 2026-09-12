@@ -5,8 +5,8 @@
       "layers" : [
         {
           "hidden" : true,
-          "image-name" : "scriptio_staging_icon.png",
-          "name" : "scriptio_staging_icon",
+          "image-name" : "scenarly_staging_icon.png",
+          "name" : "scenarly_staging_icon",
           "position" : {
             "scale" : 0.42,
             "translation-in-points" : [
@@ -20,8 +20,8 @@
           "fill" : "none",
           "glass" : true,
           "hidden" : false,
-          "image-name" : "scriptio_icon.png",
-          "name" : "scriptio_icon",
+          "image-name" : "scenarly_icon.png",
+          "name" : "scenarly_icon",
           "opacity" : 1,
           "position" : {
             "scale" : 0.4,

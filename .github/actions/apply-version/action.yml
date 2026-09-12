@@ -1,12 +1,12 @@
 name: Apply App Version
-description: Writes version into src-tauri/tauri.conf.json + Cargo.toml. Optionally sets window title to "Scriptio (Staging)".
+description: Writes version into src-tauri/tauri.conf.json + Cargo.toml. Optionally sets window title to "Scenarly (Staging)".
 
 inputs:
     version:
         description: Version string (e.g. 2.0.1.5) to write into Tauri + Cargo configs.
         required: true
     staging:
-        description: When "true", sets window title to "Scriptio (Staging)".
+        description: When "true", sets window title to "Scenarly (Staging)".
         required: false
         default: "false"
     ios:
@@ -36,29 +36,29 @@ runs:
               REVISION=$(echo "$INPUT_VERSION" | cut -d. -f4)
 
               if [[ "$INPUT_STAGING" == "true" ]]; then
-                  PRODUCT_NAME="Scriptio (Staging)"
-                  WINDOW_TITLE="Scriptio (Staging)"
-                  APPSTORE_IDENTIFIER="app.scriptio.staging"
-                  IOS_IDENTIFIER="app.scriptio.staging"
+                  PRODUCT_NAME="Scenarly (Staging)"
+                  WINDOW_TITLE="Scenarly (Staging)"
+                  APPSTORE_IDENTIFIER="com.scenarly.staging"
+                  IOS_IDENTIFIER="com.scenarly.staging"
                   # tauri ios build writes this straight into pbxproj's PRODUCT_NAME
                   # (see synchronize_project_config in tauri-cli), which becomes the
                   # .app's actual executable filename — App Store Connect rejects
                   # parens/brackets/etc there, so it must stay identifier-safe unlike
                   # the desktop PRODUCT_NAME above.
-                  IOS_PRODUCT_NAME="Scriptio_Staging"
-                  WINDOWS_IDENTIFIER="ArkoLogic.ScriptioStaging"
+                  IOS_PRODUCT_NAME="Scenarly_Staging"
+                  WINDOWS_IDENTIFIER="ArkoLogic.ScenarlyStaging"
                   # MS Store reserves the 4th version field (must stay 0). Staging's
                   # build counter (REVISION) sits in that slot, so fold PATCH+REVISION
                   # into the 3rd field to keep MSIX versions strictly increasing
                   # across staging pushes and release bumps.
                   MSIX_VERSION="${MAJOR}.${MINOR}.$(( PATCH * 10000 + REVISION )).0"
               else
-                  PRODUCT_NAME="Scriptio"
-                  WINDOW_TITLE="Scriptio"
-                  APPSTORE_IDENTIFIER="app.scriptio"
-                  IOS_IDENTIFIER="app.scriptio"
-                  IOS_PRODUCT_NAME="Scriptio"
-                  WINDOWS_IDENTIFIER="ArkoLogic.Scriptio"
+                  PRODUCT_NAME="Scenarly"
+                  WINDOW_TITLE="Scenarly"
+                  APPSTORE_IDENTIFIER="com.scenarly"
+                  IOS_IDENTIFIER="com.scenarly"
+                  IOS_PRODUCT_NAME="Scenarly"
+                  WINDOWS_IDENTIFIER="ArkoLogic.Scenarly"
                   # Release builds carry REVISION=0, so the app version is Store-legal as-is.
                   MSIX_VERSION="${MAJOR}.${MINOR}.${PATCH}.0"
               fi
@@ -199,9 +199,9 @@ runs:
               set -e
 
               if [[ "$INPUT_STAGING" == "true" ]]; then
-                  APPSTORE_IDENTIFIER="app.scriptio.staging"
+                  APPSTORE_IDENTIFIER="com.scenarly.staging"
               else
-                  APPSTORE_IDENTIFIER="app.scriptio"
+                  APPSTORE_IDENTIFIER="com.scenarly"
               fi
 
               TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :com.apple.developer.team-identifier" src-tauri/Entitlements.plist)
@@ -217,16 +217,16 @@ runs:
           run: |
               set -e
 
-              INFO_PLIST="src-tauri/gen/apple/Scriptio_iOS/Info.plist"
+              INFO_PLIST="src-tauri/gen/apple/Scenarly_iOS/Info.plist"
               if [[ ! -f "$INFO_PLIST" ]]; then
                   echo "No $INFO_PLIST found; run 'tauri ios init' and commit gen/apple." >&2
                   exit 1
               fi
 
               if [[ "$INPUT_STAGING" == "true" ]]; then
-                  DISPLAY_NAME="Scriptio (Staging)"
+                  DISPLAY_NAME="Scenarly (Staging)"
               else
-                  DISPLAY_NAME="Scriptio"
+                  DISPLAY_NAME="Scenarly"
               fi
 
               # PRODUCT_NAME, PRODUCT_BUNDLE_IDENTIFIER, CFBundleShortVersionString and

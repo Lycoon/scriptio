@@ -1,5 +1,5 @@
 /**
- * The third save target: a `.scriptio` file on disk that Scriptio keeps up to
+ * The third save target: a `.scenarly` file on disk that Scenarly keeps up to
  * date on its own.
  *
  * Local (IndexedDB) and cloud are unconditional; this one is opt-in and per
@@ -32,7 +32,7 @@ import { isTauri } from "@tauri-apps/api/core";
 import * as Y from "yjs";
 
 import { isIOS, isAndroid } from "@src/lib/utils/platform";
-import { applyDocumentUpdate } from "@src/lib/adapters/scriptio/scriptio-open";
+import { applyDocumentUpdate } from "@src/lib/adapters/scenarly/scenarly-open";
 import { withProjectDoc } from "@src/lib/project/project-state";
 import {
     bindProjectFile,
@@ -280,7 +280,7 @@ const grantedScratchPaths = new Map<string, string>();
  *
  * The scratch sibling is not a path the user picked, and the file dialog grants
  * fs scope for exactly the path it returned — so writing to it is refused
- * outright ("forbidden path: …scriptio.part"). `allow_scratch_file` grants it,
+ * outright ("forbidden path: …scenarly.part"). `allow_scratch_file` grants it,
  * but only for a target that is itself already granted, which keeps intact the
  * rule the scope exists to enforce.
  */
@@ -399,7 +399,7 @@ async function lineageAt(path: string, fileSize: number): Promise<string | null>
  * This is the mirror of "never blind-overwrite the local project": the file may
  * have changed since our last write, and overwriting it would discard
  * those changes silently. Reading it back and merging first is what makes a
- * `.scriptio` in a sync folder behave like a slow sync channel instead of a
+ * `.scenarly` in a sync folder behave like a slow sync channel instead of a
  * footgun.
  *
  * Returns false when the writer must stop: the file at our path belongs to a
@@ -858,7 +858,7 @@ export async function checkBindTarget(projectId: string, path: string): Promise<
             return { kind: "not-writable", message: error instanceof Error ? error.message : String(error) };
         }
 
-        // An existing `.scriptio` from a different document is somebody's
+        // An existing `.scenarly` from a different document is somebody's
         // project file. The OS "replace?" prompt does not convey that binding
         // here destroys it, so ask separately.
         try {

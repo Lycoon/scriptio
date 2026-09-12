@@ -1,9 +1,9 @@
 /**
- * Opening a `.scriptio` file without destroying anything.
+ * Opening a `.scenarly` file without destroying anything.
  *
  * The naive read of "open a file" is *replace the project with it*, and that is
  * the one behaviour this module must never have. The case it would ruin is
- * ordinary: someone sends you a `.scriptio` of a project you already have,
+ * ordinary: someone sends you a `.scenarly` of a project you already have,
  * exported three weeks ago, and replacing your copy with it throws away three
  * weeks of writing. So the primitive here is a **CRDT merge**, which is a union
  * of operations and therefore cannot lose anything:
@@ -49,7 +49,7 @@ import { getStorageProvider } from "@src/lib/persistence/storage-provider/storag
 import { createProjectShell } from "@src/lib/import/import-project";
 import type { CookieUser } from "@src/lib/utils/types";
 
-import { ScriptioAdapter, restoreScriptioAssets } from "./scriptio-adapter";
+import { ScenarlyAdapter, restoreScenarlyAssets } from "./scenarly-adapter";
 import { isProjectFile, openProjectFile, rangeReaderFor, readDocumentUpdate } from "@src/lib/persistence/project-file/reader";
 import { restoreAssetsInto } from "@src/lib/persistence/project-file/restore";
 
@@ -60,7 +60,7 @@ import { restoreAssetsInto } from "@src/lib/persistence/project-file/restore";
  * anything is written, so the UI can describe the outcome and the user can
  * decline it.
  */
-export type ScriptioOpenPlan =
+export type ScenarlyOpenPlan =
     /** No local project descends from this file's document. */
     | { kind: "new-project" }
     /** A local replica already contains every operation the file holds. */
@@ -120,11 +120,11 @@ function hasNewDeletions(source: Y.Doc, target: Y.Doc): boolean {
 
 /** The archive's raw Yjs update, or null for a readable (`document.json`) one. */
 function fileUpdateOf(bytes: ArrayBuffer): Uint8Array | null {
-    return new ScriptioAdapter().extractYjsUpdate(bytes);
+    return new ScenarlyAdapter().extractYjsUpdate(bytes);
 }
 
 /**
- * The document a `.scriptio` holds, whichever container it arrived in.
+ * The document a `.scenarly` holds, whichever container it arrived in.
  *
  * Two shapes carry the extension and both have to open. The ZIP archive is what
  * Export produces and what people send each other; the block format is what a
@@ -148,7 +148,7 @@ async function documentUpdateFrom(bytes: ArrayBuffer): Promise<Uint8Array | null
 async function restoreAssetsFrom(projectId: string, bytes: ArrayBuffer): Promise<void> {
     const view = new Uint8Array(bytes);
     if (!isProjectFile(view)) {
-        await restoreScriptioAssets(projectId, bytes);
+        await restoreScenarlyAssets(projectId, bytes);
         return;
     }
 
@@ -167,20 +167,20 @@ function scratchDocFrom(update: Uint8Array): ProjectState {
 }
 
 /**
- * Replace an open project's contents with a `.scriptio` file's, from either
+ * Replace an open project's contents with a `.scenarly` file's, from either
  * container.
  *
- * The sibling of {@link createProjectFromScriptio} for a project that already
+ * The sibling of {@link createProjectFromScenarly} for a project that already
  * exists — "import into this project" rather than "open as a new one". It lives
  * here rather than in `import-project` because deciding which container a
- * `.scriptio` is arrives with the document, and that decision belongs in one
+ * `.scenarly` is arrives with the document, and that decision belongs in one
  * place; the generic import path only knows extensions.
  *
  * A true replace, not a merge: every map and fragment is wiped first, so this
  * never blends the file into what was there. Callers wanting the merge
- * semantics want {@link applyScriptioUpdate}.
+ * semantics want {@link applyScenarlyUpdate}.
  */
-export async function importScriptioIntoProject(
+export async function importScenarlyIntoProject(
     bytes: ArrayBuffer,
     projectId: string,
     editor?: Editor | null,
@@ -193,7 +193,7 @@ export async function importScriptioIntoProject(
     // A readable export carries no CRDT, and without a repository there is no
     // document to write into. Both fall back to the adapter's own path.
     if (!update || !ydoc) {
-        new ScriptioAdapter().import(bytes, editor, titlePageEditor, repository ?? null);
+        new ScenarlyAdapter().import(bytes, editor, titlePageEditor, repository ?? null);
         await restoreAssetsFrom(projectId, bytes);
         return;
     }
@@ -243,7 +243,7 @@ async function projectsWithLineage(lineageId: string): Promise<string[]> {
         } catch (error) {
             // A project whose local database won't open can't be a merge target;
             // treat it as "not a match" rather than failing the whole open.
-            console.warn("[Scriptio] Could not read lineage of project", project.id, error);
+            console.warn("[Scenarly] Could not read lineage of project", project.id, error);
         }
     }
 
@@ -260,10 +260,10 @@ async function projectsWithLineage(lineageId: string): Promise<string[]> {
  * it, because merging a doc whose shape we don't understand is the corruption
  * path this rule exists to close.
  */
-export async function planScriptioOpen(
+export async function planScenarlyOpen(
     bytes: ArrayBuffer,
     { currentVersion = CURRENT_PROJECT_VERSION }: SchemaOverrides = {},
-): Promise<ScriptioOpenPlan> {
+): Promise<ScenarlyOpenPlan> {
     const update = await documentUpdateFrom(bytes);
     if (!update) return { kind: "no-lineage" };
 
@@ -310,13 +310,13 @@ export interface SchemaOverrides {
 }
 
 /** Thrown when a file cannot be merged; carries the reason for the dialog. */
-export class ScriptioMergeError extends Error {
+export class ScenarlyMergeError extends Error {
     constructor(
         message: string,
         readonly reason: "no-lineage" | "lineage-mismatch" | "future-version",
     ) {
         super(message);
-        this.name = "ScriptioMergeError";
+        this.name = "ScenarlyMergeError";
     }
 }
 
@@ -344,8 +344,8 @@ async function alignFileVersion(fileDoc: ProjectState, overrides: SchemaOverride
     const fileVersion = readProjectDocVersion(fileDoc);
 
     if (fileVersion > currentVersion) {
-        throw new ScriptioMergeError(
-            `File was written by a newer version of Scriptio (v${fileVersion})`,
+        throw new ScenarlyMergeError(
+            `File was written by a newer version of Scenarly (v${fileVersion})`,
             "future-version",
         );
     }
@@ -359,7 +359,7 @@ async function alignFileVersion(fileDoc: ProjectState, overrides: SchemaOverride
 }
 
 /**
- * Merge a `.scriptio` archive into an existing local project.
+ * Merge a `.scenarly` archive into an existing local project.
  *
  * Order matters and is fixed: verify lineage, version-align the file's copy
  * (R5), snapshot the local doc (R6), then apply the **raw update** so the result
@@ -367,14 +367,14 @@ async function alignFileVersion(fileDoc: ProjectState, overrides: SchemaOverride
  * reversible if a file ever claims a lineage falsely, which is why it is taken
  * even when the merge looks trivial.
  */
-export async function applyScriptioUpdate(
+export async function applyScenarlyUpdate(
     projectId: string,
     bytes: ArrayBuffer,
     overrides: SchemaOverrides = {},
 ): Promise<void> {
     const update = await documentUpdateFrom(bytes);
     if (!update) {
-        throw new ScriptioMergeError("This file is a readable export and holds no mergeable history", "no-lineage");
+        throw new ScenarlyMergeError("This file is a readable export and holds no mergeable history", "no-lineage");
     }
 
     await applyDocumentUpdate(projectId, update, overrides, (id) => restoreAssetsFrom(id, bytes));
@@ -383,7 +383,7 @@ export async function applyScriptioUpdate(
 /**
  * The merge itself, over a raw Yjs update rather than an archive.
  *
- * Split out because the two things that carry a document — the `.scriptio`
+ * Split out because the two things that carry a document — the `.scenarly`
  * export and the bound project file — package it completely differently but must
  * merge on identical terms. Everything the rule set turns on (lineage checked
  * before the apply, version alignment, the rollback snapshot) lives here so that
@@ -402,7 +402,7 @@ export async function applyDocumentUpdate(
     try {
         const fileLineage = fileDoc.metadata().get("lineageId");
         if (!fileLineage) {
-            throw new ScriptioMergeError("This file carries no lineage and cannot be merged", "no-lineage");
+            throw new ScenarlyMergeError("This file carries no lineage and cannot be merged", "no-lineage");
         }
 
         await alignFileVersion(fileDoc, overrides);
@@ -412,7 +412,7 @@ export async function applyDocumentUpdate(
             // Compared *before* applying, never after: once the update lands, the
             // two lineage values have already merged and the check is meaningless.
             if (localDoc.metadata().get("lineageId") !== fileLineage) {
-                throw new ScriptioMergeError(
+                throw new ScenarlyMergeError(
                     "This file belongs to a different document and cannot be merged",
                     "lineage-mismatch",
                 );
@@ -446,7 +446,7 @@ export async function applyDocumentUpdate(
 
 // ── Creating ──────────────────────────────────────────────────────────────────
 
-export interface CreateProjectFromScriptioOptions {
+export interface CreateProjectFromScenarlyOptions {
     /**
      * Whether the user is deliberately splitting this file off into a separate
      * document rather than receiving it.
@@ -473,7 +473,7 @@ export interface CreateProjectFromScriptioOptions {
 }
 
 /**
- * Create a new local project from a `.scriptio` archive.
+ * Create a new local project from a `.scenarly` archive.
  *
  * For a binary archive this builds a genuine **replica**: an empty doc with the
  * file's update applied, never a rebuild through `applyProjectData`. That single
@@ -484,9 +484,9 @@ export interface CreateProjectFromScriptioOptions {
  * A readable archive has no history to preserve, so it takes the flat path and
  * is stamped with a fresh lineage, like any other import.
  */
-export async function createProjectFromScriptio(
+export async function createProjectFromScenarly(
     bytes: ArrayBuffer,
-    opts: CreateProjectFromScriptioOptions,
+    opts: CreateProjectFromScenarlyOptions,
 ): Promise<string> {
     const update = await documentUpdateFrom(bytes);
 
@@ -495,7 +495,7 @@ export async function createProjectFromScriptio(
         if (update) {
             Y.applyUpdate(ydoc, update);
         } else {
-            applyProjectData(ydoc, new ScriptioAdapter().convertFrom(bytes));
+            applyProjectData(ydoc, new ScenarlyAdapter().convertFrom(bytes));
         }
 
         const metadata = ydoc.metadata();

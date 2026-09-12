@@ -38,7 +38,7 @@ export async function generateAppleJWT({
 if (process.argv[1]?.includes("generate-apple-jwt")) {
     const config: AppleAuthConfig = {
         teamId: process.env.AUTH_APPLE_TEAM_ID!,
-        clientId: process.env.AUTH_APPLE_CLIENT_ID!,
+        clientId: process.env.AUTH_APPLE_ID!,
         keyId: process.env.AUTH_APPLE_KEY_ID!,
         privateKey: process.env.AUTH_APPLE_PRIVATE_KEY!,
     };

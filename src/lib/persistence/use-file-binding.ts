@@ -4,7 +4,7 @@ import { useCallback, useContext, useMemo, useSyncExternalStore } from "react";
 
 import { UserContext } from "@src/context/UserContext";
 import { autoSavePopup, confirmFileBindPopup, saveToFilePopup } from "@src/lib/screenplay/popup";
-import { SCRIPTIO_FILE_FILTER } from "@src/lib/import/scriptio-file-open";
+import { SCENARLY_FILE_FILTER } from "@src/lib/import/scenarly-file-open";
 
 import {
     SUGGEST_COMPACT_FRACTION,
@@ -112,8 +112,8 @@ export function useFileActions(projectId: string | null, projectTitle: string): 
         if (!projectId || !isSupported) return;
         const { save } = await import("@tauri-apps/plugin-dialog");
         const path = await save({
-            defaultPath: `${projectTitle || "Untitled"}.scriptio`,
-            filters: [SCRIPTIO_FILE_FILTER],
+            defaultPath: `${projectTitle || "Untitled"}.scenarly`,
+            filters: [SCENARLY_FILE_FILTER],
         });
         if (path) await bindWithConfirmation(path);
     }, [projectId, isSupported, projectTitle, bindWithConfirmation]);
@@ -152,7 +152,7 @@ export function useFileActions(projectId: string | null, projectTitle: string): 
     const locate = useCallback(async () => {
         if (!projectId || !isSupported) return;
         const { open } = await import("@tauri-apps/plugin-dialog");
-        const path = await open({ multiple: false, directory: false, filters: [SCRIPTIO_FILE_FILTER] });
+        const path = await open({ multiple: false, directory: false, filters: [SCENARLY_FILE_FILTER] });
         if (typeof path === "string") await bindWithConfirmation(path);
     }, [projectId, isSupported, bindWithConfirmation]);
 

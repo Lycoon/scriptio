@@ -87,7 +87,7 @@ const resolveLang = (locale: string | null | undefined): string => {
 
 // The dictation language is a per-device preference (like the UI locale and
 // spellcheck language), chosen in Language settings and read by the footer mic.
-const DICTATION_LANG_KEY = "scriptio-dictation-lang";
+const DICTATION_LANG_KEY = "scenarly-dictation-lang";
 const DEFAULT_DICTATION_LANG = "en";
 
 /** The saved dictation language code, defaulting to English. */

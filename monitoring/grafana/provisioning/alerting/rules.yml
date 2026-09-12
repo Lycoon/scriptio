@@ -2,11 +2,11 @@ apiVersion: 1
 
 groups:
     - orgId: 1
-      name: scriptio-app
-      folder: scriptio
+      name: scenarly-app
+      folder: scenarly
       interval: 1m
       rules:
-          - uid: scriptio-http-error-rate
+          - uid: scenarly-http-error-rate
             title: HighHttpErrorRate
             condition: C
             data:
@@ -39,7 +39,7 @@ groups:
                 summary: HTTP error rate above 5%
                 description: "{{ $value | printf \"%.2f\" }} of requests in the last 5 minutes returned a 4xx/5xx status."
 
-          - uid: scriptio-db-almost-full
+          - uid: scenarly-db-almost-full
             title: DbAlmostFull
             condition: C
             data:
@@ -50,7 +50,7 @@ groups:
                   datasourceUid: prometheus
                   model:
                       refId: A
-                      expr: scriptio_db_size_bytes / ${DB_SIZE_LIMIT_BYTES}
+                      expr: scenarly_db_size_bytes / ${DB_SIZE_LIMIT_BYTES}
                       instant: true
                 - refId: C
                   relativeTimeRange:

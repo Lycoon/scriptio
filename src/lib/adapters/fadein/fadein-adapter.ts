@@ -46,7 +46,7 @@ const parser = new XMLParser({
     parseAttributeValue: false,
 });
 
-// OSF basestyle → Scriptio node type. Unknown styles fall back to "action".
+// OSF basestyle → Scenarly node type. Unknown styles fall back to "action".
 const OSF_ELEMENT_TABLE: Record<string, string> = {
     "Scene Heading": "scene",
     Action: "action",
@@ -57,7 +57,7 @@ const OSF_ELEMENT_TABLE: Record<string, string> = {
     "Normal Text": "action",
 };
 
-// <text> formatting attribute → Scriptio mark type.
+// <text> formatting attribute → Scenarly mark type.
 const OSF_MARK_TABLE: { attr: string; type: string }[] = [
     { attr: "@_bold", type: "bold" },
     { attr: "@_italic", type: "italic" },
@@ -111,7 +111,7 @@ function runsOf(para: OSFParagraph): JSONContent[] {
     return content;
 }
 
-/** Convert OSF <paragraphs> into Scriptio screenplay block nodes. */
+/** Convert OSF <paragraphs> into Scenarly screenplay block nodes. */
 function paragraphsToScreenplay(paras: OSFParagraph[]): JSONContent[] {
     return paras.map((para) => {
         const basestyle = para.style?.["@_basestyle"];

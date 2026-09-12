@@ -5,7 +5,7 @@ import type { InstalledDictionary, SpellWorkerResponse } from "@src/lib/spellche
 import type { StorageProvider } from "@src/lib/persistence/storage-provider/storage-provider";
 import { BUILTIN_DICTIONARY_CODE, loadBuiltinDictionary } from "@src/lib/spellcheck/spellcheck-dictionaries";
 
-const LANG_KEY = "scriptio-spellcheck-lang";
+const LANG_KEY = "scenarly-spellcheck-lang";
 
 interface SpellcheckContextValue {
     spellcheckLang: string | null;

@@ -62,7 +62,7 @@ export const createReadAloudHighlightExtension = () =>
 export const setReadAloudHighlight = (editor: Editor, from: number, to: number) => {
     if (!editor || editor.isDestroyed || !editor.view) return;
     const dom = editor.view.dom as HTMLElement;
-    // Anchor the focus mask (scriptio.css) on the current node's vertical centre,
+    // Anchor the focus mask (scenarly.css) on the current node's vertical centre,
     // measured in the editor's own coordinate space (difference of client rects,
     // so it's scroll-independent) — the fade then grades by distance from the
     // spoken line, continuously across nodes rather than per node.

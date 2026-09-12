@@ -137,7 +137,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
             const res = await downloadDataExport(dataExport.id);
             if (!res.ok) throw new Error("Download failed");
 
-            await saveBlob(await res.blob(), "scriptio-data-export.zip", {
+            await saveBlob(await res.blob(), "scenarly-data-export.zip", {
                 label: t("exportArchive"),
                 extension: "zip",
             });

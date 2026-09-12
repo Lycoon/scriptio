@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import DesktopOAuthStart from "@components/home/desktop-oauth/DesktopOAuthStart";
 
 export const metadata: Metadata = {
-    title: "Sign in | Scriptio®",
+    title: "Sign in | Scenarly®",
 };
 
 export default function DesktopOAuthStartPage() {

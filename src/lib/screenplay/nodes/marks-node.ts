@@ -13,7 +13,7 @@ import Underline from "@tiptap/extension-underline";
 /**
  * Custom Bold mark using class-based styling.
  */
-export const ScriptioBold = Bold.extend({
+export const ScenarlyBold = Bold.extend({
     addAttributes() {
         return {
             class: {
@@ -44,7 +44,7 @@ export const ScriptioBold = Bold.extend({
 /**
  * Custom Italic mark using class-based styling.
  */
-export const ScriptioItalic = Italic.extend({
+export const ScenarlyItalic = Italic.extend({
     addAttributes() {
         return {
             class: {
@@ -75,7 +75,7 @@ export const ScriptioItalic = Italic.extend({
 /**
  * Custom Underline mark using class-based styling.
  */
-export const ScriptioUnderline = Underline.extend({
+export const ScenarlyUnderline = Underline.extend({
     addAttributes() {
         return {
             class: {

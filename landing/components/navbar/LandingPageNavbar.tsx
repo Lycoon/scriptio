@@ -62,8 +62,8 @@ export default function LandingPageNavbar() {
             {page !== "index" && (
                 <Link className={styles.logoWrapper} href="/">
                     <Image
-                        src="/_site/images/scriptio.png"
-                        alt="Scriptio Logo"
+                        src="/_site/images/scenarly.png"
+                        alt="Scenarly Logo"
                         width={90}
                         height={27}
                         className={styles.logo}

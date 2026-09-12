@@ -52,7 +52,7 @@ describe("FadeIn adapter import", () => {
     const { screenplay, titlepage } = new FadeInAdapter().convertFrom(toFadeIn(DOC));
     const nodes = screenplay as JSONContent[];
 
-    it("maps OSF basestyles to Scriptio node types", () => {
+    it("maps OSF basestyles to Scenarly node types", () => {
         expect(nodes.map((n) => n.type)).toEqual([
             "scene",
             "character",

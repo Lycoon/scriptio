@@ -40,7 +40,7 @@ const DOCUMENT_ENTRY = "script.json";
 const MAIN_BRANCH = "-";
 const TITLE_BRANCH = "titlePage";
 
-// WriterDuet line type → Scriptio node type. Unknown types fall back to "action".
+// WriterDuet line type → Scenarly node type. Unknown types fall back to "action".
 const LINE_TYPE_TABLE: Record<string, string> = {
     Slugline: "scene",
     Action: "action",

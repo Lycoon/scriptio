@@ -5,14 +5,14 @@ import { prosemirrorJSONToYXmlFragment } from "y-prosemirror";
 import { ProjectState, applyProjectData, projectDataOf } from "@src/lib/project/project-state";
 import { createProjectRepository } from "@src/lib/project/project-repository";
 import { ScreenplaySchema } from "@src/lib/screenplay/editor";
-import { ScriptioAdapter } from "@src/lib/adapters/scriptio/scriptio-adapter";
+import { ScenarlyAdapter } from "@src/lib/adapters/scenarly/scenarly-adapter";
 import {
-    applyScriptioUpdate,
-    createProjectFromScriptio,
+    applyScenarlyUpdate,
+    createProjectFromScenarly,
     hasOps,
-    planScriptioOpen,
-    ScriptioMergeError,
-} from "@src/lib/adapters/scriptio/scriptio-open";
+    planScenarlyOpen,
+    ScenarlyMergeError,
+} from "@src/lib/adapters/scenarly/scenarly-open";
 import type { ProjectMigration } from "@src/lib/project/migrations/project-migrations";
 import {
     createCachedProject,
@@ -64,7 +64,7 @@ function newProjectDoc(title: string, firstLine: string): ProjectState {
     return doc;
 }
 
-const adapter = new ScriptioAdapter();
+const adapter = new ScenarlyAdapter();
 
 async function exportBinary(doc: ProjectState): Promise<ArrayBuffer> {
     const blob = await adapter.convertTo(doc, {
@@ -192,7 +192,7 @@ describe("lineage", () => {
         // The value *is* in the JSON — that is precisely the trap.
         expect(adapter.convertFrom(readable).metadata.lineageId).toBe(sourceLineage);
 
-        const projectId = await createProjectFromScriptio(readable, { fork: false });
+        const projectId = await createProjectFromScenarly(readable, { fork: false });
         createdProjects.push(projectId);
 
         const rebuiltLineage = await readProjectDoc(projectId, (doc) => doc.metadata().get("lineageId"));
@@ -200,7 +200,7 @@ describe("lineage", () => {
         expect(rebuiltLineage).not.toBe(sourceLineage);
 
         // And so it can never merge into the lineage it names.
-        await expect(applyScriptioUpdate(projectId, readable)).rejects.toBeInstanceOf(ScriptioMergeError);
+        await expect(applyScenarlyUpdate(projectId, readable)).rejects.toBeInstanceOf(ScenarlyMergeError);
 
         source.destroy();
     });
@@ -210,9 +210,9 @@ describe("lineage", () => {
         const sourceLineage = source.metadata().get("lineageId")!;
         const archive = await exportBinary(source);
 
-        const receivedId = await createProjectFromScriptio(archive, { fork: false });
+        const receivedId = await createProjectFromScenarly(archive, { fork: false });
         createdProjects.push(receivedId);
-        const forkedId = await createProjectFromScriptio(archive, { fork: true });
+        const forkedId = await createProjectFromScenarly(archive, { fork: true });
         createdProjects.push(forkedId);
 
         expect(await readProjectDoc(receivedId, (d) => d.metadata().get("lineageId"))).toBe(sourceLineage);
@@ -231,7 +231,7 @@ describe("lineage", () => {
 describe("binary open keeps the CRDT (R4)", () => {
     it("produces a replica that still merges with its source without duplicating", async () => {
         const alice = newProjectDoc("Alice", "Shared line");
-        const projectId = await createProjectFromScriptio(await exportBinary(alice), { fork: false });
+        const projectId = await createProjectFromScenarly(await exportBinary(alice), { fork: false });
         createdProjects.push(projectId);
 
         // Each side writes something the other has never seen.
@@ -258,7 +258,7 @@ describe("binary open keeps the CRDT (R4)", () => {
         const aliceArchive = await exportBinary(alice);
 
         // Bob has no copy, so he receives it as a new project — lineage preserved.
-        const bobId = await createProjectFromScriptio(aliceArchive, { fork: false });
+        const bobId = await createProjectFromScenarly(aliceArchive, { fork: false });
         createdProjects.push(bobId);
         await readProjectDoc(bobId, (bob) => appendLine(bob, "b2", "Bob's rewrite"));
         const bobArchive = await readProjectDoc(bobId, (bob) => exportBinary(bob));
@@ -278,10 +278,10 @@ describe("binary open keeps the CRDT (R4)", () => {
         carolDoc.destroy();
 
         // Bob's file must merge into Carol's copy rather than being refused.
-        const plan = await planScriptioOpen(await bobArchive);
+        const plan = await planScenarlyOpen(await bobArchive);
         expect(plan).toEqual({ kind: "diverged", projectId: carolId });
 
-        await applyScriptioUpdate(carolId, await bobArchive);
+        await applyScenarlyUpdate(carolId, await bobArchive);
 
         const text = await readProjectDoc(carolId, lines);
         expect(text.filter((line) => line === "Scene one")).toHaveLength(1);
@@ -294,10 +294,10 @@ describe("binary open keeps the CRDT (R4)", () => {
 
 // ── Planning ──────────────────────────────────────────────────────────────────
 
-describe("planScriptioOpen", () => {
+describe("planScenarlyOpen", () => {
     it("reports new-project when nothing local shares the lineage", async () => {
         const doc = newProjectDoc("Stranger", "One");
-        expect(await planScriptioOpen(await exportBinary(doc))).toEqual({ kind: "new-project" });
+        expect(await planScenarlyOpen(await exportBinary(doc))).toEqual({ kind: "new-project" });
         doc.destroy();
     });
 
@@ -310,7 +310,7 @@ describe("planScriptioOpen", () => {
         const projectId = await persistAsProject(local, "Mine");
         local.destroy();
 
-        expect(await planScriptioOpen(archive)).toEqual({ kind: "already-current", projectId });
+        expect(await planScenarlyOpen(archive)).toEqual({ kind: "already-current", projectId });
         doc.destroy();
     });
 
@@ -319,7 +319,7 @@ describe("planScriptioOpen", () => {
         const projectId = await persistAsProject(replicaOf(base), "Mine");
 
         appendLine(base, "a2", "Newer line");
-        expect(await planScriptioOpen(await exportBinary(base))).toEqual({
+        expect(await planScenarlyOpen(await exportBinary(base))).toEqual({
             kind: "fast-forward",
             projectId,
         });
@@ -334,7 +334,7 @@ describe("planScriptioOpen", () => {
         local.destroy();
 
         appendLine(base, "f2", "File line");
-        expect(await planScriptioOpen(await exportBinary(base))).toEqual({ kind: "diverged", projectId });
+        expect(await planScenarlyOpen(await exportBinary(base))).toEqual({ kind: "diverged", projectId });
         base.destroy();
     });
 
@@ -344,7 +344,7 @@ describe("planScriptioOpen", () => {
         const second = await persistAsProject(replicaOf(base), "Copy B");
 
         appendLine(base, "a2", "Newer");
-        const plan = await planScriptioOpen(await exportBinary(base));
+        const plan = await planScenarlyOpen(await exportBinary(base));
         expect(plan.kind).toBe("ambiguous");
         expect((plan as { projectIds: string[] }).projectIds.sort()).toEqual([first, second].sort());
         base.destroy();
@@ -352,21 +352,21 @@ describe("planScriptioOpen", () => {
 
     it("reports no-lineage for a readable archive", async () => {
         const doc = newProjectDoc("Mine", "One");
-        expect(await planScriptioOpen(await exportReadable(doc))).toEqual({ kind: "no-lineage" });
+        expect(await planScenarlyOpen(await exportReadable(doc))).toEqual({ kind: "no-lineage" });
         doc.destroy();
     });
 
     it("reports no-lineage for a binary archive that was never stamped", async () => {
         const doc = new ProjectState();
         appendLine(doc, "a1", "Unstamped");
-        expect(await planScriptioOpen(await exportBinary(doc))).toEqual({ kind: "no-lineage" });
+        expect(await planScenarlyOpen(await exportBinary(doc))).toEqual({ kind: "no-lineage" });
         doc.destroy();
     });
 
     it("reports future-version before it even looks for a local copy", async () => {
         const doc = newProjectDoc("Mine", "One");
         doc.transact(() => doc.metadata().set("version", 99));
-        expect(await planScriptioOpen(await exportBinary(doc))).toEqual({
+        expect(await planScenarlyOpen(await exportBinary(doc))).toEqual({
             kind: "future-version",
             fileVersion: 99,
         });
@@ -376,13 +376,13 @@ describe("planScriptioOpen", () => {
 
 // ── Applying ──────────────────────────────────────────────────────────────────
 
-describe("applyScriptioUpdate", () => {
+describe("applyScenarlyUpdate", () => {
     it("fast-forwards the local copy to the file's content", async () => {
         const base = newProjectDoc("Mine", "One");
         const projectId = await persistAsProject(replicaOf(base), "Mine");
 
         appendLine(base, "a2", "From the file");
-        await applyScriptioUpdate(projectId, await exportBinary(base));
+        await applyScenarlyUpdate(projectId, await exportBinary(base));
 
         expect(await readProjectDoc(projectId, lines)).toEqual(["One", "From the file"]);
         base.destroy();
@@ -396,7 +396,7 @@ describe("applyScriptioUpdate", () => {
         local.destroy();
 
         appendLine(base, "f2", "File only");
-        await applyScriptioUpdate(projectId, await exportBinary(base));
+        await applyScenarlyUpdate(projectId, await exportBinary(base));
 
         const text = await readProjectDoc(projectId, lines);
         expect(text).toContain("Local only");
@@ -410,7 +410,7 @@ describe("applyScriptioUpdate", () => {
         const projectId = await persistAsProject(replicaOf(base), "Mine");
 
         appendLine(base, "a2", "From the file");
-        await applyScriptioUpdate(projectId, await exportBinary(base));
+        await applyScenarlyUpdate(projectId, await exportBinary(base));
 
         const { getStorageProvider } = await import(
             "@src/lib/persistence/storage-provider/storage-provider"
@@ -431,7 +431,7 @@ describe("applyScriptioUpdate", () => {
         const projectId = await persistAsProject(local, "Mine");
 
         const stranger = newProjectDoc("Theirs", "Something else");
-        await expect(applyScriptioUpdate(projectId, await exportBinary(stranger))).rejects.toMatchObject({
+        await expect(applyScenarlyUpdate(projectId, await exportBinary(stranger))).rejects.toMatchObject({
             reason: "lineage-mismatch",
         });
         expect(await readProjectDoc(projectId, lines)).toEqual(["One"]);
@@ -444,7 +444,7 @@ describe("applyScriptioUpdate", () => {
         const local = newProjectDoc("Mine", "One");
         const projectId = await persistAsProject(local, "Mine");
 
-        await expect(applyScriptioUpdate(projectId, await exportReadable(local))).rejects.toMatchObject({
+        await expect(applyScenarlyUpdate(projectId, await exportReadable(local))).rejects.toMatchObject({
             reason: "no-lineage",
         });
         expect(await readProjectDoc(projectId, lines)).toEqual(["One"]);
@@ -492,7 +492,7 @@ describe("version alignment (R5)", () => {
         });
         appendLine(file, "f2", "From the older file");
 
-        await applyScriptioUpdate(projectId, await exportBinary(file), { migrations, currentVersion: 2 });
+        await applyScenarlyUpdate(projectId, await exportBinary(file), { migrations, currentVersion: 2 });
 
         const after = await readProjectDoc(projectId, (doc) => ({
             version: doc.metadata().get("version"),
@@ -518,7 +518,7 @@ describe("version alignment (R5)", () => {
         appendLine(file, "f2", "From the future");
 
         await expect(
-            applyScriptioUpdate(projectId, await exportBinary(file), { migrations, currentVersion: 2 }),
+            applyScenarlyUpdate(projectId, await exportBinary(file), { migrations, currentVersion: 2 }),
         ).rejects.toMatchObject({ reason: "future-version" });
 
         const after = await readProjectDoc(projectId, (doc) => ({
@@ -556,7 +556,7 @@ describe("flat rebuilds", () => {
 
 describe("opening a bound project file", () => {
     /**
-     * Both containers wear the `.scriptio` extension: the ZIP is what Export
+     * Both containers wear the `.scenarly` extension: the ZIP is what Export
      * produces and what circulates, the block format is what a bound project is
      * written into. Double-clicking your own working copy has to open it, so the
      * open flow sniffs the magic number rather than trusting the name.
@@ -564,7 +564,7 @@ describe("opening a bound project file", () => {
     it("recognises one and plans against it like any other file", async () => {
         const source = newProjectDoc("Bound copy", "FADE IN:");
 
-        const plan = await planScriptioOpen(boundFile(source));
+        const plan = await planScenarlyOpen(boundFile(source));
         // Nothing local descends from it yet, so it opens as a new project —
         // the same verdict the archive of the same document would get.
         expect(plan.kind).toBe("new-project");
@@ -574,7 +574,7 @@ describe("opening a bound project file", () => {
     it("creates a project from one", async () => {
         const source = newProjectDoc("Bound copy", "FADE IN:");
 
-        const projectId = await createProjectFromScriptio(boundFile(source), { fork: false });
+        const projectId = await createProjectFromScenarly(boundFile(source), { fork: false });
         createdProjects.push(projectId);
 
         expect((await readProjectDoc(projectId, lines)).join("\n")).toContain("FADE IN:");
@@ -584,7 +584,7 @@ describe("opening a bound project file", () => {
     it("merges one into the project it came from", async () => {
         const alice = newProjectDoc("Shared", "FADE IN:");
 
-        const projectId = await createProjectFromScriptio(boundFile(alice), { fork: false });
+        const projectId = await createProjectFromScenarly(boundFile(alice), { fork: false });
         createdProjects.push(projectId);
 
         // The file moves on elsewhere — another machine, a synced folder.
@@ -594,9 +594,9 @@ describe("opening a bound project file", () => {
         // local project stamped it with its own id, which is an operation the
         // file has never seen. Both sides hold something the other lacks, which
         // is exactly the case a CRDT merge exists for.
-        expect((await planScriptioOpen(boundFile(alice))).kind).toBe("diverged");
+        expect((await planScenarlyOpen(boundFile(alice))).kind).toBe("diverged");
 
-        await applyScriptioUpdate(projectId, boundFile(alice));
+        await applyScenarlyUpdate(projectId, boundFile(alice));
         expect((await readProjectDoc(projectId, lines)).join("\n")).toContain("She turns.");
         alice.destroy();
     });

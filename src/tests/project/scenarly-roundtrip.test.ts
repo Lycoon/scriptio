@@ -11,7 +11,7 @@ import {
 } from "@src/lib/project/project-state";
 import { createProjectRepository } from "@src/lib/project/project-repository";
 import { ScreenplaySchema } from "@src/lib/screenplay/editor";
-import { ScriptioAdapter } from "@src/lib/adapters/scriptio/scriptio-adapter";
+import { ScenarlyAdapter } from "@src/lib/adapters/scenarly/scenarly-adapter";
 
 const action = (id: string, text: string) => ({
     type: "action",
@@ -89,7 +89,7 @@ function buildPopulatedProject(): ProjectState {
 const baseOptions = { title: "My Script", author: "Ada", includeNotes: false };
 
 async function exportBuffer(project: ProjectState, readable: boolean): Promise<ArrayBuffer> {
-    const adapter = new ScriptioAdapter();
+    const adapter = new ScenarlyAdapter();
     const blob = await adapter.convertTo(project, { ...baseOptions, readable });
     return blob.arrayBuffer();
 }
@@ -118,7 +118,7 @@ function snapshot(data: ReturnType<typeof projectDataOf>) {
     };
 }
 
-describe("scriptio adapter full round trip", () => {
+describe("scenarly adapter full round trip", () => {
     for (const readable of [false, true]) {
         const label = readable ? "readable JSON" : "binary";
 
@@ -126,7 +126,7 @@ describe("scriptio adapter full round trip", () => {
             const original = buildPopulatedProject();
             const before = snapshot(projectDataOf(original));
 
-            const adapter = new ScriptioAdapter();
+            const adapter = new ScenarlyAdapter();
             const buffer = await exportBuffer(original, readable);
             const parsed = adapter.convertFrom(buffer);
 
@@ -145,7 +145,7 @@ describe("scriptio adapter full round trip", () => {
 
     it("names the document entry by type and writes a header-free readable JSON", async () => {
         const project = buildPopulatedProject();
-        const adapter = new ScriptioAdapter();
+        const adapter = new ScenarlyAdapter();
 
         const readableZip = fflate.unzipSync(
             new Uint8Array(await (await adapter.convertTo(project, { ...baseOptions, readable: true })).arrayBuffer()),
@@ -169,7 +169,7 @@ describe("scriptio adapter full round trip", () => {
 
     it("writes an uncompressed mimetype as the first archive entry", async () => {
         const project = buildPopulatedProject();
-        const adapter = new ScriptioAdapter();
+        const adapter = new ScenarlyAdapter();
         const blob = await adapter.convertTo(project, { ...baseOptions, readable: false });
         const bytes = new Uint8Array(await blob.arrayBuffer());
 
@@ -181,7 +181,7 @@ describe("scriptio adapter full round trip", () => {
 
         // Stored (not deflated): the value appears verbatim right after the name.
         const dataStart = 30 + nameLen + extraLen;
-        const mimetype = "application/vnd.scriptio+zip";
+        const mimetype = "application/vnd.scenarly+zip";
         expect(new TextDecoder().decode(bytes.slice(dataStart, dataStart + mimetype.length))).toBe(
             mimetype,
         );
@@ -197,7 +197,7 @@ describe("scriptio adapter full round trip", () => {
         // Binary: the metadata op itself travels, so a doc built by applying the
         // update is a genuine replica and reports the same lineage.
         const replica = new ProjectState();
-        const adapter = new ScriptioAdapter();
+        const adapter = new ScenarlyAdapter();
         const update = adapter.extractYjsUpdate(await exportBuffer(original, false));
         expect(update).not.toBeNull();
         Y.applyUpdate(replica, update!);

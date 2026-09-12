@@ -12,7 +12,7 @@ import jaMessages from "../../messages/ja.json";
 import deMessages from "../../messages/de.json";
 import plMessages from "../../messages/pl.json";
 
-const LOCALE_KEY = "scriptio-locale";
+const LOCALE_KEY = "scenarly-locale";
 const DEFAULT_LOCALE: UserLanguage = "en";
 const MESSAGES: Record<UserLanguage, typeof enMessages> = { en: enMessages, es: esMessages, fr: frMessages, zh: zhMessages, ko: koMessages, ja: jaMessages, de: deMessages, pl: plMessages };
 

@@ -4,11 +4,11 @@ import { playfair, inter, courier, josefin } from "@styles/fonts";
 import layout from "@components/utils/Layout.module.css";
 import { Metadata } from "next";
 
-const TITLE = "Scriptio | Screenwriting Software";
+const TITLE = "Scenarly | Screenwriting Software";
 const DESCRIPTION = "Modern, elegant and affordable screenwriting software. Screenwriters first.";
 // Self-hosted under /_site so the homepage's OG tag never depends on the app container.
-const TITLE_IMG = "https://scriptio.app/_site/images/banner.png";
-const URL = "https://scriptio.app/";
+const TITLE_IMG = "https://scenarly.com/_site/images/banner.png";
+const URL = "https://scenarly.com/";
 
 // The homepage only ever renders in dark — no theme switching, so no ThemeProvider
 // or next-themes: the class is fixed at build time, not toggled client-side.
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
-    applicationName: "Scriptio",
+    applicationName: "Scenarly",
     authors: [{ name: "Hugo 'Lycoon' Bois" }],
     keywords: ["movie", "script", "writing", "story", "screenwriting"],
     icons: { icon: "/_site/favicon.ico" },
@@ -46,10 +46,10 @@ export const metadata: Metadata = {
                 url: TITLE_IMG,
                 width: 1200,
                 height: 630,
-                alt: "Scriptio Banner",
+                alt: "Scenarly Banner",
             },
         ],
-        siteName: "Scriptio",
+        siteName: "Scenarly",
     },
 
     twitter: {

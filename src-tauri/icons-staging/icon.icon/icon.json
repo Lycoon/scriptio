@@ -6,8 +6,8 @@
         {
           "glass" : true,
           "hidden" : false,
-          "image-name" : "scriptio_staging_icon.png",
-          "name" : "scriptio_staging_icon",
+          "image-name" : "scenarly_staging_icon.png",
+          "name" : "scenarly_staging_icon",
           "opacity-specializations" : [
             {
               "appearance" : "dark",
@@ -27,8 +27,8 @@
           "fill" : "none",
           "glass" : true,
           "hidden" : true,
-          "image-name" : "scriptio_icon.png",
-          "name" : "scriptio_icon",
+          "image-name" : "scenarly_icon.png",
+          "name" : "scenarly_icon",
           "opacity" : 1,
           "position" : {
             "scale" : 0.42,

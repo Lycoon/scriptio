@@ -20,7 +20,7 @@ import {
  */
 
 const ENABLED = process.env.NODE_ENV !== "production";
-const STORAGE_KEY = "scriptio.applyTimingPanel.visible";
+const STORAGE_KEY = "scenarly.applyTimingPanel.visible";
 const POLL_INTERVAL_MS = 400;
 
 // Name of the synthetic row holding the whole-keydown duration. Pinned at the

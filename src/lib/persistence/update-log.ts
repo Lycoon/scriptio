@@ -10,7 +10,7 @@
  * sv)` looks like the natural way to produce "what the file is missing", and it
  * is what the writer falls back to — but it is the *catch a peer up from
  * scratch* API, so it carries the document's entire delete set every time (see
- * `hasOps` in scriptio-open). That term grows with the document's lifetime
+ * `hasOps` in scenarly-open). That term grows with the document's lifetime
  * deletion history, not with the edit, so a log built from it would grow at a
  * rate set by how much the script has ever been revised. The update handed to a
  * `doc.on("update")` observer carries only *that transaction's* structs and

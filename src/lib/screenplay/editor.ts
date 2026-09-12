@@ -5,7 +5,7 @@ import { ScreenplayElement, Style, TitlePageElement } from "../utils/enums";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 
-import { ScreenplayNodes, ScriptioBold, ScriptioItalic, ScriptioUnderline, generateNodeId } from "@src/lib/screenplay/nodes";
+import { ScreenplayNodes, ScenarlyBold, ScenarlyItalic, ScenarlyUnderline, generateNodeId } from "@src/lib/screenplay/nodes";
 import { Placeholder } from "./extensions/placeholder-extension";
 import { PAGE_SIZES, PageBreakAttribute } from "./extensions/pagination-extension";
 import { RevisionMark, RevisionAttribute } from "./extensions/revisions-extension";
@@ -154,7 +154,7 @@ export const BASE_EXTENSIONS = [
     // Individual screenplay element nodes
     ...ScreenplayNodes,
 
-    // Manual page-break attribute (schema-level; logic lives in ScriptioPagination).
+    // Manual page-break attribute (schema-level; logic lives in ScenarlyPagination).
     // In BASE_EXTENSIONS so it survives full-project serialization via ScreenplaySchema.
     PageBreakAttribute,
 
@@ -166,9 +166,9 @@ export const BASE_EXTENSIONS = [
     RevisionAttribute,
 
     // Mark extensions
-    ScriptioBold,
-    ScriptioItalic,
-    ScriptioUnderline,
+    ScenarlyBold,
+    ScenarlyItalic,
+    ScenarlyUnderline,
 
     Placeholder.configure({
         placeholder: "",

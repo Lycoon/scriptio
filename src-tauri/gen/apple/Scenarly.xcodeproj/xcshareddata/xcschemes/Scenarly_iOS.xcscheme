@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "D502AAB9ADFFD4B8261EFF69"
-               BuildableName = "Scriptio.app"
-               BlueprintName = "Scriptio_iOS"
-               ReferencedContainer = "container:Scriptio.xcodeproj">
+               BuildableName = "Scenarly.app"
+               BlueprintName = "Scenarly_iOS"
+               ReferencedContainer = "container:Scenarly.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -31,9 +31,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D502AAB9ADFFD4B8261EFF69"
-            BuildableName = "Scriptio.app"
-            BlueprintName = "Scriptio_iOS"
-            ReferencedContainer = "container:Scriptio.xcodeproj">
+            BuildableName = "Scenarly.app"
+            BlueprintName = "Scenarly_iOS"
+            ReferencedContainer = "container:Scenarly.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <EnvironmentVariables>
@@ -66,9 +66,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D502AAB9ADFFD4B8261EFF69"
-            BuildableName = "Scriptio.app"
-            BlueprintName = "Scriptio_iOS"
-            ReferencedContainer = "container:Scriptio.xcodeproj">
+            BuildableName = "Scenarly.app"
+            BlueprintName = "Scenarly_iOS"
+            ReferencedContainer = "container:Scenarly.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <EnvironmentVariables>
@@ -95,9 +95,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "D502AAB9ADFFD4B8261EFF69"
-            BuildableName = "Scriptio.app"
-            BlueprintName = "Scriptio_iOS"
-            ReferencedContainer = "container:Scriptio.xcodeproj">
+            BuildableName = "Scenarly.app"
+            BlueprintName = "Scenarly_iOS"
+            ReferencedContainer = "container:Scenarly.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <EnvironmentVariables>

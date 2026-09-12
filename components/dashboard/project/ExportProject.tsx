@@ -17,7 +17,7 @@ import { ExportFormat } from "@src/lib/utils/enums";
 import { BaseExportOptions } from "@src/lib/adapters/screenplay-adapter";
 import Dropdown, { DropdownOption } from "@components/utils/Dropdown";
 import { PDFExportOptions, RevisionExportMode } from "@src/lib/adapters/pdf/pdf-adapter";
-import { ScriptioExportOptions } from "@src/lib/adapters/scriptio/scriptio-adapter";
+import { ScenarlyExportOptions } from "@src/lib/adapters/scenarly/scenarly-adapter";
 import { TextExportOptions } from "@src/lib/adapters/text/text-adapter";
 import { importFileIntoProject } from "@src/lib/import/import-project";
 
@@ -206,13 +206,13 @@ const ExportProject = () => {
         } else if (format === ExportFormat.TEXT) {
             const textOptions: TextExportOptions = { ...baseOptions, includeTitlePage };
             await adapter.export(ydoc, textOptions as BaseExportOptions);
-        } else if (format === ExportFormat.SCRIPTIO) {
-            const scriptioOptions: ScriptioExportOptions = {
+        } else if (format === ExportFormat.SCENARLY) {
+            const scenarlyOptions: ScenarlyExportOptions = {
                 ...baseOptions,
                 readable: readableExport,
                 projectId,
             };
-            await adapter.export(ydoc, scriptioOptions as BaseExportOptions);
+            await adapter.export(ydoc, scenarlyOptions as BaseExportOptions);
         } else {
             await adapter.export(ydoc, baseOptions);
         }
@@ -226,7 +226,7 @@ const ExportProject = () => {
         { value: ExportFormat.FOUNTAIN, label: t("formatOptions.fountain") },
         { value: ExportFormat.FDX, label: t("formatOptions.fdx") },
         { value: ExportFormat.TEXT, label: t("formatOptions.text") },
-        { value: ExportFormat.SCRIPTIO, label: t("formatOptions.scriptio") },
+        { value: ExportFormat.SCENARLY, label: t("formatOptions.scenarly") },
     ];
 
     const revisionExportOptions: DropdownOption[] = [
@@ -295,7 +295,7 @@ const ExportProject = () => {
                     {format === ExportFormat.FOUNTAIN && t("formatHelp.fountain")}
                     {format === ExportFormat.FDX && t("formatHelp.fdx")}
                     {format === ExportFormat.TEXT && t("formatHelp.text")}
-                    {format === ExportFormat.SCRIPTIO && t("formatHelp.scriptio")}
+                    {format === ExportFormat.SCENARLY && t("formatHelp.scenarly")}
                 </p>
             </div>
 
@@ -422,8 +422,8 @@ const ExportProject = () => {
                 </div>
             )}
 
-            {/* --- Readable JSON (Scriptio only) --- */}
-            {format === ExportFormat.SCRIPTIO && (
+            {/* --- Readable JSON (Scenarly only) --- */}
+            {format === ExportFormat.SCENARLY && (
                 <div className={styles.options}>
                     <div
                         className={`${optionCard.optionCard} ${readableExport ? optionCard.active : ""}`}

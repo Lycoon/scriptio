@@ -16,7 +16,7 @@ jobs:
     deploy-landing:
         runs-on: ubuntu-latest
         env:
-            IMAGE_NAME: ghcr.io/lycoon/scriptio-landing
+            IMAGE_NAME: ghcr.io/lycoon/scenarly-landing
         steps:
             - uses: actions/checkout@v6
 

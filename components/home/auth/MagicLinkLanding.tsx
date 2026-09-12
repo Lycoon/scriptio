@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import ScriptioLogo from "@public/images/scriptio.svg";
+import ScenarlyLogo from "@public/images/scenarly.svg";
 import layout from "../../utils/Layout.module.css";
 import auth from "./AuthPage.module.css";
 import form from "../../utils/Form.module.css";
@@ -63,13 +63,13 @@ const MagicLinkLanding = () => {
         status === "working"
             ? "Signing you in…"
             : status === "desktop"
-              ? "You're signed in. You can return to the Scriptio desktop app."
+              ? "You're signed in. You can return to the Scenarly desktop app."
               : "This sign-in link is invalid or has expired. Please request a new one from the app.";
 
     return (
         <div className={layout.center_middle}>
             <div className={auth.authPage}>
-                <ScriptioLogo className={auth.authLogo} />
+                <ScenarlyLogo className={auth.authLogo} />
                 <div className={form.home}>
                     <div className={form.header}>
                         <h1>Sign in</h1>

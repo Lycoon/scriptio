@@ -1,4 +1,4 @@
-import ScriptioLogo from "@public/images/scriptio.svg";
+import ScenarlyLogo from "@public/images/scenarly.svg";
 import { Tag, GitCommit } from "lucide-react";
 import styles from "./AboutSettings.module.css";
 
@@ -10,9 +10,9 @@ const AboutSettings = () => {
         <div className={styles.container}>
             <div className={styles.brandSection}>
                 <div className={styles.logoWrapper}>
-                    <ScriptioLogo className={styles.logo} />
+                    <ScenarlyLogo className={styles.logo} />
                 </div>
-                <h1 className={styles.title}>Scriptio</h1>
+                <h1 className={styles.title}>Scenarly</h1>
                 <p className={styles.copyright}>© {new Date().getFullYear()} Arko Logic</p>
             </div>
 

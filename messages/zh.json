@@ -77,7 +77,7 @@
     "fileSaving": "正在保存…",
     "fileNeedsAttention": "需要处理",
     "fileMissing": "文件已被移动或删除。",
-    "fileError": "Scriptio 无法保存到此文件。",
+    "fileError": "Scenarly 无法保存到此文件。",
     "fileForeign": "此位置是另一个项目的文件。",
     "fileLocate": "定位…",
     "fileOpen": "打开…",
@@ -87,7 +87,7 @@
     "fileReclaimable": "此项目文件可缩小 {percent}%。",
     "fileCompact": "压缩文件",
     "savedToFile": "已保存到 {file}",
-    "fileNoAccess": "Scriptio 已无权访问此文件。请用“定位…”重新指定它。",
+    "fileNoAccess": "Scenarly 已无权访问此文件。请用“定位…”重新指定它。",
     "targetCloudOff": "未同步",
     "cloudUpgrade": "升级到 Pro",
     "cloudSignInUpgrade": "同步到云端",
@@ -325,7 +325,7 @@
     "deleteAccountBtn": "确认注销账户",
     "deleteFailed": "删除账户失败，请重试。",
     "subscription": {
-      "openWebsite": "在 scriptio.app 上管理",
+      "openWebsite": "在 scenarly.com 上管理",
       "title": "订阅",
       "proBadge": "Pro",
       "proTitle": "Pro 计划",
@@ -352,15 +352,15 @@
       "manageApple": "打开 App Store",
       "alreadyBoundTo": "此订阅已与 {email} 关联。",
       "alreadyBoundUnknown": "此订阅已与其他账户关联。",
-      "welcomePro": "您已成功订阅 Scriptio Pro。欢迎！",
+      "welcomePro": "您已成功订阅 Scenarly Pro。欢迎！",
       "resubscribe": "重新激活订阅",
       "restorePurchases": "恢复购买",
       "transferConfirm": "您的 App Store 账户有一个与 {email} 关联的有效订阅。恢复将把 Pro 转移到此账户，{email} 将失去 Pro 访问权限。Apple 将继续向同一个 Apple ID 收费。继续吗？",
-      "transferConfirmUnknown": "您的 App Store 账户有一个与另一个 Scriptio 账户关联的有效订阅。恢复将把 Pro 转移到此账户，另一个账户将失去 Pro 访问权限。Apple 将继续向同一个 Apple ID 收费。继续吗？",
+      "transferConfirmUnknown": "您的 App Store 账户有一个与另一个 Scenarly 账户关联的有效订阅。恢复将把 Pro 转移到此账户，另一个账户将失去 Pro 访问权限。Apple 将继续向同一个 Apple ID 收费。继续吗？",
       "transferYes": "是的，转移",
       "transferring": "转移中...",
       "appleStoreFreeInfo": "Pro 功能适用于通过我们网站升级的账户。",
-      "appleStoreProInfo": "如需更新付款方式或取消，请访问 scriptio.app 上的个人资料设置。"
+      "appleStoreProInfo": "如需更新付款方式或取消，请访问 scenarly.com 上的个人资料设置。"
     }
   },
   "projects": {
@@ -506,21 +506,21 @@
   "export": {
     "importLabel": "导入",
     "selectFile": "选择文件",
-    "selectFileDesc": "导入 .fountain, .fdx, .scriptio 或 .txt",
+    "selectFileDesc": "导入 .fountain, .fdx, .scenarly 或 .txt",
     "exportLabel": "导出",
     "formatOptions": {
       "pdf": "PDF 文档 (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
       "text": "格式化文本 (.txt)",
-      "scriptio": "Scriptio (.scriptio)"
+      "scenarly": "Scenarly (.scenarly)"
     },
     "formatHelp": {
       "pdf": "行业标准格式。",
       "fountain": "基于 Markdown 的文本格式。",
       "fdx": "兼容 Final Draft。",
       "text": "按剧本标准页边距排版的纯文本，随处可读。",
-      "scriptio": "Scriptio 原生格式。"
+      "scenarly": "Scenarly 原生格式。"
     },
     "includeNotes": "包含备注",
     "includeNotesDesc": "导出内联备注。",
@@ -704,7 +704,7 @@
       "uploading": "正在上传...",
       "failed": "上传失败。请重试。"
     },
-    "scriptioOpen": {
+    "scenarlyOpen": {
       "title": "打开 {file}",
       "untitledProject": "未命名",
       "alreadyCurrent": "你的副本已包含此文件的全部内容。",
@@ -723,21 +723,21 @@
     "saveToFile": {
       "title": "保存到文件",
       "reassurance": "你的作品已经在自动保存 —— 保存在本设备上，若项目已同步还会保存到云端。",
-      "offer": "保存到文件会给你一份可自行保管和分享的副本；保存之后，Scriptio 会自动让该文件保持最新。",
+      "offer": "保存到文件会给你一份可自行保管和分享的副本；保存之后，Scenarly 会自动让该文件保持最新。",
       "confirm": "选择位置…",
       "cancel": "暂不"
     },
     "autoSave": {
       "title": "自动保存已开启",
-      "body": "{file} 会自动保持最新——你工作时 Scriptio 会把改动写入其中，无需手动保存。",
+      "body": "{file} 会自动保持最新——你工作时 Scenarly 会把改动写入其中，无需手动保存。",
       "hint": "你的作品也会保存在本设备上，若项目已同步还会保存到云端。",
       "ok": "知道了"
     },
     "fileBind": {
       "title": "保存到此文件？",
       "pathTaken": "{project} 已在保存到此文件。两个项目不能共用一个文件 —— 请另选位置。",
-      "replacesForeignFile": "此位置保存着另一个 Scriptio 项目。保存到这里会替换它的文件，那个项目将不再在磁盘上保持最新。",
-      "notWritable": "Scriptio 无法写入此位置（{message}）。请另选一个。",
+      "replacesForeignFile": "此位置保存着另一个 Scenarly 项目。保存到这里会替换它的文件，那个项目将不再在磁盘上保持最新。",
+      "notWritable": "Scenarly 无法写入此位置（{message}）。请另选一个。",
       "replaceAnyway": "替换",
       "cancel": "取消",
       "ok": "确定"

@@ -12,7 +12,7 @@ import { StoreMigrationFailedError } from "@src/lib/persistence/storage-provider
 let dbName: string;
 
 function uniqueName() {
-    return `scriptio-test-${Math.random().toString(36).slice(2)}`;
+    return `scenarly-test-${Math.random().toString(36).slice(2)}`;
 }
 
 function openWithMigrations(

@@ -7,7 +7,7 @@ import { join } from "@src/lib/utils/misc";
 import { useCookieUser, useIsPhone } from "@src/lib/utils/hooks";
 import { useTranslations } from "next-intl";
 
-import Logo from "@public/images/scriptio.svg"
+import Logo from "@public/images/scenarly.svg"
 
 import navbar from "./ProjectNavbar.module.css";
 import navBtn from "@components/utils/NavbarIconButton.module.css";

@@ -14,9 +14,9 @@ import * as Y from "yjs";
 
 // ─── Container format ──────────────────────────────────────────────────────────
 //
-// A `.scriptio` file is a ZIP archive:
+// A `.scenarly` file is a ZIP archive:
 //
-//   mimetype               `application/vnd.scriptio+zip`. First entry, STORED
+//   mimetype               `application/vnd.scenarly+zip`. First entry, STORED
 //                          (uncompressed) so the type is sniffable by content at
 //                          a fixed offset — the EPUB/ODF/OOXML convention.
 //   document.json   ─┐     Exactly one document entry, named by its type:
@@ -42,11 +42,11 @@ const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];
 
 /**
  * Content type identifying the archive. Written as the first entry, uncompressed,
- * so a sniffer (libmagic/`file`, the OS) can recognise a `.scriptio` by content
+ * so a sniffer (libmagic/`file`, the OS) can recognise a `.scenarly` by content
  * even if it's renamed — the same trick EPUB and OpenDocument use. The `+zip`
  * suffix (RFC 6839) advertises the ZIP-based structure.
  */
-const SCRIPTIO_MIMETYPE = "application/vnd.scriptio+zip";
+const SCENARLY_MIMETYPE = "application/vnd.scenarly+zip";
 
 const ZIP_MIMETYPE_ENTRY = "mimetype";
 const ZIP_DOCUMENT_JSON = "document.json"; // readable export (ProjectData JSON)
@@ -54,7 +54,7 @@ const ZIP_DOCUMENT_YDOC = "document.ydoc"; // binary export (raw Yjs update)
 const ZIP_ASSET_DIR = "assets/";
 const ZIP_ASSET_MANIFEST = "assets/manifest.json";
 
-export type ScriptioExportOptions = BaseExportOptions & {
+export type ScenarlyExportOptions = BaseExportOptions & {
     /** When true, the document is indented JSON (ProjectData) instead of binary Yjs state. */
     readable?: boolean;
     /**
@@ -125,7 +125,7 @@ function extensionForMime(mime: string): string {
 
 /** Decompress just the document entry (skip assets) from a ZIP archive. */
 function unzipDocument(data: Uint8Array): fflate.Unzipped {
-    if (!isZipArchive(data)) throw new Error("Not a .scriptio archive");
+    if (!isZipArchive(data)) throw new Error("Not a .scenarly archive");
     return fflate.unzipSync(data, {
         filter: (f) => f.name === ZIP_DOCUMENT_JSON || f.name === ZIP_DOCUMENT_YDOC,
     });
@@ -152,8 +152,8 @@ function parseZipDocument(unzipped: fflate.Unzipped): ProjectData {
         try {
             return JSON.parse(fflate.strFromU8(json)) as ProjectData;
         } catch (error) {
-            console.error("Failed to parse readable Scriptio document", error);
-            throw new Error("Invalid Scriptio file format");
+            console.error("Failed to parse readable Scenarly document", error);
+            throw new Error("Invalid Scenarly file format");
         }
     }
 
@@ -162,12 +162,12 @@ function parseZipDocument(unzipped: fflate.Unzipped): ProjectData {
         try {
             return projectDataFromYjsUpdate(ydoc);
         } catch (error) {
-            console.error("Failed to parse Scriptio document", error);
-            throw new Error("Invalid Scriptio file format");
+            console.error("Failed to parse Scenarly document", error);
+            throw new Error("Invalid Scenarly file format");
         }
     }
 
-    throw new Error("Invalid .scriptio archive: missing document entry");
+    throw new Error("Invalid .scenarly archive: missing document entry");
 }
 
 // ── Asset bundling ───────────────────────────────────────────────────────────────
@@ -220,11 +220,11 @@ async function buildAssetEntries(
 }
 
 /**
- * Restore the board image assets bundled in a `.scriptio` archive into local
+ * Restore the board image assets bundled in a `.scenarly` archive into local
  * storage under `projectId`. No-ops for archives without an asset manifest, and
  * safe to call for any imported file — non-archive content is ignored.
  */
-export async function restoreScriptioAssets(
+export async function restoreScenarlyAssets(
     projectId: string,
     rawContent: ArrayBuffer,
 ): Promise<void> {
@@ -235,7 +235,7 @@ export async function restoreScriptioAssets(
     try {
         unzipped = fflate.unzipSync(data, { filter: (f) => f.name.startsWith(ZIP_ASSET_DIR) });
     } catch (error) {
-        console.warn("[Scriptio] Failed to read bundled assets:", error);
+        console.warn("[Scenarly] Failed to read bundled assets:", error);
         return;
     }
 
@@ -246,7 +246,7 @@ export async function restoreScriptioAssets(
     try {
         manifest = JSON.parse(fflate.strFromU8(manifestBytes)) as AssetManifest;
     } catch (error) {
-        console.warn("[Scriptio] Invalid asset manifest:", error);
+        console.warn("[Scenarly] Invalid asset manifest:", error);
         return;
     }
 
@@ -274,12 +274,12 @@ export async function restoreScriptioAssets(
     );
 }
 
-export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
-    label = "Scriptio";
-    exportTarget = { format: ExportFormat.SCRIPTIO, extension: "scriptio" };
-    importExtensions = ["scriptio"];
+export class ScenarlyAdapter extends ProjectAdapter<ScenarlyExportOptions> {
+    label = "Scenarly";
+    exportTarget = { format: ExportFormat.SCENARLY, extension: "scenarly" };
+    importExtensions = ["scenarly"];
 
-    async convertTo(project: ProjectState, options: ScriptioExportOptions): Promise<Blob> {
+    async convertTo(project: ProjectState, options: ScenarlyExportOptions): Promise<Blob> {
         const readable = options.readable ?? false;
 
         // Readable: pretty-printed ProjectData JSON (a snapshot, no CRDT history).
@@ -294,7 +294,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
         // Stored (level 0) and first, its value lands at the fixed byte offset
         // where content sniffers expect it.
         const zipEntries: fflate.Zippable = {
-            [ZIP_MIMETYPE_ENTRY]: [fflate.strToU8(SCRIPTIO_MIMETYPE), { level: 0 }],
+            [ZIP_MIMETYPE_ENTRY]: [fflate.strToU8(SCENARLY_MIMETYPE), { level: 0 }],
             [documentName]: [documentBytes, { level: 9 }],
         };
 
@@ -304,14 +304,14 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
             } catch (error) {
                 // Never fail the whole export over an asset read hiccup — the
                 // document is the essential part.
-                console.warn("[Scriptio] Failed to bundle assets:", error);
+                console.warn("[Scenarly] Failed to bundle assets:", error);
             }
         }
 
         const archive = fflate.zipSync(zipEntries, { level: 6 });
         // Re-wrap as an ArrayBuffer-backed view: fflate types its output as
         // Uint8Array<ArrayBufferLike>, which BlobPart won't accept directly.
-        return new Blob([new Uint8Array(archive)], { type: SCRIPTIO_MIMETYPE });
+        return new Blob([new Uint8Array(archive)], { type: SCENARLY_MIMETYPE });
     }
 
     convertFrom(rawContent: ArrayBuffer): ProjectData {
@@ -363,7 +363,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
                     Y.applyUpdate(ydoc, ydocUpdate);
                 } else {
                     const json = unzipped[ZIP_DOCUMENT_JSON];
-                    if (!json) throw new Error("Invalid .scriptio archive: missing document entry");
+                    if (!json) throw new Error("Invalid .scenarly archive: missing document entry");
                     applyProjectData(ydoc, JSON.parse(fflate.strFromU8(json)) as ProjectData);
                 }
 
@@ -378,7 +378,7 @@ export class ScriptioAdapter extends ProjectAdapter<ScriptioExportOptions> {
 
                 return;
             } catch (error) {
-                console.warn("Failed to apply Scriptio update directly, falling back to base import.", error);
+                console.warn("Failed to apply Scenarly update directly, falling back to base import.", error);
             }
         }
 

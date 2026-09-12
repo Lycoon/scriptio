@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import { isTauri } from "@tauri-apps/api/core";
 
 import { isFileBindingSupported } from "@src/lib/persistence/file-binding";
-import { offerScriptioOpenFromPath } from "./scriptio-file-open";
+import { offerScenarlyOpenFromPath } from "./scenarly-file-open";
 
 /**
- * Route `.scriptio` files the OS hands us into the open flow.
+ * Route `.scenarly` files the OS hands us into the open flow.
  *
  * Two arrival paths, both ending here:
  *  · **Cold launch** — the path is in `argv` (Windows/Linux) or an Apple Event
@@ -30,8 +30,8 @@ export function useOsFileOpen(): void {
 
         const handle = (path: unknown) => {
             if (cancelled || typeof path !== "string" || !path) return;
-            void offerScriptioOpenFromPath(path).catch((error) =>
-                console.error("[Scriptio] Could not open the file the system sent:", error),
+            void offerScenarlyOpenFromPath(path).catch((error) =>
+                console.error("[Scenarly] Could not open the file the system sent:", error),
             );
         };
 
@@ -42,7 +42,7 @@ export function useOsFileOpen(): void {
                     import("@tauri-apps/api/event"),
                 ]);
 
-                const stop = await listen<string>("scriptio://open-file", (event) => handle(event.payload));
+                const stop = await listen<string>("scenarly://open-file", (event) => handle(event.payload));
                 if (cancelled) {
                     stop();
                     return;
@@ -58,7 +58,7 @@ export function useOsFileOpen(): void {
                 // UI, and the user can simply open them again.
                 if (queued.length > 0) handle(queued[0]);
             } catch (error) {
-                console.warn("[Scriptio] File-open integration unavailable:", error);
+                console.warn("[Scenarly] File-open integration unavailable:", error);
             }
         })();
 

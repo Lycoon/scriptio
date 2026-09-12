@@ -13,7 +13,7 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
  * app container's deploy lifecycle.
  *
  * `assetPrefix` moves every /_next asset to /_site/_next so it never collides with
- * the app's /_next namespace on the shared scriptio.app host. Traefik routes
+ * the app's /_next namespace on the shared scenarly.com host. Traefik routes
  * /_site/* here; everything else (including the app's /_next) goes to the app.
  * It's only applied to the production build — in `next dev` the prefix isn't
  * served, so the dev server keeps assets at the default /_next and works at `/`.

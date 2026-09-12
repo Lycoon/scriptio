@@ -30,8 +30,8 @@ export default function AdminShell({ email, title, subtitle, children }: Props) 
             <aside className={styles.sidebar}>
                 <div className={styles.brand}>
                     <Image
-                        src="/images/scriptio.svg"
-                        alt="Scriptio"
+                        src="/images/scenarly.svg"
+                        alt="Scenarly"
                         width={100}
                         height={28}
                         className={styles.brandLogo}

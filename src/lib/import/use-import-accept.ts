@@ -15,7 +15,7 @@ import { isMobileFilePicker } from "@src/lib/utils/platform";
  * - Android resolves the accept list to MIME types before opening the Storage
  *   Access Framework picker (`WebChromeClient.onShowFileChooser` →
  *   `MimeTypeMap.getMimeTypeFromExtension`). It knows none of `.fdx`,
- *   `.fountain`, `.scriptio`, `.fadein` or `.wdz`, so they all drop out and only
+ *   `.fountain`, `.scenarly`, `.fadein` or `.wdz`, so they all drop out and only
  *   `.txt` → text/plain survives as the filter. The picker still *lists* every
  *   file — it just refuses to return the ones outside that filter, so tapping a
  *   .fdx does nothing at all and reads as a permission problem.

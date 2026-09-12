@@ -18,7 +18,7 @@
 // undo/redo, formatting, the element picker — in [EditorBottomBar], which is why
 // none of this is a loss. Note the system's undo could never have driven this
 // editor's history anyway: it is a Yjs UndoManager, not WebKit's undo stack.
-static id scriptioNoInputAccessoryView(id self, SEL _cmd) { return nil; }
+static id scenarlyNoInputAccessoryView(id self, SEL _cmd) { return nil; }
 
 // Emptying the accessory view alone is only half the job on iPad.
 //
@@ -33,21 +33,21 @@ static id scriptioNoInputAccessoryView(id self, SEL _cmd) { return nil; }
 // So clear the assistant item's button groups too. The original implementation
 // still supplies the item — UIKit hands out one instance per responder and
 // expects to keep seeing it — and only its contents are emptied.
-static IMP scriptioAssistantItemOriginal = NULL;
+static IMP scenarlyAssistantItemOriginal = NULL;
 
-static id scriptioEmptyInputAssistantItem(id self, SEL _cmd) {
-	if (!scriptioAssistantItemOriginal) return nil;
+static id scenarlyEmptyInputAssistantItem(id self, SEL _cmd) {
+	if (!scenarlyAssistantItemOriginal) return nil;
 	UITextInputAssistantItem *item =
-		((UITextInputAssistantItem *(*)(id, SEL))scriptioAssistantItemOriginal)(self, _cmd);
+		((UITextInputAssistantItem *(*)(id, SEL))scenarlyAssistantItemOriginal)(self, _cmd);
 	item.leadingBarButtonGroups = @[];
 	item.trailingBarButtonGroups = @[];
 	return item;
 }
 
-@interface ScriptioKeyboardPatch : NSObject
+@interface ScenarlyKeyboardPatch : NSObject
 @end
 
-@implementation ScriptioKeyboardPatch
+@implementation ScenarlyKeyboardPatch
 + (void)load {
 	Class cls = NSClassFromString(@"WKContentView");
 	if (!cls) return;
@@ -57,7 +57,7 @@ static id scriptioEmptyInputAssistantItem(id self, SEL _cmd) {
 	const char *types = existing ? method_getTypeEncoding(existing) : "@@:";
 	// class_replaceMethod adds the override to WKContentView when the method is
 	// only inherited, or replaces it when the class already defines it.
-	class_replaceMethod(cls, sel, (IMP)scriptioNoInputAccessoryView, types);
+	class_replaceMethod(cls, sel, (IMP)scenarlyNoInputAccessoryView, types);
 
 	// Captured *before* replacing, so the override calls the real implementation
 	// rather than itself. Inherited from UIResponder, hence the capture rather
@@ -65,8 +65,8 @@ static id scriptioEmptyInputAssistantItem(id self, SEL _cmd) {
 	SEL assistantSel = @selector(inputAssistantItem);
 	Method assistant = class_getInstanceMethod(cls, assistantSel);
 	if (assistant) {
-		scriptioAssistantItemOriginal = method_getImplementation(assistant);
-		class_replaceMethod(cls, assistantSel, (IMP)scriptioEmptyInputAssistantItem,
+		scenarlyAssistantItemOriginal = method_getImplementation(assistant);
+		class_replaceMethod(cls, assistantSel, (IMP)scenarlyEmptyInputAssistantItem,
 		                    method_getTypeEncoding(assistant));
 	}
 }

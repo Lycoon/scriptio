@@ -16,7 +16,7 @@ import popup from "./Popup.module.css";
  * Two of the three cases have no "yes": another project in this library already
  * writes to that path (two writers over one file would clobber each other on
  * every save), or the OS refuses the location outright. The third — an existing
- * `.scriptio` belonging to a *different* document — is the user's to make, but
+ * `.scenarly` belonging to a *different* document — is the user's to make, but
  * the system's own "replace?" prompt does not say that a project's file is about
  * to be destroyed, so it is said here, with the danger styling that goes with it.
  */

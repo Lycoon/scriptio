@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import MagicLinkLanding from "@components/home/auth/MagicLinkLanding";
 
 export const metadata: Metadata = {
-    title: "Sign in | Scriptio®",
+    title: "Sign in | Scenarly®",
 };
 
 export default function MagicLinkPage() {

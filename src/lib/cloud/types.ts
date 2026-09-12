@@ -4,7 +4,7 @@ export interface Env {
     PROJECT_ROOM: DurableObjectNamespace;
     JWT_SECRET: string;
     SNAPSHOTS: R2Bucket;
-    /** Base URL of the Next.js app, for the asset-GC callback (e.g. https://scriptio.app). */
+    /** Base URL of the Next.js app, for the asset-GC callback (e.g. https://scenarly.com). */
     API_URL: string;
 }
 

@@ -21,7 +21,7 @@ export type DropPosition = "into" | "before" | "after";
  * tree onto a panel to open it there. Reordering within the tree uses internal
  * React state, so this only matters for cross-target (panel) drops.
  */
-export const DOC_DND_MIME = "application/x-scriptio-doc";
+export const DOC_DND_MIME = "application/x-scenarly-doc";
 
 export interface DocumentTreeItemProps {
     node: DocumentNode;

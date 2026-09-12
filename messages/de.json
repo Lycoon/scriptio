@@ -78,7 +78,7 @@
     "fileSaving": "Wird gespeichert…",
     "fileNeedsAttention": "Benötigt Aufmerksamkeit",
     "fileMissing": "Die Datei wurde verschoben oder gelöscht.",
-    "fileError": "Scriptio konnte nicht in diese Datei schreiben.",
+    "fileError": "Scenarly konnte nicht in diese Datei schreiben.",
     "fileForeign": "An diesem Ort liegt die Datei eines anderen Projekts.",
     "fileLocate": "Suchen…",
     "fileOpen": "Öffnen…",
@@ -88,7 +88,7 @@
     "fileReclaimable": "Diese Projektdatei kann um {percent} % verkleinert werden.",
     "fileCompact": "Datei komprimieren",
     "savedToFile": "In {file} gespeichert",
-    "fileNoAccess": "Scriptio hat keine Berechtigung mehr für diese Datei. Wählen Sie sie über Suchen… erneut aus.",
+    "fileNoAccess": "Scenarly hat keine Berechtigung mehr für diese Datei. Wählen Sie sie über Suchen… erneut aus.",
     "targetCloudOff": "Nicht synchronisiert",
     "cloudUpgrade": "Auf Pro upgraden",
     "cloudSignInUpgrade": "Mit der Cloud synchronisieren",
@@ -326,7 +326,7 @@
     "deleteAccountBtn": "Mein Konto löschen",
     "deleteFailed": "Konto konnte nicht gelöscht werden. Bitte erneut versuchen.",
     "subscription": {
-      "openWebsite": "Auf scriptio.app verwalten",
+      "openWebsite": "Auf scenarly.com verwalten",
       "title": "Abonnement",
       "proBadge": "Pro",
       "proTitle": "Pro-Plan",
@@ -353,15 +353,15 @@
       "manageApple": "App Store öffnen",
       "alreadyBoundTo": "Dieses Abonnement ist bereits mit {email} verknüpft.",
       "alreadyBoundUnknown": "Dieses Abonnement ist bereits mit einem anderen Konto verknüpft.",
-      "welcomePro": "Du hast jetzt Scriptio Pro abonniert. Willkommen!",
+      "welcomePro": "Du hast jetzt Scenarly Pro abonniert. Willkommen!",
       "resubscribe": "Abonnement reaktivieren",
       "restorePurchases": "Käufe wiederherstellen",
       "transferConfirm": "Dein App-Store-Konto hat ein aktives Abonnement, das mit {email} verknüpft ist. Beim Wiederherstellen wird Pro auf dieses Konto übertragen und {email} verliert den Pro-Zugang. Apple stellt weiterhin derselben Apple ID die Rechnung. Fortfahren?",
-      "transferConfirmUnknown": "Dein App-Store-Konto hat ein aktives Abonnement, das mit einem anderen Scriptio-Konto verknüpft ist. Beim Wiederherstellen wird Pro auf dieses Konto übertragen und das andere Konto verliert den Pro-Zugang. Apple stellt weiterhin derselben Apple ID die Rechnung. Fortfahren?",
+      "transferConfirmUnknown": "Dein App-Store-Konto hat ein aktives Abonnement, das mit einem anderen Scenarly-Konto verknüpft ist. Beim Wiederherstellen wird Pro auf dieses Konto übertragen und das andere Konto verliert den Pro-Zugang. Apple stellt weiterhin derselben Apple ID die Rechnung. Fortfahren?",
       "transferYes": "Ja, übertragen",
       "transferring": "Wird übertragen...",
       "appleStoreFreeInfo": "Pro-Funktionen sind für Konten verfügbar, die über unsere Website upgegradet wurden.",
-      "appleStoreProInfo": "Um deine Zahlungsmethode zu aktualisieren oder zu kündigen, besuche bitte die Profileinstellungen auf scriptio.app."
+      "appleStoreProInfo": "Um deine Zahlungsmethode zu aktualisieren oder zu kündigen, besuche bitte die Profileinstellungen auf scenarly.com."
     }
   },
   "projects": {
@@ -507,21 +507,21 @@
   "export": {
     "importLabel": "Importieren",
     "selectFile": "Datei auswählen",
-    "selectFileDesc": ".fountain, .fdx, .scriptio oder .txt hochladen",
+    "selectFileDesc": ".fountain, .fdx, .scenarly oder .txt hochladen",
     "exportLabel": "Exportieren",
     "formatOptions": {
       "pdf": "PDF-Dokument (.pdf)",
       "fountain": "Fountain (.fountain)",
       "fdx": "Final Draft (.fdx)",
       "text": "Formatierter Text (.txt)",
-      "scriptio": "Scriptio (.scriptio)"
+      "scenarly": "Scenarly (.scenarly)"
     },
     "formatHelp": {
       "pdf": "Branchenstandard-Format. Ideal zum Teilen und Drucken.",
       "fountain": "Einfaches Textformat basierend auf Markdown, ideal für Kompatibilität.",
       "fdx": "Kompatibel mit der Branchensoftware Final Draft.",
       "text": "Reiner Text mit den Standardrändern eines Drehbuchs, überall lesbar.",
-      "scriptio": "Scriptios eigenes Format, um Ihr Projekt lokal zu speichern"
+      "scenarly": "Scenarlys eigenes Format, um Ihr Projekt lokal zu speichern"
     },
     "includeNotes": "Notizen einschließen",
     "includeNotesDesc": "Integrierte Notizen exportieren.",
@@ -705,7 +705,7 @@
       "uploading": "Wird hochgeladen...",
       "failed": "Hochladen fehlgeschlagen. Bitte versuchen Sie es erneut."
     },
-    "scriptioOpen": {
+    "scenarlyOpen": {
       "title": "{file} öffnen",
       "untitledProject": "Ohne Titel",
       "alreadyCurrent": "Ihre Kopie ist bereits auf dem Stand dieser Datei.",
@@ -724,21 +724,21 @@
     "saveToFile": {
       "title": "In eine Datei speichern",
       "reassurance": "Ihre Arbeit wird bereits automatisch gespeichert — auf diesem Gerät und, wenn das Projekt synchronisiert ist, in der Cloud.",
-      "offer": "Eine Datei gibt Ihnen eine eigene Kopie zum Weitergeben; danach hält Scriptio diese Datei von selbst aktuell.",
+      "offer": "Eine Datei gibt Ihnen eine eigene Kopie zum Weitergeben; danach hält Scenarly diese Datei von selbst aktuell.",
       "confirm": "Ort wählen…",
       "cancel": "Jetzt nicht"
     },
     "autoSave": {
       "title": "Automatisches Speichern ist aktiv",
-      "body": "{file} wird von selbst aktuell gehalten — Scriptio schreibt Ihre Änderungen während der Arbeit hinein, es gibt also nichts von Hand zu speichern.",
+      "body": "{file} wird von selbst aktuell gehalten — Scenarly schreibt Ihre Änderungen während der Arbeit hinein, es gibt also nichts von Hand zu speichern.",
       "hint": "Ihre Arbeit wird außerdem auf diesem Gerät gespeichert und, wenn das Projekt synchronisiert ist, in der Cloud.",
       "ok": "Verstanden"
     },
     "fileBind": {
       "title": "In diese Datei speichern?",
       "pathTaken": "{project} speichert bereits in diese Datei. Zwei Projekte können sich keine Datei teilen — wählen Sie einen anderen Ort.",
-      "replacesForeignFile": "An diesem Ort ist ein anderes Scriptio-Projekt gespeichert. Hier zu speichern ersetzt dessen Datei, und jenes Projekt wird auf der Festplatte nicht mehr aktuell gehalten.",
-      "notWritable": "Scriptio kann an diesem Ort nicht schreiben ({message}). Wählen Sie einen anderen.",
+      "replacesForeignFile": "An diesem Ort ist ein anderes Scenarly-Projekt gespeichert. Hier zu speichern ersetzt dessen Datei, und jenes Projekt wird auf der Festplatte nicht mehr aktuell gehalten.",
+      "notWritable": "Scenarly kann an diesem Ort nicht schreiben ({message}). Wählen Sie einen anderen.",
       "replaceAnyway": "Ersetzen",
       "cancel": "Abbrechen",
       "ok": "OK"

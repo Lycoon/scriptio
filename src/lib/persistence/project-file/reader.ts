@@ -126,7 +126,7 @@ async function readIndexChain(
  */
 export async function openProjectFile(read: ReadRange, fileSize: number): Promise<ProjectFile> {
     const header = readHeader(await read(0, DATA_START));
-    if (!header) throw new Error("not a scriptio project file");
+    if (!header) throw new Error("not a scenarly project file");
 
     // A file longer than the commit says has a partial save at the end. That is
     // the expected shape after a crash, and those bytes are unreachable, so the

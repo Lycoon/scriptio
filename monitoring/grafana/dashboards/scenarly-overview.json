@@ -1,6 +1,6 @@
 {
-    "uid": "scriptio-overview",
-    "title": "Scriptio Overview",
+    "uid": "scenarly-overview",
+    "title": "Scenarly Overview",
     "timezone": "browser",
     "schemaVersion": 39,
     "refresh": "30s",
@@ -39,7 +39,7 @@
             "targets": [
                 {
                     "refId": "A",
-                    "expr": "scriptio_db_size_bytes",
+                    "expr": "scenarly_db_size_bytes",
                     "legendFormat": "DB size"
                 }
             ]

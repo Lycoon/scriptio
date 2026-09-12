@@ -35,7 +35,7 @@ describe("adapter registry", () => {
         it("routes the other readable formats to their own adapters", () => {
             for (const [filename, extension] of [
                 ["a.fdx", "fdx"],
-                ["a.scriptio", "scriptio"],
+                ["a.scenarly", "scenarly"],
                 ["a.fadein", "fadein"],
                 ["a.wdz", "wdz"],
             ] as const) {
@@ -122,7 +122,7 @@ describe("adapter registry", () => {
                 [ExportFormat.FOUNTAIN, "fountain"],
                 [ExportFormat.FDX, "fdx"],
                 [ExportFormat.TEXT, "txt"],
-                [ExportFormat.SCRIPTIO, "scriptio"],
+                [ExportFormat.SCENARLY, "scenarly"],
             ] as const) {
                 expect(getExportAdapter(format)?.exportTarget?.extension, format).toBe(extension);
             }

@@ -88,7 +88,7 @@ export const clampZoom = (level: number) =>
 /** localStorage key for the zoom level. A device display preference, deliberately
  *  not part of the synced user settings: the right zoom on a laptop is the wrong
  *  one on an external monitor, so carrying it between machines would be a bug. */
-const ZOOM_STORAGE_KEY = "scriptio:editor-zoom";
+const ZOOM_STORAGE_KEY = "scenarly:editor-zoom";
 
 /**
  * The stored zoom, held as an external store rather than React state.
