@@ -318,7 +318,6 @@
     "deleteModalTitle": "Eliminar cuenta",
     "deleteModalDesc": "Esto eliminará permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.",
     "deleteSubscriptionWarning": "Tu suscripción Pro está activa hasta el {date}. Eliminar tu cuenta la cancela de inmediato: el tiempo restante se pierde y no se reembolsa.",
-    "deleteSubscriptionWarningApple": "Tu suscripción Pro se factura a través de la App Store y sigue activa hasta el {date}. Eliminar tu cuenta finaliza tu acceso Pro, pero no detiene el cobro: cancela también la suscripción en los ajustes de la App Store.",
     "deleteConfirmPhrase": "Confirmo la eliminación de mi cuenta",
     "deleteConfirmLabel": "Escribe el siguiente texto para confirmar la eliminación:",
     "deleting": "Eliminando...",

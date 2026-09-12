@@ -318,7 +318,6 @@
     "deleteModalTitle": "Delete account",
     "deleteModalDesc": "This will permanently delete your account and all associated data. This action cannot be undone.",
     "deleteSubscriptionWarning": "Your Pro subscription is active until {date}. Deleting your account cancels it immediately — the remaining time is lost and will not be refunded.",
-    "deleteSubscriptionWarningApple": "Your Pro subscription is billed through the App Store and stays active until {date}. Deleting your account ends your Pro access, but does not stop the billing — cancel the subscription in your App Store settings too.",
     "deleteConfirmPhrase": "I confirm my account deletion",
     "deleteConfirmLabel": "Type the following text to confirm deletion:",
     "deleting": "Deleting...",

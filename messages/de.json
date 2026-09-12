@@ -319,7 +319,6 @@
     "deleteModalTitle": "Konto löschen",
     "deleteModalDesc": "Dies wird dauerhaft Ihr Konto und alle verknüpften Daten löschen. Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleteSubscriptionWarning": "Dein Pro-Abo läuft bis zum {date}. Wenn du dein Konto löschst, wird es sofort gekündigt – die verbleibende Zeit verfällt und wird nicht erstattet.",
-    "deleteSubscriptionWarningApple": "Dein Pro-Abo wird über den App Store abgerechnet und läuft bis zum {date}. Das Löschen deines Kontos beendet deinen Pro-Zugang, stoppt aber nicht die Abrechnung – kündige das Abo zusätzlich in den App-Store-Einstellungen.",
     "deleteConfirmPhrase": "Ich bestätige die Löschung meines Kontos",
     "deleteConfirmLabel": "Gib folgenden Text ein, um die Löschung zu bestätigen:",
     "deleting": "Löschen...",

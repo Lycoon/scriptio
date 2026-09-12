@@ -318,7 +318,6 @@
     "deleteModalTitle": "계정 삭제",
     "deleteModalDesc": "계정과 모든 데이터를 영구적으로 삭제합니다. 이 작업은 취소할 수 없습니다.",
     "deleteSubscriptionWarning": "Pro 구독이 {date}까지 유효합니다. 계정을 삭제하면 구독이 즉시 해지되며, 남은 기간은 사라지고 환불되지 않습니다.",
-    "deleteSubscriptionWarningApple": "Pro 구독은 App Store를 통해 청구되며 {date}까지 유효합니다. 계정을 삭제하면 Pro 이용은 종료되지만 청구는 중단되지 않습니다. App Store 설정에서도 구독을 해지하세요.",
     "deleteConfirmPhrase": "계정 삭제를 확인합니다",
     "deleteConfirmLabel": "삭제를 확인하려면 아래 텍스트를 입력하세요:",
     "deleting": "삭제 중...",

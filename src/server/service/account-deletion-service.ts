@@ -12,8 +12,8 @@
  *     Auth.js verification tokens, pending invitations addressed to them).
  *     None of these can be a foreign key: all three are written for addresses
  *     that have no account yet — sign-up links and invitations to strangers.
- *  4. the User row itself, which cascades Account, Session, Transaction and
- *     the remaining ProjectMember rows.
+ *  4. the User row itself, which cascades Account, Session and the remaining
+ *     ProjectMember rows.
  *
  * External cleanup (Cloudflare, Stripe) is best-effort: it is logged on
  * failure but never blocks the deletion, otherwise a Worker outage would leave
@@ -34,15 +34,16 @@ import { logger } from "@src/lib/utils/logger";
 /**
  * Stop billing a user who no longer exists. Cancels immediately rather than at
  * period end: the account is gone, so there is nothing left to keep active —
- * and once the Transaction rows cascade away we can no longer map the
- * subscription back to anyone.
+ * and once the User row is deleted we can no longer map the subscription back
+ * to anyone. The webhook clears stripeSubscriptionId when a subscription ends,
+ * so one still set means we believe it is live.
  */
 async function cancelStripeSubscription(userId: string): Promise<void> {
-    const subscriptionId = await UserService.getStripeSubscriptionId(userId);
-    if (!subscriptionId) return;
+    const { stripeSubscriptionId } = await UserService.getStripeIds(userId);
+    if (!stripeSubscriptionId) return;
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-    await stripe.subscriptions.cancel(subscriptionId);
+    await stripe.subscriptions.cancel(stripeSubscriptionId);
 }
 
 export async function deleteAccount(userId: string): Promise<boolean> {
@@ -63,15 +64,10 @@ export async function deleteAccount(userId: string): Promise<boolean> {
         }
     }
 
-    // The webhook clears subscriptionProvider when a subscription ends, so a
-    // lingering STRIPE means we believe one is still live. Apple subscriptions
-    // can only be cancelled by the user through the App Store.
-    if (user.subscriptionProvider === "STRIPE") {
-        try {
-            await cancelStripeSubscription(userId);
-        } catch (e) {
-            logger.error("[AccountDeletion] Failed to cancel Stripe subscription", { userId, error: e });
-        }
+    try {
+        await cancelStripeSubscription(userId);
+    } catch (e) {
+        logger.error("[AccountDeletion] Failed to cancel Stripe subscription", { userId, error: e });
     }
 
     await Promise.all([

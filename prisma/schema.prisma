@@ -22,11 +22,6 @@ enum UserRole {
   ADMIN
 }
 
-enum SubscriptionProvider {
-  STRIPE
-  APPLE
-}
-
 enum DataExportStatus {
   PENDING
   COMPLETED
@@ -44,14 +39,17 @@ model User {
 
   isProUntil                  DateTime?
   isSubscriptionCancelled     Boolean   @default(false)
-  subscriptionProvider        SubscriptionProvider?
+  // Stripe is the source of truth for billing; these only link the user to it.
+  // The customer id outlives the subscription so a lapsed user re-subscribes
+  // on the same Stripe customer; the subscription id is cleared when it ends.
+  stripeCustomerId            String?   @unique
+  stripeSubscriptionId        String?   @unique
 
   settings            Json?
 
   accounts            Account[]
   sessions            Session[]
   projects            ProjectMember[]
-  transactions        Transaction[]
   dataExports         DataExport[]
 }
 
@@ -101,18 +99,6 @@ model MagicLinkToken {
   inviteToken         String?
 
   @@index([email, createdAt])
-}
-
-model Transaction {
-  id            Int                  @id @default(autoincrement())
-  userId        String
-  provider      SubscriptionProvider
-  transactionId String               @unique
-  createdAt     DateTime             @default(now())
-
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
 }
 
 model Project {

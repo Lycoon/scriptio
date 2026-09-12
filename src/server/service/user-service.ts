@@ -34,13 +34,17 @@ export const getUserSettings = async (userId: string) => {
     return repository.fetchUserSettings(userId);
 };
 
-export const getUserByStripeSubscriptionId = async (subscriptionId: string) => {
-    return repository.fetchUserByStripeSubscriptionId(subscriptionId);
+export const getUserIdByStripeSubscriptionId = async (subscriptionId: string) => {
+    const result = await repository.fetchUserByStripeSubscriptionId(subscriptionId);
+    return result?.id ?? null;
 };
 
-export const getStripeSubscriptionId = async (userId: string) => {
-    const result = await repository.fetchStripeSubscriptionId(userId);
-    return result?.transactionId ?? null;
+export const getStripeIds = async (userId: string) => {
+    const result = await repository.fetchStripeIds(userId);
+    return {
+        stripeCustomerId: result?.stripeCustomerId ?? null,
+        stripeSubscriptionId: result?.stripeSubscriptionId ?? null,
+    };
 };
 
 export const searchUsers = async (term: string, limit: number, cursor?: number) => {

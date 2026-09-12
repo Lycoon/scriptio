@@ -318,7 +318,6 @@
     "deleteModalTitle": "Usuń konto",
     "deleteModalDesc": "To trwale usunie Twoje konto i wszystkie powiązane dane. Tej akcji nie można cofnąć.",
     "deleteSubscriptionWarning": "Twoja subskrypcja Pro jest aktywna do {date}. Usunięcie konta anuluje ją natychmiast — pozostały czas przepada i nie zostanie zwrócony.",
-    "deleteSubscriptionWarningApple": "Twoja subskrypcja Pro jest rozliczana przez App Store i pozostaje aktywna do {date}. Usunięcie konta kończy dostęp Pro, ale nie zatrzymuje płatności — anuluj subskrypcję również w ustawieniach App Store.",
     "deleteConfirmPhrase": "Potwierdzam usunięcie mojego konta",
     "deleteConfirmLabel": "Wpisz poniższy tekst, aby potwierdzić usunięcie:",
     "deleting": "Usuwanie...",

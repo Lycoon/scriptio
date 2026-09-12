@@ -40,11 +40,8 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
 
     // A subscription still renewing is money at stake: deleting the account
     // cancels it on the spot, so the dialog has to say so before they confirm.
-    // Apple bills through the App Store and we cannot cancel it server-side —
-    // that case needs the opposite warning, or the user assumes billing stops.
     const isPro = !!user?.isProUntil && new Date(user.isProUntil) > new Date();
     const hasLiveSubscription = isPro && !user?.isSubscriptionCancelled;
-    const isAppleSubscription = user?.subscriptionProvider === "APPLE";
     const proExpiryDate = user?.isProUntil
         ? new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(
               new Date(user.isProUntil),
@@ -268,11 +265,7 @@ const ProfileSettings = ({ dangerOpen, onDangerToggle }: { dangerOpen: boolean; 
                             {hasLiveSubscription && (
                                 <div className={styles.subscriptionWarning}>
                                     <TriangleAlert size={16} className={styles.subscriptionWarningIcon} />
-                                    <span>
-                                        {isAppleSubscription
-                                            ? t("deleteSubscriptionWarningApple", { date: proExpiryDate })
-                                            : t("deleteSubscriptionWarning", { date: proExpiryDate })}
-                                    </span>
+                                    <span>{t("deleteSubscriptionWarning", { date: proExpiryDate })}</span>
                                 </div>
                             )}
                             <label

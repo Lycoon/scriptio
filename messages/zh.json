@@ -318,7 +318,6 @@
     "deleteModalTitle": "删除账户",
     "deleteModalDesc": "该操作不可撤销。",
     "deleteSubscriptionWarning": "您的 Pro 订阅有效期至 {date}。删除账户将立即取消订阅，剩余时间将失效且不予退款。",
-    "deleteSubscriptionWarningApple": "您的 Pro 订阅通过 App Store 计费，有效期至 {date}。删除账户会终止 Pro 访问权限，但不会停止扣费——请同时在 App Store 设置中取消订阅。",
     "deleteConfirmPhrase": "我确认删除我的账户",
     "deleteConfirmLabel": "请输入以下文字以确认删除：",
     "deleting": "正在注销...",

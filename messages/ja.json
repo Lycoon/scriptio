@@ -318,7 +318,6 @@
     "deleteModalTitle": "アカウントを削除",
     "deleteModalDesc": "アカウントとすべての関連データを完全に削除します。この操作は取り消せません。",
     "deleteSubscriptionWarning": "Proサブスクリプションは{date}まで有効です。アカウントを削除すると直ちに解約され、残りの期間は失われ、返金されません。",
-    "deleteSubscriptionWarningApple": "ProサブスクリプションはApp Store経由で課金され、{date}まで有効です。アカウントを削除するとProへのアクセスは終了しますが、課金は停止しません。App Storeの設定でもサブスクリプションを解約してください。",
     "deleteConfirmPhrase": "アカウントの削除を承認します",
     "deleteConfirmLabel": "削除を確認するために以下のテキストを入力してください：",
     "deleting": "削除中...",

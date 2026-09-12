@@ -1,5 +1,5 @@
 import { UserSettings } from "@src/lib/utils/types";
-import { Prisma, SubscriptionProvider } from "../../generated/client/client";
+import { Prisma } from "../../generated/client/client";
 import prisma from "../db";
 
 export type UpdateSettings = {
@@ -18,7 +18,8 @@ export interface UserUpdate {
     color?: string;
     isProUntil?: Date | null;
     isSubscriptionCancelled?: boolean;
-    subscriptionProvider?: SubscriptionProvider | null;
+    stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
     settings?: Partial<UserSettings>;
 }
 
@@ -40,7 +41,8 @@ export class UserRepository {
                 color: userUpdate.color,
                 isProUntil: userUpdate.isProUntil,
                 isSubscriptionCancelled: userUpdate.isSubscriptionCancelled,
-                subscriptionProvider: userUpdate.subscriptionProvider,
+                stripeCustomerId: userUpdate.stripeCustomerId,
+                stripeSubscriptionId: userUpdate.stripeSubscriptionId,
             },
         });
     }
@@ -79,7 +81,6 @@ export class UserRepository {
                 role: true,
                 isProUntil: true,
                 isSubscriptionCancelled: true,
-                subscriptionProvider: true,
             },
         });
     }
@@ -112,25 +113,23 @@ export class UserRepository {
                 createdAt: true,
                 role: true,
                 isProUntil: true,
-                subscriptionProvider: true,
             },
         });
     }
 
     /** Find the user who owns a given Stripe subscription ID. */
-    fetchUserByStripeSubscriptionId(subscriptionId: string) {
-        return prisma.transaction.findFirst({
-            where: { transactionId: subscriptionId, provider: "STRIPE" },
-            select: { userId: true },
+    fetchUserByStripeSubscriptionId(stripeSubscriptionId: string) {
+        return prisma.user.findUnique({
+            where: { stripeSubscriptionId },
+            select: { id: true },
         });
     }
 
-    /** Get the most recent Stripe subscription ID for a user (for cancellation). */
-    fetchStripeSubscriptionId(userId: string) {
-        return prisma.transaction.findFirst({
-            where: { userId, provider: "STRIPE" },
-            orderBy: { createdAt: "desc" },
-            select: { transactionId: true },
+    /** Kept out of fetchUser: that select is what /api/users hands to the browser. */
+    fetchStripeIds(userId: string) {
+        return prisma.user.findUnique({
+            where: { id: userId },
+            select: { stripeCustomerId: true, stripeSubscriptionId: true },
         });
     }
 

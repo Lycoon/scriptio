@@ -319,7 +319,6 @@
     "deleteModalTitle": "Supprimer le compte",
     "deleteModalDesc": "Cela supprimera définitivement votre compte et toutes les données associées. Cette action ne peut pas être annulée.",
     "deleteSubscriptionWarning": "Votre abonnement Pro est actif jusqu'au {date}. La suppression de votre compte l'annule immédiatement : le temps restant est perdu et ne sera pas remboursé.",
-    "deleteSubscriptionWarningApple": "Votre abonnement Pro est facturé via l'App Store et reste actif jusqu'au {date}. La suppression de votre compte met fin à votre accès Pro, mais n'arrête pas la facturation : annulez aussi l'abonnement dans les réglages de l'App Store.",
     "deleteConfirmPhrase": "Je confirme la suppression de mon compte",
     "deleteConfirmLabel": "Écrivez le texte suivant pour confirmer la suppression :",
     "deleting": "Suppression...",
